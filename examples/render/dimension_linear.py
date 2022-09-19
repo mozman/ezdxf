@@ -1,5 +1,4 @@
-# Purpose: using DIMENSION horizontal, vertical and rotated
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 from typing import cast
 import math
@@ -13,31 +12,26 @@ from ezdxf.math import Vec3, UCS
 from ezdxf.entities import DimStyle
 from ezdxf.enums import MTextLineAlignment
 
-# ========================================
-# Setup logging
-# ========================================
+# ------------------------------------------------------------------------------
+# This example shows how to use angular dimension.
+# ------------------------------------------------------------------------------
+
 logging.basicConfig(level="WARNING")
+DXFVERSION = "R2013"
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
-# ========================================
-# Setup your preferred output directory
-# ========================================
-OUTDIR = pathlib.Path("~/Desktop/Outbox").expanduser()
-if not OUTDIR.exists():
-    OUTDIR = pathlib.Path()
 
-# ========================================
-# Default text attributes
-# ========================================
+# Default text attributes:
 TEXT_ATTRIBS = {
     "height": 0.25,
     "style": ezdxf.options.default_dimension_text_style,
 }
 DIM_TEXT_STYLE = ezdxf.options.default_dimension_text_style
 
-# =======================================================
-# Discarding dimension rendering is possible
-# for BricsCAD, but is incompatible to AutoCAD -> error
-# =======================================================
+# Discarding the dimension rendering is possible for BricsCAD,
+# but it is incompatible to AutoCAD -> error
 BRICSCAD = False
 
 
@@ -110,10 +104,10 @@ def linear_tutorial(dxfversion="R12"):
     dim2.render()
 
     doc.set_modelspace_vport(height=5, center=(5, 0))
-    doc.saveas(OUTDIR / f"dim_linear_{dxfversion}_tutorial.dxf")
+    doc.saveas(CWD / f"dim_linear_{dxfversion}_tutorial.dxf")
 
 
-def example_background_fill(dxfversion="R12"):
+def example_background_fill(dxfversion=DXFVERSION):
     """This example shows the background fill feature, ezdxf uses MTEXT for this
     feature and has no effect in DXF R12.
 
@@ -146,7 +140,7 @@ def example_background_fill(dxfversion="R12"):
     )
     dim.set_text("cyan")
     dim.render()
-    doc.saveas(OUTDIR / f"background_fill_example_{dxfversion}.dxf")
+    doc.saveas(CWD / f"background_fill_example_{dxfversion}.dxf")
 
 
 def example_for_all_text_placings_R12():
@@ -215,7 +209,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
         line_space = 0.4
         delta = Vec3(0, line_space, 0)
         for line in lines:
-            text = msp.add_text(line, dxfattribs=attribs).set_pos(insert)
+            text = msp.add_text(line, dxfattribs=attribs).set_placement(insert)
             if ucs:
                 text.transform(ucs.matrix)
             insert -= delta
@@ -475,7 +469,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
         )
         row += 1
 
-    doc.saveas(OUTDIR / filename)
+    doc.saveas(CWD / filename)
 
 
 def example_multi_point_linear_dimension():
@@ -500,7 +494,7 @@ def example_multi_point_linear_dimension():
     msp.add_multi_point_linear_dim(
         base=(0, 5), points=points, dimstyle="WITHTFILL"
     )
-    doc.saveas(OUTDIR / f"multi_point_linear_dim_R2007.dxf")
+    doc.saveas(CWD / f"multi_point_linear_dim_R2007.dxf")
 
 
 def random_point(start, end):
@@ -511,7 +505,7 @@ def random_point(start, end):
 def example_random_multi_point_linear_dimension(
     count=10, length=20, discard=BRICSCAD
 ):
-    """Example for using the ezdxf "multi-point linear dimension" feature, which
+    """Example for using the ezdxf "multipoint linear dimension" feature, which
     generates dimension entities for multiple points at ones and tries to move
     dimension text to a readable location.
 
@@ -561,11 +555,11 @@ def example_random_multi_point_linear_dimension(
         dimstyle="WITHTXT",
         discard=discard,
     )
-    doc.saveas(OUTDIR / f"multi_random_point_linear_dim_R2007.dxf")
+    doc.saveas(CWD / f"multi_random_point_linear_dim_R2007.dxf")
 
 
 def linear_all_arrow_style(
-    version="R12", dimltype=None, dimltex1=None, dimltex2=None, filename=""
+    version=DXFVERSION, dimltype=None, dimltex1=None, dimltex2=None, filename=""
 ):
     """Show all AutoCAD standard arrows on a linear dimension.
 
@@ -608,10 +602,10 @@ def linear_all_arrow_style(
     if not filename:
         filename = "all_arrow_styles_dim_{}.dxf".format(version)
 
-    doc.saveas(OUTDIR / filename)
+    doc.saveas(CWD / filename)
 
 
-def linear_tutorial_using_tolerances(version="R2000"):
+def linear_tutorial_using_tolerances(version=DXFVERSION):
     """Shows usage of tolerances for the dimension text.
 
     ezdxf uses MTEXT features for tolerance rendering and therefore requires
@@ -646,13 +640,15 @@ def linear_tutorial_using_tolerances(version="R2000"):
         base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle="tolerance"
     )
     # set tolerance attributes by dim style override
-    dim.set_tolerance(0.1, 0.15, hfactor=0.4, align="middle", dec=2)
+    dim.set_tolerance(
+        0.1, 0.15, hfactor=0.4, align=MTextLineAlignment.MIDDLE, dec=2
+    )
     dim.render(discard=discard)
 
-    doc.saveas(OUTDIR / f"dimensions_with_tolerance_{version}.dxf")
+    doc.saveas(CWD / f"dimensions_with_tolerance_{version}.dxf")
 
 
-def linear_tutorial_using_limits(version="R2000"):
+def linear_tutorial_using_limits(version=DXFVERSION):
     """Shows usage of limits for the dimension text, limits are the lower and
     upper limit for the measured distance, the measurement itself is not shown.
 
@@ -682,7 +678,7 @@ def linear_tutorial_using_limits(version="R2000"):
     msp.add_linear_dim(
         base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle="limits"
     ).render(discard=discard)
-    doc.saveas(OUTDIR / f"dimensions_with_limits_{version}.dxf")
+    doc.saveas(CWD / f"dimensions_with_limits_{version}.dxf")
 
 
 def linear_tutorial_using_tvp():
@@ -713,7 +709,7 @@ def linear_tutorial_using_tvp():
         base=(0, 7), p1=(15, 5), p2=(15.5, 5), dimstyle="TVP2"
     ).render()
 
-    doc.saveas(OUTDIR / "dimensions_with_dimtvp.dxf")
+    doc.saveas(CWD / "dimensions_with_dimtvp.dxf")
 
 
 def linear_tutorial_ext_lines():
@@ -753,7 +749,7 @@ def linear_tutorial_ext_lines():
         dimstyle="EZDXF",
         override=attributes,
     ).render()
-    doc.saveas(OUTDIR / "dim_linear_R12_ext_lines.dxf")
+    doc.saveas(CWD / "dim_linear_R12_ext_lines.dxf")
 
 
 def linear_EZ_M(fmt):
@@ -763,7 +759,7 @@ def linear_EZ_M(fmt):
 
     msp.add_line((0, 0), (1, 0))
     msp.add_linear_dim(base=(0, 1), p1=(0, 0), p2=(1, 0), dimstyle=fmt).render()
-    doc.saveas(OUTDIR / f"dim_linear_R12_{fmt}.dxf")
+    doc.saveas(CWD / f"dim_linear_R12_{fmt}.dxf")
 
 
 def linear_EZ_CM(fmt):
@@ -775,7 +771,7 @@ def linear_EZ_CM(fmt):
     msp.add_linear_dim(
         base=(0, 100), p1=(0, 0), p2=(100, 0), dimstyle=fmt
     ).render()
-    doc.saveas(OUTDIR / f"dim_linear_R12_{fmt}.dxf")
+    doc.saveas(CWD / f"dim_linear_R12_{fmt}.dxf")
 
 
 def linear_EZ_MM(fmt):
@@ -787,14 +783,15 @@ def linear_EZ_MM(fmt):
     msp.add_linear_dim(
         base=(0, 1000), p1=(0, 0), p2=(1000, 0), dimstyle=fmt
     ).render()
-    doc.saveas(OUTDIR / f"dim_linear_R12_{fmt}.dxf")
+    doc.saveas(CWD / f"dim_linear_R12_{fmt}.dxf")
 
 
 ALL = True
 
 if __name__ == "__main__":
     example_for_all_text_placings_ucs_R12()
-    # todo: DIMENSION entities placed in 3D space for DXF R12 does not work!
+    # todo: TEXT entities transformed into 3D space do not work as expected
+    #  for DXF R12!
     example_for_all_text_placings_in_space_R12()
     example_for_all_text_placings_ucs_R2007()
     example_for_all_text_placings_in_space_R2007()
