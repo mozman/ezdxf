@@ -1,6 +1,6 @@
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.render.forms import gear, translate
 from ezdxf.math.clipping import (
@@ -10,9 +10,14 @@ from ezdxf.math.clipping import (
 )
 from ezdxf import zoom
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to execute boolean operations (union, intersection,
+# difference) by the Greiner-Hormann clipping algorithm on 2D polygons.
+# ------------------------------------------------------------------------------
 
 PATCH = [
     (0.3, 1.5),
@@ -38,7 +43,7 @@ def export(polygons, name):
     for color, polygon in enumerate(polygons):
         msp.add_lwpolyline(polygon, dxfattribs={"color": color + 1})
     zoom.extents(msp, 1.1)
-    doc.saveas(DIR / name)
+    doc.saveas(CWD / name)
     print(f"exported: {name}")
 
 
@@ -81,7 +86,7 @@ def this_does_not_work():
 
 def fixed_union_of_two_squares():
     # This example fixes the union problem of "this_does_not_work" by shifting
-    # the second square just a little bit:
+    # the second square just a little:
     execute_all_operations(
         SQUARE1, list(translate(SQUARE2, (-0.001, 0))), "ts2"
     )
