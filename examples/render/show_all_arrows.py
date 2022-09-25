@@ -1,13 +1,16 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from pathlib import Path
-
+import pathlib
 import ezdxf
 from ezdxf import colors
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows all supported arrow heads.
+# ------------------------------------------------------------------------------
 
 
 def main():
@@ -60,7 +63,7 @@ def main():
     msp.add_line((4, 0), (4, y))
     msp.add_line((8, 0), (8, y))
 
-    doc.saveas(DIR / f"all_arrows_{doc.acad_release}.dxf")
+    doc.saveas(CWD / f"all_arrows_{doc.acad_release}.dxf")
 
 
 if __name__ == "__main__":
