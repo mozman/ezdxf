@@ -3,7 +3,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple, Optional
 import math
-import warnings
 
 from ezdxf.lldxf import validator
 from ezdxf.lldxf import const

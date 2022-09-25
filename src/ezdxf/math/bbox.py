@@ -3,7 +3,6 @@
 from __future__ import annotations
 from typing import Iterable, Tuple, Optional, List, Iterator
 import abc
-import warnings
 
 from ezdxf.math import Vec3, Vec2, UVec, AnyVec
 
@@ -252,13 +251,6 @@ class BoundingBox(AbstractBoundingBox):
             return False
         return True
 
-    def intersect(self, other: "AbstractBoundingBox") -> bool:
-        warnings.warn(
-            "intersect() is deprecated, replaced by has_intersection()",
-            DeprecationWarning,
-        )
-        return self.has_intersection(other)
-
     def has_overlap(self, other: "AbstractBoundingBox") -> bool:
         """Returns ``True`` if this bounding box intersects with `other` but
         in contrast to :meth:`has_intersection` includes touching bounding boxes too::
@@ -295,13 +287,6 @@ class BoundingBox(AbstractBoundingBox):
         if self.extmax.z < o_min.z:
             return False
         return True
-
-    def overlap(self, other: "AbstractBoundingBox") -> bool:
-        warnings.warn(
-            "overlap() is deprecated, replaced by has_overlap()",
-            DeprecationWarning,
-        )
-        return self.has_overlap(other)
 
     def cube_vertices(self) -> Tuple[Vec3, ...]:
         """Returns the 3D corners of the bounding box as :class:`Vec3` objects."""
@@ -417,13 +402,6 @@ class BoundingBox2d(AbstractBoundingBox):
             return False
         return True
 
-    def intersect(self, other: "AbstractBoundingBox") -> bool:
-        warnings.warn(
-            "intersect() is deprecated, replaced by has_intersection()",
-            DeprecationWarning,
-        )
-        return self.has_intersection(other)
-
     def intersection(self, other: "AbstractBoundingBox") -> "BoundingBox2d":
         """Returns the bounding box of the intersection rectangle of both
         2D bounding boxes. Returns an empty bounding box if the intersection
@@ -473,13 +451,6 @@ class BoundingBox2d(AbstractBoundingBox):
         if self.extmax.y < other.extmin.y:
             return False
         return True
-
-    def overlap(self, other: "AbstractBoundingBox") -> bool:
-        warnings.warn(
-            "overlap() is deprecated, replaced by has_overlap()",
-            DeprecationWarning,
-        )
-        return self.has_overlap(other)
 
 
 def extends3d(vertices: Iterable[UVec]) -> Tuple[Vec3, Vec3]:
