@@ -1,14 +1,18 @@
 # Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 import math
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.render import forms, MeshBuilder
 from itertools import cycle
 
-DIR = Path("~/desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to create 3D forms.
+# ------------------------------------------------------------------------------
 
 
 def write_mesh(filename, mesh: MeshBuilder):
@@ -86,14 +90,14 @@ def create_gear(
 
 def main():
     cylinder = forms.cylinder(16)
-    write_mesh(DIR / "cylinder_mesh.dxf", cylinder)
-    write_polyface(DIR / "cylinder_polyface.dxf", cylinder)
-    write_3dfaces(DIR / "cylinder_3dfaces.dxf", cylinder)
+    write_mesh(CWD / "cylinder_mesh.dxf", cylinder)
+    write_polyface(CWD / "cylinder_polyface.dxf", cylinder)
+    write_3dfaces(CWD / "cylinder_3dfaces.dxf", cylinder)
     rotation_form = build_rotation_form(sides=32)
-    write_mesh(DIR / "rotated_profile_mesh.dxf", rotation_form)
-    write_polyface(DIR / "rotated_profile_polyface.dxf", rotation_form)
-    write_3dfaces(DIR / "rotated_profile_3dfaces.dxf", rotation_form)
-    create_gear(DIR / "gear.dxf")
+    write_mesh(CWD / "rotated_profile_mesh.dxf", rotation_form)
+    write_polyface(CWD / "rotated_profile_polyface.dxf", rotation_form)
+    write_3dfaces(CWD / "rotated_profile_3dfaces.dxf", rotation_form)
+    create_gear(CWD / "gear.dxf")
 
 
 if __name__ == "__main__":
