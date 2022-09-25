@@ -5,8 +5,8 @@ from ezdxf.lldxf import const
 
 
 class TextHAlign(IntEnum):
-    """ Enumeration for DXF attribute: :attr:`ezdxf.entities.Text.dxf.halign`
-    """
+    """Enumeration for DXF attribute: :attr:`ezdxf.entities.Text.dxf.halign`"""
+
     LEFT = const.LEFT
     CENTER = const.CENTER
     RIGHT = const.RIGHT
@@ -16,8 +16,8 @@ class TextHAlign(IntEnum):
 
 
 class TextVAlign(IntEnum):
-    """ Enumeration for DXF attribute: :attr:`ezdxf.entities.Text.dxf.valign`
-    """
+    """Enumeration for DXF attribute: :attr:`ezdxf.entities.Text.dxf.valign`"""
+
     BASELINE = const.BASELINE
     BOTTOM = const.BOTTOM
     MIDDLE = const.MIDDLE
@@ -30,6 +30,7 @@ class TextEntityAlignment(Enum):
     :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.AttDef`
     entities.
     """
+
     LEFT = auto()
     CENTER = auto()
     RIGHT = auto()
@@ -91,26 +92,6 @@ MAP_FLAGS_TO_STRING_ALIGN = dict(
 )
 
 
-# only required by deprecated method Text.set_pos(), Text.set_align()
-MAP_STRING_ALIGN_TO_ENUM_ALIGN = {
-    "LEFT": TextEntityAlignment.LEFT,
-    "CENTER": TextEntityAlignment.CENTER,
-    "RIGHT": TextEntityAlignment.RIGHT,
-    "ALIGNED": TextEntityAlignment.ALIGNED,
-    "MIDDLE": TextEntityAlignment.MIDDLE,
-    "FIT": TextEntityAlignment.FIT,
-    "BOTTOM_LEFT": TextEntityAlignment.BOTTOM_LEFT,
-    "BOTTOM_CENTER": TextEntityAlignment.BOTTOM_CENTER,
-    "BOTTOM_RIGHT": TextEntityAlignment.BOTTOM_RIGHT,
-    "MIDDLE_LEFT": TextEntityAlignment.MIDDLE_LEFT,
-    "MIDDLE_CENTER": TextEntityAlignment.MIDDLE_CENTER,
-    "MIDDLE_RIGHT": TextEntityAlignment.MIDDLE_RIGHT,
-    "TOP_LEFT": TextEntityAlignment.TOP_LEFT,
-    "TOP_CENTER": TextEntityAlignment.TOP_CENTER,
-    "TOP_RIGHT": TextEntityAlignment.TOP_RIGHT,
-}
-
-
 class MTextEntityAlignment(IntEnum):
     """Text alignment enum for the :class:`~ezdxf.entities.MText` entity."""
 
@@ -160,7 +141,8 @@ class MTextLineAlignment(IntEnum):  # exclusive state
 
 
 class MTextStroke(IntFlag):
-    """ Combination of flags is supported: UNDERLINE + STRIKE_THROUGH """
+    """Combination of flags is supported: UNDERLINE + STRIKE_THROUGH"""
+
     UNDERLINE = 1
     STRIKE_THROUGH = 2
     OVERLINE = 4
@@ -239,6 +221,7 @@ class SortEntities(IntFlag):
 
 class ACI(IntEnum):
     """AutoCAD Color Index"""
+
     BYBLOCK = 0
     BYLAYER = 256
     BYOBJECT = 257

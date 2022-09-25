@@ -18,10 +18,8 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.enums import (
     TextEntityAlignment,
-    MAP_STRING_ALIGN_TO_ENUM_ALIGN,
     MAP_TEXT_ENUM_TO_ALIGN_FLAGS,
     MAP_TEXT_ALIGN_FLAGS_TO_ENUM,
-    MAP_FLAGS_TO_STRING_ALIGN,
 )
 from ezdxf.math import Vec3, UVec, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform
@@ -221,52 +219,6 @@ class Text(DXFGraphic):
             tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_text2.name)
         self.dxf.export_dxf_attribs(tagwriter, "valign")
 
-    def set_pos(self, p1: UVec, p2: UVec = None, align: str = None) -> Text:
-        """Set text alignment and location. (deprecated)
-
-        The alignments "ALIGNED" and "FIT"
-        are special, they require a second alignment point, the text is aligned
-        on the virtual line between these two points and sits vertically at the
-        base line.
-
-        - "ALIGNED": Text is stretched or compressed
-          to fit exactly between `p1` and `p2` and the text height is also
-          adjusted to preserve height/width ratio.
-        - "FIT": Text is stretched or compressed to fit
-          exactly between `p1` and `p2` but only the text width is adjusted,
-          the text height is fixed by the :attr:`dxf.height` attribute.
-        - "MIDDLE": also a special adjustment, centered
-          text like "MIDDLE_CENTER", but vertically
-          centred at the total height of the text.
-
-        .. warning::
-
-            Will be removed in v1.0.0, use :meth:`set_placement`
-
-        Args:
-            p1: first alignment point as (x, y[, z])
-            p2: second alignment point as (x, y[, z]), required for "ALIGNED"
-                and "FIT" else ignored
-            align: new alignment as string or ``None`` to preserve the existing
-                alignment.
-
-        """
-        warnings.warn(
-            "set_pos() is deprecated, replaced by set_placement()",
-            DeprecationWarning,
-        )
-
-        if align is None:
-            align_enum = self.get_align_enum()
-        else:
-            assert isinstance(align, str)
-            try:
-                align_enum = MAP_STRING_ALIGN_TO_ENUM_ALIGN[align.upper()]
-            except KeyError:
-                raise ValueError(align)
-            self.set_align_enum(align_enum)
-        return self.set_placement(p1, p2, align_enum)
-
     def set_placement(
         self,
         p1: UVec,
@@ -314,32 +266,6 @@ class Text(DXFGraphic):
         self.dxf.align_point = p2
         return self
 
-    def get_pos(self) -> Tuple[str, Vec3, Optional[Vec3]]:
-        """Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment
-        method, `p1` is the alignment point, `p2` is only relevant if `align`
-        is "ALIGNED" or "FIT", otherwise it is ``None`` (deprecated).
-
-        .. warning::
-
-            Will be removed in v1.0.0, use :meth:`get_placement()`
-
-        """
-        warnings.warn(
-            "get_pos() is deprecated, replaced by get_placement()",
-            DeprecationWarning,
-        )
-
-        p1 = Vec3(self.dxf.insert)
-        # Except for "LEFT" is the "align point" the real insert point:
-        # If the required "align point" is not present use "insert"!
-        p2 = Vec3(self.dxf.get("align_point", p1))
-        align = self.get_align()
-        if align == "LEFT":
-            return align, p1, None
-        if align in ("FIT", "ALIGNED"):
-            return align, p1, p2
-        return align, p2, None
-
     def get_placement(self) -> Tuple[TextEntityAlignment, Vec3, Optional[Vec3]]:
         """Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment
         enum :class:`~ezdxf.enum.TextEntityAlignment`, `p1` is the
@@ -358,29 +284,6 @@ class Text(DXFGraphic):
             return align, p1, p2
         return align, p2, None
 
-    def set_align(self, align: str = "LEFT") -> Text:
-        """Set the text alignment as string (deprecated)
-
-        .. warning::
-
-            Will be removed in v1.0.0, use :meth:`set_align_enum`
-
-        """
-        warnings.warn(
-            "set_align() is deprecated, replaced by set_align_enum()",
-            DeprecationWarning,
-        )
-        assert isinstance(align, str)
-        align = align.upper()
-        try:
-            align_enum = MAP_STRING_ALIGN_TO_ENUM_ALIGN[align]
-        except KeyError:
-            raise ValueError(f"invalid argument align: {align}")
-        halign, valign = MAP_TEXT_ENUM_TO_ALIGN_FLAGS[align_enum]
-        self.dxf.halign = halign
-        self.dxf.valign = valign
-        return self
-
     def set_align_enum(self, align=TextEntityAlignment.LEFT) -> Text:
         """Just for experts: Sets the text alignment without setting the
         alignment points, set adjustment points attr:`dxf.insert` and
@@ -394,25 +297,6 @@ class Text(DXFGraphic):
         self.dxf.halign = halign
         self.dxf.valign = valign
         return self
-
-    def get_align(self) -> str:
-        """Returns the current text alignment as string (deprecated).
-
-        .. warning::
-
-            Will be removed in v1.0.0, use :meth:`get_align_enum`
-
-        """
-        warnings.warn(
-            "get_align() is deprecated, replaced by get_align_enum()",
-            DeprecationWarning,
-        )
-
-        halign = self.dxf.get("halign", 0)
-        valign = self.dxf.get("valign", 0)
-        if halign > 2:
-            valign = 0
-        return MAP_FLAGS_TO_STRING_ALIGN.get((halign, valign), "LEFT")
 
     def get_align_enum(self) -> TextEntityAlignment:
         """Returns the current text alignment as :class:`~ezdxf.enums.TextEntityAlignment`,
