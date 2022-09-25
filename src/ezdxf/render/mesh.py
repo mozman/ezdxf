@@ -610,8 +610,6 @@ class MeshBuilder:
             data.faces = list(self.faces)  # type: ignore
         return mesh
 
-    render = render_mesh  # TODO: 2021-02-10 - compatibility alias
-
     def render_normals(
         self,
         layout: GenericLayoutType,

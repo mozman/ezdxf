@@ -24,7 +24,7 @@ def main(filepath):
     concave_prism = forms.extrude(
         profile, [(0, 0, 0), (0, 0, 10)], close=True, caps=True
     )
-    concave_prism.render(msp, dxfattribs={"color": 2})
+    concave_prism.render_mesh(msp, dxfattribs={"color": 2})
     concave_prism.render_normals(msp, dxfattribs={"color": 6})
 
     # tessellate prism into triangles:
