@@ -9,6 +9,12 @@ CWD = Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = Path(".")
 
+# ------------------------------------------------------------------------------
+# This example shows how to use the ezdxf.forms.extrude method to create a prism
+# from a concave base polygon. The added face-normals show if the face-orientation
+# follows the usual count-clockwise order to build outside pointing faces.
+# ------------------------------------------------------------------------------
+
 
 def main(filepath):
     doc = ezdxf.new()
