@@ -29,7 +29,6 @@ from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.math import UVec, NULLVEC, Vec3
 from ezdxf.render.arrows import ARROWS
 from ezdxf.audit import Auditor, AuditError
-import warnings
 import logging
 
 logger = logging.getLogger("ezdxf")
@@ -403,15 +402,6 @@ class BlocksSection:
 
         for name in trash:
             self.__delitem__(name)
-
-    def purge(self):
-        """Purge functionality removed! - it was just too dangerous!
-        The method name suggests a functionality and quality similar
-        to that of a CAD application, which can not be delivered!
-        """
-        warnings.warn(
-            "Blocks.purge() deactivated, unsafe operation!", DeprecationWarning
-        )
 
     def audit(self, auditor: Auditor) -> None:
         """Audit and repair BLOCKS section.
