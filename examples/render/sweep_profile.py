@@ -12,6 +12,10 @@ if not CWD.exists():
     CWD = pathlib.Path(".")
 DEBUG_COLOR = ezdxf.colors.CYAN
 
+# ------------------------------------------------------------------------------
+# This example shows how sweep a profile along a polyline to create a MESH entity.
+# ------------------------------------------------------------------------------
+
 
 def main(filepath):
     def add_debug_profiles(profiles, sweeping_path):
