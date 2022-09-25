@@ -10,16 +10,27 @@ CWD = Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = Path(".")
 
-doc = ezdxf.new()
-msp = doc.modelspace()
+# ------------------------------------------------------------------------------
+# This example shows how triangulate arbitrary path objects, a doughnut in this
+# special case.
+# ------------------------------------------------------------------------------
 
-circle0 = path.unit_circle(segments=8)
-circle1 = circle0.transform(Matrix44.scale(3))
 
-colors = [1, 2, 3, 4, 5, 6, 7]
-count = len(colors)
-for index, points in enumerate(path.triangulate([circle1, circle0])):
-    msp.add_solid(points, dxfattribs={"color": colors[index % count]})
+def main():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
 
-zoom.extents(msp)
-doc.saveas(CWD / "triangulated_doughnut.dxf")
+    circle0 = path.unit_circle(segments=8)
+    circle1 = circle0.transform(Matrix44.scale(3))
+
+    colors = [1, 2, 3, 4, 5, 6, 7]
+    count = len(colors)
+    for index, points in enumerate(path.triangulate([circle1, circle0])):
+        msp.add_solid(points, dxfattribs={"color": colors[index % count]})
+
+    zoom.extents(msp)
+    doc.saveas(CWD / "triangulated_doughnut.dxf")
+
+
+if __name__ == "__main__":
+    main()
