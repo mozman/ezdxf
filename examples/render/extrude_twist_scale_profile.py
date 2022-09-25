@@ -9,6 +9,12 @@ from ezdxf.render import forms
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to use the extended ezdxf.forms.extrude_twist_scale
+# method to create a 3D figure from a base polygon (profile).
+# ------------------------------------------------------------------------------
+
 DEBUG_COLOR = ezdxf.colors.CYAN
 
 doc = ezdxf.new()
