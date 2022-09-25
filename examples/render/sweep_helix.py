@@ -10,6 +10,10 @@ CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = pathlib.Path(".")
 
+# ------------------------------------------------------------------------------
+# This example shows how sweep a profile along a helix to create a MESH entity.
+# ------------------------------------------------------------------------------
+
 
 def make_bspline_tool(helix: path.Path):
     return next(path.to_bsplines_and_vertices(helix))
