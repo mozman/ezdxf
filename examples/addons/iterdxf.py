@@ -1,35 +1,47 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 import time
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.addons import iterdxf
 
-BIGFILE = Path(ezdxf.EZDXF_TEST_FILES) / "GKB-R2010.dxf"
-# BIGFILE = Path(ezdxf.EZDXF_TEST_FILES) / 'ACAD_R2000.dxf'
-OUTDIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
-t0 = time.perf_counter()
-doc = iterdxf.opendxf(BIGFILE)
-line_exporter = doc.export(OUTDIR / "lines.dxf")
-text_exporter = doc.export(OUTDIR / "text.dxf")
-polyline_exporter = doc.export(OUTDIR / "polyline.dxf")
-lwpolyline_exporter = doc.export(OUTDIR / "lwpolyline.dxf")
-try:
-    for entity in doc.modelspace():
-        if entity.dxftype() == "LINE":
-            line_exporter.write(entity)
-        elif entity.dxftype() == "TEXT":
-            text_exporter.write(entity)
-        elif entity.dxftype() == "POLYLINE":
-            polyline_exporter.write(entity)
-        elif entity.dxftype() == "LWPOLYLINE":
-            lwpolyline_exporter.write(entity)
-finally:
-    line_exporter.close()
-    text_exporter.close()
-    polyline_exporter.close()
-    lwpolyline_exporter.close()
-    doc.close()
+# ------------------------------------------------------------------------------
+# This example shows how iterate over very big DXF files without loading them
+# into memory. This takes much longer, but it's maybe the only way to process
+# these very large files.
+# ------------------------------------------------------------------------------
 
-print(f"Processing time: {time.perf_counter()-t0:.2f}s")
+
+def main():
+    t0 = time.perf_counter()
+    doc = iterdxf.opendxf(ezdxf.options.test_files_path / "GKB-R2010.dxf")
+    line_exporter = doc.export(CWD / "lines.dxf")
+    text_exporter = doc.export(CWD / "text.dxf")
+    polyline_exporter = doc.export(CWD / "polyline.dxf")
+    lwpolyline_exporter = doc.export(CWD / "lwpolyline.dxf")
+    try:
+        for entity in doc.modelspace():
+            if entity.dxftype() == "LINE":
+                line_exporter.write(entity)
+            elif entity.dxftype() == "TEXT":
+                text_exporter.write(entity)
+            elif entity.dxftype() == "POLYLINE":
+                polyline_exporter.write(entity)
+            elif entity.dxftype() == "LWPOLYLINE":
+                lwpolyline_exporter.write(entity)
+    finally:
+        line_exporter.close()
+        text_exporter.close()
+        polyline_exporter.close()
+        lwpolyline_exporter.close()
+        doc.close()
+
+    print(f"Processing time: {time.perf_counter()-t0:.2f}s")
+
+
+if __name__ == "__main__":
+    main()
