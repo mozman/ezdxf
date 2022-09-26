@@ -27,8 +27,8 @@ if TYPE_CHECKING:
 
 
 def get_block_entity_space(
-    doc: "Drawing", block_record_handle: str
-) -> "EntitySpace":
+    doc: Drawing, block_record_handle: str
+) -> EntitySpace:
     block_record = doc.entitydb[block_record_handle]
     return block_record.entity_space
 
@@ -77,7 +77,7 @@ class Layout(BaseLayout):
     INITIALIZING = 8192
     PREV_PLOT_INIT = 16384
 
-    def __init__(self, layout: "DXFLayout", doc: "Drawing"):
+    def __init__(self, layout: DXFLayout, doc: Drawing):
         self.dxf_layout = layout
         block_record = doc.entitydb[layout.dxf.block_record_handle]
         # link maybe broken
@@ -86,8 +86,8 @@ class Layout(BaseLayout):
 
     @classmethod
     def new(
-        cls, name: str, block_name: str, doc: "Drawing", dxfattribs: dict = None
-    ) -> "Layout":
+        cls, name: str, block_name: str, doc: Drawing, dxfattribs: dict = None
+    ) -> Layout:
         """Returns the required structures for a new layout:
 
             - a :class:`BlockLayout` with BLOCK_RECORD, BLOCK and ENDBLK entities
@@ -102,7 +102,7 @@ class Layout(BaseLayout):
         (internal API)
 
         """
-        block_layout = doc.blocks.new(block_name)  # type: BlockLayout
+        block_layout: BlockLayout = doc.blocks.new(block_name)
         dxfattribs = dxfattribs or {}
         dxfattribs.update(
             {
@@ -114,7 +114,7 @@ class Layout(BaseLayout):
         return cls(dxf_layout, doc)  # type: ignore
 
     @classmethod
-    def load(cls, layout: "DXFLayout", doc: "Drawing"):
+    def load(cls, layout: DXFLayout, doc: Drawing):
         """Loading interface. (internal API)"""
         _layout = cls(layout, doc)
         _layout._repair_owner_tags()
@@ -153,7 +153,7 @@ class Layout(BaseLayout):
             if entity.dxf.paperspace != paperspace:
                 entity.dxf.paperspace = paperspace
 
-    def __contains__(self, entity: Union["DXFGraphic", str]) -> bool:
+    def __contains__(self, entity: Union[DXFGraphic, str]) -> bool:
         """Returns ``True`` if `entity` is stored in this layout.
 
         Args:
@@ -208,8 +208,8 @@ class Layout(BaseLayout):
         the paper size settings.
 
         Args:
-             extmin: minimum extents or (0, 0) as default
-             extmax: maximum extents or (paper width, paper height) as default value
+             limmin: minimum limits or (0, 0) as default
+             limmax: maximum limits or (paper width, paper height) as default value
 
         """
         dxf = self.dxf_layout.dxf
@@ -335,7 +335,7 @@ class Modelspace(Layout):
     """:class:`Modelspace` - not deletable, all entities of this layout are
     stored in the ENTITIES section of the DXF file, the associated
     "*Model_Space" block is empty, block name is fixed as "*Model_Space",
-    the name is fixed as ""Model".
+    the name is fixed as "Model".
 
     """
 
@@ -344,7 +344,7 @@ class Modelspace(Layout):
         """Name of modelspace is fixed as "Model"."""
         return "Model"
 
-    def new_geodata(self, dxfattribs: dict = None) -> "GeoData":
+    def new_geodata(self, dxfattribs: dict = None) -> GeoData:
         """Creates a new :class:`GeoData` entity and replaces existing ones.
         The GEODATA entity resides in the OBJECTS section and not in the
         modelspace, it is linked to the modelspace by an
@@ -419,7 +419,7 @@ class Paperspace(Layout):
         """
         self.dxf_layout.dxf.name = name
 
-    def viewports(self) -> List["Viewport"]:
+    def viewports(self) -> List[Viewport]:
         """Get all VIEWPORT entities defined in this paperspace layout.
         Returns a list of :class:`~ezdxf.entities.Viewport` objects, sorted by
         id, the first entity is always the main viewport with an id of 1.
@@ -429,7 +429,7 @@ class Paperspace(Layout):
         vports.sort(key=lambda e: e.dxf.id)
         return vports  # type: ignore
 
-    def main_viewport(self) -> Optional["Viewport"]:
+    def main_viewport(self) -> Optional[Viewport]:
         """Returns the main viewport of this paper space layout, or ``None``
         if no main viewport exist.
 
@@ -452,7 +452,7 @@ class Paperspace(Layout):
         view_center_point: UVec,
         view_height: float,
         dxfattribs: dict = None,
-    ) -> "Viewport":
+    ) -> Viewport:
         """Add a new :class:`~ezdxf.entities.Viewport` entity."""
         dxfattribs = dxfattribs or {}
         width, height = size
@@ -480,7 +480,7 @@ class Paperspace(Layout):
 
     def reset_main_viewport(
         self, center: UVec = None, size: UVec = None
-    ) -> "Viewport":
+    ) -> Viewport:
         """Reset the main viewport of this paper space layout to the given
         values, or reset them to the default values, deduced from the paper
         settings. Creates a new main viewport if none exist.
@@ -555,7 +555,7 @@ class Paperspace(Layout):
         )
         return center, (vp_width, vp_height)
 
-    def add_new_main_viewport(self) -> "Viewport":
+    def add_new_main_viewport(self) -> Viewport:
         """Add a new main viewport."""
         center, size = self.default_viewport_config()
         vp_height = size[1]
