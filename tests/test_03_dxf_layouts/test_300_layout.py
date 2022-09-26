@@ -136,3 +136,40 @@ def test_create_layout(doc):
 
     layout.page_setup()  # default paper setup
     assert len(layout) == 1, "missing 'main' viewport entity"
+
+
+class TestAcquireLayouts:
+    @pytest.fixture(scope="class")
+    def doc(self):
+        doc = ezdxf.new()
+        doc.layouts.new("Layout2")
+        doc.layouts.new("Layout3")
+        doc.layouts.set_active_layout("Layout3")
+        return doc
+
+    def test_get_modelspace(self, doc):
+        msp = doc.modelspace()
+        assert msp.name == "Model"
+
+    def test_layout_returns_first_layout_in_tab_order(self, doc):
+        psp = doc.layout()
+        assert psp.name == "Layout1"
+        assert psp.is_active_paperspace is False
+
+    def test_paperspace_returns_active_paperspace_by_default(self, doc):
+        psp = doc.paperspace()
+        assert psp.name == "Layout3"
+        assert psp.is_active_paperspace is True
+
+    def test_paperspace_returns_paperspace_by_name(self, doc):
+        psp = doc.paperspace("Layout2")
+        assert psp.name == "Layout2"
+        assert psp.is_active_paperspace is False
+
+    def test_paperspace_raises_key_error_if_not_exists(self, doc):
+        with pytest.raises(KeyError):
+            doc.paperspace("DoesNotExist")
+
+    def test_paperspace_raises_key_error_for_modelspace(self, doc):
+        with pytest.raises(KeyError):
+            doc.paperspace("Model")

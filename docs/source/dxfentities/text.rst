@@ -112,19 +112,11 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: set_placement
 
-    .. automethod:: set_pos
-
     .. automethod:: get_placement
-
-    .. automethod:: get_pos
 
     .. automethod:: get_align_enum
 
-    .. automethod:: get_align
-
     .. automethod:: set_align_enum
-
-    .. automethod:: set_align
 
     .. automethod:: transform
 

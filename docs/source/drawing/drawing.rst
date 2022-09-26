@@ -184,6 +184,8 @@ Drawing Object
 
     .. automethod:: modelspace
 
+    .. automethod:: paperspace
+
     .. automethod:: layout
 
     .. automethod:: active_layout

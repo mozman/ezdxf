@@ -1,5 +1,6 @@
 # Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     TextIO,
@@ -22,7 +23,7 @@ import logging
 from itertools import chain
 
 import ezdxf
-from ezdxf.layouts import Modelspace
+from ezdxf.layouts import Modelspace, Paperspace
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import (
     BLK_XREF,
@@ -783,19 +784,48 @@ class Drawing:
         """
         self._dimension_renderer = renderer
 
-    def modelspace(self) -> "Modelspace":
+    def modelspace(self) -> Modelspace:
         """Returns the modelspace layout, displayed as ``'Model'`` tab in CAD
         applications, defined by block record named ``'*Model_Space'``.
         """
         return self.layouts.modelspace()
 
-    def layout(self, name: str = None) -> "Layout":
-        """Returns paperspace layout `name` or returns first layout in tab
-        order if `name` is ``None``.
+    def layout(self, name: str = "") -> Layout:
+        """Returns paperspace layout `name` or the first layout in tab-order
+        if no name is given.
+
+        Args:
+            name: paperspace name or empty string for the first paperspace in
+                tab-order
+
+        Raises:
+            KeyError: layout `name` does not exist
+
         """
         return self.layouts.get(name)
 
-    def active_layout(self) -> "Layout":
+    def paperspace(self, name: str = "") -> Paperspace:
+        """Returns paperspace layout `name` or the active paperspace if no
+        name is given.
+
+        Args:
+            name: paperspace name or empty string for the active paperspace
+
+        Raises:
+            KeyError: if the modelspace was acquired or layout `name` does not exist
+
+        """
+        if name:
+            psp = self.layouts.get(name)
+            if isinstance(psp, Paperspace):
+                return psp
+            raise KeyError(
+                "use method modelspace() to acquire the modelspace."
+            )
+        else:
+            return self.active_layout()
+
+    def active_layout(self) -> Paperspace:
         """Returns the active paperspace layout, defined by block record
         name ``'*Paper_Space'``.
         """
@@ -808,7 +838,7 @@ class Drawing:
         return list(self.layouts.names())
 
     def layout_names_in_taborder(self) -> Iterable[str]:
-        """Returns all layout names in tab order, layout "Model" (model space)
+        """Returns all layout names in tab-order, layout "Model" (model space)
         is always the first name.
         """
         return list(self.layouts.names_in_taborder())

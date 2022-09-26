@@ -6,6 +6,7 @@ Version 1.0.0b0 - dev
 ---------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
+- NEW: `Drawing.paperspace()` type-safe method to acquire paperspace layouts 
 - CHANGE: removed deprecated features
 
 Version 0.18.1 - 2022-09-03
