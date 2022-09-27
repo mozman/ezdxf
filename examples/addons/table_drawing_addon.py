@@ -1,9 +1,20 @@
-# Purpose: examples for add-on table usage
-# Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2020, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
+import pathlib
 import ezdxf
+from ezdxf.enums import TextEntityAlignment
 from ezdxf.addons import Table
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This add-ons shows how to draw tables by the Table add-on.
+#
+# Rendering of the TABLE entity is not supported by ezdxf and probably will
+# never be because of the complexity and a lack of usable documentation !
+# ------------------------------------------------------------------------------
 
 
 def get_mat_symbol(doc):
@@ -37,11 +48,10 @@ def get_mat_symbol(doc):
             "height": 0.7,
             "color": 1,
         },
-    ).set_align("MIDDLE_CENTER")
+    ).set_align_enum(TextEntityAlignment.MIDDLE)
     return symbol
 
 
-name = "table.dxf"
 doc = ezdxf.new("R12")
 msp = doc.modelspace()
 
@@ -151,6 +161,8 @@ for pos in [3, 4, 5, 6]:
 # render table to a layout: can be the model space, a paper space or a block definition.
 table.render(msp, insert=(0, 0))
 doc.set_modelspace_vport(height=70, center=(50, 0))
-doc.saveas(name)
 
-print("drawing '%s' created.\n" % name)
+filepath = CWD / "table_drawing.dxf"
+doc.saveas(filepath)
+
+print(f"drawing '{filepath}' created.")
