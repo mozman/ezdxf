@@ -10,7 +10,7 @@ if not CWD.exists():
     CWD = pathlib.Path(".")
 
 # ------------------------------------------------------------------------------
-# This example creates come Menger-Sponges.
+# This example creates some Menger-Sponges.
 #
 # docs: https://ezdxf.mozman.at/docs/addons/forms.html
 # ------------------------------------------------------------------------------

@@ -1,11 +1,19 @@
-# Copyright (c) 2018-2020 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 from time import perf_counter
 import ezdxf
 from ezdxf.addons import SierpinskyPyramid
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example creates some Sierpinski pyramids.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/forms.html
+# ------------------------------------------------------------------------------
 
 
 def write(filename, pyramids, merge=False):
@@ -29,5 +37,5 @@ def main(filename, level, sides=3, merge=False):
 
 
 if __name__ == "__main__":
-    main(DIR / "sierpinski_pyramid_3.dxf", level=4, sides=3)
-    main(DIR / "sierpinski_pyramid_4.dxf", level=4, sides=4, merge=True)
+    main(CWD / "sierpinski_pyramid_3.dxf", level=4, sides=3)
+    main(CWD / "sierpinski_pyramid_4.dxf", level=4, sides=4, merge=True)
