@@ -1,6 +1,6 @@
-# Copyright (c) 2020 Manfred Moitzi
+# Copyright (c) 2020-2022 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 from time import perf_counter
 import math
 from ezdxf.addons import MengerSponge
@@ -8,7 +8,15 @@ from ezdxf.addons import r12writer
 from ezdxf.math.perlin import snoise2
 from ezdxf.render.forms import sphere
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to use the fast DXF R12 writer add-on.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/r12writer.html
+# ------------------------------------------------------------------------------
 
 
 def menger_sponge(filename, level=1, kind=0):
@@ -59,7 +67,7 @@ def polyface_sphere(filename):
 
 
 if __name__ == "__main__":
-    menger_sponge(DIR / "menger_sponge_r12.dxf", level=3)
-    polymesh(DIR / "polymesh.dxf", size=(256, 256), height=20)
-    perlin_mesh(DIR / "perlin_mesh.dxf", size=(256, 256), height=20, scale=3)
-    polyface_sphere(DIR / "sphere.dxf")
+    menger_sponge(CWD / "menger_sponge_r12.dxf", level=3)
+    polymesh(CWD / "polymesh.dxf", size=(256, 256), height=20)
+    perlin_mesh(CWD / "perlin_mesh.dxf", size=(256, 256), height=20, scale=3)
+    polyface_sphere(CWD / "sphere.dxf")
