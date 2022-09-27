@@ -1,11 +1,17 @@
-# Copyright (c) 2018-2020 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 from time import perf_counter
 import ezdxf
 from ezdxf.addons import MengerSponge
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example creates come Menger-Sponges.
+# ------------------------------------------------------------------------------
 
 
 def write(filename, sponge, merge=False):
@@ -30,7 +36,7 @@ def main(filename, level=3, kind=0, merge=False):
 
 
 if __name__ == "__main__":
-    main(DIR / "menger_sponge_0.dxf", level=3, kind=0)
-    main(DIR / "menger_sponge_1.dxf", level=3, kind=1)
-    main(DIR / "menger_sponge_2.dxf", level=3, kind=2)
-    main(DIR / "jerusalem_cube.dxf", level=2, kind=3, merge=True)
+    main(CWD / "menger_sponge_0.dxf", level=3, kind=0)
+    main(CWD / "menger_sponge_1.dxf", level=3, kind=1)
+    main(CWD / "menger_sponge_2.dxf", level=3, kind=2)
+    main(CWD / "jerusalem_cube.dxf", level=2, kind=3, merge=True)
