@@ -1,10 +1,18 @@
-# Purpose: examples for using Dimension add-ons
-# Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2019, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
+import pathlib
 import ezdxf
 from ezdxf.addons import dimstyles, LinearDimension, AngularDimension
 from ezdxf.addons import ArcDimension, RadialDimension
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# These add-ons are obsolete since the rendering of DIMENSION entities is
+# supported by ezdxf but these add-ons will be preserved as they are!
+# ------------------------------------------------------------------------------
 
 # create a new drawing: dxfwrite.DXFEngine.drawing(filename)
 NAME = "dimlines.dxf"
@@ -79,5 +87,6 @@ render(
 dimstyles.new("radius", height=0.25, prefix="R=")
 render(RadialDimension((20, 0), (24, 1.5), dimstyle="radius"))
 
-doc.saveas(NAME)
-print("drawing '%s' created.\n" % NAME)
+filepath = CWD / NAME
+doc.saveas(filepath)
+print(f"drawing '{filepath}' created.")
