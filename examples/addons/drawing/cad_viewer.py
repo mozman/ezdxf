@@ -12,15 +12,15 @@ from ezdxf import recover
 from ezdxf.addons.drawing.qtviewer import CadViewer
 from ezdxf.addons.drawing.config import Configuration
 
+# ------------------------------------------------------------------------------
 # IMPORTANT: This example is just a remaining skeleton, the implementation
 # details moved into module: ezdxf.addon.drawing.qtviewer
 #
 # The CAD viewer can be executed by the new ezdxf command line launcher:
 # C:\> ezdxf view FILE
-
-# Load and draw proxy graphic:
-ezdxf.options.preserve_proxy_graphics()
-
+#
+# # docs: https://ezdxf.mozman.at/docs/addons/drawing.html
+# ------------------------------------------------------------------------------
 
 def _main():
     parser = argparse.ArgumentParser()

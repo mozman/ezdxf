@@ -12,6 +12,17 @@ from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.config import Configuration, LinePolicy
 from ezdxf.addons.drawing.pillow import PillowBackend, TextMode
 
+# ------------------------------------------------------------------------------
+# The "pillow.py" viewer can be executed by the new ezdxf command line
+# launcher:
+#
+# C:\> ezdxf pillow FILE
+#
+# This file remains as an example for the usage of the Pillow backend.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/drawing.html
+# ------------------------------------------------------------------------------
+
 
 def main():
     parser = argparse.ArgumentParser(

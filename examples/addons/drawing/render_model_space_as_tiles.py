@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import Iterator
-from pathlib import Path
+import pathlib
 import random
 
 import matplotlib.pyplot as plt
@@ -13,15 +13,19 @@ from ezdxf.math import BoundingBox2d
 
 assert ezdxf.__version__ >= "0.18", "requires ezdxf v0.18b0 or newer"
 
+# ------------------------------------------------------------------------------
 # This example renders the DXF file in rows by cols tiles including filtering
 # the DXF entities outside the rendering area.
 # But the calculation of the bounding boxes is also costly and entities
 # expanding into several tiles are rendered multiple times, therefore this
 # solution takes longer than a single-pass rendering, but it shows the concept.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/drawing.html
+# ------------------------------------------------------------------------------
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 COLORS = list(range(1, 7))
 DPI = 300
@@ -103,7 +107,7 @@ def main(rows: int, cols: int):
 
         filename = f"tile-{tile:02d}.png"
         print(f'saving tile #{tile} to "{filename}"')
-        fig.savefig(DIR / filename, dpi=DPI)
+        fig.savefig(CWD / filename, dpi=DPI)
         plt.close(fig)
 
 

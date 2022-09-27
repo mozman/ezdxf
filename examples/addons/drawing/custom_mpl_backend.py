@@ -1,5 +1,5 @@
-#  Copyright (c) 2021, Matthew Broadway
-#  License: MIT License
+# Copyright (c) 2021-2022, Matthew Broadway
+# License: MIT License
 import argparse
 
 import matplotlib.pyplot as plt

@@ -1,7 +1,7 @@
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from pathlib import Path
+import pathlib
 import matplotlib.pyplot as plt
 
 import ezdxf
@@ -10,9 +10,16 @@ from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 from ezdxf.math import Vec2
 from ezdxf.enums import TextEntityAlignment, MTextEntityAlignment
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to render the modelspace by the drawing add-on and the
+# Matplotlib backend to a certain scale.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/drawing.html
+# ------------------------------------------------------------------------------
 
 
 def make_doc(offset=(0, 0), size=(3, 4)):
@@ -82,7 +89,7 @@ def save_to_scale(
     # Set output size in inches:
     fig.set_size_inches(size_in_inches[0], size_in_inches[1], forward=True)
 
-    fig.savefig(DIR / f"image_scale_1_{scale}.pdf", dpi=dpi)
+    fig.savefig(CWD / f"image_scale_1_{scale}.pdf", dpi=dpi)
     plt.close(fig)
 
 

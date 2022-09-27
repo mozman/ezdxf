@@ -12,8 +12,7 @@ from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 from ezdxf.addons.drawing.config import Configuration
 
-from ezdxf.tools import fonts
-
+# ------------------------------------------------------------------------------
 # The "draw_cad.py" viewer can be executed by the new ezdxf command line
 # launcher:
 #
@@ -21,8 +20,8 @@ from ezdxf.tools import fonts
 #
 # This file remains as an example for the usage of the Matplotlib backend.
 #
-# For the case automatic font loading is disabled:
-fonts.load()
+# docs: https://ezdxf.mozman.at/docs/addons/drawing.html
+# ------------------------------------------------------------------------------
 
 
 def _main():
