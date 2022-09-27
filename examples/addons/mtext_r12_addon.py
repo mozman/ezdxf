@@ -1,9 +1,20 @@
-# Purpose: examples for using MText() add-on
-# Created: 09.02.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2019, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
+import pathlib
 import ezdxf
 from ezdxf.addons import MText
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# These add-on can be used to create MTEXT like text entities for DXF R12 which
+# does not support the MTEXT entity. These add-on can be replaced by exploding
+# MTEXT entities by the mtxpl add-on. This add-on will be preserved is it is!
+#
+# docs: https://ezdxf.mozman.at/docs/addons/mtxpl.html
+# ------------------------------------------------------------------------------
 
 
 def render(mtext):
@@ -140,6 +151,6 @@ txt = (
 )
 rotate_text(txt, (600, 100), parts=16, color=3)
 
-NAME = "mtext.dxf"
-doc.saveas(NAME)
-print("drawing '%s' created.\n" % NAME)
+filepath = CWD / "mtext.dxf"
+doc.saveas(filepath)
+print(f"drawing '{filepath}' created.\n")
