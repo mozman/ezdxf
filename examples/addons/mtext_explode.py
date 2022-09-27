@@ -1,11 +1,20 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.addons import MTextExplode
 
-DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to explode MTEXT entities into TEXT and LINE primitives.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/mtxpl.html
+# ------------------------------------------------------------------------------
+
 
 LOREM_IPSUM = (
     r"Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam "
@@ -47,7 +56,7 @@ def explode_mtext(doc, filename, destroy=False):
             if mtext.is_alive:
                 mtext.dxf.layer = "SOURCE"
     zoom.extents(msp)
-    doc.saveas(DIR / filename)
+    doc.saveas(CWD / filename)
 
 
 def explode_mtext_to_block(doc, filename, destroy=False):
@@ -60,17 +69,17 @@ def explode_mtext_to_block(doc, filename, destroy=False):
                 mtext.dxf.layer = "SOURCE"
     msp.add_blockref("EXPLODE", (0, 0))
     zoom.extents(msp)
-    doc.saveas(DIR / filename)
+    doc.saveas(CWD / filename)
 
 
 def create(filename):
     doc = new_doc(LEFT + CENTER + RIGHT + JUSTIFIED)
-    doc.saveas(DIR / filename)
+    doc.saveas(CWD / filename)
     return doc
 
 
 def load(filename):
-    return ezdxf.readfile(DIR / filename)
+    return ezdxf.readfile(CWD / filename)
 
 
 if __name__ == "__main__":
