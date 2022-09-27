@@ -1,15 +1,21 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import Sequence
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.math import Vec3
 from ezdxf.render import forms, MeshTransformer
 from ezdxf.addons import meshex, openscad
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to utilize OpenSCAD for construction tasks by ezdxf.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/openscad.html
+# ------------------------------------------------------------------------------
 
 
 def make_rect_room(
@@ -76,8 +82,8 @@ def main(filename: str):
     msp = doc.modelspace()
     wall_mesh = walls_by_openscad()
     wall_mesh.render_mesh(msp, dxfattribs={"layer": "WALL_MESH"})
-    doc.saveas(DIR / (filename + ".dxf"))
-    with open(DIR / (filename + ".obj"), "wt") as fp:
+    doc.saveas(CWD / (filename + ".dxf"))
+    with open(CWD / (filename + ".obj"), "wt") as fp:
         fp.write(meshex.obj_dumps(wall_mesh))
 
 
