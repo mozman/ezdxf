@@ -17,6 +17,8 @@ if not CWD.exists():
 # ------------------------------------------------------------------------------
 # This example shows how to execute boolean operations (union, intersection,
 # difference) by the Greiner-Hormann clipping algorithm on 2D polygons.
+#
+# docs: https://ezdxf.mozman.at/docs/math/clipping.html
 # ------------------------------------------------------------------------------
 
 PATCH = [

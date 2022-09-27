@@ -13,6 +13,8 @@ if not CWD.exists():
 # ------------------------------------------------------------------------------
 # This example shows how triangulate arbitrary path objects, a doughnut in this
 # special case.
+#
+# docs: https://ezdxf.mozman.at/docs/path.html#ezdxf.path.triangulate
 # ------------------------------------------------------------------------------
 
 

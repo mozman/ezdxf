@@ -10,6 +10,8 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example shows how to create gear-like shaped polyline.
+#
+# docs: https://ezdxf.mozman.at/docs/render/forms.html#ezdxf.render.forms.gear
 # ------------------------------------------------------------------------------
 
 doc = ezdxf.new()

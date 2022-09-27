@@ -13,6 +13,8 @@ if not CWD.exists():
 # This example shows how to use the ezdxf.render.Bezier class.
 # The DXF format does not support Bézier curves, therefore they can only be
 # approximated by polylines.
+#
+# docs: https://ezdxf.mozman.at/docs/render/curves.html#bezier
 # ------------------------------------------------------------------------------
 
 

@@ -9,6 +9,8 @@ import logging
 
 # ------------------------------------------------------------------------------
 # This example shows how to use arc dimension.
+#
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/arc_dimension.html
 # ------------------------------------------------------------------------------
 
 logging.basicConfig(level="WARNING")

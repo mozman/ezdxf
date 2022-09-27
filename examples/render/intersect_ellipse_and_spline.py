@@ -13,6 +13,8 @@ if not CWD.exists():
 # ------------------------------------------------------------------------------
 # This example shows how to calculate intersection points of arbitrary 2d
 # polylines, an ellipse and a spline in this example.
+#
+# docs: https://ezdxf.mozman.at/docs/math/core.html#ezdxf.math.intersect_polylines_2d
 # ------------------------------------------------------------------------------
 
 ENTITIES = "ENTITIES"

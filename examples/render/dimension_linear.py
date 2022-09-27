@@ -14,6 +14,8 @@ from ezdxf.enums import MTextLineAlignment
 
 # ------------------------------------------------------------------------------
 # This example shows how to use angular dimension.
+#
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/linear_dimension.html
 # ------------------------------------------------------------------------------
 
 logging.basicConfig(level="WARNING")

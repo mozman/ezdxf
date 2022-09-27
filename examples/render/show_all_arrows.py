@@ -10,6 +10,8 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example shows all supported arrow heads.
+#
+# docs: https://ezdxf.mozman.at/docs/render/arrows.html
 # ------------------------------------------------------------------------------
 
 

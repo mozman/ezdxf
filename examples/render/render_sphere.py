@@ -12,6 +12,8 @@ if not CWD.exists():
 # This example shows how to render a 3D sphere as MESH entity. The added
 # face-normals show if the face-orientation follows the usual count-clockwise
 # order to build outside pointing faces.
+#
+# docs: https://ezdxf.mozman.at/docs/render/forms.html#
 # ------------------------------------------------------------------------------
 
 

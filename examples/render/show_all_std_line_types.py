@@ -11,6 +11,8 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example shows the standard linetypes supported by ezdxf.
+#
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/linetypes.html
 # ------------------------------------------------------------------------------
 
 

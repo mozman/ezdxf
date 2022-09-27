@@ -12,6 +12,8 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example shows how sweep a profile along a helix to create a MESH entity.
+#
+# docs: https://ezdxf.mozman.at/docs/render/forms.html#d-form-builder
 # ------------------------------------------------------------------------------
 
 

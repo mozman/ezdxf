@@ -12,6 +12,8 @@ if not CWD.exists():
 # ------------------------------------------------------------------------------
 # This example shows how to get B-splines in DXF R12 files which does not support
 # the SPLINE entity.
+#
+# docs: https://ezdxf.mozman.at/docs/render/curves.html#r12spline
 # ------------------------------------------------------------------------------
 
 next_frame = Matrix44.translate(0, 7, 0)

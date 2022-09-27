@@ -12,6 +12,10 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example shows how to create 3D forms.
+#
+# docs:
+# forms: https://ezdxf.mozman.at/docs/render/forms.html
+# MeshBuilder: https://ezdxf.mozman.at/docs/render/mesh.html
 # ------------------------------------------------------------------------------
 
 

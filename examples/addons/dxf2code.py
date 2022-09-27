@@ -10,6 +10,8 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example shows how to export DXF entities from modelspace as Python code.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/dxf2code.html
 # ------------------------------------------------------------------------------
 
 FILENAME = "A_000217"

@@ -13,6 +13,10 @@ if not CWD.exists():
 # ------------------------------------------------------------------------------
 # This example shows how to get ellipses in DXF R12 files which does not support
 # the ELLIPSE entity.
+#
+# docs:
+# ellipse: https://ezdxf.mozman.at/docs/render/forms.html#ezdxf.render.forms.ellipse
+# basic_transformation: https://ezdxf.mozman.at/docs/math/core.html#ezdxf.math.basic_transformation
 # ------------------------------------------------------------------------------
 
 

@@ -14,6 +14,10 @@ if not CWD.exists():
 # This example shows how to create a new HATCH entity from existing
 # DXF entities, which is similar to applying then HATCH command to some DXF
 # entities in CAD applications
+#
+# docs:
+# disassemble module: https://ezdxf.mozman.at/docs/disassemble.html
+# path sub-package: https://ezdxf.mozman.at/docs/path.html
 # ------------------------------------------------------------------------------
 
 

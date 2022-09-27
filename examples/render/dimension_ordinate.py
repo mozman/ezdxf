@@ -7,6 +7,8 @@ import logging
 
 # ------------------------------------------------------------------------------
 # This example shows how to use ordinate dimension.
+#
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/ordinate_dimension.html
 # ------------------------------------------------------------------------------
 
 logging.basicConfig(level="WARNING")

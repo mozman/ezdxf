@@ -14,6 +14,8 @@ if not CWD.exists():
 # ------------------------------------------------------------------------------
 # This example shows how create outline paths from a text and fit them into a
 # specified rectangle.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/text2path.html
 # ------------------------------------------------------------------------------
 
 

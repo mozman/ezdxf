@@ -12,6 +12,10 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example shows how to use the chamfer and fillet tools.
+#
+# docs:
+# chamfer: https://ezdxf.mozman.at/docs/path.html#ezdxf.path.chamfer
+# fillet: https://ezdxf.mozman.at/docs/path.html#ezdxf.path.fillet
 # ------------------------------------------------------------------------------
 
 

@@ -17,6 +17,8 @@ if not CWD.exists():
 #
 # This example uses the modelspace iterator to copy all supported entities from
 # modelspace without any resources defined in the source DXF document.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/iterdxf.html#ezdxf.addons.iterdxf.modelspace
 # ------------------------------------------------------------------------------
 
 BIGFILE = ezdxf.options.test_files_path / "GKB-R2010.dxf"

@@ -8,6 +8,8 @@ import logging
 
 # ------------------------------------------------------------------------------
 # This example shows how to use diameter dimension.
+#
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/diameter_dimension.html
 # ------------------------------------------------------------------------------
 
 logging.basicConfig(level="WARNING")

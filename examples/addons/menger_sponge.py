@@ -11,6 +11,8 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example creates come Menger-Sponges.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/forms.html
 # ------------------------------------------------------------------------------
 
 

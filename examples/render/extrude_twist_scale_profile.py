@@ -13,6 +13,8 @@ if not CWD.exists():
 # ------------------------------------------------------------------------------
 # This example shows how to use the extended ezdxf.forms.extrude_twist_scale
 # method to create a 3D figure from a base polygon (profile).
+#
+# docs: https://ezdxf.mozman.at/docs/render/forms.html#ezdxf.render.forms.extrude_twist_scale
 # ------------------------------------------------------------------------------
 
 DEBUG_COLOR = ezdxf.colors.CYAN

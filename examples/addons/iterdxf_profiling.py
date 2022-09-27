@@ -14,6 +14,8 @@ BIGFILE = ezdxf.options.test_files_path / "GKB-R2010.dxf"
 #
 # This example shows the difference of the tree supported iteration methods of
 # the iterdxf add-on.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/iterdxf.html#
 # ------------------------------------------------------------------------------
 
 

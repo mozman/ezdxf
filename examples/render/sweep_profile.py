@@ -14,6 +14,8 @@ DEBUG_COLOR = ezdxf.colors.CYAN
 
 # ------------------------------------------------------------------------------
 # This example shows how sweep a profile along a polyline to create a MESH entity.
+#
+# docs: https://ezdxf.mozman.at/docs/render/forms.html#d-form-builder
 # ------------------------------------------------------------------------------
 
 

@@ -12,6 +12,8 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example shows how to use MeshTransformer class.
+#
+# docs: https://ezdxf.mozman.at/docs/render/mesh.html#meshtransformer
 # ------------------------------------------------------------------------------
 
 

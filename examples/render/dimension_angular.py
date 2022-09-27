@@ -9,6 +9,8 @@ import logging
 
 # ------------------------------------------------------------------------------
 # This example shows how to use angular dimension.
+#
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/angular_dimension.html
 # ------------------------------------------------------------------------------
 
 logging.basicConfig(level="WARNING")

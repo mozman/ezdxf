@@ -16,6 +16,8 @@ if not CWD.exists():
 #
 # This example uses the opendxf() method to copy modelspace entities and also
 # preserves ALL resources defined in the source DXF document.
+#
+# docs: https://ezdxf.mozman.at/docs/addons/iterdxf.html#ezdxf.addons.iterdxf.opendxf
 # ------------------------------------------------------------------------------
 
 

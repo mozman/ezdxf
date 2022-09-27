@@ -8,6 +8,8 @@ from ezdxf.render import forms
 
 # ------------------------------------------------------------------------------
 # This example shows how to use ordinate dimension in WCS.
+#
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/ordinate_dimension.html
 # ------------------------------------------------------------------------------
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()

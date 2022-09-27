@@ -11,6 +11,8 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example shows how to create SPLINE entities.
+#
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/spline.html
 # ------------------------------------------------------------------------------
 
 

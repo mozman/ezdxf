@@ -15,6 +15,8 @@ if not CWD.exists():
 # This example shows how to use the ezdxf.render.EulerSpiral class.
 # The DXF format does not support euler-spirals, therefore they can only be
 # approximated by polylines.
+#
+# docs: https://ezdxf.mozman.at/docs/render/curves.html#eulerspiral
 # ------------------------------------------------------------------------------
 
 NAME = "euler_spiral.dxf"
