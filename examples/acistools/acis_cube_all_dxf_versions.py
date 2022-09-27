@@ -1,14 +1,20 @@
-#  Copyright (c) 2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2022, Manfred Moitzi
+# License: MIT License
 
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.render import forms
 from ezdxf.acis import api as acis
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to create a simple ACIS cube for all supported DXf versions.
+#
+# docs: https://ezdxf.mozman.at/docs/tools/acis.html
+# ------------------------------------------------------------------------------
 
 
 def run(version: str):
@@ -23,7 +29,7 @@ def run(version: str):
     acis.export_dxf(solid3d, [body])
 
     doc.set_modelspace_vport(5)
-    doc.saveas(DIR / f"acis_cube_{version}.dxf")
+    doc.saveas(CWD / f"acis_cube_{version}.dxf")
 
 
 def main():
