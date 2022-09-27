@@ -13,6 +13,9 @@ if not CWD.exists():
 # This example shows how iterate over very big DXF files without loading them
 # into memory. This takes much longer, but it's maybe the only way to process
 # these very large files.
+#
+# This example uses the opendxf() method to copy modelspace entities and also
+# preserves ALL resources defined in the source DXF document.
 # ------------------------------------------------------------------------------
 
 
