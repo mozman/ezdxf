@@ -1,13 +1,20 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.addons import meshex
 from ezdxf.render.forms import cylinder, sphere
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to export MeshBuilder instances as 3D file formats:
+# STL, OBJ, PLY and IFC4
+#
+# docs: https://ezdxf.mozman.at/docs/addons/meshex.html
+# ------------------------------------------------------------------------------
 
 SIDES = 16
 NAME = "sphere"
@@ -81,28 +88,28 @@ def export_dxf(filename):
 
 
 def main():
-    export_scad(DIR / f"{NAME}.scad")
-    export_stl_asc(DIR / f"{NAME}_asc.stl")
-    export_stl_bin(DIR / f"{NAME}_bin.stl")
-    export_off(DIR / f"{NAME}.off")
-    export_obj(DIR / f"{NAME}.obj")
-    export_ply(DIR / f"{NAME}.ply")
-    export_dxf(DIR / f"{NAME}.dxf")
+    export_scad(CWD / f"{NAME}.scad")
+    export_stl_asc(CWD / f"{NAME}_asc.stl")
+    export_stl_bin(CWD / f"{NAME}_bin.stl")
+    export_off(CWD / f"{NAME}.off")
+    export_obj(CWD / f"{NAME}.obj")
+    export_ply(CWD / f"{NAME}.ply")
+    export_dxf(CWD / f"{NAME}.dxf")
     export_ifc4(
-        DIR / f"{NAME}_polygon_face_set.ifc",
+        CWD / f"{NAME}_polygon_face_set.ifc",
         meshex.IfcEntityType.POLYGON_FACE_SET,
     )
     export_ifc4(
-        DIR / f"{NAME}_closed_shell.ifc", meshex.IfcEntityType.CLOSED_SHELL
+        CWD / f"{NAME}_closed_shell.ifc", meshex.IfcEntityType.CLOSED_SHELL
     )
     export_ifc4ZIP(
-        DIR / f"{NAME}_closed_shell.ifcZIP", meshex.IfcEntityType.CLOSED_SHELL
+        CWD / f"{NAME}_closed_shell.ifcZIP", meshex.IfcEntityType.CLOSED_SHELL
     )
     export_ifc4_open_cylinder(
-        DIR / f"open_cylinder_open_shell.ifc", meshex.IfcEntityType.OPEN_SHELL
+        CWD / f"open_cylinder_open_shell.ifc", meshex.IfcEntityType.OPEN_SHELL
     )
     export_ifc4_open_cylinder(
-        DIR / f"open_cylinder_polygon_face_set.ifc", meshex.IfcEntityType.POLYGON_FACE_SET
+        CWD / f"open_cylinder_polygon_face_set.ifc", meshex.IfcEntityType.POLYGON_FACE_SET
     )
 
 
