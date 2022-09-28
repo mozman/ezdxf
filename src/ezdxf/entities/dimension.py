@@ -748,11 +748,39 @@ class Dimension(DXFGraphic, OverrideMixin):
 
     def __virtual_entities__(self) -> Iterable[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
+
+        def ocs_to_wcs(entity: DXFGraphic, elevation: float):
+            # - OCS entities have to get the extrusion vector and the
+            #   elevation of the DIMENSION entity
+            # - WCS entities have to be transformed to the WCS
+            dxftype = entity.dxftype()
+            dxf = entity.dxf
+            if dxftype == "LINE":
+                dxf.start = ocs.to_wcs(dxf.start.replace(z=elevation))
+                dxf.end = ocs.to_wcs(dxf.end.replace(z=elevation))
+            elif dxftype == "MTEXT":
+                entity.convert_rotation_to_text_direction()  # type: ignore
+                dxf.extrusion = ocs.uz
+                dxf.text_direction = Vec3(
+                    ocs.to_wcs(dxf.text_direction)
+                ).normalize()
+                dxf.insert = ocs.to_wcs(dxf.insert.replace(z=elevation))
+            elif dxftype == "POINT":
+                dxf.location = ocs.to_wcs(dxf.location.replace(z=elevation))
+            else:  # INSERT, TEXT, CIRCLE, ARC
+                dxf.extrusion = ocs.uz
+                # set elevation:
+                if dxf.hasattr("insert"):  # INSERT, TEXT
+                    dxf.insert = dxf.insert.replace(z=elevation)
+                elif dxf.hasattr("center"):  # ARC, CIRCLE
+                    dxf.center = dxf.center.replace(z=elevation)
+
+        ocs = self.ocs()
         transform = False
         insert = self.dxf.get("insert", None)
         if insert:
             transform = True
-            insert = self.ocs().to_wcs(insert)
+            insert = ocs.to_wcs(insert)
             m = Matrix44.translate(insert.x, insert.y, insert.z)
 
         for entity in self._block_content():
@@ -760,6 +788,13 @@ class Dimension(DXFGraphic, OverrideMixin):
                 copy = entity.copy()
             except DXFTypeError:
                 continue
+
+            if ocs.transform:
+                # All block content entities are located in the OCS defined by
+                # the DIMENSION entity, even the WCS entities LINE, MTEXT and
+                # POINT:
+                ocs_to_wcs(copy, self.dxf.text_midpoint.z)
+
             if transform:
                 # noinspection PyUnboundLocalVariable
                 copy.transform(m)
