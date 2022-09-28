@@ -761,9 +761,7 @@ class Dimension(DXFGraphic, OverrideMixin):
             elif dxftype == "MTEXT":
                 entity.convert_rotation_to_text_direction()  # type: ignore
                 dxf.extrusion = ocs.uz
-                dxf.text_direction = Vec3(
-                    ocs.to_wcs(dxf.text_direction)
-                ).normalize()
+                dxf.text_direction = ocs.to_wcs(dxf.text_direction)
                 dxf.insert = ocs.to_wcs(dxf.insert.replace(z=elevation))
             elif dxftype == "POINT":
                 dxf.location = ocs.to_wcs(dxf.location.replace(z=elevation))
