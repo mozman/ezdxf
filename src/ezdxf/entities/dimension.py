@@ -1,5 +1,6 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 import math
 from typing import TYPE_CHECKING, Optional, Union, Iterable
 import logging
@@ -229,7 +230,7 @@ acdb_dimension_dummy_group_codes = group_code_mapping(acdb_dimension_dummy)
 
 # noinspection PyUnresolvedReferences
 class OverrideMixin:
-    def get_dim_style(self) -> "DimStyle":
+    def get_dim_style(self) -> DimStyle:
         """Returns the associated :class:`DimStyle` entity."""
         assert self.doc is not None, "valid DXF document required"  # type: ignore
 
@@ -238,14 +239,14 @@ class OverrideMixin:
         # exist!
         return self.doc.dimstyles.get(dim_style_name)  # type: ignore
 
-    def dim_style_attributes(self) -> "DXFAttributes":
+    def dim_style_attributes(self) -> DXFAttributes:
         """Returns all valid DXF attributes (internal API)."""
         return self.get_dim_style().DXFATTRIBS
 
     def dim_style_attr_names_to_handles(
         self, data: dict, dxfversion: str
     ) -> dict:
-        """`ezdxf` uses internally only resource names for arrows, line types
+        """`Ezdxf` uses internally only resource names for arrows, linetypes
         and text styles, but DXF 2000 and later requires handles for these
         resources, this method translates resource names into related handles.
         (e.g. 'dimtxsty': 'FancyStyle' -> 'dimtxsty_handle', <handle of FancyStyle>)
@@ -441,7 +442,7 @@ class OverrideMixin:
                 set_ltype_name(attrib_name, handle)
         return data
 
-    def get_acad_dstyle(self, dim_style: "DimStyle") -> dict:
+    def get_acad_dstyle(self, dim_style: DimStyle) -> dict:
         """Get XDATA section ACAD:DSTYLE, to override DIMSTYLE attributes for
         this DIMENSION entity. Returns a ``dict`` with DIMSTYLE attribute names
         as keys.
@@ -489,14 +490,14 @@ class Dimension(DXFGraphic, OverrideMixin):
         # store the content of the geometry block for virtual entities
         self.virtual_block_content: Optional[EntitySpace] = None
 
-    def copy(self) -> "Dimension":
+    def copy(self) -> Dimension:
         virtual_copy = super().copy()
         # The new virtual copy can not reference the same geometry block as the
         # original dimension entity:
         virtual_copy.dxf.discard("geometry")
-        return virtual_copy
+        return virtual_copy  # type: ignore
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, Dimension)
         if self.virtual_block_content:
             # another copy of a virtual entity:
@@ -532,7 +533,7 @@ class Dimension(DXFGraphic, OverrideMixin):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -545,7 +546,7 @@ class Dimension(DXFGraphic, OverrideMixin):
             # content.
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion == DXF12:
@@ -658,12 +659,12 @@ class Dimension(DXFGraphic, OverrideMixin):
     @property
     def is_dimensional_constraint(self) -> bool:
         """Returns ``True`` if the DIMENSION entity is a dimensional
-        constrains object.
+        constraint object.
         """
         dxf = self.dxf
         return not dxf.hasattr("dimtype") and dxf.layer == ADSK_CONSTRAINTS
 
-    def get_geometry_block(self) -> Optional["BlockLayout"]:
+    def get_geometry_block(self) -> Optional[BlockLayout]:
         """Returns :class:`~ezdxf.layouts.BlockLayout` of associated anonymous
         dimension block, which contains the entities that make up the dimension
         picture. Returns ``None`` if block name is not set or the BLOCK itself
@@ -686,7 +687,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         else:
             raise TypeError(f"Unknown DIMENSION type {self.dimtype}.")
 
-    def override(self) -> "DimStyleOverride":
+    def override(self) -> DimStyleOverride:
         """Returns the :class:`~ezdxf.entities.DimStyleOverride` object."""
         return DimStyleOverride(self)
 
@@ -699,7 +700,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         # references share the same geometry block!
         self.override().render()
 
-    def transform(self, m: "Matrix44") -> "Dimension":
+    def transform(self, m: Matrix44) -> Dimension:
         """Transform the DIMENSION entity by transformation matrix `m` inplace.
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
@@ -731,7 +732,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         self.post_transform(m)
         return self
 
-    def _block_content(self) -> Iterable["DXFGraphic"]:
+    def _block_content(self) -> Iterable[DXFGraphic]:
         if self.virtual_block_content or self.is_virtual:
             content = self.virtual_block_content
         else:
@@ -745,7 +746,7 @@ class Dimension(DXFGraphic, OverrideMixin):
             except (NotImplementedError, NonUniformScalingError):
                 pass  # ignore transformation errors
 
-    def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
+    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
         transform = False
         insert = self.dxf.get("insert", None)
@@ -764,19 +765,19 @@ class Dimension(DXFGraphic, OverrideMixin):
                 copy.transform(m)
             yield copy
 
-    def virtual_entities(self) -> Iterable["DXFGraphic"]:
+    def virtual_entities(self) -> Iterable[DXFGraphic]:
         """
         Yields 'virtual' parts of DIMENSION as basic DXF entities like LINE, ARC
         or TEXT.
 
-        This entities are located at the original positions, but are not stored
+        These entities are located at the original positions, but are not stored
         in the entity database, have no handle and are not assigned to any
         layout.
 
         """
         return self.__virtual_entities__()
 
-    def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
+    def explode(self, target_layout: BaseLayout = None) -> EntityQuery:
         """
         Explode parts of DIMENSION as basic DXF entities like LINE, ARC or TEXT
         into target layout, if target layout is ``None``, the target layout is
@@ -807,7 +808,7 @@ class Dimension(DXFGraphic, OverrideMixin):
                     return (block.block_record_handle,)
         return tuple()
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         super().audit(auditor)
         doc = auditor.doc
         dxf = self.dxf
@@ -866,7 +867,7 @@ class ArcDimension(Dimension):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         # Skip Dimension loader:
         dxf = super(Dimension, self).load_dxf_attribs(processor)
         if processor:
@@ -884,7 +885,7 @@ class ArcDimension(Dimension):
         else:
             return (self.dxf.dimtype & 0xFFF0) | 5
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         dimtype = self.dxf.dimtype  # preserve original dimtype
         self.dxf.dimtype = self.versioned_dimtype(tagwriter.dxfversion)
@@ -906,7 +907,7 @@ class ArcDimension(Dimension):
         )
         self.dxf.dimtype = dimtype  # restore original dimtype
 
-    def transform(self, m: "Matrix44") -> "Dimension":
+    def transform(self, m: Matrix44) -> Dimension:
         """Transform the ARC_DIMENSION entity by transformation matrix `m` inplace.
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
@@ -954,7 +955,7 @@ class RadialDimensionLarge(Dimension):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         # Skip Dimension loader:
         dxf = super(Dimension, self).load_dxf_attribs(processor)
         if processor:
@@ -966,7 +967,7 @@ class RadialDimensionLarge(Dimension):
             )
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbRadialDimensionLarge")
@@ -975,7 +976,7 @@ class RadialDimensionLarge(Dimension):
             ["chord_point", "override_center", "jog_point", "unknown2"],
         )
 
-    def transform(self, m: "Matrix44") -> "Dimension":
+    def transform(self, m: Matrix44) -> Dimension:
         """Transform the LARGE_RADIAL_DIMENSION entity by transformation matrix
         `m` inplace.
 
@@ -989,7 +990,7 @@ class RadialDimensionLarge(Dimension):
 
         dxf = self.dxf
         super().transform(m)
-        # todo: are this WCS points?
+        # todo: are these WCS points?
         for vertex_name in ("chord_point", "override_center", "Jog_point"):
             transform_if_exist(vertex_name, m.transform)
 
@@ -1126,7 +1127,7 @@ def angle_between(v1: Vec3, v2: Vec3) -> float:
 
 
 def linear_measurement(
-    p1: Vec3, p2: Vec3, angle: float = 0, ocs: "OCS" = None
+    p1: Vec3, p2: Vec3, angle: float = 0, ocs: OCS = None
 ) -> float:
     """Returns distance from `p1` to `p2` projected onto ray defined by
     `angle`, `angle` in radians in the xy-plane.
