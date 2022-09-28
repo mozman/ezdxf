@@ -765,15 +765,22 @@ class Dimension(DXFGraphic, OverrideMixin):
                 dxf.insert = ocs.to_wcs(dxf.insert.replace(z=elevation))
             elif dxftype == "POINT":
                 dxf.location = ocs.to_wcs(dxf.location.replace(z=elevation))
-            else:  # INSERT, TEXT, CIRCLE, ARC
+            else:  # INSERT, TEXT, CIRCLE, ARC, SOLID
                 dxf.extrusion = ocs.uz
                 # set elevation:
                 if dxf.hasattr("insert"):  # INSERT, TEXT
                     dxf.insert = dxf.insert.replace(z=elevation)
                 elif dxf.hasattr("center"):  # ARC, CIRCLE
                     dxf.center = dxf.center.replace(z=elevation)
+                elif dxftype == "SOLID":
+                    # AutoCAD uses the SOLID entity to render the "solid fill"
+                    # arrow directly without using a block reference as usual. >:(
+                    for vtx_name in const.VERTEXNAMES:
+                        point = dxf.get(vtx_name, NULLVEC).replace(z=elevation)
+                        dxf.set(vtx_name, point)
 
         ocs = self.ocs()
+        dim_elevation = self.dxf.text_midpoint.z
         transform = False
         insert = self.dxf.get("insert", None)
         if insert:
@@ -791,7 +798,7 @@ class Dimension(DXFGraphic, OverrideMixin):
                 # All block content entities are located in the OCS defined by
                 # the DIMENSION entity, even the WCS entities LINE, MTEXT and
                 # POINT:
-                ocs_to_wcs(copy, self.dxf.text_midpoint.z)
+                ocs_to_wcs(copy, dim_elevation)
 
             if transform:
                 # noinspection PyUnboundLocalVariable
