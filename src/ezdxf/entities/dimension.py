@@ -749,23 +749,23 @@ class Dimension(DXFGraphic, OverrideMixin):
     def __virtual_entities__(self) -> Iterable[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
 
-        def ocs_to_wcs(entity: DXFGraphic, elevation: float):
+        def ocs_to_wcs(e: DXFGraphic, elevation: float):
             # - OCS entities have to get the extrusion vector and the
             #   elevation of the DIMENSION entity
             # - WCS entities have to be transformed to the WCS
-            dxftype = entity.dxftype()
-            dxf = entity.dxf
+            dxftype = e.dxftype()
+            dxf = e.dxf
             if dxftype == "LINE":
                 dxf.start = ocs.to_wcs(dxf.start.replace(z=elevation))
                 dxf.end = ocs.to_wcs(dxf.end.replace(z=elevation))
             elif dxftype == "MTEXT":
-                entity.convert_rotation_to_text_direction()  # type: ignore
+                e.convert_rotation_to_text_direction()  # type: ignore
                 dxf.extrusion = ocs.uz
                 dxf.text_direction = ocs.to_wcs(dxf.text_direction)
                 dxf.insert = ocs.to_wcs(dxf.insert.replace(z=elevation))
             elif dxftype == "POINT":
                 dxf.location = ocs.to_wcs(dxf.location.replace(z=elevation))
-            else:  # INSERT, TEXT, CIRCLE, ARC, SOLID
+            else:  # OCS entities
                 dxf.extrusion = ocs.uz
                 # set elevation:
                 if dxf.hasattr("insert"):  # INSERT, TEXT
