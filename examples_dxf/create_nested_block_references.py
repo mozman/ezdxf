@@ -1,16 +1,16 @@
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
-from typing import Dict, TYPE_CHECKING, cast
+from __future__ import annotations
+from typing import Dict, cast
 import math
 import ezdxf
-from time import perf_counter
 
 from ezdxf.math import Vec3, Matrix44, X_AXIS, OCS
 from ezdxf import zoom, disassemble
 from ezdxf.entities import copy_attrib_as_text
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import BlockLayout, Drawing, BaseLayout
+from ezdxf.layouts import BlockLayout, BaseLayout
+from ezdxf.document import Drawing
 
 # Check if a viewer and ezdxf does correct block reference (INSERT)
 # transformations. It is not possible to check the drawing add-on by this
@@ -33,7 +33,7 @@ EXPLODE = "EXPLODE"  # by ezdxf exploded block references
 LAYERS = [BLK_CONTENT, EXPLODE, ATTRIBS]
 
 
-def explode(layout: "BaseLayout"):
+def explode(layout: BaseLayout):
     if EXPLODE_CONTENT:
         entities = list(disassemble.recursive_decompose(layout))
         for e in entities:
@@ -48,33 +48,22 @@ def explode(layout: "BaseLayout"):
 
 
 def create_doc(filename, content_creator):
-    print(f"start DXF document: {filename}")
     doc = ezdxf.new(dxfversion="R2004")
     for name in LAYERS:
         doc.layers.new(name)
     doc.styles.new(ATTRIBS, dxfattribs={"font": "OpenSansCondensed-Light.ttf"})
     content_creator(doc)
     msp = doc.modelspace()
-    print("exploding ...")
-    ts = perf_counter()
-    explode(msp)
-    print(f"... required {perf_counter()-ts:.2f}s")
-    print("zooming ...")
-    ts = perf_counter()
     if EXPLODE_CONTENT:
         # processing only LINE entities is much faster:
         zoom.objects(msp, doc.modelspace().query("LINE"))
     else:
         zoom.extents(msp)
-    print(f"... required {perf_counter()-ts:.2f}s")
-    print("saving ...")
-    ts = perf_counter()
     doc.saveas(filename)
-    print(f"... required {perf_counter()-ts:.2f}s")
-    print(f"saved DXF document: {filename}\n")
+    print(f"created {filename}")
 
 
-def create_base_block(block: "BlockLayout", arrow_length=4):
+def create_base_block(block: BlockLayout, arrow_length=4):
     def add_axis(attribs: Dict, m: Matrix44 = None):
         start = -X_AXIS * arrow_length / 2
         end = X_AXIS * arrow_length / 2
@@ -132,7 +121,7 @@ def show_config(blk_ref):
 
 
 def create_block_references(
-    layout: "BaseLayout",
+    layout: BaseLayout,
     block_name: str,
     layer: str = "LAYER",
     grid=(10, 10),
@@ -164,7 +153,7 @@ def create_block_references(
             y += grid_y
 
 
-def create_l0_block_references(layout: "BaseLayout", block_name: str):
+def create_l0_block_references(layout: BaseLayout, block_name: str):
     create_block_references(
         layout,
         block_name,
@@ -183,7 +172,7 @@ def create_l0_block_references(layout: "BaseLayout", block_name: str):
     )
 
 
-def create_l1_block_references(layout: "BaseLayout", block_name: str):
+def create_l1_block_references(layout: BaseLayout, block_name: str):
     create_block_references(
         layout,
         block_name,
@@ -202,13 +191,13 @@ def create_l1_block_references(layout: "BaseLayout", block_name: str):
     )
 
 
-def nesting_level_0(doc: "Drawing"):
+def nesting_level_0(doc: Drawing):
     blk = doc.blocks.new("BASE")
     create_base_block(blk)
     create_l0_block_references(doc.modelspace(), "BASE")
 
 
-def nesting_level_1(doc: "Drawing"):
+def nesting_level_1(doc: Drawing):
     blk = doc.blocks.new("BASE")
     create_base_block(blk)
     blk0 = doc.blocks.new("LEVEL0")

@@ -19,7 +19,7 @@ def create_doc(filename):
         msp.add_line((x + width, y), (x + width, y + height))
 
         msp.add_line((x, y - 1), (x + width, y - 1))
-        msp.add_text("BASELINE ADJUSTMENTS", dxfattribs=attribs).set_pos(
+        msp.add_text("BASELINE ADJUSTMENTS", dxfattribs=attribs).set_placement(
             (x, y - 1.5)
         )
         msp.add_text("LEFT", dxfattribs=attribs).set_placement(
