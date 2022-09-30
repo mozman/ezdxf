@@ -1,13 +1,13 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf import colors
 from ezdxf.addons.drawing.matplotlib import qsave
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 
 def main():
@@ -41,7 +41,7 @@ def make_arrow_image(name):
     add_connection_point(cp1)
     qsave(
         msp,
-        str(DIR / f"{ezdxf.ARROWS.block_name(name)}.png"),
+        str(CWD / f"{ezdxf.ARROWS.block_name(name)}.png"),
         bg="#FFFFFF",
         dpi=100,
         size_inches=(3, 1),

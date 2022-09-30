@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 
 import ezdxf
@@ -40,4 +40,4 @@ def process_dir(folder: Path):
                 print("*" * 40 + "\n")
 
 
-process_dir(Path(ezdxf.EZDXF_TEST_FILES))
+process_dir(ezdxf.options.test_files_path)
