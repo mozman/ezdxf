@@ -1,9 +1,11 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 # Create a DXF document with missing BLOCK definitions
 # to see how AutoCAD/BricsCAD reacts:
@@ -19,4 +21,4 @@ doc.header["$DIMLDRBLK"] = "DoesNotExist"
 # INSERT without a BLOCK definition:
 msp.add_blockref("TEST", (0, 0))
 
-doc.saveas(DIR / "missing_block_definitions.dxf")
+doc.saveas(CWD / "missing_block_definitions.dxf")

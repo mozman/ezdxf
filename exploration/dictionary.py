@@ -1,10 +1,13 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
+import pathlib
 import ezdxf
 from ezdxf.document import Drawing
 from ezdxf.lldxf.types import dxftag
-from pathlib import Path
-DIR = Path("~/Desktop/Outbox").expanduser()
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 
 def add_graphic_entity_to_root_dict(doc: Drawing):
@@ -54,7 +57,7 @@ def main():
     doc = ezdxf.new()
     add_graphic_entity_to_root_dict(doc)
     reference_graphic_entities_in_extension_dictionaries(doc)
-    doc.saveas(DIR / "dictionary.dxf")
+    doc.saveas(CWD / "dictionary.dxf")
 
 
 if __name__ == "__main__":

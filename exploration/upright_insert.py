@@ -2,7 +2,10 @@ import pathlib
 import ezdxf
 from ezdxf.upright import upright
 
-DIR = pathlib.Path("~/Desktop/Now/ezdxf").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
 POLYLINE_POINTS = [
     # x, y, s, e, b
     (0, 0, 0, 0, 0),
@@ -40,4 +43,4 @@ blk_ref_copy.dxf.layer = "upright"
 upright(blk_ref_copy)
 msp.add_entity(blk_ref_copy)
 
-doc.saveas(DIR / "upright_insert.dxf")
+doc.saveas(CWD / "upright_insert.dxf")

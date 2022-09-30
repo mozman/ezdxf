@@ -1,10 +1,13 @@
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.upright import upright
 
 from ezdxf.math import Matrix44
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
 
 doc = ezdxf.new()
 msp = doc.modelspace()
@@ -47,4 +50,4 @@ msp.add_line((0, 0), mirrored_arc.end_point, dxfattribs={"color": ezdxf.const.BL
 
 
 doc.set_modelspace_vport(15)
-doc.saveas(DIR / "upright_arc.dxf")
+doc.saveas(CWD / "upright_arc.dxf")

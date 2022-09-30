@@ -1,9 +1,11 @@
-from pathlib import Path
+#  Copyright (c) 2022, Manfred Moitzi
+#  License: MIT License
+import pathlib
 import ezdxf
 
-CWD = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
-    CWD = Path(".")
+    CWD = pathlib.Path(".")
 
 for version in ["R12", "R2000", "R2004", "R2007", "R2010", "R2013", "R2018"]:
     doc = ezdxf.new(dxfversion=version, setup=True)

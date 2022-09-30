@@ -1,7 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import List
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.math import Vec2
 from ezdxf.tools.text_size import mtext_size, WordSizeDetector
@@ -9,7 +9,9 @@ from ezdxf import path, colors
 from ezdxf.addons import text2path
 from ezdxf.addons import MTextExplode
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 
 def rect(p1: Vec2, p2: Vec2) -> List[Vec2]:
@@ -24,9 +26,13 @@ def rect(p1: Vec2, p2: Vec2) -> List[Vec2]:
 def main():
     doc = ezdxf.new()
     doc.styles.add("ARIAL", font="arial.ttf")
-    box_layer = doc.layers.add("bounding boxes based on Matplotlib", color=colors.MAGENTA)
+    box_layer = doc.layers.add(
+        "bounding boxes based on Matplotlib", color=colors.MAGENTA
+    )
     mtext_layer = doc.layers.add("MTEXT by current viewer")
-    path_layer = doc.layers.add("path rendering by Matplotlib", color=colors.YELLOW)
+    path_layer = doc.layers.add(
+        "path rendering by Matplotlib", color=colors.YELLOW
+    )
 
     msp = doc.modelspace()
     mtext = msp.add_mtext(
@@ -70,7 +76,7 @@ def main():
         size.total_height * 1.1,
         center=(size.total_width / 2, -size.total_height / 2),
     )
-    doc.saveas(DIR / "mtext_rendering_by_matplotlib.dxf")
+    doc.saveas(CWD / "mtext_rendering_by_matplotlib.dxf")
 
 
 if __name__ == "__main__":

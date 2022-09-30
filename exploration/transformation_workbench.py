@@ -1,15 +1,19 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from typing import cast
-from pathlib import Path
+import pathlib
 import math
 import random
 import ezdxf
 from ezdxf import zoom
+from ezdxf.enums import TextEntityAlignment
 from ezdxf.math import linspace, Vec3, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
 from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text, MText, Hatch
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
 UNIFORM_SCALING = [
     (-1, 1, 1),
     (1, -1, 1),
@@ -302,7 +306,7 @@ def main_text(layout):
             },
             doc=doc,
         )
-        t.set_pos(p1, align="LEFT")
+        t.set_placement(p1, align=TextEntityAlignment.LEFT)
         tlen = height * len(t.dxf.text) * width
         p2 = p1.replace(x=tlen)
         p3 = p2.replace(y=height)
@@ -539,15 +543,15 @@ if __name__ == "__main__":
     doc = ezdxf.new("R2000", setup=True)
     setup_csys_blk("UCS")
     msp = doc.modelspace()
-    # main_ellipse(msp)
-    # main_multi_ellipse(msp)
-    # add_hatch_for_all_ellipses(msp)
-    # main_text(msp)
-    # main_mtext(msp)
-    # main_insert(msp)
-    # main_insert2(msp)
-    # main_uniform_hatch_polyline(msp)
+    main_ellipse(msp)
+    main_multi_ellipse(msp)
+    add_hatch_for_all_ellipses(msp)
+    main_text(msp)
+    main_mtext(msp)
+    main_insert(msp)
+    main_insert2(msp)
+    main_uniform_hatch_polyline(msp)
     main_ellipse_hatch(msp, spline=True)
-    # main_non_uniform_hatch_polyline(msp, spline=True)
+    main_non_uniform_hatch_polyline(msp, spline=True)
     zoom.extents(msp)
-    doc.saveas(DIR / "transform.dxf")
+    doc.saveas(CWD / "transform.dxf")

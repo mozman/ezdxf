@@ -2,10 +2,9 @@
 #  License: MIT License
 from typing import cast
 from pathlib import Path
-import math
 import ezdxf
 from ezdxf import colors
-from ezdxf.math import Matrix44, ConstructionBox
+from ezdxf.math import ConstructionBox
 from ezdxf.layouts import Paperspace, Modelspace
 from ezdxf.entities import Viewport
 

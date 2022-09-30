@@ -5,7 +5,9 @@ from ezdxf.upright import upright
 from ezdxf import path
 from ezdxf.math import Vec2
 
-DIR = pathlib.Path("~/Desktop/Now/ezdxf").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 
 def all_edge_types_hatch(elevation, extrusion):
@@ -96,4 +98,4 @@ msp.add_entity(hatch_copy)
 p = path.make_path(hatch_copy)
 path.render_lwpolylines(msp, [p], dxfattribs={"layer": "paths"})
 
-doc.saveas(DIR / "upright_hatch.dxf")
+doc.saveas(CWD / "upright_hatch.dxf")
