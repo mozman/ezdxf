@@ -12,6 +12,10 @@ from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 from ezdxf.addons.drawing.properties import LayoutProperties
 from ezdxf.math import Matrix44, X_AXIS
 
+# ------------------------------------------------------------------------------
+# This example shows how to implement a custom drawing backend.
+# ------------------------------------------------------------------------------
+
 
 class FixedSizedTextMatplotlibBackend(MatplotlibBackend):
     """Export text in PDF as characters and not as PathPatch() for a smaller
@@ -31,6 +35,7 @@ class FixedSizedTextMatplotlibBackend(MatplotlibBackend):
     https://github.com/mozman/ezdxf/discussions/582
 
     """
+
     def __init__(
         self,
         ax: plt.Axes,
@@ -53,7 +58,9 @@ class FixedSizedTextMatplotlibBackend(MatplotlibBackend):
     ):
         if not text.strip():
             return  # no point rendering empty strings
-        font_properties = self._text_renderer.get_font_properties(properties.font)
+        font_properties = self._text_renderer.get_font_properties(
+            properties.font
+        )
         assert self.current_entity is not None
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
         x, y, _, _ = transform.get_row(3)
@@ -74,15 +81,14 @@ class FixedSizedTextMatplotlibBackend(MatplotlibBackend):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('dxf_file')
-    parser.add_argument('output_path')
+    parser.add_argument("dxf_file")
+    parser.add_argument("output_path")
     parser.add_argument(
         "--scale",
         "-s",
         type=float,
         default=1.0,
         help="text scaling factor",
-
     )
     args = parser.parse_args()
 
