@@ -419,11 +419,11 @@ def from_hatch_edge_path(
             weights=edge.weights if edge.weights else None,
         )
 
-    def wcs(vertex: Vec2) -> Vec3:
-        return _wcs(Vec3(vertex.x, vertex.y, elevation))
+    def wcs(vertex: UVec) -> Vec3:
+        return _wcs(Vec3(vertex[0], vertex[1], elevation))
 
-    def wcs_tangent(vertex: Vec2) -> Vec3:
-        return _wcs(Vec3(vertex.x, vertex.y, 0))
+    def wcs_tangent(vertex: UVec) -> Vec3:
+        return _wcs(Vec3(vertex[0], vertex[1], 0))
 
     def _wcs(vec3: Vec3) -> Vec3:
         if ocs and ocs.transform:
