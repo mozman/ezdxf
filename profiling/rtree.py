@@ -1,7 +1,6 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 import time
-from pathlib import Path
 from ezdxf.math import Vec3, closest_point
 from ezdxf.math.rtree import RTree
 
@@ -9,8 +8,6 @@ try:
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None
-
-DIR = Path("~/Desktop/Outbox").expanduser()
 
 
 def random_points(n, size=1.0):
@@ -66,9 +63,7 @@ def profile_rtree_building(repeat: int, max_size: int):
     for size in range(100, 2000, 100):
         points = random_points(size, 50.0)
         name = f"RTree({size}, {max_size})"
-        t0 = profile(
-            profile_build_time_random_rtree, repeat, points, max_size
-        )
+        t0 = profile(profile_build_time_random_rtree, repeat, points, max_size)
         time_str = f"{t0:6.2f}s"
         print(f"Build random {name}, {repeat}x , {time_str}")
         log.append((size, t0))
@@ -81,9 +76,7 @@ def profile_rtree_contains_all_points(repeat: int, max_size: int):
         points = random_points(size, 50.0)
         tree = RTree(points, max_size)
         name = f"RTree({size}, {max_size})"
-        t0 = profile(
-            profile_tree_contains_points, repeat, tree, points
-        )
+        t0 = profile(profile_tree_contains_points, repeat, tree, points)
         time_str = f"{t0:6.2f}s"
         print(f"{name} contains all points, {repeat}x , {time_str}")
         log.append((size, t0))
@@ -98,9 +91,7 @@ def profile_rtree_nearest_neighbor(repeat: int, max_size: int):
         name = f"RTree({size}, {max_size})"
 
         search_points = random_points(100, 50.0)
-        t0 = profile(
-            profile_tree_nearest_neighbor, repeat, tree, search_points
-        )
+        t0 = profile(profile_tree_nearest_neighbor, repeat, tree, search_points)
         time_str = f"{t0:6.2f}s"
         print(f"{name} nearest neighbor, {repeat}x , {time_str}")
         log.append((size, t0))
@@ -113,9 +104,7 @@ def profile_brute_force_contains_all_points(repeat: int):
         points = random_points(size, 50.0)
 
         name = f"Brute Force({size})"
-        t0 = profile(
-            profile_brute_force_contains_points, repeat, points
-        )
+        t0 = profile(profile_brute_force_contains_points, repeat, points)
         time_str = f"{t0:6.2f}s"
         print(f"{name} contains all points, {repeat}x , {time_str}")
         log.append((size, t0))
@@ -171,7 +160,10 @@ if __name__ == "__main__":
     if PROFILE_RTREE_CONTAINS:
         log = profile_rtree_contains_all_points(10, max_size)
         if plt:
-            show_log(log, f"Random RTree contains all points, max node size={max_size}")
+            show_log(
+                log,
+                f"Random RTree contains all points, max node size={max_size}",
+            )
     if PROFILE_BRUTE_FORCE_CONTAINS:
         log = profile_brute_force_contains_all_points(10)
         if plt:
@@ -179,7 +171,9 @@ if __name__ == "__main__":
     if PROFILE_RTREE_NEIGHBOR:
         log = profile_rtree_nearest_neighbor(10, max_size)
         if plt:
-            show_log(log, f"Random RTree nearest neighbor, max node size={max_size}")
+            show_log(
+                log, f"Random RTree nearest neighbor, max node size={max_size}"
+            )
     if PROFILE_BRUTE_FORCE_NEIGHBOR:
         log = profile_brute_force_nearest_neighbor(10)
         if plt:

@@ -1,10 +1,9 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
-import os
 import time
-from ezdxf import EZDXF_TEST_FILES
+import ezdxf
 
-BIG_FILE = os.path.join(EZDXF_TEST_FILES, "CADKitSamples", "torso_uniform.dxf")
+BIG_FILE = ezdxf.options.test_files_path / "CADKitSamples" / "torso_uniform.dxf"
 
 
 def load_ascii():

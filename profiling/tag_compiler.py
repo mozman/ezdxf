@@ -1,12 +1,11 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
-import os
 import time
+import ezdxf
 from ezdxf.lldxf.tagger import ascii_tags_loader, tag_compiler
 from ezdxf.recover import safe_tag_loader
-from ezdxf import EZDXF_TEST_FILES
 
-BIG_FILE = os.path.join(EZDXF_TEST_FILES, "CADKitSamples", "torso_uniform.dxf")
+BIG_FILE = ezdxf.options.test_files_path / "CADKitSamples" / "torso_uniform.dxf"
 
 
 def load_ascii():

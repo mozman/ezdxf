@@ -1,11 +1,11 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
 import time
-from pathlib import Path
+import ezdxf
 
-DIR = Path(r"D:\Source\dxftest\CADKitSamples")
-_3D_MODEL = DIR / "fanuc-430-arm.dxf"
-_2D_PLAN = DIR / "AEC Plan Elev Sample.dxf"
+CWD = ezdxf.options.test_files_path / "CADKitSamples"
+_3D_MODEL = CWD / "fanuc-430-arm.dxf"
+_2D_PLAN = CWD / "AEC Plan Elev Sample.dxf"
 
 
 def load_3D_model():

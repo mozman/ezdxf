@@ -1,9 +1,9 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 import time
 import random
 import csv
-from pathlib import Path
+import pathlib
 from ezdxf.math.linalg import (
     Matrix,
     BandedMatrixLU,
@@ -11,7 +11,9 @@ from ezdxf.math.linalg import (
     LUDecomposition,
 )
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 
 def random_values(n, spread=1.0):
@@ -48,7 +50,7 @@ def profile(func, *args):
 
 REPEAT = 5
 
-with open(DIR / "profiling_banded_matrix.csv", mode="wt", newline="") as f:
+with open(CWD / "profiling_banded_matrix.csv", mode="wt", newline="") as f:
     writer = csv.writer(f, dialect="excel")
     writer.writerow(["Parameters", "Standard LU", "Banded LU", "Factor"])
     for size in range(10, 101, 5):

@@ -2,9 +2,14 @@
 #  License: MIT License
 import random
 import time
+import pathlib
 import ezdxf
 
 from ezdxf.math import Vec2, convex_hull_2d, is_point_left_of_line
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 SIZE = 100
 ROUNDS = 2000
@@ -76,7 +81,7 @@ def export_dxf(points):
     msp.add_lwpolyline(hull, dxfattribs={"color": 2, "layer": "old_hull"})
     hull = convex_hull_2d(points)
     msp.add_lwpolyline(hull, dxfattribs={"color": 6, "layer": "new_hull"})
-    doc.saveas(r"C:\Users\manfred\Desktop\Outbox\convexhull.dxf")
+    doc.saveas(CWD / "convexhull.dxf")
 
 
 def main():
@@ -87,6 +92,7 @@ def main():
     print(f"new convex hull function: {new:.3f}s")
     print(f"ratio old/new: {old/new:.3f}")
     export_dxf(points)
+
 
 if __name__ == "__main__":
     main()

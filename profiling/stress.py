@@ -1,27 +1,24 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
 
 import pytest
 import sys
 import argparse
 
-import os
-import glob
 import time
 import ezdxf
 from ezdxf import recover
-from ezdxf import EZDXF_TEST_FILES
 from itertools import chain
 
 DIRS = [
-    "AutodeskSamples/*.dxf",
-    "AutodeskProducts/*.dxf",
-    "CADKitSamples/*.dxf",
-    "*.dxf",
+    "AutodeskSamples",
+    "AutodeskProducts",
+    "CADKitSamples",
+    "",
 ]
 
 files = list(
-    chain(*[glob.glob(os.path.join(EZDXF_TEST_FILES, d)) for d in DIRS])
+    chain(*[(ezdxf.options.test_files_path / d).glob("*.dxf") for d in DIRS])
 )
 
 
@@ -74,7 +71,7 @@ if __name__ == "__main__":
     print_config()
     print("-" * 79)
     if args.cadkit:  # only CADKit samples
-        files = glob.glob(os.path.join(EZDXF_TEST_FILES, "CADKitSamples/*.dxf"))
+        files = (ezdxf.options.test_files_path / "CADKitSamples").glob("*.dxf")
     if args.log:
         logging.basicConfig(level=logging.WARNING)
 

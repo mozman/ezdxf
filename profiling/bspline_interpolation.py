@@ -1,10 +1,9 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import Iterable
 import time
-import ezdxf
-from pathlib import Path
+import pathlib
 import math
+import ezdxf
 from ezdxf.math import (
     global_bspline_interpolation,
     BoundingBox,
@@ -13,8 +12,9 @@ from ezdxf.math import (
 )
 from ezdxf.render import random_3d_path
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 def profile_bspline_interpolation(count, path):
     for _ in range(count):
@@ -43,7 +43,7 @@ def export_path(path):
     curve = global_bspline_interpolation(path)
     spline.apply_construction_tool(curve)
     doc.set_modelspace_vport(center=bbox.center, height=bbox.size[1])
-    doc.saveas(DIR / "path1.dxf")
+    doc.saveas(CWD / "path1.dxf")
 
 
 path = list(random_3d_path(100, max_step_size=10, max_heading=math.pi * 0.8))

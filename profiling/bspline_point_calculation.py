@@ -1,14 +1,9 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import Iterable
 import time
-import ezdxf
-from pathlib import Path
 import math
 from ezdxf.math import global_bspline_interpolation, linspace
 from ezdxf.render import random_3d_path
-
-DIR = Path("~/Desktop/Outbox").expanduser()
 
 path = list(random_3d_path(100, max_step_size=10, max_heading=math.pi * 0.8))
 spline = global_bspline_interpolation(path)

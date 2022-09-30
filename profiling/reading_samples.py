@@ -1,10 +1,9 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-import ezdxf
 import os
 from collections import Counter
 import time
-from ezdxf import EZDXF_TEST_FILES
+import ezdxf
 
 CADKIT = "CADKitSamples"
 CADKIT_FILES = [
@@ -50,7 +49,7 @@ def count_entities(msp):
 
 
 for _name in CADKIT_FILES:
-    filename = os.path.join(EZDXF_TEST_FILES, CADKIT, _name)
+    filename = ezdxf.options.test_files_path / CADKIT / _name
     print(f"reading file: {filename}")
     start_reading = time.perf_counter()
     doc = ezdxf.readfile(filename)

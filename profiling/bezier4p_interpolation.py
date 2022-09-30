@@ -1,14 +1,15 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import Iterable
 import time
 import ezdxf
-from pathlib import Path
+import pathlib
 import math
 from ezdxf.math import cubic_bezier_interpolation, BoundingBox
 from ezdxf.render import random_3d_path
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 
 def profile_bezier_interpolation(count, path):
@@ -33,7 +34,7 @@ def export_path(path):
             curve.approximate(20), dxfattribs={"layer": "Bézier", "color": 1}
         )
     doc.set_modelspace_vport(center=bbox.center, height=bbox.size[1])
-    doc.saveas(DIR / "path1.dxf")
+    doc.saveas(CWD / "path1.dxf")
 
 
 path = list(random_3d_path(100, max_step_size=10, max_heading=math.pi * 0.8))
