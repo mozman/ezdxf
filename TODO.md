@@ -4,29 +4,46 @@ TODO
 Add-ons
 -------
 
-- drawing
+- drawing add-on improvements:
   - (>v1.0) render SHX fonts and SHAPE entities as paths by the frontend 
     from `.shx` or `.shp` files
   
-- (>v1.0) Native SVG exporter, planned after the matplotlib backend supports 
-  all v1.0 features. 
-
-- (>v1.0) Native PDF exporter? Problem: The PDF 1.7 reference has ~1300 pages, 
-  but I assume I only need a fraction of that information for a simple exporter. 
-  I can use Matplotlib for text rendering as Bèzier curves if required.  
-  
-  Existing Python packages for PDF rendering: 
-  - pycairo: binary wheels for Windows on PyPI - could handle SVG & PDF, but I 
-    don't know how much control I get from cairo. The advantage of a native 
-    exporter would be to get full control over all available features of the 
-    output format, by the disadvantage of doing ALL the work by myself.
-  - pypoppler: only source code distribution from 2013 on PyPI
-  - python-poppler-qt5: only source code distribution on PyPI
-  - Reportlab: more report or magazine page layout oriented
-  - PyQt: QPrinter & QPainter - https://wiki.qt.io/Handling_PDF
-  
-  In consideration, if the SVG exporter works well.
+  - (>v1.0) proper rendering pipeline: Frontend -> Stage0 -> ... -> Backend 
+    Introducing the Designer() class was the first step, but the implementation 
+    is not as flexible as required. Possible rendering stages:
+    - linetype rendering
+    - 3D text rendering as path-patches
+    - optional stage to render ALL text as path-patches, this could be used for 
+      backends without good text support like the Pillow backend.
+    - ortho-view projection (TOP, LEFT, FRONT, ...)
     
+    The pipeline should be passed to the Frontend() class as component or 
+    set on the fly. The composition of the pipeline from various stages is a 
+    very important feature.
+  
+    REMINDER FOR MYSELF: Decoupling of the rendering stages and the pipeline 
+    is very important, the first proof of concept was too tightly 
+    coupled (viewport rendering)!!!!
+
+  - (>v1.0) Native SVG exporter, planned after the matplotlib backend supports 
+    all v1.0 features. 
+
+  - (>v1.0) Native PDF exporter? Problem: The PDF 1.7 reference has ~1300 pages, 
+    but I assume I only need a fraction of that information for a simple exporter. 
+    I can use Matplotlib for text rendering as Bèzier curves if required.  
+  
+    Existing Python packages for PDF rendering: 
+    - pycairo: binary wheels for Windows on PyPI - could handle SVG & PDF, but I 
+      don't know how much control I get from cairo. The advantage of a native 
+      exporter would be to get full control over all available features of the 
+      output format, by the disadvantage of doing ALL the work by myself.
+    - pypoppler: only source code distribution from 2013 on PyPI
+    - python-poppler-qt5: only source code distribution on PyPI
+    - Reportlab: more report or magazine page layout oriented
+    - PyQt: QPrinter & QPainter - https://wiki.qt.io/Handling_PDF
+  
+    In consideration, if the SVG exporter works well.
+   
 - (>v1.0) DWG loader, planned for the future. Cython will be required for the 
   low level stuff, no pure Python implementation.
 - (>v1.0) text2path: add support for SHX fonts
