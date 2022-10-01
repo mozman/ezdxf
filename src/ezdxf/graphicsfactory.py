@@ -17,7 +17,7 @@ from ezdxf.math import (
     NULLVEC,
 )
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import factory, Point, Spline, Body, Surface
+from ezdxf.entities import factory, Point, Spline, Body, Surface, Line
 from ezdxf.entities.mtext_columns import *
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import (
         Arc,
         AttDef,
-        Attrib,
         Circle,
         Dimension,
         ArcDimension,
@@ -44,7 +43,6 @@ if TYPE_CHECKING:
         Insert,
         LWPolyline,
         Leader,
-        Line,
         LoftedSurface,
         MLine,
         MText,
@@ -75,7 +73,7 @@ if TYPE_CHECKING:
 
 
 class CreatorInterface:
-    def __init__(self, doc: "Drawing"):
+    def __init__(self, doc: Drawing):
         self.doc = doc
 
     @property
@@ -86,7 +84,7 @@ class CreatorInterface:
     def is_active_paperspace(self):
         return False
 
-    def new_entity(self, type_: str, dxfattribs: Dict) -> "DXFGraphic":
+    def new_entity(self, type_: str, dxfattribs: Dict) -> DXFGraphic:
         """
         Create entity in drawing database and add entity to the entity space.
 
@@ -99,10 +97,10 @@ class CreatorInterface:
         self.add_entity(entity)  # type: ignore
         return entity  # type: ignore
 
-    def add_entity(self, entity: "DXFGraphic") -> None:
+    def add_entity(self, entity: DXFGraphic) -> None:
         pass
 
-    def add_point(self, location: UVec, dxfattribs=None) -> "Point":
+    def add_point(self, location: UVec, dxfattribs=None) -> Point:
         """
         Add a :class:`~ezdxf.entities.Point` entity at `location`.
 
@@ -115,7 +113,7 @@ class CreatorInterface:
         dxfattribs["location"] = Vec3(location)
         return self.new_entity("POINT", dxfattribs)  # type: ignore
 
-    def add_line(self, start: UVec, end: UVec, dxfattribs=None) -> "Line":
+    def add_line(self, start: UVec, end: UVec, dxfattribs=None) -> Line:
         """
         Add a :class:`~ezdxf.entities.Line` entity from `start` to `end`.
 
@@ -132,7 +130,7 @@ class CreatorInterface:
 
     def add_circle(
         self, center: UVec, radius: float, dxfattribs=None
-    ) -> "Circle":
+    ) -> Circle:
         """
         Add a :class:`~ezdxf.entities.Circle` entity. This is an 2D element,
         which can be placed in space by using :ref:`OCS`.
@@ -156,12 +154,12 @@ class CreatorInterface:
         start_param: float = 0,
         end_param: float = math.tau,
         dxfattribs=None,
-    ) -> "Ellipse":
+    ) -> Ellipse:
         """
         Add an :class:`~ezdxf.entities.Ellipse` entity, `ratio` is the ratio of
         minor axis to major axis, `start_param` and `end_param` defines start
         and end point of the ellipse, a full ellipse goes from 0 to 2π.
-        The ellipse goes from start to end param in `counter clockwise`
+        The ellipse goes from start to end param in `counter-clockwise`
         direction.
 
         Args:
@@ -197,10 +195,10 @@ class CreatorInterface:
         end_angle: float,
         is_counter_clockwise: bool = True,
         dxfattribs=None,
-    ) -> "Arc":
+    ) -> Arc:
         """
         Add an :class:`~ezdxf.entities.Arc` entity. The arc goes from
-        `start_angle` to `end_angle` in counter clockwise direction by default,
+        `start_angle` to `end_angle` in counter-clockwise direction by default,
         set parameter `is_counter_clockwise` to ``False`` for clockwise
         orientation.
 
@@ -240,7 +238,7 @@ class CreatorInterface:
         """
         return self._add_quadrilateral("SOLID", points, dxfattribs)  # type: ignore
 
-    def add_trace(self, points: Iterable[UVec], dxfattribs=None) -> "Trace":
+    def add_trace(self, points: Iterable[UVec], dxfattribs=None) -> Trace:
         """Add a :class:`~ezdxf.entities.Trace` entity, `points` is an iterable
         of 3 or 4 points.
 
@@ -256,7 +254,7 @@ class CreatorInterface:
         """
         return self._add_quadrilateral("TRACE", points, dxfattribs)  # type: ignore
 
-    def add_3dface(self, points: Iterable[UVec], dxfattribs=None) -> "Face3d":
+    def add_3dface(self, points: Iterable[UVec], dxfattribs=None) -> Face3d:
         """
         Add a :class:`~ezdxf.entities.3DFace` entity, `points` is an iterable
         3 or 4 2D/3D points.
@@ -280,7 +278,7 @@ class CreatorInterface:
         height: float = None,
         rotation: float = None,
         dxfattribs=None,
-    ) -> "Text":
+    ) -> Text:
         """
         Add a :class:`~ezdxf.entities.Text` entity, see also
         :class:`~ezdxf.entities.Textstyle`.
@@ -301,9 +299,7 @@ class CreatorInterface:
         dxfattribs.setdefault("insert", Vec3())
         return self.new_entity("TEXT", dxfattribs)  # type: ignore
 
-    def add_blockref(
-        self, name: str, insert: UVec, dxfattribs=None
-    ) -> "Insert":
+    def add_blockref(self, name: str, insert: UVec, dxfattribs=None) -> Insert:
         """
         Add an :class:`~ezdxf.entities.Insert` entity.
 
@@ -333,7 +329,7 @@ class CreatorInterface:
         insert: UVec,
         values: Dict[str, str],
         dxfattribs=None,
-    ) -> "Insert":
+    ) -> Insert:
         """
         Add an :class:`~ezdxf.entities.Insert` entity. This method adds for each
         :class:`~ezdxf.entities.Attdef` entity, defined in the block definition,
@@ -391,7 +387,7 @@ class CreatorInterface:
         height: float = None,
         rotation: float = None,
         dxfattribs=None,
-    ) -> "AttDef":
+    ) -> AttDef:
         """
         Add an :class:`~ezdxf.entities.AttDef` as stand alone DXF entity.
 
@@ -427,7 +423,7 @@ class CreatorInterface:
         *,
         close: bool = False,
         dxfattribs=None,
-    ) -> "Polyline":
+    ) -> Polyline:
         """
         Add a 2D :class:`~ezdxf.entities.Polyline` entity.
 
@@ -464,7 +460,7 @@ class CreatorInterface:
         *,
         close: bool = False,
         dxfattribs=None,
-    ) -> "Polyline":
+    ) -> Polyline:
         """Add a 3D :class:`~ezdxf.entities.Polyline` entity.
 
         Args:
@@ -481,7 +477,7 @@ class CreatorInterface:
 
     def add_polymesh(
         self, size: Tuple[int, int] = (3, 3), dxfattribs=None
-    ) -> "Polymesh":
+    ) -> Polymesh:
         """
         Add a :class:`~ezdxf.entities.Polymesh` entity, which is a wrapper class
         for the POLYLINE entity. A polymesh is a grid of `mcount` x `ncount`
@@ -502,8 +498,7 @@ class CreatorInterface:
         dxfattribs["n_count"] = n_size
         m_close = dxfattribs.pop("m_close", False)
         n_close = dxfattribs.pop("n_close", False)
-        # returns casted entity
-        polymesh: "Polymesh" = self.new_entity("POLYLINE", dxfattribs)  # type: ignore
+        polymesh: Polymesh = self.new_entity("POLYLINE", dxfattribs)  # type: ignore
 
         points = [(0, 0, 0)] * (m_size * n_size)
         polymesh.append_vertices(points)  # init mesh vertices
@@ -513,7 +508,7 @@ class CreatorInterface:
 
         return polymesh
 
-    def add_polyface(self, dxfattribs=None) -> "Polyface":
+    def add_polyface(self, dxfattribs=None) -> Polyface:
         """Add a :class:`~ezdxf.entities.Polyface` entity, which is a wrapper
         class for the POLYLINE entity.
 
@@ -560,9 +555,9 @@ class CreatorInterface:
         insert: UVec = (0, 0),
         size: float = 1.0,
         dxfattribs=None,
-    ) -> "Shape":
+    ) -> Shape:
         """
-        Add a :class:`~ezdxf.entities.Shape` reference to a external stored shape.
+        Add a :class:`~ezdxf.entities.Shape` reference to an external stored shape.
 
         Args:
             name: shape name as string
@@ -586,7 +581,7 @@ class CreatorInterface:
         *,
         close: bool = False,
         dxfattribs=None,
-    ) -> "LWPolyline":
+    ) -> LWPolyline:
         """
         Add a 2D polyline as :class:`~ezdxf.entities.LWPolyline` entity.
         A points are defined as (x, y, [start_width, [end_width, [bulge]]])
@@ -629,7 +624,7 @@ class CreatorInterface:
         lwpolyline.closed = close
         return lwpolyline
 
-    def add_mtext(self, text: str, dxfattribs=None) -> "MText":
+    def add_mtext(self, text: str, dxfattribs=None) -> MText:
         """
         Add a multiline text entity with automatic text wrapping at boundaries
         as :class:`~ezdxf.entities.MText` entity.
@@ -654,7 +649,7 @@ class CreatorInterface:
         gutter_width: float,
         height: float,
         dxfattribs=None,
-    ) -> "MText":
+    ) -> MText:
         """Add a multiline text entity with static columns as
         :class:`~ezdxf.entities.MText` entity. The content is spread
         across the columns, the count of content strings determine the count
@@ -705,8 +700,8 @@ class CreatorInterface:
         height: float,
         count: int,
         dxfattribs=None,
-    ) -> "MText":
-        """Add a multiline text entity with as much columns as needed for the
+    ) -> MText:
+        """Add a multiline text entity with as many columns as needed for the
         given common fixed `height`. The content is spread across the columns
         automatically by the CAD application. The `height` argument also defines
         the total height of the MTEXT entity. To get the correct column `count`
@@ -764,7 +759,7 @@ class CreatorInterface:
         gutter_width: float,
         heights: Sequence[float],
         dxfattribs=None,
-    ) -> "MText":
+    ) -> MText:
         """Add a multiline text entity with dynamic columns as
         :class:`~ezdxf.entities.MText` entity. The content is spread
         across the columns automatically by the CAD application.
@@ -829,7 +824,7 @@ class CreatorInterface:
         self.add_entity(mtext)
         return mtext
 
-    def add_ray(self, start: UVec, unit_vector: UVec, dxfattribs=None) -> "Ray":
+    def add_ray(self, start: UVec, unit_vector: UVec, dxfattribs=None) -> Ray:
         """
         Add a :class:`~ezdxf.entities.Ray` that begins at `start` point and
         continues to infinity (construction line). (requires DXF R2000)
@@ -849,7 +844,7 @@ class CreatorInterface:
 
     def add_xline(
         self, start: UVec, unit_vector: UVec, dxfattribs=None
-    ) -> "XLine":
+    ) -> XLine:
         """Add an infinity :class:`~ezdxf.entities.XLine` (construction line).
         (requires DXF R2000)
 
@@ -1039,7 +1034,7 @@ class CreatorInterface:
             spline.knots = knots  # type: ignore
         return spline
 
-    def add_body(self, dxfattribs=None) -> "Body":
+    def add_body(self, dxfattribs=None) -> Body:
         """Add a :class:`~ezdxf.entities.Body` entity.
         (requires DXF R2000 or later)
 
@@ -1048,7 +1043,7 @@ class CreatorInterface:
         """
         return self._add_acis_entity("BODY", dxfattribs)  # type: ignore
 
-    def add_region(self, dxfattribs=None) -> "Region":
+    def add_region(self, dxfattribs=None) -> Region:
         """Add a :class:`~ezdxf.entities.Region` entity.
         (requires DXF R2000 or later)
 
@@ -1057,7 +1052,7 @@ class CreatorInterface:
         """
         return self._add_acis_entity("REGION", dxfattribs)  # type: ignore
 
-    def add_3dsolid(self, dxfattribs=None) -> "Solid3d":
+    def add_3dsolid(self, dxfattribs=None) -> Solid3d:
         """Add a 3DSOLID entity (:class:`~ezdxf.entities.Solid3d`).
         (requires DXF R2000 or later)
 
@@ -1066,7 +1061,7 @@ class CreatorInterface:
         """
         return self._add_acis_entity("3DSOLID", dxfattribs)  # type: ignore
 
-    def add_surface(self, dxfattribs=None) -> "Surface":
+    def add_surface(self, dxfattribs=None) -> Surface:
         """Add a :class:`~ezdxf.entities.Surface` entity.
         (requires DXF R2007 or later)
 
@@ -1077,7 +1072,7 @@ class CreatorInterface:
             raise DXFVersionError("SURFACE requires DXF R2007 or later")
         return self._add_acis_entity("SURFACE", dxfattribs)  # type: ignore
 
-    def add_extruded_surface(self, dxfattribs=None) -> "ExtrudedSurface":
+    def add_extruded_surface(self, dxfattribs=None) -> ExtrudedSurface:
         """Add a :class:`~ezdxf.entities.ExtrudedSurface` entity.
         (requires DXF R2007 or later)
 
@@ -1088,7 +1083,7 @@ class CreatorInterface:
             raise DXFVersionError("EXTRUDEDSURFACE requires DXF R2007 or later")
         return self._add_acis_entity("EXTRUDEDSURFACE", dxfattribs)  # type: ignore
 
-    def add_lofted_surface(self, dxfattribs=None) -> "LoftedSurface":
+    def add_lofted_surface(self, dxfattribs=None) -> LoftedSurface:
         """Add a :class:`~ezdxf.entities.LoftedSurface` entity.
         (requires DXF R2007 or later)
 
@@ -1099,7 +1094,7 @@ class CreatorInterface:
             raise DXFVersionError("LOFTEDSURFACE requires DXF R2007 or later")
         return self._add_acis_entity("LOFTEDSURFACE", dxfattribs)  # type: ignore
 
-    def add_revolved_surface(self, dxfattribs=None) -> "RevolvedSurface":
+    def add_revolved_surface(self, dxfattribs=None) -> RevolvedSurface:
         """
         Add a :class:`~ezdxf.entities.RevolvedSurface` entity.
         (requires DXF R2007 or later)
@@ -1111,7 +1106,7 @@ class CreatorInterface:
             raise DXFVersionError("REVOLVEDSURFACE requires DXF R2007 or later")
         return self._add_acis_entity("REVOLVEDSURFACE", dxfattribs)  # type: ignore
 
-    def add_swept_surface(self, dxfattribs=None) -> "SweptSurface":
+    def add_swept_surface(self, dxfattribs=None) -> SweptSurface:
         """
         Add a :class:`~ezdxf.entities.SweptSurface` entity.
         (requires DXF R2007 or later)
@@ -1123,7 +1118,7 @@ class CreatorInterface:
             raise DXFVersionError("SWEPTSURFACE requires DXF R2007 or later")
         return self._add_acis_entity("SWEPTSURFACE", dxfattribs)  # type: ignore
 
-    def _add_acis_entity(self, name, dxfattribs) -> "Body":
+    def _add_acis_entity(self, name, dxfattribs) -> Body:
         if self.dxfversion < const.DXF2000:
             raise DXFVersionError(f"{name} requires DXF R2000 or later")
         dxfattribs = dict(dxfattribs or {})
@@ -1132,7 +1127,7 @@ class CreatorInterface:
             dxfattribs.setdefault("uid", guid())
         return self.new_entity(name, dxfattribs)  # type: ignore
 
-    def add_hatch(self, color: int = 7, dxfattribs=None) -> "Hatch":
+    def add_hatch(self, color: int = 7, dxfattribs=None) -> Hatch:
         """Add a :class:`~ezdxf.entities.Hatch` entity. (requires DXF R2000)
 
         Args:
@@ -1153,7 +1148,7 @@ class CreatorInterface:
         color: int = const.BYLAYER,
         fill_color: int = None,
         dxfattribs=None,
-    ) -> "MPolygon":
+    ) -> MPolygon:
         """Add a :class:`~ezdxf.entities.MPolygon` entity. (requires DXF R2000)
 
         The MPOLYGON entity is not a core DXF entity and is not supported by
@@ -1183,7 +1178,7 @@ class CreatorInterface:
         dxfattribs["color"] = int(color)
         return self.new_entity("MPOLYGON", dxfattribs)  # type: ignore
 
-    def add_mesh(self, dxfattribs=None) -> "Mesh":
+    def add_mesh(self, dxfattribs=None) -> Mesh:
         """
         Add a :class:`~ezdxf.entities.Mesh` entity. (requires DXF R2007)
 
@@ -1198,7 +1193,7 @@ class CreatorInterface:
 
     def add_image(
         self,
-        image_def: "ImageDef",
+        image_def: ImageDef,
         insert: UVec,
         size_in_units: Tuple[float, float],
         rotation: float = 0.0,
@@ -1234,9 +1229,7 @@ class CreatorInterface:
         dxfattribs["image_def"] = image_def  # is not a real DXF attrib
         return self.new_entity("IMAGE", dxfattribs)  # type: ignore
 
-    def add_wipeout(
-        self, vertices: Iterable[UVec], dxfattribs=None
-    ) -> "Wipeout":
+    def add_wipeout(self, vertices: Iterable[UVec], dxfattribs=None) -> Wipeout:
         """Add a :class:`ezdxf.entities.Wipeout` entity, the masking area is
         defined by WCS `vertices`.
 
@@ -1259,7 +1252,7 @@ class CreatorInterface:
         scale=(1, 1, 1),
         rotation: float = 0.0,
         dxfattribs=None,
-    ) -> "Underlay":
+    ) -> Underlay:
         """
         Add an :class:`~ezdxf.entities.Underlay` entity, requires a
         :class:`~ezdxf.entities.UnderlayDefinition` entity,
@@ -1282,7 +1275,7 @@ class CreatorInterface:
         dxfattribs["underlay_def_handle"] = underlay_def.dxf.handle
         dxfattribs["rotation"] = float(rotation)
 
-        underlay: "Underlay" = self.new_entity(  # type: ignore
+        underlay: Underlay = self.new_entity(  # type: ignore
             underlay_def.entity_name, dxfattribs
         )
         underlay.scaling = scale
@@ -1310,7 +1303,7 @@ class CreatorInterface:
         dimstyle: str = "EZDXF",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Add horizontal, vertical and rotated :class:`~ezdxf.entities.Dimension`
         line. If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
@@ -1321,7 +1314,7 @@ class CreatorInterface:
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
-        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step
+        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two-step
         process allows additional processing steps on the
         :class:`~ezdxf.entities.Dimension` entity between creation and rendering.
 
@@ -1335,7 +1328,7 @@ class CreatorInterface:
                 its extension will do (in UCS)
             p1: measurement point 1 and start point of extension line 1 (in UCS)
             p2: measurement point 2 and start point of extension line 2 (in UCS)
-            location: user defined location for text mid point (in UCS)
+            location: user defined location for the text midpoint (in UCS)
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text, everything
                 else `text` is drawn as dimension text
@@ -1395,7 +1388,7 @@ class CreatorInterface:
         This method sets many design decisions by itself, the necessary geometry
         will be generated automatically, no required nor possible
         :meth:`~ezdxf.entities.DimStyleOverride.render` call.
-        This method is easy to use but you get what you get.
+        This method is easy to use, but you get what you get.
 
         .. note::
 
@@ -1443,7 +1436,7 @@ class CreatorInterface:
         dimstyle: str = "EZDXF",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Add linear dimension aligned with measurement points `p1` and `p2`. If
         an :class:`~ezdxf.math.UCS` is used for dimension line rendering, all
@@ -1453,8 +1446,8 @@ class CreatorInterface:
         See also: :ref:`tut_linear_dimension`
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object,
-        to create the necessary dimension geometry, you have to  call
-        :meth:`DimStyleOverride.render` manually, this two step process allows
+        to create the necessary dimension geometry, you have to call
+        :meth:`DimStyleOverride.render` manually, this two-step process allows
         additional processing steps on the  :class:`~ezdxf.entities.Dimension`
         entity between creation and rendering.
 
@@ -1506,10 +1499,10 @@ class CreatorInterface:
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
-        Add angular :class:`~ezdxf.entities.Dimension` from 2 lines. The
-        measurement is always done from `line1` to `line2` in counter clockwise
+        Add angular :class:`~ezdxf.entities.Dimension` from two lines. The
+        measurement is always done from `line1` to `line2` in counter-clockwise
         orientation. This does not always match the result in CAD applications!
 
         If an :class:`~ezdxf.math.UCS` is used for angular dimension rendering,
@@ -1519,7 +1512,7 @@ class CreatorInterface:
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
-        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step
+        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two-step
         process allows additional processing steps on the
         :class:`~ezdxf.entities.Dimension` entity between creation and rendering.
 
@@ -1535,7 +1528,7 @@ class CreatorInterface:
                 determines extension line 1 (in UCS)
             line2: specifies end leg of the angle (start point, end point) and
                 determines extension line 2 (in UCS)
-            location: user defined location for text mid point (in UCS)
+            location: user defined location for the text midpoint (in UCS)
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -1587,11 +1580,11 @@ class CreatorInterface:
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
-        Add angular :class:`~ezdxf.entities.Dimension` from 3 points
+        Add angular :class:`~ezdxf.entities.Dimension` from three points
         (center, p1, p2). The measurement is always done from `p1` to `p2` in
-        counter clockwise orientation. This does not always match the result in
+        counter-clockwise orientation. This does not always match the result in
         CAD applications!
 
         If an :class:`~ezdxf.math.UCS` is used for angular dimension rendering,
@@ -1601,7 +1594,7 @@ class CreatorInterface:
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
-        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step
+        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two-step
         process allows additional processing steps on the
         :class:`~ezdxf.entities.Dimension` entity between creation and rendering.
 
@@ -1614,11 +1607,11 @@ class CreatorInterface:
             base: location of dimension line, any point on the dimension line
                 or its extension is valid (in UCS)
             center: specifies the vertex of the angle
-            p1: specifies start leg of the angle (center -> p1) and end point
+            p1: specifies start leg of the angle (center -> p1) and end-point
                 of extension line 1 (in UCS)
-            p2: specifies end leg of the  angle (center -> p2) and end point
+            p2: specifies end leg of the  angle (center -> p2) and end-point
                 of extension line 2 (in UCS)
-            location: user defined location for text mid point (in UCS)
+            location: user defined location for the text midpoint (in UCS)
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -1671,13 +1664,13 @@ class CreatorInterface:
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Shortcut method to create an angular dimension by (c)enter point,
         (r)adius and start- and end (a)ngles, the measurement text is placed at
         the default location defined by the associated `dimstyle`.
         The measurement is always done from `start_angle` to `end_angle` in
-        counter clockwise orientation. This does not always match the result in
+        counter-clockwise orientation. This does not always match the result in
         CAD applications!
         For further information see the more generic factory method
         :func:`add_angular_dim_3p`.
@@ -1690,7 +1683,7 @@ class CreatorInterface:
             end_angle: end angle in degrees (in UCS)
             distance: distance from start of the extension lines to the
                 dimension line in drawing units
-            location: user defined location for text mid point (in UCS)
+            location: user defined location for the text midpoint (in UCS)
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -1744,7 +1737,7 @@ class CreatorInterface:
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Shortcut method to create an angular dimension from a
         :class:`~ezdxf.math.ConstructionArc`. This construction tool can
@@ -1753,7 +1746,7 @@ class CreatorInterface:
         The measurement text is placed at the default location defined by the
         associated `dimstyle`.
         The measurement is always done from `start_angle` to `end_angle` of the
-        arc in counter clockwise orientation.
+        arc in counter-clockwise orientation.
         This does not always match the result in CAD applications!
         For further information see the more generic factory method
         :func:`add_angular_dim_3p`.
@@ -1762,7 +1755,7 @@ class CreatorInterface:
             arc: :class:`~ezdxf.math.ConstructionArc`
             distance: distance from start of the extension lines to the
                 dimension line in drawing units
-            location: user defined location for text mid point (in UCS)
+            location: user defined location for the text midpoint (in UCS)
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -1805,11 +1798,11 @@ class CreatorInterface:
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
-        Add :class:`~ezdxf.entities.ArcDimension` from 3 points
-        (center, p1, p2). Point `p1` defines the radius and the start angle of
-        the arc, point `p2` only defines the end angle of the arc.
+        Add :class:`~ezdxf.entities.ArcDimension` from three points
+        (center, p1, p2). Point `p1` defines the radius and the start-angle of
+        the arc, point `p2` only defines the end-angle of the arc.
 
         If an :class:`~ezdxf.math.UCS` is used for arc dimension rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
@@ -1818,7 +1811,7 @@ class CreatorInterface:
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
-        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step
+        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two-step
         process allows additional processing steps on the
         :class:`~ezdxf.entities.ArcDimension` entity between creation and
         rendering.
@@ -1837,7 +1830,7 @@ class CreatorInterface:
                 arc, this is also the start point for the 1st extension line (in UCS)
             p2: specifies the end angle of the arc. The start 2nd extension line
                 is defined by this angle and the radius defined by p1 (in UCS)
-            location: user defined location for text mid point (in UCS)
+            location: user defined location for the text midpoint (in UCS)
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -1856,8 +1849,8 @@ class CreatorInterface:
         # always set dimtype to 8 for DXF R2013+, the DXF export handles the
         # version dependent dimtype
         type_ = {"dimtype": const.DIM_ARC | const.DIM_BLOCK_EXCLUSIVE}
-        dimline = cast(
-            "ArcDimension", self.new_entity("ARC_DIMENSION", dxfattribs=type_)
+        dimline: "ArcDimension" = self.new_entity(  # type: ignore
+            "ARC_DIMENSION", dxfattribs=type_
         )
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
@@ -1898,7 +1891,7 @@ class CreatorInterface:
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Shortcut method to create an arc dimension by (c)enter point,
         (r)adius and start- and end (a)ngles, the measurement text is placed at
@@ -1914,11 +1907,11 @@ class CreatorInterface:
             center: center point of the angle (in UCS)
             radius: the distance from `center` to the start of the extension
                 lines in drawing units
-            start_angle: start angle in degrees (in UCS)
-            end_angle: end angle in degrees (in UCS)
+            start_angle: start-angle in degrees (in UCS)
+            end_angle: end-angle in degrees (in UCS)
             distance: distance from start of the extension lines to the
                 dimension line in drawing units
-            location: user defined location for text mid point (in UCS)
+            location: user defined location for text midpoint (in UCS)
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -1972,7 +1965,7 @@ class CreatorInterface:
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Shortcut method to create an arc dimension from a
         :class:`~ezdxf.math.ConstructionArc`. This construction tool can
@@ -1991,7 +1984,7 @@ class CreatorInterface:
             arc: :class:`~ezdxf.math.ConstructionArc`
             distance: distance from start of the extension lines to the
                 dimension line in drawing units
-            location: user defined location for text mid point (in UCS)
+            location: user defined location for the text midpoint (in UCS)
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -2033,7 +2026,7 @@ class CreatorInterface:
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Add a diameter :class:`~ezdxf.entities.Dimension` line. The diameter
         dimension line requires a `center` point and a point `mpoint` on the
@@ -2047,7 +2040,7 @@ class CreatorInterface:
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
-        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step
+        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two-step
         process allows additional processing steps on the :class:`~ezdxf.entities.Dimension`
         entity between creation and rendering.
 
@@ -2062,7 +2055,7 @@ class CreatorInterface:
             radius: specify radius, requires argument `angle`, overrides `p1` argument
             angle: specify angle of dimension line in degrees, requires argument
                 `radius`, overrides `p1` argument
-            location: user defined location for text mid point (in UCS)
+            location: user defined location for the text midpoint (in UCS)
             text: ``None`` or ``"<>"`` the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -2120,13 +2113,13 @@ class CreatorInterface:
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Shortcut method to create a diameter dimension by two points on the
         circle and the measurement text at the default location defined by the
         associated `dimstyle`, for further information see general method
         :func:`add_diameter_dim`. Center point of the virtual circle is the
-        mid point between `p1` and `p2`.
+        midpoint between `p1` and `p2`.
 
         - dimstyle "EZ_RADIUS": places the dimension text outside
         - dimstyle "EZ_RADIUS_INSIDE": places the dimension text inside
@@ -2169,21 +2162,21 @@ class CreatorInterface:
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Add a radius :class:`~ezdxf.entities.Dimension` line. The radius
         dimension line requires a `center` point and a point `mpoint` on the
         circle or as an alternative a `radius` and a dimension line `angle` in
         degrees. See also: :ref:`tut_radius_dimension`
 
-        If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
+        If a :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is
         defined by UCS or (0, 0, 1) by default.
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
-        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step
+        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two-step
         process allows additional processing steps on the
         :class:`~ezdxf.entities.Dimension` entity between creation and rendering.
 
@@ -2277,7 +2270,7 @@ class CreatorInterface:
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Shortcut method to create a radius dimension by center point,
         measurement point on the circle and the measurement text at the default
@@ -2320,7 +2313,7 @@ class CreatorInterface:
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "DimStyleOverride":
+    ) -> DimStyleOverride:
         """
         Shortcut method to create a radius dimension by (c)enter point,
         (r)adius and (a)ngle, the measurement text is placed at the default
@@ -2380,7 +2373,7 @@ class CreatorInterface:
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
-        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step
+        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two-step
         process allows additional processing steps on the
         :class:`~ezdxf.entities.Dimension` entity between creation and rendering.
 
@@ -2458,7 +2451,7 @@ class CreatorInterface:
         override: Dict = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
-        """Shortcut to add a x-type feature ordinate DIMENSION, for more
+        """Shortcut to add an x-type feature ordinate DIMENSION, for more
         information see :meth:`add_ordinate_dim`.
 
         .. versionadded:: v0.18
@@ -2546,7 +2539,7 @@ class CreatorInterface:
         dimstyle: str = "EZDXF",
         override: Dict = None,
         dxfattribs=None,
-    ) -> "Leader":
+    ) -> Leader:
         """
         The :class:`~ezdxf.entities.Leader` entity represents an arrow, made up
         of one or more vertices (or spline fit points) and an arrowhead.
@@ -2601,7 +2594,7 @@ class CreatorInterface:
         self,
         style: str = "Standard",
         dxfattribs=None,
-    ) -> "MultiLeaderMTextBuilder":
+    ) -> MultiLeaderMTextBuilder:
         """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
         a :class:`~ezdxf.render.MultiLeaderMTextBuilder`.
 
@@ -2617,7 +2610,7 @@ class CreatorInterface:
         self,
         style: str = "Standard",
         dxfattribs=None,
-    ) -> "MultiLeaderBlockBuilder":
+    ) -> MultiLeaderBlockBuilder:
         """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
         a :class:`~ezdxf.render.MultiLeaderBlockBuilder`.
 
@@ -2633,7 +2626,7 @@ class CreatorInterface:
         self,
         style: str,
         dxfattribs=None,
-    ) -> "MultiLeader":
+    ) -> MultiLeader:
         if self.dxfversion < DXF2000:
             raise DXFVersionError("MULTILEADER requires DXF R2000")
         dxfattribs = dict(dxfattribs or {})
@@ -2649,7 +2642,7 @@ class CreatorInterface:
         *,
         close: bool = False,
         dxfattribs=None,
-    ) -> "MLine":
+    ) -> MLine:
         """Add a :class:`~ezdxf.entities.MLine` entity
 
         Args:
@@ -2677,7 +2670,7 @@ class CreatorInterface:
         turns: float,
         ccw=True,
         dxfattribs=None,
-    ) -> "Helix":
+    ) -> Helix:
         """
         Add a :class:`~ezdxf.entities.Helix` entity.
 
