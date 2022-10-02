@@ -67,7 +67,7 @@ Simplified render workflow but with less control:
     if not auditor.has_errors:
         matplotlib.qsave(doc.modelspace(), 'your.png')
 
-.. autofunction:: ezdxf.addons.drawing.matplotlib.qsave(layout: Layout, filename: str, *, bg: Color = None, fg: Color = None, dpi: int = 300, size_inches: Tuple[float, float]=None, backend: str = "agg", config: Configuration = None, filter_func: FilterFunc = None) -> None
+.. autofunction:: ezdxf.addons.drawing.matplotlib.qsave
 
 MatplotlibBackend
 -----------------

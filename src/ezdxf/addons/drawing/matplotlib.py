@@ -1,8 +1,10 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
+from __future__ import annotations
 import math
-from typing import Iterable, TYPE_CHECKING, Optional, List, Tuple
+from typing import Iterable, TYPE_CHECKING, Optional, List, Tuple, Union
 import logging
+from os import PathLike
 
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
@@ -331,8 +333,8 @@ def _get_width_height(
 
 
 def qsave(
-    layout: "Layout",
-    filename: str,
+    layout: Layout,
+    filename: Union[str, PathLike],
     *,
     bg: Optional[Color] = None,
     fg: Optional[Color] = None,
