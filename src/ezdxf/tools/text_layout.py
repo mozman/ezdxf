@@ -975,6 +975,10 @@ class Paragraph(Container):
                     )
                     if append_state == SUCCESS:
                         index += 1  # consume tabulator
+                    elif not line.has_content:
+                        # The tabulator and the following word do no fit into a
+                        # line -> ignore the tabulator
+                        index += 1
                 else:
                     append_state = line.append(cell)
                 # state check order by probability:
@@ -1004,7 +1008,6 @@ class Paragraph(Container):
                     first = False
                     self._lines.append(line)
                     paragraph_height += leading(line_height, self._line_spacing)
-
         not_all_cells_processed = index < count
         if align == ParagraphAlignment.JUSTIFIED:
             # distribute justified text across the line width,

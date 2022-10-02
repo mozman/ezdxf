@@ -350,6 +350,18 @@ class TestParagraphLeftAlignment:
         assert result[0] == "Text(0.0, -1.0, 6.0, 0.0)"
         assert result[1] == "Text(4.0, -2.7, 10.0, -1.7)", "x1 has to be 4.0"
 
+    def test_tab_and_text_do_not_fit_into_line(self):
+        result = []
+        par = tl.Paragraph(width=6, tab_stops=[tl.TabStop(4)])
+        par.append_content(str2cells("t#t", content=6, result=result))
+        # The tabulator (#) and the following text move to the next line,
+        # but also do not fit into a single line -> ignore tab
+        par.distribute_content()
+        par.place(0, 0)
+        par.render()
+        assert result[0] == "Text(0.0, -1.0, 6.0, 0.0)"
+        assert result[1] == "Text(0.0, -2.7, 6.0, -1.7)", "x1 has to be 0.0"
+
 
 class TestParagraphAlignment:
     # default values:

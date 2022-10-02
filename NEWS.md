@@ -12,6 +12,8 @@ Version 1.0.0b0 - dev
   fix virtual entities of 3D DIMENSION entities  
 - BUGFIX: [#748](https://github.com/mozman/ezdxf/issues/748)
   fix keyword only argument in virtual_block_reference_entities() call
+- BUGFIX: [#749](https://github.com/mozman/ezdxf/issues/749)
+  fix infinite loop in MTEXT rendering with tabulators
 
 Version 0.18.1 - 2022-09-03
 ---------------------------
