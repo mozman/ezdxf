@@ -1,5 +1,6 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import Sequence, Iterable, Optional, Tuple, List, NamedTuple
 import abc
 import itertools
@@ -366,7 +367,7 @@ class Glue(Cell):  # ABC
     def total_height(self) -> float:
         return 0
 
-    def to_space(self) -> "Space":
+    def to_space(self) -> Space:
         return Space(self._width, self._min_width, self._max_width)
 
 
@@ -915,7 +916,7 @@ class Paragraph(Container):
             height += last_line_height
         return height
 
-    def distribute_content(self, height: float = None) -> Optional["Paragraph"]:
+    def distribute_content(self, height: float = None) -> Optional[Paragraph]:
         """Distribute the raw content into lines. Returns the cells which do
         not fit as a new paragraph.
 
@@ -1027,7 +1028,7 @@ class Paragraph(Container):
         else:
             return None
 
-    def _new_paragraph(self, cells: List[Cell], first: bool) -> "Paragraph":
+    def _new_paragraph(self, cells: List[Cell], first: bool) -> Paragraph:
         # First line of the paragraph included?
         indent_first = self._indent_first if first else self._indent_left
         indent = (indent_first, self._indent_left, self._indent_right)
@@ -1058,7 +1059,7 @@ class Column(Container):
         self._gutter = gutter
         self._paragraphs: List[Paragraph] = []
 
-    def clone_empty(self) -> "Column":
+    def clone_empty(self) -> Column:
         return self.__class__(
             width=self.content_width,
             height=self.content_height,
@@ -1449,11 +1450,15 @@ class AbstractLine(ContentCell):  # ABC
         render_cells(cells, m)
         render_text_strokes(cells, m)
 
-    def remove_line_breaking_space(self):
-        """Remove the last space in the line."""
+    def remove_line_breaking_space(self) -> bool:
+        """Remove the last space in the line. Returns True if such a space was
+        removed.
+        """
         _cells = self._cells
         if _cells and isinstance(_cells[-1].cell, Space):
             _cells.pop()
+            return True
+        return False
 
 
 class LeftLine(AbstractLine):
