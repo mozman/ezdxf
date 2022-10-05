@@ -12,8 +12,8 @@ Welcome! This is the documentation for ezdxf release |release|, last updated |to
 Quick-Info
 ==========
 
-- *ezdxf* is a Python package to create new DXF files and read/modify/write
-  existing DXF files
+- *ezdxf* is a Python package to create new DXF documents and read/modify/write
+  existing DXF documents
 - MIT-License
 - the intended audience are programmers
 - requires at least Python 3.7
@@ -24,8 +24,8 @@ Quick-Info
   `typing_extensions <https://pypi.org/project/typing-extensions/>`_,
   `pyparsing <https://pypi.org/project/pyparsing/>`_
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
-- read-only support for DXF versions R13/R14 (upgraded to R2000)
-- read-only support for older DXF versions than R12 (upgraded to R12)
+- additional read-only support for DXF versions R13/R14 (upgraded to R2000)
+- additional read-only support for older DXF versions than R12 (upgraded to R12)
 - read/write support for ASCII DXF and Binary DXF
 - retains third-party DXF content
 - optional C-extensions for CPython are included in the binary wheels, available
@@ -40,7 +40,7 @@ visit the `documentation <https://ezdxf.mozman.at/docs/setup.html>`_.
 
 
 - :mod:`~ezdxf.addons.drawing` add-on to visualise and convert DXF files to
-  images which can be saved to various formats such as png, pdf and svg
+  images which can be saved as PNG, PDF or SVG files
 - :mod:`~ezdxf.addons.r12writer` add-on to write basic DXF entities direct and
   fast into a DXF R12 file or stream
 - :mod:`~ezdxf.addons.iterdxf` add-on to iterate over DXF entities from the
@@ -54,7 +54,7 @@ visit the `documentation <https://ezdxf.mozman.at/docs/setup.html>`_.
   modeling technique
 - :class:`~ezdxf.addons.MTextExplode` add-on for exploding MTEXT entities into
   single-line TEXT entities
-- :mod:`~ezdxf.addons.text2path` add-on to convert text into linear paths
+- :mod:`~ezdxf.addons.text2path` add-on to convert text into outline paths
 - :mod:`~ezdxf.addons.geo` add-on to support the `__geo_interface__ <https://gist.github.com/sgillies/2217756>`_
 - :mod:`~ezdxf.addons.meshex` add-on for exchanging meshes with other tools as
   STL, OFF or OBJ files

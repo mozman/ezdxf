@@ -5,17 +5,18 @@ ezdxf
 Abstract
 --------
 
-A Python package for creating and modifying DXF drawings, regardless of the DXF
-version. You can open/save any DXF file without losing content (except comments).
-Unknown tags in the DXF file are ignored but retained for saving. With this behavior
-it is possible to also open DXF drawings that contain data from third-party 
-applications.
+This Python package is for creating and modifying DXF documents, regardless of 
+the DXF version. The package supports loading and rewriting DXF file without 
+losing any content except comments.
+Unknown DXF tags in the document are ignored but kept for rewriting. 
+This behavior allows processing DXF documents that contain data from third-party 
+applications without loosing information.
 
 Quick-Info
 ----------
 
 - *ezdxf* is a Python package to create new DXF files and read/modify/write 
-  existing DXF files
+  existing DXF documents
 - MIT-License
 - the intended audience are programmers
 - requires at least Python 3.7
@@ -26,8 +27,8 @@ Quick-Info
   [typing_extensions](https://pypi.org/project/typing-extensions/), 
   [pyparsing](https://pypi.org/project/pyparsing/) 
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
-- read-only support for DXF versions R13/R14 (upgraded to R2000)
-- read-only support for older DXF versions than R12 (upgraded to R12)
+- additional read-only support for DXF versions R13/R14 (upgraded to R2000)
+- additional read-only support for older DXF versions than R12 (upgraded to R12)
 - read/write support for ASCII DXF and Binary DXF
 - retains third-party DXF content
 - optional C-extensions for CPython are included in the binary wheels, available 
@@ -42,7 +43,7 @@ visit the [documentation](https://ezdxf.mozman.at/docs/setup.html).
 
 - The `drawing` add-on is a translation layer to send DXF data to a render backend, 
   interfaces to [matplotlib](https://pypi.org/project/matplotlib/), which can export 
-  images as png, pdf or svg, and [PyQt5](https://pypi.org/project/PyQt5/) are implemented.
+  images as PNG, PDF or SVG, and [PyQt5](https://pypi.org/project/PyQt5/) are implemented.
 - `r12writer` add-on to write basic DXF entities direct and fast into a DXF R12 
   file or stream
 - `iterdxf` add-on to iterate over DXF entities from the modelspace of huge DXF 
@@ -53,7 +54,7 @@ visit the [documentation](https://ezdxf.mozman.at/docs/setup.html).
 - `acadctb` add-on to read/write plot style files (CTB/STB)
 - `pycsg` add-on for basic Constructive Solid Geometry (CSG) modeling
 - `MTextExplode` add-on for exploding MTEXT entities into single-line TEXT entities
-- `text2path` add-on to convert text into linear paths
+- `text2path` add-on to convert text into outline paths
 - `geo` add-on to support the [`__geo_interface__`](https://gist.github.com/sgillies/2217756)
 - `meshex` for exchanging meshes with other tools as STL, OFF or OBJ files
 - `openscad` add-on, an interface to [OpenSCAD](https://openscad.org)
@@ -64,24 +65,26 @@ A simple example:
 
 ```Python
 import ezdxf
+from ezdxf import colors
+from ezdxf.enums import TextEntityAlignment
 
 # Create a new DXF document.
 doc = ezdxf.new(dxfversion="R2010")
 
 # Create new table entries (layers, linetypes, text styles, ...).
-doc.layers.add("TEXTLAYER", color=2)
+doc.layers.add("TEXTLAYER", color=colors.RED)
 
 # DXF entities (LINE, TEXT, ...) reside in a layout (modelspace, 
 # paperspace layout or block definition).  
 msp = doc.modelspace()
 
 # Add entities to a layout by factory methods: layout.add_...() 
-msp.add_line((0, 0), (10, 0), dxfattribs={"color": 7})
+msp.add_line((0, 0), (10, 0), dxfattribs={"color": colors.YELLOW})
 msp.add_text(
     "Test", 
     dxfattribs={
         "layer": "TEXTLAYER"
-    }).set_pos((0, 0.2), align="CENTER")
+    }).set_placement((0, 0.2), align=TextEntityAlignment.CENTER)
 
 # Save the DXF document.
 doc.saveas("test.dxf")
@@ -114,7 +117,7 @@ binary wheels:
 
     pip install ezdxf
 
-Full installation with all dependencies (matplotlib, PyQt5) to use the 
+Full installation with all dependencies (matplotlib, PySide6) for using the 
 drawing add-on:
 
     pip install ezdxf[draw]

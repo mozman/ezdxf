@@ -15,7 +15,7 @@ First import the package::
 Loading DXF Files
 -----------------
 
-`ezdxf` supports loading ASCII and binary DXF files from a file::
+`ezdxf` supports loading ASCII and binary DXF documents from a file::
 
     doc = ezdxf.readfile(filename)
 
@@ -23,22 +23,22 @@ or from a zip-file::
 
     doc = ezdxf.readzip(zipfilename[, filename])
 
-Which loads the DXF file `filename` from the zip-file `zipfilename` or the
+Which loads the DXF document `filename` from the zip-file `zipfilename` or the
 first DXF file in the zip-file if `filename` is absent.
 
-It is also possible to read a DXF file from a stream by the :func:`ezdxf.read`
+It is also possible to read a DXF document from a stream by the :func:`ezdxf.read`
 function, but this is a more advanced feature, because this requires detection
 of the file encoding in advance.
 
-This works well with DXF files from trusted sources like AutoCAD or BricsCAD,
-for loading DXF files with minor or major flaws look at the
-:mod:`ezdxf.recover` module.
+This works well with DXF documents from trusted sources like AutoCAD or BricsCAD.
+For loading DXF documents with minor or major flaws use the :mod:`ezdxf.recover`
+module.
 
 .. seealso::
 
     Documentation for :func:`ezdxf.readfile`, :func:`ezdxf.readzip` and
     :func:`ezdxf.read`, for more information about file
-    management go to the :ref:`dwgmanagement` section. For loading DXF files
+    management go to the :ref:`dwgmanagement` section. For loading DXF documents
     with structural errors look at the :mod:`ezdxf.recover` module.
 
 Saving DXF Files
@@ -61,11 +61,11 @@ or with the same name as loaded::
 Create a New DXF File
 ---------------------
 
-Create new file for the latest supported DXF version::
+Create new document for the latest supported DXF version::
 
     doc = ezdxf.new()
 
-Create a new DXF file for a specific DXF version, e.g for DXF R12::
+Create a new DXF document for a specific DXF version, e.g. for DXF R12::
 
     doc = ezdxf.new("R12")
 
@@ -100,11 +100,11 @@ Getting the modelspace of a DXF document::
 Getting a paperspace layout by the name as shown in the tab of a
 CAD application::
 
-    psp = doc.layout("Layout1")
+    psp = doc.paperspace("Layout1")
 
 A block is just another kind of entity space, which can be inserted
 multiple times into other layouts and blocks by the INSERT entity also called
-block references, this is a very powerful and important concept of the DXF
+block references, this is a very powerful and an important concept of the DXF
 format.
 
 Getting a block layout by the block name::
@@ -132,12 +132,12 @@ Query DXF Entities
 ------------------
 
 As said in the `Layouts and Blocks`_ section, all graphical DXF entities are
-stored in layouts, all these layouts can be iterated and support the index
+stored in layouts, all these layouts can be iterated and do support the index
 operator e.g. :code:`layout[-1]` returns the last entity.
 
 The main difference between iteration and index access is, that iteration filters
 destroyed entities, but the index operator returns also destroyed entities
-until these entities are purged by :code:`layout.purge()` more about this topic
+until these entities are purged by :code:`layout.purge()`, more about this topic
 in section: `Delete Entities`_.
 
 There are two advanced query methods: :meth:`~ezdxf.layouts.BaseLayout.query`
@@ -167,8 +167,9 @@ Examine DXF Entities
 --------------------
 
 Each DXF entity has a :attr:`dxf` namespace attribute, which stores the named
-DXF attributes, some DXF attributes are only indirect available like the
-vertices in the LWPOLYLINE entity. More information about the DXF attributes of
+DXF attributes, some entity attributes and assets are only available from
+Python properties or methods outside the :attr:`dxf` namespace like the
+vertices of the LWPOLYLINE entity. More information about the DXF attributes of
 each entity can found in the documentation of the :mod:`ezdxf.entities` module.
 
 Get some basic DXF attributes::
@@ -178,23 +179,26 @@ Get some basic DXF attributes::
 
 Most DXF attributes have a default value, which will be returned if the DXF
 attribute is not present, for DXF attributes without a default value you can
-check in the attribute really exist::
+check if the attribute really exist::
 
     entity.dxf.hasattr("true_color")
 
-or use the :meth:`get` method and a default value::
+or use the :meth:`get` method and provide a default value::
 
     entity.dxf.get("true_color", 0)
 
 .. seealso::
 
-    :ref:`Common graphical DXF attributes`
+    - :ref:`Common graphical DXF attributes`
+    - Helper class :class:`ezdxf.gfxattribs.GfxAttribs` for building DXF attribute
+      dictionaries.
+
 
 Create New DXF Entities
 -----------------------
 
 The factory methods for creating new graphical DXF entities are located in the
-:class:`~ezdxf.layouts.BaseLayout` class. This means this factory methods are
+:class:`~ezdxf.layouts.BaseLayout` class and these factory methods are
 available for all entity containers:
 
     - :class:`~ezdxf.layouts.Modelspace`
@@ -210,25 +214,23 @@ The usage is simple::
 
     :ref:`thematic_factory_method_index`
 
-A few important or required DXF attributes are explicit method arguments,
-most additional and optional DXF attributes are gives as a regular Python
-:class:`dict` object.
+A few important/required DXF attributes are explicit method arguments,
+most additional DXF attributes are gives as a regular Python
+:class:`dict` object by the keyword only argument :attr:`dxfattribs`.
 The supported DXF attributes can be found in the documentation of the
 :mod:`ezdxf.entities` module.
 
 .. warning::
 
     Do not instantiate DXF entities by yourself and add them to layouts, always
-    use the provided factory function to create new graphical entities, this is
+    use the provided factory methods to create new graphical entities, this is
     the intended way to use `ezdxf`.
-
 
 Create Block References
 -----------------------
 
-A block reference is just another DXF entity called INSERT, but the term
-"Block Reference" is a better choice and so the :class:`~ezdxf.entities.Insert`
-entity is created by the factory function:
+A block reference is just another DXF entity called INSERT.
+The :class:`~ezdxf.entities.Insert` entity is created by the factory method:
 :meth:`~ezdxf.layouts.BaseLayout.add_blockref`::
 
     msp.add_blockref("MyBlock", (0, 0))
@@ -244,7 +246,7 @@ Create New Layers
 -----------------
 
 A layer is not an entity container, a layer is just another DXF attribute
-stored in the entity and this entity can inherit some properties from this
+stored in the entity and the entity can inherit some properties from this
 :class:`~ezdxf.entities.Layer` object.
 Layer objects are stored in the layer table which is available as
 attribute :code:`doc.layers`.
@@ -287,15 +289,14 @@ destroyed entity and all Python attributes are deleted, so
 because ``line`` does not have a :attr:`~ezdxf.entities.DXFEntity.dxf`
 attribute anymore.
 
-`Ezdxf` also supports also destruction of entities
-by calling method :meth:`~ezdxf.entities.DXFEntity.destroy` manually::
+`Ezdxf` also supports manually destruction of entities by calling the method
+:meth:`~ezdxf.entities.DXFEntity.destroy`::
 
     line.destroy()
 
-Manually destroyed entities are not removed
-immediately from entities containers like :class:`Modelspace` or
-:class:`EntityQuery`, but iterating such a container will filter destroyed
-entities automatically, so a :code:`for e in msp: ...` loop
+Manually destroyed entities are not removed immediately from entities containers
+like :class:`Modelspace` or :class:`EntityQuery`, but iterating such a container
+will filter destroyed entities automatically, so a :code:`for e in msp: ...` loop
 will never yield destroyed entities. The index operator and the :func:`len`
 function do **not** filter deleted entities, to avoid getting deleted entities
 call the :func:`purge` method of the container manually to remove deleted
@@ -304,5 +305,4 @@ entities.
 Further Information
 -------------------
 
-- :ref:`reference` documentation
-- Documentation of package internals: :ref:`Developer Guides`.
+- :ref:`reference`

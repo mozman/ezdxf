@@ -5,9 +5,9 @@ Introduction
 What is ezdxf
 -------------
 
-`ezdxf`  is a `Python`_ interface to the :term:`DXF` (drawing interchange file)
+`Ezdxf`  is a `Python`_ interface to the :term:`DXF` (drawing interchange file)
 format developed by `Autodesk`_, `ezdxf` allows developers to read and modify
-existing DXF drawings or create new DXF drawings.
+existing DXF documents or create new DXF documents.
 
 The main objective in the development of `ezdxf` was to hide complex DXF details
 from the programmer but still support most capabilities of the :term:`DXF`
@@ -18,8 +18,8 @@ DXF format.
 Not all DXF features are supported yet, but additional features will be added in
 the future gradually.
 
-`ezdxf` is also a replacement for my `dxfwrite`_ and my `dxfgrabber`_ packages
-but with different APIs, for more information see also: :ref:`faq001`
+`Ezdxf` is also a replacement for the outdated `dxfwrite`_ and `dxfgrabber`_
+packages but with different APIs, for more information see also: :ref:`faq001`
 
 What ezdxf can't do
 -------------------
@@ -38,20 +38,20 @@ What ezdxf can't do
 Supported Python Versions
 -------------------------
 
-`ezdxf` requires at least Python 3.7 and will be tested with the latest stable
+`Ezdxf` requires at least Python 3.7 and will be tested with the latest stable
 CPython version and the latest stable release of pypy3 during development.
 
-`ezdxf` is written in pure Python with optional Cython implementations of some
+`Ezdxf` is written in pure Python with optional Cython implementations of some
 low level math classes and requires only `pyparser` and `typing_extensions` as
 additional library beside the Python Standard Library.
-`pytest` is required to run the unit and integration tests. Data to run the
+`Pytest` is required to run the unit and integration tests. Data to run the
 stress and audit test can not be provided, because I don't have the rights for
-publishing this DXF files.
+publishing these DXF files.
 
 Supported Operating Systems
 ---------------------------
 
-`ezdxf` is OS independent and runs on all platforms which provide an appropriate
+`Ezdxf` is OS independent and runs on all platforms which provide an appropriate
 Python interpreter (>=3.7).
 
 Supported DXF Versions
@@ -59,13 +59,13 @@ Supported DXF Versions
 
 .. include:: dxfversion.inc
 
-`ezdxf` also reads older DXF versions but saves it as DXF R12.
+`Ezdxf` also reads older DXF versions but saves it as DXF R12.
 
 Embedded DXF Information of 3rd Party Applications
 --------------------------------------------------
 
 The DXF format allows third-party applications to embed application-specific
-information. `ezdxf` manages DXF data in a structure-preserving form, but for
+information. `Ezdxf` manages DXF data in a structure-preserving form, but for
 the price of large memory requirement. Because of this, processing of DXF
 information of third-party applications is possible and will retained on
 rewriting.
@@ -73,7 +73,7 @@ rewriting.
 License
 -------
 
-`ezdxf` is licensed under the very liberal MIT-License_.
+`Ezdxf` is licensed under the very liberal MIT-License_.
 
 .. _Autodesk: http://usa.autodesk.com/
 

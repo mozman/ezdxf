@@ -13,8 +13,9 @@ The `pyparsing`_ package and the `typing_extensions`_ are the only hard dependen
 and will be installed automatically by `pip3`!
 
 The minimal required Python version is determined by the latest stable version
-of `pypy3`_ and the Python version deployed by the `Raspberry Pi`_ OS, which is
-currently Python 3.7 (2021).
+of `pypy3`_ and the Python version deployed by the `Raspberry Pi`_ OS, which
+would be Python 3.9 in 2022, but Python 3.7 will be kept as the minimal version
+for the 1.0 release.
 
 Basic Installation
 ------------------
@@ -60,7 +61,7 @@ going on and they are maybe also helpful for other developers which do not touch
 CI services every day.
 
 The C-extensions are disabled for `pypy3`_, because the JIT compiled code of pypy
-is much faster than the compiled C-extensions for pypy.
+is much faster than the compiled C-extensions.
 
 Disable C-Extensions
 --------------------
@@ -74,7 +75,7 @@ or on Linux::
 
     export EZDXF_DISABLE_C_EXT=1
 
-This is has to be done **before** anything from ezdxf is imported! If you are
+This is has to be done **before** anything from `ezdxf` is imported! If you are
 working in an interactive environment, you have to restart the interpreter.
 
 
@@ -90,8 +91,8 @@ Build and Install from Source
 
 This is only required if you want the compiled C-extensions, the `ezdxf`
 installation by `pip` from the source code package works without the C-extension
-but is slower. There are many binary wheels including the compiles C-extensions
-available on `PyPi`_.
+but is slower. There are binary wheels available on `PyPi`_ which included the
+compiled C-extensions.
 
 Windows 10
 ++++++++++
@@ -131,7 +132,7 @@ Check if the installation was successful::
 The `ezdxf` command should run without a preceding `python3 -m`, but calling the
 launcher through the interpreter guarantees to call the version which was
 installed in the venv if there exist a global installation of `ezdxf` like in
-my case.
+my development environment.
 
 The output should look like this::
 
@@ -155,8 +156,9 @@ requirement, the `build-essential` package adds the required C++ support::
 
     sudo apt install build-essential
 
-The system Python 3 interpreter has the version 3.8, but I will show in a later
-section how to install an additional newer Python version from the source code::
+The system Python 3 interpreter has the version 3.8 (in 2021), but I will show
+in a later section how to install an additional newer Python version from the
+source code::
 
     cd ~
     mkdir build
@@ -198,7 +200,7 @@ Raspberry Pi OS
 
 Testing platform is a `Raspberry Pi`_ 400 and the OS is the `Raspberry Pi`_ OS
 which runs on 64bit hardware but is a 32bit OS. The system Python 3
-interpreter comes in version 3.7, but I will show in a later
+interpreter comes in version 3.7 (in 2021), but I will show in a later
 section how to install an additional newer Python version from the source code.
 
 Install the build requirements, `Matplotlib`_ and the `PyQt5`_ bindings
