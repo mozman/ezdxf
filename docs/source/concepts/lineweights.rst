@@ -6,7 +6,7 @@ Lineweights
 The :attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight` attribute represents the
 lineweight as integer value in millimeters * 100, e.g. 0.25mm = 25,
 independently from the unit system used in the DXF document.
-The :attr:`lineweight` attribute is supported by DXF version R2000 and newer.
+The :attr:`lineweight` attribute is supported by DXF R2000 and newer.
 
 Only certain values are valid, they are stored in
 :attr:`ezdxf.lldxf.const.VALID_DXF_LINEWEIGHTS`: 0, 5, 9, 13, 15, 18, 20, 25,
@@ -24,14 +24,14 @@ Values < 0 have a special meaning and can be imported as constants from
 The validator function: :func:`ezdxf.lldxf.validator.is_valid_lineweight`
 returns ``True`` for valid lineweight values otherwise ``False``.
 
-Sample file which shows all valid lineweights: `valid_lineweights.dxf`_
+Sample script which shows all valid lineweights: `valid_lineweights.dxf`_
 
 You have to enable the option to show lineweights in your CAD application or
-viewer to see the effect on screen, which is often disabled by default, the same
+viewer to see the effect on screen, which is disabled by default, the same
 has to be done in the page setup options for plotting lineweights.
 
-Setting the HEADER variable ``$LWDISPLAY`` to 1 may activate support for
-showing lineweights on screen::
+Setting the HEADER variable ``$LWDISPLAY`` to 1, activates support for
+displaying lineweights on screen::
 
     # activate on screen lineweight display
     doc.header["$LWDISPLAY"] = 1

@@ -3,14 +3,17 @@
 Linetypes
 =========
 
-The :attr:`~ezdxf.entities.DXFGraphic.dxf.linetype` defines the pattern of a line. The linetype of an entity
-can be specified by the DXF attribute :attr:`linetype`, this can be an explicit named linetype or the entity
-can inherit its line type from the assigned layer by setting :attr:`linetype` to ``'BYLAYER'``,
-which is also the default value. CONTINUOUS is the default line type for layers with
-unspecified line type.
+The :attr:`~ezdxf.entities.DXFGraphic.dxf.linetype` defines the rendering pattern
+of linear graphical entities like LINE, ARC, CIRCLE and so on.
+The linetype of an entity can be specified by the DXF attribute :attr:`linetype`,
+this can be an explicit named linetype or the entity can inherit its linetype
+from the assigned layer by setting :attr:`linetype` to ``'BYLAYER'``,
+which is also the default value. ``CONTINUOUS`` is the default linetype for
+layers with an unspecified linetype.
 
-`ezdxf` creates several standard linetypes, if the argument `setup` is ``True`` at calling :func:`~ezdxf.new`,
-this simple line types are supported by all DXF versions:
+`Ezdxf` creates several standard linetypes, if the argument `setup` is ``True``
+when calling :func:`~ezdxf.new`, this simple linetypes are supported by all
+DXF versions:
 
 .. code-block:: Python
 
@@ -18,8 +21,8 @@ this simple line types are supported by all DXF versions:
 
 .. image:: all_std_line_types.png
 
-In DXF R13 Autodesk introduced complex linetypes, containing TEXT or SHAPES in linetypes. `ezdxf` v0.8.4 and later
-supports complex linetypes.
+In DXF R13 Autodesk introduced complex linetypes which can contain text or
+shapes.
 
 .. seealso::
 
@@ -28,8 +31,9 @@ supports complex linetypes.
 Linetype Scaling
 -----------------
 
-Global linetype scaling can be changed by setting the header variable :code:`doc.header['$LTSCALE'] = 2`,
-which stretches the line pattern by factor 2.
+Global linetype scaling can be changed by setting the header variable
+:code:`doc.header['$LTSCALE'] = 2`, which stretches the line pattern by factor 2.
 
-To change the linetype scaling for single entities set scaling factor by DXF attribute
-:attr:`~ezdxf.entities.DXFGraphic.dxf.ltscale`, which is supported since DXF version R2000.
+The linetype scaling for a single entity can be set by the DXF attribute
+:attr:`~ezdxf.entities.DXFGraphic.dxf.ltscale`, which is supported since
+DXF R2000.

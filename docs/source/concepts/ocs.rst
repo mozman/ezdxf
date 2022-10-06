@@ -24,7 +24,7 @@ direction, there is only one OCS. It has the following properties:
 - The orientation of the x- and y-axis within the xy-plane are calculated in an
   arbitrary but consistent manner. AutoCAD performs this calculation using the
   arbitrary axis algorithm (see below).
-- Because of `Arbitrary Axis Algorithm`_ the OCS can only represent a
+- Because of the `Arbitrary Axis Algorithm`_ the OCS can only represent a
   **right-handed** coordinate system!
 
 The following entities do not lie in a particular plane. All points are

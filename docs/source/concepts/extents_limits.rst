@@ -6,19 +6,19 @@ Layout Extents and Limits
 The `extents` and `limits` of an layout represents borders which can be
 referenced by the ZOOM command or read from some header variables from the
 :class:`~ezdxf.sections.header.HeaderSection`, if the creator application
-maintains these values -- `ezdxf` does it not automatically.
+maintains these values -- `ezdxf` does this not automatically.
 
 Extents
 -------
 
-The `extents` of an layout are determined by the maximum extents of all  DXF
+The `extents` of an layout are determined by the maximum extents of all DXF
 entities that are in this layout. The command::
 
     ZOOM extents
 
 sets the current viewport to the extents of the currently selected layout.
 
-A paper space layout in an arbitrary zoom state:
+A paperspace layout in an arbitrary zoom state:
 
 .. image:: ../gfx/zoom_overview_800px.png
 
@@ -31,7 +31,7 @@ Limits
 
 Sets an invisible rectangular boundary in the drawing area that can limit the
 grid display and limit clicking or entering point locations. The default limits
-for paper space layouts is defined by the paper size.
+for paperspace layouts is defined by the paper size.
 
 The layout from above after the :code:`ZOOM all` command:
 
@@ -44,7 +44,7 @@ The layout from above after the :code:`ZOOM all` command:
 Read Stored Values
 ------------------
 
-The extents of the model space (the tab called "Model") are stored in
+The extents of the modelspace (the tab called "Model") are stored in
 the header variable ``$EXTMIN`` and ``$EXTMAX``. The default values
 of ``$EXTMIN`` is (+1e20, +1e20, +1e20) and ``$EXTMAX`` is
 (-1e20, -1e20, -1e20), which do not describe real borders. These values are
@@ -56,11 +56,11 @@ The limits of the modelspace are stored in the header variables ``$LIMMIN`` and
 size of `ezdxf` in drawing units. These are copies of the :class:`~ezdxf.layouts.Layout`
 attributes :attr:`Layout.dxf.extmin` and :attr:`Layout.dxf.extmax`.
 
-The extents and the limits of the `actual` paper space layout, which is the last
-activated paper space layout tab, stored in the header variable ``$PEXTMIN``,
+The extents and the limits of the `actual` paperspace layout, which is the last
+activated paperspace layout tab, are stored in the header variable ``$PEXTMIN``,
 ``$PEXTMAX``, ``$PLIMMIN`` and ``$PLIMMAX``.
 
-Each paper space layout has its own values stored in the :class:`~ezdxf.layouts.Layout`
+Each paperspace layout has its own values stored in the :class:`~ezdxf.layouts.Layout`
 attributes :attr:`Layout.dxf.extmin`, :attr:`Layout.dxf.extmax`, :attr:`Layout.dxf.limmin`
 and :attr:`Layout.dxf.limmax`.
 
