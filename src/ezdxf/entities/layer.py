@@ -1,5 +1,6 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Tuple, cast, Dict, List, Any
 import logging
 from dataclasses import dataclass
@@ -134,7 +135,7 @@ class Layer(DXFEntity):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.simple_dxfattribs_loader(
@@ -142,7 +143,7 @@ class Layer(DXFEntity):
             )
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
@@ -226,13 +227,13 @@ class Layer(DXFEntity):
 
     def get_color(self) -> int:
         """Get layer color, safe method for getting the layer color, because
-        dxf.color is negative for layer status `off`.
+        :attr:`dxf.color` is negative for layer status `off`.
         """
         return abs(self.dxf.color)
 
     def set_color(self, color: int) -> None:
         """Set layer color, safe method for setting the layer color, because
-        dxf.color is negative for layer status `off`.
+        :attr:`dxf.color` is negative for layer status `off`.
         """
         color = abs(color) if self.is_on() else -abs(color)
         self.dxf.color = color
@@ -255,14 +256,14 @@ class Layer(DXFEntity):
     @property
     def color(self) -> int:
         """Get layer color, safe method for getting the layer color, because
-        dxf.color is negative for layer status `off`.
+        :attr:`dxf.color` is negative for layer status `off`.
         """
         return self.get_color()
 
     @color.setter
     def color(self, value: int) -> None:
         """Set layer color, safe method for setting the layer color, because
-        dxf.color is negative for layer status `off`.
+        :attr:`dxf.color` is negative for layer status `off`.
         """
         self.set_color(value)
 
@@ -381,7 +382,7 @@ class Layer(DXFEntity):
                     f"LAYER_INDEX"
                 )
 
-    def get_vp_overrides(self) -> "LayerOverrides":
+    def get_vp_overrides(self) -> LayerOverrides:
         """Returns the :class:`LayerOverrides` object for this layer."""
         return LayerOverrides(self)
 
@@ -638,7 +639,7 @@ def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
     return overrides
 
 
-def _load_ovr_values(xrec: "XRecord", group_code):
+def _load_ovr_values(xrec: XRecord, group_code):
     tags = xrec.tags
     handles = [value for code, value in tags.find_all(const.OVR_VP_HANDLE_CODE)]
     values = [value for code, value in tags.find_all(group_code)]
