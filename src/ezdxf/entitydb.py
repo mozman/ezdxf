@@ -1,5 +1,6 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     Optional,
     Iterable,
@@ -39,7 +40,7 @@ class EntityDB:
     """A simple key/entity database.
 
     Every entity/object, except tables and sections, are represented as
-    DXFEntity or inherited types, this entities are stored in the
+    DXFEntity or inherited types, these entities are stored in the
     DXF document database, database-key is the `handle` as string.
 
     """
@@ -47,7 +48,7 @@ class EntityDB:
     class Trashcan:
         """Store handles to entities which should be deleted later."""
 
-        def __init__(self, db: "EntityDB"):
+        def __init__(self, db: EntityDB):
             self._database = db._database
             self._handles: Set[str] = set()
 
@@ -219,7 +220,7 @@ class EntityDB:
             doc.objects.add_object(new_entity)
         return new_entity
 
-    def audit(self, auditor: "Auditor"):
+    def audit(self, auditor: Auditor):
         """Restore database integrity:
 
         - restore database entries with modified handles (key != entity.dxf.handle)
@@ -269,14 +270,14 @@ class EntityDB:
                 continue
             self[handle] = entity
 
-    def new_trashcan(self) -> "EntityDB.Trashcan":
+    def new_trashcan(self) -> EntityDB.Trashcan:
         """Returns a new trashcan, empty trashcan manually by: :
         func:`Trashcan.clear()`.
         """
         return EntityDB.Trashcan(self)
 
     @contextmanager  # type: ignore
-    def trashcan(self) -> "EntityDB.Trashcan":  # type: ignore
+    def trashcan(self) -> EntityDB.Trashcan:  # type: ignore
         """Returns a new trashcan in context manager mode, trashcan will be
         emptied when leaving context.
         """
@@ -385,7 +386,7 @@ class EntitySpace:
         for entity in entities:
             self.add(entity)
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         """Export all entities into DXF file by `tagwriter`.
 
         (internal API)
