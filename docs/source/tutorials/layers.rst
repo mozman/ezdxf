@@ -29,6 +29,18 @@ so you can leave off these assignments:
 
 The new created line will be drawn with color ``7`` and linetype ``"DASHED"``.
 
+Moving an Entity to a Different Layer
+-------------------------------------
+
+Moving an entity to a different layer is a simple assignment of the new
+layer name to the :attr:`layer` attribute of the entity.
+
+.. code-block:: python
+
+    line = msp.add_line((0, 0), (10, 0), dxfattribs={"layer": "MyLines"})
+    # move the entity to layer "OtherLayer"
+    line.dxf.layer = "OtherLayer"
+
 Changing Layer State
 --------------------
 
