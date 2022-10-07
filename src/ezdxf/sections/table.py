@@ -438,7 +438,7 @@ class TextstyleTable(Table[Textstyle]):
             name (str): text style name
             font (str): TTF font file name like "Arial.ttf", the real font file
                 name from the file system is required and remember only Windows
-                is case insensitive.
+                is case-insensitive.
             dxfattribs (dict): additional DXF attributes
 
         .. versionadded:: 0.17

@@ -5,6 +5,8 @@ Tutorial for Layers
 
 If you are not familiar with the concept of layers, please read this first: :ref:`layer_concept`
 
+Reminder: a layer definition is not required for using a layer!
+
 Create a Layer Definition
 -------------------------
 
@@ -30,7 +32,7 @@ The new created line will be drawn with color ``7`` and linetype ``"DASHED"``.
 Changing Layer State
 --------------------
 
-Get the layer definition object:
+Get the layer definition object from the layer table:
 
 .. code-block:: python
 
@@ -55,11 +57,11 @@ Change the state of the layer:
     # lock layer, entities at this layer are not editable in CAD applications
     my_lines.lock()
 
-Get/set default color of a layer by property :attr:`Layer.color`, because the
+Get/set the color of a layer by property :attr:`Layer.color`, because the
 DXF attribute :attr:`Layer.dxf.color` is misused for switching the layer on and
-off, layer is off if the color value is negative.
+off, the layer is off if the color value is negative.
 
-Changing the default layer values:
+Changing the layer properties:
 
 .. code-block:: python
 
@@ -73,7 +75,8 @@ Changing the default layer values:
 Check Available Layers
 ----------------------
 
-The layers object supports some standard Python protocols:
+The :class:`~ezdxf.sections.table.LayerTable` object supports some standard
+Python protocols:
 
 .. code-block:: python
 
@@ -102,3 +105,17 @@ layer set to ``"MyLines"`` are still there, but if they inherit color and/or
 linetype from the layer definition they will be drawn now with linetype
 ``"Continuous"`` and color ``1``.
 
+Renaming a Layer
+----------------
+
+The :class:`~ezdxf.entities.Layer` class has a method for renaming the layer,
+but has the same limitations as deleting a layer, not all places where layer
+references can occur are documented and third-party entities are black-boxes,
+so some references may reference a non-existing layer definition after the
+renaming, at least these references are still valid, because a layer definition
+is not required for using a layer.
+
+.. code-block:: python
+
+    my_lines = doc.layers.get("MyLines")
+    my_lines.rename("YourLines")

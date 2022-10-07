@@ -311,7 +311,7 @@ class Layer(DXFEntity):
                 AcCmTransparency, [(1071, clr.float2transparency(value))]
             )
         else:
-            raise ValueError("Value out of range (0 .. 1).")
+            raise ValueError("Value out of range [0, 1].")
 
     def rename(self, name: str) -> None:
         """
@@ -320,12 +320,16 @@ class Layer(DXFEntity):
         .. warning::
 
             The DXF format is not consistent in storing layer references, the
-            layers are mostly referenced by their case-insensitive name, and in
-            some entities introduced later, layers are referenced by their handle.
-            There is also not a complete overview of where layer references are
-            stored, which means that it is not 100% safe to rename layers via
-            ezdxf, so in some rare cases renaming layers can corrupt the DXF
-            file!
+            layers are mostly referenced by their case-insensitive name,
+            some later introduced entities do reference layers by handle, which
+            is the safer way in the context of renaming layers.
+
+            There is no complete overview of where layer references are
+            stored, third-party entities are black-boxes with unknown content
+            and layer names could be stored in the extended data section of any
+            DXF entity or in XRECORD entities.
+            Which means that in some rare cases references to the old layer name
+            can persist, at least this does not invalidate the DXF document.
 
         Args:
              name: new layer name
