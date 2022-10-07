@@ -91,8 +91,25 @@ Python protocols:
 
     layer_count = len(doc.layers) # total count of layer definitions
 
-Deleting a Layer
+Renaming a Layer
 ----------------
+
+The :class:`~ezdxf.entities.Layer` class has a method for renaming the layer,
+but has same limitations, not all places where layer references can occur are
+documented, third-party entities are black-boxes with unknown content and layer
+references could be stored in the extended data section of any DXF entity or in
+a XRECORD entity, so some references may reference a non-existing layer
+definition after the renaming, at least these references are still valid,
+because a layer definition is not required for using a layer.
+
+.. code-block:: python
+
+    my_lines = doc.layers.get("MyLines")
+    my_lines.rename("YourLines")
+
+
+Deleting a Layer Definition
+---------------------------
 
 Delete a layer definition:
 
@@ -100,22 +117,35 @@ Delete a layer definition:
 
     doc.layers.remove("MyLines")
 
-This just deletes the layer definition, all DXF entities with the DXF attribute
-layer set to ``"MyLines"`` are still there, but if they inherit color and/or
-linetype from the layer definition they will be drawn now with linetype
-``"Continuous"`` and color ``1``.
+This just deletes the layer definition, all DXF entities referencing this layer
+still exist, if they inherit any properties from the deleted layer they will now
+get the default layer properties.
 
-Renaming a Layer
-----------------
+.. warning::
 
-The :class:`~ezdxf.entities.Layer` class has a method for renaming the layer,
-but has the same limitations as deleting a layer, not all places where layer
-references can occur are documented and third-party entities are black-boxes,
-so some references may reference a non-existing layer definition after the
-renaming, at least these references are still valid, because a layer definition
-is not required for using a layer.
+    The behavior of entities referencing the layer by handle is unknown and may
+    break the DXF document.
+
+Deleting All Entities From a Layer
+----------------------------------
+
+Because of all these uncertainties about layer references mentioned above,
+deleting all entities referencing a certain layer from a DXF document is not
+implemented as an API call!
+
+Nonetheless deleting all graphical entities from the DXF document which do
+reference a certain layer by the :attr:`layer` attribute is a safe procedure:
 
 .. code-block:: python
 
-    my_lines = doc.layers.get("MyLines")
-    my_lines.rename("YourLines")
+    key_func = doc.layers.key
+    layer_key = key_func("MyLines")
+    # The trashcan context-manager is a safe way to delete entities from the
+    # entities database while iterating.
+    with doc.entitydb.trashcan() as trash:
+        for entity in doc.entitydb.values():
+            if not entity.dxf.hasattr("layer"):
+                continue
+            if layer_key == key_func(entity.dxf.layer):
+                # safe destruction while iterating
+                trash.add(entity.dxf.handle)
