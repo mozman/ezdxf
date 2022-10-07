@@ -3,7 +3,8 @@
 Tutorial for Layers
 ===================
 
-If you are not familiar with the concept of layers, please read this first: :ref:`layer_concept`
+If you are not familiar with the concept of layers, please read this first:
+Concept of :ref:`layer_concept`
 
 Reminder: a layer definition is not required for using a layer!
 

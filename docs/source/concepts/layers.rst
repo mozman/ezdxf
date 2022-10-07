@@ -1,7 +1,7 @@
 .. _layer_concept:
 
-Layer Concept
-=============
+Layers
+======
 
 Every object has a layer as one of its properties. You may be familiar with
 layers - independent drawing spaces that stack on top of each other to create

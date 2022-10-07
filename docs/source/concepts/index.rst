@@ -23,3 +23,4 @@ specific problems go to the :ref:`Howto` section.
     units
     extents_limits
     fonts
+    blocks
