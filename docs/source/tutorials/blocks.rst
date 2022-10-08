@@ -19,13 +19,15 @@ one blocks section stored in the attribute: :attr:`Drawing.blocks`.
 Block References (Insert)
 -------------------------
 
-A block reference is a DXF :class:`~ezdxf.entities.Insert` entity and can be
-placed in any layout: :class:`~ezdxf.layouts.Modelspace`, any
-:class:`~ezdxf.layouts.Paperspace` or :class:`~ezdxf.layouts.BlockLayout`
-(which enables nested block references). Every block reference can be placed,
-scaled and rotated individually. Scaling by negative values is mirroring.
+A block reference can be created by adding an :class:`~ezdxf.entities.Insert`
+entity to any of these layout types:
 
-Lets insert some random flags into the modelspace:
+  - :class:`~ezdxf.layouts.Modelspace`
+  - :class:`~ezdxf.layouts.Paperspace`
+  - :class:`~ezdxf.layouts.BlockLayout`
+
+A block reference can be scaled and rotated individually.
+Lets add some random flags into the modelspace:
 
 .. literalinclude:: src/blocks.py
     :lines: 23-40
@@ -37,42 +39,41 @@ Query all block references of block ``FLAG``:
     for flag_ref in msp.query('INSERT[name=="FLAG"]'):
         print(str(flag_ref))
 
-When inserting a block reference into the modelspace or another block
-layout with different units, the scaling factor between these units
-should be applied as scaling attributes (:attr:`xscale`, ...) e.g.
-modelspace in meters and block in centimeters, :attr:`xscale` has to
-be 0.01.
+When adding a block reference to a layout with different units, the scaling
+factor between these units should be applied as scaling attributes
+(:attr:`xscale`, ...) e.g. modelspace in meters and block in centimeters,
+:attr:`xscale` has to be 0.01.
 
-What are Attributes?
---------------------
+Block Attributes
+----------------
 
-An attribute (:class:`~ezdxf.entities.Attrib`) is a text annotation attached to
-a block reference with an associated tag. Attributes are often used to add
-information to blocks which can be evaluated and exported by CAD programs.
-An attribute can be visible or hidden. The simple way to use attributes is
-just to add an attribute to a block reference by :meth:`Insert.add_attrib`,
-but the attribute is geometrically not related to the block reference, so you
-have to calculate the insertion point, rotation and scaling of the attribute
-by yourself.
+A block attribute (:class:`~ezdxf.entities.Attrib`) is a text annotation
+attached to a block reference with an associated tag.
+Attributes are often used to add information to blocks which can be evaluated
+and exported by CAD applications.
+An attribute can be added to a block reference by the :meth:`Insert.add_attrib`
+method, the ATTRIB entity is geometrically not related to the block reference,
+so insertion point, rotation and scaling of the attribute have to be calculated
+by the user, but helper tools for that do exist.
 
 Using Attribute Definitions
 ---------------------------
 
-The second way to use attributes in block references is a two step process,
-first step is to create an attribute definition (template) in the block
-definition, the second step is adding the block reference by
-:meth:`Layout.add_blockref` and attach and fill attribute automatically by the
-:meth:`~ezdxf.entities.Insert.add_auto_attribs` method to the block reference.
-The advantage of this method is that all attributes are placed relative to the
-block base point with the same rotation and scaling as the block, but has the
-disadvantage that non uniform scaling is not handled very well.
-The method :meth:`Layout.add_auto_blockref` handles non uniform scaling better
-by wrapping the block reference and its attributes into an anonymous block and
-let the CAD application do the transformation work which will create correct
-graphical representations at least by AutoCAD and BricsCAD. This method has the
-disadvantage of a more complex evaluation of attached attributes
+Another way to add attributes to block references is using attribute templates
+(:class:`~ezdxf.entities.AttDef`). First create the attribute definition in the
+block definition, then add the block reference by :meth:`add_blockref`
+and attach and fill attributes automatically by the :meth:`~ezdxf.entities.Insert.add_auto_attribs`
+method to the block reference. This method has the advantage that all attributes
+are placed relative to the block base point with the same rotation and scaling
+as the block reference, but non-uniform scaling is not handled very well.
 
-Using attribute definitions (:class:`~ezdxf.entities.Attdef`):
+The :meth:`~ezdxf.layouts.BaseLayout.add_auto_blockref` method handles
+non-uniform scaling better by wrapping the block reference and its attributes
+into an anonymous block and let the CAD application do the transformation work.
+This method has the disadvantage of a more complex evaluation of attached
+attributes
+
+Using attribute definitions (:class:`~ezdxf.entities.AttDef` templates):
 
 .. literalinclude:: src/blocks.py
     :lines: 42-69
@@ -85,15 +86,15 @@ See the howto: :ref:`howto_get_attribs`
 Evaluate Wrapped Block References
 ---------------------------------
 
-As mentioned above evaluation of block references wrapped into anonymous blocks
-is complex:
+As mentioned above the evaluation of block references wrapped into anonymous
+blocks is complex:
 
 .. code-block:: python
 
     # Collect all anonymous block references starting with '*U'
     anonymous_block_refs = modelspace.query('INSERT[name ? "^\*U.+"]')
 
-    # Collect real references to 'FLAG'
+    # Collect the references of the 'FLAG' block
     flag_refs = []
     for block_ref in anonymous_block_refs:
         # Get the block layout of the anonymous block
@@ -114,13 +115,12 @@ is complex:
 Exploding Block References
 --------------------------
 
-This is an advanced feature and because `ezdxf` is still not a CAD application,
-the results may no be perfect. **Non uniform scaling** lead to incorrect results
-for text entities (TEXT, MTEXT, ATTRIB) and some other entities like HATCH with
-arc or ellipse path segments.
-
-By default the "exploded" entities are added to the same layout as the block
-reference is located.
+This is an advanced feature and the results may not be perfect.
+A **non-uniform scaling** lead to incorrect results for text entities (TEXT,
+MTEXT, ATTRIB) and some other entities like HATCH with arc- or ellipse path
+segments.
+The "exploded" entities are added to the same layout as the block
+reference by default.
 
 
 .. code-block:: Python
@@ -131,9 +131,9 @@ reference is located.
 Examine Entities of Block References
 ------------------------------------
 
-If you just want to examine the entities of a block reference use the
+To just examine the entities of a block reference use the
 :meth:`~ezdxf.entities.Insert.virtual_entities` method.
-This methods yields "virtual" entities with attributes identical to "exploded"
+This methods yields "virtual" entities with properties identical to "exploded"
 entities but they are not stored in the entity database, have no handle and are
 not assigned to any layout.
 

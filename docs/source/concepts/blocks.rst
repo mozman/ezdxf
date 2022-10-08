@@ -10,6 +10,14 @@ placed in 3D space by :ref:`OCS` and arranged in a grid like manner, each
 :class:`~ezdxf.entities.Insert` entity can have individual attributes
 (:class:`~ezdxf.entities.Attrib`) attached.
 
+Block Attributes
+----------------
+
+A block attribute (:class:`~ezdxf.entities.Attrib`) is a text annotation attached
+to a block reference with an associated tag. Attributes are often used to add
+information to block references which can be evaluated and exported by CAD
+applications.
+
 Extended Block Features
 -----------------------
 
