@@ -3,13 +3,20 @@
 Tutorial for LWPolyline
 =======================
 
-The :class:`~ezdxf.entities.LWPolyline` is defined as a single graphic entity,
-which differs from the old-style :class:`~ezdxf.entities.Polyline` entity, which
-is defined as a group of sub-entities.
-:class:`~ezdxf.entities.LWPolyline` display faster (in AutoCAD) and consume
-less disk space, it is a planar element, therefore all points in
-:ref:`OCS` as ``(x, y)`` tuples (:attr:`LWPolyline.dxf.elevation` is the
-z-axis value).
+The :class:`~ezdxf.entities.LWPolyline` (lightweight polyline) was introduced in
+DXF R13/14 and it is defined as a single graphic entity, which differs from the
+old-style :class:`~ezdxf.entities.Polyline` entity, which is defined as a group
+of sub-entities. It is recommended to prefer the LWPOLYLINE over the 2D POLYLINE
+entity because it requires less space in memory and in DXF files and displays
+faster in AutoCAD.
+
+.. important::
+
+    The LWPOLYLINE is a planar element, therefore the (x, y) point coordinates are
+    located in the :ref:`OCS` and the z-axis is stored in the
+    :attr:`LWPolyline.dxf.elevation` attribute.
+    The method :class:`~ezdxf.entities.LWPolyline.vertices_in_wcs` returns the
+    polyline vertices as WCS coordinates.
 
 Create a simple polyline:
 
@@ -39,7 +46,7 @@ Append multiple points to a polyline:
 
     doc.saveas("lwpolyline2.dxf")
 
-The LWPOLYLINE entity always returns polyline points as 5-tuple
+The index operator ``[]`` always returns polyline points as 5-tuple
 (x, y, start_width, end_width, bulge), the start_width, end_width and
 bulge values are 0 if not present:
 
@@ -48,13 +55,12 @@ bulge values are 0 if not present:
     first_point = line[0]
     x, y, start_width, end_width, bulge = first_point
 
-Use the method :meth:`~ezdxf.entities.LWPolyline.points` as context manager to
-edit polyline points, this method was introduced because accessing single points
-was very slow in early versions of *ezdxf*, but now direct access by the index
-operator ``[]`` is very fast and using the context manager is not required
-anymore.
-The advantage of the context manager is the ability to use a user defined point
-format:
+The context manager :meth:`~ezdxf.entities.LWPolyline.points` can be used to edit
+polyline points, this method was introduced because accessing individual
+points was very slow in early versions of `ezdxf`, in current versions of `ezdxf` the
+direct access by the index operator ``[]`` is very fast and using the context
+manager is not required anymore, but the context manager still exist and has the
+advantage of supporting an user defined point format:
 
 .. code-block:: python
 
@@ -76,8 +82,8 @@ format:
 
     doc.saveas("lwpolyline3.dxf")
 
-Each line segment can have a different start- and end-width, if omitted start-
-and end-width is 0:
+Each line segment can have a different start- and end width, if omitted start-
+and end width is 0:
 
 .. code-block:: python
 
@@ -93,11 +99,11 @@ and end-width is 0:
     doc.saveas("lwpolyline4.dxf")
 
 The first point carries the start- and end-width of the first segment, the
-second point of the second segment and so on, the start- and end-width value
+second point of the second segment and so on, the start- and end width value
 of the last point is used for the closing segment if the polyline is closed
 else these values are ignored.
-Start- and end-width only works if the DXF attribute :attr:`dxf.const_width` is
-unset, to be sure delete it:
+Start- and end width only works if the DXF attribute :attr:`dxf.const_width` is
+unset, delete it to be sure it's unset:
 
 .. code-block:: python
 
@@ -128,6 +134,8 @@ defines the ratio of the arc sagitta (segment height `h`) to half line segment
 length (point distance), a bulge value of 1 defines a semicircle.
 The curve is on the right side of the line for a bulge value > 0, and on the
 left side of the line for a bulge value < 0.
+
+Helper functions to handle bulge values: :ref:`bulge_related_functions`
 
 The user defined point format, default is ``xyseb``:
 
