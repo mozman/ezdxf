@@ -120,3 +120,13 @@ def test_link_dxf_object_to_extension_dict(doc):
     xdict.link_dxf_object("MyEntry", obj)
     assert "MyEntry" in xdict
     assert obj.dxf.owner == owner
+
+
+def test_add_new_dictionary_to_xdict(doc):
+    # issue #751
+    msp = doc.modelspace()
+    line = msp.add_line((0, 0), (1, 0))
+    xdict = line.new_extension_dict()
+    new_dict = xdict.add_dictionary("TEST")
+    assert new_dict.dxf.owner == xdict.handle
+

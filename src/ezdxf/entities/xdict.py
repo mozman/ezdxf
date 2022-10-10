@@ -188,7 +188,7 @@ class ExtensionDict:
         doc = dictionary.doc
         assert doc is not None, "valid DXF document required"
         new_dict = doc.objects.add_dictionary(
-            owner=dictionary.dxf.hande,
+            owner=dictionary.dxf.handle,
             hard_owned=hard_owned,
         )
         dictionary[name] = new_dict

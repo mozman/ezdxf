@@ -14,6 +14,8 @@ Version 1.0.0b0 - dev
   fix keyword only argument in virtual_block_reference_entities() call
 - BUGFIX: [#749](https://github.com/mozman/ezdxf/issues/749)
   fix infinite loop in MTEXT rendering with tabulators
+- BUGFIX: [#751](https://github.com/mozman/ezdxf/issues/751)
+  fix invalid DXF attribute name
 
 Version 0.18.1 - 2022-09-03
 ---------------------------
