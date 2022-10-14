@@ -20,10 +20,10 @@ assign the layer properties such as color and linetype. Then assign those layers
 to other DXF entities by setting the DXF attribute :attr:`~ezdxf.entities.DXFGraphic.dxf.layer`
 to the layer name as string.
 
-The DXF format do not require a layer table entry for a layer to use but not
-recommend, a layer without a layer table entry has the default linetype
-``'Continuous'``, a default color of ``7`` and the lineweight is ``-3`` for
-default lineweight which is 0.25 in most circumstances.
+The DXF format do not require a layer table entry for a layer. A layer
+without a layer table entry has the default linetype ``'Continuous'``, a default
+color of ``7`` and a lineweight of ``-3`` which represents the default
+lineweight of 0.25mm in most circumstances.
 
 The advantage of assigning properties to a layer is that entities
 can inherit this properties from the layer by using the string ``'BYLAYER'`` as
