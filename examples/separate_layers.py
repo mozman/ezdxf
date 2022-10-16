@@ -9,8 +9,6 @@ CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = pathlib.Path(".")
 
-SOURCE_DXF = "test.dxf"
-
 # ------------------------------------------------------------------------------
 # This example shows how to separate entities by their layer attribute
 #
@@ -27,8 +25,8 @@ SOURCE_DXF = "test.dxf"
 # ------------------------------------------------------------------------------
 
 
-def main():
-    source_doc = ezdxf.readfile(CWD / SOURCE_DXF)
+def main(filename: str):
+    source_doc = ezdxf.readfile(CWD / filename)
     source_msp = source_doc.modelspace()
     # create an EntityQuery container with all entities from the modelspace
     source_entities = source_msp.query()
@@ -53,4 +51,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main("test.dxf")
