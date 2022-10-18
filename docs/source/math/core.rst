@@ -73,6 +73,7 @@ Bulge Related Functions
     bulge_center
     bulge_radius
     bulge_to_arc
+    bulge_from_radius_and_chord
 
 .. seealso::
 
@@ -87,6 +88,8 @@ Bulge Related Functions
 .. autofunction:: bulge_radius
 
 .. autofunction:: bulge_to_arc
+
+.. autofunction:: bulge_from_radius_and_chord
 
 2D Graphic Functions
 ====================

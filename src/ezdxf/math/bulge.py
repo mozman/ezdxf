@@ -14,6 +14,7 @@ __all__ = [
     "bulge_center",
     "bulge_radius",
     "arc_to_bulge",
+    "bulge_from_radius_and_chord",
 ]
 
 
@@ -63,9 +64,7 @@ def arc_to_bulge(
     return start_point, end_point, bulge
 
 
-def bulge_3_points(
-    start_point: UVec, end_point: UVec, point: UVec
-) -> float:
+def bulge_3_points(start_point: UVec, end_point: UVec, point: UVec) -> float:
     """Returns bulge value defined by three points.
 
     Based on 3-Points to Bulge by `Lee Mac`_.
@@ -109,9 +108,7 @@ def bulge_to_arc(
         return c, angle(c, start_point), angle(c, end_point), abs(r)
 
 
-def bulge_center(
-    start_point: UVec, end_point: UVec, bulge: float
-) -> "Vec2":
+def bulge_center(start_point: UVec, end_point: UVec, bulge: float) -> "Vec2":
     """Returns center of arc described by the given bulge parameters.
 
     Based on  Bulge Center by `Lee Mac`_.
@@ -141,9 +138,7 @@ def signed_bulge_radius(
     )
 
 
-def bulge_radius(
-    start_point: UVec, end_point: UVec, bulge: float
-) -> float:
+def bulge_radius(start_point: UVec, end_point: UVec, bulge: float) -> float:
     """Returns radius of arc defined by the given bulge parameters.
 
     Based on Bulge Radius by `Lee Mac`_
@@ -155,3 +150,24 @@ def bulge_radius(
 
     """
     return abs(signed_bulge_radius(start_point, end_point, bulge))
+
+
+def bulge_from_radius_and_chord(radius: float, chord: float) -> float:
+    """Returns the bulge value for the given arc radius and chord length.
+    Returns 0 if the radius is zero or the radius is too small for the given
+    chord length to create an arc.
+
+    Args:
+        radius: arc radius
+        chord: chord length
+
+    """
+    # https://github.com/mozman/ezdxf/discussions/758
+    try:
+        x = chord / (2.0 * radius)
+    except ZeroDivisionError:
+        return 0.0
+    try:
+        return x / (1.0 + math.sqrt(1.0 - x * x))
+    except ValueError:  # domain error
+        return 0.0

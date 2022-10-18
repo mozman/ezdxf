@@ -5,7 +5,6 @@ from typing import Iterable, List, Tuple, Sequence
 
 from functools import partial
 import math
-import warnings
 from ezdxf.math import (
     Vec3,
     Vec2,
