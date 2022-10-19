@@ -68,6 +68,8 @@ DXF Entities
 - (>v1.0) explode HATCH pattern into LINE entities, points are represented by 
   zero-length LINE entities, because the POINT entity has a special meaning.
 - (>v1.0) extend ACIS support
+- (>v1.0) clipping path support for block references, see XCLIP command,
+  https://github.com/mozman/ezdxf/discussions/760
 
 DXF Document
 ------------
