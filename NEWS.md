@@ -2,10 +2,11 @@
 News
 ====
 
-Version 1.0.0b0 - dev
+Version 1.0.0b1 - dev
 ---------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
+- NEW: Python 3.11 packages on PyPI
 - NEW: `Drawing.paperspace()` type-safe method to acquire paperspace layouts 
 - CHANGE: removed deprecated features
 - BUGFIX: [#747](https://github.com/mozman/ezdxf/issues/747)
