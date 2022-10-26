@@ -1,5 +1,6 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
+import pytest
 import math
 from ezdxf.math import (
     bulge_radius,
@@ -8,6 +9,7 @@ from ezdxf.math import (
     bulge_3_points,
     bulge_to_arc,
     bulge_from_radius_and_chord,
+    bulge_from_arc_angle,
 )
 
 
@@ -59,4 +61,16 @@ class TestBulgeFromRadiusAndChord:
 
     def test_too_small_radius_for_chord(self):
         assert bulge_from_radius_and_chord(1, 10) == 0.0
+
+
+@pytest.mark.parametrize("angle,bulge", [
+    (180, 1.0),
+    (-180, -1.0),
+    (106.26020471, 0.5),
+    (-106.26020471, -0.5),
+    (56.14497387, 0.25),
+    (-56.14497387, -0.25),
+])
+def test_bulge_from_arc_angle(angle, bulge):
+    assert math.isclose(bulge_from_arc_angle(math.radians(angle)), bulge)
 

@@ -15,6 +15,7 @@ __all__ = [
     "bulge_radius",
     "arc_to_bulge",
     "bulge_from_radius_and_chord",
+    "bulge_from_arc_angle",
 ]
 
 
@@ -171,3 +172,14 @@ def bulge_from_radius_and_chord(radius: float, chord: float) -> float:
         return x / (1.0 + math.sqrt(1.0 - x * x))
     except ValueError:  # domain error
         return 0.0
+
+
+def bulge_from_arc_angle(angle: float) -> float:
+    """Returns the bulge value for the given arc angle.
+
+    Args:
+        angle: arc angle in radians
+
+    """
+    # https://github.com/mozman/ezdxf/discussions/758
+    return math.tan(angle/4.0)
