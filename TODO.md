@@ -71,6 +71,73 @@ DXF Entities
 - (>v1.0) clipping path support for block references, see XCLIP command,
   https://github.com/mozman/ezdxf/discussions/760
 
+Selection Module
+----------------
+
+(>1.0) A module to select entities based on their spatial location and shape 
+like in CAD applications, but using the bounding box of the entities instead 
+their real geometry for simplicity.
+
+Selection methods:
+- rectangle selection - entity bbox inside a rectangular window
+- rectangle crossing - entity bbox inside or crossing a rectangular window
+- circle selection - entity bbox inside a circular window
+- circle crossing - entity bbox inside or crossing a circular window
+- polygon selection - entity bbox inside a polygonal window
+- polygon crossing - entity bbox inside or crossing a polygonal window
+- fence selection - entity bboxes crossing an arbitrary polyline
+- cluster selection - entity bboxes located near together (k_means, dbscan)
+- chain selection - linked bboxes starting at a given point or entity (RTree)
+
+The selection geometry should be an object:
+- Rectangle
+- Circle
+- Polygon
+- Fence
+
+The selection result should be an `EntityQuery` container, which already has 
+`Set` operations to combine multiple selections:
+- union of selections
+- subtract selected entities from a previous selection
+- intersection of selection
+
+The selection methods should support a bounding box cache as an optional 
+parameter to improve the performance for multiple selections for the 
+same base entities.
+
+Usage should look like this:
+
+```python
+from ezdxf import select
+from ezdxf import bbox
+
+...
+
+entities = doc.modelspace()
+
+# optional bounding box cache for faster processing of multiple queries:
+bbox_cache = bbox.Cache()
+
+rect = select.Rectangle(x0=0, y0=0, x1=10, y1=10)
+circle = select.Circle(x=30, y=30, radius=10)
+
+# union:
+selection0 = select.inside(entities, rect, cache=bbox_cache)
+selection1 = select.crossing(entities, circle, cache=bbox_cache)
+result = selection0 | selection1
+
+# subtraction:
+selection = select.inside(entities, rect, cache=bbox_cache)
+ignore = select.crossing(selection, circle, cache=bbox_cache)
+result = selection - ignore
+```
+
+Issues:
+- How to handle 2D/3D selections?
+- 2D selections always in top-view mode?
+- Using special box- and sphere selections for 3D selection?
+
+
 DXF Document
 ------------
 
