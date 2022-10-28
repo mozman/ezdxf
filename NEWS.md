@@ -6,8 +6,9 @@ Version 1.0.0b1 - dev
 ---------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
-- NEW: Python 3.11 packages on PyPI
-- NEW: `Drawing.paperspace()` type-safe method to acquire paperspace layouts 
+- NEW: Python 3.11 binary wheels on PyPI
+- NEW: `Drawing.paperspace()`, a correct type-annotated method to get paperspace 
+  layouts 
 - CHANGE: removed deprecated features
 - BUGFIX: [#747](https://github.com/mozman/ezdxf/issues/747)
   fix virtual entities of 3D DIMENSION entities  
