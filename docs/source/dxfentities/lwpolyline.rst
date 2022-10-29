@@ -92,7 +92,7 @@ User Defined Point Format Codes
         dxf.flags                      Value   Description
         ============================== ======= ===========
         LWPOLYLINE_CLOSED              1       polyline is closed
-        LWPOLYLINE_PLINEGEN            128     ???
+        LWPOLYLINE_PLINEGEN            128     linetype is generated across the points
         ============================== ======= ===========
 
     .. attribute:: dxf.const_width
