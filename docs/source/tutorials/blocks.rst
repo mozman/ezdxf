@@ -11,7 +11,7 @@ Create a Block
 
 Blocks are managed as :class:`~ezdxf.layouts.BlockLayout` objects by the
 :class:`~ezdxf.sections.blocks.BlocksSection` object, every drawing has only
-one blocks section stored in the attribute: :attr:`Drawing.blocks`.
+one blocks section referenced by attribute :attr:`Drawing.blocks`.
 
 .. literalinclude:: src/blocks.py
     :lines: 1-21
@@ -27,7 +27,7 @@ entity to any of these layout types:
   - :class:`~ezdxf.layouts.BlockLayout`
 
 A block reference can be scaled and rotated individually.
-Lets add some random flags into the modelspace:
+Lets add some random flags to the modelspace:
 
 .. literalinclude:: src/blocks.py
     :lines: 23-40
@@ -117,10 +117,9 @@ Exploding Block References
 
 This is an advanced feature and the results may not be perfect.
 A **non-uniform scaling** lead to incorrect results for text entities (TEXT,
-MTEXT, ATTRIB) and some other entities like HATCH with arc- or ellipse path
-segments.
-The "exploded" entities are added to the same layout as the block
-reference by default.
+MTEXT, ATTRIB) and some other entities like HATCH with circular- or elliptic
+path segments.  The "exploded" entities are added to the same layout as the
+block reference by default.
 
 
 .. code-block:: Python
@@ -131,7 +130,7 @@ reference by default.
 Examine Entities of Block References
 ------------------------------------
 
-To just examine the entities of a block reference use the
+To just examine the content entities of a block reference use the
 :meth:`~ezdxf.entities.Insert.virtual_entities` method.
 This methods yields "virtual" entities with properties identical to "exploded"
 entities but they are not stored in the entity database, have no handle and are
