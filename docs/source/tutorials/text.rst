@@ -16,7 +16,7 @@ Add a simple one line text entity by factory function :meth:`~ezdxf.layouts.Base
     # The TEXT entity is a DXF primitive and is supported in all DXF versions.
     # The argument setup=True creates standard linetypes and text styles in the
     # new DXF document.
-    doc = ezdxf.new('R12', setup=True)
+    doc = ezdxf.new("R12", setup=True)
     msp = doc.modelspace()
 
     # Use method set_placement() to define the TEXT alignment, because the
@@ -31,7 +31,7 @@ Add a simple one line text entity by factory function :meth:`~ezdxf.layouts.Base
     msp.add_text(
         "Text Style Example: Liberation Serif",
         height=0.35,
-        dxfattribs={'style': 'LiberationSerif'}
+        dxfattribs={"style": "LiberationSerif"}
     ).set_placement((2, 6), align=TextEntityAlignment.LEFT)
 
     doc.saveas("simple_text.dxf")
@@ -77,6 +77,15 @@ name (e.g. :code:`{'style': 'OpenSans-Italic'}`):
 
 .. image:: gfx/fonts.png
 
+.. important::
+
+    To see the defined text styles in a DXF viewer or CAD application, the
+    applications have to know where the referenced TTF fonts can be found.
+    This configuration is not possible by `ezdxf` and has to be done for each
+    application as described in their documentation.
+
+    See also: :ref:`font resources`
+
 New Text Style
 --------------
 
@@ -84,9 +93,9 @@ Creating a new text style is simple:
 
 .. code-block:: Python
 
-    doc.styles.new('myStandard', dxfattribs={'font' : 'OpenSans-Regular.ttf'})
+    doc.styles.new("myStandard", dxfattribs={"font" : "OpenSans-Regular.ttf"})
 
-But getting the correct font name is often not that simple, especially on Windows.
+Getting the correct font name is often not that simple, especially on Windows.
 This shows the required steps to get the font name for `Open Sans`:
 
     - open font folder `c:\\windows\\fonts`
@@ -94,12 +103,14 @@ This shows the required steps to get the font name for `Open Sans`:
     - right-click on `Open Sans Standard` and select `Properties`
     - on top of the first tab you see the font name: ``'OpenSans-Regular.ttf'``
 
-The style name has to be unique in the DXF document, else `ezdxf` will raise an
-:class:`DXFTableEntryError` exception. To replace an existing entry, delete the
-existing entry by :code:`doc.styles.remove(name)`, and add the replacement entry.
+The style name has to be unique in the DXF document, otherwise `ezdxf` will
+raise an :class:`DXFTableEntryError` exception. To replace an existing entry,
+delete the existing entry by :code:`doc.styles.remove(name)`, and add the
+replacement entry.
 
 3D Text
 -------
 
-It is possible to place the 2D :class:`Text` entity into 3D space by using the :ref:`OCS`,
-for further information see: :ref:`tut_ocs`.
+It is possible to place the 2D :class:`Text` entity into 3D space by using the
+:ref:`OCS`, for further information see: :ref:`tut_ocs` and
+:ref:`tut_ucs_transform`.
