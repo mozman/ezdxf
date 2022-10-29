@@ -7,6 +7,16 @@ The :class:`~ezdxf.entities.MText` entity is a multi line entity with extended
 formatting possibilities and requires at least DXF version R2000, to use all
 features (e.g. background fill) DXF R2007 is required.
 
+.. important::
+
+    The rendering result of the MTEXT entity depends on the DXF viewer or CAD
+    application and can differ between different applications. These differences
+    have the greatest impact on line wrapping, which can cause columns of text
+    to have different heights in different applications!
+
+    In order for the text to look similar in different programs, the formatting
+    should be as simple as possible or omitted altogether.
+
 Prolog code:
 
 .. code-block:: python
@@ -27,29 +37,32 @@ Prolog code:
     deserunt mollit anim id est laborum.
     """
 
-Adding a MText entity
+Adding a MTEXT entity
 ---------------------
 
-The MText entity can be added to any layout (modelspace, paperspace or block)
+The MTEXT entity can be added to any layout (modelspace, paperspace or block)
 by the :meth:`~ezdxf.layouts.BaseLayout.add_mtext` function.
 
 .. code-block:: python
 
-    # store MText entity for additional manipulations
+    # store MTEXT entity for additional manipulations
     mtext = msp.add_mtext(lorem_ipsum, dxfattribs={"style": "OpenSans"})
 
-This adds a MText entity with text style "OpenSans".
-The MText content can be accessed by the :attr:`text` attribute, this attribute
+This adds a MTEXT entity with text style "OpenSans".
+The MTEXT content can be accessed by the :attr:`text` attribute, this attribute
 can be edited like any Python string:
 
 .. code-block:: python
 
-    mtext.text += "Append additional text to the MText entity."
+    mtext.text += "Append additional text to the MTEXT entity."
     # even shorter with __iadd__() support:
-    mtext += "Append additional text to the MText entity."
+    mtext += "Append additional text to the MTEXT entity."
 
 
 .. image:: gfx/mtext_without_width.png
+
+The :class:`MText` entity has an alias :attr:`MText.dxf.text` for the
+:attr:`MText.text` attribute for compatibility to the :class:`Text` entity.
 
 .. important::
 
@@ -59,10 +72,10 @@ can be edited like any Python string:
 Text placement
 --------------
 
-The location of the MText entity is defined by the :attr:`MText.dxf.insert` and
-the :attr:`MText.dxf.attachment_point` attributes. The :attr:`attachment_point`
-defines the text alignment relative to the :attr:`insert` location, default
-value is 1.
+The location of the MTEXT entity is defined by the :attr:`MText.dxf.insert` and
+the :attr:`MText.dxf.attachment_point` attributes in :ref:`WCS` coordinates.
+The :attr:`attachment_point` defines the text alignment relative to the
+:attr:`insert` location, default value is 1.
 
 Attachment point constants defined in :mod:`ezdxf.lldxf.const`:
 
@@ -80,7 +93,7 @@ MTEXT_BOTTOM_CENTER            8
 MTEXT_BOTTOM_RIGHT             9
 ============================== =======
 
-The MText entity has a method for setting :attr:`insert`,
+The MTEXT entity has a method for setting :attr:`insert`,
 :attr:`attachment_point` and :attr:`rotation` attributes
 by one call: :meth:`~ezdxf.entities.MText.set_location`
 
@@ -89,7 +102,7 @@ Character height
 
 The character height is defined by the DXF attribute
 :attr:`MText.dxf.char_height` in drawing units, which
-has also consequences for the line spacing of the MText entity:
+has also consequences for the line spacing of the MTEXT entity:
 
 .. code-block:: python
 
@@ -104,11 +117,11 @@ Text rotation (direction)
 The :attr:`MText.dxf.rotation` attribute defines the text rotation as angle
 between the x-axis and the horizontal direction of the text in degrees.
 The :attr:`MText.dxf.text_direction` attribute defines the horizontal direction
-of MText as vector in WCS or OCS, if an :ref:`OCS` is defined.
+of MTEXT as vector in WCS.
 Both attributes can be present at the same entity, in this case the
 :attr:`MText.dxf.text_direction` attribute has the higher priority.
 
-The MText entity has two methods to get/set rotation:
+The MTEXT entity has two methods to get/set rotation:
 :meth:`~ezdxf.entities.MText.get_rotation` returns the rotation angle in degrees
 independent from definition as angle or direction, and
 :meth:`~ezdxf.entities.MText.set_rotation` set the :attr:`rotation` attribute
@@ -132,10 +145,10 @@ needed.
 
 .. _mtext_formatting:
 
-MText formatting
+MTEXT formatting
 ----------------
 
-MText supports inline formatting by special codes: :ref:`mtext_inline_codes`
+MTEXT supports inline formatting by special codes: :ref:`mtext_inline_codes`
 
 .. code-block:: python
 
@@ -143,12 +156,12 @@ MText supports inline formatting by special codes: :ref:`mtext_inline_codes`
 
 .. image:: gfx/mtext_rgb.png
 
-See also new section for the new support class `MTextEditor`_ in `ezdxf` v0.17.
+See also the support class `MTextEditor`_.
 
 Stacked text
 ------------
 
-MText also supports stacked text:
+MTEXT supports stacked text:
 
 .. code-block:: python
 
@@ -159,12 +172,12 @@ MText also supports stacked text:
 
 .. image:: gfx/mtext_stacked.png
 
-See also new section for the new support class `MTextEditor`_ in `ezdxf` v0.17.
+See also the support class `MTextEditor`_.
 
 Background color (filling)
 --------------------------
 
-The MText entity can have a background filling:
+The MTEXT entity can have a background filling:
 
 - :ref:`ACI`
 - true color value as ``(r, g, b)`` tuple
@@ -181,7 +194,7 @@ required DXF attributes at once:
 
 The parameter `scale` determines how much border there is around the text, the
 value is based on the text height, and should be in the range of 1 - 5,
-where 1 fits exact the MText entity.
+where 1 fits exact the MTEXT entity.
 
 .. image:: gfx/mtext_bg_color.png
     :align: center
