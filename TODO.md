@@ -167,7 +167,7 @@ DXF Document
   - resource management like CAD applications, e.g. layer names of xrefs: 
     <dwg-name>$0$layername
   - `xref.bind(xref_block)`: convert a XREF into a common BLOCK, this replaces 
-    the model space import of the `Importer` add-on
+    the modelspace import of the `Importer` add-on
   - `xref.attach(doc, "xref_filename.dxf")`, replaces `Drawing.add_xref_def()`
   - `xmgr = xref.XRefManager(source_doc, target_doc)`
   - `xmgr.import_modelspace()` import all modelspace entities
@@ -181,5 +181,15 @@ DXF Document
 Documentation
 -------------
 
-- Basic concept & tutorial: Text styling (TEXT, ATTRIB, ATTDEF, MTEXT)
-- Tutorial for POLYFACE
+- Basic concept 
+  - text styling (TEXT, ATTRIB, ATTDEF, MTEXT)
+  - true color
+  - transparency
+  - ltscale
+- Tutorials
+  - usage of graphical properties: ACI, true color, transparency, linetype, 
+    lineweight, ltscale
+  - text styling 
+  - VIEWPORT
+
+  
