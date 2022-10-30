@@ -32,14 +32,14 @@ create 3D meshes and render them as POLYFACE entities by the
         msp = doc.modelspace()
 
         # render as MESH entity
-        cube.render(msp, dxfattribs=red)
+        cube.render_mesh(msp, dxfattribs=red)
         cube.translate(20)
 
         # render as POLYFACE a.k.a. POLYLINE entity
         cube.render_polyface(msp, dxfattribs=green)
         cube.translate(20)
 
-        # render as unconnected 3DFACE entities
+        # render as a bunch of 3DFACE entities
         cube.render_3dfaces(msp, dxfattribs=blue)
 
         doc.saveas("meshes.dxf")
@@ -78,3 +78,7 @@ for inspecting :class:`Polyface` entities:
         if polyline.is_poly_face_mesh:
             mesh = MeshBuilder.from_polyface(polyline)
             process(mesh)
+
+.. seealso::
+
+    :ref:`tut_mesh`

@@ -4,13 +4,14 @@ Mesh
 .. module:: ezdxf.entities
     :noindex:
 
-The MESH entity (`DXF Reference`_) is a 3D mesh similar to the :class:`Polyface` entity.
+The :class:`~ezdxf.entities.Mesh` entity is a 3D surface mesh build up
+from vertices and faces.
+
+The MESH entity (`DXF Reference`_) is a 3D object in :ref:`WCS` build up
+from vertices and faces similar to the :class:`Polyface` entity.
 
 All vertices in :ref:`WCS` as (x, y, z) tuples
 
-.. versionchanged:: 0.8.9
-
-    :class:`Mesh` stores vertices, edges, faces and creases as packed data.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -22,7 +23,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
 .. seealso::
 
-    :ref:`tut_mesh` and helper classes: :class:`~ezdxf.render.MeshBuilder`, :class:`~ezdxf.render.MeshVertexMerger`
+    :ref:`tut_mesh` and helper classes: :class:`~ezdxf.render.MeshBuilder`,
+    :class:`~ezdxf.render.MeshVertexMerger`
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-4B9ADA67-87C8-4673-A579-6E4C76FF7025
 
@@ -67,14 +69,14 @@ MeshData
 
     .. attribute:: edges
 
-        A standard Python list with (v1, v2) tuples (read/write). These list
+        A Python list with (v1, v2) tuples (read/write). This list
         represents the edges to which the :attr:`edge_crease_values` values
         will be applied. Each edge consist of exact two vertex indices
         (= index in :attr:`vertices`).
 
     .. attribute:: edge_crease_values
 
-        A standard Python list of float values, one value for each edge. (read/write)
+        A Python list of float values, one value for each edge. (read/write)
 
     .. automethod:: add_face
 

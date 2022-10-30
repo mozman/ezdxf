@@ -3,7 +3,10 @@
 Tutorial for Mesh
 =================
 
-Create a cube mesh by direct access to base data structures:
+The :class:`~ezdxf.entities.Mesh` entity is a 3D object in :ref:`WCS` build up
+from vertices and faces.
+
+Create a cube mesh by directly accessing the base data structures:
 
 .. code-block:: python
 
@@ -44,9 +47,9 @@ Create a cube mesh by direct access to base data structures:
 
     doc.saveas("cube_mesh_1.dxf")
 
-Create a cube mesh by assembling single faces and the
+Create a cube mesh by assembling single faces using the
 :meth:`~ezdxf.entities.Mesh.edit_data()` context manager of the
-:class:`~ezdxf.entities.Mesh` class, using the helper class
+:class:`~ezdxf.entities.Mesh` class and the helper class
 :class:`~ezdxf.entities.MeshData`:
 
 .. code-block:: python
@@ -82,3 +85,77 @@ Create a cube mesh by assembling single faces and the
         mesh_data.optimize()
 
     doc.saveas("cube_mesh_2.dxf")
+
+Its recommended to use the :class:`~ezdxf.render.MeshBuilder` objects to
+create 3D meshes and render them as MESH entities by the
+:meth:`~ezdxf.render.MeshBuilder.render_mesh` method into a layout:
+
+.. code-block:: Python
+
+        import ezdxf
+        from ezdxf import colors
+        from ezdxf.gfxattribs import GfxAttribs
+        from ezdxf.render import forms
+
+        cube = forms.cube().scale_uniform(10).subdivide(2)
+        red = GfxAttribs(color=colors.RED)
+        green = GfxAttribs(color=colors.GREEN)
+        blue = GfxAttribs(color=colors.BLUE)
+
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+
+        # render as MESH entity
+        cube.render_mesh(msp, dxfattribs=red)
+        cube.translate(20)
+
+        # render as POLYFACE a.k.a. POLYLINE entity
+        cube.render_polyface(msp, dxfattribs=green)
+        cube.translate(20)
+
+        # render as a bunch of 3DFACE entities
+        cube.render_3dfaces(msp, dxfattribs=blue)
+
+        doc.saveas("meshes.dxf")
+
+.. image:: gfx/mesh_cubes.png
+
+There exist some tools to manage meshes:
+
+- :class:`ezdxf.render.MeshBuilder`: The :class:`~ezdxf.render.MeshBuilder`
+  classes are helper tools to manage meshes buildup by vertices and faces.
+- :class:`ezdxf.render.MeshTransformer`: Same functionality as :class:`~ezdxf.render.MeshBuilder`
+  but supports inplace transformation.
+- :class:`ezdxf.render.MeshDiagnose`: A diagnose tool which can be used to
+  analyze and detect errors of :class:`~ezdxf.render.MeshBuilder` objects
+  like topology errors for closed surfaces.
+- :class:`ezdxf.render.FaceOrientationDetector`: A helper class for face
+  orientation and face normal vector detection
+
+The :mod:`ezdxf.render.forms` module provides function to create basic
+geometries like cube, cone, sphere and so on and functions to create meshes
+from profiles by extrusion, rotation or sweeping.
+
+This example shows how to sweep a gear profile along a helix:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.render import forms
+
+    doc = ezdxf.new()
+    doc.layers.add("MESH", color=ezdxf.colors.YELLOW)
+    msp = doc.modelspace()
+    # sweeping a gear-profile
+    gear = forms.gear(
+        8, top_width=0.01, bottom_width=0.02, height=0.02, outside_radius=0.1
+    )
+    helix = path.helix(radius=2, pitch=1, turns=6)
+    # along a helix spine
+    sweeping_path = helix.flattening(0.1)
+    mesh = forms.sweep(gear, sweeping_path, close=True, caps=True)
+    # and render as MESH entity
+    mesh.render_mesh(msp, dxfattribs={"layer": "MESH"})
+    doc.saveas("gear_along_helix.dxf")
+
+.. image:: gfx/gear_along_helix.png
