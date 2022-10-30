@@ -3,7 +3,17 @@
 Tutorial for Underlay and UnderlayDefinition
 ============================================
 
-Insert a PDF, DWF, DWFx or DGN file as drawing underlay, the underlay file is NOT embedded into the DXF file::
+This example shows hot to insert a a PDF, DWF, DWFx or DGN file as drawing
+underlay. Each UNDERLAY entity requires an associated UNDERLAYDEF entity in the
+objects section, which stores the filename of the linked document and the
+parameters of the underlay. Multiple UNDERLAY entities can share the same
+UNDERLAYDEF entity.
+
+.. important::
+
+    The underlay file is NOT embedded into the DXF file:
+
+.. code-block:: Python
 
     import ezdxf
 
