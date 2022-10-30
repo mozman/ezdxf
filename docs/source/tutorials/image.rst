@@ -3,8 +3,14 @@
 Tutorial for Image and ImageDef
 ===============================
 
-Insert a raster image into a DXF document, the raster image is NOT embedded in
-the DXF file:
+This example shows how to use a raster image in a DXF document.
+Each IMAGE entity requires an associated IMAGEDEF entity in the objects
+section, which stores the filename of the linked image and the size in pixels.
+Multiple IMAGE entities can share the same IMAGEDEF entity.
+
+.. important::
+
+    The raster image is NOT embedded in the DXF file!
 
 .. code-block:: Python
 
