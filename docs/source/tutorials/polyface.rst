@@ -9,7 +9,8 @@ VERTEX structure. The :class:`Polyface` entity was used in DXF R12 and older
 DXF versions and is still supported by newer DXF versions. The new
 :class:`~ezdxf.entities.Mesh` entity stores the same data much more efficient
 but requires DXF R2000 or newer. The :class:`Polyface` entity supports only
-triangles and quadrilaterals as faces the :class:`Mesh` entity supports n-gons.
+triangles and quadrilaterals as faces, the :class:`Mesh` entity supports also
+n-gons.
 
 Its recommended to use the :class:`~ezdxf.render.MeshBuilder` objects to
 create 3D meshes and render them as POLYFACE entities by the
