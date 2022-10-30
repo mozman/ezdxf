@@ -26,7 +26,8 @@ shapes.
 
 .. seealso::
 
-    :ref:`tut_linetypes`
+    - :ref:`tut_linetypes`
+    - Autodesk Knowledge Network: `About Linetypes`_
 
 Linetype Scaling
 -----------------
@@ -37,3 +38,5 @@ Global linetype scaling can be changed by setting the header variable
 The linetype scaling for a single entity can be set by the DXF attribute
 :attr:`~ezdxf.entities.DXFGraphic.dxf.ltscale`, which is supported since
 DXF R2000.
+
+.. _about linetypes: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2019/ENU/AutoCAD-Core/files/GUID-20B4D4B3-1220-426A-847B-5BBE36EC6FDF-htm.html#GUID-20B4D4B3-1220-426A-847B-5BBE36EC6FDF__SECTION_C298CAFE7CDF42A1AF937862BDA04F1C

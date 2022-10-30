@@ -26,5 +26,8 @@ attributes by distinct values.
 
 .. seealso::
 
-    :ref:`plot_style_files`
-    :mod:`ezdxf.colors`
+    - :ref:`plot_style_files`
+    - :mod:`ezdxf.colors`
+    - Autodesk Knowledge Network: `About Setting the COLOR of Objects`_
+
+.. _About Setting the COLOR of Objects: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2019/ENU/AutoCAD-Core/files/GUID-14BC039D-238D-4D9E-921B-F4015F96CB54-htm.html
