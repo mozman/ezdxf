@@ -115,8 +115,6 @@ Use predefined hatch pattern by name:
 .. image:: gfx/hatch-predefined-pattern.png
     :align: center
 
+.. seealso::
 
-Create hatches with gradient fill
----------------------------------
-
-TODO
+    :ref:`tut_hatch_pattern`

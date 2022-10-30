@@ -10,6 +10,7 @@ Tutorials
     getting_data
     simple_drawings
     layers
+    linetypes
     blocks
     lwpolyline
     text
@@ -21,7 +22,7 @@ Tutorials
     hatch_pattern
     image
     underlay
-    linetypes
+    mleader
     ocs_usage
     ucs_transform
     linear_dimension
@@ -32,4 +33,4 @@ Tutorials
     ordinate_dimension
     geo
     custom_data
-    mleader
+
