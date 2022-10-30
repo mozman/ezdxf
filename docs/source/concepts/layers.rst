@@ -49,5 +49,7 @@ default settings.
 
     - :ref:`tut_layers`
     - Autodesk Knowledge Network: `About Layers`_
+    - BricsCAD Help Center: `Working with Layers`_
 
 .. _About Layers: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2019/ENU/AutoCAD-Core/files/GUID-6B3E3B5D-3AE2-4162-A5FE-CFE42AB0743B-htm.html
+.. _Working with Layers: https://help.bricsys.com/document/_guides--BCAD_2D_drafting--GD_workingwithlayers/V22/EN_US?id=165079137441

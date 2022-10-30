@@ -44,6 +44,8 @@ The lineweight value can be overridden by :term:`CTB` or :term:`STB` files.
 .. seealso::
 
     - Autodesk Knowledge Network: `about lineweights`_
+    - BricsCAD Help Center: `Entity Lineweight`_
 
 .. _valid_lineweights.dxf: https://raw.githubusercontent.com/mozman/ezdxf/master/examples_dxf/valid_lineweights.dxf
-.. _about lineweights: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2019/ENU/AutoCAD-Core/files/GUID-4B33ACD3-F6DD-4CB5-8C55-D6D0D7130905-htm.html
+.. _About Lineweights: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2019/ENU/AutoCAD-Core/files/GUID-4B33ACD3-F6DD-4CB5-8C55-D6D0D7130905-htm.html
+.. _Entity Lineweight: https://help.bricsys.com/document/_guides--BCAD_2D_drafting--GD_lineweight/V22/EN_US?id=165079137239
