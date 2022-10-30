@@ -4,6 +4,7 @@ import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.lldxf import const
+from ezdxf.math import Vec2
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
@@ -40,6 +41,30 @@ def create_pattern_fill_polyline_hatch():
     )
     zoom.extents(msp)
     doc.saveas(CWD / "hatch_pattern_fill_polyline.dxf")
+
+
+def create_user_pattern_fill():
+    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
+    msp = doc.modelspace()  # we are working in model space
+    hatch = msp.add_hatch()  # by default a SOLID fill
+    offset = Vec2.from_deg_angle(45+90, length=0.7)
+    hatch.set_pattern_fill(
+        "MyPattern",
+        color=7,
+        angle=0,
+        scale=1.0,
+        style=0,
+        pattern_type=0,
+        definition=[
+            [0, (0, 0), (0, 1), [1, -1]],  # horizontal dashed line
+            [45, (0, 0), offset, []],  # slanted solid line
+        ],
+    )
+    points = [(0, 0), (10, 0), (10, 10), (0, 10)]
+    hatch.paths.add_polyline_path(points)
+    msp.add_lwpolyline(points, close=True, dxfattribs={"color": 1})
+    zoom.extents(msp)
+    doc.saveas(CWD / "hatch_user_pattern_fill.dxf")
 
 
 def create_pattern_fill_hatch_with_bgcolor():
@@ -215,10 +240,11 @@ def using_hatch_with_spline_edge():
     doc.saveas(CWD / "hatch_with_spline_edge.dxf")  # save DXF drawing
 
 
-if __name__ == '__main__':
-    create_solid_polyline_hatch()
-    create_pattern_fill_polyline_hatch()
-    create_pattern_fill_hatch_with_bgcolor()
-    using_hatch_style()
-    using_hatch_style_with_edge_path()
-    using_hatch_with_spline_edge()
+if __name__ == "__main__":
+    #create_solid_polyline_hatch()
+    #create_pattern_fill_polyline_hatch()
+    #create_pattern_fill_hatch_with_bgcolor()
+    create_user_pattern_fill()
+    #using_hatch_style()
+    #using_hatch_style_with_edge_path()
+    #using_hatch_with_spline_edge()
