@@ -6,18 +6,18 @@ Tutorial for Linear Dimensions
 The :class:`~ezdxf.entities.Dimension` entity is the generic entity for all
 dimension types, but unfortunately AutoCAD is **not willing** to show a
 dimension line defined only by this dimension entity, it also needs an anonymous
-block which contains the dimension line shape constructed by basic DXF entities
+block which contains the dimension line shape constructed by DXF primitives
 like LINE and TEXT entities, this representation is called the dimension line
-`rendering` in this documentation, beside the fact this is not a real graphical
-rendering. BricsCAD is a much more friendly CAD application, which do show the
-dimension entity without the graphical rendering as block, which was very useful
-for testing, because there is no documentation how to apply all the dimension
-style variables (more than 80).
+`rendering` in this documentation, beside the fact that this is not a real
+graphical rendering.  BricsCAD is a much more friendly CAD application, which
+do show the dimension entity without the graphical rendering as block, which was
+very useful for testing, because there is no documentation how to apply all the
+dimension style variables (more than 80).
 This seems to be the reason why dimension lines are rendered so differently by
 many CAD application.
 
 Don't expect to get the same rendering results by `ezdxf` as you get from
-AutoCAD, `ezdxf` tries to be as close to the results rendered by BricsCAD, but
+AutoCAD. `Ezdxf` tries to be as close to the results rendered by BricsCAD, but
 it is not possible to implement all the various combinations of dimension style
 parameters, which often affect one another.
 
@@ -28,16 +28,16 @@ parameters, which often affect one another.
 
 Text rendering is another problem, because `ezdxf` has no real rendering engine.
 Some font properties, like the real text width, which is only available to
-`ezdxf` if the `Matplotlib` package is installed and may also vary slightly for
-different CAD applications. Without access to the `Matplotlib` package the text
-properties in `ezdxf` are based on an abstract monospaced font and are bigger
-than required by true type fonts.
+`ezdxf` if the `Matplotlib` package is installed and this value may also vary
+slightly for different CAD applications.  Without access to the `Matplotlib`
+package the text properties in `ezdxf` are based on an abstract monospaced font
+and are bigger than required by true type fonts.
 
 Not all DIMENSION and DIMSTYLE features are supported by all DXF versions,
 especially DXF R12 does not support many features, but in this case the required
 rendering of dimension lines is an advantage, because if the application just
-shows the rendered block, all features which can be used in DXF R12 are displayed
-like linetypes, but this features will disappear if the dimension line will be
+shows the rendered block, all features which can be used in DXF R12 will be
+displayed, but these features will disappear if the dimension line will be
 edited in the CAD application. `Ezdxf` writes only the supported DIMVARS of the
 used DXF version to avoid invalid DXF files. So it is not that critical to know
 all the supported features of a DXF version, except for limits and tolerances,
@@ -254,9 +254,9 @@ measurement text:
 
 .. image:: gfx/dim_linear_user_location_absolute.png
 
-The `location` is relative to origin of the active coordinate system or WCS if
-no UCS is defined in the :meth:`~ezdxf.entities.DimStyleOverride.render` method,
-the user defined `location` can also be set by
+The `location` is relative to the origin of the active coordinate system or
+WCS if no UCS is defined in the :meth:`~ezdxf.entities.DimStyleOverride.render`
+method, the user defined `location` can also be set by
 :meth:`~ezdxf.entities.DimStyleOverride.user_location_override`.
 
 Location Relative to Center of Dimension Line
