@@ -24,6 +24,9 @@ attributes like :attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight` and
 :attr:`~ezdxf.entities.DXFGraphic.dxf.true_color` which can define these
 attributes by distinct values.
 
+.. image:: ../gfx/ACI-Color-Wheel.png
+
+
 .. seealso::
 
     - :ref:`plot_style_files`
