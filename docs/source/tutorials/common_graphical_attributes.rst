@@ -227,3 +227,30 @@ the attribute can always be used without any concerns::
 
     is_invisible = bool(entity.dxf.invisible)
 
+
+GfxAttribs
+----------
+
+When adding new entities to an entity space like the modelspace or a block definition,
+the factory methods expect the graphical DXF attributes by the argument
+`dxfattribs`. This object can be a Python :class:`dict` where the key is the DXF
+attribute name and the value is the attribute value, or better use the
+:class:`~ezdxf.gfxattribs.GfxAttribs` object which has some additional
+validation checks and support for code completions by IDEs:
+
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.gfxattribs import GfxAttribs
+
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+
+    line = msp.add_line(
+        (0, 0), (10, 10), dxfattribs=GfxAttribs(layer="0", rgb=(25, 128, 16))
+    )
+
+.. seealso::
+
+    - :mod:`ezdxf.gfxattribs` module

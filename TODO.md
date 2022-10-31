@@ -181,15 +181,7 @@ DXF Document
 Documentation
 -------------
 
-- Basic concept 
-  - text styling (TEXT, ATTRIB, ATTDEF, MTEXT)
-  - true color
-  - transparency
-  - ltscale
 - Tutorials
-  - usage of graphical properties: ACI, true color, transparency, linetype, 
-    lineweight, ltscale
-  - text styling 
   - VIEWPORT
 
   
