@@ -103,7 +103,7 @@ You can delete a linetype:
     doc.layers.remove("DASHED")
 
 This just removes the linetype definition, the :attr:`linetype` attribute of DXF
-entities may still refer the reoved linetype definition "DASHED" and AutoCAD
+entities may still refer the removed linetype definition "DASHED" and AutoCAD
 will not open DXF files including undefined linetypes.
 
 Tutorial for Creating Complex Linetype Pattern
