@@ -1,6 +1,6 @@
 .. _tut_getting_data:
 
-Tutorial for getting data from DXF files
+Tutorial for Getting Data from DXF Files
 ========================================
 
 This tutorial shows how to get data from an existing DXF document.

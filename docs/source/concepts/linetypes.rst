@@ -26,6 +26,7 @@ shapes.
 
 .. seealso::
 
+    - :ref:`tut_common_graphical_attributes`
     - :ref:`tut_linetypes`
     - Autodesk Knowledge Network: `About Linetypes`_
     - BricsCAD Help Center: `Entity Linetype`_

@@ -1,6 +1,6 @@
 .. _tut_simple_drawings:
 
-Tutorial for creating DXF drawings
+Tutorial for Creating DXF Drawings
 ==================================
 
 Create a new DXF document by the :func:`ezdxf.new` function:

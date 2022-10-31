@@ -9,8 +9,10 @@ Tutorials
 
     getting_data
     simple_drawings
+    common_graphical_attributes
     layers
     linetypes
+    dxf_primitives
     blocks
     lwpolyline
     text

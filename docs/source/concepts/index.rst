@@ -23,6 +23,9 @@ specific problems go to the :ref:`Howto` section.
     coordinates
     ocs
     units
+    modelspace
+    paperspace
+    blocks
     extents_limits
     fonts
-    blocks
+

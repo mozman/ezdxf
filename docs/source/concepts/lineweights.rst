@@ -43,7 +43,7 @@ The lineweight value can be overridden by :term:`CTB` or :term:`STB` files.
 
 .. seealso::
 
-    - Autodesk Knowledge Network: `about lineweights`_
+    - Autodesk Knowledge Network: `About Lineweights`_
     - BricsCAD Help Center: `Entity Lineweight`_
 
 .. _valid_lineweights.dxf: https://raw.githubusercontent.com/mozman/ezdxf/master/examples_dxf/valid_lineweights.dxf

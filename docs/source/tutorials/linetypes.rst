@@ -1,7 +1,7 @@
 .. _tut_linetypes:
 
-Tutorial for Linetypes
-======================
+Tutorial for Creating Linetype Pattern
+======================================
 
 Simple line type example:
 
@@ -106,8 +106,8 @@ This just removes the linetype definition, the :attr:`linetype` attribute of DXF
 entities may still refer the reoved linetype definition "DASHED" and AutoCAD
 will not open DXF files including undefined linetypes.
 
-Tutorial for Complex Linetypes
-==============================
+Tutorial for Creating Complex Linetype Pattern
+==============================================
 
 In DXF R13 Autodesk introduced complex linetypes, containing TEXT or SHAPES in
 line types.

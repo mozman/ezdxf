@@ -31,6 +31,7 @@ attributes by distinct values.
 
     - :ref:`plot_style_files`
     - :mod:`ezdxf.colors`
+    - :ref:`tut_common_graphical_attributes`
     - Autodesk Knowledge Network: `About Setting the Color of Objects`_
     - BricsCAD Help Center: `Entity Color`_
 
