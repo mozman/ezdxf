@@ -29,8 +29,8 @@ paperspace layout or a block layout.
 Predefined Resources
 --------------------
 
-`Ezdxf` creates new DXF documents with the least possible content, this means
-only resources which are absolutely necessary will be created.
+`Ezdxf` creates new DXF documents with as little content as possible, this means
+only the resources that are absolutely necessary are created.
 The :func:`ezdxf.new` function can create some standard resources, such as
 linetypes and text styles, by setting the argument `setup` to ``True``.
 

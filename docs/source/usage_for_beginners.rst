@@ -70,7 +70,8 @@ Create a new DXF document for a specific DXF version, e.g. for DXF R12::
     doc = ezdxf.new("R12")
 
 
-To setup some basic DXF resources use the `setup` argument::
+The :func:`ezdxf.new` function can create some standard resources, such as
+linetypes and text styles, by setting the argument `setup` to ``True``::
 
     doc = ezdxf.new(setup=True)
 
