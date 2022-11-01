@@ -78,7 +78,7 @@ acdb_plot_settings = DefSubclass(
         # 3 = 90 degrees clockwise
         "plot_rotation": DXFAttr(
             73,
-            default=1,
+            default=0,
             validator=validator.is_in_integer_range(0, 4),
             fixer=RETURN_DEFAULT,
         ),
