@@ -130,35 +130,36 @@ def create_viewports(paperspace: Paperspace):
     ).set_placement((16, 10), align=TextEntityAlignment.CENTER)
 
 
+def make_dxf(dxfversion: str, filename: str):
+    doc = ezdxf.new(dxfversion, setup=True)
+    # create/get the default layer for VIEWPORT entities:
+    if "VIEWPORTS" not in doc.layers:
+        vp_layer = doc.layers.add("VIEWPORTS")
+    else:
+        vp_layer = doc.layers.get("VIEWPORTS")
+    # switch viewport layer off to hide the viewport borderlines
+    vp_layer.off()
+    # the VIEWPORT layer is not fixed:
+    # Paperspace.add_viewport(..., dxfattribs={"layer": "MyViewportLayer"})
+
+    create_2d_modelspace_content(doc.modelspace())
+    create_3d_modelspace_content(doc.modelspace())
+    # IMPORTANT: DXF R12 supports only one paper space aka layout, every
+    # layout name returns the same layout
+    layout: Paperspace = doc.layout("Layout1")  # type: ignore
+    layout.page_setup(size=(22, 17), margins=(1, 1, 1, 1), units="inch")
+    create_viewports(layout)
+
+    try:
+        doc.saveas(CWD / filename)
+    except IOError:
+        print(f"Can't write: {filename}")
+
+
 def main():
-    def make(dxfversion, filename):
-        doc = ezdxf.new(dxfversion, setup=True)
-        # create/get the default layer for VIEWPORT entities:
-        if "VIEWPORTS" not in doc.layers:
-            vp_layer = doc.layers.add("VIEWPORTS")
-        else:
-            vp_layer = doc.layers.get("VIEWPORTS")
-        # switch viewport layer off to hide the viewport border lines
-        vp_layer.off()
-        # the VIEWPORT layer is not fixed:
-        # Paperspace.add_viewport(..., dxfattribs={"layer": "MyViewportLayer"})
-
-        create_2d_modelspace_content(doc.modelspace())
-        create_3d_modelspace_content(doc.modelspace())
-        # IMPORTANT: DXF R12 supports only one paper space aka layout, every
-        # layout name returns the same layout
-        layout: Paperspace = doc.layout("Layout1")  # type: ignore
-        layout.page_setup(size=(22, 17), margins=(1, 1, 1, 1), units="inch")
-        create_viewports(layout)
-
-        try:
-            doc.saveas(CWD / filename)
-        except IOError:
-            print("Can't write: '%s'" % filename)
-
-    make("AC1009", "viewports_in_paperspace_R12.dxf")
-    make("AC1015", "viewports_in_paperspace_R2000.dxf")
-    make("AC1021", "viewports_in_paperspace_R2007.dxf")
+    make_dxf("AC1009", "viewports_in_paperspace_R12.dxf")
+    make_dxf("AC1015", "viewports_in_paperspace_R2000.dxf")
+    make_dxf("AC1021", "viewports_in_paperspace_R2007.dxf")
 
 
 if __name__ == "__main__":
