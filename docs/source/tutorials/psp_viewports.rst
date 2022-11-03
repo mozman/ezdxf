@@ -40,10 +40,8 @@ The `size` argument defines the overall paper size in rotation mode 0, it seems
 to be the best practice to define the paper extents in landscape mode and rotate
 the paper by the `rotate` argument afterwards.
 
-Valid choices for the `rotation` argument:
+Choices for the `rotation` argument:
 
-    === ============
-    int Rotation
     === ============
     0   no rotation
     1   90 degrees counter-clockwise
