@@ -97,7 +97,7 @@ User Defined Point Format Codes
 
     .. attribute:: dxf.const_width
 
-        Constant line width (float), default value is ``0``.
+        Constant line width (float), default value is 0.
 
     .. attribute:: dxf.count
 

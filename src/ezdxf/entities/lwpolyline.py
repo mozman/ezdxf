@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -157,9 +157,8 @@ class LWPolyline(DXFGraphic):
 
     @property
     def closed(self) -> bool:
-        """Get/set closed state of polyline.
-        A closed polyline has a connection from the last vertex to the first
-        vertex.
+        """Get/set closed state of polyline.  A closed polyline has a connection
+        segment from the last vertex to the first vertex.
         """
         return self.get_flag_state(LWPOLYLINE_CLOSED)
 
@@ -169,13 +168,13 @@ class LWPolyline(DXFGraphic):
 
     @property
     def is_closed(self) -> bool:
-        """Returns ``True`` if LWPOLYLINE is closed.
+        """Get closed state of LWPOLYLINE.
         Compatibility interface to :class:`Polyline`
         """
         return self.get_flag_state(LWPOLYLINE_CLOSED)
 
     def close(self, state: bool = True) -> None:
-        """Get/set closed state of LWPOLYLINE.
+        """Set closed state of LWPOLYLINE.
         Compatibility interface to :class:`Polyline`
         """
         self.closed = state
@@ -188,9 +187,7 @@ class LWPolyline(DXFGraphic):
     @property
     def has_width(self) -> bool:
         """Returns ``True`` if LWPOLYLINE has any segment with width attributes
-        or DXF attribute const_width != 0.
-
-        .. versionadded:: 0.14
+        or the DXF attribute const_width is not 0.
 
         """
         if self.dxf.hasattr("const_width"):
@@ -209,8 +206,8 @@ class LWPolyline(DXFGraphic):
 
     def __getitem__(self, index: int) -> LWPointType:
         """Returns point at position `index` as (x, y, start_width, end_width,
-        bulge) tuple. start_width, end_width and bulge is ``0`` if not present,
-        supports extended slicing. Point format is fixed as ``'xyseb'``.
+        bulge) tuple. start_width, end_width and bulge is 0 if not present,
+        supports extended slicing. Point format is fixed as "xyseb".
 
         All coordinates in :ref:`OCS`.
 
@@ -220,10 +217,10 @@ class LWPolyline(DXFGraphic):
     def __setitem__(self, index: int, value: Sequence[float]) -> None:
         """
         Set point at position `index` as (x, y, [start_width, [end_width,
-        [bulge]]]) tuple. If start_width or end_width is ``0`` or left off the
-        default value is used. If the bulge value is left off, bulge is ``0``
+        [bulge]]]) tuple. If start_width or end_width is 0 or left off the
+        default width value is used. If the bulge value is left off, bulge is 0
         by default (straight line).
-        Does NOT support extend slicing. Point format is fixed as ``'xyseb'``.
+        Does NOT support extend slicing. Point format is fixed as "xyseb".
 
         All coordinates in :ref:`OCS`.
 
@@ -263,14 +260,14 @@ class LWPolyline(DXFGraphic):
     def append(
         self, point: Sequence[float], format: str = DEFAULT_FORMAT
     ) -> None:
-        """Append `point` to polyline, `format`` specifies a user defined
+        """Append `point` to polyline, `format` specifies a user defined
         point format.
 
         All coordinates in :ref:`OCS`.
 
         Args:
             point: (x, y, [start_width, [end_width, [bulge]]]) tuple
-            format: format string, default is ``'xyseb'``, see: `format codes`_
+            format: format string, default is "xyseb", see: `format codes`_
 
         """
         self.lwpoints.append(point, format=format)
@@ -286,7 +283,7 @@ class LWPolyline(DXFGraphic):
         Args:
             pos: insert position
             point: point data
-            format: format string, default is 'xyseb', see: `format codes`_
+            format: format string, default is "xyseb", see: `format codes`_
 
         """
         data = compile_array(point, format=format)
@@ -304,7 +301,7 @@ class LWPolyline(DXFGraphic):
         Args:
             points: iterable of point, point is (x, y, [start_width, [end_width,
                 [bulge]]]) tuple
-            format: format string, default is ``'xyseb'``, see: `format codes`_
+            format: format string, default is "xyseb", see: `format codes`_
 
         """
         for point in points:
@@ -335,7 +332,7 @@ class LWPolyline(DXFGraphic):
         the z-axis value).
 
         Args:
-            format: format string, default is ``'xyseb'``, see `format codes`_
+            format: format string, default is "xyseb", see `format codes`_
 
         """
         return [format_point(p, format=format) for p in self.lwpoints]
@@ -350,7 +347,7 @@ class LWPolyline(DXFGraphic):
         Args:
             points: iterable of point, point is (x, y, [start_width, [end_width,
                 [bulge]]]) tuple
-            format: format string, default is ``'xyseb'``, see `format codes`_
+            format: format string, default is "xyseb", see `format codes`_
 
         """
         self.lwpoints.clear()
@@ -370,7 +367,7 @@ class LWPolyline(DXFGraphic):
             m: transformation :class:`~ezdxf.math.Matrix44`
 
         Raises:
-            NonUniformScalingError: for non uniform scaling of entity containing
+            NonUniformScalingError: for non-uniform scaling of entity containing
                 circular arc segments (bulges)
 
         """
@@ -507,7 +504,7 @@ def format_point(
 
     Args:
         point: list or tuple of (x, y, start_width, end_width, bulge)
-        format: format string, default is 'xyseb'
+        format: format string, default is "xyseb"
 
     Returns:
         Sequence[float]: tuple of selected components
@@ -533,7 +530,7 @@ def compile_array(data: Sequence[float], format="xyseb") -> array.array:
 
     Args:
         data: list or tuple of point components
-        format: format string, default is 'xyseb'
+        format: format string, default is "xyseb"
 
     Returns:
         array.array: array.array('d', (x, y, start_width, end_width, bulge))
