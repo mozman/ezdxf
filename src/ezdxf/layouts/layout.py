@@ -757,30 +757,20 @@ class Paperspace(Layout):
         def paper_units(value):
             return value * scale_factor
 
-        # TODO: don't know how paper setup in DXF R12 works
-        paper_width, paper_height = size
-
-        # TODO: don't know how margins setup in DXF R12 works
-        margin_top, margin_right, margin_bottom, margin_left = margins
-
+        margin_top = paper_units(margins[0])
+        margin_right = paper_units(margins[1])
+        margin_bottom = paper_units(margins[2])
+        margin_left = paper_units(margins[3])
         paper_width = paper_units(size[0])
         paper_height = paper_units(size[1])
-
-        plimmin = self.doc.header["$PLIMMIN"] = (0, 0)
-        plimmax = self.doc.header["$PLIMMAX"] = (paper_width, paper_height)
-
-        # TODO: don't know how paper setup in DXF R12 works
-
-        pextmin = self.doc.header["$PEXTMIN"] = (0, 0, 0)
-        pextmax = self.doc.header["$PEXTMAX"] = (paper_width, paper_height, 0)
+        self.doc.header["$PLIMMIN"] = (0, 0)
+        self.doc.header["$PLIMMAX"] = (paper_width, paper_height)
+        self.doc.header["$PEXTMIN"] = (0, 0, 0)
+        self.doc.header["$PEXTMAX"] = (paper_width, paper_height, 0)
 
         # printing area
-        printable_width = (
-            paper_width - paper_units(margin_left) - paper_units(margin_right)
-        )
-        printable_height = (
-            paper_height - paper_units(margin_bottom) - paper_units(margin_top)
-        )
+        printable_width = paper_width - margin_left - margin_right
+        printable_height = paper_height - margin_bottom - margin_top
 
         # AutoCAD viewport (window) size
         vp_width = paper_width * 1.1

@@ -130,7 +130,7 @@ def create_viewports(paperspace: Paperspace):
     ).set_placement((16, 10), align=TextEntityAlignment.CENTER)
 
 
-def make_dxf(dxfversion: str, filename: str):
+def make_dxf(dxfversion: str):
     doc = ezdxf.new(dxfversion, setup=True)
     # create/get the default layer for VIEWPORT entities:
     if "VIEWPORTS" not in doc.layers:
@@ -147,9 +147,13 @@ def make_dxf(dxfversion: str, filename: str):
     # IMPORTANT: DXF R12 supports only one paper space aka layout, every
     # layout name returns the same layout
     layout: Paperspace = doc.layout("Layout1")  # type: ignore
-    layout.page_setup(size=(22, 17), margins=(1, 1, 1, 1), units="inch")
+    if dxfversion == "R12":
+        layout.page_setup_r12(size=(22, 17), margins=(1, 1, 1, 1), units="inch")
+    else:
+        layout.page_setup(size=(22, 17), margins=(1, 1, 1, 1), units="inch")
     create_viewports(layout)
 
+    filename = f"viewports_in_paperspace_{dxfversion}.dxf"
     try:
         doc.saveas(CWD / filename)
     except IOError:
@@ -157,9 +161,9 @@ def make_dxf(dxfversion: str, filename: str):
 
 
 def main():
-    make_dxf("AC1009", "viewports_in_paperspace_R12.dxf")
-    make_dxf("AC1015", "viewports_in_paperspace_R2000.dxf")
-    make_dxf("AC1021", "viewports_in_paperspace_R2007.dxf")
+    make_dxf("R12")
+    make_dxf("R2000")
+    make_dxf("R2007")
 
 
 if __name__ == "__main__":
