@@ -1,11 +1,14 @@
 # Copyright (c) 2015-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 import math
 import pathlib
 
 import ezdxf
-from ezdxf.layouts import Paperspace
+from ezdxf.layouts import Paperspace, Modelspace
 from ezdxf.enums import TextEntityAlignment
+from ezdxf.render import forms
+from ezdxf.math import Vec2
 from ezdxf import colors
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
@@ -36,22 +39,22 @@ def build_cos_sin_mesh(mesh):
             mesh.set_mesh_vertex((x, y), (dx + x, dy + y, z))
 
 
-def create_2d_modelspace_content(layout):
-    rect = layout.add_polyline2d(
+def create_2d_modelspace_content(msp: Modelspace):
+    rect = msp.add_polyline2d(
         [(5, 5), (10, 5), (10, 10), (5, 10)], dxfattribs={"color": colors.RED}
     )
     rect.close(True)
 
-    layout.add_circle((10, 5), 2.5, dxfattribs={"color": colors.GREEN})
+    msp.add_circle((10, 5), 2.5, dxfattribs={"color": colors.GREEN})
 
-    triangle = layout.add_polyline2d(
+    triangle = msp.add_polyline2d(
         [(10, 7.5), (15, 5), (15, 10)], dxfattribs={"color": colors.CYAN}
     )
     triangle.close(True)
 
 
-def create_3d_modelspace_content(modelspace):
-    mesh = modelspace.add_polymesh(
+def create_3d_modelspace_content(msp: Modelspace):
+    mesh = msp.add_polymesh(
         (MESH_SIZE, MESH_SIZE), dxfattribs={"color": colors.MAGENTA}
     )
     build_cos_sin_mesh(mesh)
@@ -130,6 +133,12 @@ def create_viewports(paperspace: Paperspace):
     ).set_placement((16, 10), align=TextEntityAlignment.CENTER)
 
 
+def draw_border_lines(psp: Paperspace, start: Vec2, size: Vec2):
+    rect = forms.box(size.x, size.y)
+    # DXF R12 does not support LWPOLYLINE
+    psp.add_polyline2d(forms.translate(rect, start), close=True)
+
+
 def make_dxf(dxfversion: str):
     doc = ezdxf.new(dxfversion, setup=True)
     # create/get the default layer for VIEWPORT entities:
@@ -146,11 +155,30 @@ def make_dxf(dxfversion: str):
     create_3d_modelspace_content(doc.modelspace())
     # IMPORTANT: DXF R12 supports only one paper space aka layout, every
     # layout name returns the same layout
+
     layout: Paperspace = doc.layout("Layout1")  # type: ignore
+    # Arch C = 18 x 24 in
+    width, height = 24, 18
+    m = 1
     if dxfversion == "R12":
-        layout.page_setup_r12(size=(22, 17), margins=(1, 1, 1, 1), units="inch")
+        layout.page_setup_r12(
+            size=(width, height), margins=(m, m, m, m), units="inch"
+        )
     else:
-        layout.page_setup(size=(22, 17), margins=(1, 1, 1, 1), units="inch")
+        layout.page_setup(
+            size=(width, height), margins=(m, m, m, m), units="inch"
+        )
+    # The canvas is defined by the page size minus the margins:
+    canvas_width = width - 2 * m
+    canvas_height = height - 2 * m
+    # The lower left corner of the canvas has the coordinates: 0, 0
+    # You can draw beyond that margins, but this content may not be printed
+    # by the CAD application.
+    draw_border_lines(
+        layout,
+        start=Vec2(-0.5, -0.5),
+        size=Vec2(canvas_width + 1, canvas_height + 1),
+    )
     create_viewports(layout)
 
     filename = f"viewports_in_paperspace_{dxfversion}.dxf"
