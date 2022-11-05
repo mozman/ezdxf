@@ -132,6 +132,22 @@ ignore = select.crossing(selection, circle, cache=bbox_cache)
 result = selection - ignore
 ```
 
+Extended entity geometry for selection:
+Ezdxf uses the `disassemble` module for the bounding box calculation, which 
+deconstructs DXF entities into path and/or mesh primitives. This data
+could be used to select entities not only by their bounding box, but also
+by their vertices for mesh primitives and by their control points or flattened 
+vertices for path entities. 
+
+EntityGeometry enum:
+- BBOX
+- CONTROL_POINTS
+- VERTICES
+
+This feature would require a different caching strategy, because the bounding 
+box cache does not contain the disassembled primitives and reusing an existing 
+bounding box cache is not possible.
+
 Issues:
 - How to handle 2D/3D selections?
 - 2D selections always in top-view mode?
