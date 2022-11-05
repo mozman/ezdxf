@@ -153,51 +153,62 @@ Issues:
 - 2D selections always in top-view mode?
 - Using special box- and sphere selections for 3D selection?
 
+Xref Module
+-----------
+
+(>v1.0) A core module `ezdxf.xref` as replacement for the `Importer` add-on.
+This module adds management features for external references, but also improve
+import and exchange of data and ressources with DXF documents.
+
+- AutoCAD does not support DXF files as XREF objects!
+- ezdxf will only support DXF files as XREF objects, use the `odafc` add-on to 
+  convert DWG to DXF
+- has to be much more versatile than the current `Importer` add-on otherwise 
+  just improve and extend the `Importer` add-on 
+
+Features:
+- resource management like CAD applications, e.g. layer names of xrefs: 
+  <dwg-name>$0$layername
+- `xref.bind(xref_block)`: convert a XREF into a common BLOCK, this replaces 
+  the modelspace import of the `Importer` add-on
+- `xref.attach(doc, "xref_filename.dxf")`, replaces `Drawing.add_xref_def()`
+- manage resources by the `XRefManager` class
+
+XRefManager:
+- create: `xmgr = xref.XRefManager(source_doc, target_doc)`
+- `xmgr.import_modelspace()` import all modelspace entities
+- `xmgr.import_entities(entities)` import selected entities
+- modify entities on import (transform, change DXF properties)
+- `xmgr.import_block("block_name")`
+- `xmgr.import_resources(resource_desc)`
+- `xmgr.import_paperspace("layout_name")`???
+- `xmgr.finalize()`
+
+Convert Document to DXF R12
+---------------------------
+
+(>v1.0) A module to convert a whole DXF document into DXF R12 inplace, this is 
+a destructive process and converts or explodes DXF entities:
+- explode MTEXT, MULTILEADER, MLINE, ACAD_TABLE, ARC_DIMENSION
+- convert MESH to PolyFaceMesh
+- convert LWPOLYLINE into 2D polyline
+- flatten SPLINE into a 3D polyline
+- flatten ELLIPSE into a 3D polyline
+- ACIS based entities with only flat faces could be converted to PolyFaceMesh 
+- render HATCH and MPOLYGON entities with pattern filling into a BLOCK as LINE 
+  entities
+
+Removes all data not supported by DXF R12:
+- all ACIS based entities which contain curved faces 
+- HATCH and MPOLYGON entities with solid or gradient filling. The mapbox-earcut 
+  algorithm for polygon triangulation does not support nested holes. 
+- IMAGE and UNDERLAY entities
+- XLINE and RAY entities
+- OBJECTS and the CLASSES sections
+- all but the first paper space layout
 
 DXF Document
 ------------
 
-- (>v1.0) `doc.to_dxf_r12()`: convert the whole DXF document into DXF R12. 
-  This is a destructive process, which converts or explodes DXF entities:
-  
-  - explode MTEXT, MULTILEADER, MLINE, ACAD_TABLE, ARC_DIMENSION
-  - convert MESH to PolyFaceMesh
-  - convert LWPOLYLINE into 2D polyline
-  - flatten SPLINE into a 3D polyline
-  - flatten ELLIPSE into a 3D polyline
-
-  Removes all data not supported by DXF R12:
-  - all ACIS based entities 
-  - HATCH and MPOLYGON entities
-  - IMAGE and UNDERLAY entities
-  - XLINE and RAY entities
-  - OBJECTS and the CLASSES sections
-  - all but the first paper space layout
-
-- (>v1.0) core module `ezdxf.xref` as replacement for the `Importer` add-on
-  - AutoCAD does not support DXF as XREF objects!
-  - ezdxf will only support DXF as XREF objects, use the `odafc` add-on to convert 
-    DWG to DXF
-  - has to be much more versatile than the current `Importer` add-on otherwise 
-    just improve and extend the `Importer` add-on 
-  - resource management like CAD applications, e.g. layer names of xrefs: 
-    <dwg-name>$0$layername
-  - `xref.bind(xref_block)`: convert a XREF into a common BLOCK, this replaces 
-    the modelspace import of the `Importer` add-on
-  - `xref.attach(doc, "xref_filename.dxf")`, replaces `Drawing.add_xref_def()`
-  - `xmgr = xref.XRefManager(source_doc, target_doc)`
-  - `xmgr.import_modelspace()` import all modelspace entities
-  - `xmgr.import_entities(entities)` import selected entities
-  - modify entities on import (transform, change DXF properties)
-  - `xmgr.import_block("block_name")`
-  - `xmgr.import_resources(resource_desc)`
-  - `xmgr.import_paperspace("layout_name")` ???
-  - `xmgr.finalize()`
-  
-Documentation
--------------
-
-- Tutorials
-  - VIEWPORT
-
-  
+- (>v1.0) copy DXF document by serializing and reloading the document in memory 
+  or by file-system, this is not efficient but safe.
