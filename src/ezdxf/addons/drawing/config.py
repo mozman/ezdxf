@@ -136,9 +136,9 @@ class Configuration:
     @staticmethod
     def defaults() -> "Configuration":
         return Configuration(
-            pdsize=1,
-            pdmode=0,
-            measurement=None,
+            pdsize=None,  # use $PDSIZE from HEADER section
+            pdmode=None,  # use $PDMODE from HEADER section
+            measurement=None,  # use $MEASUREMENT from HEADER section
             show_defpoints=False,
             proxy_graphic_policy=ProxyGraphicPolicy.SHOW,
             line_policy=LinePolicy.APPROXIMATE,

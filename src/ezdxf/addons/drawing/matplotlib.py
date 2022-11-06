@@ -40,6 +40,7 @@ logger = logging.getLogger("ezdxf")
 # points unit (pt), 1pt = 1/72 inch, 1pt = 0.3527mm
 POINTS = 1.0 / 0.3527  # mm -> points
 CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
+SCATTER_POINT_SIZE = 0.1
 
 
 def setup_axes(ax: plt.Axes):
@@ -105,7 +106,13 @@ class MatplotlibBackend(Backend):
     def draw_point(self, pos: Vec3, properties: Properties):
         """Draw a real dimensionless point."""
         color = properties.color
-        self.ax.scatter([pos.x], [pos.y], s=0.1, c=color, zorder=self._get_z())
+        self.ax.scatter(
+            [pos.x],
+            [pos.y],
+            s=SCATTER_POINT_SIZE,
+            c=color,
+            zorder=self._get_z(),
+        )
 
     def get_lineweight(self, properties: Properties) -> float:
         """Set lineweight_scaling=0 to use a constant minimal lineweight."""
@@ -152,7 +159,9 @@ class MatplotlibBackend(Backend):
             else:
                 _lines.append(((s.x, s.y), (e.x, e.y)))
 
-        self.ax.scatter(point_x, point_y, s=0.1, c=color, zorder=z)
+        self.ax.scatter(
+            point_x, point_y, s=SCATTER_POINT_SIZE, c=color, zorder=z
+        )
         self.ax.add_collection(
             LineCollection(
                 _lines,
