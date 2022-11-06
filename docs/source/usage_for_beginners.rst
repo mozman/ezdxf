@@ -41,45 +41,6 @@ module.
     management go to the :ref:`dwgmanagement` section. For loading DXF documents
     with structural errors look at the :mod:`ezdxf.recover` module.
 
-Saving DXF Files
-----------------
-
-Save the DXF document with a new name::
-
-    doc.saveas("new_name.dxf")
-
-or with the same name as loaded::
-
-    doc.save()
-
-.. seealso::
-
-    Documentation for :func:`ezdxf.document.Drawing.save` and
-    :func:`ezdxf.document.Drawing.saveas`, for more information about file
-    management go to the :ref:`dwgmanagement` section.
-
-Create a New DXF File
----------------------
-
-Create new document for the latest supported DXF version::
-
-    doc = ezdxf.new()
-
-Create a new DXF document for a specific DXF version, e.g. for DXF R12::
-
-    doc = ezdxf.new("R12")
-
-
-The :func:`ezdxf.new` function can create some standard resources, such as
-linetypes and text styles, by setting the argument `setup` to ``True``::
-
-    doc = ezdxf.new(setup=True)
-
-.. seealso::
-
-    Documentation for :func:`ezdxf.new`, for more information about file
-    management go to the :ref:`dwgmanagement` section.
-
 Layouts and Blocks
 ------------------
 
@@ -116,18 +77,6 @@ Getting a block layout by the block name::
 All these layouts have factory functions to create graphical DXF entities for
 their entity space, for more information about creating entities see section:
 `Create new DXF Entities`_
-
-Create New Blocks
------------------
-
-The block definitions of a DXF document are managed by the
-:class:`~ezdxf.sections.blocks.BlocksSection` object::
-
-    my_block = doc.blocks.new("MyBlock")
-
-.. seealso::
-
-    :ref:`tut_blocks`
 
 Query DXF Entities
 ------------------
@@ -194,6 +143,28 @@ or use the :meth:`get` method and provide a default value::
     - Helper class :class:`ezdxf.gfxattribs.GfxAttribs` for building DXF attribute
       dictionaries.
 
+Create a New DXF File
+---------------------
+
+Create new document for the latest supported DXF version::
+
+    doc = ezdxf.new()
+
+Create a new DXF document for a specific DXF version, e.g. for DXF R12::
+
+    doc = ezdxf.new("R12")
+
+
+The :func:`ezdxf.new` function can create some standard resources, such as
+linetypes and text styles, by setting the argument `setup` to ``True``::
+
+    doc = ezdxf.new(setup=True)
+
+.. seealso::
+
+    - :ref:`tut_simple_drawings`
+    - Documentation for :func:`ezdxf.new`, for more information about file
+      management go to the :ref:`dwgmanagement` section.
 
 Create New DXF Entities
 -----------------------
@@ -211,9 +182,6 @@ The usage is simple::
     msp = doc.modelspace()
     msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "MyLayer"})
 
-.. seealso::
-
-    :ref:`thematic_factory_method_index`
 
 A few important/required DXF attributes are explicit method arguments,
 most additional DXF attributes are gives as a regular Python
@@ -226,6 +194,46 @@ The supported DXF attributes can be found in the documentation of the
     Do not instantiate DXF entities by yourself and add them to layouts, always
     use the provided factory methods to create new graphical entities, this is
     the intended way to use `ezdxf`.
+
+.. seealso::
+
+    - :ref:`thematic_factory_method_index`
+    - :ref:`tut_simple_drawings`
+    - :ref:`tut_dxf_primitives`
+    - :ref:`tut_lwpolyline`
+    - :ref:`tut_text`
+    - :ref:`tut_mtext`
+    - :ref:`tut_hatch`
+
+Saving DXF Files
+----------------
+
+Save the DXF document with a new name::
+
+    doc.saveas("new_name.dxf")
+
+or with the same name as loaded::
+
+    doc.save()
+
+.. seealso::
+
+    Documentation for :func:`ezdxf.document.Drawing.save` and
+    :func:`ezdxf.document.Drawing.saveas`, for more information about file
+    management go to the :ref:`dwgmanagement` section.
+
+Create New Blocks
+-----------------
+
+The block definitions of a DXF document are managed by the
+:class:`~ezdxf.sections.blocks.BlocksSection` object::
+
+    my_block = doc.blocks.new("MyBlock")
+
+.. seealso::
+
+    :ref:`tut_blocks`
+
 
 Create Block References
 -----------------------
