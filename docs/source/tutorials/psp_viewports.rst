@@ -148,7 +148,69 @@ to do that the layer "VIEWPORTS" have to be created by the library user:
     vp_layer = doc.layers.add("VIEWPORTS")
     vp_layer.off()
 
+Freeze Layers
+-------------
+
+Each VIEWPORT can have individual frozen layers, which means the layers are not
+visible in this VIEWPORT. To freeze layers in a VIEWPORT assign the names of the
+frozen layers as a list-like object to the :attr:`frozen_layers` attribute of the
+VIEWPORT entity:
+
+.. code-block:: Python
+
+    vp.frozen_layers = ["Layer0", "Layer1"]
+
+.. important::
+
+    AutoCAD and BricsCAD **do not crash** if the layer names do not have layer table
+    entries and the layer names are case insensitive as all table names.
+
+.. seealso::
+
+    - Basic concept of :ref:`layer_concept`
+    - :class:`~ezdxf.entities.Layer`
+
+Override Layer Properties
+-------------------------
+
+Each VIEWPORT can override layer properties individually. These overrides are
+stored in the :class:`~ezdxf.entities.Layer` entity and referenced by the handle
+of the VIEWPORT. This procedure is a bit more complex and shown in the example
+file `viewports_override_layer_attributes.py`_.
+
+1. get the :class:`~ezdxf.entities.Layer` object
+2. get the :class:`~ezdxf.entities.LayerOverrides` object from the layer
+3. override the properties of the VIEWPORT
+4. commit changes
+
+.. code-block:: Python
+
+    layer = doc.layers.get("Layer0")
+    override = layer.get_vp_overrides()
+    override.set_linetype(vp.dxf.handle, "DASHED")
+    override.commit()
+
+Supported property overrides:
+
+    - ACI color
+    - true color
+    - transparency
+    - linetype
+    - lineweight
+
+.. seealso::
+
+    - Basic concept of :ref:`layer_concept`
+    - Basic concept of :ref:`aci`
+    - Basic concept of :ref:`true color`
+    - Basic concept of :ref:`transparency`
+    - Basic concept of :ref:`linetypes`
+    - Basic concept of :ref:`lineweights`
+    - :class:`~ezdxf.entities.Layer`
+    - :class:`~ezdxf.entities.LayerOverrides`
+
 .. _viewports_in_paperspace.py: https://github.com/mozman/ezdxf/blob/master/examples/viewports_in_paperspace.py
 .. _About Plotting: https://help.autodesk.com/view/ACD/2018/ENU/?guid=GUID-2DB9EB8C-767C-4C91-B0A3-FFFEC4C5863A
 .. _About Setting the Plot Scale: https://help.autodesk.com/view/ACD/2018/ENU/?guid=GUID-89604826-0B55-4994-8214-1CA93FA66985
 .. _General Procedure for Printing: https://help.bricsys.com/document/_guides--BCAD_printing_and_plotting--GD_generalprocedureforprinting/V23/EN_US?id=165079156041
+.. _viewports_override_layer_attributes.py: https://github.com/mozman/ezdxf/blob/master/examples/viewports_override_layer_attributes.py

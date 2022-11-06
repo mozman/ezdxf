@@ -15,7 +15,7 @@ Factory function         :meth:`Drawing.layers.new`
 
 .. seealso::
 
-    :ref:`layer_concept` and :ref:`tut_layers`
+    Basic concepts of :ref:`layer_concept` and :ref:`tut_layers`
 
 .. class:: Layer
 
