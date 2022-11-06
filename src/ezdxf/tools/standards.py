@@ -1,5 +1,6 @@
 # Copyright (c) 2016-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, List, Tuple, Sequence, Union, cast
 
 from ezdxf import const
@@ -11,13 +12,15 @@ from ezdxf.lldxf.tags import Tags
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, DimStyle
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DimStyle
+    from ezdxf.layouts import Paperspace
 
 logger = logging.getLogger("ezdxf")
 LTypeDef = Tuple[str, str, Sequence[float]]
 
 
-def setup_drawing(doc: "Drawing", topics: Union[str, bool, Sequence] = "all"):
+def setup_drawing(doc: Drawing, topics: Union[str, bool, Sequence] = "all"):
     """
     Setup default linetypes, text styles or dimension styles.
 
@@ -69,7 +72,7 @@ def setup_drawing(doc: "Drawing", topics: Union[str, bool, Sequence] = "all"):
         setup_dimstyles(doc, domain=domain)
 
 
-def setup_linetypes(doc: "Drawing") -> None:
+def setup_linetypes(doc: Drawing) -> None:
     measurement = 1
     if doc:
         measurement = doc.header.get("$MEASUREMENT", measurement)
@@ -86,7 +89,7 @@ def setup_linetypes(doc: "Drawing") -> None:
         )
 
 
-def setup_styles(doc: "Drawing") -> None:
+def setup_styles(doc: Drawing) -> None:
     doc.header["$TEXTSTYLE"] = "OpenSans"
     for name, font in styles():
         if name in doc.styles:
@@ -99,7 +102,7 @@ def setup_styles(doc: "Drawing") -> None:
         )
 
 
-def setup_dimstyles(doc: "Drawing", domain: str = "all") -> None:
+def setup_dimstyles(doc: Drawing, domain: str = "all") -> None:
     setup_styles(doc)
     ezdxf_dimstyle = setup_dimstyle(
         doc,
@@ -3975,4 +3978,24 @@ VISUAL_STYLES_R2013 = {
             ]
         ),
     },
+}
+
+# all page sizes in landscape orientation
+PAGE_SIZES = {
+    "ISO A0": ("mm", 1189, 841),
+    "ISO A1": ("mm", 841, 594),
+    "ISO A2": ("mm", 594, 420),
+    "ISO A3": ("mm", 420, 297),
+    "ISO A4": ("mm", 297, 210),
+    "ANSI A": ("inch", 11, 8.5),
+    "ANSI B": ("inch", 17, 11),
+    "ANSI C": ("inch", 22, 17),
+    "ANSI D": ("inch", 34, 22),
+    "ANSI E": ("inch", 44, 34),
+    "ARCH C": ("inch", 24, 18),
+    "ARCH D": ("inch", 36, 24),
+    "ARCH E": ("inch", 48, 36),
+    "ARCH E1": ("inch", 42, 30),
+    "Letter": ("inch", 11, 8.5),
+    "Legal": ("inch", 14, 8.5),
 }

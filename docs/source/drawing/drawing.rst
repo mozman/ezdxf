@@ -196,6 +196,8 @@ Drawing Object
 
     .. automethod:: new_layout
 
+    .. automethod:: page_setup
+
     .. automethod:: delete_layout
 
     .. automethod:: add_image_def
