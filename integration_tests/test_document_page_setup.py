@@ -5,13 +5,19 @@ import pytest
 import ezdxf
 
 
+def test_simple_page_setup_is_not_supported_for_DXF_R12():
+    doc = ezdxf.new("R12")
+    with pytest.raises(ezdxf.DXFVersionError):
+        doc.page_setup("Layout1")
+
+
 def test_reset_layout1_landscape():
     doc = ezdxf.new()
     assert len(doc.layouts) == 2
     psp = doc.page_setup("Layout1", fmt="ISO A0")
     assert len(doc.layouts) == 2
-    assert psp.dxf_layout.dxf.paper_width == 1189
-    assert psp.dxf_layout.dxf.paper_height == 841
+    assert psp.dxf.paper_width == 1189
+    assert psp.dxf.paper_height == 841
 
 
 def test_invalid_paper_format_returns_A3():
@@ -25,8 +31,8 @@ def test_reset_layout1_portrait():
     assert len(doc.layouts) == 2
     psp = doc.page_setup("Layout1", fmt="ISO A0", landscape=False)
     assert len(doc.layouts) == 2
-    assert psp.dxf_layout.dxf.paper_width == 841
-    assert psp.dxf_layout.dxf.paper_height == 1189
+    assert psp.dxf.paper_width == 841
+    assert psp.dxf.paper_height == 1189
 
 
 def test_resetting_layout1_creates_a_new_main_viewport():
@@ -51,9 +57,9 @@ def test_new_layout2():
     assert len(doc.layouts) == 2
     psp = doc.page_setup("Layout2", fmt="ISO A0")
     assert len(doc.layouts) == 3
-    assert psp.dxf_layout.dxf.paper_width == 1189
-    assert psp.dxf_layout.dxf.paper_height == 841
+    assert psp.dxf.paper_width == 1189
+    assert psp.dxf.paper_height == 841
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

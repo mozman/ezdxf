@@ -574,7 +574,7 @@ class Paperspace(Layout):
     def page_setup(
         self,
         size: Tuple[float, float] = (297, 210),
-        margins: Tuple[float, float, float, float] = (10, 15, 10, 15),
+        margins: Tuple[float, float, float, float] = (0, 0, 0, 0),
         units: str = "mm",
         offset: Tuple[float, float] = (0, 0),
         rotation: int = 0,
@@ -713,10 +713,10 @@ class Paperspace(Layout):
 
     def page_setup_r12(
         self,
-        size: Tuple[int, int] = (297, 210),
-        margins: Tuple[int, int, int, int] = (0, 0, 0, 0),
+        size: Tuple[float, float] = (297, 210),
+        margins: Tuple[float, float, float, float] = (0, 0, 0, 0),
         units: str = "mm",
-        offset: Tuple[int, int] = (0, 0),
+        offset: Tuple[float, float] = (0, 0),
         rotation: float = 0,
         scale: Union[int, Tuple[float, float]] = 16,
     ) -> None:

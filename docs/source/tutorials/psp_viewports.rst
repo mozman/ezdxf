@@ -73,6 +73,10 @@ applications may not print that content.
     paper size does shift the layout content, because all paper sizes are defined
     without margins. Maybe it's preferable to set all margins to zero.
 
+    I added the helper method :meth:`~ezdxf.document.Drawing.page_setup` to the
+    :class:`~ezdxf.document.Drawing` class and an example `simple_page_setup.py`_
+    how to use it.
+
 Adding Viewports
 ----------------
 
@@ -214,3 +218,4 @@ Supported property overrides:
 .. _About Setting the Plot Scale: https://help.autodesk.com/view/ACD/2018/ENU/?guid=GUID-89604826-0B55-4994-8214-1CA93FA66985
 .. _General Procedure for Printing: https://help.bricsys.com/document/_guides--BCAD_printing_and_plotting--GD_generalprocedureforprinting/V23/EN_US?id=165079156041
 .. _viewports_override_layer_attributes.py: https://github.com/mozman/ezdxf/blob/master/examples/viewports_override_layer_attributes.py
+.. _simple_page_setup.py: https://github.com/mozman/ezdxf/blob/master/examples/simple_page_setup.py

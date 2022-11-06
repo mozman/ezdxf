@@ -947,8 +947,8 @@ class Drawing:
         landscape=True,
     ) -> Paperspace:
         """
-        Creates a new paperspace layout if `name` does not
-        exist or reset the existing layout.
+        Creates a new paperspace layout if `name` does not exist or reset the
+        existing layout.  This method requires DXF R2000 or newer.
         The paper format name `fmt` defines one of the following paper sizes,
         measures in landscape orientation:
 
@@ -986,6 +986,8 @@ class Drawing:
         """
         from ezdxf.tools.standards import PAGE_SIZES
 
+        if self.acad_release == "R12":
+            raise const.DXFVersionError("method call no supported for DXF R12")
         width: float
         height: float
         try:
