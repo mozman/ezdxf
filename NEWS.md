@@ -2,7 +2,7 @@
 News
 ====
 
-Version 1.0.0rc0 - dev
+Version 1.0.0rc1 - dev
 ---------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
@@ -19,6 +19,7 @@ Version 1.0.0rc0 - dev
   fix infinite loop in MTEXT rendering with tabulators
 - BUGFIX: [#751](https://github.com/mozman/ezdxf/issues/751)
   fix invalid DXF attribute name
+- BUGFIX: fix configuration defaults for pdsize and pdmode for the `drawing` add-on
 
 Version 0.18.1 - 2022-09-03
 ---------------------------
