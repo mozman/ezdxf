@@ -63,6 +63,19 @@ CorrespondingDXFParentStack = qc.Qt.UserRole + 1  # type: ignore
 
 
 class PyQtBackend(Backend):
+    """
+    Backend which uses the :mod:`PySide6` package to implement an interactive
+    viewer. The :mod:`PyQt5` package can be used as fallback if the :mod:`PySide6`
+    package is not available.
+
+    Args:
+        scene: drawing canvas of type :class:`QtWidgets.QGraphicsScene`,
+            if ``None`` a new canvas will be created
+        extra_lineweight_scaling: compared to other backends,
+            PyQt draws lines which appear thinner
+        use_text_cache: use caching for text path rendering
+
+    """
     def __init__(
         self,
         scene: Optional[qw.QGraphicsScene] = None,
@@ -71,11 +84,6 @@ class PyQtBackend(Backend):
         debug_draw_rect: bool = False,
         extra_lineweight_scaling: float = 2.0,
     ):
-        """
-        Args:
-            extra_lineweight_scaling: compared to other backends,
-                PyQt draws lines which appear thinner
-        """
         super().__init__()
         self._scene = scene or qw.QGraphicsScene()  # avoids many type errors
         self._color_cache: Dict[Color, qg.QColor] = {}

@@ -55,6 +55,19 @@ def setup_axes(ax: plt.Axes):
 
 
 class MatplotlibBackend(Backend):
+    """Backend which uses the :mod:`Matplotlib` package for image export.
+
+    The current implementation does not support VIEWPORT clipping and is
+    therefore not very suitable for exporting paperspace layouts.
+
+    Args:
+        ax: drawing canvas as :class:`matplotlib.pyplot.Axes` object
+        adjust_figure: automatically adjust the size of the parent
+            :class:`matplotlib.pyplot.Figure` to display all content
+        font: default font properties
+        use_text_cache: use caching for text path rendering
+
+    """
     def __init__(
         self,
         ax: plt.Axes,
@@ -63,6 +76,7 @@ class MatplotlibBackend(Backend):
         font: FontProperties = FontProperties(),
         use_text_cache: bool = True,
     ):
+
         super().__init__()
         setup_axes(ax)
         self.ax = ax
@@ -382,23 +396,6 @@ def qsave(
         filter_func: filter function which takes a DXFGraphic object as input
             and returns ``True`` if the entity should be drawn or ``False`` if
             the entity should be ignored
-
-    .. versionadded:: 0.14
-
-    .. versionadded:: 0.15
-        added argument `params` to pass parameters to the matplotlib backend
-
-    .. versionchanged:: 0.16
-        removed arguments `ltype` and `lineweight_scaling`
-
-    .. versionadded:: 0.17
-        added argument `filter_func` to filter DXF entities
-
-    .. versionchanged:: 0.17
-        `params` argument replaced by `config` argument
-
-    .. versionchanged:: 0.18
-        added argument `size_inches`
 
     """
     from .properties import RenderContext

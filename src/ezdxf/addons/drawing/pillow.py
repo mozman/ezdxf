@@ -55,6 +55,35 @@ class PillowBackendException(Exception):
 
 
 class PillowBackend(Backend):
+    """Backend which uses the :mod:`Pillow` package for image export.
+
+    For linetype support configure the line_policy in the frontend as
+    ACCURATE.
+
+    Args:
+        region: output region of the layout in DXF drawing units
+        image_size: image output size in pixels or ``None`` to be
+            calculated by the region size and the `resolution`
+        margin: image margin in pixels, same margin for all four borders
+        resolution: pixels per DXF drawing unit, e.g. a resolution of 100
+            for the drawing unit "meter" means, each pixel represents an
+            area of 1cm x 1cm (1m is 100cm).
+            If the `image_size` is given the `resolution` is calculated
+            automatically
+        dpi: output image resolution in dots per inch. The pixel width of
+            lines is determined by the DXF lineweight (in mm) and this image
+            resolution (dots/pixels per inch). The line width is independent
+            of the drawing scale!
+        oversampling: multiplier of the final image size to define the
+            render canvas size (e.g. 1, 2, 3, ...), the final image will
+            be scaled down by the LANCZOS method
+        text_mode: text rendering mode
+            - IGNORE do not draw text
+            - PLACEHOLDER draws text as filled rectangles
+            - OUTLINE draws text as outlines (recommended)
+            - FILLED draws text fillings (has some issues!)
+
+    """
     def __init__(
         self,
         region: AbstractBoundingBox,
@@ -65,35 +94,6 @@ class PillowBackend(Backend):
         oversampling: int = 1,
         text_mode=TextMode.OUTLINE,
     ):
-        """Backend which uses `Pillow` for image export.
-
-        For linetype support configure the line_policy in the frontend as
-        ACCURATE.
-
-        Args:
-            region: output region of the layout in DXF drawing units
-            image_size: image output size in pixels or ``None`` to be
-                calculated by the region size and the `resolution`
-            margin: image margin in pixels, same margin for all four borders
-            resolution: pixels per DXF drawing unit, e.g. a resolution of 100
-                for the drawing unit "meter" means, each pixel represents an
-                area of 1cm x 1cm (1m is 100cm).
-                If the `image_size` is given the `resolution` is calculated
-                automatically
-            dpi: output image resolution in dots per inch. The pixel width of
-                lines is determined by the DXF lineweight (in mm) and this image
-                resolution (dots/pixels per inch). The line width is independent
-                of the drawing scale!
-            oversampling: multiplier of the final image size to define the
-                render canvas size (e.g. 1, 2, 3, ...), the final image will
-                be scaled down by the LANCZOS method
-            text_mode: text rendering mode
-                - IGNORE do not draw text
-                - PLACEHOLDER draws text as filled rectangles
-                - OUTLINE draws text as outlines (recommended)
-                - FILLED draws text fillings (has some issues!)
-
-        """
         super().__init__()
         self.region = Vec2(0, 0)
         if region.has_data:

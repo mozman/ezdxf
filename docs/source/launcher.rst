@@ -88,8 +88,10 @@ Print help:
                             choose sections to include and their order, h=HEADER, c=CLASSES,
                             t=TABLES, b=BLOCKS, e=ENTITIES, o=OBJECTS
 
-Auditor
--------
+.. _audit_command:
+
+Audit
+-----
 
 Audit and recover the DXF file "gear.dxf" and save the recovered version
 as "gear.rec.dxf":
@@ -115,6 +117,8 @@ Print help:
     optional arguments:
       -h, --help  show this help message and exit
       -s, --save  save recovered files with extension ".rec.dxf"
+
+.. _draw_command:
 
 Draw
 ----
@@ -176,6 +180,8 @@ Print help:
       --dpi DPI             target render resolution, default is 300
       -v, --verbose         give more output
 
+.. _view_command:
+
 View
 ----
 
@@ -204,6 +210,8 @@ Print help:
                             select the layout to draw, default is "Model"
       --lwscale LWSCALE     set custom line weight scaling, default is 0 to
                             disable line weights at all
+
+.. _pillow_command:
 
 Pillow
 ------
@@ -262,6 +270,8 @@ Print help:
       --dpi DPI             output resolution in pixels/inch which is significant for the
                             linewidth, default is 300
       -v, --verbose         give more output
+
+.. _browse_command:
 
 Browse
 ------
@@ -397,6 +407,8 @@ Menus and Shortcuts
     - **Store Bookmark...** *Ctrl+Shift+B*, store current location as named bookmark
     - **Go to Bookmark...** *Ctrl+B*, go to stored location
 
+.. _browse_acis__command:
+
 Browse-ACIS
 -----------
 
@@ -450,6 +462,7 @@ Menus and Shortcuts
       file and the raw SAB data as a binary file for further processing
     - **Quit** *Ctrl+Q*
 
+.. _strip_command:
 
 Strip
 -----
@@ -472,6 +485,8 @@ THUMBNAILIMAGE section. Binary DXF files are not supported.
       -t, --thumbnail  strip THUMBNAILIMAGE section
       -v, --verbose    give more output
 
+.. _config_command:
+
 Config
 ------
 
@@ -491,6 +506,8 @@ Manage config files.
                    '~/.config/ezdxf', $XDG_CONFIG_HOME is supported if set
 
       --reset      factory reset, delete default config files 'ezdxf.ini'
+
+.. _Info_command:
 
 Info
 ----

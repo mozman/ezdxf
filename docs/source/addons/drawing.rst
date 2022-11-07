@@ -3,11 +3,13 @@
 Drawing / Export Addon
 ======================
 
-This add-on provides the functionality to render a DXF document to produce a rasterized or vector-graphic image which
-can be saved to a file or viewed interactively depending on the backend being used.
+This add-on provides the functionality to render a DXF document to produce a
+rasterized or vector-graphic image which can be saved to a file or viewed
+interactively depending on the backend being used.
 
-The module provides two example scripts in the folder ``examples/addons/drawing`` which can be run to save rendered
-images to files or view an interactive visualisation
+The module provides two example scripts in the folder ``examples/addons/drawing``
+which can be run to save rendered images to files or view an interactive
+visualisation.
 
 .. code-block::
 
@@ -25,7 +27,19 @@ images to files or view an interactive visualisation
     $ ./cad_viewer.py
 
 
-Example for the usage of the :mod:`matplotlib` backend:
+Design
+------
+
+The implementation of the :mod:`drawing` add-on is divided into a frontend and
+multiple backends. The frontend handles the translation of DXF features and
+properties into simplified structures, which are then processed by the backends.
+
+MatplotlibBackend
+-----------------
+
+.. autoclass:: ezdxf.addons.drawing.matplotlib.MatplotlibBackend(ax, *, adjust_figure=True, font=FontProperties(), use_text_cache=True)
+
+Example for the usage of the :mod:`Matplotlib` backend:
 
 .. code-block:: Python
 
@@ -69,20 +83,24 @@ Simplified render workflow but with less control:
 
 .. autofunction:: ezdxf.addons.drawing.matplotlib.qsave
 
-MatplotlibBackend
------------------
-
-.. class:: ezdxf.addons.drawing.matplotlib.MatplotlibBackend
-
-    .. method:: __init__(ax: plt.Axes, *, adjust_figure: bool = True, font: FontProperties,  use_text_cache: bool = True)
-
+The :class:`MatplotlibBackend` is used by :ref:`draw_command` command of the
+`ezdxf` launcher.
 
 PyQtBackend
 -----------
 
-.. class:: ezdxf.addons.drawing.pyqt.PyQtBackend
+.. autoclass:: ezdxf.addons.drawing.pyqt.PyQtBackend(scene=None, *,extra_lineweight_scaling=2.0, use_text_cache=True)
 
-    .. method:: __init__(scene: qw.QGraphicsScene = None, *, use_text_cache: bool = True, debug_draw_rect: bool = False)
+The :class:`PyQtBackend` is used by :ref:`view_command` command of the
+`ezdxf` launcher.
+
+PillowBackend
+-------------
+
+.. autoclass:: ezdxf.addons.drawing.pillow.PillowBackend
+
+The :class:`PillowBackend` is used by :ref:`pillow_command` command of the
+`ezdxf` launcher.
 
 Configuration
 -------------
