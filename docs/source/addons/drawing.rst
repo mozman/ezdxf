@@ -83,7 +83,7 @@ Simplified render workflow but with less control:
 
 .. autofunction:: ezdxf.addons.drawing.matplotlib.qsave
 
-The :class:`MatplotlibBackend` is used by :ref:`draw_command` command of the
+The :class:`MatplotlibBackend` is used by the :ref:`draw_command` command of the
 `ezdxf` launcher.
 
 PyQtBackend
@@ -91,7 +91,7 @@ PyQtBackend
 
 .. autoclass:: ezdxf.addons.drawing.pyqt.PyQtBackend(scene=None, *,extra_lineweight_scaling=2.0, use_text_cache=True)
 
-The :class:`PyQtBackend` is used by :ref:`view_command` command of the
+The :class:`PyQtBackend` is used by the :ref:`view_command` command of the
 `ezdxf` launcher.
 
 PillowBackend
@@ -99,7 +99,7 @@ PillowBackend
 
 .. autoclass:: ezdxf.addons.drawing.pillow.PillowBackend
 
-The :class:`PillowBackend` is used by :ref:`pillow_command` command of the
+The :class:`PillowBackend` is used by the :ref:`pillow_command` command of the
 `ezdxf` launcher.
 
 Configuration
