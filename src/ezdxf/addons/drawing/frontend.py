@@ -1,5 +1,6 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
+from __future__ import annotations
 import math
 from typing import (
     Iterable,
@@ -175,9 +176,11 @@ class Frontend:
         return dispatch_table
 
     def log_message(self, message: str):
+        """Log given message - override to alter behavior."""
         logger.info(message)
 
     def skip_entity(self, entity: DXFEntity, msg: str) -> None:
+        """Called for skipped entities - override to alter behavior."""
         self.log_message(f'skipped entity {str(entity)}. Reason: "{msg}"')
 
     def override_properties(
@@ -194,12 +197,31 @@ class Frontend:
 
     def draw_layout(
         self,
-        layout: "Layout",
+        layout: Layout,
         finalize: bool = True,
         *,
         filter_func: FilterFunc = None,
         layout_properties: Optional[LayoutProperties] = None,
     ) -> None:
+        """Draw all entities of the given `layout`.
+
+        Draws the entities of the layout in the default or redefined redraw-order
+        and calls the :meth:`finalize` method of the backend if requested.
+        The default redraw order is the ascending handle order not the order the
+        entities are stored in the layout.
+
+        The method skips invisible entities and entities for which the given
+        filter function returns ``False``.
+
+        Args:
+            layout: layout to draw of type :class:`~ezdxf.layouts.Layout`
+            finalize: ``True`` if the :meth:`finalize` method of the backend
+                should be called automatically
+            filter_func: function to filter DXf entities, the function should
+                return ``False`` if a given entity should be ignored
+            layout_properties: override the default layout properties
+
+        """
         if layout_properties is not None:
             # TODO: this does not work, layer properties have to be re-evaluated!
             self.ctx.current_layout_properties = layout_properties
@@ -230,6 +252,10 @@ class Frontend:
         *,
         filter_func: FilterFunc = None,
     ) -> None:
+        """Draw the given `entities`. The method skips invisible entities
+        and entities for which the given filter function returns ``False``.
+
+        """
         _draw_entities(self, self.ctx, entities, filter_func=filter_func)
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:

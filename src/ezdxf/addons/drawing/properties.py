@@ -99,8 +99,9 @@ class Filling:
 
 
 class Properties:
-    """An implementation agnostic representation of entity properties like
-    color and linetype.
+    """An implementation agnostic representation of DXF entity properties like
+    color and linetype. These properties represent the actual values after
+    resolving all DXF specific rules like "by layer", "by block" and so on.
     """
 
     def __init__(self):
@@ -290,6 +291,24 @@ LayerPropsOverride = Callable[[Sequence[LayerProperties]], None]
 
 
 class RenderContext:
+    """The render context for the given DXF document. The
+    :class:`RenderContext` resolves the properties of DXF entities from the
+    context they reside in to actual values like RGB colors, transparency,
+    linewidth and so on.
+
+    A given `ctb` file (plot style file) overrides the default properties for
+    all layouts, which means the plot style table stored in the layout is
+    always ignored.
+
+    Args:
+        doc: DXF document
+        ctb: path to a plot style table
+        export_mode: Whether to render the document as it would look when
+            exported (plotted) by a CAD application to a file such as pdf,
+            or whether to render the document as it would appear inside a
+            CAD application.
+    """
+
     def __init__(
         self,
         doc: Optional[Drawing] = None,
@@ -297,19 +316,6 @@ class RenderContext:
         ctb: str = "",
         export_mode: bool = False,
     ):
-        """Represents the render context for the DXF document `doc`.
-        A given `ctb` file (plot style file) overrides the default properties of
-        all layout, which means the plot style table stored in the layout is
-        always ignored.
-
-        Args:
-            doc: DXF document
-            ctb: path to a plot style table
-            export_mode: Whether to render the document as it would look when
-                exported (plotted) by a CAD application to a file such as pdf,
-                or whether to render the document as it would appear inside a
-                CAD application.
-        """
         self._saved_states: List[Properties] = []
         self.line_pattern: Dict[str, Sequence[float]] = dict()
         self.current_block_reference_properties: Optional[Properties] = None

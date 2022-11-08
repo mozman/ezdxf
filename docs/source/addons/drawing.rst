@@ -59,6 +59,18 @@ MatplotlibBackend
 
 .. autoclass:: ezdxf.addons.drawing.matplotlib.MatplotlibBackend(ax, *, adjust_figure=True, font=FontProperties(), use_text_cache=True)
 
+The :class:`MatplotlibBackend` is used by the :ref:`draw_command` command of the
+`ezdxf` launcher.
+
+Limitations
++++++++++++
+
+- the text path rendering is different to AutoCAD, therefore
+  text placement and wrapping may appear slightly different
+- the SVG export of dimensionless POINT entities is rendered as circles
+- has no VIEWPORT clipping support (yet?) and is therefore not very suitable
+  for exporting paperspace layouts
+
 Example for the usage of the :mod:`Matplotlib` backend:
 
 .. code-block:: Python
@@ -103,18 +115,6 @@ Simplified render workflow but with less control:
 
 .. autofunction:: ezdxf.addons.drawing.matplotlib.qsave
 
-The :class:`MatplotlibBackend` is used by the :ref:`draw_command` command of the
-`ezdxf` launcher.
-
-Limitations
-+++++++++++
-
-- the text path rendering is different to AutoCAD, therefore
-  text placement and wrapping may appear slightly different
-- the SVG export of dimensionless POINT entities is rendered as circles
-- has no VIEWPORT clipping support (yet?) and is therefore not very suitable
-  for exporting paperspace layouts
-
 
 PyQtBackend
 -----------
@@ -130,13 +130,20 @@ Limitations
 - the text path rendering is different to AutoCAD, therefore
   text placement and wrapping may appear slightly different
 
+.. seealso::
+
+    The `qtviewer.py`_ module implements the core of a simple DXF viewer and the
+    `cad_viewer.py`_ example is a skeleton to show how to launch the
+    :class:`CADViewer` class.
+
 PillowBackend
 -------------
 
 .. autoclass:: ezdxf.addons.drawing.pillow.PillowBackend
 
 The :class:`PillowBackend` is used by the :ref:`pillow_command` command of the
-`ezdxf` launcher.
+`ezdxf` launcher.  The `pillow.py`_ example script is the development prototype
+for the :ref:`pillow_command` command.
 
 Limitations
 +++++++++++
@@ -188,27 +195,139 @@ ProxyGraphicPolicy
 Properties
 ----------
 
-.. class:: ezdxf.addons.drawing.properties.Properties
+.. autoclass:: ezdxf.addons.drawing.properties.Properties
+
+    .. attribute:: color
+
+        The actual color value of the DXF entity as "#RRGGBB" or "#RRGGBBAA" string.
+
+    .. attribute:: rgb
+
+        RGB values extract from the :attr:`color` value as tuple of integers.
+
+    .. attribute:: luminance
+
+        Perceived luminance calculated from the :attr:`color` value as float in
+        the range [0.0, 1.0].
+
+    .. attribute:: linetype_name
+
+        The actual linetype name as string like "CONTINUOUS"
+
+    .. attribute:: linetype_pattern
+
+        The simplified DXF linetype pattern as tuple of floats, all line
+        elements and gaps are values greater than 0.0 and 0.0 represents a
+        point. Line or point elements do always alternate with gap elements:
+        line-gap-line-gap-point-gap and the pattern always ends with a gap.
+        The continuous line is an empty tuple.
+
+    .. attribute:: linetype_scale
+
+        The scaling factor as float to apply to the :attr:`linetype_pattern`.
+
+    .. attribute:: lineweight
+
+        The absolute lineweight to render in mm as float.
+
+    .. attribute:: is_visible
+
+        Visibility flag as bool.
+
+    .. attribute:: layer
+
+        The actual layer name the entity resides on as UPPERCASE string.
+
+    .. attribute:: font
+
+        The :class:`FontFace` used for text rendering or ``None``.
+
+    .. attribute:: filling
+
+        The actual :class:`Filling` properties of the entity or ``None``.
+
+    .. attribute:: units
+
+        The actual drawing units as :class:`~ezdxf.enums.InsertUnits` enum.
+
 
 LayerProperties
 ---------------
 
 .. class:: ezdxf.addons.drawing.properties.LayerProperties
 
+    Actual layer properties, inherits from class :class:`Properties`.
+
+    .. attribute:: is_visible
+
+        Modified meaning: whether entities belonging to this layer should be drawn
+
+    .. attribute:: layer
+
+        Modified meaning: stores real layer name (mixed case)
+
+LayoutProperties
+----------------
+
+.. class:: ezdxf.addons.drawing.properties.LayoutProperties
+
+    Actual layout properties.
+
+    .. attribute:: name
+
+        Layout name as string
+
+    .. attribute:: units
+
+        Layout units as :class:`~ezdxf.enums.InsertUnits` enum.
+
+    .. autoproperty:: background_color
+
+    .. autoproperty:: default_color
+
+    .. autoproperty:: has_dark_background
+
+    .. automethod:: set_colors
+
 RenderContext
 -------------
 
-.. class:: ezdxf.addons.drawing.properties.RenderContext
+.. autoclass:: ezdxf.addons.drawing.properties.RenderContext
 
 Frontend
 --------
 
-.. class:: ezdxf.addons.drawing.frontend.Frontend
+.. autoclass:: ezdxf.addons.drawing.frontend.Frontend(ctx: RenderContext, out: BackendInterface, config: Configuration = Configuration.defaults(), bbox_cache: ezdxf.bbox.Cache = None)
+
+    .. automethod:: log_message
+
+    .. automethod:: skip_entity
+
+    .. automethod:: override_properties
+
+    .. automethod:: draw_layout
+
+
+BackendInterface
+----------------
+
+.. class:: ezdxf.addons.drawing.backend.BackendInterface
+
+    The public interface definition for the rendering backend.
+
+    For more information read the source code: `backend.py`_
+
 
 Backend
 --------
 
 .. class:: ezdxf.addons.drawing.backend.Backend
+
+    Abstract base class for concrete backend implementations and
+    implements some default features.
+
+    For more information read the source code: `backend.py`_
+
 
 Details
 -------
@@ -246,3 +365,6 @@ to achieve similar behavior in some areas:
 .. _QtBrushHatch: https://doc.qt.io/qt-5/qbrush.html
 .. _cad_viewer.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/cad_viewer.py
 .. _draw_cad.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/draw_cad.py
+.. _qtviewer.py: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/qtviewer.py
+.. _pillow.py: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/pillow.py
+.. _backend.py: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/backend.py

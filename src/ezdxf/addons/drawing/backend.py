@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class BackendInterface(ABC):
-    """the public interface which a rendering backend is used through"""
+    """the public interface for the rendering backend."""
 
     @abstractmethod
     def configure(self, config: Configuration) -> None:
