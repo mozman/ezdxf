@@ -57,9 +57,6 @@ def setup_axes(ax: plt.Axes):
 class MatplotlibBackend(Backend):
     """Backend which uses the :mod:`Matplotlib` package for image export.
 
-    The current implementation does not support VIEWPORT clipping and is
-    therefore not very suitable for exporting paperspace layouts.
-
     Args:
         ax: drawing canvas as :class:`matplotlib.pyplot.Axes` object
         adjust_figure: automatically adjust the size of the parent

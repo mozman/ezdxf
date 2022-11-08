@@ -78,10 +78,12 @@ class PillowBackend(Backend):
             render canvas size (e.g. 1, 2, 3, ...), the final image will
             be scaled down by the LANCZOS method
         text_mode: text rendering mode
-            - IGNORE do not draw text
-            - PLACEHOLDER draws text as filled rectangles
-            - OUTLINE draws text as outlines (recommended)
-            - FILLED draws text fillings (has some issues!)
+
+            - IGNORE: do not draw text
+            - PLACEHOLDER: draw text as filled rectangles
+            - OUTLINE: draw text as outlines (recommended)
+            - FILLED: simulate text filling by hatching the text outline with
+              dense lines - has some issues
 
     """
     def __init__(
