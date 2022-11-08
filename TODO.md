@@ -67,10 +67,11 @@ DXF Entities
 - (>v1.0) FIELD, used by ACAD_TABLE and MTEXT
 - (>v1.0) explode HATCH pattern into LINE entities, points are represented by 
   zero-length LINE entities, because the POINT entity has a special meaning.
-- (>v1.0) HATCH: shift hatch pattern origin, see discussion #769
+- (>v1.0) HATCH: shift hatch pattern origin, see discussion #769 
+  and examples/entities/hatch_pattern_modify_origin.py
 - (>v1.0) extend ACIS support
-- (>v1.0) clipping path support for block references, see XCLIP command,
-  https://github.com/mozman/ezdxf/discussions/760
+- (>v1.0) clipping path support for block references, see XCLIP command and 
+  discussion #760
 
 Selection Module
 ----------------
