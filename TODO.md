@@ -43,7 +43,17 @@ Add-ons
     - PyQt: QPrinter & QPainter - https://wiki.qt.io/Handling_PDF
   
     In consideration, if the SVG exporter works well.
-   
+  
+  - (>1.0) Support for `Layout.dxf.plot_layout_options` in export mode of 
+    class `RenderContext`:
+    - plot with plot-styles; disable loading of the ctb-table in set_currrent_layout()
+    - plot entity lineweights; if disabled which linewidth should be used instead?
+    - scale lineweights; scale by what?
+    - plot transparencies
+    - hide paperspace entities (`DXFGraphic.dxf.paperspace` attribute is `True`)
+    
+    VIEWPORT borders are not plotted at all by the `drawing` add-on
+    
 - (>v1.0) DWG loader, planned for the future. Cython will be required for the 
   low level stuff, no pure Python implementation.
 - (>v1.0) text2path: add support for SHX fonts
