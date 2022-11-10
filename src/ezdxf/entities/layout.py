@@ -1,5 +1,6 @@
-#  Copyright (c) 2020-2021, Manfred Moitzi
+#  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER
@@ -17,7 +18,8 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.entities.dxfns import DXFNamespace
 
 __all__ = ["PlotSettings", "DXFLayout"]
 
@@ -46,20 +48,21 @@ acdb_plot_settings = DefSubclass(
         # Denominator of custom print scale: drawing units:
         "scale_denominator": DXFAttr(143, default=1.0),
         # Plot layout flags:
-        # 1 = Plot Viewport Borders
-        # 2 = Show Plot Styles
-        # 4 = Plot Centered
-        # 8 = Plot Hidden
-        # 16 = Use Standard Scale
-        # 32 = Plot Plot Styles
-        # 64 = Scale Lineweights
-        # 128 = Print Lineweights
-        # 512 = Draw Viewports First
-        # 1024 = Model Type
-        # 2048 = Update Paper
-        # 4096 = Zoom To Paper On Update
-        # 8192 = Initializing
-        # 16384 = Prev PlotInit
+        # 1 = plot viewport borders
+        # 2 = show plot-styles
+        # 4 = plot centered
+        # 8 = plot hidden == hide paperspace entities?
+        # 16 = use standard scale
+        # 32 = plot with plot-styles
+        # 64 = scale lineweights
+        # 128 = plot entity lineweights
+        # 512 = draw viewports first
+        # 1024 = model type
+        # 2048 = update paper
+        # 4096 = zoom to paper on update
+        # 8192 = initializing
+        # 16384 = prev plot-init
+        # the "Plot transparencies" option is stored in the XDATA section
         "plot_layout_flags": DXFAttr(70, default=688),
         # Plot paper units:
         # 0 = Plot in inches
@@ -185,6 +188,13 @@ acdb_plot_settings = DefSubclass(
 )
 acdb_plot_settings_group_codes = group_code_mapping(acdb_plot_settings)
 
+# The "Plot transparencies" option is stored in the XDATA section of the
+# LAYOUT entity:
+# 1001
+# PLOTTRANSPARENCY
+# 1071
+# 1
+
 
 @register_entity
 class PlotSettings(DXFObject):
@@ -193,7 +203,7 @@ class PlotSettings(DXFObject):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -201,7 +211,7 @@ class PlotSettings(DXFObject):
             )
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_plot_settings.name)
@@ -325,14 +335,14 @@ class DXFLayout(PlotSettings):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(dxf, acdb_layout_group_codes, 2)
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
-        # Set correct Model Type flag
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
+        # Set correct model type flag
         self.set_flag_state(
             1024, self.dxf.name.upper() == "MODEL", "plot_layout_flags"
         )
