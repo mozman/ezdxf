@@ -89,8 +89,8 @@ class Textstyle(DXFEntity):
 
     DXFTYPE = "STYLE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_style)
-    BOLD = 0b01000000000000000000000000
-    ITALIC = 0b10000000000000000000000000
+    ITALIC = 0b01000000000000000000000000
+    BOLD = 0b10000000000000000000000000
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None

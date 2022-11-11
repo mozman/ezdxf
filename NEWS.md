@@ -20,6 +20,8 @@ Version 1.0.0rc1 - dev
 - BUGFIX: [#751](https://github.com/mozman/ezdxf/issues/751)
   fix invalid DXF attribute name
 - BUGFIX: fix configuration defaults for pdsize and pdmode for the `drawing` add-on
+- BUGFIX: [#776](https://github.com/mozman/ezdxf/issues/776)
+  fix swapped bold and italic flag for extended font data in STYLE entity 
 
 Version 0.18.1 - 2022-09-03
 ---------------------------
