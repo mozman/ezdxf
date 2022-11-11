@@ -26,6 +26,9 @@ visualisation.
     # opens a GUI application to view CAD files
     $ ./cad_viewer.py
 
+.. seealso::
+
+    How-to section for the FAQ about the :ref:`how_to_drawing_addon`.
 
 Design
 ------

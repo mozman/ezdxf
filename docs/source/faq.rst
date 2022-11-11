@@ -104,5 +104,9 @@ like `Matplotlib` and `Qt`, therefore only SHX fonts which have corresponding
 TTF-fonts can be rendered by these backends. See also how-tos about
 :ref:`howto_fonts`
 
+Drawing Add-on
+--------------
+
+There is a dedicated how-to section for the :ref:`how_to_drawing_addon`.
 
 .. _OLE: https://en.wikipedia.org/wiki/Object_Linking_and_Embedding
