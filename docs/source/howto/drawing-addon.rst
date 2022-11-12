@@ -144,8 +144,69 @@ This code exports the specified modelspace area from (5, 3) to (7, 8) as a
     fig.set_size_inches(xmax - xmin, ymax - ymin)
     fig.savefig("x5y3_to_x7y8.png")
 
+.. _matplotlib_export_pixel_density:
+
+How to Set the Pixel Count per Drawing Unit
++++++++++++++++++++++++++++++++++++++++++++
+
+This code exports the modelspace with an extent of 5 x 3 drawing units with
+100 pixels per drawing unit as a 500 x 300 pixel image.
+
+.. seealso::
+
+    - Full example script: `export_image_pixel_size.py`_
+    - Source: https://github.com/mozman/ezdxf/discussions/357
+
+.. code-block:: Python
+
+    # -x-x-x snip -x-x-x-
+
+    def set_pixel_density(fig: plt.Figure, ax: plt.Axes, ppu: int):
+        """Argument `ppu` is pixels per drawing unit."""
+        xmin, xmax = ax.get_xlim()
+        width = xmax - xmin
+        ymin, ymax = ax.get_ylim()
+        height = ymax - ymin
+        dpi = fig.dpi
+        width_inch = width * ppu / dpi
+        height_inch = height * ppu / dpi
+        fig.set_size_inches(width_inch, height_inch)
+
+    # -x-x-x snip -x-x-x-
+
+    # export image with 100 pixels per drawing unit = 500x300 pixels
+    set_pixel_density(fig, ax, 100)
+    fig.savefig("box_500x300.png")
+
+.. _matplotlib_export_pixel_size:
+
+How to Export a Specific Image Size in Pixels
++++++++++++++++++++++++++++++++++++++++++++++
+
+This code exports the modelspace with an extent of 5 x 3 drawing units as a
+1000 x 600 pixel Image.
+
+.. seealso::
+
+    - Full example script: `export_image_pixel_size.py`_
+    - Source: https://github.com/mozman/ezdxf/discussions/357
+
+.. code-block:: Python
+
+    # -x-x-x snip -x-x-x-
+
+    def set_pixel_size(fig: plt.Figure, size: tuple[int, int]):
+        x, y = size
+        fig.set_size_inches(x / fig.dpi, y / fig.dpi)
+
+    # -x-x-x snip -x-x-x-
+
+    # export image with a size of 1000x600 pixels
+    set_pixel_size(fig, (1000, 600))
+    fig.savefig("box_1000x600.png")
 
 
 .. _FAQ: https://github.com/mozman/ezdxf/discussions/550
 .. _wcs_to_image_coordinates.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/wcs_to_image_coodinates.py
 .. _export_specific_area.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/export_specific_area.py
+.. _export_image_pixel_size.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/export_image_pixel_size.py.py
