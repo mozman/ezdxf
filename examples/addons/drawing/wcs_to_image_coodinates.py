@@ -29,11 +29,22 @@ def get_wcs_to_image_transform(
     return (
         Matrix44.translate(-x1, -y1, 0)
         @ Matrix44.scale(
-            image_width / data_width, -image_height / data_height, 0
+            image_width / data_width, -image_height / data_height, 1.0
         )
         # +1 to counteract the effect of the pixels being flipped in y
         @ Matrix44.translate(0, image_height + 1, 0)
     )
+
+
+def get_image_to_wcs_transform(
+    ax: plt.Axes, image_size: tuple[int, int]
+) -> Matrix44:
+    """Returns the transformation matrix from image coordinates to modelspace
+    coordinates.
+    """
+    m = get_wcs_to_image_transform(ax, image_size)
+    m.inverse()
+    return m
 
 
 def main():
@@ -67,6 +78,12 @@ def main():
 
     # show the image by the default image viewer
     img.show()
+
+    # convert pixel coordinates to modelspace coordinates
+    img2wcs = get_image_to_wcs_transform(ax, img.size)
+    print(f"0.25, 0.75 == {img2wcs.transform(a).round(2)}")
+    print(f"0.75, 0.25 == {img2wcs.transform(b).round(2)}")
+    print(f"1.00, 1.00 == {img2wcs.transform(c).round(2)}")
 
 
 if __name__ == "__main__":

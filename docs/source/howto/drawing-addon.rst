@@ -44,7 +44,7 @@ Transformation from modelspace coordinates to image coordinates:
         return (
             Matrix44.translate(-x1, -y1, 0)
             @ Matrix44.scale(
-                image_width / data_width, -image_height / data_height, 0
+                image_width / data_width, -image_height / data_height, 1.0
             )
             # +1 to counteract the effect of the pixels being flipped in y
             @ Matrix44.translate(0, image_height + 1, 0)
@@ -80,5 +80,32 @@ Transformation from modelspace coordinates to image coordinates:
 
     # show the image by the default image viewer
     img.show()
+
+.. _matplotlib_how_to_get_msp_coordinates:
+
+How to Get Modelspace Coordinates from Pixel Coordinates
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+This is the reverse operation of the previous how-to: :ref:`matplotlib_how_to_get_pixel_coordinates`
+
+.. code-block:: Python
+
+    def get_image_to_wcs_transform(
+        ax: plt.Axes, image_size: tuple[int, int]
+    ) -> Matrix44:
+        m = get_wcs_to_image_transform(ax, image_size)
+        m.inverse()
+        return m
+
+    ...
+
+    img2wcs = get_image_to_wcs_transform(ax, img.size)
+    print(f"0.25, 0.75 == {img2wcs.transform(a).round(2)}")
+    print(f"0.75, 0.25 == {img2wcs.transform(b).round(2)}")
+    print(f"1.00, 1.00 == {img2wcs.transform(c).round(2)}")
+
+.. seealso::
+
+    Source: https://github.com/mozman/ezdxf/discussions/269
 
 .. _FAQ: https://github.com/mozman/ezdxf/discussions/550
