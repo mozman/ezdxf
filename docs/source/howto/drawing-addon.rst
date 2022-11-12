@@ -16,7 +16,7 @@ How to Get the Pixel Coordinates of DXF Entities
 
 .. seealso::
 
-    Source: https://github.com/mozman/ezdxf/discussions/219
+    - Source: https://github.com/mozman/ezdxf/discussions/219
 
 Transformation from modelspace coordinates to image coordinates:
 
@@ -57,8 +57,8 @@ Transformation from modelspace coordinates to image coordinates:
     msp.add_line((0, 0), (1, 1))
 
     # export the pixel image
-    fig = plt.figure()
-    ax = fig.add_axes([0, 0, 1, 1])
+    fig: plt.Figure = plt.figure()
+    ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
     ctx = RenderContext(doc)
     out = MatplotlibBackend(ax)
     Frontend(ctx, out).draw_layout(msp, finalize=True)
@@ -88,6 +88,11 @@ How to Get Modelspace Coordinates from Pixel Coordinates
 
 This is the reverse operation of the previous how-to: :ref:`matplotlib_how_to_get_pixel_coordinates`
 
+.. seealso::
+
+    - Full example script: `wcs_to_image_coordinates.py`_
+    - Source: https://github.com/mozman/ezdxf/discussions/269
+
 .. code-block:: Python
 
     def get_image_to_wcs_transform(
@@ -97,15 +102,50 @@ This is the reverse operation of the previous how-to: :ref:`matplotlib_how_to_ge
         m.inverse()
         return m
 
-    ...
+    # -x-x-x snip -x-x-x-
 
     img2wcs = get_image_to_wcs_transform(ax, img.size)
     print(f"0.25, 0.75 == {img2wcs.transform(a).round(2)}")
     print(f"0.75, 0.25 == {img2wcs.transform(b).round(2)}")
     print(f"1.00, 1.00 == {img2wcs.transform(c).round(2)}")
 
+
+.. _matplotlib_export_specific_area:
+
+How to Export a Specific Area of the Modelspace
++++++++++++++++++++++++++++++++++++++++++++++++
+
+This code exports the specified modelspace area from (5, 3) to (7, 8) as a
+2x5 inch PNG image to maintain the aspect ratio of the source area.
+
 .. seealso::
 
-    Source: https://github.com/mozman/ezdxf/discussions/269
+    - Full example script: `export_specific_area.py`_
+    - Source: https://github.com/mozman/ezdxf/discussions/451
+
+.. code-block:: Python
+
+    # -x-x-x snip -x-x-x-
+
+    # export the pixel image
+    fig: plt.Figure = plt.figure()
+    ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
+    ctx = RenderContext(doc)
+    out = MatplotlibBackend(ax)
+    Frontend(ctx, out).draw_layout(msp, finalize=True)
+
+    # setting the export area:
+    xmin, xmax = 5, 7
+    ymin, ymax = 3, 8
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
+
+    # set the output size to get the expected aspect ratio:
+    fig.set_size_inches(xmax - xmin, ymax - ymin)
+    fig.savefig("x5y3_to_x7y8.png")
+
+
 
 .. _FAQ: https://github.com/mozman/ezdxf/discussions/550
+.. _wcs_to_image_coordinates.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/wcs_to_image_coodinates.py
+.. _export_specific_area.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/export_specific_area.py

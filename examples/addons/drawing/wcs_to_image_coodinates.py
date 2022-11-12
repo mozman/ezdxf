@@ -55,8 +55,8 @@ def main():
     msp.add_line((0, 0), (1, 1))
 
     # export the pixel image
-    fig = plt.figure()
-    ax = fig.add_axes([0, 0, 1, 1])
+    fig: plt.Figure = plt.figure()
+    ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
     ctx = RenderContext(doc)
     out = MatplotlibBackend(ax)
     Frontend(ctx, out).draw_layout(msp, finalize=True)
