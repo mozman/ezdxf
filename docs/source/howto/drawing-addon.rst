@@ -70,7 +70,7 @@ How to Set a Transparent Background Color
 
 The override color include an alpha transparency "#RRGGBBAA" value. An alpha
 value of "00" is opaque and "ff" is fully transparent.
-A transparent background colors still defines the foreground color!
+A transparent background color still defines the foreground color!
 
 .. hint::
 
@@ -312,12 +312,13 @@ This code exports the specified modelspace area from (5, 3) to (7, 8) as a
     fig.savefig("x5y3_to_x7y8.png")
     plt.close(fig)
 
-.. _matplotlib_export_without_margins:
+.. _matplotlib_render_without_Margin:
 
-How to Export Without Margins
+How to Render Without Margins
 +++++++++++++++++++++++++++++
 
-Set the margins of the :class:`Axes` to zero:
+To remove the empty space at the image borders set the margins of the
+:class:`Axes` object to zero:
 
 .. code-block:: Python
 
@@ -392,9 +393,22 @@ This code exports the modelspace with an extent of 5 x 3 drawing units as a
     fig.savefig("box_1000x600.png")
     plt.close(fig)
 
-.. _matplotlib_export_at_scale:
+.. _matplotlib_set_page_size_in_inches:
 
-How to Export at a Specific Scale
+How to Set the Page Size in Inches
+++++++++++++++++++++++++++++++++++
+
+The page- or image size in inches is set by the :meth:`set_size_inches` method
+of the :class:`Figure` class. The content within the :class:`Axes` limits will
+be scaled to fill the page.
+
+.. code-block:: Python
+
+    fig.set_size_inches(8, 11)
+
+.. _matplotlib_render_at_scale:
+
+How to Render at a Specific Scale
 +++++++++++++++++++++++++++++++++
 
 This code exports the modelspace at a specific scale and paper size.
