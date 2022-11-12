@@ -202,7 +202,8 @@ Properties
 
     .. attribute:: color
 
-        The actual color value of the DXF entity as "#RRGGBB" or "#RRGGBBAA" string.
+        The actual color value of the DXF entity as "#RRGGBB" or "#RRGGBBAA"
+        string. An alpha value of "00" is opaque and "ff" is fully transparent.
 
     .. attribute:: rgb
 

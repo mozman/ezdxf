@@ -6,6 +6,109 @@ Drawing Add-on
 This section consolidates the `FAQ`_ about the drawing add-on from the github
 forum.
 
+All Backends
+------------
+
+.. _how_to_set_bg_and_fg_colors:
+
+How to Set Background and Foreground Colors
++++++++++++++++++++++++++++++++++++++++++++
+
+Override the default background and foreground colors.  The foreground color is
+the :ref:`ACI` 7, which is white/black depending on the background color.
+If the foreground color is not specified, the foreground color is white for dark
+backgrounds and black for light backgrounds.  The required color format is
+a hex string "#RRGGBBAA".
+
+.. code-block:: Python
+
+    from ezdxf.addons.drawing.properties import LayoutProperties
+
+    # -x-x-x snip -x-x-x-
+
+    fig: plt.Figure = plt.figure()
+    ax: plt.Axes = fig.add_axes((0, 0, 1, 1))
+    ctx = RenderContext(doc)
+
+    # get the modelspace properties
+    msp_properties = LayoutProperties.from_layout(msp)
+
+    # set light gray background color and black foreground color
+    msp_properties.set_colors("#eaeaea")
+    out = MatplotlibBackend(ax)
+
+    # override the layout properties and render the modelspace
+    Frontend(ctx, out).draw_layout(
+        msp,
+        finalize=True,
+        layout_properties=msp_properties,
+    )
+    fig.savefig("image.png")
+
+A light background "#eaeaea" has a black foreground color by default:
+
+.. image:: gfx/bg0.png
+    :align: center
+
+A dark background "#0a0a0a" has a white foreground color by default:
+
+.. code-block:: Python
+
+    # -x-x-x snip -x-x-x-
+
+    msp_properties.set_colors("#0a0a0a")
+
+    # -x-x-x snip -x-x-x-
+
+.. image:: gfx/bg1.png
+    :align: center
+
+.. _how_to_set_transparent_bg_color:
+
+How to Set a Transparent Background Color
++++++++++++++++++++++++++++++++++++++++++
+
+The override color include an alpha transparency "#RRGGBBAA" value. An alpha
+value of "00" is opaque and "ff" is fully transparent.
+A transparent background colors still defines the foreground color!
+
+.. hint::
+
+    The :func:`savefig` function of the matplotlib backend requires the
+    `transparent` argument to be set to ``True`` to support transparency.
+
+A light and fully transparent background "#eaeaeaff" has a black foreground
+color by default:
+
+.. code-block:: Python
+
+    # -x-x-x snip -x-x-x-
+
+    msp_properties.set_colors("#eaeaeaff")
+
+    # -x-x-x snip -x-x-x-
+
+    fig.savefig("image.png", transparent=True)
+
+.. image:: gfx/bg2.png
+    :align: center
+
+A dark and fully transparent background "#0a0a0aff" has a **white**
+foreground color by default:
+
+.. code-block:: Python
+
+    # -x-x-x snip -x-x-x-
+
+    msp_properties.set_colors("#0a0a0aff")
+
+    # -x-x-x snip -x-x-x-
+
+    fig.savefig("image.png", transparent=True)
+
+.. image:: gfx/bg3.png
+    :align: center
+
 Matplotlib Backend
 ------------------
 
