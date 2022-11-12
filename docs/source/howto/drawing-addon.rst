@@ -109,6 +109,64 @@ foreground color by default:
 .. image:: gfx/bg3.png
     :align: center
 
+.. _how_to_exclude_entities_from_rendering:
+
+How to Exclude DXF Entities from Rendering
+++++++++++++++++++++++++++++++++++++++++++
+
+- If all unwanted entities are on the same layer switch off the layer.
+- If the document is not saved later, you can delete the entities or set them
+  invisible.
+- Filter the unwanted entities by a filter function.
+
+The argument `filter_func` of the :meth:`Frontend.draw_layout` method expects a
+function which takes a graphical DXF entity as input and returns ``True`` if the
+entity should be rendered or ``False`` to exclude the entity from rendering.
+
+This filter function excludes all DXF entities with an ACI color value of 2:
+
+.. code-block:: Python
+
+    from ezdxf.entities import DXFGraphic
+
+    def my_filter(e: DXFGraphic) -> bool:
+        return e.dxf.color != 2
+
+    # -x-x-x snip -x-x-x-
+
+    Frontend(ctx, out).draw_layout(msp, finalize=True, filter_func=my_filter)
+
+.. important::
+
+    Not all attributes have a default value if the attribute does not exist.
+    If you are not sure about this, use the :meth:`get` method::
+
+        def my_filter(e: DXFGraphic) -> bool:
+            return e.dxf.get("color", 7) != 2
+
+.. _how_to_override_dxf_properties:
+
+How to Override Properties of DXF Entities
+++++++++++++++++++++++++++++++++++++++++++
+
+Create a custom :class:`Frontend` class and override the the
+:meth:`override_properties` method:
+
+.. code-block:: Python
+
+    class MyFrontend(Frontend):
+        def override_properties(self, entity: DXFGraphic, properties: Properties) -> None:
+            # remove alpha channel from all entities, "#RRGGBBAA"
+            properties.color = properties.color[:7]
+
+    # -x-x-x snip -x-x-x-
+
+    MyFrontend(ctx, out).draw_layout(msp, finalize=True)
+
+.. seealso::
+
+    - :class:`ezdxf.addons.drawing.properties.Properties`
+
 Matplotlib Backend
 ------------------
 
