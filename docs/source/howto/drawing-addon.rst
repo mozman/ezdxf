@@ -9,6 +9,12 @@ forum.
 Matplotlib Backend
 ------------------
 
+.. seealso::
+
+    - Matplotlib package: https://matplotlib.org/stable/api/matplotlib_configuration_api.html
+    - :class:`Figure` API: https://matplotlib.org/stable/api/figure_api.html
+    - :class:`Axes` API: https://matplotlib.org/stable/api/axis_api.html
+
 .. _matplotlib_how_to_get_pixel_coordinates:
 
 How to Get the Pixel Coordinates of DXF Entities
@@ -143,6 +149,24 @@ This code exports the specified modelspace area from (5, 3) to (7, 8) as a
     # set the output size to get the expected aspect ratio:
     fig.set_size_inches(xmax - xmin, ymax - ymin)
     fig.savefig("x5y3_to_x7y8.png")
+    plt.close(fig)
+
+.. _matplotlib_export_without_margins:
+
+How to Export Without Margins
++++++++++++++++++++++++++++++
+
+Set the margins of the :class:`Axes` to zero:
+
+.. code-block:: Python
+
+    ax.margins(0)
+    fig.savefig("image_without_margins.png")
+    plt.close(fig)
+
+.. seealso::
+
+    - Matplotlib docs about `margins`_
 
 .. _matplotlib_export_pixel_density:
 
@@ -177,6 +201,7 @@ This code exports the modelspace with an extent of 5 x 3 drawing units with
     # export image with 100 pixels per drawing unit = 500x300 pixels
     set_pixel_density(fig, ax, 100)
     fig.savefig("box_500x300.png")
+    plt.close(fig)
 
 .. _matplotlib_export_pixel_size:
 
@@ -204,9 +229,71 @@ This code exports the modelspace with an extent of 5 x 3 drawing units as a
     # export image with a size of 1000x600 pixels
     set_pixel_size(fig, (1000, 600))
     fig.savefig("box_1000x600.png")
+    plt.close(fig)
+
+.. _matplotlib_export_at_scale:
+
+How to Export at a Specific Scale
++++++++++++++++++++++++++++++++++
+
+This code exports the modelspace at a specific scale and paper size.
+
+.. seealso::
+
+    - Full example script: `render_to_scale.py`_
+    - Source: https://github.com/mozman/ezdxf/discussions/665
+
+.. code-block:: Python
+
+    # -x-x-x snip -x-x-x-
+
+    def render_limits(
+        origin: tuple[float, float],
+        size_in_inches: tuple[float, float],
+        scale: float,
+    ) -> tuple[float, float, float, float]:
+        """Returns the render limits in drawing units. """
+        min_x, min_y = origin
+        max_x = min_x + size_in_inches[0] * scale
+        max_y = min_y + size_in_inches[1] * scale
+        return min_x, min_y, max_x, max_y
+
+
+    def export_to_scale(
+        paper_size: tuple[float, float] = (8.5, 11),
+        origin: tuple[float, float] = (0, 0),  # of modelspace area to render
+        scale: float = 1,
+        dpi: int = 300,
+    ):
+        # -x-x-x snip -x-x-x-
+
+        ctx = RenderContext(doc)
+        fig = plt.figure(dpi=dpi)
+        ax = fig.add_axes([0, 0, 1, 1])
+
+        # get render limits in drawing units:
+        min_x, min_y, max_x, max_y = render_limits(
+            origin, paper_size, scale
+        )
+
+        ax.set_xlim(min_x, max_x)
+        ax.set_ylim(min_y, max_y)
+
+        out = MatplotlibBackend(ax)
+        # finalizing invokes auto-scaling by default!
+        Frontend(ctx, out).draw_layout(msp, finalize=False)
+
+        # set output size in inches:
+        fig.set_size_inches(paper_size[0], paper_size[1], forward=True)
+
+        fig.savefig(f"image_scale_1_{scale}.pdf", dpi=dpi)
+        plt.close(fig)
+
 
 
 .. _FAQ: https://github.com/mozman/ezdxf/discussions/550
 .. _wcs_to_image_coordinates.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/wcs_to_image_coodinates.py
 .. _export_specific_area.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/export_specific_area.py
-.. _export_image_pixel_size.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/export_image_pixel_size.py.py
+.. _export_image_pixel_size.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/export_image_pixel_size.py
+.. _margins: https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.margins.html
+.. _render_to_scale.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/render_to_scale.py
