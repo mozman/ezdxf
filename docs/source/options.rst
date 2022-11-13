@@ -1,3 +1,5 @@
+.. _global_options:
+
 Global Options Object
 =====================
 
@@ -19,6 +21,8 @@ read and writeable attributes are marked by (Read/Write).
 To change options, especially the read only attributes, you have to edit the
 config file with a text editor, or set options by the :meth:`set` method and
 write the current configuration into a config file.
+
+.. _config_files:
 
 Config Files
 ============
