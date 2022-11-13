@@ -429,12 +429,13 @@ processing.
 Entity View
 ~~~~~~~~~~~
 
-The entity view is a read-only text editor, it is possible to select and copy
+The entity view is a read-only text editor, it's possible to select and copy
 parts of the text into the clipboard.
-All ACIS content entities get an id assigned automatically, this way the data
-is more readable, by default AutoCAD and BricsCAD do not use ids for ACIS
-entities. The id is shown as decimal number in parenthesis after the entity
-name. The ``~`` is a shortcut for a null-pointer.
+To improve the readability all ACIS entities get automatically an id because
+AutoCAD and BricsCAD use relative references for ACIS data export and do not
+assign entity ids.
+The id is shown as decimal number in parenthesis after the entity
+name. The ``~`` character is a shortcut for a null-pointer.
 
 .. code-block:: Text
 
@@ -512,7 +513,7 @@ Manage config files.
 Info
 ----
 
-Show information and optional stats of DXF files as loaded by ezdxf, this may
+Show information and optional stats of DXF files as loaded by `ezdxf`, this may
 not represent the original content of the file, use the `browse`_ command to see
 the original content. The upgrade is necessary for very old DXF versions
 prior to R12 and for the "special" versions R13 and R14. The `-s` option shows
