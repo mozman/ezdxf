@@ -23,6 +23,7 @@ from ezdxf.lldxf.validator import (
 
 logger = logging.getLogger("ezdxf")
 win_exec_path = ezdxf.options.get("odafc-addon", "win_exec_path").strip('"')
+unix_exec_path = ezdxf.options.get("odafc-addon", "unix_exec_path").strip('"')
 
 
 class ODAFCError(IOError):
@@ -370,6 +371,18 @@ def _get_odafc_path(system: str) -> str:
         odafc.ODAFCNotInstalledError: ODA File Converter not installed
 
     """
+    # on Linux and Darwin check if UNIX_EXEC_PATH is set and exist and
+    # return this path as exec path.
+    # This may help if the "which" command can not find the "ODAFileConverter"
+    # command and also adds support for AppImages provided by ODA.
+    if system != WINDOWS and unix_exec_path:
+        if Path(unix_exec_path).is_file():
+            return unix_exec_path
+        else:
+            logger.warning(
+                f"command '{unix_exec_path}' not found, using 'ODAFileConverter'"
+            )
+
     path = shutil.which("ODAFileConverter")
     if not path and system == WINDOWS:
         path = win_exec_path
@@ -478,7 +491,7 @@ def _odafc_failed(system: str, proc: subprocess.Popen, stderr: str) -> bool:
 
 
 def _execute_odafc(arguments: List[str]) -> Optional[bytes]:
-    """ Execute ODAFC application.
+    """Execute ODAFC application.
 
     Args:
         arguments: ODAFC argument list

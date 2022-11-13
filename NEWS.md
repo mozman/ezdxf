@@ -10,6 +10,9 @@ Version 1.0.0rc1 - dev
 - NEW: `Drawing.paperspace()`, a correct type-annotated method to get paperspace 
   layouts 
 - NEW: `Drawing.page_setup()`, simple way to set up paperspace layouts
+- NEW: `UNIX_EXEC_PATH` config option for the ODAFC add-on. 
+  This may help if the `which` command can not find the ` ODAFileConverter` command 
+  and also adds support for AppImages provided by ODA.
 - CHANGE: removed deprecated features
 - BUGFIX: [#747](https://github.com/mozman/ezdxf/issues/747)
   fix virtual entities of 3D DIMENSION entities  

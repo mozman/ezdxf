@@ -79,7 +79,8 @@ def default_config() -> ConfigParser:
         "ICON_SIZE": "32",
     }
     config[ODAFC_ADDON] = {
-        "WIN_EXEC_PATH": r'"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"'
+        "WIN_EXEC_PATH": r'"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"',
+        "UNIX_EXEC_PATH": "",
     }
     config[OPENSCAD_ADDON] = {
         "WIN_EXEC_PATH": r'"C:\Program Files\OpenSCAD\openscad.exe"'
