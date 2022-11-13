@@ -285,6 +285,8 @@ How to Export a Specific Area of the Modelspace
 This code exports the specified modelspace area from (5, 3) to (7, 8) as a
 2x5 inch PNG image to maintain the aspect ratio of the source area.
 
+Use case: render only a specific area of the modelspace.
+
 .. seealso::
 
     - Full example script: `export_specific_area.py`_
@@ -338,6 +340,9 @@ How to Set the Pixel Count per Drawing Unit
 This code exports the modelspace with an extent of 5 x 3 drawing units with
 100 pixels per drawing unit as a 500 x 300 pixel image.
 
+Use case: render the content with a fixed number of pixels for a drawing unit,
+e.g. a drawing unit of 1 inch should be rendered by 100 pixels.
+
 .. seealso::
 
     - Full example script: `export_image_pixel_size.py`_
@@ -373,6 +378,8 @@ How to Export a Specific Image Size in Pixels
 This code exports the modelspace with an extent of 5 x 3 drawing units as a
 1000 x 600 pixel Image.
 
+Use case: render the content with a fixed image size in pixels.
+
 .. seealso::
 
     - Full example script: `export_image_pixel_size.py`_
@@ -402,6 +409,9 @@ The page- or image size in inches is set by the :meth:`set_size_inches` method
 of the :class:`Figure` class. The content within the :class:`Axes` limits will
 be scaled to fill the page.
 
+Use case: render the whole content to a PDF document with a specific paper size
+without worrying about scale.
+
 .. code-block:: Python
 
     fig.set_size_inches(8, 11)
@@ -412,6 +422,9 @@ How to Render at a Specific Scale
 +++++++++++++++++++++++++++++++++
 
 This code exports the modelspace at a specific scale and paper size.
+
+Use case: render the content to a PDF document with a specific paper size and
+scale, but not all content may be rendered.
 
 .. seealso::
 
