@@ -241,4 +241,29 @@ origin.
 
     - Discussion `#769 <https://github.com/mozman/ezdxf/discussions/769>`_
 
+How to Get the Length of a Spline or Polyline
+---------------------------------------------
+
+There exist no analytical function to calculate the length of a `B-spline`_, you
+have to approximate the curve and calculate the length of the polyline.
+The construction tool :class:`ezdxf.math.ConstructionPolyline` is may be useful
+for that.
+
+.. code-block:: python
+
+    import ezdxf
+    from ezdxf.math import ConstructionPolyline
+
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0)]
+
+    spline = msp.add_spline(fit_points)
+    # Adjust the max. sagitta distance to your needs or run the calculation in a loop
+    # reducing the distance until the difference to the previous run is smaller
+    # than your expected precision:
+    polyline = ConstructionPolyline(spline.flattening(distance=0.1))
+    print(f"approximated length = {polyline.length:.2f}")
+
 .. _DXF Group Codes in Numerical Order Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3F0380A5-1C15-464D-BC66-2C5F094BCFB9
+.. _B-spline: https://en.wikipedia.org/wiki/B-spline
