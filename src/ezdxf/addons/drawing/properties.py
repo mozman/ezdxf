@@ -371,6 +371,7 @@ class RenderContext:
             self._layer_properties_override(layers)
 
     def set_current_layout(self, layout: Layout, ctb: str = ""):
+        """Set the current layout and update layout specific properties."""
         # the given ctb has the highest priority
         if ctb == "":
             # next is the override ctb

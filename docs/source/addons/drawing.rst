@@ -298,6 +298,33 @@ RenderContext
 
 .. autoclass:: ezdxf.addons.drawing.properties.RenderContext
 
+    .. automethod:: resolve_aci_color
+
+    .. automethod:: resolve_all
+
+    .. automethod:: resolve_color
+
+    .. automethod:: resolve_filling
+
+    .. automethod:: resolve_font
+
+    .. automethod:: resolve_layer
+
+    .. automethod:: resolve_layer_properties
+
+    .. automethod:: resolve_linetype
+
+    .. automethod:: resolve_lineweight
+
+    .. automethod:: resolve_units
+
+    .. automethod:: resolve_visible
+
+    .. automethod:: set_current_layout
+
+    .. automethod:: set_layer_properties_override
+
+
 Frontend
 --------
 
