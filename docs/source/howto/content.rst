@@ -265,5 +265,38 @@ for that.
     polyline = ConstructionPolyline(spline.flattening(distance=0.1))
     print(f"approximated length = {polyline.length:.2f}")
 
+How to Resolve DXF Properties
+-----------------------------
+
+Graphical properties of DXF entities (color, lineweight, ...) are sometimes
+hard to resolve because of the complex possibilities to inherit properties from
+layers or blocks, or overriding them by :term:`ctb` files.
+
+The :mod:`~ezdxf.addons.drawing` add-on provides the
+:class:`~ezdxf.addons.drawing.properties.RenderContext` class that can be used
+to resolve properties of entities in the context of their use:
+
+.. code-block:: python
+
+    import ezdxf
+    from ezdxf.addons.drawing.properties import RenderContext
+
+    doc = ezdxf.new()
+    doc.layers.add("LINE", color=ezdxf.colors.RED)
+    msp = doc.modelspace()
+    line = msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "LINE"})
+
+    ctx = RenderContext(doc)
+    ctx.set_current_layout(msp)
+    print(f"resolved RGB value: {ctx.resolve_color(line)}")
+
+Output::
+
+    resolved RGB value: #ff0000
+
+This works in most simple cases, resolving properties of objects in viewports or
+nested blocks requires additional information that is beyond the scope of a
+simple guide.
+
 .. _DXF Group Codes in Numerical Order Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3F0380A5-1C15-464D-BC66-2C5F094BCFB9
 .. _B-spline: https://en.wikipedia.org/wiki/B-spline

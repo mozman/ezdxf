@@ -324,6 +324,8 @@ RenderContext
 
     .. automethod:: set_layer_properties_override
 
+The :class:`RenderContext` class can be used isolated from the :mod:`drawing`
+add-on to resolve DXF properties.
 
 Frontend
 --------
