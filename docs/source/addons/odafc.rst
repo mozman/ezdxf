@@ -39,7 +39,7 @@ your choice (e.g. ``~/Apps``) and make the file executable::
     chmod a+x ~/Apps/ODAFileConverter_QT5_lnxX64_8.3dll_23.9.AppImage
 
 Add the **absolute** path as config option "unix_exec_path" to the
-"odafc_addon" section:
+"odafc-addon" section:
 
 .. code-block:: INI
 
