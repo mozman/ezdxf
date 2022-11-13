@@ -99,6 +99,8 @@ def is_installed() -> bool:
 
     """
     if platform.system() in (LINUX, DARWIN):
+        if unix_exec_path and Path(unix_exec_path).is_file():
+            return True
         return shutil.which("ODAFileConverter") is not None
     # Windows:
     return os.path.exists(win_exec_path)
