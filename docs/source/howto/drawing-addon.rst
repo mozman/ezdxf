@@ -440,7 +440,15 @@ scale, but not all content may be rendered.
         size_in_inches: tuple[float, float],
         scale: float,
     ) -> tuple[float, float, float, float]:
-        """Returns the render limits in drawing units. """
+        """Returns the final render limits in drawing units.
+
+        Args:
+             origin: lower left corner of the modelspace area to render
+             size_in_inches: paper size in inches
+             scale: render scale, e.g. scale=100 means 1:100, 1m is
+                 rendered as 0.01m or 1cm on paper
+
+        """
         min_x, min_y = origin
         max_x = min_x + size_in_inches[0] * scale
         max_y = min_y + size_in_inches[1] * scale
@@ -449,17 +457,30 @@ scale, but not all content may be rendered.
 
     def export_to_scale(
         paper_size: tuple[float, float] = (8.5, 11),
-        origin: tuple[float, float] = (0, 0),  # of modelspace area to render
+        origin: tuple[float, float] = (0, 0),
         scale: float = 1,
         dpi: int = 300,
     ):
+        """Render the modelspace content with to a specific paper size and scale.
+
+        Args:
+            paper_size: paper size in inches
+            origin: lower left corner of the modelspace area to render
+            scale: render scale, e.g. scale=100 means 1:100, 1m is
+                rendered as 0.01m or 1cm on paper
+            dpi: pixel density on paper as dots per inch
+
+        """
         # -x-x-x snip -x-x-x-
 
         ctx = RenderContext(doc)
-        fig = plt.figure(dpi=dpi)
-        ax = fig.add_axes([0, 0, 1, 1])
+        fig: plt.Figure = plt.figure(dpi=dpi)
+        ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
 
-        # get render limits in drawing units:
+        # disable all margins
+        ax.margins(0)
+
+        # get the final render limits in drawing units:
         min_x, min_y, max_x, max_y = render_limits(
             origin, paper_size, scale
         )
