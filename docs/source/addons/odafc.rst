@@ -61,7 +61,7 @@ On Windows the GUI of the ODA File Converter is suppressed, on Linux you may
 have to install the ``xvfb`` package to prevent this, for macOS is no solution
 known.
 
-Supported DXF and DWG versions
+Supported DXF and DWG Versions
 ------------------------------
 
 ODA File Converter version strings, you can use any of this strings to specify

@@ -214,5 +214,31 @@ or BricsCAD renderings.
     # recreate geometry block
     dimstyle_override.render()
 
+How to Change the HATCH Pattern Origin Point
+--------------------------------------------
+
+This code sets the origin of the first pattern line to the given `origin` and
+the origins of all remaining pattern lines relative to the first pattern line
+origin.
+
+.. code-block:: python
+
+    from ezdxf.entities import Hatch, Pattern
+    from ezdxf.math import Vec2
+
+    def shift_pattern_origin(hatch: Hatch, offset: Vec2):
+        if isinstance(hatch.pattern, Pattern):
+            for pattern_line in hatch.pattern.lines:
+                pattern_line.base_point += offset
+
+    def reset_pattern_origin_of_first_pattern_line(hatch: Hatch, origin: Vec2):
+        if isinstance(hatch.pattern, Pattern) and len(hatch.pattern.lines):
+            first_pattern_line = hatch.pattern.lines[0]
+            offset = origin - first_pattern_line.base_point
+            shift_pattern_origin(hatch, offset)
+
+.. seealso::
+
+    - Discussion `#769 <https://github.com/mozman/ezdxf/discussions/769>`_
 
 .. _DXF Group Codes in Numerical Order Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3F0380A5-1C15-464D-BC66-2C5F094BCFB9
