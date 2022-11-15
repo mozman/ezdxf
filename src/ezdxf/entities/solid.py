@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -24,7 +25,8 @@ from .dxfgfx import (
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.entities import DXFNamespace
 
 __all__ = ["Solid", "Trace", "Face3d"]
 
@@ -85,7 +87,7 @@ class Solid(_Base):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
@@ -96,7 +98,7 @@ class Solid(_Base):
                 elevation_to_z_axis(dxf, VERTEXNAMES)
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
@@ -115,7 +117,7 @@ class Solid(_Base):
             ],
         )
 
-    def transform(self, m: Matrix44) -> "Solid":
+    def transform(self, m: Matrix44) -> Solid:
         """Transform the SOLID/TRACE entity by transformation matrix `m` inplace."""
         # SOLID and TRACE are OCS entities.
         dxf = self.dxf
@@ -129,27 +131,25 @@ class Solid(_Base):
         self.post_transform(m)
         return self
 
-    def wcs_vertices(self, close: bool = False) -> List[Vec3]:
+    def wcs_vertices(self, close: bool = False) -> list[Vec3]:
         """Returns WCS vertices in correct order,
         if argument `close` is ``True``, last vertex == first vertex.
-        Does **not** return duplicated last vertex if represents a triangle.
-
-        .. versionadded:: 0.15
+        Does **not** return the duplicated last vertex if the entity represents
+        a triangle.
 
         """
         ocs = self.ocs()
         return list(ocs.points_to_wcs(self.vertices(close)))
 
-    def vertices(self, close: bool = False) -> List[Vec3]:
+    def vertices(self, close: bool = False) -> list[Vec3]:
         """Returns OCS vertices in correct order,
         if argument `close` is ``True``, last vertex == first vertex.
-        Does **not** return duplicated last vertex if represents a triangle.
-
-        .. versionadded:: 0.15
+        Does **not** return the duplicated last vertex if the entity represents
+        a triangle.
 
         """
         dxf = self.dxf
-        vertices: List[Vec3] = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
+        vertices: list[Vec3] = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
         if dxf.vtx3 != dxf.vtx2:  # face is not a triangle
             vertices.append(dxf.vtx3)
 
@@ -224,14 +224,14 @@ class Face3d(_Base):
         else:
             self.dxf.invisible = self.dxf.invisible & ~(1 << num)
 
-    def get_edges_visibility(self) -> List[bool]:
+    def get_edges_visibility(self) -> list[bool]:
         # if the face is a triangle, a fourth visibility flag
         # may be present but is ignored
         return [not self.is_invisible_edge(i) for i in range(4)]
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
@@ -239,7 +239,7 @@ class Face3d(_Base):
             processor.simple_dxfattribs_loader(dxf, merged_face_group_codes)
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_face.name)
@@ -249,7 +249,7 @@ class Face3d(_Base):
             tagwriter, ["vtx0", "vtx1", "vtx2", "vtx3", "invisible"]
         )
 
-    def transform(self, m: Matrix44) -> "Face3d":
+    def transform(self, m: Matrix44) -> Face3d:
         """Transform the 3DFACE  entity by transformation matrix `m` inplace."""
         dxf = self.dxf
         # 3DFACE is a real 3d entity
@@ -259,7 +259,7 @@ class Face3d(_Base):
         self.post_transform(m)
         return self
 
-    def wcs_vertices(self, close: bool = False) -> List[Vec3]:
+    def wcs_vertices(self, close: bool = False) -> list[Vec3]:
         """Returns WCS vertices, if argument `close` is ``True``,
         last vertex == first vertex.
 
@@ -270,7 +270,7 @@ class Face3d(_Base):
         already WCS vertices.
         """
         dxf = self.dxf
-        vertices: List[Vec3] = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
+        vertices: list[Vec3] = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
         vtx3 = dxf.get("vtx3")
         if (
             isinstance(vtx3, Vec3) and vtx3 != dxf.vtx2
