@@ -4,8 +4,19 @@ Face3d
 .. module:: ezdxf.entities
     :noindex:
 
-A 3DFACE (`DXF Reference`_) is real 3D solid filled triangle or quadrilateral. Access vertices by name
-(:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index (:code:`entity[0] = (1.7, 2.3)`).
+A 3DFACE (`DXF Reference`_) is real 3D solid filled triangle or quadrilateral.
+Access vertices by name (:code:`entity.dxf.vtx0 = (1.7, 2.3)`) or by index
+(:code:`entity[0] = (1.7, 2.3)`).
+
+Unlike the entities :class:`Solid` and :class:`Trace`, the vertices of
+:class:`Face3d` have the expected vertex order:
+
+.. code-block:: Python
+
+    msp.add_3dface([(0, 0), (10, 0), (10, 10), (0, 10)])
+
+.. image:: gfx/3dface.png
+    :align: center
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -16,11 +27,13 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
 .. warning::
 
-    Do not instantiate entity classes by yourself - always use the provided factory functions!
+    Do not instantiate entity classes by yourself - always use the provided
+    factory functions!
 
 .. class:: Face3d
 
-    :class:`Face3d` because :class:`3dface` is not a valid Python class name.
+    The class name is :class:`Face3d` because :class:`3dface` is not a valid
+    Python class name.
 
     .. attribute:: dxf.vtx0
 
