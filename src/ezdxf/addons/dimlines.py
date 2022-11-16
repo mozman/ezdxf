@@ -31,7 +31,7 @@ parameters.
 
 """
 from __future__  import annotations
-from typing import Any, TYPE_CHECKING, Iterable
+from typing import Any, TYPE_CHECKING, Iterable, Optional
 from math import radians, degrees, pi
 from abc import abstractmethod
 from ezdxf.enums import TextEntityAlignment
@@ -267,8 +267,8 @@ class LinearDimension(_DimensionBase):
         measure_points: Iterable[UVec],
         angle: float = 0.0,
         dimstyle: str = "Default",
-        layer: str = None,
-        roundval: int = None,
+        layer: Optional[str] = None,
+        roundval: Optional[int] = None,
     ):
         """
         LinearDimension Constructor.
@@ -486,8 +486,8 @@ class AngularDimension(_DimensionBase):
         start: UVec,
         end: UVec,
         dimstyle: str = "angle.deg",
-        layer: str = None,
-        roundval: int = None,
+        layer: Optional[str] = None,
+        roundval: Optional[int] = None,
     ):
         """
         AngularDimension constructor.
@@ -625,8 +625,8 @@ class ArcDimension(AngularDimension):
         end: UVec,
         arc3points: bool = False,
         dimstyle: str = "Default",
-        layer: str = None,
-        roundval: int = None,
+        layer: Optional[str] = None,
+        roundval: Optional[int] = None,
     ):
         """
         Args:
@@ -679,8 +679,8 @@ class RadialDimension(_DimensionBase):
         target: UVec,
         length: float = 1.0,
         dimstyle: str = "Default",
-        layer: str = None,
-        roundval: int = None,
+        layer: Optional[str] = None,
+        roundval: Optional[int] = None,
     ):
         """
         Args:
