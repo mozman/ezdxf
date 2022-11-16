@@ -1,7 +1,8 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 import logging
-from typing import Dict, Iterable, List, Union, TYPE_CHECKING
+from typing import Dict, Iterable, List, Union, TYPE_CHECKING, Optional
 from collections import OrderedDict
 
 from .const import DXFStructureError
@@ -10,7 +11,8 @@ from .extendedtags import ExtendedTags
 from ezdxf.entities import factory
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, Drawing
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFEntity
 
 logger = logging.getLogger("ezdxf")
 SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
@@ -134,13 +136,13 @@ def load_dxf_structure(
 
 
 def load_dxf_entities(
-    entities: Iterable[Tags], doc: "Drawing" = None
-) -> Iterable["DXFEntity"]:
+    entities: Iterable[Tags], doc: Optional[Drawing] = None
+) -> Iterable[DXFEntity]:
     for entity in entities:
         yield factory.load(ExtendedTags(entity), doc)
 
 
-def load_and_bind_dxf_content(sections: Dict, doc: "Drawing") -> None:
+def load_and_bind_dxf_content(sections: Dict, doc: Drawing) -> None:
     # HEADER has no database entries.
     for name in ["TABLES", "CLASSES", "ENTITIES", "BLOCKS", "OBJECTS"]:
         if name in sections:
