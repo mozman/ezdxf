@@ -1,4 +1,4 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 """
 UserRecord(): store user data in a XRECORD entity.
@@ -24,7 +24,7 @@ The UserRecord can store nested list and dict objects.
 BinaryData(): store arbitrary binary data in a XRECORD entity
 
 """
-
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Optional,
@@ -32,7 +32,6 @@ from typing import (
     Sequence,
     Mapping,
     MutableSequence,
-    List,
     cast,
 )
 from ezdxf.lldxf import const
@@ -44,7 +43,7 @@ from ezdxf.tools import take2
 from ezdxf.tools.binarydata import bytes_to_hexstr
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing
+    from ezdxf.document import Drawing
 
 TYPE_GROUP_CODE = 2
 STR_GROUP_CODE = 1
@@ -64,10 +63,10 @@ __all__ = ["UserRecord", "BinaryRecord"]
 class UserRecord:
     def __init__(
         self,
-        xrecord: XRecord = None,
+        xrecord: Optional[XRecord] = None,
         *,
         name: str = DEFAULT_NAME,
-        doc: "Drawing" = None,
+        doc: Optional[Drawing] = None,
     ):
         """Setup a :class:`UserRecord` with the given `name`.
 
@@ -125,8 +124,8 @@ class UserRecord:
         return self.xrecord
 
 
-def parse_xrecord(xrecord: XRecord, name: str) -> List:
-    data: List = []
+def parse_xrecord(xrecord: XRecord, name: str) -> list:
+    data: list = []
     tags = xrecord.tags
     if tags:
         code, value = tags[0]
@@ -138,9 +137,9 @@ def parse_xrecord(xrecord: XRecord, name: str) -> List:
     return data
 
 
-def parse_items(tags: Tags) -> List:
-    stack: List = []
-    items: List = []
+def parse_items(tags: Tags) -> list:
+    stack: list = []
+    items: list = []
     for tag in tags:
         code, value = tag
         if code == STR_GROUP_CODE:
@@ -233,9 +232,9 @@ def key_value_list(data: Mapping) -> Iterable:
 class BinaryRecord:
     def __init__(
         self,
-        xrecord: XRecord = None,
+        xrecord: Optional[XRecord] = None,
         *,
-        doc: "Drawing" = None,
+        doc: Optional[Drawing] = None,
     ):
         """Setup a :class:`BinaryRecord`.
 
