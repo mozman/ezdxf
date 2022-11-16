@@ -1,6 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from typing import Iterator, NamedTuple, Iterable
+from __future__ import annotations
+from typing import Iterator, NamedTuple, Iterable, Optional
 from difflib import SequenceMatcher
 import enum
 
@@ -50,7 +51,9 @@ def round_tags(tags: Tags, ndigits: int) -> Iterator[DXFTag]:
             yield tag
 
 
-def diff_tags(a: Tags, b: Tags, ndigits: int = None) -> Iterator[Operation]:
+def diff_tags(
+    a: Tags, b: Tags, ndigits: Optional[int] = None
+) -> Iterator[Operation]:
     if ndigits is not None:
         a = Tags(round_tags(a, ndigits))
         b = Tags(round_tags(b, ndigits))

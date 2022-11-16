@@ -1,7 +1,8 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 #  Debugging tools to analyze DXF entities.
-from typing import List, Iterable, Sequence, Optional
+from __future__ import annotations
+from typing import Iterable, Sequence, Optional
 import textwrap
 
 import ezdxf
@@ -79,7 +80,9 @@ class HatchAnalyzer:
             dxfattribs=attribs,
         )
         text.dxf.height = height
-        text.set_placement((text_start, 0), align=TextEntityAlignment.MIDDLE_LEFT)
+        text.set_placement(
+            (text_start, 0), align=TextEntityAlignment.MIDDLE_LEFT
+        )
 
         # end marker: name --X
         blk = self.doc.blocks.new(EDGE_END_MARKER)
@@ -105,7 +108,9 @@ class HatchAnalyzer:
             dxfattribs=attribs,
         )
         text.dxf.height = height
-        text.set_placement((text_start, 0), align=TextEntityAlignment.MIDDLE_RIGHT)
+        text.set_placement(
+            (text_start, 0), align=TextEntityAlignment.MIDDLE_RIGHT
+        )
 
     def export(self, name: str) -> None:
         self.doc.saveas(name)
@@ -202,7 +207,7 @@ class HatchAnalyzer:
             )
 
     @staticmethod
-    def report(hatch: DXFPolygon) -> List[str]:
+    def report(hatch: DXFPolygon) -> list[str]:
         return hatch_report(hatch)
 
     @staticmethod
@@ -210,7 +215,7 @@ class HatchAnalyzer:
         print("\n".join(hatch_report(hatch)))
 
 
-def hatch_report(hatch: DXFPolygon) -> List[str]:
+def hatch_report(hatch: DXFPolygon) -> list[str]:
     dxf = hatch.dxf
     style = const.ISLAND_DETECTION[dxf.hatch_style]
     pattern_type = const.HATCH_PATTERN_TYPE[dxf.pattern_type]
@@ -236,7 +241,7 @@ def hatch_report(hatch: DXFPolygon) -> List[str]:
     return text
 
 
-def polyline_path_report(p: PolylinePath, num: int) -> List[str]:
+def polyline_path_report(p: PolylinePath, num: int) -> list[str]:
     path_type = ", ".join(const.boundary_path_flag_names(p.path_type_flags))
     return [
         f"{num}. Polyline Path, vertex count: {len(p.vertices)}",
@@ -244,7 +249,7 @@ def polyline_path_report(p: PolylinePath, num: int) -> List[str]:
     ]
 
 
-def edge_path_report(p: EdgePath, num: int) -> List[str]:
+def edge_path_report(p: EdgePath, num: int) -> list[str]:
     closed = False
     connected = False
     path_type = ", ".join(const.boundary_path_flag_names(p.path_type_flags))
@@ -322,12 +327,12 @@ class MultileaderAnalyzer:
     def divider_line(self, symbol="-") -> str:
         return symbol * self.report_width
 
-    def shorten_lines(self, lines: Iterable[str]) -> List[str]:
+    def shorten_lines(self, lines: Iterable[str]) -> list[str]:
         return [
             textwrap.shorten(line, width=self.report_width) for line in lines
         ]
 
-    def report(self) -> List[str]:
+    def report(self) -> list[str]:
         report = [
             str(self.multileader),
             self.divider_line(),
@@ -358,7 +363,7 @@ class MultileaderAnalyzer:
     def print_overridden_properties(self):
         print("\n".join(self.overridden_attributes()))
 
-    def overridden_attributes(self) -> List[str]:
+    def overridden_attributes(self) -> list[str]:
         multileader = self.multileader
         style = self.mleaderstyle
         if style is not None:
@@ -382,7 +387,7 @@ class MultileaderAnalyzer:
             ]
         return report
 
-    def multileader_attributes(self) -> List[str]:
+    def multileader_attributes(self) -> list[str]:
         attribs = self.multileader.dxf.all_existing_dxf_attribs()
         keys = sorted(attribs.keys())
         return [f"{key}: {attribs[key]}" for key in keys]
@@ -397,7 +402,7 @@ class MultileaderAnalyzer:
     def print_context_attributes(self):
         print("\n".join(self.context_attributes()))
 
-    def context_attributes(self) -> List[str]:
+    def context_attributes(self) -> list[str]:
         context = self.context
         if context is None:
             return []
@@ -422,7 +427,7 @@ class MultileaderAnalyzer:
     def print_mtext_attributes(self):
         print("\n".join(self.mtext_attributes()))
 
-    def mtext_attributes(self) -> List[str]:
+    def mtext_attributes(self) -> list[str]:
         report = [
             self.divider_line(),
             "MTEXT content attributes:",
@@ -436,7 +441,7 @@ class MultileaderAnalyzer:
     def print_block_attributes(self):
         print("\n".join(self.block_attributes()))
 
-    def block_attributes(self) -> List[str]:
+    def block_attributes(self) -> list[str]:
         report = [
             self.divider_line(),
             "BLOCK content attributes:",
@@ -450,7 +455,7 @@ class MultileaderAnalyzer:
     def print_leader_attributes(self):
         print("\n".join(self.leader_attributes()))
 
-    def leader_attributes(self) -> List[str]:
+    def leader_attributes(self) -> list[str]:
         report = []
         leaders = self.context.leaders
         if leaders is not None:
@@ -460,7 +465,7 @@ class MultileaderAnalyzer:
 
     def _leader_attributes(
         self, index: int, leader: mleader.LeaderData
-    ) -> List[str]:
+    ) -> list[str]:
         report = [
             self.divider_line(),
             f"{index+1}. LEADER attributes:",
@@ -473,7 +478,7 @@ class MultileaderAnalyzer:
             report.extend(self._leader_lines(leader.lines))
         return report
 
-    def _leader_lines(self, lines) -> List[str]:
+    def _leader_lines(self, lines) -> list[str]:
         report = []
         for num, line in enumerate(lines):
             report.extend(
@@ -497,7 +502,7 @@ class MultileaderAnalyzer:
     def print_block_attribs(self):
         print("\n".join(self.block_reference_attribs()))
 
-    def block_reference_attribs(self) -> List[str]:
+    def block_reference_attribs(self) -> list[str]:
         report = [
             self.divider_line(),
             f"BLOCK reference attributes:",
@@ -516,7 +521,7 @@ class MultileaderAnalyzer:
             report.append(f"text: {attr.text}")
         return report
 
-    def arrow_heads(self) -> List[str]:
+    def arrow_heads(self) -> list[str]:
         report = [
             self.divider_line(),
             f"ARROW HEAD attributes:",
@@ -536,7 +541,7 @@ class MultileaderAnalyzer:
     def print_mleaderstyle(self):
         print("\n".join(self.mleaderstyle_attributes()))
 
-    def mleaderstyle_attributes(self) -> List[str]:
+    def mleaderstyle_attributes(self) -> list[str]:
         report = []
         style = self.mleaderstyle
         if style is not None:
@@ -556,7 +561,9 @@ class MultileaderAnalyzer:
         return self.shorten_lines(report)
 
 
-def _content_attributes(entity, exclude: Sequence[str] = None) -> List[str]:
+def _content_attributes(
+    entity, exclude: Optional[Sequence[str]] = None
+) -> list[str]:
     exclude = exclude or []
     if entity is not None:
         return [
