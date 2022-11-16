@@ -76,6 +76,7 @@ class AbstractBoundaryPath(abc.ABC):
         ...
 
     @classmethod
+    @abc.abstractmethod
     def load_tags(cls, tags: Tags) -> AbstractBoundaryPath:
         ...
 

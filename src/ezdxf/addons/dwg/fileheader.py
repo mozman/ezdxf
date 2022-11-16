@@ -34,7 +34,7 @@ class FileHeader:
         self.crc_check = crc_check
         if len(data) < 6:
             raise DwgVersionError("Not a DWG file.")
-        ver = data[:6].decode(errors="ignore")
+        ver = data[:6].decode(errors="ignore")  # type: ignore
         if ver not in SUPPORTED_VERSIONS:
             raise DwgVersionError(
                 f"Not a DWG file or unsupported DWG version, signature: {ver}."
