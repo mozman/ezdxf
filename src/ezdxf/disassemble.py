@@ -470,16 +470,12 @@ def _estimate_column_extents(mtext: MText):
     if columns.count > 1:
         _columns_content = _content.split("\\N")
         if len(_columns_content) > 1:
-            _content = max(
-                _columns_content, key=lambda t: len(t)
-            )
+            _content = max(_columns_content, key=lambda t: len(t))
     return estimate_mtext_content_extents(
         content=_content,
         font=fonts.MonospaceFont(mtext.dxf.char_height, 1.0),
         column_width=columns.width,
-        line_spacing_factor=mtext.dxf.get_default(
-            "line_spacing_factor"
-        ),
+        line_spacing_factor=mtext.dxf.get_default("line_spacing_factor"),
     )
 
 
@@ -586,7 +582,8 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
 
 
 def to_primitives(
-    entities: Iterable[DXFEntity], max_flattening_distance: float = None
+    entities: Iterable[DXFEntity],
+    max_flattening_distance: Optional[float] = None,
 ) -> Iterable[Primitive]:
     """Yields all DXF entities as path or mesh primitives. Yields
     unsupported entities as empty primitives, see :func:`make_primitive`.
