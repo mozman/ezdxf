@@ -1,7 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Sequence
+from typing import Sequence, Optional
 from dataclasses import dataclass
 import ezdxf
 from ezdxf.math import Matrix44, Vec2
@@ -17,7 +17,6 @@ __all__ = [
     "TextSize",
     "MTextSize",
     "WordSizeDetector",
-
     # estimate_mtext_extents() belongs also to the topic of this module, users
     # may look here first
     "estimate_mtext_extents",
@@ -78,7 +77,9 @@ def text_size(text: Text) -> TextSize:
     return TextSize(text_width, cap_height, total_height)
 
 
-def mtext_size(mtext: MText, tool: "MTextSizeDetector" = None) -> MTextSize:
+def mtext_size(
+    mtext: MText, tool: Optional[MTextSizeDetector] = None
+) -> MTextSize:
     """Returns the total-width, -height and columns information for a
     :class:`~ezdxf.entities.MText` entity.
 
@@ -178,7 +179,7 @@ class WordSizeCollector(tl.DoNothingRenderer):
         bottom: float,
         right: float,
         top: float,
-        m: Matrix44 = None,
+        m: Optional[Matrix44] = None,
     ) -> None:
         self.word_boxes.append((Vec2(left, bottom), Vec2(right, top)))
 
