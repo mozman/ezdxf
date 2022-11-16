@@ -1,15 +1,12 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     Iterable,
     Iterator,
     cast,
     BinaryIO,
-    Tuple,
-    Dict,
     Optional,
-    List,
-    Set,
     Union,
     Any,
 )
@@ -93,9 +90,9 @@ class IterDXF:
 
     def _load_index(
         self, name: str
-    ) -> Tuple[fileindex.FileStructure, Dict[str, int]]:
+    ) -> tuple[fileindex.FileStructure, dict[str, int]]:
         structure = fileindex.load(name)
-        sections: Dict[str, int] = dict()
+        sections: dict[str, int] = dict()
         new_index = []
         for e in structure.index:
             if e.code == 0:
@@ -114,7 +111,7 @@ class IterDXF:
     def dxfversion(self):
         return self.structure.version
 
-    def export(self, name: Filename) -> "IterDXFWriter":
+    def export(self, name: Filename) -> IterDXFWriter:
         """Returns a companion object to export parts from the source DXF file
         into another DXF file, the new file will have the same HEADER, CLASSES,
         TABLES, BLOCKS and OBJECTS sections, which guarantees all necessary
@@ -147,7 +144,9 @@ class IterDXF:
         data = self.file.read(count)
         f.write(data)
 
-    def modelspace(self, types: Iterable[str] = None) -> Iterable[DXFGraphic]:
+    def modelspace(
+        self, types: Optional[Iterable[str]] = None
+    ) -> Iterable[DXFGraphic]:
         """Returns an iterator for all supported DXF entities in the
         modelspace. These entities are regular :class:`~ezdxf.entities.DXFGraphic`
         objects but without a valid document assigned. It is **not**
@@ -180,7 +179,8 @@ class IterDXF:
             yield queued
 
     def load_entities(
-        self, start: int, requested_types: Set[str]) -> Iterable[DXFGraphic]:
+        self, start: int, requested_types: set[str]
+    ) -> Iterable[DXFGraphic]:
         def to_str(data: bytes) -> str:
             return data.decode(self.encoding, errors=self.errors).replace(
                 "\r\n", "\n"
@@ -289,7 +289,7 @@ def opendxf(filename: Filename, errors: str = "surrogateescape") -> IterDXF:
 
 def modelspace(
     filename: Filename,
-    types: Iterable[str] = None,
+    types: Optional[Iterable[str]] = None,
     errors: str = "surrogateescape",
 ) -> Iterable[DXFGraphic]:
     """Iterate over all modelspace entities as :class:`DXFGraphic` objects of
@@ -322,7 +322,7 @@ def modelspace(
     with open(filename, mode="rt", encoding=info.encoding, errors=errors) as fp:
         tagger = ascii_tags_loader(fp)
         queued: Optional[DXFEntity] = None
-        tags: List[DXFTag] = []
+        tags: list[DXFTag] = []
         linked_entity = entity_linker()
 
         for tag in tag_compiler(tagger):
@@ -358,7 +358,7 @@ def modelspace(
 
 def single_pass_modelspace(
     stream: BinaryIO,
-    types: Iterable[str] = None,
+    types: Optional[Iterable[str]] = None,
     errors: str = "surrogateescape",
 ) -> Iterable[DXFGraphic]:
     """Iterate over all modelspace entities as :class:`DXFGraphic` objects in
@@ -415,7 +415,7 @@ def single_pass_modelspace(
         encoding = "utf-8"
 
     queued: Optional[DXFGraphic] = None
-    tags: List[DXFTag] = []
+    tags: list[DXFTag] = []
     linked_entity = entity_linker()
 
     for tag in tag_compiler(binary_tagger(stream, encoding, errors)):
@@ -447,7 +447,9 @@ def single_pass_modelspace(
 
 
 def binary_tagger(
-    file: BinaryIO, encoding: str = None, errors: str = "surrogateescape"
+    file: BinaryIO,
+    encoding: Optional[str] = None,
+    errors: str = "surrogateescape",
 ) -> Iterator[DXFTag]:
     while True:
         try:
@@ -464,7 +466,7 @@ def binary_tagger(
             return
 
 
-def _requested_types(types: Optional[Iterable[str]]) -> Set[str]:
+def _requested_types(types: Optional[Iterable[str]]) -> set[str]:
     if types:
         requested = SUPPORTED_TYPES.intersection(set(types))
         if "POLYLINE" in requested:
