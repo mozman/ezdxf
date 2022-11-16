@@ -1,17 +1,18 @@
 # Created: 23.12.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, TextIO, Iterable, Set
+from __future__ import annotations
+from typing import TYPE_CHECKING, TextIO, Iterable, Optional
 
 from ezdxf.lldxf.validator import is_dxf_file
 from ezdxf.filemanagement import dxf_file_info
 from ezdxf.lldxf.tagger import ascii_tags_loader
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFTag
+    from ezdxf.lldxf.types import DXFTag
 
 
-def from_stream(stream: TextIO, codes: Set[int] = None) -> Iterable['DXFTag']:
+def from_stream(stream: TextIO, codes: Optional[set[int]] = None) -> Iterable[DXFTag]:
     """
     Yields comment tags from text `stream` as :class:`~ezdxf.lldxf.types.DXFTag` objects.
 
@@ -25,7 +26,7 @@ def from_stream(stream: TextIO, codes: Set[int] = None) -> Iterable['DXFTag']:
     return (tag for tag in ascii_tags_loader(stream, skip_comments=False) if tag.code in codes)
 
 
-def from_file(filename: str, codes: Set[int] = None) -> Iterable['DXFTag']:
+def from_file(filename: str, codes: Optional[set[int]] = None) -> Iterable[DXFTag]:
     """
     Yields comment tags from file `filename` as :class:`~ezdxf.lldxf.types.DXFTag` objects.
 
