@@ -12,6 +12,8 @@ from typing import (
     Iterable,
     cast,
     TYPE_CHECKING,
+    List,
+    Tuple,
 )
 from datetime import datetime
 import struct
@@ -42,7 +44,7 @@ class Token(NamedTuple):
         return f"(0x{self.tag:02x}, {str(self.value)})"
 
 
-SabRecord = list[Token]
+SabRecord = List[Token]
 
 
 class Decoder:
@@ -241,7 +243,7 @@ class SabDataLoader(DataLoader):
         token = self.data[self.index]
         if token.tag in (Tags.LOCATION_VEC, Tags.DIRECTION_VEC):
             self.index += 1
-            return cast(tuple[float, float, float], token.value)
+            return cast(Tuple[float, float, float], token.value)
         raise ParsingError(f"expected vector token, got {token}")
 
     def read_bool(self, true: str, false: str) -> bool:

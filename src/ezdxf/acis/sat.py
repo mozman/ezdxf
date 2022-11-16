@@ -8,6 +8,7 @@ from typing import (
     Sequence,
     Iterator,
     Union,
+    List,
     TYPE_CHECKING,
 )
 from datetime import datetime
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
     from .entities import AcisEntity
     from ezdxf.math import Vec3
 
-SatRecord = list[str]
+SatRecord = List[str]
 
 
 class SatEntity(AbstractEntity):
