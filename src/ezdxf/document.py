@@ -1,6 +1,8 @@
 # Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
+
+import os
 from typing import (
     TYPE_CHECKING,
     TextIO,
@@ -84,7 +86,6 @@ if TYPE_CHECKING:
         ViewportTable,
         BlockRecordTable,
     )
-    from pathlib import Path
 
 CONST_GUID = "{00000000-0000-0000-0000-000000000000}"
 CONST_MARKER_STRING = "0.0 @ 2000-01-01T00:00:00.000000+00:00"
@@ -171,7 +172,7 @@ class Drawing:
         assert len(self.entitydb) == 0
 
     @classmethod
-    def new(cls, dxfversion: str = DXF2013) -> "Drawing":
+    def new(cls, dxfversion: str = DXF2013) -> Drawing:
         """Create new drawing. Package users should use the factory function
         :func:`ezdxf.new`. (internal API)
         """
@@ -273,7 +274,7 @@ class Drawing:
         return self._dxfversion
 
     @dxfversion.setter
-    def dxfversion(self, version) -> None:
+    def dxfversion(self, version: str) -> None:
         """Set current DXF version."""
         self._dxfversion = self._validate_dxf_version(version)
         self.header["$ACADVER"] = version
@@ -324,7 +325,7 @@ class Drawing:
         return version
 
     @classmethod
-    def read(cls, stream: TextIO) -> "Drawing":
+    def read(cls, stream: TextIO) -> Drawing:
         """Open an existing drawing. Package users should use the factory
         function :func:`ezdxf.read`. To preserve possible binary data in
         XRECORD entities use :code:`errors='surrogateescape'` as error handler
@@ -340,7 +341,7 @@ class Drawing:
         return cls.load(tag_loader)
 
     @classmethod
-    def load(cls, tag_loader: Iterable["DXFTag"]) -> "Drawing":
+    def load(cls, tag_loader: Iterable[DXFTag]) -> Drawing:
         """Load DXF document from a DXF tag loader, in general an external
         untrusted source.
 
@@ -356,13 +357,13 @@ class Drawing:
         return doc
 
     @classmethod
-    def from_tags(cls, compiled_tags: Iterable["DXFTag"]) -> "Drawing":
+    def from_tags(cls, compiled_tags: Iterable[DXFTag]) -> Drawing:
         """Create new drawing from compiled tags. (internal API)"""
         doc = cls()
         doc._load(tagger=compiled_tags)
         return doc
 
-    def _load(self, tagger: Iterable["DXFTag"]) -> None:
+    def _load(self, tagger: Iterable[DXFTag]) -> None:
         # 1st Loading stage: load complete DXF entity structure
         self.is_loading = True
         sections = loader.load_dxf_structure(tagger)
@@ -505,8 +506,8 @@ class Drawing:
 
     def saveas(
         self,
-        filename: Union[str, "Path"],
-        encoding: str = None,
+        filename: Union[os.PathLike, str],
+        encoding: Optional[str] = None,
         fmt: str = "asc",
     ) -> None:
         """Set :class:`Drawing` attribute :attr:`filename` to `filename` and
@@ -524,7 +525,7 @@ class Drawing:
         self.filename = str(filename)
         self.save(encoding=encoding, fmt=fmt)
 
-    def save(self, encoding: str = None, fmt: str = "asc") -> None:
+    def save(self, encoding: Optional[str] = None, fmt: str = "asc") -> None:
         """Write drawing to file-system by using the :attr:`filename` attribute
         as filename. Override file encoding by argument `encoding`, handle with
         care, but this option allows you to create DXF files for applications
@@ -625,7 +626,7 @@ class Drawing:
         # Create Windows line endings and do base64 encoding:
         return base64.encodebytes(binary_data.replace(b"\n", b"\r\n"))
 
-    def export_sections(self, tagwriter: "TagWriter") -> None:
+    def export_sections(self, tagwriter: TagWriter) -> None:
         """DXF export sections. (internal API)"""
         dxfversion = tagwriter.dxfversion
         self.header.export_dxf(tagwriter)
@@ -692,7 +693,7 @@ class Drawing:
         self.header["$HANDSEED"] = str(self.entitydb.handles)  # next handle
         self.header["$DWGCODEPAGE"] = tocodepage(self.encoding)
 
-    def ezdxf_metadata(self) -> "MetaData":
+    def ezdxf_metadata(self) -> MetaData:
         """Returns the *ezdxf* :class:`ezdxf.document.MetaData` object, which
         manages  *ezdxf* and custom metadata in DXF files.
         For more information see:  :ref:`ezdxf_metadata`.
@@ -728,15 +729,15 @@ class Drawing:
         return const.acad_release.get(self.dxfversion, "unknown")
 
     @property
-    def layers(self) -> "LayerTable":
+    def layers(self) -> LayerTable:
         return self.tables.layers
 
     @property
-    def linetypes(self) -> "LinetypeTable":
+    def linetypes(self) -> LinetypeTable:
         return self.tables.linetypes
 
     @property
-    def styles(self) -> "TextstyleTable":
+    def styles(self) -> TextstyleTable:
         return self.tables.styles
 
     @property
@@ -1091,7 +1092,7 @@ class Drawing:
         var_dict.set_or_add_dict_var("WIPEOUTFRAME", str(frame))
 
     def add_underlay_def(
-        self, filename: str, fmt: str = "ext", name: str = None
+        self, filename: str, fmt: str = "ext", name: Optional[str] = None
     ):
         """Add an :class:`~ezdxf.entities.underlay.UnderlayDef` entity to the
         drawing (OBJECTS section).

@@ -1,6 +1,15 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator, Union
+from __future__ import annotations
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    Tuple,
+    cast,
+    Iterator,
+    Union,
+    Optional,
+)
 import logging
 
 from ezdxf.entities.dictionary import Dictionary
@@ -447,7 +456,7 @@ class ObjectsSection:
         return cast("ImageDefReactor", image_def_reactor)
 
     def add_underlay_def(
-        self, filename: str, fmt: str = "pdf", name: str = None
+        self, filename: str, fmt: str = "pdf", name: Optional[str] = None
     ) -> "UnderlayDefinition":
         """Add an :class:`~ezdxf.entities.underlay.UnderlayDefinition` entity
         to the drawing (OBJECTS section). `filename` is the underlay file name
