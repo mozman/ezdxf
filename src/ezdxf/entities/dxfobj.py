@@ -1,6 +1,7 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Dict, Tuple, Union, Any
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Union, Any
 import logging
 import array
 from ezdxf.lldxf import validator
@@ -20,7 +21,9 @@ from .factory import register_entity
 
 logger = logging.getLogger("ezdxf")
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, DXFNamespace, TagWriter
+    from ezdxf.audit import Auditor
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = [
     "DXFObject",
@@ -34,11 +37,11 @@ __all__ = [
 
 
 class DXFObject(DXFEntity):
-    """Non graphical entities stored in the OBJECTS section."""
+    """Non-graphical entities stored in the OBJECTS section."""
 
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         """Validity check. (internal API)"""
         if not self.is_alive:
             return
@@ -95,7 +98,7 @@ class XRecord(DXFObject):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             try:
@@ -122,23 +125,23 @@ class XRecord(DXFObject):
             self.tags = Tags(tags[start_index:])
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_xrecord.name)
         tagwriter.write_tag2(280, self.dxf.cloning)
         tagwriter.write_tags(Tags(totags(self.tags)))
 
-    def reset(self, tags: Iterable[Union[DXFTag, Tuple[int, Any]]]) -> None:
-        """Reset DXF tags. """
+    def reset(self, tags: Iterable[Union[DXFTag, tuple[int, Any]]]) -> None:
+        """Reset DXF tags."""
         self.tags.clear()
         self.tags.extend(totags(tags))
 
-    def extend(self, tags: Iterable[Union[DXFTag, Tuple[int, Any]]]) -> None:
-        """Extend DXF tags. """
+    def extend(self, tags: Iterable[Union[DXFTag, tuple[int, Any]]]) -> None:
+        """Extend DXF tags."""
         self.tags.extend(totags(tags))
 
     def clear(self) -> None:
-        """Remove all DXF tags. """
+        """Remove all DXF tags."""
         self.tags.clear()
 
 
@@ -170,26 +173,26 @@ class VBAProject(DXFObject):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.load_byte_data(processor.subclasses[1])
         return dxf
 
-    def load_byte_data(self, tags: "Tags") -> None:
+    def load_byte_data(self, tags: Tags) -> None:
         byte_array = array.array("B")
         # Translation from String to binary data happens in tag_compiler():
         for byte_data in (tag.value for tag in tags if tag.code == 310):
             byte_array.extend(byte_data)
         self.data = byte_array.tobytes()
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_vba_project.name)
         tagwriter.write_tag2(90, len(self.data))
         self.export_data(tagwriter)
 
-    def export_data(self, tagwriter: "TagWriter"):
+    def export_data(self, tagwriter: AbstractTagWriter):
         data = self.data
         while data:
             tagwriter.write_tag(DXFBinaryTag(310, data[:127]))
@@ -245,7 +248,7 @@ class SortEntsTable(DXFObject):
 
     def __init__(self):
         super().__init__()
-        self.table: Dict[str, str] = dict()
+        self.table: dict[str, str] = dict()
 
     def _copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, SortEntsTable)
@@ -253,7 +256,7 @@ class SortEntsTable(DXFObject):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
@@ -262,7 +265,7 @@ class SortEntsTable(DXFObject):
             self.load_table(tags)
         return dxf
 
-    def load_table(self, tags: "Tags") -> None:
+    def load_table(self, tags: Tags) -> None:
         for handle, sort_handle in take2(tags):
             if handle.code != 331:
                 raise DXFStructureError(
@@ -274,13 +277,13 @@ class SortEntsTable(DXFObject):
                 )
             self.table[handle.value] = sort_handle.value
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_sort_ents_table.name)
         tagwriter.write_tag2(330, self.dxf.block_record_handle)
         self.export_table(tagwriter)
 
-    def export_table(self, tagwriter: "TagWriter"):
+    def export_table(self, tagwriter: AbstractTagWriter):
         for handle, sort_handle in self.table.items():
             tagwriter.write_tag2(331, handle)
             tagwriter.write_tag2(5, sort_handle)
@@ -309,7 +312,7 @@ class SortEntsTable(DXFObject):
         """Remove all handles from redraw order table."""
         self.table = dict()
 
-    def set_handles(self, handles: Iterable[Tuple[str, str]]) -> None:
+    def set_handles(self, handles: Iterable[tuple[str, str]]) -> None:
         """Set all redraw associations from iterable `handles`, after removing
         all existing associations.
 
@@ -327,7 +330,7 @@ class SortEntsTable(DXFObject):
         self.table = dict(handles)
 
     def remove_invalid_handles(self) -> None:
-        """Remove all handles which do not exists in the drawing database."""
+        """Remove all handles which do not exist in the drawing database."""
         if self.doc is None:
             return
         entitydb = self.doc.entitydb
