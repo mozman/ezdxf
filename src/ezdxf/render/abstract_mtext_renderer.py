@@ -1,4 +1,4 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 
 # This is the abstract link between the text layout engine implemented in
@@ -115,7 +115,7 @@ def new_paragraph(
     cap_height: float,
     line_spacing: float = 1,
     width: float = 0,
-    default_stops: Sequence[tl.TabStop] = None,
+    default_stops: Optional[Sequence[tl.TabStop]] = None,
 ):
     if cells:
         p = ctx.paragraph

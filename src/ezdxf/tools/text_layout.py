@@ -1240,11 +1240,11 @@ class Layout(Container):
 
     def append_column(
         self,
-        width: float = None,
-        height: float = None,
+        width: Optional[float] = None,
+        height: Optional[float] = None,
         gutter: float = 0,
-        margins: Sequence[float] = None,
-        renderer: ContentRenderer = None,
+        margins: Optional[Sequence[float]] = None,
+        renderer: Optional[ContentRenderer] = None,
     ) -> Column:
         """Append a new column to the layout."""
         if not width:
