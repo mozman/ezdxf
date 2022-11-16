@@ -1,9 +1,13 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, DXFEntity, ExtendedTags
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFEntity
+    from ezdxf.lldxf.extendedtags import ExtendedTags
+
 
 __all__ = [
     "register_entity",
@@ -43,8 +47,8 @@ def register_entity(cls):
 
 
 def new(
-    dxftype: str, dxfattribs: dict = None, doc: "Drawing" = None
-) -> "DXFEntity":
+    dxftype: str, dxfattribs: dict = None, doc: Optional[Drawing] = None
+) -> DXFEntity:
     """Create a new entity, does not require an instantiated DXF document."""
     entity = cls(dxftype).new(
         handle=None,
@@ -55,23 +59,23 @@ def new(
     return entity.cast() if hasattr(entity, "cast") else entity  # type: ignore
 
 
-def create_db_entry(dxftype, dxfattribs: dict, doc: "Drawing") -> "DXFEntity":
+def create_db_entry(dxftype, dxfattribs: dict, doc: Drawing) -> DXFEntity:
     entity = new(dxftype=dxftype, dxfattribs=dxfattribs)
     bind(entity, doc)
     return entity
 
 
-def load(tags: "ExtendedTags", doc: "Drawing" = None) -> "DXFEntity":
+def load(tags: ExtendedTags, doc: Optional[Drawing] = None) -> DXFEntity:
     entity = cls(tags.dxftype()).load(tags, doc)
     return entity.cast() if hasattr(entity, "cast") else entity  # type: ignore
 
 
-def cls(dxftype: str) -> "DXFEntity":
+def cls(dxftype: str) -> DXFEntity:
     """Returns registered class for `dxftype`."""
     return ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
 
 
-def bind(entity: "DXFEntity", doc: "Drawing") -> None:
+def bind(entity: DXFEntity, doc: Drawing) -> None:
     """Bind `entity` to the DXF document `doc`.
 
     The bind process stores the DXF `entity` in the entity database of the DXF
@@ -98,7 +102,7 @@ def bind(entity: "DXFEntity", doc: "Drawing") -> None:
         entity.post_bind_hook()
 
 
-def unbind(entity: "DXFEntity"):
+def unbind(entity: DXFEntity):
     """Unbind `entity` from document and layout, but does not destroy the
     entity.
 
@@ -122,7 +126,7 @@ def unbind(entity: "DXFEntity"):
         entity.doc = None
 
 
-def is_bound(entity: "DXFEntity", doc: "Drawing") -> bool:
+def is_bound(entity: DXFEntity, doc: Drawing) -> bool:
     """Returns ``True`` if `entity`is bound to DXF document `doc`."""
     if not entity.is_alive:
         return False
