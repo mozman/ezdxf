@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Dict, Any
+from typing import TYPE_CHECKING, Optional, Iterable, Any
 from ezdxf.entities import factory
 from ezdxf import options
 from ezdxf.lldxf import validator
@@ -32,13 +32,11 @@ from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
 from .dxfentity import DXFEntity, base_class, SubclassProcessor, DXFTagStorage
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        Auditor,
-        TagWriter,
-        BaseLayout,
-        DXFNamespace,
-        Drawing,
-    )
+    from ezdxf.audit import Auditor
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.layouts import BaseLayout
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = [
     "DXFGraphic",
@@ -190,7 +188,7 @@ class DXFGraphic(DXFEntity):
     """
 
     DXFTYPE = "DXFGFX"
-    DEFAULT_ATTRIBS: Dict[str, Any] = {"layer": "0"}
+    DEFAULT_ATTRIBS: dict[str, Any] = {"layer": "0"}
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)
 
     def load_dxf_attribs(
@@ -224,7 +222,7 @@ class DXFGraphic(DXFEntity):
         return dxf
 
     def post_new_hook(self):
-        """Post processing and integrity validation after entity creation
+        """Post-processing and integrity validation after entity creation
         (internal API)
         """
         if self.doc:
@@ -278,7 +276,7 @@ class DXFGraphic(DXFEntity):
         """Returns ``True`` if entity inherits transparency from block."""
         return self.dxf.get("transparency", 0) == TRANSPARENCY_BYBLOCK
 
-    def graphic_properties(self) -> Dict:
+    def graphic_properties(self) -> dict:
         """Returns the important common properties layer, color, linetype,
         lineweight, ltscale, true_color and color_name as `dxfattribs` dict.
 
@@ -319,13 +317,13 @@ class DXFGraphic(DXFEntity):
         """
         pass
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         # Base class export is done by parent class.
         self.export_acdb_entity(tagwriter)
         # XDATA and embedded objects export is also done by the parent class.
 
-    def export_acdb_entity(self, tagwriter: TagWriter):
+    def export_acdb_entity(self, tagwriter: AbstractTagWriter):
         """Export subclass 'AcDbEntity' as DXF tags. (internal API)"""
         # Full control over tag order and YES, sometimes order matters
         not_r12 = tagwriter.dxfversion > DXF12
@@ -512,7 +510,7 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.scale(sx, sy, sz))
 
-    def scale_uniform(self, s: float) -> "DXFGraphic":
+    def scale_uniform(self, s: float) -> DXFGraphic:
         """Scale entity inplace uniform about `s` in x-axis, y-axis and z-axis,
         returns `self` (floating interface).
 
@@ -582,7 +580,7 @@ class DXFGraphic(DXFEntity):
             self.doc.appids.new("PE_URL")
         return self
 
-    def get_hyperlink(self) -> Tuple[str, str, str]:
+    def get_hyperlink(self) -> tuple[str, str, str]:
         """Returns hyperlink, description and location."""
         link = ""
         description = ""

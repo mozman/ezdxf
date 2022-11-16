@@ -126,7 +126,7 @@ def transparency2float(value: int) -> float:
 
 
 def int2rgb(value: int) -> RGB:
-    """Split RGB integer `value` into ``(r, g, b)`` tuple."""
+    """Split RGB integer `value` into (r, g, b) tuple."""
     return (
         (value >> 16) & 0xFF,  # red
         (value >> 8) & 0xFF,  # green
@@ -135,13 +135,13 @@ def int2rgb(value: int) -> RGB:
 
 
 def rgb2int(rgb: RGB) -> int:
-    """Combined integer value from ``(r, g, b)`` tuple."""
+    """Combined integer value from (r, g, b) tuple."""
     r, g, b = rgb
     return ((int(r) & 0xFF) << 16) | ((int(g) & 0xFF) << 8) | (int(b) & 0xFF)
 
 
 def aci2rgb(index: int) -> RGB:
-    """Convert :ref:`ACI` into ``(r, g, b)`` tuple, based on default AutoCAD
+    """Convert :ref:`ACI` into (r, g, b) tuple, based on default AutoCAD
     colors.
     """
     if index < 1:
@@ -150,7 +150,7 @@ def aci2rgb(index: int) -> RGB:
 
 
 def luminance(color: RGB) -> float:
-    """Returns perceived luminance for a RGB color in the range [0.0, 1.0]
+    """Returns perceived luminance for an RGB color in the range [0.0, 1.0]
     from dark to light.
     """
     r = float(color[0]) / 255
