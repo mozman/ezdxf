@@ -1,5 +1,6 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 import abc
 import math
 from typing import (
@@ -22,6 +23,7 @@ from ezdxf import colors
 from ezdxf.math import (
     Vec3,
     Vec2,
+    UVec,
     Matrix44,
     X_AXIS,
     Y_AXIS,
@@ -255,7 +257,7 @@ def copy_mtext_data(
     dxf.attachment_point = mtext_data.alignment
 
 
-def make_mtext(mleader: MultiLeader) -> "MText":
+def make_mtext(mleader: MultiLeader) -> MText:
     mtext = cast("MText", factory.new("MTEXT", doc=mleader.doc))
     mtext.dxf.layer = mleader.dxf.layer
     context = mleader.context
@@ -445,7 +447,7 @@ class RenderEngine:
             return closed_filled
         return block_record.dxf.name
 
-    def leader_line_attribs(self, raw_color: int = None) -> Dict:
+    def leader_line_attribs(self, raw_color: Optional[int] = None) -> Dict:
         aci_color = self.leader_aci_color
         true_color = self.leader_true_color
 
@@ -686,7 +688,10 @@ class RenderEngine:
         return name
 
     def add_dxf_spline(
-        self, fit_points: List[Vec3], tangents=None, color: int = None
+        self,
+        fit_points: List[Vec3],
+        tangents: Optional[Iterable[UVec]] = None,
+        color: Optional[int] = None,
     ):
         attribs = self.leader_line_attribs(color)
         spline = cast(
@@ -698,7 +703,7 @@ class RenderEngine:
         )
         self.entities.append(spline)
 
-    def add_dxf_line(self, start: Vec3, end: Vec3, color: int = None):
+    def add_dxf_line(self, start: Vec3, end: Vec3, color: Optional[int] = None):
         attribs = self.leader_line_attribs(color)
         attribs["start"] = start
         attribs["end"] = end
@@ -897,6 +902,7 @@ class MultiLeaderBuilder(abc.ABC):
         """Reset base properties by :class:`~ezdxf.entities.MLeaderStyle`
         properties. This also resets the content!
         """
+
         def copy_style_to_context():
             self.context.char_height = style_dxf.char_height
             self.context.landing_gap_size = style_dxf.landing_gap_size
@@ -946,7 +952,7 @@ class MultiLeaderBuilder(abc.ABC):
         top=VerticalConnection.by_style,
         bottom=VerticalConnection.by_style,
     ):
-        """Set the connection type for each connection side. """
+        """Set the connection type for each connection side."""
         context = self.context
         style = self._mleader_style
         if left == HorizontalConnection.by_style:
@@ -1030,7 +1036,7 @@ class MultiLeaderBuilder(abc.ABC):
         name: str = "",
         size: float = 0.0,  # 0=by style
     ):
-        """ Set leader arrow properties all leader lines have the same arrow
+        """Set leader arrow properties all leader lines have the same arrow
         type.
 
         The MULTILEADER entity is able to support multiple arrows, but this
@@ -1071,7 +1077,7 @@ class MultiLeaderBuilder(abc.ABC):
         self._leaders[side].append(list(vertices))
 
     def build(
-        self, insert: Vec2, rotation: float = 0.0, ucs: UCS = None
+        self, insert: Vec2, rotation: float = 0.0, ucs: Optional[UCS] = None
     ) -> None:
         """Compute the required geometry data. The construction plane is
         the xy-plane of the given render :class:`~ezdxf.math.UCS`.
@@ -1230,10 +1236,10 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
     def set_content(
         self,
         content: str,
-        color: Union[int, colors.RGB] = None,  # None = uses MLEADERSTYLE value
+        color: Optional[Union[int, colors.RGB]] = None,  # None = uses MLEADERSTYLE value
         char_height: float = 0.0,  # unscaled char height, 0.0 is by style
         alignment: TextAlignment = TextAlignment.left,
-        style: str = None,
+        style: str = "",
     ):
         """Set MTEXT content.
 
@@ -1259,7 +1265,7 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         )
         if char_height:
             context.char_height = char_height * self.multileader.dxf.scale
-        if style is not None:
+        if style:
             self._set_mtext_style(style)
 
     def _set_mtext_style(self, name: str):
@@ -1362,11 +1368,11 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         content: str,
         target: Vec2,
         segment1: Vec2,
-        segment2: Vec2 = None,
+        segment2: Optional[Vec2] = None,
         connection_type: Union[
             HorizontalConnection, VerticalConnection
         ] = HorizontalConnection.middle_of_top_line,
-        ucs: UCS = None,
+        ucs: Optional[UCS] = None,
     ) -> None:
         """Creates a quick MTEXT leader. The `target` point defines where the
         leader points to.
@@ -1518,7 +1524,7 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
 
     @property
     def extents(self) -> BoundingBox:
-        """Returns the bounding box of the block. """
+        """Returns the bounding box of the block."""
         if not self._extents.has_data:
             from ezdxf import bbox
 
