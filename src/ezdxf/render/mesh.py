@@ -2,18 +2,17 @@
 # License: MIT License
 from __future__ import annotations
 from typing import (
-    List,
-    Sequence,
+    Dict,
     Tuple,
+    Sequence,
     Iterable,
     Iterator,
     TYPE_CHECKING,
     Union,
-    Set,
-    Dict,
     TypeVar,
     Type,
     NamedTuple,
+    Optional,
 )
 from ezdxf.math import (
     Matrix44,
@@ -88,7 +87,7 @@ def open_faces(faces: Iterable[Face]) -> Iterator[Face]:
 
 
 def normalize_faces(
-    faces: List[Sequence[int]],
+    faces: list[Sequence[int]],
     *,
     close=False,
 ) -> Iterator[Sequence[int]]:
@@ -241,7 +240,7 @@ class MeshDiagnose:
         self._mesh = mesh
         self._edge_stats: EdgeStats = {}
         self._bbox = BoundingBox()
-        self._face_normals: List[Vec3] = []
+        self._face_normals: list[Vec3] = []
 
     @property
     def vertices(self) -> Sequence[Vec3]:
@@ -440,9 +439,9 @@ class MeshBuilder:
     """
 
     def __init__(self) -> None:
-        self.vertices: List[Vec3] = []
+        self.vertices: list[Vec3] = []
         # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....)
-        self.faces: List[Sequence[int]] = []
+        self.faces: list[Sequence[int]] = []
 
     def bbox(self) -> BoundingBox:
         """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh.
@@ -500,7 +499,7 @@ class MeshBuilder:
             except (ValueError, ZeroDivisionError):
                 yield NULLVEC
 
-    def faces_as_vertices(self) -> Iterator[List[Vec3]]:
+    def faces_as_vertices(self) -> Iterator[list[Vec3]]:
         """Yields all faces as list of vertices."""
         v = self.vertices
         for face in self.faces:
@@ -551,8 +550,8 @@ class MeshBuilder:
 
     def add_mesh(
         self,
-        vertices: List[Vec3] = None,
-        faces: List[Face] = None,
+        vertices: Optional[list[Vec3]] = None,
+        faces: Optional[list[Face]] = None,
         mesh=None,
     ) -> None:
         """Add another mesh to this mesh.
@@ -584,8 +583,8 @@ class MeshBuilder:
         self,
         layout: GenericLayoutType,
         dxfattribs=None,
-        matrix: Matrix44 = None,
-        ucs: UCS = None,
+        matrix: Optional[Matrix44] = None,
+        ucs: Optional[UCS] = None,
     ):
         """Render mesh as :class:`~ezdxf.entities.Mesh` entity into `layout`.
 
@@ -695,8 +694,8 @@ class MeshBuilder:
         self,
         layout: GenericLayoutType,
         dxfattribs=None,
-        matrix: Matrix44 = None,
-        ucs: UCS = None,
+        matrix: Optional[Matrix44] = None,
+        ucs: Optional[UCS] = None,
     ):
         """Render mesh as :class:`~ezdxf.entities.Polyface` entity into
         `layout`.
@@ -730,8 +729,8 @@ class MeshBuilder:
         self,
         layout: GenericLayoutType,
         dxfattribs=None,
-        matrix: Matrix44 = None,
-        ucs: UCS = None,
+        matrix: Optional[Matrix44] = None,
+        ucs: Optional[UCS] = None,
     ):
         """Render mesh as :class:`~ezdxf.entities.Face3d` entities into
         `layout`.
@@ -872,7 +871,7 @@ class MeshBuilder:
         """
         self.faces = list(flip_face_normals(self.faces))
 
-    def separate_meshes(self) -> List[MeshTransformer]:
+    def separate_meshes(self) -> list[MeshTransformer]:
         """A single :class:`MeshBuilder` instance can store multiple separated
         meshes. This function returns this separated meshes as multiple
         :class:`MeshTransformer` instances.
@@ -907,7 +906,7 @@ class MeshBuilder:
         return FaceOrientationDetector(self, reference=reference)
 
     def unify_face_normals(
-        self, *, fod: FaceOrientationDetector = None
+        self, *, fod: Optional[FaceOrientationDetector] = None
     ) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` object with unified
         face normal vectors of all faces.
@@ -934,7 +933,7 @@ class MeshBuilder:
         reference: int = 0,
         *,
         force_outwards=False,
-        fod: FaceOrientationDetector = None,
+        fod: Optional[FaceOrientationDetector] = None,
     ) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` object with unified
         face normal vectors of all faces.
@@ -1128,7 +1127,7 @@ class MeshVertexMerger(MeshBuilder):
 
         """
         super().__init__()
-        self.ledger: Dict[Vec3, int] = {}
+        self.ledger: dict[Vec3, int] = {}
         self.precision: int = precision
 
     def add_vertices(self, vertices: Iterable[UVec]) -> Face:
@@ -1200,8 +1199,8 @@ class MeshAverageVertexMerger(MeshBuilder):
     # can not support vertex transformation
     def __init__(self, precision: int = 6):
         super().__init__()
-        self.ledger: Dict[
-            Vec3, Tuple[int, int]
+        self.ledger: dict[
+            Vec3, tuple[int, int]
         ] = {}  # each key points to a tuple (vertex index, vertex count)
         self.precision: int = precision
 
@@ -1283,10 +1282,10 @@ class _XFace:
 
 
 def _merge_adjacent_coplanar_faces(
-    vertices: List[Vec3], faces: List[Face], precision: int = 4
+    vertices: list[Vec3], faces: list[Face], precision: int = 4
 ) -> MeshVertexMerger:
-    oriented_faces: Dict[Vec3, List[_XFace]] = {}
-    extended_faces: List[_XFace] = []
+    oriented_faces: dict[Vec3, list[_XFace]] = {}
+    extended_faces: list[_XFace] = []
     for face in faces:
         if len(face) < 3:
             raise ValueError("found invalid face count < 3")
@@ -1340,7 +1339,7 @@ def remove_colinear_face_vertices(vertices: Sequence[Vec3]) -> Iterator[Vec3]:
         return
 
     # remove duplicated vertices
-    _vertices: List[Vec3] = [vertices[0]]
+    _vertices: list[Vec3] = [vertices[0]]
     for v in vertices[1:]:
         if not v.isclose(_vertices[-1]):
             _vertices.append(v)
@@ -1434,8 +1433,8 @@ def merge_full_patch(path: Sequence[int], patch: Sequence[int]):
 
 class Lump:
     def __init__(self, face: Face):
-        self.edges: Set[Edge] = set()
-        self.faces: List[Face] = [face]
+        self.edges: set[Edge] = set()
+        self.faces: list[Face] = [face]
         for a, b in face_edges(face):
             # sort vertex indices to guarantee: edge a,b == edge b,a
             self.edges.add((a, b) if a <= b else (b, a))
@@ -1448,7 +1447,7 @@ class Lump:
         self.edges.update(other.edges)
 
 
-def merge_lumps(lumps: Iterable[Lump]) -> List[Lump]:
+def merge_lumps(lumps: Iterable[Lump]) -> list[Lump]:
     merged_lumps = _merge_lumps(lumps)
     prior_len = 0
     while 1 < len(merged_lumps) != prior_len:
@@ -1457,8 +1456,8 @@ def merge_lumps(lumps: Iterable[Lump]) -> List[Lump]:
     return merged_lumps
 
 
-def _merge_lumps(lumps: Iterable[Lump]) -> List[Lump]:
-    merged_lumps: List[Lump] = []
+def _merge_lumps(lumps: Iterable[Lump]) -> list[Lump]:
+    merged_lumps: list[Lump] = []
     for lump in lumps:
         for base in merged_lumps:
             if lump.is_connected(base):
@@ -1530,8 +1529,8 @@ def face_normals_after_transformation(m: Matrix44) -> bool:
     return have_away_pointing_normals(bottom, top)
 
 
-def _make_edge_mapping(faces: Iterable[Face]) -> Dict[Edge, List[Face]]:
-    mapping: Dict[Edge, List[Face]] = {}
+def _make_edge_mapping(faces: Iterable[Face]) -> dict[Edge, list[Face]]:
+    mapping: dict[Edge, list[Face]] = {}
     for face in faces:
         for edge in face_edges(face):
             mapping.setdefault(edge, []).append(face)
@@ -1561,13 +1560,13 @@ class FaceOrientationDetector:
 
     def __init__(self, mesh: MeshBuilder, reference: int = 0):
         self._mesh = mesh
-        self.edge_mapping: Dict[Edge, List[Face]] = _make_edge_mapping(
+        self.edge_mapping: dict[Edge, list[Face]] = _make_edge_mapping(
             mesh.faces
         )
         self.reference = reference
         self.is_manifold = True  # 2-manifold is meant
-        self.forward: Dict[int, Face] = dict()
-        self.backward: Dict[int, Face] = dict()
+        self.forward: dict[int, Face] = dict()
+        self.backward: dict[int, Face] = dict()
         self.classify_faces(reference)
 
     @property
@@ -1592,7 +1591,7 @@ class FaceOrientationDetector:
         return self.all_reachable
 
     @property
-    def count(self) -> Tuple[int, int]:
+    def count(self) -> tuple[int, int]:
         """Returns the count of forward and backward oriented faces."""
         return len(self.forward), len(self.backward)
 
@@ -1650,10 +1649,10 @@ class FaceOrientationDetector:
         self.reference = int(reference)
         self.is_manifold = True
         edge_mapping = self.edge_mapping
-        forward: Dict[int, Face] = dict()
-        backward: Dict[int, Face] = dict()
+        forward: dict[int, Face] = dict()
+        backward: dict[int, Face] = dict()
         # the reference face defines the forward orientation
-        process_faces: List[Tuple[Face, bool]] = [
+        process_faces: list[tuple[Face, bool]] = [
             (self._mesh.faces[reference], True)
         ]
         while len(process_faces):
@@ -1680,7 +1679,7 @@ class FaceOrientationDetector:
         """
         if not self.is_manifold:
             return False
-        empty: List[Face] = []
+        empty: list[Face] = []
         edge_mapping = self.edge_mapping
         # For a closed surface all edges have to connect exact 2 faces.
         for edge in edge_mapping.keys():
@@ -1710,7 +1709,7 @@ class FaceOrientationDetector:
 def unify_face_normals_by_reference(
     mesh: MeshBuilder,
     *,
-    fod: FaceOrientationDetector = None,
+    fod: Optional[FaceOrientationDetector] = None,
     reference: int = 0,
 ) -> MeshTransformer:
     """Unifies the orientation of all faces of a :class:`MeshBuilder` object.
@@ -1746,7 +1745,7 @@ def unify_face_normals_by_reference(
 def unify_face_normals_by_majority(
     mesh: MeshBuilder,
     *,
-    fod: FaceOrientationDetector = None,
+    fod: Optional[FaceOrientationDetector] = None,
 ) -> MeshTransformer:
     """Unifies the orientation of all faces of a :class:`MeshBuilder` object.
     The forward orientation is defined by the orientation of the majority of
