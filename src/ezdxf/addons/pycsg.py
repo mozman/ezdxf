@@ -3,7 +3,8 @@
 # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
 # Additions by Alex Pletzer (Pennsylvania State University)
 # Integration as ezdxf add-on, Copyright (c) 2020, Manfred Moitzi, MIT License.
-from typing import List, Optional
+from __future__ import annotations
+from typing import Optional
 from ezdxf.math import Vec3, best_fit_normal, normal_vector_3p
 from ezdxf.render import MeshVertexMerger, MeshBuilder, MeshTransformer
 
@@ -56,11 +57,11 @@ class Plane:
         self.w = w
 
     @classmethod
-    def from_points(cls, a: Vec3, b: Vec3, c: Vec3) -> "Plane":
+    def from_points(cls, a: Vec3, b: Vec3, c: Vec3) -> Plane:
         n = normal_vector_3p(a, b, c)
         return Plane(n, n.dot(a))
 
-    def clone(self) -> "Plane":
+    def clone(self) -> Plane:
         return Plane(self.normal, self.w)
 
     def flip(self) -> None:
@@ -73,10 +74,10 @@ class Plane:
     def split_polygon(
         self,
         polygon: "Polygon",
-        coplanar_front: List["Polygon"],
-        coplanar_back: List["Polygon"],
-        front: List["Polygon"],
-        back: List["Polygon"],
+        coplanar_front: list[Polygon],
+        coplanar_back: list[Polygon],
+        front: list[Polygon],
+        back: list[Polygon],
     ) -> None:
         """
         Split `polygon` by this plane if needed, then put the polygon or polygon
@@ -156,7 +157,7 @@ class Polygon:
 
     __slots__ = ("vertices", "plane", "meshid")
 
-    def __init__(self, vertices: List[Vec3], meshid: int = 0):
+    def __init__(self, vertices: list[Vec3], meshid: int = 0):
         self.vertices = vertices
         try:
             normal = normal_vector_3p(vertices[0], vertices[1], vertices[2])
@@ -166,7 +167,7 @@ class Polygon:
         # number of mesh, this polygon is associated to
         self.meshid = meshid
 
-    def clone(self) -> "Polygon":
+    def clone(self) -> Polygon:
         return Polygon(list(self.vertices), meshid=self.meshid)
 
     def flip(self) -> None:
@@ -189,15 +190,15 @@ class BSPNode:
 
     __slots__ = ("plane", "front", "back", "polygons")
 
-    def __init__(self, polygons: List[Polygon] = None):
+    def __init__(self, polygons: Optional[list[Polygon]] = None):
         self.plane: Optional[Plane] = None
         self.front: Optional[BSPNode] = None
         self.back: Optional[BSPNode] = None
-        self.polygons: List[Polygon] = []
+        self.polygons: list[Polygon] = []
         if polygons:
             self.build(polygons)
 
-    def clone(self) -> "BSPNode":
+    def clone(self) -> BSPNode:
         node = BSPNode()
         if self.plane:
             node.plane = self.plane.clone()
@@ -220,7 +221,7 @@ class BSPNode:
             self.back.invert()
         self.front, self.back = self.back, self.front
 
-    def clip_polygons(self, polygons: List[Polygon]) -> List[Polygon]:
+    def clip_polygons(self, polygons: list[Polygon]) -> list[Polygon]:
         """Recursively remove all polygons in `polygons` that are inside this
         BSP tree.
 
@@ -228,8 +229,8 @@ class BSPNode:
         if self.plane is None:
             return polygons[:]
 
-        front: List[Polygon] = []
-        back: List[Polygon] = []
+        front: list[Polygon] = []
+        back: list[Polygon] = []
         for polygon in polygons:
             self.plane.split_polygon(polygon, front, back, front, back)
 
@@ -244,7 +245,7 @@ class BSPNode:
         front.extend(back)
         return front
 
-    def clip_to(self, bsp: "BSPNode") -> None:
+    def clip_to(self, bsp: BSPNode) -> None:
         """Remove all polygons in this BSP tree that are inside the other BSP
         tree `bsp`.
         """
@@ -254,7 +255,7 @@ class BSPNode:
         if self.back:
             self.back.clip_to(bsp)
 
-    def all_polygons(self) -> List[Polygon]:
+    def all_polygons(self) -> list[Polygon]:
         """Return a list of all polygons in this BSP tree."""
         polygons = self.polygons[:]
         if self.front:
@@ -263,7 +264,7 @@ class BSPNode:
             polygons.extend(self.back.all_polygons())
         return polygons
 
-    def build(self, polygons: List[Polygon]) -> None:
+    def build(self, polygons: list[Polygon]) -> None:
         """
         Build a BSP tree out of `polygons`. When called on an existing tree, the
         new polygons are filtered down to the bottom of the tree and become new
@@ -277,8 +278,8 @@ class BSPNode:
             self.plane = polygons[0].plane.clone()
         # add first polygon to this node
         self.polygons.append(polygons[0])
-        front: List[Polygon] = []
-        back: List[Polygon] = []
+        front: list[Polygon] = []
+        back: list[Polygon] = []
         # split all other polygons at the split plane
         for poly in polygons[1:]:
             # coplanar front and back polygons go into self.polygons
@@ -312,9 +313,9 @@ class CSG:
 
     """
 
-    def __init__(self, mesh: MeshBuilder = None, meshid: int = 0):
+    def __init__(self, mesh: Optional[MeshBuilder] = None, meshid: int = 0):
         if mesh is None:
-            self.polygons: List[Polygon] = []
+            self.polygons: list[Polygon] = []
         else:
             mesh_copy = mesh.copy()
             mesh_copy.normalize_faces()
@@ -323,7 +324,7 @@ class CSG:
             ]
 
     @classmethod
-    def from_polygons(cls, polygons: List[Polygon]) -> "CSG":
+    def from_polygons(cls, polygons: list[Polygon]) -> CSG:
         csg = CSG()
         csg.polygons = polygons
         return csg
@@ -342,10 +343,10 @@ class CSG:
                 mesh.add_face(face.vertices)
         return MeshTransformer.from_builder(mesh)
 
-    def clone(self) -> "CSG":
+    def clone(self) -> CSG:
         return self.from_polygons([p.clone() for p in self.polygons])
 
-    def union(self, other: "CSG") -> "CSG":
+    def union(self, other: CSG) -> CSG:
         """
         Return a new CSG solid representing space in either this solid or in the
         solid `other`. Neither this solid nor the solid `other` are modified::
@@ -373,7 +374,7 @@ class CSG:
 
     __add__ = union
 
-    def subtract(self, other: "CSG") -> "CSG":
+    def subtract(self, other: CSG) -> CSG:
         """
         Return a new CSG solid representing space in this solid but not in the
         solid `other`. Neither this solid nor the solid `other` are modified::
@@ -403,7 +404,7 @@ class CSG:
 
     __sub__ = subtract
 
-    def intersect(self, other: "CSG") -> "CSG":
+    def intersect(self, other: CSG) -> CSG:
         """
         Return a new CSG solid representing space both this solid and in the
         solid `other`. Neither this solid nor the solid `other` are modified::
@@ -432,7 +433,7 @@ class CSG:
 
     __mul__ = intersect
 
-    def inverse(self) -> "CSG":
+    def inverse(self) -> CSG:
         """
         Return a new CSG solid with solid and empty space switched. This solid is
         not modified.
