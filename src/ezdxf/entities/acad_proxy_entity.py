@@ -9,7 +9,8 @@ from .dxfgfx import DXFGraphic
 from . import factory
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFNamespace, TagWriter, DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.entities import DXFNamespace
 
 
 # Group Codes of AcDbProxyEntity
@@ -54,7 +55,7 @@ class ACADProxyEntity(DXFGraphic):
         raise const.DXFTypeError(f"Cloning of {self.dxftype()} not supported.")
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -71,7 +72,7 @@ class ACADProxyEntity(DXFGraphic):
                 self.acdb_proxy_entity, length_code, 310
             )
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         # Proxy graphic is stored in AcDbProxyEntity and not as usual in
         # AcDbEntity!
         preserve_proxy_graphic = self.proxy_graphic
@@ -79,7 +80,7 @@ class ACADProxyEntity(DXFGraphic):
         super().export_dxf(tagwriter)
         self.proxy_graphic = preserve_proxy_graphic
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         # Base class and AcDbEntity export is done by parent class
         super().export_entity(tagwriter)
