@@ -1,16 +1,16 @@
-# Copyright (c) 2016-2021, Manfred Moitzi
+# Copyright (c) 2016-2022, Manfred Moitzi
 # License: MIT License
 # Purpose: fast & simple but restricted DXF R12 writer, with no in-memory
 # drawing, and without dependencies to other ezdxf modules.
 # The created DXF file contains no HEADER, TABLES or BLOCKS section only the
 # ENTITIES section is present.
+from __future__ import annotations
 from typing import (
     TextIO,
     BinaryIO,
     Union,
     Sequence,
     Iterable,
-    Tuple,
     cast,
     Iterator,
     Optional,
@@ -62,7 +62,7 @@ def r12writer(
     stream: Union[TextIO, BinaryIO, str, Path],
     fixed_tables: bool = False,
     fmt: str = "asc",
-) -> Iterator["R12FastStreamWriter"]:
+) -> Iterator[R12FastStreamWriter]:
     """Context manager for writing DXF entities to a stream/file. `stream` can
     be any file like object with a :func:`write` method or just a string for
     writing DXF entities to the file system. If `fixed_tables` is ``True``, a
@@ -126,8 +126,8 @@ class R12FastStreamWriter:
         start: Vertex,
         end: Vertex,
         layer: str = "0",
-        color: int = None,
-        linetype: str = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
     ) -> None:
         """Add a LINE entity from `start` to `end`.
 
@@ -157,8 +157,8 @@ class R12FastStreamWriter:
         center: Vertex,
         radius: float,
         layer: str = "0",
-        color: int = None,
-        linetype: str = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
     ) -> None:
         """Add a CIRCLE entity.
 
@@ -183,10 +183,10 @@ class R12FastStreamWriter:
         start: float = 0,
         end: float = 360,
         layer: str = "0",
-        color: int = None,
-        linetype: str = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
     ) -> None:
-        """Add an ARC entity. The arc goes counter clockwise from `start` angle
+        """Add an ARC entity. The arc goes counter-clockwise from `start` angle
         to `end` angle.
 
         Args:
@@ -211,8 +211,8 @@ class R12FastStreamWriter:
         self,
         location: Vertex,
         layer: str = "0",
-        color: int = None,
-        linetype: str = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
     ) -> None:
         """
         Add a POINT entity.
@@ -234,8 +234,8 @@ class R12FastStreamWriter:
         vertices: Iterable[Vertex],
         invisible: int = 0,
         layer: str = "0",
-        color: int = None,
-        linetype: str = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
     ) -> None:
         """Add a 3DFACE entity. 3DFACE is a spatial area with 3 or 4 vertices,
         all vertices have to be in the same plane.
@@ -265,8 +265,8 @@ class R12FastStreamWriter:
         self,
         vertices: Iterable[Vertex],
         layer: str = "0",
-        color: int = None,
-        linetype: str = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
     ) -> None:
         """Add a SOLID entity. SOLID is a solid filled area with 3 or 4 edges
         and SOLID is a 2D entity.
@@ -310,8 +310,8 @@ class R12FastStreamWriter:
         vertices: Iterable[Vertex],
         closed: bool = False,
         layer: str = "0",
-        color: int = None,
-        linetype: str = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
     ) -> None:
         """Add a 3D POLYLINE entity.
 
@@ -353,8 +353,8 @@ class R12FastStreamWriter:
         start_width: float = 0,
         end_width: float = 0,
         layer: str = "0",
-        color: int = None,
-        linetype: str = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
     ) -> None:
         """Add a 2D POLYLINE entity with start width, end width and bulge value
         support.
@@ -423,8 +423,8 @@ class R12FastStreamWriter:
         vertices: Iterable[Vertex],
         faces: Iterable[Sequence[int]],
         layer: str = "0",
-        color: int = None,
-        linetype: str = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
     ) -> None:
         """Add a POLYFACE entity. The POLYFACE entity supports only faces of
         maximum 4 vertices, more indices will be ignored. A simple square would
@@ -500,11 +500,11 @@ class R12FastStreamWriter:
     def add_polymesh(
         self,
         vertices: Iterable[Vertex],
-        size: Tuple[int, int],
+        size: tuple[int, int],
         closed=(False, False),
         layer: str = "0",
-        color: int = None,
-        linetype: str = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
     ) -> None:
         """Add a POLYMESH entity. A POLYMESH is a mesh of m rows and n columns,
         each mesh vertex has its own x-, y- and z coordinates. The mesh can be
@@ -568,7 +568,7 @@ class R12FastStreamWriter:
         oblique: float = 0.0,
         style: str = "STANDARD",
         layer: str = "0",
-        color: int = None,
+        color: Optional[int] = None,
     ) -> None:
         """Add a one line TEXT entity.
 
@@ -619,7 +619,9 @@ class R12FastStreamWriter:
         self.stream.write("".join(dxf))
 
 
-def dxf_attribs(layer: str, color: int = None, linetype: str = None) -> str:
+def dxf_attribs(
+    layer: str, color: Optional[int] = None, linetype: Optional[str] = None
+) -> str:
     dxf = ["8\n%s\n" % layer]  # layer is required
     if linetype is not None:
         dxf.append("6\n%s\n" % linetype)
