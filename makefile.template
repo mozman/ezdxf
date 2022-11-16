@@ -49,4 +49,4 @@ packages: sdist bdist
 # assuming mypy and ezdxf is installed, ezdxf maybe in development mode:
 # > pip install -e .
 mypy:
-	mypy --ignore-missing-imports -p ezdxf
+	mypy --ignore-missing-imports --implicit-optional -p ezdxf
