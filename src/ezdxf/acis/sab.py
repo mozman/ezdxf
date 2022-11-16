@@ -13,6 +13,7 @@ from typing import (
     cast,
     TYPE_CHECKING,
     List,
+    Tuple,
     Optional,
 )
 from datetime import datetime
@@ -243,7 +244,7 @@ class SabDataLoader(DataLoader):
         token = self.data[self.index]
         if token.tag in (Tags.LOCATION_VEC, Tags.DIRECTION_VEC):
             self.index += 1
-            return cast(tuple[float, float, float], token.value)
+            return cast(Tuple[float, float, float], token.value)
         raise ParsingError(f"expected vector token, got {token}")
 
     def read_bool(self, true: str, false: str) -> bool:

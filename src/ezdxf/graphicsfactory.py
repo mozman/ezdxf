@@ -1,7 +1,15 @@
 # Copyright (c) 2013-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    Sequence,
+    Dict,
+    Tuple,
+    cast,
+    Optional,
+)
 import math
 import logging
 import warnings

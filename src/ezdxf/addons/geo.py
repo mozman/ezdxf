@@ -9,6 +9,7 @@ Type definitions see GeoJson Standard: https://tools.ietf.org/html/rfc7946
 and examples : https://tools.ietf.org/html/rfc7946#appendix-A
 
 """
+from __future__ import annotations
 from typing import (
     Iterable,
     Union,
