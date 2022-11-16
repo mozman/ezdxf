@@ -1,6 +1,7 @@
 # Copyright (c) 2015-2021, Manfred Moitzi
 # License: MIT License
-from typing import Dict, List, Sequence, Tuple
+from __future__ import annotations
+from typing import Sequence, Tuple, Optional
 from ezdxf.math import Vec2
 from ._iso_pattern import ISO_PATTERN
 
@@ -26,7 +27,7 @@ HatchPatternLineType = Tuple[
 HatchPatternType = Sequence[HatchPatternLineType]
 
 
-def load(measurement: int = 1, factor: float = None):
+def load(measurement: int = 1, factor: Optional[float] = None):
     """Load hatch pattern definition, default scaling is like the iso.pat of
     BricsCAD, set `measurement` to 0 to use the imperial (US) scaled pattern,
     which has a scaling factor of 1/25.4 = ~0.03937.
@@ -79,7 +80,7 @@ def scale_all(pattern: dict, factor: float = 1, angle: float = 0):
     }
 
 
-def parse(pattern: str) -> Dict:
+def parse(pattern: str) -> dict:
     try:
         comp = PatternFileCompiler(pattern)
         return comp.compile_pattern()
@@ -87,7 +88,7 @@ def parse(pattern: str) -> Dict:
         raise ValueError("Incompatible pattern definition.")
 
 
-def _tokenize_pattern_line(line: str) -> List:
+def _tokenize_pattern_line(line: str) -> list:
     return line.split(",", maxsplit=1 if line.startswith("*") else -1)
 
 
@@ -112,7 +113,7 @@ class PatternFileCompiler:
         if pattern:
             yield pattern
 
-    def compile_pattern(self, ndigits: int = 10) -> Dict:
+    def compile_pattern(self, ndigits: int = 10) -> dict:
         pattern = dict()
         for p in self._parse_pattern():
             pat = []
@@ -158,7 +159,7 @@ class PatternAnalyser:
     def __init__(self, pattern: HatchPatternType):
         # List of 2-tuples: (angle, is solid line pattern)
         # angle is rounded to a multiple of 15° in the range [0, 180)
-        self._lines: List[Tuple[int, bool]] = [
+        self._lines: list[Tuple[int, bool]] = [
             (round_angle_15_deg(angle), is_solid(line_pattern))
             for angle, _, _, line_pattern in pattern
         ]
