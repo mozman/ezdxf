@@ -1,13 +1,10 @@
-# Copyright (c) 2017-2021, Manfred Moitzi
+# Copyright (c) 2017-2022, Manfred Moitzi
 # License: MIT License
 from typing import (
     TYPE_CHECKING,
     Iterable,
-    List,
-    Set,
     TextIO,
     Any,
-    Dict,
     Optional,
     Callable,
 )
@@ -18,12 +15,11 @@ from ezdxf.entities import factory, DXFEntity
 from ezdxf.math import NULLVEC
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        Drawing,
-        DXFGraphic,
-        BlocksSection,
-        EntityDB,
-    )
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFGraphic
+    from ezdxf.sections.blocks import BlocksSection
+    from ezdxf.entitydb import EntityDB
+
 
 __all__ = ["Auditor", "AuditError", "audit", "BlockCycleDetector"]
 
@@ -101,7 +97,7 @@ class ErrorEntry:
         self,
         code: int,
         message: str = "",
-        dxf_entity: DXFEntity = None,
+        dxf_entity: Optional[DXFEntity] = None,
         data: Any = None,
     ):
         self.code: int = code  # error code AuditError()
@@ -111,14 +107,14 @@ class ErrorEntry:
 
 
 class Auditor:
-    def __init__(self, doc: "Drawing"):
+    def __init__(self, doc: Drawing):
         assert doc is not None
         self.doc = doc
         self._rootdict_handle = doc.rootdict.dxf.handle
-        self.errors: List[ErrorEntry] = []
-        self.fixes: List[ErrorEntry] = []
+        self.errors: list[ErrorEntry] = []
+        self.fixes: list[ErrorEntry] = []
         self._trashcan = doc.entitydb.new_trashcan()
-        self._post_audit_jobs: List[Callable[[], None]] = []
+        self._post_audit_jobs: list[Callable[[], None]] = []
 
     def reset(self) -> None:
         self.errors = []
@@ -153,7 +149,9 @@ class Auditor:
         return bool(self.fixes)
 
     def print_error_report(
-        self, errors: List[ErrorEntry] = None, stream: TextIO = None
+        self,
+        errors: Optional[list[ErrorEntry]] = None,
+        stream: Optional[TextIO] = None,
     ) -> None:
         def entity_str(count, code, entity):
             if entity is not None:
@@ -179,7 +177,7 @@ class Auditor:
                 )
                 stream.write("   " + error.message + "\n\n")
 
-    def print_fixed_errors(self, stream: TextIO = None) -> None:
+    def print_fixed_errors(self, stream: Optional[TextIO] = None) -> None:
         def entity_str(count, code, entity):
             if entity is not None:
                 return f"{count:4d}. Issue [{code}] fixed in {str(entity)}."
@@ -203,7 +201,7 @@ class Auditor:
         self,
         code: int,
         message: str = "",
-        dxf_entity: DXFEntity = None,
+        dxf_entity: Optional[DXFEntity] = None,
         data: Any = None,
     ) -> None:
         self.errors.append(ErrorEntry(code, message, dxf_entity, data))
@@ -212,12 +210,12 @@ class Auditor:
         self,
         code: int,
         message: str = "",
-        dxf_entity: DXFEntity = None,
+        dxf_entity: Optional[DXFEntity] = None,
         data: Any = None,
     ) -> None:
         self.fixes.append(ErrorEntry(code, message, dxf_entity, data))
 
-    def purge(self, codes: Set[int]):
+    def purge(self, codes: set[int]):
         """Remove error messages defined by integer error `codes`.
 
         This is useful to remove errors which are not important for a specific
@@ -226,7 +224,7 @@ class Auditor:
         """
         self.errors = [err for err in self.errors if err.code in codes]
 
-    def run(self) -> List[ErrorEntry]:
+    def run(self) -> list[ErrorEntry]:
         self.doc.entitydb.audit(self)
         self.check_root_dict()
         self.check_tables()
@@ -342,7 +340,7 @@ class Auditor:
                 data=style,
             )
 
-    def check_dimension_style(self, entity: "DXFGraphic") -> None:
+    def check_dimension_style(self, entity: DXFGraphic) -> None:
         """Check for usage of undefined dimension styles."""
         assert self.doc is entity.doc, "Entity from different DXF document."
         if not entity.dxf.hasattr("dimstyle"):
@@ -371,7 +369,7 @@ class Auditor:
                 data=name,
             )
 
-    def check_entity_color_index(self, entity: "DXFGraphic") -> None:
+    def check_entity_color_index(self, entity: DXFGraphic) -> None:
         color = entity.dxf.color
         # 0 == BYBLOCK
         # 256 == BYLAYER
@@ -385,7 +383,7 @@ class Auditor:
                 data=color,
             )
 
-    def check_entity_lineweight(self, entity: "DXFGraphic") -> None:
+    def check_entity_lineweight(self, entity: DXFGraphic) -> None:
         weight = entity.dxf.lineweight
         if weight not in const.VALID_DXF_LINEWEIGHT_VALUES:
             entity.dxf.lineweight = validator.fix_lineweight(weight)
@@ -462,13 +460,11 @@ class Auditor:
 
 
 class BlockCycleDetector:
-    def __init__(self, doc: "Drawing"):
+    def __init__(self, doc: Drawing):
         self.key = doc.blocks.key
         self.blocks = self._build_block_ledger(doc.blocks)
 
-    def _build_block_ledger(
-        self, blocks: "BlocksSection"
-    ) -> Dict[str, Set[str]]:
+    def _build_block_ledger(self, blocks: BlocksSection) -> dict[str, set[str]]:
         ledger = dict()
         for block in blocks:
             inserts = {
@@ -494,12 +490,12 @@ class BlockCycleDetector:
             path.pop()
             return False
 
-        path: List[str] = []
+        path: list[str] = []
         block_name = self.key(block_name)
         return check(block_name)
 
 
-def audit(entity: DXFEntity, doc: "Drawing") -> Auditor:
+def audit(entity: DXFEntity, doc: Drawing) -> Auditor:
     """Setup an :class:`Auditor` object, run the audit process for `entity`
     and return result as :class:`Auditor` object.
 
