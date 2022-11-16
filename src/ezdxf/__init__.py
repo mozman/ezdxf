@@ -1,6 +1,6 @@
 # Copyright (C) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TextIO
+from typing import TextIO, Optional
 import sys
 import os
 from .version import version, __version__
@@ -73,16 +73,21 @@ EZDXF_TEST_FILES = options.test_files
 YES_NO = {True: "yes", False: "no"}
 
 
-def print_config(verbose: bool = False, stream: TextIO = None) -> None:
+def print_config(
+    verbose: bool = False, stream: Optional[TextIO] = None
+) -> None:
     from pathlib import Path
+
     if stream is None:
         stream = sys.stdout
-    stream.writelines([
-        f"ezdxf {__version__} from {Path(__file__).parent}\n",
-        f"Python version: {sys.version}\n",
-        f"using C-extensions: {YES_NO[options.use_c_ext]}\n",
-        f"using Matplotlib: {YES_NO[options.use_matplotlib]}\n",
-    ])
+    stream.writelines(
+        [
+            f"ezdxf {__version__} from {Path(__file__).parent}\n",
+            f"Python version: {sys.version}\n",
+            f"using C-extensions: {YES_NO[options.use_c_ext]}\n",
+            f"using Matplotlib: {YES_NO[options.use_matplotlib]}\n",
+        ]
+    )
     if verbose:
         stream.write("\nConfiguration:\n")
         options.write(stream)
