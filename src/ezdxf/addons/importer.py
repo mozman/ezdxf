@@ -1,7 +1,8 @@
 # Purpose: Import data from another DXF document
-# Copyright (c) 2013-2021, Manfred Moitzi
+# Copyright (c) 2013-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Set, cast, Union, List, Dict
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, cast, Union, Optional
 import logging
 from ezdxf.lldxf import const
 from ezdxf.render.arrows import ARROWS
@@ -15,16 +16,11 @@ from ezdxf.entities import (
     Viewport,
     Linetype,
     Insert,
-    MText,
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        Drawing,
-        BaseLayout,
-        Layout,
-        BlockLayout,
-    )
+    from ezdxf.document import Drawing
+    from ezdxf.layouts import BaseLayout, Layout
 
 logger = logging.getLogger("ezdxf")
 
@@ -80,28 +76,28 @@ class Importer:
 
     """
 
-    def __init__(self, source: "Drawing", target: "Drawing"):
-        self.source: "Drawing" = source
-        self.target: "Drawing" = target
+    def __init__(self, source: Drawing, target: Drawing):
+        self.source: Drawing = source
+        self.target: Drawing = target
 
-        self.used_layers: Set[str] = set()
-        self.used_linetypes: Set[str] = set()
-        self.used_styles: Set[str] = set()
-        self.used_shape_files: Set[str] = set()  # style entry without a name!
-        self.used_dimstyles: Set[str] = set()
-        self.used_arrows: Set[str] = set()
-        self.handle_mapping: Dict[str, str] = dict()  # old_handle: new_handle
+        self.used_layers: set[str] = set()
+        self.used_linetypes: set[str] = set()
+        self.used_styles: set[str] = set()
+        self.used_shape_files: set[str] = set()  # style entry without a name!
+        self.used_dimstyles: set[str] = set()
+        self.used_arrows: set[str] = set()
+        self.handle_mapping: dict[str, str] = dict()  # old_handle: new_handle
 
         # collects all imported INSERT entities, for later name resolving.
-        self.imported_inserts: List[DXFEntity] = list()  # imported inserts
+        self.imported_inserts: list[DXFEntity] = list()  # imported inserts
 
         # collects all imported block names and their assigned new name
         # imported_block[original_name] = new_name
-        self.imported_blocks: Dict[str, str] = dict()
+        self.imported_blocks: dict[str, str] = dict()
         self._default_plotstyle_handle = target.plotstyles["Normal"].dxf.handle
         self._default_material_handle = target.materials["Global"].dxf.handle
 
-    def _add_used_resources(self, entity: "DXFEntity") -> None:
+    def _add_used_resources(self, entity: DXFEntity) -> None:
         """Register used resources."""
         self.used_layers.add(entity.get_dxf_attrib("layer", "0"))
         self.used_linetypes.add(entity.get_dxf_attrib("linetype", "BYLAYER"))
@@ -112,7 +108,7 @@ class Importer:
                 entity.get_dxf_attrib("dimstyle", "Standard")
             )
 
-    def _add_dimstyle_resources(self, dimstyle: "DimStyle") -> None:
+    def _add_dimstyle_resources(self, dimstyle: DimStyle) -> None:
         self.used_styles.add(dimstyle.get_dxf_attrib("dimtxsty", "Standard"))
         self.used_linetypes.add(dimstyle.get_dxf_attrib("dimltype", "BYLAYER"))
         self.used_linetypes.add(dimstyle.get_dxf_attrib("dimltex1", "BYLAYER"))
@@ -122,7 +118,7 @@ class Importer:
         self.used_arrows.add(dimstyle.get_dxf_attrib("dimblk2", ""))
         self.used_arrows.add(dimstyle.get_dxf_attrib("dimldrblk", ""))
 
-    def _add_linetype_resources(self, linetype: "Linetype") -> None:
+    def _add_linetype_resources(self, linetype: Linetype) -> None:
         if linetype.pattern_tags.is_complex_type():
             style_handle = linetype.pattern_tags.get_style_handle()
             style = self.source.entitydb.get(style_handle)
@@ -226,7 +222,7 @@ class Importer:
                 table_entry.dxf.handle
             ] = new_table_entry.dxf.handle
 
-    def import_shape_files(self, fonts: Set[str]) -> None:
+    def import_shape_files(self, fonts: set[str]) -> None:
         """Import shape file table entries from the source document into the
         target document.
         Shape file entries are stored in the styles table but without a name.
@@ -244,14 +240,14 @@ class Importer:
             else:
                 logger.warning(f'Required shape file entry "{font}" not found.')
 
-    def _set_table_entry_dxf_attribs(self, entity: "DXFEntity") -> None:
+    def _set_table_entry_dxf_attribs(self, entity: DXFEntity) -> None:
         entity.doc = self.target
         if entity.dxf.hasattr("plotstyle_handle"):
             entity.dxf.plotstyle_handle = self._default_plotstyle_handle
         if entity.dxf.hasattr("material_handle"):
             entity.dxf.material_handle = self._default_material_handle
 
-    def _duplicate_table_entry(self, entry: "DXFEntity") -> "DXFEntity":
+    def _duplicate_table_entry(self, entry: DXFEntity) -> DXFEntity:
         # duplicate table entry
         new_entry = new_clean_entity(entry)
         self._set_table_entry_dxf_attribs(entry)
@@ -261,7 +257,7 @@ class Importer:
         return new_entry
 
     def import_entity(
-        self, entity: "DXFEntity", target_layout: "BaseLayout" = None
+        self, entity: DXFEntity, target_layout: Optional[BaseLayout] = None
     ) -> None:
         """
         Imports a single DXF `entity` into `target_layout` or the modelspace
@@ -299,7 +295,7 @@ class Importer:
         self._add_used_resources(entity)
 
         try:
-            new_entity = cast("DXFGraphic", new_clean_entity(entity))
+            new_entity = cast(DXFGraphic, new_clean_entity(entity))
         except const.DXFTypeError:
             logger.debug(f"Copying for DXF type {dxftype} not supported.")
             return
@@ -313,21 +309,21 @@ class Importer:
         except AttributeError:
             pass
 
-    def _import_insert(self, insert: "Insert"):
+    def _import_insert(self, insert: Insert):
         self.imported_inserts.append(insert)
         # remove all possible source document dependencies from sub entities
         for attrib in insert.attribs:
             remove_dependencies(attrib)
 
-    def _import_polyline(self, polyline: "Polyline"):
+    def _import_polyline(self, polyline: Polyline):
         # remove all possible source document dependencies from sub entities
         for vertex in polyline.vertices:
             remove_dependencies(vertex)
 
-    def _import_hatch(self, hatch: "Hatch"):
+    def _import_hatch(self, hatch: Hatch):
         hatch.dxf.discard("associative")
 
-    def _import_viewport(self, viewport: "Viewport"):
+    def _import_viewport(self, viewport: Viewport):
         viewport.dxf.discard("sun_handle")
         viewport.dxf.discard("clipping_boundary_handle")
         viewport.dxf.discard("ucs_handle")
@@ -340,7 +336,7 @@ class Importer:
         viewport.dxf.discard("ref_vp_object_3")
         viewport.dxf.discard("ref_vp_object_4")
 
-    def _import_dimension(self, dimension: "Dimension"):
+    def _import_dimension(self, dimension: Dimension):
         if dimension.virtual_block_content:
             for entity in dimension.virtual_block_content:
                 if isinstance(entity, Insert):  # import arrow blocks
@@ -353,8 +349,8 @@ class Importer:
 
     def import_entities(
         self,
-        entities: Iterable["DXFEntity"],
-        target_layout: "BaseLayout" = None,
+        entities: Iterable[DXFEntity],
+        target_layout: Optional[BaseLayout] = None,
     ) -> None:
         """Import all `entities` into `target_layout` or the modelspace of the
         target document, if `target_layout` is ``None``.
@@ -371,7 +367,9 @@ class Importer:
         for entity in entities:
             self.import_entity(entity, target_layout)
 
-    def import_modelspace(self, target_layout: "BaseLayout" = None) -> None:
+    def import_modelspace(
+        self, target_layout: Optional[BaseLayout] = None
+    ) -> None:
         """Import all entities from source modelspace into `target_layout` or
         the modelspace of the target document, if `target_layout` is ``None``.
 
@@ -387,7 +385,7 @@ class Importer:
             self.source.modelspace(), target_layout=target_layout
         )
 
-    def recreate_source_layout(self, name: str) -> "Layout":
+    def recreate_source_layout(self, name: str) -> Layout:
         """Recreate source paperspace layout `name` in the target document.
         The layout will be renamed if `name` already exist in the target
         document. Returns target modelspace for layout name "Model".
@@ -438,7 +436,7 @@ class Importer:
         )
         return target_layout
 
-    def import_paperspace_layout(self, name: str) -> "Layout":
+    def import_paperspace_layout(self, name: str) -> Layout:
         """Import paperspace layout `name` into the target document.
 
         Recreates the source paperspace layout in the target document, renames
@@ -622,7 +620,7 @@ class Importer:
         self.update_complex_linetypes()
 
     def update_complex_linetypes(self):
-        for linetype in self.target.linetypes:  # type: Linetype
+        for linetype in self.target.linetypes:
             if linetype.pattern_tags.is_complex_type():
                 old_handle = linetype.pattern_tags.get_style_handle()
                 new_handle = self.handle_mapping.get(old_handle)
@@ -642,8 +640,8 @@ class Importer:
 
 
 def new_clean_entity(
-    entity: "DXFEntity", keep_xdata: bool = False
-) -> "DXFEntity":
+    entity: DXFEntity, keep_xdata: bool = False
+) -> DXFEntity:
     """Copy entity and remove all external dependencies.
 
     Args:
@@ -657,8 +655,8 @@ def new_clean_entity(
 
 
 def remove_dependencies(
-    entity: "DXFEntity", keep_xdata: bool = False
-) -> "DXFEntity":
+    entity: DXFEntity, keep_xdata: bool = False
+) -> DXFEntity:
     """Remove all external dependencies.
 
     Args:
