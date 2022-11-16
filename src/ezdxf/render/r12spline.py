@@ -99,12 +99,13 @@ Vertex 70=0, Vertex 70=1, Vertex 70=0, Vertex 70=1
 
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, List
+from typing import TYPE_CHECKING, Iterable, Optional
 from ezdxf.lldxf import const
 from ezdxf.math import BSpline, closed_uniform_bspline, Vec3, UCS, UVec
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BaseLayout, Polyline
+    from ezdxf.layouts import BaseLayout
+    from ezdxf.entities import Polyline
 
 
 class R12Spline:
@@ -116,7 +117,7 @@ class R12Spline:
 
     This way it was possible to store the spline parameters in the DXF R12 file,
     to allow CAD applications to modify the spline parameters and rerender the
-    B-spline afterward again as polyline approximation. Therefore the result is
+    B-spline afterward again as polyline approximation. Therefore, the result is
     not better than an approximation by the :class:`Spline` class, it is also
     just a POLYLINE entity, but maybe someone need exact this tool in the
     future.
@@ -141,11 +142,11 @@ class R12Spline:
         self.closed = closed
 
     def approximate(
-        self, segments: int = 40, ucs: "UCS" = None
-    ) -> List[UVec]:
+        self, segments: int = 40, ucs: Optional[UCS] = None
+    ) -> list[UVec]:
         """Approximate the B-spline by a polyline with `segments` line segments.
         If `ucs` is not ``None``, ucs defines an :class:`~ezdxf.math.UCS`, to
-        transformed the curve into :ref:`OCS`. The control points are placed
+        transform the curve into :ref:`OCS`. The control points are placed
         xy-plane of the UCS, don't use z-axis coordinates, if so make sure all
         control points are in a plane parallel to the OCS base plane
         (UCS xy-plane), else the result is unpredictable and depends on the CAD
@@ -175,11 +176,11 @@ class R12Spline:
 
     def render(
         self,
-        layout: "BaseLayout",
+        layout: BaseLayout,
         segments: int = 40,
-        ucs: "UCS" = None,
-        dxfattribs: dict = None,
-    ) -> "Polyline":
+        ucs: Optional[UCS] = None,
+        dxfattribs=None,
+    ) -> Polyline:
         """Renders the B-spline into `layout` as 2D :class:`~ezdxf.entities.Polyline`
         entity. Use an :class:`~ezdxf.math.UCS` to place the 2D spline in the
         3D space, see :meth:`approximate` for more information.
