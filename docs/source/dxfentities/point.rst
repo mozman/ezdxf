@@ -4,7 +4,8 @@ Point
 .. module:: ezdxf.entities
     :noindex:
 
-POINT (`DXF Reference`_) at location :attr:`dxf.location`.
+POINT (`DXF Reference`_) at location :attr:`dxf.location`. The POINT entity has
+:ref:`WCS` coordinates.
 
 The POINT styling is a global setting, stored as header variable `$PDMODE`_,
 this also means **all** POINT entities in a DXF document have the same styling:
@@ -35,6 +36,10 @@ The size of the points is defined by the header variable `$PDSIZE`_:
 <0  Specifies a percentage of the viewport size
 >0  Specifies an absolute size
 === ==============
+
+.. seealso::
+
+    - :ref:`tut_dxf_primitives`, section :ref:`tut_dxf_primitives_point`
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`

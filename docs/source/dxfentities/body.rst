@@ -22,13 +22,14 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
 .. warning::
 
-    Do not instantiate entity classes by yourself - always use the provided factory functions!
+    Do not instantiate entity classes by yourself - always use the provided
+    factory functions!
 
 .. class:: Body
 
     .. attribute:: dxf.version
 
-        Modeler format version number, default value is ``1``
+        Modeler format version number, default value is 1
 
     .. attribute:: dxf.flags
 

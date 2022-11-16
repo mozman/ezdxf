@@ -29,6 +29,8 @@ Prelude to all following examples::
     - :ref:`tut_layers`
     - :mod:`ezdxf.gfxattribs` module
 
+.. _tut_dxf_primitives_point:
+
 Point
 -----
 
@@ -45,6 +47,8 @@ header variable $PDMODE, for more information read the reference of class
     - Reference of class :class:`~ezdxf.entities.Point`
     - :ref:`tut_common_graphical_attributes`
 
+.. _tut_dxf_primitives_line:
+
 Line
 ----
 
@@ -58,6 +62,8 @@ an end point in the :ref:`WCS`::
     - Reference of class :class:`~ezdxf.entities.Line`
     - :ref:`tut_common_graphical_attributes`
     - :class:`ezdxf.math.ConstructionLine`
+
+.. _tut_dxf_primitives_circle:
 
 Circle
 ------
@@ -73,6 +79,8 @@ center point and a radius::
     - Reference of class :class:`~ezdxf.entities.Circle`
     - :ref:`tut_common_graphical_attributes`
     - :class:`ezdxf.math.ConstructionCircle`
+
+.. _tut_dxf_primitives_arc:
 
 Arc
 ---
@@ -112,6 +120,8 @@ point (5, 3):
     - Reference of class :class:`~ezdxf.entities.Arc`
     - :ref:`tut_common_graphical_attributes`
     - :class:`ezdxf.math.ConstructionArc`
+
+.. _tut_dxf_primitives_ellipse:
 
 Ellipse
 -------

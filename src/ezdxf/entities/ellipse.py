@@ -1,5 +1,6 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable
 import math
 from ezdxf.audit import AuditError
@@ -35,7 +36,10 @@ from .dxfgfx import (
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Spline, Auditor
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.entities import DXFNamespace, Spline
+    from ezdxf.audit import Auditor
+
 
 __all__ = ["Ellipse"]
 
@@ -106,7 +110,7 @@ class Ellipse(DXFGraphic):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
@@ -114,7 +118,7 @@ class Ellipse(DXFGraphic):
             processor.simple_dxfattribs_loader(dxf, merged_ellipse_group_codes)
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_ellipse.name)
@@ -140,11 +144,11 @@ class Ellipse(DXFGraphic):
         )
 
     @property
-    def start_point(self) -> "Vec3":
+    def start_point(self) -> Vec3:
         return list(self.vertices([self.dxf.start_param]))[0]
 
     @property
-    def end_point(self) -> "Vec3":
+    def end_point(self) -> Vec3:
         return list(self.vertices([self.dxf.end_param]))[0]
 
     def construction_tool(self) -> ConstructionEllipse:
@@ -159,7 +163,7 @@ class Ellipse(DXFGraphic):
             dxf.end_param,
         )
 
-    def apply_construction_tool(self, e: ConstructionEllipse) -> "Ellipse":
+    def apply_construction_tool(self, e: ConstructionEllipse) -> Ellipse:
         """Set ELLIPSE data from construction tool
         :class:`ezdxf.math.ConstructionEllipse`.
 
@@ -168,10 +172,10 @@ class Ellipse(DXFGraphic):
         return self  # floating interface
 
     def params(self, num: int) -> Iterable[float]:
-        """Returns `num` params from start- to end param in counter
-        clockwise order.
+        """Returns `num` params from start- to end param in counter-clockwise
+        order.
 
-        All params are normalized in the range from [0, 2pi).
+        All params are normalized in the range from [0, 2*pi).
 
         """
         start = self.dxf.start_param % math.tau
@@ -182,8 +186,8 @@ class Ellipse(DXFGraphic):
         """Yields vertices on ellipse for iterable `params` in WCS.
 
         Args:
-            params: param values in the range from ``0`` to ``2*pi`` in radians,
-                param goes counter clockwise around the extrusion vector,
+            params: param values in the range from 0 to 2*pi in radians,
+                param goes counter-clockwise around the extrusion vector,
                 major_axis = local x-axis = 0 rad.
 
         """
@@ -201,8 +205,6 @@ class Ellipse(DXFGraphic):
                 segment chord.
             segments: minimum segment count
 
-        .. versionadded:: 0.15
-
         """
         return self.construction_tool().flattening(distance, segments)
 
@@ -213,7 +215,7 @@ class Ellipse(DXFGraphic):
         self.update_dxf_attribs(e.dxfattribs())
 
     @classmethod
-    def from_arc(cls, entity: "DXFGraphic") -> "Ellipse":
+    def from_arc(cls, entity: DXFGraphic) -> Ellipse:
         """Create a new ELLIPSE entity from ARC or CIRCLE entity.
 
         The new SPLINE entity has no owner, no handle, is not stored in
@@ -233,7 +235,7 @@ class Ellipse(DXFGraphic):
         attribs.update(e.dxfattribs())
         return Ellipse.new(dxfattribs=attribs, doc=entity.doc)
 
-    def transform(self, m: Matrix44) -> "Ellipse":
+    def transform(self, m: Matrix44) -> Ellipse:
         """Transform the ELLIPSE entity by transformation matrix `m` inplace."""
         e = self.construction_tool()
         e.transform(m)
@@ -241,7 +243,7 @@ class Ellipse(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def translate(self, dx: float, dy: float, dz: float) -> "Ellipse":
+    def translate(self, dx: float, dy: float, dz: float) -> Ellipse:
         """Optimized ELLIPSE translation about `dx` in x-axis, `dy` in y-axis
         and `dz` in z-axis, returns `self` (floating interface).
 
@@ -252,7 +254,7 @@ class Ellipse(DXFGraphic):
             self.post_transform(Matrix44.translate(dx, dy, dz))
         return self
 
-    def to_spline(self, replace=True) -> "Spline":
+    def to_spline(self, replace=True) -> Spline:
         """Convert ELLIPSE to a :class:`~ezdxf.entities.Spline` entity.
 
         Adds the new SPLINE entity to the entity database and to the
@@ -278,7 +280,7 @@ class Ellipse(DXFGraphic):
         # different way!
         return OCS()
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         if not self.is_alive:
             return
         super().audit(auditor)
