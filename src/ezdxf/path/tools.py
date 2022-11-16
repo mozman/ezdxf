@@ -3,10 +3,8 @@
 from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
-    List,
     Iterable,
     Iterator,
-    Tuple,
     Optional,
     Sequence,
 )
@@ -107,7 +105,7 @@ def single_paths(paths: Iterable[Path]) -> Iterable[Path]:
             yield p
 
 
-def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
+def transform_paths(paths: Iterable[Path], m: Matrix44) -> list[Path]:
     """Transform multiple :class:`Path` objects at once by transformation
     matrix `m`. Returns a list of the transformed :class:`Path` objects.
 
@@ -119,7 +117,7 @@ def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
     return [p.transform(m) for p in paths]
 
 
-def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]:
+def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> list[Path]:
     """Transform multiple :class:`Path` objects at once from WCS to OCS.
     Returns a list of the transformed :class:`Path` objects.
 
@@ -168,7 +166,7 @@ def precise_bbox(path: Path) -> BoundingBox:
     if len(path) == 0:  # empty path
         return BoundingBox()
     start = path.start
-    points: List[Vec3] = [start]
+    points: list[Vec3] = [start]
     for cmd in path:
         if cmd.type == Command.LINE_TO:
             points.append(cmd.end)
@@ -191,10 +189,10 @@ def precise_bbox(path: Path) -> BoundingBox:
 
 def fit_paths_into_box(
     paths: Iterable[Path],
-    size: Tuple[float, float, float],
+    size: tuple[float, float, float],
     uniform: bool = True,
-    source_box: BoundingBox = None,
-) -> List[Path]:
+    source_box: Optional[BoundingBox] = None,
+) -> list[Path]:
     """Scale the given `paths` to fit into a box of the given `size`,
     so that all path vertices are inside these borders.
     If `source_box` is ``None`` the default source bounding box is calculated
@@ -834,7 +832,7 @@ def _all_lines_to_curve(path: Path, count: int = 4) -> Path:
     return new_path
 
 
-def _get_local_fillet_ucs(p0, p1, p2, radius) -> Tuple[Vec3, float, UCS]:
+def _get_local_fillet_ucs(p0, p1, p2, radius) -> tuple[Vec3, float, UCS]:
     dir1 = (p0 - p1).normalize()
     dir2 = (p2 - p1).normalize()
     if dir1.isclose(dir2) or dir1.isclose(-dir2):
