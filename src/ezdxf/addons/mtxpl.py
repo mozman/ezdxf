@@ -1,6 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from typing import cast, Dict, Tuple, Any
+from __future__ import annotations
+from typing import cast, Any, Optional
 import math
 import ezdxf
 from ezdxf.entities import MText, DXFGraphic, Textstyle
@@ -16,7 +17,7 @@ __all__ = ["MTextExplode"]
 
 
 class FrameRenderer(tl.ContentRenderer):
-    def __init__(self, attribs: Dict, layout: BaseLayout):
+    def __init__(self, attribs: dict, layout: BaseLayout):
         self.line_attribs = attribs
         self.layout = layout
 
@@ -49,10 +50,10 @@ class FrameRenderer(tl.ContentRenderer):
 class ColumnBackgroundRenderer(FrameRenderer):
     def __init__(
         self,
-        attribs: Dict,
+        attribs: dict,
         layout: BaseLayout,
-        bg_aci: int = None,
-        bg_true_color: int = None,
+        bg_aci: Optional[int] = None,
+        bg_true_color: Optional[int] = None,
         offset: float = 0,
         text_frame: bool = False,
     ):
@@ -73,7 +74,7 @@ class ColumnBackgroundRenderer(FrameRenderer):
         bottom: float,
         right: float,
         top: float,
-        m: Matrix44 = None,
+        m: Optional[Matrix44] = None,
     ) -> None:
         # Important: this is not a clipping box, it is possible to
         # render anything outside of the given borders!
@@ -100,8 +101,8 @@ class TextRenderer(FrameRenderer):
     def __init__(
         self,
         text: str,
-        text_attribs: Dict,
-        line_attribs: Dict,
+        text_attribs: dict,
+        line_attribs: dict,
         layout: BaseLayout,
     ):
         super().__init__(line_attribs, layout)
@@ -114,7 +115,7 @@ class TextRenderer(FrameRenderer):
         bottom: float,
         right: float,
         top: float,
-        m: Matrix44 = None,
+        m: Optional[Matrix44] = None,
     ):
         """Create/render the text content"""
         text = self.layout.add_text(self.text, dxfattribs=self.text_attribs)
@@ -161,7 +162,7 @@ def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:
     return font_face
 
 
-def get_color_attribs(ctx: MTextContext) -> Dict:
+def get_color_attribs(ctx: MTextContext) -> dict:
     attribs = {"color": ctx.aci}
     if ctx.rgb is not None:
         attribs["true_color"] = ezdxf.rgb2int(ctx.rgb)
@@ -212,7 +213,7 @@ def make_bg_renderer(mtext: MText):
     )
 
 
-def get_base_attribs(mtext: MText) -> Dict:
+def get_base_attribs(mtext: MText) -> dict:
     dxf = mtext.dxf
     attribs = {
         "layer": dxf.layer,
@@ -237,7 +238,7 @@ class MTextExplode(AbstractMTextRenderer):
     def __init__(
         self,
         layout: BaseLayout,
-        doc: Drawing = None,
+        doc: Optional[Drawing] = None,
         spacing_factor: float = 1.0,
     ):
         super().__init__()
@@ -246,8 +247,8 @@ class MTextExplode(AbstractMTextRenderer):
         assert self._doc is not None, "DXF document required"
         # scale the width of spaces by this factor:
         self._spacing_factor = float(spacing_factor)
-        self._required_text_styles: Dict[str, fonts.FontFace] = {}
-        self.current_base_attribs: Dict[str, Any] = dict()
+        self._required_text_styles: dict[str, fonts.FontFace] = {}
+        self.current_base_attribs: dict[str, Any] = dict()
 
     # Implementation of required AbstractMTextRenderer methods and overrides:
 
@@ -270,7 +271,7 @@ class MTextExplode(AbstractMTextRenderer):
             ),
         )
 
-    def fraction(self, data: Tuple, ctx: MTextContext) -> tl.ContentCell:
+    def fraction(self, data: tuple, ctx: MTextContext) -> tl.ContentCell:
         upr, lwr, type_ = data
         if type_:
             return tl.Fraction(
@@ -318,7 +319,7 @@ class MTextExplode(AbstractMTextRenderer):
             self._font_cache[key] = font
         return font
 
-    def get_text_attribs(self, ctx: MTextContext) -> Dict:
+    def get_text_attribs(self, ctx: MTextContext) -> dict:
         attribs = {
             "height": ctx.cap_height,
             "style": self.mtext_exploded_text_style(ctx.font_face),
