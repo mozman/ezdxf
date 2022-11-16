@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Union, Iterable, Sequence
+from typing import Union, Iterable, Sequence, Optional
 from pathlib import Path
 import enum
 import platform
@@ -49,7 +49,7 @@ def is_installed() -> bool:
     return Path(DEFAULT_WIN_OPENSCAD_PATH).exists()
 
 
-def run(script: str, exec_path: str = None) -> MeshTransformer:
+def run(script: str, exec_path: Optional[str] = None) -> MeshTransformer:
     """Executes the given `script` by OpenSCAD and returns the result mesh as
     :class:`~ezdxf.render.MeshTransformer`.
 
@@ -99,7 +99,7 @@ def str_matrix44(m: Matrix44) -> str:
 
 def str_polygon(
     path: Iterable[UVec],
-    holes: Sequence[Iterable[UVec]] = None,
+    holes: Optional[Sequence[Iterable[UVec]]] = None,
 ) -> str:
     """Returns a ``polygon()`` command as string. This is a 2D command, all
     z-axis values of the input vertices are ignored and all paths and holes
@@ -162,7 +162,7 @@ class Script:
     def add_polygon(
         self,
         path: Iterable[UVec],
-        holes: Sequence[Iterable[UVec]] = None,
+        holes: Optional[Sequence[Iterable[UVec]]] = None,
     ) -> None:
         """Add a ``polygon()`` command. This is a 2D command, all
         z-axis values of the input vertices are ignored and all paths and holes
@@ -242,7 +242,7 @@ class Script:
         nx: float,
         ny: float,
         nz: float,
-        auto: Union[bool, tuple[bool, bool, bool]] = None,
+        auto: Optional[Union[bool, tuple[bool, bool, bool]]] = None,
     ) -> None:
         """Add a ``resize()`` operation.
 

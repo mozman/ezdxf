@@ -302,7 +302,7 @@ def simplified_text_chunks(
     text: AnyText,
     out: BackendInterface,
     *,
-    font: fonts.FontFace = None,
+    font: Optional[fonts.FontFace] = None,
     debug_draw_rect: bool = False
 ) -> Iterable[Tuple[str, Matrix44, float]]:
     """Splits a complex text entity into simple chunks of text which can all be

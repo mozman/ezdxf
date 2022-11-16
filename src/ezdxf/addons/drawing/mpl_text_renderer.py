@@ -107,7 +107,10 @@ class MplTextRenderer(TextRenderer[FontProperties]):
         return path
 
     def get_text_line_width(
-        self, text: str, cap_height: float, font: fonts.FontFace = None
+        self,
+        text: str,
+        cap_height: float,
+        font: Optional[fonts.FontFace] = None,
     ) -> float:
         font_properties = self.get_font_properties(font)
         try:

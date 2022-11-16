@@ -49,7 +49,8 @@ class ViewportGroup(qw.QGraphicsItemGroup):
     def __init__(self, clipping_path: Path):
         super().__init__()
         self.setFlag(
-            qw.QGraphicsItemGroup.GraphicsItemFlag.ItemClipsChildrenToShape, True
+            qw.QGraphicsItemGroup.GraphicsItemFlag.ItemClipsChildrenToShape,
+            True,
         )
         self._clipping_path = to_qpainter_path([clipping_path])
 
@@ -76,6 +77,7 @@ class PyQtBackend(Backend):
         use_text_cache: use caching for text path rendering
 
     """
+
     def __init__(
         self,
         scene: Optional[qw.QGraphicsScene] = None,
@@ -107,7 +109,9 @@ class PyQtBackend(Backend):
     def clear_text_cache(self):
         self._text_renderer.clear_cache()
 
-    def set_clipping_path(self, path: Path = None, scale: float = 1.0) -> bool:
+    def set_clipping_path(
+        self, path: Optional[Path] = None, scale: float = 1.0
+    ) -> bool:
         if path:
             self._current_viewport = ViewportGroup(path)
             self._scene.addItem(self._current_viewport)
@@ -274,7 +278,7 @@ class PyQtBackend(Backend):
         return self._text_renderer.get_font_properties(font)
 
     def get_font_measurements(
-        self, cap_height: float, font: fonts.FontFace = None
+        self, cap_height: float, font: Optional[fonts.FontFace] = None
     ) -> FontMeasurements:
         qfont = self.get_qfont(font)
         return self._text_renderer.get_font_measurements(
@@ -282,7 +286,10 @@ class PyQtBackend(Backend):
         ).scale_from_baseline(desired_cap_height=cap_height)
 
     def get_text_line_width(
-        self, text: str, cap_height: float, font: fonts.FontFace = None
+        self,
+        text: str,
+        cap_height: float,
+        font: Optional[fonts.FontFace] = None,
     ) -> float:
         if not text.strip():
             return 0

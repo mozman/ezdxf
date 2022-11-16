@@ -10,6 +10,7 @@ from typing import (
     Union,
     List,
     TYPE_CHECKING,
+    Optional,
 )
 from datetime import datetime
 from . import const
@@ -38,7 +39,7 @@ class SatEntity(AbstractEntity):
         name: str,
         attr_ptr: str = "$-1",
         id: int = -1,
-        data: list[Any] = None,
+        data: Optional[list[Any]] = None,
     ):
         self.name = name
         self.attr_ptr = attr_ptr
@@ -57,7 +58,7 @@ def new_entity(
     name: str,
     attributes=NULL_PTR,
     id=-1,
-    data: list[Any] = None,
+    data: Optional[list[Any]] = None,
 ) -> SatEntity:
     """Factory to create new ACIS entities.
 
@@ -107,7 +108,7 @@ class SatDataLoader(DataLoader):
     def has_data(self) -> bool:
         return self.index <= len(self.data)
 
-    def read_int(self, skip_sat: int = None) -> int:
+    def read_int(self, skip_sat: Optional[int] = None) -> int:
         if skip_sat is not None:
             return skip_sat
 

@@ -1,6 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Set, Dict, Iterator, Iterable
+from __future__ import annotations
+from typing import Iterator, Iterable, Optional
 import random
 import statistics
 import itertools
@@ -20,13 +21,13 @@ __all__ = [
 
 
 def dbscan(
-    points: List[AnyVec],
+    points: list[AnyVec],
     *,
     radius: float,
     min_points: int = 4,
-    rtree: RTree = None,
+    rtree: Optional[RTree] = None,
     max_node_size: int = 5,
-) -> List[List[AnyVec]]:
+) -> list[list[AnyVec]]:
     """DBSCAN clustering.
 
     https://en.wikipedia.org/wiki/DBSCAN
@@ -50,7 +51,7 @@ def dbscan(
     if rtree is None:
         rtree = RTree(points, max_node_size)
 
-    clusters: List[Set[AnyVec]] = []
+    clusters: list[set[AnyVec]] = []
     point_set = set(points)
     while len(point_set):
         point = point_set.pop()
@@ -70,8 +71,8 @@ def dbscan(
 
 
 def k_means(
-    points: List[AnyVec], k: int, max_iter: int = 10
-) -> List[List[AnyVec]]:
+    points: list[AnyVec], k: int, max_iter: int = 10
+) -> list[list[AnyVec]]:
     """K-means clustering.
 
     https://en.wikipedia.org/wiki/K-means_clustering
@@ -89,7 +90,7 @@ def k_means(
     """
 
     def classify(centroids: Iterable[AnyVec]):
-        new_clusters: Dict[AnyVec, List[AnyVec]] = defaultdict(list)
+        new_clusters: dict[AnyVec, list[AnyVec]] = defaultdict(list)
         tree = RTree(centroids)
         for point in points:
             nn, _ = tree.nearest_neighbor(point)
@@ -115,7 +116,7 @@ def k_means(
         raise ValueError(
             "invalid argument k: must be in range [2, len(points)-1]"
         )
-    clusters: Dict[AnyVec, List[AnyVec]] = classify(random.sample(points, k))
+    clusters: dict[AnyVec, list[AnyVec]] = classify(random.sample(points, k))
     for _ in range(max_iter):
         new_clusters = classify(recenter())
         if is_equal_clustering(clusters, new_clusters):
@@ -124,7 +125,7 @@ def k_means(
     return list(clusters.values())
 
 
-def average_intra_cluster_distance(clusters: List[List[AnyVec]]) -> float:
+def average_intra_cluster_distance(clusters: list[list[AnyVec]]) -> float:
     """Returns the average point-to-point intra cluster distance."""
 
     return statistics.mean(
@@ -136,7 +137,7 @@ def average_intra_cluster_distance(clusters: List[List[AnyVec]]) -> float:
     )
 
 
-def average_cluster_radius(clusters: List[List[AnyVec]]) -> float:
+def average_cluster_radius(clusters: list[list[AnyVec]]) -> float:
     """Returns the average cluster radius."""
 
     return statistics.mean(

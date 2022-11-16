@@ -1,6 +1,7 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
-from typing import Dict, Optional, Union
+from __future__ import annotations
+from typing import Optional, Union
 from collections import defaultdict
 from functools import lru_cache
 from .text_renderer import TextRenderer
@@ -17,13 +18,13 @@ class QtTextRenderer(TextRenderer[qg.QFont]):
 
         # Each font has its own text path cache
         # key is QFont.key()
-        self._text_path_cache: Dict[
-            str, Dict[str, qg.QPainterPath]
+        self._text_path_cache: dict[
+            str, dict[str, qg.QPainterPath]
         ] = defaultdict(dict)
 
         # Each font has its own font measurements cache
         # key is QFont.key()
-        self._font_measurement_cache: Dict[str, FontMeasurements] = {}
+        self._font_measurement_cache: dict[str, FontMeasurements] = {}
 
     @property
     def default_font(self) -> qg.QFont:
@@ -81,7 +82,7 @@ class QtTextRenderer(TextRenderer[qg.QFont]):
         return self.get_text_path(text, font).boundingRect()
 
     def get_text_line_width(
-        self, text: str, cap_height: float, font: FontFace = None
+        self, text: str, cap_height: float, font: Optional[FontFace] = None
     ) -> float:
         qfont = self.get_font_properties(font)
         scale = self.get_scale(cap_height, qfont)

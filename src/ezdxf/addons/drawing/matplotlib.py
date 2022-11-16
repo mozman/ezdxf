@@ -2,7 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 import math
-from typing import Iterable, TYPE_CHECKING, Optional, List, Tuple, Union
+from typing import Iterable, TYPE_CHECKING, Optional, Union
 import logging
 from os import PathLike
 
@@ -65,6 +65,7 @@ class MatplotlibBackend(Backend):
         use_text_cache: use caching for text path rendering
 
     """
+
     def __init__(
         self,
         ax: plt.Axes,
@@ -102,7 +103,7 @@ class MatplotlibBackend(Backend):
         self.ax.set_facecolor(color)
 
     def set_clipping_path(
-        self, path: ezdxf.path.Path = None, scale: float = 1.0
+        self, path: Optional[ezdxf.path.Path] = None, scale: float = 1.0
     ) -> bool:
         from matplotlib.transforms import Transform
 
@@ -153,7 +154,7 @@ class MatplotlibBackend(Backend):
 
     def draw_solid_lines(
         self,
-        lines: Iterable[Tuple[Vec3, Vec3]],
+        lines: Iterable[tuple[Vec3, Vec3]],
         properties: Properties,
     ):
         """Fast method to draw a bunch of solid lines with the same properties."""
@@ -211,7 +212,7 @@ class MatplotlibBackend(Backend):
         if self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
             return
         linewidth = 0
-        oriented_paths: List[ezdxf.path.Path] = []
+        oriented_paths: list[ezdxf.path.Path] = []
         for path in paths:
             try:
                 path = path.counter_clockwise()
@@ -290,14 +291,17 @@ class MatplotlibBackend(Backend):
             self.ax.add_patch(patch)
 
     def get_font_measurements(
-        self, cap_height: float, font: fonts.FontFace = None
+        self, cap_height: float, font: Optional[fonts.FontFace] = None
     ) -> FontMeasurements:
         return self._text_renderer.get_font_measurements(
             self._text_renderer.get_font_properties(font)
         ).scale_from_baseline(desired_cap_height=cap_height)
 
     def get_text_line_width(
-        self, text: str, cap_height: float, font: fonts.FontFace = None
+        self,
+        text: str,
+        cap_height: float,
+        font: Optional[fonts.FontFace] = None,
     ) -> float:
         if not text.strip():
             return 0
@@ -342,7 +346,7 @@ def _get_aspect_ratio(ax: plt.Axes) -> float:
 
 def _get_width_height(
     ratio: float, width: float, height: float
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     if width == 0.0 and height == 0.0:
         raise ValueError("invalid (width, height) values")
     if width == 0.0:
@@ -360,9 +364,9 @@ def qsave(
     fg: Optional[Color] = None,
     dpi: int = 300,
     backend: str = "agg",
-    config: Configuration = None,
-    filter_func: FilterFunc = None,
-    size_inches: Optional[Tuple[float, float]] = None,
+    config: Optional[Configuration] = None,
+    filter_func: Optional[FilterFunc] = None,
+    size_inches: Optional[tuple[float, float]] = None,
 ) -> None:
     """Quick and simplified render export by matplotlib.
 

@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import List, TypeVar, Tuple, Generic, TYPE_CHECKING, Dict, Set
+from typing import TypeVar, Generic, TYPE_CHECKING, Optional
 from abc import ABC, abstractmethod
 from .const import NULL_PTR_NAME, MIN_EXPORT_VERSION
 from .hdr import AcisHeader
@@ -42,7 +42,7 @@ class DataLoader(ABC):
         pass
 
     @abstractmethod
-    def read_int(self, skip_sat: int = None) -> int:
+    def read_int(self, skip_sat: Optional[int] = None) -> int:
         """There are sometimes additional int values in SAB files which are
         not present in SAT files, maybe reference counters e.g. vertex, coedge.
         """
@@ -57,7 +57,7 @@ class DataLoader(ABC):
         pass
 
     @abstractmethod
-    def read_vec3(self) -> Tuple[float, float, float]:
+    def read_vec3(self) -> tuple[float, float, float]:
         pass
 
     @abstractmethod
@@ -73,7 +73,7 @@ class DataLoader(ABC):
         pass
 
     @abstractmethod
-    def read_transform(self) -> List[float]:
+    def read_transform(self) -> list[float]:
         pass
 
 
@@ -120,20 +120,20 @@ class DataExporter(ABC):
         pass
 
     @abstractmethod
-    def write_transform(self, data: List[str]) -> None:
+    def write_transform(self, data: list[str]) -> None:
         pass
 
 
 class AbstractBuilder(Generic[T]):
     header: AcisHeader
-    bodies: List[T]
-    entities: List[T]
+    bodies: list[T]
+    entities: list[T]
 
     def reorder_records(self) -> None:
         if len(self.entities) == 0:
             return
-        header: List[T] = []
-        entities: List[T] = []
+        header: list[T] = []
+        entities: list[T] = []
         for e in self.entities:
             if e.name == "body":
                 header.append(e)
@@ -156,11 +156,11 @@ class EntityExporter(Generic[T]):
     def __init__(self, header: AcisHeader):
         self.header = header
         self.version = header.version
-        self._exported_entities: Dict[int, T] = {}
+        self._exported_entities: dict[int, T] = {}
         if self.header.has_asm_header:
             self.export(self.header.asm_header())
 
-    def export_records(self) -> List[T]:
+    def export_records(self) -> list[T]:
         return list(self._exported_entities.values())
 
     @abstractmethod
@@ -215,7 +215,7 @@ class EntityExporter(Generic[T]):
             return False
 
         entities = [entity]
-        done: Set[int] = set()
+        done: set[int] = set()
         while entities:
             next_entity = entities.pop(0)
             _export_record(next_entity)

@@ -13,7 +13,7 @@ from typing import (
     cast,
     TYPE_CHECKING,
     List,
-    Tuple,
+    Optional,
 )
 from datetime import datetime
 import struct
@@ -195,7 +195,7 @@ class SabEntity(AbstractEntity):
         name: str,
         attr_ptr: int = -1,
         id: int = -1,
-        data: SabRecord = None,
+        data: Optional[SabRecord] = None,
     ):
         self.name = name
         self.attr_ptr = attr_ptr
@@ -219,7 +219,7 @@ class SabDataLoader(DataLoader):
     def has_data(self) -> bool:
         return self.index <= len(self.data)
 
-    def read_int(self, skip_sat: int = None) -> int:
+    def read_int(self, skip_sat: Optional[int] = None) -> int:
         token = self.data[self.index]
         if token.tag == Tags.INT:
             self.index += 1
@@ -243,7 +243,7 @@ class SabDataLoader(DataLoader):
         token = self.data[self.index]
         if token.tag in (Tags.LOCATION_VEC, Tags.DIRECTION_VEC):
             self.index += 1
-            return cast(Tuple[float, float, float], token.value)
+            return cast(tuple[float, float, float], token.value)
         raise ParsingError(f"expected vector token, got {token}")
 
     def read_bool(self, true: str, false: str) -> bool:

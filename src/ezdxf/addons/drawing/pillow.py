@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Tuple, Optional
+from typing import Iterable, Optional
 import sys
 import enum
 import itertools
@@ -86,10 +86,11 @@ class PillowBackend(Backend):
               dense lines - has some issues
 
     """
+
     def __init__(
         self,
         region: AbstractBoundingBox,
-        image_size: Tuple[int, int] = None,
+        image_size: Optional[tuple[int, int]] = None,
         resolution: float = 1.0,
         margin: int = 10,
         dpi: int = 300,
@@ -177,7 +178,9 @@ class PillowBackend(Backend):
         self.clear()
 
     def set_clipping_path(
-        self, clipping_path: ezdxf.path.Path = None, scale: float = 1.0
+        self,
+        clipping_path: Optional[ezdxf.path.Path] = None,
+        scale: float = 1.0,
     ) -> bool:
         if clipping_path:
             bbox = ezdxf.path.bbox((clipping_path,), fast=True)
@@ -190,7 +193,7 @@ class PillowBackend(Backend):
     def width(self, lineweight: float) -> int:
         return max(int(lineweight * self.line_pixel_factor), 1)
 
-    def pixel_loc(self, point: AnyVec) -> Tuple[float, float]:
+    def pixel_loc(self, point: AnyVec) -> tuple[float, float]:
         # Source: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#coordinate-system
         # The Python Imaging Library uses a Cartesian pixel coordinate system,
         # with (0,0) in the upper left corner. Note that the coordinates refer
@@ -305,7 +308,7 @@ class PillowBackend(Backend):
             )
 
     def get_font_measurements(
-        self, cap_height: float, font: FontFace = None
+        self, cap_height: float, font: Optional[FontFace] = None
     ) -> FontMeasurements:
         if self.text_mode == TextMode.PLACEHOLDER:
             return MonospaceFont(cap_height).measurements
@@ -320,7 +323,7 @@ class PillowBackend(Backend):
         return prepare_string_for_rendering(text, dxftype)
 
     def get_text_line_width(
-        self, text: str, cap_height: float, font: FontFace = None
+        self, text: str, cap_height: float, font: Optional[FontFace] = None
     ) -> float:
         if not text.strip():
             return 0.0

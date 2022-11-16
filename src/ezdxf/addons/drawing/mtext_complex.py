@@ -95,7 +95,7 @@ class ColumnBackgroundRenderer(FrameRenderer):
         self,
         properties: Properties,
         backend: DrawInterface,
-        bg_properties: Properties = None,
+        bg_properties: Optional[Properties] = None,
         offset: float = 0,
         text_frame: bool = False,
     ):

@@ -1,6 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from typing import Optional, Set, List
+from __future__ import annotations
+from typing import Optional, Set
 from functools import partial
 from pathlib import Path
 import subprocess
@@ -54,8 +55,8 @@ SearchSections = Set[str]
 
 def searchable_entities(
     doc: DXFDocument, search_sections: SearchSections
-) -> List[Tags]:
-    entities: List[Tags] = []
+) -> list[Tags]:
+    entities: list[Tags] = []
     for name, section_entities in doc.sections.items():
         if name in search_sections:
             entities.extend(section_entities)  # type: ignore
@@ -71,8 +72,8 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
     def __init__(
         self,
         filename: str = "",
-        line: int = None,
-        handle: str = None,
+        line: Optional[int] = None,
+        handle: Optional[str] = None,
         resource_path: Path = Path("."),
     ):
         super().__init__()
@@ -82,8 +83,8 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
         self._dxf_tags_table = DXFTagsTable()
         self._current_entity: Optional[Tags] = None
         self._active_search: Optional[SearchIndex] = None
-        self._search_sections: Set[str] = set()
-        self._find_dialog: "FindDialog" = self.create_find_dialog()
+        self._search_sections: set[str] = set()
+        self._find_dialog: FindDialog = self.create_find_dialog()
         self._file_watcher = QFileSystemWatcher()
         self._exclusive_reload_dialog = True  # see ask_for_reloading() method
         self.history = EntityHistory()
@@ -468,7 +469,9 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
         if entity:
             self.set_current_entity(entity)
 
-    def set_current_entity(self, entity: Tags, select_line_number: int = None):
+    def set_current_entity(
+        self, entity: Tags, select_line_number: Optional[int] = None
+    ):
         if entity:
             self._current_entity = entity
             start_line_number = self.doc.get_line_number(entity)

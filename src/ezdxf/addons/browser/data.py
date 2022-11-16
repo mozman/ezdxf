@@ -19,7 +19,7 @@ __all__ = [
 
 
 class DXFDocument:
-    def __init__(self, sections: SectionDict = None):
+    def __init__(self, sections: Optional[SectionDict] = None):
         # Important: the section dict has to store the raw string tags
         # else an association of line numbers to entities is not possible.
         # Comment tags (999) are ignored, because the load_section_dict()

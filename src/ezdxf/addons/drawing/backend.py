@@ -84,13 +84,13 @@ class BackendInterface(ABC):
 
     @abstractmethod
     def get_font_measurements(
-        self, cap_height: float, font: "FontFace" = None
-    ) -> "FontMeasurements":
+        self, cap_height: float, font: Optional[FontFace] = None
+    ) -> FontMeasurements:
         raise NotImplementedError
 
     @abstractmethod
     def get_text_line_width(
-        self, text: str, cap_height: float, font: "FontFace" = None
+        self, text: str, cap_height: float, font: Optional[FontFace] = None
     ) -> float:
         raise NotImplementedError
 
@@ -103,7 +103,9 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def set_clipping_path(self, path: Path = None, scale: float = 1.0) -> bool:
+    def set_clipping_path(
+        self, path: Optional[Path] = None, scale: float = 1.0
+    ) -> bool:
         """Set the current clipping path.
         Returns True if a clipping path is supported.
         An empty path or None removes the clipping path.
@@ -136,7 +138,9 @@ class Backend(BackendInterface, metaclass=ABCMeta):
     def set_background(self, color: Color) -> None:
         raise NotImplementedError
 
-    def set_clipping_path(self, path: Path = None, scale: float = 1.0) -> bool:
+    def set_clipping_path(
+        self, path: Optional[Path] = None, scale: float = 1.0
+    ) -> bool:
         """Clipping path is not supported by default."""
         return False
 
@@ -154,8 +158,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
     def draw_solid_lines(
         self, lines: Iterable[tuple[Vec3, Vec3]], properties: Properties
     ) -> None:
-        """Fast method to draw a bunch of solid lines with the same properties.
-        """
+        """Fast method to draw a bunch of solid lines with the same properties."""
         # Must be overridden by the backend to gain a performance benefit.
         # This is the default implementation to ensure compatibility with
         # existing backends.
@@ -247,14 +250,14 @@ class Backend(BackendInterface, metaclass=ABCMeta):
 
     @abstractmethod
     def get_font_measurements(
-        self, cap_height: float, font: "FontFace" = None
+        self, cap_height: float, font: Optional[FontFace] = None
     ) -> "FontMeasurements":
         """Note: backends might want to cache the results of these calls"""
         raise NotImplementedError
 
     @abstractmethod
     def get_text_line_width(
-        self, text: str, cap_height: float, font: "FontFace" = None
+        self, text: str, cap_height: float, font: Optional[FontFace] = None
     ) -> float:
         """Get the width of a single line of text."""
         # https://stackoverflow.com/questions/32555015/how-to-get-the-visual-length-of-a-text-string-in-python

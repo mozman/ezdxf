@@ -261,7 +261,7 @@ class LayoutProperties:
             units = layout.units
         return LayoutProperties(layout.name, bg, units=units)
 
-    def set_colors(self, bg: Color, fg: Color = None) -> None:
+    def set_colors(self, bg: Color, fg: Optional[Color] = None) -> None:
         """Setup default layout colors.
 
         Required color format "#RRGGBB" or including alpha transparency
@@ -355,7 +355,9 @@ class RenderContext:
                     self.units = InsertUnits.Inches
         self.current_layout_properties.units = self.units  # default modelspace
 
-    def set_layer_properties_override(self, func: LayerPropsOverride = None):
+    def set_layer_properties_override(
+        self, func: Optional[LayerPropsOverride] = None
+    ):
         """The function `func` is called with the current layer properties as
         argument after resetting them, so the function can override the layer
         properties.
@@ -725,7 +727,7 @@ class RenderContext:
             return rgb_to_hex(self.plot_styles[aci].color)
 
     def resolve_linetype(
-        self, entity: DXFGraphic, *, resolved_layer: str = None
+        self, entity: DXFGraphic, *, resolved_layer: Optional[str] = None
     ) -> tuple[str, Sequence[float]]:
         """Resolve the linetype of `entity`. Returns a tuple of the linetype
         name as upper-case string and the simplified linetype pattern as tuple
@@ -763,7 +765,7 @@ class RenderContext:
         return name, pattern
 
     def resolve_lineweight(
-        self, entity: DXFGraphic, *, resolved_layer: str = None
+        self, entity: DXFGraphic, *, resolved_layer: Optional[str] = None
     ) -> float:
         """Resolve the lineweight of `entity` in mm.
 

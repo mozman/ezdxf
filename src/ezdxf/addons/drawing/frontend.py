@@ -111,7 +111,7 @@ class Frontend:
         ctx: RenderContext,
         out: BackendInterface,
         config: Configuration = Configuration.defaults(),
-        bbox_cache: ezdxf.bbox.Cache = None,
+        bbox_cache: Optional[ezdxf.bbox.Cache] = None,
     ):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
@@ -200,7 +200,7 @@ class Frontend:
         layout: Layout,
         finalize: bool = True,
         *,
-        filter_func: FilterFunc = None,
+        filter_func: Optional[FilterFunc] = None,
         layout_properties: Optional[LayoutProperties] = None,
     ) -> None:
         """Draw all entities of the given `layout`.
@@ -250,7 +250,7 @@ class Frontend:
         self,
         entities: Iterable[DXFGraphic],
         *,
-        filter_func: FilterFunc = None,
+        filter_func: Optional[FilterFunc] = None,
     ) -> None:
         """Draw the given `entities`. The method skips invisible entities
         and entities for which the given filter function returns ``False``.
@@ -487,7 +487,7 @@ class Frontend:
         entity: DXFGraphic,
         properties: Properties,
         *,
-        loops: List[Path] = None,
+        loops: Optional[list[Path]] = None,
     ) -> None:
         if properties.filling is None:
             return
@@ -797,7 +797,7 @@ class Designer:
         self,
         vp: Viewport,
         layout_ctx: RenderContext,
-        bbox_cache: ezdxf.bbox.Cache = None,
+        bbox_cache: Optional[ezdxf.bbox.Cache] = None,
     ) -> bool:
         """Draw the content of the given viewport current viewport.
         Returns ``False`` if the backend doesn't support viewports.
@@ -946,7 +946,7 @@ class Designer:
 
 
 def filter_vp_entities(
-    msp: Layout, limits: Sequence[float], bbox_cache: ezdxf.bbox.Cache = None
+    msp: Layout, limits: Sequence[float], bbox_cache: Optional[ezdxf.bbox.Cache] = None
 ) -> Iterator[DXFGraphic]:
     """Yields all DXF entities that need to be processed by the given viewport
     `limits`. The entities may be partially of even complete outside the viewport.
@@ -1008,7 +1008,7 @@ def _draw_entities(
     ctx: RenderContext,
     entities: Iterable[DXFGraphic],
     *,
-    filter_func: FilterFunc = None,
+    filter_func: Optional[FilterFunc] = None,
 ) -> None:
     if filter_func is not None:
         entities = filter(filter_func, entities)
