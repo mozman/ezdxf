@@ -1,8 +1,7 @@
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
-
 from __future__ import annotations
-from typing import Iterable, Iterator, List, Tuple, Sequence
+from typing import Iterable, Iterator, Sequence, Optional
 import ezdxf
 from ezdxf.math import Vec2, UVec, Vec3, safe_normal_vector, OCS
 
@@ -21,8 +20,8 @@ __all__ = [
 
 
 def mapbox_earcut_2d(
-    exterior: Iterable[UVec], holes: Iterable[Iterable[UVec]] = None
-) -> List[Sequence[Vec2]]:
+    exterior: Iterable[UVec], holes: Optional[Iterable[Iterable[UVec]]] = None
+) -> list[Sequence[Vec2]]:
     """Mapbox triangulation algorithm with hole support for 2D polygons.
 
     Implements a modified ear slicing algorithm, optimized by z-order
@@ -46,18 +45,18 @@ def mapbox_earcut_2d(
     .. _Steiner point: https://en.wikipedia.org/wiki/Steiner_point_(computational_geometry)
 
     """
-    points: List[Vec2] = Vec2.list(exterior)
+    points: list[Vec2] = Vec2.list(exterior)
     if len(points) == 0:
         return []
-    holes_: List[List[Vec2]] = []
+    holes_: list[list[Vec2]] = []
     if holes:
         holes_ = [Vec2.list(hole) for hole in holes]
     return earcut(points, holes_)
 
 
 def mapbox_earcut_3d(
-    exterior: Iterable[UVec], holes: Iterable[Iterable[UVec]] = None
-) -> Iterator[Tuple[Vec3, Vec3, Vec3]]:
+    exterior: Iterable[UVec], holes: Optional[Iterable[Iterable[UVec]]] = None
+) -> Iterator[tuple[Vec3, Vec3, Vec3]]:
     """Mapbox triangulation algorithm with hole support for flat
     3D polygons.
 
@@ -102,7 +101,7 @@ def mapbox_earcut_3d(
     ocs = OCS(safe_normal_vector(polygon))
     elevation = ocs.from_wcs(polygon[0]).z  # type: ignore
     exterior_ocs = list(ocs.points_from_wcs(polygon))
-    holes_ocs: List[List[Vec3]] = []
+    holes_ocs: list[list[Vec3]] = []
     if holes:
         holes_ocs = [list(ocs.points_from_wcs(hole)) for hole in holes]
 
