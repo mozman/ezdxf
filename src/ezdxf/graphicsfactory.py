@@ -1495,7 +1495,7 @@ class CreatorInterface:
         *,
         location: UVec = None,
         text: str = "<>",
-        text_rotation: float = None,
+        text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs=None,

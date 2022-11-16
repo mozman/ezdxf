@@ -1,18 +1,16 @@
 # Purpose: read and write AutoCAD CTB files
-# Copyright (c) 2010-2021, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
 # IMPORTANT: use only standard 7-Bit ascii code
-
+from __future__ import annotations
 from typing import (
     Union,
-    Tuple,
     Optional,
     BinaryIO,
     TextIO,
     Iterable,
-    List,
+    Iterator,
     Any,
-    Dict,
 )
 from abc import abstractmethod
 from io import StringIO
@@ -118,7 +116,10 @@ def get_bool(value: Union[str, bool]) -> bool:
 
 class PlotStyle:
     def __init__(
-        self, index: int, data: dict = None, parent: "PlotStyleTable" = None
+        self,
+        index: int,
+        data: Optional[dict] = None,
+        parent: Optional[PlotStyleTable] = None,
     ):
         data = data or {}
         self.parent = parent
@@ -149,7 +150,7 @@ class PlotStyle:
         self.fill_style = int(data.get("fill_style", FILL_STYLE_OBJECT))
 
     @property
-    def color(self) -> Optional[Tuple[int, int, int]]:
+    def color(self) -> Optional[tuple[int, int, int]]:
         """Get style color as ``(r, g, b)`` tuple or ``None``, if style has
         object color.
         """
@@ -159,7 +160,7 @@ class PlotStyle:
             return int2color(self._mode_color)[:3]
 
     @color.setter
-    def color(self, rgb: Tuple[int, int, int]) -> None:
+    def color(self, rgb: tuple[int, int, int]) -> None:
         """Set color as RGB values."""
         r, g, b = rgb
         # when defining a user-color, `mode_color` represents the real
@@ -395,9 +396,9 @@ class ColorDependentPlotStyles(PlotStyleTable):
         apply_factor: bool = False,
     ):
         super().__init__(description, scale_factor, apply_factor)
-        self._styles = [
+        self._styles: list[PlotStyle] = [
             PlotStyle(index, parent=self) for index in range(STYLE_COUNT)
-        ]  # type: List[PlotStyle]
+        ]
         self._styles.insert(
             0, PlotStyle(256)
         )  # 1-based array: insert dummy value for index 0
@@ -421,7 +422,7 @@ class ColorDependentPlotStyles(PlotStyleTable):
         """Iterable of all plot styles."""
         return iter(self._styles[1:])
 
-    def new_style(self, aci: int, data: dict = None) -> PlotStyle:
+    def new_style(self, aci: int, data: Optional[dict] = None) -> PlotStyle:
         """Set `aci` to new attributes defined by `data` dict.
 
         Args:
@@ -507,7 +508,7 @@ class NamedPlotStyles(PlotStyleTable):
                 "localized_name": "Normal",
             },
         )
-        self._styles = {"Normal": normal}  # type: Dict[str, PlotStyle]
+        self._styles: dict[str, PlotStyle] = {"Normal": normal}
 
     def __iter__(self) -> Iterable[str]:
         """Iterable of all plot style names."""
@@ -532,7 +533,7 @@ class NamedPlotStyles(PlotStyleTable):
         result.extend(sorted(keys))
         return iter(result)
 
-    def items(self) -> Iterable[Tuple[str, PlotStyle]]:
+    def items(self) -> Iterator[tuple[str, PlotStyle]]:
         """Iterable of all plot styles as (``name``, class:`PlotStyle`) tuples."""
         for key in self.keys():
             yield key, self._styles[key]
@@ -543,7 +544,10 @@ class NamedPlotStyles(PlotStyleTable):
             yield value
 
     def new_style(
-        self, name: str, data: dict = None, localized_name: str = None
+        self,
+        name: str,
+        data: Optional[dict] = None,
+        localized_name: Optional[str] = None,
     ) -> PlotStyle:
         """Create new class:`PlotStyle` `name` by attribute dict `data`, replaces
         existing class:`PlotStyle` objects.
@@ -745,14 +749,14 @@ class PlotStyleFileParser:
         while line_index < len(lines):
             name = get_name()
             value = get_value()
-            yield (name, value)
+            yield name, value
             skip_empty_lines()
 
     def get(self, name: str, default: Any) -> Any:
         return self.data.get(name, default)
 
 
-def int2color(color: int) -> Tuple[int, int, int, int]:
+def int2color(color: int) -> tuple[int, int, int, int]:
     """Convert color integer value from CTB-file to ``(r, g, b, color_type)
     tuple.
     """

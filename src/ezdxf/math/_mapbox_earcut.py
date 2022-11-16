@@ -48,7 +48,7 @@
 # A Steiner point is defined as a hole with a single point!
 #
 from __future__ import annotations
-from typing import List, TypeVar, Sequence
+from typing import List, TypeVar, Sequence, Optional
 from typing_extensions import Protocol
 
 import math
@@ -330,7 +330,7 @@ def eliminate_hole(hole: Node, outer_node: Node) -> Node:
     return filter_points(bridge, bridge.next)
 
 
-def filter_points(start: Node, end: Node = None) -> Node:
+def filter_points(start: Node, end: Optional[Node] = None) -> Node:
     """eliminate colinear or duplicate points"""
     if start is None:
         return start  # type: ignore

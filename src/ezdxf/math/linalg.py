@@ -1,6 +1,17 @@
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Tuple, List, Sequence, Union, Any, Iterator, cast
+from __future__ import annotations
+from typing import (
+    Iterable,
+    Tuple,
+    List,
+    Sequence,
+    Union,
+    Any,
+    Iterator,
+    cast,
+    Optional,
+)
 from functools import lru_cache
 from itertools import repeat
 import math
@@ -96,7 +107,10 @@ class Matrix:
     __slots__ = ("matrix", "abs_tol")
 
     def __init__(
-        self, items: Any = None, shape: Shape = None, matrix: MatrixData = None
+        self,
+        items: Any = None,
+        shape: Optional[Shape] = None,
+        matrix: Optional[MatrixData] = None,
     ):
         self.matrix: MatrixData = matrix  # type: ignore
         self.abs_tol: float = 1e-12

@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Tuple, Dict, Union, List, Mapping
+from typing import TYPE_CHECKING, Iterable, Union, Mapping, Optional
 import heapq
 
 if TYPE_CHECKING:
@@ -12,7 +12,7 @@ __all__ = ["ascending", "descending"]
 
 def ascending(
     entities: Iterable[DXFGraphic],
-    mapping: Union[Dict, Iterable[Tuple[str, str]]] = None,
+    mapping: Optional[Union[dict, Iterable[tuple[str, str]]]] = None,
 ) -> Iterable[DXFGraphic]:
     """Yields entities in ascending handle order.
 
@@ -35,7 +35,7 @@ def ascending(
 
 def descending(
     entities: Iterable[DXFGraphic],
-    mapping: Union[Dict, Iterable[Tuple[str, str]]] = None,
+    mapping: Optional[Union[dict, Iterable[tuple[str, str]]]] = None,
 ) -> Iterable[DXFGraphic]:
     """Yields entities in descending handle order.
 
@@ -64,7 +64,7 @@ def _sorted(heap) -> Iterable[DXFGraphic]:
 
 def _build(
     entities: Iterable[DXFGraphic], mapping: Mapping, order: int
-) -> List[Tuple[int, int, DXFGraphic]]:
+) -> list[tuple[int, int, DXFGraphic]]:
     """Returns a heap structure.
 
     Args:
@@ -84,7 +84,7 @@ def _build(
         # Example for 128-bit handles: "CADKitSamples\AEC Plan Elev Sample.dxf"
         return sort_handle_ if sort_handle_ else 0xFFFFFFFFFFFFFFFF
 
-    heap: List[Tuple[int, int, DXFGraphic]] = []
+    heap: list[tuple[int, int, DXFGraphic]] = []
     for index, entity in enumerate(entities):
         # DXFGraphic is not sortable, using the index as second value avoids
         # a key function and preserves explicit the source order for

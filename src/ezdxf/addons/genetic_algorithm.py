@@ -1,5 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import (
     List,
     Sequence,
@@ -575,7 +576,7 @@ class GeneticOptimizer:
 
     def execute(
         self,
-        feedback: Callable[["GeneticOptimizer"], bool] = None,
+        feedback: Optional[Callable[[GeneticOptimizer], bool]] = None,
         interval: float = 1.0,
     ) -> None:
         if self.is_executed:
