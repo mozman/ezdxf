@@ -25,6 +25,8 @@ Version 1.0.0rc1 - dev
 - BUGFIX: fix configuration defaults for pdsize and pdmode for the `drawing` add-on
 - BUGFIX: [#776](https://github.com/mozman/ezdxf/issues/776)
   fix swapped bold and italic flag for extended font data in STYLE entity 
+- BUGFIX: [#777](https://github.com/mozman/ezdxf/issues/777)
+  check for empty `TextPath` in function `get_text_line_width()` 
 
 Version 0.18.1 - 2022-09-03
 ---------------------------

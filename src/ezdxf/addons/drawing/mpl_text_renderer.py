@@ -114,9 +114,11 @@ class MplTextRenderer(TextRenderer[FontProperties]):
             path = self.get_text_path(text, font_properties)
         except (RuntimeError, ValueError):
             return 0.0
-        return max(x for x, y in path.vertices) * self.get_scale(
-            cap_height, font_properties
-        )
+        if len(path.vertices):
+            return max(x for x, y in path.vertices) * self.get_scale(
+                cap_height, font_properties
+            )
+        return 0.0
 
     def get_ezdxf_path(
         self, text: str, font: FontProperties
