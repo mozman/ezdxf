@@ -2,7 +2,7 @@
 # Copyright (c) 2016-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, List, Sequence, Tuple, Iterator
+from typing import TYPE_CHECKING, Iterable, Sequence, Iterator, Optional
 import math
 from ezdxf.math import Vec3, UVec
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
@@ -48,7 +48,7 @@ class SierpinskyPyramid:
 
     def _calc_vertices(
         self, location: UVec, length: float
-    ) -> List[UVec]:
+    ) -> list[UVec]:
         """
         Calculates the pyramid vertices.
 
@@ -81,7 +81,7 @@ class SierpinskyPyramid:
         else:
             raise ValueError("sides has to be 3 or 4.")
 
-    def faces(self) -> List[Sequence[int]]:
+    def faces(self) -> list[Sequence[int]]:
         """Returns list of pyramid faces. All pyramid vertices have the same
         order, so one faces list fits them all.
 
@@ -95,11 +95,11 @@ class SierpinskyPyramid:
 
     def render(
         self,
-        layout: "GenericLayoutType",
+        layout: GenericLayoutType,
         merge: bool = False,
         dxfattribs=None,
-        matrix: "Matrix44" = None,
-        ucs: "UCS" = None,
+        matrix: Optional[Matrix44] = None,
+        ucs: Optional[UCS] = None,
     ) -> None:
         """Renders the sierpinsky pyramid into layout, set `merge` to ``True``
         for rendering the whole sierpinsky pyramid into one MESH entity, set
@@ -147,7 +147,7 @@ def sierpinsky_pyramid(
     length: float = 1.0,
     level: int = 1,
     sides: int = 4,
-) -> List[Tuple[Vec3, float]]:
+) -> list[tuple[Vec3, float]]:
     """Build a Sierpinski pyramid.
 
     Args:
@@ -176,7 +176,7 @@ def sierpinsky_pyramid(
 
 def _sierpinsky_pyramid(
     location: Vec3, length: float = 1.0, sides: int = 4
-) -> List[Tuple[Vec3, float]]:
+) -> list[tuple[Vec3, float]]:
     if sides == 3:
         return sierpinsky_pyramid_3(location, length)
     elif sides == 4:
@@ -187,7 +187,7 @@ def _sierpinsky_pyramid(
 
 def sierpinsky_pyramid_4(
     location: Vec3, length: float = 1.0
-) -> List[Tuple[Vec3, float]]:
+) -> list[tuple[Vec3, float]]:
     """Build a 4-sided Sierpinski pyramid. Pyramid height = length of the base
     square!
 
@@ -212,7 +212,7 @@ def sierpinsky_pyramid_4(
 
 def sierpinsky_pyramid_3(
     location: Vec3, length: float = 1.0
-) -> List[Tuple[Vec3, float]]:
+) -> list[tuple[Vec3, float]]:
     """Build a 3-sided Sierpinski pyramid (tetraeder).
 
     Args:
