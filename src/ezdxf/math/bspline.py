@@ -26,6 +26,7 @@ from typing import (
     Dict,
     Tuple,
     Union,
+    Optional,
 )
 import math
 from ezdxf.math import (
@@ -94,7 +95,7 @@ __all__ = [
 
 def fit_points_to_cad_cv(
     fit_points: Iterable[UVec],
-    tangents: Iterable[UVec] = None,
+    tangents: Optional[Iterable[UVec]] = None,
     estimate: str = "5-p",
 ) -> "BSpline":
     """Returns a cubic :class:`BSpline` from fit points as close as possible
@@ -861,8 +862,8 @@ class BSpline:
         self,
         control_points: Iterable[UVec],
         order: int = 4,
-        knots: Iterable[float] = None,
-        weights: Iterable[float] = None,
+        knots: Optional[Iterable[float]] = None,
+        weights: Optional[Iterable[float]] = None,
     ):
         self._control_points = Vec3.tuple(control_points)
         count = len(self._control_points)

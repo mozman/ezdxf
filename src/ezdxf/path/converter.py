@@ -6,9 +6,7 @@ from typing import (
     Iterable,
     Iterator,
     Union,
-    Tuple,
     Optional,
-    Dict,
     Callable,
     Type,
     TypeVar,
@@ -284,7 +282,7 @@ def from_hatch(hatch: Hatch) -> Iterator[Path]:
 
 def from_hatch_boundary_path(
     boundary: AbstractBoundaryPath,
-    ocs: OCS = None,
+    ocs: Optional[OCS] = None,
     elevation: float = 0,
     offset: Vec3 = NULLVEC,  # ocs offset!
 ) -> "Path":
@@ -315,7 +313,7 @@ def from_hatch_boundary_path(
 
 
 def from_hatch_polyline_path(
-    polyline: PolylinePath, ocs: OCS = None, elevation: float = 0
+    polyline: PolylinePath, ocs: Optional[OCS] = None, elevation: float = 0
 ) -> Path:
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline path.
@@ -333,7 +331,7 @@ def from_hatch_polyline_path(
 
 def from_hatch_edge_path(
     edges: EdgePath,
-    ocs: OCS = None,
+    ocs: Optional[OCS] = None,
     elevation: float = 0,
 ) -> Path:
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
@@ -551,7 +549,7 @@ def to_lwpolylines(
             yield p
 
 
-def _get_ocs(extrusion: Vec3, reference_point: Vec3) -> Tuple[OCS, float]:
+def _get_ocs(extrusion: Vec3, reference_point: Vec3) -> tuple[OCS, float]:
     ocs = OCS(extrusion)
     elevation = ocs.from_wcs(reference_point).z  # type: ignore
     return ocs, elevation
@@ -761,7 +759,7 @@ def _polygon_converter(
 
     extrusion = Vec3(extrusion)
     reference_point = paths[0].start
-    _dxfattribs: Dict = dict(dxfattribs or {})
+    _dxfattribs: dict = dict(dxfattribs or {})
     if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
         paths = tools.transform_paths_to_ocs(paths, ocs)
@@ -917,8 +915,8 @@ def to_bsplines_and_vertices(
             curves.append(curve)
             prev = cmd.end
 
-    bezier: List = []
-    polyline: List = []
+    bezier: list = []
+    polyline: list = []
     for curve in curves:
         if isinstance(curve, tuple):
             if bezier:
@@ -1073,8 +1071,8 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
         codes.append(code)
         vertices.append((point.x, point.y))
 
-    vertices: List[Tuple[float, float]] = []
-    codes: List[MplCmd] = []
+    vertices: list[tuple[float, float]] = []
+    codes: list[MplCmd] = []
     for path in paths:
         add_command(MplCmd.MOVETO, path.start)
         for cmd in path.commands():
@@ -1109,7 +1107,7 @@ def multi_path_from_qpainter_path(qpath) -> Path:
     """
     # QPainterPath stores only cubic Bèzier curves
     path = Path()
-    vertices: List[Vec3] = []
+    vertices: list[Vec3] = []
     for index in range(qpath.elementCount()):
         element = qpath.elementAt(index)
         cmd = element.type
