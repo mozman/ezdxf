@@ -1,7 +1,7 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Sequence, Iterable, Optional, Tuple, List, NamedTuple
+from typing import Sequence, Iterable, Optional, Tuple, NamedTuple
 import abc
 import itertools
 import enum
@@ -326,7 +326,7 @@ class Cell(Box):  # ABC
         # not necessary
         pass
 
-    def final_location(self) -> Tuple[float, float]:
+    def final_location(self) -> tuple[float, float]:
         # Base cells do not render anything, therefore final location is not
         # important
         return 0, 0
@@ -339,7 +339,7 @@ class Glue(Cell):  # ABC
     EMPTY: Tuple = tuple()
 
     def __init__(
-        self, width: float, min_width: float = None, max_width: float = None
+        self, width: float, min_width: Optional[float] = None, max_width: Optional[float] = None
     ):
         self._width: float = float(width)
         self._min_width = float(min_width) if min_width else self._width
@@ -405,7 +405,7 @@ class ContentCell(Cell):  # ABC
         width: float,
         height: float,
         valign: CellAlignment = CellAlignment.BOTTOM,
-        renderer: ContentRenderer = None,
+        renderer: Optional[ContentRenderer] = None,
     ):
         self._final_x: Optional[float] = None
         self._final_y: Optional[float] = None
@@ -470,12 +470,12 @@ class Text(ContentCell):
         height: float,
         valign: CellAlignment = CellAlignment.BOTTOM,
         stroke: int = Stroke.NO_STROKE,
-        renderer: ContentRenderer = None,
+        renderer: Optional[ContentRenderer] = None,
     ):
         super().__init__(width, height, valign, renderer)
         self.stroke = int(stroke)  # public attribute read/write
 
-    def render(self, m: Matrix44 = None) -> None:
+    def render(self, m: Optional[Matrix44] = None) -> None:
         left, top = self.final_location()
         height = self.total_height
         bottom = top - height
@@ -517,7 +517,7 @@ def render_cells(cells: Iterable[Cell], m: Matrix44 = None) -> None:
             cell.render(m)
 
 
-def render_text_strokes(cells: List[Cell], m: Matrix44 = None) -> None:
+def render_text_strokes(cells: list[Cell], m: Matrix44 = None) -> None:
     """Render text cell strokes across glue cells."""
 
     # Should be called for container with horizontal arranged text cells
@@ -567,7 +567,7 @@ class Fraction(ContentCell):
         bottom: ContentCell,
         stacking: Stacking = Stacking.OVER,
         valign: CellAlignment = CellAlignment.BOTTOM,
-        renderer: ContentRenderer = None,
+        renderer: Optional[ContentRenderer] = None,
     ):
         super().__init__(0, 0, valign, renderer)
         self._stacking = stacking
@@ -641,7 +641,7 @@ _glue = (Space, NonBreakingSpace, Tabulator)
 _no_break = (Text, NonBreakingSpace)
 
 
-def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
+def normalize_cells(cells: Iterable[Cell]) -> list[Cell]:
     def replace_pending_nbsp_by_spaces():
         index = len(content) - 1
         while index >= 0:
@@ -687,9 +687,9 @@ class Container(Box):
     def __init__(
         self,
         width: Optional[float],
-        height: float = None,
-        margins: Sequence[float] = None,
-        renderer: ContentRenderer = None,
+        height: Optional[float] = None,
+        margins: Optional[Sequence[float]] = None,
+        renderer: Optional[ContentRenderer] = None,
     ):
         self._final_x: Optional[float] = None
         self._final_y: Optional[float] = None
@@ -822,7 +822,7 @@ class EmptyParagraph(Cell):
     def set_total_width(self, width: float):
         self._width = width
 
-    def distribute_content(self, height: float = None):
+    def distribute_content(self, height: Optional[float] = None):
         pass
 
     @property
@@ -833,13 +833,13 @@ class EmptyParagraph(Cell):
 class Paragraph(Container):
     def __init__(
         self,
-        width: float = None,  # defined by parent container
+        width: Optional[float] = None,  # defined by parent container
         align: ParagraphAlignment = ParagraphAlignment.LEFT,
-        indent: Tuple[float, float, float] = (0, 0, 0),
+        indent: tuple[float, float, float] = (0, 0, 0),
         line_spacing: float = 1,
-        margins: Sequence[float] = None,
-        tab_stops: Sequence[TabStop] = None,
-        renderer: ContentRenderer = None,
+        margins: Optional[Sequence[float]] = None,
+        tab_stops: Optional[Sequence[TabStop]] = None,
+        renderer: Optional[ContentRenderer] = None,
     ):
         super().__init__(width, None, margins, renderer)
         self._align = align
@@ -851,10 +851,10 @@ class Paragraph(Container):
         self._tab_stops = tab_stops or []
 
         # contains the raw and not distributed content:
-        self._cells: List[Cell] = []
+        self._cells: list[Cell] = []
 
         # contains the final distributed content:
-        self._lines: List[AbstractLine] = []
+        self._lines: list[AbstractLine] = []
 
         # space to next paragraph
         self._last_line_spacing = 0.0
@@ -916,7 +916,7 @@ class Paragraph(Container):
             height += last_line_height
         return height
 
-    def distribute_content(self, height: float = None) -> Optional[Paragraph]:
+    def distribute_content(self, height: Optional[float] = None) -> Optional[Paragraph]:
         """Distribute the raw content into lines. Returns the cells which do
         not fit as a new paragraph.
 
@@ -942,7 +942,7 @@ class Paragraph(Container):
             else:
                 raise ValueError(align)
 
-        cells: List[Cell] = normalize_cells(self._cells)
+        cells: list[Cell] = normalize_cells(self._cells)
         cells = group_non_breakable_cells(cells)
         # Delete raw content:
         self._cells.clear()
@@ -1028,7 +1028,7 @@ class Paragraph(Container):
         else:
             return None
 
-    def _new_paragraph(self, cells: List[Cell], first: bool) -> Paragraph:
+    def _new_paragraph(self, cells: list[Cell], first: bool) -> Paragraph:
         # First line of the paragraph included?
         indent_first = self._indent_first if first else self._indent_left
         indent = (indent_first, self._indent_left, self._indent_right)
@@ -1049,15 +1049,15 @@ class Column(Container):
     def __init__(
         self,
         width: float,
-        height: float = None,
+        height: Optional[float] = None,
         gutter: float = 0,
-        margins: Sequence[float] = None,
-        renderer: ContentRenderer = None,
+        margins: Optional[Sequence[float]] = None,
+        renderer: Optional[ContentRenderer] = None,
     ):
         super().__init__(width, height, margins, renderer)
         # spacing between columns
         self._gutter = gutter
-        self._paragraphs: List[Paragraph] = []
+        self._paragraphs: list[Paragraph] = []
 
     def clone_empty(self) -> Column:
         return self.__class__(
@@ -1125,8 +1125,8 @@ class Column(Container):
 
     def append_paragraphs(
         self, paragraphs: Iterable[Paragraph]
-    ) -> List[Paragraph]:
-        remainder: List[Paragraph] = []
+    ) -> list[Paragraph]:
+        remainder: list[Paragraph] = []
         for paragraph in paragraphs:
             if remainder:
                 remainder.append(paragraph)
@@ -1147,14 +1147,14 @@ class Layout(Container):
     def __init__(
         self,
         width: float,
-        height: float = None,
-        margins: Sequence[float] = None,
-        renderer: ContentRenderer = None,
+        height: Optional[float] = None,
+        margins: Optional[Sequence[float]] = None,
+        renderer: Optional[ContentRenderer] = None,
     ):
         super().__init__(width, height, margins, renderer)
         self._reference_column_width = width
         self._current_column = 0
-        self._columns: List[Column] = []
+        self._columns: list[Column] = []
 
     def __iter__(self):
         return iter(self._columns)
@@ -1295,10 +1295,10 @@ def linear_placing(cells: Sequence[Cell], x: float, y: float):
 
 class RigidConnection(ContentCell):
     def __init__(
-        self, cells: Iterable[Cell] = None, valign=CellAlignment.BOTTOM
+        self, cells: Optional[Iterable[Cell]] = None, valign=CellAlignment.BOTTOM
     ):
         super().__init__(0, 0, valign=valign)
-        self._cells: List[Cell] = list(cells) if cells else []
+        self._cells: list[Cell] = list(cells) if cells else []
 
     def __iter__(self):
         return iter(self._cells)
@@ -1311,7 +1311,7 @@ class RigidConnection(ContentCell):
     def total_height(self) -> float:
         return max(cell.total_height for cell in self._cells)
 
-    def render(self, m: Matrix44 = None) -> None:
+    def render(self, m: Optional[Matrix44] = None) -> None:
         render_cells(self._cells, m)
         render_text_strokes(self._cells, m)
 
@@ -1327,7 +1327,7 @@ class RigidConnection(ContentCell):
         )
 
 
-def group_non_breakable_cells(cells: List[Cell]) -> List[Cell]:
+def group_non_breakable_cells(cells: list[Cell]) -> list[Cell]:
     def append_rigid_content(s: int, e: int):
         _rigid_content = cells[s:e]
         if len(_rigid_content) > 1:
@@ -1384,7 +1384,7 @@ class AbstractLine(ContentCell):  # ABC
 
     def __init__(self, width: float):
         super().__init__(width=width, height=0, valign=CellAlignment.BOTTOM)
-        self._cells: List[LineCell] = []
+        self._cells: list[LineCell] = []
         self._current_offset: float = 0.0
 
     def __iter__(self):
@@ -1464,7 +1464,7 @@ class AbstractLine(ContentCell):  # ABC
 class LeftLine(AbstractLine):
     has_tab_support = True
 
-    def __init__(self, width: float, tab_stops: Sequence[TabStop] = None):
+    def __init__(self, width: float, tab_stops: Optional[Sequence[TabStop]] = None):
         super().__init__(width=width)
         self._tab_stops = tab_stops or []  # tab stops relative to line start
 
@@ -1553,7 +1553,7 @@ def content_width(cells: Iterable[Cell]) -> float:
     return sum(cell.total_width for cell in cells)
 
 
-def growable_cells(cells: Iterable[Cell]) -> List[Glue]:
+def growable_cells(cells: Iterable[Cell]) -> list[Glue]:
     growable = []
     for cell in cells:
         if isinstance(cell, Glue) and cell.can_grow:
@@ -1563,7 +1563,7 @@ def growable_cells(cells: Iterable[Cell]) -> List[Glue]:
     return growable
 
 
-def update_offsets(cells: List[LineCell], index: int) -> None:
+def update_offsets(cells: list[LineCell], index: int) -> None:
     count = len(cells)
     if count == 0 or index > count:
         return
@@ -1672,7 +1672,7 @@ class RightLine(NoTabLine):
 
 def shift_tab_stops(
     tab_stops: Iterable[TabStop], offset: float, right_border: float
-) -> List[TabStop]:
+) -> list[TabStop]:
     return [
         tab_stop
         for tab_stop in (TabStop(pos + offset, kind) for pos, kind in tab_stops)
