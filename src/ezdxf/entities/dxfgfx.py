@@ -188,7 +188,7 @@ class DXFGraphic(DXFEntity):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         """Adds subclass processing for 'AcDbEntity', requires previous base
         class processing by parent class.
@@ -617,7 +617,7 @@ class DXFGraphic(DXFEntity):
         self.dxf.discard("plotstyle_enum")
         self.dxf.discard("plotstyle_handle")
 
-    def _new_compound_entity(self, type_: str, dxfattribs: dict) -> DXFGraphic:
+    def _new_compound_entity(self, type_: str, dxfattribs) -> DXFGraphic:
         """Create and bind  new entity with same layout settings as `self`.
 
         Used by INSERT & POLYLINE to create appended DXF entities, don't use it
