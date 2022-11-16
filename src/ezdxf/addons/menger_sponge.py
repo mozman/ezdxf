@@ -2,7 +2,7 @@
 # Copyright (c) 2016-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple, Iterator, Sequence, Dict
+from typing import TYPE_CHECKING, Iterator, Sequence, Optional
 from ezdxf.math import Vec3, UVec
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer, MeshBuilder
 
@@ -121,7 +121,7 @@ class MengerSponge:
     __iter__ = vertices
 
     @staticmethod
-    def faces() -> List[List[int]]:
+    def faces() -> list[list[int]]:
         """Returns list of cube faces. All cube vertices have the same order, so
         one faces list fits them all.
 
@@ -130,11 +130,11 @@ class MengerSponge:
 
     def render(
         self,
-        layout: "GenericLayoutType",
+        layout: GenericLayoutType,
         merge: bool = False,
         dxfattribs=None,
-        matrix: "Matrix44" = None,
-        ucs: "UCS" = None,
+        matrix: Optional[Matrix44] = None,
+        ucs: Optional[UCS] = None,
     ) -> None:
         """Renders the menger sponge into layout, set `merge` to ``True`` for
         rendering the whole menger sponge into one MESH entity, set `merge` to
@@ -185,8 +185,8 @@ def remove_duplicate_inner_faces(mesh: MeshBuilder) -> MeshTransformer:
     return new_mesh
 
 
-def manifold_faces(faces: List[Sequence[int]]) -> Iterator[Sequence[int]]:
-    ledger: Dict[Tuple[int, ...], List[Sequence[int]]] = {}
+def manifold_faces(faces: list[Sequence[int]]) -> Iterator[Sequence[int]]:
+    ledger: dict[tuple[int, ...], list[Sequence[int]]] = {}
     for face in faces:
         key = tuple(sorted(face))
         try:
@@ -200,7 +200,7 @@ def manifold_faces(faces: List[Sequence[int]]) -> Iterator[Sequence[int]]:
 
 def _subdivide(
     location: UVec = (0.0, 0.0, 0.0), length: float = 1.0, kind: int = 0
-) -> List[Tuple[UVec, float]]:
+) -> list[tuple[UVec, float]]:
     """Divides a cube in sub-cubes and keeps only cubes determined by the
     building schema.
 
@@ -238,7 +238,7 @@ def _menger_sponge(
     length: float = 1.0,
     level: int = 1,
     kind: int = 0,
-) -> List[Tuple[Vec3, float]]:
+) -> list[tuple[Vec3, float]]:
     """Builds a menger sponge for given level.
 
     Args:
