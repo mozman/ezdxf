@@ -187,6 +187,7 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Typing :: Typed",
     ],
 )
 
