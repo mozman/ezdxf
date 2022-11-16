@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, List, Tuple, Sequence, Iterator, Callable
+from typing import Iterable, List, Tuple, Sequence, Iterator, Callable, Optional
 import math
 from enum import IntEnum
 from ezdxf.math import (
@@ -251,8 +251,8 @@ def arrow2(
 
 def ngon(
     count: int,
-    length: float = None,
-    radius: float = None,
+    length: Optional[float] = None,
+    radius: Optional[float] = None,
     rotation: float = 0.0,
     elevation: float = 0.0,
     close: bool = False,

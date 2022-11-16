@@ -1,6 +1,7 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+from typing import Optional
 import math
 from ezdxf.math import (
     cubic_bezier_arc_parameters,
@@ -159,9 +160,9 @@ def rect(
 
 def ngon(
     count: int,
-    length: float = None,
+    length: Optional[float] = None,
     radius: float = 1.0,
-    transform: Matrix44 = None,
+    transform: Optional[Matrix44] = None,
 ) -> Path:
     """Returns a `regular polygon <https://en.wikipedia.org/wiki/Regular_polygon>`_
     a :class:`Path` object, with the center at (0, 0, 0).
