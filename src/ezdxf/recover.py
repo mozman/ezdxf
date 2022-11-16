@@ -6,11 +6,9 @@ from typing import (
     TYPE_CHECKING,
     BinaryIO,
     Iterable,
-    List,
     Callable,
-    Tuple,
-    Dict,
     Union,
+    Optional,
 )
 import itertools
 import re
@@ -57,9 +55,9 @@ logger = logging.getLogger("ezdxf")
 
 def readfile(
     filename: Union[str, Path], errors: str = "surrogateescape"
-) -> Tuple["Drawing", "Auditor"]:
+) -> tuple[Drawing, Auditor]:
     """Read a DXF document from file system similar to :func:`ezdxf.readfile`,
-    but this function will repair as much flaws as possible, runs the required
+    but this function will repair as many flaws as possible, runs the required
     audit process automatically the DXF document and the :class:`Auditor`.
 
     Args:
@@ -84,10 +82,10 @@ def readfile(
 
 def read(
     stream: BinaryIO, errors: str = "surrogateescape"
-) -> Tuple["Drawing", "Auditor"]:
+) -> tuple[Drawing, Auditor]:
     """Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
     but this function will detect the text encoding automatically and repair
-    as much flaws as possible, runs the required audit process afterwards
+    as many flaws as possible, runs the required audit process afterwards
     and returns the DXF document and the :class:`Auditor`.
 
     Args:
@@ -109,7 +107,7 @@ def read(
 
 def explore(
     filename: Union[str, Path], errors: str = "ignore"
-) -> Tuple["Drawing", "Auditor"]:
+) -> tuple[Drawing, Auditor]:
     """Read a DXF document from file system similar to :func:`readfile`,
     but this function will use a special tag loader, which synchronise the tag
     stream if invalid tags occur. This function is intended to load corrupted
@@ -139,7 +137,7 @@ def explore(
     return doc, auditor
 
 
-def _load_and_audit_document(recover_tool) -> Tuple["Drawing", "Auditor"]:
+def _load_and_audit_document(recover_tool) -> tuple[Drawing, Auditor]:
     from ezdxf.document import Drawing
 
     doc = Drawing()
@@ -158,7 +156,7 @@ def _load_and_audit_document(recover_tool) -> Tuple["Drawing", "Auditor"]:
 class Recover:
     """Loose coupled recovering tools."""
 
-    def __init__(self, loader: Callable = None):
+    def __init__(self, loader: Optional[Callable] = None):
         # different tag loading strategies can be used:
         #  - bytes_loader(): expects a valid low level structure
         #  - synced_bytes_loader(): loads everything which looks like a tag
@@ -169,8 +167,8 @@ class Recover:
         self.section_dict: "SectionDict" = dict()
 
         # Store error messages from low level processes
-        self.errors: List[Tuple[int, str]] = []
-        self.fixes: List[Tuple[int, str]] = []
+        self.errors: list[tuple[int, str]] = []
+        self.fixes: list[tuple[int, str]] = []
 
         # Detected DXF version
         self.dxfversion = const.DXF12
@@ -179,9 +177,9 @@ class Recover:
     def run(
         cls,
         stream: BinaryIO,
-        loader: Callable = None,
+        loader: Optional[Callable] = None,
         errors: str = "surrogateescape",
-    ) -> "Recover":
+    ) -> Recover:
         """Execute the recover process."""
         recover_tool = Recover(loader)
         tags = recover_tool.load_tags(stream, errors)
@@ -207,7 +205,7 @@ class Recover:
             stream, self.tag_loader, messages=self.errors, errors=errors
         )
 
-    def rebuild_sections(self, tags: Iterable[DXFTag]) -> List[List[DXFTag]]:
+    def rebuild_sections(self, tags: Iterable[DXFTag]) -> list[list[DXFTag]]:
         """Collect tags between SECTION and ENDSEC or next SECTION tag
         as list of DXFTag objects, collects tags outside of sections
         as an extra section.
@@ -278,9 +276,9 @@ class Recover:
                 )
                 orphans.append(tag)
 
-        orphans: List[DXFTag] = []
-        sections: List[List[DXFTag]] = []
-        collector: List[DXFTag] = []
+        orphans: list[DXFTag] = []
+        sections: list[list[DXFTag]] = []
+        collector: list[DXFTag] = []
         inside_section = False
         for tag in tags:
             code, value = tag
@@ -292,7 +290,7 @@ class Recover:
         sections.append(orphans)
         return sections
 
-    def load_section_dict(self, sections: List[List[DXFTag]]) -> None:
+    def load_section_dict(self, sections: list[list[DXFTag]]) -> None:
         """Merge sections of same type."""
 
         def add_section(name: str, tags) -> None:
@@ -301,12 +299,12 @@ class Recover:
             else:
                 section_dict[name] = tags
 
-        def _build_section_dict(d: Dict) -> None:
+        def _build_section_dict(d: dict) -> None:
             for name, section in d.items():
                 if name in const.MANAGED_SECTIONS:
                     self.section_dict[name] = list(group_tags(section, 0))
 
-        def _remove_unsupported_sections(d: Dict):
+        def _remove_unsupported_sections(d: dict):
             for name in ("CLASSES", "OBJECTS", "ACDSDATA"):
                 if name in d:
                     del d[name]
@@ -350,7 +348,7 @@ class Recover:
             _remove_unsupported_sections(section_dict)
         _build_section_dict(section_dict)
 
-    def rebuild_tables(self, tables: List[Tags]) -> List[Tags]:
+    def rebuild_tables(self, tables: list[Tags]) -> list[Tags]:
         """Rebuild TABLES section."""
 
         # Note: the recover module does not report invalid placed table entries,
@@ -404,7 +402,7 @@ class Recover:
         return tables
 
     def rescue_orphaned_header_vars(
-        self, header: List[DXFTag], orphans: Iterable[DXFTag]
+        self, header: list[DXFTag], orphans: Iterable[DXFTag]
     ) -> None:
         var_name = None
         for tag in orphans:
@@ -416,7 +414,7 @@ class Recover:
                 header.append(tag)
                 var_name = None
 
-    def check_entities(self, entities: List[Tags]) -> Iterable[Tags]:
+    def check_entities(self, entities: list[Tags]) -> Iterable[Tags]:
         for entity in entities:
             _, dxftype = entity[0]
             if dxftype in EXCLUDE_STRUCTURE_CHECK:
@@ -449,7 +447,7 @@ class Recover:
             )
 
 
-def _detect_dxf_version(header: List) -> str:
+def _detect_dxf_version(header: list) -> str:
     next_is_dxf_version = False
     for tag in header:
         if next_is_dxf_version:
@@ -470,7 +468,7 @@ def _is_rootdict(entity: Tags) -> bool:
     return any(tag == (3, "ACAD_GROUP") for tag in entity)
 
 
-def _find_rootdict(objects: List[Tags]) -> Tuple[int, Tags]:
+def _find_rootdict(objects: list[Tags]) -> tuple[int, Tags]:
     for index, entity in enumerate(objects):
         if _is_rootdict(entity):
             return index, entity
@@ -479,8 +477,8 @@ def _find_rootdict(objects: List[Tags]) -> Tuple[int, Tags]:
 
 def safe_tag_loader(
     stream: BinaryIO,
-    loader: Callable = None,
-    messages: List = None,
+    loader: Optional[Callable] = None,
+    messages: Optional[list] = None,
     errors: str = "surrogateescape",
 ) -> Iterable[DXFTag]:
     """Yields :class:``DXFTag`` objects from a bytes `stream`
@@ -680,7 +678,7 @@ def detect_encoding(tags: Iterable[DXFTag]) -> str:
 def byte_tag_compiler(
     tags: Iterable[DXFTag],
     encoding=const.DEFAULT_ENCODING,
-    messages: List = None,
+    messages: Optional[list] = None,
     errors: str = "surrogateescape",
 ) -> Iterable[DXFTag]:
     """Compiles DXF tag values imported by bytes_loader() into Python types.
