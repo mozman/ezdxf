@@ -13,18 +13,14 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf import colors as clr
+from ezdxf.lldxf import const
 from ezdxf.lldxf.const import (
     DXF12,
     DXF2000,
     DXF2004,
     DXF2007,
     DXF2013,
-    DXFValueError,
-    DXFKeyError,
-    DXFTableEntryError,
     SUBCLASS_MARKER,
-    DXFInvalidLineType,
-    DXFStructureError,
     TRANSPARENCY_BYBLOCK,
 )
 from ezdxf.math import OCS, Matrix44, UVec
@@ -227,7 +223,7 @@ class DXFGraphic(DXFEntity):
         """
         if self.doc:
             if self.dxf.linetype not in self.doc.linetypes:
-                raise DXFInvalidLineType(
+                raise const.DXFInvalidLineType(
                     f'Linetype "{self.dxf.linetype}" not defined.'
                 )
 
@@ -366,11 +362,11 @@ class DXFGraphic(DXFEntity):
             return None
         try:
             return self.doc.layouts.get_layout_by_key(self.dxf.owner)
-        except DXFKeyError:
+        except const.DXFKeyError:
             pass
         try:
             return self.doc.blocks.get_block_layout_by_handle(self.dxf.owner)
-        except DXFTableEntryError:
+        except const.DXFTableEntryError:
             return None
 
     def unlink_from_layout(self) -> None:
@@ -415,7 +411,7 @@ class DXFGraphic(DXFEntity):
         if source is None:
             source = self.get_layout()
             if source is None:
-                raise DXFValueError("Source layout for entity not found.")
+                raise const.DXFValueError("Source layout for entity not found.")
         source.move_to_layout(self, layout)
 
     def copy_to_layout(self, layout: BaseLayout) -> DXFEntity:
@@ -432,7 +428,7 @@ class DXFGraphic(DXFEntity):
 
         """
         if self.doc != layout.doc:
-            raise DXFStructureError(
+            raise const.DXFStructureError(
                 "Copying between different DXF drawings is not supported."
             )
 

@@ -1,12 +1,13 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
 
-from ezdxf.entities.dxfgfx import DXFGraphic, DXFValueError, is_graphic_entity
+from ezdxf.entities.dxfgfx import DXFGraphic, is_graphic_entity
 from ezdxf.math import Matrix44
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.entities.dxfns import recover_graphic_attributes
+from ezdxf.lldxf.const import DXFValueError
 
 
 @pytest.fixture
