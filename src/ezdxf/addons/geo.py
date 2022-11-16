@@ -1,4 +1,4 @@
-#  Copyright (c) 2020-2021, Manfred Moitzi
+#  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
 """
 Implementation of the `__geo_interface__`: https://gist.github.com/sgillies/2217756
@@ -10,14 +10,12 @@ and examples : https://tools.ietf.org/html/rfc7946#appendix-A
 
 """
 from typing import (
-    Dict,
     Iterable,
-    List,
     Union,
     cast,
     Callable,
     Sequence,
-    Tuple,
+    Optional,
 )
 import numbers
 import copy
@@ -149,7 +147,7 @@ class GeoProxy:
 
     """
 
-    def __init__(self, geo_mapping: Dict, places: int = 6):
+    def __init__(self, geo_mapping: dict, places: int = 6):
         self._root = geo_mapping
         self.places = places
 
@@ -167,7 +165,7 @@ class GeoProxy:
         return cls(parse(geo_mapping))
 
     @property
-    def root(self) -> Dict:
+    def root(self) -> dict:
         return self._root
 
     @property
@@ -182,13 +180,13 @@ class GeoProxy:
     copy = __copy__
 
     @property
-    def __geo_interface__(self) -> Dict:
+    def __geo_interface__(self) -> dict:
         """Returns the ``__geo_interface__`` compatible mapping as
         :class:`dict`.
         """
         return _rebuild(self._root, self.places)
 
-    def __iter__(self) -> Iterable[Dict]:
+    def __iter__(self) -> Iterable[dict]:
         """Iterate over all geo content objects.
 
         Yields only "Point", "LineString", "Polygon", "MultiPoint",
@@ -256,7 +254,7 @@ class GeoProxy:
         if not check(self._root):
             self._root = {}
 
-    def globe_to_map(self, func: TFunc = None) -> None:
+    def globe_to_map(self, func: Optional[TFunc] = None) -> None:
         """Transform all coordinates recursive from globe representation
         in longitude and latitude in decimal degrees into 2D map representation
         in meters.
@@ -278,7 +276,7 @@ class GeoProxy:
             func = wgs84_4326_to_3395
         self.apply(func)
 
-    def map_to_globe(self, func: TFunc = None) -> None:
+    def map_to_globe(self, func: Optional[TFunc] = None) -> None:
         """Transform all coordinates recursive from 2D map representation in
         meters into globe representation as longitude and latitude in decimal
         degrees.
@@ -349,7 +347,7 @@ class GeoProxy:
 
         """
 
-        def process(entity: Dict):
+        def process(entity: dict):
             def transform(coords):
                 if isinstance(coords, Vec3):
                     return func(coords)
@@ -431,7 +429,7 @@ class GeoProxy:
             polyline.append_points(vertices, format="xy")
             return polyline
 
-        def polygon_(exterior: List, holes: List) -> Iterable[DXFGraphic]:
+        def polygon_(exterior: list, holes: list) -> Iterable[DXFGraphic]:
             if polygon & 4:  # MPOLYGON
                 yield mpolygon_(exterior, holes)
                 # the following DXF entities do not support the
@@ -492,7 +490,7 @@ class GeoProxy:
             yield from entity(_mapping.get(TYPE), _mapping.get(COORDINATES))
 
 
-def parse(geo_mapping: Dict) -> Dict:
+def parse(geo_mapping: dict) -> dict:
     """Parse ``__geo_interface__`` convert all coordinates into
     :class:`Vec3` objects, Polygon['coordinates'] is always a
     tuple (exterior, holes), holes maybe an empty list.
@@ -580,13 +578,13 @@ def _parse_polygon(coordinates: Sequence) -> Sequence:
     return Vec3.list(exterior), [Vec3.list(h) for h in holes]
 
 
-def _rebuild(geo_mapping: Dict, places: int = 6) -> Dict:
+def _rebuild(geo_mapping: dict, places: int = 6) -> dict:
     """Returns ``__geo_interface__`` compatible mapping as :class:`dict` from
     compiled internal representation.
 
     """
 
-    def pnt(v: Vec3) -> Tuple[float, float]:
+    def pnt(v: Vec3) -> tuple[float, float]:
         return round(v.x, places), round(v.y, places)
 
     def _polygon(exterior, holes):
@@ -628,7 +626,7 @@ def mapping(
     entity: DXFGraphic,
     distance: float = MAX_FLATTENING_DISTANCE,
     force_line_string: bool = False,
-) -> Dict:
+) -> dict:
     """Create the compiled ``__geo_interface__`` mapping as :class:`dict`
     for the given DXF `entity`, all coordinates are :class:`Vec3` objects and
     represents "Polygon" always as tuple (exterior, holes) even without holes.
@@ -679,7 +677,7 @@ def mapping(
 
 
 def _line_string_or_polygon_mapping(
-    points: List[Vec3], force_line_string: bool
+    points: list[Vec3], force_line_string: bool
 ):
     len_ = len(points)
     if len_ < 2:
@@ -695,12 +693,12 @@ def _line_string_or_polygon_mapping(
 
 def _hatch_as_polygon(
     hatch: DXFPolygon, distance: float, force_line_string: bool
-) -> Dict:
-    def boundary_to_vertices(boundary) -> List[Vec3]:
+) -> dict:
+    def boundary_to_vertices(boundary) -> list[Vec3]:
         path = from_hatch_boundary_path(boundary, ocs, elevation)
         return path_to_vertices(path)
 
-    def path_to_vertices(path) -> List[Vec3]:
+    def path_to_vertices(path) -> list[Vec3]:
         path.close()
         return list(path.flattening(distance))
 
@@ -768,7 +766,7 @@ def collection(
     entities: Iterable[DXFGraphic],
     distance: float = MAX_FLATTENING_DISTANCE,
     force_line_string: bool = False,
-) -> Dict:
+) -> dict:
     """Create the ``__geo_interface__`` mapping as :class:`dict` for the
     given DXF `entities`, see https://gist.github.com/sgillies/2217756
 
@@ -794,7 +792,7 @@ def collection(
         return join_multi_single_type_mappings(m)
 
 
-def line_string_mapping(points: List[Vec3]) -> Dict:
+def line_string_mapping(points: list[Vec3]) -> dict:
     """Returns a "LineString" mapping.
 
     .. code::
@@ -811,14 +809,14 @@ def line_string_mapping(points: List[Vec3]) -> Dict:
     return {TYPE: LINE_STRING, COORDINATES: points}
 
 
-def is_linear_ring(points: List[Vec3]):
+def is_linear_ring(points: list[Vec3]):
     return points[0].isclose(points[-1])
 
 
 # GeoJSON : A linear ring MUST follow the right-hand rule with respect
 # to the area it bounds, i.e., exterior rings are counterclockwise, and
 # holes are clockwise.
-def linear_ring(points: List[Vec3], ccw=True) -> List[Vec3]:
+def linear_ring(points: list[Vec3], ccw=True) -> list[Vec3]:
     """Return `points` as linear ring (last vertex == first vertex),
     argument `ccw` defines the winding orientation, ``True`` for counter-clock
     wise and ``False`` for clock wise.
@@ -839,7 +837,7 @@ def linear_ring(points: List[Vec3], ccw=True) -> List[Vec3]:
     return points
 
 
-def polygon_mapping(points: List[Vec3], holes: List[List[Vec3]]) -> Dict:
+def polygon_mapping(points: list[Vec3], holes: list[list[Vec3]]) -> dict:
     """Returns a "Polygon" mapping.
 
     .. code::
@@ -877,7 +875,7 @@ def polygon_mapping(points: List[Vec3], holes: List[List[Vec3]]) -> Dict:
     }
 
 
-def join_multi_single_type_mappings(geometries: Iterable[Dict]) -> Dict:
+def join_multi_single_type_mappings(geometries: Iterable[dict]) -> dict:
     """Returns multiple geometries as a "MultiPoint", "MultiLineString" or
     "MultiPolygon" mapping.
     """
@@ -895,7 +893,7 @@ def join_multi_single_type_mappings(geometries: Iterable[Dict]) -> Dict:
         return {TYPE: "Multi" + tuple(types)[0], COORDINATES: data}
 
 
-def geometry_collection_mapping(geometries: Iterable[Dict]) -> Dict:
+def geometry_collection_mapping(geometries: Iterable[dict]) -> dict:
     """Returns multiple geometries as a "GeometryCollection" mapping."""
     return {TYPE: GEOMETRY_COLLECTION, GEOMETRIES: list(geometries)}
 
@@ -984,7 +982,7 @@ def dms2dd(d: float, m: float = 0, s: float = 0) -> float:
     return dd
 
 
-def dd2dms(dd: float) -> Tuple[float, float, float]:
+def dd2dms(dd: float) -> tuple[float, float, float]:
     """Convert decimal degrees into degree, minutes, seconds."""
     m, s = divmod(dd * 3600, 60)
     d, m = divmod(m, 60)
