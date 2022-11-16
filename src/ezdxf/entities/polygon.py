@@ -50,12 +50,12 @@ class DXFPolygon(DXFGraphic):
 
     LOAD_GROUP_CODES: Dict[int, Union[str, List[str]]] = {}
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.paths = BoundaryPaths()
         self.pattern: Optional[Pattern] = None
         self.gradient: Optional[Gradient] = None
-        self.seeds = []  # not supported/exported by MPOLYGON
+        self.seeds: List = []  # not supported/exported by MPOLYGON
 
     def _copy_data(self, entity: DXFEntity) -> None:
         """Copy paths, pattern, gradient, seeds."""

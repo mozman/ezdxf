@@ -488,7 +488,7 @@ class RenderEngine:
     def add_block_content(self) -> None:
         block = self.context.block
         assert block is not None
-        block_name = _get_block_name(block.block_record_handle, self.doc)
+        block_name = _get_block_name(block.block_record_handle, self.doc)  # type: ignore
         if block_name is None:
             return
         location = block.insert  # in WCS, really funny for an OCS entity!
@@ -836,7 +836,7 @@ class MultiLeaderBuilder(abc.ABC):
         doc = multileader.doc
         assert doc is not None, "valid DXF document required"
         handle = multileader.dxf.style_handle
-        style: MLeaderStyle = doc.entitydb.get(handle)
+        style: MLeaderStyle = doc.entitydb.get(handle)  # type: ignore
         if style is None:
             raise ValueError(f"invalid MLEADERSTYLE handle #{handle}")
         self._doc: "Drawing" = doc
@@ -1504,7 +1504,7 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         assert isinstance(block, BlockData), "undefined BLOCK content"
 
         handle = block.block_record_handle
-        block_record = self._doc.entitydb.get(handle)
+        block_record = self._doc.entitydb.get(handle)  # type: ignore
         if block_record is None:
             raise ValueError(f"invalid BLOCK_RECORD handle #{handle}")
         name = block_record.dxf.name

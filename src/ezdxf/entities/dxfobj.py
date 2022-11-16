@@ -246,7 +246,7 @@ class SortEntsTable(DXFObject):
     DXFTYPE = "SORTENTSTABLE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_sort_ents_table)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.table: dict[str, str] = dict()
 

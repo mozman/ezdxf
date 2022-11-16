@@ -16,7 +16,7 @@ class OLE2Frame(DXFGraphic):
     DXFTYPE = "OLE2FRAME"
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.acdb_ole2frame: Optional["Tags"] = None
 

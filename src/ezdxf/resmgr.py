@@ -7,7 +7,8 @@ Resource management module for transferring DXF resources between documents.
 Planning state!!!
 
 """
-from typing import Dict, List, Iterator, cast, Callable, Iterable
+from __future__ import annotations
+from typing import Iterator, cast, Callable, Iterable
 from ezdxf.respkg import RTP
 from ezdxf.entities import DXFEntity, factory
 from ezdxf.document import Drawing
@@ -75,12 +76,12 @@ class Layer(DXFEntity):
 class _ResourcePackage:
     def __init__(self, entity: DXFEntity):
         self.entity = entity
-        self._resources: List[List[DXFEntity]] = list()
+        self._resources: list[list[DXFEntity]] = list()
 
-    def push(self, resources: List[DXFEntity]):
+    def push(self, resources: list[DXFEntity]):
         self._resources.append(resources)
 
-    def pop(self) -> List[DXFEntity]:
+    def pop(self) -> list[DXFEntity]:
         return self._resources.pop()
 
     def resources(self) -> Iterator[DXFEntity]:
@@ -95,8 +96,8 @@ class _ResourcePackage:
 
 
 class ResourceTransferManager:
-    def __init__(self):
-        self.packages: Dict[int, _ResourcePackage] = dict()
+    def __init__(self) -> None:
+        self.packages: dict[int, _ResourcePackage] = dict()
         self.copy_machine = CopyMachine()
 
     def register(self, entity: DXFEntity):
@@ -139,9 +140,9 @@ class ResourceTransferManager:
 
 
 class CopyMachine:
-    def __init__(self):
-        self._copies: Dict[int, DXFEntity] = dict()
-        self._originals: Dict[int, DXFEntity] = dict()
+    def __init__(self) -> None:
+        self._copies: dict[int, DXFEntity] = dict()
+        self._originals: dict[int, DXFEntity] = dict()
 
     @property
     def copies(self) -> Iterable[DXFEntity]:

@@ -121,6 +121,9 @@ class BoundaryPaths:
     def __getitem__(self, item):
         return self.paths[item]
 
+    def __iter__(self):
+        return iter(self.paths)
+
     @classmethod
     def load_tags(cls, tags: Tags) -> BoundaryPaths:
         paths = []
@@ -564,7 +567,7 @@ def export_source_boundary_objects(
 class PolylinePath(AbstractBoundaryPath):
     type = BoundaryPathType.POLYLINE
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.path_type_flags: int = const.BOUNDARY_PATH_POLYLINE
         self.is_closed = False
         # List of 2D coordinates with bulge values (x, y, bulge);
@@ -699,7 +702,7 @@ class PolylinePath(AbstractBoundaryPath):
 class EdgePath(AbstractBoundaryPath):
     type = BoundaryPathType.EDGE
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.path_type_flags = const.BOUNDARY_PATH_DEFAULT
         self.edges: List[AbstractEdge] = []
         self.source_boundary_objects = []
@@ -979,7 +982,7 @@ class ArcEdge(AbstractEdge):
     type = EdgeType.ARC  # 2021-05-31: deprecated use type
     EDGE_TYPE = "ArcEdge"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.center = Vec2(0.0, 0.0)
         self.radius: float = 1.0
         # Start- and end angles are always stored in counter-clockwise order!
@@ -1082,7 +1085,7 @@ class EllipseEdge(AbstractEdge):
     EDGE_TYPE = "EllipseEdge"  # 2021-05-31: deprecated use type
     type = EdgeType.ELLIPSE
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.center = Vec2((0.0, 0.0))
         # Endpoint of major axis relative to center point (in OCS)
         self.major_axis = Vec2((1.0, 0.0))
@@ -1230,7 +1233,7 @@ class SplineEdge(AbstractEdge):
     EDGE_TYPE = "SplineEdge"  # 2021-05-31: deprecated use type
     type = EdgeType.SPLINE
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.degree: int = 3  # code = 94
         self.rational: int = 0  # code = 73
         self.periodic: int = 0  # code = 74

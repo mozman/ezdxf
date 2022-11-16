@@ -58,7 +58,7 @@ class ImageBase(DXFGraphic):
     USE_CLIPPING_BOUNDARY = 4
     USE_TRANSPARENCY = 8
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         # Boundary/Clipping path coordinates:
         # 0/0 is in the Left/Top corner of the image!
@@ -313,7 +313,7 @@ class Image(ImageBase):
     _SUBCLASS_NAME = acdb_image.name  # type: ignore
     DEFAULT_ATTRIBS = {"layer": "0", "flags": 3}
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._boundary_path: List[Vec2] = []
         self._image_def: Optional[ImageDef] = None
@@ -362,13 +362,13 @@ class Image(ImageBase):
     def post_load_hook(self, doc: Drawing) -> Optional[Callable]:
         super().post_load_hook(doc)
         db = doc.entitydb
-        self._image_def = db.get(self.dxf.get("image_def_handle", None))
+        self._image_def = db.get(self.dxf.get("image_def_handle", None))  # type: ignore
         if self._image_def is None:
             # unrecoverable structure error
             self.destroy()
             return None
 
-        self._image_def_reactor = db.get(
+        self._image_def_reactor = db.get(  # type: ignore
             self.dxf.get("image_def_reactor_handle", None)
         )
         if self._image_def_reactor is None:

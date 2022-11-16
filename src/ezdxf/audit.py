@@ -426,7 +426,7 @@ class Auditor:
                     message=f"Deleted {str(entity)} entity with invalid owner "
                     f"handle #{owner_handle}.",
                 )
-                self.trash(doc.entitydb.get(handle))
+                self.trash(doc.entitydb.get(handle))  # type: ignore
 
     def check_extrusion_vector(self, entity: DXFEntity) -> None:
         if NULLVEC.isclose(entity.dxf.extrusion):

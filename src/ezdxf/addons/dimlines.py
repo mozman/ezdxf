@@ -31,7 +31,7 @@ parameters.
 
 """
 from __future__  import annotations
-from typing import Any, Dict, TYPE_CHECKING, Iterable, List, Tuple
+from typing import Any, TYPE_CHECKING, Iterable
 from math import radians, degrees, pi
 from abc import abstractmethod
 from ezdxf.enums import TextEntityAlignment
@@ -114,8 +114,8 @@ class DimStyles:
 
     """
 
-    def __init__(self):
-        self._styles = {}  # type: Dict[str, DimStyle]
+    def __init__(self) -> None:
+        self._styles: dict[str, DimStyle] = {}
         self.default = DimStyle("Default")
 
         self.new(
@@ -314,7 +314,7 @@ class LinearDimension(_DimensionBase):
         """
         return self.dimline_points[self.point_order[index]]
 
-    def _get_section_points(self, section: int) -> Tuple[Vec3, Vec3]:
+    def _get_section_points(self, section: int) -> tuple[Vec3, Vec3]:
         """
         Get start and end point on the dimension line of dimension section.
         """
@@ -322,7 +322,7 @@ class LinearDimension(_DimensionBase):
             section + 1
         )
 
-    def _get_dimline_bounds(self) -> Tuple[Vec3, Vec3]:
+    def _get_dimline_bounds(self) -> tuple[Vec3, Vec3]:
         """
         Get the first and the last point of dimension line.
         """
@@ -348,7 +348,7 @@ class LinearDimension(_DimensionBase):
         self._draw_ticks(layout)
 
     @staticmethod
-    def _indices_of_sorted_points(points: Iterable[UVec]) -> List[int]:
+    def _indices_of_sorted_points(points: Iterable[UVec]) -> list[int]:
         """get indices of points, for points sorted by x, y values"""
         indexed_points = [(point, idx) for idx, point in enumerate(points)]
         indexed_points.sort()

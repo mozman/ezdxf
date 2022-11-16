@@ -71,14 +71,14 @@ class CustomVars:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.properties: List[Tuple[str, str]] = list()
 
     def __len__(self) -> int:
         """Count of custom properties."""
         return len(self.properties)
 
-    def __iter__(self) -> Iterable[Tuple[str, str]]:
+    def __iter__(self) -> Iterator[Tuple[str, str]]:
         """Iterate over all custom properties as ``(tag, value)`` tuples."""
         return iter(self.properties)
 
@@ -154,7 +154,7 @@ class HeaderSection:
     MIN_HEADER_TAGS = Tags.from_text(MIN_HEADER_TEXT)
     name = "HEADER"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.hdrvars: Dict[str, "HeaderVar"] = OrderedDict()
         self.custom_vars = CustomVars()
 

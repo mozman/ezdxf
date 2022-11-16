@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Mapping, Set
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Mapping
 import json
 
 from ezdxf.sections.tables import TABLENAMES
@@ -125,20 +126,20 @@ def table_entries_to_code(
 class Code:
     """Source code container."""
 
-    def __init__(self):
-        self.code: List[str] = []
+    def __init__(self) -> None:
+        self.code: list[str] = []
         # global imports -> indentation level 0:
-        self.imports: Set[str] = set()
+        self.imports: set[str] = set()
         # layer names as string:
-        self.layers: Set[str] = set()
+        self.layers: set[str] = set()
         # text style name as string, requires a TABLE entry:
-        self.styles: Set[str] = set()
+        self.styles: set[str] = set()
         # line type names as string, requires a TABLE entry:
-        self.linetypes: Set[str] = set()
+        self.linetypes: set[str] = set()
         # dimension style names as string, requires a TABLE entry:
-        self.dimstyles: Set[str] = set()
+        self.dimstyles: set[str] = set()
         # block names as string, requires a BLOCK definition:
-        self.blocks: Set[str] = set()
+        self.blocks: set[str] = set()
 
     def code_str(self, indent: int = 0) -> str:
         """Returns the source code as a single string.
@@ -248,7 +249,7 @@ def _fmt_list(l: Iterable, indent: int = 0) -> Iterable[str]:
 
 def _fmt_api_call(
     func_call: str, args: Iterable[str], dxfattribs: dict
-) -> List[str]:
+) -> list[str]:
     attributes = dict(dxfattribs)
     args = list(args) if args else []
 

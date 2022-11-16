@@ -93,7 +93,7 @@ class DXFEntity:
     DEFAULT_ATTRIBS: dict[str, Any] = {}
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF12
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Default constructor. (internal API)"""
         # Public attributes for package users
         self.doc: Optional[Drawing] = None
@@ -952,7 +952,7 @@ class DXFEntity:
 class DXFTagStorage(DXFEntity):
     """Just store all the tags as they are. (internal class)"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Default constructor"""
         super().__init__()
         self.xtags = ExtendedTags()

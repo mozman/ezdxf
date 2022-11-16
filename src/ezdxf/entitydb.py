@@ -73,7 +73,7 @@ class EntityDB:
 
             self._handles.clear()
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._database: Dict[str, DXFEntity] = {}
         # DXF handles of entities to delete later:
         self.handles = HandleGenerator()

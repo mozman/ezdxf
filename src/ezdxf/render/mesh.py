@@ -439,7 +439,7 @@ class MeshBuilder:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.vertices: List[Vec3] = []
         # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....)
         self.faces: List[Sequence[int]] = []

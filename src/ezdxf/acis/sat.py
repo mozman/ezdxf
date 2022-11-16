@@ -4,14 +4,11 @@ from __future__ import annotations
 
 import math
 from typing import (
-    List,
     Any,
     Sequence,
     Iterator,
-    Tuple,
     Union,
     TYPE_CHECKING,
-    Dict,
 )
 from datetime import datetime
 from . import const
@@ -29,7 +26,7 @@ if TYPE_CHECKING:
     from .entities import AcisEntity
     from ezdxf.math import Vec3
 
-SatRecord = List[str]
+SatRecord = list[str]
 
 
 class SatEntity(AbstractEntity):
@@ -40,12 +37,12 @@ class SatEntity(AbstractEntity):
         name: str,
         attr_ptr: str = "$-1",
         id: int = -1,
-        data: List[Any] = None,
+        data: list[Any] = None,
     ):
         self.name = name
         self.attr_ptr = attr_ptr
         self.id = id
-        self.data: List[Any] = data if data is not None else []
+        self.data: list[Any] = data if data is not None else []
         self.attributes: "SatEntity" = None  # type: ignore
 
     def __str__(self):
@@ -59,7 +56,7 @@ def new_entity(
     name: str,
     attributes=NULL_PTR,
     id=-1,
-    data: List[Any] = None,
+    data: list[Any] = None,
 ) -> SatEntity:
     """Factory to create new ACIS entities.
 
@@ -80,7 +77,7 @@ def is_ptr(s: str) -> bool:
     return len(s) > 0 and s[0] == "$"
 
 
-def resolve_str_pointers(entities: List[SatEntity]) -> List[SatEntity]:
+def resolve_str_pointers(entities: list[SatEntity]) -> list[SatEntity]:
     def ptr(s: str) -> SatEntity:
         num = int(s[1:])
         if num == -1:
@@ -101,7 +98,7 @@ def resolve_str_pointers(entities: List[SatEntity]) -> List[SatEntity]:
 
 
 class SatDataLoader(DataLoader):
-    def __init__(self, data: List[Any], version: int):
+    def __init__(self, data: list[Any], version: int):
         self.version = version
         self.data = data
         self.index = 0
@@ -136,7 +133,7 @@ class SatDataLoader(DataLoader):
             return self.read_double()
         return math.inf
 
-    def read_vec3(self) -> Tuple[float, float, float]:
+    def read_vec3(self) -> tuple[float, float, float]:
         x = self.read_double()
         y = self.read_double()
         z = self.read_double()
@@ -168,7 +165,7 @@ class SatDataLoader(DataLoader):
             return entity
         raise ParsingError(f"expected pointer, got {type(entity)}")
 
-    def read_transform(self) -> List[float]:
+    def read_transform(self) -> list[float]:
         # 4th column is not stored
         # Read only the matrix values which contain all information needed,
         # the additional data are only hints for the kernel how to process
@@ -179,13 +176,13 @@ class SatDataLoader(DataLoader):
 class SatBuilder(AbstractBuilder):
     """Low level data structure to manage ACIS SAT data files."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.header = AcisHeader()
-        self.bodies: List[SatEntity] = []
-        self.entities: List[SatEntity] = []
-        self._export_mapping: Dict[int, SatEntity] = {}
+        self.bodies: list[SatEntity] = []
+        self.entities: list[SatEntity] = []
+        self._export_mapping: dict[int, SatEntity] = {}
 
-    def dump_sat(self) -> List[str]:
+    def dump_sat(self) -> list[str]:
         """Returns the text representation of the ACIS file as list of strings
         without line endings.
 
@@ -207,7 +204,7 @@ class SatBuilder(AbstractBuilder):
         data.append(self.header.sat_end_marker())
         return data
 
-    def set_entities(self, entities: List[SatEntity]) -> None:
+    def set_entities(self, entities: list[SatEntity]) -> None:
         """Reset entities and bodies list. (internal API)"""
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
@@ -222,14 +219,14 @@ class SatExporter(EntityExporter[SatEntity]):
     def make_data_exporter(self, record: SatEntity) -> DataExporter:
         return SatDataExporter(self, record.data)
 
-    def dump_sat(self) -> List[str]:
+    def dump_sat(self) -> list[str]:
         builder = SatBuilder()
         builder.header = self.header
         builder.set_entities(self.export_records())
         return builder.dump_sat()
 
 
-def build_str_records(entities: List[SatEntity], version: int) -> Iterator[str]:
+def build_str_records(entities: list[SatEntity], version: int) -> Iterator[str]:
     def ptr_str(e: SatEntity) -> str:
         if e is NULL_PTR:
             return "$-1"
@@ -272,7 +269,7 @@ def parse_header_str(s: str) -> Iterator[str]:
             num = ""
 
 
-def parse_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
+def parse_header(data: Sequence[str]) -> tuple[AcisHeader, Sequence[str]]:
     header = AcisHeader()
     tokens = data[0].split()
     header.version = int(tokens[0])
@@ -319,9 +316,9 @@ def merge_record_strings(data: Sequence[str]) -> Iterator[str]:
             yield record
 
 
-def parse_records(data: Sequence[str]) -> List[SatRecord]:
+def parse_records(data: Sequence[str]) -> list[SatRecord]:
     expected_seq_num = 0
-    records: List[SatRecord] = []
+    records: list[SatRecord] = []
     for line in merge_record_strings(data):
         tokens: SatRecord = line.split()
         first_token = tokens[0].strip()
@@ -339,8 +336,8 @@ def parse_records(data: Sequence[str]) -> List[SatRecord]:
 
 def build_entities(
     records: Sequence[SatRecord], version: int
-) -> List[SatEntity]:
-    entities: List[SatEntity] = []
+) -> list[SatEntity]:
+    entities: list[SatEntity] = []
     for record in records:
         name = record[0]
         attr = record[1]
@@ -379,7 +376,7 @@ def parse_sat(s: Union[str, Sequence[str]]) -> SatBuilder:
 
 
 class SatDataExporter(DataExporter):
-    def __init__(self, exporter: SatExporter, data: List[Any]):
+    def __init__(self, exporter: SatExporter, data: list[Any]):
         self.version = exporter.version
         self.exporter = exporter
         self.data = data
@@ -427,5 +424,5 @@ class SatDataExporter(DataExporter):
             record = self.exporter.get_record(entity)
         self.data.append(record)
 
-    def write_transform(self, data: List[str]) -> None:
+    def write_transform(self, data: list[str]) -> None:
         self.data.extend(data)

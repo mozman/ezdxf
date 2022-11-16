@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import List, Union, Tuple, Iterable, Sequence
+from typing import Union, Iterable, Sequence
 from pathlib import Path
 import enum
 import platform
@@ -126,7 +126,7 @@ def str_polygon(
             index += 1
         return indices
 
-    points: List[str] = []
+    points: list[str] = []
     paths = [add_vertices(path)]
     if holes is not None:
         for hole in holes:
@@ -144,8 +144,8 @@ def str_polygon(
 
 
 class Script:
-    def __init__(self):
-        self.data: List[str] = []
+    def __init__(self) -> None:
+        self.data: list[str] = []
 
     def add(self, data: str) -> None:
         """Add a string."""
@@ -242,7 +242,7 @@ class Script:
         nx: float,
         ny: float,
         nz: float,
-        auto: Union[bool, Tuple[bool, bool, bool]] = None,
+        auto: Union[bool, tuple[bool, bool, bool]] = None,
     ) -> None:
         """Add a ``resize()`` operation.
 

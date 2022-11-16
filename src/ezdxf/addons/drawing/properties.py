@@ -4,12 +4,8 @@
 from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
-    Dict,
     Optional,
-    Tuple,
     Union,
-    List,
-    Set,
     cast,
     Sequence,
     Callable,
@@ -82,7 +78,7 @@ class Filling:
     PATTERN = 1
     GRADIENT = 2
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Solid fill color is stored in Properties.color attribute
         self.type = Filling.SOLID
         # Gradient- or pattern name
@@ -104,7 +100,7 @@ class Properties:
     resolving all DXF specific rules like "by layer", "by block" and so on.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.color: str = "#ffffff"  # format #RRGGBB or #RRGGBBAA
         # Color names should be resolved into a actual color value
 
@@ -316,19 +312,19 @@ class RenderContext:
         ctb: str = "",
         export_mode: bool = False,
     ):
-        self._saved_states: List[Properties] = []
-        self.line_pattern: Dict[str, Sequence[float]] = dict()
+        self._saved_states: list[Properties] = []
+        self.line_pattern: dict[str, Sequence[float]] = dict()
         self.current_block_reference_properties: Optional[Properties] = None
         self.export_mode = export_mode
         self.override_ctb = ctb
-        self.layers: Dict[str, LayerProperties] = dict()
-        self.fonts: Dict[str, fonts.FontFace] = dict()
+        self.layers: dict[str, LayerProperties] = dict()
+        self.fonts: dict[str, fonts.FontFace] = dict()
         self.units = InsertUnits.Unitless  # modelspace units
         self.linetype_scale: float = 1.0  # overall modelspace linetype scaling
         self.measurement = Measurement.Imperial
         self.pdsize: float = 0
         self.pdmode: int = 0
-        self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
+        self._hatch_pattern_cache: dict[str, HatchPatternType] = dict()
         self.current_layout_properties = LayoutProperties.modelspace()
         self.plot_styles = self._load_plot_style_table(self.override_ctb)
 
@@ -403,8 +399,8 @@ class RenderContext:
             changes["measurement"] = self.measurement
         return config.with_changes(**changes)
 
-    def _setup_layers(self, doc: Drawing) -> Dict[str, LayerProperties]:
-        layers: Dict[str, LayerProperties] = dict()
+    def _setup_layers(self, doc: Drawing) -> dict[str, LayerProperties]:
+        layers: dict[str, LayerProperties] = dict()
         for layer in doc.layers:
             layer_properties = self.resolve_layer_properties(cast(Layer, layer))
             layers[layer_key(layer_properties.layer)] = layer_properties
@@ -414,12 +410,12 @@ class RenderContext:
         for text_style in doc.styles:
             self.add_text_style(cast("Textstyle", text_style))
 
-    def _setup_vp_layers(self, vp: Viewport) -> Dict[str, LayerProperties]:
+    def _setup_vp_layers(self, vp: Viewport) -> dict[str, LayerProperties]:
         doc = vp.doc
         assert doc is not None
         frozen_layer_names = {layer_key(name) for name in vp.frozen_layers}
         vp_handle = vp.dxf.handle
-        layers: Dict[str, LayerProperties] = dict()
+        layers: dict[str, LayerProperties] = dict()
         for layer in doc.layers:
             layer = cast(Layer, layer)
             overrides = layer.get_vp_overrides()
@@ -701,7 +697,7 @@ class RenderContext:
         return color
 
     def _true_entity_color(
-        self, true_color: Optional[Tuple[int, int, int]], aci: int
+        self, true_color: Optional[tuple[int, int, int]], aci: int
     ) -> Color:
         """Returns rgb color in hex format: "#RRGGBB".
 
@@ -730,7 +726,7 @@ class RenderContext:
 
     def resolve_linetype(
         self, entity: DXFGraphic, *, resolved_layer: str = None
-    ) -> Tuple[str, Sequence[float]]:
+    ) -> tuple[str, Sequence[float]]:
         """Resolve the linetype of `entity`. Returns a tuple of the linetype
         name as upper-case string and the simplified linetype pattern as tuple
         of floats.
@@ -906,7 +902,7 @@ def is_valid_color(color: Color) -> bool:
 
 
 def rgb_to_hex(
-    rgb: Union[Tuple[int, int, int], Tuple[float, float, float]]
+    rgb: Union[tuple[int, int, int], tuple[float, float, float]]
 ) -> Color:
     """Returns color in hex format: "#RRGGBB"."""
     assert all(0 <= x <= 255 for x in rgb), f"invalid RGB color: {rgb}"
@@ -946,12 +942,12 @@ def transparency_to_alpha(value: float) -> int:
     return int(round((1.0 - value) * 255))
 
 
-def _load_line_pattern(linetypes: Table) -> Dict[str, Sequence[float]]:
+def _load_line_pattern(linetypes: Table) -> dict[str, Sequence[float]]:
     """Load linetypes defined in a DXF document into  as dictionary,
     key is the upper case linetype name, value is the simplified line pattern,
     see :func:`compile_line_pattern`.
     """
-    pattern: Dict[str, Sequence[float]] = dict()
+    pattern: dict[str, Sequence[float]] = dict()
     for linetype in linetypes:
         assert isinstance(linetype, Linetype)
         name = linetype.dxf.name.upper()

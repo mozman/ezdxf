@@ -526,7 +526,7 @@ class Frontend:
         else:  # only HATCH
             paths = polygon.paths.rendering_paths(polygon.dxf.hatch_style)
             polygons: List = fast_bbox_detection(
-                closed_loops(paths, ocs, elevation)
+                closed_loops(paths, ocs, elevation)  # type: ignore
             )
             external_paths, holes = winding_deconstruction(polygons)
 
@@ -555,7 +555,7 @@ class Frontend:
         elevation: float = polygon.dxf.elevation.z
         offset = Vec3(polygon.dxf.get("offset_vector", NULLVEC))
         # MPOLYGON does not support hatch styles, all paths are rendered.
-        loops = closed_loops(polygon.paths, ocs, elevation, offset)
+        loops = closed_loops(polygon.paths, ocs, elevation, offset)  # type: ignore
 
         line_color: str = properties.color
         assert properties.filling is not None

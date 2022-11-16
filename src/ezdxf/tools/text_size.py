@@ -1,6 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Sequence, Tuple, List
+from __future__ import annotations
+from typing import Sequence
 from dataclasses import dataclass
 import ezdxf
 from ezdxf.math import Matrix44, Vec2
@@ -98,11 +99,11 @@ def mtext_size(mtext: MText, tool: "MTextSizeDetector" = None) -> MTextSize:
 
     """
     tool = tool or MTextSizeDetector()
-    column_heights: List[float] = [0.0]
+    column_heights: list[float] = [0.0]
     gutter_width = 0.0
     column_width = 0.0
     if mtext.text:
-        columns: List[tl.Column] = list(tool.measure(mtext))
+        columns: list[tl.Column] = list(tool.measure(mtext))
         if len(columns):
             first_column = columns[0]
             # same values for all columns
@@ -138,7 +139,7 @@ class MTextSizeDetector(AbstractMTextRenderer):
             renderer=self.renderer,
         )
 
-    def fraction(self, data: Tuple, ctx: MTextContext) -> tl.ContentCell:
+    def fraction(self, data: tuple, ctx: MTextContext) -> tl.ContentCell:
         upr, lwr, type_ = data
         if type_:
             return tl.Fraction(
@@ -168,8 +169,8 @@ class WordSizeCollector(tl.DoNothingRenderer):
     right corner as Vec2 objects, ignores lines.
     """
 
-    def __init__(self):
-        self.word_boxes: List[Tuple[Vec2, Vec2]] = []
+    def __init__(self) -> None:
+        self.word_boxes: list[tuple[Vec2, Vec2]] = []
 
     def render(
         self,
@@ -191,5 +192,5 @@ class WordSizeDetector(MTextSizeDetector):
         layout.render()
         return layout
 
-    def word_boxes(self) -> List[Tuple[Vec2, Vec2]]:
+    def word_boxes(self) -> list[tuple[Vec2, Vec2]]:
         return self.renderer.word_boxes

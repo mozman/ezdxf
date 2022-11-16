@@ -80,7 +80,7 @@ class Body(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._sat: List[str] = []
         self._sab: bytes = b""

@@ -43,7 +43,7 @@ T = TypeVar("T", bound="DXFEntity")
 class Table(Generic[T]):
     TABLE_TYPE = "UNKNOWN"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.doc: Optional[Drawing] = None
         self.entries: Dict[str, T] = OrderedDict()
         self._head = TableHead()

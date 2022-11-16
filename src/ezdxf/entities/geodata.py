@@ -248,7 +248,7 @@ class GeoData(DXFObject):
     GRID_SCALE = 3
     PRISMOIDEAL = 4
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.source_vertices = MeshVertices()
         self.target_vertices = MeshVertices()

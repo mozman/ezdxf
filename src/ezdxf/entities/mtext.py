@@ -242,7 +242,7 @@ class MTextColumns:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.column_type: ColumnType = ColumnType.STATIC
         # The embedded object in R2018 does not store the column count for
         # column type DYNAMIC and auto_height is True!
@@ -661,7 +661,7 @@ class MText(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mtext)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.text: str = ""
         # Linked MText columns do not have a MTextColumns() object!

@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple, Iterable, Sequence
+from typing import TYPE_CHECKING, Tuple, Iterable, Sequence, Iterator
 import math
 
 from ezdxf.math import Vec2, UVec
@@ -156,7 +156,7 @@ class ConstructionArc:
             r: float = math.radians(angle)
             yield Vec2((-math.sin(r), math.cos(r)))
 
-    def main_axis_points(self):
+    def main_axis_points(self) -> Iterator[Vec2]:
         center: Vec2 = self.center
         radius: float = self.radius
         start: float = math.radians(self.start_angle)

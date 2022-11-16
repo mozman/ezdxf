@@ -70,7 +70,7 @@ class DXFGroup(DXFObject):
     DXFTYPE = "GROUP"
     DXFATTRIBS = DXFAttributes(base_class, acdb_group)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._handles: Set[str] = set()  # only needed at the loading stage
         self._data: List[DXFEntity] = []

@@ -251,7 +251,7 @@ class Material(DXFObject):
     }
     DXFATTRIBS = DXFAttributes(base_class, acdb_material)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.diffuse_mapper_matrix: Optional[Matrix44] = None  # code 43
         self.specular_mapper_matrix: Optional[Matrix44] = None  # code 47

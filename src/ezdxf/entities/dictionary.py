@@ -89,7 +89,7 @@ class Dictionary(DXFObject):
     DXFTYPE = "DICTIONARY"
     DXFATTRIBS = DXFAttributes(base_class, acdb_dictionary)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._data: Dict[str, Union[str, DXFObject]] = dict()
         self._value_code = VALUE_CODE
@@ -288,7 +288,7 @@ class Dictionary(DXFObject):
                     f"Invalid entity handle #{entity} for key {key}"
                 )
         elif isinstance(entity, DXFGraphic):
-            if self.doc is not None and self.doc.is_loading:
+            if self.doc is not None and self.doc.is_loading:  # type: ignore
                 # AutoCAD add-ons can store graphical entities in DICTIONARIES
                 # in the OBJECTS section and AutoCAD does not complain - so just
                 # preserve them!
@@ -498,7 +498,7 @@ class DictionaryWithDefault(Dictionary):
         base_class, acdb_dictionary, acdb_dict_with_default
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._default: Optional[DXFObject] = None
 

@@ -1,6 +1,7 @@
 # Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import TextIO, List, Union, Tuple, Sequence
+from __future__ import annotations
+from typing import TextIO, Union, Sequence
 import os
 import sys
 from pathlib import Path
@@ -51,7 +52,7 @@ def config_home_path() -> Path:
     return xdg_path(XDG_CONFIG_HOME, CONFIG_DIRECTORY)
 
 
-def default_config_files() -> List[Path]:
+def default_config_files() -> list[Path]:
     config_paths = [
         config_home_path() / EZDXF_INI,
         Path(f"./{EZDXF_INI}"),
@@ -93,7 +94,7 @@ def default_config() -> ConfigParser:
     return config
 
 
-def config_files() -> List[Path]:
+def config_files() -> list[Path]:
     # Loading order for config files:
     # 1. user home directory:
     #    "$XDG_CONFIG_HOME/ezdxf/ezdxf.ini" or
@@ -108,7 +109,7 @@ def config_files() -> List[Path]:
     return paths
 
 
-def load_config_files(paths: List[Path]) -> ConfigParser:
+def load_config_files(paths: list[Path]) -> ConfigParser:
     config = default_config()
     try:
         config.read(paths, encoding="utf8")
@@ -144,9 +145,9 @@ class Options:
         "EZDXF_CONFIG_FILE",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         paths = config_files()
-        self._loaded_paths: List[Path] = [p for p in paths if p.exists()]
+        self._loaded_paths: list[Path] = [p for p in paths if p.exists()]
         self._config = load_config_files(paths)
         # needs fast access:
         self.log_unprocessed_tags = True
@@ -184,7 +185,7 @@ class Options:
         )
 
     @property
-    def loaded_config_files(self) -> Tuple[Path, ...]:
+    def loaded_config_files(self) -> tuple[Path, ...]:
         return tuple(self._loaded_paths)
 
     def read_file(self, filename: str) -> None:

@@ -30,7 +30,7 @@ def get_block_entity_space(
     doc: Drawing, block_record_handle: str
 ) -> EntitySpace:
     block_record = doc.entitydb[block_record_handle]
-    return block_record.entity_space
+    return block_record.entity_space  # type: ignore
 
 
 class Layout(BaseLayout):
@@ -82,7 +82,7 @@ class Layout(BaseLayout):
         block_record = doc.entitydb[layout.dxf.block_record_handle]
         # link maybe broken
         block_record.dxf.layout = layout.dxf.handle
-        super().__init__(block_record)
+        super().__init__(block_record)  # type: ignore
 
     @classmethod
     def new(

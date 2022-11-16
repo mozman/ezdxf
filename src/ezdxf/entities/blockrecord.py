@@ -95,7 +95,7 @@ class BlockRecord(DXFEntity):
         base_class, acdb_symbol_table_record, acdb_blockrec
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         from ezdxf.entitydb import EntitySpace
 
         super().__init__()

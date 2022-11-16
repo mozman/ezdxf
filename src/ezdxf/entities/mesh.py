@@ -425,7 +425,7 @@ class Mesh(DXFGraphic):
 
 
 class MeshData:
-    def __init__(self, mesh):
+    def __init__(self, mesh) -> None:
         self.vertices: List[Sequence[float]] = list(mesh.vertices)
         self.faces: List[array.array] = list(mesh.faces)
         self.edges: List[Tuple[int, int]] = list(mesh.edges)

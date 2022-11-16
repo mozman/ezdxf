@@ -359,7 +359,7 @@ class Layouts:
         if len(mismatch):
             for handle in mismatch:
                 br = doc.entitydb.get(handle)
-                name = br.dxf.get("name")
+                name = br.dxf.get("name")  # type: ignore
                 auditor.fixed_error(
                     code=AuditError.ORPHANED_PAPER_SPACE_BLOCK_RECORD_ENTITY,
                     message=f'Removed orphaned layout {str(br)} "{name}"',

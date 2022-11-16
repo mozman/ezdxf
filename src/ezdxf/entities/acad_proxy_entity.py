@@ -1,5 +1,6 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Iterable
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
@@ -45,7 +46,7 @@ class ACADProxyEntity(DXFGraphic):
     DXFTYPE = "ACAD_PROXY_ENTITY"
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.acdb_proxy_entity: Optional[Tags] = None
 
@@ -54,7 +55,7 @@ class ACADProxyEntity(DXFGraphic):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.acdb_proxy_entity = processor.subclass_by_index(2)

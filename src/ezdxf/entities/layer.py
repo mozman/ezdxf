@@ -366,7 +366,7 @@ class Layer(DXFEntity):
                 e.dxf.layer = new_name
             entity_type = e.dxftype()
             if entity_type == "VIEWPORT":
-                e.rename_frozen_layer(old_name, new_name)
+                e.rename_frozen_layer(old_name, new_name)  # type: ignore
             elif entity_type == "LAYER_FILTER":
                 # todo: if LAYER_FILTER implemented, add support for
                 #  renaming layers

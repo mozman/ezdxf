@@ -103,7 +103,7 @@ class Underlay(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_underlay)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._boundary_path: List[UVec] = []
         self._underlay_def: Optional[UnderlayDefinition] = None
@@ -145,7 +145,7 @@ class Underlay(DXFGraphic):
     def post_load_hook(self, doc: Drawing) -> None:
         super().post_load_hook(doc)
         db = doc.entitydb
-        self._underlay_def = db.get(self.dxf.get("underlay_def_handle", None))
+        self._underlay_def = db.get(self.dxf.get("underlay_def_handle", None))  # type: ignore
 
     def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""

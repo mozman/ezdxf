@@ -436,7 +436,7 @@ class Log:
         fitness: float
         avg_fitness: float
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.entries: List[Log.Entry] = []
 
     def add(self, runtime: float, fitness: float, avg_fitness: float) -> None:
@@ -495,7 +495,7 @@ def threshold_filter(
         min_value = (1.0 - threshold) * minimum.fitness  # type: ignore
     else:
         min_value = best_fitness * threshold
-    return (c for c in candidates if c.fitness > min_value)    # type: ignore
+    return (c for c in candidates if c.fitness > min_value)  # type: ignore
 
 
 class GeneticOptimizer:
@@ -649,8 +649,8 @@ class GeneticOptimizer:
     def filter_threshold(self, candidates: Sequence[DNA]) -> Iterable[DNA]:
         if self.threshold > 0.0:
             return threshold_filter(
-                    candidates, self.best_fitness, self.threshold
-                )
+                candidates, self.best_fitness, self.threshold
+            )
         else:
             return candidates
 
@@ -671,7 +671,7 @@ def conv_negative_weights(weights: Iterable[float]) -> Iterable[float]:
 class RouletteSelection(Selection):
     """Selection by fitness values."""
 
-    def __init__(self, negative_values=False):
+    def __init__(self, negative_values: bool = False) -> None:
         self._candidates: List[DNA] = []
         self._weights: List[float] = []
         self._negative_values = bool(negative_values)

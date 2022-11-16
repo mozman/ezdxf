@@ -167,7 +167,7 @@ class Leader(DXFGraphic, OverrideMixin):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_leader)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.vertices: List[Vec3] = []
 

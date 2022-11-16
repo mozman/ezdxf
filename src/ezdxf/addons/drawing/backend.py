@@ -1,12 +1,11 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
+from __future__ import annotations
 from abc import ABC, abstractmethod, ABCMeta
 from typing import (
     Optional,
-    Tuple,
     TYPE_CHECKING,
     Iterable,
-    List,
 )
 
 from ezdxf.addons.drawing.config import Configuration
@@ -14,7 +13,7 @@ from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.tools.text import replace_non_printable_characters
-from ezdxf.math import Vec3, Matrix44, Vec2
+from ezdxf.math import Vec3, Matrix44
 from ezdxf.path import Path
 
 if TYPE_CHECKING:
@@ -50,7 +49,7 @@ class BackendInterface(ABC):
 
     @abstractmethod
     def draw_solid_lines(
-        self, lines: Iterable[Tuple[Vec3, Vec3]], properties: Properties
+        self, lines: Iterable[tuple[Vec3, Vec3]], properties: Properties
     ) -> None:
         raise NotImplementedError
 
@@ -114,8 +113,8 @@ class BackendInterface(ABC):
 
 
 class Backend(BackendInterface, metaclass=ABCMeta):
-    def __init__(self):
-        self.entity_stack: List[Tuple[DXFGraphic, Properties]] = []
+    def __init__(self) -> None:
+        self.entity_stack: list[tuple[DXFGraphic, Properties]] = []
         self.config: Configuration
 
     def configure(self, config: Configuration) -> None:
@@ -153,7 +152,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         raise NotImplementedError
 
     def draw_solid_lines(
-        self, lines: Iterable[Tuple[Vec3, Vec3]], properties: Properties
+        self, lines: Iterable[tuple[Vec3, Vec3]], properties: Properties
     ) -> None:
         """Fast method to draw a bunch of solid lines with the same properties.
         """

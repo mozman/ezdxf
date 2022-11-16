@@ -310,7 +310,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         text_radial_dir = Vec2.from_angle(self.center_angle_rad)
         return self.center_of_arc + text_radial_dir * radius
 
-    def setup_text_and_arrow_fitting(self):
+    def setup_text_and_arrow_fitting(self) -> None:
         # self.text_box.width includes the gaps between text and dimension line
         # Is the measurement text without the arrows too wide to fit between the
         # extension lines?
@@ -326,7 +326,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
         # dimatfit: measurement text fitting rule is ignored!
         # Place arrows outside?
-        self.arrows_outside: bool = not fits_into_arc_span(
+        self.arrows_outside = not fits_into_arc_span(
             required_text_and_arrows_space,
             self.dim_line_radius,
             self.arc_angle_span_rad,

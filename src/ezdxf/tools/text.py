@@ -1014,7 +1014,7 @@ class MTextEditor:
 class MTextContext:
     """Internal class to store the MTEXT context state."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._stroke: int = 0
         self.continue_stroke: bool = False
         self._aci = 7  # used if rgb is None
@@ -1606,16 +1606,16 @@ class MTextParser:
                 )
                 skip_commas()
             elif cmd == "t":
-                tab_stops = []
+                tab_stops = []  # type: ignore
                 while paragraph_scanner.has_data:  # parse to end
                     type_ = paragraph_scanner.peek()
                     if type_ == "r" or type_ == "c":
                         paragraph_scanner.consume()
-                        tab_stops.append(type_ + parse_float_expr())
+                        tab_stops.append(type_ + parse_float_expr())  # type: ignore
                     else:
                         float_expr = parse_float_expr()
                         if float_expr:
-                            tab_stops.append(float(float_expr))
+                            tab_stops.append(float(float_expr))  # type: ignore
                         else:
                             # invalid float expression, consume invalid letter
                             # and try again:
@@ -1732,7 +1732,7 @@ def estimate_mtext_extents(mtext: MText) -> Tuple[float, float]:
 
     """
 
-    def _make_font():
+    def _make_font() -> AbstractFont:
         cap_height: float = mtext.dxf.get_default("char_height")
         doc = mtext.doc
         if doc:

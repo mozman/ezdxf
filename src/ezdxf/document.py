@@ -8,12 +8,9 @@ from typing import (
     Iterable,
     Iterator,
     Union,
-    Tuple,
     Callable,
     cast,
     Optional,
-    List,
-    Dict,
 )
 from datetime import datetime, timezone
 import io
@@ -111,7 +108,7 @@ def _validate_handle_seed(seed: str) -> str:
 
 
 class Drawing:
-    def __init__(self, dxfversion=DXF2013):
+    def __init__(self, dxfversion=DXF2013) -> None:
         self.entitydb = EntityDB()
         target_dxfversion = dxfversion.upper()
         self._dxfversion: str = const.acad_release_to_dxf_version.get(
@@ -150,7 +147,7 @@ class Drawing:
         # DXF R2013 and later
         self.acdsdata: AcDsDataSection = None  # type: ignore
 
-        self.stored_sections: List[StoredSection] = []
+        self.stored_sections: list[StoredSection] = []
         self.layouts: Layouts = None  # type: ignore
         self.groups: GroupCollection = None  # type: ignore
         self.materials: MaterialCollection = None  # type: ignore
@@ -160,7 +157,7 @@ class Drawing:
         # Set to False if the generated DXF file will be incompatible to AutoCAD
         self._acad_compatible = True
         # Store reasons for AutoCAD incompatibility:
-        self._acad_incompatibility_reason = set()
+        self._acad_incompatibility_reason: set[str] = set()
 
         # DIMENSION rendering engine can be replaced by a custom Dimension
         # render: see property Drawing.dimension_renderer
@@ -168,7 +165,7 @@ class Drawing:
 
         # Some fixes can't be applied while the DXF document is not fully
         # initialized, store this fixes as callable object:
-        self._post_init_commands: List[Callable] = []
+        self._post_init_commands: list[Callable] = []
         # Don't create any new entities here:
         # New created handles could collide with handles loaded from DXF file.
         assert len(self.entitydb) == 0
@@ -377,7 +374,7 @@ class Drawing:
         """Internal API to load a DXF document from a section dict."""
         self.is_loading = True
         # Create header section:
-        header_entities: List["Tags"] = sections.get(
+        header_entities: list[Tags] = sections.get(
             "HEADER", []  # type: ignore
         )
         if header_entities:
@@ -1017,7 +1014,7 @@ class Drawing:
             raise const.DXFValueError(f'Arrow block "{name}" does not exist.')
 
     def add_image_def(
-        self, filename: str, size_in_pixel: Tuple[int, int], name=None
+        self, filename: str, size_in_pixel: tuple[int, int], name=None
     ):
         """Add an image definition to the objects section.
 
@@ -1288,7 +1285,7 @@ class R12MetaData(MetaData):
             tags.append((1000, str(value)))
         self._msp_block.set_xdata("EZDXF", tags)  # type: ignore
 
-    def _load(self) -> Dict:
+    def _load(self) -> dict:
         data = dict()
         if self._msp_block.has_xdata("EZDXF"):  # type: ignore
             xdata = self._msp_block.get_xdata("EZDXF")  # type: ignore
@@ -1327,7 +1324,7 @@ class R2000MetaData(MetaData):
         self._data.remove(safe_string(key, MAX_STR_LEN))
 
 
-def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> List[str]:
+def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> list[str]:
     from ezdxf.units import unit_name
     from collections import Counter
 
@@ -1343,7 +1340,7 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> List[str]:
         data.append(f"{name} {container} entries: {len(table)}")
         if verbose:
             if name == "STYLE":
-                names: List[str] = []
+                names: list[str] = []
                 for entry in table:
                     name = entry.dxf.name
                     if name == "":
@@ -1370,7 +1367,7 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> List[str]:
     loaded_dxf_version = doc.loaded_dxfversion
     if loaded_dxf_version is None:
         loaded_dxf_version = doc.dxfversion
-    data: List[str] = []
+    data: list[str] = []
     data.append(f'Filename: "{doc.filename}"')
     data.append(f"Format: {fmt}")
     if loaded_dxf_version != doc.dxfversion:

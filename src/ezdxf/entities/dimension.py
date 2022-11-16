@@ -485,7 +485,7 @@ class Dimension(DXFGraphic, OverrideMixin):
     # WARNING for destroy() method:
     # Do not destroy associated anonymous block, if DIMENSION is used in a
     # block, the same geometry block maybe used by multiple block references.
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         # store the content of the geometry block for virtual entities
         self.virtual_block_content: Optional[EntitySpace] = None

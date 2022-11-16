@@ -266,7 +266,7 @@ class Viewport(DXFGraphic):
         Viewport.viewport_id += 1
         return current_id
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._frozen_layers: List[str] = []
 

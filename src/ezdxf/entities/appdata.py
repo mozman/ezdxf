@@ -30,7 +30,7 @@ ERR_DXF_ATTRIB_NOT_EXITS = "DXF attribute {} does not exist"
 
 
 class AppData:
-    def __init__(self):
+    def __init__(self) -> None:
         self.data: Dict[str, Tags] = OrderedDict()
 
     def __contains__(self, appid: str) -> bool:

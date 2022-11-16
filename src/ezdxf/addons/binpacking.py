@@ -23,8 +23,6 @@
 #   - DXF exporter for debugging
 from __future__ import annotations
 from typing import (
-    Tuple,
-    List,
     Iterable,
     TYPE_CHECKING,
     TypeVar,
@@ -102,7 +100,7 @@ class PickStrategy(Enum):
     SHUFFLE = auto()
 
 
-START_POSITION: Tuple[float, float, float] = (0, 0, 0)
+START_POSITION: tuple[float, float, float] = (0, 0, 0)
 
 
 class Item:
@@ -161,14 +159,14 @@ class Item:
         self._taint()
 
     @property
-    def position(self) -> Tuple[float, float, float]:
+    def position(self) -> tuple[float, float, float]:
         """Returns the position of then lower left corner of the item in the
         container, the lower left corner is the origin (0, 0, 0).
         """
         return self._position
 
     @position.setter
-    def position(self, value: Tuple[float, float, float]) -> None:
+    def position(self, value: tuple[float, float, float]) -> None:
         self._position = value
         self._taint()
 
@@ -176,7 +174,7 @@ class Item:
         """Returns the volume of the item."""
         return self.width * self.height * self.depth
 
-    def get_dimension(self) -> Tuple[float, float, float]:
+    def get_dimension(self) -> tuple[float, float, float]:
         """Returns the item dimension according the :attr:`rotation_type`."""
         rt = self.rotation_type
         if rt == RotationType.WHD:
@@ -271,7 +269,7 @@ class Bin:
         if self.depth <= 0.0:
             raise ValueError("invalid depth")
         self.max_weight = float(max_weight)
-        self.items: List[Item] = []
+        self.items: list[Item] = []
 
     def __len__(self):
         return len(self.items)
@@ -300,7 +298,7 @@ class Bin:
             f"vol({self.get_capacity():.3f})"
         )
 
-    def put_item(self, item: Item, pivot: Tuple[float, float, float]) -> bool:
+    def put_item(self, item: Item, pivot: tuple[float, float, float]) -> bool:
         valid_item_position = item.position
         item.position = pivot
         x, y, z = pivot
@@ -375,20 +373,20 @@ class Envelope(Bin):
         return RotationType.WHD, RotationType.HWD
 
 
-def _smaller_first(bins: List, items: List) -> None:
+def _smaller_first(bins: list, items: list) -> None:
     # SMALLER_FIRST is often very bad! Especially for many in small
     # amounts increasing sizes.
     bins.sort(key=lambda b: b.get_capacity())
     items.sort(key=lambda i: i.get_volume())
 
 
-def _bigger_first(bins: List, items: List) -> None:
+def _bigger_first(bins: list, items: list) -> None:
     # BIGGER_FIRST is the best strategy
     bins.sort(key=lambda b: b.get_capacity(), reverse=True)
     items.sort(key=lambda i: i.get_volume(), reverse=True)
 
 
-def _shuffle(bins: List, items: List) -> None:
+def _shuffle(bins: list, items: list) -> None:
     # Better as SMALLER_FIRST
     random.shuffle(bins)
     random.shuffle(items)
@@ -402,9 +400,9 @@ PICK_STRATEGY = {
 
 
 class AbstractPacker:
-    def __init__(self):
-        self.bins: List[Bin] = []
-        self.items: List[Item] = []
+    def __init__(self) -> None:
+        self.bins: list[Bin] = []
+        self.items: list[Item] = []
         self._init_state = True
 
     def copy(self):
@@ -426,7 +424,7 @@ class AbstractPacker:
         return not self._init_state
 
     @property
-    def unfitted_items(self) -> List[Item]:  # just an alias
+    def unfitted_items(self) -> list[Item]:  # just an alias
         """Returns the unfitted items."""
         return self.items
 
@@ -546,13 +544,13 @@ def pack_item_subset(
 
 
 def get_item_subset(
-    items: List[Item], picker: Iterable
-) -> Tuple[List[Item], List[Item]]:
+    items: list[Item], picker: Iterable
+) -> tuple[list[Item], list[Item]]:
     """Returns a subset of `items`, where items are chosen by an iterable
     yielding a True or False value for each item.
     """
-    chosen: List[Item] = []
-    rejects: List[Item] = []
+    chosen: list[Item] = []
+    rejects: list[Item] = []
     count = 0
     for item, pick in zip(items, picker):
         count += 1
@@ -644,7 +642,7 @@ class FlatPacker(AbstractPacker):
 
 
 def export_dxf(
-    layout: "GenericLayoutType", bins: List[Bin], offset: UVec = (1, 0, 0)
+    layout: "GenericLayoutType", bins: list[Bin], offset: UVec = (1, 0, 0)
 ) -> None:
     from ezdxf import colors
 

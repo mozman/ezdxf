@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 import random
 import math
 from ezdxf.math import (
@@ -147,10 +147,10 @@ class Bezier:
             bezier = Bezier4P(control_points)
             return bezier.approximate(self.segments)
 
-    def __init__(self):
+    def __init__(self) -> None:
         # fit point, first control vector, second control vector, segment count
-        self.points: List[
-            Tuple[Vec3, Optional[Vec3], Optional[Vec3], Optional[int]]
+        self.points: list[
+            tuple[Vec3, Optional[Vec3], Optional[Vec3], Optional[int]]
         ] = []
 
     def start(self, point: UVec, tangent: UVec) -> None:
@@ -217,7 +217,7 @@ class Bezier:
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """
-        points: List[Vec3] = []
+        points: list[Vec3] = []
         for segment in self._build_bezier_segments():
             points.extend(segment.approximate())
         if force3d or any(p[2] for p in points):
@@ -251,7 +251,7 @@ class Spline:
         """
         if points is None:
             points = []
-        self.points: List[Vec3] = Vec3.list(points)
+        self.points: list[Vec3] = Vec3.list(points)
         self.segments = int(segments)
 
     def subdivide(self, segments: int = 4) -> None:

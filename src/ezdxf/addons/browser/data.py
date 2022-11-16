@@ -1,6 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from typing import Optional, Dict, List, Tuple, Iterable, Any
+from __future__ import annotations
+from typing import Optional, Iterable, Any
 from pathlib import Path
 from ezdxf.lldxf.loader import SectionDict
 from ezdxf.addons.browser.loader import load_section_dict
@@ -56,7 +57,7 @@ class DXFDocument:
     def absolute_filepath(self):
         return self.filepath.absolute()
 
-    def get_section(self, name: str) -> List[Tags]:
+    def get_section(self, name: str) -> list[Tags]:
         return self.sections.get(name)  # type: ignore
 
     def get_entity(self, handle: str) -> Optional[Tags]:
@@ -98,19 +99,19 @@ class EntityIndex:
     def __init__(self, sections: SectionDict):
         # dict() entries have to be ordered since Python 3.6!
         # Therefore _index.values() returns the DXF entities in file order!
-        self._index: Dict[str, IndexEntry] = dict()
+        self._index: dict[str, IndexEntry] = dict()
         # Index dummy handle of entities without handles by the id of the
         # first tag for faster retrieval of the dummy handle from tags:
         # dict items: (id, handle)
-        self._dummy_handle_index: Dict[int, str] = dict()
+        self._dummy_handle_index: dict[int, str] = dict()
         self._max_line_number: int = 0
         self._build(sections)
 
     def _build(self, sections: SectionDict) -> None:
         start_line_number = 1
         dummy_handle = 1
-        entity_index: Dict[str, IndexEntry] = dict()
-        dummy_handle_index: Dict[int, str] = dict()
+        entity_index: dict[str, IndexEntry] = dict()
+        dummy_handle_index: dict[int, str] = dict()
         prev_entry: Optional[IndexEntry] = None
         for section in sections.values():
             for tags in section:
@@ -224,10 +225,10 @@ def dxfstr(tags: Tags) -> str:
 
 
 class EntityHistory:
-    def __init__(self):
-        self._history: List[Tags] = list()
+    def __init__(self) -> None:
+        self._history: list[Tags] = list()
         self._index: int = 0
-        self._time_travel: List[Tags] = list()
+        self._time_travel: list[Tags] = list()
 
     def __len__(self):
         return len(self._history)
@@ -280,7 +281,7 @@ class EntityHistory:
         self._time_travel.append(entity)
         return entity
 
-    def content(self) -> List[Tags]:
+    def content(self) -> list[Tags]:
         return list(self._history)
 
 
@@ -288,7 +289,7 @@ class SearchIndex:
     NOT_FOUND = None, -1
 
     def __init__(self, entities: Iterable[Tags]):
-        self.entities: List[Tags] = list(entities)
+        self.entities: list[Tags] = list(entities)
         self._current_entity_index: int = 0
         self._current_tag_index: int = 0
         self._search_term: Optional[str] = None
@@ -315,13 +316,13 @@ class SearchIndex:
         except ValueError:
             self.reset_cursor()
 
-    def update_entities(self, entities: List[Tags]):
+    def update_entities(self, entities: list[Tags]):
         current_entity, index = self.current_entity()
         self.entities = entities
         if current_entity:
             self.set_current_entity(current_entity, index)
 
-    def current_entity(self) -> Tuple[Optional[Tags], int]:
+    def current_entity(self) -> tuple[Optional[Tags], int]:
         if self.entities and not self._end_of_index:
             return (
                 self.entities[self._current_entity_index],
@@ -342,7 +343,7 @@ class SearchIndex:
         else:
             self._end_of_index = True
 
-    def cursor(self) -> Tuple[int, int]:
+    def cursor(self) -> tuple[int, int]:
         return self._current_entity_index, self._current_tag_index
 
     def move_cursor_forward(self) -> None:
@@ -380,7 +381,7 @@ class SearchIndex:
 
     def find(
         self, term: str, backward: bool = False, reset_index: bool = True
-    ) -> Tuple[Optional[Tags], int]:
+    ) -> tuple[Optional[Tags], int]:
         self.reset_search_term(term)
         if reset_index:
             self.reset_cursor(backward)
@@ -392,13 +393,13 @@ class SearchIndex:
         else:
             return self.NOT_FOUND
 
-    def find_forward(self) -> Tuple[Optional[Tags], int]:
+    def find_forward(self) -> tuple[Optional[Tags], int]:
         return self._find(self.move_cursor_forward)
 
-    def find_backwards(self) -> Tuple[Optional[Tags], int]:
+    def find_backwards(self) -> tuple[Optional[Tags], int]:
         return self._find(self.move_cursor_backward)
 
-    def _find(self, move_cursor) -> Tuple[Optional[Tags], int]:
+    def _find(self, move_cursor) -> tuple[Optional[Tags], int]:
         if self.entities and self._search_term and not self._end_of_index:
             while not self._end_of_index:
                 entity, tag_index = self.current_entity()

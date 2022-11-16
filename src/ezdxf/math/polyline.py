@@ -376,7 +376,7 @@ class _PolylineIntersection:
     p1: Sequence
     p2: Sequence
 
-    def __init__(self):
+    def __init__(self) -> None:
         # At each recursion level the bounding box for each half of the
         # polyline will be created two times, using a cache is an advantage:
         self.bbox_cache: TCache = {}

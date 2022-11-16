@@ -160,7 +160,7 @@ acdb_mline_group_codes = group_code_mapping(acdb_mline)
 
 
 class MLineVertex:
-    def __init__(self):
+    def __init__(self) -> None:
         self.location: Vec3 = NULLVEC
         self.line_direction: Vec3 = X_AXIS
         self.miter_direction: Vec3 = Y_AXIS
@@ -316,7 +316,7 @@ class MLine(DXFGraphic):
     SUPPRESS_START_CAPS = const.MLINE_SUPPRESS_START_CAPS
     SUPPRESS_END_CAPS = const.MLINE_SUPPRESS_END_CAPS
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         # The MLINE geometry stored in vertices, is the final geometry,
         # scaling factor, justification and MLineStyle settings are already
@@ -429,7 +429,7 @@ class MLine(DXFGraphic):
         _style = self.doc.entitydb.get(self.dxf.style_handle)
         if _style is None:
             _style = self.doc.mline_styles.get(self.dxf.style_name)
-        return _style
+        return _style  # type: ignore
 
     def set_style(self, name: str) -> None:
         """Set MLINESTYLE by name and update geometry accordingly.

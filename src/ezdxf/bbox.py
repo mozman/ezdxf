@@ -1,6 +1,7 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from typing import TYPE_CHECKING, Iterable, Dict, Optional
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Optional
 
 import ezdxf
 from ezdxf import disassemble
@@ -20,8 +21,8 @@ class Cache:
 
     """
 
-    def __init__(self, uuid=False):
-        self._boxes: Dict[str, BoundingBox] = dict()
+    def __init__(self, uuid=False) -> None:
+        self._boxes: dict[str, BoundingBox] = dict()
         self._use_uuid = bool(uuid)
         self.hits: int = 0
         self.misses: int = 0

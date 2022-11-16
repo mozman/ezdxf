@@ -21,7 +21,7 @@ class LinkedEntities(DXFGraphic):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._sub_entities: List[DXFGraphic] = []
         self.seqend: Optional["SeqEnd"] = None

@@ -317,7 +317,7 @@ class MultileaderAnalyzer:
     @property
     def mleaderstyle(self) -> Optional[mleader.MLeaderStyle]:
         handle = self.multileader.dxf.get("style_handle")
-        return self.doc.entitydb.get(handle)
+        return self.doc.entitydb.get(handle)  # type: ignore
 
     def divider_line(self, symbol="-") -> str:
         return symbol * self.report_width

@@ -4,8 +4,8 @@
 # This is the abstract link between the text layout engine implemented in
 # ezdxf.tools.text_layout and a concrete MTEXT renderer implementation like
 # MTextExplode or ComplexMTextRenderer.
-
-from typing import List, Sequence, Dict, Tuple, Optional
+from __future__ import annotations
+from typing import Sequence, Optional
 import abc
 from ezdxf.lldxf import const
 from ezdxf.entities.mtext import MText, MTextColumns
@@ -52,7 +52,7 @@ STACKING = {
 }
 
 
-def make_default_tab_stops(cap_height: float, width: float) -> List[tl.TabStop]:
+def make_default_tab_stops(cap_height: float, width: float) -> list[tl.TabStop]:
     tab_stops = []
     step = 4.0 * cap_height
     pos = step
@@ -63,7 +63,7 @@ def make_default_tab_stops(cap_height: float, width: float) -> List[tl.TabStop]:
 
 
 def append_default_tab_stops(
-    tab_stops: List[tl.TabStop], default_stops: Sequence[tl.TabStop]
+    tab_stops: list[tl.TabStop], default_stops: Sequence[tl.TabStop]
 ) -> None:
     last_pos = 0.0
     if tab_stops:
@@ -76,7 +76,7 @@ def make_tab_stops(
     width: float,
     tab_stops: Sequence,
     default_stops: Sequence[tl.TabStop],
-) -> List[tl.TabStop]:
+) -> list[tl.TabStop]:
     _tab_stops = []
     for stop in tab_stops:
         if isinstance(stop, str):
@@ -110,7 +110,7 @@ def get_stroke(ctx: MTextContext) -> int:
 
 
 def new_paragraph(
-    cells: List,
+    cells: list,
     ctx: MTextContext,
     cap_height: float,
     line_spacing: float = 1,
@@ -154,8 +154,8 @@ def defined_width(mtext: MText) -> float:
     return width
 
 
-def column_heights(columns: MTextColumns) -> List[Optional[float]]:
-    heights: List[Optional[float]]
+def column_heights(columns: MTextColumns) -> list[Optional[float]]:
+    heights: list[Optional[float]]
     if columns.heights:  # dynamic manual
         heights = list(columns.heights)
         # last height has to be auto height = None
@@ -166,8 +166,8 @@ def column_heights(columns: MTextColumns) -> List[Optional[float]]:
 
 
 class AbstractMTextRenderer(abc.ABC):
-    def __init__(self):
-        self._font_cache: Dict[Tuple[str, float, float], AbstractFont] = {}
+    def __init__(self) -> None:
+        self._font_cache: dict[tuple[str, float, float], AbstractFont] = {}
 
     @abc.abstractmethod
     def word(self, test: str, ctx: MTextContext) -> tl.ContentCell:
@@ -175,7 +175,7 @@ class AbstractMTextRenderer(abc.ABC):
 
     @abc.abstractmethod
     def fraction(
-        self, data: Tuple[str, str, str], ctx: MTextContext
+        self, data: tuple[str, str, str], ctx: MTextContext
     ) -> tl.ContentCell:
         ...
 
@@ -265,7 +265,7 @@ class AbstractMTextRenderer(abc.ABC):
 
         content = mtext.all_columns_raw_content()
         ctx = self.make_mtext_context(mtext)
-        cells: List[tl.Cell] = []
+        cells: list[tl.Cell] = []
         for token in MTextParser(content, ctx):
             ctx = token.ctx
             if token.type == TokenType.NEW_PARAGRAPH:

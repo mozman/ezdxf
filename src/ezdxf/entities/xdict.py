@@ -162,7 +162,7 @@ class ExtensionDict:
     def load_resources(self, doc: "Drawing") -> None:
         handle = self._xdict
         assert isinstance(handle, str)
-        self._xdict = doc.entitydb.get(handle)
+        self._xdict = doc.entitydb.get(handle)  # type: ignore
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         assert self._xdict is not None

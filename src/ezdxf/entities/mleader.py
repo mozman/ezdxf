@@ -277,7 +277,7 @@ class MultiLeader(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mleader)
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.context = MLeaderContext()
         self.arrow_heads: List[ArrowHeadData] = []
@@ -678,7 +678,7 @@ class MLeaderContext:
         273: "bottom_attachment",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.leaders: List["LeaderData"] = []
         self.scale: float = 1.0  # overall scale
 
@@ -864,7 +864,7 @@ class MTextData:
         295: "use_word_break",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.default_content: str = ""
         self.extrusion: Vec3 = Z_AXIS
         self.style_handle: str = "0"  # handle of TextStyle() table entry
@@ -968,7 +968,7 @@ class BlockData:
         93: "color",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.block_record_handle = None
         self.extrusion: Vec3 = Z_AXIS
         self.insert: Vec3 = NULLVEC
@@ -1045,7 +1045,7 @@ class BlockData:
 
 
 class LeaderData:
-    def __init__(self):
+    def __init__(self) -> None:
         self.lines: List["LeaderLine"] = []
         # has_last_leader_line:
         # in AutoCAD the leader is invisible if set to 0
@@ -1139,7 +1139,7 @@ class LeaderData:
 
 
 class LeaderLine:
-    def __init__(self):
+    def __init__(self) -> None:
         self.vertices: List[Vec3] = []  # WCS coordinates
         self.breaks: List[Union[int, Vec3]] = []
         # Breaks: 90, 11, 12, [11, 12, ...] [, 90, 11, 12 [11, 12, ...]]

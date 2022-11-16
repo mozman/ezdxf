@@ -127,7 +127,7 @@ class LinearTrace(AbstractTrace):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._stations: List[LinearStation] = []
         self.abs_tol = 1e-12
 
@@ -318,7 +318,7 @@ class CurvedTrace(AbstractTrace):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._stations: List[CurveStation] = []
 
     def __len__(self):
@@ -436,7 +436,7 @@ class TraceBuilder(Sequence):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._traces: List[AbstractTrace] = []
         self.abs_tol = 1e-12
 

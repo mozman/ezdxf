@@ -195,7 +195,7 @@ acdb_attdef_xrecord = DefSubclass(
 class BaseAttrib(Text):
     XRECORD_DEF = acdb_attdef_xrecord
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         # Does subclass AcDbXrecord really exist?
         self._xrecord: Optional["Tags"] = None
@@ -588,7 +588,7 @@ class EmbeddedMText:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Attribute "dxf" contains the DXF attributes defined in subclass
         # "AcDbMText"
         self.dxf = EmbeddedMTextNS()
