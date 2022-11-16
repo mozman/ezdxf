@@ -8,7 +8,7 @@ from ezdxf import disassemble
 from ezdxf.math import BoundingBox
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity
+    from ezdxf.entities import DXFEntity
 
 MAX_FLATTENING_DISTANCE = disassemble.Primitive.max_flattening_distance
 
@@ -38,7 +38,7 @@ class Cache:
             f"misses={self.misses})"
         )
 
-    def get(self, entity: "DXFEntity") -> Optional[BoundingBox]:
+    def get(self, entity: DXFEntity) -> Optional[BoundingBox]:
         assert entity is not None
         key = self._get_key(entity)
         if key is None:
@@ -51,14 +51,14 @@ class Cache:
             self.hits += 1
         return box
 
-    def store(self, entity: "DXFEntity", box: BoundingBox) -> None:
+    def store(self, entity: DXFEntity, box: BoundingBox) -> None:
         assert entity is not None
         key = self._get_key(entity)
         if key is None:
             return
         self._boxes[key] = box
 
-    def invalidate(self, entities: Iterable["DXFEntity"]) -> None:
+    def invalidate(self, entities: Iterable[DXFEntity]) -> None:
         """Invalidate cache entries for the given DXF `entities`.
 
         If entities are changed by the user, it is possible to invalidate
@@ -74,7 +74,7 @@ class Cache:
             except KeyError:
                 pass
 
-    def _get_key(self, entity: "DXFEntity") -> Optional[str]:
+    def _get_key(self, entity: DXFEntity) -> Optional[str]:
         if entity.dxftype() == "HATCH":
             # Special treatment for multiple primitives for the same
             # HATCH entity - all have the same handle:
@@ -90,10 +90,10 @@ class Cache:
 
 
 def multi_recursive(
-    entities: Iterable["DXFEntity"],
+    entities: Iterable[DXFEntity],
     *,
     fast=False,
-    cache: Cache = None,
+    cache: Optional[Cache] = None,
 ) -> Iterable[BoundingBox]:
     """Yields all bounding boxes for the given `entities` **or** all bounding
     boxes for their sub entities. If an entity (INSERT) has sub entities, only
@@ -129,10 +129,10 @@ def multi_recursive(
 
 
 def extents(
-    entities: Iterable["DXFEntity"],
+    entities: Iterable[DXFEntity],
     *,
     fast=False,
-    cache: Cache = None,
+    cache: Optional[Cache] = None,
 ) -> BoundingBox:
     """Returns a single bounding box for all given `entities`.
 
@@ -164,10 +164,10 @@ def extents(
 
 
 def multi_flat(
-    entities: Iterable["DXFEntity"],
+    entities: Iterable[DXFEntity],
     *,
     fast=False,
-    cache: Cache = None,
+    cache: Optional[Cache] = None,
 ) -> Iterable[BoundingBox]:
     """Yields a bounding box for each of the given `entities`.
 
@@ -180,7 +180,7 @@ def multi_flat(
 
     """
 
-    def extends_(entities_: Iterable["DXFEntity"]) -> BoundingBox:
+    def extends_(entities_: Iterable[DXFEntity]) -> BoundingBox:
         _extends = BoundingBox()
         for _box in multi_recursive(entities_, fast=fast, cache=cache):
             _extends.extend(_box)
