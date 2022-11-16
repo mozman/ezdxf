@@ -1,6 +1,7 @@
-# Copyright (c) 2014-2021, Manfred Moitzi
+# Copyright (c) 2014-2022, Manfred Moitzi
 # License: MIT License
-from typing import BinaryIO, cast, TextIO, List, Optional
+from __future__ import annotations
+from typing import BinaryIO, cast, TextIO, Optional
 import zipfile
 from contextlib import contextmanager
 
@@ -22,7 +23,7 @@ class ZipReader:
         self.errors = errors
         self.dxfversion = "AC1009"
 
-    def open(self, dxf_file_name: str = None) -> None:
+    def open(self, dxf_file_name: Optional[str] = None) -> None:
         def open_dxf_file() -> BinaryIO:
             # Open always in binary mode:
             return cast(BinaryIO, self.zip_archive.open(self.dxf_file_name))  # type: ignore
@@ -50,7 +51,7 @@ class ZipReader:
         else:
             raise IOError("No DXF files found.")
 
-    def get_dxf_file_names(self) -> List[str]:
+    def get_dxf_file_names(self) -> list[str]:
         return [
             name
             for name in self.zip_archive.namelist()  # type: ignore
@@ -74,7 +75,9 @@ class ZipReader:
 
 @contextmanager  # type: ignore
 def ctxZipReader(  # type: ignore
-    zipfilename: str, filename: str = None, errors: str = "surrogateescape"
+    zipfilename: str,
+    filename: Optional[str] = None,
+    errors: str = "surrogateescape",
 ) -> ZipReader:
     zip_reader = ZipReader(zipfilename, errors=errors)
     zip_reader.open(filename)
