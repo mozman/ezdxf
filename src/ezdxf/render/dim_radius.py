@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from ezdxf.math import Vec2, UCS, UVec
 from ezdxf.tools import normalize_text_angle
 from ezdxf.render.arrows import ARROWS, connection_point
@@ -15,7 +15,8 @@ from ezdxf.render.dim_base import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, GenericLayoutType
+    from ezdxf.entities import Dimension
+    from ezdxf.eztypes import GenericLayoutType
 
 
 class RadiusMeasurement(LengthMeasurement):
@@ -57,9 +58,9 @@ class RadiusDimension(BaseDimensionRenderer):
 
     def __init__(
         self,
-        dimension: "Dimension",
-        ucs: "UCS" = None,
-        override: "DimStyleOverride" = None,
+        dimension: Dimension,
+        ucs: Optional[UCS] = None,
+        override: Optional[DimStyleOverride] = None,
     ):
         super().__init__(dimension, ucs, override)
         dimtype = self.dimension.dimtype
@@ -220,7 +221,7 @@ class RadiusDimension(BaseDimensionRenderer):
         radius = (location - self.center).magnitude
         return radius > self.radius
 
-    def render(self, block: "GenericLayoutType") -> None:
+    def render(self, block: GenericLayoutType) -> None:
         """Create dimension geometry of basic DXF entities in the associated
         BLOCK layout.
         """
