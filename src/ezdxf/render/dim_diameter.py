@@ -1,6 +1,7 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Any
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 from ezdxf.math import Vec2, UCS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
@@ -12,7 +13,7 @@ from .dim_radius import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension
+    from ezdxf.entities import Dimension
 
 PREFIX = "Ø"
 
@@ -46,9 +47,9 @@ class DiameterDimension(RadiusDimension):
 
     def __init__(
         self,
-        dimension: "Dimension",
-        ucs: "UCS" = None,
-        override: "DimStyleOverride" = None,
+        dimension: Dimension,
+        ucs: Optional[UCS] = None,
+        override: Optional[DimStyleOverride] = None,
     ):
         # Diameter dimension has the same styles for inside text as radius dimension, except for the
         # measurement text
@@ -56,7 +57,7 @@ class DiameterDimension(RadiusDimension):
         self.point_on_circle2 = Vec2(self.dimension.dxf.defpoint)
 
     def add_text(
-        self, text: str, pos: Vec2, rotation: float, dxfattribs: Dict[str, Any]
+        self, text: str, pos: Vec2, rotation: float, dxfattribs
     ) -> None:
         # escape diameter sign
         super().add_text(text.replace(PREFIX, "%%c"), pos, rotation, dxfattribs)
