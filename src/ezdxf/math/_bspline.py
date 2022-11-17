@@ -1,9 +1,9 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 #
 # Pure Python implementation of the B-spline basis function.
 from __future__ import annotations
-from typing import List, Iterable, Sequence, Tuple
+from typing import Iterable, Sequence, Optional
 import math
 import bisect
 
@@ -24,7 +24,7 @@ class Basis:
         knots: Iterable[float],
         order: int,
         count: int,
-        weights: Sequence[float] = None,
+        weights: Optional[Sequence[float]] = None,
     ):
         self._knots = tuple(knots)
         self._weights = tuple(weights or [])
@@ -51,11 +51,11 @@ class Basis:
         return self._order - 1
 
     @property
-    def knots(self) -> Tuple[float, ...]:
+    def knots(self) -> tuple[float, ...]:
         return self._knots
 
     @property
-    def weights(self) -> Tuple[float, ...]:
+    def weights(self) -> tuple[float, ...]:
         return self._weights
 
     @property
@@ -63,7 +63,7 @@ class Basis:
         """Returns ``True`` if curve is a rational B-spline. (has weights)"""
         return bool(self._weights)
 
-    def basis_vector(self, t: float) -> List[float]:
+    def basis_vector(self, t: float) -> list[float]:
         """Returns the expanded basis vector."""
         span = self.find_span(t)
         p = self._order - 1
@@ -94,7 +94,7 @@ class Basis:
                 span += 1
             return span - 1
 
-    def basis_funcs(self, span: int, u: float) -> List[float]:
+    def basis_funcs(self, span: int, u: float) -> list[float]:
         # Source: The NURBS Book: Algorithm A2.2
         order = self._order
         knots = self._knots
@@ -116,7 +116,7 @@ class Basis:
         else:
             return N
 
-    def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
+    def span_weighting(self, nbasis: list[float], span: int) -> list[float]:
         size = len(nbasis)
         weights = self._weights[span - self._order + 1 : span + 1]
         products = [nb * w for nb, w in zip(nbasis, weights)]
@@ -223,7 +223,7 @@ class Evaluator:
         for u in t:
             yield self.point(u)
 
-    def derivative(self, u: float, n: int = 1) -> List[Vec3]:
+    def derivative(self, u: float, n: int = 1) -> list[Vec3]:
         """Return point and derivatives up to n <= degree for parameter u."""
         # Source: The NURBS Book: Algorithm A3.2
         basis = self._basis
@@ -237,8 +237,8 @@ class Evaluator:
         if basis.is_rational:
             # Homogeneous point representation required:
             # (x*w, y*w, z*w, w)
-            CKw: List[Vec3] = []
-            wders: List[float] = []
+            CKw: list[Vec3] = []
+            wders: list[float] = []
             weights = basis.weights
             for k in range(n + 1):
                 v = NULLVEC
@@ -253,7 +253,7 @@ class Evaluator:
                 wders.append(wder)
 
             # Source: The NURBS Book: Algorithm A4.2
-            CK: List[Vec3] = []
+            CK: list[Vec3] = []
             for k in range(n + 1):
                 v = CKw[k]
                 for i in range(1, k + 1):
@@ -271,6 +271,6 @@ class Evaluator:
 
     def derivatives(
         self, t: Iterable[float], n: int = 1
-    ) -> Iterable[List[Vec3]]:
+    ) -> Iterable[list[Vec3]]:
         for u in t:
             yield self.derivative(u, n)
