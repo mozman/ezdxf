@@ -22,7 +22,7 @@ Quick-Info
 - requires at least Python 3.7
 - OS independent
 - tested with CPython and pypy3
-- has type annotations and passes `mypy --ignore-missing-imports --implicit-optional -p ezdxf` successful
+- has type annotations and passes `mypy --ignore-missing-imports -p ezdxf` successful
 - additional required packages for the core package without add-ons: 
   [typing_extensions](https://pypi.org/project/typing-extensions/), 
   [pyparsing](https://pypi.org/project/pyparsing/) 

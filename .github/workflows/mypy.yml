@@ -24,4 +24,4 @@ jobs:
         python setup.py install
     - name: Check type annotations by mypy
       run: |
-        python -m mypy --ignore-missing-imports --implicit-optional -p ezdxf
+        python -m mypy --ignore-missing-imports -p ezdxf
