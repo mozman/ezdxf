@@ -1,5 +1,6 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 import copy
 from ezdxf.lldxf import validator
@@ -35,7 +36,10 @@ from .mtext import (
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Tags, DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.lldxf.tags import Tags
+    from ezdxf.entities import DXFEntity
+
 
 __all__ = ["AttDef", "Attrib", "copy_attrib_as_text", "BaseAttrib"]
 
@@ -198,8 +202,8 @@ class BaseAttrib(Text):
     def __init__(self) -> None:
         super().__init__()
         # Does subclass AcDbXrecord really exist?
-        self._xrecord: Optional["Tags"] = None
-        self._embedded_mtext: Optional["EmbeddedMText"] = None
+        self._xrecord: Optional[Tags] = None
+        self._embedded_mtext: Optional[EmbeddedMText] = None
 
     def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy entity data, xrecord data and embedded MTEXT are not stored
@@ -219,7 +223,7 @@ class BaseAttrib(Text):
             mtext.load_dxf_tags(processor)
             self._embedded_mtext = mtext
 
-    def export_dxf_r2018_features(self, tagwriter: "TagWriter") -> None:
+    def export_dxf_r2018_features(self, tagwriter: AbstractTagWriter) -> None:
         tagwriter.write_tag2(71, self.dxf.attribute_type)
         tagwriter.write_tag2(72, 0)  # unknown tag
         if self.dxf.hasattr("align_point"):
@@ -412,8 +416,8 @@ class AttDef(BaseAttrib):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_text, acdb_attdef)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super(Text, self).load_dxf_attribs(processor)
         # Do not call Text loader.
         if processor:
@@ -431,7 +435,7 @@ class AttDef(BaseAttrib):
 
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         # Text() writes 2x AcDbText which is not suitable for AttDef()
         self.export_acdb_entity(tagwriter)
         self.export_acdb_text(tagwriter)
@@ -440,7 +444,7 @@ class AttDef(BaseAttrib):
             self.dxf.attribute_type = 4 if self.has_embedded_mtext_entity else 1
             self.export_dxf_r2018_features(tagwriter)
 
-    def export_acdb_attdef(self, tagwriter: "TagWriter") -> None:
+    def export_acdb_attdef(self, tagwriter: AbstractTagWriter) -> None:
         if tagwriter.dxfversion > const.DXF12:
             tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_attdef.name)
         self.dxf.export_dxf_attribs(
@@ -466,8 +470,8 @@ class Attrib(BaseAttrib):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_text, acdb_attrib)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super(Text, self).load_dxf_attribs(processor)
         # Do not call Text loader.
         if processor:
@@ -484,7 +488,7 @@ class Attrib(BaseAttrib):
                 elevation_to_z_axis(dxf, ("insert", "align_point"))
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         # Text() writes 2x AcDbText which is not suitable for AttDef()
         self.export_acdb_entity(tagwriter)
         self.export_acdb_attrib_text(tagwriter)
@@ -493,7 +497,7 @@ class Attrib(BaseAttrib):
             self.dxf.attribute_type = 2 if self.has_embedded_mtext_entity else 1
             self.export_dxf_r2018_features(tagwriter)
 
-    def export_acdb_attrib_text(self, tagwriter: "TagWriter") -> None:
+    def export_acdb_attrib_text(self, tagwriter: AbstractTagWriter) -> None:
         # Despite the similarities to TEXT, it is different to
         # Text.export_acdb_text():
         if tagwriter.dxfversion > const.DXF12:
@@ -516,7 +520,7 @@ class Attrib(BaseAttrib):
             ],
         )
 
-    def export_acdb_attrib(self, tagwriter: "TagWriter") -> None:
+    def export_acdb_attrib(self, tagwriter: AbstractTagWriter) -> None:
         if tagwriter.dxfversion > const.DXF12:
             tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_attrib.name)
         self.dxf.export_dxf_attribs(
@@ -594,7 +598,7 @@ class EmbeddedMText:
         self.dxf = EmbeddedMTextNS()
         self.text: str = ""
 
-    def copy(self) -> "EmbeddedMText":
+    def copy(self) -> EmbeddedMText:
         copy_ = EmbeddedMText()
         copy_.dxf = copy.deepcopy(self.dxf)
         return copy_
@@ -645,7 +649,7 @@ class EmbeddedMText:
             if not dxf.hasattr(key):
                 dxf.set(key, default)
 
-    def export_dxf_tags(self, tagwriter: "TagWriter") -> None:
+    def export_dxf_tags(self, tagwriter: AbstractTagWriter) -> None:
         """Export embedded MTEXT as "Embedded Object"."""
         tagwriter.write_tag2(EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR)
         self.set_required_dxf_attributes()
