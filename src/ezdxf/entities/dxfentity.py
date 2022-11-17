@@ -193,7 +193,9 @@ class DXFEntity:
         pass
 
     @classmethod
-    def load(cls: Type[T], tags: ExtendedTags, doc: Drawing = None) -> T:
+    def load(
+        cls: Type[T], tags: ExtendedTags, doc: Optional[Drawing] = None
+    ) -> T:
         """Constructor to generate entities loaded from an external source.
 
         LOAD process:
@@ -222,7 +224,9 @@ class DXFEntity:
         entity.load_tags(tags, dxfversion=dxfversion)
         return entity
 
-    def load_tags(self, tags: ExtendedTags, dxfversion: str = None) -> None:
+    def load_tags(
+        self, tags: ExtendedTags, dxfversion: Optional[str] = None
+    ) -> None:
         """Generic tag loading interface, called if DXF document is loaded
         from external sources.
 
@@ -279,7 +283,7 @@ class DXFEntity:
         return None
 
     @classmethod
-    def from_text(cls: Type[T], text: str, doc: Drawing = None) -> T:
+    def from_text(cls: Type[T], text: str, doc: Optional[Drawing] = None) -> T:
         """Load constructor from text for testing. (internal API)"""
         return cls.load(ExtendedTags.from_text(text), doc)
 
@@ -446,28 +450,24 @@ class DXFEntity:
 
     @property
     def is_alive(self) -> bool:
-        """Is ``False`` if entity has been deleted.
-        """
+        """Is ``False`` if entity has been deleted."""
         return hasattr(self, "dxf")
 
     @property
     def is_virtual(self) -> bool:
-        """Is ``True`` if entity is a virtual entity.
-        """
+        """Is ``True`` if entity is a virtual entity."""
         return self.doc is None or self.dxf.handle is None
 
     @property
     def is_bound(self) -> bool:
-        """Is ``True`` if entity is bound to DXF document.
-        """
+        """Is ``True`` if entity is bound to DXF document."""
         if self.is_alive and not self.is_virtual:
             return factory.is_bound(self, self.doc)  # type: ignore
         return False
 
     @property
     def has_source_block_reference(self) -> bool:
-        """Is ``True`` if this virtual entity was created by a block reference.
-        """
+        """Is ``True`` if this virtual entity was created by a block reference."""
         return hasattr(self, DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE)
 
     @property
@@ -581,7 +581,7 @@ class DXFEntity:
         """Returns a simple string representation including the class."""
         return str(self.__class__) + " " + str(self)
 
-    def dxfattribs(self, drop: set[str] = None) -> dict:
+    def dxfattribs(self, drop: Optional[set[str]] = None) -> dict:
         """Returns a ``dict`` with all existing DXF attributes and their
         values and exclude all DXF attributes listed in set `drop`.
 
@@ -608,7 +608,7 @@ class DXFEntity:
         """
         return bool(self.dxf.get(name, 0) & flag)
 
-    def remove_dependencies(self, other: Drawing = None):
+    def remove_dependencies(self, other: Optional[Drawing] = None):
         """Remove all dependencies from current document.
 
         Intended usage is to remove dependencies from the current document to
@@ -977,7 +977,9 @@ class DXFTagStorage(DXFEntity):
         return self.xtags.has_subclass("AcDbEntity")
 
     @classmethod
-    def load(cls, tags: ExtendedTags, doc: Drawing = None) -> DXFTagStorage:
+    def load(
+        cls, tags: ExtendedTags, doc: Optional[Drawing] = None
+    ) -> DXFTagStorage:
         assert isinstance(tags, ExtendedTags)
         entity = cls.new(doc=doc)
         dxfversion = doc.dxfversion if doc else None
