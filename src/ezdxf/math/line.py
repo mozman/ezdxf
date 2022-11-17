@@ -31,7 +31,9 @@ class ConstructionRay:
 
     """
 
-    def __init__(self, p1: UVec, p2: UVec = None, angle: float = None):
+    def __init__(
+        self, p1: UVec, p2: Optional[UVec] = None, angle: Optional[float] = None
+    ):
         self._location = Vec2(p1)
         self._angle: Optional[float]
         self._slope: Optional[float]
