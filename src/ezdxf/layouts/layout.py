@@ -344,7 +344,7 @@ class Modelspace(Layout):
         """Name of modelspace is fixed as "Model"."""
         return "Model"
 
-    def new_geodata(self, dxfattribs: dict = None) -> GeoData:
+    def new_geodata(self, dxfattribs=None) -> GeoData:
         """Creates a new :class:`GeoData` entity and replaces existing ones.
         The GEODATA entity resides in the OBJECTS section and not in the
         modelspace, it is linked to the modelspace by an

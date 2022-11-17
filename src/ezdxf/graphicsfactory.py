@@ -5,8 +5,6 @@ from typing import (
     TYPE_CHECKING,
     Iterable,
     Sequence,
-    Dict,
-    Tuple,
     cast,
     Optional,
 )
@@ -18,6 +16,7 @@ from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2013
 from ezdxf.math import (
     Vec3,
     UVec,
+    UCS,
     global_bspline_interpolation,
     fit_points_to_cad_cv,
     arc_angle_span_deg,
@@ -34,14 +33,15 @@ from ezdxf.tools import guid
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
+    from ezdxf.document import Drawing
+    from ezdxf.eztypes import GenericLayoutType
+    from ezdxf.entities import (
         Arc,
         AttDef,
         Circle,
         Dimension,
         ArcDimension,
         DXFGraphic,
-        Drawing,
         Ellipse,
         ExtrudedSurface,
         Face3d,
@@ -67,17 +67,17 @@ if TYPE_CHECKING:
         SweptSurface,
         Text,
         Trace,
-        UCS,
         Underlay,
         UnderlayDefinition,
         Wipeout,
         XLine,
-        GenericLayoutType,
         MultiLeader,
+        Helix,
+    )
+    from ezdxf.render.mleader import (
         MultiLeaderMTextBuilder,
         MultiLeaderBlockBuilder,
     )
-    from ezdxf.entities import Helix
 
 
 class CreatorInterface:
@@ -92,7 +92,7 @@ class CreatorInterface:
     def is_active_paperspace(self):
         return False
 
-    def new_entity(self, type_: str, dxfattribs: Dict) -> DXFGraphic:
+    def new_entity(self, type_: str, dxfattribs: dict) -> DXFGraphic:
         """
         Create entity in drawing database and add entity to the entity space.
 
@@ -283,8 +283,8 @@ class CreatorInterface:
         self,
         text: str,
         *,
-        height: float = None,
-        rotation: float = None,
+        height: Optional[float] = None,
+        rotation: Optional[float] = None,
         dxfattribs=None,
     ) -> Text:
         """
@@ -335,7 +335,7 @@ class CreatorInterface:
         self,
         name: str,
         insert: UVec,
-        values: Dict[str, str],
+        values: dict[str, str],
         dxfattribs=None,
     ) -> Insert:
         """
@@ -366,7 +366,7 @@ class CreatorInterface:
         if not isinstance(name, str):
             raise DXFValueError("Block name as string required.")
 
-        def unpack(dxfattribs) -> Tuple[str, str, UVec]:
+        def unpack(dxfattribs) -> tuple[str, str, UVec]:
             tag = dxfattribs.pop("tag")
             text = values.get(tag, "")
             location = dxfattribs.pop("insert")
@@ -392,8 +392,8 @@ class CreatorInterface:
         insert: UVec = (0, 0),
         text: str = "",
         *,
-        height: float = None,
-        rotation: float = None,
+        height: Optional[float] = None,
+        rotation: Optional[float] = None,
         dxfattribs=None,
     ) -> AttDef:
         """
@@ -427,7 +427,7 @@ class CreatorInterface:
     def add_polyline2d(
         self,
         points: Iterable[UVec],
-        format: str = None,
+        format: Optional[str] = None,
         *,
         close: bool = False,
         dxfattribs=None,
@@ -484,7 +484,7 @@ class CreatorInterface:
         return self.add_polyline2d(points, close=close, dxfattribs=dxfattribs)
 
     def add_polymesh(
-        self, size: Tuple[int, int] = (3, 3), dxfattribs=None
+        self, size: tuple[int, int] = (3, 3), dxfattribs=None
     ) -> Polymesh:
         """
         Add a :class:`~ezdxf.entities.Polymesh` entity, which is a wrapper class
@@ -871,7 +871,7 @@ class CreatorInterface:
 
     def add_spline(
         self,
-        fit_points: Iterable[UVec] = None,
+        fit_points: Optional[Iterable[UVec]] = None,
         degree: int = 3,
         dxfattribs=None,
     ) -> Spline:
@@ -959,7 +959,7 @@ class CreatorInterface:
     def add_cad_spline_control_frame(
         self,
         fit_points: Iterable[UVec],
-        tangents: Iterable[UVec] = None,
+        tangents: Optional[Iterable[UVec]] = None,
         estimate: str = "5-p",
         dxfattribs=None,
     ) -> Spline:
@@ -987,7 +987,7 @@ class CreatorInterface:
         self,
         control_points: Iterable[UVec],
         degree: int = 3,
-        knots: Iterable[float] = None,
+        knots: Optional[Iterable[float]] = None,
         dxfattribs=None,
     ) -> Spline:
         """
@@ -1014,7 +1014,7 @@ class CreatorInterface:
         control_points: Iterable[UVec],
         weights: Sequence[float],
         degree: int = 3,
-        knots: Iterable[float] = None,
+        knots: Optional[Iterable[float]] = None,
         dxfattribs=None,
     ) -> Spline:
         """
@@ -1154,7 +1154,7 @@ class CreatorInterface:
     def add_mpolygon(
         self,
         color: int = const.BYLAYER,
-        fill_color: int = None,
+        fill_color: Optional[int] = None,
         dxfattribs=None,
     ) -> MPolygon:
         """Add a :class:`~ezdxf.entities.MPolygon` entity. (requires DXF R2000)
@@ -1203,7 +1203,7 @@ class CreatorInterface:
         self,
         image_def: ImageDef,
         insert: UVec,
-        size_in_units: Tuple[float, float],
+        size_in_units: tuple[float, float],
         rotation: float = 0.0,
         dxfattribs=None,
     ) -> "Image":
@@ -1307,9 +1307,9 @@ class CreatorInterface:
         text: str = "<>",
         angle: float = 0,
         # 0=horizontal, 90=vertical, else=rotated
-        text_rotation: float = None,
+        text_rotation: Optional[float] = None,
         dimstyle: str = "EZDXF",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -1378,10 +1378,10 @@ class CreatorInterface:
         base: UVec,
         points: Iterable[UVec],
         angle: float = 0,
-        ucs: "UCS" = None,
+        ucs: Optional[UCS] = None,
         avoid_double_rendering: bool = True,
         dimstyle: str = "EZDXF",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
         discard=False,
     ) -> None:
@@ -1442,7 +1442,7 @@ class CreatorInterface:
         distance: float,
         text: str = "<>",
         dimstyle: str = "EZDXF",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -1498,14 +1498,14 @@ class CreatorInterface:
     def add_angular_dim_2l(
         self,
         base: UVec,
-        line1: Tuple[UVec, UVec],
-        line2: Tuple[UVec, UVec],
+        line1: tuple[UVec, UVec],
+        line2: tuple[UVec, UVec],
         *,
         location: UVec = None,
         text: str = "<>",
         text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -1584,9 +1584,9 @@ class CreatorInterface:
         *,
         location: UVec = None,
         text: str = "<>",
-        text_rotation: float = None,
+        text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -1668,9 +1668,9 @@ class CreatorInterface:
         *,
         location: UVec = None,
         text: str = "<>",
-        text_rotation: float = None,
+        text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -1741,9 +1741,9 @@ class CreatorInterface:
         *,
         location: UVec = None,
         text: str = "<>",
-        text_rotation: float = None,
+        text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -1802,9 +1802,9 @@ class CreatorInterface:
         *,
         location: UVec = None,
         text: str = "<>",
-        text_rotation: float = None,
+        text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -1895,9 +1895,9 @@ class CreatorInterface:
         *,
         location: UVec = None,
         text: str = "<>",
-        text_rotation: float = None,
+        text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -1969,9 +1969,9 @@ class CreatorInterface:
         *,
         location: UVec = None,
         text: str = "<>",
-        text_rotation: float = None,
+        text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -2025,14 +2025,14 @@ class CreatorInterface:
     def add_diameter_dim(
         self,
         center: UVec,
-        mpoint: UVec = None,
-        radius: float = None,
-        angle: float = None,
+        mpoint: Optional[UVec] = None,
+        radius: Optional[float] = None,
+        angle: Optional[float] = None,
         *,
-        location: UVec = None,
+        location: Optional[UVec] = None,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -2119,7 +2119,7 @@ class CreatorInterface:
         p2: UVec,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -2161,14 +2161,14 @@ class CreatorInterface:
     def add_radius_dim(
         self,
         center: UVec,
-        mpoint: UVec = None,
-        radius: float = None,
-        angle: float = None,
+        mpoint: Optional[UVec] = None,
+        radius: Optional[float] = None,
+        angle: Optional[float] = None,
         *,
-        location: UVec = None,
+        location: Optional[UVec] = None,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -2276,7 +2276,7 @@ class CreatorInterface:
         *,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -2319,7 +2319,7 @@ class CreatorInterface:
         *,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -2366,7 +2366,7 @@ class CreatorInterface:
         rotation: float = 0.0,
         text: str = "<>",
         dimstyle: str = "EZDXF",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """
@@ -2456,7 +2456,7 @@ class CreatorInterface:
         rotation: float = 0.0,
         text: str = "<>",
         dimstyle: str = "EZDXF",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """Shortcut to add an x-type feature ordinate DIMENSION, for more
@@ -2486,7 +2486,7 @@ class CreatorInterface:
         rotation: float = 0.0,
         text: str = "<>",
         dimstyle: str = "EZDXF",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> DimStyleOverride:
         """Shortcut to add a y-type feature ordinate DIMENSION, for more
@@ -2545,7 +2545,7 @@ class CreatorInterface:
         self,
         vertices: Iterable[UVec],
         dimstyle: str = "EZDXF",
-        override: Dict = None,
+        override: Optional[dict] = None,
         dxfattribs=None,
     ) -> Leader:
         """
@@ -2573,7 +2573,7 @@ class CreatorInterface:
 
         """
 
-        def filter_unsupported_dimstyle_attributes(attribs: Dict) -> Dict:
+        def filter_unsupported_dimstyle_attributes(attribs: dict) -> dict:
             return {
                 k: v
                 for k, v in attribs.items()
@@ -2646,7 +2646,7 @@ class CreatorInterface:
 
     def add_mline(
         self,
-        vertices: Iterable[UVec] = None,
+        vertices: Optional[Iterable[UVec]] = None,
         *,
         close: bool = False,
         dxfattribs=None,

@@ -579,11 +579,11 @@ def multi_point_linear_dimension(
     base: UVec,
     points: Iterable[UVec],
     angle: float = 0,
-    ucs: UCS = None,
+    ucs: Optional[UCS] = None,
     avoid_double_rendering: bool = True,
     dimstyle: str = "EZDXF",
-    override: dict = None,
-    dxfattribs: dict = None,
+    override: Optional[dict] = None,
+    dxfattribs=None,
     discard=False,
 ) -> None:
     """Creates multiple DIMENSION entities for each point pair in `points`.
