@@ -1,35 +1,31 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING, Tuple, Dict
+from typing import Any, TYPE_CHECKING, Optional
 from ezdxf.enums import MTextLineAlignment
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
-from ezdxf.math import Vec3, UVec
+from ezdxf.math import Vec3, UVec, UCS
 import logging
 
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        Dimension,
-        UCS,
-        Drawing,
-        DimStyle,
-        BaseDimensionRenderer,
-    )
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DimStyle, Dimension
+    from ezdxf.render.dim_base import BaseDimensionRenderer
 
 
 class DimStyleOverride:
-    def __init__(self, dimension: Dimension, override: dict = None):
+    def __init__(self, dimension: Dimension, override: Optional[dict] = None):
         self.dimension = dimension
         dim_style_name: str = dimension.get_dxf_attrib("dimstyle", "STANDARD")
         self.dimstyle: DimStyle = self.doc.dimstyles.get(dim_style_name)  # type: ignore
-        self.dimstyle_attribs: Dict = self.get_dstyle_dict()
+        self.dimstyle_attribs: dict = self.get_dstyle_dict()
 
         # Special ezdxf attributes beyond the DXF reference, therefore not
         # stored in the DSTYLE data.
-        # This are only rendering effects or data transfer objects
+        # These are only rendering effects or data transfer objects
         # user_location: Vec3 - user location override if not None
         # relative_user_location: bool - user location override relative to
         #   dimline center if True
@@ -124,11 +120,11 @@ class DimStyleOverride:
 
     def set_arrows(
         self,
-        blk: str = None,
-        blk1: str = None,
-        blk2: str = None,
-        ldrblk: str = None,
-        size: float = None,
+        blk: Optional[str] = None,
+        blk1: Optional[str] = None,
+        blk2: Optional[str] = None,
+        ldrblk: Optional[str] = None,
+        size: Optional[float] = None,
     ) -> None:
         """Set arrows or user defined blocks and disable oblique stroke as
         tick.
@@ -162,7 +158,7 @@ class DimStyleOverride:
         if ldrblk is not None:
             set_arrow("dimldrblk", ldrblk)
 
-    def get_arrow_names(self) -> Tuple[str, str]:
+    def get_arrow_names(self) -> tuple[str, str]:
         """Get arrow names as strings like 'ARCHTICK'.
 
         Returns:
@@ -195,7 +191,10 @@ class DimStyleOverride:
         self.dimstyle_attribs["dimtsz"] = float(size)
 
     def set_text_align(
-        self, halign: str = None, valign: str = None, vshift: float = None
+        self,
+        halign: Optional[str] = None,
+        valign: Optional[str] = None,
+        vshift: Optional[float] = None,
     ) -> None:
         """Set measurement text alignment, `halign` defines the horizontal
         alignment, `valign` defines the vertical alignment, `above1` and
@@ -222,12 +221,12 @@ class DimStyleOverride:
     def set_tolerance(
         self,
         upper: float,
-        lower: float = None,
-        hfactor: float = None,
-        align: MTextLineAlignment = None,
-        dec: int = None,
-        leading_zeros: bool = None,
-        trailing_zeros: bool = None,
+        lower: Optional[float] = None,
+        hfactor: Optional[float] = None,
+        align: Optional[MTextLineAlignment] = None,
+        dec: Optional[int] = None,
+        leading_zeros: Optional[bool] = None,
+        trailing_zeros: Optional[bool] = None,
     ) -> None:
         """Set tolerance text format, upper and lower value, text height
         factor, number of decimal places or leading and trailing zero
@@ -276,10 +275,10 @@ class DimStyleOverride:
         self,
         upper: float,
         lower: float,
-        hfactor: float = None,
-        dec: int = None,
-        leading_zeros: bool = None,
-        trailing_zeros: bool = None,
+        hfactor: Optional[float] = None,
+        dec: Optional[int] = None,
+        leading_zeros: Optional[bool] = None,
+        trailing_zeros: Optional[bool] = None,
     ) -> None:
         """Set limits text format, upper and lower limit values, text
         height factor, number of decimal places or leading and trailing zero
@@ -287,7 +286,7 @@ class DimStyleOverride:
 
         Args:
             upper: upper limit value added to measurement value
-            lower: lower lower value subtracted from measurement value
+            lower: lower limit value subtracted from measurement value
             hfactor: limit text height factor in relation to the dimension
                 text height
             dec: Sets the number of decimal places displayed,
@@ -323,11 +322,11 @@ class DimStyleOverride:
         self,
         prefix: str = "",
         postfix: str = "",
-        rnd: float = None,
-        dec: int = None,
-        sep: str = None,
-        leading_zeros: bool = None,
-        trailing_zeros: bool = None,
+        rnd: Optional[float] = None,
+        dec: Optional[int] = None,
+        sep: Optional[str] = None,
+        leading_zeros: Optional[bool] = None,
+        trailing_zeros: Optional[bool] = None,
     ) -> None:
         """Set dimension text format, like prefix and postfix string, rounding
         rule and number of decimal places.
@@ -366,12 +365,12 @@ class DimStyleOverride:
 
     def set_dimline_format(
         self,
-        color: int = None,
-        linetype: str = None,
-        lineweight: int = None,
-        extension: float = None,
-        disable1: bool = None,
-        disable2: bool = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
+        lineweight: Optional[int] = None,
+        extension: Optional[float] = None,
+        disable1: Optional[bool] = None,
+        disable2: Optional[bool] = None,
     ):
         """Set dimension line properties
 
@@ -399,11 +398,11 @@ class DimStyleOverride:
 
     def set_extline_format(
         self,
-        color: int = None,
-        lineweight: int = None,
-        extension: float = None,
-        offset: float = None,
-        fixed_length: float = None,
+        color: Optional[int] = None,
+        lineweight: Optional[int] = None,
+        extension: Optional[float] = None,
+        offset: Optional[float] = None,
+        fixed_length: Optional[float] = None,
     ):
         """Set common extension line attributes.
 
@@ -427,7 +426,7 @@ class DimStyleOverride:
             self.dimstyle_attribs["dimfxlon"] = 1
             self.dimstyle_attribs["dimfxl"] = fixed_length
 
-    def set_extline1(self, linetype: str = None, disable=False):
+    def set_extline1(self, linetype: Optional[str] = None, disable=False):
         """Set extension line 1 attributes.
 
         Args:
@@ -440,7 +439,7 @@ class DimStyleOverride:
         if disable:
             self.dimstyle_attribs["dimse1"] = 1
 
-    def set_extline2(self, linetype: str = None, disable=False):
+    def set_extline2(self, linetype: Optional[str] = None, disable=False):
         """Set extension line 2 attributes.
 
         Args:
@@ -506,19 +505,19 @@ class DimStyleOverride:
         )
         self.dimstyle_attribs["user_location"] = Vec3(location)
 
-    def get_renderer(self, ucs: "UCS" = None):
+    def get_renderer(self, ucs: Optional[UCS] = None):
         """Get designated DIMENSION renderer. (internal API)"""
         return self.doc.dimension_renderer.dispatch(self, ucs)
 
     def render(
-        self, ucs: "UCS" = None, discard=False
+        self, ucs: Optional[UCS] = None, discard=False
     ) -> BaseDimensionRenderer:
         """Initiate dimension line rendering process and also writes overridden
         dimension style attributes into the DSTYLE XDATA section.
 
         For a friendly CAD applications like BricsCAD you can discard the
         dimension line rendering, because it is done automatically by BricsCAD,
-        if no dimension rendering BLOCK is available and it is likely to get
+        if no dimension rendering BLOCK is available, and it is likely to get
         better results as by `ezdxf`.
 
         AutoCAD does not render DIMENSION entities automatically, so I rate

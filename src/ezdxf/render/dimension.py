@@ -1,6 +1,7 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 from ezdxf.math import UCS
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
@@ -18,8 +19,8 @@ if TYPE_CHECKING:
 
 class DimensionRenderer:
     def dispatch(
-        self, override: "DimStyleOverride", ucs: "UCS" = None
-    ) -> "BaseDimensionRenderer":
+        self, override: DimStyleOverride, ucs: Optional[UCS] = None
+    ) -> BaseDimensionRenderer:
         dimension = override.dimension
         dim_type = dimension.dimtype
         dxf_type = dimension.dxftype()
