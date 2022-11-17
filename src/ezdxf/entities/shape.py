@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -24,7 +25,10 @@ from .dxfgfx import (
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Matrix44
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.math import Matrix44
+
 
 __all__ = ["Shape"]
 
@@ -79,8 +83,8 @@ class Shape(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_shape)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
@@ -91,7 +95,7 @@ class Shape(DXFGraphic):
                 elevation_to_z_axis(dxf, ("center",))
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
@@ -110,7 +114,7 @@ class Shape(DXFGraphic):
             ],
         )
 
-    def transform(self, m: "Matrix44") -> "Shape":
+    def transform(self, m: Matrix44) -> Shape:
         """Transform the SHAPE entity by transformation matrix `m` inplace."""
         dxf = self.dxf
         dxf.insert = m.transform(dxf.insert)  # DXF Reference: WCS?
