@@ -1,15 +1,7 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import (
-    Union,
-    List,
-    Iterable,
-    Sequence,
-    Tuple,
-    Optional,
-    TYPE_CHECKING,
-)
+from typing import Union, Iterable, Sequence, Optional, TYPE_CHECKING
 import abc
 import enum
 import math
@@ -35,7 +27,7 @@ from ezdxf.math import (
 from ezdxf.math.transformtools import OCSTransform
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = [
     "BoundaryPaths",
@@ -69,7 +61,7 @@ class EdgeType(enum.IntEnum):
 class AbstractBoundaryPath(abc.ABC):
     type: BoundaryPathType
     path_type_flags: int
-    source_boundary_objects: List[str]
+    source_boundary_objects: list[str]
 
     @abc.abstractmethod
     def clear(self) -> None:
@@ -81,7 +73,7 @@ class AbstractBoundaryPath(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def export_dxf(self, tagwriter: TagWriter, dxftype: str) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter, dxftype: str) -> None:
         ...
 
     @abc.abstractmethod
@@ -103,7 +95,7 @@ class AbstractEdge(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def export_dxf(self, tagwriter: TagWriter) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         ...
 
     @abc.abstractmethod
@@ -112,8 +104,8 @@ class AbstractEdge(abc.ABC):
 
 
 class BoundaryPaths:
-    def __init__(self, paths: List[AbstractBoundaryPath] = None):
-        self.paths: List[AbstractBoundaryPath] = paths or []
+    def __init__(self, paths: Optional[list[AbstractBoundaryPath]] = None):
+        self.paths: list[AbstractBoundaryPath] = paths or []
 
     def __len__(self):
         return len(self.paths)
@@ -204,7 +196,7 @@ class BoundaryPaths:
 
     def add_polyline_path(
         self,
-        path_vertices: Iterable[Tuple[float, ...]],
+        path_vertices: Iterable[tuple[float, ...]],
         is_closed: bool = True,
         flags: int = 1,
     ) -> PolylinePath:
@@ -233,7 +225,7 @@ class BoundaryPaths:
         self.paths.append(new_path)
         return new_path
 
-    def export_dxf(self, tagwriter: TagWriter, dxftype: str) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter, dxftype: str) -> None:
         tagwriter.write_tag2(91, len(self.paths))
         for path in self.paths:
             path.export_dxf(tagwriter, dxftype)
@@ -302,7 +294,7 @@ class BoundaryPaths:
 
         def to_edge_path(polyline_path) -> EdgePath:
             edge_path = EdgePath()
-            vertices: List = list(polyline_path.vertices)
+            vertices: list = list(polyline_path.vertices)
             if polyline_path.is_closed:
                 vertices.append(vertices[0])
             edge_path.edges = list(_edges(vertices))
@@ -539,7 +531,7 @@ def flatten_to_polyline_path(
     )
 
 
-def pop_source_boundary_objects_tags(path_tags: Tags) -> List[str]:
+def pop_source_boundary_objects_tags(path_tags: Tags) -> list[str]:
     source_boundary_object_tags = []
     while len(path_tags):
         if path_tags[-1].code in (97, 330):
@@ -557,7 +549,7 @@ def pop_source_boundary_objects_tags(path_tags: Tags) -> List[str]:
 
 
 def export_source_boundary_objects(
-    tagwriter: "TagWriter", handles: Sequence[str]
+    tagwriter: AbstractTagWriter, handles: Sequence[str]
 ):
     tagwriter.write_tag2(97, len(handles))
     for handle in handles:
@@ -570,17 +562,17 @@ class PolylinePath(AbstractBoundaryPath):
     def __init__(self) -> None:
         self.path_type_flags: int = const.BOUNDARY_PATH_POLYLINE
         self.is_closed = False
-        # List of 2D coordinates with bulge values (x, y, bulge);
+        # list of 2D coordinates with bulge values (x, y, bulge);
         # bulge default = 0.0
-        self.vertices: List[Tuple[float, float, float]] = []
+        self.vertices: list[tuple[float, float, float]] = []
         # MPOLYGON does not support source boundary objects, the MPOLYGON is
         # the source object!
-        self.source_boundary_objects: List[str] = []  # (330, handle) tags
+        self.source_boundary_objects: list[str] = []  # (330, handle) tags
 
     @classmethod
     def from_vertices(
         cls,
-        path_vertices: Iterable[Tuple[float, ...]],
+        path_vertices: Iterable[tuple[float, ...]],
         is_closed: bool = True,
         flags: int = 1,
     ) -> "PolylinePath":
@@ -655,7 +647,7 @@ class PolylinePath(AbstractBoundaryPath):
     def has_bulge(self) -> bool:
         return any(bulge for x, y, bulge in self.vertices)
 
-    def export_dxf(self, tagwriter: "TagWriter", dxftype: str) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter, dxftype: str) -> None:
         has_bulge = self.has_bulge()
         write_tag = tagwriter.write_tag2
 
@@ -704,7 +696,7 @@ class EdgePath(AbstractBoundaryPath):
 
     def __init__(self) -> None:
         self.path_type_flags = const.BOUNDARY_PATH_DEFAULT
-        self.edges: List[AbstractEdge] = []
+        self.edges: list[AbstractEdge] = []
         self.source_boundary_objects = []
 
     def __iter__(self):
@@ -851,14 +843,14 @@ class EdgePath(AbstractBoundaryPath):
 
     def add_spline(
         self,
-        fit_points: Iterable[UVec] = None,
-        control_points: Iterable[UVec] = None,
-        knot_values: Iterable[float] = None,
-        weights: Iterable[float] = None,
+        fit_points: Optional[Iterable[UVec]] = None,
+        control_points: Optional[Iterable[UVec]] = None,
+        knot_values: Optional[Iterable[float]] = None,
+        weights: Optional[Iterable[float]] = None,
         degree: int = 3,
         periodic: int = 0,
-        start_tangent: UVec = None,
-        end_tangent: UVec = None,
+        start_tangent: Optional[UVec] = None,
+        end_tangent: Optional[UVec] = None,
     ) -> SplineEdge:
         """Add a :class:`SplineEdge`.
 
@@ -910,7 +902,7 @@ class EdgePath(AbstractBoundaryPath):
 
     def add_spline_control_frame(
         self,
-        fit_points: Iterable[Tuple[float, float]],
+        fit_points: Iterable[tuple[float, float]],
         degree: int = 3,
         method: str = "distance",
     ) -> SplineEdge:
@@ -927,7 +919,7 @@ class EdgePath(AbstractBoundaryPath):
         """Delete all edges."""
         self.edges = []
 
-    def export_dxf(self, tagwriter: "TagWriter", dxftype: str) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter, dxftype: str) -> None:
         tagwriter.write_tag2(92, int(self.path_type_flags))
         tagwriter.write_tag2(93, len(self.edges))
         for edge in self.edges:
@@ -962,7 +954,7 @@ class LineEdge(AbstractEdge):
                 edge.end = Vec2(value)
         return edge
 
-    def export_dxf(self, tagwriter: TagWriter) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         tagwriter.write_tag2(72, 1)  # edge type
 
         x, y, *_ = self.start
@@ -1032,7 +1024,7 @@ class ArcEdge(AbstractEdge):
             edge.end_angle = 360.0 - start
         return edge
 
-    def export_dxf(self, tagwriter: TagWriter) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         tagwriter.write_tag2(72, 2)  # edge type
         x, y, *_ = self.center
         if self.ccw:
@@ -1156,7 +1148,7 @@ class EllipseEdge(AbstractEdge):
 
         return edge
 
-    def export_dxf(self, tagwriter: TagWriter) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         tagwriter.write_tag2(72, 3)  # edge type
         x, y, *_ = self.center
         tagwriter.write_tag2(10, float(x))
@@ -1237,10 +1229,10 @@ class SplineEdge(AbstractEdge):
         self.degree: int = 3  # code = 94
         self.rational: int = 0  # code = 73
         self.periodic: int = 0  # code = 74
-        self.knot_values: List[float] = []
-        self.control_points: List[Vec2] = []
-        self.fit_points: List[Vec2] = []
-        self.weights: List[float] = []
+        self.knot_values: list[float] = []
+        self.control_points: list[Vec2] = []
+        self.fit_points: list[Vec2] = []
+        self.weights: list[float] = []
         # do not set tangents by default to (0, 0)
         self.start_tangent: Optional[Vec2] = None
         self.end_tangent: Optional[Vec2] = None
@@ -1278,8 +1270,8 @@ class SplineEdge(AbstractEdge):
                 edge.end_tangent = Vec2(value)
         return edge
 
-    def export_dxf(self, tagwriter: TagWriter) -> None:
-        def set_required_tangents(points: List[Vec2]):
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
+        def set_required_tangents(points: list[Vec2]):
             if len(points) > 1:
                 if self.start_tangent is None:
                     self.start_tangent = points[1] - points[0]
