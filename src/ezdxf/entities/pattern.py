@@ -1,24 +1,24 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, List, TYPE_CHECKING
+from typing import Iterable, TYPE_CHECKING, Optional
 
 from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.math import Vec2, UVec
 from ezdxf.tools import pattern
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["Pattern", "PatternLine"]
 
 
 class Pattern:
-    def __init__(self, lines: Iterable[PatternLine] = None):
-        self.lines: List[PatternLine] = list(lines) if lines else []
+    def __init__(self, lines: Optional[Iterable[PatternLine]] = None):
+        self.lines: list[PatternLine] = list(lines) if lines else []
 
     @classmethod
-    def load_tags(cls, tags: Tags) -> "Pattern":
+    def load_tags(cls, tags: Tags) -> Pattern:
         grouped_line_tags = group_tags(tags, splitcode=53)
         return cls(
             PatternLine.load_tags(line_tags) for line_tags in grouped_line_tags
@@ -33,7 +33,7 @@ class Pattern:
         angle: float = 0,
         base_point: UVec = (0, 0),
         offset: UVec = (0, 0),
-        dash_length_items: Iterable[float] = None,
+        dash_length_items: Optional[Iterable[float]] = None,
     ) -> None:
         """Create a new pattern definition line and add the line to the
         :attr:`Pattern.lines` attribute.
@@ -46,7 +46,7 @@ class Pattern:
             PatternLine(angle, base_point, offset, dash_length_items)
         )
 
-    def export_dxf(self, tagwriter: TagWriter, force=False) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter, force=False) -> None:
         if len(self.lines) or force:
             tagwriter.write_tag2(78, len(self.lines))
             for line in self.lines:
@@ -55,7 +55,7 @@ class Pattern:
     def __str__(self) -> str:
         return "[" + ",".join(str(line) for line in self.lines) + "]"
 
-    def as_list(self) -> List:
+    def as_list(self) -> list:
         return [line.as_list() for line in self.lines]
 
     def scale(self, factor: float = 1, angle: float = 0) -> None:
@@ -83,12 +83,12 @@ class PatternLine:
         angle: float = 0,
         base_point: UVec = (0, 0),
         offset: UVec = (0, 0),
-        dash_length_items: Iterable[float] = None,
+        dash_length_items: Optional[Iterable[float]] = None,
     ):
         self.angle: float = float(angle)  # in degrees
         self.base_point: Vec2 = Vec2(base_point)
         self.offset: Vec2 = Vec2(offset)
-        self.dash_length_items: List[float] = (
+        self.dash_length_items: list[float] = (
             [] if dash_length_items is None else list(dash_length_items)
         )
         # dash_length_items = [item0, item1, ...]
@@ -108,7 +108,7 @@ class PatternLine:
             p[53], (p[43], p[44]), (p[45], p[46]), dash_length_items
         )
 
-    def export_dxf(self, tagwriter: TagWriter) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         write_tag = tagwriter.write_tag2
         write_tag(53, self.angle)
         write_tag(43, self.base_point.x)
@@ -125,7 +125,7 @@ class PatternLine:
             f"{self.dash_length_items}]"
         )
 
-    def as_list(self) -> List:
+    def as_list(self) -> list:
         return [
             self.angle,
             self.base_point,
