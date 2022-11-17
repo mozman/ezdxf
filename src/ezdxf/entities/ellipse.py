@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, Optional
 import math
 from ezdxf.audit import AuditError
 from ezdxf.lldxf import validator
@@ -109,7 +109,7 @@ class Ellipse(DXFGraphic):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
