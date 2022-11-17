@@ -132,7 +132,7 @@ class DXFEntity:
         cls: Type[T],
         handle: Optional[str] = None,
         owner: Optional[str] = None,
-        dxfattribs: Optional[dict] = None,
+        dxfattribs=None,
         doc: Optional[Drawing] = None,
     ) -> T:
         """Constructor for building new entities from scratch by ezdxf.

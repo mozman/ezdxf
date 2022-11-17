@@ -74,7 +74,7 @@ class DXFClass(DXFEntity):
         cls,
         handle: Optional[str] = None,
         owner: Optional[str] = None,
-        dxfattribs: Optional[dict] = None,
+        dxfattribs=None,
         doc: Optional[Drawing] = None,
     ) -> DXFClass:
         """New CLASS constructor - has no handle, no owner and do not need
