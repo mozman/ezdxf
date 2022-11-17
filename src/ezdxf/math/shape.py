@@ -1,6 +1,7 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import Union, Iterable, List
+from __future__ import annotations
+from typing import Union, Iterable, Optional
 import math
 from ezdxf.math import Vec2, UVec
 from .construct2d import convex_hull_2d
@@ -22,8 +23,8 @@ class Shape2d:
 
     """
 
-    def __init__(self, vertices: Iterable[UVec] = None):
-        self.vertices: List[Vec2] = (
+    def __init__(self, vertices: Optional[Iterable[UVec]] = None):
+        self.vertices: list[Vec2] = (
             [] if vertices is None else Vec2.list(vertices)
         )
 
@@ -32,7 +33,7 @@ class Shape2d:
         """:class:`BoundingBox2d`"""
         return BoundingBox2d(self.vertices)
 
-    def copy(self) -> "Shape2d":
+    def copy(self) -> Shape2d:
         return self.__class__(self.vertices)
 
     __copy__ = copy
@@ -50,11 +51,11 @@ class Shape2d:
         """Scale shape uniform about `scale` in x- and y-axis."""
         self.vertices = [v * scale for v in self.vertices]
 
-    def rotate(self, angle: float, center: UVec = None) -> None:
+    def rotate(self, angle: float, center: Optional[UVec] = None) -> None:
         """Rotate shape around rotation `center` about `angle` in degrees."""
         self.rotate_rad(math.radians(angle), center)
 
-    def rotate_rad(self, angle: float, center: UVec = None) -> None:
+    def rotate_rad(self, angle: float, center: Optional[UVec] = None) -> None:
         """Rotate shape around rotation `center` about `angle` in radians."""
         if center is not None:
             center = Vec2(center)
@@ -63,7 +64,7 @@ class Shape2d:
         if center is not None:
             self.translate(center)  # faster than a Matrix44 multiplication
 
-    def offset(self, offset: float, closed: bool = False) -> "Shape2d":
+    def offset(self, offset: float, closed: bool = False) -> Shape2d:
         """Returns a new offset shape, for more information see also
         :func:`ezdxf.math.offset_vertices_2d` function.
 
@@ -78,7 +79,7 @@ class Shape2d:
             offset_vertices_2d(self.vertices, offset=offset, closed=closed)
         )
 
-    def convex_hull(self) -> "Shape2d":
+    def convex_hull(self) -> Shape2d:
         """Returns convex hull as new shape."""
         return self.__class__(convex_hull_2d(self.vertices))
 
