@@ -74,7 +74,7 @@ section structure (work in progress):
 0 <str> ENDSEC
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterator, Iterable, List, Any, Optional
+from typing import TYPE_CHECKING, Iterator, Iterable, Any, Optional
 import abc
 from itertools import islice
 
@@ -83,12 +83,13 @@ from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing
+    from ezdxf.document import Drawing
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 
 class AcDsEntity(abc.ABC):
     @abc.abstractmethod
-    def export_dxf(self, tagwriter: TagWriter):
+    def export_dxf(self, tagwriter: AbstractTagWriter):
         ...
 
     @abc.abstractmethod
@@ -99,9 +100,9 @@ class AcDsEntity(abc.ABC):
 class AcDsDataSection:
     name = "ACDSDATA"
 
-    def __init__(self, doc: Drawing, entities: Iterable[Tags] = None):
+    def __init__(self, doc: Drawing, entities: Optional[Iterable[Tags]] = None):
         self.doc = doc
-        self.entities: List[AcDsEntity] = []
+        self.entities: list[AcDsEntity] = []
         self.section_info = Tags()
         if entities is not None:
             self.load_tags(iter(entities))
@@ -135,7 +136,7 @@ class AcDsDataSection:
         data = cls(entity.tags)
         self.entities.append(data)
 
-    def export_dxf(self, tagwriter: TagWriter) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         if not self.is_valid or not self.has_records:
             # Empty ACDSDATA section is not required!
             return
@@ -145,7 +146,7 @@ class AcDsDataSection:
         tagwriter.write_tag2(0, "ENDSEC")
 
     @property
-    def acdsrecords(self) -> Iterable[AcDsRecord]:
+    def acdsrecords(self) -> Iterator[AcDsRecord]:
         return (
             entity for entity in self.entities if isinstance(entity, AcDsRecord)
         )
@@ -182,7 +183,7 @@ class AcDsData(AcDsEntity):
     def __init__(self, tags: Tags):
         self.tags = tags
 
-    def export_dxf(self, tagwriter: TagWriter):
+    def export_dxf(self, tagwriter: AbstractTagWriter):
         tagwriter.write_tags(self.tags)
 
     def dxftype(self) -> str:
@@ -249,16 +250,16 @@ class AcDsRecord(AcDsEntity):
     def __getitem__(self, item) -> Section:
         return self.sections[item]
 
-    def _write_header(self, tagwriter: TagWriter) -> None:
+    def _write_header(self, tagwriter: AbstractTagWriter) -> None:
         tagwriter.write_tags(Tags([self._dxftype, self.flags]))
 
-    def export_dxf(self, tagwriter: TagWriter) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         self._write_header(tagwriter)
         for section in self.sections:
             tagwriter.write_tags(section)
 
 
-def get_acis_data(record: AcDsRecord) -> List[bytes]:
+def get_acis_data(record: AcDsRecord) -> list[bytes]:
     try:
         asm_data = record.get_section("ASM_Data")
     except DXFKeyError:  # no data stored
