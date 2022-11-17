@@ -1,6 +1,7 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Sequence
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Sequence, Optional
 import logging
 from ezdxf.lldxf.const import DXFStructureError, DXF12
 from .table import (
@@ -17,12 +18,9 @@ from .table import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        Drawing,
-        DXFEntity,
-        DXFTagStorage,
-    )
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFEntity, DXFTagStorage
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 logger = logging.getLogger("ezdxf")
 
@@ -40,7 +38,7 @@ TABLENAMES = {
 
 
 class TablesSection:
-    def __init__(self, doc: "Drawing", entities: List["DXFEntity"] = None):
+    def __init__(self, doc: Drawing, entities: Optional[list[DXFEntity]] = None):
         assert doc is not None
         self.doc = doc
         # not loaded tables: table.doc is None
@@ -71,7 +69,7 @@ class TablesSection:
             self.block_records,
         )
 
-    def _load(self, entities: List["DXFEntity"]) -> None:
+    def _load(self, entities: list[DXFEntity]) -> None:
         section_head: "DXFTagStorage" = entities[0]  # type: ignore
         if section_head.dxftype() != "SECTION" or section_head.base_class[
             1
@@ -81,7 +79,7 @@ class TablesSection:
             )
         del entities[0]  # delete first entity (0, SECTION)
 
-        table_records: List["DXFEntity"] = []
+        table_records: list[DXFEntity] = []
         table_name = None
         for entity in entities:
             if entity.dxftype() == "TABLE":
@@ -109,7 +107,7 @@ class TablesSection:
             self._load_table(table_name, table_records)  # type: ignore
 
     def _load_table(
-        self, name: str, table_entities: Iterable["DXFEntity"]
+        self, name: str, table_entities: Iterable[DXFEntity]
     ) -> None:
         """
         Load table from tags.
@@ -131,7 +129,7 @@ class TablesSection:
                 table.reset(self.doc, handle)
                 entitydb.add(table.head)
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nTABLES\n")
         version = tagwriter.dxfversion
         self.viewports.export_dxf(tagwriter)
