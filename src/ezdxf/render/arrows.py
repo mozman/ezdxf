@@ -1,15 +1,14 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Iterator
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Iterator, Optional
 from ezdxf.math import Vec2, Shape2d, NULLVEC, UVec
 from .forms import open_arrow, arrow2
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        GenericLayoutType,
-        DXFGraphic,
-        BlocksSection,
-    )
+    from ezdxf.entities import DXFGraphic
+    from ezdxf.sections.blocks import BlocksSection
+    from ezdxf.eztypes import GenericLayoutType
 
 DEFAULT_ARROW_ANGLE = 18.924644
 DEFAULT_BETA = 45.0
@@ -21,7 +20,7 @@ class BaseArrow:
     def __init__(self, vertices: Iterable[UVec]):
         self.shape = Shape2d(vertices)
 
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         pass
 
     def place(self, insert: UVec, angle: float):
@@ -42,14 +41,14 @@ class ObliqueStroke(BaseArrow):
         super().__init__([Vec2((-s2, -s2)), Vec2((s2, s2))])
         self.place(insert, angle)
 
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: "GenericLayoutType", dxfattribs=None):
         layout.add_line(
             start=self.shape[0], end=self.shape[1], dxfattribs=dxfattribs
         )
 
 
 class ArchTick(ObliqueStroke):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         width = self.size * 0.15
         dxfattribs = dxfattribs or {}
         if layout.dxfversion > "AC1009":
@@ -68,7 +67,7 @@ class ClosedArrowBlank(BaseArrow):
         super().__init__(open_arrow(size, angle=DEFAULT_ARROW_ANGLE))
         self.place(insert, angle)
 
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         if layout.dxfversion > "AC1009":
             polyline = layout.add_lwpolyline(
                 points=self.shape, dxfattribs=dxfattribs  # type: ignore
@@ -81,7 +80,7 @@ class ClosedArrowBlank(BaseArrow):
 
 
 class ClosedArrow(ClosedArrowBlank):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         super().render(layout, dxfattribs)
         end_point = self.shape[0].lerp(self.shape[2])
 
@@ -91,7 +90,7 @@ class ClosedArrow(ClosedArrowBlank):
 
 
 class ClosedArrowFilled(ClosedArrow):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         layout.add_solid(
             points=self.shape,  # type: ignore
             dxfattribs=dxfattribs,
@@ -111,7 +110,7 @@ class _OpenArrow(BaseArrow):
         super().__init__(points)
         self.place(insert, angle)
 
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         if layout.dxfversion > "AC1009":
             layout.add_lwpolyline(points=self.shape[:-1], dxfattribs=dxfattribs)
         else:
@@ -149,14 +148,14 @@ class Circle(BaseArrow):
         )
         self.place(insert, angle)
 
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         layout.add_circle(
             center=self.shape[0], radius=self.radius, dxfattribs=dxfattribs
         )
 
 
 class Origin(Circle):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         super().render(layout, dxfattribs)
         layout.add_line(
             start=self.shape[0], end=self.shape[2], dxfattribs=dxfattribs
@@ -164,7 +163,7 @@ class Origin(Circle):
 
 
 class CircleBlank(Circle):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         super().render(layout, dxfattribs)
         layout.add_line(
             start=self.shape[1], end=self.shape[2], dxfattribs=dxfattribs
@@ -172,7 +171,7 @@ class CircleBlank(Circle):
 
 
 class Origin2(Circle):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         layout.add_circle(
             center=self.shape[0], radius=self.radius, dxfattribs=dxfattribs
         )
@@ -185,7 +184,7 @@ class Origin2(Circle):
 
 
 class DotSmall(Circle):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         center = self.shape[0]
         d = Vec2((self.radius / 2, 0))
         p1 = center - d
@@ -210,7 +209,7 @@ class DotSmall(Circle):
 
 
 class Dot(DotSmall):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         layout.add_line(
             start=self.shape[1], end=self.shape[2], dxfattribs=dxfattribs
         )
@@ -233,7 +232,7 @@ class Box(BaseArrow):
         )
         self.place(insert, angle)
 
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         if layout.dxfversion > "AC1009":
             polyline = layout.add_lwpolyline(
                 points=self.shape[0:4], dxfattribs=dxfattribs
@@ -249,7 +248,7 @@ class Box(BaseArrow):
 
 
 class BoxFilled(Box):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         def solid_order():
             v = self.shape.vertices
             return [v[0], v[1], v[3], v[2]]
@@ -274,7 +273,7 @@ class Integral(BaseArrow):
         )
         self.place(insert, angle)
 
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         angle = self.angle
         layout.add_arc(
             center=self.shape[1],
@@ -307,7 +306,7 @@ class DatumTriangle(BaseArrow):
         )
         self.place(insert, angle)
 
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         if layout.dxfversion > "AC1009":
             polyline = layout.add_lwpolyline(
                 points=self.shape, dxfattribs=dxfattribs  # type: ignore
@@ -320,7 +319,7 @@ class DatumTriangle(BaseArrow):
 
 
 class DatumTriangleFilled(DatumTriangle):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         layout.add_solid(points=self.shape, dxfattribs=dxfattribs)  # type: ignore
 
 
@@ -331,7 +330,7 @@ class _EzArrow(BaseArrow):
         super().__init__(points)
         self.place(insert, angle)
 
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         if layout.dxfversion > "AC1009":
             polyline = layout.add_lwpolyline(
                 self.shape[:-1], dxfattribs=dxfattribs
@@ -344,7 +343,7 @@ class _EzArrow(BaseArrow):
 
 
 class EzArrowBlank(_EzArrow):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         super().render(layout, dxfattribs)
         layout.add_line(
             start=self.shape[-2], end=self.shape[-1], dxfattribs=dxfattribs
@@ -352,7 +351,7 @@ class EzArrowBlank(_EzArrow):
 
 
 class EzArrow(_EzArrow):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         super().render(layout, dxfattribs)
         layout.add_line(
             start=self.shape[1], end=self.shape[-1], dxfattribs=dxfattribs
@@ -360,7 +359,7 @@ class EzArrow(_EzArrow):
 
 
 class EzArrowFilled(_EzArrow):
-    def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         points = self.shape.vertices
         layout.add_solid(
             [points[0], points[1], points[3], points[2]], dxfattribs=dxfattribs
@@ -470,25 +469,25 @@ class _Arrows:
     }
 
     def is_acad_arrow(self, item: str) -> bool:
-        """Returns ``True`` if `item` is a standard AutoCAD arrow. """
+        """Returns ``True`` if `item` is a standard AutoCAD arrow."""
         return item.upper() in self.__acad__
 
     def is_ezdxf_arrow(self, item: str) -> bool:
-        """Returns ``True`` if `item` is a special `ezdxf` arrow. """
+        """Returns ``True`` if `item` is a special `ezdxf` arrow."""
         return item.upper() in self.__ezdxf__
 
     def has_extension_line(self, name):
-        """Returns ``True`` if the arrow `name` supports extension lines. """
+        """Returns ``True`` if the arrow `name` supports extension lines."""
         return name in self.EXTENSIONS_ALLOWED
 
     def __contains__(self, item: str) -> bool:
-        """Returns `True` if `item` is an arrow managed by this class. """
+        """Returns `True` if `item` is an arrow managed by this class."""
         if item is None:
             return False
         return item.upper() in self.__all_arrows__
 
-    def create_block(self, blocks: "BlocksSection", name: str):
-        """Creates the BLOCK definition for arrow `name`. """
+    def create_block(self, blocks: BlocksSection, name: str):
+        """Creates the BLOCK definition for arrow `name`."""
         block_name = self.block_name(name)
         if block_name not in blocks:
             block = blocks.new(block_name)
@@ -496,15 +495,15 @@ class _Arrows:
             arrow.render(block, dxfattribs={"color": 0, "linetype": "BYBLOCK"})
         return block_name
 
-    def arrow_handle(self, blocks: "BlocksSection", name: str) -> str:
-        """Returns the BLOCK_RECORD handle or arrow `name`. """
+    def arrow_handle(self, blocks: BlocksSection, name: str) -> str:
+        """Returns the BLOCK_RECORD handle or arrow `name`."""
         arrow_name = self.arrow_name(name)
         block_name = self.create_block(blocks, arrow_name)
         block = blocks.get(block_name)
         return block.block_record_handle
 
     def block_name(self, name):
-        """Returns the block name. """
+        """Returns the block name."""
         if not self.is_acad_arrow(name):  # common BLOCK definition
             # e.g. Dimension.dxf.bkl = 'EZ_ARROW' == Insert.dxf.name
             return name.upper()
@@ -518,7 +517,7 @@ class _Arrows:
             return "_" + name.upper()
 
     def arrow_name(self, block_name: str) -> str:
-        """Returns the arrow name. """
+        """Returns the arrow name."""
         if block_name.startswith("_"):
             name = block_name[1:].upper()
             if name == "CLOSEDFILLED":
@@ -529,13 +528,13 @@ class _Arrows:
 
     def insert_arrow(
         self,
-        layout: "GenericLayoutType",
+        layout: GenericLayoutType,
         name: str,
         insert: UVec = NULLVEC,
         size: float = 1.0,
         rotation: float = 0,
         *,
-        dxfattribs=None
+        dxfattribs=None,
     ) -> Vec2:
         """Insert arrow as block reference into `layout`."""
         block_name = self.create_block(layout.doc.blocks, name)
@@ -551,13 +550,13 @@ class _Arrows:
 
     def render_arrow(
         self,
-        layout: "GenericLayoutType",
+        layout: GenericLayoutType,
         name: str,
         insert: UVec = NULLVEC,
         size: float = 1.0,
         rotation: float = 0,
         *,
-        dxfattribs=None
+        dxfattribs=None,
     ) -> Vec2:
         """Render arrow as basic DXF entities into `layout`."""
         dxfattribs = dict(dxfattribs or {})
@@ -574,8 +573,8 @@ class _Arrows:
         size: float = 0.625,
         rotation: float = 0,
         *,
-        dxfattribs=None
-    ) -> Iterator["DXFGraphic"]:
+        dxfattribs=None,
+    ) -> Iterator[DXFGraphic]:
         """Returns all arrow components as virtual DXF entities."""
         from ezdxf.layouts import VirtualLayout
 
@@ -594,8 +593,7 @@ class _Arrows:
     def arrow_shape(
         self, name: str, insert: UVec, size: float, rotation: float
     ) -> BaseArrow:
-        """Returns an instance of the shape management class for arrow `name`.
-        """
+        """Returns an instance of the shape management class for arrow `name`."""
         # size depending shapes
         name = name.upper()
         if name == self.dot_small:
@@ -609,7 +607,7 @@ class _Arrows:
 def connection_point(
     arrow_name: str, insert: UVec, scale: float = 1.0, rotation: float = 0.0
 ) -> Vec2:
-    """Returns the connection point for `arrow_name`. """
+    """Returns the connection point for `arrow_name`."""
     insert = Vec2(insert)
     if ARROWS.arrow_name(arrow_name) in _Arrows.ORIGIN_ZERO:
         return insert
@@ -618,7 +616,7 @@ def connection_point(
 
 
 def arrow_length(arrow_name: str, scale: float = 1.0) -> float:
-    """Returns the scaled arrow length of `arrow_name`. """
+    """Returns the scaled arrow length of `arrow_name`."""
     if ARROWS.arrow_name(arrow_name) in _Arrows.ORIGIN_ZERO:
         return 0.0
     else:
