@@ -1,13 +1,17 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Callable, List, Optional
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Callable, Optional
 
 from ezdxf.entities import factory, DXFGraphic, SeqEnd, DXFEntity
 from ezdxf.lldxf import const
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, EntityDB, Drawing
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFEntity
+    from ezdxf.entitydb import EntityDB
+
 
 __all__ = ["entity_linker", "LinkedEntities"]
 
@@ -23,23 +27,23 @@ class LinkedEntities(DXFGraphic):
 
     def __init__(self) -> None:
         super().__init__()
-        self._sub_entities: List[DXFGraphic] = []
-        self.seqend: Optional["SeqEnd"] = None
+        self._sub_entities: list[DXFGraphic] = []
+        self.seqend: Optional[SeqEnd] = None
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         """Copy all sub-entities ands SEQEND. (internal API)"""
         assert isinstance(entity, LinkedEntities)
         entity._sub_entities = [e.copy() for e in self._sub_entities]
         if self.seqend:
             entity.seqend = self.seqend.copy()
 
-    def link_entity(self, entity: "DXFEntity") -> None:
+    def link_entity(self, entity: DXFEntity) -> None:
         """Link VERTEX to ATTRIB entities."""
         assert isinstance(entity, DXFGraphic)
         entity.set_owner(self.dxf.owner, self.dxf.paperspace)
         self._sub_entities.append(entity)
 
-    def link_seqend(self, seqend: "DXFEntity") -> None:
+    def link_seqend(self, seqend: DXFEntity) -> None:
         """Link SEQEND entity. (internal API)"""
         seqend.dxf.owner = self.dxf.owner
         self.seqend = seqend  # type: ignore
@@ -49,24 +53,24 @@ class LinkedEntities(DXFGraphic):
         if self.seqend is None:
             self.new_seqend()
 
-    def all_sub_entities(self) -> Iterable["DXFEntity"]:
+    def all_sub_entities(self) -> Iterable[DXFEntity]:
         """Yields all sub-entities and SEQEND. (internal API)"""
         yield from self._sub_entities
         if self.seqend:
             yield self.seqend
 
-    def process_sub_entities(self, func: Callable[["DXFEntity"], None]):
+    def process_sub_entities(self, func: Callable[[DXFEntity], None]):
         """Call `func` for all sub-entities and SEQEND. (internal API)"""
         for entity in self.all_sub_entities():
             if entity.is_alive:
                 func(entity)
 
-    def add_sub_entities_to_entitydb(self, db: "EntityDB") -> None:
+    def add_sub_entities_to_entitydb(self, db: EntityDB) -> None:
         """Add sub-entities (VERTEX, ATTRIB, SEQEND) to entity database `db`,
         called from EntityDB. (internal API)
         """
 
-        def add(entity: "DXFEntity"):
+        def add(entity: DXFEntity):
             entity.doc = self.doc  # grant same document
             db.add(entity)
 
@@ -98,7 +102,7 @@ class LinkedEntities(DXFGraphic):
 
         self.process_sub_entities(set_owner)
 
-    def remove_dependencies(self, other: "Drawing" = None):
+    def remove_dependencies(self, other: Optional[Drawing] = None):
         """Remove all dependencies from current document to bind entity to
         `other` document. (internal API)
         """
