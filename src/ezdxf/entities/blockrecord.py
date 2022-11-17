@@ -1,5 +1,6 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 import logging
 from ezdxf.audit import AuditError
@@ -24,16 +25,12 @@ from .factory import register_entity
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        DXFNamespace,
-        DXFGraphic,
-        EntitySpace,
-        BlockLayout,
-        Block,
-        EndBlk,
-        Auditor,
-    )
+    from ezdxf.audit import Auditor
+    from ezdxf.entities import DXFGraphic, Block, EndBlk
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.entitydb import EntitySpace
+    from ezdxf.layouts import BlockLayout
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["BlockRecord"]
 
@@ -102,18 +99,18 @@ class BlockRecord(DXFEntity):
         # Store entities in the block_record instead of BlockLayout and Layout,
         # because BLOCK_RECORD is also the hard owner of all the entities.
         self.entity_space = EntitySpace()
-        self.block: Optional["Block"] = None
-        self.endblk: Optional["EndBlk"] = None
+        self.block: Optional[Block] = None
+        self.endblk: Optional[EndBlk] = None
         # stores also the block layout structure
         self.block_layout: Optional[BlockLayout] = None
 
-    def set_block(self, block: "Block", endblk: "EndBlk"):
+    def set_block(self, block: Block, endblk: EndBlk):
         self.block = block
         self.endblk = endblk
         self.block.dxf.owner = self.dxf.handle
         self.endblk.dxf.owner = self.dxf.handle
 
-    def set_entity_space(self, entity_space: "EntitySpace") -> None:
+    def set_entity_space(self, entity_space: EntitySpace) -> None:
         self.entity_space = entity_space
 
     def rename(self, name: str) -> None:
@@ -122,14 +119,14 @@ class BlockRecord(DXFEntity):
         self.block.dxf.name = name
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.simple_dxfattribs_loader(dxf, acdb_blockrec_group_codes)  # type: ignore
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         if tagwriter.dxfversion == DXF12:
             raise DXFInternalEzdxfError("Exporting BLOCK_RECORDS for DXF R12.")
@@ -147,8 +144,8 @@ class BlockRecord(DXFEntity):
             ],
         )
 
-    def export_block_definition(self, tagwriter: "TagWriter") -> None:
-        """Exports BLOCK, than all DXF entities and at last the ENDBLK entity,
+    def export_block_definition(self, tagwriter: AbstractTagWriter) -> None:
+        """Exports BLOCK, then all DXF entities and at last the ENDBLK entity,
         except for *Model_space and *Paper_Pacer, their entities are stored
         in the entities section.
 
@@ -222,7 +219,7 @@ class BlockRecord(DXFEntity):
             return bool(self.block.dxf.flags & 12)
         return False
 
-    def add_entity(self, entity: "DXFGraphic") -> None:
+    def add_entity(self, entity: DXFGraphic) -> None:
         """Add an existing DXF entity to BLOCK_RECORD.
 
         Args:
@@ -242,7 +239,7 @@ class BlockRecord(DXFEntity):
         # errors!
         self.entity_space.add(entity)
 
-    def unlink_entity(self, entity: "DXFGraphic") -> None:
+    def unlink_entity(self, entity: DXFGraphic) -> None:
         """Unlink `entity` from BLOCK_RECORD.
 
         Removes `entity` just from  entity space but not from the drawing
@@ -259,7 +256,7 @@ class BlockRecord(DXFEntity):
             except AttributeError:
                 pass  # unsupported entities as DXFTagStorage
 
-    def delete_entity(self, entity: "DXFGraphic") -> None:
+    def delete_entity(self, entity: DXFGraphic) -> None:
         """Delete `entity` from BLOCK_RECORD entity space and drawing database.
 
         Args:
@@ -269,7 +266,7 @@ class BlockRecord(DXFEntity):
         self.unlink_entity(entity)  # 1. unlink from entity space
         entity.destroy()
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         """Validity check. (internal API)"""
         if not self.is_alive:
             return
