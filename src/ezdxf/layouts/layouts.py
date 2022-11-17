@@ -1,6 +1,7 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterator, List, cast, Optional
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterator, cast, Optional
 import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
 from ezdxf.lldxf.const import (
@@ -13,7 +14,9 @@ from .layout import Layout, Modelspace, Paperspace
 from ezdxf.entities import DXFEntity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dictionary, Drawing, Auditor, DXFLayout
+    from ezdxf.audit import Auditor
+    from ezdxf.document import Drawing
+    from ezdxf.entities import Dictionary, DXFLayout
 
 logger = logging.getLogger("ezdxf")
 
@@ -32,7 +35,7 @@ class Layouts:
         """Default constructor. (internal API)"""
         self.doc = doc
         # Store layout names in normalized form: key(name)
-        self._layouts: Dict[str, Layout] = {}
+        self._layouts: dict[str, Layout] = {}
         # key: layout name as original case sensitive string; value: DXFLayout()
         self._dxf_layouts: "Dictionary" = cast(
             "Dictionary", self.doc.rootdict["ACAD_LAYOUT"]
@@ -102,7 +105,7 @@ class Layouts:
             count += 1
         return "*Paper_Space%d" % count
 
-    def new(self, name: str, dxfattribs: dict = None) -> Paperspace:
+    def new(self, name: str, dxfattribs=None) -> Paperspace:
         """Returns a new :class:`~ezdxf.layouts.Paperspace` layout.
 
         Args:
@@ -196,12 +199,12 @@ class Layouts:
         """Returns the :class:`~ezdxf.layouts.Modelspace` layout."""
         return cast(Modelspace, self.get("Model"))
 
-    def names(self) -> List[str]:
+    def names(self) -> list[str]:
         """Returns a list of all layout names, all names in original case
         sensitive form."""
         return [layout.name for layout in self._layouts.values()]
 
-    def get(self, name: Optional[str]) -> "Layout":
+    def get(self, name: Optional[str]) -> Layout:
         """Returns :class:`~ezdxf.layouts.Layout` by `name`, case insensitive
         "Model" == "MODEL".
 
@@ -240,7 +243,7 @@ class Layouts:
         layout.rename(new_name)
         self._add_layout(new_name, layout)
 
-    def names_in_taborder(self) -> List[str]:
+    def names_in_taborder(self) -> list[str]:
         """Returns all layout names in tab order as shown in :term:`CAD`
         applications."""
         names = [
@@ -249,14 +252,14 @@ class Layouts:
         ]
         return [name for order, name in sorted(names)]
 
-    def get_layout_for_entity(self, entity: "DXFEntity") -> "Layout":
+    def get_layout_for_entity(self, entity: DXFEntity) -> Layout:
         """Returns the owner layout for a DXF `entity`."""
         owner = entity.dxf.owner
         if owner is None:
             raise DXFKeyError("No associated layout, owner is None.")
         return self.get_layout_by_key(entity.dxf.owner)
 
-    def get_layout_by_key(self, layout_key: str) -> "Layout":
+    def get_layout_by_key(self, layout_key: str) -> Layout:
         """Returns a layout by its `layout_key`. (internal API)"""
         assert isinstance(layout_key, str), type(layout_key)
         try:
@@ -328,7 +331,7 @@ class Layouts:
                 return cast(Paperspace, layout)
         raise DXFInternalEzdxfError("No active paperspace layout found.")
 
-    def audit(self, auditor: "Auditor"):
+    def audit(self, auditor: Auditor):
         from ezdxf.audit import AuditError
 
         doc = auditor.doc
