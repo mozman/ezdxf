@@ -4,13 +4,11 @@ from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Iterable,
+    Iterator,
     cast,
-    Tuple,
     Union,
     Optional,
     Callable,
-    Dict,
-    List,
 )
 import math
 from ezdxf.lldxf import validator
@@ -60,15 +58,10 @@ from .subentity import LinkedEntities
 from .attrib import Attrib
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        DXFNamespace,
-        AttDef,
-        BlockLayout,
-        BaseLayout,
-        Auditor,
-        BlockRecord,
-    )
+    from ezdxf.audit import Auditor
+    from ezdxf.entities import DXFNamespace, AttDef, BlockRecord
+    from ezdxf.layouts import BaseLayout, BlockLayout
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["Insert"]
 
@@ -173,7 +166,7 @@ class Insert(LinkedEntities):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_block_reference)
 
     @property
-    def attribs(self) -> List[Attrib]:
+    def attribs(self) -> list[Attrib]:
         return self._sub_entities  # type: ignore
 
     @property
@@ -181,7 +174,7 @@ class Insert(LinkedEntities):
         return bool(len(self.attribs))
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
@@ -193,7 +186,7 @@ class Insert(LinkedEntities):
                 elevation_to_z_axis(dxf, ("insert",))
         return dxf
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
@@ -220,7 +213,7 @@ class Insert(LinkedEntities):
             ],
         )
 
-    def export_dxf(self, tagwriter: TagWriter):
+    def export_dxf(self, tagwriter: AbstractTagWriter):
         super().export_dxf(tagwriter)
         # Do no export SEQEND if no ATTRIBS attached:
         if self.attribs_follow:
@@ -271,9 +264,9 @@ class Insert(LinkedEntities):
 
     def place(
         self,
-        insert: UVec = None,
-        scale: Tuple[float, float, float] = None,
-        rotation: float = None,
+        insert: Optional[UVec] = None,
+        scale: Optional[tuple[float, float, float]] = None,
+        rotation: Optional[float] = None,
     ) -> Insert:
         """
         Set block reference placing location `insert`, scaling and rotation
@@ -302,8 +295,8 @@ class Insert(LinkedEntities):
 
     def grid(
         self,
-        size: Tuple[int, int] = (1, 1),
-        spacing: Tuple[float, float] = (1, 1),
+        size: tuple[int, int] = (1, 1),
+        spacing: tuple[float, float] = (1, 1),
     ) -> Insert:
         """Place block reference in a grid layout, grid `size` defines the
         row- and column count, `spacing` defines the distance between two block
@@ -569,7 +562,7 @@ class Insert(LinkedEntities):
         self.dxf.discard("extrusion")
 
     def explode(
-        self, target_layout: BaseLayout = None, *, redraw_order=False
+        self, target_layout: Optional[BaseLayout] = None, *, redraw_order=False
     ) -> EntityQuery:
         """Explode block reference entities into target layout, if target
         layout is ``None``, the target layout is the layout of the block
@@ -610,7 +603,7 @@ class Insert(LinkedEntities):
         """Implements the SupportsVirtualEntities protocol.
 
         This protocol is for consistent internal usage and does not replace
-        the method :meth:`virtual_entities`! Ignores the redraw order!
+        the method :meth:`virtual_entities`! Ignores the redraw-order!
         """
         return self.virtual_entities()
 
@@ -632,8 +625,8 @@ class Insert(LinkedEntities):
         definition, the `reason` string is an explanation why the entity was
         skipped.
 
-        This entities are not stored in the entity database, have no handle and
-        are not assigned to any layout. It is possible to convert this entities
+        These entities are not stored in the entity database, have no handle and
+        are not assigned to any layout. It is possible to convert these entities
         into regular drawing entities by adding the entities to the entities
         database and a layout of the same DXF document as the block reference::
 
@@ -676,7 +669,7 @@ class Insert(LinkedEntities):
             self.dxf.column_count if self.dxf.column_spacing else 1
         )
 
-    def multi_insert(self) -> Iterable[Insert]:
+    def multi_insert(self) -> Iterator[Insert]:
         """Yields a virtual INSERT entity for each grid element of a MINSERT
         entity (multi-insert).
         """
@@ -712,7 +705,7 @@ class Insert(LinkedEntities):
                     transform_attached_attrib_entities(insert, offset)
                     yield insert
 
-    def add_auto_attribs(self, values: Dict[str, str]) -> Insert:
+    def add_auto_attribs(self, values: dict[str, str]) -> Insert:
         """
         Attach for each :class:`~ezdxf.entities.Attdef` entity, defined in the
         block definition, automatically an :class:`Attrib` entity to the block
@@ -733,7 +726,7 @@ class Insert(LinkedEntities):
 
         """
 
-        def unpack(dxfattribs) -> Tuple[str, str, UVec]:
+        def unpack(dxfattribs) -> tuple[str, str, UVec]:
             tag = dxfattribs.pop("tag")
             text = values.get(tag, "")
             location = dxfattribs.pop("insert")
