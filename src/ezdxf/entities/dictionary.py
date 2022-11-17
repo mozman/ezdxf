@@ -1,12 +1,7 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT-License
-from typing import (
-    TYPE_CHECKING,
-    Union,
-    Dict,
-    Optional,
-    List,
-)
+from __future__ import annotations
+from typing import TYPE_CHECKING, Union, Optional
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import (
@@ -31,7 +26,11 @@ from .dxfobj import DXFObject
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Auditor, XRecord
+    from ezdxf.entities import DXFNamespace, XRecord
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.document import Drawing
+    from ezdxf.audit import Auditor
+
 
 __all__ = ["Dictionary", "DictionaryWithDefault", "DictionaryVar"]
 
@@ -91,7 +90,7 @@ class Dictionary(DXFObject):
 
     def __init__(self) -> None:
         super().__init__()
-        self._data: Dict[str, Union[str, DXFObject]] = dict()
+        self._data: dict[str, Union[str, DXFObject]] = dict()
         self._value_code = VALUE_CODE
 
     def _copy_data(self, entity: DXFEntity) -> None:
@@ -126,8 +125,8 @@ class Dictionary(DXFObject):
             object_section.add_object(entity)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
@@ -157,7 +156,7 @@ class Dictionary(DXFObject):
         # Use same value code as loaded:
         self._value_code = value_code
 
-    def post_load_hook(self, doc: "Drawing") -> None:
+    def post_load_hook(self, doc: Drawing) -> None:
         super().post_load_hook(doc)
         db = doc.entitydb
 
@@ -171,14 +170,14 @@ class Dictionary(DXFObject):
             for k, v in list(items()):
                 self.__setitem__(k, v)
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dictionary.name)
         self.dxf.export_dxf_attribs(tagwriter, ["hard_owned", "cloning"])
         self.export_dict(tagwriter)
 
-    def export_dict(self, tagwriter: "TagWriter"):
+    def export_dict(self, tagwriter: AbstractTagWriter):
         # key: dict key string
         # value: DXFEntity or handle as string
         # Ignore invalid handles at export, because removing can create an empty
@@ -346,7 +345,7 @@ class Dictionary(DXFObject):
             # TODO: use entity.destroy()?
             objects.delete_entity(entity)  # type: ignore
 
-    def add_new_dict(self, key: str, hard_owned: bool = False) -> "Dictionary":
+    def add_new_dict(self, key: str, hard_owned: bool = False) -> Dictionary:
         """Create a new sub-dictionary of type :class:`Dictionary`.
 
         Args:
@@ -360,7 +359,7 @@ class Dictionary(DXFObject):
         self.add(key, dxf_dict)
         return dxf_dict
 
-    def add_dict_var(self, key: str, value: str) -> "DictionaryVar":
+    def add_dict_var(self, key: str, value: str) -> DictionaryVar:
         """Add a new :class:`DictionaryVar`.
 
         Args:
@@ -374,7 +373,7 @@ class Dictionary(DXFObject):
         self.add(key, new_var)
         return new_var
 
-    def add_xrecord(self, key: str) -> "XRecord":
+    def add_xrecord(self, key: str) -> XRecord:
         """Add a new :class:`XRecord`.
 
         Args:
@@ -387,7 +386,7 @@ class Dictionary(DXFObject):
         self.add(key, new_xrecord)
         return new_xrecord
 
-    def set_or_add_dict_var(self, key: str, value: str) -> "DictionaryVar":
+    def set_or_add_dict_var(self, key: str, value: str) -> DictionaryVar:
         """Set or add new :class:`DictionaryVar`.
 
         Args:
@@ -420,7 +419,7 @@ class Dictionary(DXFObject):
         self.add(name, obj)
         obj.dxf.owner = self.dxf.handle
 
-    def get_required_dict(self, key: str, hard_owned=False) -> "Dictionary":
+    def get_required_dict(self, key: str, hard_owned=False) -> Dictionary:
         """Get entry `key` or create a new :class:`Dictionary`,
         if `Key` not exist.
         """
@@ -429,7 +428,7 @@ class Dictionary(DXFObject):
             dxf_dict = self.add_new_dict(key, hard_owned=hard_owned)
         return dxf_dict  # type: ignore
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         if not self.is_alive:
             return
         if not self.dxf.hasattr("owner"):
@@ -442,8 +441,8 @@ class Dictionary(DXFObject):
         super().audit(auditor)
         self._check_invalid_entries(auditor)
 
-    def _check_invalid_entries(self, auditor: "Auditor"):
-        trash: List[str] = []  # do not delete content while iterating
+    def _check_invalid_entries(self, auditor: Auditor):
+        trash: list[str] = []  # do not delete content while iterating
         owner_handle = self.dxf.handle
         append = trash.append
         db = auditor.entitydb
@@ -460,7 +459,7 @@ class Dictionary(DXFObject):
                     entry.dxf.owner = owner_handle
                     auditor.fixed_error(
                         code=AuditError.INVALID_OWNER_HANDLE,
-                        message=f'Fixed invalid owner handle in {str(entry)}',
+                        message=f"Fixed invalid owner handle in {str(entry)}",
                     )
             else:  # entry is destroyed
                 append(key)
@@ -506,16 +505,16 @@ class DictionaryWithDefault(Dictionary):
         assert isinstance(entity, DictionaryWithDefault)
         entity._default = self._default
 
-    def post_load_hook(self, doc: "Drawing") -> None:
+    def post_load_hook(self, doc: Drawing) -> None:
         # Set _default to None if default object not exist - audit() replaces
-        # a not existing default object by a place holder object.
+        # a not existing default object by a placeholder object.
         # AutoCAD ignores not existing default objects!
         self._default = doc.entitydb.get(self.dxf.default)  # type: ignore
         super().post_load_hook(doc)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -523,7 +522,7 @@ class DictionaryWithDefault(Dictionary):
             )
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dict_with_default.name)
         self.dxf.export_dxf_attribs(tagwriter, "default")
@@ -552,7 +551,7 @@ class DictionaryWithDefault(Dictionary):
         self._default = default
         self.dxf.default = self._default.dxf.handle
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         def create_missing_default_object():
             placeholder = self.doc.objects.add_placeholder(
                 owner=self.dxf.handle
@@ -627,14 +626,14 @@ class DictionaryVar(DXFObject):
         self.dxf.set("value", str(data))
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(dxf, acdb_dict_var_group_codes, 1)
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dict_var.name)
