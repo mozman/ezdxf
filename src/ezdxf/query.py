@@ -1,16 +1,15 @@
 # Purpose: Query language and manipulation object for DXF entities
 # Copyright (c) 2013-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     Iterable,
     Iterator,
     Callable,
     Hashable,
-    Dict,
-    List,
     Sequence,
     Union,
-    Set,
+    Optional,
 )
 import re
 import operator
@@ -113,7 +112,9 @@ class EntityQuery(abc.Sequence):
     true_color = _AttributeDescriptor("true_color")
     transparency = _AttributeDescriptor("transparency")
 
-    def __init__(self, entities: Iterable[DXFEntity] = None, query: str = "*"):
+    def __init__(
+        self, entities: Optional[Iterable[DXFEntity]] = None, query: str = "*"
+    ):
         """
         Setup container with entities matching the initial query.
 
@@ -127,7 +128,7 @@ class EntityQuery(abc.Sequence):
         # Text selection mode, but only for operator comparisons:
         self.ignore_case = True
 
-        self.entities: List[DXFEntity]
+        self.entities: list[DXFEntity]
         if entities is None:
             self.entities = []
         elif query == "*":
@@ -148,11 +149,6 @@ class EntityQuery(abc.Sequence):
         """Returns DXFEntity at index `item`, supports negative indices and
         slicing. Returns all entities which support a specific DXF attribute,
         if `item` is a DXF attribute name as string.
-
-        .. versionchanged:: 0.18
-
-            support DXF attribute name as argument
-
         """
         if isinstance(item, str):
             return self._get_entities_with_supported_attribute(item)
@@ -160,32 +156,25 @@ class EntityQuery(abc.Sequence):
 
     def __setitem__(self, key, value):
         """Set the DXF attribute `key` for all supported DXF entities to `value`.
-
-        .. versionadded:: 0.18
-
         """
         if not isinstance(key, str):
             raise TypeError("key has to be a string (DXF attribute name)")
         self._set_dxf_attribute_for_all(key, value)
 
     def __delitem__(self, key):
-        """Discard the DXF attribute `key` from all supported DXF entities.
-
-        .. versionadded:: 0.18
-
-        """
+        """Discard the DXF attribute `key` from all supported DXF entities."""
         if not isinstance(key, str):
             raise TypeError("key has to be a string (DXF attribute name)")
         self._discard_dxf_attribute_for_all(key)
 
-    def purge(self) -> "EntityQuery":
+    def purge(self) -> EntityQuery:
         """Remove destroyed entities."""
         self.entities = [e for e in self.entities if e.is_alive]
         return self  # fluent interface
 
     def _get_entities_with_supported_attribute(
         self, attribute: str
-    ) -> "EntityQuery":
+    ) -> EntityQuery:
         query = self.__class__(
             e for e in self.entities if e.dxf.is_supported(attribute)
         )
@@ -208,9 +197,6 @@ class EntityQuery(abc.Sequence):
         """Equal selector (self == other).
         Returns all entities where the selected DXF attribute is equal to
         `other`.
-
-        .. versionadded:: 0.18
-
         """
         if not self.selected_dxf_attribute:
             raise TypeError("no DXF attribute selected")
@@ -219,9 +205,6 @@ class EntityQuery(abc.Sequence):
     def __ne__(self, other):
         """Not equal selector (self != other). Returns all entities where the
         selected DXF attribute is not equal to `other`.
-
-        .. versionadded:: 0.18
-
         """
         if not self.selected_dxf_attribute:
             raise TypeError("no DXF attribute selected")
@@ -233,9 +216,6 @@ class EntityQuery(abc.Sequence):
 
         Raises:
              TypeError: for vector based attributes like `center` or `insert`
-
-        .. versionadded:: 0.18
-
         """
         if not self.selected_dxf_attribute:
             raise TypeError("no DXF attribute selected")
@@ -247,9 +227,6 @@ class EntityQuery(abc.Sequence):
 
         Raises:
              TypeError: for vector based attributes like `center` or `insert`
-
-        .. versionadded:: 0.18
-
         """
         if not self.selected_dxf_attribute:
             raise TypeError("no DXF attribute selected")
@@ -261,9 +238,6 @@ class EntityQuery(abc.Sequence):
 
         Raises:
              TypeError: for vector based attributes like `center` or `insert`
-
-        .. versionadded:: 0.18
-
         """
         if not self.selected_dxf_attribute:
             raise TypeError("no DXF attribute selected")
@@ -275,55 +249,36 @@ class EntityQuery(abc.Sequence):
 
         Raises:
              TypeError: for vector based attributes like `center` or `insert`
-
-        .. versionadded:: 0.18
-
         """
         if not self.selected_dxf_attribute:
             raise TypeError("no DXF attribute selected")
         return self._select_by_operator(other, operator.ge, vectors=False)
 
     def __or__(self, other):
-        """Union operator, see :meth:`union`.
-
-        .. versionadded:: 0.18
-
-        """
+        """Union operator, see :meth:`union`."""
         if isinstance(other, EntityQuery):
             return self.union(other)
         return NotImplemented
 
     def __and__(self, other):
-        """Intersection operator, see :meth:`intersection`.
-
-        .. versionadded:: 0.18
-
-        """
+        """Intersection operator, see :meth:`intersection`."""
         if isinstance(other, EntityQuery):
             return self.intersection(other)
         return NotImplemented
 
     def __sub__(self, other):
-        """Difference operator, see :meth:`difference`.
-
-        .. versionadded:: 0.18
-
-        """
+        """Difference operator, see :meth:`difference`."""
         if isinstance(other, EntityQuery):
             return self.difference(other)
         return NotImplemented
 
     def __xor__(self, other):
-        """Symmetric difference operator, see :meth:`symmetric_difference`.
-
-        .. versionadded:: 0.18
-
-        """
+        """Symmetric difference operator, see :meth:`symmetric_difference`."""
         if isinstance(other, EntityQuery):
             return self.symmetric_difference(other)
         return NotImplemented
 
-    def _select_by_operator(self, value, op, vectors=True) -> "EntityQuery":
+    def _select_by_operator(self, value, op, vectors=True) -> EntityQuery:
         attribute = self.selected_dxf_attribute
         if self.ignore_case and isinstance(value, str):
             value = value.lower()
@@ -348,7 +303,7 @@ class EntityQuery(abc.Sequence):
                     entities.append(entity)
         return query
 
-    def match(self, pattern: str) -> "EntityQuery":
+    def match(self, pattern: str) -> EntityQuery:
         """Returns all entities where the selected DXF attribute matches the
         regular expression `pattern`.
 
@@ -369,7 +324,7 @@ class EntityQuery(abc.Sequence):
 
         return self._regex_match(pattern, match)
 
-    def _regex_match(self, pattern: str, func) -> "EntityQuery":
+    def _regex_match(self, pattern: str, func) -> EntityQuery:
         ignore_case = self.ignore_case
         self.ignore_case = False  # deactivate string manipulation
         re_flags = re.IGNORECASE if ignore_case else 0
@@ -403,7 +358,7 @@ class EntityQuery(abc.Sequence):
         self,
         entities: Iterable[DXFEntity],
         query: str = "*",
-    ) -> "EntityQuery":
+    ) -> EntityQuery:
         """Extent the :class:`EntityQuery` container by entities matching an
         additional query.
 
@@ -411,7 +366,7 @@ class EntityQuery(abc.Sequence):
         self.entities = self.union(self.__class__(entities, query)).entities
         return self  # fluent interface
 
-    def remove(self, query: str = "*") -> "EntityQuery":
+    def remove(self, query: str = "*") -> EntityQuery:
         """Remove all entities from :class:`EntityQuery` container matching this
         additional query.
 
@@ -421,7 +376,7 @@ class EntityQuery(abc.Sequence):
         ).entities
         return self  # fluent interface
 
-    def query(self, query: str = "*") -> "EntityQuery":
+    def query(self, query: str = "*") -> EntityQuery:
         """Returns a new :class:`EntityQuery` container with all entities
         matching this additional query.
 
@@ -432,8 +387,10 @@ class EntityQuery(abc.Sequence):
         return self.__class__(self.entities, query)
 
     def groupby(
-        self, dxfattrib: str = "", key: Callable[[DXFEntity], Hashable] = None
-    ) -> Dict[Hashable, List[DXFEntity]]:
+        self,
+        dxfattrib: str = "",
+        key: Optional[Callable[[DXFEntity], Hashable]] = None,
+    ) -> dict[Hashable, list[DXFEntity]]:
         """Returns a dict of entity lists, where entities are grouped by a DXF
         attribute or a key function.
 
@@ -447,7 +404,7 @@ class EntityQuery(abc.Sequence):
         """
         return groupby(self.entities, dxfattrib, key)
 
-    def filter(self, func: Callable[[DXFEntity], bool]) -> "EntityQuery":
+    def filter(self, func: Callable[[DXFEntity], bool]) -> EntityQuery:
         """Returns a new :class:`EntityQuery` with all entities from this
         container for which the callable `func` returns ``True``.
 
@@ -457,45 +414,30 @@ class EntityQuery(abc.Sequence):
             result = msp.query().filter(
                 lambda e: hasattr(e, "rgb") and e.rbg == (0, 0, 0)
             )
-
-        .. versionadded:: 0.18
-
         """
         return self.__class__(filter(func, self.entities))
 
-    def union(self, other: "EntityQuery") -> "EntityQuery":
+    def union(self, other: EntityQuery) -> EntityQuery:
         """Returns a new :class:`EntityQuery` with entities from `self` and
         `other`. All entities are unique - no duplicates.
-
-        .. versionadded:: 0.18
-
         """
         return self.__class__(set(self.entities) | set(other.entities))
 
-    def intersection(self, other: "EntityQuery") -> "EntityQuery":
+    def intersection(self, other: EntityQuery) -> EntityQuery:
         """Returns a new :class:`EntityQuery` with entities common to `self`
         and `other`.
-
-        .. versionadded:: 0.18
-
         """
         return self.__class__(set(self.entities) & set(other.entities))
 
-    def difference(self, other: "EntityQuery") -> "EntityQuery":
+    def difference(self, other: EntityQuery) -> EntityQuery:
         """Returns a new :class:`EntityQuery` with all entities from `self` that
         are not in `other`.
-
-        .. versionadded:: 0.18
-
         """
         return self.__class__(set(self.entities) - set(other.entities))
 
-    def symmetric_difference(self, other: "EntityQuery") -> "EntityQuery":
+    def symmetric_difference(self, other: EntityQuery) -> EntityQuery:
         """Returns a new :class:`EntityQuery` with entities in either `self` or
         `other` but not both.
-
-        .. versionadded:: 0.18
-
         """
         return self.__class__(set(self.entities) ^ set(other.entities))
 
@@ -633,7 +575,7 @@ def build_entity_attributes_matcher(
 
 def unique_entities(entities: Iterable[DXFEntity]) -> Iterator[DXFEntity]:
     """Yield all unique entities, order of all entities will be preserved."""
-    done: Set[DXFEntity] = set()
+    done: set[DXFEntity] = set()
     for entity in entities:
         if entity not in done:
             done.add(entity)
@@ -680,7 +622,9 @@ def name_matcher(query: str = "*") -> Callable[[str], bool]:
     return match
 
 
-def new(entities: Iterable[DXFEntity] = None, query: str = "*") -> EntityQuery:
+def new(
+    entities: Optional[Iterable[DXFEntity]] = None, query: str = "*"
+) -> EntityQuery:
     """Start a new query based on sequence `entities`. The `entities` argument
     has to be an iterable of :class:`~ezdxf.entities.DXFEntity` or inherited
     objects and returns an :class:`EntityQuery` object.
