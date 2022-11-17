@@ -392,7 +392,7 @@ class DXFGraphic(DXFEntity):
             layout.unlink_entity(self)
 
     def move_to_layout(
-        self, layout: BaseLayout, source: BaseLayout = None
+        self, layout: BaseLayout, source: Optional[BaseLayout] = None
     ) -> None:
         """
         Move entity from model space or a paper space layout to another layout.
@@ -559,7 +559,10 @@ class DXFGraphic(DXFEntity):
         return bool(self.xdata) and ("PE_URL" in self.xdata)  # type: ignore
 
     def set_hyperlink(
-        self, link: str, description: str = None, location: str = None
+        self,
+        link: str,
+        description: Optional[str] = None,
+        location: Optional[str] = None,
     ):
         """Set hyperlink of an entity."""
         xdata = [(1001, "PE_URL"), (1000, str(link))]
@@ -595,7 +598,7 @@ class DXFGraphic(DXFEntity):
                 location = xdata[2]
         return link, description, location
 
-    def remove_dependencies(self, other: Drawing = None) -> None:
+    def remove_dependencies(self, other: Optional[Drawing] = None) -> None:
         """Remove all dependencies from current document.
 
         (internal API)
@@ -646,7 +649,7 @@ class SeqEnd(DXFGraphic):
     DXFTYPE = "SEQEND"
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
