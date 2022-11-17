@@ -35,7 +35,9 @@ from .dxfgfx import (
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["Text", "acdb_text", "acdb_text_group_codes"]
 
@@ -173,7 +175,7 @@ class Text(DXFGraphic):
     UPSIDE_DOWN = MIRROR_Y
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
@@ -184,13 +186,13 @@ class Text(DXFGraphic):
                 elevation_to_z_axis(dxf, ("insert", "align_point"))
         return dxf
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         super().export_entity(tagwriter)
         self.export_acdb_text(tagwriter)
         self.export_acdb_text2(tagwriter)
 
-    def export_acdb_text(self, tagwriter: TagWriter) -> None:
+    def export_acdb_text(self, tagwriter: AbstractTagWriter) -> None:
         """Export TEXT data as DXF tags. (internal API)"""
         if tagwriter.dxfversion > const.DXF12:
             tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_text.name)
@@ -212,7 +214,7 @@ class Text(DXFGraphic):
             ],
         )
 
-    def export_acdb_text2(self, tagwriter: TagWriter) -> None:
+    def export_acdb_text2(self, tagwriter: AbstractTagWriter) -> None:
         """Export TEXT data as DXF tags. (internal API)"""
         if tagwriter.dxfversion > const.DXF12:
             tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_text2.name)
@@ -221,8 +223,8 @@ class Text(DXFGraphic):
     def set_placement(
         self,
         p1: UVec,
-        p2: UVec = None,
-        align: TextEntityAlignment = None,
+        p2: Optional[UVec] = None,
+        align: Optional[TextEntityAlignment] = None,
     ) -> Text:
         """Set text alignment and location.
 
@@ -359,7 +361,7 @@ class Text(DXFGraphic):
             self.post_transform(Matrix44.translate(dx, dy, dz))
         return self
 
-    def remove_dependencies(self, other: Drawing = None) -> None:
+    def remove_dependencies(self, other: Optional[Drawing] = None) -> None:
         """Remove all dependencies from actual document.
 
         (internal API)
