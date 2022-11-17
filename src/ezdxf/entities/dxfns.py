@@ -1,15 +1,7 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import (
-    Any,
-    Optional,
-    Union,
-    Iterable,
-    List,
-    TYPE_CHECKING,
-    Dict,
-    Set,
-)
+from __future__ import annotations
+from typing import Any, Optional, Union, Iterable, TYPE_CHECKING, Set
 import logging
 import itertools
 from ezdxf import options
@@ -21,7 +13,10 @@ from ezdxf.lldxf.tags import Tags
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import ExtendedTags, DXFEntity, TagWriter
+    from ezdxf.lldxf.extendedtags import ExtendedTags
+    from ezdxf.entities import DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+
 
 __all__ = ["DXFNamespace", "SubclassProcessor"]
 
@@ -55,7 +50,9 @@ class DXFNamespace:
     """
 
     def __init__(
-        self, processor: "SubclassProcessor" = None, entity: "DXFEntity" = None
+        self,
+        processor: Optional[SubclassProcessor] = None,
+        entity: Optional[DXFEntity] = None,
     ):
         if processor:
             base_class = processor.base_class
@@ -80,14 +77,14 @@ class DXFNamespace:
             self.reset_handles()
             self.rewire(entity)
 
-    def copy(self, entity: "DXFEntity"):
+    def copy(self, entity: DXFEntity):
         namespace = self.__class__()
         for k, v in self.__dict__.items():
             namespace.__dict__[k] = v
         namespace.rewire(entity)
         return namespace
 
-    def __deepcopy__(self, memodict: dict = None):
+    def __deepcopy__(self, memodict: Optional[dict] = None):
         return self.copy(self._entity)
 
     def reset_handles(self):
@@ -97,9 +94,9 @@ class DXFNamespace:
 
     def rewire(
         self,
-        entity: Optional["DXFEntity"],
-        handle: str = None,
-        owner: str = None,
+        entity: Optional[DXFEntity],
+        handle: Optional[str] = None,
+        owner: Optional[str] = None,
     ) -> None:
         """Rewire DXF namespace with parent entity
 
@@ -250,9 +247,9 @@ class DXFNamespace:
 
     def update(
         self,
-        dxfattribs: Dict[str, Any],
+        dxfattribs: dict[str, Any],
         *,
-        exclude: Set[str] = None,
+        exclude: Optional[Set[str]] = None,
         ignore_errors=False,
     ) -> None:
         """Update DXF namespace attributes from a dict."""
@@ -302,16 +299,16 @@ class DXFNamespace:
 
     def dxf_default_value(self, key: str) -> Any:
         """Returns the default value as defined in the DXF standard."""
-        attrib: Optional["DXFAttr"] = self.dxfattribs.get(key)
+        attrib: Optional[DXFAttr] = self.dxfattribs.get(key)
         if attrib:
             return attrib.default
         else:
             return None
 
     def export_dxf_attribs(
-        self, tagwriter: "TagWriter", attribs: Union[str, Iterable]
+        self, tagwriter: AbstractTagWriter, attribs: Union[str, Iterable]
     ) -> None:
-        """Exports DXF attribute `name` by `tagwriter`. Non optional attributes
+        """Exports DXF attribute `name` by `tagwriter`. Non-optional attributes
         are forced and optional tags are only written if different to default
         value. DXF version check is always on: does not export DXF attribs
         which are not supported by tagwriter.dxfversion.
@@ -328,7 +325,7 @@ class DXFNamespace:
                 self._export_dxf_attribute_optional(tagwriter, name)
 
     def _export_dxf_attribute_optional(
-        self, tagwriter: "TagWriter", name: str
+        self, tagwriter: AbstractTagWriter, name: str
     ) -> None:
         """Exports DXF attribute `name` by `tagwriter`. Optional tags are only
         written if different to default value.
@@ -388,11 +385,11 @@ BASE_CLASS_CODES = {0, 5, 102, 330}
 class SubclassProcessor:
     """Helper class for loading tags into entities. (internal class)"""
 
-    def __init__(self, tags: "ExtendedTags", dxfversion=None):
+    def __init__(self, tags: ExtendedTags, dxfversion: Optional[str] = None):
         if len(tags.subclasses) == 0:
             raise ValueError("Invalid tags.")
-        self.subclasses: List[Tags] = list(tags.subclasses)  # copy subclasses
-        self.embedded_objects: List[Tags] = tags.embedded_objects or []
+        self.subclasses: list[Tags] = list(tags.subclasses)  # copy subclasses
+        self.embedded_objects: list[Tags] = tags.embedded_objects or []
         self.dxfversion: Optional[str] = dxfversion
         # DXF R12 and prior have no subclass marker system, all tags of an
         # entity in one flat list.
@@ -415,7 +412,10 @@ class SubclassProcessor:
         return self.subclasses[0]
 
     def log_unprocessed_tags(
-        self, unprocessed_tags: Iterable, subclass="<?>", handle=None
+        self,
+        unprocessed_tags: Iterable,
+        subclass="<?>",
+        handle: Optional[str] = None,
     ) -> None:
         if options.log_unprocessed_tags:
             for tag in unprocessed_tags:
@@ -453,7 +453,7 @@ class SubclassProcessor:
     def fast_load_dxfattribs(
         self,
         dxf: DXFNamespace,
-        group_code_mapping: Dict[int, Union[str, List]],
+        group_code_mapping: dict[int, Union[str, list]],
         subclass: Union[int, str, Tags],
         *,
         recover=False,
@@ -486,7 +486,7 @@ class SubclassProcessor:
         if tags is None or len(tags) == 0:
             return unprocessed_tags
 
-        processed_names: Set[str] = set()
+        processed_names: set[str] = set()
         # Localize attributes:
         get_attrib_name = group_code_mapping.get
         append_unprocessed_tag = unprocessed_tags.append
@@ -561,7 +561,7 @@ class SubclassProcessor:
             )
 
     def simple_dxfattribs_loader(
-        self, dxf: DXFNamespace, group_code_mapping: Dict[int, str]
+        self, dxf: DXFNamespace, group_code_mapping: dict[int, str]
     ) -> None:
         # Most tests in text suite 201 for the POINT entity
         """Load DXF attributes from all subclasses into the DXF namespace.
