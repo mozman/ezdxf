@@ -6,14 +6,14 @@ from typing import (
     Tuple,
     Sequence,
     Iterable,
-    List,
     Union,
     Iterator,
+    Optional,
 )
 import array
 import copy
 from contextlib import contextmanager
-from ezdxf.math import Vec3, UVec, Matrix44, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -41,14 +41,9 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        DXFNamespace,
-        Line,
-        Arc,
-        BaseLayout,
-        DXFEntity,
-    )
+    from ezdxf.entities import DXFNamespace, Line, Arc, DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.layouts import BaseLayout
 
 __all__ = ["LWPolyline", "FORMAT_CODES"]
 
@@ -112,7 +107,7 @@ class LWPolyline(DXFGraphic):
         entity.lwpoints = copy.deepcopy(self.lwpoints)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         """
         Adds subclass processing for AcDbPolyline, requires previous base class
@@ -139,12 +134,12 @@ class LWPolyline(DXFGraphic):
         self.lwpoints, unprocessed_tags = LWPolylinePoints.from_tags(tags)
         return unprocessed_tags
 
-    def preprocess_export(self, tagwriter: TagWriter) -> bool:
+    def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         # Returns True if entity should be exported
         # Do not export polylines without vertices
         return len(self.lwpoints) > 0
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_lwpolyline.name)
@@ -235,7 +230,7 @@ class LWPolyline(DXFGraphic):
         """Delete point at position `index`, supports extended slicing."""
         del self.lwpoints[index]
 
-    def vertices(self) -> Iterator[Tuple[float, float]]:
+    def vertices(self) -> Iterator[tuple[float, float]]:
         """
         Returns iterable of all polyline points as (x, y) tuples in :ref:`OCS`
         (:attr:`dxf.elevation` is the z-axis value).
@@ -244,14 +239,14 @@ class LWPolyline(DXFGraphic):
         for point in self:
             yield point[0], point[1]
 
-    def vertices_in_wcs(self) -> Iterable[Vec3]:
+    def vertices_in_wcs(self) -> Iterator[Vec3]:
         """Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`WCS`."""
         ocs = self.ocs()
         elevation = self.get_dxf_attrib("elevation", default=0.0)
         for x, y in self.vertices():
             yield ocs.to_wcs(Vec3(x, y, elevation))
 
-    def vertices_in_ocs(self) -> Iterable[Vec3]:
+    def vertices_in_ocs(self) -> Iterator[Vec3]:
         """Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`OCS`."""
         elevation = self.get_dxf_attrib("elevation", default=0.0)
         for x, y in self.vertices():
@@ -310,7 +305,7 @@ class LWPolyline(DXFGraphic):
     @contextmanager
     def points(
         self, format: str = DEFAULT_FORMAT
-    ) -> Iterator[List[Sequence[float]]]:
+    ) -> Iterator[list[Sequence[float]]]:
         """Context manager for polyline points. Returns a standard Python list
         of points, according to the format string.
 
@@ -324,7 +319,7 @@ class LWPolyline(DXFGraphic):
         yield points
         self.set_points(points, format=format)
 
-    def get_points(self, format: str = DEFAULT_FORMAT) -> List[Sequence[float]]:
+    def get_points(self, format: str = DEFAULT_FORMAT) -> list[Sequence[float]]:
         """Returns all points as list of tuples, format specifies a user
         defined point format.
 
@@ -403,7 +398,7 @@ class LWPolyline(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def virtual_entities(self) -> Iterable[Union[Line, Arc]]:
+    def virtual_entities(self) -> Iterator[Union[Line, Arc]]:
         """Yields the graphical representation of LWPOLYLINE as virtual DXF
         primitives (LINE or ARC).
 
@@ -416,7 +411,7 @@ class LWPolyline(DXFGraphic):
             e.set_source_of_copy(self)
             yield e
 
-    def explode(self, target_layout: BaseLayout = None) -> EntityQuery:
+    def explode(self, target_layout: Optional[BaseLayout] = None) -> EntityQuery:
         """Explode the LWPOLYLINE entity as DXF primitives (LINE or ARC) into
         the target layout, if the target layout is ``None``, the target layout
         is the layout of the source entity.
@@ -475,7 +470,7 @@ class LWPolylinePoints(VertexArray):
     ) -> None:
         super().append(compile_array(point, format=format))
 
-    def dxftags(self) -> Iterable[DXFTag]:
+    def dxftags(self) -> Iterator[DXFTag]:
         for point in self:
             x, y, start_width, end_width, bulge = point
             yield DXFVertex(self.VERTEX_CODE, (x, y))
