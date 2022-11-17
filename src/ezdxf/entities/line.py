@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -21,7 +22,8 @@ from .dxfgfx import DXFGraphic, acdb_entity, acdb_entity_group_codes
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["Line"]
 
@@ -56,8 +58,8 @@ class Line(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_line)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
@@ -65,7 +67,7 @@ class Line(DXFGraphic):
             processor.simple_dxfattribs_loader(dxf, merged_line_group_codes)
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
@@ -85,7 +87,7 @@ class Line(DXFGraphic):
         # different way!
         return OCS()
 
-    def transform(self, m: Matrix44) -> "Line":
+    def transform(self, m: Matrix44) -> Line:
         """Transform the LINE entity by transformation matrix `m` inplace."""
         start, end = m.transform_vertices([self.dxf.start, self.dxf.end])
         self.dxf.start = start
@@ -94,7 +96,7 @@ class Line(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def translate(self, dx: float, dy: float, dz: float) -> "Line":
+    def translate(self, dx: float, dy: float, dz: float) -> Line:
         """Optimized LINE translation about `dx` in x-axis, `dy` in y-axis and
         `dz` in z-axis.
 
