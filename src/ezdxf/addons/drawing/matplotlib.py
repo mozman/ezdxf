@@ -270,14 +270,19 @@ class MatplotlibBackend(Backend):
             text_path = self._text_renderer.get_text_path(text, font_properties)
         except (RuntimeError, ValueError):
             return
-
-        transformed_path = _transform_path(
-            text_path,
-            Matrix44.scale(
-                self._text_renderer.get_scale(cap_height, font_properties)
+        try:
+            transformed_path = _transform_path(
+                text_path,
+                Matrix44.scale(
+                    self._text_renderer.get_scale(cap_height, font_properties)
+                )
+                @ transform,
             )
-            @ transform,
-        )
+        except ValueError as e:
+            logger.info(
+                f"ignored transformation error of matplotlib path in draw_text(): {str(e)}"
+            )
+            return
         try:
             patch = PathPatch(
                 transformed_path,
@@ -286,9 +291,9 @@ class MatplotlibBackend(Backend):
                 zorder=self._get_z(),
             )
         except ValueError as e:
-            logger.info(f"ignored matplotlib error in draw_text(): {str(e)}")
-        else:
-            self.ax.add_patch(patch)
+            logger.info(f"ignored unknown matplotlib error in draw_text(): {str(e)}")
+            return
+        self.ax.add_patch(patch)
 
     def get_font_measurements(
         self, cap_height: float, font: Optional[fonts.FontFace] = None
@@ -329,6 +334,7 @@ class MatplotlibBackend(Backend):
 
 
 def _transform_path(path: Path, transform: Matrix44) -> Path:
+    # raises ValueError for invalid TextPath objects
     vertices = transform.transform_vertices(
         [Vec3(x, y) for x, y in path.vertices]
     )
