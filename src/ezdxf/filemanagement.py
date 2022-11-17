@@ -1,7 +1,7 @@
 # Copyright (C) 2018-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TextIO, TYPE_CHECKING, Union, Sequence
+from typing import TextIO, TYPE_CHECKING, Union, Sequence, Optional
 import base64
 import io
 import pathlib
@@ -11,7 +11,7 @@ from ezdxf.lldxf.const import DXF2013
 from ezdxf.document import Drawing
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFInfo
+    from ezdxf.lldxf.validator import DXFInfo
 
 
 def new(
@@ -96,7 +96,7 @@ def read(stream: TextIO) -> Drawing:
 
 def readfile(
     filename: Union[str, pathlib.Path],
-    encoding: str = None,
+    encoding: Optional[str] = None,
     errors: str = "surrogateescape",
 ) -> Drawing:
     """Read the DXF document `filename` from the file-system.
@@ -185,8 +185,10 @@ def dxf_stream_info(stream: TextIO) -> DXFInfo:
 
 
 def readzip(
-    zipfile: str, filename: str = None, errors: str = "surrogateescape"
-) -> "Drawing":
+    zipfile: str,
+    filename: Optional[str] = None,
+    errors: str = "surrogateescape",
+) -> Drawing:
     """Load a DXF document specified by `filename` from a zip archive, or if
     `filename` is ``None`` the first DXF document in the zip archive.
 
@@ -259,7 +261,7 @@ def decode_base64(data: bytes, errors: str = "surrogateescape") -> "Drawing":
 
 
 def find_support_file(
-    filename: str, support_dirs: Sequence[str] = None
+    filename: str, support_dirs: Optional[Sequence[str]] = None
 ) -> str:
     """Find file `filename` in the support directories`."""
     if pathlib.Path(filename).exists():
