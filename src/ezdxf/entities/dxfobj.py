@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Union, Any
+from typing import TYPE_CHECKING, Iterable, Union, Any, Optional
 import logging
 import array
 from ezdxf.lldxf import validator
@@ -97,7 +97,7 @@ class XRecord(DXFObject):
         entity.tags = Tags(self.tags)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -172,7 +172,7 @@ class VBAProject(DXFObject):
         entity.data = entity.data
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -255,7 +255,7 @@ class SortEntsTable(DXFObject):
         entity.table = dict(entity.table)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
