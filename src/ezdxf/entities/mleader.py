@@ -1,6 +1,7 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Union, Optional, Iterable, Dict, Any
+from __future__ import annotations
+from typing import TYPE_CHECKING, Union, Optional, Iterable, Any
 import copy
 import logging
 from collections import namedtuple
@@ -40,16 +41,13 @@ from .factory import register_entity
 from .objectcollection import ObjectCollection
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        Drawing,
-        DXFNamespace,
-        DXFTag,
-        DXFEntity,
-        BaseLayout,
-        EntityQuery,
-        Auditor,
-    )
+    from ezdxf.audit import Auditor
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.layouts import BaseLayout
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.lldxf.types import DXFTag
+    from ezdxf.query import EntityQuery
 
 __all__ = [
     "MultiLeader",
@@ -244,11 +242,9 @@ END_LEADER_LINE = 305
 
 
 def compile_context_tags(
-    data: List["DXFTag"], stop_code: int
-) -> List[Union["DXFTag", List]]:
-    def build_structure(
-        tag: "DXFTag", stop: int
-    ) -> List[Union["DXFTag", List]]:
+    data: list[DXFTag], stop_code: int
+) -> list[Union[DXFTag, list]]:
+    def build_structure(tag: DXFTag, stop: int) -> list[Union[DXFTag, list]]:
         collector = [tag]
         tag = next(tags)
         while tag.code != stop:
@@ -280,8 +276,8 @@ class MultiLeader(DXFGraphic):
     def __init__(self) -> None:
         super().__init__()
         self.context = MLeaderContext()
-        self.arrow_heads: List[ArrowHeadData] = []
-        self.block_attribs: List[AttribData] = []
+        self.arrow_heads: list[ArrowHeadData] = []
+        self.block_attribs: list[AttribData] = []
 
     @property
     def has_mtext_content(self) -> bool:
@@ -308,26 +304,26 @@ class MultiLeader(DXFGraphic):
     def has_block_content(self) -> bool:
         return self.context.block is not None
 
-    def get_block_content(self) -> Dict[str, str]:
+    def get_block_content(self) -> dict[str, str]:
         """Get BLOCK attributes as dictionary of (tag, value) pairs.
         Returns an empty dictionary if MULTILEADER has MTEXT content.
         """
         assert self.doc is not None, "valid DXF document required"
         entitydb = self.doc.entitydb
-        tags: Dict[str, str] = dict()
+        tags: dict[str, str] = dict()
         for attr in self.block_attribs:
             attdef = entitydb.get(attr.handle)
             if attdef is not None:
                 tags[attdef.dxf.tag] = attr.text
         return tags
 
-    def set_block_content(self, content: Dict[str, str]):
+    def set_block_content(self, content: dict[str, str]):
         """Set BLOCK attributes by a dictionary of (tag, value) pairs.
         Does nothing if MULTILEADER has MTEXT content.
         """
         assert self.doc is not None, "valid DXF document required"
         entitydb = self.doc.entitydb
-        tags: Dict[str, str] = dict()
+        tags: dict[str, str] = dict()
         block_attribs = self.block_attribs
         for index, attr in enumerate(block_attribs):
             attdef = entitydb.get(attr.handle)
@@ -338,7 +334,7 @@ class MultiLeader(DXFGraphic):
                     block_attribs[index] = attr._replace(text=new_text)
         return tags
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         """Copy leaders"""
         assert isinstance(entity, MultiLeader)
         entity.context = copy.deepcopy(self.context)
@@ -346,8 +342,8 @@ class MultiLeader(DXFGraphic):
         entity.block_attribs = copy.deepcopy(self.block_attribs)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
@@ -375,7 +371,7 @@ class MultiLeader(DXFGraphic):
         return dxf
 
     @staticmethod
-    def extract_context_data(tags: Tags) -> List["DXFTag"]:
+    def extract_context_data(tags: Tags) -> list[DXFTag]:
         start, end = None, None
         context_data = []
         for index, tag in enumerate(tags):
@@ -391,7 +387,7 @@ class MultiLeader(DXFGraphic):
         return context_data
 
     @staticmethod
-    def load_context(data: List["DXFTag"]) -> "MLeaderContext":
+    def load_context(data: list[DXFTag]) -> MLeaderContext:
         try:
             context = compile_context_tags(data, END_CONTEXT_DATA)
         except StopIteration:
@@ -400,7 +396,7 @@ class MultiLeader(DXFGraphic):
             return MLeaderContext.load(context)
 
     @staticmethod
-    def extract_arrow_heads(data: Tags) -> List[ArrowHeadData]:
+    def extract_arrow_heads(data: Tags) -> list[ArrowHeadData]:
         def store_head():
             heads.append(
                 ArrowHeadData(
@@ -410,7 +406,7 @@ class MultiLeader(DXFGraphic):
             )
             collector.clear()
 
-        heads: List[ArrowHeadData] = []
+        heads: list[ArrowHeadData] = []
         try:
             start = data.tag_index(94)
         except const.DXFValueError:
@@ -429,7 +425,7 @@ class MultiLeader(DXFGraphic):
         return heads
 
     @staticmethod
-    def extract_block_attribs(data: Tags) -> List[AttribData]:
+    def extract_block_attribs(data: Tags) -> list[AttribData]:
         def store_attrib():
             attribs.append(
                 AttribData(
@@ -441,14 +437,14 @@ class MultiLeader(DXFGraphic):
             )
             collector.clear()
 
-        attribs: List[AttribData] = []
+        attribs: list[AttribData] = []
         try:
             start = data.tag_index(330)
         except const.DXFValueError:
             return attribs
 
         end = start
-        collector: Dict[int, Any] = dict()
+        collector: dict[int, Any] = dict()
         for code, value in data.collect_consecutive_tags(
             {330, 177, 44, 302}, start
         ):
@@ -463,7 +459,7 @@ class MultiLeader(DXFGraphic):
         del data[start:end]
         return attribs
 
-    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
+    def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         if self.context.is_valid:
             return True
         else:
@@ -472,7 +468,7 @@ class MultiLeader(DXFGraphic):
             )
             return False
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         def write_handle_if_exist(code: int, name: str):
             handle = dxf.get(name)
             if handle is not None:
@@ -533,19 +529,19 @@ class MultiLeader(DXFGraphic):
         if version >= const.DXF2013:
             write_tag2(295, dxf.leader_extend_to_text)
 
-    def export_arrow_heads(self, tagwriter: "TagWriter") -> None:
+    def export_arrow_heads(self, tagwriter: AbstractTagWriter) -> None:
         for index, handle in self.arrow_heads:
             tagwriter.write_tag2(94, index)
             tagwriter.write_tag2(345, handle)
 
-    def export_block_attribs(self, tagwriter: "TagWriter") -> None:
+    def export_block_attribs(self, tagwriter: AbstractTagWriter) -> None:
         for attrib in self.block_attribs:
             tagwriter.write_tag2(330, attrib.handle)
             tagwriter.write_tag2(177, attrib.index)
             tagwriter.write_tag2(44, attrib.width)
             tagwriter.write_tag2(302, safe_string(attrib.text, EXT_MAX_STR_LEN))
 
-    def virtual_entities(self) -> Iterable["DXFGraphic"]:
+    def virtual_entities(self) -> Iterable[DXFGraphic]:
         """Yields the graphical representation of MULTILEADER as virtual DXF
         primitives.
 
@@ -556,7 +552,9 @@ class MultiLeader(DXFGraphic):
         """
         return self.__virtual_entities__()
 
-    def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
+    def explode(
+        self, target_layout: Optional[BaseLayout] = None
+    ) -> EntityQuery:
         """Explode MULTILEADER as DXF primitives into target layout,
         if target layout is ``None``, the target layout is the layout of the
         source entity.
@@ -573,7 +571,7 @@ class MultiLeader(DXFGraphic):
 
         return explode_entity(self, target_layout)
 
-    def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
+    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
         """Support for "VirtualEntities" protocol."""
         from ezdxf.render import mleader
 
@@ -600,7 +598,7 @@ class MultiLeader(DXFGraphic):
             if handle is not None:
                 yield handle
 
-    def transform(self, m: "Matrix44") -> "MultiLeader":
+    def transform(self, m: Matrix44) -> MultiLeader:
         """Transform the MULTILEADER entity by transformation matrix `m` inplace.
 
         Non uniform scaling is not supported.
@@ -679,7 +677,7 @@ class MLeaderContext:
     }
 
     def __init__(self) -> None:
-        self.leaders: List["LeaderData"] = []
+        self.leaders: list[LeaderData] = []
         self.scale: float = 1.0  # overall scale
 
         # MTEXT base point: is not the MTEXT insertion point!
@@ -714,7 +712,7 @@ class MLeaderContext:
         self.bottom_attachment = 9
 
     @classmethod
-    def load(cls, context: List[Union["DXFTag", List]]) -> "MLeaderContext":
+    def load(cls, context: list[Union[DXFTag, list]]) -> MLeaderContext:
         assert context[0] == (START_CONTEXT_DATA, CONTEXT_STR)
         ctx = cls()
         content = None
@@ -753,7 +751,7 @@ class MLeaderContext:
             z_axis = -z_axis
         return z_axis
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         write_tag2 = tagwriter.write_tag2
         write_vertex = tagwriter.write_vertex
         write_tag2(START_CONTEXT_DATA, CONTEXT_STR)
@@ -888,7 +886,7 @@ class MTextData:
         self.column_width: float = 0.0  # not scaled
         self.column_gutter_width: float = 0.0  # not scaled
         self.column_flow_reversed: int = 0
-        self.column_sizes: List[float] = []  # heights?, not scaled
+        self.column_sizes: list[float] = []  # heights?, not scaled
         self.use_word_break: int = 1
 
     def parse(self, code: int, value) -> bool:
@@ -901,7 +899,7 @@ class MTextData:
             self.__setattr__(attrib, cast_value(code, value))
         return bool(attrib)
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         write_tag2 = tagwriter.write_tag2
         write_vertex = tagwriter.write_vertex
         write_tag2(304, safe_string(self.default_content, EXT_MAX_STR_LEN))
@@ -969,7 +967,7 @@ class BlockData:
     }
 
     def __init__(self) -> None:
-        self.block_record_handle = None
+        self.block_record_handle: Optional[str] = None
         self.extrusion: Vec3 = Z_AXIS
         self.insert: Vec3 = NULLVEC
         self.scale: Vec3 = Vec3(1, 1, 1)
@@ -977,7 +975,7 @@ class BlockData:
         self.color: int = colors.BY_BLOCK_RAW_VALUE
         # The transformation matrix is stored in transposed order
         # of ezdxf.math.Matrix44()!
-        self._matrix: List[float] = []  # group code 47 x 16
+        self._matrix: list[float] = []  # group code 47 x 16
 
     @property
     def matrix44(self) -> Matrix44:
@@ -1005,7 +1003,7 @@ class BlockData:
         # return True if data belongs to block else False (end of block section)
         return True
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         write_tag2 = tagwriter.write_tag2
         write_vertex = tagwriter.write_vertex
         if self.block_record_handle:
@@ -1046,7 +1044,7 @@ class BlockData:
 
 class LeaderData:
     def __init__(self) -> None:
-        self.lines: List["LeaderLine"] = []
+        self.lines: list[LeaderLine] = []
         # has_last_leader_line:
         # in AutoCAD the leader is invisible if set to 0
         # BricsCAD ignores this flag
@@ -1059,7 +1057,7 @@ class LeaderData:
 
         # 0=horizontal; 1=vertical
         self.attachment_direction: int = 0  # group code 271, R2010+
-        self.breaks: List[
+        self.breaks: list[
             Vec3
         ] = []  # group code 12, 13 - multiple breaks possible!
 
@@ -1068,7 +1066,7 @@ class LeaderData:
         return not bool(self.attachment_direction)
 
     @classmethod
-    def load(cls, context: List[Union["DXFTag", List]]):
+    def load(cls, context: list[Union[DXFTag, list]]):
         assert context[0] == (START_LEADER, LEADER_STR)
         leader = cls()
         for tag in context:
@@ -1096,7 +1094,7 @@ class LeaderData:
 
         return leader
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         write_tag2 = tagwriter.write_tag2
         write_vertex = tagwriter.write_vertex
 
@@ -1140,8 +1138,8 @@ class LeaderData:
 
 class LeaderLine:
     def __init__(self) -> None:
-        self.vertices: List[Vec3] = []  # WCS coordinates
-        self.breaks: List[Union[int, Vec3]] = []
+        self.vertices: list[Vec3] = []  # WCS coordinates
+        self.breaks: list[Union[int, Vec3]] = []
         # Breaks: 90, 11, 12, [11, 12, ...] [, 90, 11, 12 [11, 12, ...]]
         # group code 90 = break index
         # group code 11 = start vertex of break
@@ -1152,7 +1150,7 @@ class LeaderLine:
         # R2010+: override properties see ODA DWG pg. 214-215
 
     @classmethod
-    def load(cls, tags: List["DXFTag"]):
+    def load(cls, tags: list[DXFTag]):
         assert tags[0] == (START_LEADER_LINE, LEADER_LINE_STR)
         line = LeaderLine()
         vertices = line.vertices
@@ -1170,7 +1168,7 @@ class LeaderLine:
             line.breaks = breaks
         return line
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         write_tag2 = tagwriter.write_tag2
         write_vertex = tagwriter.write_vertex
 
@@ -1196,7 +1194,7 @@ class LeaderLine:
         m = wcs.m
         self.vertices = list(m.transform_vertices(self.vertices))
         if self.breaks:
-            breaks: List[Union[int, Vec3]] = []
+            breaks: list[Union[int, Vec3]] = []
             for value in self.breaks:
                 if isinstance(value, Vec3):
                     breaks.append(m.transform(value))
@@ -1274,8 +1272,8 @@ class MLeaderStyle(DXFObject):
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -1320,7 +1318,7 @@ class MLeaderStyle(DXFObject):
             # no handle needed
             del self.dxf.arrow_head_handle
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_mleader_style.name)
         self.dxf.export_dxf_attribs(
@@ -1334,7 +1332,7 @@ class MLeaderStyle(DXFObject):
             if handle is not None:
                 yield handle
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         from ezdxf.audit import AuditError
 
         if not self.is_alive:
@@ -1352,7 +1350,7 @@ class MLeaderStyle(DXFObject):
                     AuditError.UNDEFINED_TEXT_STYLE,
                     f"{name}: text_style_handle={handle} is not valid, replaced by "
                     f"'Standard' text style",
-                    self
+                    self,
                 )
             else:
                 logger.warning("required text style 'Standard' does not exist")
@@ -1360,7 +1358,7 @@ class MLeaderStyle(DXFObject):
                 auditor.fixed_error(
                     AuditError.UNDEFINED_TEXT_STYLE,
                     f"{name}: removed invalid text_style_handle={handle}",
-                    self
+                    self,
                 )
         for attrib in ("arrow_head_handle", "block_record_handle"):
             handle = dxf.get(attrib)
@@ -1371,12 +1369,12 @@ class MLeaderStyle(DXFObject):
                 auditor.fixed_error(
                     AuditError.UNDEFINED_BLOCK,
                     f"{name}: removed invalid {attrib}={handle}",
-                    self
+                    self,
                 )
 
 
 class MLeaderStyleCollection(ObjectCollection[MLeaderStyle]):
-    def __init__(self, doc: "Drawing"):
+    def __init__(self, doc: Drawing):
         super().__init__(
             doc, dict_name="ACAD_MLEADERSTYLE", object_type="MLEADERSTYLE"
         )
