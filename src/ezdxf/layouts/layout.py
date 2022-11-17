@@ -5,8 +5,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Union,
-    List,
-    Tuple,
     cast,
     Optional,
 )
@@ -16,14 +14,9 @@ from ezdxf.lldxf import const
 from .base import BaseLayout
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        GeoData,
-        Viewport,
-        Drawing,
-        DXFLayout,
-        DXFGraphic,
-        BlockLayout,
-    )
+    from ezdxf.document import Drawing
+    from ezdxf.layouts import BlockLayout
+    from ezdxf.entities import GeoData, Viewport, DXFLayout, DXFGraphic
 
 
 def get_block_entity_space(
@@ -86,7 +79,7 @@ class Layout(BaseLayout):
 
     @classmethod
     def new(
-        cls, name: str, block_name: str, doc: Drawing, dxfattribs: dict = None
+        cls, name: str, block_name: str, doc: Drawing, dxfattribs=None
     ) -> Layout:
         """Returns the required structures for a new layout:
 
@@ -263,8 +256,8 @@ class Layout(BaseLayout):
 
     def set_plot_window(
         self,
-        lower_left: Tuple[float, float] = (0, 0),
-        upper_right: Tuple[float, float] = (0, 0),
+        lower_left: tuple[float, float] = (0, 0),
+        upper_right: tuple[float, float] = (0, 0),
     ) -> None:
         """Set plot window size in (scaled) paper space units.
 
@@ -419,7 +412,7 @@ class Paperspace(Layout):
         """
         self.dxf_layout.dxf.name = name
 
-    def viewports(self) -> List[Viewport]:
+    def viewports(self) -> list[Viewport]:
         """Get all VIEWPORT entities defined in this paperspace layout.
         Returns a list of :class:`~ezdxf.entities.Viewport` objects, sorted by
         id, the first entity is always the main viewport with an id of 1.
@@ -448,10 +441,10 @@ class Paperspace(Layout):
     def add_viewport(
         self,
         center: UVec,
-        size: Tuple[float, float],
+        size: tuple[float, float],
         view_center_point: UVec,
         view_height: float,
-        dxfattribs: dict = None,
+        dxfattribs=None,
     ) -> Viewport:
         """Add a new :class:`~ezdxf.entities.Viewport` entity."""
         dxfattribs = dxfattribs or {}
@@ -512,7 +505,7 @@ class Paperspace(Layout):
 
     def default_viewport_config(
         self,
-    ) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    ) -> tuple[tuple[float, float], tuple[float, float]]:
         dxf = self.dxf_layout.dxf
         if dxf.plot_paper_units == 0:  # inches
             unit_factor = 25.4
@@ -573,12 +566,12 @@ class Paperspace(Layout):
 
     def page_setup(
         self,
-        size: Tuple[float, float] = (297, 210),
-        margins: Tuple[float, float, float, float] = (0, 0, 0, 0),
+        size: tuple[float, float] = (297, 210),
+        margins: tuple[float, float, float, float] = (0, 0, 0, 0),
         units: str = "mm",
-        offset: Tuple[float, float] = (0, 0),
+        offset: tuple[float, float] = (0, 0),
         rotation: int = 0,
-        scale: Union[int, Tuple[float, float]] = 16,
+        scale: Union[int, tuple[float, float]] = 16,
         name: str = "ezdxf",
         device: str = "DWG to PDF.pc3",
     ) -> None:
@@ -699,7 +692,7 @@ class Paperspace(Layout):
         dxf.limmin = (-shift_x, -shift_y)  # paper space units
         dxf.limmax = (paper_width - shift_x, paper_height - shift_y)
 
-    def get_paper_limits(self) -> Tuple[Vec2, Vec2]:
+    def get_paper_limits(self) -> tuple[Vec2, Vec2]:
         """Returns paper limits in plot paper units, relative to the plot origin.
 
         plot origin = lower left corner of printable area + plot origin offset
@@ -713,12 +706,12 @@ class Paperspace(Layout):
 
     def page_setup_r12(
         self,
-        size: Tuple[float, float] = (297, 210),
-        margins: Tuple[float, float, float, float] = (0, 0, 0, 0),
+        size: tuple[float, float] = (297, 210),
+        margins: tuple[float, float, float, float] = (0, 0, 0, 0),
         units: str = "mm",
-        offset: Tuple[float, float] = (0, 0),
+        offset: tuple[float, float] = (0, 0),
         rotation: float = 0,
-        scale: Union[int, Tuple[float, float]] = 16,
+        scale: Union[int, tuple[float, float]] = 16,
     ) -> None:
 
         # remove existing viewports
@@ -790,7 +783,7 @@ class Paperspace(Layout):
         main_viewport.dxf.status = 2  # AutoCAD default value
         main_viewport.dxf.render_mode = 1000  # AutoDesk default (view mode?)
 
-    def get_paper_limits_r12(self) -> Tuple[Vec2, Vec2]:
+    def get_paper_limits_r12(self) -> tuple[Vec2, Vec2]:
         """Returns paper limits in plot paper units."""
         limmin = self.doc.header.get("$PLIMMIN", (0, 0))
         limmax = self.doc.header.get("$PLIMMAX", (0, 0))
