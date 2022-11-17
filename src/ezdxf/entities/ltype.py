@@ -1,5 +1,6 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Union,
@@ -25,7 +26,9 @@ from ezdxf.tools.complex_ltype import lin_compiler
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.document import Drawing
 
 __all__ = ["Linetype", "compile_line_pattern", "CONTINUOUS_PATTERN"]
 
@@ -51,13 +54,13 @@ class LinetypePattern:
     def __len__(self):
         return len(self.tags)
 
-    def export_dxf(self, tagwriter: "TagWriter"):
+    def export_dxf(self, tagwriter: AbstractTagWriter):
         if tagwriter.dxfversion <= DXF12:
             self.export_r12_dxf(tagwriter)
         else:
             tagwriter.write_tags(self.tags)
 
-    def export_r12_dxf(self, tagwriter: "TagWriter"):
+    def export_r12_dxf(self, tagwriter: AbstractTagWriter):
         tags49 = Tags(tag for tag in self.tags if tag.code == 49)
         tagwriter.write_tag2(72, 65)
         tagwriter.write_tag2(73, len(tags49))
@@ -159,14 +162,14 @@ class Linetype(DXFEntity):
         super().__init__()
         self.pattern_tags = LinetypePattern(Tags())
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         """Copy pattern_tags."""
         assert isinstance(entity, Linetype)
         entity.pattern_tags = deepcopy(self.pattern_tags)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
@@ -175,7 +178,7 @@ class Linetype(DXFEntity):
             self.pattern_tags = LinetypePattern(tags)
         return dxf
 
-    def preprocess_export(self, tagwriter: "TagWriter"):
+    def preprocess_export(self, tagwriter: AbstractTagWriter):
         if len(self.pattern_tags) == 0:
             return False
         # Do not export complex linetypes for DXF12
@@ -183,7 +186,7 @@ class Linetype(DXFEntity):
             return not self.pattern_tags.is_complex_type()
         return True
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
