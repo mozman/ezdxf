@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple, Iterable, Sequence, Iterator
+from typing import TYPE_CHECKING, Iterable, Sequence, Iterator, Optional
 import math
 
 from ezdxf.math import Vec2, UVec
@@ -12,7 +12,8 @@ from .line import ConstructionRay, ConstructionLine
 from .ucs import UCS
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BaseLayout, Arc
+    from ezdxf.entities import Arc
+    from ezdxf.layouts import BaseLayout
 
 __all__ = ["ConstructionArc", "arc_chord_length", "arc_segment_count"]
 
@@ -44,7 +45,7 @@ class ConstructionArc:
         radius: float = 1.0,
         start_angle: float = 0.0,
         end_angle: float = 360.0,
-        is_counter_clockwise: bool = True,
+        is_counter_clockwise: Optional[bool] = True,
     ):
 
         self.center = Vec2(center)
@@ -209,7 +210,7 @@ class ConstructionArc:
     @staticmethod
     def validate_start_and_end_point(
         start_point: UVec, end_point: UVec
-    ) -> Tuple[Vec2, Vec2]:
+    ) -> tuple[Vec2, Vec2]:
         start_point = Vec2(start_point)
         end_point = Vec2(end_point)
         if start_point == end_point:
@@ -357,8 +358,8 @@ class ConstructionArc:
         )
 
     def add_to_layout(
-        self, layout: "BaseLayout", ucs: UCS = None, dxfattribs=None
-    ) -> "Arc":
+        self, layout: BaseLayout, ucs: Optional[UCS] = None, dxfattribs=None
+    ) -> Arc:
         """Add arc as DXF :class:`~ezdxf.entities.Arc` entity to a layout.
 
         Supports 3D arcs by using an :ref:`UCS`. An :class:`ConstructionArc` is
