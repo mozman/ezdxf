@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, List, Tuple, Sequence, Iterator, Callable, Optional
+from typing import Iterable, Sequence, Iterator, Callable, Optional
 import math
 from enum import IntEnum
 from ezdxf.math import (
@@ -151,7 +151,7 @@ def euler_spiral(
         yield vertex.replace(z=elevation)
 
 
-def square(size: float = 1.0, center=False) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
+def square(size: float = 1.0, center=False) -> tuple[Vec3, Vec3, Vec3, Vec3]:
     """Returns 4 vertices for a square with a side length of the given `size`.
     The center of the square in (0, 0) if `center` is ``True`` otherwise
     the lower left corner is (0, 0), upper right corner is (`size`, `size`).
@@ -170,7 +170,7 @@ def square(size: float = 1.0, center=False) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
 
 def box(
     sx: float = 1.0, sy: float = 1.0, center=False
-) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
+) -> tuple[Vec3, Vec3, Vec3, Vec3]:
     """Returns 4 vertices for a box with a width of `sx` by and a height of
     `sy`. The center of the box in (0, 0) if `center` is ``True`` otherwise
     the lower left corner is (0, 0), upper right corner is (`sx`, `sy`).
@@ -190,7 +190,7 @@ def box(
 
 def open_arrow(
     size: float = 1.0, angle: float = 30.0
-) -> Tuple[Vec3, Vec3, Vec3]:
+) -> tuple[Vec3, Vec3, Vec3]:
     """Returns 3 vertices for an open arrow `<` with a length of the given
     `size`, argument `angle` defines the enclosing angle in degrees.
     Vertex order: upward end vertex, tip (0, 0) , downward end vertex (counter-
@@ -207,7 +207,7 @@ def open_arrow(
 
 def arrow2(
     size: float = 1.0, angle: float = 30.0, beta: float = 45.0
-) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
+) -> tuple[Vec3, Vec3, Vec3, Vec3]:
     """Returns 4 vertices for an arrow with a length of the given `size`, and
     an enclosing `angle` in degrees and a slanted back side defined by angle
     `beta`::
@@ -546,11 +546,11 @@ def scale(vertices: Iterable[UVec], scaling=(1.0, 1.0, 1.0)) -> Iterable[Vec3]:
 
 def close_polygon(
     vertices: Iterable[Vec3], rel_tol: float = 1e-9, abs_tol: float = 1e-12
-) -> List[Vec3]:
+) -> list[Vec3]:
     """Returns list of :class:`~ezdxf.math.Vec3`, where the first vertex is
     equal to the last vertex.
     """
-    polygon: List[Vec3] = list(vertices)
+    polygon: list[Vec3] = list(vertices)
     if not polygon[0].isclose(polygon[-1], rel_tol=rel_tol, abs_tol=abs_tol):
         polygon.append(polygon[0])
     return polygon
@@ -683,7 +683,7 @@ def extrude(
     return MeshTransformer.from_builder(mesh)
 
 
-def _partial_path_factors(path: List[Vec3]) -> List[float]:
+def _partial_path_factors(path: list[Vec3]) -> list[float]:
     partial_lengths = [v1.distance(v2) for v1, v2 in zip(path, path[1:])]
     total_length = sum(partial_lengths)
     factors = [0.0]
@@ -696,8 +696,8 @@ def _partial_path_factors(path: List[Vec3]) -> List[float]:
 
 def _divide_path_into_steps(
     path: Sequence[Vec3], max_step_size: float
-) -> List[Vec3]:
-    new_path: List[Vec3] = [path[0]]
+) -> list[Vec3]:
+    new_path: list[Vec3] = [path[0]]
     for v0, v1 in zip(path, path[1:]):
         segment_vec = v1 - v0
         length = segment_vec.magnitude
@@ -801,7 +801,7 @@ def extrude_twist_scale(
 def cylinder(
     count: int = 16,
     radius: float = 1.0,
-    top_radius: float = None,
+    top_radius: Optional[float] = None,
     top_center: UVec = (0, 0, 1),
     *,
     caps=True,
@@ -816,10 +816,6 @@ def cylinder(
         top_radius: radius for top profile, if ``None`` top_radius == radius
         top_center: location vector for the center of the top profile
         caps: close hull with top- and  bottom faces (ngons)
-
-    .. versionchanged: 0.18
-
-        removed `ngons` argument
 
     """
     if top_radius is None:
@@ -919,7 +915,7 @@ def spline_interpolation(
     degree: int = 3,
     method: str = "chord",
     subdivide: int = 4,
-) -> List[Vec3]:
+) -> list[Vec3]:
     """B-spline interpolation, vertices are fit points for the spline
     definition.
 
@@ -944,7 +940,7 @@ def spline_interpolation(
 
 def spline_interpolated_profiles(
     profiles: Sequence[Sequence[Vec3]], subdivide: int = 4
-) -> Iterable[List[Vec3]]:
+) -> Iterable[list[Vec3]]:
     """Profile interpolation by cubic B-spline interpolation.
 
     Args:
@@ -1270,7 +1266,7 @@ def torus(
 
 
 def connection_faces(
-    start_profile: List[Vec3], end_profile: List[Vec3], quad: bool
+    start_profile: list[Vec3], end_profile: list[Vec3], quad: bool
 ) -> Iterator[Sequence[Vec3]]:
     assert len(start_profile) == len(
         end_profile
@@ -1363,8 +1359,8 @@ def _intersect_rays(
 def _intersection_profiles(
     start_profiles: Sequence[Sequence[Vec3]],
     end_profiles: Sequence[Sequence[Vec3]],
-) -> List[Sequence[Vec3]]:
-    profiles: List[Sequence[Vec3]] = [start_profiles[0]]
+) -> list[Sequence[Vec3]]:
+    profiles: list[Sequence[Vec3]] = [start_profiles[0]]
     rays = [
         [(v0, v1) for v0, v1 in zip(p0, p1)]
         for p0, p1 in zip(start_profiles, end_profiles)
@@ -1401,7 +1397,7 @@ def _make_sweep_start_and_end_profiles(
     profile: Iterable[UVec],
     sweeping_path: Iterable[UVec],
     next_ref_frame: Callable[[UCS, Vec3, Vec3], UCS],
-) -> Tuple[List[List[Vec3]], List[List[Vec3]]]:
+) -> tuple[list[list[Vec3]], list[list[Vec3]]]:
     spath = Vec3.list(sweeping_path)
     reference_profile = Vec3.list(profile)
     start_profiles = []
@@ -1419,7 +1415,7 @@ def _make_sweep_start_and_end_profiles(
 def sweep_profile(
     profile: Iterable[UVec],
     sweeping_path: Iterable[UVec],
-) -> List[Sequence[Vec3]]:
+) -> list[Sequence[Vec3]]:
     """Returns the intermediate profiles of sweeping a profile along a 3D path
     where the sweeping path defines the final location in the `WCS`.
 
@@ -1444,10 +1440,10 @@ def debug_sweep_profiles(
     profile: Iterable[UVec],
     sweeping_path: Iterable[UVec],
     close=True,
-) -> List[Sequence[Vec3]]:
+) -> list[Sequence[Vec3]]:
     if close:
         profile = close_polygon(profile)
-    profiles: List[Sequence[Vec3]] = []
+    profiles: list[Sequence[Vec3]] = []
     for sp, ep in zip(
         *_make_sweep_start_and_end_profiles(
             profile, sweeping_path, make_next_reference_frame
