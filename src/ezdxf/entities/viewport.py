@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Iterable, Tuple
+from typing import TYPE_CHECKING, Iterable, Optional
 import math
 from ezdxf.lldxf import validator
 from ezdxf.lldxf import const
@@ -38,7 +38,9 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing, DXFEntity
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["Viewport"]
 
@@ -268,14 +270,14 @@ class Viewport(DXFGraphic):
 
     def __init__(self) -> None:
         super().__init__()
-        self._frozen_layers: List[str] = []
+        self._frozen_layers: list[str] = []
 
     def _copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, Viewport)
         entity._frozen_layers = self._frozen_layers
 
     @property
-    def frozen_layers(self) -> List[str]:
+    def frozen_layers(self) -> list[str]:
         """Set/get frozen layers as list of layer names."""
         return self._frozen_layers
 
@@ -319,7 +321,7 @@ class Viewport(DXFGraphic):
         return True
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -339,7 +341,7 @@ class Viewport(DXFGraphic):
 
     def post_load_hook(self, doc: Drawing):
         super().post_load_hook(doc)
-        bag: List[str] = []
+        bag: list[str] = []
         db = doc.entitydb
         for handle in self._frozen_layers:
             try:
@@ -400,7 +402,7 @@ class Viewport(DXFGraphic):
         self._frozen_layers = tags[26:]
         self.xdata.discard("ACAD")  # type: ignore
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion == DXF12:
@@ -479,7 +481,7 @@ class Viewport(DXFGraphic):
                 ],
             )
 
-    def export_acdb_viewport_r12(self, tagwriter: TagWriter):
+    def export_acdb_viewport_r12(self, tagwriter: AbstractTagWriter):
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -552,7 +554,7 @@ class Viewport(DXFGraphic):
             for name in self.frozen_layers
         ]
 
-    def clipping_rect_corners(self) -> List[Vec2]:
+    def clipping_rect_corners(self) -> list[Vec2]:
         """Returns the default rectangular clipping path as list of
         vertices. Use function :func:`ezdxf.path.make_path` to get also
         non-rectangular shaped clipping paths if defined.
@@ -569,7 +571,7 @@ class Viewport(DXFGraphic):
             Vec2(cx - width2, cy + height2),
         ]
 
-    def clipping_rect(self) -> Tuple[Vec2, Vec2]:
+    def clipping_rect(self) -> tuple[Vec2, Vec2]:
         """Returns the lower left and the upper right corner of the clipping
         rectangle.
         """
@@ -624,7 +626,7 @@ class Viewport(DXFGraphic):
         except ZeroDivisionError:
             return 0.0
 
-    def get_modelspace_limits(self) -> Tuple[float, float, float, float]:
+    def get_modelspace_limits(self) -> tuple[float, float, float, float]:
         """Returns the limits of the modelspace to view in drawing units
         as tuple (min_x, min_y, max_x, max_y).
         """
