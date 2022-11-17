@@ -1,6 +1,7 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Union
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Union, Optional
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -24,7 +25,8 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = [
     "Body",
@@ -82,12 +84,12 @@ class Body(DXFGraphic):
 
     def __init__(self) -> None:
         super().__init__()
-        self._sat: List[str] = []
+        self._sat: list[str] = []
         self._sab: bytes = b""
         self._update = False
 
     @property
-    def acis_data(self) -> Union[bytes, List[str]]:
+    def acis_data(self) -> Union[bytes, list[str]]:
         """Returns :term:`SAT` data  for DXF R2000 up to R2010 and :term:`SAB`
         data for DXF R2013 and later
         """
@@ -96,18 +98,18 @@ class Body(DXFGraphic):
         return self.sat
 
     @property
-    def sat(self) -> List[str]:
-        """Get/Set :term:`SAT` data as list of strings. """
+    def sat(self) -> list[str]:
+        """Get/Set :term:`SAT` data as list of strings."""
         return self._sat
 
     @sat.setter
-    def sat(self, data: List[str]) -> None:
-        """Set :term:`SAT` data as list of strings. """
+    def sat(self, data: list[str]) -> None:
+        """Set :term:`SAT` data as list of strings."""
         self._sat = data
 
     @property
     def sab(self) -> bytes:
-        """Get/Set :term:`SAB` data as bytes. """
+        """Get/Set :term:`SAB` data as bytes."""
         if (  # load SAB data on demand
             self.doc is not None
             and self.has_binary_data
@@ -118,7 +120,7 @@ class Body(DXFGraphic):
 
     @sab.setter
     def sab(self, data: bytes) -> None:
-        """Set :term:`SAB` data as bytes. """
+        """Set :term:`SAB` data as bytes."""
         self._update = True
         self._sab = data
 
@@ -137,8 +139,8 @@ class Body(DXFGraphic):
         raise DXFTypeError("Copying of ACIS data not supported.")
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -154,7 +156,7 @@ class Body(DXFGraphic):
         text_lines = tags2textlines(tag for tag in tags if tag.code in (1, 3))
         self._sat = list(crypt.decode(text_lines))
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_modeler_geometry.name)
@@ -172,7 +174,7 @@ class Body(DXFGraphic):
             self.dxf.export_dxf_attribs(tagwriter, "version")
             self.export_sat_data(tagwriter)
 
-    def export_sat_data(self, tagwriter: "TagWriter") -> None:
+    def export_sat_data(self, tagwriter: AbstractTagWriter) -> None:
         """Export ACIS data as DXF tags. (internal API)"""
 
         def cleanup(lines):
@@ -253,14 +255,14 @@ class Solid3d(Body):
     )
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(dxf, acdb_3dsolid_group_codes, 3)
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
         super().export_entity(tagwriter)
@@ -271,14 +273,16 @@ class Solid3d(Body):
             self.dxf.export_dxf_attribs(tagwriter, "history_handle")
 
 
-def load_matrix(subclass: "Tags", code: int) -> Matrix44:
+def load_matrix(subclass: Tags, code: int) -> Matrix44:
     values = [tag.value for tag in subclass.find_all(code)]
     if len(values) != 16:
         raise DXFStructureError("Invalid transformation matrix.")
     return Matrix44(values)
 
 
-def export_matrix(tagwriter: "TagWriter", code: int, matrix: Matrix44) -> None:
+def export_matrix(
+    tagwriter: AbstractTagWriter, code: int, matrix: Matrix44
+) -> None:
     for value in list(matrix):
         tagwriter.write_tag2(code, value)
 
@@ -303,14 +307,14 @@ class Surface(Body):
     )
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(dxf, acdb_surface_group_codes, 3)
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
         super().export_entity(tagwriter)
@@ -375,8 +379,8 @@ class ExtrudedSurface(Surface):
         self.path_entity_transformation_matrix = Matrix44()
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -390,7 +394,7 @@ class ExtrudedSurface(Surface):
         self.sweep_entity_transformation_matrix = load_matrix(tags, code=46)
         self.path_entity_transformation_matrix = load_matrix(tags, code=47)
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
         super().export_entity(tagwriter)
@@ -477,8 +481,8 @@ class LoftedSurface(Surface):
         self.transformation_matrix_lofted_entity = Matrix44()
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -490,7 +494,7 @@ class LoftedSurface(Surface):
     def load_matrices(self, tags: Tags):
         self.transformation_matrix_lofted_entity = load_matrix(tags, code=40)
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
         super().export_entity(tagwriter)
@@ -544,8 +548,8 @@ class RevolvedSurface(Surface):
         self.transformation_matrix_revolved_entity = Matrix44()
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -557,7 +561,7 @@ class RevolvedSurface(Surface):
     def load_matrices(self, tags: Tags):
         self.transformation_matrix_revolved_entity = load_matrix(tags, code=42)
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
         super().export_entity(tagwriter)
@@ -655,8 +659,8 @@ class SweptSurface(Surface):
         self.path_entity_transformation_matrix = Matrix44()
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -671,7 +675,7 @@ class SweptSurface(Surface):
         self.sweep_entity_transformation_matrix = load_matrix(tags, code=46)
         self.path_entity_transformation_matrix = load_matrix(tags, code=47)
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
         super().export_entity(tagwriter)
