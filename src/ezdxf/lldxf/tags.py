@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 """
 Tags
@@ -12,7 +12,8 @@ may appear multiples times in one entity. At the worst case
 diffuse map) using same group codes with different meanings.
 
 """
-from typing import Iterable, Tuple, Iterator, Any
+from __future__ import annotations
+from typing import Iterable, Iterator, Any, Optional
 
 from .const import DXFStructureError, DXFValueError, STRUCTURE_MARKER
 from .types import DXFTag, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR, dxftag
@@ -28,11 +29,11 @@ class Tags(list):
     """
 
     @classmethod
-    def from_text(cls, text: str) -> "Tags":
+    def from_text(cls, text: str) -> Tags:
         """Constructor from DXF string."""
         return cls(internal_tag_compiler(text))
 
-    def __copy__(self) -> "Tags":
+    def __copy__(self) -> Tags:
         return self.__class__(tag.clone() for tag in self)
 
     clone = __copy__
@@ -122,7 +123,7 @@ class Tags(list):
         else:
             return default  # type: ignore
 
-    def find_all(self, code: int) -> "Tags":
+    def find_all(self, code: int) -> Tags:
         """Returns a list of :class:`~ezdxf.lldxf.types.DXFTag` with given
         group code.
 
@@ -132,7 +133,9 @@ class Tags(list):
         """
         return self.__class__(tag for tag in self if tag.code == code)
 
-    def tag_index(self, code: int, start: int = 0, end: int = None) -> int:
+    def tag_index(
+        self, code: int, start: int = 0, end: Optional[int] = None
+    ) -> int:
         """Return index of first :class:`~ezdxf.lldxf.types.DXFTag` with given
         group code.
 
@@ -211,8 +214,8 @@ class Tags(list):
         return (tag for tag in self if tag.code not in set(codes))
 
     def collect_consecutive_tags(
-        self, codes: Iterable[int], start: int = 0, end: int = None
-    ) -> "Tags":
+        self, codes: Iterable[int], start: int = 0, end: Optional[int] = None
+    ) -> Tags:
         """Collect all consecutive tags with group code in `codes`, `start` and
         `end` delimits the search range. A tag code not in codes ends the
         process.
@@ -251,7 +254,7 @@ class Tags(list):
         return False
 
     @classmethod
-    def strip(cls, tags: "Tags", codes: Iterable[int]) -> "Tags":
+    def strip(cls, tags: Tags, codes: Iterable[int]) -> Tags:
         """Constructor from `tags`, strips all tags with group codes in `codes`
         from tags.
 
@@ -348,7 +351,7 @@ class NotFoundException(Exception):
 
 def get_start_and_end_of_named_list_in_xdata(
     name: str, tags: Tags
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     start = None
     end = None
     level = 0
@@ -380,7 +383,7 @@ def get_start_and_end_of_named_list_in_xdata(
 
 def find_begin_and_end_of_encoded_xdata_tags(
     name: str, tags: Tags
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Find encoded XDATA tags, surrounded by group code 1000 tags
     name_BEGIN and name_END (e.g. MTEXT column specification).
 
