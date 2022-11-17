@@ -1,6 +1,7 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -21,7 +22,8 @@ from .factory import register_entity
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["VPort"]
 
@@ -59,7 +61,6 @@ acdb_vport = DefSubclass(
         "view_mode": DXFAttr(71, default=0),
         "circle_sides": DXFAttr(72, default=1000),
         "fast_zoom": DXFAttr(73, default=1),  # removed in R2007
-
         # ucs_icon:
         # bit 0: 0=hide, 1=show
         # bit 1: 0=display in lower left corner, 1=display at origin
@@ -179,8 +180,8 @@ class VPort(DXFEntity):
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_vport)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -188,7 +189,7 @@ class VPort(DXFEntity):
             )
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         dxfversion = tagwriter.dxfversion
         if dxfversion > DXF12:
@@ -249,7 +250,7 @@ class VPort(DXFEntity):
         )
 
     def reset_wcs(self) -> None:
-        """Reset coordinate system to the :ref:`WCS`. """
+        """Reset coordinate system to the :ref:`WCS`."""
         self.dxf.ucs_vp = 1
         self.dxf.ucs_origin = (0, 0, 0)
         self.dxf.ucs_xaxis = (1, 0, 0)
