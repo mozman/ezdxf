@@ -1,8 +1,7 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-
-from typing import TYPE_CHECKING, Iterator, Union, Dict, Iterable, Tuple
+from typing import TYPE_CHECKING, Iterator, Union, Iterable, Optional
 
 from ezdxf.entities import factory, is_graphic_entity, SortEntsTable
 from ezdxf.enums import InsertUnits
@@ -19,12 +18,8 @@ from ezdxf.entitydb import EntityDB, EntitySpace
 from ezdxf.graphicsfactory import CreatorInterface
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        BlockRecord,
-        DXFGraphic,
-        KeyFunc,
-        ExtensionDict,
-    )
+    from ezdxf.entities import DXFGraphic, BlockRecord, ExtensionDict
+    from ezdxf.eztypes import KeyFunc
 
 SUPPORTED_FOREIGN_ENTITY_TYPES = {
     "ARC",
@@ -83,7 +78,7 @@ class _AbstractLayout(CreatorInterface):
         """Get all DXF entities matching the :ref:`entity query string`."""
         return EntityQuery(iter(self), query)
 
-    def groupby(self, dxfattrib: str = "", key: "KeyFunc" = None) -> dict:
+    def groupby(self, dxfattrib: str = "", key: Optional[KeyFunc] = None) -> dict:
         """
         Returns a ``dict`` of entity lists, where entities are grouped by a
         `dxfattrib` or a `key` function.
@@ -353,7 +348,7 @@ class BaseLayout(_AbstractLayout):
         return sortents_table
 
     def set_redraw_order(
-        self, handles: Union[Dict, Iterable[Tuple[str, str]]]
+        self, handles: Union[dict, Iterable[tuple[str, str]]]
     ) -> None:
         """If the header variable $SORTENTS `Regen` flag (bit-code value 16)
         is set, AutoCAD regenerates entities in ascending handles order.
@@ -380,7 +375,7 @@ class BaseLayout(_AbstractLayout):
             handles = handles.items()
         sortents.set_handles(handles)
 
-    def get_redraw_order(self) -> Iterable[Tuple[str, str]]:
+    def get_redraw_order(self) -> Iterable[tuple[str, str]]:
         """Returns iterable for all existing table entries as (entity_handle,
         sort_handle) pairs, see also :meth:`~BaseLayout.set_redraw_order`.
 

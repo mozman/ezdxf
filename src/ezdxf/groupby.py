@@ -1,17 +1,21 @@
 # Purpose: Grouping entities by DXF attributes or a key function.
-# Copyright (c) 2017-2021, Manfred Moitzi
+# Copyright (c) 2017-2022, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Hashable, Dict, List, TYPE_CHECKING
+from __future__ import annotations
+from typing import Iterable, Hashable, TYPE_CHECKING, Optional
 
 from ezdxf.lldxf.const import DXFValueError, DXFAttributeError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, KeyFunc
+    from ezdxf.entities import DXFEntity
+    from ezdxf.eztypes import KeyFunc
 
 
 def groupby(
-    entities: Iterable["DXFEntity"], dxfattrib: str = "", key: "KeyFunc" = None
-) -> Dict[Hashable, List["DXFEntity"]]:
+    entities: Iterable[DXFEntity],
+    dxfattrib: str = "",
+    key: Optional[KeyFunc] = None,
+) -> dict[Hashable, list[DXFEntity]]:
     """
     Groups a sequence of DXF entities by a DXF attribute like ``'layer'``,
     returns a dict with `dxfattrib` values as key and a list of entities
@@ -75,7 +79,7 @@ def groupby(
             "but not both."
         )
 
-    result: Dict[Hashable, List["DXFEntity"]] = dict()
+    result: dict[Hashable, list[DXFEntity]] = dict()
     for dxf_entity in entities:
         if not dxf_entity.is_alive:
             continue
