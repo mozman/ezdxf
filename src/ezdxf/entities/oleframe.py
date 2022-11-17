@@ -1,5 +1,6 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 from ezdxf.lldxf import const
 from . import factory
@@ -8,7 +9,9 @@ from .dxfentity import SubclassProcessor
 from ezdxf.math import BoundingBox, Vec3
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFNamespace, TagWriter, Tags
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.lldxf.tags import Tags
 
 
 @factory.register_entity
@@ -18,20 +21,20 @@ class OLE2Frame(DXFGraphic):
 
     def __init__(self) -> None:
         super().__init__()
-        self.acdb_ole2frame: Optional["Tags"] = None
+        self.acdb_ole2frame: Optional[Tags] = None
 
-    def copy(self) -> "OLE2Frame":
+    def copy(self) -> OLE2Frame:
         raise const.DXFTypeError(f"Cloning of {self.dxftype()} not supported.")
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.acdb_ole2frame = processor.subclass_by_index(2)
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         # Base class and AcDbEntity export is done by parent class
         super().export_entity(tagwriter)
