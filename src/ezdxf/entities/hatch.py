@@ -1,6 +1,7 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Iterable
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Optional
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf import validator
@@ -21,7 +22,11 @@ from .factory import register_entity
 from .polygon import DXFPolygon
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFEntity, RGB
+    from ezdxf.colors import RGB
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+
 
 __all__ = ["Hatch"]
 
@@ -170,7 +175,7 @@ class Hatch(DXFPolygon):
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
     LOAD_GROUP_CODES = acdb_hatch_group_code
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_hatch.name)
@@ -212,12 +217,12 @@ class Hatch(DXFPolygon):
         self.seeds = [value for code, value in seed_data if code == 10]
         return tags
 
-    def export_seeds(self, tagwriter: "TagWriter"):
+    def export_seeds(self, tagwriter: AbstractTagWriter):
         tagwriter.write_tag2(98, len(self.seeds))
         for seed in self.seeds:
             tagwriter.write_vertex(10, seed[:2])
 
-    def remove_dependencies(self, other: "Drawing" = None) -> None:
+    def remove_dependencies(self, other: Optional[Drawing] = None) -> None:
         """Remove all dependencies from actual document. (internal API)"""
         if not self.is_alive:
             return
@@ -232,7 +237,9 @@ class Hatch(DXFPolygon):
             for path in self.paths:
                 path.source_boundary_objects = []
 
-    def set_solid_fill(self, color: int = 7, style: int = 1, rgb: "RGB" = None):
+    def set_solid_fill(
+        self, color: int = 7, style: int = 1, rgb: Optional[RGB] = None
+    ):
         """Set :class:`Hatch` to solid fill mode and removes all gradient and
         pattern fill related data.
 
@@ -257,7 +264,7 @@ class Hatch(DXFPolygon):
             self.rgb = rgb
 
     def associate(
-        self, path: AbstractBoundaryPath, entities: Iterable["DXFEntity"]
+        self, path: AbstractBoundaryPath, entities: Iterable[DXFEntity]
     ):
         """Set association from hatch boundary `path` to DXF geometry `entities`.
 
@@ -300,7 +307,7 @@ class Hatch(DXFPolygon):
             entity.append_reactor_handle(handle)
         self.dxf.associative = 1 if len(path.source_boundary_objects) else 0
 
-    def set_seed_points(self, points: Iterable[Tuple[float, float]]) -> None:
+    def set_seed_points(self, points: Iterable[tuple[float, float]]) -> None:
         """Set seed points, `points` is an iterable of (x, y)-tuples.
         I don't know why there can be more than one seed point.
         All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value)
@@ -309,8 +316,8 @@ class Hatch(DXFPolygon):
         points = list(points)
         if len(points) < 1:
             raise const.DXFValueError(
-                "Param points should be an iterable of 2D points and requires at "
-                "least one point."
+                "Argument points should be an iterable of 2D points and requires"
+                " at least one point."
             )
         self.seeds = list(points)
         self.dxf.n_seed_points = len(self.seeds)
