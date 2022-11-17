@@ -5,9 +5,7 @@ Tools in this module should be as independent of DXF entities as possible!
 """
 from __future__ import annotations
 from typing import (
-    List,
     Iterable,
-    Tuple,
     TYPE_CHECKING,
     Union,
     Optional,
@@ -41,7 +39,8 @@ from ezdxf.colors import rgb2int, RGB, int2rgb
 from .fonts import FontMeasurements, AbstractFont, FontFace, make_font
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Text, MText, DXFEntity, Tags
+    from ezdxf.entities import Text, MText, DXFEntity
+    from ezdxf.lldxf.tags import Tags
 
 X_MIDDLE = 4  # special case for overall alignment "MIDDLE"
 
@@ -103,8 +102,8 @@ class TextLine:
         halign: int = 0,
         valign: int = 0,
         angle: float = 0,
-        scale: Tuple[float, float] = (1, 1),
-    ) -> List[Vec3]:
+        scale: tuple[float, float] = (1, 1),
+    ) -> list[Vec3]:
         """Returns the left and the right baseline vertex of the text line.
 
         Args:
@@ -131,9 +130,9 @@ class TextLine:
         halign: int = 0,
         valign: int = 0,
         angle: float = 0,
-        scale: Tuple[float, float] = (1, 1),
+        scale: tuple[float, float] = (1, 1),
         oblique: float = 0,
-    ) -> List[Vec3]:
+    ) -> list[Vec3]:
         """Returns the corner vertices of the text line in the order
         bottom left, bottom right, top right, top left.
 
@@ -160,18 +159,18 @@ class TextLine:
 
     def _shift_vector(
         self, halign: int, valign: int, fm: FontMeasurements
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         return _shift_x(self.width, halign), _shift_y(fm, valign)
 
     @staticmethod
     def transform_2d(
         vertices: Iterable[UVec],
         insert: UVec = Vec3(0, 0, 0),
-        shift: Tuple[float, float] = (0, 0),
+        shift: tuple[float, float] = (0, 0),
         rotation: float = 0,
-        scale: Tuple[float, float] = (1, 1),
+        scale: tuple[float, float] = (1, 1),
         oblique: float = 0,
-    ) -> List[Vec3]:
+    ) -> list[Vec3]:
         """Transform any vertices from the text line located at the base
         location at (0, 0) and alignment LEFT.
 
@@ -243,7 +242,7 @@ def _shift_y(fm: FontMeasurements, valign: int) -> float:
     return -fm.bottom
 
 
-def unified_alignment(entity: Union[Text, MText]) -> Tuple[int, int]:
+def unified_alignment(entity: Union[Text, MText]) -> tuple[int, int]:
     """Return unified horizontal and vertical alignment.
 
     horizontal alignment: left=0, center=1, right=2
@@ -420,7 +419,7 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # - Paragraphs do overflow into the next column if required.
 
 
-def fast_plain_mtext(text: str, split=False) -> Union[List[str], str]:
+def fast_plain_mtext(text: str, split=False) -> Union[list[str], str]:
     """Returns the plain MTEXT content as a single string or  a list of
     strings if `split` is ``True``. Replaces ``\\P`` by ``\\n`` and removes
     other controls chars and inline codes.
@@ -513,7 +512,7 @@ def caret_decode(text: str) -> str:
     return re.sub(r"\^(.)", replace_match, text)
 
 
-def split_mtext_string(s: str, size: int = 250) -> List[str]:
+def split_mtext_string(s: str, size: int = 250) -> list[str]:
     """Split the MTEXT content string into chunks of max `size`."""
     chunks = []
     pos = 0
@@ -537,7 +536,7 @@ def plain_mtext(
     text: str,
     split=False,
     tabsize: int = 4,
-) -> Union[List[str], str]:
+) -> Union[list[str], str]:
     """Returns the plain MTEXT content as a single string or a list of
     strings if `split` is ``True``. Replaces ``\\P`` by ``\\n`` and removes
     other controls chars and inline codes.
@@ -551,8 +550,8 @@ def plain_mtext(
         tabsize: count of replacement spaces for tabulators ``^I``
 
     """
-    content: List[str] = []
-    paragraph: List[str] = []
+    content: list[str] = []
+    paragraph: list[str] = []
 
     # localize enum to speed up inner loop
     (
@@ -609,7 +608,7 @@ def text_wrap(
     text: str,
     box_width: Optional[float],
     get_text_width: Callable[[str], float],
-) -> List[str]:
+) -> list[str]:
     """Wrap text at ``\\n`` and given `box_width`. This tool was developed for
     usage with the MTEXT entity. This isn't the most straightforward word
     wrapping algorithm, but it aims to match the behavior of AutoCAD.
@@ -626,7 +625,7 @@ def text_wrap(
         return []
     manual_lines = re.split(r"(\n)", text)  # includes \n as it's own token
     tokens = [t for line in manual_lines for t in re.split(r"(\s+)", line) if t]
-    lines: List[str] = []
+    lines: list[str] = []
     current_line: str = ""
     line_just_wrapped = False
 
@@ -728,7 +727,7 @@ class ParagraphProperties(NamedTuple):
     # prefix 'c' defines a center adjusted tab stop e.g. 'c3.5'
     # prefix 'r' defines a right adjusted tab stop e.g. 'r2.7'
     # The tab stop in drawing units = n x char_height
-    tab_stops: Tuple = tuple()
+    tab_stops: tuple = tuple()
 
     def tostring(self) -> str:
         """Returns the MTEXT paragraph properties as MTEXT inline code
@@ -1253,12 +1252,12 @@ class MTextParser:
 
     __slots__ = ("ctx", "scanner", "_ctx_stack", "_continue_stroke")
 
-    def __init__(self, content: str, ctx: MTextContext = None):
+    def __init__(self, content: str, ctx: Optional[MTextContext] = None):
         if ctx is None:
             ctx = MTextContext()
         self.ctx = ctx
         self.scanner = TextScanner(caret_decode(content))
-        self._ctx_stack: List[MTextContext] = []
+        self._ctx_stack: list[MTextContext] = []
         self._continue_stroke = False
 
     def __iter__(self):
@@ -1379,7 +1378,7 @@ class MTextParser:
             else:
                 break
 
-    def parse_stacking(self) -> Tuple:
+    def parse_stacking(self) -> tuple:
         """Returns a tuple of strings: (numerator, denominator, type).
         The numerator and denominator is always a single and can contain spaces,
         which are not decoded as separate tokens. The type string is "^" for
@@ -1406,7 +1405,7 @@ class MTextParser:
             stacking_scanner.consume(1)
             return c, escape
 
-        def parse_numerator() -> Tuple[str, str]:
+        def parse_numerator() -> tuple[str, str]:
             word = ""
             while stacking_scanner.has_data:
                 c, escape = get_next_char()
@@ -1717,7 +1716,7 @@ def leading(cap_height: float, line_spacing: float = 1.0) -> float:
     return cap_height * 1.667 * line_spacing
 
 
-def estimate_mtext_extents(mtext: MText) -> Tuple[float, float]:
+def estimate_mtext_extents(mtext: MText) -> tuple[float, float]:
     """Estimate the width and height of a single column
     :class:`~ezdxf.entities.MText` entity.
 
@@ -1754,7 +1753,7 @@ def estimate_mtext_content_extents(
     font: AbstractFont,
     column_width: float = 0.0,
     line_spacing_factor: float = 1.0,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """Estimate the width and height of the :class:`~ezdxf.entities.MText`
     content string. The result is very inaccurate if inline codes are used or
     line wrapping at the column border is involved!
@@ -1770,14 +1769,14 @@ def estimate_mtext_content_extents(
         line_spacing_factor: :attr:`MText.dxf.line_spacing_factor`
 
     Returns:
-        Tuple[width, height]
+        tuple[width, height]
 
     """
     max_width: float = 0.0
     height: float = 0.0
     cap_height: float = font.measurements.cap_height
     has_column_width: bool = column_width > 0.0
-    lines: List[str] = fast_plain_mtext(content, split=True)  # type: ignore
+    lines: list[str] = fast_plain_mtext(content, split=True)  # type: ignore
 
     if any(lines):  # has any non empty lines
         line_count: int = 0
