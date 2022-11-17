@@ -1,7 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-
-from typing import TYPE_CHECKING, List
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 import logging
 import math
 from ezdxf.math import Vec2, UCS, NULLVEC
@@ -32,8 +32,8 @@ class OrdinateDimension(BaseDimensionRenderer):
     def __init__(
         self,
         dimension: Dimension,
-        ucs: "UCS" = None,
-        override: DimStyleOverride = None,
+        ucs: Optional[UCS] = None,
+        override: Optional[DimStyleOverride] = None,
     ):
         # The local coordinate system is defined by origin and the
         # horizontal_direction in OCS:
@@ -121,7 +121,7 @@ class OrdinateDimension(BaseDimensionRenderer):
             else self.local_y_axis.project(feature_location_vec).magnitude
         )
 
-    def get_defpoints(self) -> List[Vec2]:
+    def get_defpoints(self) -> list[Vec2]:
         return [
             self.origin_ocs,
             self.feature_location_ocs,
@@ -148,7 +148,7 @@ class OrdinateDimension(BaseDimensionRenderer):
         # for group code 51:
         dxf.horizontal_direction = -ucs.to_ocs_angle_deg(self.horizontal_dir)
 
-    def render(self, block: "GenericLayoutType") -> None:
+    def render(self, block: GenericLayoutType) -> None:
         """Main method to create dimension geometry of basic DXF entities in the
         associated BLOCK layout.
 
