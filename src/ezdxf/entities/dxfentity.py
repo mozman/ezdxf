@@ -410,7 +410,7 @@ class DXFEntity:
         """
         pass
 
-    def __deepcopy__(self, memodict: dict = None):
+    def __deepcopy__(self, memodict: Optional[dict] = None):
         """Some entities maybe linked by more than one entity, to be safe use
         `memodict` for bookkeeping.
         (internal API)
