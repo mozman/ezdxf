@@ -1,31 +1,28 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Iterator, cast
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Iterator, cast, Optional
 from itertools import chain
 import logging
 
 from ezdxf.lldxf import const
-from ezdxf.entities import entity_linker, is_graphic_entity
+from ezdxf.entities import entity_linker
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        Drawing,
-        DXFEntity,
-        Tags,
-        DXFGraphic,
-        DXFTagStorage,
-        BlockRecord,
-    )
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFEntity, DXFTagStorage, BlockRecord, DXFGraphic
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.lldxf.tags import Tags
+
 
 logger = logging.getLogger("ezdxf")
 
 
 class StoredSection:
-    def __init__(self, entities: List["Tags"]):
+    def __init__(self, entities: list[Tags]):
         self.entities = entities
 
-    def export_dxf(self, tagwriter: "TagWriter"):
+    def export_dxf(self, tagwriter: AbstractTagWriter):
         # (0, SECTION) (2, NAME) is stored in entities
         for entity in self.entities:
             tagwriter.write_tags(entity)
@@ -39,13 +36,15 @@ class EntitySection:
     """
 
     def __init__(
-        self, doc: "Drawing" = None, entities: Iterable["DXFEntity"] = None
+        self,
+        doc: Optional[Drawing] = None,
+        entities: Optional[Iterable[DXFEntity]] = None,
     ):
         self.doc = doc
         if entities is not None:
             self._build(iter(entities))
 
-    def __iter__(self) -> Iterator["DXFEntity"]:
+    def __iter__(self) -> Iterator[DXFEntity]:
         """Iterable for all entities of modelspace and active paperspace."""
         assert self.doc is not None
         layouts = self.doc.layouts
@@ -60,7 +59,7 @@ class EntitySection:
 
     # none public interface
 
-    def _build(self, entities: Iterator["DXFEntity"]) -> None:
+    def _build(self, entities: Iterator[DXFEntity]) -> None:
         assert self.doc is not None
         section_head = cast("DXFTagStorage", next(entities))
         if section_head.dxftype() != "SECTION" or section_head.base_class[
@@ -70,7 +69,7 @@ class EntitySection:
                 "Critical structure error in ENTITIES section."
             )
 
-        def add(entity: "DXFGraphic"):
+        def add(entity: DXFGraphic):
             handle = entity.dxf.owner
             # higher priority for owner handle
             paperspace = 0
@@ -78,7 +77,9 @@ class EntitySection:
                 paperspace = 0
             elif handle == psp_layout_key:
                 paperspace = 1
-            elif entity.dxf.hasattr("paperspace"):  # paperspace flag as fallback
+            elif entity.dxf.hasattr(
+                "paperspace"
+            ):  # paperspace flag as fallback
                 paperspace = entity.dxf.paperspace
 
             if paperspace:
@@ -98,7 +99,7 @@ class EntitySection:
             if not linked_entities(entity):
                 add(entity)  # type: ignore
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         assert self.doc is not None
         layouts = self.doc.layouts
         tagwriter.write_str("  0\nSECTION\n  2\nENTITIES\n")
