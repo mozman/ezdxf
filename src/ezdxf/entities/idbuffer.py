@@ -1,6 +1,7 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT-License
-from typing import TYPE_CHECKING, List
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFStructureError
 from ezdxf.lldxf.attributes import (
     DXFAttributes,
@@ -13,7 +14,10 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Tags, DXFEntity
+
+    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.lldxf.tags import Tags
 
 __all__ = ["IDBuffer", "FieldList", "LayerFilter"]
 
@@ -29,16 +33,16 @@ class IDBuffer(DXFObject):
 
     def __init__(self) -> None:
         super().__init__()
-        self.handles: List[str] = []
+        self.handles: list[str] = []
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         """Copy handles"""
         assert isinstance(entity, IDBuffer)
         entity.handles = list(self.handles)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             if len(processor.subclasses) < 2:
@@ -48,16 +52,16 @@ class IDBuffer(DXFObject):
             self.load_handles(processor.subclasses[1])
         return dxf
 
-    def load_handles(self, tags: "Tags"):
+    def load_handles(self, tags: Tags):
         self.handles = [value for code, value in tags if code == 330]
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_id_buffer.name)
         self.export_handles(tagwriter)
 
-    def export_handles(self, tagwriter: "TagWriter"):
+    def export_handles(self, tagwriter: AbstractTagWriter):
         for handle in self.handles:
             tagwriter.write_tag2(330, handle)
 
@@ -80,8 +84,8 @@ class FieldList(IDBuffer):
     DXFATTRIBS = DXFAttributes(base_class, acdb_id_set, acdb_field_list)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super(DXFObject, self).load_dxf_attribs(processor)
         if processor:
             if len(processor.subclasses) < 3:
@@ -93,7 +97,7 @@ class FieldList(IDBuffer):
             self.load_handles(processor.subclasses[2])
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super(DXFObject, self).export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_id_set.name)
@@ -114,8 +118,8 @@ class LayerFilter(IDBuffer):
     DXFATTRIBS = DXFAttributes(base_class, acdb_filter, acdb_layer_filter)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super(DXFObject, self).load_dxf_attribs(processor)
         if processor:
             if len(processor.subclasses) < 3:
@@ -126,7 +130,7 @@ class LayerFilter(IDBuffer):
             self.load_handles(processor.subclasses[2])
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super(DXFObject, self).export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_filter.name)
