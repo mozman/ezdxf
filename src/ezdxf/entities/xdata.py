@@ -1,16 +1,15 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
-    List,
     Iterable,
-    Tuple,
     Any,
-    Dict,
     MutableSequence,
     MutableMapping,
     Iterator,
     Union,
+    Optional,
 )
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -32,7 +31,8 @@ import logging
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFEntity
+    from ezdxf.entities import DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["XData", "XDataUserList", "XDataUserDict"]
 
@@ -42,8 +42,8 @@ def has_valid_xdata_group_codes(tags: Tags) -> bool:
 
 
 class XData:
-    def __init__(self, xdata: Iterable[Tags] = None):
-        self.data: Dict[str, Tags] = OrderedDict()
+    def __init__(self, xdata: Optional[Iterable[Tags]] = None):
+        self.data: dict[str, Tags] = OrderedDict()
         if xdata is not None:
             for data in xdata:
                 self._add(data)
@@ -73,7 +73,7 @@ class XData:
                 raise DXFValueError(f"found invalid XDATA group code in {tags}")
 
     def add(
-        self, appid: str, tags: Iterable[Union[Tuple[int, Any], "DXFTag"]]
+        self, appid: str, tags: Iterable[Union[tuple[int, Any], DXFTag]]
     ) -> None:
         """Add a list of DXF tags for `appid`. The `tags` argument is an
         iterable of (group code, value) tuples, where the group code has to be
@@ -114,7 +114,7 @@ class XData:
         if appid in self.data:
             del self.data[appid]
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         for appid, tags in self.data.items():
             if options.filter_invalid_xdata_group_codes:
                 tags = Tags(filter_invalid_xdata_group_codes(tags))
@@ -135,7 +135,7 @@ class XData:
         else:
             return True
 
-    def get_xlist(self, appid: str, name: str) -> List[Tuple]:
+    def get_xlist(self, appid: str, name: str) -> list[tuple]:
         """Get list `name` from XDATA `appid`.
 
         Args:
@@ -282,7 +282,9 @@ class XDataUserList(MutableSequence):
         int: 1071,
     }
 
-    def __init__(self, xdata: XData = None, name="DefaultList", appid="EZDXF"):
+    def __init__(
+        self, xdata: Optional[XData] = None, name="DefaultList", appid="EZDXF"
+    ):
         """Setup a XDATA user list `name` for the given `appid`.
 
         The data is stored in the given `xdata` object, or in a new created
@@ -306,13 +308,13 @@ class XDataUserList(MutableSequence):
             data = xdata.get_xlist(self._appid, self._name)
         except DXFValueError:
             data = []
-        self._data: List = self._parse_list(data)
+        self._data: list = self._parse_list(data)
 
     @classmethod
     @contextmanager
     def entity(
-        cls, entity: "DXFEntity", name="DefaultList", appid="EZDXF"
-    ) -> Iterator["XDataUserList"]:
+        cls, entity: DXFEntity, name="DefaultList", appid="EZDXF"
+    ) -> Iterator[XDataUserList]:
         """Context manager to manage a XDATA list `name` for a given DXF
         `entity`. Appends the user list to the existing :class:`XData` instance
         or creates new :class:`XData` instance.
@@ -356,7 +358,7 @@ class XDataUserList(MutableSequence):
         """Delete self[item]."""
         self._data.__delitem__(item)
 
-    def _parse_list(self, tags: Iterable[Tuple]) -> List:
+    def _parse_list(self, tags: Iterable[tuple]) -> list:
         data = list(tags)
         content = []
         for code, value in data[2:-1]:
@@ -409,7 +411,9 @@ class XDataUserDict(MutableMapping):
 
     """
 
-    def __init__(self, xdata: XData = None, name="DefaultDict", appid="EZDXF"):
+    def __init__(
+        self, xdata: Optional[XData] = None, name="DefaultDict", appid="EZDXF"
+    ):
         """Setup a XDATA user dict `name` for the given `appid`.
 
         The data is stored in the given `xdata` object, or in a new created
@@ -425,9 +429,9 @@ class XDataUserDict(MutableMapping):
 
         """
         self._xlist = XDataUserList(xdata, name, appid)
-        self._user_dict: Dict[str, Any] = self._parse_xlist()
+        self._user_dict: dict[str, Any] = self._parse_xlist()
 
-    def _parse_xlist(self) -> Dict:
+    def _parse_xlist(self) -> dict:
         if self._xlist:
             return dict(take2(self._xlist))
         else:
@@ -446,8 +450,8 @@ class XDataUserDict(MutableMapping):
     @classmethod
     @contextmanager
     def entity(
-        cls, entity: "DXFEntity", name="DefaultDict", appid="EZDXF"
-    ) -> Iterator["XDataUserDict"]:
+        cls, entity: DXFEntity, name="DefaultDict", appid="EZDXF"
+    ) -> Iterator[XDataUserDict]:
         """Context manager to manage a XDATA dict `name` for a given DXF
         `entity`. Appends the user dict to the existing :class:`XData` instance
         or creates new :class:`XData` instance.
