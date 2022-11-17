@@ -4,11 +4,7 @@ from __future__ import annotations
 from typing import (
     Optional,
     Iterable,
-    Tuple,
     TYPE_CHECKING,
-    Dict,
-    Set,
-    List,
     Iterator,
 )
 from contextlib import contextmanager
@@ -50,7 +46,7 @@ class EntityDB:
 
         def __init__(self, db: EntityDB):
             self._database = db._database
-            self._handles: Set[str] = set()
+            self._handles: set[str] = set()
 
         def add(self, handle: str):
             """Put handle into trashcan to delete the entity later, this is
@@ -74,7 +70,7 @@ class EntityDB:
             self._handles.clear()
 
     def __init__(self) -> None:
-        self._database: Dict[str, DXFEntity] = {}
+        self._database: dict[str, DXFEntity] = {}
         # DXF handles of entities to delete later:
         self.handles = HandleGenerator()
         self.locked: bool = False  # used only for debugging
@@ -143,7 +139,7 @@ class EntityDB:
         """Iterable of all entities, does filter destroyed entities."""
         return (entity for handle, entity in self.items())
 
-    def items(self) -> Iterable[Tuple[str, DXFEntity]]:
+    def items(self) -> Iterable[tuple[str, DXFEntity]]:
         """Iterable of all (handle, entities) pairs, does filter destroyed
         entities.
         """
@@ -299,7 +295,7 @@ class EntityDB:
         for handle in dead_handles:
             del db[handle]
 
-    def dxf_types_in_use(self) -> Set[str]:
+    def dxf_types_in_use(self) -> set[str]:
         return set(entity.dxftype() for entity in self.values())
 
     def reset_handle(self, entity: DXFEntity, handle: str) -> bool:
@@ -341,8 +337,8 @@ class EntitySpace:
 
     """
 
-    def __init__(self, entities: Iterable[DXFEntity] = None):
-        self.entities: List[DXFEntity] = (
+    def __init__(self, entities: Optional[Iterable[DXFEntity]] = None):
+        self.entities: list[DXFEntity] = (
             list(e for e in entities if e.is_alive) if entities else []
         )
 
