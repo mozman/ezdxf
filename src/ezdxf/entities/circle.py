@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Optional
 import math
 
 from ezdxf.lldxf import validator
@@ -35,7 +36,9 @@ from .dxfgfx import (
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Ellipse, Spline
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.entities import Ellipse, Spline
 
 __all__ = ["Circle"]
 
@@ -76,8 +79,8 @@ class Circle(DXFGraphic):
     MERGED_GROUP_CODES = merged_circle_group_codes
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
@@ -88,7 +91,7 @@ class Circle(DXFGraphic):
                 elevation_to_z_axis(dxf, ("center",))
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
@@ -101,8 +104,8 @@ class Circle(DXFGraphic):
         """Yields vertices of the circle for iterable `angles` in WCS.
 
         Args:
-            angles: iterable of angles in OCS as degrees, angle goes counter
-                clockwise around the extrusion vector, OCS x-axis = 0 deg.
+            angles: iterable of angles in OCS as degrees, angle goes
+                counter-clockwise around the extrusion vector, OCS x-axis = 0 deg.
 
         """
         ocs = self.ocs()
@@ -118,15 +121,13 @@ class Circle(DXFGraphic):
 
         Yields always :class:`~ezdxf.math.Vec3` objects.
 
-        .. versionadded:: 0.15
-
         """
         radius = abs(self.dxf.radius)
         if radius > 0.0:
             count = arc_segment_count(radius, math.tau, sagitta)
             yield from self.vertices(linspace(0.0, 360.0, count + 1))
 
-    def transform(self, m: Matrix44) -> "Circle":
+    def transform(self, m: Matrix44) -> Circle:
         """Transform the CIRCLE entity by transformation matrix `m` inplace.
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
@@ -136,7 +137,7 @@ class Circle(DXFGraphic):
         self.post_transform(m)
         return circle
 
-    def _transform(self, ocs: OCSTransform) -> "Circle":
+    def _transform(self, ocs: OCSTransform) -> Circle:
         dxf = self.dxf
         if ocs.scale_uniform:
             dxf.extrusion = ocs.new_extrusion
@@ -157,7 +158,7 @@ class Circle(DXFGraphic):
 
         return self
 
-    def translate(self, dx: float, dy: float, dz: float) -> "Circle":
+    def translate(self, dx: float, dy: float, dz: float) -> Circle:
         """Optimized CIRCLE/ARC translation about `dx` in x-axis, `dy` in
         y-axis and `dz` in z-axis, returns `self` (floating interface).
 
@@ -171,7 +172,7 @@ class Circle(DXFGraphic):
             self.post_transform(Matrix44.translate(dx, dy, dz))
         return self
 
-    def to_ellipse(self, replace=True) -> "Ellipse":
+    def to_ellipse(self, replace=True) -> Ellipse:
         """Convert CIRCLE/ARC to an :class:`~ezdxf.entities.Ellipse` entity.
 
         Adds the new ELLIPSE entity to the entity database and to the
@@ -193,7 +194,7 @@ class Circle(DXFGraphic):
             add_entity(ellipse, layout)
         return ellipse
 
-    def to_spline(self, replace=True) -> "Spline":
+    def to_spline(self, replace=True) -> Spline:
         """Convert CIRCLE/ARC to a :class:`~ezdxf.entities.Spline` entity.
 
         Adds the new SPLINE entity to the entity database and to the
