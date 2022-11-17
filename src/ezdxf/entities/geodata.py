@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT-License
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Sequence, Iterable, Tuple, Optional
+from typing import TYPE_CHECKING, Sequence, Iterable, Optional
 from xml.etree import ElementTree
 import math
 import re
@@ -34,7 +34,8 @@ from .factory import register_entity
 from .. import units
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["GeoData", "MeshVertices"]
 logger = logging.getLogger("ezdxf")
@@ -224,7 +225,7 @@ class MeshVertices(VertexArray):
     VERTEX_SIZE = 2
 
 
-def mesh_group_codes(version: int) -> Tuple[int, int]:
+def mesh_group_codes(version: int) -> tuple[int, int]:
     return (12, 13) if version < 2 else (13, 14)
 
 
@@ -252,15 +253,15 @@ class GeoData(DXFObject):
         super().__init__()
         self.source_vertices = MeshVertices()
         self.target_vertices = MeshVertices()
-        self.faces: List[Sequence[int]] = []
+        self.faces: list[Sequence[int]] = []
         self.coordinate_system_definition = ""
 
     def copy(self):
         raise DXFTypeError(f"Cloning of {self.DXFTYPE} not supported.")
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             version = processor.detect_implementation_version(
@@ -298,7 +299,7 @@ class GeoData(DXFObject):
         # group codes of version 1 and 2 differ, see DXF reference R2009
         src, target = mesh_group_codes(version)
         face_indices = {97, 98, 99}
-        face: List[int] = []
+        face: list[int] = []
         for code, value in tags:
             if code == src:
                 self.source_vertices.append(value)
@@ -322,7 +323,7 @@ class GeoData(DXFObject):
                 "does not match."
             )
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_geo_data.name)
@@ -364,7 +365,7 @@ class GeoData(DXFObject):
         )
         self.export_mesh_data(tagwriter)
 
-    def export_mesh_data(self, tagwriter: TagWriter):
+    def export_mesh_data(self, tagwriter: AbstractTagWriter):
         if len(self.source_vertices) != len(self.target_vertices):
             raise DXFStructureError(
                 "GEODATA mesh definition error: source and target point count "
@@ -389,7 +390,7 @@ class GeoData(DXFObject):
             tagwriter.write_tag2(98, f2)
             tagwriter.write_tag2(99, f3)
 
-    def export_coordinate_system_definition(self, tagwriter: TagWriter):
+    def export_coordinate_system_definition(self, tagwriter: AbstractTagWriter):
         text = self.coordinate_system_definition.replace("\n", "^J")
         chunks = split_mtext_string(text, size=255)
         if len(chunks) == 0:
@@ -398,12 +399,12 @@ class GeoData(DXFObject):
             tagwriter.write_tag2(303, chunks.pop(0))
         tagwriter.write_tag2(301, chunks[0])
 
-    def decoded_units(self) -> Tuple[Optional[str], Optional[str]]:
+    def decoded_units(self) -> tuple[Optional[str], Optional[str]]:
         return units.decode(self.dxf.horizontal_units), units.decode(
             self.dxf.vertical_units
         )
 
-    def get_crs(self) -> Tuple[int, bool]:
+    def get_crs(self) -> tuple[int, bool]:
         """Returns the EPSG index and axis-ordering, axis-ordering is ``True``
         if fist axis is labeled "E" or "W" and ``False`` if first axis is
         labeled "N" or "S".
@@ -505,7 +506,7 @@ class GeoData(DXFObject):
 
     def get_crs_transformation(
         self, *, no_checks: bool = False
-    ) -> Tuple[Matrix44, int]:
+    ) -> tuple[Matrix44, int]:
         """Returns the transformation matrix and the EPSG index to transform
         WCS coordinates into CRS coordinates. Because of the lack of proper
         documentation this method works only for tested configurations, set
