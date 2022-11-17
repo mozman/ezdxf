@@ -1,6 +1,7 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Optional
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -16,12 +17,14 @@ from .objectcollection import ObjectCollection
 from ezdxf.math import Matrix44
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, DXFEntity
+    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.document import Drawing
 
 __all__ = ["Material", "MaterialCollection"]
 
 
-def fetch_matrix(tags: "Tags", code: int) -> Tuple[Tags, Optional[Matrix44]]:
+def fetch_matrix(tags: Tags, code: int) -> tuple[Tags, Optional[Matrix44]]:
     values = []
     remaining = Tags()
     for tag in tags:
@@ -39,7 +42,9 @@ def fetch_matrix(tags: "Tags", code: int) -> Tuple[Tags, Optional[Matrix44]]:
         return tags, None
 
 
-def export_matrix(tagwriter: "TagWriter", code: int, matrix: Matrix44) -> None:
+def export_matrix(
+    tagwriter: AbstractTagWriter, code: int, matrix: Matrix44
+) -> None:
     if matrix is not None:
         for value in matrix:
             tagwriter.write_tag2(code, value)
@@ -261,11 +266,12 @@ class Material(DXFObject):
         self.refraction_mapper_matrix: Optional[Matrix44] = None  # code 147
         self.normal_mapper_matrix: Optional[Matrix44] = None  # code 43 ???
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         """Copy material mapper matrices"""
 
         def copy(matrix):
             return None if matrix is None else matrix.copy()
+
         assert isinstance(entity, Material)
         entity.diffuse_mapper_matrix = copy(self.diffuse_mapper_matrix)
         entity.specular_mapper_matrix = copy(self.specular_mapper_matrix)
@@ -276,8 +282,8 @@ class Material(DXFObject):
         entity.normal_mapper_matrix = copy(self.normal_mapper_matrix)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
@@ -309,7 +315,7 @@ class Material(DXFObject):
         if matrix:
             self.normal_mapper_matrix = matrix
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
 
@@ -448,7 +454,7 @@ class Material(DXFObject):
 
 
 class MaterialCollection(ObjectCollection[Material]):
-    def __init__(self, doc: "Drawing"):
+    def __init__(self, doc: Drawing):
         super().__init__(doc, dict_name="ACAD_MATERIAL", object_type="MATERIAL")
         self.create_required_entries()
 
