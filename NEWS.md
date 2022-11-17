@@ -3,7 +3,7 @@ News
 ====
 
 Version 1.0.0rc1 - dev
----------------------
+----------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
 - NEW: Python 3.11 binary wheels on PyPI
