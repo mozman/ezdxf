@@ -1,6 +1,14 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT-License
-from typing import TYPE_CHECKING, Iterable, Iterator, cast, Union, List, Set
+from __future__ import annotations
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    Iterator,
+    cast,
+    Union,
+    Optional,
+)
 from contextlib import contextmanager
 import logging
 from ezdxf.lldxf import validator, const
@@ -20,15 +28,12 @@ from .objectcollection import ObjectCollection
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        Drawing,
-        DXFNamespace,
-        Auditor,
-        EntityDB,
-        Dictionary,
-    )
+    from ezdxf.audit import Auditor
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFNamespace, Dictionary
+    from ezdxf.entitydb import EntityDB
     from ezdxf.layouts import Layouts
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["DXFGroup", "GroupCollection"]
 
@@ -72,15 +77,15 @@ class DXFGroup(DXFObject):
 
     def __init__(self) -> None:
         super().__init__()
-        self._handles: Set[str] = set()  # only needed at the loading stage
-        self._data: List[DXFEntity] = []
+        self._handles: set[str] = set()  # only needed at the loading stage
+        self._data: list[DXFEntity] = []
 
     def copy(self):
         raise const.DXFTypeError("Copying of GROUP not supported.")
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
@@ -96,7 +101,7 @@ class DXFGroup(DXFObject):
                 # are not stored in the EntityDB:
                 self._handles.add(value)
 
-    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
+    def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         # remove invalid entities
         assert self.doc is not None
         self.purge(self.doc)
@@ -108,7 +113,7 @@ class DXFGroup(DXFObject):
             )
         return True
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_group.name)
@@ -117,7 +122,7 @@ class DXFGroup(DXFObject):
         )
         self.export_group(tagwriter)
 
-    def export_group(self, tagwriter: "TagWriter"):
+    def export_group(self, tagwriter: AbstractTagWriter):
         for entity in self._data:
             tagwriter.write_tag2(GROUP_ITEM_CODE, entity.dxf.handle)
 
@@ -226,7 +231,7 @@ class DXFGroup(DXFObject):
         """
         self._data = []
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         """Remove invalid entities from :class:`DXFGroup`.
 
         Invalid entities are:
@@ -254,7 +259,7 @@ class DXFGroup(DXFObject):
             )
             self.clear()
 
-    def purge(self, doc: "Drawing") -> None:
+    def purge(self, doc: Drawing) -> None:
         """Remove invalid group entities."""
         self._data = filter_invalid_entities(
             entities=self._data, doc=doc, group_name=str(self)
@@ -263,13 +268,13 @@ class DXFGroup(DXFObject):
 
 def filter_invalid_entities(
     entities: Iterable[DXFEntity],
-    doc: "Drawing",
+    doc: Drawing,
     group_name: str = "",
-) -> List[DXFEntity]:
+) -> list[DXFEntity]:
     assert doc is not None
     db = doc.entitydb
     valid_owner_handles = valid_layout_handles(doc.layouts)
-    valid_entities: List[DXFEntity] = []
+    valid_entities: list[DXFEntity] = []
     for entity in entities:
         if entity.is_alive and _has_valid_owner(
             entity.dxf.owner, db, valid_owner_handles
@@ -286,7 +291,7 @@ def filter_invalid_entities(
 
 
 def _has_valid_owner(
-    owner: str, db: "EntityDB", valid_owner_handles: Set[str]
+    owner: str, db: EntityDB, valid_owner_handles: set[str]
 ) -> bool:
     # no owner -> no layout association
     if owner is None:
@@ -315,17 +320,17 @@ def all_entities_on_same_layout(entities: Iterable[DXFEntity]):
     return len(owners) < 2
 
 
-def valid_layout_handles(layouts: "Layouts") -> Set[str]:
+def valid_layout_handles(layouts: Layouts) -> set[str]:
     """Returns valid layout keys for group entities."""
     return set(layout.layout_key for layout in layouts if layout.is_any_layout)
 
 
 class GroupCollection(ObjectCollection[DXFGroup]):
-    def __init__(self, doc: "Drawing"):
+    def __init__(self, doc: Drawing):
         super().__init__(doc, dict_name="ACAD_GROUP", object_type="GROUP")
         self._next_unnamed_number = 0
 
-    def groups(self) -> Iterable[DXFGroup]:
+    def groups(self) -> Iterator[DXFGroup]:
         """Iterable of all existing groups."""
         for name, group in self:
             yield group  # type: ignore
@@ -341,11 +346,14 @@ class GroupCollection(ObjectCollection[DXFGroup]):
         return f"*A{self._next_unnamed_number}"
 
     def new(
-        self, name: str = None, description: str = "", selectable: bool = True
+        self,
+        name: Optional[str] = None,
+        description: str = "",
+        selectable: bool = True,
     ) -> DXFGroup:
         r"""Creates a new group. If `name` is ``None`` an unnamed group is
         created, which has an automatically generated name like "\*Annnn".
-        Group names are case insensitive.
+        Group names are case-insensitive.
 
         Args:
             name: group name as string
@@ -389,7 +397,7 @@ class GroupCollection(ObjectCollection[DXFGroup]):
         else:
             raise const.DXFValueError("GROUP not in group table registered.")
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         """Removes empty groups and invalid handles from all groups."""
         trash = []
         for name, group in self:
@@ -408,7 +416,7 @@ class GroupCollection(ObjectCollection[DXFGroup]):
             self.delete(name)
 
 
-def get_group_name(group: DXFGroup, db: "EntityDB") -> str:
+def get_group_name(group: DXFGroup, db: EntityDB) -> str:
     """Get name of `group`."""
     group_table = cast("Dictionary", db[group.dxf.owner])
     for name, entity in group_table.items():
