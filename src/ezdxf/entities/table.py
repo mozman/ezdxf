@@ -1,13 +1,15 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.lldxf import const
 from .dxfentity import SubclassProcessor, DXFEntity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["TableHead"]
 
@@ -39,8 +41,8 @@ class TableHead(DXFEntity):
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             dxf.name = processor.base_class.get_first_value(2)
@@ -48,9 +50,9 @@ class TableHead(DXFEntity):
             dxf.count = 0
         return dxf
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         assert self.dxf.handle, (
-            "TABLE needs a handle, maybe loaded from " "DXF R12 without handle!"
+            "TABLE needs a handle, maybe loaded from DXF R12 without handle!"
         )
         tagwriter.write_tag2(const.STRUCTURE_MARKER, self.DXFTYPE)
         tagwriter.write_tag2(2, self.dxf.name)
