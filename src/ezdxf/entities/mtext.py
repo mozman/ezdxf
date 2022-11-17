@@ -7,8 +7,6 @@ import logging
 from typing import (
     TYPE_CHECKING,
     Union,
-    Tuple,
-    List,
     Iterable,
     Iterator,
     Optional,
@@ -49,14 +47,11 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .xdata import XData
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        DXFNamespace,
-        DXFEntity,
-        Auditor,
-        Drawing,
-        EntityDB,
-    )
+    from ezdxf.audit import Auditor
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.entitydb import EntityDB
 
 __all__ = [
     "MText",
@@ -257,11 +252,11 @@ class MTextColumns:
         self.total_width: float = 0.0
         self.total_height: float = 0.0
         # Storage for handles of linked MTEXT entities at loading stage:
-        self.linked_handles: Optional[List[str]] = None
+        self.linked_handles: Optional[list[str]] = None
         # Storage for linked MTEXT entities for DXF versions < R2018:
-        self.linked_columns: List["MText"] = []
+        self.linked_columns: list["MText"] = []
         # R2018+: heights of all columns if auto_height is False
-        self.heights: List[float] = []
+        self.heights: list[float] = []
 
     def deep_copy(self) -> MTextColumns:
         columns = self.shallow_copy()
@@ -415,7 +410,7 @@ class MTextColumns:
         tags.append(DXFTag(1000, "ACAD_MTEXT_COLUMNS_END"))
         return tags
 
-    def mtext_handles(self) -> List[str]:
+    def mtext_handles(self) -> list[str]:
         """Returns a list of all linked MTEXT handles."""
         if self.linked_handles:
             return self.linked_handles
@@ -545,8 +540,8 @@ def load_mtext_column_info(tags: Tags) -> Optional[MTextColumns]:
     return columns
 
 
-def load_mtext_linked_column_handles(tags: Tags) -> List[str]:
-    handles: List[str] = []
+def load_mtext_linked_column_handles(tags: Tags) -> list[str]:
+    handles: list[str] = []
     try:
         start, end = find_begin_and_end_of_encoded_xdata_tags(
             "ACAD_MTEXT_COLUMNS", tags
@@ -624,11 +619,11 @@ def load_columns_from_xdata(
     return columns
 
 
-def extract_mtext_text_frame_handles(xdata: XData) -> List[str]:
+def extract_mtext_text_frame_handles(xdata: XData) -> list[str]:
     # Stores information about the text frame until DXF R2018.
     # Newer CAD applications do not need that information nor the separated
     # LWPOLYLINE as text frame entity.
-    handles: List[str] = []
+    handles: list[str] = []
     if "ACAD" in xdata:
         acad = xdata.get("ACAD")
     else:
@@ -678,7 +673,7 @@ class MText(DXFGraphic):
         return self.text
 
     def _set_text(self, value):
-        """Setter for virtual Mtext.dxf.text attribute. """
+        """Setter for virtual Mtext.dxf.text attribute."""
         self.text = str(value)
 
     @property
@@ -700,7 +695,7 @@ class MText(DXFGraphic):
             entity._columns = self._columns.deep_copy()  # type: ignore
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -751,7 +746,7 @@ class MText(DXFGraphic):
             return unlink_mtext_columns_from_layout
         return None
 
-    def preprocess_export(self, tagwriter: TagWriter) -> bool:
+    def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         """Pre requirement check and pre-processing for export.
 
         Returns False if MTEXT should not be exported at all.
@@ -771,13 +766,13 @@ class MText(DXFGraphic):
             self.sync_common_attribs_of_linked_columns()
         return True
 
-    def export_dxf(self, tagwriter: TagWriter) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         super().export_dxf(tagwriter)
         # Linked MTEXT entities are not stored in the layout entity space!
         if self.has_columns and tagwriter.dxfversion < const.DXF2018:
             self.export_linked_entities(tagwriter)
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mtext.name)
@@ -835,7 +830,7 @@ class MText(DXFGraphic):
         parts.append(tail)
         self.text = escape_dxf_line_endings("".join(parts))
 
-    def export_embedded_object(self, tagwriter: TagWriter):
+    def export_embedded_object(self, tagwriter: AbstractTagWriter):
         dxf = self.dxf
         cols = self._columns
         assert cols is not None
@@ -863,7 +858,7 @@ class MText(DXFGraphic):
         for height in cols.heights:
             tagwriter.write_tag2(46, height)
 
-    def export_linked_entities(self, tagwriter: TagWriter):
+    def export_linked_entities(self, tagwriter: AbstractTagWriter):
         for mtext in self._columns.linked_columns:  # type: ignore
             if mtext.dxf.handle is None:
                 raise const.DXFStructureError(
@@ -929,8 +924,8 @@ class MText(DXFGraphic):
     def set_location(
         self,
         insert: UVec,
-        rotation: float = None,
-        attachment_point: int = None,
+        rotation: Optional[float] = None,
+        attachment_point: Optional[int] = None,
     ) -> MText:
         """Set attributes :attr:`dxf.insert`, :attr:`dxf.rotation` and
         :attr:`dxf.attachment_point`, ``None`` for :attr:`dxf.rotation` or
@@ -999,7 +994,7 @@ class MText(DXFGraphic):
                 self.dxf.bg_fill_true_color = rgb2int(color)
         return self  # fluent interface
 
-    def __iadd__(self, text: str) -> "MText":
+    def __iadd__(self, text: str) -> MText:
         """Append `text` to existing content (:attr:`text` attribute)."""
         self.text += text
         return self
@@ -1077,7 +1072,7 @@ class MText(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def plain_text(self, split=False, fast=True) -> Union[List[str], str]:
+    def plain_text(self, split=False, fast=True) -> Union[list[str], str]:
         """Returns the text content without inline formatting codes.
 
         The "fast" mode is accurate if the DXF content was created by
@@ -1092,24 +1087,19 @@ class MText(DXFGraphic):
             fast: uses the "fast" mode to extract the plain MTEXT content if
                 ``True`` or the "accurate" mode if set to ``False``
 
-        .. versionadded:: 0.16.6
-            `fast` argument
-
         """
         if fast:
             return fast_plain_mtext(self.text, split=split)
         else:
             return plain_mtext(self.text, split=split)
 
-    def all_columns_plain_text(self, split=False) -> Union[List[str], str]:
+    def all_columns_plain_text(self, split=False) -> Union[list[str], str]:
         """Returns the text content of all columns without inline formatting
         codes.
 
         Args:
             split: split content text at line breaks if ``True`` and
                 returns a list of strings without line endings
-
-        .. versionadded:: 0.17
 
         """
 
@@ -1139,8 +1129,6 @@ class MText(DXFGraphic):
     def all_columns_raw_content(self) -> str:
         """Returns the text content of all columns as a single string
         including the inline formatting codes.
-
-        .. versionadded:: 0.17
 
         """
         content = [self.text]
@@ -1234,7 +1222,7 @@ class MText(DXFGraphic):
             column.dxf.insert = insert
             linked_columns.append(column)
 
-    def remove_dependencies(self, other: Drawing = None) -> None:
+    def remove_dependencies(self, other: Optional[Drawing] = None) -> None:
         if not self.is_alive:
             return
 
@@ -1253,7 +1241,7 @@ class MText(DXFGraphic):
         return OCS()
 
 
-def export_mtext_content(text, tagwriter: TagWriter) -> None:
+def export_mtext_content(text, tagwriter: AbstractTagWriter) -> None:
     txt = escape_dxf_line_endings(text)
     str_chunks = split_mtext_string(txt, size=250)
     if len(str_chunks) == 0:
