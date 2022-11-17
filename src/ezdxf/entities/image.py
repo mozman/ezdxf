@@ -4,11 +4,9 @@ from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Iterable,
-    List,
     cast,
     Optional,
     Callable,
-    Dict,
     Union,
     Type,
 )
@@ -32,15 +30,12 @@ from .factory import register_entity
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        DXFNamespace,
-        Drawing,
-        DXFTag,
-        Matrix44,
-        Auditor,
-        DXFEntity,
-    )
+    from ezdxf.audit import Auditor
+    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.lldxf.types import DXFTag
+    from ezdxf.document import Drawing
+    from ezdxf.math import Matrix44
 
 __all__ = ["Image", "ImageDef", "ImageDefReactor", "RasterVariables", "Wipeout"]
 
@@ -49,7 +44,7 @@ class ImageBase(DXFGraphic):
     """DXF IMAGE entity"""
 
     DXFTYPE = "IMAGEBASE"
-    _CLS_GROUP_CODES: Dict[int, Union[str, List[str]]] = dict()
+    _CLS_GROUP_CODES: dict[int, Union[str, list[str]]] = dict()
     _SUBCLASS_NAME = "dummy"
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
@@ -65,7 +60,7 @@ class ImageBase(DXFGraphic):
         # x-coordinates increases in u_pixel vector direction
         # y-coordinates increases against the v_pixel vector!
         # see also WCS coordinate calculation
-        self._boundary_path: List[Vec2] = []
+        self._boundary_path: list[Vec2] = []
 
     def _copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, ImageBase)
@@ -76,7 +71,7 @@ class ImageBase(DXFGraphic):
         self.reset_boundary_path()
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -95,7 +90,7 @@ class ImageBase(DXFGraphic):
             Vec2(value) for code, value in tags if code == 14
         ]
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, self._SUBCLASS_NAME)
@@ -123,7 +118,7 @@ class ImageBase(DXFGraphic):
         if tagwriter.dxfversion >= DXF2010:
             self.dxf.export_dxf_attribs(tagwriter, "clip_mode")
 
-    def export_boundary_path(self, tagwriter: TagWriter):
+    def export_boundary_path(self, tagwriter: AbstractTagWriter):
         for vertex in self.boundary_path:
             tagwriter.write_vertex(14, vertex)
 
@@ -181,7 +176,7 @@ class ImageBase(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def boundary_path_wcs(self) -> List[Vec3]:
+    def boundary_path_wcs(self) -> list[Vec3]:
         """Returns the boundary/clipping path in WCS coordinates.
 
         .. versionadded:: 0.14
@@ -315,18 +310,18 @@ class Image(ImageBase):
 
     def __init__(self) -> None:
         super().__init__()
-        self._boundary_path: List[Vec2] = []
+        self._boundary_path: list[Vec2] = []
         self._image_def: Optional[ImageDef] = None
         self._image_def_reactor: Optional[ImageDefReactor] = None
 
     @classmethod
     def new(
         cls: Type[Image],
-        handle: str = None,
-        owner: str = None,
-        dxfattribs: Dict = None,
-        doc: "Drawing" = None,
-    ) -> "Image":
+        handle: Optional[str] = None,
+        owner: Optional[str] = None,
+        dxfattribs: Optional[dict] = None,
+        doc: Optional[Drawing] = None,
+    ) -> Image:
         dxfattribs = dxfattribs or {}
         # 'image_def' is not a real DXF attribute (image_def_handle)
         image_def = dxfattribs.pop("image_def", None)
@@ -487,7 +482,7 @@ class Wipeout(ImageBase):
         self._reset_handles()
         super().audit(auditor)
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         self._reset_handles()
         super().export_entity(tagwriter)
@@ -532,14 +527,14 @@ class ImageDef(DXFObject):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(dxf, acdb_image_def_group_codes, 1)
         return dxf
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_image_def.name)
@@ -576,7 +571,7 @@ class ImageDefReactor(DXFObject):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -585,7 +580,7 @@ class ImageDefReactor(DXFObject):
             )
         return dxf
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_image_def_reactor.name)
@@ -645,7 +640,7 @@ class RasterVariables(DXFObject):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -654,7 +649,7 @@ class RasterVariables(DXFObject):
             )
         return dxf
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_raster_variables.name)
@@ -695,7 +690,7 @@ class WipeoutVariables(DXFObject):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -704,7 +699,7 @@ class WipeoutVariables(DXFObject):
             )
         return dxf
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_wipeout_variables.name)
