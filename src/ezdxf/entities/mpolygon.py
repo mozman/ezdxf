@@ -1,6 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from typing import TYPE_CHECKING
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 import logging
 from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.attributes import (
@@ -21,7 +22,9 @@ from .gradient import Gradient, GradientType
 __all__ = ["MPolygon"]
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, RGB
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.colors import RGB
+
 
 logger = logging.getLogger("ezdxf")
 acdb_mpolygon = DefSubclass(
@@ -137,7 +140,7 @@ class MPolygon(DXFPolygon):
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
     LOAD_GROUP_CODES = acdb_mpolygon_group_code
 
-    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
+    def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         if self.paths.has_edge_paths:
             logger.warning(
                 "MPOLYGON including edge paths are not exported by ezdxf!"
@@ -145,7 +148,7 @@ class MPolygon(DXFPolygon):
             return False
         return True
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_mpolygon.name)
@@ -192,17 +195,19 @@ class MPolygon(DXFPolygon):
         self.export_degenerated_loops(tagwriter)
         self.export_gradient(tagwriter)
 
-    def export_degenerated_loops(self, tagwriter: "TagWriter"):
+    def export_degenerated_loops(self, tagwriter: AbstractTagWriter):
         self.dxf.export_dxf_attribs(tagwriter, "degenerated_loops")
 
-    def export_gradient(self, tagwriter: "TagWriter"):
+    def export_gradient(self, tagwriter: AbstractTagWriter):
         if tagwriter.dxfversion < const.DXF2004:
             return
         if self.gradient is None:
             self.gradient = Gradient(kind=0, num=0, type=0)
         self.gradient.export_dxf(tagwriter)
 
-    def set_solid_fill(self, color: int = 7, style: int = 1, rgb: "RGB" = None):
+    def set_solid_fill(
+        self, color: int = 7, style: int = 1, rgb: Optional[RGB] = None
+    ):
         """Set :class:`MPolygon` to solid fill mode and removes all gradient and
         pattern fill related data.
 
@@ -226,8 +231,8 @@ class MPolygon(DXFPolygon):
         if rgb is not None:
             self.set_solid_rgb_gradient(rgb)
 
-    def set_solid_rgb_gradient(self, rgb: "RGB"):
-        """ Set solid fill color as gradient of a single RGB color.
+    def set_solid_rgb_gradient(self, rgb: RGB):
+        """Set solid fill color as gradient of a single RGB color.
         This disables pattern fill!
 
         (internal API)
