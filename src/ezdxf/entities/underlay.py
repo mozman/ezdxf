@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Union, Tuple, Iterable, List, Optional
+from typing import TYPE_CHECKING, Union, Iterable, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -21,7 +21,10 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+
 
 __all__ = [
     "PdfUnderlay",
@@ -105,14 +108,14 @@ class Underlay(DXFGraphic):
 
     def __init__(self) -> None:
         super().__init__()
-        self._boundary_path: List[UVec] = []
+        self._boundary_path: list[UVec] = []
         self._underlay_def: Optional[UnderlayDefinition] = None
 
     def copy(self):
         raise DXFTypeError("Copying of underlay not supported.")
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -147,7 +150,7 @@ class Underlay(DXFGraphic):
         db = doc.entitydb
         self._underlay_def = db.get(self.dxf.get("underlay_def_handle", None))  # type: ignore
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_underlay.name)
@@ -168,7 +171,7 @@ class Underlay(DXFGraphic):
         )
         self.export_boundary_path(tagwriter)
 
-    def export_boundary_path(self, tagwriter: TagWriter):
+    def export_boundary_path(self, tagwriter: AbstractTagWriter):
         for vertex in self.boundary_path:
             tagwriter.write_vertex(11, vertex[:2])
 
@@ -221,11 +224,11 @@ class Underlay(DXFGraphic):
         self.set_flag_state(const.UNDERLAY_ADJUST_FOR_BG, state)
 
     @property
-    def scaling(self) -> Tuple[float, float, float]:
+    def scaling(self) -> tuple[float, float, float]:
         return self.dxf.scale_x, self.dxf.scale_y, self.dxf.scale_z
 
     @scaling.setter
-    def scaling(self, scale: Union[float, Tuple]):
+    def scaling(self, scale: Union[float, tuple]):
         if isinstance(scale, (float, int)):
             x, y, z = scale, scale, scale
         else:
@@ -300,8 +303,8 @@ class UnderlayDefinition(DXFObject):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -309,7 +312,7 @@ class UnderlayDefinition(DXFObject):
             )
         return dxf
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_underlay_def.name)
