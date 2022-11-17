@@ -1,6 +1,7 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import Sequence, Optional, Dict, Union, List
+from __future__ import annotations
+from typing import Sequence, Optional, Union
 import abc
 import copy
 
@@ -48,14 +49,14 @@ PATTERN_DEFINITION_LINE_CODES = {53, 43, 44, 45, 46, 79, 49}
 class DXFPolygon(DXFGraphic):
     """Base class for the HATCH and the MPOLYGON entity."""
 
-    LOAD_GROUP_CODES: Dict[int, Union[str, List[str]]] = {}
+    LOAD_GROUP_CODES: dict[int, Union[str, list[str]]] = {}
 
     def __init__(self) -> None:
         super().__init__()
         self.paths = BoundaryPaths()
         self.pattern: Optional[Pattern] = None
         self.gradient: Optional[Gradient] = None
-        self.seeds: List = []  # not supported/exported by MPOLYGON
+        self.seeds: list = []  # not supported/exported by MPOLYGON
 
     def _copy_data(self, entity: DXFEntity) -> None:
         """Copy paths, pattern, gradient, seeds."""
@@ -66,7 +67,7 @@ class DXFPolygon(DXFGraphic):
         entity.seeds = copy.deepcopy(self.seeds)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -121,7 +122,7 @@ class DXFPolygon(DXFGraphic):
         self.pattern = Pattern.load_tags(pattern_tags)
 
         # Delete pattern data including length tag 78
-        del tags[index: index + len(pattern_tags) + 1]
+        del tags[index : index + len(pattern_tags) + 1]
         return tags
 
     def load_gradient(self, tags: Tags) -> Tags:
@@ -378,7 +379,7 @@ class DXFPolygon(DXFGraphic):
         self.pattern.scale(angle=angle - dxf.pattern_angle)  # type: ignore
         dxf.pattern_angle = angle % 360.0
 
-    def transform(self, m: "Matrix44") -> "DXFPolygon":
+    def transform(self, m: Matrix44) -> DXFPolygon:
         """Transform entity by transformation matrix `m` inplace."""
         dxf = self.dxf
         ocs = OCSTransform(dxf.extrusion, m)
@@ -394,5 +395,7 @@ class DXFPolygon(DXFGraphic):
         return self
 
     @abc.abstractmethod
-    def set_solid_fill(self, color: int = 7, style: int = 1, rgb: "RGB" = None):
+    def set_solid_fill(
+        self, color: int = 7, style: int = 1, rgb: Optional[RGB] = None
+    ):
         ...
