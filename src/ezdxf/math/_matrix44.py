@@ -5,7 +5,7 @@
 # Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Sequence, Iterable, List, Tuple, Iterator, TYPE_CHECKING
+from typing import Sequence, Iterable, Iterator, TYPE_CHECKING, Optional
 import math
 from math import sin, cos, tan
 from itertools import chain
@@ -23,7 +23,7 @@ __all__ = ["Matrix44"]
 # optimization is not needed
 
 
-def floats(items: Iterable) -> List[float]:
+def floats(items: Iterable) -> list[float]:
     return [float(v) for v in items]
 
 
@@ -93,7 +93,7 @@ class Matrix44:
             format_row(row) for row in self.rows()
         )
 
-    def get_2d_transformation(self) -> Tuple[float, ...]:
+    def get_2d_transformation(self) -> tuple[float, ...]:
         """Returns a 2D transformation as a row-major matrix in a linear
         array (tuple).
 
@@ -103,7 +103,7 @@ class Matrix44:
         m = self._matrix
         return m[0], m[1], 0.0, m[4], m[5], 0.0, m[12], m[13], 1.0
 
-    def get_row(self, row: int) -> Tuple[float, ...]:
+    def get_row(self, row: int) -> tuple[float, ...]:
         """Get row as list of four float values.
 
         Args:
@@ -112,7 +112,7 @@ class Matrix44:
         """
         if 0 <= row < 4:
             index = row * 4
-            return tuple(self._matrix[index: index + 4])
+            return tuple(self._matrix[index : index + 4])
         else:
             raise IndexError(f"invalid row index: {row}")
 
@@ -126,11 +126,11 @@ class Matrix44:
         """
         if 0 <= row < 4:
             index = row * 4
-            self._matrix[index: index + len(values)] = floats(values)
+            self._matrix[index : index + len(values)] = floats(values)
         else:
             raise IndexError(f"invalid row index: {row}")
 
-    def get_col(self, col: int) -> Tuple[float, ...]:
+    def get_col(self, col: int) -> tuple[float, ...]:
         """Returns a column as a tuple of four floats.
 
         Args:
@@ -213,7 +213,9 @@ class Matrix44:
         )
 
     @classmethod
-    def scale(cls, sx: float, sy: float = None, sz: float = None) -> Matrix44:
+    def scale(
+        cls, sx: float, sy: Optional[float] = None, sz: Optional[float] = None
+    ) -> Matrix44:
         """Returns a scaling transformation matrix. If `sy` is ``None``,
         `sy` = `sx`, and if `sz` is ``None`` `sz` = `sx`.
 
@@ -463,7 +465,7 @@ class Matrix44:
         ))
         # fmt: on
 
-    def __setitem__(self, index: Tuple[int, int], value: float):
+    def __setitem__(self, index: tuple[int, int], value: float):
         """Set (row, column) element."""
         row, col = index
         if 0 <= row < 4 and 0 <= col < 4:
@@ -471,7 +473,7 @@ class Matrix44:
         else:
             raise IndexError(f"index out of range: {index}")
 
-    def __getitem__(self, index: Tuple[int, int]):
+    def __getitem__(self, index: tuple[int, int]):
         """Get (row, column) element."""
         row, col = index
         if 0 <= row < 4 and 0 <= col < 4:
@@ -530,11 +532,11 @@ class Matrix44:
         # fmt: on
         return self
 
-    def rows(self) -> Iterable[Tuple[float, ...]]:
+    def rows(self) -> Iterable[tuple[float, ...]]:
         """Iterate over rows as 4-tuples."""
         return (self.get_row(index) for index in (0, 1, 2, 3))
 
-    def columns(self) -> Iterable[Tuple[float, ...]]:
+    def columns(self) -> Iterable[tuple[float, ...]]:
         """Iterate over columns as 4-tuples."""
         return (self.get_col(index) for index in (0, 1, 2, 3))
 
