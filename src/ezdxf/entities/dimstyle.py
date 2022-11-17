@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Optional
 import logging
 from ezdxf.enums import MTextLineAlignment
 from ezdxf.lldxf.attributes import (
@@ -22,7 +23,9 @@ from .factory import register_entity
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["DimStyle"]
 
@@ -407,15 +410,15 @@ class DimStyle(DXFEntity):
         return self.doc.dxfversion
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             # group code 70 is used 2x, simple_dxfattribs_loader() can't be used!
             processor.fast_load_dxfattribs(dxf, acdb_dimstyle_group_codes, 2)
         return dxf
 
-    def post_load_hook(self, doc: "Drawing") -> None:
+    def post_load_hook(self, doc: Drawing) -> None:
         # 2nd Loading stage: resolve handles to names.
         # ezdxf uses names for blocks, linetypes and text style as internal
         # data, handles are set at export.
@@ -458,7 +461,7 @@ class DimStyle(DXFEntity):
         # at export.
         self.discard_handles()
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(
@@ -557,7 +560,7 @@ class DimStyle(DXFEntity):
             if name.startswith("dim"):
                 print(f"{name} ({attdef(name).code}) = {value}")  # type: ignore
 
-    def copy_to_header(self, doc: "Drawing"):
+    def copy_to_header(self, doc: Drawing):
         """Copy all dimension style variables to HEADER section of `doc`."""
         attribs = self.dxfattribs()
         header = doc.header
@@ -612,7 +615,7 @@ class DimStyle(DXFEntity):
         self.set_dxf_attrib("dimtsz", size)
 
     def set_text_align(
-        self, halign: str = None, valign: str = None, vshift: float = None
+        self, halign: Optional[str] = None, valign: Optional[str] = None, vshift: Optional[float] = None
     ) -> None:
         """Set measurement text alignment, `halign` defines the horizontal
         alignment (requires DXF R2000+), `valign` defines the vertical
@@ -641,9 +644,9 @@ class DimStyle(DXFEntity):
         self,
         prefix: str = "",
         postfix: str = "",
-        rnd: float = None,
-        dec: int = None,
-        sep: str = None,
+        rnd: Optional[float] = None,
+        dec: Optional[int] = None,
+        sep: Optional[str] = None,
         leading_zeros: bool = True,
         trailing_zeros: bool = True,
     ):
@@ -687,12 +690,12 @@ class DimStyle(DXFEntity):
 
     def set_dimline_format(
         self,
-        color: int = None,
-        linetype: str = None,
-        lineweight: int = None,
-        extension: float = None,
-        disable1: bool = None,
-        disable2: bool = None,
+        color: Optional[int] = None,
+        linetype: Optional[str] = None,
+        lineweight: Optional[int] = None,
+        extension: Optional[float] = None,
+        disable1: Optional[bool] = None,
+        disable2: Optional[bool] = None,
     ):
         """Set dimension line properties
 
@@ -724,11 +727,11 @@ class DimStyle(DXFEntity):
 
     def set_extline_format(
         self,
-        color: int = None,
-        lineweight: int = None,
-        extension: float = None,
-        offset: float = None,
-        fixed_length: float = None,
+        color: Optional[int] = None,
+        lineweight: Optional[int] = None,
+        extension: Optional[float] = None,
+        offset: Optional[float] = None,
+        fixed_length: Optional[float] = None,
     ):
         """Set common extension line attributes.
 
@@ -753,7 +756,7 @@ class DimStyle(DXFEntity):
             self.dxf.dimfxlon = 1
             self.dxf.dimfxl = fixed_length
 
-    def set_extline1(self, linetype: str = None, disable=False):
+    def set_extline1(self, linetype: Optional[str] = None, disable=False):
         """Set extension line 1 attributes.
 
         Args:
@@ -766,7 +769,7 @@ class DimStyle(DXFEntity):
         if linetype is not None:
             self.dxf.dimltex1 = linetype
 
-    def set_extline2(self, linetype: str = None, disable=False):
+    def set_extline2(self, linetype: Optional[str] = None, disable=False):
         """Set extension line 2 attributes.
 
         Args:
@@ -782,12 +785,12 @@ class DimStyle(DXFEntity):
     def set_tolerance(
         self,
         upper: float,
-        lower: float = None,
+        lower: Optional[float] = None,
         hfactor: float = 1.0,
-        align: MTextLineAlignment = None,
-        dec: int = None,
-        leading_zeros: bool = None,
-        trailing_zeros: bool = None,
+        align: Optional[MTextLineAlignment] = None,
+        dec: Optional[int] = None,
+        leading_zeros: Optional[bool] = None,
+        trailing_zeros: Optional[bool] = None,
     ) -> None:
         """Set tolerance text format, upper and lower value, text height
         factor, number of decimal places or leading and trailing zero
@@ -843,9 +846,9 @@ class DimStyle(DXFEntity):
         upper: float,
         lower: float,
         hfactor: float = 1.0,
-        dec: int = None,
-        leading_zeros: bool = None,
-        trailing_zeros: bool = None,
+        dec: Optional[int] = None,
+        leading_zeros: Optional[bool] = None,
+        trailing_zeros: Optional[bool] = None,
     ) -> None:
         """Set limits text format, upper and lower limit values, text height
         factor, number of decimal places or leading and trailing zero
@@ -853,7 +856,7 @@ class DimStyle(DXFEntity):
 
         Args:
             upper: upper limit value added to measurement value
-            lower: lower lower value subtracted from measurement value
+            lower: lower limit value subtracted from measurement value
             hfactor: limit text height factor in relation to the dimension
                 text height
             dec: Sets the number of decimal places displayed,
@@ -896,7 +899,7 @@ class DimStyle(DXFEntity):
                         yield block.block_record.dxf.handle
 
 
-def get_block_name_by_handle(handle, doc: "Drawing", default="") -> str:
+def get_block_name_by_handle(handle, doc: Drawing, default="") -> str:
     try:
         entry = doc.entitydb[handle]
     except const.DXFKeyError:
