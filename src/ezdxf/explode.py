@@ -265,7 +265,7 @@ EXCLUDE_FROM_EXPLODE = {"POINT"}
 
 
 def explode_entity(
-    entity: DXFGraphic, target_layout: BaseLayout = None
+    entity: DXFGraphic, target_layout: Optional[BaseLayout] = None
 ) -> EntityQuery:
     """Explode parts of an entity as primitives into target layout, if target
     layout is ``None``, the target layout is the layout of the source entity.

@@ -38,17 +38,12 @@ from .factory import register_entity
 from .dimstyleoverride import DimStyleOverride
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        DimStyle,
-        DXFNamespace,
-        BlockLayout,
-        OCS,
-        BaseLayout,
-        EntityQuery,
-        DXFEntity,
-        Auditor,
-    )
+    from ezdxf.entities import DXFNamespace, DXFEntity, DimStyle
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.layouts import BaseLayout, BlockLayout
+    from ezdxf.audit import Auditor
+    from ezdxf.query import EntityQuery
+    from ezdxf.math import OCS
 
 logger = logging.getLogger("ezdxf")
 ADSK_CONSTRAINTS = "*ADSK_CONSTRAINTS"
@@ -532,7 +527,7 @@ class Dimension(DXFGraphic, OverrideMixin):
             self.virtual_block_content = None
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -546,7 +541,7 @@ class Dimension(DXFGraphic, OverrideMixin):
             # content.
         return dxf
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion == DXF12:
@@ -817,7 +812,9 @@ class Dimension(DXFGraphic, OverrideMixin):
         """
         return self.__virtual_entities__()
 
-    def explode(self, target_layout: BaseLayout = None) -> EntityQuery:
+    def explode(
+        self, target_layout: Optional[BaseLayout] = None
+    ) -> EntityQuery:
         """
         Explode parts of DIMENSION as basic DXF entities like LINE, ARC or TEXT
         into target layout, if target layout is ``None``, the target layout is
@@ -906,7 +903,7 @@ class ArcDimension(Dimension):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         # Skip Dimension loader:
         dxf = super(Dimension, self).load_dxf_attribs(processor)
@@ -925,7 +922,7 @@ class ArcDimension(Dimension):
         else:
             return (self.dxf.dimtype & 0xFFF0) | 5
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         dimtype = self.dxf.dimtype  # preserve original dimtype
         self.dxf.dimtype = self.versioned_dimtype(tagwriter.dxfversion)
@@ -994,7 +991,7 @@ class RadialDimensionLarge(Dimension):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2004
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         # Skip Dimension loader:
         dxf = super(Dimension, self).load_dxf_attribs(processor)
@@ -1007,7 +1004,7 @@ class RadialDimensionLarge(Dimension):
             )
         return dxf
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbRadialDimensionLarge")
@@ -1167,7 +1164,7 @@ def angle_between(v1: Vec3, v2: Vec3) -> float:
 
 
 def linear_measurement(
-    p1: Vec3, p2: Vec3, angle: float = 0, ocs: OCS = None
+    p1: Vec3, p2: Vec3, angle: float = 0, ocs: Optional[OCS] = None
 ) -> float:
     """Returns distance from `p1` to `p2` projected onto ray defined by
     `angle`, `angle` in radians in the xy-plane.
