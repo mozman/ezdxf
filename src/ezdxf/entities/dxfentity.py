@@ -130,10 +130,10 @@ class DXFEntity:
     @classmethod
     def new(
         cls: Type[T],
-        handle: str = None,
-        owner: str = None,
-        dxfattribs: dict = None,
-        doc: Drawing = None,
+        handle: Optional[str] = None,
+        owner: Optional[str] = None,
+        dxfattribs: Optional[dict] = None,
+        doc: Optional[Drawing] = None,
     ) -> T:
         """Constructor for building new entities from scratch by ezdxf.
 
@@ -249,7 +249,7 @@ class DXFEntity:
             self.dxf = self.load_dxf_attribs(processor)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         """Load DXF attributes into DXF namespace."""
         return DXFNamespace(processor, self)
