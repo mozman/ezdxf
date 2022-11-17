@@ -1,7 +1,15 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Sequence, cast, List, Iterator
+from typing import (
+    TYPE_CHECKING,
+    List,
+    Iterable,
+    Sequence,
+    cast,
+    Iterator,
+    Optional,
+)
 import array
 import copy
 from itertools import chain
@@ -43,7 +51,9 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Auditor, Ellipse
+    from ezdxf.entities import DXFNamespace, Ellipse
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.audit import Auditor
 
 __all__ = ["Spline"]
 
@@ -162,7 +172,7 @@ class Spline(DXFGraphic):
         entity._weights = copy.deepcopy(self._weights)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -178,7 +188,7 @@ class Spline(DXFGraphic):
                 )
         return dxf
 
-    def load_spline_data(self, tags) -> Iterable:
+    def load_spline_data(self, tags) -> Iterator:
         """Load and set spline data (fit points, control points, weights,
         knots) and remove invalid start- and end tangents.
         Yields the remaining unprocessed tags.
@@ -208,7 +218,7 @@ class Spline(DXFGraphic):
         self.knots = knots
         self.weights = weights
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_spline.name)
@@ -229,7 +239,7 @@ class Spline(DXFGraphic):
 
         self.export_spline_data(tagwriter)
 
-    def export_spline_data(self, tagwriter: TagWriter):
+    def export_spline_data(self, tagwriter: AbstractTagWriter):
         for value in self._knots:
             tagwriter.write_tag2(40, value)
 
@@ -252,13 +262,13 @@ class Spline(DXFGraphic):
         self.set_flag_state(self.CLOSED, state=status, name="flags")
 
     @property
-    def knots(self) -> List[float]:
+    def knots(self) -> list[float]:
         """Knot values as :code:`array.array('d')`."""
         return self._knots
 
     @knots.setter
     def knots(self, values: Iterable[float]) -> None:
-        self._knots: List[float] = cast(List[float], array.array("d", values))
+        self._knots: list[float] = cast(List[float], array.array("d", values))
 
     # DXF callback attribute Spline.dxf.n_knots
     def knot_count(self) -> int:
@@ -266,13 +276,13 @@ class Spline(DXFGraphic):
         return len(self._knots)
 
     @property
-    def weights(self) -> List[float]:
+    def weights(self) -> list[float]:
         """Control point weights as :code:`array.array('d')`."""
         return self._weights
 
     @weights.setter
     def weights(self, values: Iterable[float]) -> None:
-        self._weights: List[float] = cast(List[float], array.array("d", values))
+        self._weights: list[float] = cast(List[float], array.array("d", values))
 
     @property
     def control_points(self) -> Vertices:
@@ -414,7 +424,7 @@ class Spline(DXFGraphic):
     def set_open_uniform(
         self, control_points: Sequence[UVec], degree: int = 3
     ) -> None:
-        """Open B-spline with uniform knot vector, start and end at your first
+        """Open B-spline with a uniform knot vector, start and end at your first
         and last control points.
 
         """
@@ -436,8 +446,8 @@ class Spline(DXFGraphic):
         self.knots = uniform_knot_vector(len(control_points), degree + 1)
 
     def set_closed(self, control_points: Sequence[UVec], degree=3) -> None:
-        """
-        Closed B-spline with uniform knot vector, start and end at your first control point.
+        """Closed B-spline with a uniform knot vector, start and end at your
+        first control point.
 
         """
         self.dxf.flags = self.PERIODIC | self.CLOSED
