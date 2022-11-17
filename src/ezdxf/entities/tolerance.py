@@ -1,6 +1,7 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -18,7 +19,10 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Matrix44
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.math import Matrix44
+
 
 __all__ = ["Tolerance"]
 
@@ -64,8 +68,8 @@ class Tolerance(DXFGraphic):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -73,7 +77,7 @@ class Tolerance(DXFGraphic):
             )
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_tolerance.name)
@@ -82,7 +86,7 @@ class Tolerance(DXFGraphic):
             ["dimstyle", "insert", "content", "extrusion", "x_axis_vector"],
         )
 
-    def transform(self, m: "Matrix44") -> "Tolerance":
+    def transform(self, m: Matrix44) -> Tolerance:
         """Transform the TOLERANCE entity by transformation matrix `m` inplace."""
         self.dxf.insert = m.transform(self.dxf.insert)
         self.dxf.x_axis_vector = m.transform_direction(self.dxf.x_axis_vector)
