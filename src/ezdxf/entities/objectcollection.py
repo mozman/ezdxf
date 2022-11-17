@@ -1,11 +1,11 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Iterator,
     cast,
     Optional,
-    Tuple,
     TypeVar,
     Generic,
 )
@@ -17,11 +17,8 @@ from ezdxf.lldxf.const import (
 from ezdxf.lldxf.validator import make_table_key, is_valid_table_name
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        DXFObject,
-        Dictionary,
-        Drawing,
-    )
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFObject, Dictionary
 
 
 def validate_name(name: str) -> str:
@@ -39,17 +36,17 @@ T = TypeVar("T", bound="DXFObject")
 class ObjectCollection(Generic[T]):
     def __init__(
         self,
-        doc: "Drawing",
+        doc: Drawing,
         dict_name: str = "ACAD_MATERIAL",
         object_type: str = "MATERIAL",
     ):
-        self.doc: "Drawing" = doc
+        self.doc: Drawing = doc
         self.object_type: str = object_type
-        self.object_dict: "Dictionary" = doc.rootdict.get_required_dict(
+        self.object_dict: Dictionary = doc.rootdict.get_required_dict(
             dict_name
         )
 
-    def __iter__(self) -> Iterator[Tuple[str, T]]:
+    def __iter__(self) -> Iterator[tuple[str, T]]:
         return self.object_dict.items()
 
     def __len__(self) -> int:
@@ -71,7 +68,7 @@ class ObjectCollection(Generic[T]):
                 return False
         return True
 
-    def get(self, name: str, default: T = None) -> Optional[T]:
+    def get(self, name: str, default: Optional[T] = None) -> Optional[T]:
         """Get object by name. Object collection entries are case insensitive.
 
         Args:
@@ -88,7 +85,7 @@ class ObjectCollection(Generic[T]):
     def new(self, name: str) -> T:
         """Create a new object of type `self.object_type` and store its handle
         in the object manager dictionary.  Object collection entry names are
-        case insensitive and limited to 255 characters.
+        case-insensitive and limited to 255 characters.
 
         Args:
             name: name of new object as string
@@ -157,7 +154,7 @@ class ObjectCollection(Generic[T]):
 
         obj = self.get(name)  # case insensitive
         if obj is not None:
-            # The underlying DICTIONARY is not case insensitive implemented,
+            # The underlying DICTIONARY is not case-insensitive implemented,
             # get real object name if available
             if obj.dxf.is_supported("name"):
                 name = obj.dxf.get("name", name)
