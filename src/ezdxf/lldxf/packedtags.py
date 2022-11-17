@@ -1,5 +1,7 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
+from typing import Optional
 from array import array
 from typing import Iterable, MutableSequence, Sequence, Iterator
 
@@ -7,7 +9,7 @@ from .types import DXFTag
 from .const import DXFTypeError, DXFIndexError, DXFValueError
 from .tags import Tags
 from ezdxf.tools.indexing import Index
-from ezdxf.lldxf.tagwriter import TagWriter
+from ezdxf.lldxf.tagwriter import AbstractTagWriter
 from ezdxf.math import Matrix44
 
 
@@ -19,12 +21,12 @@ class TagList:
     def __init__(self, data: Iterable = None):
         self.values: MutableSequence = list(data or [])
 
-    def clone(self) -> "TagList":
+    def clone(self) -> TagList:
         """Returns a deep copy."""
         return self.__class__(data=self.values)
 
     @classmethod
-    def from_tags(cls, tags: Tags, code: int) -> "TagList":
+    def from_tags(cls, tags: Tags, code: int) -> TagList:
         """
         Setup list from iterable tags.
 
@@ -49,7 +51,7 @@ class TagArray(TagList):
     # Defines the data type of array.array()
     DTYPE = "i"
 
-    def __init__(self, data: Iterable = None):
+    def __init__(self, data: Optional[Iterable] = None):
         self.values: array = array(self.DTYPE, data or [])
 
     def set_values(self, values: Iterable) -> None:
@@ -66,7 +68,7 @@ class VertexArray:
     VERTEX_SIZE = 3  # set to 2 for 2d points
     __slots__ = ("values",)
 
-    def __init__(self, data: Iterable = None):
+    def __init__(self, data: Optional[Iterable] = None):
         self.values = array("d", data or [])
 
     def __len__(self) -> int:
@@ -129,12 +131,12 @@ class VertexArray:
         for value in reversed(point):
             _insert(pos, value)
 
-    def clone(self) -> "VertexArray":
+    def clone(self) -> VertexArray:
         """Returns a deep copy."""
         return self.__class__(data=self.values)
 
     @classmethod
-    def from_tags(cls, tags: Iterable[DXFTag], code: int = 10) -> "VertexArray":
+    def from_tags(cls, tags: Iterable[DXFTag], code: int = 10) -> VertexArray:
         """Setup point array from iterable tags.
 
         Args:
@@ -190,7 +192,7 @@ class VertexArray:
         )
         self.values = survivors
 
-    def export_dxf(self, tagwriter: "TagWriter", code=10):
+    def export_dxf(self, tagwriter: AbstractTagWriter, code=10):
         delta = 0
         for c in self.values:
             tagwriter.write_tag2(code + delta, c)
