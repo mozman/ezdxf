@@ -1,6 +1,7 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast, Dict, Tuple
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast, Optional
 from collections import Counter, OrderedDict
 import logging
 
@@ -9,7 +10,8 @@ from ezdxf.entities.dxfclass import DXFClass
 from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing
+    from ezdxf.document import Drawing
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 logger = logging.getLogger("ezdxf")
 
@@ -181,17 +183,19 @@ REQUIRED_CLASSES = {
 
 class ClassesSection:
     def __init__(
-        self, doc: "Drawing" = None, entities: Iterable[DXFEntity] = None
+        self,
+        doc: Optional[Drawing] = None,
+        entities: Optional[Iterable[DXFEntity]] = None,
     ):
         # Multiple entries for 'name' possible -> key is (name, cpp_class_name)
         # DXFClasses are not stored in the entities database, because CLASS has
         # no handle.
-        self.classes: Dict[Tuple[str, str], DXFClass] = OrderedDict()
+        self.classes: dict[tuple[str, str], DXFClass] = OrderedDict()
         self.doc = doc
         if entities is not None:
             self.load(iter(entities))
 
-    def __iter__(self) -> Iterable[DXFClass]:
+    def __iter__(self) -> Iterator[DXFClass]:
         return (cls for cls in self.classes.values())
 
     def load(self, entities: Iterator[DXFEntity]) -> None:
@@ -214,7 +218,7 @@ class ClassesSection:
                 )
 
     def register(
-        self, classes: Union[DXFClass, Iterable[DXFClass]] = None
+        self, classes: Optional[Union[DXFClass, Iterable[DXFClass]]] = None
     ) -> None:
         if classes is None:
             return
@@ -298,7 +302,7 @@ class ClassesSection:
         for dxftype in dxf_types_in_use:
             self.add_class(dxftype)
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         """Export DXF tags. (internal API)"""
         tagwriter.write_str("  0\nSECTION\n  2\nCLASSES\n")
         for dxfclass in self.classes.values():
@@ -312,7 +316,7 @@ class ClassesSection:
         assert self.doc is not None
         if self.doc.dxfversion < DXF2004:
             return  # instance counter not supported
-        counter: Dict[str, int] = Counter()
+        counter: dict[str, int] = Counter()
         # count all entities in the entity database
         for entity in self.doc.entitydb.values():
             counter[entity.dxftype()] += 1
