@@ -1,6 +1,7 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Optional, List, Iterator, cast
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Optional, Iterator
 from itertools import chain
 import logging
 from .types import tuples_to_tags, NONE_TAG
@@ -38,26 +39,26 @@ class ExtendedTags:
 
     __slots__ = ("subclasses", "appdata", "xdata", "embedded_objects")
 
-    def __init__(self, tags: Iterable[DXFTag] = None, legacy=False):
+    def __init__(self, tags: Optional[Iterable[DXFTag]] = None, legacy=False):
         if isinstance(tags, str):
             raise DXFValueError(
                 "use ExtendedTags.from_text() to create tags from a string."
             )
 
         # code == 102, keys are "{<arbitrary name>", values are Tags()
-        self.appdata: List[Tags] = list()
+        self.appdata: list[Tags] = list()
 
         # code == 100, keys are "subclass-name", values are Tags()
-        self.subclasses: List[Tags] = list()
+        self.subclasses: list[Tags] = list()
 
         # code >= 1000, keys are "APPID", values are Tags()
-        self.xdata: List[Tags] = list()
+        self.xdata: list[Tags] = list()
 
         # Store embedded objects as list, but embedded objects are rare, so
         # storing an empty list for every DXF entity is waste of memory.
         # Support for multiple embedded objects is maybe future proof, but
         # for now only one embedded object per entity is used.
-        self.embedded_objects: Optional[List[Tags]] = None
+        self.embedded_objects: Optional[list[Tags]] = None
 
         if tags is not None:
             self._setup(iter(tags))
@@ -113,7 +114,7 @@ class ExtendedTags:
             handle = ""
         return self.dxftype() + handle
 
-    def __copy__(self) -> "ExtendedTags":
+    def __copy__(self) -> ExtendedTags:
         """Shallow copy."""
 
         def copy(tag_lists):
@@ -370,12 +371,14 @@ class ExtendedTags:
                 return xdata
         raise DXFValueError(f'No extended data for APPID "{appid}".')
 
-    def set_xdata(self, appid: str, tags: "IterableTags") -> None:
+    def set_xdata(self, appid: str, tags: IterableTags) -> None:
         """Set `tags` as XDATA for `appid`."""
         xdata = self.get_xdata(appid)
         xdata[1:] = tuples_to_tags(tags)
 
-    def new_xdata(self, appid: str, tags: "IterableTags" = None) -> Tags:
+    def new_xdata(
+        self, appid: str, tags: Optional[IterableTags] = None
+    ) -> Tags:
         """Append a new XDATA block.
 
         Assumes that no XDATA block with the same `appid` already exist::
@@ -411,13 +414,16 @@ class ExtendedTags:
         """
         return Tags(self.get_app_data(appid)[1:-1])
 
-    def set_app_data_content(self, appid: str, tags: "IterableTags") -> None:
+    def set_app_data_content(self, appid: str, tags: IterableTags) -> None:
         """Set application defined data for `appid` for already exiting data."""
         app_data = self.get_app_data(appid)
         app_data[1:-1] = tuples_to_tags(tags)
 
     def new_app_data(
-        self, appid: str, tags: "IterableTags" = None, subclass_name: str = None
+        self,
+        appid: str,
+        tags: Optional[IterableTags] = None,
+        subclass_name: Optional[str] = None,
     ) -> Tags:
         """Append a new application defined data to subclass `subclass_name`.
 
@@ -452,6 +458,6 @@ class ExtendedTags:
         return app_tags
 
     @classmethod
-    def from_text(cls, text: str, legacy=False) -> "ExtendedTags":
+    def from_text(cls, text: str, legacy=False) -> ExtendedTags:
         """Create :class:`ExtendedTags` from DXF text."""
         return cls(internal_tag_compiler(text), legacy=legacy)
