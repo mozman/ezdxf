@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Optional
@@ -18,7 +18,7 @@ class TagList:
 
     __slots__ = ("values",)
 
-    def __init__(self, data: Iterable = None):
+    def __init__(self, data: Optional[Iterable] = None):
         self.values: MutableSequence = list(data or [])
 
     def clone(self) -> TagList:
