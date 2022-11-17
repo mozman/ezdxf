@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
 import logging
 from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.attributes import (
@@ -18,7 +19,8 @@ from .factory import register_entity
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.tools.fonts import AbstractFont
 
 __all__ = ["Textstyle"]
@@ -93,14 +95,14 @@ class Textstyle(DXFEntity):
     BOLD = 0b10000000000000000000000000
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.simple_dxfattribs_loader(dxf, acdb_style_group_codes)  # type: ignore
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
@@ -126,7 +128,7 @@ class Textstyle(DXFEntity):
         """Returns ``True`` if extended font data is present."""
         return self.has_xdata("ACAD")
 
-    def get_extended_font_data(self) -> Tuple[str, bool, bool]:
+    def get_extended_font_data(self) -> tuple[str, bool, bool]:
         """Returns extended font data as tuple (font-family, italic-flag,
         bold-flag).
 
@@ -205,8 +207,10 @@ class Textstyle(DXFEntity):
         self.set_flag_state(const.VERTICAL_STACKED, state, "flags")
 
     def make_font(
-        self, cap_height: float = None, width_factor: float = None
-    ) -> "AbstractFont":
+        self,
+        cap_height: Optional[float] = None,
+        width_factor: Optional[float] = None,
+    ) -> AbstractFont:
         """Returns a font abstraction :class:`~ezdxf.tools.fonts.AbstractFont`
         for this text style. Returns a font for a cap height of 1, if the
         text style has auto height (:attr:`Textstyle.dxf.height` is 0) and
