@@ -47,7 +47,7 @@ def register_entity(cls):
 
 
 def new(
-    dxftype: str, dxfattribs: dict = None, doc: Optional[Drawing] = None
+    dxftype: str, dxfattribs=None, doc: Optional[Drawing] = None
 ) -> DXFEntity:
     """Create a new entity, does not require an instantiated DXF document."""
     entity = cls(dxftype).new(
@@ -59,7 +59,7 @@ def new(
     return entity.cast() if hasattr(entity, "cast") else entity  # type: ignore
 
 
-def create_db_entry(dxftype, dxfattribs: dict, doc: Drawing) -> DXFEntity:
+def create_db_entry(dxftype, dxfattribs, doc: Drawing) -> DXFEntity:
     entity = new(dxftype=dxftype, dxfattribs=dxfattribs)
     bind(entity, doc)
     return entity
