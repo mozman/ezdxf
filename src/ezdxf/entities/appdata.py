@@ -1,15 +1,7 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import (
-    TYPE_CHECKING,
-    List,
-    Iterable,
-    Set,
-    Sequence,
-    Optional,
-    Iterator,
-    Dict,
-)
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Sequence, Optional, Iterator
 from collections import OrderedDict
 from ezdxf.lldxf.types import dxftag, uniform_appid
 from ezdxf.lldxf.tags import Tags
@@ -21,7 +13,7 @@ from ezdxf.lldxf.const import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.lldxf.tagwriter import TagWriter
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["AppData", "Reactors"]
 
@@ -31,7 +23,7 @@ ERR_DXF_ATTRIB_NOT_EXITS = "DXF attribute {} does not exist"
 
 class AppData:
     def __init__(self) -> None:
-        self.data: Dict[str, Tags] = OrderedDict()
+        self.data: dict[str, Tags] = OrderedDict()
 
     def __contains__(self, appid: str) -> bool:
         """Returns ``True`` if application-defined data exist for `appid`."""
@@ -82,7 +74,7 @@ class AppData:
         if _appid in self.data:
             del self.data[_appid]
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         for data in self.data.values():
             tagwriter.write_tags(data)
 
@@ -95,8 +87,8 @@ class Reactors:
 
     """
 
-    def __init__(self, handles: Iterable[str] = None):
-        self.reactors: Set[str] = set(handles or [])
+    def __init__(self, handles: Optional[Iterable[str]] = None):
+        self.reactors: set[str] = set(handles or [])
 
     def __len__(self) -> int:
         """Returns count of registered handles."""
@@ -111,7 +103,7 @@ class Reactors:
         return iter(self.get())
 
     @classmethod
-    def from_tags(cls, tags: Tags = None) -> "Reactors":
+    def from_tags(cls, tags: Optional[Tags] = None) -> Reactors:
         """Create Reactors() instance from tags.
 
         Expected DXF structure:
@@ -128,7 +120,7 @@ class Reactors:
             raise DXFStructureError("ACAD_REACTORS error")
         return cls((handle.value for handle in tags[1:-1]))
 
-    def get(self) -> List[str]:
+    def get(self) -> list[str]:
         """Returns all registered handles as sorted list."""
         return sorted(self.reactors, key=lambda x: int(x, base=16))
 
@@ -144,7 +136,7 @@ class Reactors:
         """Discard a single `handle`."""
         self.reactors.discard(handle)
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         tagwriter.write_tag2(APP_DATA_MARKER, ACAD_REACTORS)
         for handle in self.get():
             tagwriter.write_tag2(REACTOR_HANDLE_CODE, handle)
