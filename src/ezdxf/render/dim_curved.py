@@ -1,5 +1,6 @@
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 import math
 from typing import TYPE_CHECKING, Tuple, List, Optional, Dict, Any
 from abc import abstractmethod
@@ -189,8 +190,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
     def __init__(
         self,
         dimension: Dimension,
-        ucs: "UCS" = None,
-        override: DimStyleOverride = None,
+        ucs: Optional[UCS] = None,
+        override: Optional[DimStyleOverride] = None,
     ):
         super().__init__(dimension, ucs, override)
         # Common parameters for all sub-classes:
@@ -736,8 +737,8 @@ class AngularDimension(_AngularCommonBase):
     def __init__(
         self,
         dimension: Dimension,
-        ucs: "UCS" = None,
-        override: DimStyleOverride = None,
+        ucs: Optional[UCS] = None,
+        override: Optional[DimStyleOverride] = None,
     ):
         self.leg1_start = get_required_defpoint(dimension, "defpoint")
         self.leg1_end = get_required_defpoint(dimension, "defpoint4")
@@ -837,8 +838,8 @@ class Angular3PDimension(_AngularCommonBase):
     def __init__(
         self,
         dimension: Dimension,
-        ucs: "UCS" = None,
-        override: DimStyleOverride = None,
+        ucs: Optional[UCS] = None,
+        override: Optional[DimStyleOverride] = None,
     ):
         self.dim_line_location = get_required_defpoint(dimension, "defpoint")
         self.leg1_start = get_required_defpoint(dimension, "defpoint2")

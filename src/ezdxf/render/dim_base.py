@@ -3,12 +3,9 @@
 from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
-    Tuple,
     Iterable,
     Optional,
-    Dict,
     Any,
-    List,
     cast,
 )
 import math
@@ -31,11 +28,9 @@ from ezdxf.render.arrows import ARROWS
 from ezdxf.entities import DimStyleOverride, Dimension
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        Drawing,
-        GenericLayoutType,
-        Textstyle,
-    )
+    from ezdxf.document import Drawing
+    from ezdxf.entities import Textstyle
+    from ezdxf.eztypes import GenericLayoutType
 
 
 class TextBox(ConstructionBox):
@@ -50,9 +45,7 @@ class TextBox(ConstructionBox):
         hgap: float = 0.0,  # horizontal gap - width
         vgap: float = 0.0,  # vertical gap - height
     ):
-        super().__init__(
-            center, width + 2.0 * hgap, height + 2.0 * vgap, angle
-        )
+        super().__init__(center, width + 2.0 * hgap, height + 2.0 * vgap, angle)
 
 
 PLUS_MINUS = "±"
@@ -80,7 +73,7 @@ def sign_char(value: float) -> str:
 
 def format_text(
     value: float,
-    dimrnd: float = None,
+    dimrnd: Optional[float] = None,
     dimdec: int = 2,
     dimzin: int = 0,
     dimdsep: str = ".",
@@ -319,9 +312,9 @@ class ExtensionLines:
         # Length below the dimension line:
         self.length_below: float = get("dimfxl", self.extension_above) * scale
 
-    def dxfattribs(self, num: int = 1) -> Dict[str, Any]:
+    def dxfattribs(self, num: int = 1) -> Any:
         """Returns default dimension line DXF attributes as dict."""
-        attribs: Dict[str, Any] = {"color": self.color}
+        attribs: dict[str, Any] = {"color": self.color}
         if num == 1:
             linetype = self.linetype1
         elif num == 2:
@@ -367,9 +360,9 @@ class DimensionLine:
         # not supported yet - ezdxf behaves like option 1
         self.has_dim_line_if_text_outside: bool = bool(get("dimtofl", 1))
 
-    def dxfattribs(self) -> Dict[str, Any]:
+    def dxfattribs(self) -> Any:
         """Returns default dimension line DXF attributes as dict."""
-        attribs: Dict[str, Any] = {"color": self.color}
+        attribs: dict[str, Any] = {"color": self.color}
         if self.linetype:
             attribs["linetype"] = self.linetype
         if self.lineweight != self.default_lineweight:
@@ -404,7 +397,7 @@ class Arrows:
     def has_ticks(self) -> bool:
         return self.tick_size > 0.0
 
-    def dxfattribs(self) -> Dict[str, Any]:
+    def dxfattribs(self) -> Any:
         return {"color": self.color}
 
 
@@ -703,7 +696,7 @@ class Measurement:
         self.relative_user_location = relative
         self.text_is_outside = True
 
-    def dxfattribs(self) -> Dict[str, Any]:
+    def dxfattribs(self) -> Any:
         return {"color": self.text_color}
 
     @abc.abstractmethod
@@ -792,7 +785,7 @@ class Geometry:
         insert: Vec2,
         size: float,
         rotation: float,
-        dxfattribs: Dict[str, Any],
+        dxfattribs,
     ) -> None:
         # OCS of the arrow blocks is defined by the DIMENSION entity!
         # Therefore remove OCS elevation, the elevation is defined by the
@@ -807,7 +800,7 @@ class Geometry:
         name: str,
         insert: Vec2,
         rotation: float,
-        dxfattribs: Dict[str, Any],
+        dxfattribs,
     ) -> None:
         # OCS of the arrow blocks is defined by the DIMENSION entity!
         # Therefore remove OCS elevation, the elevation is defined by the
@@ -818,7 +811,7 @@ class Geometry:
         self.layout.add_blockref(name, insert, dxfattribs)
 
     def add_text(
-        self, text: str, pos: Vec2, rotation: float, dxfattribs: Dict[str, Any]
+        self, text: str, pos: Vec2, rotation: float, dxfattribs
     ) -> None:
         dxfattribs["rotation"] = self.ucs.to_ocs_angle_deg(rotation)
         entity = self.layout.add_text(text, dxfattribs=dxfattribs)
@@ -826,10 +819,13 @@ class Geometry:
         # Therefore remove OCS elevation, the elevation is defined by the
         # DIMENSION 'text_midpoint' (group code 11) and do not set 'extrusion'
         # either!
-        entity.set_placement(self.ucs.to_ocs(Vec3(pos)).vec2, align=TextEntityAlignment.MIDDLE_CENTER)
+        entity.set_placement(
+            self.ucs.to_ocs(Vec3(pos)).vec2,
+            align=TextEntityAlignment.MIDDLE_CENTER,
+        )
 
     def add_mtext(
-        self, text: str, pos: Vec2, rotation: float, dxfattribs: Dict[str, Any]
+        self, text: str, pos: Vec2, rotation: float, dxfattribs
     ) -> None:
         # OCS of the measurement text is defined by the DIMENSION entity!
         # Therefore remove OCS elevation, the elevation is defined by the
@@ -854,7 +850,7 @@ class Geometry:
         self,
         start: Vec2,
         end: Vec2,
-        dxfattribs: Dict[str, Any],
+        dxfattribs,
         remove_hidden_lines=False,
     ) -> None:
         """Add a LINE entity to the geometry layout. Removes parts of the line
@@ -877,7 +873,7 @@ class Geometry:
                 dxfattribs=dxfattribs,
             )
 
-        def order(a: Vec2, b: Vec2) -> Tuple[Vec2, Vec2]:
+        def order(a: Vec2, b: Vec2) -> tuple[Vec2, Vec2]:
             if (start - a).magnitude < (start - b).magnitude:
                 return a, b
             else:
@@ -926,7 +922,7 @@ class Geometry:
         radius: float,
         start_angle: float,
         end_angle: float,
-        dxfattribs: dict = None,
+        dxfattribs=None,
         remove_hidden_lines=False,
     ) -> None:
         """Add a ARC entity to the geometry layout. Removes parts of the arc
@@ -978,8 +974,8 @@ class BaseDimensionRenderer:
     def __init__(
         self,
         dimension: Dimension,
-        ucs: UCS = None,
-        override: DimStyleOverride = None,
+        ucs: Optional[UCS] = None,
+        override: Optional[DimStyleOverride] = None,
     ):
         self.dimension: Dimension = dimension
         self.geometry = self.init_geometry(dimension, ucs)
@@ -1041,7 +1037,7 @@ class BaseDimensionRenderer:
             self.measurement.text_height, self.tol.text_height
         )
 
-    def init_geometry(self, dimension: Dimension, ucs: UCS = None):
+    def init_geometry(self, dimension: Dimension, ucs: Optional[UCS] = None):
         from ezdxf.layouts import VirtualLayout
 
         return Geometry(dimension, ucs or PassTroughUCS(), VirtualLayout())
@@ -1108,7 +1104,7 @@ class BaseDimensionRenderer:
                     width += self.tol.text_width  # type: ignore
         return width
 
-    def default_attributes(self) -> Dict[str, Any]:
+    def default_attributes(self) -> dict[str, Any]:
         """Returns default DXF attributes as dict."""
         return {
             "layer": self.default_layer,
@@ -1135,7 +1131,7 @@ class BaseDimensionRenderer:
         self,
         start: Vec2,
         end: Vec2,
-        dxfattribs: Dict[str, Any],
+        dxfattribs,
         remove_hidden_lines=False,
     ) -> None:
         """Add a LINE entity to the dimension BLOCK. Remove parts of the line
@@ -1161,7 +1157,7 @@ class BaseDimensionRenderer:
         radius: float,
         start_angle: float,
         end_angle: float,
-        dxfattribs: Dict[str, Any] = None,
+        dxfattribs=None,
         remove_hidden_lines=False,
     ) -> None:
         """Add a ARC entity to the geometry layout. Remove parts of the arc
@@ -1190,7 +1186,7 @@ class BaseDimensionRenderer:
         insert: Vec2,
         rotation: float,
         scale: float,
-        dxfattribs: Dict[str, Any],
+        dxfattribs,
     ) -> None:
         """
         Add block references and standard arrows to the dimension BLOCK.
@@ -1221,7 +1217,7 @@ class BaseDimensionRenderer:
             self.geometry.add_blockref(name, insert, rotation, attribs)
 
     def add_text(
-        self, text: str, pos: Vec2, rotation: float, dxfattribs: Dict[str, Any]
+        self, text: str, pos: Vec2, rotation: float, dxfattribs
     ) -> None:
         """
         Add TEXT (DXF R12) or MTEXT (DXF R2000+) entity to the dimension BLOCK.
@@ -1287,7 +1283,7 @@ class BaseDimensionRenderer:
             self.dimension.dxf.extrusion = self.geometry.extrusion
 
 
-def order_leader_points(p1: Vec2, p2: Vec2, p3: Vec2) -> Tuple[Vec2, Vec2]:
+def order_leader_points(p1: Vec2, p2: Vec2, p3: Vec2) -> tuple[Vec2, Vec2]:
     if (p1 - p2).magnitude > (p1 - p3).magnitude:
         return p3, p2
     else:
@@ -1296,7 +1292,7 @@ def order_leader_points(p1: Vec2, p2: Vec2, p3: Vec2) -> Tuple[Vec2, Vec2]:
 
 def get_center_leader_points(
     target_point: Vec2, text_box: TextBox, leg_length: float
-) -> Tuple[Vec2, Vec2]:
+) -> tuple[Vec2, Vec2]:
     """Returns the leader points of the "leg" for a vertical centered leader."""
     c0, c1, c2, c3 = text_box.corners
     #              c3-------c2
@@ -1329,7 +1325,7 @@ def visible_arcs(
     start_angle: float,
     end_angle: float,
     box: ConstructionBox,
-) -> List[Tuple[float, float]]:
+) -> list[tuple[float, float]]:
     """Returns the visible parts of an arc intersecting with a construction box
     as (start angle, end angle) tuples.
 
@@ -1342,7 +1338,7 @@ def visible_arcs(
 
     """
 
-    intersection_angles: List[float] = []  # angles are in the range 0 to 2pi
+    intersection_angles: list[float] = []  # angles are in the range 0 to 2pi
     start_angle %= math.tau
     end_angle %= math.tau
     arc = ConstructionArc(
