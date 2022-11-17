@@ -1,14 +1,7 @@
 # Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import (
-    TYPE_CHECKING,
-    Tuple,
-    Iterable,
-    List,
-    cast,
-    Optional,
-)
+from typing import TYPE_CHECKING, Iterable, cast, Optional
 import math
 from ezdxf.math import Vec3, Vec2, UVec, ConstructionRay, UCS
 from ezdxf.render.arrows import ARROWS, connection_point
@@ -23,7 +16,8 @@ from .dim_base import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, GenericLayoutType
+    from ezdxf.entities import Dimension
+    from ezdxf.eztypes import GenericLayoutType
 
 
 class LinearDimension(BaseDimensionRenderer):
@@ -40,8 +34,8 @@ class LinearDimension(BaseDimensionRenderer):
     def __init__(
         self,
         dimension: Dimension,
-        ucs: UCS = None,
-        override: DimStyleOverride = None,
+        ucs: Optional[UCS] = None,
+        override: Optional[DimStyleOverride] = None,
     ):
         super().__init__(dimension, ucs, override)
         measurement = self.measurement
@@ -111,9 +105,7 @@ class LinearDimension(BaseDimensionRenderer):
         self.required_arrows_space: float = (
             2 * self.arrows.arrow_size + measurement.text_gap
         )
-        self.arrows_outside: bool = (
-            self.required_arrows_space > raw_measurement
-        )
+        self.arrows_outside: bool = self.required_arrows_space > raw_measurement
 
         # text location and rotation
         if measurement.text:
@@ -208,7 +200,7 @@ class LinearDimension(BaseDimensionRenderer):
             self.dim_style, self.default_color, self.dim_scale
         )
 
-    def render(self, block: "GenericLayoutType") -> None:
+    def render(self, block: GenericLayoutType) -> None:
         """Main method to create dimension geometry of basic DXF entities in the
         associated BLOCK layout.
 
@@ -342,7 +334,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         return location
 
-    def add_arrows(self) -> Tuple[Vec2, Vec2]:
+    def add_arrows(self) -> tuple[Vec2, Vec2]:
         """
         Add arrows or ticks to dimension.
 
@@ -501,7 +493,7 @@ class LinearDimension(BaseDimensionRenderer):
 
     def extension_line_points(
         self, start: Vec2, end: Vec2, text_above_extline=False
-    ) -> Tuple[Vec2, Vec2]:
+    ) -> tuple[Vec2, Vec2]:
         """Adjust start and end point of extension line by dimension variables
         DIMEXE, DIMEXO, DIMEXFIX, DIMEXLEN.
 
@@ -568,7 +560,7 @@ CAN_SUPPRESS_ARROW1 = {
 
 def sort_projected_points(
     points: Iterable[UVec], angle: float = 0
-) -> List[Vec2]:
+) -> list[Vec2]:
     direction = Vec2.from_deg_angle(angle)
     projected_vectors = [(direction.project(Vec2(p)), p) for p in points]
     return [p for projection, p in sorted(projected_vectors)]
