@@ -6,8 +6,8 @@ from typing import (
     Iterable,
     Iterator,
     Union,
-    List,
     cast,
+    Optional,
 )
 from ezdxf.lldxf.const import (
     DXFStructureError,
@@ -34,14 +34,11 @@ import logging
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        Drawing,
-        EntityDB,
-        DXFEntity,
-        DXFTagStorage,
-        Table,
-    )
+    from ezdxf.document import Drawing
+    from ezdxf.entities import DXFEntity, DXFTagStorage
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.entitydb import EntityDB
+    from ezdxf.sections.table import Table
 
 
 def is_special_block(name: str) -> bool:
@@ -83,7 +80,9 @@ class BlocksSection:
     """
 
     def __init__(
-        self, doc: "Drawing" = None, entities: List[DXFEntity] = None
+        self,
+        doc: Optional[Drawing] = None,
+        entities: Optional[list[DXFEntity]] = None,
     ):
         self.doc = doc
         if entities is not None:
@@ -108,7 +107,7 @@ class BlocksSection:
     def entitydb(self) -> EntityDB:
         return self.doc.entitydb  # type: ignore
 
-    def load(self, entities: List[DXFEntity]) -> None:
+    def load(self, entities: list[DXFEntity]) -> None:
         """
         Load DXF entities into BlockLayouts. `entities` is a list of
         entity tags, separated by BLOCK and ENDBLK entities.
@@ -118,7 +117,7 @@ class BlocksSection:
         def load_block_record(
             block: Block,
             endblk: EndBlk,
-            block_entities: List[DXFEntity],
+            block_entities: list[DXFEntity],
         ) -> BlockRecord:
             try:
                 block_record = cast(
@@ -158,7 +157,7 @@ class BlocksSection:
             )
         # Remove SECTION entity
         del entities[0]
-        content: List["DXFEntity"] = []
+        content: list["DXFEntity"] = []
         block: Block = _MISSING_BLOCK_
         for entity in link_entities():
             if isinstance(entity, Block):
@@ -178,7 +177,7 @@ class BlocksSection:
                 content.clear()
             else:
                 # No check for valid entities here:
-                # Use the audit- or the recover module to fix invalid DXF files!
+                # Use the audit or the recover module to fix invalid DXF files!
                 content.append(entity)
 
     def _reconstruct_orphaned_block_records(self):
@@ -204,7 +203,7 @@ class BlocksSection:
                 block_record.set_block(block, endblk)
                 self.add(block_record)
 
-    def export_dxf(self, tagwriter: TagWriter) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
         for block_record in self.block_records:
             assert isinstance(block_record, BlockRecord)
@@ -271,8 +270,8 @@ class BlocksSection:
         self,
         name: str,
         base_point: UVec = NULLVEC,
-        dxfattribs: dict = None,
-    ) -> "BlockLayout":
+        dxfattribs=None,
+    ) -> BlockLayout:
         """Create and add a new :class:`~ezdxf.layouts.BlockLayout`, `name`
         is the BLOCK name, `base_point` is the insertion point of the BLOCK.
         """
