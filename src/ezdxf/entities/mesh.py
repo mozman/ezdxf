@@ -5,11 +5,9 @@ from typing import (
     TYPE_CHECKING,
     Iterable,
     Sequence,
-    Tuple,
     Union,
-    List,
-    Dict,
     Iterator,
+    Optional,
 )
 import array
 import copy
@@ -40,13 +38,10 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        DXFNamespace,
-        Tags,
-        DXFEntity,
-        Auditor,
-    )
+    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.lldxf.tags import Tags
+    from ezdxf.audit import Auditor
 
 __all__ = ["Mesh", "MeshData"]
 
@@ -101,14 +96,14 @@ class EdgeArray(TagArray):
     def __len__(self) -> int:
         return len(self.values) // 2
 
-    def __iter__(self) -> Iterator[Tuple[int, int]]:
+    def __iter__(self) -> Iterator[tuple[int, int]]:
         for edge in take2(self.values):
             yield edge
 
-    def set_data(self, edges: Iterable[Tuple[int, int]]) -> None:
+    def set_data(self, edges: Iterable[tuple[int, int]]) -> None:
         self.values = array.array(self.DTYPE, chain.from_iterable(edges))
 
-    def export_dxf(self, tagwriter: TagWriter):
+    def export_dxf(self, tagwriter: AbstractTagWriter):
         # count = count of edges not tags!
         tagwriter.write_tag2(94, len(self.values) // 2)
         for index in self.values:
@@ -122,7 +117,7 @@ class FaceList(TagList):
     def __iter__(self) -> Iterable[array.array]:
         return iter(self.values)
 
-    def export_dxf(self, tagwriter: TagWriter):
+    def export_dxf(self, tagwriter: AbstractTagWriter):
         # count = count of tags not faces!
         tagwriter.write_tag2(93, self.tag_count())
         for face in self.values:
@@ -159,7 +154,7 @@ def create_vertex_array(tags: Tags, start_index: int) -> VertexArray:
 def create_face_list(tags: Tags, start_index: int) -> FaceList:
     faces = FaceList()
     faces_list = faces.values
-    face: List[int] = []
+    face: list[int] = []
     counter = 0
     for tag in tags.collect_consecutive_tags(codes=(90,), start=start_index):
         if not counter:
@@ -228,7 +223,7 @@ class Mesh(DXFGraphic):
         entity._creases = copy.deepcopy(self._creases)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -303,7 +298,7 @@ class Mesh(DXFGraphic):
         self._edges = process_edges()
         self._creases = process_creases()
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mesh.name)
@@ -313,7 +308,7 @@ class Mesh(DXFGraphic):
         self.export_mesh_data(tagwriter)
         self.export_override_data(tagwriter)
 
-    def export_mesh_data(self, tagwriter: "TagWriter"):
+    def export_mesh_data(self, tagwriter: AbstractTagWriter):
         tagwriter.write_tag2(92, len(self.vertices))
         self._vertices.export_dxf(tagwriter, code=10)
         self._faces.export_dxf(tagwriter)
@@ -324,7 +319,7 @@ class Mesh(DXFGraphic):
         for crease_value in creases:
             tagwriter.write_tag2(140, crease_value)
 
-    def _fixed_crease_values(self) -> List[float]:
+    def _fixed_crease_values(self) -> list[float]:
         # The edge count has to match the crease count, otherwise its an invalid
         # DXF file to AutoCAD!
         edge_count = len(self._edges)
@@ -336,7 +331,7 @@ class Mesh(DXFGraphic):
             creases.append(0.0)
         return creases
 
-    def export_override_data(self, tagwriter: TagWriter):
+    def export_override_data(self, tagwriter: AbstractTagWriter):
         tagwriter.write_tag2(90, 0)
 
     @property
@@ -367,7 +362,7 @@ class Mesh(DXFGraphic):
         return self._edges
 
     @edges.setter
-    def edges(self, edges: Iterable[Tuple[int, int]]) -> None:
+    def edges(self, edges: Iterable[tuple[int, int]]) -> None:
         self._edges.set_data(edges)
 
     @property
@@ -426,10 +421,10 @@ class Mesh(DXFGraphic):
 
 class MeshData:
     def __init__(self, mesh) -> None:
-        self.vertices: List[Sequence[float]] = list(mesh.vertices)
-        self.faces: List[array.array] = list(mesh.faces)
-        self.edges: List[Tuple[int, int]] = list(mesh.edges)
-        self.edge_crease_values: List[float] = list(mesh.creases)
+        self.vertices: list[Sequence[float]] = list(mesh.vertices)
+        self.faces: list[array.array] = list(mesh.faces)
+        self.edges: list[tuple[int, int]] = list(mesh.edges)
+        self.edge_crease_values: list[float] = list(mesh.creases)
 
     def add_face(self, vertices: Iterable[UVec]) -> Sequence[int]:
         """Add a face by coordinates, vertices is a list of ``(x, y, z)``
@@ -454,7 +449,7 @@ class MeshData:
         self.edge_crease_values.append(crease)
 
     def add_entity(
-        self, vertices: Iterable[UVec], entity_list: List
+        self, vertices: Iterable[UVec], entity_list: list
     ) -> Sequence[int]:
         indices = [self.add_vertex(vertex) for vertex in vertices]
         entity_list.append(indices)
@@ -476,8 +471,8 @@ class MeshData:
 
         """
 
-        def remove_doublette_vertices() -> Dict[int, int]:
-            def prepare_vertices() -> Iterable[Tuple[float, float, float, int]]:
+        def remove_doublette_vertices() -> dict[int, int]:
+            def prepare_vertices() -> Iterable[tuple[float, float, float, int]]:
                 for index, vertex in enumerate(self.vertices):
                     x, y, z = vertex
                     yield (
@@ -490,7 +485,7 @@ class MeshData:
             sorted_vertex_list = list(sorted(prepare_vertices()))
             original_vertices = self.vertices
             self.vertices = []
-            index_map: Dict[int, int] = {}
+            index_map: dict[int, int] = {}
             cmp_vertex = None
             index = 0
             while len(sorted_vertex_list):
@@ -513,8 +508,8 @@ class MeshData:
         def remap_edges() -> None:
             self.edges = remap_indices(self.edges)  # type: ignore
 
-        def remap_indices(entity_list: Sequence[Sequence[int]]) -> List[Tuple]:
-            mapped_indices: List[Tuple] = []
+        def remap_indices(entity_list: Sequence[Sequence[int]]) -> list[tuple]:
+            mapped_indices: list[tuple] = []
             for entity in entity_list:
                 index_list = [index_map[index] for index in entity]
                 mapped_indices.append(tuple(index_list))
