@@ -807,7 +807,9 @@ class ProxyGraphic:
 
 
 class ProxyGraphicDebugger(ProxyGraphic):
-    def __init__(self, data: bytes, doc: "Drawing" = None, debug_stream=None):
+    def __init__(
+        self, data: bytes, doc: Optional[Drawing] = None, debug_stream=None
+    ):
         super(ProxyGraphicDebugger, self).__init__(data, doc)
         if debug_stream is None:
             debug_stream = sys.stdout
@@ -884,7 +886,7 @@ class ProxyGraphicDebugger(ProxyGraphic):
         self.log_state()
 
 
-def _apply_face_colors(polyface: "Polyface", colors: list[int]) -> None:
+def _apply_face_colors(polyface: Polyface, colors: list[int]) -> None:
     color_count: int = len(colors)
     if color_count == 0:
         return
