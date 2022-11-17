@@ -2,47 +2,46 @@
 # License: MIT License
 from __future__ import annotations
 from typing import (
-    TYPE_CHECKING,
     Iterable,
-    Tuple,
-    cast,
     Iterator,
-    Union,
     Optional,
+    TYPE_CHECKING,
+    Union,
+    cast,
 )
 import logging
 
 from ezdxf.entities.dictionary import Dictionary
 from ezdxf.entities import factory, is_dxf_object
 from ezdxf.lldxf import const, validator
-from ezdxf.entitydb import EntitySpace
+from ezdxf.entitydb import EntitySpace, EntityDB
 from ezdxf.query import EntityQuery
 from ezdxf.tools.handle import UnderlayKeyGenerator
 from ezdxf.audit import Auditor, AuditError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import GeoData, DictionaryVar
-    from ezdxf.eztypes import (
-        Drawing,
-        TagWriter,
-        EntityDB,
+    from ezdxf.document import Drawing
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.entities import (
+        GeoData,
+        DictionaryVar,
         DXFTagStorage,
         DXFObject,
-    )
-    from ezdxf.eztypes import (
-        ImageDefReactor,
         ImageDef,
         UnderlayDefinition,
         DictionaryWithDefault,
         XRecord,
         Placeholder,
     )
+    from ezdxf.entities.image import ImageDefReactor
 
 logger = logging.getLogger("ezdxf")
 
 
 class ObjectsSection:
-    def __init__(self, doc: "Drawing", entities: Iterable["DXFObject"] = None):
+    def __init__(
+        self, doc: Drawing, entities: Optional[Iterable[DXFObject]] = None
+    ):
         self.doc = doc
         self.underlay_key_generator = UnderlayKeyGenerator()
         self._entity_space = EntitySpace()
@@ -50,11 +49,11 @@ class ObjectsSection:
             self._build(iter(entities))
 
     @property
-    def entitydb(self) -> "EntityDB":
+    def entitydb(self) -> EntityDB:
         """Returns drawing entity database. (internal API)"""
         return self.doc.entitydb
 
-    def get_entity_space(self) -> "EntitySpace":
+    def get_entity_space(self) -> EntitySpace:
         """Returns entity space. (internal API)"""
         return self._entity_space
 
@@ -64,7 +63,7 @@ class ObjectsSection:
             if checkfunc(key):
                 return key
 
-    def _build(self, entities: Iterator["DXFObject"]) -> None:
+    def _build(self, entities: Iterator[DXFObject]) -> None:
         section_head = cast("DXFTagStorage", next(entities))
 
         if section_head.dxftype() != "SECTION" or section_head.base_class[
@@ -79,13 +78,13 @@ class ObjectsSection:
             # Use the audit- or the recover module to fix invalid DXF files!
             self._entity_space.add(entity)
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         """Export DXF entity by `tagwriter`. (internal API)"""
         tagwriter.write_str("  0\nSECTION\n  2\nOBJECTS\n")
         self._entity_space.export_dxf(tagwriter)
         tagwriter.write_tag2(0, "ENDSEC")
 
-    def new_entity(self, _type: str, dxfattribs: dict) -> "DXFObject":
+    def new_entity(self, _type: str, dxfattribs: dict) -> DXFObject:
         """Create new DXF object, add it to the entity database and to the
         entity space.
 
@@ -99,7 +98,7 @@ class ObjectsSection:
         self._entity_space.add(dxf_entity)
         return dxf_entity  # type: ignore
 
-    def delete_entity(self, entity: "DXFObject") -> None:
+    def delete_entity(self, entity: DXFObject) -> None:
         """Remove `entity` from entity space and destroy object. (internal API)"""
         self._entity_space.remove(entity)
         self.entitydb.delete_entity(entity)
@@ -165,7 +164,7 @@ class ObjectsSection:
             if isinstance(table, str) and validator.is_handle(table):
                 restore_table_handle(name, handle=table)
 
-    def add_object(self, entity: "DXFObject") -> None:
+    def add_object(self, entity: DXFObject) -> None:
         """Add `entity` to OBJECTS section. (internal API)"""
         if is_dxf_object(entity):
             self._entity_space.add(entity)
@@ -175,8 +174,8 @@ class ObjectsSection:
             )
 
     def add_dxf_object_with_reactor(
-        self, dxftype: str, dxfattribs: dict
-    ) -> "DXFObject":
+        self, dxftype: str, dxfattribs
+    ) -> DXFObject:
         """Add DXF object with reactor. (internal API)"""
         dxfobject = self.new_entity(dxftype, dxfattribs)
         dxfobject.set_reactors([dxfattribs["owner"]])
@@ -205,7 +204,7 @@ class ObjectsSection:
         """Returns iterable of all DXF objects in the OBJECTS section."""
         return iter(self._entity_space)
 
-    def __getitem__(self, index) -> "DXFObject":
+    def __getitem__(self, index) -> DXFObject:
         """Get entity at `index`.
 
         The underlying data structure for storing DXF objects is organized like
@@ -279,7 +278,7 @@ class ObjectsSection:
 
     def add_dictionary_with_default(
         self, owner="0", default="0", hard_owned: bool = True
-    ) -> "DictionaryWithDefault":
+    ) -> DictionaryWithDefault:
         """Add new :class:`~ezdxf.entities.DictionaryWithDefault` object.
 
         Args:
@@ -300,7 +299,7 @@ class ObjectsSection:
 
     def add_dictionary_var(
         self, owner: str = "0", value: str = ""
-    ) -> "DictionaryVar":
+    ) -> DictionaryVar:
         """Add a new :class:`~ezdxf.entities.DictionaryVar` object.
 
         Args:
@@ -312,7 +311,7 @@ class ObjectsSection:
             "DICTIONARYVAR", dxfattribs={"owner": owner, "value": value}
         )
 
-    def add_xrecord(self, owner: str = "0") -> "XRecord":
+    def add_xrecord(self, owner: str = "0") -> XRecord:
         """Add a new :class:`~ezdxf.entities.XRecord` object.
 
         Args:
@@ -323,7 +322,7 @@ class ObjectsSection:
             "XRECORD", dxfattribs={"owner": owner}
         )
 
-    def add_placeholder(self, owner: str = "0") -> "Placeholder":
+    def add_placeholder(self, owner: str = "0") -> Placeholder:
         """Add a new :class:`~ezdxf.entities.Placeholder` object.
 
         Args:
@@ -403,8 +402,11 @@ class ObjectsSection:
             wipeout_vars.dxf.frame = int(frame)
 
     def add_image_def(
-        self, filename: str, size_in_pixel: Tuple[int, int], name=None
-    ) -> "ImageDef":
+        self,
+        filename: str,
+        size_in_pixel: tuple[int, int],
+        name: Optional[str] = None,
+    ) -> ImageDef:
         """Add an image definition to the objects section.
 
         Add an :class:`~ezdxf.entities.image.ImageDef` entity to the drawing
@@ -441,7 +443,7 @@ class ObjectsSection:
         image_dict[name] = image_def.dxf.handle
         return cast("ImageDef", image_def)
 
-    def add_image_def_reactor(self, image_handle: str) -> "ImageDefReactor":
+    def add_image_def_reactor(self, image_handle: str) -> ImageDefReactor:
         """Add required IMAGEDEF_REACTOR object for IMAGEDEF object.
 
         (internal API)
@@ -457,7 +459,7 @@ class ObjectsSection:
 
     def add_underlay_def(
         self, filename: str, fmt: str = "pdf", name: Optional[str] = None
-    ) -> "UnderlayDefinition":
+    ) -> UnderlayDefinition:
         """Add an :class:`~ezdxf.entities.underlay.UnderlayDefinition` entity
         to the drawing (OBJECTS section). `filename` is the underlay file name
         as relative or absolute path and `fmt` as string (pdf, dwf, dgn).
@@ -500,8 +502,8 @@ class ObjectsSection:
         return cast("UnderlayDefinition", underlay_def)
 
     def add_geodata(
-        self, owner: str = "0", dxfattribs: dict = None
-    ) -> "GeoData":
+        self, owner: str = "0", dxfattribs=None
+    ) -> GeoData:
         """Creates a new :class:`GeoData` entity and replaces existing ones.
         The GEODATA entity resides in the OBJECTS section and NOT in the layout
         entity space and it is linked to the layout by an extension dictionary
