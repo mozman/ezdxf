@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterator, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -21,7 +22,8 @@ from .dxfgfx import DXFGraphic, acdb_entity, acdb_entity_group_codes
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.entities import DXFNamespace
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["Point"]
 
@@ -78,8 +80,8 @@ class Point(DXFGraphic):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_point)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
@@ -87,7 +89,7 @@ class Point(DXFGraphic):
             processor.simple_dxfattribs_loader(dxf, merged_point_group_codes)
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
@@ -96,7 +98,7 @@ class Point(DXFGraphic):
             tagwriter, ["location", "thickness", "extrusion", "angle"]
         )
 
-    def transform(self, m: Matrix44) -> "Point":
+    def transform(self, m: Matrix44) -> Point:
         """Transform the POINT entity by transformation matrix `m` inplace."""
         self.dxf.location = m.transform(self.dxf.location)
         transform_thickness_and_extrusion_without_ocs(self, m)
@@ -104,7 +106,7 @@ class Point(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def translate(self, dx: float, dy: float, dz: float) -> "Point":
+    def translate(self, dx: float, dy: float, dz: float) -> Point:
         """Optimized POINT translation about `dx` in x-axis, `dy` in y-axis and
         `dz` in z-axis.
         """
@@ -116,7 +118,7 @@ class Point(DXFGraphic):
 
     def virtual_entities(
         self, pdsize: float = 1, pdmode: int = 0
-    ) -> Iterable["DXFGraphic"]:
+    ) -> Iterator[DXFGraphic]:
         """Yields point graphic as DXF primitives LINE and CIRCLE entities.
         The dimensionless point is rendered as zero-length line!
 
