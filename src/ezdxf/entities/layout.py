@@ -1,7 +1,7 @@
 #  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.lldxf.attributes import (
@@ -202,7 +202,7 @@ class PlotSettings(DXFObject):
     DXFATTRIBS = DXFAttributes(base_class, acdb_plot_settings)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
@@ -334,7 +334,7 @@ class DXFLayout(PlotSettings):
     DXFATTRIBS = DXFAttributes(base_class, acdb_plot_settings, acdb_layout)
 
     def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
+        self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
