@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Iterable, Optional, Iterator
 import copy
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.lldxf.tags import Tags
@@ -34,7 +34,7 @@ class AcadTableBlockContent(DXFTagStorage):
     def proxy_graphic_content(self) -> Iterable[DXFGraphic]:
         return super().__virtual_entities__()
 
-    def _block_content(self) -> Iterable[DXFGraphic]:
+    def _block_content(self) -> Iterator[DXFGraphic]:
         tags = self._block_reference_tags()
         block_name: str = tags.get_first_value(2, "*")
         return self.doc.blocks.get(block_name, [])  # type: ignore
@@ -48,7 +48,7 @@ class AcadTableBlockContent(DXFTagStorage):
     def _insert_location(self) -> Vec3:
         return self._block_reference_tags().get_first_value(10, Vec3())
 
-    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
         insert: Vec3 = Vec3(self._insert_location())
         m: Optional[Matrix44] = None

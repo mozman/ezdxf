@@ -19,6 +19,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Iterable,
+    Iterator,
     Optional,
     Type,
     TypeVar,
@@ -1030,7 +1031,7 @@ class DXFTagStorage(DXFEntity):
         del self.xtags
         super().destroy()
 
-    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
         from ezdxf.proxygraphic import ProxyGraphic
 
@@ -1042,6 +1043,6 @@ class DXFTagStorage(DXFEntity):
                 yield e
         return []
 
-    def virtual_entities(self) -> Iterable[DXFGraphic]:
+    def virtual_entities(self) -> Iterator[DXFGraphic]:
         """Yields proxy graphic as "virtual" entities."""
         return self.__virtual_entities__()

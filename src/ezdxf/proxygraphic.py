@@ -5,6 +5,7 @@ from typing import (
     TYPE_CHECKING,
     Optional,
     Iterable,
+    Iterator,
     cast,
     Sequence,
     Any,
@@ -290,10 +291,10 @@ class ProxyGraphic:
             yield index, size, name
             index += size
 
-    def virtual_entities(self) -> Iterable[DXFGraphic]:
+    def virtual_entities(self) -> Iterator[DXFGraphic]:
         return self.__virtual_entities__()
 
-    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
         try:
             yield from self.unsafe_virtual_entities()

@@ -13,6 +13,7 @@ from typing import (
     Optional,
     Union,
     Iterable,
+    Iterator,
 )
 import logging
 import enum
@@ -169,13 +170,13 @@ class MLeaderStyleOverride:
 
 def virtual_entities(
     mleader: MultiLeader, proxy_graphic=False
-) -> List["DXFGraphic"]:
+) -> Iterator[DXFGraphic]:
     doc = mleader.doc
     assert doc is not None, "valid DXF document required"
     if proxy_graphic and mleader.proxy_graphic is not None:
-        return list(ProxyGraphic(mleader.proxy_graphic, doc).virtual_entities())
+        return ProxyGraphic(mleader.proxy_graphic, doc).virtual_entities()
     else:
-        return RenderEngine(mleader, doc).run()
+        return iter(RenderEngine(mleader, doc).run())
 
 
 def get_style(mleader: MultiLeader, doc: "Drawing") -> MLeaderStyleOverride:

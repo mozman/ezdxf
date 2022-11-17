@@ -599,7 +599,7 @@ class Insert(LinkedEntities):
             self, target_layout=target_layout, redraw_order=redraw_order
         )
 
-    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol.
 
         This protocol is for consistent internal usage and does not replace
@@ -614,7 +614,7 @@ class Insert(LinkedEntities):
             Callable[[DXFGraphic, str], None]
         ] = None,
         redraw_order=False,
-    ) -> Iterable[DXFGraphic]:
+    ) -> Iterator[DXFGraphic]:
         """
         Yields "virtual" entities of a block reference. This method is meant to
         examine the block reference entities at the "exploded" location without

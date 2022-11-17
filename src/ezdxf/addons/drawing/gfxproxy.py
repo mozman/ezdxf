@@ -1,7 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-
-from typing import Iterable, TYPE_CHECKING
+from __future__ import annotations
+from typing import Iterable, TYPE_CHECKING, Iterator
 from ezdxf.entities import DXFGraphic, DXFEntity
 from ezdxf.lldxf import const
 from ezdxf.protocols import SupportsVirtualEntities
@@ -30,18 +30,18 @@ class DXFGraphicProxy(DXFGraphic):
     def dxftype(self) -> str:
         return self.entity.dxftype()
 
-    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
         if isinstance(self.entity, SupportsVirtualEntities):
             return self.entity.__virtual_entities__()  # type: ignore
         if hasattr(self.entity, "virtual_entities"):
             return self.entity.virtual_entities()  # type: ignore
-        return []
+        return iter([])
 
     def virtual_entities(self) -> Iterable[DXFGraphic]:
         return self.__virtual_entities__()
 
-    def copy(self) -> "DXFGraphicProxy":
+    def copy(self) -> DXFGraphicProxy:
         raise const.DXFTypeError(f"Cloning of DXFGraphicProxy() not supported.")
 
     def preprocess_export(self, tagwriter: "TagWriter") -> bool:

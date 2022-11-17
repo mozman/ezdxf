@@ -2,7 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 import math
-from typing import TYPE_CHECKING, Optional, Union, Iterable
+from typing import TYPE_CHECKING, Optional, Union, Iterable, Iterator
 import logging
 from ezdxf.audit import AuditError
 from ezdxf.lldxf import validator, const
@@ -741,7 +741,7 @@ class Dimension(DXFGraphic, OverrideMixin):
             except (NotImplementedError, NonUniformScalingError):
                 pass  # ignore transformation errors
 
-    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
 
         def ocs_to_wcs(e: DXFGraphic, elevation: float):
@@ -800,7 +800,7 @@ class Dimension(DXFGraphic, OverrideMixin):
                 copy.transform(m)
             yield copy
 
-    def virtual_entities(self) -> Iterable[DXFGraphic]:
+    def virtual_entities(self) -> Iterator[DXFGraphic]:
         """
         Yields 'virtual' parts of DIMENSION as basic DXF entities like LINE, ARC
         or TEXT.

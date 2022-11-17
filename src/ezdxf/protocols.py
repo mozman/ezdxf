@@ -1,6 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, TYPE_CHECKING, Tuple
+from __future__ import annotations
+from typing import TYPE_CHECKING, Tuple, Iterator, Sequence, Iterable
 from typing_extensions import Protocol, runtime_checkable
 from ezdxf.query import EntityQuery
 
@@ -36,11 +37,11 @@ class SupportsVirtualEntities(Protocol):
 
     """
 
-    def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         ...
 
 
-def virtual_entities(entity: SupportsVirtualEntities) -> Iterable["DXFGraphic"]:
+def virtual_entities(entity: SupportsVirtualEntities) -> Iterator[DXFGraphic]:
     if isinstance(entity, SupportsVirtualEntities):
         return entity.__virtual_entities__()
     else:

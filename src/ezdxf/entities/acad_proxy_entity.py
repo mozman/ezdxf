@@ -1,7 +1,7 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, Iterable
+from typing import TYPE_CHECKING, Optional, Iterable, Iterator
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import SubclassProcessor
@@ -88,7 +88,7 @@ class ACADProxyEntity(DXFGraphic):
             tagwriter.write_tags(self.acdb_proxy_entity)
         # XDATA export is done by the parent class
 
-    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol. """
         from ezdxf.proxygraphic import ProxyGraphic
         if self.proxy_graphic:
@@ -97,7 +97,7 @@ class ACADProxyEntity(DXFGraphic):
                 yield e
         return []
 
-    def virtual_entities(self) -> Iterable[DXFGraphic]:
+    def virtual_entities(self) -> Iterator[DXFGraphic]:
         """Yields proxy graphic as "virtual" entities. """
         return self.__virtual_entities__()
 

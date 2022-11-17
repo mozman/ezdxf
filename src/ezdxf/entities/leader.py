@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Iterable, Optional, Iterator
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -262,7 +262,7 @@ class Leader(DXFGraphic, OverrideMixin):
         self.post_transform(m)
         return self
 
-    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
         from ezdxf.render.leader import virtual_entities
 
@@ -270,7 +270,7 @@ class Leader(DXFGraphic, OverrideMixin):
             e.set_source_of_copy(self)
             yield e
 
-    def virtual_entities(self) -> Iterable[DXFGraphic]:
+    def virtual_entities(self) -> Iterator[DXFGraphic]:
         """Yields 'virtual' parts of LEADER as DXF primitives.
 
         These entities are located at the original positions, but are not stored

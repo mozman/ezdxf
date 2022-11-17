@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Union, Optional, Iterable, Any
+from typing import TYPE_CHECKING, Union, Optional, Iterable, Any, Iterator
 import copy
 import logging
 from collections import namedtuple
@@ -541,7 +541,7 @@ class MultiLeader(DXFGraphic):
             tagwriter.write_tag2(44, attrib.width)
             tagwriter.write_tag2(302, safe_string(attrib.text, EXT_MAX_STR_LEN))
 
-    def virtual_entities(self) -> Iterable[DXFGraphic]:
+    def virtual_entities(self) -> Iterator[DXFGraphic]:
         """Yields the graphical representation of MULTILEADER as virtual DXF
         primitives.
 
@@ -571,7 +571,7 @@ class MultiLeader(DXFGraphic):
 
         return explode_entity(self, target_layout)
 
-    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Support for "VirtualEntities" protocol."""
         from ezdxf.render import mleader
 
@@ -601,7 +601,7 @@ class MultiLeader(DXFGraphic):
     def transform(self, m: Matrix44) -> MultiLeader:
         """Transform the MULTILEADER entity by transformation matrix `m` inplace.
 
-        Non uniform scaling is not supported.
+        Non-uniform scaling is not supported.
 
         Args:
             m: transformation :class:`~ezdxf.math.Matrix44`
