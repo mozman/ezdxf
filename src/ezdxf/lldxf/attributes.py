@@ -1,11 +1,9 @@
 # Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from enum import Enum
 from typing import (
     Optional,
-    Dict,
-    List,
-    Tuple,
     TYPE_CHECKING,
     Iterable,
     Callable,
@@ -20,12 +18,12 @@ from .const import DXFAttributeError, DXF12
 import copy
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity
+    from ezdxf.entities import DXFEntity
 
 
 class DefSubclass(NamedTuple):
     name: Optional[str]
-    attribs: Dict[str, "DXFAttr"]
+    attribs: dict[str, DXFAttr]
 
 
 VIRTUAL_TAG = -666
@@ -41,20 +39,20 @@ class XType(Enum):
 
 
 def group_code_mapping(
-    subclass: DefSubclass, *, ignore: Iterable[int] = None
-) -> Dict[int, Union[str, List[str]]]:
+    subclass: DefSubclass, *, ignore: Optional[Iterable[int]] = None
+) -> dict[int, Union[str, list[str]]]:
     # Unique group codes are stored as group_code <int>: name <str>
     # Duplicate group codes are stored as group_code <int>: [name1, name2, ...] <list>
     # The order of appearance is important, therefore also callback attributes
     # have to be included, but they should not be loaded into the DXF namespace.
-    mapping: Dict[int, Union[str, List[str]]] = dict()
+    mapping: dict[int, Union[str, list[str]]] = dict()
     for name, dxfattrib in subclass.attribs.items():
         if dxfattrib.xtype == XType.callback:
             # Mark callback attributes for special treatment as invalid
             # Python name:
             name = "*" + name
         code = dxfattrib.code
-        existing_data: Union[None, str, List[str]] = mapping.get(code)
+        existing_data: Union[None, str, list[str]] = mapping.get(code)
         if existing_data is None:
             mapping[code] = name
         else:
@@ -72,8 +70,8 @@ def group_code_mapping(
     return mapping
 
 
-def merge_group_code_mappings(*mappings: Mapping) -> Dict[int, str]:
-    merge_group_code_mapping: Dict[int, str] = {}
+def merge_group_code_mappings(*mappings: Mapping) -> dict[int, str]:
+    merge_group_code_mapping: dict[int, str] = {}
     for index, mapping in enumerate(mappings):
         msg = f"{index}. mapping contains none unique group codes"
         if not all(isinstance(e, str) for e in mapping.values()):
@@ -111,7 +109,7 @@ class DXFAttr:
     def __init__(
         self,
         code: int,
-        xtype: XType = None,
+        xtype: Optional[XType] = None,
         default=None,
         optional: bool = False,
         dxfversion: str = DXF12,
@@ -119,7 +117,9 @@ class DXFAttr:
         setter: str = "",
         alias: str = "",
         validator: Optional[Callable[[Any], bool]] = None,
-        fixer: Union[Callable[[Any], Any], None, ReturnDefault] = None,
+        fixer: Optional[
+            Union[Callable[[Any], Any], None, ReturnDefault]
+        ] = None,
     ):
 
         # Attribute name set by DXFAttributes.__init__()
@@ -171,7 +171,7 @@ class DXFAttr:
     def __repr__(self) -> str:
         return "DXFAttr" + self.__str__()
 
-    def get_callback_value(self, entity: "DXFEntity") -> Any:
+    def get_callback_value(self, entity: DXFEntity) -> Any:
         """
         Executes a callback function in 'entity' to get a DXF value.
 
@@ -197,7 +197,7 @@ class DXFAttr:
         except TypeError:
             raise DXFAttributeError(f"DXF attribute {self.name} has no getter.")
 
-    def set_callback_value(self, entity: "DXFEntity", value: Any) -> None:
+    def set_callback_value(self, entity: DXFEntity, value: Any) -> None:
         """Executes a callback function in 'entity' to set a DXF value.
 
         Callback function is defined by self.setter as string.
@@ -231,7 +231,7 @@ class DXFAttributes:
     __slots__ = ("_attribs",)
 
     def __init__(self, *subclassdefs: DefSubclass):
-        self._attribs: Dict[str, DXFAttr] = dict()
+        self._attribs: dict[str, DXFAttr] = dict()
         for subclass in subclassdefs:
             for name, dxfattrib in subclass.attribs.items():
                 dxfattrib.name = name
@@ -250,7 +250,7 @@ class DXFAttributes:
 
     def build_group_code_items(
         self, func=lambda x: True
-    ) -> Iterable[Tuple[int, str]]:
+    ) -> Iterable[tuple[int, str]]:
         for name, attrib in self._attribs.items():
             # code < 0 is internal tag
             if attrib.code > 0 and func(name):
