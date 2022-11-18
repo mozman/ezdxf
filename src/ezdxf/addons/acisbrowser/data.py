@@ -1,6 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Iterator
+from __future__ import annotations
+from typing import Iterator
 
 from ezdxf.acis.sat import parse_sat, SatEntity
 from ezdxf.acis.sab import parse_sab, SabEntity
@@ -8,7 +9,7 @@ from ezdxf.acis.sab import parse_sab, SabEntity
 
 class AcisData:
     def __init__(self, name: str = "unknown", handle: str = ""):
-        self.lines: List[str] = []
+        self.lines: list[str] = []
         self.name: str = name
         self.handle: str = handle
 
@@ -20,7 +21,7 @@ class BinaryAcisData(AcisData):
 
 
 class TextAcisData(AcisData):
-    def __init__(self, data: List[str], name: str, handle: str):
+    def __init__(self, data: list[str], name: str, handle: str):
         super().__init__(name, handle)
         self.lines = list(make_sat_records(data))
 
@@ -29,7 +30,7 @@ def ptr_str(e):
     return "~" if e.is_null_ptr else str(e)
 
 
-def make_sat_records(data: List[str]) -> Iterator[str]:
+def make_sat_records(data: list[str]) -> Iterator[str]:
     builder = parse_sat(data)
     yield from builder.header.dumps()
     builder.reset_ids()

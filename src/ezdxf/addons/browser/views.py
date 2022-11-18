@@ -1,10 +1,8 @@
-#  Copyright (c) 2021, Manfred Moitzi
-#  License: MIT License
-import typing
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
+from __future__ import annotations
 from ezdxf.addons.xqt import QTableView, QTreeView, QModelIndex
-
-if typing.TYPE_CHECKING:
-    from ezdxf.eztypes import Tags
+from ezdxf.lldxf.tags import Tags
 
 
 class StructureTree(QTreeView):
@@ -13,7 +11,7 @@ class StructureTree(QTreeView):
         self.expand(model.index(0, 0, QModelIndex()))
         self.setHeaderHidden(True)
 
-    def expand_to_entity(self, entity: "Tags"):
+    def expand_to_entity(self, entity: Tags):
         model = self.model()
         index = model.index_of_entity(entity)  # type: ignore
         self.setCurrentIndex(index)
@@ -35,8 +33,8 @@ class DXFTagsTable(QTableView):
             first_row = selection[0].row()  # type: ignore
         return first_row
 
-    def selected_rows(self) -> typing.List[int]:
-        rows: typing.Set[int] = set()
+    def selected_rows(self) -> list[int]:
+        rows: set[int] = set()
         selection = self.selectedIndexes()
         for item in selection:
             rows.add(item.row())

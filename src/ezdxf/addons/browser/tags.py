@@ -1,7 +1,8 @@
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
-from ezdxf.lldxf.tags import Tags
 from typing import Iterable, Sequence
+
+from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import (
     DXFTag,
     DXFVertex,

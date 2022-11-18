@@ -1,6 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Any, List, Dict, Optional
+from __future__ import annotations
+from typing import Any, Optional
 import textwrap
 from ezdxf.lldxf.types import (
     render_tag,
@@ -33,7 +34,7 @@ def name_fmt(handle, name: str) -> str:
 HEADER_LABELS = ["Group Code", "Data Type", "Content", "4", "5"]
 
 
-def calc_line_numbers(start: int, tags: Tags) -> List[int]:
+def calc_line_numbers(start: int, tags: Tags) -> list[int]:
     numbers = [start]
     index = start
     for tag in tags:
@@ -123,7 +124,7 @@ class DXFTagsModel(QAbstractTableModel):
 
 
 class EntityContainer(QStandardItem):
-    def __init__(self, name: str, entities: List[Tags]):
+    def __init__(self, name: str, entities: list[Tags]):
         super().__init__()
         self.setEditable(False)
         self.setText(name + f" ({len(entities)})")
@@ -189,7 +190,7 @@ class Blocks(EntityContainer):
                 container.clear()
 
 
-def get_section_name(section: List[Tags]) -> str:
+def get_section_name(section: list[Tags]) -> str:
     if len(section) > 0:
         header = section[0]
         if len(header) > 1 and header[0].code == 0 and header[1].code == 2:
@@ -551,7 +552,7 @@ GROUP_CODE_TOOLTIPS = [
 ]
 
 
-def build_group_code_tooltip_dict() -> Dict[int, str]:
+def build_group_code_tooltip_dict() -> dict[int, str]:
     tooltips = dict()
     for code, tooltip in GROUP_CODE_TOOLTIPS:
         tooltip = "\n".join(textwrap.wrap(tooltip, width=80))

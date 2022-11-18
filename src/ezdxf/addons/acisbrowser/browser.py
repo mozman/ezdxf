@@ -1,6 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Iterator, Iterable, Optional
+from __future__ import annotations
+from typing import Iterator, Iterable, Optional
 import ezdxf
 from ezdxf.addons.xqt import (
     QtWidgets,
@@ -38,7 +39,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
     ):
         super().__init__()
         self.doc: Optional[Drawing] = None
-        self.acis_entities: List[AcisData] = []
+        self.acis_entities: list[AcisData] = []
         self.current_acis_entity = AcisData()
         self.entity_selector = self.make_entity_selector()
         self.acis_content_viewer = self.make_content_viewer()
@@ -182,7 +183,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         return f"Loaded DXF file has version {self.doc.acad_release}/{dxfversion}" \
                f" and contains {acis_type} data"
 
-    def set_acis_entities(self, entities: List[AcisData]):
+    def set_acis_entities(self, entities: list[AcisData]):
         self.acis_entities = entities
         self.update_entity_selector(entities)
         self.set_current_acis_entity(entities[0])
