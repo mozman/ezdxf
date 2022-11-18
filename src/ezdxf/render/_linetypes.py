@@ -1,5 +1,5 @@
-#  Copyright (c) 2020-2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2020-2022, Manfred Moitzi
+# License: MIT License
 from __future__ import annotations
 from typing import Tuple, Iterable, Sequence
 import math
@@ -55,7 +55,7 @@ class _LineTypeRenderer:
                 yield _start, _end
             _start = _end
 
-    def _render_dashes(self, length: float) -> Iterable[Tuple[bool, float]]:
+    def _render_dashes(self, length: float) -> Iterable[tuple[bool, float]]:
         if length <= self._current_dash_length:
             self._current_dash_length -= length
             yield self._is_dash, length

@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+
 from ezdxf.math import Vec2, UCS, UVec
 from ezdxf.tools import normalize_text_angle
 from ezdxf.render.arrows import ARROWS, connection_point

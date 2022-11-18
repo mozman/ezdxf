@@ -1,10 +1,10 @@
 # Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-import math
 from typing import TYPE_CHECKING, Optional
 from abc import abstractmethod
 import logging
+import math
 
 from ezdxf.math import (
     Vec2,
@@ -21,7 +21,6 @@ from .dim_base import (
     get_required_defpoint,
     format_text,
     apply_dimpost,
-    TextBox,
     Tolerance,
     Measurement,
     LengthMeasurement,
@@ -37,7 +36,6 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import GenericLayoutType
 
 __all__ = ["AngularDimension", "Angular3PDimension", "ArcLengthDimension"]
-
 logger = logging.getLogger("ezdxf")
 
 ARC_PREFIX = "( "
@@ -507,9 +505,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                 self.ext2_start, self.ext2_dir, ext_lines.dxfattribs(2)
             )
 
-    def _add_ext_line(
-        self, start: Vec2, direction: Vec2, dxfattribs
-    ) -> None:
+    def _add_ext_line(self, start: Vec2, direction: Vec2, dxfattribs) -> None:
         ext_lines = self.extension_lines
         center = self.center_of_arc
         radius = self.dim_line_radius

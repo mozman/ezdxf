@@ -1,16 +1,16 @@
-#  Copyright (c) 2020, Manfred Moitzi
-#  License: MIT License
-from typing import TYPE_CHECKING, List, cast, Sequence, Dict
+# Copyright (c) 2020-2022, Manfred Moitzi
+# License: MIT License
+from __future__ import annotations
+from typing import TYPE_CHECKING, cast, Sequence, Any
 from itertools import chain
 from ezdxf.entities import factory, MLineStyle
 from ezdxf.math import Vec3, OCS
 import logging
 
 if TYPE_CHECKING:
-    from ezdxf.entities import MLine, DXFGraphic, Hatch, LWPolyline, Line, Arc
+    from ezdxf.entities import MLine, DXFGraphic, Hatch, Line, Arc
 
 __all__ = ["virtual_entities"]
-
 logger = logging.getLogger("ezdxf")
 
 
@@ -19,7 +19,7 @@ logger = logging.getLogger("ezdxf")
 # applied.
 
 
-def _dxfattribs(mline) -> Dict:
+def _dxfattribs(mline) -> dict[str, Any]:
     attribs = mline.graphic_properties()
     # True color value of MLINE is ignored by CAD applications:
     if "true_color" in attribs:
@@ -27,7 +27,7 @@ def _dxfattribs(mline) -> Dict:
     return attribs
 
 
-def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
+def virtual_entities(mline: MLine) -> list[DXFGraphic]:
     """Yields 'virtual' parts of MLINE as LINE, ARC and HATCH entities.
 
     This entities are located at the original positions, but are not stored
@@ -35,7 +35,7 @@ def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
     layout.
     """
 
-    def filling() -> "Hatch":
+    def filling() -> Hatch:
         attribs = _dxfattribs(mline)
         attribs["color"] = style.dxf.fill_color
         attribs["elevation"] = Vec3(ocs.from_wcs(bottom_border[0])).replace(
@@ -43,7 +43,7 @@ def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
         )
         attribs["extrusion"] = mline.dxf.extrusion
         hatch = cast("Hatch", factory.new("HATCH", dxfattribs=attribs, doc=doc))
-        bulges: List[float] = [0.0] * (len(bottom_border) * 2)
+        bulges: list[float] = [0.0] * (len(bottom_border) * 2)
         points = chain(
             Vec3.generate(ocs.points_from_wcs(bottom_border)),
             Vec3.generate(ocs.points_from_wcs(reversed(top_border))),
@@ -57,8 +57,8 @@ def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
         hatch.paths.add_polyline_path(lwpoints, is_closed=True)
         return hatch
 
-    def start_cap() -> List["DXFGraphic"]:
-        entities: List["DXFGraphic"] = []
+    def start_cap() -> list[DXFGraphic]:
+        entities: list[DXFGraphic] = []
         if style.get_flag_state(style.START_SQUARE):
             entities.extend(create_miter(miter_points[0]))
         if style.get_flag_state(style.START_ROUND):
@@ -72,8 +72,8 @@ def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
             entities.extend(round_caps(0, start_index, end_index))
         return entities
 
-    def end_cap() -> List["DXFGraphic"]:
-        entities: List["DXFGraphic"] = []
+    def end_cap() -> list[DXFGraphic]:
+        entities: list[DXFGraphic] = []
         if style.get_flag_state(style.END_SQUARE):
             entities.extend(create_miter(miter_points[-1]))
         if style.get_flag_state(style.END_ROUND):
@@ -96,7 +96,7 @@ def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
 
     def _arc_caps(
         start: Vec3, end: Vec3, color1: int, color2: int
-    ) -> Sequence["Arc"]:
+    ) -> Sequence[Arc]:
         attribs = _dxfattribs(mline)
         center = start.lerp(end)
         radius = (end - start).magnitude / 2.0
@@ -115,9 +115,9 @@ def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
         arc2 = cast("Arc", factory.new("ARC", dxfattribs=attribs, doc=doc))
         return arc1, arc2
 
-    def lines() -> List["Line"]:
+    def lines() -> list[Line]:
         prev = None
-        _lines: List["Line"] = []
+        _lines: list[Line] = []
         attribs = _dxfattribs(mline)
 
         for miter in miter_points:
@@ -147,8 +147,8 @@ def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
                 _lines.extend(create_miter(miter))
         return _lines
 
-    def create_miter(miter) -> List["Line"]:
-        _lines: List["Line"] = []
+    def create_miter(miter) -> list[Line]:
+        _lines: list[Line] = []
         attribs = _dxfattribs(mline)
         top = miter[top_index]
         bottom = miter[bottom_index]
@@ -171,7 +171,7 @@ def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
         )
         return _lines
 
-    entities: List["DXFGraphic"] = []
+    entities: list[DXFGraphic] = []
     if not mline.is_alive or mline.doc is None or len(mline.vertices) < 2:
         return entities
 
@@ -186,9 +186,9 @@ def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
     ordered_indices = style.ordered_indices()
     bottom_index = ordered_indices[0]
     top_index = ordered_indices[-1]
-    bottom_border: List[Vec3] = []
-    top_border: List[Vec3] = []
-    miter_points: List[List[Vec3]] = []
+    bottom_border: list[Vec3] = []
+    top_border: list[Vec3] = []
+    miter_points: list[list[Vec3]] = []
 
     for vertex in mline.vertices:
         offsets = vertex.line_params

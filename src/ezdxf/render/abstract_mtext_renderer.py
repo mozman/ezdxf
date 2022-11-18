@@ -1,5 +1,5 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 
 # This is the abstract link between the text layout engine implemented in
 # ezdxf.tools.text_layout and a concrete MTEXT renderer implementation like

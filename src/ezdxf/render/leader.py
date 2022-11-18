@@ -1,6 +1,7 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, cast
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterator, cast
 
 from ezdxf import ARROWS
 from ezdxf.entities import factory
@@ -8,7 +9,7 @@ from ezdxf.lldxf.const import BYBLOCK
 from ezdxf.math import Vec3, fit_points_to_cad_cv
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
+    from ezdxf.entities import (
         DXFGraphic,
         Leader,
         Insert,
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
     )
 
 
-def virtual_entities(leader: "Leader") -> Iterable["DXFGraphic"]:
+def virtual_entities(leader: Leader) -> Iterator[DXFGraphic]:
     # Source: https://atlight.github.io/formats/dxf-leader.html
     # GDAL: DXF LEADER implementation:
     # https://github.com/OSGeo/gdal/blob/master/gdal/ogr/ogrsf_frmts/dxf/ogrdxf_leader.cpp

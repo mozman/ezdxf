@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Iterator, Optional
+from typing import TYPE_CHECKING, Iterable, Iterator
 from ezdxf.math import Vec2, Shape2d, NULLVEC, UVec
 from .forms import open_arrow, arrow2
 
@@ -41,7 +41,7 @@ class ObliqueStroke(BaseArrow):
         super().__init__([Vec2((-s2, -s2)), Vec2((s2, s2))])
         self.place(insert, angle)
 
-    def render(self, layout: "GenericLayoutType", dxfattribs=None):
+    def render(self, layout: GenericLayoutType, dxfattribs=None):
         layout.add_line(
             start=self.shape[0], end=self.shape[1], dxfattribs=dxfattribs
         )

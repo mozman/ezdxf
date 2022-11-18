@@ -1,9 +1,10 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 import logging
 import math
+
 from ezdxf.math import Vec2, UCS, NULLVEC
 from ezdxf.lldxf import const
 from ezdxf.entities import DimStyleOverride, Dimension
@@ -17,7 +18,6 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import GenericLayoutType
 
 __all__ = ["OrdinateDimension"]
-
 logger = logging.getLogger("ezdxf")
 
 

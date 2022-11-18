@@ -1,25 +1,26 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Union
 import logging
 import math
-from typing import TYPE_CHECKING, Iterable, Union
 
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import VERTEXNAMES
 from ezdxf.math import Vec3, bulge_to_arc, OCS
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
-    from ezdxf.eztypes import LWPolyline, Polyline, Line, Arc, Face3d, Polymesh
+    from ezdxf.entities import LWPolyline, Polyline, Line, Arc, Face3d, Polymesh
+
+logger = logging.getLogger("ezdxf")
 
 
 def virtual_lwpolyline_entities(
-    lwpolyline: "LWPolyline",
-) -> Iterable[Union["Line", "Arc"]]:
+    lwpolyline: LWPolyline,
+) -> Iterable[Union[Line, Arc]]:
     """Yields 'virtual' entities of LWPOLYLINE as LINE or ARC objects.
 
-    This entities are located at the original positions, but are not stored in
+    These entities are located at the original positions, but are not stored in
     the entity database, have no handle and are not assigned to any layout.
 
     (internal API)
@@ -44,11 +45,11 @@ def virtual_lwpolyline_entities(
 
 
 def virtual_polyline_entities(
-    polyline: "Polyline",
-) -> Iterable[Union["Line", "Arc", "Face3d"]]:
+    polyline: Polyline,
+) -> Iterable[Union[Line, Arc, Face3d]]:
     """Yields 'virtual' entities of POLYLINE as LINE, ARC or 3DFACE objects.
 
-    This entities are located at the original positions, but are not stored in
+    These entities are located at the original positions, but are not stored in
     the entity database, have no handle and are not assigned to any layout.
 
     (internal API)
@@ -67,11 +68,11 @@ def virtual_polyline_entities(
 
 
 def virtual_polyline2d_entities(
-    polyline: "Polyline",
-) -> Iterable[Union["Line", "Arc"]]:
+    polyline: Polyline,
+) -> Iterable[Union[Line, Arc]]:
     """Yields 'virtual' entities of 2D POLYLINE as LINE or ARC objects.
 
-    This entities are located at the original positions, but are not stored in
+    These entities are located at the original positions, but are not stored in
     the entity database, have no handle and are not assigned to any layout.
 
     (internal API)
@@ -100,7 +101,7 @@ def virtual_polyline2d_entities(
 
 def _virtual_polyline_entities(
     points, elevation: float, extrusion: Vec3, dxfattribs: dict, doc
-) -> Iterable[Union["Line", "Arc"]]:
+) -> Iterable[Union[Line, Arc]]:
     ocs = OCS(extrusion) if extrusion else OCS()
     prev_point = None
     prev_bulge = None
@@ -133,7 +134,7 @@ def _virtual_polyline_entities(
         prev_bulge = bulge
 
 
-def virtual_polyline3d_entities(polyline: "Polyline") -> Iterable["Line"]:
+def virtual_polyline3d_entities(polyline: Polyline) -> Iterable[Line]:
     """Yields 'virtual' entities of 3D POLYLINE as LINE objects.
 
     This entities are located at the original positions, but are not stored in
@@ -156,7 +157,7 @@ def virtual_polyline3d_entities(polyline: "Polyline") -> Iterable["Line"]:
         yield factory.new(dxftype="LINE", dxfattribs=dxfattribs, doc=doc)  # type: ignore
 
 
-def virtual_polymesh_entities(polyline: "Polyline") -> Iterable["Face3d"]:
+def virtual_polymesh_entities(polyline: Polyline) -> Iterable[Face3d]:
     """Yields 'virtual' entities of POLYMESH as 3DFACE objects.
 
     This entities are located at the original positions, but are not stored in
@@ -165,7 +166,7 @@ def virtual_polymesh_entities(polyline: "Polyline") -> Iterable["Face3d"]:
     (internal API)
 
     """
-    polymesh: "Polymesh" = polyline   # type: ignore
+    polymesh: "Polymesh" = polyline  # type: ignore
     assert polymesh.dxftype() == "POLYLINE"
     assert polymesh.is_polygon_mesh
 
@@ -189,7 +190,7 @@ def virtual_polymesh_entities(polyline: "Polyline") -> Iterable["Face3d"]:
             yield factory.new(dxftype="3DFACE", dxfattribs=dxfattribs, doc=doc)  # type: ignore
 
 
-def virtual_polyface_entities(polyline: "Polyline") -> Iterable["Face3d"]:
+def virtual_polyface_entities(polyline: Polyline) -> Iterable[Face3d]:
     """Yields 'virtual' entities of POLYFACE as 3DFACE objects.
 
     This entities are located at the original positions, but are not stored in

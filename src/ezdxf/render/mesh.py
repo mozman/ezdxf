@@ -3,40 +3,36 @@
 from __future__ import annotations
 from typing import (
     Dict,
-    Tuple,
-    Sequence,
     Iterable,
     Iterator,
-    TYPE_CHECKING,
-    Union,
-    TypeVar,
-    Type,
     NamedTuple,
     Optional,
+    Sequence,
+    TYPE_CHECKING,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
 )
 from ezdxf.math import (
-    Matrix44,
-    Vec3,
     BoundingBox,
-    UVec,
+    Matrix44,
     NULLVEC,
+    OCS,
+    UCS,
+    UVec,
+    Vec3,
+    area,
     is_planar_face,
-    subdivide_face,
     normal_vector_3p,
     safe_normal_vector,
+    subdivide_face,
     subdivide_ngons,
-    area,
-    OCS,
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        UCS,
-        Polyface,
-        Polymesh,
-        GenericLayoutType,
-        Mesh,
-    )
+    from ezdxf.entities import Polyface, Polymesh, Mesh
+    from ezdxf.eztypes import GenericLayoutType
 
 T = TypeVar("T")
 

@@ -2,19 +2,21 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+
 from ezdxf.math import UCS
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
-from .dim_linear import LinearDimension
-from .dim_radius import RadiusDimension
-from .dim_diameter import DiameterDimension
+from .dim_base import BaseDimensionRenderer
 from .dim_curved import AngularDimension, Angular3PDimension, ArcLengthDimension
+from .dim_diameter import DiameterDimension
+from .dim_linear import LinearDimension
 from .dim_ordinate import OrdinateDimension
+from .dim_radius import RadiusDimension
 
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, BaseDimensionRenderer
+    from ezdxf.entities import Dimension
 
 
 class DimensionRenderer:
