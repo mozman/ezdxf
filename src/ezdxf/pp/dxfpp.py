@@ -4,8 +4,9 @@
 """
 Creates a structured HTML view of the DXF tags - not a CAD drawing!
 """
+from __future__ import annotations
+from typing import Sequence, Iterable
 import os
-from typing import Sequence, Tuple, Iterable, Dict, Set, List
 from collections import defaultdict
 from ezdxf.lldxf.types import (
     is_pointer_code,
@@ -118,7 +119,7 @@ def with_bitmask(value: int) -> str:
 
 
 def pointer_collector(
-    tagger: Iterable[DXFTag], handles: List[str], pointers: Dict[str, Set[str]]
+    tagger: Iterable[DXFTag], handles: list[str], pointers: dict[str, set[str]]
 ) -> Iterable[DXFTag]:
     entity = None
     handle = None
@@ -142,8 +143,8 @@ class DXF2HtmlConverter:
     ):
         self.filename = filename
         self.section_order = section_order
-        self.handles: List[str] = []
-        self.pointers: Dict[str, Set[str]] = defaultdict(set)
+        self.handles: list[str] = []
+        self.pointers: dict[str, set[str]] = defaultdict(set)
         tagger = pointer_collector(tagger, self.handles, self.pointers)
         self.dxf_structure = load_dxf_structure(tagger, ignore_missing_eof=True)
         self.section_names_in_write_order = self._section_names_in_write_order()
@@ -193,7 +194,7 @@ class DXF2HtmlConverter:
     def create_section_html_template(self, name: str) -> str:
         """Creates a section template with buttons to the previous and next section."""
 
-        def nav_targets() -> Tuple[str, str]:
+        def nav_targets() -> tuple[str, str]:
             section_names = self.section_names_in_write_order
             index = section_names.index(name)
             prev_index = max(0, index - 1)
@@ -221,7 +222,7 @@ class DXF2HtmlConverter:
             )
         return SECTION_LINKS_TPL.format(buttons=" \n".join(section_links))
 
-    def entities(self) -> List["Tags"]:
+    def entities(self) -> list[Tags]:
         return self.dxf_structure["ENTITIES"]  # type: ignore
 
     def section2html(self, section_name: str, section_template: str) -> str:
@@ -265,7 +266,7 @@ class DXF2HtmlConverter:
 
     def entities2html(
         self,
-        entities: Iterable["Tags"],
+        entities: Iterable[Tags],
         create_ref_links=False,
         show_ref_status=False,
     ) -> str:
@@ -312,7 +313,7 @@ class DXF2HtmlConverter:
             pointers=pointers_str
         )
 
-    def tags2html(self, tags: "Tags") -> str:
+    def tags2html(self, tags: Tags) -> str:
         """DXF tag list as <div> container."""
 
         def tag2html(tag: "DXFTag") -> str:
@@ -376,7 +377,7 @@ class DXF2HtmlConverter:
         return TABLES_SECTION_TPL.format(content="\n".join(tables_html_strings))
 
     @staticmethod
-    def create_table_navigation(table_section: List[List["Tags"]]) -> str:
+    def create_table_navigation(table_section: list[list[Tags]]) -> str:
         """Create a button bar with links to all DXF tables as <div> container."""
         buttons = []
         for table in table_section:
@@ -386,7 +387,7 @@ class DXF2HtmlConverter:
             buttons.append(BUTTON_TPL.format(name=name, target=link))
         return BUTTON_BAR_TPL.format(content="\n".join(buttons))
 
-    def table2html(self, table: List["Tags"], navigation="") -> str:
+    def table2html(self, table: list[Tags], navigation="") -> str:
         """DXF table as <div> container."""
         header = ENTITY_TPL.format(
             name="TABLE HEADER", tags=self.tags2html(table[0]), references=""
@@ -420,7 +421,7 @@ class DXF2HtmlConverter:
         )
         return BLOCKS_SECTION_TPL.format(content="\n".join(block_strings))
 
-    def block2html(self, entities: List["Tags"]) -> str:
+    def block2html(self, entities: list[Tags]) -> str:
         """DXF block entity as <div> container."""
         block = entities[0]
         block_html = self.entity2html(block, create_ref_links=True)
