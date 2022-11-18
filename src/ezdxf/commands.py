@@ -1,7 +1,7 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Callable, Optional, Dict, TYPE_CHECKING, Type, Tuple
+from typing import Callable, Optional, Dict, TYPE_CHECKING, Type
 import abc
 import sys
 import os
@@ -19,7 +19,7 @@ from ezdxf.dwginfo import dwg_file_info
 from ezdxf import units
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic
+    from ezdxf.entities import DXFGraphic
     from ezdxf.addons.drawing.properties import Properties
 
 __all__ = ["get", "add_parsers"]
@@ -655,7 +655,7 @@ class Pillow(Command):
             out.resize().show(args.file)
 
 
-def parse_image_size(image_size: str) -> Tuple[int, int]:
+def parse_image_size(image_size: str) -> tuple[int, int]:
     if "," in image_size:
         sx, sy = image_size.split(",")
     elif "x" in image_size:

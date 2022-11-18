@@ -11,21 +11,19 @@ https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-DE941DB5-7044-433C-AA68-
 Using bytes for strings because no encoding is defined in of shape-files.
 
 """
-import math
+from __future__ import annotations
 from typing import (
-    Dict,
     Sequence,
     Iterable,
     Iterator,
     Callable,
-    List,
-    Tuple,
     Optional,
     Any,
     Set,
 )
-import enum
 import dataclasses
+import enum
+import math
 import pathlib
 
 from ezdxf import path
@@ -93,14 +91,14 @@ class Symbol:
     name: bytes
     data: Sequence[int] = NO_DATA
 
-    def export_str(self, as_num: int = 0) -> List[bytes]:
+    def export_str(self, as_num: int = 0) -> list[bytes]:
         num = as_num if as_num else self.number
         export = [f"*{num:05X},{self.byte_count},".encode() + self.name]
         export.extend(format_shape_data_string(self.data))
         return export
 
 
-def format_shape_data_string(data: Sequence[int]) -> List[bytes]:
+def format_shape_data_string(data: Sequence[int]) -> list[bytes]:
     export = []
     s = b""
     for num in data:
@@ -125,7 +123,7 @@ class ShapeFile:
         encoding=FontEncoding.UNICODE,
         embed=FontEmbedding.ALLOWED,
     ):
-        self.shapes: Dict[int, Symbol] = dict()
+        self.shapes: dict[int, Symbol] = dict()
         self.name = name
         self.above = above
         self.below = below
@@ -244,7 +242,7 @@ class ShapeFile:
             numbers, self.get_codes, stacked=stacked, reset_to_baseline=True
         )
 
-    def shape_string(self, shape_number: int, as_num: int = 0) -> List[bytes]:
+    def shape_string(self, shape_number: int, as_num: int = 0) -> list[bytes]:
         return self.shapes[shape_number].export_str(as_num)
 
 
@@ -392,15 +390,15 @@ class DataReader:
 SHX_SHAPES_START_INDEX = 0x17
 
 
-def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
-    shapes: Dict[int, Symbol] = dict()
+def parse_shx_shapes(data: bytes) -> dict[int, Symbol]:
+    shapes: dict[int, Symbol] = dict()
     reader = DataReader(data, SHX_SHAPES_START_INDEX)
     if reader.u8() != 0x1A:
         raise FileStructureError("signature byte 0x1A not found")
     first_number = reader.u16()
     last_number = reader.u16()
     shape_count = reader.u16()
-    index_table: List[Tuple[int, int]] = []
+    index_table: list[tuple[int, int]] = []
     for _ in range(shape_count):
         shape_number = reader.u16()
         data_size = reader.u16()
@@ -426,7 +424,7 @@ def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
     return shapes
 
 
-def parse_shx_data_record(data: bytes) -> Tuple[bytes, Sequence[int]]:
+def parse_shx_data_record(data: bytes) -> tuple[bytes, Sequence[int]]:
     reader = DataReader(data)
     name = reader.read_str()
     codes = parse_shape_codes(reader)
@@ -477,8 +475,8 @@ def parse_shx_unifont_definition(reader: DataReader) -> Sequence[Any]:
     return name, above, below, mode, encoding, embed
 
 
-def parse_shx_unifont_shapes(reader: DataReader) -> Dict[int, Symbol]:
-    shapes: Dict[int, Symbol] = dict()
+def parse_shx_unifont_shapes(reader: DataReader) -> dict[int, Symbol]:
+    shapes: dict[int, Symbol] = dict()
     while reader.has_data:
         shape_number = reader.u16()
         byte_count = reader.u16()
@@ -494,7 +492,7 @@ SINGLE_CODES = {1, 2, 5, 6, 14}
 
 
 def parse_shape_codes(reader: DataReader, unifont=False) -> Sequence[int]:
-    codes: List[int] = []
+    codes: list[int] = []
     while True:
         code = reader.u8()
         codes.append(code)
@@ -578,8 +576,8 @@ def merge_lines(lines: Iterable[bytes]) -> Iterator[bytes]:
 
 def parse_string_records(
     lines: Iterable[bytes],
-) -> Dict[bytes, Sequence[bytes]]:
-    records: Dict[bytes, Sequence[bytes]] = dict()
+) -> dict[bytes, Sequence[bytes]]:
+    records: dict[bytes, Sequence[bytes]] = dict()
     name = None
     record = []
     for line in lines:
@@ -644,7 +642,7 @@ class ShapeRenderer:
         self.vector_length = float(vector_length)  # initial vector length
         self.pen_down = pen_down
         self.stacked = stacked  # vertical stacked text
-        self._location_stack: List[Vec3] = []
+        self._location_stack: list[Vec3] = []
         self._get_codes = get_codes
         self._baseline_y = self.p.start.y
 
@@ -879,7 +877,7 @@ class ShapeRenderer:
             self.draw_displacement(x, y)
 
 
-def decode_octant_specs(specs: int) -> Tuple[int, int, bool]:
+def decode_octant_specs(specs: int) -> tuple[int, int, bool]:
     ccw = True
     if specs < 0:
         ccw = False

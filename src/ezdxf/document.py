@@ -1,8 +1,6 @@
 # Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-
-import os
 from typing import (
     TYPE_CHECKING,
     TextIO,
@@ -14,15 +12,24 @@ from typing import (
     cast,
     Optional,
 )
-from datetime import datetime, timezone
-import io
 import abc
 import base64
+import io
 import logging
+import os
+from datetime import datetime, timezone
 from itertools import chain
 
 import ezdxf
+from ezdxf.audit import Auditor
+from ezdxf.entities.dxfgroups import GroupCollection
+from ezdxf.entities.material import MaterialCollection
+from ezdxf.entities.mleader import MLeaderStyleCollection
+from ezdxf.entities.mline import MLineStyleCollection
+from ezdxf.entitydb import EntityDB
+from ezdxf.groupby import groupby
 from ezdxf.layouts import Modelspace, Paperspace
+from ezdxf.layouts.layouts import Layouts
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import (
     BLK_XREF,
@@ -36,45 +43,29 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.lldxf import loader
 from ezdxf.lldxf.tagwriter import TagWriter, BinaryTagWriter
-
-from ezdxf.entitydb import EntityDB
-from ezdxf.layouts.layouts import Layouts
+from ezdxf.query import EntityQuery
+from ezdxf.render.dimension import DimensionRenderer
+from ezdxf.sections.acdsdata import AcDsDataSection, new_acds_data_section
+from ezdxf.sections.blocks import BlocksSection
+from ezdxf.sections.classes import ClassesSection
+from ezdxf.sections.entities import EntitySection, StoredSection
+from ezdxf.sections.header import HeaderSection
+from ezdxf.sections.objects import ObjectsSection
+from ezdxf.sections.tables import TablesSection
+from ezdxf.tools import guid
 from ezdxf.tools.codepage import tocodepage, toencoding
 from ezdxf.tools.juliandate import juliandate
 from ezdxf.tools.text import safe_string, MAX_STR_LEN
 
-from ezdxf.tools import guid
-from ezdxf.query import EntityQuery
-from ezdxf.groupby import groupby
-from ezdxf.render.dimension import DimensionRenderer
-
-from ezdxf.sections.header import HeaderSection
-from ezdxf.sections.classes import ClassesSection
-from ezdxf.sections.tables import TablesSection
-from ezdxf.sections.blocks import BlocksSection
-from ezdxf.sections.entities import EntitySection, StoredSection
-from ezdxf.sections.objects import ObjectsSection
-from ezdxf.sections.acdsdata import AcDsDataSection, new_acds_data_section
-
-from ezdxf.entities.dxfgroups import GroupCollection
-from ezdxf.entities.material import MaterialCollection
-from ezdxf.entities.mleader import MLeaderStyleCollection
-from ezdxf.entities.mline import MLineStyleCollection
-from ezdxf.audit import Auditor
 
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        DXFTag,
-        Tags,
-        VPort,
-        Dictionary,
-        Layout,
-        DXFEntity,
-        Layer,
-        GenericLayoutType,
-    )
+    from ezdxf.entities import DXFEntity, Layer, VPort, Dictionary
+    from ezdxf.eztypes import GenericLayoutType
+    from ezdxf.layouts import Layout
+    from ezdxf.lldxf.tags import Tags
+    from ezdxf.lldxf.types import DXFTag
     from ezdxf.sections.tables import (
         LayerTable,
         LinetypeTable,
@@ -375,9 +366,7 @@ class Drawing:
         """Internal API to load a DXF document from a section dict."""
         self.is_loading = True
         # Create header section:
-        header_entities: list[Tags] = sections.get(
-            "HEADER", []  # type: ignore
-        )
+        header_entities: list[Tags] = sections.get("HEADER", [])  # type: ignore
         if header_entities:
             # All header tags are the first DXF structure entity
             self.header = HeaderSection.load(header_entities[0])  # type: ignore

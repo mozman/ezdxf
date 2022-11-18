@@ -37,7 +37,8 @@ from ezdxf.tools.codepage import toencoding
 from ezdxf.audit import Auditor, AuditError
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, SectionDict
+    from ezdxf.document import Drawing
+    from ezdxf.eztypes import SectionDict
 
 __all__ = ["read", "readfile"]
 

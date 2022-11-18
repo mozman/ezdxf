@@ -8,10 +8,8 @@ from typing import (
     Callable,
     Optional,
     cast,
-    Dict,
-    List,
 )
-
+from ezdxf.lldxf import const
 from ezdxf.entities import factory
 from ezdxf.entities.boundary_paths import (
     PolylinePath,
@@ -21,7 +19,6 @@ from ezdxf.entities.boundary_paths import (
     EllipseEdge,
     SplineEdge,
 )
-from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
 from ezdxf.math import OCS, Vec3, ABS_TOL
 from ezdxf.math.transformtools import (
     NonUniformScalingError,
@@ -29,18 +26,18 @@ from ezdxf.math.transformtools import (
 )
 from ezdxf.query import EntityQuery
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
-    from ezdxf.entities.polygon import DXFPolygon
-    from ezdxf.eztypes import (
-        Insert,
-        BaseLayout,
+    from ezdxf.entities import (
         DXFGraphic,
+        Insert,
         Attrib,
         Text,
         LWPolyline,
     )
+    from ezdxf.entities.polygon import DXFPolygon
+    from ezdxf.layouts import BaseLayout
+
+logger = logging.getLogger("ezdxf")
 
 __all__ = [
     "virtual_block_reference_entities",
@@ -88,10 +85,10 @@ def explode_block_reference(
 
     """
     if target_layout is None:
-        raise DXFStructureError("Target layout is None.")
+        raise const.DXFStructureError("Target layout is None.")
 
     if block_ref.doc is None:
-        raise DXFStructureError(
+        raise const.DXFStructureError(
             "Block reference has to be assigned to a DXF document."
         )
 
@@ -120,7 +117,7 @@ def explode_block_reference(
         entitydb is not None
     ), "Exploding a block reference requires an entity database."
 
-    entities: List[DXFGraphic] = []
+    entities: list[DXFGraphic] = []
     if block_ref.mcount > 1:
         for virtual_insert in block_ref.multi_insert():
             _explode_single_block_ref(virtual_insert)
@@ -162,9 +159,7 @@ def attrib_to_text(attrib: Attrib) -> Text:
 def virtual_block_reference_entities(
     block_ref: Insert,
     *,
-    skipped_entity_callback: Optional[
-        Callable[[DXFGraphic, str], None]
-    ] = None,
+    skipped_entity_callback: Optional[Callable[[DXFGraphic, str], None]] = None,
     redraw_order=False,
 ) -> Iterable[DXFGraphic]:
     """Yields 'virtual' parts of block reference `block_ref`. This method is meant
@@ -208,7 +203,7 @@ def virtual_block_reference_entities(
                 continue
             try:
                 copy = entity.copy()
-            except DXFTypeError:
+            except const.DXFTypeError:
                 if hasattr(entity, "virtual_entities"):
                     yield from entity.virtual_entities()
                 else:
@@ -254,7 +249,7 @@ def virtual_block_reference_entities(
     m = block_ref.matrix44()
     block_layout = block_ref.block()
     if block_layout is None:
-        raise DXFStructureError(
+        raise const.DXFStructureError(
             f'Required block definition for "{block_ref.dxf.name}" does not exist.'
         )
 
@@ -284,23 +279,23 @@ def explode_entity(
     dxftype = entity.dxftype()
     virtual_entities = getattr(entity, "virtual_entities")
     if virtual_entities is None or dxftype in EXCLUDE_FROM_EXPLODE:
-        raise DXFTypeError(f"Can not explode entity {dxftype}.")
+        raise const.DXFTypeError(f"Can not explode entity {dxftype}.")
 
     if entity.doc is None:
-        raise DXFStructureError(
+        raise const.DXFStructureError(
             f"{dxftype} has to be assigned to a DXF document."
         )
 
     entitydb = entity.doc.entitydb
     if entitydb is None:
-        raise DXFStructureError(
+        raise const.DXFStructureError(
             f"Exploding {dxftype} requires an entity database."
         )
 
     if target_layout is None:
         target_layout = entity.get_layout()
         if target_layout is None:
-            raise DXFStructureError(
+            raise const.DXFStructureError(
                 f"{dxftype} without layout assignment, specify target layout."
             )
 
@@ -319,7 +314,7 @@ def explode_entity(
 
 def virtual_boundary_path_entities(
     polygon: DXFPolygon,
-) -> List[List[DXFGraphic]]:
+) -> list[list[DXFGraphic]]:
     from ezdxf.entities import LWPolyline
 
     def polyline():
@@ -345,8 +340,8 @@ def virtual_boundary_path_entities(
 
 
 def _virtual_edge_path(
-    path: EdgePath, dxfattribs: Dict, ocs: OCS, elevation: float
-) -> List[DXFGraphic]:
+    path: EdgePath, dxfattribs, ocs: OCS, elevation: float
+) -> list[DXFGraphic]:
     from ezdxf.entities import Line, Arc, Ellipse, Spline
 
     def pnt_to_wcs(v):
@@ -355,7 +350,7 @@ def _virtual_edge_path(
     def dir_to_wcs(v):
         return ocs.to_wcs(v)
 
-    edges: List[DXFGraphic] = []
+    edges: list[DXFGraphic] = []
     for edge in path.edges:
         attribs = dict(dxfattribs)
         if isinstance(edge, LineEdge):

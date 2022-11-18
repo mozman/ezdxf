@@ -7,8 +7,8 @@ DXF resources between documents.
 Planning state!!!
 
 """
-
-from typing import List, TYPE_CHECKING
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from typing_extensions import Protocol, runtime_checkable
 
 if TYPE_CHECKING:
@@ -30,10 +30,10 @@ class ResourcePackage(Protocol):
 
     """
 
-    def push(self, resources: List["DXFEntity"]):
+    def push(self, resources: list[DXFEntity]):
         ...
 
-    def pop(self) -> List["DXFEntity"]:
+    def pop(self) -> list[DXFEntity]:
         ...
 
 

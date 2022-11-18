@@ -1,6 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from typing import Dict, Any, Optional, List, Tuple, Iterator, TYPE_CHECKING
+from __future__ import annotations
+from typing import Any, Optional, Iterator, TYPE_CHECKING
 
 from ezdxf import colors
 from ezdxf.lldxf import validator, const
@@ -92,17 +93,17 @@ class GfxAttribs:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.__str__()})"
 
-    def __iter__(self) -> Iterator[Tuple[str, Any]]:
+    def __iter__(self) -> Iterator[tuple[str, Any]]:
         """Returns iter(self)."""
         return iter(self.items())
 
-    def items(self, default_values=False) -> List[Tuple[str, Any]]:
+    def items(self, default_values=False) -> list[tuple[str, Any]]:
         """Returns the DXF attributes as list of name, value pairs, returns
         also the default values if argument `default_values` is ``True``.
         The true_color and transparency attributes do not have default values,
         the absence of these attributes is the default value.
         """
-        data: List[Tuple[str, Any]] = []
+        data: list[tuple[str, Any]] = []
         if default_values or self._layer != DEFAULT_LAYER:
             data.append(("layer", self._layer))
         if default_values or self._aci_color != DEFAULT_ACI_COLOR:
@@ -129,7 +130,7 @@ class GfxAttribs:
             data.append(("ltscale", self._ltscale))
         return data
 
-    def asdict(self, default_values=False) -> Dict[str, Any]:
+    def asdict(self, default_values=False) -> dict[str, Any]:
         """Returns the DXF attributes as :class:`dict`, returns also the
         default values if argument `default_values` is ``True``.
         The true_color and transparency attributes do not have default values,

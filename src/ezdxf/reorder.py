@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Iterable, Union, Mapping, Optional
 import heapq
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic
+    from ezdxf.entities import DXFGraphic
 
 __all__ = ["ascending", "descending"]
 

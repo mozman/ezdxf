@@ -15,8 +15,8 @@
 # cannot represented by an extrusion vector (0, 0, 1), therefore this CANNOT
 # work for text entities or entities including text:
 # TEXT, ATTRIB, ATTDEF, MTEXT, DIMENSION, LEADER, MLEADER
-
-from typing import Iterable, List, Sequence, Tuple
+from __future__ import annotations
+from typing import Iterable, Sequence
 from functools import singledispatch
 import math
 from ezdxf.math import Z_AXIS, Vec3, Vec2
@@ -168,7 +168,7 @@ def _flip_ellipse(ellipse: Ellipse) -> None:
 
 @_flip_dxf_graphic.register(LWPolyline)
 def _flip_lwpolyline(polyline: LWPolyline) -> None:
-    flipped_points: List[Sequence[float]] = []
+    flipped_points: list[Sequence[float]] = []
     for x, y, start_width, end_width, bulge in polyline.lwpoints:
         bulge = -bulge
         v = _flip_2d_vertex(Vec2(x, y))
@@ -211,7 +211,7 @@ def _flip_boundary_path(path) -> None:
 
 @_flip_boundary_path.register(PolylinePath)
 def _flip_polyline_path(polyline: PolylinePath) -> None:
-    flipped_vertices: List[Tuple[float, float, float]] = []
+    flipped_vertices: list[tuple[float, float, float]] = []
     for x, y, bulge in polyline.vertices:
         bulge = -bulge
         v = _flip_2d_vertex(Vec2(x, y))

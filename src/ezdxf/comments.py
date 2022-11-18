@@ -1,4 +1,3 @@
-# Created: 23.12.2019
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
