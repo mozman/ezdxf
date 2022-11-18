@@ -1,5 +1,6 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Optional
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFStructureError
@@ -10,10 +11,10 @@ from ezdxf.lldxf.const import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.eztypes import (
+    from ezdxf.document import Drawing
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.entities import (
         Dictionary,
-        Drawing,
         DXFEntity,
         DXFObject,
         Placeholder,
@@ -39,13 +40,13 @@ class ExtensionDict:
 
     __slots__ = ("_xdict",)
 
-    def __init__(self, xdict: Union[str, "Dictionary"]):
+    def __init__(self, xdict: Union[str, Dictionary]):
         # 1st loading stage: xdict as string -> handle to dict
         # 2nd loading stage: xdict as DXF Dictionary
         self._xdict = xdict
 
     @property
-    def dictionary(self) -> "Dictionary":
+    def dictionary(self) -> Dictionary:
         """Returns the underlying :class:`~ezdxf.entities.Dictionary` object."""
         xdict = self._xdict
         assert xdict is not None, "destroyed extension dictionary"
@@ -60,7 +61,7 @@ class ExtensionDict:
         return self.dictionary.dxf.handle
 
     def __getitem__(self, key: str):
-        """Get self[key]. """
+        """Get self[key]."""
         return self.dictionary[key]
 
     def __setitem__(self, key: str, value):
@@ -77,11 +78,11 @@ class ExtensionDict:
         self.dictionary[key] = value
 
     def __delitem__(self, key: str):
-        """Delete self[key], destroys referenced entity. """
+        """Delete self[key], destroys referenced entity."""
         del self.dictionary[key]
 
     def __contains__(self, key: str):
-        """Return `key` in self. """
+        """Return `key` in self."""
         return key in self.dictionary
 
     def __len__(self):
@@ -99,16 +100,16 @@ class ExtensionDict:
         """
         return self.dictionary.items()
 
-    def get(self, key: str, default=None) -> Optional["DXFEntity"]:
-        """Return extension dictionary entry `key`. """
+    def get(self, key: str, default=None) -> Optional[DXFEntity]:
+        """Return extension dictionary entry `key`."""
         return self.dictionary.get(key, default)
 
     def discard(self, key: str) -> None:
-        """Discard extension dictionary entry `key`. """
+        """Discard extension dictionary entry `key`."""
         return self.dictionary.discard(key)
 
     @classmethod
-    def new(cls, owner_handle: str, doc: "Drawing"):
+    def new(cls, owner_handle: str, doc: Drawing):
         xdict = doc.objects.add_dictionary(
             owner=owner_handle,
             # All data in the extension dictionary belongs only to the owner
@@ -116,7 +117,7 @@ class ExtensionDict:
         )
         return cls(xdict)
 
-    def copy(self) -> "ExtensionDict":
+    def copy(self) -> ExtensionDict:
         """Deep copy of the extension dictionary all entries are virtual
         entities.
         """
@@ -159,12 +160,12 @@ class ExtensionDict:
             raise DXFStructureError("ACAD_XDICTIONARY error.")
         return cls(tags[1].value)
 
-    def load_resources(self, doc: "Drawing") -> None:
+    def load_resources(self, doc: Drawing) -> None:
         handle = self._xdict
         assert isinstance(handle, str)
         self._xdict = doc.entitydb.get(handle)  # type: ignore
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         assert self._xdict is not None
         xdict = self._xdict
         handle = xdict if isinstance(xdict, str) else xdict.dxf.handle
@@ -178,9 +179,7 @@ class ExtensionDict:
             self._xdict.destroy()
         self._xdict = None
 
-    def add_dictionary(
-        self, name: str, hard_owned: bool = True
-    ) -> "Dictionary":
+    def add_dictionary(self, name: str, hard_owned: bool = True) -> Dictionary:
         """Create a new :class:`~ezdxf.entities.Dictionary` object as
         extension dictionary entry `name`.
         """
@@ -194,7 +193,7 @@ class ExtensionDict:
         dictionary[name] = new_dict
         return new_dict
 
-    def add_xrecord(self, name: str) -> "XRecord":
+    def add_xrecord(self, name: str) -> XRecord:
         """Create a new :class:`~ezdxf.entities.XRecord` object as
         extension dictionary entry `name`.
         """
@@ -205,33 +204,29 @@ class ExtensionDict:
         dictionary[name] = xrecord
         return xrecord
 
-    def add_dictionary_var(self, name: str, value: str) -> "DictionaryVar":
+    def add_dictionary_var(self, name: str, value: str) -> DictionaryVar:
         """Create a new :class:`~ezdxf.entities.DictionaryVar` object as
         extension dictionary entry `name`.
         """
         dictionary = self.dictionary
         doc = dictionary.doc
         assert doc is not None, "valid DXF document required"
-        dict_var = doc.objects.add_dictionary_var(
-            dictionary.dxf.handle, value
-        )
+        dict_var = doc.objects.add_dictionary_var(dictionary.dxf.handle, value)
         dictionary[name] = dict_var
         return dict_var
 
-    def add_placeholder(self, name: str) -> "Placeholder":
+    def add_placeholder(self, name: str) -> Placeholder:
         """Create a new :class:`~ezdxf.entities.Placeholder` object as
         extension dictionary entry `name`.
         """
         dictionary = self.dictionary
         doc = dictionary.doc
         assert doc is not None, "valid DXF document required"
-        placeholder = doc.objects.add_placeholder(
-            dictionary.dxf.handle
-        )
+        placeholder = doc.objects.add_placeholder(dictionary.dxf.handle)
         dictionary[name] = placeholder
         return placeholder
 
-    def link_dxf_object(self, name: str, obj: "DXFObject") -> None:
+    def link_dxf_object(self, name: str, obj: DXFObject) -> None:
         """Link `obj` to the extension dictionary as entry `name`.
 
         Linked objects are owned by the extensions dictionary and therefore

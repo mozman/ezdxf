@@ -20,14 +20,13 @@ from .dxfentity import SubclassProcessor, DXFEntity, base_class
 from .layer import acdb_symbol_table_record
 from .factory import register_entity
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["DimStyle"]
+logger = logging.getLogger("ezdxf")
 
 acdb_dimstyle = DefSubclass(
     "AcDbDimStyleTableRecord",
@@ -93,7 +92,6 @@ acdb_dimstyle = DefSubclass(
         # 2 = Suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
         # 3 = Suppresses leading and trailing zeros (for example, 0.5000 becomes .5)
         "dimazin": DXFAttr(79, default=3, dxfversion=DXF2000),
-
         # dimarcsym: show arc symbol
         # 0 = preceding text
         # 1 = above text
@@ -615,7 +613,10 @@ class DimStyle(DXFEntity):
         self.set_dxf_attrib("dimtsz", size)
 
     def set_text_align(
-        self, halign: Optional[str] = None, valign: Optional[str] = None, vshift: Optional[float] = None
+        self,
+        halign: Optional[str] = None,
+        valign: Optional[str] = None,
+        vshift: Optional[float] = None,
     ) -> None:
         """Set measurement text alignment, `halign` defines the horizontal
         alignment (requires DXF R2000+), `valign` defines the vertical
@@ -888,7 +889,7 @@ class DimStyle(DXFEntity):
             self.dxf.dimtdec = int(dec)
 
     def __referenced_blocks__(self) -> Iterable[str]:
-        """Support for "ReferencedBlocks" protocol. """
+        """Support for "ReferencedBlocks" protocol."""
         if self.doc:
             blocks = self.doc.blocks
             for attrib_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):

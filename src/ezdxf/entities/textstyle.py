@@ -16,14 +16,13 @@ from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.tools.fonts import AbstractFont
 
 __all__ = ["Textstyle"]
+logger = logging.getLogger("ezdxf")
 
 acdb_style = DefSubclass(
     "AcDbTextStyleTableRecord",

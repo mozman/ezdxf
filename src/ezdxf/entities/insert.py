@@ -59,7 +59,7 @@ from .attrib import Attrib
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
-    from ezdxf.entities import DXFNamespace, AttDef, BlockRecord
+    from ezdxf.entities import DXFNamespace, AttDef
     from ezdxf.layouts import BaseLayout, BlockLayout
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
 

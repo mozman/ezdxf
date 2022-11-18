@@ -19,14 +19,13 @@ from .factory import register_entity
 from .polygon import DXFPolygon
 from .gradient import Gradient, GradientType
 
-__all__ = ["MPolygon"]
-
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.colors import RGB
 
-
+__all__ = ["MPolygon"]
 logger = logging.getLogger("ezdxf")
+
 acdb_mpolygon = DefSubclass(
     "AcDbMPolygon",
     {

@@ -2,19 +2,19 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Any, TYPE_CHECKING, Optional
+import logging
+
 from ezdxf.enums import MTextLineAlignment
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
 from ezdxf.math import Vec3, UVec, UCS
-import logging
-
-logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DimStyle, Dimension
     from ezdxf.render.dim_base import BaseDimensionRenderer
 
+logger = logging.getLogger("ezdxf")
 
 class DimStyleOverride:
     def __init__(self, dimension: Dimension, override: Optional[dict] = None):

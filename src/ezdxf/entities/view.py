@@ -19,13 +19,12 @@ from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["View"]
+logger = logging.getLogger("ezdxf")
 
 acdb_view = DefSubclass(
     "AcDbViewTableRecord",

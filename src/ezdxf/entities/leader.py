@@ -23,8 +23,6 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .dimension import OverrideMixin
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from audit import Auditor
     from ezdxf.entities import DXFNamespace, DXFEntity
@@ -34,6 +32,7 @@ if TYPE_CHECKING:
     from ezdxf.query import EntityQuery
 
 __all__ = ["Leader"]
+logger = logging.getLogger("ezdxf")
 
 acdb_leader = DefSubclass(
     "AcDbLeader",

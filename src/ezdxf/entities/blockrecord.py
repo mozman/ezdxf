@@ -22,8 +22,6 @@ from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
     from ezdxf.entities import DXFGraphic, Block, EndBlk
@@ -33,6 +31,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["BlockRecord"]
+logger = logging.getLogger("ezdxf")
 
 acdb_blockrec = DefSubclass(
     "AcDbBlockTableRecord",

@@ -5,7 +5,6 @@ from typing import (
     TYPE_CHECKING,
     Union,
     Iterable,
-    cast,
     Sequence,
     Optional,
 )
@@ -28,7 +27,6 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
-    from ezdxf.document import Drawing
 
 __all__ = ["Linetype", "compile_line_pattern", "CONTINUOUS_PATTERN"]
 

@@ -23,16 +23,14 @@ from ezdxf.entities import factory, DXFGraphic
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, XRecord
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.document import Drawing
     from ezdxf.audit import Auditor
 
-
 __all__ = ["Dictionary", "DictionaryWithDefault", "DictionaryVar"]
+logger = logging.getLogger("ezdxf")
 
 acdb_dictionary = DefSubclass(
     "AcDbDictionary",

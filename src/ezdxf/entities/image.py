@@ -27,8 +27,6 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
 from .factory import register_entity
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
     from ezdxf.entities import DXFNamespace, DXFEntity
@@ -38,6 +36,7 @@ if TYPE_CHECKING:
     from ezdxf.math import Matrix44
 
 __all__ = ["Image", "ImageDef", "ImageDefReactor", "RasterVariables", "Wipeout"]
+logger = logging.getLogger("ezdxf")
 
 
 class ImageBase(DXFGraphic):

@@ -40,8 +40,6 @@ from .dxfns import DXFNamespace, SubclassProcessor
 from .xdata import XData
 from .xdict import ExtensionDict
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
     from ezdxf.document import Drawing
@@ -51,6 +49,7 @@ if TYPE_CHECKING:
 
 
 __all__ = ["DXFEntity", "DXFTagStorage", "base_class", "SubclassProcessor"]
+logger = logging.getLogger("ezdxf")
 
 # Dynamic attributes created only at request:
 # Source entity of a copy or None if not a copy:

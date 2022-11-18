@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
 
 __all__ = ["entity_linker", "LinkedEntities"]
-
 logger = logging.getLogger("ezdxf")
 
 

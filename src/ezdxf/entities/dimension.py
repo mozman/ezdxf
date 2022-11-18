@@ -1,8 +1,8 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-import math
 from typing import TYPE_CHECKING, Optional, Union, Iterable, Iterator
+import math
 import logging
 from ezdxf.audit import AuditError
 from ezdxf.lldxf import validator, const

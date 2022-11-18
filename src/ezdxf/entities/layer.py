@@ -29,8 +29,6 @@ from ezdxf.lldxf.const import (
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from .factory import register_entity
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, Viewport, XRecord
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
@@ -38,6 +36,7 @@ if TYPE_CHECKING:
 
 
 __all__ = ["Layer", "acdb_symbol_table_record", "LayerOverrides"]
+logger = logging.getLogger("ezdxf")
 
 
 def is_valid_layer_color_index(aci: int) -> bool:

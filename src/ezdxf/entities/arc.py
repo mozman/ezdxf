@@ -26,7 +26,7 @@ from .circle import acdb_circle, Circle, merged_circle_group_codes
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["Arc"]
 
@@ -52,7 +52,7 @@ class Arc(Circle):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_circle, acdb_arc)
     MERGED_GROUP_CODES = merged_arc_group_codes
 
-    def export_entity(self, tagwriter: TagWriter) -> None:
+    def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
@@ -74,8 +74,8 @@ class Arc(Circle):
         return v[0]
 
     def angles(self, num: int) -> Iterable[float]:
-        """Returns `num` angles from start- to end angle in degrees in counter
-        clockwise order.
+        """Returns `num` angles from start- to end angle in degrees in
+        counter-clockwise orientation.
 
         All angles are normalized in the range from [0, 360).
 

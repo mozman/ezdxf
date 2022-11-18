@@ -1,8 +1,9 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 import logging
+
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -15,13 +16,12 @@ from ezdxf.entities.layer import acdb_symbol_table_record
 from ezdxf.lldxf.validator import is_valid_table_name
 from .factory import register_entity
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["AppID"]
+logger = logging.getLogger("ezdxf")
 
 acdb_appid = DefSubclass(
     "AcDbRegAppTableRecord",

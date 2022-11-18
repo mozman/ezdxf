@@ -19,7 +19,6 @@ from ezdxf.tools import take2
 from .dxfentity import DXFEntity, base_class, SubclassProcessor, DXFTagStorage
 from .factory import register_entity
 
-logger = logging.getLogger("ezdxf")
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
     from ezdxf.entities import DXFNamespace
@@ -34,6 +33,7 @@ __all__ = [
     "Field",
     "is_dxf_object",
 ]
+logger = logging.getLogger("ezdxf")
 
 
 class DXFObject(DXFEntity):

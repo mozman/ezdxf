@@ -42,10 +42,9 @@ if TYPE_CHECKING:
     from ezdxf.query import EntityQuery
 
 __all__ = ["MLine", "MLineVertex", "MLineStyle", "MLineStyleCollection"]
+logger = logging.getLogger("ezdxf")
 
 # Usage example: CADKitSamples\Lock-Off.dxf
-
-logger = logging.getLogger("ezdxf")
 
 
 def filter_close_vertices(
@@ -646,7 +645,9 @@ class MLine(DXFGraphic):
         """
         return self.__virtual_entities__()
 
-    def explode(self, target_layout: Optional[BaseLayout] = None) -> EntityQuery:
+    def explode(
+        self, target_layout: Optional[BaseLayout] = None
+    ) -> EntityQuery:
         """Explode parts of MLINE as LINE, ARC and HATCH entities into target
         layout, if target layout is ``None``, the target layout is the layout
         of the MLINE.

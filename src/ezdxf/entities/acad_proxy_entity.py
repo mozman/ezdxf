@@ -1,7 +1,7 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, Iterable, Iterator
+from typing import TYPE_CHECKING, Optional, Iterator
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import SubclassProcessor
@@ -89,16 +89,19 @@ class ACADProxyEntity(DXFGraphic):
         # XDATA export is done by the parent class
 
     def __virtual_entities__(self) -> Iterator[DXFGraphic]:
-        """Implements the SupportsVirtualEntities protocol. """
+        """Implements the SupportsVirtualEntities protocol."""
         from ezdxf.proxygraphic import ProxyGraphic
+
         if self.proxy_graphic:
-            for e in ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities():
+            for e in ProxyGraphic(
+                self.proxy_graphic, self.doc
+            ).virtual_entities():
                 e.set_source_of_copy(self)
                 yield e
         return []
 
     def virtual_entities(self) -> Iterator[DXFGraphic]:
-        """Yields proxy graphic as "virtual" entities. """
+        """Yields proxy graphic as "virtual" entities."""
         return self.__virtual_entities__()
 
 
@@ -110,7 +113,7 @@ def load_proxy_data(
     except const.DXFValueError:
         return None
     binary_data = []
-    for code, value in tags[index + 1:]:
+    for code, value in tags[index + 1 :]:
         if code == data_code:
             binary_data.append(value)
         else:

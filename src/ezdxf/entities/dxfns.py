@@ -10,8 +10,6 @@ from ezdxf.lldxf.attributes import XType, DXFAttributes, DXFAttr
 from ezdxf.lldxf.types import cast_value, dxftag
 from ezdxf.lldxf.tags import Tags
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.lldxf.extendedtags import ExtendedTags
     from ezdxf.entities import DXFEntity
@@ -19,6 +17,7 @@ if TYPE_CHECKING:
 
 
 __all__ = ["DXFNamespace", "SubclassProcessor"]
+logger = logging.getLogger("ezdxf")
 
 ERR_INVALID_DXF_ATTRIB = 'Invalid DXF attribute "{}" for entity {}'
 ERR_DXF_ATTRIB_NOT_EXITS = 'DXF attribute "{}" does not exist'

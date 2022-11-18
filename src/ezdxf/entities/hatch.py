@@ -24,7 +24,7 @@ from .polygon import DXFPolygon
 if TYPE_CHECKING:
     from ezdxf.colors import RGB
     from ezdxf.document import Drawing
-    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.entities import DXFEntity
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 

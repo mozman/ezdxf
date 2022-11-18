@@ -62,7 +62,6 @@ __all__ = [
     "ArrowHeadData",
     "AttribData",
 ]
-
 logger = logging.getLogger("ezdxf")
 
 

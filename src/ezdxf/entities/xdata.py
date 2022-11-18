@@ -13,6 +13,8 @@ from typing import (
 )
 from collections import OrderedDict
 from contextlib import contextmanager
+import logging
+
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.lldxf.types import dxftag, VALID_XDATA_GROUP_CODES, DXFTag
 from ezdxf.lldxf.tags import Tags
@@ -26,15 +28,13 @@ from ezdxf.lldxf.tags import (
 from ezdxf.tools import take2
 from ezdxf import options
 from ezdxf.lldxf.repair import filter_invalid_xdata_group_codes
-import logging
-
-logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["XData", "XDataUserList", "XDataUserDict"]
+logger = logging.getLogger("ezdxf")
 
 
 def has_valid_xdata_group_codes(tags: Tags) -> bool:

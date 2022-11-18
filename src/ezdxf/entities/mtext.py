@@ -1,9 +1,6 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-import enum
-import math
-import logging
 from typing import (
     TYPE_CHECKING,
     Union,
@@ -13,6 +10,9 @@ from typing import (
     Callable,
     cast,
 )
+import enum
+import math
+import logging
 
 from ezdxf.lldxf import const, validator
 from ezdxf.lldxf.attributes import (
@@ -61,7 +61,6 @@ __all__ = [
     "acdb_mtext_group_codes",
     "export_mtext_content",
 ]
-
 logger = logging.getLogger("ezdxf")
 
 BG_FILL_MASK = 1 + 2 + 16

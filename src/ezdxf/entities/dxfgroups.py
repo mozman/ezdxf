@@ -25,8 +25,6 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 from .objectcollection import ObjectCollection
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
     from ezdxf.document import Drawing
@@ -36,6 +34,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["DXFGroup", "GroupCollection"]
+logger = logging.getLogger("ezdxf")
 
 acdb_group = DefSubclass(
     "AcDbGroup",

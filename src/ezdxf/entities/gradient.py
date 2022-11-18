@@ -1,5 +1,6 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 import enum
 import math
@@ -8,7 +9,7 @@ from ezdxf.colors import RGB, int2rgb, rgb2int
 from ezdxf.lldxf.tags import Tags
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 __all__ = ["Gradient", "GradientType"]
 
@@ -63,7 +64,7 @@ class Gradient:
         self.name: str = gradient_names[type]
 
     @classmethod
-    def load_tags(cls, tags: Tags) -> "Gradient":
+    def load_tags(cls, tags: Tags) -> Gradient:
         gdata = cls()
         assert tags[0].code == 450
         gdata.kind = tags[0].value  # 0 = solid; 1 = gradient
@@ -96,7 +97,7 @@ class Gradient:
                     gdata.color2 = int2rgb(value)
         return gdata
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         # Tag order matters!
         write_tag = tagwriter.write_tag2
         write_tag(450, self.kind)  # gradient or solid
