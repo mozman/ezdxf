@@ -1,6 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
-#  License: MIT License
-from typing import Union, Iterable
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
+from __future__ import annotations
+from typing import Union, Iterable, TYPE_CHECKING
 from pathlib import Path
 
 from ezdxf.lldxf import loader
@@ -9,8 +10,11 @@ from ezdxf.lldxf.tagger import ascii_tags_loader
 from ezdxf.lldxf.validator import is_dxf_file
 from ezdxf.filemanagement import dxf_file_info
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import SectionDict
 
-def raw_structure_loader(filename: Union[str, Path]) -> loader.SectionDict:
+
+def raw_structure_loader(filename: Union[str, Path]) -> SectionDict:
     """Load content of ASCII DXF file `filename` as SectionDict, all tags are in
     raw format with the group code as integer and the value as string: (int, str).
 

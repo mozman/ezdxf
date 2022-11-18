@@ -1,8 +1,9 @@
-#  Copyright (c) 2021, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 from __future__ import annotations
 from typing import Sequence, Optional
 from dataclasses import dataclass
+
 import ezdxf
 from ezdxf.math import Matrix44, Vec2
 from ezdxf.entities import Text, MText, get_font_name

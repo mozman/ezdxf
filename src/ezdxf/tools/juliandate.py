@@ -1,6 +1,6 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import Tuple
+from __future__ import annotations
 from math import floor
 from datetime import datetime
 
@@ -34,7 +34,7 @@ class CalendarDate:
         hour, minute, second = frac2time(self.jdate)
         self.result = datetime(year, month, day, hour, minute, second)
 
-    def get_date(self) -> Tuple[int, int, int]:
+    def get_date(self) -> tuple[int, int, int]:
         Z = floor(self.jdate)
 
         if Z < 2299161:
@@ -54,7 +54,7 @@ class CalendarDate:
         return int(year), int(month), int(day)
 
 
-def frac2time(jdate) -> Tuple[int, int, int]:
+def frac2time(jdate) -> tuple[int, int, int]:
     seconds = int(frac(jdate) * 86400.0)
     hour = int(seconds / 3600)
     seconds = seconds % 3600

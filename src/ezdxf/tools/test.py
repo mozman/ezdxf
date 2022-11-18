@@ -1,13 +1,15 @@
-#  Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import Sequence, TYPE_CHECKING, Iterable, List, Set
+from __future__ import annotations
+from typing import Sequence, TYPE_CHECKING, Iterable
 from ezdxf.lldxf.tagger import internal_tag_compiler
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFTag, EntityDB, ExtendedTags, DXFEntity
+    from ezdxf.lldxf.types import DXFTag
+    from ezdxf.lldxf.extendedtags import ExtendedTags
 
 
-def compile_tags_without_handles(text: str) -> Iterable["DXFTag"]:
+def compile_tags_without_handles(text: str) -> Iterable[DXFTag]:
     return (
         tag for tag in internal_tag_compiler(text) if tag.code not in (5, 105)
     )
@@ -18,7 +20,7 @@ def normlines(text: str) -> Sequence[str]:
     return [line.strip() for line in lines]
 
 
-def load_section(text: str, name: str) -> List["ExtendedTags"]:
+def load_section(text: str, name: str) -> list[ExtendedTags]:
     from ezdxf.lldxf.loader import load_dxf_structure
 
     dxf = load_dxf_structure(

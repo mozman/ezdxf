@@ -14,7 +14,6 @@ import logging
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DimStyle
-    from ezdxf.layouts import Paperspace
 
 logger = logging.getLogger("ezdxf")
 LTypeDef = Tuple[str, str, Sequence[float]]

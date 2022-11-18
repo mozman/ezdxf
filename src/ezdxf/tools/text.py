@@ -1,5 +1,5 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 """
 Tools in this module should be as independent of DXF entities as possible!
 """

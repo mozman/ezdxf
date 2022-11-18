@@ -1,5 +1,5 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 from __future__ import annotations
 from typing import Sequence, Iterable, Optional, Tuple, NamedTuple
 import abc

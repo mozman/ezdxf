@@ -1,6 +1,7 @@
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
-from typing import Optional, Dict
+from __future__ import annotations
+from typing import Optional
 from pathlib import Path
 from functools import lru_cache
 from matplotlib.font_manager import FontProperties
@@ -23,7 +24,7 @@ def _get_font_manager() -> FontManager:
     return _font_manager
 
 
-def load_system_fonts() -> Dict[str, fonts.FontFace]:
+def load_system_fonts() -> dict[str, fonts.FontFace]:
     """Load system fonts by the FontManager of matplotlib.
 
     This may take a long time!
@@ -97,9 +98,9 @@ def get_text_path(text: str, font: FontProperties, size=1) -> TextPath:
 
 
 def build_font_measurement_cache(
-    font_faces: Dict[str, fonts.FontFace],
-    measurements: Dict[str, fonts.FontMeasurements],
-) -> Dict[str, fonts.FontMeasurements]:
+    font_faces: dict[str, fonts.FontFace],
+    measurements: dict[str, fonts.FontMeasurements],
+) -> dict[str, fonts.FontMeasurements]:
     """Build font measurement cache for all known TTF fonts."""
     for ttf_path, font_face in font_faces.items():
         if ttf_path not in measurements:
@@ -109,7 +110,7 @@ def build_font_measurement_cache(
     return measurements
 
 
-def remove_fonts_without_measurement(font_faces: Dict, measurements: Dict):
+def remove_fonts_without_measurement(font_faces: dict, measurements: dict):
     """Remove fonts without a measurement from `font_faces` which can not be
     processed and should be replaced by a default font.
     """

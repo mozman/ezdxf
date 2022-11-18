@@ -43,6 +43,7 @@ ultra-expanded  200%
 =============== ======
 
 """
+from __future__ import annotations
 from typing import Dict, Optional, NamedTuple, TYPE_CHECKING, cast
 import abc
 import logging
@@ -52,6 +53,7 @@ from ezdxf import options
 from ezdxf.lldxf import const
 
 if TYPE_CHECKING:
+    from ezdxf.document import Drawing
     from ezdxf.entities import DXFEntity, Textstyle
 
 FONT_FACE_CACHE_FILE = "font_face_cache.json"
@@ -85,8 +87,8 @@ class FontFace(NamedTuple):
 
 
 # Key is TTF font file name without path in lowercase like "arial.ttf":
-font_face_cache: Dict[str, FontFace] = dict()
-font_measurement_cache: Dict[str, "FontMeasurements"] = dict()
+font_face_cache: dict[str, FontFace] = dict()
+font_measurement_cache: dict[str, FontMeasurements] = dict()
 
 WEIGHT_TO_VALUE = {
     "thin": 100,
@@ -172,7 +174,7 @@ def weight_name_to_value(name: str) -> int:
 
 
 def cache_key(name: str) -> str:
-    """Returns the normalize TTF file name in lower case without preceding
+    """Returns the normalized TTF file name in lower case without preceding
     folders. e.g. "C:\\Windows\\Fonts\\Arial.TTF" -> "arial.ttf"
     """
     return Path(name).name.lower()
@@ -267,7 +269,7 @@ def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
         return font
 
 
-def get_font_measurements(ttf_path: str, map_shx=True) -> "FontMeasurements":
+def get_font_measurements(ttf_path: str, map_shx=True) -> FontMeasurements:
     """Get cached font measurements by TTF file name e.g. "Arial.ttf".
 
     Args:
@@ -293,7 +295,7 @@ def get_font_measurements(ttf_path: str, map_shx=True) -> "FontMeasurements":
 
 def find_font_face_by_family(
     family: str, italic=False, bold=False
-) -> Optional["FontFace"]:
+) -> Optional[FontFace]:
     # TODO: find best match
     #  additional attributes "italic" and "bold" are ignored yet
     key = family.lower()
@@ -405,7 +407,7 @@ class FontMeasurements(NamedTuple):
     x_height: float
     descender_height: float
 
-    def scale(self, factor: float = 1.0) -> "FontMeasurements":
+    def scale(self, factor: float = 1.0) -> FontMeasurements:
         return FontMeasurements(
             self.baseline * factor,
             self.cap_height * factor,
@@ -413,7 +415,7 @@ class FontMeasurements(NamedTuple):
             self.descender_height * factor,
         )
 
-    def shift(self, distance: float = 0.0) -> "FontMeasurements":
+    def shift(self, distance: float = 0.0) -> FontMeasurements:
         return FontMeasurements(
             self.baseline + distance,
             self.cap_height,
@@ -423,7 +425,7 @@ class FontMeasurements(NamedTuple):
 
     def scale_from_baseline(
         self, desired_cap_height: float
-    ) -> "FontMeasurements":
+    ) -> FontMeasurements:
         factor = desired_cap_height / self.cap_height
         return FontMeasurements(
             self.baseline,
@@ -451,6 +453,7 @@ class FontMeasurements(NamedTuple):
 
 class AbstractFont:
     """The `ezdxf` font abstraction."""
+
     def __init__(self, measurements: FontMeasurements):
         self.measurements = measurements
 
@@ -567,7 +570,9 @@ def make_font(
         return MonospaceFont(cap_height, width_factor)
 
 
-def get_entity_font_face(entity: "DXFEntity", doc=None) -> FontFace:
+def get_entity_font_face(
+    entity: DXFEntity, doc: Optional[Drawing] = None
+) -> FontFace:
     """Returns the :class:`FontFace` defined by the associated text style.
     Returns the default font face if the `entity` does not have or support
     the DXF attribute "style". Supports the extended font information stored in

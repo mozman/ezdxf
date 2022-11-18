@@ -41,13 +41,13 @@
 # A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25
 # *ZICKZACK,Zickzack /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 # A,.0001,-.2,[ZIG,ltypeshp.shx,x=-.2,s=.2],-.4,[ZIG,ltypeshp.shx,r=180,x=.2,s=.2],-.2
-
-from typing import TYPE_CHECKING, Iterable, Sequence, Union, List, Any
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Sequence, Union, Any
 from ezdxf.lldxf.const import DXFValueError, DXFTableEntryError
 from ezdxf.lldxf.tags import DXFTag, Tags
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.eztypes import Drawing
+    from ezdxf.document import Drawing
 
 Token = Union[str, float, list]
 
@@ -144,7 +144,7 @@ def compile_complex_defnition(tokens: Sequence) -> ComplexLineTypePart:
 
 
 def lin_parser(definition: str) -> Sequence[Token]:
-    bag: List[Any] = []
+    bag: list[Any] = []
     sublist = None
     first = True
     for token in lin_tokenizer(definition):

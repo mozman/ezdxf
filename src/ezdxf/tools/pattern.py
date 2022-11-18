@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2021, Manfred Moitzi
+# Copyright (c) 2015-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Tuple, Optional
@@ -159,7 +159,7 @@ class PatternAnalyser:
     def __init__(self, pattern: HatchPatternType):
         # List of 2-tuples: (angle, is solid line pattern)
         # angle is rounded to a multiple of 15° in the range [0, 180)
-        self._lines: list[Tuple[int, bool]] = [
+        self._lines: list[tuple[int, bool]] = [
             (round_angle_15_deg(angle), is_solid(line_pattern))
             for angle, _, _, line_pattern in pattern
         ]

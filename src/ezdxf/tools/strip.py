@@ -1,5 +1,5 @@
-#  Copyright (c) 2021, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 from typing import BinaryIO, Optional
 from ezdxf.lldxf.validator import is_dxf_file, DXFStructureError
 from pathlib import Path

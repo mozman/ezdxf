@@ -1,6 +1,7 @@
-# Copyright (c) 2014-2021, Manfred Moitzi
+# Copyright (c) 2014-2022, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Any, Sequence, Union, Tuple, overload, Optional
+from __future__ import annotations
+from typing import Iterable, Any, Sequence, Union, overload, Optional
 from array import array
 import struct
 from binascii import unhexlify, hexlify
@@ -95,7 +96,7 @@ class ByteStream:
         """
         buffer = self.buffer
         for end_index in range(self.index, len(buffer), 2):
-            if buffer[end_index: end_index + 2] == NULL_NULL:
+            if buffer[end_index : end_index + 2] == NULL_NULL:
                 start_index = self.index
                 self.index = self.align(end_index + 2)
                 # noinspection PyTypeChecker
@@ -492,7 +493,7 @@ class BitStream:
         else:
             return self.read_text_unicode()
 
-    def read_cm_color_cms(self) -> Tuple[int, str, str]:
+    def read_cm_color_cms(self) -> tuple[int, str, str]:
         """Returns tuple (rgb, color_name, book_name)."""
         _ = self.read_bit_short()  # index always 0
         color_name = ""

@@ -1,6 +1,6 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
-#  License: MIT License
-#  Debugging tools to analyze DXF entities.
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
+# Debugging tools to analyze DXF entities.
 from __future__ import annotations
 from typing import Iterable, Sequence, Optional
 import textwrap
@@ -12,8 +12,6 @@ from ezdxf.lldxf import const
 from ezdxf.enums import TextEntityAlignment
 from ezdxf.tools.debug import print_bitmask
 from ezdxf.render.mleader import MLeaderStyleOverride, OVERRIDE_FLAG
-
-
 from ezdxf.entities import (
     EdgePath,
     PolylinePath,

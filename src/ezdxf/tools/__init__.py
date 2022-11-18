@@ -1,6 +1,7 @@
-# Copyright (c) 2015-2021, Manfred Moitzi
+# Copyright (c) 2015-2022, Manfred Moitzi
 # License: MIT License
-from typing import Tuple, Any, Iterable
+from __future__ import annotations
+from typing import Any, Iterable
 from uuid import uuid4
 import functools
 import html
@@ -64,7 +65,7 @@ def guid() -> str:
     return "{" + str(uuid4()).upper() + "}"
 
 
-def take2(iterable: Iterable) -> Iterable[Tuple[Any, Any]]:
+def take2(iterable: Iterable) -> Iterable[tuple[Any, Any]]:
     """Iterate `iterable` as 2-tuples.
 
     :code:`[1, 2, 3, 4, ...] -> (1, 2), (3, 4), ...`
