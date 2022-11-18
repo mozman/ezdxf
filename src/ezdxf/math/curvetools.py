@@ -1,7 +1,7 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 from __future__ import annotations
-from typing import Iterable, Union, List, Sequence, Tuple, TypeVar
+from typing import Iterable, Union, Sequence, TypeVar
 import math
 from ezdxf.math import (
     BSpline,
@@ -113,7 +113,7 @@ def have_bezier_curves_g1_continuity(
     return math.isclose(te.dot(ts), 1.0, abs_tol=g1_tol)
 
 
-def reverse_bezier_curves(curves: List[AnyBezier]) -> List[AnyBezier]:
+def reverse_bezier_curves(curves: list[AnyBezier]) -> list[AnyBezier]:
     curves = list(c.reverse() for c in curves)
     curves.reverse()
     return curves
@@ -121,7 +121,7 @@ def reverse_bezier_curves(curves: List[AnyBezier]) -> List[AnyBezier]:
 
 def split_bezier(
     control_points: Sequence[T], t: float
-) -> Tuple[List[T], List[T]]:
+) -> tuple[list[T], list[T]]:
     """Split a Bèzier curve at parameter `t`.
 
     Returns the control points for two new Bèzier curves of the same degree
@@ -142,8 +142,8 @@ def split_bezier(
         raise ValueError("2 or more control points required")
     if t < 0.0 or t > 1.0:
         raise ValueError("parameter `t` must be in range [0, 1]")
-    left: List[T] = []
-    right: List[T] = []
+    left: list[T] = []
+    right: list[T] = []
 
     def split(points: Sequence[T]):
         n: int = len(points) - 1
@@ -213,7 +213,7 @@ def cubic_bezier_bbox(curve: Bezier4P, *, abs_tol=1e-12) -> BoundingBox:
 
     """
     cp = curve.control_points
-    points: List[Vec3] = [cp[0], cp[3]]
+    points: list[Vec3] = [cp[0], cp[3]]
     for p1, p2, p3, p4 in zip(*cp):
         a = 3.0 * (-p1 + 3.0 * p2 - 3.0 * p3 + p4)
         b = 6.0 * (p1 - 2.0 * p2 + p3)
@@ -261,7 +261,7 @@ def _bezier4poly(a: float, b: float, c: float, d: float):
 # noinspection PyPep8Naming
 def intersection_params_ray_cubic_bezier(
     p0: AnyVec, p1: AnyVec, cp: Sequence[AnyVec]
-) -> List[float]:
+) -> list[float]:
     """Returns the parameters of the intersection points between the ray defined
     by two points `p0` and `p1` and the cubic Bézier curve defined by four
     control points `cp`.

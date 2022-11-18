@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import List, Sequence, Iterable
+from typing import Sequence, Iterable
 import math
 from ezdxf.math import Vec2, UVec
 from .bbox import BoundingBox2d
@@ -241,7 +241,7 @@ class ConstructionBox:
             ConstructionLine(p4, p1),
         )
 
-    def intersect(self, line: ConstructionLine) -> List[Vec2]:
+    def intersect(self, line: ConstructionLine) -> list[Vec2]:
         """Returns 0, 1 or 2 intersection points between `line` and box
         borderlines.
 

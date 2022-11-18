@@ -1,5 +1,6 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import Iterable
 from ezdxf.math import Vec3
 from .construct2d import linspace

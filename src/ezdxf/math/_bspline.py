@@ -1,6 +1,5 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
-#  License: MIT License
-#
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 # Pure Python implementation of the B-spline basis function.
 from __future__ import annotations
 from typing import Iterable, Sequence, Optional

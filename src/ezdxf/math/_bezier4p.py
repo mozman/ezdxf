@@ -11,7 +11,7 @@ from ._matrix44 import Matrix44
 from ._construct import arc_angle_span_deg
 
 if TYPE_CHECKING:
-    from ._vector import UVec, AnyVec
+    from ezdxf.math import UVec, AnyVec
     from ezdxf.math.ellipse import ConstructionEllipse
 
 __all__ = [

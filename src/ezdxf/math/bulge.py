@@ -44,7 +44,7 @@ def angle(p1: Any, p2: Any) -> float:
 
 def arc_to_bulge(
     center: UVec, start_angle: float, end_angle: float, radius: float
-) -> Tuple["Vec2", "Vec2", float]:
+) -> tuple[Vec2, Vec2, float]:
     """Returns bulge parameters from arc parameters.
 
     Args:
@@ -82,7 +82,7 @@ def bulge_3_points(start_point: UVec, end_point: UVec, point: UVec) -> float:
 
 def bulge_to_arc(
     start_point: UVec, end_point: UVec, bulge: float
-) -> Tuple["Vec2", float, float, float]:
+) -> tuple[Vec2, float, float, float]:
     """Returns arc parameters from bulge parameters.
 
     The arcs defined by bulge values of :class:`~ezdxf.entities.LWPolyline`
@@ -109,7 +109,7 @@ def bulge_to_arc(
         return c, angle(c, start_point), angle(c, end_point), abs(r)
 
 
-def bulge_center(start_point: UVec, end_point: UVec, bulge: float) -> "Vec2":
+def bulge_center(start_point: UVec, end_point: UVec, bulge: float) -> Vec2:
     """Returns center of arc described by the given bulge parameters.
 
     Based on  Bulge Center by `Lee Mac`_.
@@ -182,4 +182,4 @@ def bulge_from_arc_angle(angle: float) -> float:
 
     """
     # https://github.com/mozman/ezdxf/discussions/758
-    return math.tan(angle/4.0)
+    return math.tan(angle / 4.0)

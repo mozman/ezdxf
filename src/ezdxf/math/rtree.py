@@ -1,5 +1,5 @@
-#  Copyright (c) 2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2022, Manfred Moitzi
+# License: MIT License
 # Immutable spatial search tree based on the SsTree implementation of the book
 # "Advanced Algorithms and Data Structures"
 # - SsTree JavaScript source code:
@@ -7,8 +7,9 @@
 #   https://github.com/mlarocca/AlgorithmsAndDataStructuresInAction/tree/master/JavaScript/src/ss_tree
 # - Research paper of Antonin Guttman:
 #   http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
+from __future__ import annotations
 import statistics
-from typing import List, Iterator, Tuple, Callable, Sequence, Iterable
+from typing import Iterator, Callable, Sequence, Iterable
 import abc
 import math
 
@@ -40,7 +41,7 @@ class Node:
     @abc.abstractmethod
     def _nearest_neighbor(
         self, target: AnyVec, nn: AnyVec = None, nn_dist: float = INF
-    ) -> Tuple[AnyVec, float]:
+    ) -> tuple[AnyVec, float]:
         ...
 
     @abc.abstractmethod
@@ -53,14 +54,14 @@ class Node:
     def points_in_bbox(self, bbox: BoundingBox) -> Iterator[AnyVec]:
         ...
 
-    def nearest_neighbor(self, target: AnyVec) -> Tuple[AnyVec, float]:
+    def nearest_neighbor(self, target: AnyVec) -> tuple[AnyVec, float]:
         return self._nearest_neighbor(target)
 
 
 class LeafNode(Node):
     __slots__ = ("points", "bbox")
 
-    def __init__(self, points: List[AnyVec]):
+    def __init__(self, points: list[AnyVec]):
         self.points = tuple(points)
         super().__init__(BoundingBox(self.points))
 
@@ -75,7 +76,7 @@ class LeafNode(Node):
 
     def _nearest_neighbor(
         self, target: AnyVec, nn: AnyVec = None, nn_dist: float = INF
-    ) -> Tuple[AnyVec, float]:
+    ) -> tuple[AnyVec, float]:
 
         distance, point = min((target.distance(p), p) for p in self.points)
         if distance < nn_dist:
@@ -116,7 +117,7 @@ class InnerNode(Node):
 
     def _nearest_neighbor(
         self, target: AnyVec, nn: AnyVec = None, nn_dist: float = INF
-    ) -> Tuple[AnyVec, float]:
+    ) -> tuple[AnyVec, float]:
         closest_child = find_closest_child(self.children, target)
         nn, nn_dist = closest_child._nearest_neighbor(target, nn, nn_dist)
         for child in self.children:
@@ -199,7 +200,7 @@ class RTree:
         """
         return self._root.contains(point)
 
-    def nearest_neighbor(self, target: AnyVec) -> Tuple[AnyVec, float]:
+    def nearest_neighbor(self, target: AnyVec) -> tuple[AnyVec, float]:
         """Returns the closest point to the `target` point and the distance
         between these points.
         """
@@ -225,7 +226,7 @@ class RTree:
         Excludes outliers of sizes beyond mean + standard deviation * spread.
         Returns 0.0 if less than two points in tree.
         """
-        sizes: List[float] = [
+        sizes: list[float] = [
             max(leaf.bbox.size.xyz) for leaf in collect_leafs(self._root)
         ]
         return average_exclusive_outliers(sizes, spread)
@@ -235,7 +236,7 @@ class RTree:
         Excludes outliers with radius beyond mean + standard deviation * spread.
         Returns 0.0 if less than two points in tree.
         """
-        radii: List[float] = [
+        radii: list[float] = [
             spherical_envelope(leaf.points)[1]
             for leaf in collect_leafs(self._root)
         ]
@@ -253,16 +254,16 @@ class RTree:
             is the point count of the leaf node.
 
         """
-        distances: List[float] = []
+        distances: list[float] = []
         for leaf in collect_leafs(self._root):
             distances.extend(nearest_neighbor_distances(leaf.points))
         return average_exclusive_outliers(distances, spread)
 
 
 def make_node(
-    points: List[AnyVec],
+    points: list[AnyVec],
     max_size: int,
-    split_strategy: Callable[[List[AnyVec], int], Sequence[Node]],
+    split_strategy: Callable[[list[AnyVec], int], Sequence[Node]],
 ) -> Node:
     if len(points) > max_size:
         return InnerNode(split_strategy(points, max_size))
@@ -270,7 +271,7 @@ def make_node(
         return LeafNode(points)
 
 
-def box_split(points: List[AnyVec], max_size: int) -> Sequence[Node]:
+def box_split(points: list[AnyVec], max_size: int) -> Sequence[Node]:
     n = len(points)
     size = BoundingBox(points).size.xyz
     dim = size.index(max(size))
@@ -311,7 +312,7 @@ def grow_box(box: BoundingBox, dist: float) -> BoundingBox:
     return bbox
 
 
-def average_exclusive_outliers(values: List[float], spread: float) -> float:
+def average_exclusive_outliers(values: list[float], spread: float) -> float:
     if len(values) < 2:
         return 0.0
     stdev = statistics.stdev(values)
@@ -332,7 +333,7 @@ def collect_leafs(node: Node) -> Iterable[LeafNode]:
             yield from collect_leafs(child)
 
 
-def nearest_neighbor_distances(points: Sequence[AnyVec]) -> List[float]:
+def nearest_neighbor_distances(points: Sequence[AnyVec]) -> list[float]:
     """Brute force calculation of nearest neighbor distances with a
     complexity of O(n!).
     """

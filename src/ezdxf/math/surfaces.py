@@ -1,7 +1,6 @@
 # Copyright (c) 2012-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import List
 from .bezier import bernstein_basis
 from ezdxf.math import Vec3, NULLVEC, UVec
 
@@ -22,7 +21,7 @@ class BezierSurface:
 
     """
 
-    def __init__(self, defpoints: List[List[UVec]]):
+    def __init__(self, defpoints: list[list[UVec]]):
         self._defpoints = defpoints
 
     @property
@@ -35,7 +34,7 @@ class BezierSurface:
         """count of columns (n-dimension)"""
         return len(self._defpoints[0])
 
-    def approximate(self, usegs: int, vsegs: int) -> List[List[Vec3]]:
+    def approximate(self, usegs: int, vsegs: int) -> list[list[Vec3]]:
         """Approximate surface as grid of ``(x, y, z)`` :class:`Vec3`.
 
         Args:
@@ -49,7 +48,7 @@ class BezierSurface:
         """
         stepu = 1.0 / float(usegs)
         stepv = 1.0 / float(vsegs)
-        result: List[List[Vec3]] = [[NULLVEC] * self.ncols] * self.nrows
+        result: list[list[Vec3]] = [[NULLVEC] * self.ncols] * self.nrows
         for u_index in range(usegs + 1):
             u = stepu * u_index
             for v_index in range(vsegs + 1):

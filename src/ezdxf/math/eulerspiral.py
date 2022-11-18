@@ -1,13 +1,14 @@
-# Copyright (c) 2010-2021, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
-from typing import Dict, Iterable, List
+from __future__ import annotations
+from typing import Dict, Iterable
 from ezdxf.math import Vec3
 from ezdxf.math.bspline import global_bspline_interpolation, BSpline
 
 __all__ = ["EulerSpiral"]
 
 
-def powers(base: float, count: int) -> List[float]:
+def powers(base: float, count: int) -> list[float]:
     assert count > 2, "requires count > 2"
     values = [1.0, base]
     next_value = base
@@ -38,7 +39,7 @@ class EulerSpiral:
     def __init__(self, curvature: float = 1.0):
         curvature = float(curvature)
         self.curvature = curvature  # Radius of curvature
-        self.curvature_powers: List[float] = powers(curvature, 19)
+        self.curvature_powers: list[float] = powers(curvature, 19)
         self._cache: Dict[float, Vec3] = {}  # coordinates cache
 
     def radius(self, t: float) -> float:

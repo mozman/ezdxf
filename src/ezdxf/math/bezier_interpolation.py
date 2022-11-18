@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import List, Iterable, Sequence
+from typing import Iterable, Sequence
 from ezdxf.math import Vec3, Bezier4P, UVec
 
 # These are low-level interpolation tools for B-splines, which can not be
@@ -60,7 +60,7 @@ def cubic_bezier_interpolation(
 
 def tangents_cubic_bezier_interpolation(
     fit_points: Sequence[Vec3], normalize=True
-) -> List[Vec3]:
+) -> list[Vec3]:
     if len(fit_points) < 3:
         raise ValueError("At least 3 points required")
 

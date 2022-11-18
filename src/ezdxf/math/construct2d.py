@@ -1,7 +1,7 @@
-# Copyright (c) 2010-2022, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, List, Tuple, Sequence
+from typing import Iterable, Sequence
 
 from functools import partial
 import math
@@ -74,7 +74,7 @@ def sign(f: float) -> float:
     return -1.0 if f < 0.0 else +1.0
 
 
-def decdeg2dms(value: float) -> Tuple[float, float, float]:
+def decdeg2dms(value: float) -> tuple[float, float, float]:
     """Return decimal degrees as tuple (Degrees, Minutes, Seconds)."""
     mnt, sec = divmod(value * 3600.0, 60.0)
     deg, mnt = divmod(mnt, 60.0)
@@ -118,7 +118,7 @@ def closest_point(base: UVec, points: Iterable[UVec]) -> "Vec3":
     return found
 
 
-def convex_hull_2d(points: Iterable[UVec]) -> List[Vec2]:
+def convex_hull_2d(points: Iterable[UVec]) -> list[Vec2]:
     """Returns the 2D convex hull of given `points`.
 
     Returns a closed polyline, first vertex is equal to the last vertex.
@@ -139,7 +139,7 @@ def convex_hull_2d(points: Iterable[UVec]) -> List[Vec2]:
         )
 
     n: int = len(vertices)
-    hull: List[Vec2] = [Vec2()] * (2 * n)
+    hull: list[Vec2] = [Vec2()] * (2 * n)
     k: int = 0
     i: int
     for i in range(n):
@@ -366,7 +366,7 @@ def has_matrix_2d_stretching(m: Matrix44) -> bool:
 
 
 def is_convex_polygon_2d(
-    polygon: List[Vec2], *, strict=False, epsilon=1e-6
+    polygon: list[Vec2], *, strict=False, epsilon=1e-6
 ) -> bool:
     """Returns ``True`` if the 2D `polygon` is convex. This function works with
     open and closed polygons and clockwise or counter-clockwise vertex
@@ -381,7 +381,7 @@ def is_convex_polygon_2d(
     if len(polygon) < 3:
         return False
 
-    signs: List[int] = []
+    signs: list[int] = []
     prev = polygon[-1]
     prev_prev = polygon[-2]
     for vertex in polygon:

@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 import math
 from ezdxf.math import (
     Vec3,
@@ -17,7 +17,7 @@ from ezdxf.math import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFGraphic
+    from ezdxf.entities import DXFGraphic
 
 __all__ = [
     "TransformError",
@@ -48,7 +48,7 @@ class InsertTransformationError(TransformError):
 
 
 def transform_thickness_and_extrusion_without_ocs(
-    entity: "DXFGraphic", m: Matrix44
+    entity: DXFGraphic, m: Matrix44
 ) -> None:
     if entity.dxf.hasattr("thickness"):
         thickness = entity.dxf.thickness
@@ -61,7 +61,7 @@ def transform_thickness_and_extrusion_without_ocs(
         entity.dxf.extrusion = extrusion.normalize()
 
 
-def transform_extrusion(extrusion: UVec, m: Matrix44) -> Tuple[Vec3, bool]:
+def transform_extrusion(extrusion: UVec, m: Matrix44) -> tuple[Vec3, bool]:
     """Transforms the old `extrusion` vector into a new extrusion vector.
     Returns the new extrusion vector and a boolean value: ``True`` if the new
     OCS established by the new extrusion vector has a uniform scaled xy-plane,
@@ -123,7 +123,7 @@ class OCSTransform:
     @classmethod
     def from_ocs(
         cls, old: OCS, new: OCS, m: Matrix44, scale_uniform=True
-    ) -> "OCSTransform":
+    ) -> OCSTransform:
         ocs = cls(m=m)
         ocs._reset_ocs(old, new, scale_uniform)
         return ocs
@@ -201,7 +201,7 @@ class OCSTransform:
 
     def transform_ccw_arc_angles(
         self, start: float, end: float
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Returns arc start- and end angle (in radians) from old OCS
         transformed into new OCS in counter-clockwise orientation.
         """
@@ -226,7 +226,7 @@ class OCSTransform:
 
     def transform_ccw_arc_angles_deg(
         self, start: float, end: float
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Returns start- and end angle (in degrees) from old OCS transformed
         into new OCS in counter-clockwise orientation.
         """

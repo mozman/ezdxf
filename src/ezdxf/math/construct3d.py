@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Sequence, List, Iterable, Tuple, Optional, Set
+from typing import Sequence, Iterable, Optional
 from enum import IntEnum
 import math
 from ezdxf.math import (
@@ -72,7 +72,7 @@ def is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool:
 
 def subdivide_face(
     face: Sequence[AnyVec], quads: bool = True
-) -> Iterable[Tuple[Vec3, ...]]:
+) -> Iterable[tuple[Vec3, ...]]:
     """Subdivides faces by subdividing edges and adding a center vertex.
 
     Args:
@@ -85,7 +85,7 @@ def subdivide_face(
         raise ValueError("3 or more vertices required.")
     len_face: int = len(face)
     mid_pos = Vec3.sum(face) / len_face
-    subdiv_location: List[Vec3] = [
+    subdiv_location: list[Vec3] = [
         face[i].lerp(face[(i + 1) % len_face]) for i in range(len_face)
     ]
 
@@ -416,7 +416,7 @@ def split_polygon_by_plane(
     *,
     coplanar=True,
     abs_tol=PLANE_EPSILON,
-) -> Tuple[Sequence[Vec3], Sequence[Vec3]]:
+) -> tuple[Sequence[Vec3], Sequence[Vec3]]:
     """Split a convex `polygon` by the given `plane`.
 
     Returns a tuple of front- and back vertices (front, back).
@@ -428,9 +428,9 @@ def split_polygon_by_plane(
 
     """
     polygon_type = PlaneLocationState.COPLANAR
-    vertex_types: List[PlaneLocationState] = []
-    front_vertices: List[Vec3] = []
-    back_vertices: List[Vec3] = []
+    vertex_types: list[PlaneLocationState] = []
+    front_vertices: list[Vec3] = []
+    back_vertices: list[Vec3] = []
     vertices = list(polygon)
     w = plane.distance_from_origin
     normal = plane.normal
@@ -563,7 +563,7 @@ def intersection_ray_polygon_3d(
 
 
 def _is_intersection_point_inside_3d_polygon(
-    ip: Vec3, vertices: List[Vec3], normal: Vec3, boundary: bool, abs_tol: float
+    ip: Vec3, vertices: list[Vec3], normal: Vec3, boundary: bool, abs_tol: float
 ):
     from ezdxf.math import is_point_in_polygon_2d, OCS
 
@@ -633,7 +633,7 @@ class BarycentricCoordinates:
         return self.a * b1 + self.b * b2 + self.c * b3
 
 
-def linear_vertex_spacing(start: Vec3, end: Vec3, count: int) -> List[Vec3]:
+def linear_vertex_spacing(start: Vec3, end: Vec3, count: int) -> list[Vec3]:
     """Returns `count` evenly spaced vertices from `start` to `end`."""
     if count <= 2:
         return [start, end]
@@ -666,7 +666,7 @@ def has_matrix_3d_stretching(m: Matrix44) -> bool:
     ) or not math.isclose(ux_mag_sqr, uz.magnitude_square)
 
 
-def spherical_envelope(points: Sequence[UVec]) -> Tuple[Vec3, float]:
+def spherical_envelope(points: Sequence[UVec]) -> tuple[Vec3, float]:
     """Calculate the spherical envelope for the given points.  Returns the
     centroid (a.k.a. geometric center) and the radius of the enclosing sphere.
 
@@ -753,7 +753,7 @@ def front_faces_intersect_face_normal(
     # The detector face is excluded by the
     # is_face_in_front_of_detector() function!
 
-    intersection_points: Set[Vec3] = set()
+    intersection_points: set[Vec3] = set()
     for face in front_faces:
         ip = intersection_ray_polygon_3d(
             origin, face_normal, face, boundary=True, abs_tol=abs_tol

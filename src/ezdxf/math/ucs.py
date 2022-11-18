@@ -1,20 +1,21 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple, Sequence, Iterable
+from typing import TYPE_CHECKING, Sequence, Iterable
 from ezdxf.math import Vec3, UVec, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BaseLayout, RGB
+    from ezdxf.layouts import BaseLayout
+    from ezdxf.colors import RGB
 
 __all__ = ["OCS", "UCS", "PassTroughUCS"]
 
 
 def render_axis(
-    layout: "BaseLayout",
+    layout: BaseLayout,
     start: UVec,
     points: Sequence[UVec],
-    colors: "RGB" = (1, 3, 5),
+    colors: RGB = (1, 3, 5),
 ) -> None:
     for point, color in zip(points, colors):
         layout.add_line(start, point, dxfattribs={"color": color})
@@ -92,9 +93,9 @@ class OCS:
 
     def render_axis(
         self,
-        layout: "BaseLayout",
+        layout: BaseLayout,
         length: float = 1,
-        colors: "RGB" = (1, 3, 5),
+        colors: RGB = (1, 3, 5),
     ) -> None:
         """Render axis as 3D lines into a `layout`."""
         render_axis(
@@ -184,7 +185,7 @@ class UCS:
         """Set origin."""
         self.matrix.origin = v
 
-    def copy(self) -> "UCS":
+    def copy(self) -> UCS:
         """Returns a copy of this UCS."""
         return UCS(self.origin, self.ux, self.uy, self.uz)
 
@@ -268,7 +269,7 @@ class UCS:
         """
         return OCS(self.uz).from_wcs(self.direction_to_wcs(direction))
 
-    def rotate(self, axis: UVec, angle: float) -> "UCS":
+    def rotate(self, axis: UVec, angle: float) -> UCS:
         """Returns a new rotated UCS, with the same origin as the source UCS.
         The rotation vector is located in the origin and has :ref:`WCS`
         coordinates e.g. (0, 0, 1) is the WCS z-axis as rotation vector.
@@ -282,7 +283,7 @@ class UCS:
         ux, uy, uz = t.transform_vertices([self.ux, self.uy, self.uz])
         return UCS(origin=self.origin, ux=ux, uy=uy, uz=uz)
 
-    def rotate_local_x(self, angle: float) -> "UCS":
+    def rotate_local_x(self, angle: float) -> UCS:
         """Returns a new rotated UCS, rotation axis is the local x-axis.
 
         Args:
@@ -293,7 +294,7 @@ class UCS:
         uy, uz = t.transform_vertices([self.uy, self.uz])
         return UCS(origin=self.origin, ux=self.ux, uy=uy, uz=uz)
 
-    def rotate_local_y(self, angle: float) -> "UCS":
+    def rotate_local_y(self, angle: float) -> UCS:
         """Returns a new rotated UCS, rotation axis is the local y-axis.
 
         Args:
@@ -304,7 +305,7 @@ class UCS:
         ux, uz = t.transform_vertices([self.ux, self.uz])
         return UCS(origin=self.origin, ux=ux, uy=self.uy, uz=uz)
 
-    def rotate_local_z(self, angle: float) -> "UCS":
+    def rotate_local_z(self, angle: float) -> UCS:
         """Returns a new rotated UCS, rotation axis is the local z-axis.
 
         Args:
@@ -315,7 +316,7 @@ class UCS:
         ux, uy = t.transform_vertices([self.ux, self.uy])
         return UCS(origin=self.origin, ux=ux, uy=uy, uz=self.uz)
 
-    def shift(self, delta: UVec) -> "UCS":
+    def shift(self, delta: UVec) -> UCS:
         """Shifts current UCS by `delta` vector and returns `self`.
 
         Args:
@@ -325,7 +326,7 @@ class UCS:
         self.origin += Vec3(delta)
         return self
 
-    def moveto(self, location: UVec) -> "UCS":
+    def moveto(self, location: UVec) -> UCS:
         """Place current UCS at new origin `location` and returns `self`.
 
         Args:
@@ -335,7 +336,7 @@ class UCS:
         self.origin = Vec3(location)
         return self
 
-    def transform(self, m: Matrix44) -> "UCS":
+    def transform(self, m: Matrix44) -> UCS:
         """General inplace transformation interface, returns `self` (floating
         interface).
 
@@ -354,8 +355,8 @@ class UCS:
     @staticmethod
     def from_x_axis_and_point_in_xy(
         origin: UVec, axis: UVec, point: UVec
-    ) -> "UCS":
-        """Returns an new :class:`UCS` defined by the origin, the x-axis vector
+    ) -> UCS:
+        """Returns a new :class:`UCS` defined by the origin, the x-axis vector
         and an arbitrary point in the xy-plane.
 
         Args:
@@ -372,8 +373,8 @@ class UCS:
     @staticmethod
     def from_x_axis_and_point_in_xz(
         origin: UVec, axis: UVec, point: UVec
-    ) -> "UCS":
-        """Returns an new :class:`UCS` defined by the origin, the x-axis vector
+    ) -> UCS:
+        """Returns a new :class:`UCS` defined by the origin, the x-axis vector
         and an arbitrary point in the xz-plane.
 
         Args:
@@ -391,8 +392,8 @@ class UCS:
     @staticmethod
     def from_y_axis_and_point_in_xy(
         origin: UVec, axis: UVec, point: UVec
-    ) -> "UCS":
-        """Returns an new :class:`UCS` defined by the origin, the y-axis vector
+    ) -> UCS:
+        """Returns a new :class:`UCS` defined by the origin, the y-axis vector
         and an arbitrary point in the xy-plane.
 
         Args:
@@ -410,8 +411,8 @@ class UCS:
     @staticmethod
     def from_y_axis_and_point_in_yz(
         origin: UVec, axis: UVec, point: UVec
-    ) -> "UCS":
-        """Returns an new :class:`UCS` defined by the origin, the y-axis vector
+    ) -> UCS:
+        """Returns a new :class:`UCS` defined by the origin, the y-axis vector
         and an arbitrary point in the yz-plane.
 
         Args:
@@ -429,8 +430,8 @@ class UCS:
     @staticmethod
     def from_z_axis_and_point_in_xz(
         origin: UVec, axis: UVec, point: UVec
-    ) -> "UCS":
-        """Returns an new :class:`UCS` defined by the origin, the z-axis vector
+    ) -> UCS:
+        """Returns a new :class:`UCS` defined by the origin, the z-axis vector
         and an arbitrary point in the xz-plane.
 
         Args:
@@ -447,8 +448,8 @@ class UCS:
     @staticmethod
     def from_z_axis_and_point_in_yz(
         origin: UVec, axis: UVec, point: UVec
-    ) -> "UCS":
-        """Returns an new :class:`UCS` defined by the origin, the z-axis vector
+    ) -> UCS:
+        """Returns a new :class:`UCS` defined by the origin, the z-axis vector
         and an arbitrary point in the yz-plane.
 
         Args:
@@ -465,9 +466,9 @@ class UCS:
 
     def render_axis(
         self,
-        layout: "BaseLayout",
+        layout: BaseLayout,
         length: float = 1,
-        colors: Tuple[int, int, int] = (1, 3, 5),
+        colors: RGB = (1, 3, 5),
     ):
         """Render axis as 3D lines into a `layout`."""
         render_axis(

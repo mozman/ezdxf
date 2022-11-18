@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Dict, Tuple
+from typing import TYPE_CHECKING, Iterable, Any
 import math
 from ezdxf.math import (
     Vec3,
@@ -18,7 +18,8 @@ from ezdxf.math import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import BaseLayout, Ellipse
+    from ezdxf.layouts import BaseLayout
+    from ezdxf.entities import Ellipse
 
 __all__ = [
     "ConstructionEllipse",
@@ -79,7 +80,7 @@ class ConstructionEllipse:
         start_angle: float = 0,
         end_angle: float = 360,
         ccw: bool = True,
-    ) -> "ConstructionEllipse":
+    ) -> ConstructionEllipse:
         """Returns :class:`ConstructionEllipse` from arc or circle.
 
         Arc and Circle parameters defined in OCS.
@@ -145,7 +146,7 @@ class ConstructionEllipse:
             self.ratio,
         )
 
-    def dxfattribs(self) -> Dict:
+    def dxfattribs(self) -> dict[str, Any]:
         """Returns required DXF attributes to build an ELLIPSE entity.
 
         Entity ELLIPSE has always a ratio in range from 1e-6 to 1.
@@ -313,14 +314,14 @@ class ConstructionEllipse:
 
     @property
     def param_span(self) -> float:
-        """Returns the counter clockwise params span from start- to end param,
+        """Returns the counter-clockwise params span from start- to end param,
         see also :func:`ezdxf.math.ellipse_param_span` for more information.
 
         """
         return arc_angle_span_rad(self.start_param, self.end_param)
 
     def params(self, num: int) -> Iterable[float]:
-        """Returns `num` params from start- to end param in counter clockwise
+        """Returns `num` params from start- to end param in counter-clockwise
         order.
 
         All params are normalized in the range from [0, 2π).
@@ -333,7 +334,7 @@ class ConstructionEllipse:
 
         Args:
             params: param values in the range from [0, 2π) in radians,
-                param goes counter clockwise around the extrusion vector,
+                param goes counter-clockwise around the extrusion vector,
                 major_axis = local x-axis = 0 rad.
 
         """
@@ -360,8 +361,6 @@ class ConstructionEllipse:
             distance: maximum distance from the projected curve point onto the
                 segment chord.
             segments: minimum segment count
-
-        .. versionadded:: 0.15
 
         """
 
@@ -416,7 +415,7 @@ class ConstructionEllipse:
     ) -> Iterable[float]:
         """Yields ellipse params for all given `vertices`.
 
-        The vertex don't has to be exact on the ellipse curve or in the range
+        The vertex don't have to be exact on the ellipse curve or in the range
         from start- to end param or even in the ellipse plane. Param is
         calculated from the intersection point of the ray projected on the
         ellipse plane from the center of the ellipse through the vertex.
@@ -442,7 +441,7 @@ class ConstructionEllipse:
 
         Args:
             params: param values in the range from [0, 2π] in radians, param
-                goes counter clockwise around the extrusion vector,
+                goes counter-clockwise around the extrusion vector,
                 major_axis = local x-axis = 0 rad.
 
         """
@@ -472,8 +471,8 @@ class ConstructionEllipse:
         self.end_param = (end_param - HALF_PI) % math.tau
 
     def add_to_layout(
-        self, layout: "BaseLayout", dxfattribs=None
-    ) -> "Ellipse":
+        self, layout: BaseLayout, dxfattribs=None
+    ) -> Ellipse:
         """Add ellipse as DXF :class:`~ezdxf.entities.Ellipse` entity to a
         layout.
 
@@ -491,7 +490,7 @@ class ConstructionEllipse:
         layout.add_entity(e)
         return e
 
-    def to_ocs(self) -> "ConstructionEllipse":
+    def to_ocs(self) -> ConstructionEllipse:
         """Returns ellipse parameters as OCS representation.
 
         OCS elevation is stored in :attr:`center.z`.
@@ -530,7 +529,7 @@ def vertex(
 
 
 def get_params(start: float, end: float, num: int) -> Iterable[float]:
-    """Returns `num` params from start- to end param in counter clockwise order.
+    """Returns `num` params from start- to end param in counter-clockwise order.
 
     All params are normalized in the range from [0, 2π).
 
@@ -574,7 +573,7 @@ def param_to_angle(ratio: float, param: float) -> float:
     return math.atan2(math.sin(param) * ratio, math.cos(param))
 
 
-def rytz_axis_construction(d1: Vec3, d2: Vec3) -> Tuple[Vec3, Vec3, float]:
+def rytz_axis_construction(d1: Vec3, d2: Vec3) -> tuple[Vec3, Vec3, float]:
     """The Rytz’s axis construction is a basic method of descriptive Geometry
     to find the axes, the semi-major axis and semi-minor axis, starting from two
     conjugated half-diameters.

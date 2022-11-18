@@ -48,7 +48,7 @@
 # A Steiner point is defined as a hole with a single point!
 #
 from __future__ import annotations
-from typing import List, TypeVar, Sequence, Optional
+from typing import TypeVar, Sequence, Optional
 from typing_extensions import Protocol
 
 import math
@@ -92,8 +92,8 @@ class Node:
 
 
 def earcut(
-    exterior: List[T], holes: List[List[T]]
-) -> List[Sequence[T]]:
+    exterior: list[T], holes: list[list[T]]
+) -> list[Sequence[T]]:
     """Implements a modified ear slicing algorithm, optimized by z-order
     curve hashing and extended to handle holes, twisted polygons, degeneracies
     and self-intersections in a way that doesn't guarantee correctness of
@@ -115,7 +115,7 @@ def earcut(
     """
     # exterior points in counter-clockwise order
     outer_node: Node = linked_list(exterior, 0, ccw=True)
-    triangles: List[Sequence[T]] = []
+    triangles: list[Sequence[T]] = []
 
     if outer_node is None or outer_node.next is outer_node.prev:
         return triangles
@@ -297,7 +297,7 @@ def eliminate_holes(
     """link every hole into the outer loop, producing a single-ring polygon
     without holes
     """
-    queue: List[Node] = []
+    queue: list[Node] = []
     for hole in holes:
         if len(hole) < 1:  # skip empty holes
             continue
@@ -359,7 +359,7 @@ def filter_points(start: Node, end: Optional[Node] = None) -> Node:
 # main ear slicing loop which triangulates a polygon (given as a linked list)
 def earcut_linked(
     ear: Node,
-    triangles: List[Sequence[T]],
+    triangles: list[Sequence[T]],
     min_x: float,
     min_y: float,
     inv_size: float,
@@ -688,7 +688,7 @@ def split_polygon(a: Node, b: Node) -> Node:
 
 
 # go through all polygon nodes and cure small local self-intersections
-def cure_local_intersections(start: Node, triangles: List[Sequence[T]]) -> Node:
+def cure_local_intersections(start: Node, triangles: list[Sequence[T]]) -> Node:
     p = start
     while True:
         a = p.prev
@@ -714,7 +714,7 @@ def cure_local_intersections(start: Node, triangles: List[Sequence[T]]) -> Node:
 
 def split_ear_cut(
     start: Node,
-    triangles: List[Sequence[T]],
+    triangles: list[Sequence[T]],
     min_x: float,
     min_y: float,
     inv_size: float,

@@ -1,9 +1,8 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 from __future__ import annotations
 from typing import (
     Iterable,
-    List,
     Tuple,
     Iterator,
     Sequence,
@@ -76,13 +75,13 @@ class ConstructionPolyline(Sequence):
         rel_tol: float = REL_TOL,
     ):
         self._rel_tol = float(rel_tol)
-        v3list: List[Vec3] = Vec3.list(vertices)
-        self._vertices: List[Vec3] = v3list
+        v3list: list[Vec3] = Vec3.list(vertices)
+        self._vertices: list[Vec3] = v3list
         if close and len(v3list) > 2:
             if not v3list[0].isclose(v3list[-1], rel_tol=self._rel_tol):
                 v3list.append(v3list[0])
 
-        self._distances: List[float] = _distances(v3list)
+        self._distances: list[float] = _distances(v3list)
 
     def __len__(self) -> int:
         """len(self)"""
@@ -117,7 +116,7 @@ class ConstructionPolyline(Sequence):
             )
         return False
 
-    def data(self, index: int) -> Tuple[float, float, Vec3]:
+    def data(self, index: int) -> tuple[float, float, Vec3]:
         """Returns the tuple (distance from start, distance from previous vertex,
         vertex). All distances measured along the polyline.
         """
@@ -218,10 +217,10 @@ class ConstructionPolyline(Sequence):
             yield self._vertices[-1]
 
 
-def _distances(vertices: Iterable[Vec3]) -> List[float]:
+def _distances(vertices: Iterable[Vec3]) -> list[float]:
     # distance from start vertex of the polyline to the vertex
     current_station: float = 0.0
-    distances: List[float] = []
+    distances: list[float] = []
     prev_vertex = Vec3()
     for vertex in vertices:
         if distances:
@@ -320,7 +319,7 @@ class ApproxParamT:
 
 def intersect_polylines_2d(
     p1: Sequence[Vec2], p2: Sequence[Vec2], abs_tol=1e-10
-) -> List[Vec2]:
+) -> list[Vec2]:
     """Returns the intersection points for two polylines as list of :class:`Vec2`
     objects, the list is empty if no intersection points exist.
     Does not return self intersection points of `p1` or `p2`.
@@ -343,7 +342,7 @@ def intersect_polylines_2d(
 
 def intersect_polylines_3d(
     p1: Sequence[Vec3], p2: Sequence[Vec3], abs_tol=1e-10
-) -> List[Vec3]:
+) -> list[Vec3]:
     """Returns the intersection points for two polylines as list of :class:`Vec3`
     objects, the list is empty if no intersection points exist.
     Does not return self intersection points of `p1` or `p2`.
@@ -364,7 +363,7 @@ def intersect_polylines_3d(
     return intersect.intersections
 
 
-def divide(a: int, b: int) -> Tuple[int, int, int, int]:
+def divide(a: int, b: int) -> tuple[int, int, int, int]:
     m = (a + b) // 2
     return a, m, m, b
 
@@ -441,7 +440,7 @@ class _PolylineIntersection2d(_PolylineIntersection):
         super().__init__()
         self.p1 = p1
         self.p2 = p2
-        self.intersections: List[Vec2] = []
+        self.intersections: list[Vec2] = []
         self.abs_tol = abs_tol
 
     def bbox(self, points: Sequence) -> AbstractBoundingBox:
@@ -464,7 +463,7 @@ class _PolylineIntersection3d(_PolylineIntersection):
         super().__init__()
         self.p1 = p1
         self.p2 = p2
-        self.intersections: List[Vec3] = []
+        self.intersections: list[Vec3] = []
         self.abs_tol = abs_tol
 
     def bbox(self, points: Sequence) -> AbstractBoundingBox:

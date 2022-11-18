@@ -1,8 +1,7 @@
-# Copyright (c) 2010-2022, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 # These are the pure Python implementations of the Cython accelerated
 # construction tools: ezdxf/acc/construct.pyx
-
 from __future__ import annotations
 from typing import Iterable, Sequence, Optional, TYPE_CHECKING
 import math
@@ -11,7 +10,7 @@ import math
 from ._vector import Vec2, Vec3
 
 if TYPE_CHECKING:
-    from ._vector import UVec
+    from ezdxf.math import UVec
 
 TOLERANCE = 1e-10
 RAD_ABS_TOL = 1e-15

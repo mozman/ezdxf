@@ -37,7 +37,7 @@ __all__ = [
 ]
 
 
-def zip_to_list(*args) -> Iterable[List]:
+def zip_to_list(*args) -> Iterable[list]:
     for e in zip(*args):  # returns immutable tuples
         yield list(e)  # need mutable list
 
@@ -54,7 +54,7 @@ def copy_float_matrix(A) -> MatrixData:
     return [[float(v) for v in row] for row in A]
 
 
-def freeze_matrix(A: Union[IterableMatrixData, "Matrix"]) -> "Matrix":
+def freeze_matrix(A: Union[IterableMatrixData, Matrix]) -> Matrix:
     """Returns a frozen matrix, all data is stored in immutable tuples."""
     if isinstance(A, Matrix):
         A = A.matrix
@@ -149,7 +149,7 @@ class Matrix:
         return f"Matrix({reprlib.repr(self.matrix)})"
 
     @staticmethod
-    def reshape(items: Iterable[float], shape: Shape) -> "Matrix":
+    def reshape(items: Iterable[float], shape: Shape) -> Matrix:
         """Returns a new matrix for iterable `items` in the configuration of
         `shape`.
         """
@@ -174,7 +174,7 @@ class Matrix:
         """Shape of matrix as (n, m) tuple for n rows and m columns."""
         return self.nrows, self.ncols
 
-    def row(self, index: int) -> List[float]:
+    def row(self, index: int) -> list[float]:
         """Returns row `index` as list of floats."""
         return self.matrix[index]
 
@@ -182,7 +182,7 @@ class Matrix:
         """Yield values of row `index`."""
         return iter(self.matrix[index])
 
-    def col(self, index: int) -> List[float]:
+    def col(self, index: int) -> list[float]:
         """Return column `index` as list of floats."""
         return [row[index] for row in self.matrix]
 
@@ -190,7 +190,7 @@ class Matrix:
         """Yield values of column `index`."""
         return (row[index] for row in self.matrix)
 
-    def diag(self, index: int) -> List[float]:
+    def diag(self, index: int) -> list[float]:
         """Returns diagonal `index` as list of floats.
 
         An `index` of 0 specifies the main diagonal, negative values
@@ -274,7 +274,7 @@ class Matrix:
                 return
 
     @classmethod
-    def identity(cls, shape: Shape) -> "Matrix":
+    def identity(cls, shape: Shape) -> Matrix:
         """Returns the identity matrix for configuration `shape`."""
         m = Matrix(shape=shape)
         m.set_diag(0, 1.0)
@@ -309,18 +309,18 @@ class Matrix:
         for row in self.rows():
             row[a], row[b] = row[b], row[a]
 
-    def freeze(self) -> "Matrix":
+    def freeze(self) -> Matrix:
         """Returns a frozen matrix, all data is stored in immutable tuples."""
         return freeze_matrix(self.matrix)
 
-    def lu_decomp(self) -> "LUDecomposition":
+    def lu_decomp(self) -> LUDecomposition:
         """Returns the `LU decomposition`_ as :class:`LUDecomposition` object,
         a faster linear equation solver.
 
         """
         return LUDecomposition(self.matrix)
 
-    def __getitem__(self, item: Tuple[int, int]) -> float:
+    def __getitem__(self, item: tuple[int, int]) -> float:
         """Get value by (row, col) index tuple, fancy slicing as known from
         numpy is not supported.
 
@@ -328,7 +328,7 @@ class Matrix:
         row, col = item
         return self.matrix[row][col]
 
-    def __setitem__(self, item: Tuple[int, int], value: float):
+    def __setitem__(self, item: tuple[int, int], value: float):
         """Set value by (row, col) index tuple, fancy slicing as known from
         numpy is not supported.
 
@@ -351,7 +351,7 @@ class Matrix:
                     return False
         return True
 
-    def __mul__(self, other: Union["Matrix", float]) -> "Matrix":
+    def __mul__(self, other: Union[Matrix, float]) -> Matrix:
         """Matrix multiplication by another matrix or a float, returns a new
         matrix.
 
@@ -375,7 +375,7 @@ class Matrix:
 
     __imul__ = __mul__
 
-    def __add__(self, other: Union["Matrix", float]) -> "Matrix":
+    def __add__(self, other: Union[Matrix, float]) -> Matrix:
         """Matrix addition by another matrix or a float, returns a new matrix."""
         if isinstance(other, Matrix):
             matrix = Matrix.reshape(
@@ -390,7 +390,7 @@ class Matrix:
 
     __iadd__ = __add__
 
-    def __sub__(self, other: Union["Matrix", float]) -> "Matrix":
+    def __sub__(self, other: Union[Matrix, float]) -> Matrix:
         """Matrix subtraction by another matrix or a float, returns a new
         matrix.
 
@@ -408,11 +408,11 @@ class Matrix:
 
     __isub__ = __sub__
 
-    def transpose(self) -> "Matrix":
+    def transpose(self) -> Matrix:
         """Returns a new transposed matrix."""
         return Matrix(matrix=list(zip_to_list(*self.matrix)))
 
-    def inverse(self) -> "Matrix":
+    def inverse(self) -> Matrix:
         """Returns inverse of matrix as new object."""
         if self.nrows != self.ncols:
             raise TypeError("Inverse of non-square matrix not supported.")
@@ -497,7 +497,7 @@ def cubic_equation(a: float, b: float, c: float, d: float) -> Sequence[float]:
 
 def gauss_vector_solver(
     A: Iterable[Iterable[float]], B: Iterable[float]
-) -> List[float]:
+) -> list[float]:
     """Solves the linear equation system given by a nxn Matrix A . x = B,
     right-hand side quantities as vector B with n elements by the
     `Gauss-Elimination`_ algorithm, which is faster than the `Gauss-Jordan`_
@@ -573,7 +573,7 @@ def gauss_matrix_solver(A: IterableMatrixData, B: IterableMatrixData) -> Matrix:
     return result
 
 
-def _build_upper_triangle(A: MatrixData, B: List) -> None:
+def _build_upper_triangle(A: MatrixData, B: list) -> None:
     """Build upper triangle for backsubstitution. Modifies A and B inplace!
 
     Args:
@@ -616,7 +616,7 @@ def _build_upper_triangle(A: MatrixData, B: List) -> None:
                     B[row][col] += c * B[i][col]
 
 
-def _backsubstitution(A: MatrixData, B: List[float]) -> List[float]:
+def _backsubstitution(A: MatrixData, B: list[float]) -> list[float]:
     """Solve equation A . x = B for an upper triangular matrix A by
     backsubstitution.
 
@@ -636,7 +636,7 @@ def _backsubstitution(A: MatrixData, B: List[float]) -> List[float]:
 
 def gauss_jordan_solver(
     A: IterableMatrixData, B: IterableMatrixData
-) -> Tuple[Matrix, Matrix]:
+) -> tuple[Matrix, Matrix]:
     """Solves the linear equation system given by a nxn Matrix A . x = B,
     right-hand side quantities as nxm Matrix B by the `Gauss-Jordan`_ algorithm,
     which is the slowest of all, but it is very reliable. Returns a copy of the
@@ -763,10 +763,10 @@ class LUDecomposition:
         lu: MatrixData = copy_float_matrix(A)
         n: int = len(lu)
         det: float = 1.0
-        index: List[int] = []
+        index: list[int] = []
 
         # find max value for each row, raises ZeroDivisionError for singular matrix!
-        scaling: List[float] = [1.0 / max(abs(v) for v in row) for row in lu]
+        scaling: list[float] = [1.0 / max(abs(v) for v in row) for row in lu]
 
         for k in range(n):
             big: float = 0.0
@@ -793,7 +793,7 @@ class LUDecomposition:
                 for j in range(k + 1, n):
                     lu[i][j] -= temp * lu[k][j]
 
-        self.index: List[int] = index
+        self.index: list[int] = index
         self.matrix: MatrixData = lu
         self._det: float = det
 
@@ -808,7 +808,7 @@ class LUDecomposition:
         """Count of matrix rows (and cols)."""
         return len(self.matrix)
 
-    def solve_vector(self, B: Iterable[float]) -> List[float]:
+    def solve_vector(self, B: Iterable[float]) -> list[float]:
         """Solves the linear equation system given by the nxn Matrix A . x = B,
         right-hand side quantities as vector B with n elements.
 
@@ -819,9 +819,9 @@ class LUDecomposition:
             vector as list of floats
 
         """
-        X: List[float] = [float(v) for v in B]
+        X: list[float] = [float(v) for v in B]
         lu: MatrixData = self.matrix
-        index: List[int] = self.index
+        index: list[int] = self.index
         n: int = self.nrows
         ii: int = 0
 
@@ -895,7 +895,7 @@ class LUDecomposition:
 
 def tridiagonal_vector_solver(
     A: IterableMatrixData, B: Iterable[float]
-) -> List[float]:
+) -> list[float]:
     """Solves the linear equation system given by a tri-diagonal nxn Matrix
     A . x = B, right-hand side quantities as vector B. Matrix A is diagonal
     matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
@@ -976,8 +976,8 @@ def tridiagonal_matrix_solver(
 
 
 def _solve_tridiagonal_matrix(
-    a: List[float], b: List[float], c: List[float], r: List[float]
-) -> List[float]:
+    a: list[float], b: list[float], c: list[float], r: list[float]
+) -> list[float]:
     """Solves the linear equation system given by a tri-diagonal
     Matrix(a, b, c) . x = r.
 
@@ -1002,8 +1002,8 @@ def _solve_tridiagonal_matrix(
 
     """
     n: int = len(a)
-    u: List[float] = [0.0] * n
-    gam: List[float] = [0.0] * n
+    u: list[float] = [0.0] * n
+    gam: list[float] = [0.0] * n
     bet: float = b[0]
     u[0] = r[0] / bet
     for j in range(1, n):
@@ -1016,7 +1016,7 @@ def _solve_tridiagonal_matrix(
     return u
 
 
-def banded_matrix(A: Matrix, check_all=True) -> Tuple[Matrix, int, int]:
+def banded_matrix(A: Matrix, check_all=True) -> tuple[Matrix, int, int]:
     """Transform matrix A into a compact banded matrix representation.
     Returns compact representation as :class:`Matrix` object and
     lower- and upper band count m1 and m2.
@@ -1032,7 +1032,7 @@ def banded_matrix(A: Matrix, check_all=True) -> Tuple[Matrix, int, int]:
     return m, m1, m2
 
 
-def detect_banded_matrix(A: Matrix, check_all=True) -> Tuple[int, int]:
+def detect_banded_matrix(A: Matrix, check_all=True) -> tuple[int, int]:
     """Returns lower- and upper band count m1 and m2.
 
     Args:
@@ -1103,7 +1103,7 @@ class BandedMatrixLU:
         # lower triangle of LU decomposition
         n: int = self.nrows
         self.lower: MatrixData = [[0.0] * m1 for _ in range(n)]
-        self.index: List[int] = [0] * n
+        self.index: list[int] = [0] * n
         self._det: float = 1.0
 
         m1 = self.m1
@@ -1148,7 +1148,7 @@ class BandedMatrixLU:
         """Count of matrix rows."""
         return len(self.upper)
 
-    def solve_vector(self, B: Iterable[float]) -> List[float]:
+    def solve_vector(self, B: Iterable[float]) -> list[float]:
         """Solves the linear equation system given by the banded nxn Matrix
         A . x = B, right-hand side quantities as vector B with n elements.
 
@@ -1159,7 +1159,7 @@ class BandedMatrixLU:
             vector as list of floats
 
         """
-        x: List[float] = list(B)
+        x: list[float] = list(B)
         if len(x) != self.nrows:
             raise ValueError(
                 "Item count of vector B has to be equal to matrix row count."
@@ -1168,7 +1168,7 @@ class BandedMatrixLU:
         n: int = self.nrows
         m1: int = self.m1
         m2: int = self.m2
-        index: List[int] = self.index
+        index: list[int] = self.index
         al: MatrixData = self.lower
         au: MatrixData = self.upper
 

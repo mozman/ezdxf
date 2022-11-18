@@ -2,7 +2,7 @@
 # Home-page: http://code.google.com/p/gameobjects/
 # Author: Will McGugan
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
-# Copyright (c) 2010-2022 Manfred Moitzi
+# Copyright (c) 2011-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Iterable, Iterator, TYPE_CHECKING, Optional
@@ -14,7 +14,7 @@ from itertools import chain
 from ._vector import Vec3, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 
 if TYPE_CHECKING:
-    from ._vector import UVec
+    from ezdxf.math import UVec
 
 __all__ = ["Matrix44"]
 
