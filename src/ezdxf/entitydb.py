@@ -18,7 +18,7 @@ from ezdxf.entities import factory
 from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
 
 DATABASE_EXCLUDE = {
     "SECTION",
@@ -352,7 +352,7 @@ class EntitySpace:
         :class:`EntitySpace` has a standard Python list like interface,
         therefore `index` can be any valid list indexing or slicing term, like
         a single index ``layout[-1]`` to get the last entity, or an index slice
-        ``layout[:10]`` to get the first 10 or less entities as
+        ``layout[:10]`` to get the first 10 or fewer entities as
         ``List[DXFEntity]``. Does not filter destroyed entities.
 
         """
@@ -382,7 +382,7 @@ class EntitySpace:
         for entity in entities:
             self.add(entity)
 
-    def export_dxf(self, tagwriter: TagWriter) -> None:
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         """Export all entities into DXF file by `tagwriter`.
 
         (internal API)

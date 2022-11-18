@@ -1,5 +1,5 @@
-#  Copyright (c) 2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2022, Manfred Moitzi
+# License: MIT License
 from typing import TYPE_CHECKING
 import pathlib
 
@@ -12,7 +12,8 @@ from ezdxf.render import forms
 from ezdxf.render import mleader
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, BlockLayout
+    from ezdxf.document import Drawing
+    from ezdxf.layouts import BlockLayout
 
 # reserved for further imports, line numbers have to be preserved for
 # .. literalinclude::

@@ -1,5 +1,5 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 from typing import TYPE_CHECKING
 import pathlib
 import logging
@@ -12,7 +12,8 @@ from ezdxf.math import Vec2, UCS, NULLVEC, ConstructionBox
 from ezdxf.render import forms, mleader
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, BlockLayout
+    from ezdxf.document import Drawing
+    from ezdxf.eztypes import BlockLayout
 
 # ========================================
 # Setup logging

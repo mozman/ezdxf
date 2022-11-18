@@ -33,7 +33,9 @@ from ezdxf.lldxf.types import POINTER_CODES
 from ezdxf.protocols import referenced_blocks
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, Tags, DXFEntity, BlockRecord
+    from ezdxf.document import Drawing
+    from ezdxf.lldxf.tags import Tags
+    from ezdxf.entities import DXFEntity, BlockRecord
 
 __all__ = ["BlockDefinitionIndex", "BlockReferenceCounter"]
 

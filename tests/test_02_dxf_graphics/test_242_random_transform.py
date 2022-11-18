@@ -9,7 +9,7 @@ from ezdxf.math import Matrix44, Vec3, linspace, X_AXIS, Y_AXIS, Z_AXIS
 import ezdxf
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing
+    from ezdxf.document import Drawing
 
 UNIFORM_SCALING = [
     (2, 2, 2),
