@@ -321,7 +321,7 @@ def from_hatch_polyline_path(
     path = Path()
     tools.add_2d_polyline(
         path,
-        polyline.vertices,  # List[(x, y, bulge)]
+        polyline.vertices,  # list[(x, y, bulge)]
         close=polyline.is_closed,
         ocs=ocs or OCS(),
         elevation=elevation,

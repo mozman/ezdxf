@@ -40,7 +40,8 @@ from .commands import Command
 from . import converter, nesting
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Layout, EntityQuery
+    from ezdxf.query import EntityQuery
+    from ezdxf.layouts import Layout
 
 __all__ = [
     "bbox",

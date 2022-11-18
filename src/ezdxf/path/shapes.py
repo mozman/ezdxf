@@ -1,5 +1,5 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021-2022, Manfred Moitzi
+# License: MIT License
 from __future__ import annotations
 from typing import Optional
 import math
@@ -32,10 +32,10 @@ def unit_circle(
     segments: int = 1,
     transform: Matrix44 = None,
 ) -> Path:
-    """Returns an unit circle as a :class:`Path` object, with the center at
+    """Returns a unit circle as a :class:`Path` object, with the center at
     (0, 0, 0) and the radius of 1 drawing unit.
 
-    The arc spans from the start- to the end angle in counter clockwise
+    The arc spans from the start- to the end angle in counter-clockwise
     orientation. The end angle has to be greater than the start angle and the
     angle span has to be greater than 0.
 
@@ -71,7 +71,7 @@ def wedge(
     """Returns a wedge as a :class:`Path` object, with the center at
     (0, 0, 0) and the radius of 1 drawing unit.
 
-    The arc spans from the start- to the end angle in counter clockwise
+    The arc spans from the start- to the end angle in counter-clockwise
     orientation. The end angle has to be greater than the start angle and the
     angle span has to be greater than 0.
 
@@ -105,10 +105,10 @@ def elliptic_transformation(
     ratio: float = 1,
     rotation: float = 0,
 ) -> Matrix44:
-    """Returns the transformation matrix to transform an unit circle into
+    """Returns the transformation matrix to transform a unit circle into
     an arbitrary circular- or elliptic arc.
 
-    Example how to create an ellipse with an major axis length of 3, a minor
+    Example how to create an ellipse with a major axis length of 3, a minor
     axis length 1.5 and rotated about 90°::
 
         m = elliptic_transformation(radius=3, ratio=0.5, rotation=math.pi / 2)

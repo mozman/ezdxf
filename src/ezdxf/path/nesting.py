@@ -1,5 +1,5 @@
-#  Copyright (c) 2020-2021, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2020-2022, Manfred Moitzi
+# License: MIT License
 """
 This module provides "nested Polygon" detection for multiple paths.
 
@@ -91,6 +91,7 @@ Sort by Area
 It is not possible for a path to contain another path with a larger area.
 
 """
+from __future__ import annotations
 from typing import Tuple, Optional, List, Iterable, TypeVar
 from collections import namedtuple
 from .path import Path
@@ -109,7 +110,7 @@ Polygon = Tuple[Exterior, Optional[List[Polygon]]]  # type: ignore
 BoxStruct = namedtuple("BoxStruct", "bbox, path")
 
 
-def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
+def fast_bbox_detection(paths: Iterable[Path]) -> list[Polygon]:
     """Create a nested polygon structure from iterable `paths`, using 2D
     bounding boxes as fast detection objects.
 
@@ -121,10 +122,10 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
         return width * height
 
     def separate(
-        exterior: BoundingBox2d, candidates: List[BoxStruct]
-    ) -> Tuple[List[BoxStruct], List[BoxStruct]]:
-        holes: List[BoxStruct] = []
-        outside: List[BoxStruct] = []
+        exterior: BoundingBox2d, candidates: list[BoxStruct]
+    ) -> tuple[list[BoxStruct], list[BoxStruct]]:
+        holes: list[BoxStruct] = []
+        outside: list[BoxStruct] = []
         for candidate in candidates:
             # Fast inside check:
             (
@@ -132,7 +133,7 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
             ).append(candidate)
         return holes, outside
 
-    def polygon_structure(outside: List[BoxStruct]) -> List[List]:
+    def polygon_structure(outside: list[BoxStruct]) -> list[list]:
         polygons = []
         while outside:
             exterior = outside.pop()  # path with largest area
@@ -147,7 +148,7 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
             polygons.append([exterior, *holes])
         return polygons
 
-    def as_nested_paths(polygons) -> List:
+    def as_nested_paths(polygons) -> list:
         return [
             polygon.path
             if isinstance(polygon, BoxStruct)
@@ -166,8 +167,8 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
 
 
 def winding_deconstruction(
-    polygons: List[Polygon],
-) -> Tuple[List[Path], List[Path]]:
+    polygons: list[Polygon],
+) -> tuple[list[Path], list[Path]]:
     """Flatten the nested polygon structure in a tuple of two lists,
     the first list contains the paths which should be counter-clockwise oriented
     and the second list contains the paths which should be clockwise oriented.
@@ -185,8 +186,8 @@ def winding_deconstruction(
             else:
                 deconstruct(polygon, level + 1)
 
-    cw_paths: List[Path] = []
-    ccw_paths: List[Path] = []
+    cw_paths: list[Path] = []
+    ccw_paths: list[Path] = []
     deconstruct(polygons, 0)
     return ccw_paths, cw_paths
 
@@ -200,7 +201,7 @@ def flatten_polygons(polygons: Polygon) -> Iterable[Path]:
             yield from flatten_polygons(polygon)  # type: ignore
 
 
-def group_paths(paths: Iterable[Path]) -> List[List[Path]]:
+def group_paths(paths: Iterable[Path]) -> list[list[Path]]:
     """Group separated paths and their inner holes as flat lists."""
     polygons = fast_bbox_detection(paths)  # type: ignore
     return [list(flatten_polygons(polygon)) for polygon in polygons]

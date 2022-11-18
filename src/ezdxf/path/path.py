@@ -48,10 +48,10 @@ class Path:
 
     def __init__(self, start: UVec = NULLVEC):
         # stores all command vertices in a contiguous list
-        self._vertices: List[Vec3] = [Vec3(start)]
+        self._vertices: list[Vec3] = [Vec3(start)]
         # start index of each command
-        self._start_index: List[int] = []
-        self._commands: List[Command] = []
+        self._start_index: list[int] = []
+        self._commands: list[Command] = []
         self._has_sub_paths = False
         self._user_data: Any = None  # should be immutable data!
 
@@ -82,11 +82,11 @@ class Path:
     def __iter__(self) -> Iterator[PathElement]:
         return (self[i] for i in range(len(self._commands)))
 
-    def commands(self) -> List[PathElement]:
+    def commands(self) -> list[PathElement]:
         """Returns all path elements as list."""
         return list(self.__iter__())
 
-    def __copy__(self) -> "Path":
+    def __copy__(self) -> Path:
         """Returns a new copy of :class:`Path` with shared immutable data."""
         copy = Path()
         copy._commands = self._commands.copy()
@@ -131,7 +131,7 @@ class Path:
         """:class:`Path` end point."""
         return self._vertices[-1]
 
-    def control_vertices(self) -> List[Vec3]:
+    def control_vertices(self) -> list[Vec3]:
         """Yields all path control vertices in consecutive order."""
         if self._commands:
             return list(self._vertices)
@@ -159,8 +159,6 @@ class Path:
     def has_sub_paths(self) -> bool:
         """Returns ``True`` if the path is a :term:`Multi-Path` object which
         contains multiple sub-paths.
-
-        .. versionadded:: 0.17
 
         """
         return self._has_sub_paths
@@ -205,8 +203,6 @@ class Path:
         If the :meth:`move_to` command is the first command, the start point of
         the path will be reset to `location`.
 
-        .. versionadded:: 0.17
-
         """
         commands = self._commands
         if not commands:
@@ -249,9 +245,6 @@ class Path:
         """Close last sub-path by adding a line segment from the end point to
         the start point of the last sub-path. Behaves like :meth:`close` for
         :term:`Single-Path` instances.
-
-        .. versionadded:: 0.17
-
         """
         if self.has_sub_paths:
             start_point = self._start_of_last_sub_path()
@@ -274,7 +267,7 @@ class Path:
             index -= 1
         return None
 
-    def reversed(self) -> "Path":
+    def reversed(self) -> Path:
         """Returns a new :class:`Path` with reversed segments and control
         vertices.
 
@@ -313,7 +306,7 @@ class Path:
             elif cmd == Command.MOVE_TO:
                 start += 1
 
-    def clockwise(self) -> "Path":
+    def clockwise(self) -> Path:
         """Returns new :class:`Path` in clockwise orientation.
 
         Raises:
@@ -325,7 +318,7 @@ class Path:
         else:
             return self.reversed()
 
-    def counter_clockwise(self) -> "Path":
+    def counter_clockwise(self) -> Path:
         """Returns new :class:`Path` in counter-clockwise orientation.
 
         Raises:
@@ -420,7 +413,7 @@ class Path:
                 raise ValueError(f"Invalid command: {cmd}")
             start = end_location
 
-    def transform(self, m: "Matrix44") -> "Path":
+    def transform(self, m: Matrix44) -> Path:
         """Returns a new transformed path.
 
         Args:
@@ -437,7 +430,7 @@ class Path:
             ocs.to_wcs(v.replace(z=elevation)) for v in self._vertices
         )
 
-    def sub_paths(self) -> Iterator["Path"]:
+    def sub_paths(self) -> Iterator[Path]:
         """Yield sub-path as :term:`Single-Path` objects.
 
         It is safe to call :meth:`sub_paths` on any path-type:
@@ -458,13 +451,11 @@ class Path:
                 path.append_path_element(cmd)
         yield path
 
-    def extend_multi_path(self, path: "Path") -> None:
+    def extend_multi_path(self, path: Path) -> None:
         """Extend the path by another path. The source path is automatically a
         :term:`Multi-Path` object, even if the previous end point matches the
         start point of the appended path. Ignores paths without any commands
         (empty paths).
-
-        .. versionadded:: 0.17
 
         """
         if len(path):
@@ -472,11 +463,9 @@ class Path:
             for cmd in path.commands():
                 self.append_path_element(cmd)
 
-    def append_path(self, path: "Path") -> None:
+    def append_path(self, path: Path) -> None:
         """Append another path to this path. Adds a :code:`self.line_to(path.start)`
         if the end of this path != the start of appended path.
-
-        .. versionadded:: 0.17
 
         """
         if len(path) == 0:
