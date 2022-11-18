@@ -2,7 +2,6 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import (
-    List,
     Sequence,
     Iterable,
     Optional,
@@ -25,7 +24,7 @@ class DNA(abc.ABC):
     """Abstract DNA class."""
 
     fitness: Optional[float] = None
-    _data: List
+    _data: list
 
     @abc.abstractmethod
     def reset(self, values: Iterable):
@@ -241,16 +240,16 @@ class FloatDNA(DNA):
     __slots__ = ("_data", "fitness")
 
     def __init__(self, values: Iterable[float]):
-        self._data: List[float] = list(values)
+        self._data: list[float] = list(values)
         self._check_valid_data()
         self.fitness: Optional[float] = None
 
     @classmethod
-    def random(cls, length: int) -> "FloatDNA":
+    def random(cls, length: int) -> FloatDNA:
         return cls((random.random() for _ in range(length)))
 
     @classmethod
-    def n_random(cls, n: int, length: int) -> List["FloatDNA"]:
+    def n_random(cls, n: int, length: int) -> list[FloatDNA]:
         return [cls.random(length) for _ in range(n)]
 
     @property
@@ -283,7 +282,7 @@ class BitDNA(DNA):
     __slots__ = ("_data", "fitness")
 
     def __init__(self, values: Iterable):
-        self._data: List[bool] = list(bool(v) for v in values)
+        self._data: list[bool] = list(bool(v) for v in values)
         self.fitness: Optional[float] = None
 
     @property
@@ -291,11 +290,11 @@ class BitDNA(DNA):
         return True  # everything can be evaluated to True/False
 
     @classmethod
-    def random(cls, length: int) -> "BitDNA":
+    def random(cls, length: int) -> BitDNA:
         return cls(bool(random.randint(0, 1)) for _ in range(length))
 
     @classmethod
-    def n_random(cls, n: int, length: int) -> List["BitDNA"]:
+    def n_random(cls, n: int, length: int) -> list[BitDNA]:
         return [cls.random(length) for _ in range(n)]
 
     def __str__(self):
@@ -327,7 +326,7 @@ class UniqueIntDNA(DNA):
     __slots__ = ("_data", "fitness")
 
     def __init__(self, values: Union[int, Iterable]):
-        self._data: List[int]
+        self._data: list[int]
         if isinstance(values, int):
             self._data = list(range(values))
         else:
@@ -337,13 +336,13 @@ class UniqueIntDNA(DNA):
         self.fitness: Optional[float] = None
 
     @classmethod
-    def random(cls, length: int) -> "UniqueIntDNA":
+    def random(cls, length: int) -> UniqueIntDNA:
         dna = cls(length)
         random.shuffle(dna._data)
         return dna
 
     @classmethod
-    def n_random(cls, n: int, length: int) -> List["UniqueIntDNA"]:
+    def n_random(cls, n: int, length: int) -> list[UniqueIntDNA]:
         return [cls.random(length) for _ in range(n)]
 
     @property
@@ -374,18 +373,18 @@ class IntegerDNA(DNA):
 
     def __init__(self, values: Iterable[int], max_: int):
         self._max = int(max_)
-        self._data: List[int] = list(values)
+        self._data: list[int] = list(values)
         if not self.is_valid:
             raise TypeError(self._data)
         self.fitness: Optional[float] = None
 
     @classmethod
-    def random(cls, length: int, max_: int) -> "IntegerDNA":
+    def random(cls, length: int, max_: int) -> IntegerDNA:
         imax = int(max_)
         return cls((random.randrange(0, imax) for _ in range(length)), imax)
 
     @classmethod
-    def n_random(cls, n: int, length: int, max_: int) -> List["IntegerDNA"]:
+    def n_random(cls, n: int, length: int, max_: int) -> list[IntegerDNA]:
         return [cls.random(length, max_) for _ in range(n)]
 
     @property
@@ -438,7 +437,7 @@ class Log:
         avg_fitness: float
 
     def __init__(self) -> None:
-        self.entries: List[Log.Entry] = []
+        self.entries: list[Log.Entry] = []
 
     def add(self, runtime: float, fitness: float, avg_fitness: float) -> None:
         self.entries.append(Log.Entry(runtime, fitness, avg_fitness))
@@ -449,7 +448,7 @@ class Log:
             json.dump(data, fp, indent=4)
 
     @classmethod
-    def load(cls, filename: str) -> "Log":
+    def load(cls, filename: str) -> Log:
         with open(filename, "rt") as fp:
             data = json.load(fp)
         log = Log()
@@ -475,7 +474,7 @@ class HallOfFame:
         assert dna.fitness is not None
         self._unique_entries[dna.fitness] = dna
 
-    def get(self, count: int) -> List[DNA]:
+    def get(self, count: int) -> list[DNA]:
         entries = self._unique_entries
         keys = self._sorted_keys()
         return [entries[k] for k in keys[: min(count, self.count)]]
@@ -528,7 +527,7 @@ class GeneticOptimizer:
         # data:
         self.name = "GeneticOptimizer"
         self.log = Log()
-        self.candidates: List[DNA] = []
+        self.candidates: list[DNA] = []
 
         # core components:
         self.evaluator: Evaluator = evaluator
@@ -630,7 +629,7 @@ class GeneticOptimizer:
 
     def next_generation(self) -> None:
         count = len(self.candidates)
-        candidates: List[DNA] = []
+        candidates: list[DNA] = []
         selector = self.selection
         selector.reset(self.filter_threshold(self.candidates))
 
@@ -673,8 +672,8 @@ class RouletteSelection(Selection):
     """Selection by fitness values."""
 
     def __init__(self, negative_values: bool = False) -> None:
-        self._candidates: List[DNA] = []
-        self._weights: List[float] = []
+        self._candidates: list[DNA] = []
+        self._weights: list[float] = []
         self._negative_values = bool(negative_values)
 
     def reset(self, candidates: Iterable[DNA]):
@@ -707,7 +706,7 @@ class TournamentSelection(Selection):
     """Selection by choosing the best of a certain count of candidates."""
 
     def __init__(self, candidates: int):
-        self._candidates: List[DNA] = []
+        self._candidates: list[DNA] = []
         self.candidates = candidates
 
     def reset(self, candidates: Iterable[DNA]):

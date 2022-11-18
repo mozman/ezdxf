@@ -1,6 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from typing import Union, List, Tuple
+from __future__ import annotations
+from typing import Union
 import enum
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties, findfont
@@ -84,7 +85,7 @@ def make_paths_from_str(
     align=TextEntityAlignment.LEFT,
     length: float = 0,
     m: Matrix44 = None,
-) -> List[Path]:
+) -> list[Path]:
     """Convert a single line string `s` into a list of
     :class:`~ezdxf.path.Path` objects. All paths are returned as a list of
     :term:`Single-Path` objects.
@@ -115,7 +116,7 @@ def make_paths_from_str(
 
 def _get_font_data(
     font: fonts.FontFace,
-) -> Tuple[FontProperties, fonts.FontMeasurements]:
+) -> tuple[FontProperties, fonts.FontMeasurements]:
     fp = FontProperties(
         family=font.family,
         style=font.style,
@@ -201,7 +202,7 @@ def make_hatches_from_str(
     length: float = 0,
     dxfattribs=None,
     m: Matrix44 = None,
-) -> List[Hatch]:
+) -> list[Hatch]:
     """Convert a single line string `s` into a list of virtual
     :class:`~ezdxf.entities.Hatch` entities.
     The text `size` is the height of the uppercase letter "X" (cap height).
@@ -270,7 +271,7 @@ def make_path_from_entity(entity: AnyText) -> Path:
     return p.transform(m)
 
 
-def make_paths_from_entity(entity: AnyText) -> List[Path]:
+def make_paths_from_entity(entity: AnyText) -> list[Path]:
     """Convert text content from DXF entities TEXT and ATTRIB into a
     list of :class:`~ezdxf.path.Path` objects. All paths are returned as a
     list of :term:`Single-Path` objects.
@@ -280,7 +281,7 @@ def make_paths_from_entity(entity: AnyText) -> List[Path]:
     return list(make_path_from_entity(entity).sub_paths())
 
 
-def make_hatches_from_entity(entity: AnyText) -> List[Hatch]:
+def make_hatches_from_entity(entity: AnyText) -> list[Hatch]:
     """Convert text content from DXF entities TEXT and ATTRIB into a
     list of virtual :class:`~ezdxf.entities.Hatch` entities.
     The hatches are placed at the same location as the source entity and have
@@ -339,7 +340,7 @@ def virtual_entities(entity: AnyText, kind: int = Kind.HATCHES) -> EntityQuery:
     check_entity_type(entity)
     extrusion = entity.dxf.extrusion
     attribs = entity.graphic_properties()
-    entities: List[DXFGraphic] = []
+    entities: list[DXFGraphic] = []
 
     if kind & Kind.HATCHES:
         entities.extend(make_hatches_from_entity(entity))

@@ -3,11 +3,11 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator, Sequence, Optional
-from ezdxf.math import Vec3, UVec
+from ezdxf.math import Vec3, UVec, Matrix44, UCS
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer, MeshBuilder
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import GenericLayoutType, Matrix44, UCS
+    from ezdxf.eztypes import GenericLayoutType
 
 # fmt: off
 all_cubes_size_3_template = [

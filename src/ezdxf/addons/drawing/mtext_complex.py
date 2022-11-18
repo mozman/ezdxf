@@ -1,5 +1,6 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import Iterable, Optional
 from typing_extensions import Protocol
 import copy

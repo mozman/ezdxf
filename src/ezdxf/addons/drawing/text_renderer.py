@@ -1,5 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import TypeVar, Generic, Optional
 import abc
 from ezdxf.tools.fonts import FontFace, FontMeasurements

@@ -1,6 +1,8 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 # type: ignore
+from __future__ import annotations
+from typing import Optional, Union
 import logging
 import os
 import platform
@@ -10,7 +12,6 @@ import tempfile
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, List, Union
 
 import ezdxf
 from ezdxf.document import Drawing
@@ -341,7 +342,7 @@ def _odafc_arguments(
     output_format: str = "DXF",
     version: str = "ACAD2013",
     audit: bool = False,
-) -> List[str]:
+) -> list[str]:
     """ODA File Converter command line format:
 
     ODAFileConverter "Input Folder" "Output Folder" version type recurse audit [filter]
@@ -424,7 +425,7 @@ def _linux_dummy_display():
 
 
 def _run_with_no_gui(
-    system: str, command: str, arguments: List[str]
+    system: str, command: str, arguments: list[str]
 ) -> subprocess.Popen:
     """Execute ODAFC application without launching the GUI.
 
@@ -492,7 +493,7 @@ def _odafc_failed(system: str, proc: subprocess.Popen, stderr: str) -> bool:
         return stderr != ""
 
 
-def _execute_odafc(arguments: List[str]) -> Optional[bytes]:
+def _execute_odafc(arguments: list[str]) -> Optional[bytes]:
     """Execute ODAFC application.
 
     Args:

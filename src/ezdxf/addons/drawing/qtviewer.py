@@ -2,6 +2,7 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 # mypy: ignore_errors=True
+from __future__ import annotations
 from typing import Iterable, Sequence
 import math
 import os

@@ -1,5 +1,6 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
+from __future__ import annotations
 from typing import Union, Tuple, Iterable, Optional, Callable
 import enum
 from math import radians

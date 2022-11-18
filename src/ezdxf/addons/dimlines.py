@@ -30,7 +30,7 @@ entity and therefore, they have completely different implementations and
 parameters.
 
 """
-from __future__  import annotations
+from __future__ import annotations
 from typing import Any, TYPE_CHECKING, Iterable, Optional
 from math import radians, degrees, pi
 from abc import abstractmethod
@@ -38,7 +38,8 @@ from ezdxf.enums import TextEntityAlignment
 from ezdxf.math import Vec3, Vec2, distance, lerp, ConstructionRay, UVec
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, GenericLayoutType
+    from ezdxf.document import Drawing
+    from ezdxf.eztypes import GenericLayoutType
 
 DIMENSIONS_MIN_DISTANCE = 0.05
 DIMENSIONS_FLOATINGPOINT = "."
@@ -758,9 +759,7 @@ class RadialDimension(_DimensionBase):
         )
 
 
-def center_of_3points_arc(
-    point1: UVec, point2: UVec, point3: UVec
-) -> Vec2:
+def center_of_3points_arc(point1: UVec, point2: UVec, point3: UVec) -> Vec2:
     """
     Calc center point of 3 point arc. ConstructionCircle is defined by 3 points
     on the circle: point1, point2 and point3.

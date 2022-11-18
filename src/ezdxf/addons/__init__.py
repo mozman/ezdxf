@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2021, Manfred Moitzi
+# Copyright (C) 2011-2022, Manfred Moitzi
 # License: MIT License
 from .table import Table, CustomCell
 from .mtext import MText
