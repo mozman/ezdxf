@@ -9,36 +9,37 @@ from typing import (
     cast,
     Optional,
 )
-from ezdxf.lldxf.const import (
-    DXFStructureError,
-    DXFBlockInUseError,
-    DXFTableEntryError,
-    DXFKeyError,
-)
-from ezdxf.lldxf import const, validator
-from ezdxf.entities import (
-    factory,
-    entity_linker,
-    Block,
-    EndBlk,
-    BlockRecord,
-    is_graphic_entity,
-    Attrib,
-)
-from ezdxf.layouts.blocklayout import BlockLayout
-from ezdxf.math import UVec, NULLVEC, Vec3
-from ezdxf.render.arrows import ARROWS
-from ezdxf.audit import Auditor, AuditError
 import logging
 
-logger = logging.getLogger("ezdxf")
+from ezdxf.audit import Auditor, AuditError
+from ezdxf.layouts.blocklayout import BlockLayout
+from ezdxf.lldxf import const, validator
+from ezdxf.lldxf.const import (
+    DXFBlockInUseError,
+    DXFKeyError,
+    DXFStructureError,
+    DXFTableEntryError,
+)
+from ezdxf.entities import (
+    Attrib,
+    Block,
+    BlockRecord,
+    EndBlk,
+    entity_linker,
+    factory,
+    is_graphic_entity,
+)
+from ezdxf.math import UVec, NULLVEC, Vec3
+from ezdxf.render.arrows import ARROWS
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFEntity, DXFTagStorage
-    from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.entitydb import EntityDB
+    from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.sections.table import Table
+
+logger = logging.getLogger("ezdxf")
 
 
 def is_special_block(name: str) -> bool:

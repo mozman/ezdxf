@@ -14,6 +14,7 @@ Version 1.0.0rc1 - dev
   This may help if the `which` command can not find the ` ODAFileConverter` command 
   and also adds support for AppImages provided by ODA.
 - CHANGE: removed deprecated features
+- CHANGE: type annotation refactoring
 - BUGFIX: [#747](https://github.com/mozman/ezdxf/issues/747)
   fix virtual entities of 3D DIMENSION entities  
 - BUGFIX: [#748](https://github.com/mozman/ezdxf/issues/748)

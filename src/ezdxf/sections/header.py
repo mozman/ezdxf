@@ -11,22 +11,22 @@ from typing import (
     TYPE_CHECKING,
     Union,
 )
-
+import logging
 from collections import OrderedDict
-from ezdxf.lldxf.types import strtag
-from ezdxf.lldxf.tags import group_tags, Tags, DXFTag
+
 from ezdxf.lldxf import const
+from ezdxf.lldxf.tags import group_tags, Tags, DXFTag
+from ezdxf.lldxf.types import strtag
 from ezdxf.lldxf.validator import header_validator
 from ezdxf.sections.headervars import (
     HEADER_VAR_MAP,
     version_specific_group_code,
 )
-import logging
-
-logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+
+logger = logging.getLogger("ezdxf")
 
 MIN_HEADER_TEXT = """  0
 SECTION
