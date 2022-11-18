@@ -1,6 +1,7 @@
-# Copyright (c) 2016-2021, Manfred Moitzi
+# Copyright (c) 2016-2022, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, TextIO, Iterator, List, Tuple, Any, Optional
+from __future__ import annotations
+from typing import Iterable, TextIO, Iterator, Any, Optional
 import struct
 from .types import (
     DXFTag,
@@ -21,7 +22,7 @@ from ezdxf.tools.codepage import toencoding
 
 def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
     """Yields DXFTag() from trusted (internal) source - relies on
-    well formed and error free DXF format. Does not skip comment
+    well-formed and error free DXF format. Does not skip comment
     tags (group code == 999).
 
     Args:
@@ -29,14 +30,14 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
 
     """
     assert isinstance(s, str)
-    lines: List[str] = s.split("\n")
+    lines: list[str] = s.split("\n")
     # split() creates an extra item, if s ends with '\n',
     # but lines[-1] can be an empty string!!!
     if s.endswith("\n"):
         lines.pop()
     pos: int = 0
     count: int = len(lines)
-    point: Tuple[float, ...]
+    point: tuple[float, ...]
     while pos < count:
         code = int(lines[pos])
         value = lines[pos + 1]
@@ -280,7 +281,7 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterable[DXFTag]:
 
     undo_tag: Optional[DXFTag] = None
     line: int = 0
-    point: Tuple[float, ...]
+    point: tuple[float, ...]
     # Silencing mypy by "type: ignore", because this is a work horse function
     # and should not be slowed down by isinstance(...) checks or unnecessary
     # cast() calls

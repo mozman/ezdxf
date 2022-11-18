@@ -1,7 +1,9 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
-from typing import Any, TextIO, TYPE_CHECKING, Union, List, Iterable, BinaryIO
+from __future__ import annotations
+from typing import Any, TextIO, TYPE_CHECKING, Union, Iterable, BinaryIO
 import abc
+
 from .types import TAG_STRING_FORMAT, cast_tag_value, DXFVertex
 from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_DATA
 from .tags import DXFTag, Tags
@@ -10,7 +12,8 @@ from ezdxf.tools import take2
 import struct
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import ExtendedTags, DXFEntity
+    from ezdxf.lldxf.extendedtags import ExtendedTags
+    from ezdxf.entities import DXFEntity
 
 __all__ = [
     "TagWriter",
@@ -46,7 +49,7 @@ class AbstractTagWriter:
     # End of low level interface
 
     # Tag export based on low level tag export:
-    def write_tags(self, tags: Union["Tags", "ExtendedTags"]) -> None:
+    def write_tags(self, tags: Union[Tags, ExtendedTags]) -> None:
         for tag in tags:
             self.write_tag(tag)
 
@@ -193,7 +196,7 @@ class BinaryTagWriter(AbstractTagWriter):
             stream.write(code.to_bytes(2, "little"))
 
             # write max CHUNK_SIZE bytes of binary data in one tag
-            chunk = data[index: index + CHUNK_SIZE]
+            chunk = data[index : index + CHUNK_SIZE]
             # write actual chunk size
             stream.write(len(chunk).to_bytes(1, "little"))
             stream.write(chunk)
@@ -209,7 +212,7 @@ class TagCollector(AbstractTagWriter):
         write_handles: bool = True,
         optional: bool = True,
     ):
-        self.tags: List[DXFTag] = []
+        self.tags: list[DXFTag] = []
         self.dxfversion: str = dxfversion
         self.write_handles: bool = write_handles
         self.force_optional: bool = optional
@@ -229,20 +232,20 @@ class TagCollector(AbstractTagWriter):
 
     # End of low level interface
 
-    def has_all_tags(self, other: "TagCollector"):
+    def has_all_tags(self, other: TagCollector):
         return all(tag in self.tags for tag in other.tags)
 
     def reset(self):
         self.tags = []
 
     @classmethod
-    def dxftags(cls, entity: "DXFEntity", dxfversion=LATEST_DXF_VERSION):
+    def dxftags(cls, entity: DXFEntity, dxfversion=LATEST_DXF_VERSION):
         collector = cls(dxfversion=dxfversion)
         entity.export_dxf(collector)
         return Tags(collector.tags)
 
 
-def basic_tags_from_text(text: str) -> List[DXFTag]:
+def basic_tags_from_text(text: str) -> list[DXFTag]:
     """Returns all tags from `text` as basic DXFTags(). All complex tags are
     resolved into basic (code, value) tags (e.g. DXFVertex(10, (1, 2, 3)) ->
     DXFTag(10, 1), DXFTag(20, 2), DXFTag(30, 3).

@@ -1,10 +1,11 @@
-# Copyright (C) 2018-2021, Manfred Moitzi
+# Copyright (C) 2018-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
+from typing import TextIO, Iterable, Optional, cast, Sequence
 import logging
 import io
 import bisect
 import math
-from typing import TextIO, Iterable, List, Optional, Set, cast, Sequence
 
 from .const import (
     DXFStructureError,
@@ -107,7 +108,7 @@ def header_validator(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
         yield tag
 
 
-def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
+def entity_structure_validator(tags: list[DXFTag]) -> Iterable[DXFTag]:
     """Checks for valid DXF entity tag structure.
 
     - APP DATA can not be nested and every opening tag (102, '{...') needs a
@@ -442,7 +443,7 @@ def fix_integer_bool(v) -> int:
     return 1 if v else 0
 
 
-def is_one_of(values: Set):
+def is_one_of(values: set):
     def _validator(v) -> bool:
         return v in values
 

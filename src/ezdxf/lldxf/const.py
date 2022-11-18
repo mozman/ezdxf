@@ -1,6 +1,6 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import List
+from __future__ import annotations
 from dataclasses import dataclass
 
 DXF9 = "AC1004"
@@ -440,10 +440,10 @@ BOUNDARY_PATH_TEXTBOX = 8
 BOUNDARY_PATH_OUTERMOST = 16
 
 
-def boundary_path_flag_names(flags: int) -> List[str]:
+def boundary_path_flag_names(flags: int) -> list[str]:
     if flags == 0:
         return ["default"]
-    types: List[str] = []
+    types: list[str] = []
     if flags & BOUNDARY_PATH_EXTERNAL:
         types.append("external")
     if flags & BOUNDARY_PATH_POLYLINE:

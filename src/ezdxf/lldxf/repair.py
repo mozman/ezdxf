@@ -1,5 +1,6 @@
 # Copyright (c) 2016-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     Iterable,
     Optional,
@@ -14,10 +15,10 @@ import logging
 from .tags import DXFTag
 from .types import POINT_CODES, NONE_TAG, VALID_XDATA_GROUP_CODES
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.eztypes import Tags
+
+logger = logging.getLogger("ezdxf")
 
 
 def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
@@ -34,7 +35,7 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
     for tag in tagger:
         if tag.code == 0:
             if collector is not None:
-                # stop collecting if inside of an supported entity
+                # stop collecting if inside a supported entity
                 entity = _s(collector[0].value)
                 yield from COORDINATE_FIXING_TOOLBOX[entity](collector)
                 collector = None
@@ -122,7 +123,7 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
         yield from point
 
 
-def fix_coordinate_order(tags: "Tags", codes: Sequence[int] = (10, 11)):
+def fix_coordinate_order(tags: Tags, codes: Sequence[int] = (10, 11)):
     def extend_codes():
         for code in codes:
             yield code  # x tag

@@ -1,6 +1,8 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import Tuple, List, Iterable, NamedTuple, BinaryIO
+from __future__ import annotations
+from typing import Iterable, NamedTuple, BinaryIO
+
 from .const import DXFStructureError
 from ezdxf.tools.codepage import toencoding
 
@@ -39,7 +41,7 @@ class FileStructure:
         self.version: str = "AC1009"
         # Python encoding required to read the DXF document as text file.
         self.encoding: str = "cp1252"
-        self.index: List[IndexEntry] = []
+        self.index: list[IndexEntry] = []
 
     def print(self) -> None:
         print(f"Filename: {self.filename}")
@@ -88,12 +90,12 @@ def load(filename: str) -> FileStructure:
     line: int = 1
     eof: bool = False
     header: bool = False
-    index: List[IndexEntry] = []
+    index: list[IndexEntry] = []
     prev_code: int = -1
     prev_value: bytes = b""
     structure = None  # the current structure tag: 'SECTION', 'LINE', ...
 
-    def load_tag() -> Tuple[int, bytes]:
+    def load_tag() -> tuple[int, bytes]:
         nonlocal line
         try:
             code = int(file.readline())

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2011-2021 Manfred Moitzi
 # License: MIT License
 
 from . import factory

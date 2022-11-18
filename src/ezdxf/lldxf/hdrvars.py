@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2021, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
 from typing import Sequence, Union, Callable, Any, NamedTuple, Optional
 from .types import DXFVertex, DXFTag, cast_tag_value

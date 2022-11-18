@@ -2,7 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 import logging
-from typing import Dict, Iterable, List, Union, TYPE_CHECKING, Optional
+from typing import Iterable, TYPE_CHECKING, Optional
 from collections import OrderedDict
 
 from .const import DXFStructureError
@@ -13,9 +13,9 @@ from ezdxf.entities import factory
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFEntity
+    from ezdxf.eztypes import SectionDict
 
 logger = logging.getLogger("ezdxf")
-SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
 
 
 def load_dxf_structure(
@@ -82,7 +82,7 @@ def load_dxf_structure(
         return True
 
     sections: SectionDict = OrderedDict()
-    section: List[Tags] = []
+    section: list[Tags] = []
     eof = False
     # The structure checking here should not be changed, ezdxf expect a valid
     # DXF file, to load messy DXF files exist an (future) add-on
@@ -142,7 +142,7 @@ def load_dxf_entities(
         yield factory.load(ExtendedTags(entity), doc)
 
 
-def load_and_bind_dxf_content(sections: Dict, doc: Drawing) -> None:
+def load_and_bind_dxf_content(sections: dict, doc: Drawing) -> None:
     # HEADER has no database entries.
     for name in ["TABLES", "CLASSES", "ENTITIES", "BLOCKS", "OBJECTS"]:
         if name in sections:

@@ -1,7 +1,6 @@
 # Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from enum import Enum
 from typing import (
     Optional,
     TYPE_CHECKING,
@@ -14,6 +13,7 @@ from typing import (
     NamedTuple,
     Mapping,
 )
+from enum import Enum
 from .const import DXFAttributeError, DXF12
 import copy
 

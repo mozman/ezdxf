@@ -1,12 +1,14 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Optional, Iterable, Any
+from typing import Optional, Iterable, Any, TYPE_CHECKING
 from pathlib import Path
-from ezdxf.lldxf.loader import SectionDict
 from ezdxf.addons.browser.loader import load_section_dict
 from ezdxf.lldxf.types import DXFVertex, tag_type
 from ezdxf.lldxf.tags import Tags
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import SectionDict
 
 __all__ = [
     "DXFDocument",

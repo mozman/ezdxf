@@ -17,10 +17,10 @@ from .types import (
 from .types import is_app_data_marker, is_embedded_object_marker
 from .tagger import internal_tag_compiler
 
-logger = logging.getLogger("ezdxf")
-
 if TYPE_CHECKING:
     from ezdxf.eztypes import IterableTags
+
+logger = logging.getLogger("ezdxf")
 
 
 class ExtendedTags:

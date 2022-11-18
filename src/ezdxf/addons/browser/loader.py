@@ -1,6 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from typing import Union, Iterable
+from __future__ import annotations
+from typing import Union, Iterable, TYPE_CHECKING
 from pathlib import Path
 from ezdxf.lldxf import loader
 from ezdxf.lldxf.types import DXFTag
@@ -8,8 +9,11 @@ from ezdxf.lldxf.tagger import ascii_tags_loader, binary_tags_loader
 from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
 from ezdxf.filemanagement import dxf_file_info
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import SectionDict
 
-def load_section_dict(filename: Union[str, Path]) -> loader.SectionDict:
+
+def load_section_dict(filename: Union[str, Path]) -> SectionDict:
     tagger = get_tag_loader(filename)
     return loader.load_dxf_structure(tagger)
 

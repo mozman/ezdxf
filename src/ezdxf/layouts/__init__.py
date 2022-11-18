@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 from .base import BaseLayout, VirtualLayout
 from .layout import Layout, Modelspace, Paperspace
