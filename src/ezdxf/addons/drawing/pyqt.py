@@ -1,9 +1,10 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
+from __future__ import annotations
+from typing import Optional, Iterable, Tuple
 import math
-from typing import Optional, Iterable, Dict, Tuple, List
-from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
 
+from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.tools.fonts import FontMeasurements
@@ -88,8 +89,8 @@ class PyQtBackend(Backend):
     ):
         super().__init__()
         self._scene = scene or qw.QGraphicsScene()  # avoids many type errors
-        self._color_cache: Dict[Color, qg.QColor] = {}
-        self._pattern_cache: Dict[PatternKey, int] = {}
+        self._color_cache: dict[Color, qg.QColor] = {}
+        self._pattern_cache: dict[PatternKey, int] = {}
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
 
@@ -196,7 +197,7 @@ class PyQtBackend(Backend):
 
     def draw_solid_lines(
         self,
-        lines: Iterable[Tuple[Vec3, Vec3]],
+        lines: Iterable[tuple[Vec3, Vec3]],
         properties: Properties,
     ):
         """Fast method to draw a bunch of solid lines with the same properties."""
@@ -222,7 +223,7 @@ class PyQtBackend(Backend):
         holes: Iterable[Path],
         properties: Properties,
     ) -> None:
-        oriented_paths: List[Path] = []
+        oriented_paths: list[Path] = []
         for path in paths:
             try:
                 path = path.counter_clockwise()

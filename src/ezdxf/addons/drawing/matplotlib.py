@@ -1,8 +1,8 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
+from typing import Iterable, Optional, Union
 import math
-from typing import Iterable, TYPE_CHECKING, Optional, Union
 import logging
 from os import PathLike
 
@@ -13,6 +13,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 
+import ezdxf.path
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties, LayoutProperties
 from ezdxf.addons.drawing.type_hints import FilterFunc
@@ -21,12 +22,8 @@ from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
-import ezdxf.path
-
+from ezdxf.layouts import Layout
 from .config import Configuration, HatchPolicy
-
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Layout
 
 logger = logging.getLogger("ezdxf")
 # matplotlib docs: https://matplotlib.org/index.html
@@ -291,7 +288,9 @@ class MatplotlibBackend(Backend):
                 zorder=self._get_z(),
             )
         except ValueError as e:
-            logger.info(f"ignored unknown matplotlib error in draw_text(): {str(e)}")
+            logger.info(
+                f"ignored unknown matplotlib error in draw_text(): {str(e)}"
+            )
             return
         self.ax.add_patch(patch)
 

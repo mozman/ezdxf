@@ -1,13 +1,11 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, TYPE_CHECKING, Iterator
+from typing import Iterable, Iterator
 from ezdxf.entities import DXFGraphic, DXFEntity
 from ezdxf.lldxf import const
+from ezdxf.lldxf.tagwriter import AbstractTagWriter
 from ezdxf.protocols import SupportsVirtualEntities
-
-if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
 
 
 class DXFGraphicProxy(DXFGraphic):
@@ -44,6 +42,6 @@ class DXFGraphicProxy(DXFGraphic):
     def copy(self) -> DXFGraphicProxy:
         raise const.DXFTypeError(f"Cloning of DXFGraphicProxy() not supported.")
 
-    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
+    def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         # prevent dxf export
         return False

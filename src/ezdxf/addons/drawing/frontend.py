@@ -7,17 +7,17 @@ from typing import (
     Iterator,
     cast,
     Union,
-    List,
     Sequence,
     Dict,
     Callable,
     Tuple,
-    Set,
     Optional,
 )
 import logging
 import itertools
 import time
+
+import ezdxf.bbox
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
@@ -73,7 +73,6 @@ from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
 from ezdxf.tools.text import has_inline_formatting_codes
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
-import ezdxf.bbox
 
 __all__ = ["Frontend"]
 
@@ -126,12 +125,12 @@ class Frontend:
         self.out.configure(self.config)
 
         # Parents entities of current entity/sub-entity
-        self.parent_stack: List[DXFGraphic] = []
+        self.parent_stack: list[DXFGraphic] = []
 
         self._dispatch = self._build_dispatch_table()
 
         # Supported DXF entities which use only proxy graphic for rendering:
-        self._proxy_graphic_only_entities: Set[str] = {
+        self._proxy_graphic_only_entities: set[str] = {
             "MLEADER",  # todo: remove if MLeader.virtual_entities() is implemented
             "MULTILEADER",
             "ACAD_PROXY_ENTITY",
@@ -451,14 +450,14 @@ class Frontend:
             )
 
     def draw_hatch_pattern(
-        self, polygon: DXFPolygon, paths: List[Path], properties: Properties
+        self, polygon: DXFPolygon, paths: list[Path], properties: Properties
     ):
         if polygon.pattern is None or len(polygon.pattern.lines) == 0:
             return
         ocs = polygon.ocs()
         elevation = polygon.dxf.elevation.z
         properties.linetype_pattern = tuple()
-        lines: List[Tuple[Vec3, Vec3]] = []
+        lines: list[tuple[Vec3, Vec3]] = []
 
         t0 = time.perf_counter()
         max_time = self.config.hatching_timeout
@@ -516,8 +515,8 @@ class Frontend:
         # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
 
-        external_paths: List[Path]
-        holes: List[Path]
+        external_paths: list[Path]
+        holes: list[Path]
 
         if loops is not None:  # only MPOLYGON
             external_paths, holes = winding_deconstruction(
@@ -525,7 +524,7 @@ class Frontend:
             )
         else:  # only HATCH
             paths = polygon.paths.rendering_paths(polygon.dxf.hatch_style)
-            polygons: List = fast_bbox_detection(
+            polygons: list = fast_bbox_detection(
                 closed_loops(paths, ocs, elevation)  # type: ignore
             )
             external_paths, holes = winding_deconstruction(polygons)
@@ -736,11 +735,11 @@ def is_spatial_text(extrusion: Vec3) -> bool:
 
 
 def closed_loops(
-    paths: List[AbstractBoundaryPath],
+    paths: list[AbstractBoundaryPath],
     ocs: OCS,
     elevation: float,
     offset: Vec3 = NULLVEC,
-) -> List[Path]:
+) -> list[Path]:
     loops = []
     for boundary in paths:
         path = from_hatch_boundary_path(boundary, ocs, elevation, offset)
@@ -780,7 +779,7 @@ class Designer:
         self.frontend = frontend
         self.backend = backend
         self.config = frontend.config
-        self.pattern_cache: Dict[PatternKey, Sequence[float]] = dict()
+        self.pattern_cache: dict[PatternKey, Sequence[float]] = dict()
         self.transformation: Optional[Matrix44] = None
         # scaling factor from modelspace to viewport
         self.scale: float = 1.0
@@ -858,7 +857,7 @@ class Designer:
             )
 
     def draw_solid_lines(
-        self, lines: Iterable[Tuple[Vec3, Vec3]], properties: Properties
+        self, lines: Iterable[tuple[Vec3, Vec3]], properties: Properties
     ) -> None:
         if self.transformation:
             t = self.transformation.transform
@@ -946,7 +945,9 @@ class Designer:
 
 
 def filter_vp_entities(
-    msp: Layout, limits: Sequence[float], bbox_cache: Optional[ezdxf.bbox.Cache] = None
+    msp: Layout,
+    limits: Sequence[float],
+    bbox_cache: Optional[ezdxf.bbox.Cache] = None,
 ) -> Iterator[DXFGraphic]:
     """Yields all DXF entities that need to be processed by the given viewport
     `limits`. The entities may be partially of even complete outside the viewport.

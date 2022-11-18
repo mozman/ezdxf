@@ -606,7 +606,7 @@ class Pillow(Command):
             # get entity bounding boxes in modelspace for faster paperspace
             # rendering
             bbox.extents(doc.modelspace(), fast=True, cache=bbox_cache)
-        extents = bbox.extents(layout, fast=True, bbox_cache=bbox_cache)
+        extents = bbox.extents(layout, fast=True, cache=bbox_cache)
         img_x, img_y = parse_image_size(args.image_size)
         if verbose:
             print(f"    units: {units.unit_name(layout.units)}")

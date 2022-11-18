@@ -2,11 +2,10 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 # mypy: ignore_errors=True
-
+from typing import Iterable, Sequence
 import math
 import os
 import time
-from typing import Iterable, Tuple, List, Sequence, Set
 
 from ezdxf.addons.xqt import QtWidgets as qw, QtCore as qc, QtGui as qg
 from ezdxf.addons.xqt import Slot, QAction, Signal
@@ -130,7 +129,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._selected_items: List[qw.QGraphicsItem] = []
+        self._selected_items: list[qw.QGraphicsItem] = []
         self._selected_index = None
 
     def clear(self):
@@ -182,7 +181,7 @@ class CadViewer(qw.QMainWindow):
         # everywhere!
         self.doc: Drawing = None  # type: ignore
         self._render_context: RenderContext = None  # type: ignore
-        self._visible_layers: Set[str] = set()
+        self._visible_layers: set[str] = set()
         self._current_layout: str = "Model"
         self._reset_backend()
         self._bbox_cache = ezdxf.bbox.Cache()
@@ -385,7 +384,7 @@ class CadViewer(qw.QMainWindow):
     def resizeEvent(self, event: qg.QResizeEvent) -> None:
         self.view.fit_to_scene()
 
-    def _layer_checkboxes(self) -> Iterable[Tuple[int, qw.QCheckBox]]:
+    def _layer_checkboxes(self) -> Iterable[tuple[int, qw.QCheckBox]]:
         for i in range(self.layers.count()):
             item = self.layers.itemWidget(self.layers.item(i))
             yield i, item  # type: ignore
@@ -417,7 +416,7 @@ class CadViewer(qw.QMainWindow):
 
     @Slot(object, int)
     def _on_element_selected(
-        self, elements: List[qw.QGraphicsItem], index: int
+        self, elements: list[qw.QGraphicsItem], index: int
     ):
         if not elements:
             text = "No element selected"
