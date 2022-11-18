@@ -1,6 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Iterator, Set, Callable, Dict, Any, List
+from __future__ import annotations
+from typing import Iterator, Callable, Any
 from .entities import (
     AcisEntity,
     NONE_REF,
@@ -8,7 +9,6 @@ from .entities import (
     Coedge,
     Loop,
     Vertex,
-    StraightCurve,
 )
 from . import sab
 
@@ -17,7 +17,7 @@ class AcisDebugger:
     def __init__(self, root: AcisEntity = NONE_REF, start_id: int = 1):
         self._next_id = start_id - 1
         self._root: AcisEntity = root
-        self.entities: Dict[int, AcisEntity] = dict()
+        self.entities: dict[int, AcisEntity] = dict()
         if not root.is_none:
             self._store_entities(root)
 
@@ -54,7 +54,7 @@ class AcisDebugger:
 
         if root.is_none:
             root = self._root
-        done: Set[int] = set()
+        done: set[int] = set()
         yield from _walk(root)
 
     def filter(
@@ -106,7 +106,7 @@ class AcisDebugger:
 
     @staticmethod
     def partner_faces(face: Face) -> Iterator[int]:
-        coedges: List[Coedge] = []
+        coedges: list[Coedge] = []
         loop = face.loop
         while not loop.is_none:
             coedges.extend(co for co in loop.coedges())
@@ -116,9 +116,9 @@ class AcisDebugger:
                 yield partner_coedge.loop.face.id
 
     @staticmethod
-    def coedge_structure(face: Face, ident: int = 4) -> List[str]:
-        lines: List[str] = []
-        coedges: List[Coedge] = []
+    def coedge_structure(face: Face, ident: int = 4) -> list[str]:
+        lines: list[str] = []
+        coedges: list[Coedge] = []
         loop = face.loop
 
         while not loop.is_none:
@@ -143,7 +143,7 @@ class AcisDebugger:
         return f"{indent_str}{loop} >> {list(AcisDebugger.loop_edges(loop))}"
 
     @staticmethod
-    def loop_edges(loop: Loop) -> Iterator[List[int]]:
+    def loop_edges(loop: Loop) -> Iterator[list[int]]:
         coedge = loop.coedge
         first = coedge
         while not coedge.is_none:

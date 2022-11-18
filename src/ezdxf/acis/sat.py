@@ -1,8 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-
-import math
 from typing import (
     Any,
     Sequence,
@@ -12,7 +10,9 @@ from typing import (
     TYPE_CHECKING,
     Optional,
 )
+import math
 from datetime import datetime
+
 from . import const
 from .const import ParsingError, InvalidLinkStructure
 from .hdr import AcisHeader

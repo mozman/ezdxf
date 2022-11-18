@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Union, List, Dict, Callable, Type, Any, Sequence, Iterator
+from typing import Union, Dict, Callable, Type, Any, Sequence, Iterator
 import abc
 
 from . import sab, sat, const, hdr
@@ -15,7 +15,7 @@ ENTITY_TYPES: Dict[str, Type[AcisEntity]] = {}
 INF = float("inf")
 
 
-def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
+def load(data: Union[str, Sequence[str], bytes, bytearray]) -> list[Body]:
     """Returns a list of :class:`Body` entities from :term:`SAT` or :term:`SAB`
     data. Accepts :term:`SAT` data as a single string or a sequence of strings
     and :term:`SAB` data as bytes or bytearray.
@@ -28,7 +28,7 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
 
 def export_sat(
     bodies: Sequence[Body], version: int = const.DEFAULT_SAT_VERSION
-) -> List[str]:
+) -> list[str]:
     """Export one or more :class:`Body` entities as text based :term:`SAT` data.
 
     ACIS version 700 is sufficient for DXF versions R2000, R2004, R2007 and
@@ -187,7 +187,7 @@ class Transform(AcisEntity):
         def write_double(value: float):
             data.append(f"{value:g}")
 
-        data: List[str] = []
+        data: list[str] = []
         for row in self.matrix.rows():
             write_double(row[0])
             write_double(row[1])
@@ -265,7 +265,7 @@ class Body(SupportsPattern):
                 current_lump = current_lump.next_lump
             current_lump.next_lump = lump
 
-    def lumps(self) -> List[Lump]:
+    def lumps(self) -> list[Lump]:
         """Returns all linked :class:`Lump` entities as a list."""
         lumps = []
         current_lump = self.lump
@@ -317,7 +317,7 @@ class Lump(SupportsPattern):
                 current_shell = current_shell.next_shell
             current_shell.next_shell = shell
 
-    def shells(self) -> List[Shell]:
+    def shells(self) -> list[Shell]:
         """Returns all linked :class:`Shell` entities as a list."""
         shells = []
         current_shell = self.shell
@@ -365,7 +365,7 @@ class Shell(SupportsPattern):
                 current_face = current_face.next_face
             current_face.next_face = face
 
-    def faces(self) -> List[Face]:
+    def faces(self) -> list[Face]:
         """Returns all linked :class:`Face` entities as a list."""
         faces = []
         current_face = self.face
@@ -432,7 +432,7 @@ class Face(SupportsPattern):
                 current_loop = current_loop.next_loop
             current_loop.next_loop = loop
 
-    def loops(self) -> List[Loop]:
+    def loops(self) -> list[Loop]:
         """Returns all linked :class:`Loop` entities as a list."""
         loops = []
         current_loop = self.loop
@@ -528,7 +528,7 @@ class Loop(SupportsPattern):
         exporter.write_ptr(self.coedge)
         exporter.write_ptr(self.face)
 
-    def set_coedges(self, coedges: List[Coedge], close=True) -> None:
+    def set_coedges(self, coedges: list[Coedge], close=True) -> None:
         """Set all coedges of a loop at once."""
         assert len(coedges) > 0
         self.coedge = coedges[0]
@@ -546,7 +546,7 @@ class Loop(SupportsPattern):
             coedge.prev_coedge = prev
             coedge.next_coedge = next
 
-    def coedges(self) -> List[Coedge]:
+    def coedges(self) -> list[Coedge]:
         """Returns all linked :class:`Coedge` entities as a list."""
         coedges = []
 
@@ -617,9 +617,9 @@ class Coedge(SupportsPattern):
         #  by the right-hand rule around this edge.
         pass
 
-    def partner_coedges(self) -> List[Coedge]:
+    def partner_coedges(self) -> list[Coedge]:
         """Returns all partner coedges of this coedge without `self`. """
-        coedges: List[Coedge] = []
+        coedges: list[Coedge] = []
         partner_coedge = self.partner_coedge
         if partner_coedge.is_none:
             return coedges
@@ -762,7 +762,7 @@ class FileLoader(abc.ABC):
     records: Sequence[Union[sat.SatEntity, sab.SabEntity]]
 
     def __init__(self, version: int):
-        self.entities: Dict[int, AcisEntity] = {}
+        self.entities: dict[int, AcisEntity] = {}
         self.version: int = version
 
     def entity_factory(self, raw_entity: AbstractEntity) -> AcisEntity:
@@ -774,7 +774,7 @@ class FileLoader(abc.ABC):
             self.entities[uid] = entity
             return entity
 
-    def bodies(self) -> List[Body]:
+    def bodies(self) -> list[Body]:
         # noinspection PyTypeChecker
         return [e for e in self.entities.values() if isinstance(e, Body)]
 
@@ -791,7 +791,7 @@ class FileLoader(abc.ABC):
             entity.load(data_loader, entity_factory)
 
     @abc.abstractmethod
-    def make_data_loader(self, data: List[Any]) -> DataLoader:
+    def make_data_loader(self, data: list[Any]) -> DataLoader:
         pass
 
 
@@ -801,11 +801,11 @@ class SabLoader(FileLoader):
         super().__init__(builder.header.version)
         self.records = builder.entities
 
-    def make_data_loader(self, data: List[Any]) -> DataLoader:
+    def make_data_loader(self, data: list[Any]) -> DataLoader:
         return sab.SabDataLoader(data, self.version)
 
     @classmethod
-    def load(cls, data: Union[bytes, bytearray]) -> List[Body]:
+    def load(cls, data: Union[bytes, bytearray]) -> list[Body]:
         loader = cls(data)
         loader.load_entities()
         return loader.bodies()
@@ -817,11 +817,11 @@ class SatLoader(FileLoader):
         super().__init__(builder.header.version)
         self.records = builder.entities
 
-    def make_data_loader(self, data: List[Any]) -> DataLoader:
+    def make_data_loader(self, data: list[Any]) -> DataLoader:
         return sat.SatDataLoader(data, self.version)
 
     @classmethod
-    def load(cls, data: Union[str, Sequence[str]]) -> List[Body]:
+    def load(cls, data: Union[str, Sequence[str]]) -> list[Body]:
         loader = cls(data)
         loader.load_entities()
         return loader.bodies()

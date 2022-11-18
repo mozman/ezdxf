@@ -1,14 +1,14 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import List, Iterator, Sequence, Optional, Tuple, Dict, Iterable
+from typing import Iterator, Sequence, Optional, Iterable
 from ezdxf.render import MeshVertexMerger, MeshTransformer, MeshBuilder
 from ezdxf.math import Matrix44, Vec3, NULLVEC, BoundingBox
 from . import entities
 from .entities import Body, Lump, NONE_REF, Face, Shell
 
 
-def mesh_from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
+def mesh_from_body(body: Body, merge_lumps=True) -> list[MeshTransformer]:
     """Returns a list of :class:`~ezdxf.render.MeshTransformer` instances from
     the given ACIS :class:`Body` entity.
     The list contains multiple meshes if `merge_lumps` is ``False`` or just a
@@ -37,7 +37,7 @@ def mesh_from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
     if not isinstance(body, Body):
         raise TypeError(f"expected a body entity, got: {type(body)}")
 
-    meshes: List[MeshTransformer] = []
+    meshes: list[MeshTransformer] = []
     builder = MeshVertexMerger()
     for faces in flat_polygon_faces_from_body(body):
         for face in faces:
@@ -52,7 +52,7 @@ def mesh_from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
 
 def flat_polygon_faces_from_body(
     body: Body,
-) -> Iterator[List[Sequence[Vec3]]]:
+) -> Iterator[list[Sequence[Vec3]]]:
     """Yields all flat polygon faces from all lumps in the given
     :class:`Body` entity.
     Yields a separated list of faces for each linked :class:`Lump` entity.
@@ -99,7 +99,7 @@ def flat_polygon_faces_from_lump(
     shell = lump.shell
     if shell.is_none:
         return  # not a shell
-    vertices: List[Vec3] = []
+    vertices: list[Vec3] = []
     face = shell.face
     while not face.is_none:
         first_coedge = NONE_REF
@@ -192,10 +192,10 @@ class PolyhedronFaceBuilder:
     def __init__(self, mesh: MeshBuilder):
         mesh_copy = mesh.copy()
         mesh_copy.normalize_faces()  # open faces without duplicates!
-        self.vertices: List[Vec3] = mesh_copy.vertices
-        self.faces: List[Sequence[int]] = mesh_copy.faces
+        self.vertices: list[Vec3] = mesh_copy.vertices
+        self.faces: list[Sequence[int]] = mesh_copy.faces
         self.normals = list(mesh_copy.face_normals())
-        self.acis_vertices: List[entities.Vertex] = []
+        self.acis_vertices: list[entities.Vertex] = []
 
         # double_sided:
         # If every edge belongs to two faces the body is for sure a closed
@@ -209,17 +209,17 @@ class PolyhedronFaceBuilder:
         self.double_sided = mesh_copy.diagnose().is_edge_balance_broken
 
         # coedges and edges ledger, where index1 <= index2
-        self.partner_coedges: Dict[Tuple[int, int], entities.Coedge] = dict()
-        self.edges: Dict[Tuple[int, int], entities.Edge] = dict()
+        self.partner_coedges: dict[tuple[int, int], entities.Coedge] = dict()
+        self.edges: dict[tuple[int, int], entities.Edge] = dict()
 
     def reset(self):
         self.acis_vertices = list(make_vertices(self.vertices))
         self.partner_coedges.clear()
         self.edges.clear()
 
-    def acis_faces(self) -> List[Face]:
+    def acis_faces(self) -> list[Face]:
         self.reset()
-        faces: List[Face] = []
+        faces: list[Face] = []
         for face, face_normal in zip(self.faces, self.normals):
             if face_normal.is_null:
                 continue
@@ -253,7 +253,7 @@ class PolyhedronFaceBuilder:
         return plane
 
     def make_loop(self, face: Sequence[int]) -> Optional[entities.Loop]:
-        coedges: List[entities.Coedge] = []
+        coedges: list[entities.Coedge] = []
         face2 = list(face[1:])
         if face[0] != face[-1]:
             face2.append(face[0])
@@ -282,7 +282,7 @@ class PolyhedronFaceBuilder:
 
     def make_edge(
         self, index1: int, index2: int, parent: entities.Coedge
-    ) -> Tuple[entities.Edge, bool]:
+    ) -> tuple[entities.Edge, bool]:
         def make_vertex(index: int):
             vertex = self.acis_vertices[index]
             vertex.ref_count += 1

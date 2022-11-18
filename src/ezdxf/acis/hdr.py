@@ -1,8 +1,8 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List
 import struct
 from . import const
 
@@ -46,7 +46,7 @@ class AcisHeader:
     def has_asm_header(self) -> bool:
         return self.asm_version != ""
 
-    def dumps(self) -> List[str]:
+    def dumps(self) -> list[str]:
         """Returns the SAT file header as list of strings."""
         return [
             f"{self.version} {self.n_records} {self.n_entities} {self.flags} ",
@@ -56,7 +56,7 @@ class AcisHeader:
 
     def dumpb(self) -> bytes:
         """Returns the SAB file header as bytes."""
-        buffer: List[bytes] = []
+        buffer: list[bytes] = []
         if self.version > 21800:
             buffer.append(const.ASM_SIGNATURE)
         else:

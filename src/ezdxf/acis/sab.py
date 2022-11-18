@@ -1,8 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-
-import math
 from typing import (
     NamedTuple,
     Any,
@@ -16,10 +14,11 @@ from typing import (
     Tuple,
     Optional,
 )
-from datetime import datetime
+import math
 import struct
-from ezdxf.math import Vec3
+from datetime import datetime
 
+from ezdxf.math import Vec3
 from . import const
 from .const import ParsingError, Tags, InvalidLinkStructure
 from .hdr import AcisHeader

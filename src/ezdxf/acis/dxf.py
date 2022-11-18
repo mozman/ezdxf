@@ -1,15 +1,9 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import cast, Sequence, List
+from typing import cast, Sequence
 from ezdxf.entities import DXFEntity, Body as DXFBody
-from ezdxf.lldxf.const import (
-    DXF2000,
-    DXF2013,
-    DXFTypeError,
-    DXFValueError,
-    DXFVersionError,
-)
+from ezdxf.lldxf import const
 from .entities import Body, export_sat, export_sab, load
 
 
@@ -28,22 +22,22 @@ def export_dxf(entity: DXFEntity, bodies: Sequence[Body]):
 
     """
     if not isinstance(entity, DXFBody):
-        raise DXFTypeError(f"invalid DXF entity {entity.dxftype()}")
+        raise const.DXFTypeError(f"invalid DXF entity {entity.dxftype()}")
     body = cast(DXFBody, entity)
     doc = entity.doc
     if doc is None:
-        raise DXFValueError("a valid DXF document is required")
+        raise const.DXFValueError("a valid DXF document is required")
     dxfversion = doc.dxfversion
-    if dxfversion < DXF2000:
-        raise DXFVersionError(f"invalid DXF version {dxfversion}")
+    if dxfversion < const.DXF2000:
+        raise const.DXFVersionError(f"invalid DXF version {dxfversion}")
 
-    if dxfversion < DXF2013:
+    if dxfversion < const.DXF2013:
         body.sat = export_sat(bodies)
     else:
         body.sab = export_sab(bodies)
 
 
-def load_dxf(entity: DXFEntity) -> List[Body]:
+def load_dxf(entity: DXFEntity) -> list[Body]:
     """Load the :term:`ACIS` bodies from the given DXF entity. This is the
     recommended way to load ACIS data.
 
@@ -69,14 +63,14 @@ def load_dxf(entity: DXFEntity) -> List[Body]:
     """
 
     if not isinstance(entity, DXFBody):
-        raise DXFTypeError(f"invalid DXF entity {entity.dxftype()}")
+        raise const.DXFTypeError(f"invalid DXF entity {entity.dxftype()}")
     body = cast(DXFBody, entity)
     doc = entity.doc
     if doc is None:
-        raise DXFValueError("a valid DXF document is required")
+        raise const.DXFValueError("a valid DXF document is required")
     dxfversion = doc.dxfversion
-    if dxfversion < DXF2000:
-        raise DXFVersionError(f"invalid DXF version {dxfversion}")
+    if dxfversion < const.DXF2000:
+        raise const.DXFVersionError(f"invalid DXF version {dxfversion}")
     if body.has_binary_data:
         binary_data = body.sab
         if binary_data:
