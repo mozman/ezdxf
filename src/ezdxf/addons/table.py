@@ -68,19 +68,18 @@ class Table:
     """Table object similar to an HTML table.
 
     The table object contains the table data cells.
+
+    Args:
+        insert: insert location as or :class:`~ezdxf.math.UVec`
+        nrows: row count
+        ncols: column count
+        default_grid: draw a grid of solid lines if ``True``, otherwise
+            draw only explicit defined borders, the default grid has a
+            priority of 50.
+
     """
 
     def __init__(self, insert: UVec, nrows: int, ncols: int, default_grid=True):
-        """
-        Args:
-            insert: insert location as or :class:`~ezdxf.math.UVec`
-            nrows: row count
-            ncols: column count
-            default_grid: draw a grid of solid lines if ``True``, otherwise
-                draw only explicit defined borders, the default grid has a
-                priority of 50.
-
-        """
         self.insert = Vec2(insert)
         self.nrows: int = nrows
         self.ncols: int = ncols
@@ -165,9 +164,7 @@ class Table:
         return self.set_cell(row, col, cell)
 
     def set_cell(self, row: int, col: int, cell: T) -> T:
-        """
-        Insert a cell at position (row, col).
-        """
+        """Insert a cell at position (row, col)."""
         row, col = self.validate_index(row, col)
         self._cells[row, col] = cell
         return cell
@@ -246,27 +243,19 @@ class Table:
         return border_style
 
     def get_cell_style(self, name: str) -> CellStyle:
-        """
-        Get cell style by name.
-        """
+        """Get cell style by name."""
         return self.styles[name]
 
     def iter_visible_cells(
         self, visibility_map: VisibilityMap
     ) -> Iterator[tuple[int, int, Cell]]:
-        """
-        Iterate over all visible cells.
-
-        Returns: a generator which yields all visible cells as tuples: (row , col, cell)
-        """
+        """Iterate over all visible cells"""
         return (
             (row, col, self.get_cell(row, col)) for row, col in visibility_map
         )
 
     def render(self, layout: GenericLayoutType, insert: Optional[UVec] = None):
-        """
-        Render table to layout object.
-        """
+        """Render table to layout."""
         _insert = self.insert  # backup value
         if insert is not None:
             self.insert = Vec2(insert)
@@ -284,24 +273,19 @@ class VisibilityMap:
     """Stores the visibility of the table cells."""
 
     def __init__(self, table: Table):
-        """
-        Create the visibility map for table.
-        """
+        """Create the visibility map for table."""
         self.table: Table = table
         self._hidden_cells: set[tuple[int, int]] = set()
         self._create_visibility_map()
 
     def _create_visibility_map(self):
-        """
-        Set visibility for all existing cells.
-        """
+        """Set visibility for all existing cells."""
         for row, col in iter(self):
             cell = self.table.get_cell(row, col)
             self._set_span_visibility(row, col, cell.span)
 
     def _set_span_visibility(self, row: int, col: int, span: tuple[int, int]):
-        """
-        Set the visibility of the given cell.
+        """Set the visibility of the given cell.
 
         The cell itself is visible, all other cells in the span-range
         (tuple: width, height) are invisible, they are covered by the
@@ -318,38 +302,28 @@ class VisibilityMap:
         self.show(row, col)
 
     def show(self, row: int, col: int):
-        """
-        Show cell (row, col).
-        """
+        """Show cell (row, col)."""
         try:
             self._hidden_cells.remove((row, col))
         except KeyError:
             pass
 
     def hide(self, row: int, col: int) -> None:
-        """
-        Hide cell (row, col).
-        """
+        """Hide cell (row, col)."""
         self._hidden_cells.add((row, col))
 
     def iter_all_cells(self) -> Iterator[tuple[int, int]]:
-        """
-        Iterate over all cell indices, yields (row, col) tuples.
-        """
+        """Iterate over all cell indices, yields (row, col) tuples."""
         for row in range(self.table.nrows):
             for col in range(self.table.ncols):
                 yield row, col
 
     def is_visible_cell(self, row: int, col: int) -> bool:
-        """
-        True if cell (row, col)  is visible, else False.
-        """
+        """True if cell (row, col)  is visible, else False."""
         return (row, col) not in self._hidden_cells
 
     def __iter__(self) -> Iterator[tuple[int, int]]:
-        """
-        Iterate over all visible cells.
-        """
+        """Iterate over all visible cells."""
         return (
             (row, col)
             for (row, col) in self.iter_all_cells()
@@ -423,9 +397,7 @@ class CellStyle:
     def set_border_style(
         self, style: BorderStyle, left=True, right=True, top=True, bottom=True
     ):
-        """
-        Set border styles of all cell borders at once.
-        """
+        """Set border styles of all cell borders at once."""
         for border, status in (
             ("left", left),
             ("right", right),
@@ -484,8 +456,7 @@ class Grid:
         )
 
     def _init_borders(self, hborder: BorderStyle, vborder: BorderStyle):
-        """
-        Init the _hborders with  <hborder> and _vborders with <vborder>.
+        """Init the _hborders with  <hborder> and _vborders with <vborder>.
         """
         # <border_count> has more elements than necessary, but it unifies the
         # index calculation for _vborders and _hborders.
@@ -497,20 +468,18 @@ class Grid:
         self._vborders = [vborder] * border_count
 
     def _border_index(self, row: int, col: int) -> int:
-        """
-        Calculate linear index for border arrays _hborders and _vborders.
-        """
+        """Calculate linear index for border arrays _hborders and _vborders."""
         return row * (self.table.ncols + 1) + col
 
     def set_hborder(self, row: int, col: int, border_style: BorderStyle):
-        """
-        Set <border_style> for the horizontal border element above <row>, <col>.
+        """Set <border_style> for the horizontal border element above
+        <row>, <col>.
         """
         return self._set_border_style(self._hborders, row, col, border_style)
 
     def set_vborder(self, row: int, col: int, border_style: BorderStyle):
-        """
-        Set <border_style> for the vertical border element left of <row>, <col>.
+        """Set <border_style> for the vertical border element left of
+        <row>, <col>.
         """
         return self._set_border_style(self._vborders, row, col, border_style)
 
@@ -521,24 +490,20 @@ class Grid:
         col: int,
         border_style: BorderStyle,
     ):
-        """
-        Set <border_style> for <row>, <col> in <borders>.
-        """
+        """Set <border_style> for <row>, <col> in <borders>."""
         border_index = self._border_index(row, col)
         actual_borderstyle = borders[border_index]
         if border_style.priority >= actual_borderstyle.priority:
             borders[border_index] = border_style
 
     def get_hborder(self, row: int, col: int) -> BorderStyle:
-        """
-        Get the horizontal border element above <row>, <col>.
+        """Get the horizontal border element above <row>, <col>.
         Last grid line (below <nrows>) is the element above of <nrows+1>.
         """
         return self._get_border(self._hborders, row, col)
 
     def get_vborder(self, row: int, col: int) -> BorderStyle:
-        """
-        Get the vertical border element left of <row>, <col>.
+        """Get the vertical border element left of <row>, <col>.
         Last grid line (right of <ncols>) is the element left of <ncols+1>.
         """
         return self._get_border(self._vborders, row, col)
@@ -546,9 +511,7 @@ class Grid:
     def _get_border(
         self, borders: list[BorderStyle], row: int, col: int
     ) -> BorderStyle:
-        """
-        Get border element at <row>, <col> from <borders>.
-        """
+        """Get border element at <row>, <col> from <borders>."""
         return borders[self._border_index(row, col)]
 
     def _calc_col_pos(self) -> list[float]:
@@ -581,9 +544,7 @@ class Grid:
     def render_cell_background(
         self, layout: GenericLayoutType, row: int, col: int, cell: Cell
     ):
-        """
-        Render the cell background for <row>, <col> as SOLID entity.
-        """
+        """Render the cell background for <row>, <col> as SOLID entity."""
         style = cell.style
         if style["bgcolor"] is None:
             return
@@ -604,17 +565,13 @@ class Grid:
     def render_cell_content(
         self, layout: GenericLayoutType, row: int, col: int, cell: Cell
     ):
-        """
-        Render the cell content for <row>,<col> into layout object.
-        """
+        """Render the cell content for <row>,<col> into layout object."""
         # get cell coords in absolute drawing units
         coords = self.cell_coords(row, col, cell.span)
         cell.render(layout, coords, self.table.fglayer)
 
     def render_lines(self, layout: GenericLayoutType, vm: VisibilityMap):
-        """
-        Render all grid lines into layout object.
-        """
+        """Render all grid lines into layout object."""
         # Init borders with default_style top- and left border.
         default_style = self.table.get_cell_style("default")
         hborder = default_style.top
@@ -625,9 +582,7 @@ class Grid:
         self._render_borders(layout, self.table)
 
     def _set_borders(self, visible_cells: Iterable[tuple[int, int, Cell]]):
-        """
-        Set borders of the visible cells.
-        """
+        """Set borders of the visible cells."""
         for row, col, cell in visible_cells:
             bottom_row = row + cell.span[0]
             right_col = col + cell.span[1]
@@ -644,8 +599,7 @@ class Grid:
         right_col: int,
         border_style: BorderStyle,
     ):
-        """
-        Set <border_style> to the inner borders of the rectangle <top_row...
+        """Set <border_style> to the inner borders of the rectangle <top_row...
         """
         if bottom_row - top_row > 1:
             for col in range(left_col, right_col):
@@ -664,11 +618,11 @@ class Grid:
         right_col: int,
         style: CellStyle,
     ):
-        """
-        Set border <style> to the rectangle <top_row><bottom_row...
+        """Set border <style> to the rectangle <top_row><bottom_row...
 
-        The values describing the grid lines between the cells, see doc-strings for set_hborder and set_vborder and see
-        comments for self._hborders and self._vborders.
+        The values describing the grid lines between the cells, see doc-strings
+        for set_hborder and set_vborder and see comments for self._hborders and
+        self._vborders.
         """
         for col in range(left_col, right_col):
             self.set_hborder(top_row, col, style["top"])
@@ -678,9 +632,7 @@ class Grid:
             self.set_vborder(row, right_col, style["right"])
 
     def _set_frames(self, frames: Iterable[Frame]):
-        """
-        Set borders for all defined frames.
-        """
+        """Set borders for all defined frames."""
         for frame in frames:
             top_row = frame.pos[0]
             left_col = frame.pos[1]
@@ -694,9 +646,7 @@ class Grid:
         """Render the grid lines as LINE entities into layout object."""
 
         def render_line(start: Vec2, end: Vec2, style: BorderStyle):
-            """
-            Render the LINE entity into layout object.
-            """
+            """Render the LINE entity into layout object."""
             if style.status:
                 layout.add_line(
                     start=start,
@@ -734,7 +684,14 @@ class Grid:
 
 
 class Frame:
-    """Represent a rectangle cell area enclosed by borderlines."""
+    """Represent a rectangle cell area enclosed by borderlines.
+
+   Args:
+        table: the assigned data table
+        pos: tuple (row, col), border goes left and top of pos
+        span: count of cells that Frame covers, border goes right and below of this cells
+        style: style name as string
+    """
 
     def __init__(
         self,
@@ -743,14 +700,6 @@ class Frame:
         span: tuple[int, int] = (1, 1),
         style="default",
     ):
-        """Constructor
-
-        Args:
-            table: the assigned data table
-            pos: tuple (row, col), border goes left and top of pos
-            span: count of cells that Frame covers, border goes right and below of this cells
-            style: style name as string
-        """
         self.table = table
         self.pos = pos
         self.span = span
@@ -762,24 +711,22 @@ class Frame:
 
 
 class Cell:
-    """
-    Cell represents the table cell data.
+    """Cell represents the table cell data.
+
+    Args:
+        table: assigned data table
+        style: style name as string
+        span: tuple(spanrows, spancols), count of cells that cell covers
+
+    A cell doesn't know its own position in the data table, because a cell can
+    be used multiple times in the same or in different tables, therefore the
+    cell itself can not determine if the cell-range reaches beyond the table
+    borders.
     """
 
     def __init__(
         self, table: Table, style="default", span: tuple[int, int] = (1, 1)
     ):
-        """Constructor
-
-        Args:
-            table: assigned data table
-            style: style name as string
-            span: tuple(spanrows, spancols), count of cells that cell covers
-
-        Cell does not know its own position in the data table, because a cell can be used multiple times in the same or
-        in different tables. Therefore the cell itself can not determine if the cell-range reaches beyond the table
-        borders.
-        """
         self.table = table
         self.stylename = style
         # span values has to be >= 1
@@ -791,16 +738,11 @@ class Cell:
 
     @span.setter
     def span(self, value: tuple[int, int]):
-        """
-        Ensures that span values are >= 1 in each direction.
-        """
+        """Ensures that span values are >= 1 in each direction."""
         self._span = (max(1, value[0]), max(1, value[1]))
 
     @property
     def style(self) -> CellStyle:
-        """
-        Returns: Style() object of the associated table.
-        """
         return self.table.get_cell_style(self.stylename)
 
     def render(
@@ -809,8 +751,7 @@ class Cell:
         pass
 
     def get_workspace_coords(self, coords: Sequence[float]) -> Sequence[float]:
-        """
-        Reduces the cell-coords about the hmargin and the vmargin values.
+        """Reduces the cell-coords about the hmargin and the vmargin values.
         """
         hmargin = self.style["hmargin"]
         vmargin = self.style["vmargin"]
