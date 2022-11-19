@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 from ezdxf.document import Drawing
 from ezdxf.addons.table import Table, CustomCell
-from ezdxf.addons.table import Grid, Style, DEFAULT_BORDER_COLOR
+from ezdxf.addons.table import Grid, CellStyle, DEFAULT_BORDER_COLOR
 
 
 @pytest.fixture(scope="module")
@@ -35,7 +35,6 @@ def test_init():
     style = table.get_cell_style("default")
     for border in ["left", "right", "top", "bottom"]:
         assert style[border]["status"] is True
-
 
 
 def test_setter_methods():
@@ -94,7 +93,7 @@ def test_cell_style():
     table = Table((0, 0), 10, 10)
     table.new_cell_style("extra", textcolor=199)
     style = table.get_cell_style("extra")
-    assert style["textcolor"] == 199
+    assert style.textcolor == 199
     with pytest.raises(KeyError):
         table.get_cell_style("extraextra")
 
@@ -229,7 +228,7 @@ def test_draw_cell_background(doc, table):
 
 
 def test_set_border_status():
-    style = Style.get_default_cell_style()
+    style = CellStyle.get_default_cell_style()
     style.set_border_status(False, True, False, True)
     assert style["left"]["status"] is False
     assert style["right"]["status"] is True
@@ -238,8 +237,8 @@ def test_set_border_status():
 
 
 def test_set_border_style():
-    style = Style.get_default_cell_style()
-    border_style = Style.get_default_border_style()
+    style = CellStyle.get_default_cell_style()
+    border_style = CellStyle.get_default_border_style()
     border_style["color"] = 17
 
     style.set_border_style(border_style, False, True, False, True)
@@ -247,3 +246,25 @@ def test_set_border_style():
     assert style["right"]["color"] == 17
     assert style["top"]["color"] == DEFAULT_BORDER_COLOR
     assert style["bottom"]["color"] == 17
+
+
+class TestStyle:
+    def test_init_default_style(self):
+        style = CellStyle()
+        assert style.textstyle == "STANDARD"
+
+    def test_init_custom_style(self):
+        style = CellStyle({"textstyle": "Arial"})
+        assert style.textstyle == "Arial"
+
+    def test_get_attribute_index_operator(self):
+        style = CellStyle()
+        assert style["textstyle"] == style.textstyle
+
+    def test_invalid_attribute_name_raises_key_error(self):
+        style = CellStyle()
+        with pytest.raises(KeyError):  # get
+            _ = style["xxx"]
+
+        with pytest.raises(KeyError):  # set
+            style["xxx"] = "xxx"

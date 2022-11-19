@@ -19,13 +19,14 @@ This add-on exist for porting :mod:`dxfwrite` projects to :mod:`ezdxf`.
 """
 from __future__ import annotations
 from typing import (
-    TypeVar,
+    Any,
+    Callable,
     Iterable,
     Iterator,
-    TYPE_CHECKING,
     Optional,
-    Callable,
     Sequence,
+    TYPE_CHECKING,
+    TypeVar,
 )
 from copy import deepcopy
 
@@ -88,8 +89,8 @@ class Table:
         self.bglayer: str = DEFAULT_TABLE_BGLAYER
         self.fglayer: str = DEFAULT_TABLE_FGLAYER
         self.gridlayer: str = DEFAULT_TABLE_GRIDLAYER
-        self.styles: dict[str, Style] = {
-            "default": Style.get_default_cell_style()
+        self.styles: dict[str, CellStyle] = {
+            "default": CellStyle.get_default_cell_style()
         }
         if not default_grid:
             default_style = self.get_cell_style("default")
@@ -197,7 +198,7 @@ class Table:
         self.frames.append(frame)
         return frame
 
-    def new_cell_style(self, name: str, **kwargs) -> Style:
+    def new_cell_style(self, name: str, **kwargs) -> CellStyle:
         """Create a new Style object `name`, overwrites exiting styles.
 
         Args:
@@ -208,17 +209,17 @@ class Table:
         assert (
             isinstance(name, str) and name != ""
         ), "name has to be a non-empty string"
-        style: Style = deepcopy(self.get_cell_style("default"))
+        style: CellStyle = deepcopy(self.get_cell_style("default"))
         style.update(kwargs)
         if "align" in kwargs:
             align = kwargs.get("align", "LEFT")
             halign, valign = MAP_STRING_ALIGN_TO_FLAGS.get(align, (0, 0))
-            style["halign"] = halign
-            style["valign"] = valign
+            style.halign = halign
+            style.valign = valign
         else:
             halign = kwargs.get("halign", 0)
             valign = kwargs.get("valign", 0)
-            style["align"] = MAP_FLAGS_TO_STRING_ALIGN.get(halign, valign)  # type: ignore
+            style.align = MAP_FLAGS_TO_STRING_ALIGN[halign, valign]  # type: ignore
 
         self.styles[name] = style
         return style
@@ -239,14 +240,14 @@ class Table:
             priority: drawing priority, higher priorities cover lower priorities
 
         """
-        border_style = Style.get_default_border_style()
+        border_style = CellStyle.get_default_border_style()
         border_style["color"] = color
         border_style["linetype"] = linetype
         border_style["status"] = status
         border_style["priority"] = priority
         return border_style
 
-    def get_cell_style(self, name: str) -> Style:
+    def get_cell_style(self, name: str) -> CellStyle:
         """
         Get cell style by name.
         """
@@ -282,9 +283,7 @@ class Table:
 
 
 class VisibilityMap:
-    """
-    Stores the visibility of the table cells.
-    """
+    """Stores the visibility of the table cells."""
 
     def __init__(self, table: Table):
         """
@@ -360,53 +359,65 @@ class VisibilityMap:
         )
 
 
-class Style(dict):
-    """
-    Cell style object.
-    """
+class CellStyle:
+    """Cell style object. """
+
+    def __init__(self, data: Optional[dict[str, Any]] = None):
+        # textstyle is ignored by block cells
+        self.textstyle = "STANDARD"
+        # text height in drawing units, ignored by block cells
+        self.textheight = DEFAULT_CELL_TEXT_HEIGHT
+        # line spacing in percent = <textheight>*<linespacing>, ignored by block cells
+        self.linespacing = DEFAULT_CELL_LINESPACING
+        # text stretch or block reference x-axis scaling factor
+        self.xscale = DEFAULT_CELL_XSCALE
+        # block reference y-axis scaling factor, ignored by text cells
+        self.yscale = DEFAULT_CELL_YSCALE
+        # dxf color index, ignored by block cells
+        self.textcolor = DEFAULT_CELL_TEXTCOLOR
+        # text or block rotation in degrees
+        self.rotation = 0.0
+        # Letters are stacked top-to-bottom, but not rotated
+        self.stacked = False
+        # simple combined align parameter, like 'TOP_CENTER', see also MText.VALID_ALIGN
+        self.align = "TOP_CENTER"  # higher priority than 'haling' and 'valign'
+        # horizontal alignment (const.LEFT, const.CENTER, const.RIGHT)
+        self.halign = const.CENTER
+        # vertical alignment (const.TOP, const.MIDDLE, const.BOTTOM)
+        self.valign = const.TOP
+        # left and right margin in drawing units
+        self.hmargin = DEFAULT_CELL_HMARGIN
+        # top and bottom margin
+        self.vmargin = DEFAULT_CELL_VMARGIN
+        # background color, dxf color index, ignored by block cells
+        self.bgcolor = DEFAULT_CELL_BG_COLOR
+        # left border style
+        self.left = CellStyle.get_default_border_style()
+        # top border style
+        self.top = CellStyle.get_default_border_style()
+        # right border style
+        self.right = CellStyle.get_default_border_style()
+        # bottom border style
+        self.bottom = CellStyle.get_default_border_style()
+        if data:
+            self.update(data)
+
+    def __getitem__(self, k: str) -> Any:
+        return self.__dict__[k]
+
+    def __setitem__(self, k: str, v: Any):
+        if k in self.__dict__:
+            self.__dict__.__setitem__(k, v)
+        else:
+            raise KeyError(f"invalid attribute name: {k}")
+
+    def update(self, data: dict[str, Any]):
+        for k, v in data.items():
+            self.__setitem__(k, v)
 
     @staticmethod
     def get_default_cell_style():
-        return Style(
-            {
-                # textstyle is ignored by block cells
-                "textstyle": "STANDARD",
-                # text height in drawing units, ignored by block cells
-                "textheight": DEFAULT_CELL_TEXT_HEIGHT,
-                # line spacing in percent = <textheight>*<linespacing>, ignored by block cells
-                "linespacing": DEFAULT_CELL_LINESPACING,
-                # text stretch or block reference x-axis scaling factor
-                "xscale": DEFAULT_CELL_XSCALE,
-                # block reference y-axis scaling factor, ignored by text cells
-                "yscale": DEFAULT_CELL_YSCALE,
-                # dxf color index, ignored by block cells
-                "textcolor": DEFAULT_CELL_TEXTCOLOR,
-                # text or block rotation in degrees
-                "rotation": 0.0,
-                # Letters are stacked top-to-bottom, but not rotated
-                "stacked": False,
-                # simple combined align parameter, like 'TOP_CENTER', see also MText.VALID_ALIGN
-                "align": "TOP_CENTER",  # higher priority than 'haling' and 'valign'
-                # horizontal alignment (const.LEFT, const.CENTER, const.RIGHT)
-                "halign": const.CENTER,
-                # vertical alignment (const.TOP, const.MIDDLE, const.BOTTOM)
-                "valign": const.TOP,
-                # left and right margin in drawing units
-                "hmargin": DEFAULT_CELL_HMARGIN,
-                # top and bottom margin
-                "vmargin": DEFAULT_CELL_VMARGIN,
-                # background color, dxf color index, ignored by block cells
-                "bgcolor": DEFAULT_CELL_BG_COLOR,
-                # left border style
-                "left": Style.get_default_border_style(),
-                # top border style
-                "top": Style.get_default_border_style(),
-                # right border style
-                "right": Style.get_default_border_style(),
-                # bottom border style
-                "bottom": Style.get_default_border_style(),
-            }
-        )
+        return CellStyle()
 
     @staticmethod
     def get_default_border_style():
@@ -647,7 +658,7 @@ class Grid:
         bottom_row: int,
         left_col: int,
         right_col: int,
-        style: Style,
+        style: CellStyle,
     ):
         """
         Set border <style> to the rectangle <top_row><bottom_row...
@@ -744,7 +755,7 @@ class Frame:
         self.stylename = style
 
     @property
-    def style(self) -> Style:
+    def style(self) -> CellStyle:
         return self.table.get_cell_style(self.stylename)
 
 
@@ -784,7 +795,7 @@ class Cell:
         self._span = (max(1, value[0]), max(1, value[1]))
 
     @property
-    def style(self) -> Style:
+    def style(self) -> CellStyle:
         """
         Returns: Style() object of the associated table.
         """

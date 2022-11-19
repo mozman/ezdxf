@@ -52,7 +52,7 @@ def get_mat_symbol(doc: Drawing) -> BlockLayout:
         (p1, -p2),
     ]
 
-    # should run with DXF R12, so not symbol.add_lwpolyline()
+    # should run with DXF R12, do not use add_lwpolyline()
     symbol.add_polyline2d(
         points,
         close=True,
