@@ -89,9 +89,7 @@ class Table:
         self.bglayer: str = DEFAULT_TABLE_BGLAYER
         self.fglayer: str = DEFAULT_TABLE_FGLAYER
         self.gridlayer: str = DEFAULT_TABLE_GRIDLAYER
-        self.styles: dict[str, CellStyle] = {
-            "default": CellStyle.get_default_cell_style()
-        }
+        self.styles: dict[str, CellStyle] = {"default": CellStyle()}
         if not default_grid:
             default_style = self.get_cell_style("default")
             default_style.set_border_status(False, False, False, False)
@@ -230,7 +228,7 @@ class Table:
         status=True,
         priority: int = 100,
         linetype: str = "BYLAYER",
-    ) -> dict:
+    ) -> BorderStyle:
         """Create a new border style.
 
         Args:
@@ -240,11 +238,11 @@ class Table:
             priority: drawing priority, higher priorities cover lower priorities
 
         """
-        border_style = CellStyle.get_default_border_style()
-        border_style["color"] = color
-        border_style["linetype"] = linetype
-        border_style["status"] = status
-        border_style["priority"] = priority
+        border_style = BorderStyle()
+        border_style.color = color
+        border_style.linetype = linetype
+        border_style.status = status
+        border_style.priority = priority
         return border_style
 
     def get_cell_style(self, name: str) -> CellStyle:
@@ -360,7 +358,7 @@ class VisibilityMap:
 
 
 class CellStyle:
-    """Cell style object. """
+    """Cell style object."""
 
     def __init__(self, data: Optional[dict[str, Any]] = None):
         # textstyle is ignored by block cells
@@ -392,13 +390,13 @@ class CellStyle:
         # background color, dxf color index, ignored by block cells
         self.bgcolor = DEFAULT_CELL_BG_COLOR
         # left border style
-        self.left = CellStyle.get_default_border_style()
+        self.left = BorderStyle()
         # top border style
-        self.top = CellStyle.get_default_border_style()
+        self.top = BorderStyle()
         # right border style
-        self.right = CellStyle.get_default_border_style()
+        self.right = BorderStyle()
         # bottom border style
-        self.bottom = CellStyle.get_default_border_style()
+        self.bottom = BorderStyle()
         if data:
             self.update(data)
 
@@ -415,37 +413,15 @@ class CellStyle:
         for k, v in data.items():
             self.__setitem__(k, v)
 
-    @staticmethod
-    def get_default_cell_style():
-        return CellStyle()
-
-    @staticmethod
-    def get_default_border_style():
-        return {
-            # border status, True for visible, False for hidden
-            "status": DEFAULT_BORDER_STATUS,
-            # dxf color index
-            "color": DEFAULT_BORDER_COLOR,
-            # linetype name, BYLAYER if None
-            "linetype": DEFAULT_BORDER_LINETYPE,
-            # drawing priority, higher values cover lower values
-            "priority": DEFAULT_BORDER_PRIORITY,
-        }
-
     def set_border_status(self, left=True, right=True, top=True, bottom=True):
-        """
-        Set status of all cell borders at once.
-        """
-        for border, status in (
-            ("left", left),
-            ("right", right),
-            ("top", top),
-            ("bottom", bottom),
-        ):
-            self[border]["status"] = status
+        """Set status of all cell borders at once."""
+        self.left.status = left
+        self.right.status = right
+        self.top.status = top
+        self.bottom.status = bottom
 
     def set_border_style(
-        self, style: dict, left=True, right=True, top=True, bottom=True
+        self, style: BorderStyle, left=True, right=True, top=True, bottom=True
     ):
         """
         Set border styles of all cell borders at once.
@@ -458,6 +434,28 @@ class CellStyle:
         ):
             if status:
                 self[border] = style
+
+    @staticmethod
+    def get_default_border_style() -> BorderStyle:
+        return BorderStyle()
+
+
+class BorderStyle:
+    def __init__(
+        self,
+        status: bool = DEFAULT_BORDER_STATUS,
+        color: int = DEFAULT_BORDER_COLOR,
+        linetype: str = DEFAULT_BORDER_LINETYPE,
+        priority: int = DEFAULT_BORDER_PRIORITY,
+    ):
+        # border status, True for visible, False for hidden
+        self.status = status
+        # ACI
+        self.color = color
+        # linetype name, BYLAYER if None
+        self.linetype = linetype
+        # drawing priority, higher values cover lower values
+        self.priority = priority
 
 
 class Grid:
@@ -475,17 +473,17 @@ class Grid:
         # above row, col, and row-indices are [0 .. nrows+1], nrows+1 for the
         # grid line below the last row; list contains only the border style with
         # the highest priority.
-        self._hborders: list[dict] = []  # created in _init_borders
+        self._hborders: list[BorderStyle] = []  # created in _init_borders
         # same as _hborders but for the vertical borders,
         # col-indices are [0 .. ncols+1], ncols+1 for the last grid line right
         # of the last column
-        self._vborders: list[dict] = []  # created in _init_borders
+        self._vborders: list[BorderStyle] = []  # created in _init_borders
         # border style to delete borders inside of merged cells
-        self.noborder = dict(
+        self.noborder = BorderStyle(
             status=False, priority=999, linetype="BYLAYER", color=0
         )
 
-    def _init_borders(self, hborder: dict, vborder: dict):
+    def _init_borders(self, hborder: BorderStyle, vborder: BorderStyle):
         """
         Init the _hborders with  <hborder> and _vborders with <vborder>.
         """
@@ -504,44 +502,50 @@ class Grid:
         """
         return row * (self.table.ncols + 1) + col
 
-    def set_hborder(self, row: int, col: int, border_style: dict):
+    def set_hborder(self, row: int, col: int, border_style: BorderStyle):
         """
         Set <border_style> for the horizontal border element above <row>, <col>.
         """
         return self._set_border_style(self._hborders, row, col, border_style)
 
-    def set_vborder(self, row: int, col: int, border_style: dict):
+    def set_vborder(self, row: int, col: int, border_style: BorderStyle):
         """
         Set <border_style> for the vertical border element left of <row>, <col>.
         """
         return self._set_border_style(self._vborders, row, col, border_style)
 
     def _set_border_style(
-        self, borders: list[dict], row: int, col: int, border_style: dict
+        self,
+        borders: list[BorderStyle],
+        row: int,
+        col: int,
+        border_style: BorderStyle,
     ):
         """
         Set <border_style> for <row>, <col> in <borders>.
         """
         border_index = self._border_index(row, col)
         actual_borderstyle = borders[border_index]
-        if border_style["priority"] >= actual_borderstyle["priority"]:
+        if border_style.priority >= actual_borderstyle.priority:
             borders[border_index] = border_style
 
-    def get_hborder(self, row: int, col: int) -> dict:
+    def get_hborder(self, row: int, col: int) -> BorderStyle:
         """
         Get the horizontal border element above <row>, <col>.
         Last grid line (below <nrows>) is the element above of <nrows+1>.
         """
         return self._get_border(self._hborders, row, col)
 
-    def get_vborder(self, row: int, col: int) -> dict:
+    def get_vborder(self, row: int, col: int) -> BorderStyle:
         """
         Get the vertical border element left of <row>, <col>.
         Last grid line (right of <ncols>) is the element left of <ncols+1>.
         """
         return self._get_border(self._vborders, row, col)
 
-    def _get_border(self, borders: list[dict], row: int, col: int) -> dict:
+    def _get_border(
+        self, borders: list[BorderStyle], row: int, col: int
+    ) -> BorderStyle:
         """
         Get border element at <row>, <col> from <borders>.
         """
@@ -613,8 +617,8 @@ class Grid:
         """
         # Init borders with default_style top- and left border.
         default_style = self.table.get_cell_style("default")
-        hborder = default_style["top"]
-        vborder = default_style["left"]
+        hborder = default_style.top
+        vborder = default_style.left
         self._init_borders(hborder, vborder)
         self._set_frames(self.table.frames)
         self._set_borders(self.table.iter_visible_cells(vm))
@@ -687,22 +691,20 @@ class Grid:
             )
 
     def _render_borders(self, layout: GenericLayoutType, table: Table):
-        """
-        Render the grid lines as LINE entities into layout object.
-        """
+        """Render the grid lines as LINE entities into layout object."""
 
-        def render_line(start: Vec2, end: Vec2, style):
+        def render_line(start: Vec2, end: Vec2, style: BorderStyle):
             """
             Render the LINE entity into layout object.
             """
-            if style["status"]:
+            if style.status:
                 layout.add_line(
                     start=start,
                     end=end,
                     dxfattribs={
                         "layer": layer,
-                        "color": style["color"],
-                        "linetype": style["linetype"],
+                        "color": style.color,
+                        "linetype": style.linetype,
                     },
                 )
 
@@ -860,11 +862,11 @@ class TextCell(Cell):
 
         left, right, top, bottom = self.get_workspace_coords(coords)
         style = self.style
-        halign = style["halign"]
-        valign = style["valign"]
-        rotated = self.style["rotation"]
+        halign = style.halign
+        valign = style.valign
+        rotated = self.style.rotation
         text = self.text
-        if style["stacked"]:
+        if style.stacked:
             rotated = 0.0
             text = "\n".join((char for char in self.text.replace("\n", " ")))
         xpos = (left, float(left + right) / 2.0, right)[halign]
@@ -872,14 +874,14 @@ class TextCell(Cell):
         mtext = MText(  # using dxfwrite MText() composite, because it works
             text,
             (xpos, ypos),
-            linespacing=self.style["linespacing"],
-            style=self.style["textstyle"],
-            height=self.style["textheight"],
+            linespacing=self.style.linespacing,
+            style=self.style.textstyle,
+            height=self.style.textheight,
             rotation=rotated,
-            xscale=self.style["xscale"],
+            xscale=self.style.xscale,
             halign=halign,
             valign=valign,
-            color=self.style["textcolor"],
+            color=self.style.textcolor,
             layer=layer,
         )
         mtext.render(layout)
@@ -924,8 +926,8 @@ class BlockCell(Cell):
         """
         left, right, top, bottom = self.get_workspace_coords(coords)
         style = self.style
-        halign = style["halign"]
-        valign = style["valign"]
+        halign = style.halign
+        valign = style.valign
         xpos = (left, float(left + right) / 2.0, right)[halign]
         ypos = (bottom, float(bottom + top) / 2.0, top)[valign - 1]
         layout.add_auto_blockref(
@@ -933,9 +935,9 @@ class BlockCell(Cell):
             insert=(xpos, ypos),
             values=self.attribs,
             dxfattribs={
-                "xscale": style["xscale"],
-                "yscale": style["yscale"],
-                "rotation": style["rotation"],
+                "xscale": style.xscale,
+                "yscale": style.yscale,
+                "rotation": style.rotation,
                 "layer": layer,
             },
         )

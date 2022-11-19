@@ -29,12 +29,12 @@ def test_init():
     assert bool(table) is True
     style = table.get_cell_style("default")
     for border in ["left", "right", "top", "bottom"]:
-        assert style[border]["status"] is False
+        assert style[border].status is False
 
     table = Table((0, 0), 10, 10, default_grid=True)
     style = table.get_cell_style("default")
     for border in ["left", "right", "top", "bottom"]:
-        assert style[border]["status"] is True
+        assert style[border].status is True
 
 
 def test_setter_methods():
@@ -103,12 +103,10 @@ def test_border_style():
     border_style = table.new_border_style(
         color=1, status=True, linetype="DOT", priority=99
     )
-    assert border_style == {
-        "color": 1,
-        "status": True,
-        "linetype": "DOT",
-        "priority": 99,
-    }
+    assert border_style.color == 1
+    assert border_style.status is True
+    assert border_style.linetype == "DOT"
+    assert border_style.priority == 99
 
 
 def test_visibility_map():
@@ -228,24 +226,24 @@ def test_draw_cell_background(doc, table):
 
 
 def test_set_border_status():
-    style = CellStyle.get_default_cell_style()
+    style = CellStyle()
     style.set_border_status(False, True, False, True)
-    assert style["left"]["status"] is False
-    assert style["right"]["status"] is True
-    assert style["top"]["status"] is False
-    assert style["bottom"]["status"] is True
+    assert style.left.status is False
+    assert style.right.status is True
+    assert style.top.status is False
+    assert style.bottom.status is True
 
 
 def test_set_border_style():
-    style = CellStyle.get_default_cell_style()
+    style = CellStyle()
     border_style = CellStyle.get_default_border_style()
-    border_style["color"] = 17
+    border_style.color = 17
 
     style.set_border_style(border_style, False, True, False, True)
-    assert style["left"]["color"] == DEFAULT_BORDER_COLOR
-    assert style["right"]["color"] == 17
-    assert style["top"]["color"] == DEFAULT_BORDER_COLOR
-    assert style["bottom"]["color"] == 17
+    assert style.left.color == DEFAULT_BORDER_COLOR
+    assert style.right.color == 17
+    assert style.top.color == DEFAULT_BORDER_COLOR
+    assert style.bottom.color == 17
 
 
 class TestStyle:
