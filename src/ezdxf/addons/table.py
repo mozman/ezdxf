@@ -642,7 +642,7 @@ class Grid:
         bottom_row: int,
         left_col: int,
         right_col: int,
-        border_style: dict,
+        border_style: BorderStyle,
     ):
         """
         Set <border_style> to the inner borders of the rectangle <top_row...

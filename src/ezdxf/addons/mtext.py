@@ -94,7 +94,7 @@ class MText(SubscriptAttributes):
         """Absolute line spacing in drawing units."""
         return self.height * self.linespacing
 
-    def render(self, layout: "GenericLayoutType") -> None:
+    def render(self, layout: GenericLayoutType) -> None:
         """Create the DXF-TEXT entities."""
         textlines = self.textlines
         if len(textlines) > 1:
@@ -113,7 +113,7 @@ class MText(SubscriptAttributes):
             )
 
     def _get_align_point(self, linenum: int) -> UVec:
-        """Calculate the align point depending on the line number."""
+        """Calculate the align-point depending on the line number."""
         x = self.insert[0]
         y = self.insert[1]
         try:
@@ -133,7 +133,7 @@ class MText(SubscriptAttributes):
         return self._rotate((x, y, z))  # consider rotation
 
     def _rotate(self, alignpoint: UVec) -> UVec:
-        """Rotate alignpoint around insert point about rotation degrees."""
+        """Rotate `alignpoint` around insert-point about rotation degrees."""
         dx = alignpoint[0] - self.insert[0]
         dy = alignpoint[1] - self.insert[1]
         beta = math.radians(self.rotation)
