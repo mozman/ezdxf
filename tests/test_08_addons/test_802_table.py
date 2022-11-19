@@ -3,12 +3,13 @@
 # License: MIT License
 import pytest
 import ezdxf
+from ezdxf.document import Drawing
 from ezdxf.addons.table import Table, CustomCell
 from ezdxf.addons.table import Grid, Style, DEFAULT_BORDER_COLOR
 
 
 @pytest.fixture(scope="module")
-def dxf():
+def doc() -> Drawing:
     return ezdxf.new("R12")
 
 
@@ -36,10 +37,6 @@ def test_init():
         assert style[border]["status"] is True
 
 
-def test_name():
-    table = Table((0, 0), 10, 10)
-    assert table.name == "TABLE"
-
 
 def test_setter_methods():
     table = Table((0, 0), 10, 10)
@@ -59,28 +56,30 @@ def test_cell_index():
 
 def test_default_text_cell():
     table = Table((0, 0), 10, 10)
-    table.text_cell(0, 0, "test")
+    text_cell = table.text_cell(0, 0, "test")
+    assert text_cell.text == "test"
     cell = table.get_cell(0, 0)
     assert cell.span == (1, 1)
-    assert cell.text == "test"
     assert cell.stylename == "default"
 
 
 def test_text_cell():
     table = Table((0, 0), 10, 10)
-    table.text_cell(8, 8, "test88", span=(2, 2), style="extrastyle")
+    text_cell = table.text_cell(8, 8, "test88", span=(2, 2), style="extrastyle")
+    assert text_cell.text == "test88"
     cell = table.get_cell(8, 8)
     assert cell.span == (2, 2)
-    assert cell.text == "test88"
     assert cell.stylename == "extrastyle"
 
 
-def test_block_cell():
+def test_block_cell(doc):
+    block = doc.blocks.new("EMPTY_BLOCK")
     table = Table((0, 0), 10, 10)
-    table.block_cell(1, 1, None, span=(3, 3))
+    block_cell = table.block_cell(1, 1, block, span=(3, 3))
+    assert block_cell.block_name == "EMPTY_BLOCK"
+
     cell = table.get_cell(1, 1)
     assert cell.span == (3, 3)
-    assert cell.blockdef is None
     assert cell.stylename == "default"
 
 
@@ -93,7 +92,7 @@ def test_frame():
 
 def test_cell_style():
     table = Table((0, 0), 10, 10)
-    style = table.new_cell_style("extra", textcolor=199)
+    table.new_cell_style("extra", textcolor=199)
     style = table.get_cell_style("extra")
     assert style["textcolor"] == 199
     with pytest.raises(KeyError):
@@ -117,11 +116,11 @@ def test_visibility_map():
     from ezdxf.addons.table import VisibilityMap
 
     table = Table((0, 0), 3, 3)
-    textcell = table.text_cell(0, 0, "text", span=(2, 2))
+    text_cell = table.text_cell(0, 0, "text", span=(2, 2))
     vmap = VisibilityMap(table)
     empty = table.empty_cell
     expected = [
-        (0, 0, textcell),
+        (0, 0, text_cell),
         (0, 2, empty),  # cell (0, 1) is covered by (0,0)
         (1, 2, empty),  # cells (1, 0), (1, 2) are covered by cell (0, 0)
         (2, 0, empty),
@@ -134,9 +133,9 @@ def test_visibility_map():
         assert got[2] == should[2]  # cell
 
 
-def test_rendering(dxf):
+def test_rendering(doc):
     MockCell.reset()
-    layout = dxf.blocks.new("test_rendering")
+    layout = doc.blocks.new("test_rendering")
     table = Table((0, 0), 3, 3)
     indices = [
         (0, 0),
@@ -156,9 +155,9 @@ def test_rendering(dxf):
     assert cell.counter == 9  # count get_dxf_entity calls
 
 
-def test_dxf_creation_span(dxf):
+def test_dxf_creation_span(doc):
     MockCell.reset()
-    layout = dxf.blocks.new("test_dxf_creation_span")
+    layout = doc.blocks.new("test_dxf_creation_span")
     table = Table((0, 0), 3, 3)
     indices = [
         (0, 0),
@@ -180,8 +179,8 @@ def test_dxf_creation_span(dxf):
     assert cell.counter == 6  # count get_dxf_entity calls
 
 
-def test_span_beyond_table_borders(dxf):
-    layout = dxf.blocks.new("test_span_beyond_table_borders")
+def test_span_beyond_table_borders(doc):
+    layout = doc.blocks.new("test_span_beyond_table_borders")
     table = Table((0, 0), 3, 3)
     table.text_cell(0, 2, "ERROR", span=(1, 2))
     with pytest.raises(IndexError):
@@ -218,9 +217,9 @@ def test_grid_coords_span(table):
     assert bottom == -6.0
 
 
-def test_draw_cell_background(dxf, table):
+def test_draw_cell_background(doc, table):
     grid = Grid(table)
-    layout = dxf.blocks.new("test_draw_cell_background")
+    layout = doc.blocks.new("test_draw_cell_background")
     table.new_cell_style("fill", bgcolor=17)
     cell = table.get_cell(0, 0)
     cell.stylename = "fill"
