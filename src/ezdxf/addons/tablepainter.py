@@ -28,9 +28,9 @@ if TYPE_CHECKING:
 DEFAULT_TABLE_BG_LAYER = "TABLEBACKGROUND"
 DEFAULT_TABLE_FG_LAYER = "TABLECONTENT"
 DEFAULT_TABLE_GRID_LAYER = "TABLEGRID"
-DEFAULT_TABLE_HEIGHT = 1.0
-DEFAULT_TABLE_WIDTH = 2.5
 DEFAULT_TEXT_STYLE = "STANDARD"
+DEFAULT_CELL_HEIGHT = 1.0
+DEFAULT_CELL_WIDTH = 2.5
 DEFAULT_CELL_CHAR_HEIGHT = 0.7
 DEFAULT_CELL_LINE_SPACING = 1.5
 DEFAULT_CELL_X_SCALE = 1.0
@@ -44,8 +44,6 @@ DEFAULT_BORDER_LINETYPE = "BYLAYER"
 DEFAULT_BORDER_STATUS = True
 DEFAULT_BORDER_PRIORITY = 50
 
-VISIBLE = 1
-HIDDEN = 0
 
 T = TypeVar("T", bound="Cell")
 
@@ -59,18 +57,28 @@ class TablePainter:
         insert: insert location as or :class:`~ezdxf.math.UVec`
         nrows: row count
         ncols: column count
+        cell_width: default cell width in drawing units
+        cell_height: default cell height in drawing units
         default_grid: draw a grid of solid lines if ``True``, otherwise
             draw only explicit defined borders, the default grid has a
             priority of 50.
 
     """
 
-    def __init__(self, insert: UVec, nrows: int, ncols: int, default_grid=True):
+    def __init__(
+        self,
+        insert: UVec,
+        nrows: int,
+        ncols: int,
+        cell_width=DEFAULT_CELL_WIDTH,
+        cell_height=DEFAULT_CELL_HEIGHT,
+        default_grid=True,
+    ):
         self.insert = Vec2(insert)
         self.nrows: int = nrows
         self.ncols: int = ncols
-        self.row_heights: list[float] = [DEFAULT_TABLE_HEIGHT] * nrows
-        self.col_widths: list[float] = [DEFAULT_TABLE_WIDTH] * ncols
+        self.row_heights: list[float] = [cell_height] * nrows
+        self.col_widths: list[float] = [cell_width] * ncols
         self.bg_layer_name: str = DEFAULT_TABLE_BG_LAYER
         self.fg_layer_name: str = DEFAULT_TABLE_FG_LAYER
         self.grid_layer_name: str = DEFAULT_TABLE_GRID_LAYER
@@ -81,28 +89,26 @@ class TablePainter:
 
         self._cells: dict[tuple[int, int], Cell] = {}  # data cells
         self.frames: list[Frame] = []  # border frame objects
-        # data contains the resulting dxf entities
-        self.data = None
         self.empty_cell = Cell(self)  # represents all empty cells
 
-    def set_col_width(self, column: int, value: float):
-        """Set column width in drawing units.
+    def set_col_width(self, index: int, value: float):
+        """Set column width in drawing units of the given column index.
 
         Args:
-            column: zero based column index
+            index: zero based column index
             value: new column width in drawing units
 
         """
-        self.col_widths[column] = float(value)
+        self.col_widths[index] = float(value)
 
-    def set_row_height(self, row: int, value: float):
-        """Set row height in drawing units.
+    def set_row_height(self, index: int, value: float):
+        """Set row height in drawing units of the given row index.
 
         Args:
-            row: zero based row index
+            index: zero based row index
             value: new row height in drawing units
         """
-        self.row_heights[row] = float(value)
+        self.row_heights[index] = float(value)
 
     def text_cell(
         self,
@@ -150,6 +156,16 @@ class TablePainter:
         )
         return self.set_cell(row, col, cell)
 
+    @property
+    def table_width(self) -> float:
+        """Returns the total table width."""
+        return sum(self.col_widths)
+
+    @property
+    def table_height(self) -> float:
+        """Returns the total table height."""
+        return sum(self.row_heights)
+
     def set_cell(self, row: int, col: int, cell: T) -> T:
         """Insert a cell at position (row, col)."""
         row, col = self.validate_index(row, col)
@@ -181,7 +197,7 @@ class TablePainter:
     ) -> Frame:
         """Creates a frame around the give cell area, starting at (row, col) and
         covering `width` columns and `height` rows. The `style` argument is the
-        name of a :class:`BorderStyle`.
+        name of a :class:`CellStyle`.
         """
         frame = Frame(self, pos=(row, col), span=(height, width), style=style)
         self.frames.append(frame)
@@ -193,7 +209,7 @@ class TablePainter:
 
         Args:
             name: style name as string
-            kwargs: see Style.get_default_cell_style()
+            kwargs: see attributes of class :class:`CellStyle`
 
         """
         assert (
@@ -210,6 +226,7 @@ class TablePainter:
         status=True,
         priority: int = 100,
         linetype: str = "BYLAYER",
+        lineweight: int = const.LINEWEIGHT_BYLAYER,
     ) -> BorderStyle:
         """Factory method to create a new border style.
 
@@ -217,12 +234,14 @@ class TablePainter:
             status: ``True`` for visible, ``False`` for invisible
             color: :ref:`ACI`
             linetype: linetype name, default is "BYLAYER"
+            lineweight: lineweight as int, default is by layer
             priority: drawing priority, higher priorities cover lower priorities
 
         """
         border_style = BorderStyle()
         border_style.color = color
         border_style.linetype = linetype
+        border_style.lineweight = lineweight
         border_style.status = status
         border_style.priority = priority
         return border_style
@@ -246,11 +265,10 @@ class TablePainter:
             self.insert = Vec2(insert)
         visibility_map = VisibilityMap(self)
         grid = Grid(self)
-        grid.render_lines(layout, visibility_map)
         for row, col, cell in self.iter_visible_cells(visibility_map):
             grid.render_cell_background(layout, row, col, cell)
             grid.render_cell_content(layout, row, col, cell)
-
+        grid.render_lines(layout, visibility_map)
         self.insert = insert_backup
 
 
@@ -421,6 +439,7 @@ class BorderStyle:
         status: bool = DEFAULT_BORDER_STATUS,
         color: int = DEFAULT_BORDER_COLOR,
         linetype: str = DEFAULT_BORDER_LINETYPE,
+        lineweight=const.LINEWEIGHT_BYLAYER,
         priority: int = DEFAULT_BORDER_PRIORITY,
     ):
         # border status, True for visible, False for hidden
@@ -429,6 +448,8 @@ class BorderStyle:
         self.color = color
         # linetype name, BYLAYER if None
         self.linetype = linetype
+        # lineweight
+        self.lineweight = lineweight
         # drawing priority, higher values cover lower values
         self.priority = priority
 
@@ -655,6 +676,7 @@ class Grid:
                         "layer": layer,
                         "color": style.color,
                         "linetype": style.linetype,
+                        "lineweight": style.lineweight,
                     },
                 )
 

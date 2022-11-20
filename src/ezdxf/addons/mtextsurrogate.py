@@ -37,11 +37,11 @@ class Mirror(enum.IntEnum):
 
 class MTextSurrogate(SubscriptAttributes):
     """MTEXT surrogate for DXF R12 build up by TEXT Entities. This add-on was
-    added to simplify the transition from `dxfwrite` to `ezdxf`.
+    added to simplify the transition from :mod:`dxfwrite` to :mod:`ezdxf`.
 
     The rich-text formatting capabilities for the regular MTEXT entity are not
     supported, if these features are required use the regular MTEXT entity and
-    the :class:`ezdxf.addons.MTextExplode` add-on to explode the MTEXT entity
+    the :class:`~ezdxf.addons.MTextExplode` add-on to explode the MTEXT entity
     into simpler DXF primitives.
 
     .. important::

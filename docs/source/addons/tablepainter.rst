@@ -21,24 +21,23 @@ documentation to implement all that features.
     create ACAD_TABLE entities!
 
 
-The table cells can contain multi-line text or BLOCK references, and you can
-create your own cell type by extending the :class:`CustomCell`
-class.
+The table cells can contain multi-line text or BLOCK references. You can
+create your own cell types by extending the :class:`CustomCell` class.
+The cells are addressed by zero-based row and column indices. A table cell can
+span over multiple columns and/or rows.
 
-A table cell can span over multiple columns and/or rows.
+A :class:`TextCell` can contain multi-line text with an arbitrary rotation angle
+or letters stacked from top to bottom. The :class:`~ezdxf.addons.MTextSurrogate`
+add-on is used to create multi-line text compatible to DXF version R12.
 
-Text cells can contain text with an arbitrary rotation angle, or letters can be
-stacked from top to bottom.
-
-BlockCells contains block references (INSERT) created from a BLOCK
-definition, if the block definition contains attribute definitions
-(ATTDEF), these attributes will be added to the block reference as ATTRIB
-entities.
+A :class:`BlockCell` contains block references (INSERT entities), if the block
+definition contains attribute definitions as ATTDEF entities, these attributes
+can be added automatically to the block reference as ATTRIB entities.
 
 .. note::
 
-    The DXF format does not support clipping boxes, therefore the render method
-    of any cell can render beyond their borders!
+    The DXF format does not support clipping boxes ot paths, therefore the
+    render method of any cell can render beyond the borders of the cell!
 
 .. seealso::
 
@@ -63,6 +62,10 @@ TablePainter
 
         table grid layer name, layer for the cell border lines, default is
         "TABLEGRID"
+
+    .. autoproperty:: table_width
+
+    .. autoproperty:: table_height
 
     .. automethod:: set_col_width
 
@@ -230,6 +233,10 @@ BorderStyle
     .. attribute:: linetype: str
 
         linetype name as string, default is "BYLAYER"
+
+    .. attribute:: lineweight: int
+
+        lineweight as int, default is by layer
 
     .. attribute:: priority: int
 
