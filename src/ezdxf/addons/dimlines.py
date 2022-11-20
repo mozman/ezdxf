@@ -1,33 +1,28 @@
-# Purpose: dimension lines as composite entities build with basic dxf entities,
-#   but not the DIMENSION entity.
-# Created: 10.03.2010, 2018 adapted for ezdxf
 # Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
-"""
-Dimension lines as composite entities build with basic dxf entities, but not the
-DIMENSION entity.
+"""Dimension lines as composite entities build up by DXF primitives.
 
-OBJECTS
+This add-on exist just for an easy transition from `dxfwrite` to `ezdxf`.
+
+Classes
+-------
 
 - LinearDimension
 - AngularDimension
 - ArcDimension
 - RadiusDimension
+- DimStyle
 
-PUBLIC MEMBERS
+This code was written long before I had any understanding of the DIMENSION
+entity and therefore, the classes have completely different implementations and
+styling features than the dimensions based on the DIMENSION entity .
 
-dimstyles
-    dimstyle container
+.. warning::
 
-    - new(name, kwargs) to create a new dimstyle
-    - get(name) to get a dimstyle, 'Default' if name does not exist
-    - setup(drawing) create Blocks and Layers in drawing
-
-This add-on exist only for porting 'dxfwrite' projects to 'ezdxf'.
-
-This add-on was written long before I had any understanding of the DIMENSION
-entity and therefore, they have completely different implementations and
-parameters.
+    Try to not use these classes beside porting `dxfwrite` code to `ezdxf`
+    and even for that case the usage of the regular DIMENSION entity is to
+    prefer because this module will not get much maintenance and may be removed
+    in the future.
 
 """
 from __future__ import annotations
@@ -50,9 +45,7 @@ ANGLE_RAD = 1.0
 
 
 class DimStyle(dict):
-    """
-    DimStyle parameter struct, a dumb object just to store values
-
+    """DimStyle parameter struct, a dumb object just to store values
     """
 
     default_values = [
