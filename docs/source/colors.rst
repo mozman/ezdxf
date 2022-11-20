@@ -44,6 +44,8 @@ BLUE                        5
 MAGENTA                     6
 BLACK (on light background) 7
 WHITE (on dark background)  7
+GRAY                        8
+LIGHT_GRAY                  9
 =========================== ===
 
 Default Palettes

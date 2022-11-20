@@ -17,6 +17,8 @@ BLUE = 5
 MAGENTA = 6
 BLACK = 7
 WHITE = 7
+GRAY = 8
+LIGHT_GRAY = 9
 
 # Flags for raw color int values:
 # Take color from layer, ignore other bytes.
