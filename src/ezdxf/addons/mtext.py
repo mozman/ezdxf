@@ -3,6 +3,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 import math
+import enum
 
 
 from ezdxf.enums import (
@@ -28,6 +29,12 @@ MIDDLE_ALIGN = {
 }
 
 
+class Mirror(enum.IntEnum):
+    NONE = 0
+    MIRROR_X = 2
+    MIRROR_Y = 4
+
+
 class MTextSurrogate(SubscriptAttributes):
     """MTEXT surrogate for DXF R12 build up by TEXT Entities. This add-on was
     added to simplify the transition from `dxfwrite` to `ezdxf`.
@@ -47,21 +54,22 @@ class MTextSurrogate(SubscriptAttributes):
         text: content as string
         insert: insert location in drawing units
         line_spacing: line spacing in percent of height, 1.5 = 150% = 1+1/2 lines
-        align: text alignment as :class:`ezdxf.enum.MTextEntityAlignment` enum
+        align: text alignment as :class:`~ezdxf.enums.MTextEntityAlignment` enum
         char_height: text height in drawing units
-        style: :class:`ezdxf.entities.Textstyle` reference as string
-        oblique: oblige angle in degrees, where 0 is vertical
+        style: :class:`~ezdxf.entities.Textstyle` name as string
+        oblique: oblique angle in degrees, where 0 is vertical
         rotation: text rotation angle in degrees
-        width_factor: width factor as float
-        mirror: 2 is mirror text horizontal and 4 is mirror text vertical,
-            adding both values is possible
+        width_factor: text width factor as float
+        mirror: :attr:`MTextSurrogate.MIRROR_X` to mirror the text horizontal
+            or :attr:`MTextSurrogate.MIRROR_Y` to mirror the text vertical
         layer: layer name as string
         color: :ref:`ACI`
 
     """
 
-    MIRROR_X = const.MIRROR_X
-    MIRROR_Y = const.MIRROR_Y
+    MIRROR_NONE = Mirror.NONE
+    MIRROR_X = Mirror.MIRROR_X
+    MIRROR_Y = Mirror.MIRROR_Y
 
     def __init__(
         self,
@@ -74,7 +82,7 @@ class MTextSurrogate(SubscriptAttributes):
         oblique: float = 0.0,
         rotation: float = 0.0,
         width_factor: float = 1.0,
-        mirror: int = 0,
+        mirror=Mirror.NONE,
         layer="0",
         color: int = const.BYLAYER,
     ):
@@ -99,7 +107,9 @@ class MTextSurrogate(SubscriptAttributes):
         return self.char_height * self.line_spacing
 
     def render(self, layout: GenericLayoutType) -> None:
-        """Create the DXF-TEXT entities."""
+        """Render the multi-line content as separated TEXT entities into the
+        given `layout` instance.
+        """
         text_lines = self.content
         if len(text_lines) > 1:
             if self.mirror & const.MIRROR_Y:

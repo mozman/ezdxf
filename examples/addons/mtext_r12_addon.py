@@ -27,7 +27,7 @@ def textblock(
     y: float,
     rot: float,
     color: int = 3,
-    mirror: int = 0,
+    mirror=MTextSurrogate.MIRROR_NONE,
 ):
     attribs = {"color": color}
     msp.add_line((x + 50, y), (x + 50, y + 50), dxfattribs=attribs)

@@ -24,3 +24,5 @@ Add-ons
     binpacking
     meshex
     openscad
+    tabledrawing
+    mtext_r12

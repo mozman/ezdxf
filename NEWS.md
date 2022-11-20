@@ -15,7 +15,8 @@ Version 1.0.0rc1 - dev
   and also adds support for AppImages provided by ODA.
 - CHANGE: removed deprecated features
 - CHANGE: type annotation refactoring
-- CHANGE: Table drawing add-on, R12 MText add-on
+- CHANGE: refactoring of the `Table` drawing add-on
+- CHANGE: R12 `MText` add-on renamed to `MTextSurrogate` 
 - BUGFIX: [#747](https://github.com/mozman/ezdxf/issues/747)
   fix virtual entities of 3D DIMENSION entities  
 - BUGFIX: [#748](https://github.com/mozman/ezdxf/issues/748)
