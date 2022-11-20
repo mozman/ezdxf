@@ -31,7 +31,12 @@ from typing import (
 from copy import deepcopy
 
 from ezdxf.lldxf import const
-from ezdxf.enums import MAP_FLAGS_TO_STRING_ALIGN, MAP_STRING_ALIGN_TO_FLAGS
+from ezdxf.enums import (
+    MTextEntityAlignment,
+    MAP_MTEXT_ALIGN_TO_FLAGS,
+    MAP_FLAGS_TO_STRING_ALIGN,
+    MAP_STRING_ALIGN_TO_FLAGS,
+)
 from .mtext import MText
 from ezdxf.math import UVec, Vec2
 
@@ -39,20 +44,20 @@ if TYPE_CHECKING:
     from ezdxf.layouts import BlockLayout
     from ezdxf.eztypes import GenericLayoutType
 
-DEFAULT_TABLE_BGLAYER = "TABLEBACKGROUND"
-DEFAULT_TABLE_FGLAYER = "TABLECONTENT"
-DEFAULT_TABLE_GRIDLAYER = "TABLEGRID"
+DEFAULT_TABLE_BG_LAYER = "TABLEBACKGROUND"
+DEFAULT_TABLE_FG_LAYER = "TABLECONTENT"
+DEFAULT_TABLE_GRID_LAYER = "TABLEGRID"
 DEFAULT_TABLE_HEIGHT = 1.0
 DEFAULT_TABLE_WIDTH = 2.5
-DEFAULT_TEXTSTYLE = "STANDARD"
-DEFAULT_CELL_TEXT_HEIGHT = 0.7
-DEFAULT_CELL_LINESPACING = 1.5
-DEFAULT_CELL_XSCALE = 1.0
-DEFAULT_CELL_YSCALE = 1.0
+DEFAULT_TEXT_STYLE = "STANDARD"
+DEFAULT_CELL_CHAR_HEIGHT = 0.7
+DEFAULT_CELL_LINE_SPACING = 1.5
+DEFAULT_CELL_X_SCALE = 1.0
+DEFAULT_CELL_Y_SCALE = 1.0
 DEFAULT_CELL_TEXTCOLOR = const.BYLAYER
 DEFAULT_CELL_BG_COLOR = None
-DEFAULT_CELL_HMARGIN = 0.1
-DEFAULT_CELL_VMARGIN = 0.1
+DEFAULT_CELL_X_MARGIN = 0.1
+DEFAULT_CELL_Y_MARGIN = 0.1
 DEFAULT_BORDER_COLOR = 5
 DEFAULT_BORDER_LINETYPE = "BYLAYER"
 DEFAULT_BORDER_STATUS = True
@@ -85,9 +90,9 @@ class Table:
         self.ncols: int = ncols
         self.row_heights: list[float] = [DEFAULT_TABLE_HEIGHT] * nrows
         self.col_widths: list[float] = [DEFAULT_TABLE_WIDTH] * ncols
-        self.bglayer: str = DEFAULT_TABLE_BGLAYER
-        self.fglayer: str = DEFAULT_TABLE_FGLAYER
-        self.gridlayer: str = DEFAULT_TABLE_GRIDLAYER
+        self.bg_layer_name: str = DEFAULT_TABLE_BG_LAYER
+        self.fg_layer_name: str = DEFAULT_TABLE_FG_LAYER
+        self.grid_layer_name: str = DEFAULT_TABLE_GRID_LAYER
         self.styles: dict[str, CellStyle] = {"default": CellStyle()}
         if not default_grid:
             default_style = self.get_cell_style("default")
@@ -184,7 +189,14 @@ class Table:
             raise IndexError("cell index out of range")
         return row, col
 
-    def frame(self, row, col, width=1, height=1, style="default") -> Frame:
+    def frame(
+        self,
+        row: int,
+        col: int,
+        width: int = 1,
+        height: int = 1,
+        style="default",
+    ) -> Frame:
         """Create a Frame object which frames the cell area starting at(row, col)
         covering `width` columns and `height` rows.
 
@@ -206,16 +218,6 @@ class Table:
         ), "name has to be a non-empty string"
         style: CellStyle = deepcopy(self.get_cell_style("default"))
         style.update(kwargs)
-        if "align" in kwargs:
-            align = kwargs.get("align", "LEFT")
-            halign, valign = MAP_STRING_ALIGN_TO_FLAGS.get(align, (0, 0))
-            style.halign = halign
-            style.valign = valign
-        else:
-            halign = kwargs.get("halign", 0)
-            valign = kwargs.get("valign", 0)
-            style.align = MAP_FLAGS_TO_STRING_ALIGN[halign, valign]  # type: ignore
-
         self.styles[name] = style
         return style
 
@@ -256,7 +258,7 @@ class Table:
 
     def render(self, layout: GenericLayoutType, insert: Optional[UVec] = None):
         """Render table to layout."""
-        _insert = self.insert  # backup value
+        insert_backup = self.insert
         if insert is not None:
             self.insert = Vec2(insert)
         visibility_map = VisibilityMap(self)
@@ -266,7 +268,7 @@ class Table:
             grid.render_cell_background(layout, row, col, cell)
             grid.render_cell_content(layout, row, col, cell)
 
-        self.insert = _insert  # restore value
+        self.insert = insert_backup
 
 
 class VisibilityMap:
@@ -335,34 +337,30 @@ class CellStyle:
     """Cell style object."""
 
     def __init__(self, data: Optional[dict[str, Any]] = None):
-        # textstyle is ignored by block cells
-        self.textstyle = "STANDARD"
+        # text style is ignored by block cells
+        self.text_style = "STANDARD"
         # text height in drawing units, ignored by block cells
-        self.textheight = DEFAULT_CELL_TEXT_HEIGHT
-        # line spacing in percent = <textheight>*<linespacing>, ignored by block cells
-        self.linespacing = DEFAULT_CELL_LINESPACING
+        self.char_height = DEFAULT_CELL_CHAR_HEIGHT
+        # line spacing in percent = <char_height>*<line_spacing>, ignored by block cells
+        self.line_spacing = DEFAULT_CELL_LINE_SPACING
         # text stretch or block reference x-axis scaling factor
-        self.xscale = DEFAULT_CELL_XSCALE
+        self.scale_x = DEFAULT_CELL_X_SCALE
         # block reference y-axis scaling factor, ignored by text cells
-        self.yscale = DEFAULT_CELL_YSCALE
+        self.scale_y = DEFAULT_CELL_Y_SCALE
         # dxf color index, ignored by block cells
         self.textcolor = DEFAULT_CELL_TEXTCOLOR
         # text or block rotation in degrees
         self.rotation = 0.0
         # Letters are stacked top-to-bottom, but not rotated
         self.stacked = False
-        # simple combined align parameter, like 'TOP_CENTER', see also MText.VALID_ALIGN
-        self.align = "TOP_CENTER"  # higher priority than 'haling' and 'valign'
-        # horizontal alignment (const.LEFT, const.CENTER, const.RIGHT)
-        self.halign = const.CENTER
-        # vertical alignment (const.TOP, const.MIDDLE, const.BOTTOM)
-        self.valign = const.TOP
+        # align parameter, see ezdxf.enums.MTextEntityAlignment
+        self.align = MTextEntityAlignment.TOP_CENTER
         # left and right margin in drawing units
-        self.hmargin = DEFAULT_CELL_HMARGIN
+        self.margin_x = DEFAULT_CELL_X_MARGIN
         # top and bottom margin
-        self.vmargin = DEFAULT_CELL_VMARGIN
+        self.margin_y = DEFAULT_CELL_Y_MARGIN
         # background color, dxf color index, ignored by block cells
-        self.bgcolor = DEFAULT_CELL_BG_COLOR
+        self.bg_color = DEFAULT_CELL_BG_COLOR
         # left border style
         self.left = BorderStyle()
         # top border style
@@ -386,6 +384,9 @@ class CellStyle:
     def update(self, data: dict[str, Any]):
         for k, v in data.items():
             self.__setitem__(k, v)
+        assert isinstance(
+            self.align, MTextEntityAlignment
+        ), "enum ezdxf.enums.MTextEntityAlignment for text alignments required"
 
     def set_border_status(self, left=True, right=True, top=True, bottom=True):
         """Set status of all cell borders at once."""
@@ -410,6 +411,9 @@ class CellStyle:
     @staticmethod
     def get_default_border_style() -> BorderStyle:
         return BorderStyle()
+
+    def get_text_align_flags(self) -> tuple[int, int]:
+        return MAP_MTEXT_ALIGN_TO_FLAGS[self.align]
 
 
 class BorderStyle:
@@ -440,48 +444,48 @@ class Grid:
         # contains the y-axis coords of the grid lines between the data rows.
         self.row_pos: list[float] = self._calc_row_pos()
 
-        # contains the horizontal border elements, list of border styles
+        # _x_borders contains the horizontal border elements, list of border styles
         # get index with _border_index(row, col), which means the border element
         # above row, col, and row-indices are [0 .. nrows+1], nrows+1 for the
         # grid line below the last row; list contains only the border style with
         # the highest priority.
-        self._hborders: list[BorderStyle] = []  # created in _init_borders
-        # same as _hborders but for the vertical borders,
+        self._x_borders: list[BorderStyle] = []  # created in _init_borders
+
+        # _y_borders: same as _x_borders but for the vertical borders,
         # col-indices are [0 .. ncols+1], ncols+1 for the last grid line right
         # of the last column
-        self._vborders: list[BorderStyle] = []  # created in _init_borders
+        self._y_borders: list[BorderStyle] = []  # created in _init_borders
         # border style to delete borders inside of merged cells
-        self.noborder = BorderStyle(
+        self.no_border = BorderStyle(
             status=False, priority=999, linetype="BYLAYER", color=0
         )
 
-    def _init_borders(self, hborder: BorderStyle, vborder: BorderStyle):
-        """Init the _hborders with  <hborder> and _vborders with <vborder>.
-        """
+    def _init_borders(self, x_border: BorderStyle, y_border: BorderStyle):
+        """Init the _hborders with  <hborder> and _vborders with <vborder>."""
         # <border_count> has more elements than necessary, but it unifies the
         # index calculation for _vborders and _hborders.
         # exact values are:
-        # hborder_count = ncols * (nrows+1), hindex = ncols * <row> + <col>
-        # vborder_count = nrows * (ncols+1), vindex = (ncols+1) * <row> + <col>
+        # x_border_count = ncols * (nrows+1), hindex = ncols * <row> + <col>
+        # y_border_count = nrows * (ncols+1), vindex = (ncols+1) * <row> + <col>
         border_count: int = (self.table.nrows + 1) * (self.table.ncols + 1)
-        self._hborders = [hborder] * border_count
-        self._vborders = [vborder] * border_count
+        self._x_borders = [x_border] * border_count
+        self._y_borders = [y_border] * border_count
 
     def _border_index(self, row: int, col: int) -> int:
-        """Calculate linear index for border arrays _hborders and _vborders."""
+        """Calculate linear index for border arrays _x_borders and _y_borders."""
         return row * (self.table.ncols + 1) + col
 
-    def set_hborder(self, row: int, col: int, border_style: BorderStyle):
+    def set_x_border(self, row: int, col: int, border_style: BorderStyle):
         """Set <border_style> for the horizontal border element above
         <row>, <col>.
         """
-        return self._set_border_style(self._hborders, row, col, border_style)
+        return self._set_border_style(self._x_borders, row, col, border_style)
 
-    def set_vborder(self, row: int, col: int, border_style: BorderStyle):
+    def set_y_border(self, row: int, col: int, border_style: BorderStyle):
         """Set <border_style> for the vertical border element left of
         <row>, <col>.
         """
-        return self._set_border_style(self._vborders, row, col, border_style)
+        return self._set_border_style(self._y_borders, row, col, border_style)
 
     def _set_border_style(
         self,
@@ -496,17 +500,17 @@ class Grid:
         if border_style.priority >= actual_borderstyle.priority:
             borders[border_index] = border_style
 
-    def get_hborder(self, row: int, col: int) -> BorderStyle:
+    def get_x_border(self, row: int, col: int) -> BorderStyle:
         """Get the horizontal border element above <row>, <col>.
         Last grid line (below <nrows>) is the element above of <nrows+1>.
         """
-        return self._get_border(self._hborders, row, col)
+        return self._get_border(self._x_borders, row, col)
 
-    def get_vborder(self, row: int, col: int) -> BorderStyle:
+    def get_y_border(self, row: int, col: int) -> BorderStyle:
         """Get the vertical border element left of <row>, <col>.
         Last grid line (right of <ncols>) is the element left of <ncols+1>.
         """
-        return self._get_border(self._vborders, row, col)
+        return self._get_border(self._y_borders, row, col)
 
     def _get_border(
         self, borders: list[BorderStyle], row: int, col: int
@@ -544,21 +548,17 @@ class Grid:
     def render_cell_background(
         self, layout: GenericLayoutType, row: int, col: int, cell: Cell
     ):
-        """Render the cell background for <row>, <col> as SOLID entity."""
+        """Render the cell background for (row, col) as SOLID entity."""
         style = cell.style
-        if style["bgcolor"] is None:
+        if style.bg_color is None:
             return
         # get cell coords in absolute drawing units
         left, right, top, bottom = self.cell_coords(row, col, cell.span)
-        ltop = (left, top)
-        lbot = (left, bottom)
-        rtop = (right, top)
-        rbot = (right, bottom)
         layout.add_solid(
-            points=(ltop, lbot, rtop, rbot),
+            points=((left, top), (left, bottom), (right, top), (right, bottom)),
             dxfattribs={
-                "color": style["bgcolor"],
-                "layer": self.table.bglayer,
+                "color": style.bg_color,
+                "layer": self.table.bg_layer_name,
             },
         )
 
@@ -568,15 +568,15 @@ class Grid:
         """Render the cell content for <row>,<col> into layout object."""
         # get cell coords in absolute drawing units
         coords = self.cell_coords(row, col, cell.span)
-        cell.render(layout, coords, self.table.fglayer)
+        cell.render(layout, coords, self.table.fg_layer_name)
 
     def render_lines(self, layout: GenericLayoutType, vm: VisibilityMap):
         """Render all grid lines into layout object."""
         # Init borders with default_style top- and left border.
         default_style = self.table.get_cell_style("default")
-        hborder = default_style.top
-        vborder = default_style.left
-        self._init_borders(hborder, vborder)
+        x_border = default_style.top
+        y_border = default_style.left
+        self._init_borders(x_border, y_border)
         self._set_frames(self.table.frames)
         self._set_borders(self.table.iter_visible_cells(vm))
         self._render_borders(layout, self.table)
@@ -588,7 +588,7 @@ class Grid:
             right_col = col + cell.span[1]
             self._set_rect_borders(row, bottom_row, col, right_col, cell.style)
             self._set_inner_borders(
-                row, bottom_row, col, right_col, self.noborder
+                row, bottom_row, col, right_col, self.no_border
             )
 
     def _set_inner_borders(
@@ -599,16 +599,17 @@ class Grid:
         right_col: int,
         border_style: BorderStyle,
     ):
-        """Set <border_style> to the inner borders of the rectangle <top_row...
+        """Set `border_style` to the inner borders of the rectangle (top_row,
+        bottom_row, ...)
         """
         if bottom_row - top_row > 1:
             for col in range(left_col, right_col):
                 for row in range(top_row + 1, bottom_row):
-                    self.set_hborder(row, col, border_style)
+                    self.set_x_border(row, col, border_style)
         if right_col - left_col > 1:
             for row in range(top_row, bottom_row):
                 for col in range(left_col + 1, right_col):
-                    self.set_vborder(row, col, border_style)
+                    self.set_y_border(row, col, border_style)
 
     def _set_rect_borders(
         self,
@@ -618,18 +619,18 @@ class Grid:
         right_col: int,
         style: CellStyle,
     ):
-        """Set border <style> to the rectangle <top_row><bottom_row...
+        """Set border `style` to the rectangle (top_row, bottom_row, ...)
 
         The values describing the grid lines between the cells, see doc-strings
-        for set_hborder and set_vborder and see comments for self._hborders and
-        self._vborders.
+        for methods set_x_border() and set_y_border() and see comments for
+        self._x_borders and self._y_borders.
         """
         for col in range(left_col, right_col):
-            self.set_hborder(top_row, col, style["top"])
-            self.set_hborder(bottom_row, col, style["bottom"])
+            self.set_x_border(top_row, col, style.top)
+            self.set_x_border(bottom_row, col, style.bottom)
         for row in range(top_row, bottom_row):
-            self.set_vborder(row, left_col, style["left"])
-            self.set_vborder(row, right_col, style["right"])
+            self.set_y_border(row, left_col, style.left)
+            self.set_y_border(row, right_col, style.right)
 
     def _set_frames(self, frames: Iterable[Frame]):
         """Set borders for all defined frames."""
@@ -658,39 +659,39 @@ class Grid:
                     },
                 )
 
-        def render_hborders():
+        def render_x_borders():
             """Draw the horizontal grid lines."""
             for row in range(table.nrows + 1):
-                yrow = self.row_pos[row]
+                y = self.row_pos[row]
                 for col in range(table.ncols):
-                    xleft = self.col_pos[col]
-                    xright = self.col_pos[col + 1]
-                    style = self.get_hborder(row, col)
-                    render_line(Vec2(xleft, yrow), Vec2(xright, yrow), style)
+                    left = self.col_pos[col]
+                    right = self.col_pos[col + 1]
+                    style = self.get_x_border(row, col)
+                    render_line(Vec2(left, y), Vec2(right, y), style)
 
-        def render_vborders():
+        def render_y_borders():
             """Draw the vertical grid lines."""
             for col in range(table.ncols + 1):
-                xcol = self.col_pos[col]
+                x = self.col_pos[col]
                 for row in range(table.nrows):
-                    ytop = self.row_pos[row]
-                    ybottom = self.row_pos[row + 1]
-                    style = self.get_vborder(row, col)
-                    render_line(Vec2(xcol, ytop), Vec2(xcol, ybottom), style)
+                    top = self.row_pos[row]
+                    bottom = self.row_pos[row + 1]
+                    style = self.get_y_border(row, col)
+                    render_line(Vec2(x, top), Vec2(x, bottom), style)
 
-        layer = table.gridlayer
-        render_hborders()
-        render_vborders()
+        layer = table.grid_layer_name
+        render_x_borders()
+        render_y_borders()
 
 
 class Frame:
     """Represent a rectangle cell area enclosed by borderlines.
 
-   Args:
-        table: the assigned data table
-        pos: tuple (row, col), border goes left and top of pos
-        span: count of cells that Frame covers, border goes right and below of this cells
-        style: style name as string
+    Args:
+         table: the assigned data table
+         pos: tuple (row, col), border goes left and top of pos
+         span: count of cells that Frame covers, border goes right and below of this cells
+         style: style name as string
     """
 
     def __init__(
@@ -751,16 +752,15 @@ class Cell:
         pass
 
     def get_workspace_coords(self, coords: Sequence[float]) -> Sequence[float]:
-        """Reduces the cell-coords about the hmargin and the vmargin values.
-        """
-        hmargin = self.style["hmargin"]
-        vmargin = self.style["vmargin"]
+        """Reduces the cell-coords about the margin_x and the margin_y values."""
+        margin_x = self.style.margin_x
+        margin_y = self.style.margin_y
         return (
-            coords[0] + hmargin,  # left
-            coords[1] - hmargin,  # right
-            coords[2] - vmargin,  # top
-            coords[3] + vmargin,
-        )  # bottom
+            coords[0] + margin_x,  # left
+            coords[1] - margin_x,  # right
+            coords[2] - margin_y,  # top
+            coords[3] + margin_y,  # bottom
+        )
 
 
 CustomCell = Cell
@@ -803,25 +803,23 @@ class TextCell(Cell):
 
         left, right, top, bottom = self.get_workspace_coords(coords)
         style = self.style
-        halign = style.halign
-        valign = style.valign
+        h_align, v_align = style.get_text_align_flags()
         rotated = self.style.rotation
         text = self.text
         if style.stacked:
             rotated = 0.0
             text = "\n".join((char for char in self.text.replace("\n", " ")))
-        xpos = (left, float(left + right) / 2.0, right)[halign]
-        ypos = (bottom, float(bottom + top) / 2.0, top)[valign - 1]
+        xpos = (left, float(left + right) / 2.0, right)[h_align]
+        ypos = (bottom, float(bottom + top) / 2.0, top)[v_align - 1]
         mtext = MText(  # using dxfwrite MText() composite, because it works
             text,
             (xpos, ypos),
-            linespacing=self.style.linespacing,
-            style=self.style.textstyle,
-            height=self.style.textheight,
+            line_spacing=self.style.line_spacing,
+            style=self.style.text_style,
+            height=self.style.char_height,
             rotation=rotated,
-            xscale=self.style.xscale,
-            halign=halign,
-            valign=valign,
+            width_factor=self.style.scale_x,
+            align=style.align,
             color=self.style.textcolor,
             layer=layer,
         )
@@ -867,17 +865,16 @@ class BlockCell(Cell):
         """
         left, right, top, bottom = self.get_workspace_coords(coords)
         style = self.style
-        halign = style.halign
-        valign = style.valign
-        xpos = (left, float(left + right) / 2.0, right)[halign]
-        ypos = (bottom, float(bottom + top) / 2.0, top)[valign - 1]
+        h_align, v_align = style.get_text_align_flags()
+        xpos = (left, float(left + right) / 2.0, right)[h_align]
+        ypos = (bottom, float(bottom + top) / 2.0, top)[v_align - 1]
         layout.add_auto_blockref(
             name=self.block_name,
             insert=(xpos, ypos),
             values=self.attribs,
             dxfattribs={
-                "xscale": style.xscale,
-                "yscale": style.yscale,
+                "xscale": style.scale_x,
+                "yscale": style.scale_y,
                 "rotation": style.rotation,
                 "layer": layer,
             },

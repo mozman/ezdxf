@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import pathlib
 import ezdxf
-from ezdxf.enums import TextEntityAlignment
+from ezdxf.enums import TextEntityAlignment, MTextEntityAlignment
 from ezdxf.addons import Table
 
 if TYPE_CHECKING:
@@ -81,8 +81,8 @@ def main():
     ctext = table.new_cell_style(
         name="ctext",
         textcolor=7,
-        textheight=0.5,
-        align="MIDDLE_CENTER",
+        char_height=0.5,
+        align=MTextEntityAlignment.MIDDLE_CENTER,
     )
     # halign = const.CENTER is still supported
     # valign = const.MIDDLE is still supported
@@ -94,10 +94,10 @@ def main():
     table.new_cell_style(
         name="vtext",
         textcolor=3,
-        textheight=0.3,
-        align="MIDDLE_CENTER",  # halign and valign still supported
+        char_height=0.3,
+        align=MTextEntityAlignment.MIDDLE_CENTER,
         rotation=90,  # vertical written
-        bgcolor=8,
+        bg_color=8,
     )
     # set column width, first column has index 0
     table.set_col_width(1, 7)
@@ -117,22 +117,22 @@ def main():
     table.frame(0, 0, 10, 2, "framestyle")
 
     # the style can be defined later because it is referenced by the name
-    hborder = table.new_border_style(color=4)
-    vborder = table.new_border_style(color=17)
+    x_border = table.new_border_style(color=4)
+    y_border = table.new_border_style(color=17)
     table.new_cell_style(
         name="framestyle",
-        left=hborder,
-        right=hborder,
-        top=vborder,
-        bottom=vborder,
+        left=x_border,
+        right=x_border,
+        top=y_border,
+        bottom=y_border,
     )
     mat_symbol = get_mat_symbol(doc)
 
     table.new_cell_style(
         name="matsym",
-        align="MIDDLE_CENTER",
-        xscale=0.6,
-        yscale=0.6,
+        align=MTextEntityAlignment.MIDDLE_CENTER,
+        scale_x=0.6,
+        scale_y=0.6,
     )
 
     # 1st Table rendering
@@ -145,10 +145,10 @@ def main():
     table.new_cell_style(
         name="57deg",
         textcolor=2,
-        textheight=0.5,
+        char_height=0.5,
         rotation=57,
-        align="MIDDLE_CENTER",
-        bgcolor=123,
+        align=MTextEntityAlignment.MIDDLE_CENTER,
+        bg_color=123,
     )
 
     table.text_cell(
@@ -167,8 +167,8 @@ def main():
     table.new_cell_style(
         name="stacked",
         textcolor=6,
-        textheight=0.25,
-        align="MIDDLE_CENTER",
+        char_height=0.25,
+        align=MTextEntityAlignment.MIDDLE_CENTER,
         stacked=True,
     )
     table.text_cell(6, 3, "STACKED FIELD", span=(7, 1), style="stacked")

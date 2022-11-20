@@ -1,5 +1,4 @@
-# Created: 21.03.2010, adapted 2018 for ezdxf
-# Copyright (C) 2010-2019, Manfred Moitzi
+# Copyright (C) 2011-2012, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -28,13 +27,18 @@ def test_init():
     table = Table((0, 0), 10, 10, default_grid=False)
     assert bool(table) is True
     style = table.get_cell_style("default")
-    for border in ["left", "right", "top", "bottom"]:
-        assert style[border].status is False
+
+    assert style.left.status is False
+    assert style.right.status is False
+    assert style.top.status is False
+    assert style.bottom.status is False
 
     table = Table((0, 0), 10, 10, default_grid=True)
     style = table.get_cell_style("default")
-    for border in ["left", "right", "top", "bottom"]:
-        assert style[border].status is True
+    assert style.left.status is True
+    assert style.right.status is True
+    assert style.top.status is True
+    assert style.bottom.status is True
 
 
 def test_setter_methods():
@@ -217,7 +221,7 @@ def test_grid_coords_span(table):
 def test_draw_cell_background(doc, table):
     grid = Grid(table)
     layout = doc.blocks.new("test_draw_cell_background")
-    table.new_cell_style("fill", bgcolor=17)
+    table.new_cell_style("fill", bg_color=17)
     cell = table.get_cell(0, 0)
     cell.stylename = "fill"
     grid.render_cell_background(layout, 0, 0, cell)
@@ -249,15 +253,15 @@ def test_set_border_style():
 class TestStyle:
     def test_init_default_style(self):
         style = CellStyle()
-        assert style.textstyle == "STANDARD"
+        assert style.text_style == "STANDARD"
 
     def test_init_custom_style(self):
-        style = CellStyle({"textstyle": "Arial"})
-        assert style.textstyle == "Arial"
+        style = CellStyle({"text_style": "Arial"})
+        assert style.text_style == "Arial"
 
     def test_get_attribute_index_operator(self):
         style = CellStyle()
-        assert style["textstyle"] == style.textstyle
+        assert style["text_style"] == style.text_style
 
     def test_invalid_attribute_name_raises_key_error(self):
         style = CellStyle()

@@ -25,13 +25,32 @@ from .mixins import SubscriptAttributes
 if TYPE_CHECKING:
     from ezdxf.eztypes import GenericLayoutType
 
+TOP_ALIGN = {
+    MTextEntityAlignment.TOP_LEFT,
+    MTextEntityAlignment.TOP_RIGHT,
+    MTextEntityAlignment.TOP_CENTER,
+}
+MIDDLE_ALIGN = {
+    MTextEntityAlignment.MIDDLE_LEFT,
+    MTextEntityAlignment.MIDDLE_CENTER,
+    MTextEntityAlignment.MIDDLE_RIGHT,
+}
+
 
 class MText(SubscriptAttributes):
-    """MultiLine-Text buildup with simple Text-Entities.
+    """MTEXT surrogate for DXF R12 build up by TEXT Entities. This add-on was
+    added to simplify the transition from `dxfwrite` to `ezdxf`.
 
-    Caution: align point is always the insert point, I don't need a second
-    alignpoint because horizontal alignments FIT, ALIGN, BASELINE_MIDDLE are not
-    supported.
+    The rich-text formatting capabilities for the regular MTEXT entity are not
+    supported, if these features are required use the regular MTEXT entity and
+    the :class:`ezdxf.addons.MTextExplode` add-on to explode the MTEXT entity
+    into simpler DXF primitives.
+
+    .. important::
+
+        The align-point is always the insert-point, there is no need for
+        a second align-point because the horizontal alignments FIT, ALIGN,
+        BASELINE_MIDDLE are not supported.
 
     Args:
         text: content as string
@@ -116,23 +135,15 @@ class MText(SubscriptAttributes):
             z = 0.0
         # rotation not respected
 
-        if self.align in (
-            MTextEntityAlignment.TOP_LEFT,
-            MTextEntityAlignment.TOP_RIGHT,
-            MTextEntityAlignment.TOP_CENTER,
-        ):
+        if self.align in TOP_ALIGN:
             y -= line_number * self.line_height
-        elif self.align in (
-            MTextEntityAlignment.MIDDLE_LEFT,
-            MTextEntityAlignment.MIDDLE_CENTER,
-            MTextEntityAlignment.MIDDLE_RIGHT,
-        ):
+        elif self.align in MIDDLE_ALIGN:
             y0 = line_number * self.line_height
             full_height = (len(self.content) - 1) * self.line_height
             y += (full_height / 2) - y0
-        else:  # BOTTOM
+        else:  # BOTTOM ALIGN
             y += (len(self.content) - 1 - line_number) * self.line_height
-        return self._rotate(Vec3(x, y, z))  # do rotation
+        return self._rotate(Vec3(x, y, z))
 
     def _rotate(self, alignpoint: Vec3) -> Vec3:
         """Rotate `alignpoint` around insert-point about rotation degrees."""
