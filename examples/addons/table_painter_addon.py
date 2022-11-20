@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pathlib
 import ezdxf
 from ezdxf.enums import TextEntityAlignment, MTextEntityAlignment
-from ezdxf.addons import Table
+from ezdxf.addons import TablePainter
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -16,7 +16,7 @@ if not CWD.exists():
 
 
 # ------------------------------------------------------------------------------
-# This add-ons shows how to draw tables by the Table add-on. It's important to
+# This add-ons shows how to draw tables by the TablePainter add-on. It's important to
 # understand that this table rendering is build up only by DXF primitives which
 # are supported by DXF R12.
 #
@@ -76,7 +76,7 @@ def main():
     doc = ezdxf.new("R12")
     msp = doc.modelspace()
 
-    table = Table(insert=(0, 0), nrows=20, ncols=10)
+    table = TablePainter(insert=(0, 0), nrows=20, ncols=10)
     # create a new styles
     ctext = table.new_cell_style(
         name="ctext",
@@ -135,7 +135,7 @@ def main():
         scale_y=0.6,
     )
 
-    # 1st Table rendering
+    # 1st TablePainter rendering
     # Render the table to a layout: the modelspace, a paperspace layout or a
     # block definition.
     table.render(msp, insert=(40, 20))
@@ -155,7 +155,7 @@ def main():
         6, 3, "line one\nline two\nand line three", span=(3, 3), style="57deg"
     )
 
-    # 2nd Table rendering
+    # 2nd TablePainter rendering
     # create an anonymous block
     block = doc.blocks.new_anonymous_block()
     # Render the table into the block layout at insert location (0, 0):
@@ -178,7 +178,7 @@ def main():
             pos, 1, mat_symbol, attribs={"num": pos}, style="matsym"
         )
 
-    # 3rd Table rendering
+    # 3rd TablePainter rendering
     # Render table to a layout: the modelspace, a paperspace layout or a block
     # definition.
     table.render(msp, insert=(0, 0))

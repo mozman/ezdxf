@@ -3,8 +3,13 @@
 import pytest
 import ezdxf
 from ezdxf.document import Drawing
-from ezdxf.addons.table import Table, CustomCell
-from ezdxf.addons.table import Grid, CellStyle, DEFAULT_BORDER_COLOR
+from ezdxf.addons.tablepainter import (
+    TablePainter,
+    CustomCell,
+    Grid,
+    CellStyle,
+    DEFAULT_BORDER_COLOR,
+)
 
 
 @pytest.fixture(scope="module")
@@ -24,7 +29,7 @@ class MockCell(CustomCell):
 
 
 def test_init():
-    table = Table((0, 0), 10, 10, default_grid=False)
+    table = TablePainter((0, 0), 10, 10, default_grid=False)
     assert bool(table) is True
     style = table.get_cell_style("default")
 
@@ -33,7 +38,7 @@ def test_init():
     assert style.top.status is False
     assert style.bottom.status is False
 
-    table = Table((0, 0), 10, 10, default_grid=True)
+    table = TablePainter((0, 0), 10, 10, default_grid=True)
     style = table.get_cell_style("default")
     assert style.left.status is True
     assert style.right.status is True
@@ -42,7 +47,7 @@ def test_init():
 
 
 def test_setter_methods():
-    table = Table((0, 0), 10, 10)
+    table = TablePainter((0, 0), 10, 10)
     table.set_col_width(0, 3.0)
     assert table.col_widths[0] == 3.0
     table.set_row_height(0, 4.0)
@@ -50,7 +55,7 @@ def test_setter_methods():
 
 
 def test_cell_index():
-    table = Table((0, 0), 10, 10)
+    table = TablePainter((0, 0), 10, 10)
     with pytest.raises(IndexError):
         table.get_cell(10, 10)
     with pytest.raises(IndexError):
@@ -58,7 +63,7 @@ def test_cell_index():
 
 
 def test_default_text_cell():
-    table = Table((0, 0), 10, 10)
+    table = TablePainter((0, 0), 10, 10)
     text_cell = table.text_cell(0, 0, "test")
     assert text_cell.text == "test"
     cell = table.get_cell(0, 0)
@@ -67,7 +72,7 @@ def test_default_text_cell():
 
 
 def test_text_cell():
-    table = Table((0, 0), 10, 10)
+    table = TablePainter((0, 0), 10, 10)
     text_cell = table.text_cell(8, 8, "test88", span=(2, 2), style="extrastyle")
     assert text_cell.text == "test88"
     cell = table.get_cell(8, 8)
@@ -77,7 +82,7 @@ def test_text_cell():
 
 def test_block_cell(doc):
     block = doc.blocks.new("EMPTY_BLOCK")
-    table = Table((0, 0), 10, 10)
+    table = TablePainter((0, 0), 10, 10)
     block_cell = table.block_cell(1, 1, block, span=(3, 3))
     assert block_cell.block_name == "EMPTY_BLOCK"
 
@@ -87,14 +92,14 @@ def test_block_cell(doc):
 
 
 def test_frame():
-    table = Table((0, 0), 10, 10)
+    table = TablePainter((0, 0), 10, 10)
     frame = table.frame(0, 0, width=10, height=2)
     assert frame.pos == (0, 0)
     assert frame.span == (2, 10)
 
 
 def test_cell_style():
-    table = Table((0, 0), 10, 10)
+    table = TablePainter((0, 0), 10, 10)
     table.new_cell_style("extra", textcolor=199)
     style = table.get_cell_style("extra")
     assert style.textcolor == 199
@@ -103,7 +108,7 @@ def test_cell_style():
 
 
 def test_border_style():
-    table = Table((0, 0), 10, 10)
+    table = TablePainter((0, 0), 10, 10)
     border_style = table.new_border_style(
         color=1, status=True, linetype="DOT", priority=99
     )
@@ -114,9 +119,9 @@ def test_border_style():
 
 
 def test_visibility_map():
-    from ezdxf.addons.table import VisibilityMap
+    from ezdxf.addons.tablepainter import VisibilityMap
 
-    table = Table((0, 0), 3, 3)
+    table = TablePainter((0, 0), 3, 3)
     text_cell = table.text_cell(0, 0, "text", span=(2, 2))
     vmap = VisibilityMap(table)
     empty = table.empty_cell
@@ -137,7 +142,7 @@ def test_visibility_map():
 def test_rendering(doc):
     MockCell.reset()
     layout = doc.blocks.new("test_rendering")
-    table = Table((0, 0), 3, 3)
+    table = TablePainter((0, 0), 3, 3)
     indices = [
         (0, 0),
         (0, 1),
@@ -159,7 +164,7 @@ def test_rendering(doc):
 def test_dxf_creation_span(doc):
     MockCell.reset()
     layout = doc.blocks.new("test_dxf_creation_span")
-    table = Table((0, 0), 3, 3)
+    table = TablePainter((0, 0), 3, 3)
     indices = [
         (0, 0),
         (0, 1),
@@ -182,7 +187,7 @@ def test_dxf_creation_span(doc):
 
 def test_span_beyond_table_borders(doc):
     layout = doc.blocks.new("test_span_beyond_table_borders")
-    table = Table((0, 0), 3, 3)
+    table = TablePainter((0, 0), 3, 3)
     table.text_cell(0, 2, "ERROR", span=(1, 2))
     with pytest.raises(IndexError):
         table.render(layout)
@@ -193,7 +198,7 @@ def test_span_beyond_table_borders(doc):
 
 @pytest.fixture
 def table():
-    table = Table((0, 0), 3, 3)
+    table = TablePainter((0, 0), 3, 3)
     for x in range(3):
         table.set_col_width(x, 3.0)
         table.set_row_height(x, 3.0)

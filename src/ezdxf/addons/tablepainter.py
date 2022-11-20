@@ -67,10 +67,11 @@ HIDDEN = 0
 T = TypeVar("T", bound="Cell")
 
 
-class Table:
-    """Table object similar to an HTML table.
+class TablePainter:
+    """The TablePainter class renders tables similar to an HTML table build up
+    by DXF primitives and is not related to the ACAD_TABLE DXF entity in any way.
 
-    The table object contains the table data cells.
+    The TablePainter instance contains all the data cells.
 
     Args:
         insert: insert location as or :class:`~ezdxf.math.UVec`
@@ -272,9 +273,9 @@ class Table:
 class VisibilityMap:
     """Stores the visibility of the table cells."""
 
-    def __init__(self, table: Table):
+    def __init__(self, table: TablePainter):
         """Create the visibility map for table."""
-        self.table: Table = table
+        self.table: TablePainter = table
         self._hidden_cells: set[tuple[int, int]] = set()
         self._create_visibility_map()
 
@@ -435,8 +436,8 @@ class BorderStyle:
 class Grid:
     """Grid contains the graphical representation of the table."""
 
-    def __init__(self, table: Table):
-        self.table: Table = table
+    def __init__(self, table: TablePainter):
+        self.table: TablePainter = table
         # contains the x-axis coords of the grid lines between the data columns.
         self.col_pos: list[float] = self._calc_col_pos()
         # contains the y-axis coords of the grid lines between the data rows.
@@ -641,7 +642,7 @@ class Grid:
                 top_row, bottom_row, left_col, right_col, frame.style
             )
 
-    def _render_borders(self, layout: GenericLayoutType, table: Table):
+    def _render_borders(self, layout: GenericLayoutType, table: TablePainter):
         """Render the grid lines as LINE entities into layout object."""
 
         def render_line(start: Vec2, end: Vec2, style: BorderStyle):
@@ -694,7 +695,7 @@ class Frame:
 
     def __init__(
         self,
-        table: Table,
+        table: TablePainter,
         pos: tuple[int, int] = (0, 0),
         span: tuple[int, int] = (1, 1),
         style="default",
@@ -724,7 +725,7 @@ class Cell:
     """
 
     def __init__(
-        self, table: Table, style="default", span: tuple[int, int] = (1, 1)
+        self, table: TablePainter, style="default", span: tuple[int, int] = (1, 1)
     ):
         self.table = table
         self.stylename = style
@@ -777,7 +778,7 @@ class TextCell(Cell):
 
     def __init__(
         self,
-        table: Table,
+        table: TablePainter,
         text: str,
         style="default",
         span: tuple[int, int] = (1, 1),
@@ -838,7 +839,7 @@ class BlockCell(Cell):
 
     def __init__(
         self,
-        table: Table,
+        table: TablePainter,
         blockdef: BlockLayout,
         style="default",
         attribs=None,
