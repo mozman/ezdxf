@@ -1,7 +1,7 @@
 # Copyright (C) 2011-2022, Manfred Moitzi
 # License: MIT License
+from .mtextsurrogate import MTextSurrogate
 from .tablepainter import TablePainter, CustomCell
-from .mtext import MTextSurrogate
 from .menger_sponge import MengerSponge
 from .sierpinski_pyramid import SierpinskyPyramid
 from .dimlines import LinearDimension, AngularDimension, ArcDimension, RadialDimension, dimstyles

@@ -35,7 +35,7 @@ from ezdxf.enums import (
     MTextEntityAlignment,
     MAP_MTEXT_ALIGN_TO_FLAGS,
 )
-from ezdxf.addons.mtext import MTextSurrogate
+from ezdxf.addons import MTextSurrogate
 from ezdxf.math import UVec, Vec2
 
 if TYPE_CHECKING:

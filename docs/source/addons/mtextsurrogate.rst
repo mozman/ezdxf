@@ -1,4 +1,4 @@
-.. _mtext_r12:
+.. _mtext_surrogate:
 
 MTextSurrogate for DXF R12
 ==========================
