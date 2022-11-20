@@ -39,6 +39,98 @@ can be added automatically to the block reference as ATTRIB entities.
     The DXF format does not support clipping boxes ot paths, therefore the
     render method of any cell can render beyond the borders of the cell!
 
+Tutorial
+--------
+
+Set up a new DXF document:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.enums import MTextEntityAlignment
+    from ezdxf.addons import TablePainter
+
+    doc = ezdxf.new("R2000")  # required for lineweight support
+    doc.header["$LWDISPLAY"] = 1  # show lineweights
+    doc.styles.add("HEAD", font="OpenSans-ExtraBold.ttf")
+    doc.styles.add("CELL", font="OpenSans-Regular.ttf")
+
+Create a new :class:`TablePainter` object with four rows and four columns, the
+insert location is the default render location but can be overriden in the
+:meth:`render` method:
+
+.. code-block:: Python
+
+    table = TablePainter(
+        insert=(0, 0), nrows=4, ncols=4, cell_width=6.0, cell_height=2.0
+    )
+
+Create a new :class:`CellStyle` object for the table-header called "head":
+
+.. code-block:: Python
+
+    table.new_cell_style(
+        "head",
+        text_style="HEAD",
+        textcolor=ezdxf.colors.BLUE,
+        char_height=0.7,
+        bg_color=ezdxf.colors.LIGHT_GRAY,
+        align=MTextEntityAlignment.MIDDLE_CENTER,
+    )
+
+Redefine the default :class:`CellStyle` for the content cells:
+
+.. code-block:: Python
+
+    # reset default cell style
+    default_style = table.get_cell_style("default")
+    default_style.text_style = "CELL"
+    default_style.char_height = 0.5
+    default_style.align = MTextEntityAlignment.BOTTOM_LEFT
+
+Set the table-header content:
+
+.. code-block:: Python
+
+    for col in range(4):
+        table.text_cell(0, col, f"Head[{col}]", style="head")
+
+Set the cell content:
+
+.. code-block:: Python
+
+    for row in range(1, 4):
+        for col in range(4):
+            # cell style is "default"
+            table.text_cell(row, col, f"Cell[{row}, {col}]")
+
+Add a red frame around the table-header:
+
+.. code-block:: Python
+
+    # new cell style is required
+    red_frame = table.new_cell_style("red-frame")
+    red_borderline = table.new_border_style(color=ezdxf.colors.RED, lineweight=35)
+    # set the red borderline style for all cell borders
+    red_frame.set_border_style(red_borderline)
+    # create the frame object
+    table.frame(0, 0, 4, style="red-frame")
+
+Render the table into the modelspace and export the DXF file:
+
+.. code-block:: Python
+
+    # render the table, shifting the left-bottom of the table to the origin:
+    table.render(doc.modelspace(), insert=(0, table.table_height))
+
+    th = table.table_height
+    tw = table.table_width
+    doc.set_modelspace_vport(height=th * 1.5, center=(tw/2, th/2))
+    doc.saveas("table_tutorial.dxf")
+
+.. image:: gfx/table_painter_addon.png
+    :align: center
+
 .. seealso::
 
     - Example script: `table_painter_addon.py`_
