@@ -34,10 +34,8 @@ from ezdxf.lldxf import const
 from ezdxf.enums import (
     MTextEntityAlignment,
     MAP_MTEXT_ALIGN_TO_FLAGS,
-    MAP_FLAGS_TO_STRING_ALIGN,
-    MAP_STRING_ALIGN_TO_FLAGS,
 )
-from .mtext import MText
+from ezdxf.addons.mtext import MTextSurrogate
 from ezdxf.math import UVec, Vec2
 
 if TYPE_CHECKING:
@@ -811,12 +809,12 @@ class TextCell(Cell):
             text = "\n".join((char for char in self.text.replace("\n", " ")))
         xpos = (left, float(left + right) / 2.0, right)[h_align]
         ypos = (bottom, float(bottom + top) / 2.0, top)[v_align - 1]
-        mtext = MText(  # using dxfwrite MText() composite, because it works
+        mtext = MTextSurrogate(
             text,
             (xpos, ypos),
             line_spacing=self.style.line_spacing,
             style=self.style.text_style,
-            height=self.style.char_height,
+            char_height=self.style.char_height,
             rotation=rotated,
             width_factor=self.style.scale_x,
             align=style.align,

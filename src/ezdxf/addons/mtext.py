@@ -1,14 +1,5 @@
 # Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
-"""MText - MultiLine-Text-Entity, build by simple TEXT-Entities.
-
-MTEXT was introduced in R13, so this is a replacement with multiple simple
-TEXT entities. Supports valign (TOP, MIDDLE, BOTTOM), halign (LEFT, CENTER,
-RIGHT), rotation for an arbitrary (!) angle and mirror.
-
-This add-on exist only for porting 'dxfwrite' projects to 'ezdxf'.
-
-"""
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 import math
@@ -37,7 +28,7 @@ MIDDLE_ALIGN = {
 }
 
 
-class MText(SubscriptAttributes):
+class MTextSurrogate(SubscriptAttributes):
     """MTEXT surrogate for DXF R12 build up by TEXT Entities. This add-on was
     added to simplify the transition from `dxfwrite` to `ezdxf`.
 
@@ -57,7 +48,7 @@ class MText(SubscriptAttributes):
         insert: insert location in drawing units
         line_spacing: line spacing in percent of height, 1.5 = 150% = 1+1/2 lines
         align: text alignment as :class:`ezdxf.enum.MTextEntityAlignment` enum
-        height: text height in drawing units
+        char_height: text height in drawing units
         style: :class:`ezdxf.entities.Textstyle` reference as string
         oblique: oblige angle in degrees, where 0 is vertical
         rotation: text rotation angle in degrees
@@ -78,7 +69,7 @@ class MText(SubscriptAttributes):
         insert: UVec,
         line_spacing: float = 1.5,
         align=MTextEntityAlignment.TOP_LEFT,
-        height: float = 1.0,
+        char_height: float = 1.0,
         style="STANDARD",
         oblique: float = 0.0,
         rotation: float = 0.0,
@@ -93,7 +84,7 @@ class MText(SubscriptAttributes):
         assert isinstance(align, MTextEntityAlignment)
         self.align = align
 
-        self.height = float(height)
+        self.char_height = float(char_height)
         self.style = str(style)
         self.oblique = float(oblique)  # in degree
         self.rotation = float(rotation)  # in degree
@@ -105,7 +96,7 @@ class MText(SubscriptAttributes):
     @property
     def line_height(self) -> float:
         """Absolute line spacing in drawing units."""
-        return self.height * self.line_spacing
+        return self.char_height * self.line_spacing
 
     def render(self, layout: GenericLayoutType) -> None:
         """Create the DXF-TEXT entities."""
@@ -163,7 +154,7 @@ class MText(SubscriptAttributes):
             "layer": self.layer,
             "color": self.color,
             "style": self.style,
-            "height": self.height,
+            "height": self.char_height,
             "width": self.width_factor,
             "text_generation_flag": self.mirror,
             "rotation": self.rotation,

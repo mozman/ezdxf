@@ -4,7 +4,7 @@ import pytest
 import ezdxf
 from ezdxf import const
 from ezdxf.enums import MTextEntityAlignment
-from ezdxf.addons import MText
+from ezdxf.addons import MTextSurrogate
 
 
 @pytest.fixture(scope="module")
@@ -15,7 +15,7 @@ def doc():
 def test_horiz_top(doc):
     layout = doc.blocks.new("test_horiz_top")
     text = "lineA\nlineB"
-    mtext = MText(text, (0.0, 0.0, 0.0), 1.0)
+    mtext = MTextSurrogate(text, (0.0, 0.0, 0.0), 1.0)
     mtext.render(layout)
     assert len(layout) == 2
     lines = list(layout)
@@ -32,7 +32,7 @@ def test_horiz_top(doc):
 def test_horiz_bottom(doc):
     layout = doc.blocks.new("test_horiz_bottom")
     text = "lineA\nlineB"
-    mtext = MText(
+    mtext = MTextSurrogate(
         text, (0.0, 0.0, 0.0), 1.0, align=MTextEntityAlignment.BOTTOM_LEFT
     )
     mtext.render(layout)
@@ -51,7 +51,7 @@ def test_horiz_bottom(doc):
 def test_horiz_middle(doc):
     layout = doc.blocks.new("test_horiz_middle")
     text = "lineA\nlineB"
-    mtext = MText(
+    mtext = MTextSurrogate(
         text, (0.0, 0.0, 0.0), 1.0, align=MTextEntityAlignment.MIDDLE_LEFT
     )
     mtext.render(layout)
@@ -70,7 +70,7 @@ def test_horiz_middle(doc):
 def test_45deg_top(doc):
     layout = doc.blocks.new("test_45deg_top")
     text = "lineA\nlineB\nlineC"
-    mtext = MText(
+    mtext = MTextSurrogate(
         text,
         (0.0, 0.0, 0.0),
         1.0,
@@ -97,7 +97,7 @@ def test_45deg_top(doc):
 def test_45deg_bottom(doc):
     layout = doc.blocks.new("test_45deg_bottom")
     text = "lineA\nlineB\nlineC"
-    mtext = MText(
+    mtext = MTextSurrogate(
         text,
         (0.0, 0.0, 0.0),
         1.0,
@@ -124,7 +124,7 @@ def test_45deg_bottom(doc):
 def test_one_liner(doc):
     layout = doc.blocks.new("test_one_liner")
     text = "OneLine"
-    mtext = MText(text, (0.0, 0.0, 0.0))
+    mtext = MTextSurrogate(text, (0.0, 0.0, 0.0))
     mtext.render(layout)
     assert len(layout) == 1
     lines = list(layout)
@@ -135,12 +135,12 @@ def test_one_liner(doc):
 
 
 def test_get_attribute_by_subscript():
-    mtext = MText("Test\nTest", (0, 0))
+    mtext = MTextSurrogate("Test\nTest", (0, 0))
     layer = mtext["layer"]
     assert layer == mtext.layer
 
 
 def test_set_attribute_by_subscript():
-    mtext = MText("Test\nTest", (0, 0))
+    mtext = MTextSurrogate("Test\nTest", (0, 0))
     mtext["layer"] = "modified"
     assert mtext.layer == "modified"

@@ -2,7 +2,7 @@
 # License: MIT License
 import pathlib
 import ezdxf
-from ezdxf.addons import MText
+from ezdxf.addons import MTextSurrogate
 from ezdxf.math import UVec
 from ezdxf.layouts import Modelspace
 from ezdxf.enums import MTextEntityAlignment
@@ -35,15 +35,15 @@ def textblock(
     msp.add_line((x + 150, y), (x + 150, y + 50), dxfattribs=attribs)
 
     msp.add_line((x + 50, y), (x + 150, y), dxfattribs=attribs)
-    MText(text, (x + 50, y), mirror=mirror, rotation=rot).render(msp)
-    MText(
+    MTextSurrogate(text, (x + 50, y), mirror=mirror, rotation=rot).render(msp)
+    MTextSurrogate(
         text,
         (x + 100, y),
         mirror=mirror,
         rotation=rot,
         align=MTextEntityAlignment.TOP_CENTER,
     ).render(msp)
-    MText(
+    MTextSurrogate(
         text,
         (x + 150, y),
         mirror=mirror,
@@ -52,14 +52,14 @@ def textblock(
     ).render(msp)
 
     msp.add_line((x + 50, y + 25), (x + 150, y + 25), dxfattribs=attribs)
-    MText(
+    MTextSurrogate(
         text,
         (x + 50, y + 25),
         mirror=mirror,
         rotation=rot,
         align=MTextEntityAlignment.MIDDLE_LEFT,
     ).render(msp)
-    MText(
+    MTextSurrogate(
         text,
         (x + 100, y + 25),
         mirror=mirror,
@@ -67,7 +67,7 @@ def textblock(
         align=MTextEntityAlignment.MIDDLE_CENTER,
     ).render(msp)
 
-    MText(
+    MTextSurrogate(
         text,
         (x + 150, y + 25),
         mirror=mirror,
@@ -76,21 +76,21 @@ def textblock(
     ).render(msp)
 
     msp.add_line((x + 50, y + 50), (x + 150, y + 50), dxfattribs=attribs)
-    MText(
+    MTextSurrogate(
         text,
         (x + 50, y + 50),
         mirror=mirror,
         align=MTextEntityAlignment.BOTTOM_LEFT,
         rotation=rot,
     ).render(msp)
-    MText(
+    MTextSurrogate(
         text,
         (x + 100, y + 50),
         mirror=mirror,
         align=MTextEntityAlignment.BOTTOM_CENTER,
         rotation=rot,
     ).render(msp)
-    MText(
+    MTextSurrogate(
         text,
         (x + 150, y + 50),
         mirror=mirror,
@@ -104,7 +104,7 @@ def rotate_text(
 ):
     delta = 360.0 / parts
     for part in range(parts):
-        MText(
+        MTextSurrogate(
             text,
             insert,
             rotation=(delta * part),
@@ -132,14 +132,14 @@ def main():
     textblock(msp, txt, 300, 70, 225.0, color=6)
 
     txt = "MText Zeile 1\nMIRROR_X\nZeile 3"
-    textblock(msp, txt, 0, 140, 0.0, color=4, mirror=MText.MIRROR_X)
-    textblock(msp, txt, 150, 140, 45.0, color=5, mirror=MText.MIRROR_X)
-    textblock(msp, txt, 300, 140, 90.0, color=6, mirror=MText.MIRROR_X)
+    textblock(msp, txt, 0, 140, 0.0, color=4, mirror=MTextSurrogate.MIRROR_X)
+    textblock(msp, txt, 150, 140, 45.0, color=5, mirror=MTextSurrogate.MIRROR_X)
+    textblock(msp, txt, 300, 140, 90.0, color=6, mirror=MTextSurrogate.MIRROR_X)
 
-    txt = "MText Zeile 1\nMIRROR_Y\nZeile 3"
-    textblock(msp, txt, 0, 210, 0.0, color=4, mirror=MText.MIRROR_Y)
-    textblock(msp, txt, 150, 210, 45.0, color=5, mirror=MText.MIRROR_Y)
-    textblock(msp, txt, 300, 210, 90.0, color=6, mirror=MText.MIRROR_Y)
+    txt = "MTextSurrogate Zeile 1\nMIRROR_Y\nZeile 3"
+    textblock(msp, txt, 0, 210, 0.0, color=4, mirror=MTextSurrogate.MIRROR_Y)
+    textblock(msp, txt, 150, 210, 45.0, color=5, mirror=MTextSurrogate.MIRROR_Y)
+    textblock(msp, txt, 300, 210, 90.0, color=6, mirror=MTextSurrogate.MIRROR_Y)
 
     textblock(msp, "Einzeiler  0 deg", 0, -70, 0.0, color=1)
     textblock(msp, "Einzeiler 45 deg", 150, -70, 45.0, color=2)
