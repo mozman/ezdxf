@@ -1,22 +1,5 @@
 # Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
-"""Add-on for drawing simple tables by DXF primitives. This add-on does not
-create ACAD_TABLE entities!
-
-Cells can contain MTEXT or BLOCK references, or you can create your own
-cell type by extending the CustomCell() class.
-
-A Cell can span over multiple columns and/or rows.
-Text cells can contain text with an arbitrary rotation angle, or letters can be
-stacked from top to bottom.
-
-BlockCells contains block references (INSERT) created from a block
-definition (BLOCK), if the block definition contains attribute definitions
-(ATTDEF), attribs will be added to the block reference (ATTRIB).
-
-This add-on exist for porting :mod:`dxfwrite` projects to :mod:`ezdxf`.
-
-"""
 from __future__ import annotations
 from typing import (
     Any,
@@ -68,8 +51,7 @@ T = TypeVar("T", bound="Cell")
 
 
 class TablePainter:
-    """The TablePainter class renders tables similar to an HTML table build up
-    by DXF primitives and is not related to the ACAD_TABLE DXF entity in any way.
+    """The TablePainter class renders tables build from DXF primitives.
 
     The TablePainter instance contains all the data cells.
 
@@ -130,9 +112,10 @@ class TablePainter:
         span: tuple[int, int] = (1, 1),
         style="default",
     ) -> TextCell:
-        """Create a new text cell at location (row, col), with `text` as
-        content, the `text` can be a line breaks ``'\\n'``. The final cell can
-        spread over several cells defined by the argument `span`.
+        """Factory method to create a new text cell at location (row, col),
+        with `text` as content, the `text` can be a line breaks ``'\\n'``.
+        The final cell can spread over several cells defined by the argument
+        `span`.
 
         """
         cell = TextCell(self, text, style=style, span=span)
@@ -147,11 +130,11 @@ class TablePainter:
         attribs=None,
         style="default",
     ) -> BlockCell:
-        """Create a new block cell at position (row, col).
+        """Factory method to Create a new block cell at position (row, col).
 
         Content is a block reference inserted by an INSERT entity,
-        attributes will be added if the block definition contains ATTDEF. Assignments
-        are defined by attribs-key to attdef-tag association.
+        attributes will be added if the block definition contains ATTDEF.
+        Assignments are defined by attribs-key to attdef-tag association.
 
         Example: attribs = {'num': 1} if an ATTDEF with tag=='num' in
         the block definition exists, an attrib with text=str(1) will be
@@ -196,16 +179,17 @@ class TablePainter:
         height: int = 1,
         style="default",
     ) -> Frame:
-        """Create a Frame object which frames the cell area starting at(row, col)
-        covering `width` columns and `height` rows.
-
+        """Creates a frame around the give cell area, starting at (row, col) and
+        covering `width` columns and `height` rows. The `style` argument is the
+        name of a :class:`BorderStyle`.
         """
         frame = Frame(self, pos=(row, col), span=(height, width), style=style)
         self.frames.append(frame)
         return frame
 
     def new_cell_style(self, name: str, **kwargs) -> CellStyle:
-        """Create a new Style object `name`, overwrites exiting styles.
+        """Factory method to create a new :class:`CellStyle` object, overwrites
+        an already existing cell style.
 
         Args:
             name: style name as string
@@ -227,7 +211,7 @@ class TablePainter:
         priority: int = 100,
         linetype: str = "BYLAYER",
     ) -> BorderStyle:
-        """Create a new border style.
+        """Factory method to create a new border style.
 
         Args:
             status: ``True`` for visible, ``False`` for invisible
@@ -333,16 +317,23 @@ class VisibilityMap:
 
 
 class CellStyle:
-    """Cell style object."""
+    """Cell style object.
+
+    .. important::
+
+        Always instantiate new styles by the factory method:
+        :meth:`TablePainter.new_cell_style`
+
+    """
 
     def __init__(self, data: Optional[dict[str, Any]] = None):
         # text style is ignored by block cells
         self.text_style = "STANDARD"
         # text height in drawing units, ignored by block cells
         self.char_height = DEFAULT_CELL_CHAR_HEIGHT
-        # line spacing in percent = <char_height>*<line_spacing>, ignored by block cells
+        # line spacing in percent = char_height * line_spacing, ignored by block cells
         self.line_spacing = DEFAULT_CELL_LINE_SPACING
-        # text stretch or block reference x-axis scaling factor
+        # text stretching factor (width factor) or block reference x-scaling factor
         self.scale_x = DEFAULT_CELL_X_SCALE
         # block reference y-axis scaling factor, ignored by text cells
         self.scale_y = DEFAULT_CELL_Y_SCALE
@@ -352,11 +343,11 @@ class CellStyle:
         self.rotation = 0.0
         # Letters are stacked top-to-bottom, but not rotated
         self.stacked = False
-        # align parameter, see ezdxf.enums.MTextEntityAlignment
+        # text and block alignment, see ezdxf.enums.MTextEntityAlignment
         self.align = MTextEntityAlignment.TOP_CENTER
-        # left and right margin in drawing units
+        # left and right cell margin in drawing units
         self.margin_x = DEFAULT_CELL_X_MARGIN
-        # top and bottom margin
+        # top and bottom cell margin in drawing units
         self.margin_y = DEFAULT_CELL_Y_MARGIN
         # background color, dxf color index, ignored by block cells
         self.bg_color = DEFAULT_CELL_BG_COLOR
@@ -416,6 +407,15 @@ class CellStyle:
 
 
 class BorderStyle:
+    """Border style class.
+
+    .. important::
+
+        Always instantiate new border styles by the factory method:
+        :meth:`TablePainter.new_border_style`
+
+    """
+
     def __init__(
         self,
         status: bool = DEFAULT_BORDER_STATUS,
@@ -711,7 +711,7 @@ class Frame:
 
 
 class Cell:
-    """Cell represents the table cell data.
+    """Base class for table cells.
 
     Args:
         table: assigned data table
@@ -725,7 +725,10 @@ class Cell:
     """
 
     def __init__(
-        self, table: TablePainter, style="default", span: tuple[int, int] = (1, 1)
+        self,
+        table: TablePainter,
+        style="default",
+        span: tuple[int, int] = (1, 1),
     ):
         self.table = table
         self.stylename = style
@@ -734,6 +737,7 @@ class Cell:
 
     @property
     def span(self) -> tuple[int, int]:
+        """Get/set table span parameters."""
         return self._span
 
     @span.setter
@@ -743,11 +747,13 @@ class Cell:
 
     @property
     def style(self) -> CellStyle:
+        """Returns the associated :class:`CellStyle`."""
         return self.table.get_cell_style(self.stylename)
 
     def render(
         self, layout: GenericLayoutType, coords: Sequence[float], layer: str
     ):
+        """Renders the cell content into the given `layout`."""
         pass
 
     def get_workspace_coords(self, coords: Sequence[float]) -> Sequence[float]:
@@ -766,11 +772,13 @@ CustomCell = Cell
 
 
 class TextCell(Cell):
-    """Represents a multi line text. Text lines are separated by '\n'.
+    """Implements a cell type containing a multi-line text. Uses the
+    :class:`~ezdxf.addons.MTextSurrogate` add-on to render the multi-line
+    text, therefore the content of these cells is compatible to DXF R12.
 
     Args:
         table: assigned data table
-        text: multi line text, lines separated by '\n'
+        text: multi line text, lines separated by the new line character ``"\\n"``
         style: cell style name as string
         span: tuple(rows, cols) area of cells to cover
 
@@ -826,7 +834,7 @@ class TextCell(Cell):
 
 
 class BlockCell(Cell):
-    """Block reference cells.
+    """Implements a cell type containing a block reference.
 
     Args:
         table: table object
