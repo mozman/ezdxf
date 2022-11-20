@@ -284,3 +284,7 @@ ACI
     .. attribute:: BLACK
 
     .. attribute:: WHITE
+
+    .. attribute:: GRAY
+
+    .. attribute:: LIGHT_GRAY

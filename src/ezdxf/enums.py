@@ -233,3 +233,5 @@ class ACI(IntEnum):
     MAGENTA = 6
     BLACK = 7
     WHITE = 7
+    GRAY = 8
+    LIGHT_GRAY = 9
