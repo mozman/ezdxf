@@ -10,15 +10,19 @@ This add-on exist only for porting 'dxfwrite' projects to 'ezdxf'.
 
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 import math
-from .mixins import SubscriptAttributes
-import ezdxf
+
+
+from ezdxf.enums import (
+    MTextEntityAlignment,
+    MAP_MTEXT_ALIGN_TO_FLAGS,
+)
 from ezdxf.lldxf import const
-from ezdxf.enums import MAP_FLAGS_TO_STRING_ALIGN, MAP_STRING_ALIGN_TO_FLAGS
+from ezdxf.math import UVec, Vec3
+from .mixins import SubscriptAttributes
 
 if TYPE_CHECKING:
-    from ezdxf.math import UVec
     from ezdxf.eztypes import GenericLayoutType
 
 
@@ -26,132 +30,130 @@ class MText(SubscriptAttributes):
     """MultiLine-Text buildup with simple Text-Entities.
 
     Caution: align point is always the insert point, I don't need a second
-    alignpoint because horizontal alignment FIT, ALIGN, BASELINE_MIDDLE is not
+    alignpoint because horizontal alignments FIT, ALIGN, BASELINE_MIDDLE are not
     supported.
 
-    linespacing -- line spacing in percent of height, 1.5 = 150% = 1+1/2 lines
-
-    supported align values:
-        'BOTTOM_LEFT', 'BOTTOM_CENTER', 'BOTTOM_RIGHT'
-        'MIDDLE_LEFT', 'MIDDLE_CENTER', 'MIDDLE_RIGHT'
-        'TOP_LEFT',    'TOP_CENTER',    'TOP_RIGHT'
+    Args:
+        text: content as string
+        insert: insert location in drawing units
+        line_spacing: line spacing in percent of height, 1.5 = 150% = 1+1/2 lines
+        align: text alignment as :class:`ezdxf.enum.MTextEntityAlignment` enum
+        height: text height in drawing units
+        style: :class:`ezdxf.entities.Textstyle` reference as string
+        oblique: oblige angle in degrees, where 0 is vertical
+        rotation: text rotation angle in degrees
+        width_factor: width factor as float
+        mirror: 2 is mirror text horizontal and 4 is mirror text vertical,
+            adding both values is possible
+        layer: layer name as string
+        color: :ref:`ACI`
 
     """
 
     MIRROR_X = const.MIRROR_X
     MIRROR_Y = const.MIRROR_Y
-    TOP = const.TOP
-    MIDDLE = const.MIDDLE
-    BOTTOM = const.BOTTOM
-    LEFT = const.LEFT
-    CENTER = const.CENTER
-    RIGHT = const.RIGHT
-    VALID_ALIGN = frozenset(
-        [
-            "BOTTOM_LEFT",
-            "BOTTOM_CENTER",
-            "BOTTOM_RIGHT",
-            "MIDDLE_LEFT",
-            "MIDDLE_CENTER",
-            "MIDDLE_RIGHT",
-            "TOP_LEFT",
-            "TOP_CENTER",
-            "TOP_RIGHT",
-        ]
-    )
 
     def __init__(
-        self, text: str, insert: UVec, linespacing: float = 1.5, **kwargs
+        self,
+        text: str,
+        insert: UVec,
+        line_spacing: float = 1.5,
+        align=MTextEntityAlignment.TOP_LEFT,
+        height: float = 1.0,
+        style="STANDARD",
+        oblique: float = 0.0,
+        rotation: float = 0.0,
+        width_factor: float = 1.0,
+        mirror: int = 0,
+        layer="0",
+        color: int = const.BYLAYER,
     ):
-        self.textlines = text.split("\n")
-        self.insert = insert
-        self.linespacing = linespacing
-        if "align" in kwargs:
-            self.align = kwargs.get("align", "TOP_LEFT").upper()
-        else:  # support for compatibility: valign, halign
-            halign = kwargs.get("halign", 0)
-            valign = kwargs.get("valign", 3)
-            self.align = MAP_FLAGS_TO_STRING_ALIGN.get(
-                (halign, valign), "TOP_LEFT"
-            )
+        self.content: list[str] = text.split("\n")
+        self.insert = Vec3(insert)
+        self.line_spacing = float(line_spacing)
+        assert isinstance(align, MTextEntityAlignment)
+        self.align = align
 
-        if self.align not in MText.VALID_ALIGN:
-            raise ezdxf.DXFValueError(f"Invalid align parameter: {self.align}")
-
-        self.height = kwargs.get("height", 1.0)
-        self.style = kwargs.get("style", "STANDARD")
-        self.oblique = kwargs.get("oblique", 0.0)  # in degree
-        self.rotation = kwargs.get("rotation", 0.0)  # in degree
-        self.xscale = kwargs.get("xscale", 1.0)
-        self.mirror = kwargs.get(
-            "mirror", 0
-        )  # renamed to text_generation_flag in ezdxf
-        self.layer = kwargs.get("layer", "0")
-        self.color = kwargs.get("color", const.BYLAYER)
+        self.height = float(height)
+        self.style = str(style)
+        self.oblique = float(oblique)  # in degree
+        self.rotation = float(rotation)  # in degree
+        self.width_factor = float(width_factor)
+        self.mirror = int(mirror)  # renamed to text_generation_flag in ezdxf
+        self.layer = str(layer)
+        self.color = int(color)
 
     @property
-    def lineheight(self) -> float:
+    def line_height(self) -> float:
         """Absolute line spacing in drawing units."""
-        return self.height * self.linespacing
+        return self.height * self.line_spacing
 
     def render(self, layout: GenericLayoutType) -> None:
         """Create the DXF-TEXT entities."""
-        textlines = self.textlines
-        if len(textlines) > 1:
+        text_lines = self.content
+        if len(text_lines) > 1:
             if self.mirror & const.MIRROR_Y:
-                textlines.reverse()
-            for linenum, text in enumerate(textlines):
-                alignpoint = self._get_align_point(linenum)
+                text_lines.reverse()
+            for line_number, text in enumerate(text_lines):
+                align_point = self._get_align_point(line_number)
                 layout.add_text(
                     text,
-                    dxfattribs=self._dxfattribs(alignpoint),
+                    dxfattribs=self._dxfattribs(align_point),
                 )
-        elif len(textlines) == 1:
+        elif len(text_lines) == 1:
             layout.add_text(
-                textlines[0],
+                text_lines[0],
                 dxfattribs=self._dxfattribs(self.insert),
             )
 
-    def _get_align_point(self, linenum: int) -> UVec:
+    def _get_align_point(self, line_number: int) -> Vec3:
         """Calculate the align-point depending on the line number."""
-        x = self.insert[0]
-        y = self.insert[1]
+        x = self.insert.x
+        y = self.insert.y
         try:
-            z = self.insert[2]
+            z = self.insert.z
         except IndexError:
             z = 0.0
         # rotation not respected
 
-        if self.align.startswith("TOP"):
-            y -= linenum * self.lineheight
-        elif self.align.startswith("MIDDLE"):
-            y0 = linenum * self.lineheight
-            fullheight = (len(self.textlines) - 1) * self.lineheight
-            y += (fullheight / 2) - y0
+        if self.align in (
+            MTextEntityAlignment.TOP_LEFT,
+            MTextEntityAlignment.TOP_RIGHT,
+            MTextEntityAlignment.TOP_CENTER,
+        ):
+            y -= line_number * self.line_height
+        elif self.align in (
+            MTextEntityAlignment.MIDDLE_LEFT,
+            MTextEntityAlignment.MIDDLE_CENTER,
+            MTextEntityAlignment.MIDDLE_RIGHT,
+        ):
+            y0 = line_number * self.line_height
+            full_height = (len(self.content) - 1) * self.line_height
+            y += (full_height / 2) - y0
         else:  # BOTTOM
-            y += (len(self.textlines) - 1 - linenum) * self.lineheight
-        return self._rotate((x, y, z))  # consider rotation
+            y += (len(self.content) - 1 - line_number) * self.line_height
+        return self._rotate(Vec3(x, y, z))  # do rotation
 
-    def _rotate(self, alignpoint: UVec) -> UVec:
+    def _rotate(self, alignpoint: Vec3) -> Vec3:
         """Rotate `alignpoint` around insert-point about rotation degrees."""
-        dx = alignpoint[0] - self.insert[0]
-        dy = alignpoint[1] - self.insert[1]
+        dx = alignpoint.x - self.insert.x
+        dy = alignpoint.y - self.insert.y
         beta = math.radians(self.rotation)
-        x = self.insert[0] + dx * math.cos(beta) - dy * math.sin(beta)
-        y = self.insert[1] + dy * math.cos(beta) + dx * math.sin(beta)
-        return round(x, 6), round(y, 6), alignpoint[2]
+        x = self.insert.x + dx * math.cos(beta) - dy * math.sin(beta)
+        y = self.insert.y + dy * math.cos(beta) + dx * math.sin(beta)
+        return Vec3(round(x, 6), round(y, 6), alignpoint.z)
 
-    def _dxfattribs(self, alignpoint: UVec) -> dict:
+    def _dxfattribs(self, align_point: Vec3) -> dict[str, Any]:
         """Build keyword arguments for TEXT entity creation."""
-        halign, valign = MAP_STRING_ALIGN_TO_FLAGS.get(self.align, (0, 3))
+        halign, valign = MAP_MTEXT_ALIGN_TO_FLAGS[self.align]
         return {
-            "insert": alignpoint,
-            "align_point": alignpoint,
+            "insert": align_point,
+            "align_point": align_point,
             "layer": self.layer,
             "color": self.color,
             "style": self.style,
             "height": self.height,
-            "width": self.xscale,
+            "width": self.width_factor,
             "text_generation_flag": self.mirror,
             "rotation": self.rotation,
             "oblique": self.oblique,
