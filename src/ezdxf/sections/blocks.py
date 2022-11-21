@@ -379,9 +379,6 @@ class BlocksSection:
             sections or application defined data, which could produce invalid
             DXF documents if such referenced blocks will be deleted.
 
-        .. versionchanged:: 0.14
-            removed unsafe mode
-
         """
         assert self.doc is not None
         active_references = set(

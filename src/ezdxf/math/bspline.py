@@ -137,9 +137,6 @@ def fit_points_to_cad_cv(
         tangents: start- and end tangent, default is autodetect
         estimate: tangent direction estimation method
 
-    .. versionchanged:: 0.16
-        removed unused arguments `degree` and `method`
-
     """
     # See also Spline class in ezdxf/entities/spline.py:
     # degree has no effect. A spline with degree=3 is always constructed when
@@ -176,8 +173,6 @@ def fit_points_to_cubic_bezier(fit_points: Iterable[UVec]) -> BSpline:
 
     Args:
         fit_points: points the spline is passing through
-
-    .. versionadded:: 0.16
 
     """
     points = Vec3.list(fit_points)
@@ -1055,8 +1050,6 @@ class BSpline:
             distance: maximum distance from the projected curve point onto the
                 segment chord.
             segments: minimum segment count between two knots
-
-        .. versionadded:: 0.15
 
         """
 

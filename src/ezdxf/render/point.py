@@ -25,8 +25,6 @@ def virtual_entities(
         pdsize: point size in drawing units
         pdmode: point styling mode, see :class:`~ezdxf.entities.Point` class
 
-    .. versionadded:: 0.15
-
     """
 
     def add_line_symmetrical(offset: Vec3):

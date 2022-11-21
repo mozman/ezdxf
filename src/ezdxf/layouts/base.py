@@ -394,9 +394,6 @@ class BaseLayout(_AbstractLayout):
     def entities_in_redraw_order(self, reverse=False) -> Iterable[DXFGraphic]:
         """Yields all entities from layout in ascending redraw order or
         descending redraw order if `reverse` is ``True``.
-
-        .. versionadded:: 0.18.1
-
         """
         from ezdxf import reorder
 

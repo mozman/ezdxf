@@ -53,13 +53,6 @@ def make_path_from_str(
          length: target length for the :attr:`ALIGNED` and :attr:`FIT` alignments
          m: transformation :class:`~ezdxf.math.Matrix44`
 
-    .. versionadded:: 0.17
-
-    .. version changed: 0.17.2
-
-        Enum :class:`ezdxf.enums.TextEntityAlignment` replaces string
-        values.
-
     """
     if len(s) == 0:
         return Path()
@@ -101,11 +94,6 @@ def make_paths_from_str(
             default is :attr:`LEFT`
          length: target length for the :attr:`ALIGNED` and :attr:`FIT` alignments
          m: transformation :class:`~ezdxf.math.Matrix44`
-
-    .. version changed: 0.17.2
-
-        Enum :class:`ezdxf.enums.TextEntityAlignment` replaces string
-        values.
 
     """
     if len(s) == 0:
@@ -220,11 +208,6 @@ def make_hatches_from_str(
          dxfattribs: additional DXF attributes
          m: transformation :class:`~ezdxf.math.Matrix44`
 
-    .. version changed: 0.17.2
-
-        Enum :class:`ezdxf.enums.TextEntityAlignment` replaces string
-        values.
-
     """
     # HATCH is an OCS entity, transforming just the polyline paths
     # is not correct! The Hatch has to be created in the xy-plane!
@@ -252,9 +235,6 @@ def make_path_from_entity(entity: AnyText) -> Path:
     """Convert text content from DXF entities TEXT and ATTRIB into a
     :term:`Multi-Path` object.
     The paths are located at the location of the source entity.
-
-    .. versionadded:: 0.17
-
     """
 
     check_entity_type(entity)

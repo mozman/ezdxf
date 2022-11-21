@@ -75,9 +75,7 @@ class AbstractBoundingBox:
 
     def contains(self, other: AbstractBoundingBox) -> bool:
         """Returns ``True`` if the `other` bounding box is completely inside
-        of this bounding box.
-
-        .. versionadded:: 0.17.2
+        this bounding box.
 
         """
         return self.inside(other.extmin) and self.inside(other.extmax)
@@ -186,8 +184,6 @@ class BoundingBox(AbstractBoundingBox):
         """Returns ``True`` if the bounding box is empty or the bounding box
         has a size of 0 in any or all dimensions or is undefined.
 
-        .. versionchanged:: 0.18
-
         """
         if self.has_data:
             sx, sy, sz = self.size
@@ -220,8 +216,6 @@ class BoundingBox(AbstractBoundingBox):
             bbox1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
             bbox2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
             assert bbox1.has_intersection(bbox2) is False
-
-        .. versionadded: 0.18
 
         """
         # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs
@@ -258,8 +252,6 @@ class BoundingBox(AbstractBoundingBox):
             bbox1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
             bbox2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
             assert bbox1.has_overlap(bbox2) is True
-
-        .. versionadded: 0.18
 
         """
         # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs
@@ -310,8 +302,6 @@ class BoundingBox(AbstractBoundingBox):
         """Returns the bounding box of the intersection cube of both
         3D bounding boxes. Returns an empty bounding box if the intersection
         volume is 0.
-
-        .. versionadded: 0.18
 
         """
         new_bbox = self.__class__()
@@ -429,8 +419,6 @@ class BoundingBox2d(AbstractBoundingBox):
             bbox1 = BoundingBox2d([(0, 0), (1, 1)])
             bbox2 = BoundingBox2d([(1, 1), (2, 2)])
             assert bbox1.has_overlap(bbox2) is True
-
-        .. versionadded:: 0.17.2
 
         """
         # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs

@@ -170,8 +170,6 @@ class RTree:
     Raises:
         ValueError: max. node size too small or no data given
 
-    .. versionadded:: 0.18
-
     .. _R-trees: https://en.wikipedia.org/wiki/R-tree
 
     """

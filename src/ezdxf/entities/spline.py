@@ -377,8 +377,6 @@ class Spline(DXFGraphic):
                 segment chord.
             segments: minimum segment count between two knots
 
-        .. versionadded:: 0.15
-
         """
         return self.construction_tool().flattening(distance, segments)
 

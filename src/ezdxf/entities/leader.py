@@ -293,8 +293,6 @@ class Leader(DXFGraphic, OverrideMixin):
             target_layout: target layout for DXF parts, ``None`` for same
                 layout as source entity.
 
-        .. versionadded:: 0.14
-
         """
         return explode_entity(self, target_layout)
 

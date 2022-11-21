@@ -155,11 +155,6 @@ def square(size: float = 1.0, center=False) -> tuple[Vec3, Vec3, Vec3, Vec3]:
     """Returns 4 vertices for a square with a side length of the given `size`.
     The center of the square in (0, 0) if `center` is ``True`` otherwise
     the lower left corner is (0, 0), upper right corner is (`size`, `size`).
-
-    .. versionchanged:: 0.18
-
-        added argument `center`
-
     """
     if center:
         a = size / 2.0
@@ -174,11 +169,6 @@ def box(
     """Returns 4 vertices for a box with a width of `sx` by and a height of
     `sy`. The center of the box in (0, 0) if `center` is ``True`` otherwise
     the lower left corner is (0, 0), upper right corner is (`sx`, `sy`).
-
-    .. versionchanged:: 0.18
-
-        added argument `center`
-
     """
     if center:
         a = sx / 2.0
@@ -574,8 +564,6 @@ def helix(
         resolution: vertices per turn
         ccw: creates a counter-clockwise turning (right-handed) helix if ``True``
 
-    .. versionadded:: 0.18
-
     """
     step: float = 1.0 / max(resolution, 1)
     if not ccw:
@@ -656,10 +644,6 @@ def extrude(
         caps: close hull with top- and bottom faces (ngons)
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
-
-    .. versionchanged:: 0.18
-
-        added parameter `caps` to close hull with top- and bottom faces
 
     """
     mesh = MeshVertexMerger()
@@ -749,8 +733,6 @@ def extrude_twist_scale(
         caps: close hull with top- and  bottom faces (ngons)
         quads: use quads for "sweeping" faces if ``True`` else triangles,
             the top and bottom faces are always ngons
-
-    .. versionadded:: 0.18
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
@@ -857,10 +839,6 @@ def cylinder_2p(
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
-    .. versionchanged: 0.18
-
-        added `caps` argument
-
     """
 
     origin = Vec3(base_center)
@@ -888,10 +866,6 @@ def from_profiles_linear(
         close: close profile polygon if ``True``
         quads: use quadrilaterals as connection faces if ``True`` else triangles
         caps: close hull with top- and bottom faces (ngons)
-
-    .. versionchanged: 0.18
-
-        restrict type of argument `profiles`, added argument `quads`
 
     """
     mesh = MeshVertexMerger()
@@ -950,10 +924,6 @@ def spline_interpolated_profiles(
 
     Returns: yields profiles as list of vertices
 
-    .. versionchanged: 0.18
-
-        restrict type of argument profiles
-
     """
 
     if len(set(len(p) for p in profiles)) != 1:
@@ -993,10 +963,6 @@ def from_profiles_spline(
         quads: use quadrilaterals as connection faces if ``True`` else triangles
         caps: close hull with top- and bottom faces (ngons)
 
-    .. versionchanged: 0.18
-
-        restrict type of argument profiles, added argument `quads`
-
     """
     if len(profiles) > 3:
         profiles = list(spline_interpolated_profiles(profiles, subdivide))
@@ -1026,10 +992,6 @@ def cone(
         radius: radius of basis_vector
         apex: tip of the cone
         caps: add a bottom face as ngon if ``True``
-
-    .. versionchanged: 0.18
-
-        removed `ngons` argument
 
     """
     mesh = MeshVertexMerger()
@@ -1061,10 +1023,6 @@ def cone_2p(
         apex: tip of the cone
         caps: add a bottom face as ngon if ``True``
 
-    .. versionchanged: 0.18
-
-        added `caps` argument
-
     """
     origin = Vec3(base_center)
     heading = Vec3(apex) - origin
@@ -1091,10 +1049,6 @@ def rotation_form(
         angle: rotation angle in radians
         axis: rotation axis
         caps: close hull with start- and end faces (ngons)
-
-    .. versionchanged:: 0.18
-
-        added arguments `caps` and `triangulation`
 
     """
     if count < 3:
@@ -1213,8 +1167,6 @@ def torus(
         end_angle: end angle of torus in radians
         caps: close hull with start- and end faces (ngons) if the torus is open
 
-    .. versionadded:: 0.18
-
     """
     if major_count < 1:
         raise ValueError(f"major_count < 1")
@@ -1319,8 +1271,6 @@ def reference_frame_z(heading: Vec3, origin: Vec3 = NULLVEC) -> UCS:
     Raises:
         ZeroDivisionError: heading is parallel to WCS Z_AXIS
 
-    .. versionadded:: 0.18
-
     """
     return UCS(uy=Z_AXIS.cross(heading), uz=heading, origin=origin)
 
@@ -1332,8 +1282,6 @@ def reference_frame_ext(frame: UCS, origin: Vec3 = NULLVEC) -> UCS:
     Args:
         frame: previous reference frame
         origin: new UCS origin
-
-    .. versionadded:: 0.18
 
     """
     try:  # preserve x-axis
@@ -1426,8 +1374,6 @@ def sweep_profile(
     Returns the start-, end- and all intermediate profiles along the sweeping
     path.
 
-    .. versionadded:: 0.18
-
     """
     return _intersection_profiles(
         *_make_sweep_start_and_end_profiles(
@@ -1479,8 +1425,6 @@ def sweep(
         close: close sweeping profile if ``True``
         quads: use quadrilaterals as connection faces if ``True`` else triangles
         caps: close hull with top- and bottom faces (ngons)
-
-    .. versionadded:: 0.18
 
     """
     profiles = sweep_profile(profile, sweeping_path)

@@ -94,11 +94,7 @@ DARWIN = "Darwin"
 
 
 def is_installed() -> bool:
-    """Returns ``True`` if the ODAFileConverter is installed.
-
-    .. versionadded:: 0.18
-
-    """
+    """Returns ``True`` if the ODAFileConverter is installed."""
     if platform.system() in (LINUX, DARWIN):
         if unix_exec_path and Path(unix_exec_path).is_file():
             return True
@@ -229,8 +225,6 @@ def convert(
     replace=False,
 ):
     """Convert `source` file to `dest` file.
-
-    .. versionadded::  0.18
 
     The file extension defines the target format
     e.g. :code:`convert("test.dxf", "Test.dwg")` converts the source file to a

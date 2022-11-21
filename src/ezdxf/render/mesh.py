@@ -440,11 +440,7 @@ class MeshBuilder:
         self.faces: list[Sequence[int]] = []
 
     def bbox(self) -> BoundingBox:
-        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh.
-
-        .. versionadded:: 0.18
-
-        """
+        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh."""
         return BoundingBox(self.vertices)
 
     def copy(self):
@@ -452,19 +448,12 @@ class MeshBuilder:
         return self.from_builder(self)
 
     def diagnose(self) -> MeshDiagnose:
-        """Returns the :class:`MeshDiagnose` object for this mesh.
-
-        .. versionadded:: 0.18
-
-        """
+        """Returns the :class:`MeshDiagnose` object for this mesh."""
         return MeshDiagnose(self)
 
     def get_face_vertices(self, index: int) -> Sequence[Vec3]:
         """Returns the face `index` as sequence of :class:`~ezdxf.math.Vec3`
         objects.
-
-        .. versionadded:: 0.18
-
         """
         vertices = self.vertices
         return tuple(vertices[vi] for vi in self.faces[index])
@@ -472,9 +461,6 @@ class MeshBuilder:
     def get_face_normal(self, index: int) -> Vec3:
         """Returns the normal vector of the face `index` as :class:`~ezdxf.math.Vec3`,
         returns the ``NULLVEC`` instance for degenerated  faces.
-
-        .. versionadded:: 0.18
-
         """
         face = self.get_face_vertices(index)
         try:
@@ -485,9 +471,6 @@ class MeshBuilder:
     def face_normals(self) -> Iterator[Vec3]:
         """Yields all face normals, yields the ``NULLVEC`` instance for degenerated
         faces.
-
-        .. versionadded:: 0.18
-
         """
         for face in self.faces_as_vertices():
             try:
@@ -504,9 +487,6 @@ class MeshBuilder:
     def open_faces(self) -> Iterator[Face]:
         """Yields all faces as sequence of integers where the first vertex
         is not coincident with the last vertex.
-
-        .. versionadded:: 0.18
-
         """
         yield from open_faces(self.faces)
 
@@ -702,11 +682,6 @@ class MeshBuilder:
             matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
             ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
 
-        .. versionchanged:: 0.18
-
-            Uses the :meth:`tessellation` method to process ngons with more the
-            4 vertices which can handle concave faces.
-
         """
         dxfattribs = dict(dxfattribs) if dxfattribs else {}
         polyface = layout.add_polyface(dxfattribs=dxfattribs)
@@ -736,11 +711,6 @@ class MeshBuilder:
             dxfattribs: dict of DXF attributes e.g. ``{'layer': 'mesh', 'color': 7}``
             matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
             ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
-
-        .. versionchanged:: 0.18
-
-            Uses the :meth:`tessellation` method to process ngons with more the
-            4 vertices which can handle concave faces.
 
         """
         dxfattribs = dict(dxfattribs) if dxfattribs else {}
@@ -777,8 +747,6 @@ class MeshBuilder:
 
         The current implementation is not very capable!
 
-        .. versionadded:: 0.18
-
         """
         mesh = self
         for _ in range(passes):
@@ -804,9 +772,6 @@ class MeshBuilder:
         merged together and all faces are open faces (first vertex != last
         vertex). Uses internally the :class:`MeshVertexMerger` class to merge
         vertices.
-
-        .. versionadded:: 0.18
-
         """
         mesh = MeshVertexMerger(precision=precision)
         mesh.add_mesh(mesh=self)
@@ -819,9 +784,6 @@ class MeshBuilder:
         In contrast to the :meth:`tessellation` method, creates this method a
         new vertex in the centroid of the face. This can create a more regular
         tessellation but only works reliable for convex faces!
-
-        .. versionadded:: 0.18
-
         """
         yield from subdivide_ngons(self.faces_as_vertices(), max_vertex_count)
 
@@ -832,9 +794,6 @@ class MeshBuilder:
         each face has no more vertices than the given `max_vertex_count`. This
         method uses the "ear clipping" algorithm which works with concave faces
         too and does not create any additional vertices.
-
-        .. versionadded:: 0.18
-
         """
         from ezdxf.math.triangulation import mapbox_earcut_3d
 
@@ -850,9 +809,6 @@ class MeshBuilder:
 
         The `fast` mode uses a shortcut for faces with less than 6 vertices
         which may not work for concave faces!
-
-        .. versionadded:: 0.18
-
         """
         mesh = MeshVertexMerger()
         for face in self.tessellation(max_vertex_count=max_vertex_count):
@@ -861,9 +817,6 @@ class MeshBuilder:
 
     def flip_normals(self) -> None:
         """Flips the normals of all faces by reversing the vertex order inplace.
-
-        .. versionadded:: 0.18
-
         """
         self.faces = list(flip_face_normals(self.faces))
 
@@ -871,9 +824,6 @@ class MeshBuilder:
         """A single :class:`MeshBuilder` instance can store multiple separated
         meshes. This function returns this separated meshes as multiple
         :class:`MeshTransformer` instances.
-
-        .. versionadded:: 0.18
-
         """
         return list(separate_meshes(self))
 
@@ -881,9 +831,6 @@ class MeshBuilder:
         """Removes duplicated vertex indices from faces and stores all faces as
         open faces, where the last vertex is not coincident with the first
         vertex.
-
-        .. versionadded:: 0.18
-
         """
         self.faces = list(normalize_faces(self.faces, close=False))
 
@@ -918,8 +865,6 @@ class MeshBuilder:
         Raises:
             NonManifoldError: non-manifold mesh
             MultipleMeshesError: the :class:`MeshBuilder` object contains multiple disconnected meshes
-
-        .. versionadded:: 0.18
 
         """
         return unify_face_normals_by_majority(self, fod=fod)
@@ -960,8 +905,6 @@ class MeshBuilder:
         Raises:
             ValueError: non-manifold mesh or the :class:`MeshBuilder` object
                 contains multiple disconnected meshes
-
-        .. versionadded:: 0.18
 
         """
         mesh = unify_face_normals_by_reference(
@@ -1549,8 +1492,6 @@ class FaceOrientationDetector:
     Args:
         mesh: source mesh as :class:`MeshBuilder` object
         reference: index of the reference face
-
-    .. versionadded:: 0.18
 
     """
 

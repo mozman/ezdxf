@@ -40,8 +40,6 @@ def mapbox_earcut_2d(
     Returns:
         yields the result as 3-tuples of :class:`Vec2` objects
 
-    .. versionadded:: 0.18
-
     .. _Steiner point: https://en.wikipedia.org/wiki/Steiner_point_(computational_geometry)
 
     """
@@ -79,8 +77,6 @@ def mapbox_earcut_3d(
     Raise:
         TypeError: invalid input data type
         ZeroDivisionError: normal vector calculation failed
-
-    .. versionadded:: 0.18
 
     """
     polygon = list(exterior)

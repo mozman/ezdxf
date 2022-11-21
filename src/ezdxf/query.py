@@ -310,8 +310,6 @@ class EntityQuery(abc.Sequence):
         Raises:
              TypeError: for non-string based attributes
 
-        .. versionadded:: 0.18
-
         """
 
         def match(value, regex):

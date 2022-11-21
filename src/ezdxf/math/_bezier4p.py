@@ -149,8 +149,6 @@ class Bezier4P:
                 subdivided.
             segments: minimum segment count
 
-        .. versionadded:: 0.15
-
         """
 
         def subdiv(
@@ -218,18 +216,16 @@ class Bezier4P:
             prev_point = point
         return length
 
-    def reverse(self) -> "Bezier4P":
+    def reverse(self) -> Bezier4P:
         """Returns a new Bèzier-curve with reversed control point order."""
         return Bezier4P(list(reversed(self.control_points)))
 
-    def transform(self, m: Matrix44) -> "Bezier4P":
+    def transform(self, m: Matrix44) -> Bezier4P:
         """General transformation interface, returns a new :class:`Bezier4p`
-        curve and it is always a 3D curve.
+        curve as a 3D curve.
 
         Args:
              m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
-
-        .. versionadded:: 0.14
 
         """
         defpoints: Iterable[AnyVec]

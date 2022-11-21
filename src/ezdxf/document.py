@@ -687,8 +687,6 @@ class Drawing:
         manages  *ezdxf* and custom metadata in DXF files.
         For more information see:  :ref:`ezdxf_metadata`.
 
-        .. versionadded:: 0.17
-
         """
         return (
             R12MetaData(self)
@@ -1167,11 +1165,6 @@ class Drawing:
                 application window.
              dxfattribs: additional DXF attributes for the VPORT entity
 
-        .. versionchanged:: 0.17.2
-
-            added argument `dxfattribs` to pass additional DXF attributes to
-            the VPORT entity
-
         """
         self.viewports.delete_config("*Active")
         dxfattribs = dict(dxfattribs or {})
@@ -1186,7 +1179,7 @@ class Drawing:
 
 
 class MetaData(abc.ABC):
-    """Manage ezdxf meta data by dict-like interface. Values are limited to
+    """Manage ezdxf meta-data by dict-like interface. Values are limited to
     strings with a maximum length of 254 characters.
     """
 

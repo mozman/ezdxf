@@ -285,9 +285,6 @@ class Polyline(LinkedEntities):
     def has_width(self) -> bool:
         """Returns ``True`` if 2D POLYLINE has default width values or any
         segment with width attributes.
-
-        .. versionadded:: 0.14
-
         """
         if self.is_2d_polyline:
             if self.dxf.hasattr("default_start_width") and bool(
@@ -1121,8 +1118,6 @@ class DXFVertex(DXFGraphic):
 
         Args:
             format: format string, default is "xyz"
-
-        .. versionadded:: 0.14
 
         """
         dxf = self.dxf

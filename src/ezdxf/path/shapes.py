@@ -261,8 +261,6 @@ def helix(
         ccw: creates a counter-clockwise turning (right-handed) helix if ``True``
         segments: cubic Bezier segments per turn
 
-    .. versionadded:: 0.18
-
     """
     # Source of algorithm: https://www.arc.id.au/HelixDrawing.html
     def bezier_ctrl_points(b, angle, segments):

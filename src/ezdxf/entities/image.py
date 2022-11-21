@@ -178,13 +178,11 @@ class ImageBase(DXFGraphic):
     def boundary_path_wcs(self) -> list[Vec3]:
         """Returns the boundary/clipping path in WCS coordinates.
 
-        .. versionadded:: 0.14
-
         Since version 0.16 it's recommended to create the clipping path
         as :class:`~ezdxf.path.Path` object by the
         :func:`~ezdxf.path.make_path` function::
 
-            form ezdxf.path import make_path
+            from ezdxf.path import make_path
 
             image = ...  # get image entity
             clipping_path = make_path(image)

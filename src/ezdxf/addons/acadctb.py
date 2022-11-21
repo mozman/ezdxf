@@ -646,14 +646,7 @@ def load(filename: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]:
 
 
 def new_ctb() -> ColorDependentPlotStyles:
-    """
-    Create a new CTB file.
-
-    .. versionchanged:: 0.10
-
-        renamed from :func:`new`
-
-    """
+    """Create a new CTB file."""
     return ColorDependentPlotStyles()
 
 
@@ -684,10 +677,6 @@ class PlotStyleFileParser:
     """
 
     def __init__(self, text: str):
-        """
-        :param str text: ctb content as string
-
-        """
         self.data = {}
         for element, value in PlotStyleFileParser.iteritems(text):
             self.data[element] = value

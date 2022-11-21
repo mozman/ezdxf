@@ -79,10 +79,8 @@ class ConstructionCircle:
         """Yields vertices of the circle for iterable `angles`.
 
         Args:
-            angles: iterable of angles as radians, angle goes counter
-                clockwise around the z-axis, x-axis = 0 deg.
-
-        .. versionadded:: 0.17.1
+            angles: iterable of angles as radians, angle goes counter-clockwise
+                around the z-axis, x-axis = 0 deg.
 
         """
         center = self.center
@@ -95,9 +93,6 @@ class ConstructionCircle:
         max. distance from the center of an arc segment to the center of its
         chord. Returns a closed polygon where the start vertex is coincident
         with the end vertex!
-
-        .. versionadded:: 0.17.1
-
         """
         from .arc import arc_segment_count
 
@@ -188,8 +183,6 @@ class ConstructionCircle:
             1           line intersects or touches the circle at one point
             2           line intersects the circle at two points
             =========== ==================================
-
-        .. versionadded:: 0.17.1
 
         """
         assert isinstance(line, ConstructionLine)

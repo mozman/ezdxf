@@ -22,8 +22,6 @@ the document content is changed. This is not very efficient, but it is safe.
 Always remember that `ezdxf` is not intended or suitable as a basis for a CAD
 application!
 
-.. versionadded:: 0.18
-
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional, Iterator

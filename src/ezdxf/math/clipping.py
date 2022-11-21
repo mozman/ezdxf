@@ -73,11 +73,7 @@ def _clip_polyline(
 
 
 class ClippingPolygon2d:
-    """The clipping path is an arbitrary polygon.
-
-    .. versionadded: 0.18.1
-
-    """
+    """The clipping path is an arbitrary polygon."""
 
     def __init__(self, vertices: Iterable[Vec2], ccw_check=True):
         clip = list(vertices)
@@ -178,8 +174,6 @@ class ClippingRect2d:
 
     This class will get an optimized implementation in the future.
 
-    .. versionadded: 0.18.1
-
     """
 
     def __init__(self, bottom_left: Vec2, top_right: Vec2):
@@ -235,8 +229,6 @@ def clip_polygon_2d(
 
     Returns:
         the clipped subject as list of :class:`~ezdxf.math.Vec2`
-
-    .. versionadded:: 0.16
 
     .. _Sutherland–Hodgman: https://de.wikipedia.org/wiki/Algorithmus_von_Sutherland-Hodgman
 
@@ -571,8 +563,6 @@ def greiner_hormann_intersection(
     and line end points on face edges are not considered as such intersection
     points!
 
-    .. versionadded:: 0.18
-
     """
     return greiner_hormann(p1, p2, BooleanOperation.INTERSECTION)
 
@@ -585,8 +575,6 @@ def greiner_hormann_difference(
     and line end points on face edges are not considered as such intersection
     points!
 
-    .. versionadded:: 0.18
-
     """
     return greiner_hormann(p1, p2, BooleanOperation.DIFFERENCE)
 
@@ -598,8 +586,6 @@ def greiner_hormann_union(
     This algorithm works only for polygons with real intersection points
     and line end points on face edges are not considered as such intersection
     points!
-
-    .. versionadded:: 0.18
 
     """
     return greiner_hormann(p1, p2, BooleanOperation.UNION)
@@ -619,8 +605,6 @@ def greiner_hormann(
     This algorithm works only for polygons with real intersection points
     and line end points on face edges are not considered as such intersection
     points!
-
-    .. versionadded:: 0.18
 
     """
     polygon1 = GHPolygon.build(p1)

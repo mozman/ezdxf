@@ -64,8 +64,6 @@ class ConstructionPolyline(Sequence):
             # get dividing points with a distance of 1.0 drawing unit to each other
             points = list(polyline.divide_by_length(1.0))
 
-    .. versionadded:: 0.18
-
     """
 
     def __init__(
@@ -258,8 +256,6 @@ class ApproxParamT:
         max_t: the max. parameter value
         segments: count of approximation segments
 
-    .. versionadded:: 0.18
-
     """
 
     def __init__(
@@ -332,8 +328,6 @@ def intersect_polylines_2d(
         p2: second polyline as sequence of :class:`Vec2` objects
         abs_tol: absolute tolerance for comparisons
 
-    .. versionadded:: 0.17.2
-
     """
     intersect = _PolylineIntersection2d(p1, p2, abs_tol)
     intersect.execute()
@@ -354,8 +348,6 @@ def intersect_polylines_3d(
         p1: first polyline as sequence of :class:`Vec3` objects
         p2: second polyline as sequence of :class:`Vec3` objects
         abs_tol: absolute tolerance for comparisons
-
-    .. versionadded:: 0.17.2
 
     """
     intersect = _PolylineIntersection3d(p1, p2, abs_tol)

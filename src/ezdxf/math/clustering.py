@@ -43,8 +43,6 @@ def dbscan(
     Returns:
         list of clusters, each cluster is a list of points
 
-    .. versionadded:: 0.18
-
     """
     if min_points < 2:
         raise ValueError("min_points must be >= 2")
@@ -84,8 +82,6 @@ def k_means(
 
     Returns:
         list of clusters, each cluster is a list of points
-
-    .. versionadded:: 0.18
 
     """
 

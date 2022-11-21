@@ -679,8 +679,6 @@ class CreatorInterface:
             height: max. column height
             dxfattribs: additional DXF attributes
 
-        .. versionadded:: 0.17
-
         """
         dxfversion = self.dxfversion
         if dxfversion < DXF2000:
@@ -740,8 +738,6 @@ class CreatorInterface:
             count: expected column count
             dxfattribs: additional DXF attributes
 
-        .. versionadded:: 0.17
-
         """
         dxfversion = self.dxfversion
         if dxfversion < DXF2000:
@@ -794,8 +790,6 @@ class CreatorInterface:
             gutter_width: distance between columns
             heights: column height for each column
             dxfattribs: additional DXF attributes
-
-        .. versionadded:: 0.17
 
         """
         # The current implementation work well for R2018.
@@ -1549,8 +1543,6 @@ class CreatorInterface:
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
-        .. versionadded:: v0.18
-
         """
         type_ = {"dimtype": const.DIM_ANGULAR | const.DIM_BLOCK_EXCLUSIVE}
         dimline: "Dimension" = self.new_entity("DIMENSION", dxfattribs=type_)  # type: ignore
@@ -1632,8 +1624,6 @@ class CreatorInterface:
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
-        .. versionadded:: v0.18
-
         """
         type_ = {"dimtype": const.DIM_ANGULAR_3P | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast(
@@ -1704,8 +1694,6 @@ class CreatorInterface:
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
-        .. versionadded:: v0.18
-
         """
         sa = float(start_angle)
         ea = float(end_angle)
@@ -1775,8 +1763,6 @@ class CreatorInterface:
             dxfattribs:  additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
-
-        .. versionadded:: v0.18
 
         """
         return self.add_angular_dim_cra(
@@ -1850,8 +1836,6 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
-
-        .. versionadded:: v0.18
 
         """
         # always set dimtype to 8 for DXF R2013+, the DXF export handles the
@@ -1932,8 +1916,6 @@ class CreatorInterface:
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
-        .. versionadded:: v0.18
-
         """
         sa = float(start_angle)
         ea = float(end_angle)
@@ -2004,8 +1986,6 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
-
-        .. versionadded:: v0.18
 
         """
         return self.add_arc_dim_cra(
@@ -2408,8 +2388,6 @@ class CreatorInterface:
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
-        .. versionadded:: v0.18
-
         """
         dtype = int(dtype)
         if dtype not in (0, 1):
@@ -2462,8 +2440,6 @@ class CreatorInterface:
         """Shortcut to add an x-type feature ordinate DIMENSION, for more
         information see :meth:`add_ordinate_dim`.
 
-        .. versionadded:: v0.18
-
         """
         return self.add_ordinate_dim(
             feature_location=feature_location,
@@ -2491,8 +2467,6 @@ class CreatorInterface:
     ) -> DimStyleOverride:
         """Shortcut to add a y-type feature ordinate DIMENSION, for more
         information see :meth:`add_ordinate_dim`.
-
-        .. versionadded:: v0.18
 
         """
         return self.add_ordinate_dim(
@@ -2606,8 +2580,6 @@ class CreatorInterface:
         """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
         a :class:`~ezdxf.render.MultiLeaderMTextBuilder`.
 
-        .. versionadded:: 0.18
-
         """
         from ezdxf.render.mleader import MultiLeaderMTextBuilder
 
@@ -2621,8 +2593,6 @@ class CreatorInterface:
     ) -> MultiLeaderBlockBuilder:
         """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
         a :class:`~ezdxf.render.MultiLeaderBlockBuilder`.
-
-        .. versionadded:: 0.18
 
         """
         from ezdxf.render.mleader import MultiLeaderBlockBuilder
@@ -2694,8 +2664,6 @@ class CreatorInterface:
             turns: count of turns
             ccw: creates a counter-clockwise turning (right-handed) helix if ``True``
             dxfattribs: additional DXF attributes
-
-        .. versionadded:: 0.18
 
         """
         from ezdxf import path

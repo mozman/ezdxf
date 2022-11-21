@@ -412,10 +412,6 @@ class GeoProxy:
             polygon: method to convert polygons (1-2-3-4)
             dxfattribs: dict with additional DXF attributes
 
-        .. versionadded:: 0.16.6
-
-            MPOLYGON support
-
         """
 
         def point(vertex: Sequence) -> Point:

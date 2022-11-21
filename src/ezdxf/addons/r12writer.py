@@ -323,9 +323,6 @@ class R12FastStreamWriter:
             color: color as :ref:`ACI` see :meth:`add_line`
             linetype: line type as string see :meth:`add_line`
 
-        .. versionchanged:: 0.12
-            Write only 3D POLYLINE entity, added `closed` argument.
-
         """
         dxf = ["0\nPOLYLINE\n"]
         dxf.append(dxf_attribs(layer, color, linetype))

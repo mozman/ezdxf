@@ -259,17 +259,7 @@ def _from_hatch(hatch: Hatch, **kwargs) -> Path:
 
 
 def from_hatch(hatch: Hatch) -> Iterator[Path]:
-    """Yield all HATCH boundary paths as separated :class:`Path` objects.
-
-
-    .. versionadded:: 0.16
-
-    .. versionchanged:: 17.1
-
-        Attaches the boundary state to each path as
-        :class:`ezdxf.lldxf.const.BoundaryPathState`.
-
-    """
+    """Yield all HATCH boundary paths as separated :class:`Path` objects."""
     ocs = hatch.ocs()
     elevation = hatch.dxf.elevation.z
     for boundary in hatch.paths:
@@ -288,12 +278,6 @@ def from_hatch_boundary_path(
 ) -> "Path":
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline- or edge path.
-
-    .. versionchanged:: 17.1
-
-        Attaches the boundary state to each path as
-        :class:`ezdxf.lldxf.const.BoundaryPathState`.
-
     """
     if isinstance(boundary, EdgePath):
         p = from_hatch_edge_path(boundary, ocs, elevation)
@@ -521,8 +505,6 @@ def to_lwpolylines(
     Returns:
         iterable of :class:`~ezdxf.entities.LWPolyline` objects
 
-    .. versionadded:: 0.16
-
     """
     if isinstance(paths, Path):
         paths = [paths]
@@ -579,8 +561,6 @@ def to_polylines2d(
 
     Returns:
         iterable of 2D :class:`~ezdxf.entities.Polyline` objects
-
-    .. versionadded:: 0.16
 
     """
     if isinstance(paths, Path):
@@ -639,8 +619,6 @@ def to_hatches(
     Returns:
         iterable of :class:`~ezdxf.entities.Hatch` objects
 
-    .. versionadded:: 0.16
-
     """
     boundary_factory: BoundaryFactory
     if edge_path:
@@ -685,8 +663,6 @@ def to_mpolygons(
 
     Returns:
         iterable of :class:`~ezdxf.entities.MPolygon` objects
-
-    .. versionadded:: 0.17
 
     """
     # noinspection PyTypeChecker
@@ -804,8 +780,6 @@ def to_polylines3d(
     Returns:
         iterable of 3D :class:`~ezdxf.entities.Polyline` objects
 
-    .. versionadded:: 0.16
-
     """
     if isinstance(paths, Path):
         paths = [paths]
@@ -836,8 +810,6 @@ def to_lines(
 
     Returns:
         iterable of :class:`~ezdxf.entities.Line` objects
-
-    .. versionadded:: 0.16
 
     """
     if isinstance(paths, Path):
@@ -874,8 +846,6 @@ def to_bsplines_and_vertices(
 
     Returns:
         :class:`~ezdxf.math.BSpline` and lists of :class:`~ezdxf.math.Vec3`
-
-    .. versionadded:: 0.16
 
     """
     from ezdxf.math import bezier_to_bspline
@@ -952,8 +922,6 @@ def to_splines_and_polylines(
     Returns:
         iterable of :class:`~ezdxf.entities.Line` objects
 
-    .. versionadded:: 0.16
-
     """
     if isinstance(paths, Path):
         paths = [paths]
@@ -991,8 +959,6 @@ def multi_path_from_matplotlib_path(mpath, curves=True) -> Path:
     (`TextPath`_)  object. (requires Matplotlib). Returns a multi-path object
     if necessary.
 
-    .. versionadded:: 0.17
-
     .. _TextPath: https://matplotlib.org/3.1.1/api/textpath_api.html
     .. _Path: https://matplotlib.org/3.1.1/api/path_api.html#matplotlib.path.Path
 
@@ -1027,8 +993,6 @@ def from_matplotlib_path(mpath, curves=True) -> Iterator[Path]:
     """Yields multiple :class:`Path` objects from a Matplotlib `Path`_
     (`TextPath`_)  object. (requires Matplotlib)
 
-    .. versionadded:: 0.16
-
     .. _TextPath: https://matplotlib.org/3.1.1/api/textpath_api.html
     .. _Path: https://matplotlib.org/3.1.1/api/path_api.html#matplotlib.path.Path
 
@@ -1054,8 +1018,6 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
 
     Returns:
         matplotlib `Path`_ in OCS!
-
-    .. versionadded:: 0.16
 
     """
     from matplotlib.path import Path as MatplotlibPath
@@ -1100,8 +1062,6 @@ def multi_path_from_qpainter_path(qpath) -> Path:
     """Returns a :class:`Path` objects from a `QPainterPath`_.
     Returns a multi-path object if necessary. (requires Qt bindings)
 
-    .. versionadded:: 0.17
-
     .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
 
     """
@@ -1135,8 +1095,6 @@ def from_qpainter_path(qpath) -> Iterator[Path]:
     """Yields multiple :class:`Path` objects from a `QPainterPath`_.
     (requires Qt bindings)
 
-    .. versionadded:: 0.16
-
     .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
 
     """
@@ -1162,8 +1120,6 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
 
     Returns:
         `QPainterPath`_ in OCS!
-
-    .. versionadded:: 0.16
 
     """
     from ezdxf.addons.xqt import QPainterPath, QPointF

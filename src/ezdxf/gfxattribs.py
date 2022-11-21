@@ -25,8 +25,6 @@ class GfxAttribs:
     """
     Represents often used DXF attributes of graphical entities.
 
-    .. versionadded:: 0.18
-
     Args:
         layer (str): layer name as string
         color (int): :ref:`ACI` color value as integer

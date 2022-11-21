@@ -127,8 +127,6 @@ class ConstructionArc:
         max. distance from the center of an arc segment to the center of its
         chord.
 
-        .. versionadded:: 0.15
-
         """
         radius: float = abs(self.radius)
         if radius > 0:
@@ -403,8 +401,6 @@ class ConstructionArc:
             2           line intersects the arc at two points
             =========== ==================================
 
-        .. versionadded:: 0.17.1
-
         """
         assert isinstance(ray, ConstructionRay)
         return [
@@ -433,8 +429,6 @@ class ConstructionArc:
             1           line intersects or touches the arc at one point
             2           line intersects the arc at two points
             =========== ==================================
-
-        .. versionadded:: 0.17.1
 
         """
         assert isinstance(line, ConstructionLine)
@@ -465,8 +459,6 @@ class ConstructionArc:
             2           circle intersects the arc at two points
             =========== ==================================
 
-        .. versionadded:: 0.17.1
-
         """
         assert isinstance(circle, ConstructionCircle)
         return [
@@ -495,8 +487,6 @@ class ConstructionArc:
             1           other arc intersects or touches the arc at one point
             2           other arc intersects the arc at two points
             =========== ==================================
-
-        .. versionadded:: 0.17.1
 
         """
         assert isinstance(other, ConstructionArc)

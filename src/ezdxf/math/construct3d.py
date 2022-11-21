@@ -210,8 +210,6 @@ def intersection_line_line_3d(
             real intersection points
         abs_tol: absolute tolerance for comparisons
 
-    .. versionadded:: 0.17.2
-
     """
     from ezdxf.math import intersection_ray_ray_3d, BoundingBox
 
@@ -359,8 +357,6 @@ class Plane:
         `coplanar` is ``False`` the start- or end point of the line are ignored
         as intersection points.
 
-        .. versionadded:: 0.18
-
         """
         state0 = self.vertex_location_state(start, abs_tol)
         state1 = self.vertex_location_state(end, abs_tol)
@@ -380,8 +376,6 @@ class Plane:
         `origin` and the `direction` vector and this plane or ``None`` if there
         is no intersection. A coplanar ray does not intersect the plane!
 
-        .. versionadded:: 0.18
-
         """
         n = self.normal
         try:
@@ -397,8 +391,6 @@ class Plane:
     ) -> PlaneLocationState:
         """Returns the :class:`PlaneLocationState` of the given `vertex` in
         relative to this plane.
-
-        .. versionadded:: 0.18
 
         """
         distance = self._normal.dot(vertex) - self._distance_from_origin
@@ -423,8 +415,6 @@ def split_polygon_by_plane(
     Returns also coplanar polygons if the
     argument `coplanar` is ``True``, the coplanar vertices goes into either
     front or back depending on their orientation with respect to this plane.
-
-    .. versionadded:: 0.18
 
     """
     polygon_type = PlaneLocationState.COPLANAR
@@ -504,8 +494,6 @@ def intersection_line_polygon_3d(
             is valid
         abs_tol: absolute tolerance for comparisons
 
-    .. versionadded:: 0.18
-
     """
     vertices = list(polygon)
     if len(vertices) < 3:
@@ -541,8 +529,6 @@ def intersection_ray_polygon_3d(
         boundary: if ``True`` intersection points at the polygon boundary line
             are valid
         abs_tol: absolute tolerance for comparisons
-
-    .. versionadded:: 0.18
 
     """
 
@@ -673,8 +659,6 @@ def spherical_envelope(points: Sequence[UVec]) -> tuple[Vec3, float]:
     .. note::
 
         The result does not represent the minimal bounding sphere!
-
-    .. versionadded:: 0.18
 
     """
     centroid = Vec3.sum(points) / len(points)

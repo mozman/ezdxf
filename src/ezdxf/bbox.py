@@ -103,10 +103,6 @@ def multi_recursive(
     If argument `fast` is ``True`` the calculation of Bézier curves is based on
     their control points, this may return a slightly larger bounding box.
 
-    .. versionchanged:: 0.18
-
-        replaced argument `flatten` by argument `fast`
-
     """
     flat_entities = disassemble.recursive_decompose(entities)
     primitives = disassemble.to_primitives(flat_entities)
@@ -148,10 +144,6 @@ def extents(
         the slower default mode is not a big disadvantage if a more precise text
         size calculation is important.
 
-    .. versionchanged:: 0.18
-
-        added fast mode, replaced argument `flatten` by argument `fast`
-
     """
     use_matplotlib = ezdxf.options.use_matplotlib  # save current state
     if fast:
@@ -173,10 +165,6 @@ def multi_flat(
 
     If argument `fast` is ``True`` the calculation of Bézier curves is based on
     their control points, this may return a slightly larger bounding box.
-
-    .. versionchanged:: 0.18
-
-        replaced argument `flatten` by argument `fast`
 
     """
 

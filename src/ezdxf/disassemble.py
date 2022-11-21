@@ -109,8 +109,6 @@ class Primitive(abc.ABC):
         representation if `fast` is ``False``, otherwise the bounding box for
         Bézier curves is based on their control points.
 
-        .. versionadded:: 0.18
-
         """
         if self.mesh:
             return BoundingBox(self.vertices())
@@ -532,9 +530,6 @@ def make_primitive(
     of a primitive can be checked by the property :attr:`is_empty`.
     The :attr:`path` and the :attr:`mesh` attributes of an empty primitive
     are ``None`` and the :meth:`vertices` method  yields no vertices.
-
-    .. versionchanged:: 0.17
-        regular support for the :class:`~ezdxf.entities.Hatch` entity.
 
     """
     cls = _PRIMITIVE_CLASSES.get(entity.dxftype(), EmptyPrimitive)

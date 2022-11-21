@@ -436,8 +436,6 @@ class Path:
         It is safe to call :meth:`sub_paths` on any path-type:
         :term:`Single-Path`, :term:`Multi-Path` and :term:`Empty-Path`.
 
-        .. versionadded:: 0.17
-
         """
         path = self.__class__(start=self.start)
         path._user_data = self._user_data

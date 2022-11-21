@@ -811,10 +811,6 @@ class DimStyle(DXFEntity):
             trailing_zeros: suppress trailing zeros for decimal dimensions
                 if ``False``, requires DXF R2000+
 
-        .. versionchanged:: 0.17.2
-
-            argument `align` as enum :class:`ezdxf.enums.MTextLineAlignment`
-
         """
         # Exclusive tolerances mode, disable limits
         self.dxf.dimtol = 1

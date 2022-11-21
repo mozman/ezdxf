@@ -120,8 +120,6 @@ class Bezier:
                 subdivided.
             segments: minimum segment count
 
-        .. versionadded:: 0.15
-
         """
 
         def subdiv(start_point, end_point, start_t: float, end_t: float):
