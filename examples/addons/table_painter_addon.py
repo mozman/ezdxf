@@ -84,7 +84,7 @@ def table_tutorial():
     table.new_cell_style(
         "head",
         text_style="HEAD",
-        textcolor=ezdxf.colors.BLUE,
+        text_color=ezdxf.colors.BLUE,
         char_height=0.7,
         bg_color=ezdxf.colors.LIGHT_GRAY,
         align=MTextEntityAlignment.MIDDLE_CENTER,
@@ -130,20 +130,17 @@ def main():
     # create a new styles
     ctext = table.new_cell_style(
         name="ctext",
-        textcolor=7,
+        text_color=7,
         char_height=0.5,
         align=MTextEntityAlignment.MIDDLE_CENTER,
     )
-    # halign = const.CENTER is still supported
-    # valign = const.MIDDLE is still supported
-
     # modify border settings
     border = table.new_border_style(color=6, linetype="DOT", priority=51)
     ctext.set_border_style(border, right=False)
 
     table.new_cell_style(
         name="vtext",
-        textcolor=3,
+        text_color=3,
         char_height=0.3,
         align=MTextEntityAlignment.MIDDLE_CENTER,
         rotation=90,  # vertical written
@@ -194,7 +191,7 @@ def main():
     # table do not affect previous renderings.
     table.new_cell_style(
         name="57deg",
-        textcolor=2,
+        text_color=2,
         char_height=0.5,
         rotation=57,
         align=MTextEntityAlignment.MIDDLE_CENTER,
@@ -216,7 +213,7 @@ def main():
     # Stacked text: letters are stacked top-to-bottom, but not rotated
     table.new_cell_style(
         name="stacked",
-        textcolor=6,
+        text_color=6,
         char_height=0.25,
         align=MTextEntityAlignment.MIDDLE_CENTER,
         stacked=True,

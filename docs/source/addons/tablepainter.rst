@@ -72,7 +72,7 @@ Create a new :class:`CellStyle` object for the table-header called "head":
     table.new_cell_style(
         "head",
         text_style="HEAD",
-        textcolor=ezdxf.colors.BLUE,
+        text_color=ezdxf.colors.BLUE,
         char_height=0.7,
         bg_color=ezdxf.colors.LIGHT_GRAY,
         align=MTextEntityAlignment.MIDDLE_CENTER,
@@ -258,7 +258,7 @@ CellStyle
 
         block reference y-scaling factor, ignored by :class:`TextCell`
 
-    .. attribute:: textcolor: int
+    .. attribute:: text_color: int
 
         :ref:`ACI` for text, ignored by :class:`BlockCell`
 

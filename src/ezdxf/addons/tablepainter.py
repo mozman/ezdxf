@@ -356,7 +356,7 @@ class CellStyle:
         # block reference y-axis scaling factor, ignored by text cells
         self.scale_y = DEFAULT_CELL_Y_SCALE
         # dxf color index, ignored by block cells
-        self.textcolor = DEFAULT_CELL_TEXTCOLOR
+        self.text_color = DEFAULT_CELL_TEXTCOLOR
         # text or block rotation in degrees
         self.rotation = 0.0
         # Letters are stacked top-to-bottom, but not rotated
@@ -849,7 +849,7 @@ class TextCell(Cell):
             rotation=rotated,
             width_factor=self.style.scale_x,
             align=style.align,
-            color=self.style.textcolor,
+            color=self.style.text_color,
             layer=layer,
         )
         mtext.render(layout)

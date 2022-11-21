@@ -100,9 +100,9 @@ def test_frame():
 
 def test_cell_style():
     table = TablePainter((0, 0), 10, 10)
-    table.new_cell_style("extra", textcolor=199)
+    table.new_cell_style("extra", text_color=199)
     style = table.get_cell_style("extra")
-    assert style.textcolor == 199
+    assert style.text_color == 199
     with pytest.raises(KeyError):
         table.get_cell_style("extraextra")
 
