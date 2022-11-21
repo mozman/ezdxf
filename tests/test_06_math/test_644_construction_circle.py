@@ -152,7 +152,7 @@ class TestCircleInterectRay:
         assert p2.isclose((10, 13), abs_tol=1e-5)
 
 
-def test_cicles_do_not_intersect():
+def test_circles_do_not_intersect():
     M1 = (30, 30)
     M2 = (40, 40)
     M3 = (30.3, 30.3)
@@ -187,7 +187,7 @@ def test_two_circles_touching_at_one_point(center, point):
     circle2 = ConstructionCircle(center, 1.5)
     points = circle1.intersect_circle(circle2)
     assert len(points) == 1
-    return points[0].isclose(point, abs_tol=1e-9)
+    assert points[0].isclose(point, abs_tol=1e-9) is True
 
 
 def test_intersect_circle_intersect():
