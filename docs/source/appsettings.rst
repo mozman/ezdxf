@@ -4,8 +4,6 @@
 Application Settings
 ====================
 
-.. versionadded:: 0.18
-
 .. module:: ezdxf.appsettings
 
 This is a high-level module for working with CAD application settings and behaviors.

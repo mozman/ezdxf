@@ -5,8 +5,6 @@ Bin-Packing Add-on
 
 .. module:: ezdxf.addons.binpacking
 
-.. versionadded:: 0.18
-
 This add-on is based on the 3D bin packing module `py3dbp`_ hosted on `PyPI`_.
 Both sources of this package are MIT licensed like `ezdxf` itself.
 

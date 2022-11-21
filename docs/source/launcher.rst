@@ -216,8 +216,6 @@ Print help:
 Pillow
 ------
 
-.. versionadded:: 0.18.1
-
 Convert the DXF file "gear.dxf" into a PNG file by the *Pillow* backend:
 
 .. code-block:: Text

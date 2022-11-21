@@ -115,11 +115,6 @@ This creates a HTML file with a nicer layout than a plain text file, and
 handles are links between DXF entities, this simplifies the navigation
 between the DXF entities.
 
-.. versionchanged:: 0.16
-
-    The `dxfpp` command was replaced by a sub-command of the `ezdxf` launcher.
-
-
 .. code-block:: none
 
     usage: ezdxf pp [-h] [-o] [-r] [-x] [-l] FILE [FILE ...]
@@ -178,9 +173,10 @@ specifies the area of the modelspace to view. Shortcut function:
 
     doc.set_modelspace_vport(height=10, center=(10, 10))
 
-.. versionadded:: 0.16
+.. seealso::
 
-The new :mod:`ezdxf.zoom` module of `ezdxf` v0.16, makes this task much easier.
+    The :mod:`ezdxf.zoom` module is another way to set the initial modelspace
+    view.
 
 Setting the initial view to the extents of all entities in the modelspace:
 

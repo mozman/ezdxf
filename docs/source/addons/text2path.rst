@@ -3,8 +3,6 @@
 text2path
 =========
 
-.. versionadded:: 0.16
-
 Tools to convert text strings and text based DXF entities into outer- and inner
 linear paths as :class:`~ezdxf.path.Path` objects. These tools depend on
 the optional `Matplotlib`_ package. At the moment only the TEXT and the ATTRIB

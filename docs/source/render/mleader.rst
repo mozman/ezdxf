@@ -43,8 +43,6 @@ The usual steps of the building process are:
 
 The :ref:`tut_mleader` shows how to use these helper classes in more detail.
 
-.. versionadded:: 0.18
-
 .. class:: MultiLeaderBuilder
 
     Abstract base class to build :class:`~ezdxf.entities.MultiLeader` entities.

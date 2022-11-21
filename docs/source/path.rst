@@ -49,19 +49,12 @@ only support 2D paths.
     A :class:`Path` can not represent a point. A :class:`Path` with only a
     start point yields no vertices!
 
-.. versionchanged:: 0.16
-    Refactored the module :mod:`ezdxf.render.path` into the subpackage
-    :mod:`ezdxf.path`.
-
 
 The usability of the :class:`Path` class expanded by the introduction
 of the reverse conversion from :class:`Path` to DXF entities (LWPOLYLINE,
 POLYLINE, LINE), and many other tools in `ezdxf` v0.16.
 To emphasize this new usability, the :class:`Path` class has got its own
 subpackage :mod:`ezdxf.path`.
-
-.. versionadded:: 0.17
-    Added the :meth:`Path.move_to` command and :term:`Multi-Path` support.
 
 .. glossary::
 
@@ -118,12 +111,6 @@ Functions to create :class:`Path` objects from other objects.
         see :meth:`Path.add_spline`
 
     :raises TypeError: for unsupported DXF types
-
-    .. versionadded:: 0.16
-
-    .. versionchanged:: 0.17
-
-        support for HATCH as :term:`Multi-Path` object
 
 
 .. autofunction:: from_hatch

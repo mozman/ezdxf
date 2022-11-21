@@ -10,8 +10,6 @@ HELIX curve (`DXF Reference`_).
 The helix curve is represented by a cubic B-spline curve, therefore the HELIX
 entity is also derived from the SPLINE entity.
 
-.. versionadded:: 0.18
-
 .. seealso::
 
     - `Wikipedia`_ article about the helix shape

@@ -1,8 +1,6 @@
 Upright
 =======
 
-.. versionadded:: 0.17
-
 .. module:: ezdxf.upright
 
 The functions in this module can help to convert an inverted :ref:`OCS` defined

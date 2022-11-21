@@ -3,8 +3,6 @@ GfxAttribs
 
 .. module:: ezdxf.gfxattribs
 
-.. versionadded:: 0.18
-
 The :mod:`ezdxf.gfxattribs` module provides the :class:`GfxAttribs` class to
 create valid attribute dictionaries for the most often used DXF attributes
 supported by all graphical DXF entities. The advantage of using this class

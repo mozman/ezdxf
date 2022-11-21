@@ -14,16 +14,13 @@ There are two different hatch pattern default scaling, depending on the HEADER
 variable $MEASUREMENT, one for ISO measurement (m, cm, mm, ...) and one for
 imperial measurement (in, ft, yd, ...).
 
-Starting with `ezdxf` v0.15 the default scaling for predefined hatch pattern
-will be chosen according this measurement setting in the HEADER section, this
-replicates the behavior of BricsCAD and other CAD applications. `ezdxf` uses
-the ISO pattern definitions as a base line and scales this pattern down by
-factor 1/25.6 for imperial measurement usage.
+The default scaling for predefined hatch pattern will be chosen according this
+measurement setting in the HEADER section, this replicates the behavior of
+BricsCAD and other CAD applications. `Ezdxf` uses the ISO pattern definitions as
+a base line and scales this pattern down by factor 1/25.6 for imperial
+measurement usage.
 The pattern scaling is independent from the drawing units of the document
 defined by the HEADER variable $INSUNITS.
-
-Prior to `ezdxf` v0.15 the default scaling was always the ISO
-measurement scaling, no matter which value $MEASUREMENT had.
 
 .. seealso::
 
@@ -206,7 +203,8 @@ Hatch Boundary Helper Classes
 
     .. attribute:: paths
 
-        List of all boundary paths. Contains :class:`PolylinePath` and :class:`EdgePath` objects. (read/write)
+        List of all boundary paths. Contains :class:`PolylinePath` and
+        :class:`EdgePath` objects. (read/write)
 
     .. automethod:: external_paths
 
@@ -269,13 +267,15 @@ Hatch Boundary Helper Classes
 
         My interpretation of the :attr:`path_type_flags`, see also :ref:`tut_hatch`:
 
-            * external - path is part of the hatch outer border
-            * outermost - path is completely inside of one or more external paths
-            * default - path is completely inside of one or more outermost paths
+            - external: path is part of the hatch outer border
+            - outermost: path is completely inside of one or more external paths
+            - default: path is completely inside of one or more outermost paths
 
-        If there are troubles with AutoCAD, maybe the hatch entity has the :attr:`Hatch.dxf.pixel_size` attribute set -
-        delete it :code:`del hatch.dxf.pixel_size` and maybe the problem is solved. `ezdxf` does not use the
-        :attr:`Hatch.dxf.pixel_size` attribute, but it can occur in DXF files created by other applications.
+        If there are troubles with AutoCAD, maybe the hatch entity has the
+        :attr:`Hatch.dxf.pixel_size` attribute set - delete it
+        :code:`del hatch.dxf.pixel_size` and maybe the problem is solved.
+        `Ezdxf` does not use the :attr:`Hatch.dxf.pixel_size` attribute, but it
+        can occur in DXF files created by other applications.
 
     .. attribute:: PolylinePath.is_closed
 
@@ -287,8 +287,9 @@ Hatch Boundary Helper Classes
 
     .. attribute:: source_boundary_objects
 
-        List of handles of the associated DXF entities for associative hatches. There is no support for
-        associative hatches by `ezdxf`, you have to do it all by yourself. (read/write)
+        List of handles of the associated DXF entities for associative hatches.
+        There is no support for associative hatches by `ezdxf`, you have to do
+        it all by yourself. (read/write)
 
     .. automethod:: set_vertices
 
@@ -504,8 +505,8 @@ Hatch Pattern Definition Helper Classes
 
 .. class:: PatternLine
 
-    Represents a pattern definition line, use factory function :meth:`Pattern.add_line` to create new pattern
-    definition lines.
+    Represents a pattern definition line, use factory function :meth:`Pattern.add_line`
+    to create new pattern definition lines.
 
     .. attribute:: angle
 
@@ -547,14 +548,14 @@ Hatch Gradient Fill Helper Classes
 
     .. attribute:: centered
 
-        Specifies a symmetrical gradient configuration. If this option is not selected, the gradient
-        fill is shifted up and to the left, creating the illusion of a light source to the left of
-        the object. (read/write)
+        Specifies a symmetrical gradient configuration. If this option is not
+        selected, the gradient fill is shifted up and to the left, creating the
+        illusion of a light source to the left of the object. (read/write)
 
     .. attribute:: tint
 
-        Specifies the tint (:attr:`color1` mixed with white) of a color to be used for a gradient
-        fill of one color. (read/write)
+        Specifies the tint (:attr:`color1` mixed with white) of a color to be
+        used for a gradient fill of one color. (read/write)
 
 .. seealso::
 

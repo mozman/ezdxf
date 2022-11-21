@@ -27,8 +27,6 @@ write the current configuration into a config file.
 Config Files
 ============
 
- .. versionadded:: 0.16.5
-
 The default config files are loaded from the user home directory as
 "~/.config/ezdxf/ezdxf.ini", and the current working directory as "./ezdxf.ini".
 A custom config file can be specified  by the environment variable

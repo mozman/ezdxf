@@ -6,8 +6,6 @@
 ACIS Tools
 ==========
 
-.. versionadded:: 0.18
-
 The :mod:`ezdxf.acis` sub-package provides some :term:`ACIS` data management
 tools. The main goals of this tools are:
 

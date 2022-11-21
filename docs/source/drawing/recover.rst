@@ -5,8 +5,6 @@
 Recover
 =======
 
-.. versionadded:: v0.14
-
 This module provides functions to "recover" ASCII DXF documents with structural
 flaws, which prevents the regular :func:`ezdxf.read` and :func:`ezdxf.readfile`
 functions to load the document.

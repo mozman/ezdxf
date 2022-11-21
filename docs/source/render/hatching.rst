@@ -4,8 +4,6 @@ Hatching
 
 .. module:: ezdxf.render.hatching
 
-.. versionadded:: 0.18.1
-
 This module provides rendering support for hatch patterns as used in
 :class:`~ezdxf.entities.Hatch` and :class:`~ezdxf.entities.MPolygon` entities.
 

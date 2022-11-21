@@ -142,8 +142,6 @@ EntityQuery Class
 Extended EntityQuery Features
 -----------------------------
 
-.. versionadded:: 0.18
-
 The ``[]`` operator got extended features in version 0.18, until then the
 :class:`EntityQuery` implemented the :meth:`__getitem__` interface like a
 sequence to get entities from the container:
@@ -187,8 +185,6 @@ the :class:`EntityQuery` container:
 Descriptors for DXF Attributes
 ------------------------------
 
-.. versionadded:: 0.18
-
 For some basic DXF attributes exist descriptors in the :class:`EntityQuery` class:
 
 - :attr:`layer`: layer name as string
@@ -217,8 +213,6 @@ container and has auto-completion support from IDEs:
 
 Relational Selection Operators
 ------------------------------
-
-.. versionadded:: 0.18
 
 The attribute selection by :meth:`__getitem__` allows further selections by
 relational operators:

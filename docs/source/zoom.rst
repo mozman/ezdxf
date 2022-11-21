@@ -3,8 +3,6 @@ Zoom Layouts
 
 .. module:: ezdxf.zoom
 
-.. versionadded:: 0.16
-
 These functions mimic the ZOOM commands in CAD applications.
 
 Zooming means resetting the current viewport limits to new values.

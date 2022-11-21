@@ -194,8 +194,6 @@ MeshBuilder Helper Classes
 
     Create an instance of this tool by the :meth:`MeshBuilder.diagnose` method.
 
-    .. versionadded:: 0.18
-
     .. autoproperty:: bbox
 
     .. autoproperty:: edge_stats

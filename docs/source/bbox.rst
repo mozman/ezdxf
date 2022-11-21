@@ -1,8 +1,6 @@
 Bounding Box
 ============
 
-.. versionadded:: 0.16
-
 .. module:: ezdxf.bbox
 
 The :mod:`ezdxf.bbox` module provide tools to calculate bounding boxes for

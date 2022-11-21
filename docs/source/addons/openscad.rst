@@ -3,9 +3,6 @@
 OpenSCAD
 ========
 
-.. versionadded:: 0.18
-
-
 Interface to the `OpenSCAD`_ application to apply boolean operations to
 :class:`~ezdxf.render.MeshBuilder` objects. For more information about boolean
 operations read the documentation of `OpenSCAD`_. The `OpenSCAD`_ application is

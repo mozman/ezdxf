@@ -94,8 +94,6 @@ $VERSIONGUID     every saved version gets a new GUID
 Ezdxf Metadata
 ~~~~~~~~~~~~~~
 
-.. versionadded:: 0.17
-
 Store internal metadata like *ezdxf* version and creation time for
 a new created document as metadata in the DXF file. Only standard DXF features
 are used to store meta data and this meta data is preserved by Autodesk products,

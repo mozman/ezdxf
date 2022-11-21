@@ -22,15 +22,14 @@ The `ODA File Converter`_ has to be installed by the user, the application is
 available for Windows XP, Windows 7 or later, Mac OS X, and Linux in 32/64-bit
 RPM and DEB format.
 
-.. versionadded:: 1.0.0
-    The option "unix_exec_path" was added to define an executable for Linux
-    and macOS, this executable overrides the default command ``ODAFileConverter``.
-    Assign an **absolute** path to the executable to that key and if the
-    executable is not found the add-on falls back to the ``ODAFileConverter``
-    command.
-
 AppImage Support
 ----------------
+
+The option "unix_exec_path" defines an executable for Linux
+and macOS, this executable overrides the default command ``ODAFileConverter``.
+Assign an **absolute** path to the executable to that key and if the
+executable is not found the add-on falls back to the ``ODAFileConverter``
+command.
 
 The option "unix_exec_path" also adds support for AppImages provided by the
 Open Design Alliance. Download the AppImage file and store it in a folder of

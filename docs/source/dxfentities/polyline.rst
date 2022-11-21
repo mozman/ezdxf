@@ -260,8 +260,6 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
         Args:
             format: format string, default is "xyz"
 
-        .. versionadded:: 0.14
-
 
 Polymesh
 ========

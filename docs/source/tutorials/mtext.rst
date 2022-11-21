@@ -204,8 +204,6 @@ where 1 fits exact the MTEXT entity.
 MTextEditor
 -----------
 
-.. versionadded:: 0.17
-
 .. warning::
 
     The :class:`MTextEditor` assembles just the inline code, which has to be

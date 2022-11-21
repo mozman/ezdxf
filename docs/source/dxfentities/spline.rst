@@ -16,12 +16,10 @@ To create a :class:`Spline` curve you just need a bunch of fit points - knot
 values and weights are optional (tested with AutoCAD 2010). If you add
 additional data, be sure that you know what you do.
 
-.. versionadded:: 0.16
-
-    The function :func:`ezdxf.math.fit_points_to_cad_cv` calculates control
-    vertices from given fit points. This control vertices define a cubic
-    B-spline which matches visually the SPLINE entities created by BricsCAD and
-    AutoCAD from fit points.
+The function :func:`ezdxf.math.fit_points_to_cad_cv` calculates control
+vertices from given fit points. This control vertices define a cubic
+B-spline which matches visually the SPLINE entities created by BricsCAD and
+AutoCAD from fit points.
 
 .. seealso::
 

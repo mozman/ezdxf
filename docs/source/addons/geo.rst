@@ -72,10 +72,6 @@ Supported DXF entities are:
   "Polygon" if closed
 - HATCH and MPOLYGON as "Polygon", holes are supported
 
-.. versionadded:: 0.16.6
-
-    MPOLYGON support
-
 .. warning::
 
     This module does no extensive validity checks for "Polygon" objects and

@@ -1,8 +1,6 @@
 Disassemble
 ===========
 
-.. versionadded:: 0.16
-
 .. module:: ezdxf.disassemble
 
 This module provide tools for the recursive decomposition of nested block
@@ -10,11 +8,6 @@ reference structures into a flat stream of DXF entities and converting DXF
 entities into geometric primitives of :class:`~ezdxf.path.Path` and
 :class:`~ezdxf.render.mesh.MeshBuilder` objects encapsulated into
 intermediate :class:`Primitive` classes.
-
-.. versionchanged:: 0.17
-    The :class:`~ezdxf.entities.Hatch` entity is no special case anymore and
-    has regular support by the :func:`make_primitive` function.
-
 
 .. warning::
 

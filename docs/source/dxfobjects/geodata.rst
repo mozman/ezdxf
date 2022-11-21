@@ -48,10 +48,6 @@ Required DXF version     R2010 (``'AC1024'``)
 
         Handle of host BLOCK_RECORD table entry, in general the :class:`~ezdxf.layouts.Modelspace`.
 
-        .. versionchanged:: 0.10
-
-            renamed from :attr:`dxf.block_record`
-
     .. attribute:: dxf.design_point
 
         Reference point in :ref:`WCS` coordinates.

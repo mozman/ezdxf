@@ -3,8 +3,6 @@
 Tutorial for MultiLeader
 ========================
 
-.. versionadded:: 0.18
-
 A multileader object typically consists of an arrowhead, a horizontal landing
 (a.k.a. "dogleg"), a leader line or curve, and either a MTEXT object or a BLOCK.
 

@@ -12,10 +12,6 @@ element, therefore all points are located in the :ref:`OCS` as (x, y)-tuples
 (:attr:`LWPolyline.dxf.elevation` is the z-axis value).
 
 
-.. versionchanged:: 0.8.9
-
-    :class:`LWPolyline` stores point data as packed data (:class:`array.array`).
-
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'LWPOLYLINE'``
