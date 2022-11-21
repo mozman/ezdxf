@@ -2,6 +2,7 @@
 #  License: MIT License
 
 import pytest
+import sys
 
 pytest.importorskip("PySide6")
 
@@ -94,6 +95,11 @@ class TestToQPainterPath:
         assert qpath.elementAt(3).isLineTo() is True
 
 
+@pytest.mark.skipif(
+    sys.version.startswith("3.11"),
+    reason="Does not work in CPython 3.11 and PySide6 6.4.0.1",
+    # But works in single step debug mode!
+)
 class TestFromQPainterPath:
     def test_line_to(self):
         qpath = QPainterPath(QPointF(1, 2))
