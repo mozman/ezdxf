@@ -48,11 +48,9 @@ class TestToQPainterPath:
         assert q1.x, q1.y == bez4.control_points[1]
 
         q2 = qpath.elementAt(2)
-        assert q2.type == 3  # curve data element
         assert q2.x, q2.y == bez4.control_points[2]
 
         q3 = qpath.elementAt(3)
-        assert q3.type == 3  # curve data element
         assert q3.x, q3.y == bez4.control_points[2]
 
     def test_curve4_to(self):
@@ -66,11 +64,9 @@ class TestToQPainterPath:
         assert q1.x, q1.y == bez4[1]
 
         q2 = qpath.elementAt(2)
-        assert q2.type == 3  # curve data element
         assert q2.x, q2.y == bez4[2]
 
         q3 = qpath.elementAt(3)
-        assert q3.type == 3  # curve data element
         assert q3.x, q3.y == bez4[0]
 
     def test_two_single_paths(self):
