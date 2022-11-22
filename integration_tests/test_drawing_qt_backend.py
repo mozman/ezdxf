@@ -14,9 +14,6 @@ def backend():
     return PyQtBackend(scene)
 
 
-# --------------------------------
-# This works only outside PyCharm!
-# --------------------------------
 @pytest.mark.skipif(
     "PYCHARM_HOSTED" in os.environ,
     reason="Qt backend test doesn't work inside PyCharm",
