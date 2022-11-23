@@ -747,7 +747,7 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
 
 def copy_dxf_to_clipboard(tags: Tags):
     clipboard = QtWidgets.QApplication.clipboard()
-    clipboard.setText(dxfstr(tags), mode=clipboard.Clipboard)
+    clipboard.setText(dxfstr(tags), mode=clipboard.Clipboard)  # type: ignore
 
 
 class FindDialog(QtWidgets.QDialog, Ui_FindDialog):

@@ -1,5 +1,6 @@
-#  Copyright (c) 2021, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2021, Manfred Moitzi
+# License: MIT License
+# mypy: ignore_errors=True
 from __future__ import annotations
 from typing import Any, Optional
 import textwrap

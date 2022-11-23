@@ -11,23 +11,26 @@ Layout Types
 A Layout represents and manages DXF entities, there are three different layout objects:
 
 - :class:`Modelspace` is the common working space, containing basic drawing entities.
-- :class:`Paperspace` is arrangement of objects for printing and plotting, this layout contains basic drawing entities
-  and viewports to the :class:`Modelspace`.
-- :class:`BlockLayout` works on an associated :class:`~ezdxf.entities.block.Block`, Blocks are collections of drawing
-  entities for reusing by block references.
+- :class:`Paperspace` is the arrangement of objects for printing and plotting,
+  this layout contains basic drawing entities and viewports to the
+  :class:`Modelspace`.
+- :class:`BlockLayout` works on an associated :class:`~ezdxf.entities.block.Block`,
+  Blocks are collections of DXF entities for reusing by block references.
 
 .. warning::
 
-    Do not instantiate layout classes by yourself - always use the provided factory functions!
+    Do not instantiate layout classes by yourself - always use the provided
+    factory functions!
 
 Entity Ownership
 ----------------
 
-A layout owns all entities residing in their entity space, this means the :attr:`dxf.owner` attribute of
-any :class:`~ezdxf.entities.dxfgfx.DXFGraphic` in this layout is the :attr:`dxf.handle` of the layout, and deleting
-an entity from a layout is the end of life of this entity, because it is also deleted from the
-:class:`~ezdxf.entitydb.EntityDB`.
-But it is possible to just unlink an entity from a layout, so it can be assigned to another layout, use the
+A layout owns all entities residing in their entity space, therefore the
+:attr:`dxf.owner` attribute of any :class:`~ezdxf.entities.DXFGraphic` entity
+in this layout is the :attr:`dxf.handle` of the layout, and deleting an entity
+from a layout is the end of life of this entity, because it is also deleted from
+the :class:`~ezdxf.entitydb.EntityDB`. It's possible to just unlink an entity
+from a layout to assign the entity to another layout, use the
 :meth:`~BaseLayout.move_to_layout` method to move entities between layouts.
 
 
