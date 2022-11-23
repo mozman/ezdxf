@@ -313,17 +313,17 @@ class BaseAttrib(Text):
         """Returns the embedded MTEXT content without formatting codes.
         Returns an empty string if no embedded MTEXT entity exist.
 
-        The "fast" mode is accurate if the DXF content was created by
+        The `fast` mode is accurate if the DXF content was created by
         reliable (and newer) CAD applications like AutoCAD or BricsCAD.
-        The "accurate" mode is for some rare cases where the content was
+        The `accurate` mode is for some rare cases where the content was
         created by older CAD applications or unreliable DXF libraries and CAD
         applications.
 
-        The "accurate" mode is **much** slower than the "fast" mode.
+        The `accurate` mode is **much** slower than the `fast` mode.
 
         Args:
-            fast: uses the "fast" mode to extract the plain MTEXT content if
-                ``True`` or the "accurate" mode if set to ``False``
+            fast: uses the `fast` mode to extract the plain MTEXT content if
+                ``True`` or the `accurate` mode if set to ``False``
 
         """
         if self._embedded_mtext:

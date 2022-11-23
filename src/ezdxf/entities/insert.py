@@ -575,9 +575,6 @@ class Insert(LinkedEntities):
         Attached ATTRIB entities are converted to TEXT entities, this is the
         behavior of the BURST command of the AutoCAD Express Tools.
 
-        Returns an :class:`~ezdxf.query.EntityQuery` container with all
-        "exploded" DXF entities.
-
         .. warning::
 
             **Non uniform scaling** may lead to incorrect results for text
@@ -587,6 +584,10 @@ class Insert(LinkedEntities):
             target_layout: target layout for exploded entities, ``None`` for
                 same layout as source entity.
             redraw_order: create entities in ascending redraw order if ``True``
+
+        Returns:
+            :class:`~ezdxf.query.EntityQuery` container referencing all exploded
+            DXF entities.
 
         """
         if target_layout is None:
@@ -616,9 +617,9 @@ class Insert(LinkedEntities):
         redraw_order=False,
     ) -> Iterator[DXFGraphic]:
         """
-        Yields "virtual" entities of a block reference. This method is meant to
-        examine the block reference entities at the "exploded" location without
-        really "exploding" the block reference. The`skipped_entity_callback()`
+        Yields virtual entities of a block reference. This method is meant to
+        examine the block reference entities at the exploded location without
+        really exploding the block reference. The `skipped_entity_callback()`
         will be called for all entities which are not processed, signature:
         :code:`skipped_entity_callback(entity: DXFEntity, reason: str)`,
         `entity` is the original (untransformed) DXF entity of the block

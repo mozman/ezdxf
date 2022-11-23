@@ -334,7 +334,15 @@ class BlocksSection:
                 return blockname
 
     def rename_block(self, old_name: str, new_name: str) -> None:
-        """Rename :class:`~ezdxf.layouts.BlockLayout` `old_name` to `new_name`"""
+        """Rename :class:`~ezdxf.layouts.BlockLayout` `old_name` to `new_name`
+
+        .. warning::
+
+            This is a low-level tool and does not rename the block references,
+            so all block references to `old_name` are pointing to a non-existing
+            block definition!
+
+        """
         block_record = cast(BlockRecord, self.block_records.get(old_name))
         block_record.rename(new_name)
         self.block_records.replace(old_name, block_record)
