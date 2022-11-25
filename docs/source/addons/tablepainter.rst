@@ -12,7 +12,7 @@ was not officially documented for :mod:`ezdxf` versions prior the 1.0 release.
 For the 1.0 version of :mod:`ezdxf`, this class was added as an officially
 documented add-on because full support for the ACAD_TABLE entity
 is very unlikely due to the enormous complexity for both the entity itself,
-as well as for the required infrastructure and also the lack of an usable
+and for the required infrastructure and also the lack of a usable
 documentation to implement all that features.
 
 .. important::

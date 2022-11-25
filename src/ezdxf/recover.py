@@ -815,8 +815,8 @@ def byte_tag_compiler(
                             )
                         )
 
-                    # Convert DXF unicode notation "\U+xxxx" to unicode,
-                    # but exclude structure tags (code>0):
+                    # Convert DXF-Unicode notation "\U+xxxx" to unicode,
+                    # but exclude structure tags (code == 0):
                     if code and has_dxf_unicode(str_):
                         str_ = decode_dxf_unicode(str_)
 

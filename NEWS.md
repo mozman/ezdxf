@@ -33,7 +33,7 @@ Version 1.0.0rc2 - dev
 - BUGFIX: [#777](https://github.com/mozman/ezdxf/issues/777)
   check for empty `TextPath` in function `get_text_line_width()` 
 - BUGFIX: [#782](https://github.com/mozman/ezdxf/issues/782)
-  allow DXF-Unicode encoding (`\U+XXXX`) in table names 
+  allow DXF-Unicode notion `\U+XXXX` in table names 
    
 
 Version 0.18.1 - 2022-09-03
