@@ -32,7 +32,7 @@ Version 1.0.0rc2 - dev
   fix swapped bold and italic flag for extended font data in STYLE entity 
 - BUGFIX: [#777](https://github.com/mozman/ezdxf/issues/777)
   check for empty `TextPath` in function `get_text_line_width()` 
-- BUGFIX: [#782](https://github.com/mozman/ezdxf/issues/777)
+- BUGFIX: [#782](https://github.com/mozman/ezdxf/issues/782)
   allow DXF unicode encoding (`\U+XXXX`) in table names 
    
 
