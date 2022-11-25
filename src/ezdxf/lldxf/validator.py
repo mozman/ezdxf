@@ -27,7 +27,6 @@ from .const import (
 
 from .tagger import ascii_tags_loader
 from .types import is_embedded_object_marker, DXFTag, NONE_TAG
-from.encoding import decode_dxf_unicode
 from ezdxf.tools.codepage import toencoding
 from ezdxf.math import NULLVEC
 
@@ -294,9 +293,9 @@ def is_dxf_stream(stream: TextIO) -> bool:
 
 
 def is_valid_table_name(name: str) -> bool:
-    if r"\U+" in name:
-        name = decode_dxf_unicode(name)
-    return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(set(name)))
+    # remove backslash of DXF unicode encoding \U+xxxx
+    chars = set(name.replace(r"\U+", ""))
+    return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(chars))
 
 
 def make_table_key(name: str) -> str:
