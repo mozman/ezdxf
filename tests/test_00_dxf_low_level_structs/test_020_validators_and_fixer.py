@@ -45,6 +45,10 @@ def test_invalid_layer_name():
     assert is_valid_layer_name('"Layer"') is False
 
 
+def test_allow_dxf_unicode_encoding_in_layer_names():
+    assert is_valid_layer_name(r"tschüss mit \U+00FC") is True
+
+
 def test_strange_but_valid_layer_name():
     assert is_valid_layer_name("Layer|Layer") is True
 

@@ -164,7 +164,7 @@ class DXFNamespace:
                     )
             return value
 
-        attrib_def: Optional["DXFAttr"] = self.dxfattribs.get(key)
+        attrib_def: Optional[DXFAttr] = self.dxfattribs.get(key)
         if attrib_def:
             if attrib_def.xtype == XType.callback:
                 attrib_def.set_callback_value(self._entity, value)
