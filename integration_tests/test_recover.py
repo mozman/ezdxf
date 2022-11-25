@@ -1,14 +1,13 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
-import os
 import pytest
+import pathlib
 import random
 from ezdxf import recover
 from ezdxf.audit import AuditError
 from ezdxf.lldxf.tagger import tag_compiler, ascii_tags_loader
 
-BASEDIR = os.path.dirname(__file__)
-DATADIR = "data"
+DATA = pathlib.Path(__file__).parent / "data"
 RECOVER1 = "recover01.dxf"
 RECOVER2 = "recover02.dxf"
 CC_DXFLIB = "cc_dxflib.dxf"
@@ -16,10 +15,10 @@ EMPTY_HANDLES = "empty_handles.dxf"
 
 
 def fullpath(name):
-    filename = os.path.join(BASEDIR, DATADIR, name)
-    if not os.path.exists(filename):
-        pytest.skip(f"File {filename} not found.")
-    return filename
+    filepath = DATA / name
+    if not filepath.exists():
+        pytest.skip(f"File {filepath} not found.")
+    return str(filepath)
 
 
 @pytest.fixture
@@ -156,3 +155,11 @@ def test_readfile_empty_handles_dxf():
     assert len(msp.query("LINE")) == 8
     assert len(msp.query("*[layer=='GEOMETRY-CUTTING']")) == 4
     assert len(msp.query("*[layer=='GEOMETRY-ENGRAVING']")) == 4
+
+
+def test_decode_dxf_unicode_automatically():
+    # The test file contains the layer name: "Tschüss mit \U+00FC"
+    doc, _ = recover.readfile(fullpath("dxf_unicode.dxf"))
+    assert (
+        any("Tschüss mit ü" == layer.dxf.name for layer in doc.layers) is True
+    )

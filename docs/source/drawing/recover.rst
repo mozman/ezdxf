@@ -33,9 +33,10 @@ afterwards and return the result of this audit process:
     if auditor.has_errors:
         auditor.print_error_report()
 
-
-This efforts cost some time, loading the DXF document with :func:`ezdxf.read` or
-:func:`ezdxf.readfile` will be faster.
+The loading functions also decode DXF-Unicode encoding automatically
+e.g. "\\U+00FC" -> "ü".
+All these efforts cost some time, loading the DXF document with
+:func:`ezdxf.read` or :func:`ezdxf.readfile` is faster.
 
 .. warning::
 
