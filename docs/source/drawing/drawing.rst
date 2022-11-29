@@ -1,12 +1,46 @@
-Drawing Object
-==============
+Drawing Class
+=============
 
 .. module:: ezdxf.document
 
+The :class:`Drawing` class is the central management structure of a DXF document.
+
+Access Layouts
+--------------
+
+- :meth:`Drawing.modelspace`
+- :meth:`Drawing.paperspace`
+
+Access Resources
+----------------
+
+- Application ID Table: :attr:`Drawing.appids`
+- Block Definition Table: :attr:`Drawing.blocks`
+- Dimension Style Table: :attr:`Drawing.dimstyles`
+- Layer Table: :attr:`Drawing.layers`
+- Linetype Table: :attr:`Drawing.linetypes`
+- MLeader Style Table: :attr:`Drawing.mleader_styles`
+- MLine Style Table: :attr:`Drawing.mline_styles`
+- Material Table: :attr:`Drawing.materials`
+- Text Style Table: :attr:`Drawing.styles`
+- UCS Table: :attr:`Drawing.ucs`
+- VPort Table: :attr:`Drawing.viewports`
+- View Table: :attr:`Drawing.views`
+
+- Classes Section: :attr:`Drawing.classes`
+- Object Section: :attr:`Drawing.objects`
+
+- Entity Database: :attr:`Drawing.entitydb`
+- Entity Groups: :attr:`Drawing.groups`
+- Header Variables: :attr:`Drawing.header`
+
+
+Drawing Class
+-------------
+
 .. class:: Drawing
 
-    The :class:`Drawing` class manages all entities and tables related to a DXF
-    drawing.
+    The :class:`Drawing` class is the central management structure of a DXF document.
 
     .. attribute:: dxfversion
 
@@ -78,19 +112,19 @@ Drawing Object
 
     .. attribute:: objects
 
-        Reference to the objects section, see also :class:`ObjectsSection`.
+        Reference to the objects section, see also :class:`~ezdxf.sections.objects.ObjectsSection`.
 
     .. attribute:: blocks
 
-        Reference to the blocks section, see also :class:`BlocksSection`.
+        Reference to the blocks section, see also :class:`~ezdxf.sections.blocks.BlocksSection`.
 
     .. attribute:: tables
 
-        Reference to the tables section, see also :class:`TablesSection`.
+        Reference to the tables section, see also :class:`~ezdxf.sections.tables.TablesSection`.
 
     .. attribute:: classes
 
-        Reference to the classes section, see also :class:`ClassesSection`.
+        Reference to the classes section, see also :class:`~ezdxf.sections.classes.ClassesSection`.
 
     .. attribute:: layouts
 
@@ -107,49 +141,50 @@ Drawing Object
         Shortcut for :attr:`Drawing.tables.layers`
 
         Reference to the layers table, where you can create, get and
-        remove layers, see also :class:`Table` and :class:`Layer`
+        remove layers, see also :class:`~ezdxf.sections.table.Table` and
+        :class:`~ezdxf.entities.Layer`
 
     .. attribute:: styles
 
         Shortcut for :attr:`Drawing.tables.styles`
 
-        Reference to the styles table, see also :class:`Style`.
+        Reference to the styles table, see also :class:`~ezdxf.entities.Textstyle`.
 
     .. attribute:: dimstyles
 
         Shortcut for :attr:`Drawing.tables.dimstyles`
 
-        Reference to the dimstyles table, see also :class:`DimStyle`.
+        Reference to the dimstyles table, see also :class:`~ezdxf.entities.DimStyle`.
 
     .. attribute:: linetypes
 
         Shortcut for :attr:`Drawing.tables.linetypes`
 
-        Reference to the linetypes table, see also :class:`Linetype`.
+        Reference to the linetypes table, see also :class:`~ezdxf.entities.Linetype`.
 
     .. attribute:: views
 
         Shortcut for :attr:`Drawing.tables.views`
 
-        Reference to the views table, see also :class:`View`.
+        Reference to the views table, see also :class:`~ezdxf.entities.View`.
 
     .. attribute:: viewports
 
         Shortcut for :attr:`Drawing.tables.viewports`
 
-        Reference to the viewports table, see also :class:`Viewport`.
+        Reference to the viewports table, see also :class:`~ezdxf.entities.VPort`.
 
     .. attribute:: ucs
 
         Shortcut for :attr:`Drawing.tables.ucs`
 
-        Reference to the ucs table, see also :class:`UCS`.
+        Reference to the ucs table, see also :class:`~ezdxf.entities.UCSTableEntry`.
 
     .. attribute:: appids
 
         Shortcut for :attr:`Drawing.tables.appids`
 
-        Reference to the appids table, see also :class:`AppID`.
+        Reference to the appids table, see also :class:`~ezdxf.entities.AppID`.
 
     .. attribute:: materials
 

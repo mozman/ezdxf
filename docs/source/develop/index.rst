@@ -8,12 +8,10 @@ Information about `ezdxf` internals.
 Source Code Formatting
 ----------------------
 
-Reformat code by `Black`_ for a column width of 80::
+Reformat code by `Black`_ with the default setting of 88 characters per line::
 
-    C:\> black -l 80 <python-file>
+    C:\> black <python-file>
 
-Reformatting the `ezdxf` code base is an ongoing process, add
-reformatted code in a separate commit without changing the runtime logic.
 
 Type Annotations
 ----------------

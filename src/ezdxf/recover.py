@@ -81,9 +81,7 @@ def readfile(
     return doc, auditor
 
 
-def read(
-    stream: BinaryIO, errors: str = "surrogateescape"
-) -> tuple[Drawing, Auditor]:
+def read(stream: BinaryIO, errors: str = "surrogateescape") -> tuple[Drawing, Auditor]:
     """Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
     but this function will detect the text encoding automatically and repair
     as many flaws as possible, runs the required audit process afterwards
@@ -110,10 +108,10 @@ def explore(
     filename: Union[str, Path], errors: str = "ignore"
 ) -> tuple[Drawing, Auditor]:
     """Read a DXF document from file system similar to :func:`readfile`,
-    but this function will use a special tag loader, which synchronise the tag
-    stream if invalid tags occur. This function is intended to load corrupted
-    DXF files and should only be used to explore such files, data loss is very
-    likely.
+    but this function will use a special tag loader, which tries to recover the
+    tag stream if invalid tags occur.  This function is intended to load
+    corrupted DXF files and should only be used to explore such files, data loss
+    is very likely.
 
     Args:
         filename: file-system name of the DXF document to load
@@ -130,9 +128,7 @@ def explore(
     """
     filename = str(filename)
     with open(filename, mode="rb") as fp:
-        recover_tool = Recover.run(
-            fp, errors=errors, loader=synced_bytes_loader
-        )
+        recover_tool = Recover.run(fp, errors=errors, loader=synced_bytes_loader)
         doc, auditor = _load_and_audit_document(recover_tool)
     doc.filename = filename
     return doc, auditor

@@ -107,9 +107,7 @@ class Drawing:
             target_dxfversion, target_dxfversion
         )
         if self._dxfversion not in const.versions_supported_by_new:
-            raise const.DXFVersionError(
-                f'Unsupported DXF version "{self.dxfversion}".'
-            )
+            raise const.DXFVersionError(f'Unsupported DXF version "{self.dxfversion}".')
         # Store original dxf version if loaded (and maybe converted R13/14)
         # from file.
         self._loaded_dxfversion: Optional[str] = None
@@ -395,18 +393,14 @@ class Drawing:
         self.classes = ClassesSection(
             self, sections.get("CLASSES", None)  # type: ignore
         )
-        self.tables = TablesSection(
-            self, sections.get("TABLES", None)  # type: ignore
-        )
+        self.tables = TablesSection(self, sections.get("TABLES", None))  # type: ignore
 
         # Create *Model_Space and *Paper_Space BLOCK_RECORDS
         # BlockSection setup takes care about the rest:
         self._create_required_block_records()
 
         # At this point all table entries are required:
-        self.blocks = BlocksSection(
-            self, sections.get("BLOCKS", None)  # type: ignore
-        )
+        self.blocks = BlocksSection(self, sections.get("BLOCKS", None))  # type: ignore
         self.entities = EntitySection(
             self, sections.get("ENTITIES", None)  # type: ignore
         )
@@ -656,9 +650,7 @@ class Drawing:
         material = self.entitydb.get(self.header.get("$CMATERIAL", None))
         if material is None or material.dxftype() != "MATERIAL":
             if "ByLayer" in self.materials:
-                self.header["$CMATERIAL"] = self.materials.get(
-                    "ByLayer"
-                ).dxf.handle
+                self.header["$CMATERIAL"] = self.materials.get("ByLayer").dxf.handle
             else:  # set any handle, except '0' which crashes BricsCAD
                 self.header["$CMATERIAL"] = "45"
 
@@ -688,11 +680,7 @@ class Drawing:
         For more information see:  :ref:`ezdxf_metadata`.
 
         """
-        return (
-            R12MetaData(self)
-            if self.dxfversion <= DXF12
-            else R2000MetaData(self)
-        )
+        return R12MetaData(self) if self.dxfversion <= DXF12 else R2000MetaData(self)
 
     def _create_ezdxf_metadata(self):
         ezdxf_meta = self.ezdxf_metadata()
@@ -728,31 +716,31 @@ class Drawing:
         return self.tables.styles
 
     @property
-    def dimstyles(self) -> "DimStyleTable":
+    def dimstyles(self) -> DimStyleTable:
         return self.tables.dimstyles
 
     @property
-    def ucs(self) -> "UCSTable":
+    def ucs(self) -> UCSTable:
         return self.tables.ucs
 
     @property
-    def appids(self) -> "AppIDTable":
+    def appids(self) -> AppIDTable:
         return self.tables.appids
 
     @property
-    def views(self) -> "ViewTable":
+    def views(self) -> ViewTable:
         return self.tables.views
 
     @property
-    def block_records(self) -> "BlockRecordTable":
+    def block_records(self) -> BlockRecordTable:
         return self.tables.block_records
 
     @property
-    def viewports(self) -> "ViewportTable":
+    def viewports(self) -> ViewportTable:
         return self.tables.viewports
 
     @property
-    def plotstyles(self) -> "Dictionary":
+    def plotstyles(self) -> Dictionary:
         return self.rootdict["ACAD_PLOTSTYLENAME"]  # type: ignore
 
     @property
@@ -877,7 +865,7 @@ class Drawing:
         """
         return groupby(self.chain_layouts_and_blocks(), dxfattrib, key)
 
-    def chain_layouts_and_blocks(self) -> Iterator["DXFEntity"]:
+    def chain_layouts_and_blocks(self) -> Iterator[DXFEntity]:
         """Chain entity spaces of all layouts and blocks. Yields an iterator
         for all entities in all layouts and blocks.
 
@@ -885,7 +873,7 @@ class Drawing:
         layouts = list(self.layouts_and_blocks())
         return chain.from_iterable(layouts)
 
-    def layouts_and_blocks(self) -> Iterator["GenericLayoutType"]:
+    def layouts_and_blocks(self) -> Iterator[GenericLayoutType]:
         """Iterate over all layouts (modelspace and paperspace) and all
         block definitions.
 
@@ -904,7 +892,7 @@ class Drawing:
         else:
             self.layouts.delete(name)
 
-    def new_layout(self, name, dxfattribs=None) -> "Layout":
+    def new_layout(self, name, dxfattribs=None) -> Layout:
         """
         Create a new paperspace layout `name`. Returns a
         :class:`~ezdxf.layouts.Layout` object.
@@ -1001,9 +989,7 @@ class Drawing:
         elif name not in self.blocks:
             raise const.DXFValueError(f'Arrow block "{name}" does not exist.')
 
-    def add_image_def(
-        self, filename: str, size_in_pixel: tuple[int, int], name=None
-    ):
+    def add_image_def(self, filename: str, size_in_pixel: tuple[int, int], name=None):
         """Add an image definition to the objects section.
 
         Add an :class:`~ezdxf.entities.image.ImageDef` entity to the drawing
@@ -1037,9 +1023,7 @@ class Drawing:
             name = filename
         return self.objects.add_image_def(filename, size_in_pixel, name)
 
-    def set_raster_variables(
-        self, frame: int = 0, quality: int = 1, units: str = "m"
-    ):
+    def set_raster_variables(self, frame: int = 0, quality: int = 1, units: str = "m"):
         """
         Set raster variables.
 
@@ -1062,9 +1046,7 @@ class Drawing:
                 ===== ===========================
 
         """
-        self.objects.set_raster_variables(
-            frame=frame, quality=quality, units=units
-        )
+        self.objects.set_raster_variables(frame=frame, quality=quality, units=units)
 
     def set_wipeout_variables(self, frame=0):
         """
@@ -1115,9 +1097,7 @@ class Drawing:
             flags: block flags
 
         """
-        self.blocks.new(
-            name=name, dxfattribs={"flags": flags, "xref_path": filename}
-        )
+        self.blocks.new(name=name, dxfattribs={"flags": flags, "xref_path": filename})
 
     def audit(self) -> Auditor:
         """Checks document integrity and fixes all fixable problems, not
@@ -1125,7 +1105,7 @@ class Drawing:
 
         If you are messing around with internal structures, call this method
         before saving to be sure to export valid DXF documents, but be aware
-        this is a long running task.
+        this is a long-running task.
 
         """
         auditor = Auditor(self)
@@ -1151,9 +1131,7 @@ class Drawing:
         else:
             return True
 
-    def set_modelspace_vport(
-        self, height, center=(0, 0), *, dxfattribs=None
-    ) -> "VPort":
+    def set_modelspace_vport(self, height, center=(0, 0), *, dxfattribs=None) -> VPort:
         r"""Set initial view/zoom location for the modelspace, this replaces
         the current "\*Active" viewport configuration
         (:class:`~ezdxf.entities.VPort`) and reset the coordinate system to the
@@ -1168,9 +1146,7 @@ class Drawing:
         """
         self.viewports.delete_config("*Active")
         dxfattribs = dict(dxfattribs or {})
-        vport = cast(
-            "VPort", self.viewports.new("*Active", dxfattribs=dxfattribs)
-        )
+        vport = cast("VPort", self.viewports.new("*Active", dxfattribs=dxfattribs))
         vport.dxf.center = center
         vport.dxf.height = height
         vport.reset_wcs()
@@ -1282,12 +1258,12 @@ class R12MetaData(MetaData):
 
 
 class R2000MetaData(MetaData):
-    """Manage ezdxf meta data for DXF version R2000+ as DICTIONARY object in
+    """Manage ezdxf metadata for DXF version R2000+ as DICTIONARY object in
     the rootdict.
     """
 
     def __init__(self, doc: Drawing):
-        self._data: "Dictionary" = doc.rootdict.get_required_dict(
+        self._data: Dictionary = doc.rootdict.get_required_dict(
             EZDXF_META, hard_owned=True
         )
 
@@ -1342,9 +1318,7 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> list[str]:
                 yield f"{indent}{name}={header[name]}"
 
     def append_header_var(name: str, indent=""):
-        data.append(
-            f"{indent}{name}: {header.get(name, '<undefined>').strip()}"
-        )
+        data.append(f"{indent}{name}: {header.get(name, '<undefined>').strip()}")
 
     header = doc.header
     loaded_dxf_version = doc.loaded_dxfversion
@@ -1354,9 +1328,7 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> list[str]:
     data.append(f'Filename: "{doc.filename}"')
     data.append(f"Format: {fmt}")
     if loaded_dxf_version != doc.dxfversion:
-        msg = (
-            f"Loaded content was upgraded from DXF Version {loaded_dxf_version}"
-        )
+        msg = f"Loaded content was upgraded from DXF Version {loaded_dxf_version}"
         release = const.acad_release.get(loaded_dxf_version, "")
         if release:
             msg += f" ({release})"

@@ -149,7 +149,7 @@ always pay an extra fee for the recover mode:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If files contain binary data which can not be decoded by the document encoding,
-it is maybe the best to ignore this files, this works in normal and recover
+it is maybe the best to ignore these files, this works in normal and recover
 mode:
 
 .. code-block:: Python
