@@ -22,6 +22,10 @@ def readfile(
     return doc
 
 
+def new():
+    return D6673(dxfversion=ezdxf.DXF12)
+
+
 class D6673(Drawing):
     def saveas(
         self,
