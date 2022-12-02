@@ -216,7 +216,7 @@ to check for valid polygons:
 
     import ezdxf
     from ezdxf.addons import geo
-    from shapley.geometry import shape
+    from shapely.geometry import shape
 
     # Load DXF document including HATCH entities.
     doc = ezdxf.readfile('hatch.dxf')
@@ -230,7 +230,7 @@ to check for valid polygons:
     hatch_proxy = geo.proxy(hatch_entity)
 
     # Shapely supports the __geo_interface__
-    shapley_polygon = shape(hatch_proxy)
+    shapely_polygon = shape(hatch_proxy)
 
     if shapely_polygon.is_valid:
         ...
