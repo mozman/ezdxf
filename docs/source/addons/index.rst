@@ -26,3 +26,4 @@ Add-ons
     openscad
     tablepainter
     mtextsurrogate
+    gerber_D6673

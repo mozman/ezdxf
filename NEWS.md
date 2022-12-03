@@ -13,6 +13,8 @@ Version 1.0.0rc2 - dev
 - NEW: `UNIX_EXEC_PATH` config option for the ODAFC add-on. 
   This may help if the `which` command can not find the ` ODAFileConverter` command 
   and also adds support for AppImages provided by ODA.
+- NEW: ASTM-D6673-10 Exporter for Gerber Technology applications, `gerber_D6673` 
+  [docs](https://ezdxf.mozman.at/docs/addons/gerber_D6673.html)
 - CHANGE: removed deprecated features
 - CHANGE: type annotation refactoring
 - CHANGE: renaming and refactoring of the `MTextSurrogate` add-on (formerly 
