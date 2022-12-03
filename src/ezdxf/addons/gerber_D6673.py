@@ -2,32 +2,8 @@
 # License: MIT License
 # This add-on was created to solve this problem: https://github.com/mozman/ezdxf/discussions/789
 """
-This add-on creates invalid DXF files for use by Gerber Technology applications which
-do not follow the ASTM-D6673-10 standard which requires DXF compliant DXF files.
-
-Citation from the ASTM-D6673-10 Standard:
-
-    1.2  The file format for the pattern data exchange file defined
-    by this standard (Practice D6673) complies with the Drawing
-    Interchange File (DXF) format. Autodesk, Inc. developed the
-    DXF format for transferring data between their AutoCAD(r)
-    product and other software applications. This standard documents
-    the manner in which pattern data should be represented within
-    the DXF format.  Users of this standard should have
-    Autodesk, Inc.’s documentation on Drawing Interchange Files,
-    found in the AutoCAD Reference Manual, in order to assure
-    compatibility to all DXF format specifications. The AutoCAD
-    Version 13 DXF specification is to be used. The file format for
-    the grade rule table exchange file is an ASCII text file.
-
-I hate creating invalid DXF files, but I also want to help those users who need to use
-Gerber Technology software (e.g. Gerber Accumark).
-
-I don't know Gerber Technology's motivation to cripple the file format to a point that
-these files can no longer be opened by Autodesk applications, so these files are
-definitely no longer following the DXF standard, but if that's a try locking users into
-their software-ecosystem, this add-on may help those users to get some freedom back.
-
+This add-on creates special DXF files for use by Gerber Technology applications which
+have a broken DXF loader.
 """
 from __future__ import annotations
 from typing import TextIO
@@ -42,9 +18,9 @@ __all__ = ["export_file", "export_stream"]
 
 
 def export_file(doc: Drawing, filename: str | os.PathLike) -> None:
-    """Export the given DXF R12 document which should contain content according to the
-    ASTM-D6673-10 Standard, so that Gerber Technology applications can read it.
-    The exported file is an invalid DXF file which Autodesk applications cannot open!
+    """Exports the specified DXF R12 document, intended to contain content conforming to
+    the ASTM-D6673-10 standard, in a special way so that Gerber Technology applications
+    can parse it by their low-quality DXF parser.
     """
     fp = io.open(filename, mode="wt", encoding="ascii", errors="dxfreplace")
     export_stream(doc, fp)
@@ -58,10 +34,6 @@ def export_stream(doc: Drawing, stream: TextIO) -> None:
 
 
 def _export_sections(doc: Drawing, tagwriter: AbstractTagWriter) -> None:
-    tagwriter.write_tag2(
-        999,
-        "This is an invalid DXF file created by ezdxf for use by Gerber Technology applications",
-    )
     # export empty header section
     tagwriter.write_str("  0\nSECTION\n  2\nHEADER\n")
     tagwriter.write_tag2(0, "ENDSEC")
@@ -77,11 +49,12 @@ def _export_sections(doc: Drawing, tagwriter: AbstractTagWriter) -> None:
 def _export_blocks(doc: Drawing, tagwriter: AbstractTagWriter) -> None:
     # This is the important part:
     #
-    # Gerber Technology applications do not accept DXF files that contain blocks
-    # without ASTM-D6673-10 content, such as the *MODEL_SPACE and *PAPER_SPACE blocks,
-    # the presence of which is mandatory by the DXF Standard.
+    # Gerber Technology applications have a low-quality parser which do not accept DXF
+    # files that contain blocks without ASTM-D6673-10 content, such as the *MODEL_SPACE
+    # and *PAPER_SPACE blocks.
     #
-    # So the exported file is not a valid DXF file anymore.
+    # This is annoying but the presence of these blocks is NOT mandatory for
+    # the DXF Standard.
     #
     tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
     for block_record in doc.block_records:
