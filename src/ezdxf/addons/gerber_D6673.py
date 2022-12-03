@@ -8,6 +8,7 @@ import io
 
 import ezdxf
 from ezdxf.document import Drawing
+from ezdxf.layouts import Modelspace
 from ezdxf.lldxf.tagwriter import TagWriter, AbstractTagWriter
 
 __all__ = ["export_file", "export_stream"]
@@ -32,16 +33,15 @@ def export_stream(doc: Drawing, stream: TextIO) -> None:
 
 
 def _export_sections(doc: Drawing, tagwriter: AbstractTagWriter) -> None:
+    _export_header(tagwriter)
+    _export_blocks(doc, tagwriter)
+    _export_entities(doc.modelspace(), tagwriter)
+
+
+def _export_header(tagwriter: AbstractTagWriter) -> None:
     # export empty header section
     tagwriter.write_str("  0\nSECTION\n  2\nHEADER\n")
     tagwriter.write_tag2(0, "ENDSEC")
-    # export block definitions
-    _export_blocks(doc, tagwriter)
-    # export modelspace content
-    tagwriter.write_str("  0\nSECTION\n  2\nENTITIES\n")
-    doc.modelspace().entity_space.export_dxf(tagwriter)
-    tagwriter.write_tag2(0, "ENDSEC")
-    tagwriter.write_tag2(0, "EOF")
 
 
 def _export_blocks(doc: Drawing, tagwriter: AbstractTagWriter) -> None:
@@ -59,3 +59,10 @@ def _export_blocks(doc: Drawing, tagwriter: AbstractTagWriter) -> None:
         if block_record.is_block_layout:
             block_record.export_block_definition(tagwriter)
     tagwriter.write_tag2(0, "ENDSEC")
+
+
+def _export_entities(msp: Modelspace, tagwriter: AbstractTagWriter) -> None:
+    tagwriter.write_str("  0\nSECTION\n  2\nENTITIES\n")
+    msp.entity_space.export_dxf(tagwriter)
+    tagwriter.write_tag2(0, "ENDSEC")
+    tagwriter.write_tag2(0, "EOF")
