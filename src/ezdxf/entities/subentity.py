@@ -45,6 +45,8 @@ class LinkedEntities(DXFGraphic):
     def link_seqend(self, seqend: DXFEntity) -> None:
         """Link SEQEND entity. (internal API)"""
         seqend.dxf.owner = self.dxf.owner
+        if self.seqend is not None:  # destroy existing seqend
+            self.seqend.destroy()
         self.seqend = seqend  # type: ignore
 
     def post_bind_hook(self):
