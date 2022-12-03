@@ -2,9 +2,8 @@
 # License: MIT License
 # This add-on was created to solve this problem: https://github.com/mozman/ezdxf/discussions/789
 """
-This add-on creates invalid DXF files to accommodate Gerber Technology's software,
-because the software of Gerber Technology do not follow fully the ASTM-D6673-10
-standard which requires DXF compliant DXF files.
+This add-on creates invalid DXF files for use by Gerber Technology applications which
+do not follow the ASTM-D6673-10 standard which requires DXF compliant DXF files.
 
 Citation from the ASTM-D6673-10 Standard:
 
@@ -76,6 +75,14 @@ def _export_sections(doc: Drawing, tagwriter: AbstractTagWriter) -> None:
 
 
 def _export_blocks(doc: Drawing, tagwriter: AbstractTagWriter) -> None:
+    # This is the important part:
+    #
+    # Gerber Technology applications do not accept DXF files that contain blocks
+    # without ASTM-D6673-10 content, such as the *MODEL_SPACE and *PAPER_SPACE blocks,
+    # the presence of which is mandatory by the DXF Standard.
+    #
+    # So the exported file is not a valid DXF file anymore.
+    #
     tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
     for block_record in doc.block_records:
         if block_record.is_block_layout:

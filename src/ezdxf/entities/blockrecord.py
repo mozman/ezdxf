@@ -144,9 +144,9 @@ class BlockRecord(DXFEntity):
         )
 
     def export_block_definition(self, tagwriter: AbstractTagWriter) -> None:
-        """Exports BLOCK, then all DXF entities and at last the ENDBLK entity,
-        except for *Model_space and *Paper_Pacer, their entities are stored
-        in the entities section.
+        """Exports the BLOCK entity, followed by all content entities and finally the
+        ENDBLK entity, except for the *Model_Space and *Paper_Space blocks, their
+        entities are stored in the ENTITIES section.
 
         """
         assert self.block is not None
