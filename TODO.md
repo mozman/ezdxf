@@ -224,4 +224,43 @@ DXF Document
 
 - (>v1.0) copy DXF document by serializing and reloading the document in memory 
   or by file-system, this is not efficient but safe.
- 
+
+Increase Minimal Required Python Version
+----------------------------------------
+
+(v1.1) Python 3.8 - maybe jumping straight to Python 3.9
+
+- https://docs.python.org/3/whatsnew/3.8.html
+- import `Protocol` from `typing` instead from `typing_extensions`
+- `typing.Literal`
+- walrus operator `:=`
+
+Python 3.9 in late 2023, after release of Python 3.12
+
+- https://docs.python.org/3/whatsnew/3.9.html
+- type hinting generics in standard collections: 
+  `dict[tuple[int, str], list[str]]` can be used in regular code outside of annotations,
+  import of `List`, `Dict` or `Tuple` is not required anymore
+
+Python 3.10 in late 2024, after release of Python 3.13
+
+- https://docs.python.org/3/whatsnew/3.10.html
+- structural pattern matching?
+- typing: union operator `|`, outside of annotations (type aliases)
+- dataclasses: `__slots__`
+- `itertools.pairwise()` replaces `ezdxf.tools.take2()`
+
+Python 3.11 in late 2025, after release of Python 3.14
+
+- https://docs.python.org/3/whatsnew/3.11.html
+- exception groups?
+- `typing.Self`
+
+
+Apply minimal Python version update to:
+
+- README.md
+- setup.py
+- toplevel index.rst
+- introduction.rst
+- setup.rst
