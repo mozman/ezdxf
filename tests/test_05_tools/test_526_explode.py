@@ -53,5 +53,18 @@ def test_complex_target_coordinate_system(msp: Modelspace):
     )
 
 
+def test_explode_scaled_block_ref_containing_a_hatch(msp: Modelspace):
+    doc = msp.doc
+    block = doc.blocks.new("HATCH_BLK")
+    hatch = block.add_hatch()
+    hatch.paths.add_polyline_path([(0, 0), (1, 0), (1, 1), (0, 1)])
+    hatch.set_pattern_fill("ANSI33")
+
+    insert = msp.add_blockref("HATCH_BLK", (0, 0, 0))
+    insert.scale(10, 20, 1)
+    exploded_hatch = insert.explode()[0]
+    assert exploded_hatch.dxf.pattern_scale == 10
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

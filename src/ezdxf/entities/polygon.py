@@ -390,7 +390,15 @@ class DXFPolygon(DXFGraphic):
             x=0, y=0
         )
         dxf.extrusion = ocs.new_extrusion
-        # todo scale pattern
+        if self.pattern:
+            # todo: non-uniform scaling
+            # take the scaling factor of the x-axis
+            factor = ocs.transform_length((self.dxf.pattern_scale, 0, 0))
+            angle = ocs.transform_deg_angle(self.dxf.pattern_angle)
+            # todo: non-uniform pattern scaling is not supported
+            self.pattern.scale(factor, angle)
+            self.dxf.pattern_scale = factor
+            self.dxf.pattern_angle = angle
         self.post_transform(m)
         return self
 
