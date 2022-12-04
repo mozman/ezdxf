@@ -47,15 +47,16 @@ def _export_header(tagwriter: AbstractTagWriter) -> None:
 def _export_blocks(doc: Drawing, tagwriter: AbstractTagWriter) -> None:
     # This is the important part:
     #
-    # Gerber Technology applications have a low-quality parser which do not accept DXF
-    # files that contain blocks without ASTM-D6673-10 content, such as the $MODEL_SPACE
-    # and $PAPER_SPACE blocks.
+    # Gerber Technology applications have a bad DXF parser which do not accept DXF
+    # files that contain blocks without ASTM-D6673-10 content, such as the standard
+    # $MODEL_SPACE and $PAPER_SPACE block definitions.
     #
     # This is annoying but the presence of these blocks is NOT mandatory for
     # the DXF R12 standard.
     #
     tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
     for block_record in doc.block_records:
+        # export only BLOCK definitions, ignore LAYOUT definition blocks
         if block_record.is_block_layout:
             block_record.export_block_definition(tagwriter)
     tagwriter.write_tag2(0, "ENDSEC")
