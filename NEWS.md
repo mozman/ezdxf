@@ -36,6 +36,8 @@ Version 1.0.0rc2 - dev
   check for empty `TextPath` in function `get_text_line_width()` 
 - BUGFIX: [#782](https://github.com/mozman/ezdxf/issues/782)
   allow DXF-Unicode notion `\U+XXXX` in table names 
+- BUGFIX: [#783](https://github.com/mozman/ezdxf/issues/783)
+  apply block reference transformation to pattern filling of exploded HATCH entities
    
 
 Version 0.18.1 - 2022-09-03
