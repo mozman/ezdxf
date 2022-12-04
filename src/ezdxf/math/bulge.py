@@ -3,7 +3,7 @@
 # source: http://www.lee-mac.com/bulgeconversion.html
 # source: http://www.afralisp.net/archive/lisp/Bulges1.htm
 from __future__ import annotations
-from typing import Any, Tuple
+from typing import Any
 import math
 from ezdxf.math import Vec2, UVec
 

@@ -69,7 +69,7 @@ class _AbstractLayout(CreatorInterface):
         standard Python list, therefore `index` can be any valid list indexing
         or slicing term, like a single index ``layout[-1]`` to get the last
         entity, or an index slice ``layout[:10]`` to get the first 10 or less
-        entities as ``List[DXFGraphic]``.
+        entities as ``list[DXFGraphic]``.
 
         """
         return self.entity_space[index]

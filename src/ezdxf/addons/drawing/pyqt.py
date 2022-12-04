@@ -3,6 +3,7 @@
 # mypy: ignore_errors=True
 from __future__ import annotations
 from typing import Optional, Iterable, Tuple
+from typing_extensions import TypeAlias
 import math
 
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
@@ -16,7 +17,7 @@ from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.path import Path, to_qpainter_path
 
-PatternKey = Tuple[str, float]
+PatternKey: TypeAlias = Tuple[str, float]
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):

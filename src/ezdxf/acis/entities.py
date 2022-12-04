@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Union, Dict, Callable, Type, Any, Sequence, Iterator
+from typing import Union, Callable, Type, Any, Sequence, Iterator
 import abc
 
 from . import sab, sat, const, hdr
@@ -11,7 +11,7 @@ from ezdxf.math import Matrix44, Vec3, NULLVEC
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
 
-ENTITY_TYPES: Dict[str, Type[AcisEntity]] = {}
+ENTITY_TYPES: dict[str, Type[AcisEntity]] = {}
 INF = float("inf")
 
 

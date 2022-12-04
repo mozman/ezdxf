@@ -1,10 +1,11 @@
-# Copyright (c) 2020-2021, Matthew Broadway
+# Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
-from typing import Tuple, Callable
+from typing import Callable
+from typing_extensions import TypeAlias
 from ezdxf.entities import DXFGraphic
+from ezdxf.colors import RGB
 
-LayerName = str
-Color = str
-Radians = float
-RGB = Tuple[int, int, int]
-FilterFunc = Callable[[DXFGraphic], bool]
+LayerName: TypeAlias = str
+Color: TypeAlias = str
+Radians: TypeAlias = float
+FilterFunc: TypeAlias = Callable[[DXFGraphic], bool]

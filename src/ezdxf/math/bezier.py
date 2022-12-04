@@ -1,6 +1,7 @@
 # Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Tuple, Sequence
+from __future__ import annotations
+from typing import Iterable, Sequence
 from functools import lru_cache
 import math
 from ezdxf.math import Vec3, NULLVEC, Matrix44, UVec
@@ -176,7 +177,7 @@ class Bezier:
         for u in t:
             yield self.point(u)
 
-    def derivative(self, t: float) -> Tuple[Vec3, Vec3, Vec3]:
+    def derivative(self, t: float) -> tuple[Vec3, Vec3, Vec3]:
         """Returns (point, 1st derivative, 2nd derivative) tuple for parameter `t`
         in range [0, 1] as :class:`Vec3` objects.
         """
@@ -216,7 +217,7 @@ class Bezier:
 
     def derivatives(
         self, t: Iterable[float]
-    ) -> Iterable[Tuple[Vec3, Vec3, Vec3]]:
+    ) -> Iterable[tuple[Vec3, Vec3, Vec3]]:
         """Returns multiple (point, 1st derivative, 2nd derivative) tuples for
         parameter vector  `t` as :class:`Vec3` objects.
         Parameters in range [0, 1]
@@ -224,11 +225,11 @@ class Bezier:
         for u in t:
             yield self.derivative(u)
 
-    def reverse(self) -> "Bezier":
+    def reverse(self) -> Bezier:
         """Returns a new Bèzier-curve with reversed control point order."""
         return Bezier(list(reversed(self.control_points)))
 
-    def transform(self, m: Matrix44) -> "Bezier":
+    def transform(self, m: Matrix44) -> Bezier:
         """General transformation interface, returns a new :class:`Bezier` curve.
 
         Args:

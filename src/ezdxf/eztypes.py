@@ -45,6 +45,7 @@ from typing import (
     Tuple,
     Union,
 )
+from typing_extensions import TypeAlias
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity
@@ -55,8 +56,8 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tags import Tags
     from ezdxf.math import UVec
 
-    IterableTags = Iterable[Tuple[int, Any]]
-    SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
-    KeyFunc = Callable[[DXFEntity], Hashable]
-    FaceType = Sequence[UVec]
-    GenericLayoutType = Union[Layout, BlockLayout, VirtualLayout]
+    IterableTags: TypeAlias = Iterable[Tuple[int, Any]]
+    SectionDict: TypeAlias = Dict[str, List[Union[Tags, ExtendedTags]]]
+    KeyFunc: TypeAlias = Callable[[DXFEntity], Hashable]
+    FaceType: TypeAlias = Sequence[UVec]
+    GenericLayoutType: TypeAlias = Union[Layout, BlockLayout, VirtualLayout]

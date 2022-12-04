@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, Optional
 import math
 
 from ezdxf.lldxf import validator
@@ -267,7 +267,7 @@ class Text(DXFGraphic):
         self.dxf.align_point = p2
         return self
 
-    def get_placement(self) -> Tuple[TextEntityAlignment, Vec3, Optional[Vec3]]:
+    def get_placement(self) -> tuple[TextEntityAlignment, Vec3, Optional[Vec3]]:
         """Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment
         enum :class:`~ezdxf.enum.TextEntityAlignment`, `p1` is the
         alignment point, `p2` is only relevant if `align` is :attr:`ALIGNED` or

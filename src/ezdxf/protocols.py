@@ -1,7 +1,7 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple, Iterator, Sequence, Iterable
+from typing import TYPE_CHECKING, Iterator, Iterable
 from typing_extensions import Protocol, runtime_checkable
 from ezdxf.query import EntityQuery
 
@@ -63,7 +63,7 @@ class ReferencedBlocks(Protocol):
         ...
 
 
-_EMPTY_TUPLE: Tuple = tuple()
+_EMPTY_TUPLE: tuple = tuple()
 
 
 def referenced_blocks(entity: "DXFEntity") -> Iterable[str]:

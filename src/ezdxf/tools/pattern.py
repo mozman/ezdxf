@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Tuple, Optional
+from typing_extensions import TypeAlias
 from ezdxf.math import Vec2
 from ._iso_pattern import ISO_PATTERN
 
@@ -21,10 +22,10 @@ __all__ = [
     "PatternAnalyser",
 ]
 IMPERIAL_SCALE_FACTOR = 1.0 / 25.4
-HatchPatternLineType = Tuple[
+HatchPatternLineType: TypeAlias = Tuple[
     float, Sequence[float], Sequence[float], Sequence[float]
 ]
-HatchPatternType = Sequence[HatchPatternLineType]
+HatchPatternType: TypeAlias = Sequence[HatchPatternLineType]
 
 
 def load(measurement: int = 1, factor: Optional[float] = None):
@@ -75,9 +76,7 @@ def scale_pattern(
 
 
 def scale_all(pattern: dict, factor: float = 1, angle: float = 0):
-    return {
-        name: scale_pattern(p, factor, angle) for name, p in pattern.items()
-    }
+    return {name: scale_pattern(p, factor, angle) for name, p in pattern.items()}
 
 
 def parse(pattern: str) -> dict:
@@ -108,7 +107,7 @@ class PatternFileCompiler:
                     yield pattern
                 pattern = [[line[0][1:], line[1]]]  # name, description
             else:
-                pattern.append([float(e) for e in line])  # List[floats]
+                pattern.append([float(e) for e in line])  # list[floats]
 
         if pattern:
             yield pattern
@@ -133,9 +132,7 @@ class PatternFileCompiler:
 
                 # rotate offset:
                 offset = offset.rotate_deg(angle)
-                pat_line.append(
-                    (round(offset.x, ndigits), round(offset.y, ndigits))
-                )
+                pat_line.append((round(offset.x, ndigits), round(offset.y, ndigits)))
 
                 # line dash pattern
                 pat_line.append(line[5:])
@@ -172,14 +169,12 @@ class PatternAnalyser:
 
     def has_line(self, angle: int, solid: bool) -> bool:
         return any(
-            angle_ == angle and solid_ == solid
-            for angle_, solid_ in self._lines
+            angle_ == angle and solid_ == solid for angle_, solid_ in self._lines
         )
 
     def all_lines(self, angle: int, solid: bool) -> bool:
         return all(
-            angle_ == angle and solid_ == solid
-            for angle_, solid_ in self._lines
+            angle_ == angle and solid_ == solid for angle_, solid_ in self._lines
         )
 
     def has_solid_line(self) -> bool:

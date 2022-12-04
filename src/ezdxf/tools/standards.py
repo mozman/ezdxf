@@ -2,7 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple, Sequence, Union, cast, Optional
-
+from typing_extensions import TypeAlias
 from ezdxf import const
 from ezdxf._options import options
 from ezdxf.render.arrows import ARROWS
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DimStyle
 
 logger = logging.getLogger("ezdxf")
-LTypeDef = Tuple[str, str, Sequence[float]]
+LTypeDef: TypeAlias = Tuple[str, str, Sequence[float]]
 
 
 def setup_drawing(doc: Drawing, topics: Union[str, bool, Sequence] = "all"):

@@ -2,9 +2,10 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import Tuple, Union
+from typing_extensions import TypeAlias
 import math
 
-RGB = Tuple[int, int, int]
+RGB: TypeAlias = Tuple[int, int, int]
 
 BYBLOCK = 0
 BYLAYER = 256

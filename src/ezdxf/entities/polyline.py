@@ -613,7 +613,7 @@ class Polyface(Polyline):
         """Append a single face. A `face` is a list of ``(x, y, z)`` tuples.
 
         Args:
-            face: List[``(x, y, z)`` tuples]
+            face: list[``(x, y, z)`` tuples]
             dxfattribs: dict of DXF attributes for VERTEX objects
 
         """
@@ -625,7 +625,7 @@ class Polyface(Polyline):
         """Convert (x, y, z)-tuples into DXFVertex objects.
 
         Args:
-            points: List[``(x, y, z)`` tuples]
+            points: list[``(x, y, z)`` tuples]
             dxfattribs: dict of DXF attributes for :class:`Vertex` entity
 
         """
@@ -650,7 +650,7 @@ class Polyface(Polyline):
         single face is a list of ``(x, y, z)`` tuples.
 
         Args:
-            faces: list of List[``(x, y, z)`` tuples]
+            faces: list of list[``(x, y, z)`` tuples]
             dxfattribs: dict of DXF attributes for the VERTEX objects
 
         """
@@ -689,7 +689,7 @@ class Polyface(Polyline):
 
         """
         polyface_builder = PolyfaceBuilder(faces, precision=precision)
-        # Why is List[DXFGraphic] incompatible to List[DXFVertex] when DXFVertex
+        # Why is list[DXFGraphic] incompatible to list[DXFVertex] when DXFVertex
         # is a subclass of DXFGraphic?
         self._sub_entities = polyface_builder.get_vertices()  # type: ignore
         self.update_count(polyface_builder.nvertices, polyface_builder.nfaces)

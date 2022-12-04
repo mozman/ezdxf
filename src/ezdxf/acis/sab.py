@@ -14,6 +14,7 @@ from typing import (
     Tuple,
     Optional,
 )
+from typing_extensions import TypeAlias
 import math
 import struct
 from datetime import datetime
@@ -44,7 +45,7 @@ class Token(NamedTuple):
         return f"(0x{self.tag:02x}, {str(self.value)})"
 
 
-SabRecord = List[Token]
+SabRecord: TypeAlias = List[Token]
 
 
 class Decoder:

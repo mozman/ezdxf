@@ -13,6 +13,7 @@ from typing import (
     Tuple,
     Optional,
 )
+from typing_extensions import TypeAlias
 import logging
 import itertools
 import time
@@ -77,9 +78,9 @@ from ezdxf.render import hatching
 __all__ = ["Frontend"]
 
 
-# typedef
-TDispatchTable = Dict[str, Callable[[DXFGraphic, Properties], None]]
-PatternKey = Tuple[str, float]
+TDispatchTable: TypeAlias = Dict[str, Callable[[DXFGraphic, Properties], None]]
+PatternKey: TypeAlias = Tuple[str, float]
+
 POST_ISSUE_MSG = (
     "Please post sample DXF file at https://github.com/mozman/ezdxf/issues."
 )

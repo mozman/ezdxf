@@ -10,6 +10,7 @@ from typing import (
     Iterator,
     Optional,
 )
+from typing_extensions import TypeAlias
 import array
 import copy
 from itertools import chain
@@ -140,7 +141,7 @@ class SplineData:
 
 REMOVE_CODES = {10, 11, 40, 41, 72, 73, 74}
 
-Vertices = List[Sequence[float]]
+Vertices: TypeAlias = List[Sequence[float]]
 
 
 @register_entity

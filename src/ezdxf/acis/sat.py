@@ -10,6 +10,7 @@ from typing import (
     TYPE_CHECKING,
     Optional,
 )
+from typing_extensions import TypeAlias
 import math
 from datetime import datetime
 
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
     from .entities import AcisEntity
     from ezdxf.math import Vec3
 
-SatRecord = List[str]
+SatRecord: TypeAlias = List[str]
 
 
 class SatEntity(AbstractEntity):

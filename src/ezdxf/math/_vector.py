@@ -3,7 +3,6 @@
 from __future__ import annotations
 from typing import (
     Tuple,
-    List,
     Iterable,
     Sequence,
     TYPE_CHECKING,
@@ -128,7 +127,7 @@ class Vec3:
         )
 
     @classmethod
-    def list(cls, items: Iterable[UVec]) -> List[Vec3]:
+    def list(cls, items: Iterable[UVec]) -> list[Vec3]:
         """Returns a list of :class:`Vec3` objects."""
         return list(cls.generate(items))
 
@@ -603,7 +602,7 @@ class Vec2:
         return self.__class__(round(self.x, ndigits), round(self.y, ndigits))
 
     @classmethod
-    def list(cls, items: Iterable[UVec]) -> List[Vec2]:
+    def list(cls, items: Iterable[UVec]) -> list[Vec2]:
         return list(cls.generate(items))
 
     @classmethod

@@ -1067,7 +1067,7 @@ class BSpline:
                 yield from subdiv(m, e, mid_t, end_t)
 
         evaluator = self.evaluator
-        knots: List[float] = self.knots()  # type: ignore
+        knots: list[float] = self.knots()  # type: ignore
         if self.is_clamped:
             lower_bound = 0.0
         else:
@@ -1570,7 +1570,7 @@ def bspline_basis_vector(
         knots: knot vector
 
     Returns:
-        List[float]: basis_vector vector, len(basis_vector) == count
+        list[float]: basis_vector vector, len(basis_vector) == count
 
     """
     assert len(knots) == (count + degree + 1)

@@ -10,6 +10,7 @@ from typing import (
     Sequence,
     Optional,
 )
+from typing_extensions import TypeAlias
 from abc import abstractmethod
 from collections import namedtuple
 import math
@@ -47,9 +48,9 @@ LinearStation = namedtuple(
 
 CurveStation = namedtuple("CurveStation", ("vertex0", "vertex1"))
 
-Face = Tuple[Vec2, Vec2, Vec2, Vec2]
-Polygon = Sequence[Vec2]
-Quadrilateral = Union["Solid", "Trace", "Face3d"]
+Face: TypeAlias = Tuple[Vec2, Vec2, Vec2, Vec2]
+Polygon: TypeAlias = Sequence[Vec2]
+Quadrilateral: TypeAlias = Union["Solid", "Trace", "Face3d"]
 
 
 class AbstractTrace:

@@ -1,7 +1,7 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Callable, Optional, Dict, TYPE_CHECKING, Type
+from typing import Callable, Optional, TYPE_CHECKING, Type
 import abc
 import sys
 import os
@@ -55,7 +55,7 @@ class Command:
         pass
 
 
-_commands: Dict[str, Type[Command]] = dict()
+_commands: dict[str, Type[Command]] = dict()
 
 
 def register(cls: Type[Command]):

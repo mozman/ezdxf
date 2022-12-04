@@ -154,21 +154,21 @@ def read_mesh_traits(
 ):
     # Traits data format:
     # all entries are optional
-    # traits: Dict[str, Dict]
-    #     "edges": Dict[str, List]
-    #         "colors": List[int]
-    #         "layers": List[int] as layer ids
-    #         "linetypes": List[int] as linetype ids
-    #         "markers": List[int]
-    #         "visibilities": List[int]
-    #     "faces": Dict[str, List]
-    #         "colors": List[int]
-    #         "layers": List[int] as layer ids
-    #         "markers": List[int]
-    #         "normals": List[Vec3]
-    #         "visibilities": List[int]
-    #     "vertices": Dict
-    #         "normals": List[Vec3]
+    # traits: dict[str, dict]
+    #     "edges": dict[str, list]
+    #         "colors": list[int]
+    #         "layers": list[int] as layer ids
+    #         "linetypes": list[int] as linetype ids
+    #         "markers": list[int]
+    #         "visibilities": list[int]
+    #     "faces": dict[str, list]
+    #         "colors": list[int]
+    #         "layers": list[int] as layer ids
+    #         "markers": list[int]
+    #         "normals": list[Vec3]
+    #         "visibilities": list[int]
+    #     "vertices": dict
+    #         "normals": list[Vec3]
     #         "orientation": bool
     traits = dict()
     edge_flags = bs.read_long()
@@ -532,7 +532,7 @@ class ProxyGraphic:
             num_width = 0
         # ignore DXF R13/14 special vertex order
 
-        vertices: List[Tuple[float, float]] = [bs.read_raw_double(2)]  # type: ignore
+        vertices: list[luple[float, float]] = [bs.read_raw_double(2)]  # type: ignore
         prev_point = vertices[-1]
         for _ in range(num_points - 1):
             x = bs.read_bit_double_default(default=prev_point[0])  # type: ignore

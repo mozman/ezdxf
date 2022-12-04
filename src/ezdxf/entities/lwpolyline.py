@@ -10,6 +10,7 @@ from typing import (
     Iterator,
     Optional,
 )
+from typing_extensions import TypeAlias
 import array
 import copy
 from contextlib import contextmanager
@@ -47,7 +48,7 @@ if TYPE_CHECKING:
 
 __all__ = ["LWPolyline", "FORMAT_CODES"]
 
-LWPointType = Tuple[float, float, float, float, float]
+LWPointType: TypeAlias = Tuple[float, float, float, float, float]
 
 FORMAT_CODES = frozenset("xysebv")
 DEFAULT_FORMAT = "xyseb"

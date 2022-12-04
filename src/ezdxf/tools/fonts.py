@@ -1,4 +1,4 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 """
 This module manages a backend agnostic font database.
@@ -44,7 +44,7 @@ ultra-expanded  200%
 
 """
 from __future__ import annotations
-from typing import Dict, Optional, NamedTuple, TYPE_CHECKING, cast
+from typing import Optional, NamedTuple, TYPE_CHECKING, cast
 import abc
 import logging
 from pathlib import Path
@@ -357,7 +357,7 @@ def load(path=None, reload=False):
         font_measurement_cache = _load_measurement_cache(p)
 
 
-def _load_font_faces(path) -> Dict:
+def _load_font_faces(path) -> dict:
     """Load font face cache."""
     with open(path, "rt") as fp:
         data = json.load(fp)
@@ -369,7 +369,7 @@ def _load_font_faces(path) -> Dict:
     return cache
 
 
-def _load_measurement_cache(path) -> Dict:
+def _load_measurement_cache(path) -> dict:
     """Load font measurement cache."""
     with open(path, "rt") as fp:
         data = json.load(fp)

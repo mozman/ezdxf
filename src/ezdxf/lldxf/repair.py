@@ -4,7 +4,6 @@ from __future__ import annotations
 from typing import (
     Iterable,
     Optional,
-    List,
     TYPE_CHECKING,
     Sequence,
     Any,
@@ -31,7 +30,7 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     """
 
-    collector: Optional[List] = None
+    collector: Optional[list] = None
     for tag in tagger:
         if tag.code == 0:
             if collector is not None:
@@ -82,7 +81,7 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     expected_code = -1
     z_code = 0
-    point: List[Any] = []
+    point: list[Any] = []
     handle_tag = None
     for tag in tagger:
         code = tag[0]

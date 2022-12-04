@@ -92,7 +92,8 @@ It is not possible for a path to contain another path with a larger area.
 
 """
 from __future__ import annotations
-from typing import Tuple, Optional, List, Iterable, TypeVar
+from typing import Tuple, Optional, List, Iterable
+from typing_extensions import TypeAlias
 from collections import namedtuple
 from .path import Path
 from ezdxf.math import BoundingBox2d
@@ -104,9 +105,8 @@ __all__ = [
     "flatten_polygons",
 ]
 
-Exterior = Path
-Polygon = TypeVar("Polygon")
-Polygon = Tuple[Exterior, Optional[List[Polygon]]]  # type: ignore
+Exterior: TypeAlias = Path
+Polygon: TypeAlias = Tuple[Exterior, Optional[List["Polygon"]]]
 BoxStruct = namedtuple("BoxStruct", "bbox, path")
 
 

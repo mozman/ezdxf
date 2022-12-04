@@ -11,6 +11,7 @@ from typing import (
     Type,
     TypeVar,
 )
+from typing_extensions import TypeAlias
 from functools import singledispatch, partial
 import enum
 from ezdxf.math import (
@@ -830,7 +831,7 @@ def to_lines(
         prev_vertex = None
 
 
-PathParts = Union[BSpline, List[Vec3]]
+PathParts:TypeAlias = Union[BSpline, List[Vec3]]
 
 
 def to_bsplines_and_vertices(

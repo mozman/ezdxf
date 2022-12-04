@@ -180,7 +180,7 @@ class DXFGroup(DXFObject):
         return set_group_entities
 
     @contextmanager  # type: ignore
-    def edit_data(self) -> List[DXFEntity]:  # type: ignore
+    def edit_data(self) -> list[DXFEntity]:  # type: ignore
         """Context manager which yields all the group entities as
         standard Python list::
 

@@ -9,7 +9,7 @@ from typing import (
     Dict,
 )
 import abc
-from typing_extensions import Protocol
+from typing_extensions import Protocol, TypeAlias
 from ezdxf.math import (
     Vec2,
     Vec3,
@@ -360,7 +360,7 @@ def divide(a: int, b: int) -> tuple[int, int, int, int]:
     return a, m, m, b
 
 
-TCache = Dict[Tuple[int, int, int], AbstractBoundingBox]
+TCache: TypeAlias = Dict[Tuple[int, int, int], AbstractBoundingBox]
 
 
 class _PolylineIntersection:

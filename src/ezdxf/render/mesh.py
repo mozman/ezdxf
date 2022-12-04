@@ -14,6 +14,7 @@ from typing import (
     TypeVar,
     Union,
 )
+from typing_extensions import TypeAlias
 from ezdxf.math import (
     BoundingBox,
     Matrix44,
@@ -44,9 +45,9 @@ class EdgeStat(NamedTuple):
     balance: int
 
 
-Face = Sequence[int]
-Edge = Tuple[int, int]
-EdgeStats = Dict[Edge, EdgeStat]
+Face: TypeAlias = Sequence[int]
+Edge: TypeAlias = Tuple[int, int]
+EdgeStats: TypeAlias = Dict[Edge, EdgeStat]
 
 
 class MeshBuilderError(Exception):

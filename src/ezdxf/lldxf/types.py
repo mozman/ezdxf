@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2021, Manfred Moitzi
+# Copyright (c) 2014-2022, Manfred Moitzi
 # License: MIT License
 """
 DXF Types
@@ -12,10 +12,11 @@ Required DXF tag interface:
     - :meth:`clone`: returns a deep copy of tag
 
 """
+from __future__ import annotations
 from typing import (
     Union,
-    Tuple,
     Iterable,
+    Sequence,
     Type,
     Any,
 )
@@ -257,7 +258,7 @@ class DXFVertex(DXFTag):
         return hash((self.code, x, y, z))
 
     @property
-    def value(self) -> Tuple[float, ...]:
+    def value(self) -> tuple[float, ...]:
         return tuple(self._value)  # type: ignore
 
     def dxftags(self) -> Iterable[DXFTag]:
@@ -316,7 +317,7 @@ def dxftag(code: int, value: Any) -> DXFTag:
         return DXFTag(code, cast_tag_value(code, value))
 
 
-def tuples_to_tags(iterable: Iterable[Tuple[int, Any]]) -> Iterable[DXFTag]:
+def tuples_to_tags(iterable: Iterable[tuple[int, Any]]) -> Iterable[DXFTag]:
     """Returns an iterable if :class:`DXFTag` or inherited, accepts an
     iterable of (code, value) tuples as input.
     """
@@ -352,7 +353,7 @@ def is_point_code(code: int) -> bool:
     return code in POINT_CODES
 
 
-def is_point_tag(tag: Tuple) -> bool:
+def is_point_tag(tag: Sequence) -> bool:
     return tag[0] in POINT_CODES
 
 
@@ -364,7 +365,7 @@ def tag_type(code: int) -> Type:
     return TYPE_TABLE.get(code, str)
 
 
-def strtag(tag: Union[DXFTag, Tuple[int, Any]]) -> str:
+def strtag(tag: Union[DXFTag, tuple[int, Any]]) -> str:
     return TAG_STRING_FORMAT % tuple(tag)
 
 

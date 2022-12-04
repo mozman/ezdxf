@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Union, Tuple, Iterable, Optional, Callable
+from typing_extensions import TypeAlias
 import enum
 from math import radians
 
@@ -46,8 +47,8 @@ class VAlignment(enum.Enum):
     )
 
 
-Alignment = Tuple[HAlignment, VAlignment]
-AnyText = Union[Text, MText, Attrib, AttDef]
+Alignment: TypeAlias = Tuple[HAlignment, VAlignment]
+AnyText: TypeAlias = Union[Text, MText, Attrib, AttDef]
 
 # multiple of cap_height between the baseline of the previous line and the
 # baseline of the next line
@@ -237,7 +238,7 @@ def _apply_alignment(
     line_spacing: float,
     box_width: Optional[float],
     font_measurements: FontMeasurements,
-) -> Tuple[Tuple[float, float], list[float], list[float]]:
+) -> tuple[tuple[float, float], list[float], list[float]]:
     if not line_widths:
         return (0, 0), [], []
 
@@ -312,7 +313,7 @@ def simplified_text_chunks(
     *,
     font: Optional[fonts.FontFace] = None,
     debug_draw_rect: bool = False
-) -> Iterable[Tuple[str, Matrix44, float]]:
+) -> Iterable[tuple[str, Matrix44, float]]:
     """Splits a complex text entity into simple chunks of text which can all be
     rendered the same way:
     render the string (which will not contain any newlines) with the given

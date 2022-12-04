@@ -12,6 +12,7 @@ from typing import (
     cast,
     Optional,
 )
+from typing_extensions import TypeAlias
 from functools import lru_cache
 from itertools import repeat
 import math
@@ -42,10 +43,10 @@ def zip_to_list(*args) -> Iterable[list]:
         yield list(e)  # need mutable list
 
 
-MatrixData = List[List[float]]
-IterableMatrixData = Iterable[Iterable[float]]
-FrozenMatrixData = Tuple[Tuple[float, ...]]
-Shape = Tuple[int, int]
+MatrixData: TypeAlias = List[List[float]]
+IterableMatrixData: TypeAlias = Iterable[Iterable[float]]
+FrozenMatrixData: TypeAlias = Tuple[Tuple[float, ...]]
+Shape: TypeAlias = Tuple[int, int]
 
 
 def copy_float_matrix(A) -> MatrixData:

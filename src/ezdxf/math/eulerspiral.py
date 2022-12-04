@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Dict, Iterable
+from typing import Iterable
 from ezdxf.math import Vec3
 from ezdxf.math.bspline import global_bspline_interpolation, BSpline
 
@@ -40,7 +40,7 @@ class EulerSpiral:
         curvature = float(curvature)
         self.curvature = curvature  # Radius of curvature
         self.curvature_powers: list[float] = powers(curvature, 19)
-        self._cache: Dict[float, Vec3] = {}  # coordinates cache
+        self._cache: dict[float, Vec3] = {}  # coordinates cache
 
     def radius(self, t: float) -> float:
         """Get radius of circle at distance `t`."""

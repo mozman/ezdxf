@@ -353,7 +353,7 @@ class EntitySpace:
         therefore `index` can be any valid list indexing or slicing term, like
         a single index ``layout[-1]`` to get the last entity, or an index slice
         ``layout[:10]`` to get the first 10 or fewer entities as
-        ``List[DXFEntity]``. Does not filter destroyed entities.
+        ``list[DXFEntity]``. Does not filter destroyed entities.
 
         """
         return self.entities[index]

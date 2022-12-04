@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Iterable, Optional, Tuple, NamedTuple
+from typing_extensions import TypeAlias
 import abc
 import itertools
 import enum
@@ -229,8 +230,8 @@ class DoNothingRenderer(ContentRenderer):
         pass
 
 
-Tuple4f = Tuple[float, float, float, float]
-Tuple2f = Tuple[float, float]
+Tuple4f: TypeAlias = Tuple[float, float, float, float]
+Tuple2f: TypeAlias = Tuple[float, float]
 
 
 def resolve_margins(margins: Optional[Sequence[float]]) -> Tuple4f:
@@ -295,7 +296,7 @@ class Box(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def final_location(self) -> Tuple[float, float]:
+    def final_location(self) -> tuple[float, float]:
         """Returns the final location as the top/left corner"""
         pass
 
@@ -336,7 +337,7 @@ class Cell(Box):  # ABC
 
 
 class Glue(Cell):  # ABC
-    EMPTY: Tuple = tuple()
+    EMPTY: tuple = tuple()
 
     def __init__(
         self, width: float, min_width: Optional[float] = None, max_width: Optional[float] = None

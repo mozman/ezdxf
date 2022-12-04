@@ -2,10 +2,11 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Tuple, Iterable, Sequence
+from typing_extensions import TypeAlias
 import math
 from ezdxf.math import Vec3, UVec
 
-LineSegment = Tuple[Vec3, Vec3]
+LineSegment: TypeAlias = Tuple[Vec3, Vec3]
 
 
 class _LineTypeRenderer:

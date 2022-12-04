@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Union, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, Iterable, Union, Sequence, Type
 import math
 from functools import lru_cache
 
@@ -325,7 +325,7 @@ TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
 
 def cubic_bezier_arc_parameters(
     start_angle: float, end_angle: float, segments: int = 1
-) -> Iterable[Tuple[Vec3, Vec3, Vec3, Vec3]]:
+) -> Iterable[tuple[Vec3, Vec3, Vec3, Vec3]]:
     """Yields cubic Bézier-curve parameters for a circular 2D arc with center
     at (0, 0) and a radius of 1 in the form of [start point, 1. control point,
     2. control point, end point].

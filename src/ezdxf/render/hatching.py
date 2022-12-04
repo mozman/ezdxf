@@ -11,6 +11,7 @@ from typing import (
     Optional,
     Tuple,
 )
+from typing_extensions import TypeAlias
 from collections import defaultdict
 import enum
 import math
@@ -71,6 +72,7 @@ class Line:
 @dataclasses.dataclass(frozen=True)
 class Intersection:
     """Represents an intersection."""
+
     type: IntersectionType = IntersectionType.NONE
     p0: Vec2 = NONE_VEC2
     p1: Vec2 = NONE_VEC2
@@ -94,6 +96,7 @@ class HatchLine:
         distance: the normal distance to the base hatch line as float
 
     """
+
     origin: Vec2
     direction: Vec2
     distance: float
@@ -136,9 +139,7 @@ class HatchLine:
             return Intersection(IntersectionType.REGULAR, a.lerp(b, factor))
         return Intersection()  # no intersection
 
-    def intersect_cubic_bezier_curve(
-        self, curve: Bezier4P
-    ) -> Sequence[Intersection]:
+    def intersect_cubic_bezier_curve(self, curve: Bezier4P) -> Sequence[Intersection]:
         """Returns 0 to 3 :class:`Intersection` points of this hatch line with
         a cubic Bèzier curve.
 
@@ -287,6 +288,7 @@ class HatchBaseLine:
         DenseHatchingLinesError: hatching lines are too narrow
 
     """
+
     def __init__(
         self,
         origin: Vec2,
@@ -315,9 +317,7 @@ class HatchBaseLine:
     def hatch_line(self, distance: float) -> HatchLine:
         """Returns the :class:`HatchLine` at the given signed `distance`."""
         factor = distance / self.normal_distance
-        return HatchLine(
-            self.origin + self.offset * factor, self.direction, distance
-        )
+        return HatchLine(self.origin + self.offset * factor, self.direction, distance)
 
     def signed_distance(self, point: Vec2) -> float:
         """Returns the signed normal distance of the given `point` from this
@@ -327,8 +327,7 @@ class HatchBaseLine:
         return (self.origin - point).det(self._end - point)
 
     def pattern_renderer(self, distance: float) -> PatternRenderer:
-        """Returns the :class:`PatternRenderer` for the given signed `distance`.
-        """
+        """Returns the :class:`PatternRenderer` for the given signed `distance`."""
         return PatternRenderer(self.hatch_line(distance), self.line_pattern)
 
 
@@ -342,9 +341,7 @@ def hatch_line_distances(
     normal_factors = [d / normal_distance for d in point_distances]
     max_line_number = int(math.ceil(max(normal_factors)))
     min_line_number = int(math.ceil(min(normal_factors)))
-    return [
-        normal_distance * num for num in range(min_line_number, max_line_number)
-    ]
+    return [normal_distance * num for num in range(min_line_number, max_line_number)]
 
 
 def intersect_polygon(
@@ -519,7 +516,9 @@ def hatch_paths(
     yield from _hatch_geometry(baseline, paths, intersect_path, terminate)
 
 
-IFuncType = Callable[[HatchBaseLine, Any], Iterator[Tuple[Intersection, float]]]
+IFuncType: TypeAlias = Callable[
+    [HatchBaseLine, Any], Iterator[Tuple[Intersection, float]]
+]
 
 
 def _hatch_geometry(
@@ -566,19 +565,14 @@ def _hatch_geometry(
             yield Line(start, end, distance)
 
 
-def _line_segments(
-    vertices: list[Intersection], distance: float
-) -> Iterator[Line]:
+def _line_segments(vertices: list[Intersection], distance: float) -> Iterator[Line]:
     if len(vertices) < 2:
         return
     vertices.sort(key=lambda p: p.p0.round(SORT_NDIGITS))
     inside = False
     prev_point = NONE_VEC2
     for ip in vertices:
-        if (
-            ip.type == IntersectionType.NONE
-            or ip.type == IntersectionType.COLLINEAR
-        ):
+        if ip.type == IntersectionType.NONE or ip.type == IntersectionType.COLLINEAR:
             continue
         # REGULAR, START, END
         point = ip.p0
@@ -629,9 +623,7 @@ def hatch_entity(
                 yield Vec3(s), Vec3(e)
 
 
-def hatch_boundary_paths(
-    polygon: DXFPolygon, filter_text_boxes=True
-) -> list[Path]:
+def hatch_boundary_paths(polygon: DXFPolygon, filter_text_boxes=True) -> list[Path]:
     """Returns the hatch boundary paths as :class:`ezdxf.path.Path` instances
     of HATCH and MPOLYGON entities. Ignores text boxes if argument
     `filter_text_boxes` is ``True``.
@@ -640,10 +632,7 @@ def hatch_boundary_paths(
 
     loops = []
     for boundary in polygon.paths.rendering_paths(polygon.dxf.hatch_style):
-        if (
-            filter_text_boxes
-            and boundary.path_type_flags & const.BOUNDARY_PATH_TEXTBOX
-        ):
+        if filter_text_boxes and boundary.path_type_flags & const.BOUNDARY_PATH_TEXTBOX:
             continue
         path = from_hatch_boundary_path(boundary)
         for sub_path in path.sub_paths():
