@@ -11,7 +11,7 @@ Version 1.0.0rc2 - dev
   layouts 
 - NEW: `Drawing.page_setup()`, simple way to set up paperspace layouts
 - NEW: `UNIX_EXEC_PATH` config option for the ODAFC add-on. 
-  This may help if the `which` command can not find the ` ODAFileConverter` command 
+  This may help if the `which` command cannot find the `ODAFileConverter` command 
   and also adds support for AppImages provided by ODA.
 - NEW: ASTM-D6673-10 Exporter for Gerber Technology applications, `gerber_D6673` 
   [docs](https://ezdxf.mozman.at/docs/addons/gerber_D6673.html)
@@ -24,11 +24,11 @@ Version 1.0.0rc2 - dev
 - BUGFIX: [#747](https://github.com/mozman/ezdxf/issues/747)
   fix virtual entities of 3D DIMENSION entities  
 - BUGFIX: [#748](https://github.com/mozman/ezdxf/issues/748)
-  fix keyword only argument in virtual_block_reference_entities() call
+  fix keyword only argument in `virtual_block_reference_entities()` call
 - BUGFIX: [#749](https://github.com/mozman/ezdxf/issues/749)
-  fix infinite loop in MTEXT rendering with tabulators
+  fix infinite loop when rendering MTEXT containing tabulators
 - BUGFIX: [#751](https://github.com/mozman/ezdxf/issues/751)
-  fix invalid DXF attribute name
+  fix invalid DXF attribute name in xdict.py
 - BUGFIX: fix configuration defaults for pdsize and pdmode for the `drawing` add-on
 - BUGFIX: [#776](https://github.com/mozman/ezdxf/issues/776)
   fix swapped bold and italic flag for extended font data in STYLE entity 
