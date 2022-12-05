@@ -5,15 +5,17 @@ Groups
 
 
 A group is just a bunch of DXF entities tied together. All entities of a group
-has to be on the same layout (modelspace or any paper layout but not block).
+has to be in the same layout (modelspace or any paperspace layout but not block).
 Groups can be named or unnamed, but in reality an unnamed groups has just a
 special name like "\*Annnn". The name of a group has to be unique in the drawing.
-Groups are organized in the main group table, which is stored as attribute
+Groups are organized in the group table, which is stored as attribute
 :attr:`~ezdxf.document.Drawing.groups` in the :class:`~ezdxf.document.Drawing`
 object.
 
-Group entities have to be in modelspace or any paperspace layout but not in a
-block definition!
+.. important::
+
+    Group entities have to reside in the modelspace or an paperspace layout but not in a
+    block definition!
 
 DXFGroup
 --------

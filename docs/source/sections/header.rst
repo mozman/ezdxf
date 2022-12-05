@@ -39,11 +39,10 @@ Autodesk for available `header variables`_.
 
     .. attribute:: properties
 
-        List of custom drawing properties, stored as string tuples ``(tag, value)``.
+        A list of custom header properties, stored as string tuples ``(tag, value)``.
         Multiple occurrence of the same custom tag is allowed, but not well
-        supported by the interface. This is a standard python list and it is save
-        to change this list as long you store just tuples of strings in the
-        format ``(tag, value)``.
+        supported by the interface. This is a standard Python list and it's safe
+        to modify this list as long as you just use tuples of strings.
 
     .. automethod:: __len__
 

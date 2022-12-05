@@ -45,14 +45,17 @@ class EntitySection:
             self._build(iter(entities))
 
     def __iter__(self) -> Iterator[DXFEntity]:
-        """Iterable for all entities of modelspace and active paperspace."""
+        """Returns an iterator for all entities of the modelspace and the active
+        paperspace.
+        """
         assert self.doc is not None
         layouts = self.doc.layouts
         for entity in chain(layouts.modelspace(), layouts.active_layout()):
             yield entity
 
     def __len__(self) -> int:
-        """Returns count of all entities of modelspace and active paperspace."""
+        """Returns the count of all entities in the modelspace and the active paperspace.
+        """
         assert self.doc is not None
         layouts = self.doc.layouts
         return len(layouts.modelspace()) + len(layouts.active_layout())

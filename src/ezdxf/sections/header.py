@@ -63,10 +63,10 @@ FF
 
 
 class CustomVars:
-    """Stores custom properties in the DXF header as $CUSTOMPROPERTYTAG and
-    $CUSTOMPROPERTY values. Custom properties are just supported by DXF R2004
-    (AC1018) or later. `ezdxf` can create custom properties at older DXF
-    versions, but AutoCAD will not show this properties.
+    """The :class:`CustomVars` class stores custom properties in the DXF header as
+    $CUSTOMPROPERTYTAG and $CUSTOMPROPERTY values. Custom properties require DXF R2004
+    or later, `ezdxf` can create custom properties for older DXF versions as well, but
+    AutoCAD will not show that properties.
 
     """
 
@@ -194,9 +194,7 @@ class HeaderSection:
         name_tag = next(_tags)
 
         if section_tag != (0, "SECTION") or name_tag != (2, "HEADER"):
-            raise const.DXFStructureError(
-                "Critical structure error in HEADER section."
-            )
+            raise const.DXFStructureError("Critical structure error in HEADER section.")
 
         groups = group_tags(header_validator(_tags), splitcode=9)
         custom_property_stack = []  # collect $CUSTOMPROPERTY/TAG
@@ -336,9 +334,7 @@ def header_vars_by_priority(
     for name, value in header_vars.items():
         vardef = HEADER_VAR_MAP.get(name, None)
         if vardef is None:
-            logger.info(
-                f"Header variable {name} ignored, dxfversion={dxfversion}."
-            )
+            logger.info(f"Header variable {name} ignored, dxfversion={dxfversion}.")
             continue
         if vardef.mindxf <= dxfversion <= vardef.maxdxf:
             order.append((vardef.priority, (name, value)))

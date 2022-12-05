@@ -8,11 +8,11 @@ of a DXF document.
 
 .. warning::
 
-    Blocks are an essential building block of the DXF format. Most block references
+    Blocks are an essential building block of the DXF format. Most blocks are referenced
     are by name, and renaming or deleting a block is not as easy as it seems,
-    since there is no overall index where all block references appear, and such
+    since there is no overall index where all block references appear, and such block
     references can also reside in custom data or even custom entities,
-    therefore renaming or deleting block definitions can damage DXF files!
+    therefore renaming or deleting block definitions can damage a DXF file!
 
 .. seealso::
 

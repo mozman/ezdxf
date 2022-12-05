@@ -350,16 +350,16 @@ class BlocksSection:
 
     def delete_block(self, name: str, safe: bool = True) -> None:
         """
-        Delete block. If `save` is ``True``, check if block is still referenced.
+        Delete block. Checks if the block is still referenced if `safe` is ``True``.
 
         Args:
             name: block name (case insensitive)
-            safe: check if block is still referenced or special block without
+            safe: check if the block is still referenced or a special block without
                   explicit references
 
         Raises:
             DXFKeyError: if block not exists
-            DXFBlockInUseError: if block is still referenced, and save is True
+            DXFBlockInUseError: if block is still referenced, and safe is ``True``
 
         """
         if safe:
@@ -382,10 +382,9 @@ class BlocksSection:
 
         .. warning::
 
-            There could exist undiscovered references to blocks which are
-            not documented in the DXF reference, hidden in extended data
-            sections or application defined data, which could produce invalid
-            DXF documents if such referenced blocks will be deleted.
+            There could exist references to blocks which are not documented in the DXF
+            reference, hidden in extended data sections or application defined data,
+            which could invalidate a DXF document if these blocks will be deleted.
 
         """
         assert self.doc is not None
@@ -413,8 +412,8 @@ class BlocksSection:
 
         .. important::
 
-            Do not delete entities while auditing process, because this
-            would alter the entity database while iterating, instead use::
+            Do not delete entities during the auditing process as this will alter
+            the entity database while iterating it, instead use::
 
                 auditor.trash(entity)
 

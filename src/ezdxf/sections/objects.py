@@ -197,12 +197,12 @@ class ObjectsSection:
             return self.setup_rootdict()
 
     def __len__(self) -> int:
-        """Returns count of DXF objects."""
+        """Returns the count of all DXF objects in the OBJECTS section."""
         return len(self._entity_space)
 
-    def __iter__(self):
-        """Returns iterable of all DXF objects in the OBJECTS section."""
-        return iter(self._entity_space)
+    def __iter__(self) -> Iterator[DXFObject]:
+        """Returns an iterator of all DXF objects in the OBJECTS section."""
+        return iter(self._entity_space)  # type: ignore
 
     def __getitem__(self, index) -> DXFObject:
         """Get entity at `index`.
@@ -210,7 +210,7 @@ class ObjectsSection:
         The underlying data structure for storing DXF objects is organized like
         a standard Python list, therefore `index` can be any valid list indexing
         or slicing term, like a single index ``objects[-1]`` to get the last
-        entity, or an index slice ``objects[:10]`` to get the first 10 or less
+        entity, or an index slice ``objects[:10]`` to get the first 10 or fewer
         objects as ``list[DXFObject]``.
 
         """

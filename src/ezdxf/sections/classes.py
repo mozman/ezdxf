@@ -201,12 +201,11 @@ class ClassesSection:
     def load(self, entities: Iterator[DXFEntity]) -> None:
         section_head = cast(DXFTagStorage, next(entities))
 
-        if section_head.dxftype() != "SECTION" or section_head.base_class[
-            1
-        ] != (2, "CLASSES"):
-            raise DXFStructureError(
-                "Critical structure error in CLASSES section."
-            )
+        if section_head.dxftype() != "SECTION" or section_head.base_class[1] != (
+            2,
+            "CLASSES",
+        ):
+            raise DXFStructureError("Critical structure error in CLASSES section.")
 
         for cls_entity in entities:
             if isinstance(cls_entity, DXFClass):
@@ -264,7 +263,7 @@ class ClassesSection:
         raise DXFKeyError(name)
 
     def add_required_classes(self, dxfversion: str) -> None:
-        """Add all required CLASS definitions for `dxfversion`."""
+        """Add all required CLASS definitions for the specified DXF version."""
         names = REQUIRED_CLASSES.get(dxfversion, REQ_R2004)
         for name in names:
             self.add_class(name)
