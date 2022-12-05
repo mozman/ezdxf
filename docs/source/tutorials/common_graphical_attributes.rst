@@ -92,16 +92,20 @@ Transparency
 
 Please read the section about :ref:`transparency` to understand the basics.
 
-For the :attr:`transparency` attribute it is not recommended to use the DXF
-attribute of the dxf namespace directly, always use the :attr:`~ezdxf.entities.DXFGraphic.transparency`
+It's recommended to use the :attr:`~ezdxf.entities.DXFGraphic.transparency`
 property of the :class:`~ezdxf.entities.DXFGraphic` base class.
 The :attr:`transparency` property is a float value in the range from 0.0 to
 1.0 where 0.0 is opaque and 1.0 if fully transparent::
 
     entity.transparency = 0.5
 
+or set the values of the DXF attribute by constants defined in the
+:mod:`ezdxf.colors` module::
+
+    entity.dxf.transparency = ezdxf.colors.TRANSPARENCY_50
+
 The default setting for :attr:`transparency` in CAD applications is always
-transparency from entity layer, but the :attr:`transparency` property in `ezdxf`
+transparency by layer, but the :attr:`transparency` property in `ezdxf`
 has a default value of 0.0 (opaque), so there are additional entity properties to
 check if the transparency value should be taken from the associated entity layer
 or from the parent block::
@@ -112,6 +116,24 @@ or from the parent block::
         ...
     else:
         ...
+
+The top level entity attribute :attr:`transparency` does not support setting
+transparency by layer or block::
+
+    from ezdxf import colors
+
+    ...
+
+    # set transparency by layer by removing the DXF attribute "transparency":
+    entity.dxf.discard("transparency")
+
+    # set transparency by block:
+    entity.dxf.transparency = colors.TRANSPARENCY_BYBLOCK
+
+    # there are also some handy constants in the colors module:
+    # TRANSPARENCY_10 upto TRANSPARENCY_90 in steps of 10
+    entity.dxf.transparency = colors.TRANSPARENCY_30  # set 30% transparency
+    entity.dxf.transparency = colors.OPAQUE
 
 .. seealso::
 

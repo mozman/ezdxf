@@ -81,8 +81,11 @@ them as a DXF creator either. To be clear, not even `ezdxf` (which is not a CAD
 application) is a `reliable` library in this sense - it just keeps getting better,
 but is far from `reliable`.
 
-BTW: Don't send bug reports based on `LibreCAD`_ or `QCAD`_, I won't waste my
-time on them.
+.. hint::
+
+    Please do not submit bug reports based on the use of `LibreCAD`_ or `QCAD`_, these
+    applications are in no way reliable regarding the DXF format and I will not waste my
+    time on them.
 
 .. _Wikipedia: https://en.wikipedia.org/wiki/AutoCAD_DXF
 

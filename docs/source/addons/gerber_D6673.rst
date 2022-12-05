@@ -6,7 +6,7 @@ ASTM-D6673-10 Exporter
 .. module:: ezdxf.addons.gerber_D6673
 
 This add-on creates special DXF files for use by Gerber Technology applications which
-have a very low quality DXF parser and cannot parse/ignore BLOCKS which do not contain
+have a low quality DXF parser and cannot parse/ignore BLOCKS which do not contain
 data according the ASTM-D6673-10 standard.  The function :func:`export_file` exports
 DXF R12 and only DXF R12 files which do not contain the default "$MODEL_SPACE" and
 "$PAPER_SPACE" layout block definitions, have an empty HEADER section and no TABLES
