@@ -6,20 +6,22 @@ Arc
 
 ARC (`DXF Reference`_) center at location :attr:`dxf.center` and radius of
 :attr:`dxf.radius` from :attr:`dxf.start_angle` to :attr:`dxf.end_angle`.
-ARC goes always from :attr:`dxf.start_angle` to :attr:`dxf.end_angle` in counter
-clockwise orientation around the :attr:`dxf.extrusion` vector, which is (0, 0, 1)
+ARC goes always from :attr:`dxf.start_angle` to :attr:`dxf.end_angle` in counter-clockwise
+orientation around the :attr:`dxf.extrusion` vector, which is (0, 0, 1)
 by default and the usual case for 2D arcs. The ARC entity has :ref:`OCS`
 coordinates.
 
 The helper tool :class:`ezdxf.math.ConstructionArc` supports creating arcs from
 various scenarios, like from 3 points or 2 points and an angle or 2 points and
-a radius.
+a radius and the :mod:`~ezdxf.upright` module can convert inverted extrusion vectors
+from (0, 0, -1) to (0, 0, 1) without changing the curve.
 
 .. seealso::
 
     - :ref:`tut_dxf_primitives`, section :ref:`tut_dxf_primitives_arc`
     - :class:`ezdxf.math.ConstructionArc`
     - :ref:`Object Coordinate System`
+    - :mod:`ezdxf.upright` module
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Circle`

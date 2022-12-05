@@ -14,6 +14,7 @@ any :class:`~ezdxf.layouts.Paperspace` or :class:`~ezdxf.layouts.BlockLayout`.
     - :mod:`ezdxf.gfxattribs` module, helper tools to set graphical attributes
       of DXF entities
     - :mod:`ezdxf.colors` module
+    - :ref:`tut_common_graphical_attributes`
 
 ============ =================================
 Subclass of  :class:`ezdxf.entities.DXFEntity`
@@ -193,3 +194,4 @@ Common graphical DXF attributes
     - :mod:`ezdxf.gfxattribs` module, helper tools to set graphical attributes
       of DXF entities
     - :mod:`ezdxf.colors` module
+    - :ref:`tut_common_graphical_attributes`

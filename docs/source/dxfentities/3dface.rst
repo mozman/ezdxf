@@ -66,6 +66,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: transform
 
-    .. automethod:: wcs_vertices
+    .. automethod:: wcs_vertices(close: bool = False) -> list[Vec3]
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-747865D5-51F0-45F2-BEFE-9572DBC5B151

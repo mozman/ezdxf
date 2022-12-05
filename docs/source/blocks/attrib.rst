@@ -6,7 +6,7 @@ Attrib
 
 The ATTRIB (`DXF Reference`_) entity represents a text value associated with a tag.
 In most cases an ATTRIB is appended to an :class:`Insert` entity, but it can also
-appear as standalone entity.
+be used as a standalone entity.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Text`

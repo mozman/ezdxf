@@ -47,7 +47,7 @@ Angular Dimension by center, radius, angles :meth:`~ezdxf.layouts.BaseLayout.add
 Angular Dimension by ConstructionArc        :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim_arc`
 `Diameter Dimension (DXF)`_                 :meth:`~ezdxf.layouts.BaseLayout.add_diameter_dim`
 `Radius Dimension (DXF)`_                   :meth:`~ezdxf.layouts.BaseLayout.add_radius_dim`
-`Ordinate Dimension (DXF)`_                 :meth:`~ezdxf.layouts.BaseLayout.add_ordinate_dim` (not implemented)
+`Ordinate Dimension (DXF)`_                 :meth:`~ezdxf.layouts.BaseLayout.add_ordinate_dim`
 =========================================== ==========================================
 
 .. warning::

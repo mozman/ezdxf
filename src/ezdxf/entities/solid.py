@@ -261,13 +261,11 @@ class Face3d(_Base):
 
     def wcs_vertices(self, close: bool = False) -> list[Vec3]:
         """Returns WCS vertices, if argument `close` is ``True``,
-        last vertex == first vertex.
+        the first vertex is also returned as closing last vertex.
 
-        returns 4 vertices when close=False and 5 vertices when close=True.
-        Some edges may have 0 length.
-
-        Compatibility interface to SOLID and TRACE. The 3DFACE entity returns
-        already WCS vertices.
+        Returns 4 vertices when `close` is ``False`` and 5 vertices when `close` is
+        ``True``.  Some edges may have zero-length.  This is a compatibility interface
+        to SOLID and TRACE. The 3DFACE entity is already defined by WCS vertices.
         """
         dxf = self.dxf
         vertices: list[Vec3] = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
