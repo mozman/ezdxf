@@ -88,7 +88,7 @@ acdb_ellipse = DefSubclass(
         ),
         # Start of ellipse, this value is 0.0 for a full ellipse:
         "start_param": DXFAttr(41, default=0),
-        # End of ellipse, this value is 2*pi for a full ellipse:
+        # End of ellipse, this value is 2π for a full ellipse:
         "end_param": DXFAttr(42, default=math.tau),
     },
 )
@@ -175,7 +175,7 @@ class Ellipse(DXFGraphic):
         """Returns `num` params from start- to end param in counter-clockwise
         order.
 
-        All params are normalized in the range from [0, 2*pi).
+        All params are normalized in the range [0, 2π).
 
         """
         start = self.dxf.start_param % math.tau
@@ -186,7 +186,7 @@ class Ellipse(DXFGraphic):
         """Yields vertices on ellipse for iterable `params` in WCS.
 
         Args:
-            params: param values in the range from 0 to 2*pi in radians,
+            params: param values in the range from 0 to 2π in radians,
                 param goes counter-clockwise around the extrusion vector,
                 major_axis = local x-axis = 0 rad.
 
@@ -197,8 +197,8 @@ class Ellipse(DXFGraphic):
         """Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments, if the distance from the center
         of the approximation segment to the curve is bigger than `distance` the
-        segment will be subdivided. Returns a closed polygon for a full ellipse:
-        start vertex == end vertex.
+        segment will be subdivided. Returns a closed polygon for a full ellipse
+        where the start vertex has the same value as the end vertex.
 
         Args:
             distance: maximum distance from the projected curve point onto the
@@ -216,13 +216,13 @@ class Ellipse(DXFGraphic):
 
     @classmethod
     def from_arc(cls, entity: DXFGraphic) -> Ellipse:
-        """Create a new ELLIPSE entity from ARC or CIRCLE entity.
+        """Create a new virtual ELLIPSE entity from an ARC or a CIRCLE entity.
 
         The new SPLINE entity has no owner, no handle, is not stored in
         the entity database nor assigned to any layout!
 
         """
-        assert entity.dxftype() in {"ARC", "CIRCLE"}
+        assert entity.dxftype() in {"ARC", "CIRCLE"}, "ARC or CIRCLE entity required"
         attribs = entity.dxfattribs(drop={"owner", "handle", "thickness"})
         e = ellipse.ConstructionEllipse.from_arc(
             center=attribs.get("center", NULLVEC),

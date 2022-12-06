@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("ezdxf")
 
+
 class DimStyleOverride:
     def __init__(self, dimension: Dimension, override: Optional[dict] = None):
         self.dimension = dimension
@@ -62,8 +63,8 @@ class DimStyleOverride:
         Returns `default` value for attributes not supported by DXF R12. This
         is a hack to use the same algorithm to render DXF R2000 and DXF R12
         DIMENSION entities. But the DXF R2000 attributes are not stored in the
-        DXF R12 file! Does not catch invalid attributes names! Look into debug
-        log for ignored DIMSTYLE attributes.
+        DXF R12 file! This method does not catch invalid attribute names!
+        Check debug log for ignored DIMSTYLE attributes.
 
         """
         if attribute in self.dimstyle_attribs:
@@ -76,9 +77,8 @@ class DimStyleOverride:
         return result
 
     def pop(self, attribute: str, default: Any = None) -> Any:
-        """Returns DIMSTYLE `attribute` from override dict
-        :attr:`dimstyle_attribs` and removes this `attribute`
-        from override dict.
+        """Returns DIMSTYLE `attribute` from override dict :attr:`dimstyle_attribs` and
+        removes this `attribute` from override dict.
         """
         value = self.get(attribute, default)
         # delete just from override dict
@@ -126,8 +126,7 @@ class DimStyleOverride:
         ldrblk: Optional[str] = None,
         size: Optional[float] = None,
     ) -> None:
-        """Set arrows or user defined blocks and disable oblique stroke as
-        tick.
+        """Set arrows or user defined blocks and disable oblique stroke as tick.
 
         Args:
             blk: defines both arrows at once as name str or user defined block
@@ -159,12 +158,7 @@ class DimStyleOverride:
             set_arrow("dimldrblk", ldrblk)
 
     def get_arrow_names(self) -> tuple[str, str]:
-        """Get arrow names as strings like 'ARCHTICK'.
-
-        Returns:
-            Tuple[str, str]: tuple of [dimblk1, dimblk2]
-
-        """
+        """Get arrow names as strings like 'ARCHTICK' as tuple (dimblk1, dimblk2)."""
         dimtsz = self.get("dimtsz", 0)
         blk1, blk2 = "", ""
         if dimtsz == 0.0:
@@ -239,8 +233,8 @@ class DimStyleOverride:
                 text height
             align: tolerance text alignment enum :class:`ezdxf.enums.MTextLineAlignment`
             dec: Sets the number of decimal places displayed
-            leading_zeros: suppress leading zeros for decimal dimensions if False
-            trailing_zeros: suppress trailing zeros for decimal dimensions if False
+            leading_zeros: suppress leading zeros for decimal dimensions if ``False``
+            trailing_zeros: suppress trailing zeros for decimal dimensions if ``False``
 
         """
         self.dimstyle_attribs["dimtol"] = 1
@@ -286,11 +280,11 @@ class DimStyleOverride:
             hfactor: limit text height factor in relation to the dimension
                 text height
             dec: Sets the number of decimal places displayed,
-                required DXF R2000+
+                requires DXF R2000+
             leading_zeros: suppress leading zeros for decimal dimensions if
-                False, required DXF R2000+
+                ``False``, requires DXF R2000+
             trailing_zeros: suppress trailing zeros for decimal dimensions if
-                False, required DXF R2000+
+                ``False``, requires DXF R2000+
 
         """
         # exclusive limits
@@ -337,8 +331,8 @@ class DimStyleOverride:
             dec: Sets the number of decimal places displayed for the primary
                 units of a dimension. requires DXF R2000+
             sep: "." or "," as decimal separator
-            leading_zeros: suppress leading zeros for decimal dimensions if False
-            trailing_zeros: suppress trailing zeros for decimal dimensions if False
+            leading_zeros: suppress leading zeros for decimal dimensions if ``False``
+            trailing_zeros: suppress trailing zeros for decimal dimensions if ``False``
 
         """
         if prefix or postfix:
@@ -368,7 +362,7 @@ class DimStyleOverride:
         disable1: Optional[bool] = None,
         disable2: Optional[bool] = None,
     ):
-        """Set dimension line properties
+        """Set dimension line properties.
 
         Args:
             color: color index
@@ -423,11 +417,11 @@ class DimStyleOverride:
             self.dimstyle_attribs["dimfxl"] = fixed_length
 
     def set_extline1(self, linetype: Optional[str] = None, disable=False):
-        """Set extension line 1 attributes.
+        """Set attributes of the first extension line.
 
         Args:
-            linetype: linetype for extension line 1
-            disable: disable extension line 1 if True
+            linetype: linetype for the first extension line
+            disable: disable first extension line if ``True``
 
         """
         if linetype is not None:
@@ -436,11 +430,11 @@ class DimStyleOverride:
             self.dimstyle_attribs["dimse1"] = 1
 
     def set_extline2(self, linetype: Optional[str] = None, disable=False):
-        """Set extension line 2 attributes.
+        """Set attributes of the second extension line.
 
         Args:
-            linetype: linetype for extension line 2
-            disable: disable extension line 2 if True
+            linetype: linetype for the second extension line
+            disable: disable the second extension line if ``True``
 
         """
         if linetype is not None:
@@ -449,12 +443,11 @@ class DimStyleOverride:
             self.dimstyle_attribs["dimse2"] = 1
 
     def set_text(self, text: str = "<>") -> None:
-        """
-        Set dimension text.
+        """Set dimension text.
 
             - `text` = " " to suppress dimension text
             - `text` = "" or "<>" to use measured distance as dimension text
-            - else use "text" literally
+            - otherwise display `text` literally
 
         """
         self.dimension.dxf.text = text
@@ -471,9 +464,7 @@ class DimStyleOverride:
         self.dimstyle_attribs["text_shift_h"] = dh
         self.dimstyle_attribs["text_shift_v"] = dv
 
-    def set_location(
-        self, location: UVec, leader=False, relative=False
-    ) -> None:
+    def set_location(self, location: UVec, leader=False, relative=False) -> None:
         """Set text location by user, special version for linear dimensions,
         behaves for other dimension types like :meth:`user_location_override`.
 
@@ -505,28 +496,28 @@ class DimStyleOverride:
         """Get designated DIMENSION renderer. (internal API)"""
         return self.doc.dimension_renderer.dispatch(self, ucs)
 
-    def render(
-        self, ucs: Optional[UCS] = None, discard=False
-    ) -> BaseDimensionRenderer:
-        """Initiate dimension line rendering process and also writes overridden
-        dimension style attributes into the DSTYLE XDATA section.
+    def render(self, ucs: Optional[UCS] = None, discard=False) -> BaseDimensionRenderer:
+        """Starts the dimension line rendering process and also writes overridden
+        dimension style attributes into the DSTYLE XDATA section. The rendering process
+        "draws" the graphical representation of the DIMENSION entity as DXF primitives
+        (TEXT, LINE, ARC, ...) into an anonymous content BLOCK.
 
-        For a friendly CAD applications like BricsCAD you can discard the
-        dimension line rendering, because it is done automatically by BricsCAD,
-        if no dimension rendering BLOCK is available, and it is likely to get
-        better results as by `ezdxf`.
+        You can discard the content BLOCK for a friendly CAD applications like BricsCAD,
+        because the rendering of the dimension entity is done automatically by BricsCAD
+        if the content BLOCK is missing, and the result is in most cases better than the
+        rendering done by `ezdxf`.
 
-        AutoCAD does not render DIMENSION entities automatically, so I rate
+        AutoCAD does not render DIMENSION entities automatically, therefore I see
         AutoCAD as an unfriendly CAD application.
 
         Args:
             ucs: user coordinate system
-            discard: discard rendering done by `ezdxf` (works with BricsCAD,
-                but not tolerated by AutoCAD)
+            discard: discard the content BLOCK created by `ezdxf`, this works for
+                BricsCAD, AutoCAD refuses to open DXF files containing DIMENSION
+                entities without a content BLOCK
 
         Returns:
-            BaseDimensionRenderer: Rendering object used to render the DIMENSION
-            entity for analytics
+            The rendering object of the DIMENSION entity for analytics
 
         """
 

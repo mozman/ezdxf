@@ -66,9 +66,10 @@ Angular Dimension by ConstructionArc        :meth:`~ezdxf.layouts.BaseLayout.add
 
         Name of the BLOCK that contains the entities that make up the dimension picture.
 
-        For AutoCAD this graphical representation is mandatory, else AutoCAD will not open the
-        DXF drawing. BricsCAD will render the DIMENSION entity by itself, if the graphical representation is
-        not present, but uses the BLOCK instead of rendering, if it is present.
+        For AutoCAD this graphical representation is mandatory, otherwise AutoCAD will
+        not open the DXF document.  BricsCAD will render the DIMENSION entity by itself,
+        if the graphical representation is not present, but displays the BLOCK content
+        if present.
 
     .. attribute:: dxf.dimstyle
 
@@ -76,8 +77,8 @@ Angular Dimension by ConstructionArc        :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. attribute:: dxf.dimtype
 
-        Values 0-6 are integer values that represent the dimension type. Values 32, 64, and 128 are bit values, which
-        are added to the integer values.
+        Values 0-6 are integer values that represent the dimension type. Values 32, 64,
+        and 128 are bit values, which are added to the integer values.
 
         === ===================================================================
         0   `Linear and Rotated Dimension (DXF)`_
@@ -88,56 +89,58 @@ Angular Dimension by ConstructionArc        :meth:`~ezdxf.layouts.BaseLayout.add
         5   `Angular 3P Dimension (DXF)`_
         6   `Ordinate Dimension (DXF)`_
         8   subclass :class:`ezdxf.entities.ArcDimension` introduced in DXF R2004
-        32  Indicates that graphical representation :attr:`geometry` is referenced by this dimension only.
-            (always set in DXF R13 and later)
-        64  Ordinate type. This is a bit value (bit 7) used only with integer value 6. If set, ordinate is `X-type`;
-            if not set, ordinate is `Y-type`
-        128 This is a bit value (bit 8) added to the other :attr:`dimtype` values if the dimension text has been
-            positioned at a user-defined location rather than at the default location
+        32  Indicates that graphical representation :attr:`geometry` is referenced by
+            this dimension only. (always set in DXF R13 and later)
+        64  Ordinate type. This is a bit value (bit 7) used only with integer value 6.
+            If set, ordinate is `X-type`; if not set, ordinate is `Y-type`
+        128 This is a bit value (bit 8) added to the other :attr:`dimtype` values if the
+            dimension text has been positioned at a user-defined location rather than at
+            the default location
         === ===================================================================
 
     .. attribute:: dxf.defpoint
 
         Definition point for all dimension types. (3D Point in :ref:`WCS`)
 
-        Linear and rotated dimension: :attr:`dxf.defpoint` specifies the dimension line location.
-
-        Arc and angular dimension: :attr:`dxf.defpoint` and :attr:`dxfdefpoint4` specify the endpoints of the
-        line used to determine the second extension line.
+        - Linear- and rotated dimension: :attr:`dxf.defpoint` specifies the dimension line
+          location.
+        - Arc- and angular dimension: :attr:`dxf.defpoint` and :attr:`dxfdefpoint4`
+          specify the endpoints of the line used to determine the second extension line.
 
     .. attribute:: dxf.defpoint2
 
-        Definition point for linear and angular dimensions. (3D Point in :ref:`WCS`)
+        Definition point for linear- and angular dimensions. (3D Point in :ref:`WCS`)
 
-        Linear and rotated dimension: The :attr:`dxf.defpoint2` specifies the start point of the first extension line.
-
-        Arc and angular dimension: The :attr:`dxf.defpoint2` and :attr:`dxf.defpoint3` specify the endpoints of the
-        line used to determine the first extension line.
+        - Linear- and rotated dimension: The :attr:`dxf.defpoint2` specifies the start
+          point of the first extension line.
+        - Arc- and angular dimension: The :attr:`dxf.defpoint2` and :attr:`dxf.defpoint3`
+          specify the endpoints of the line used to determine the first extension line.
 
     .. attribute:: dxf.defpoint3
 
-        Definition point for linear and angular dimensions. (3D Point in :ref:`WCS`)
+        Definition point for linear- and angular dimensions. (3D Point in :ref:`WCS`)
 
-        Linear and rotated dimension: The :attr:`dxf.defpoint3` specifies the start point of the second extension line.
-
-        Arc and angular dimension: The :attr:`dxf.defpoint2` and :attr:`dxf.defpoint3` specify the endpoints of the
-        line used to determine the first extension line.
+        - Linear- and rotated dimension: The :attr:`dxf.defpoint3` specifies the start
+          point of the second extension line.
+        - Arc- and angular dimension: The :attr:`dxf.defpoint2` and :attr:`dxf.defpoint3`
+          specify the endpoints of the line used to determine the first extension line.
 
     .. attribute:: dxf.defpoint4
 
-        Definition point for diameter, radius, and angular dimensions. (3D Point in :ref:`WCS`)
+        Definition point for diameter-, radius-, and angular dimensions.
+        (3D Point in :ref:`WCS`)
 
-        Arc and angular dimension: :attr:`dxf.defpoint` and :attr:`dxf.defpoint4` specify the endpoints of the
-        line used to determine the second extension line.
+        The :attr:`dxf.defpoint` and :attr:`dxf.defpoint4` specify the endpoints of the
+        line used to determine the second extension line for arc- and angular dimension:
 
     .. attribute:: dxf.defpoint5
 
-        Point defining dimension arc for angular dimensions, specifies the location of the dimension line arc.
+        This point defines the location of the arc for angular dimensions.
         (3D Point in :ref:`OCS`)
 
     .. attribute:: dxf.angle
 
-        Angle of linear and rotated dimensions in degrees. (float)
+        Rotation angle of linear and rotated dimensions in degrees. (float)
 
     .. attribute:: dxf.leader_length
 
@@ -157,7 +160,7 @@ Angular Dimension by ConstructionArc        :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. attribute:: dxf.attachment_point
 
-        Text attachment point (int, DXF R2000), default value is ``5``.
+        Text attachment point (int, DXF R2000), default value is 5.
 
         === ================
         1   Top left
@@ -173,7 +176,7 @@ Angular Dimension by ConstructionArc        :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. attribute:: dxf.line_spacing_style
 
-        Dimension text line-spacing style (int, DXF R2000), default value is ``1``.
+        Dimension text line-spacing style (int, DXF R2000), default value is 1.
 
         === ============================================
         1   At least (taller characters will override)
@@ -184,37 +187,40 @@ Angular Dimension by ConstructionArc        :meth:`~ezdxf.layouts.BaseLayout.add
 
         Dimension text-line spacing factor. (float, DXF R2000)
 
-        Percentage of default (3-on-5) line spacing to be applied. Valid values range from ``0.25`` to ``4.00``.
+        Percentage of default (3-on-5) line spacing to be applied. Valid values range
+        from 0.25 to 4.00.
 
     .. attribute:: dxf.actual_measurement
 
-        Actual measurement (float, DXF R2000), this is an optional attribute and often not present. (read-only value)
+        Actual measurement (float, DXF R2000), this is an optional attribute and often
+        not present. (read-only value)
 
     .. attribute:: dxf.text
 
         Dimension text explicitly entered by the user (str), default value is an empty string.
 
-        If empty string or ``'<>'``, the dimension measurement is drawn as the text,
-        if ``' '`` (one blank space), the text is suppressed. Anything else is drawn as the text.
+        If empty string or "<>", the dimension measurement is drawn as the text, if " "
+        (one blank space), the text is suppressed. Anything else will be displayed as
+        the dimension text.
 
     .. attribute:: dxf.oblique_angle
 
-        Linear dimension types with an oblique angle have an optional :attr:`dxf.oblique_angle`.
-
-        When added to the rotation :attr:`dxf.angle` of the linear dimension, it gives the angle of the extension lines.
+        The optional :attr:`dxf.oblique_angle` defines the angle of the extension lines
+        for linear dimension.
 
     .. attribute:: dxf.text_rotation
 
-        Defines is the rotation angle of the dimension text away from its default orientation
-        (the direction of the dimension line). (float)
+        Defines is the rotation angle of the dimension text away from its default
+        orientation (the direction of the dimension line). (float)
 
     .. attribute:: dxf.horizontal_direction
 
         Indicates the horizontal direction for the dimension entity (float).
 
-        This attribute determines the orientation of dimension text and lines for horizontal, vertical, and
-        rotated linear dimensions. This value is the negative of the angle in the OCS xy-plane between the dimension
-        line and the OCS x-axis.
+        This attribute determines the orientation of dimension text and lines for
+        horizontal, vertical, and  rotated linear dimensions.  This value is the
+        negative of the angle in the OCS xy-plane between the dimension line and the
+        OCS x-axis.
 
     .. autoproperty:: dimtype
 

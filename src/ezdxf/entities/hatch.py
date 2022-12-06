@@ -240,8 +240,8 @@ class Hatch(DXFPolygon):
     def set_solid_fill(
         self, color: int = 7, style: int = 1, rgb: Optional[RGB] = None
     ):
-        """Set :class:`Hatch` to solid fill mode and removes all gradient and
-        pattern fill related data.
+        """Set the solid fill mode and removes all gradient and pattern fill related
+        data.
 
         Args:
             color: :ref:`ACI`, (0 = BYBLOCK; 256 = BYLAYER)

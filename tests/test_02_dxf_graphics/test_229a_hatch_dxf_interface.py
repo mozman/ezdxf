@@ -5,6 +5,8 @@ import pytest
 from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.lldxf import const
+from ezdxf.math import Vec3
+
 
 HATCH = """0
 HATCH
@@ -54,7 +56,7 @@ SOLID
 
 
 @pytest.fixture
-def entity():
+def entity() -> Hatch:
     return Hatch.from_text(HATCH)
 
 
@@ -86,6 +88,11 @@ def test_default_new():
 def test_load_from_text(entity):
     assert entity.dxf.layer == "0"
     assert entity.dxf.color == 1, "default color is 1"
+
+
+def test_seeds(entity: Hatch):
+    # seeds is a list of (x, y) tuples
+    assert entity.seeds == [(0, 0)]
 
 
 def test_write_dxf():

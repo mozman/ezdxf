@@ -76,18 +76,14 @@ class ImageBase(DXFGraphic):
         if processor:
             path_tags = processor.subclasses[2].pop_tags(codes=(14,))
             self.load_boundary_path(path_tags)
-            processor.fast_load_dxfattribs(
-                dxf, self._CLS_GROUP_CODES, 2, recover=True
-            )
+            processor.fast_load_dxfattribs(dxf, self._CLS_GROUP_CODES, 2, recover=True)
             if len(self.boundary_path) < 2:  # something is wrong
                 self.dxf = dxf
                 self.reset_boundary_path()
         return dxf
 
     def load_boundary_path(self, tags: Iterable[DXFTag]):
-        self._boundary_path = [
-            Vec2(value) for code, value in tags if code == 14
-        ]
+        self._boundary_path = [Vec2(value) for code, value in tags if code == 14]
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
@@ -124,10 +120,9 @@ class ImageBase(DXFGraphic):
     @property
     def boundary_path(self):
         """A list of vertices as pixel coordinates, Two vertices describe a
-        rectangle, lower left corner is ``(-0.5, -0.5)`` and upper right corner
-        is ``(ImageSizeX-0.5, ImageSizeY-0.5)``, more than two vertices is a
+        rectangle, lower left corner is (-0.5, -0.5) and upper right corner
+        is (ImageSizeX-0.5, ImageSizeY-0.5), more than two vertices is a
         polygon as clipping path. All vertices as pixel coordinates. (read/write)
-
         """
         return self._boundary_path
 
@@ -139,7 +134,6 @@ class ImageBase(DXFGraphic):
         """Set boundary path to `vertices`. Two vertices describe a rectangle
         (lower left and upper right corner), more than two vertices is a polygon
         as clipping path.
-
         """
         _vertices = Vec2.list(vertices)
         if len(_vertices):
@@ -157,7 +151,6 @@ class ImageBase(DXFGraphic):
     def reset_boundary_path(self) -> None:
         """Reset boundary path to the default rectangle [(-0.5, -0.5),
         (ImageSizeX-0.5, ImageSizeY-0.5)].
-
         """
         lower_left_corner = Vec2(-0.5, -0.5)
         upper_right_corner = Vec2(self.dxf.image_size) + lower_left_corner
@@ -178,9 +171,8 @@ class ImageBase(DXFGraphic):
     def boundary_path_wcs(self) -> list[Vec3]:
         """Returns the boundary/clipping path in WCS coordinates.
 
-        Since version 0.16 it's recommended to create the clipping path
-        as :class:`~ezdxf.path.Path` object by the
-        :func:`~ezdxf.path.make_path` function::
+        It's recommended to acquire the clipping path as :class:`~ezdxf.path.Path` object
+        by the :func:`~ezdxf.path.make_path` function::
 
             from ezdxf.path import make_path
 
@@ -200,9 +192,7 @@ class ImageBase(DXFGraphic):
             boundary_path = [p0, Vec2(p1.x, p0.y), p1, Vec2(p0.x, p1.y)]
         # Boundary/Clipping path origin 0/0 is in the Left/Top corner
         # of the image!
-        vertices = [
-            origin + (u * p.x) + (v * (height - p.y)) for p in boundary_path
-        ]
+        vertices = [origin + (u * p.x) + (v * (height - p.y)) for p in boundary_path]
         if not vertices[0].isclose(vertices[-1]):
             vertices.append(vertices[0])
         return vertices
@@ -385,9 +375,7 @@ class Image(ImageBase):
 
     def _create_image_def_reactor(self):
         # ImageDef -> ImageDefReactor -> Image
-        image_def_reactor = self.doc.objects.add_image_def_reactor(
-            self.dxf.handle
-        )
+        image_def_reactor = self.doc.objects.add_image_def_reactor(self.dxf.handle)
         reactor_handle = image_def_reactor.dxf.handle
         # Link Image to ImageDefReactor:
         self.dxf.image_def_reactor_handle = reactor_handle
@@ -494,9 +482,7 @@ acdb_image_def = DefSubclass(
         # Image size in pixels:
         "image_size": DXFAttr(10, xtype=XType.point2d),
         # Default size of one pixel in AutoCAD units:
-        "pixel_size": DXFAttr(
-            11, xtype=XType.point2d, default=Vec2(0.01, 0.01)
-        ),
+        "pixel_size": DXFAttr(11, xtype=XType.point2d, default=Vec2(0.01, 0.01)),
         "loaded": DXFAttr(280, default=1),
         # Resolution units - this enums differ from the usual drawing units,
         # units.py, same as for RasterVariables.dxf.units, but only these 3 values
@@ -572,9 +558,7 @@ class ImageDefReactor(DXFObject):
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_image_def_reactor_group_codes, 1
-            )
+            processor.fast_load_dxfattribs(dxf, acdb_image_def_reactor_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
@@ -641,9 +625,7 @@ class RasterVariables(DXFObject):
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_raster_variables_group_codes, 1
-            )
+            processor.fast_load_dxfattribs(dxf, acdb_raster_variables_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
@@ -691,9 +673,7 @@ class WipeoutVariables(DXFObject):
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_wipeout_variables_group_codes, 1
-            )
+            processor.fast_load_dxfattribs(dxf, acdb_wipeout_variables_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:

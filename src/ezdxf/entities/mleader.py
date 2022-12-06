@@ -544,7 +544,7 @@ class MultiLeader(DXFGraphic):
         """Yields the graphical representation of MULTILEADER as virtual DXF
         primitives.
 
-        This entities are located at the original location, but are not stored
+        These entities are located at the original location, but are not stored
         in the entity database, have no handle and are not assigned to any
         layout.
 

@@ -11,10 +11,10 @@ The ELLIPSE (`DXF Reference`_) entity is a 3D curve defined by the
 The :attr:`dxf.ratio` attribute is the ratio of minor axis to major axis and has
 to be smaller or equal 1.  The :attr:`dxf.start_param` and :attr:`dxf.end_param`
 attributes defines the starting- and the end point of the ellipse, a full
-ellipse goes from 0 to 2*pi.  The curve always goes from start- to end
+ellipse goes from 0 to 2π.  The curve always goes from start- to end
 param in counter clockwise orientation.
 
-The :attr:`dxf.extrusion` vector defines the normal vector of the ellipse plan.
+The :attr:`dxf.extrusion` vector defines the normal vector of the ellipse plane.
 The minor axis direction is calculated by :attr:`dxf.extrusion` cross
 :attr:`dxf.major_axis`. The default extrusion vector (0, 0, 1) defines an ellipse
 plane parallel to xy-plane of the :ref:`WCS`.
@@ -56,7 +56,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.end_param
 
-        End parameter (float), default value is 2*pi.
+        End parameter (float), default value is 2π.
 
     .. attribute:: start_point
 

@@ -4,8 +4,8 @@ Hatch
 .. module:: ezdxf.entities
     :noindex:
 
-The HATCH entity (`DXF Reference`_) fills an enclosed area defined by one or
-more boundary paths with a hatch pattern, solid fill, or gradient fill.
+The HATCH entity (`DXF Reference`_) fills a closed area defined by one or
+more boundary paths by a hatch pattern, a solid fill, or a gradient fill.
 
 All points in :ref:`OCS` as (x, y) tuples (:attr:`Hatch.dxf.elevation` is the
 z-axis value).
@@ -36,7 +36,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-C6C71CED-CE0F-4184-82A5-07AD6241F15B
 
-.. rubric:: Boundary paths helper classes
+.. rubric:: Boundary paths classes
 
 Path manager: :class:`BoundaryPaths`
 
@@ -47,7 +47,7 @@ Path manager: :class:`BoundaryPaths`
     - :class:`EllipseEdge`
     - :class:`SplineEdge`
 
-.. rubric:: Pattern and gradient helper classes
+.. rubric:: Pattern and gradient classes
 
 - :class:`Pattern`
 - :class:`PatternLine`
@@ -62,8 +62,8 @@ Path manager: :class:`BoundaryPaths`
     .. attribute:: dxf.solid_fill
 
         === ==========================================================
-        1   solid fill, better use: :meth:`Hatch.set_solid_fill`
-        0   pattern fill, better use: :meth:`Hatch.set_pattern_fill`
+        1   solid fill,  use method :meth:`Hatch.set_solid_fill`
+        0   pattern fill, use method :meth:`Hatch.set_pattern_fill`
         === ==========================================================
 
     .. attribute:: dxf.associative
@@ -73,8 +73,7 @@ Path manager: :class:`BoundaryPaths`
         0   not associative hatch
         === =========================
 
-        Associations not handled by `ezdxf`, you have to set the handles to the
-        associated DXF entities by yourself.
+        Associations are not managed by `ezdxf`.
 
     .. attribute:: dxf.hatch_style
 
@@ -96,12 +95,12 @@ Path manager: :class:`BoundaryPaths`
 
     .. attribute:: dxf.pattern_angle
 
-        Actual pattern angle in degrees (float). Changing this value does not
+        The actual pattern rotation angle in degrees (float). Changing this value does not
         rotate the pattern, use :meth:`~Hatch.set_pattern_angle` for this task.
 
     .. attribute:: dxf.pattern_scale
 
-        Actual pattern scaling factor (float). Changing this value does not
+        The actual pattern scale factor (float). Changing this value does not
         scale the pattern use :meth:`~Hatch.set_pattern_scale` for this task.
 
     .. attribute:: dxf.pattern_double
@@ -110,7 +109,7 @@ Path manager: :class:`BoundaryPaths`
 
     .. attribute:: dxf.n_seed_points
 
-        Count of seed points (better user: :meth:`get_seed_points`)
+        Count of seed points (use :meth:`get_seed_points`)
 
     .. attribute:: dxf.elevation
 
@@ -130,7 +129,7 @@ Path manager: :class:`BoundaryPaths`
 
     .. attribute:: seeds
 
-        List of ``(x, y)`` tuples.
+        A list of seed points as (x, y) tuples.
 
     .. autoproperty:: has_solid_fill
 
@@ -163,7 +162,7 @@ Path manager: :class:`BoundaryPaths`
 Boundary Paths
 --------------
 
-The hatch entity is build by different functional path types, this are
+The hatch entity is build by different path types, these are the
 filter flags for the :attr:`Hatch.dxf.hatch_style`:
 
 - EXTERNAL: defines the outer boundary of the hatch
@@ -194,8 +193,8 @@ Hatch Style
   marked as EXTERNAL or OUTERMOST.
 - HATCH_STYLE_NESTED: Use all existing paths.
 
-Hatch Boundary Helper Classes
------------------------------
+Hatch Boundary Classes
+----------------------
 
 .. class:: BoundaryPaths
 
@@ -487,8 +486,8 @@ Hatch Boundary Helper Classes
         Spline end tangent (vector)  as (x, y)-tuple. (read/write)
 
 
-Hatch Pattern Definition Helper Classes
----------------------------------------
+Hatch Pattern Definition Classes
+--------------------------------
 
 .. class:: Pattern
 
@@ -524,8 +523,8 @@ Hatch Pattern Definition Helper Classes
 
         List of dash length items (item > 0 is line, < 0 is gap, 0.0 = dot). (read/write)
 
-Hatch Gradient Fill Helper Classes
-----------------------------------
+Hatch Gradient Fill Class
+-------------------------
 
 .. class:: Gradient
 
