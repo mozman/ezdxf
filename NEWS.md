@@ -38,6 +38,8 @@ Version 1.0.0rc2 - dev
   allow DXF-Unicode notion `\U+XXXX` in table names 
 - BUGFIX: [#783](https://github.com/mozman/ezdxf/issues/783)
   apply block reference transformation to pattern filling of exploded HATCH entities
+- BUGFIX: [#791](https://github.com/mozman/ezdxf/issues/791)
+  fix broken POLYGON creation in `ProxyGraphic` class
    
 
 Version 0.18.1 - 2022-09-03

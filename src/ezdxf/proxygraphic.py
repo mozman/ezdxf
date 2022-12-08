@@ -20,6 +20,7 @@ from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
 from ezdxf import colors
 from ezdxf.math import (
     Vec3,
+    Vec2,
     Matrix44,
     Z_AXIS,
     ConstructionCircle,
@@ -272,9 +273,7 @@ class ProxyGraphic:
 
         if self._doc:
             self.layers = list(layer.dxf.name for layer in self._doc.layers)
-            self.linetypes = list(
-                linetype.dxf.name for linetype in self._doc.linetypes
-            )
+            self.linetypes = list(linetype.dxf.name for linetype in self._doc.linetypes)
             self.textstyles = {
                 style.dxf.font: style.dxf.name for style in self._doc.styles
             }
@@ -460,7 +459,10 @@ class ProxyGraphic:
 
     def _filled_polygon(self, vertices, attribs):
         hatch = cast("Hatch", self._factory("HATCH", dxfattribs=attribs))
-        hatch.paths.add_polyline_path(vertices, is_closed=True)
+        elevation = _get_elevation(vertices)
+        hatch.paths.add_polyline_path(Vec2.generate(vertices), is_closed=True)
+        if elevation:
+            hatch.dxf.elevation = Vec3(0, 0, elevation)
         return hatch
 
     def _polyline(self, vertices, *, close=False, normal=Z_AXIS):
@@ -476,9 +478,7 @@ class ProxyGraphic:
             polyline = self._filled_polygon(vertices, attribs)
         else:
             attribs["flags"] = const.POLYLINE_3D_POLYLINE
-            polyline = cast(
-                "Polyline", self._factory("POLYLINE", dxfattribs=attribs)
-            )
+            polyline = cast("Polyline", self._factory("POLYLINE", dxfattribs=attribs))
             polyline.append_vertices(vertices)
             if close:
                 polyline.close()
@@ -540,12 +540,9 @@ class ProxyGraphic:
             prev_point = (x, y)
             vertices.append(prev_point)
         bulges: list[float] = [bs.read_bit_double() for _ in range(num_bulges)]
-        vertex_ids: list[int] = [
-            bs.read_bit_long() for _ in range(vertex_id_count)
-        ]
+        vertex_ids: list[int] = [bs.read_bit_long() for _ in range(vertex_id_count)]
         widths: list[tuple[float, float]] = [
-            (bs.read_bit_double(), bs.read_bit_double())
-            for _ in range(num_width)
+            (bs.read_bit_double(), bs.read_bit_double()) for _ in range(num_width)
         ]
         if len(bulges) == 0:
             bulges = list(repeat(0, num_points))
@@ -554,9 +551,7 @@ class ProxyGraphic:
         points: list[Sequence[float]] = []
         for v, w, b in zip(vertices, widths, bulges):
             points.append((v[0], v[1], w[0], w[1], b))
-        lwpolyline = cast(
-            "LWPolyline", self._factory("LWPOLYLINE", dxfattribs=attribs)
-        )
+        lwpolyline = cast("LWPolyline", self._factory("LWPOLYLINE", dxfattribs=attribs))
         lwpolyline.set_points(points)
         return lwpolyline
 
@@ -580,9 +575,7 @@ class ProxyGraphic:
                 bs, total_edge_count, total_face_count, vertex_count=0
             )
         except struct.error:
-            logger.error(
-                "Structure error while parsing traits for MESH proxy graphic"
-            )
+            logger.error("Structure error while parsing traits for MESH proxy graphic")
         if traits:
             # apply traits
             pass
@@ -592,9 +585,7 @@ class ProxyGraphic:
         attribs["m_count"] = rows
         attribs["n_count"] = columns
         attribs["flags"] = const.POLYLINE_3D_POLYMESH
-        polymesh = cast(
-            "Polymesh", self._factory("POLYLINE", dxfattribs=attribs)
-        )
+        polymesh = cast("Polymesh", self._factory("POLYLINE", dxfattribs=attribs))
         polymesh.append_vertices(vertices)
         return polymesh
 
@@ -605,9 +596,7 @@ class ProxyGraphic:
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
         attribs["flags"] = const.POLYLINE_POLYFACE
-        polyface = cast(
-            "Polyface", self._factory("POLYLINE", dxfattribs=attribs)
-        )
+        polyface = cast("Polyface", self._factory("POLYLINE", dxfattribs=attribs))
         total_vertex_count = bs.read_long()
         vertices = [Vec3(bs.read_vertex()) for _ in range(total_vertex_count)]
         face_entry_count = bs.read_long()
@@ -630,9 +619,7 @@ class ProxyGraphic:
                 bs, total_edge_count, total_face_count, vertex_count=0
             )
         except struct.error:
-            logger.error(
-                "Structure error while parsing traits for SHELL proxy graphic"
-            )
+            logger.error("Structure error while parsing traits for SHELL proxy graphic")
         polyface.append_faces(faces)
         if traits:
             face_traits = traits.get("faces")
@@ -751,9 +738,7 @@ class ProxyGraphic:
         return self._xline(data, "RAY")
 
     def _xline(self, data: bytes, type_: str):
-        logger.warning(
-            "Untested proxy graphic entity: RAY/XLINE - Need examples!"
-        )
+        logger.warning("Untested proxy graphic entity: RAY/XLINE - Need examples!")
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
         start_point = Vec3(bs.read_vertex())
@@ -781,7 +766,7 @@ class ProxyGraphic:
         count = bs.read_long()
         if load_normal:
             count += 1
-        vertices = []
+        vertices: list[Vec3] = []
         while count > 0:
             vertices.append(Vec3(bs.read_struct("<3d")))
             count -= 1
@@ -807,9 +792,7 @@ class ProxyGraphic:
 
 
 class ProxyGraphicDebugger(ProxyGraphic):
-    def __init__(
-        self, data: bytes, doc: Optional[Drawing] = None, debug_stream=None
-    ):
+    def __init__(self, data: bytes, doc: Optional[Drawing] = None, debug_stream=None):
         super(ProxyGraphicDebugger, self).__init__(data, doc)
         if debug_stream is None:
             debug_stream = sys.stdout
@@ -898,3 +881,9 @@ def _apply_face_colors(polyface: Polyface, colors: list[int]) -> None:
             index += 1
             if index >= color_count:
                 return
+
+
+def _get_elevation(vertices) -> float:
+    if vertices:
+        return vertices[0].z
+    return 0.0
