@@ -4,10 +4,11 @@ Arc
 .. module:: ezdxf.entities
     :noindex:
 
-ARC (`DXF Reference`_) center at location :attr:`dxf.center` and radius of
-:attr:`dxf.radius` from :attr:`dxf.start_angle` to :attr:`dxf.end_angle`.
-ARC goes always from :attr:`dxf.start_angle` to :attr:`dxf.end_angle` in counter-clockwise
-orientation around the :attr:`dxf.extrusion` vector, which is (0, 0, 1)
+The ARC entity (`DXF Reference`_) represents a circular arc, which is defined by the DXF
+attributes :attr:`dxf.center`, :attr:`dxf.radius`, :attr:`dxf.start_angle` and
+:attr:`dxf.end_angle`.
+The arc-curve goes always from :attr:`dxf.start_angle` to :attr:`dxf.end_angle` in
+counter-clockwise orientation around the :attr:`dxf.extrusion` vector, which is (0, 0, 1)
 by default and the usual case for 2D arcs. The ARC entity has :ref:`OCS`
 coordinates.
 

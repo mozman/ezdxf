@@ -4,8 +4,8 @@ Circle
 .. module:: ezdxf.entities
     :noindex:
 
-CIRCLE (`DXF Reference`_) center at location :attr:`dxf.center` and radius of
-:attr:`dxf.radius`. The CIRCLE entity has :ref:`OCS` coordinates.
+The CIRCLE entity (`DXF Reference`_) defined by the DXF attributes :attr:`dxf.center`
+and :attr:`dxf.radius`. The CIRCLE entity has :ref:`OCS` coordinates.
 
 .. seealso::
 

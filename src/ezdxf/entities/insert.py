@@ -140,8 +140,7 @@ merged_insert_group_codes = merge_group_code_mappings(
 )
 
 NON_ORTHO_MSG = (
-    "INSERT entity can not represent a non-orthogonal target "
-    "coordinate system."
+    "INSERT entity can not represent a non-orthogonal target " "coordinate system."
 )
 
 
@@ -221,7 +220,7 @@ class Insert(LinkedEntities):
 
     @property
     def has_scaling(self) -> bool:
-        """Returns ``True`` if any axis scaling is applied."""
+        """Returns ``True`` if scaling is applied to any axis."""
         if self.dxf.hasattr("xscale") and self.dxf.xscale != 1:
             return True
         if self.dxf.hasattr("yscale") and self.dxf.yscale != 1:
@@ -232,31 +231,29 @@ class Insert(LinkedEntities):
 
     @property
     def has_uniform_scaling(self) -> bool:
-        """Returns ``True`` if scaling is uniform in x-, y- and z-axis ignoring
-        reflections e.g. (1, 1, -1) is uniform scaling.
+        """Returns ``True`` if the scale factor is uniform for x-, y- and z-axis,
+        ignoring reflections e.g. (1, 1, -1) is uniform scaling.
 
         """
-        return (
-            abs(self.dxf.xscale) == abs(self.dxf.yscale) == abs(self.dxf.zscale)
-        )
+        return abs(self.dxf.xscale) == abs(self.dxf.yscale) == abs(self.dxf.zscale)
 
     def set_scale(self, factor: float):
-        """Set uniform scaling."""
+        """Set a uniform scale factor."""
         if factor == 0:
-            raise ValueError("Invalid scaling factor.")
+            raise ValueError("Invalid scale factor.")
         self.dxf.xscale = factor
         self.dxf.yscale = factor
         self.dxf.zscale = factor
         return self
 
     def block(self) -> Optional[BlockLayout]:
-        """Returns associated :class:`~ezdxf.layouts.BlockLayout`."""
+        """Returns the associated :class:`~ezdxf.layouts.BlockLayout`."""
         if self.doc:
             return self.doc.blocks.get(self.dxf.name)
         return None
 
     def is_xref(self) -> bool:
-        """Return ``True`` if XREF or XREF_OVERLAY."""
+        """Return ``True`` if the INSERT entity represents a XREF or XREF_OVERLAY."""
         block = self.block()
         if block is not None:
             return block.block_record.is_xref
@@ -269,12 +266,12 @@ class Insert(LinkedEntities):
         rotation: Optional[float] = None,
     ) -> Insert:
         """
-        Set block reference placing location `insert`, scaling and rotation
-        attributes. Parameters which are ``None`` will not be altered.
+        Set the location, scaling and rotation attributes. Arguments which are ``None``
+        will be ignored.
 
         Args:
-            insert: insert location as ``(x, y [,z])`` tuple
-            scale: ``(x-scale, y-scale, z-scale)`` tuple
+            insert: insert location as (x, y [,z]) tuple
+            scale: (x-scale, y-scale, z-scale) tuple
             rotation : rotation angle in degrees
 
         """
@@ -282,9 +279,7 @@ class Insert(LinkedEntities):
             self.dxf.insert = insert
         if scale is not None:
             if len(scale) != 3:
-                raise DXFValueError(
-                    "Parameter scale has to be a (x, y, z)-tuple."
-                )
+                raise DXFValueError("Argument scale has to be a (x, y[, z]) tuple.")
             x, y, z = scale
             self.dxf.xscale = x
             self.dxf.yscale = y
@@ -294,33 +289,28 @@ class Insert(LinkedEntities):
         return self
 
     def grid(
-        self,
-        size: tuple[int, int] = (1, 1),
-        spacing: tuple[float, float] = (1, 1),
+        self, size: tuple[int, int] = (1, 1), spacing: tuple[float, float] = (1, 1)
     ) -> Insert:
         """Place block reference in a grid layout, grid `size` defines the
         row- and column count, `spacing` defines the distance between two block
         references.
 
         Args:
-            size: grid size as ``(row_count, column_count)`` tuple
-            spacing: distance between placing as
-                ``(row_spacing, column_spacing)`` tuple
+            size: grid size as (row_count, column_count) tuple
+            spacing: distance between placing as (row_spacing, column_spacing) tuple
 
         """
         try:
             rows, cols = size
         except ValueError:
-            raise DXFValueError(
-                "Size has to be a 2-tuple: (row_count, column_count)."
-            )
+            raise DXFValueError("Size has to be a (row_count, column_count) tuple.")
         self.dxf.row_count = rows
         self.dxf.column_count = cols
         try:
             row_spacing, col_spacing = spacing
         except ValueError:
             raise DXFValueError(
-                "Spacing has to be a 2-tuple: (row_spacing, column_spacing)."
+                "Spacing has to be a (row_spacing, column_spacing) tuple."
             )
         self.dxf.row_spacing = row_spacing
         self.dxf.column_spacing = col_spacing
@@ -329,13 +319,13 @@ class Insert(LinkedEntities):
     def get_attrib(
         self, tag: str, search_const: bool = False
     ) -> Optional[Union[Attrib, AttDef]]:
-        """Get attached :class:`Attrib` entity with :code:`dxf.tag == tag`,
-        returns ``None`` if not found. Some applications may not attach constant
+        """Get an attached :class:`Attrib` entity with the given `tag`,
+        returns ``None`` if not found.  Some applications do not attach constant
         ATTRIB entities, set `search_const` to ``True``, to get at least the
         associated :class:`AttDef` entity.
 
         Args:
-            tag: tag name
+            tag: tag name of the ATTRIB entity
             search_const: search also const ATTDEF entities
 
         """
@@ -352,14 +342,14 @@ class Insert(LinkedEntities):
     def get_attrib_text(
         self, tag: str, default: str = "", search_const: bool = False
     ) -> str:
-        """Get content text of attached :class:`Attrib` entity with
-        :code:`dxf.tag == tag`, returns `default` if not found.
-        Some applications may not attach constant ATTRIB entities, set
+        """Get content text of an attached :class:`Attrib` entity with
+        the given `tag`, returns the `default` value if not found.
+        Some applications do not attach constant ATTRIB entities, set
         `search_const` to ``True``, to get content text of the
         associated :class:`AttDef` entity.
 
         Args:
-            tag: tag name
+            tag: tag name of the ATTRIB entity
             default: default value if ATTRIB `tag` is absent
             search_const: search also const ATTDEF entities
 
@@ -370,36 +360,34 @@ class Insert(LinkedEntities):
         return attrib.dxf.text
 
     def has_attrib(self, tag: str, search_const: bool = False) -> bool:
-        """Returns ``True`` if ATTRIB `tag` exist, for `search_const` doc see
-        :meth:`get_attrib`.
+        """Returns ``True`` if the INSERT entity has an attached ATTRIB entity with the
+        given `tag`.  Some applications do not attach constant ATTRIB entities, set
+        `search_const` to ``True``, to check for an associated :class:`AttDef` entity
+        with constant content.
+
 
         Args:
-            tag: tag name as string
+            tag: tag name fo the ATTRIB entity
             search_const: search also const ATTDEF entities
 
         """
         return self.get_attrib(tag, search_const) is not None
 
     def add_attrib(
-        self,
-        tag: str,
-        text: str,
-        insert: UVec = (0, 0),
-        dxfattribs=None,
-    ) -> "Attrib":
+        self, tag: str, text: str, insert: UVec = (0, 0), dxfattribs=None
+    ) -> Attrib:
         """Attach an :class:`Attrib` entity to the block reference.
 
-        Example for appending an attribute to an INSERT entity with none
-        standard alignment::
+        Example for appending an attribute to an INSERT entity::
 
             e.add_attrib('EXAMPLETAG', 'example text').set_placement(
                 (3, 7), align=TextEntityAlignment.MIDDLE_CENTER
             )
 
         Args:
-            tag: tag name as string
+            tag: tag name of the ATTRIB entity
             text: content text as string
-            insert: insert location as tuple ``(x, y[, z])`` in :ref:`WCS`
+            insert: insert location as (x, y[, z]) tuple in :ref:`OCS`
             dxfattribs: additional DXF attributes for the ATTRIB entity
 
         """
@@ -410,24 +398,24 @@ class Insert(LinkedEntities):
         attrib = cast("Attrib", self._new_compound_entity("ATTRIB", dxfattribs))
         self.attribs.append(attrib)
 
-        # This case is only possible if INSERT is read from file without
-        # attached ATTRIBS:
+        # This case is only possible if the INSERT was read from a file without
+        # attached ATTRIB entities:
         if self.seqend is None:
             self.new_seqend()
         return attrib
 
     def delete_attrib(self, tag: str, ignore=False) -> None:
-        """Delete an attached :class:`Attrib` entity from INSERT. If `ignore`
-        is ``False``, an :class:`DXFKeyError` exception is raised, if
-        ATTRIB `tag` does not exist.
+        """Delete an attached :class:`Attrib` entity from INSERT. Raises an
+        :class:`DXFKeyError` exception, if no ATTRIB for the given `tag` exist if
+        `ignore` is ``False``.
 
         Args:
-            tag: ATTRIB name
+            tag: tag name of the ATTRIB entity
             ignore: ``False`` for raising :class:`DXFKeyError` if ATTRIB `tag`
                 does not exist.
 
         Raises:
-            DXFKeyError: if ATTRIB `tag` does not exist.
+            DXFKeyError: no ATTRIB for the given `tag` exist
 
         """
         for index, attrib in enumerate(self.attribs):
@@ -451,8 +439,8 @@ class Insert(LinkedEntities):
         """Transform INSERT entity by transformation matrix `m` inplace.
 
         Unlike the transformation matrix `m`, the INSERT entity can not
-        represent a non-orthogonal target coordinate system, for this case an
-        :class:`InsertTransformationError` will be raised.
+        represent a non-orthogonal target coordinate system and an
+        :class:`InsertTransformationError` will be raised in that case.
 
         """
 
@@ -504,17 +492,14 @@ class Insert(LinkedEntities):
 
         """
         ocs = self.ocs()
-        self.dxf.insert = ocs.from_wcs(
-            Vec3(dx, dy, dz) + ocs.to_wcs(self.dxf.insert)
-        )
+        self.dxf.insert = ocs.from_wcs(Vec3(dx, dy, dz) + ocs.to_wcs(self.dxf.insert))
         for attrib in self.attribs:
             attrib.translate(dx, dy, dz)
         return self
 
     def matrix44(self) -> Matrix44:
-        """Returns a transformation matrix of type :class:`Matrix44` to
-        transform the block entities into :ref:`WCS`.
-
+        """Returns a transformation matrix to transform the block entities from the
+        block reference coordinate system into the :ref:`WCS`.
         """
         dxf = self.dxf
         sx = dxf.xscale
@@ -544,8 +529,8 @@ class Insert(LinkedEntities):
         return m
 
     def ucs(self):
-        """Returns the block reference coordinate system as
-        :class:`ezdxf.math.UCS` object.
+        """Returns the block reference coordinate system as :class:`ezdxf.math.UCS`
+        object.
         """
         m = self.matrix44()
         ucs = UCS()
@@ -553,8 +538,8 @@ class Insert(LinkedEntities):
         return ucs
 
     def reset_transformation(self) -> None:
-        """Reset block reference parameters `location`, `rotation` and
-        `extrusion` vector.
+        """Reset block reference attributes location, rotation angle and
+        the extrusion vector but preserves the scale factors.
 
         """
         self.dxf.insert = NULLVEC
@@ -564,21 +549,21 @@ class Insert(LinkedEntities):
     def explode(
         self, target_layout: Optional[BaseLayout] = None, *, redraw_order=False
     ) -> EntityQuery:
-        """Explode block reference entities into target layout, if target
-        layout is ``None``, the target layout is the layout of the block
-        reference. This method destroys the source block reference entity.
+        """Explodes the block reference entities into the target layout, if target
+        layout is ``None``, the layout of the block reference will be used.
+        This method destroys the source block reference entity.
 
         Transforms the block entities into the required :ref:`WCS` location by
         applying the block reference attributes `insert`, `extrusion`,
-        `rotation` and the scaling values `xscale`, `yscale` and `zscale`.
+        `rotation` and the scale factors `xscale`, `yscale` and `zscale`.
 
         Attached ATTRIB entities are converted to TEXT entities, this is the
         behavior of the BURST command of the AutoCAD Express Tools.
 
         .. warning::
 
-            **Non uniform scaling** may lead to incorrect results for text
-            entities (TEXT, MTEXT, ATTRIB) and maybe some other entities.
+            **Non-uniform scale factors** may lead to incorrect results some entities
+            (TEXT, MTEXT, ATTRIB).
 
         Args:
             target_layout: target layout for exploded entities, ``None`` for
@@ -611,21 +596,14 @@ class Insert(LinkedEntities):
     def virtual_entities(
         self,
         *,
-        skipped_entity_callback: Optional[
-            Callable[[DXFGraphic, str], None]
-        ] = None,
+        skipped_entity_callback: Optional[Callable[[DXFGraphic, str], None]] = None,
         redraw_order=False,
     ) -> Iterator[DXFGraphic]:
         """
-        Yields virtual entities of a block reference. This method is meant to
-        examine the block reference entities at the exploded location without
-        really exploding the block reference. The `skipped_entity_callback()`
-        will be called for all entities which are not processed, signature:
-        :code:`skipped_entity_callback(entity: DXFEntity, reason: str)`,
-        `entity` is the original (untransformed) DXF entity of the block
-        definition, the `reason` string is an explanation why the entity was
-        skipped.
+        Yields the transformed referenced block content as virtual entities.
 
+        This method is meant to examine the block reference entities at the target
+        location without exploding the block reference.
         These entities are not stored in the entity database, have no handle and
         are not assigned to any layout. It is possible to convert these entities
         into regular drawing entities by adding the entities to the entities
@@ -635,16 +613,22 @@ class Insert(LinkedEntities):
             msp = doc.modelspace()
             msp.add_entity(entity)
 
-        This method does not resolve the MINSERT attributes, only the
-        sub-entities of the base INSERT will be returned. To resolve MINSERT
-        entities check if multi insert processing is required, that's the case
-        if property :attr:`Insert.mcount` > 1, use the :meth:`Insert.multi_insert`
-        method to resolve the MINSERT entity into single INSERT entities.
-
         .. warning::
 
-            **Non uniform scaling** may return incorrect results for text
-            entities (TEXT, MTEXT, ATTRIB) and maybe some other entities.
+            **Non-uniform scale factors** may return incorrect results for some entities
+            (TEXT, MTEXT, ATTRIB).
+
+        This method does not resolve the MINSERT attributes, only the
+        sub-entities of the first INSERT will be returned. To resolve MINSERT
+        entities check if multi insert processing is required, that's the case
+        if the property :attr:`Insert.mcount` > 1, use the :meth:`Insert.multi_insert`
+        method to resolve the MINSERT entity into multiple INSERT entities.
+
+        The `skipped_entity_callback()` will be called for all entities which are not
+        processed, signature:
+        :code:`skipped_entity_callback(entity: DXFEntity, reason: str)`,
+        `entity` is the original (untransformed) DXF entity of the block definition, the
+        `reason` string is an explanation why the entity was skipped.
 
         Args:
             skipped_entity_callback: called whenever the transformation of an

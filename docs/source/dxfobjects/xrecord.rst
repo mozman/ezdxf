@@ -6,7 +6,7 @@ XRecord
 
 Important class for storing application defined data in DXF files.
 
-`XRECORD`_ objects are used to store and manage arbitrary data. They are
+The `XRECORD`_ entities are used to store and manage arbitrary data. They are
 composed of DXF group codes ranging from 1 through 369. This object is
 similar in concept to XDATA but is not limited by size or order.
 

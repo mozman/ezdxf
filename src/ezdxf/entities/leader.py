@@ -270,28 +270,25 @@ class Leader(DXFGraphic, OverrideMixin):
             yield e
 
     def virtual_entities(self) -> Iterator[DXFGraphic]:
-        """Yields 'virtual' parts of LEADER as DXF primitives.
+        """Yields the DXF primitives the LEADER entity is build up as virtual entities.
 
-        These entities are located at the original positions, but are not stored
+        These entities are located at the original location, but are not stored
         in the entity database, have no handle and are not assigned to any
         layout.
-
         """
         return self.__virtual_entities__()
 
-    def explode(
-        self, target_layout: Optional[BaseLayout] = None
-    ) -> EntityQuery:
-        """
-        Explode parts of LEADER as DXF primitives into target layout, if target
-        layout is ``None``, the target layout is the layout of the LEADER.
+    def explode(self, target_layout: Optional[BaseLayout] = None) -> EntityQuery:
+        """Explode parts of the LEADER entity as DXF primitives into target layout,
+        if target layout is ``None``, the target layout is the layout of the LEADER
+        entity. This method destroys the source entity.
 
-        Returns an :class:`~ezdxf.query.EntityQuery` container with all
-        DXF parts.
+        Returns an :class:`~ezdxf.query.EntityQuery` container referencing all
+        DXF primitives.
 
         Args:
-            target_layout: target layout for DXF parts, ``None`` for same
-                layout as source entity.
+            target_layout: target layout for the created DXF primitives, ``None`` for
+                the same layout as the source entity.
 
         """
         return explode_entity(self, target_layout)

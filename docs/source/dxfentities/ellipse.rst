@@ -4,8 +4,8 @@ Ellipse
 .. module:: ezdxf.entities
     :noindex:
 
-The ELLIPSE (`DXF Reference`_) entity is a 3D curve defined by the
-:attr:`dxf.center`, the :attr:`dxf.major_axis` vector and the
+The ELLIPSE entity (`DXF Reference`_) is an elliptic 3D curve defined by the DXF
+attributes :attr:`dxf.center`, the :attr:`dxf.major_axis` vector and the
 :attr:`dxf.extrusion` vector.
 
 The :attr:`dxf.ratio` attribute is the ratio of minor axis to major axis and has

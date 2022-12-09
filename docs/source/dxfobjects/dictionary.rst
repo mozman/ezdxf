@@ -4,7 +4,7 @@ Dictionary
 .. module:: ezdxf.entities
     :noindex:
 
-The `DICTIONARY`_ is a general storage entity.
+The `DICTIONARY`_ entity is a general storage entity.
 
 AutoCAD maintains items such as MLINE_STYLES and GROUP definitions as objects in
 dictionaries. Other applications are free to create and use their own
@@ -41,7 +41,7 @@ Factory function         :meth:`ezdxf.sections.objects.ObjectsSection.add_dictio
 
     .. attribute:: dxf.hard_owned
 
-        If set to ``1``, indicates that elements of the dictionary are to be
+        If set to 1, indicates that elements of the dictionary are to be
         treated as hard-owned.
 
     .. attribute:: dxf.cloning
@@ -133,7 +133,7 @@ Factory function         :meth:`ezdxf.entities.Dictionary.add_dict_var`
 
     .. attribute:: dxf.schema
 
-        Object schema number (currently set to ``0``)
+        Object schema number (currently set to 0)
 
     .. attribute:: dxf.value
 

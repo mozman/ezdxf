@@ -9,15 +9,17 @@ made up of one or more vertices (or spline fit points) and an arrowhead.
 In contrast to the :class:`Leader` entity the text- or block content is part of
 the MULTILEADER entity.
 
-AutoCAD, BricsCAD and maybe other CAD applications do accept ``'MLEADER'`` as
-type string but they always create entities with ``'MULTILEADER'`` as type
+AutoCAD, BricsCAD and maybe other CAD applications do accept "MLEADER" as
+type string but they always create entities with "MULTILEADER" as type
 string.
 
-Because of the complexity of the MULTILEADER entity, the factory method
-:meth:`~ezdxf.layouts.BaseLayout.add_multileader_mtext` returns a
-:class:`~ezdxf.render.MultiLeaderMTextBuilder` instance to build a new entity
-and the factory method :meth:`~ezdxf.layouts.BaseLayout.add_multileader_block`
-returns a :class:`~ezdxf.render.MultiLeaderBlockBuilder` instance.
+Because of the complexity of the MULTILEADER entity, the usage of factory methods to
+create new entities by special builder classes is recommended:
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_multileader_mtext` returns a new
+  :class:`~ezdxf.render.MultiLeaderMTextBuilder` instance
+- :meth:`~ezdxf.layouts.BaseLayout.add_multileader_block` returns a new
+  :class:`~ezdxf.render.MultiLeaderBlockBuilder` instance
 
 The visual design is based on an associated :class:`~ezdxf.entities.MLeaderStyle`,
 but almost all attributes are also stored in the MULTILEADER entity itself.
@@ -29,7 +31,7 @@ The `ezdxf` MULTILEADER renderer uses always the attributes from
 the MULTILEADER entity and ignores the override flags.
 
 All vertices are WCS coordinates, even those for BLOCK entities which are OCS
-coordinates in the usual case.
+coordinates for regular usage.
 
 .. seealso::
 

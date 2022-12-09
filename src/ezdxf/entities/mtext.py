@@ -898,10 +898,7 @@ class MText(DXFGraphic):
                 column.set_xdata("ACAD", tags)
 
     def get_rotation(self) -> float:
-        """Get text rotation in degrees, independent if it is defined by
-        :attr:`dxf.rotation` or :attr:`dxf.text_direction`.
-
-        """
+        """Returns the text rotation in degrees."""
         if self.dxf.hasattr("text_direction"):
             vector = self.dxf.text_direction
             radians = math.atan2(vector[1], vector[0])  # ignores z-axis
@@ -911,9 +908,8 @@ class MText(DXFGraphic):
         return rotation
 
     def set_rotation(self, angle: float) -> MText:
-        """Set attribute :attr:`rotation` to `angle` (in degrees) and deletes
+        """Sets the attribute :attr:`rotation` to `angle` (in degrees) and deletes
         :attr:`dxf.text_direction` if present.
-
         """
         # text_direction has higher priority than rotation, therefore delete it
         self.dxf.discard("text_direction")
@@ -926,7 +922,7 @@ class MText(DXFGraphic):
         rotation: Optional[float] = None,
         attachment_point: Optional[int] = None,
     ) -> MText:
-        """Set attributes :attr:`dxf.insert`, :attr:`dxf.rotation` and
+        """Sets the attributes :attr:`dxf.insert`, :attr:`dxf.rotation` and
         :attr:`dxf.attachment_point`, ``None`` for :attr:`dxf.rotation` or
         :attr:`dxf.attachment_point` preserves the existing value.
 
@@ -944,19 +940,15 @@ class MText(DXFGraphic):
         scale: float = 1.5,
         text_frame=False,
     ):
-        """Set background color as :ref:`ACI` value or as name string or as RGB
-        tuple ``(r, g, b)``.
+        """Sets the background color as :ref:`ACI` value, as name string or as
+        (r, g, b) tuple.
 
-        Use special color name ``canvas``, to set background color to canvas
-        background color.
-
-        Use `color` = ``None`` to remove the background filling.
-
-        Setting only a text border is supported (`color`=``None``), but in this
-        case the scaling is always 1.5.
+        Use the special color name ``canvas``, to set the background color to the canvas
+        background color.  Remove the background filling by setting argument `color` to
+        ``None``.
 
         Args:
-            color: color as :ref:`ACI`, string, RGB tuple or ``None``
+            color: color as :ref:`ACI`, string, (r, g, b) tuple or ``None``
             scale: determines how much border there is around the text, the
                 value is based on the text height, and should be in the range
                 of [1, 5], where 1 fits exact the MText entity.

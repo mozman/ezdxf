@@ -4,9 +4,9 @@ Text
 .. module:: ezdxf.entities
     :noindex:
 
-The single line TEXT entity (`DXF Reference`_). The :attr:`~Text.dxf.style`
-attribute stores the associated :class:`Textstyle` entity as string,
-which defines the basic font properties. The text size is stored as cap height
+The TEXT entity (`DXF Reference`_) represents a single line of text.
+The :attr:`~Text.dxf.style` attribute stores the associated :class:`Textstyle` entity as
+string, which defines the basic font properties. The text size is stored as cap-height
 in the :attr:`~Text.dxf.height` attribute in drawing units. Text alignments
 are defined as enums of type :class:`ezdxf.enums.TextEntityAlignment`.
 

@@ -4,10 +4,7 @@ Mesh
 .. module:: ezdxf.entities
     :noindex:
 
-The :class:`~ezdxf.entities.Mesh` entity is a 3D surface mesh build up
-from vertices and faces.
-
-The MESH entity (`DXF Reference`_) is a 3D object in :ref:`WCS` build up
+The MESH entity (`DXF Reference`_) is a 3D surface in :ref:`WCS` build up
 from vertices and faces similar to the :class:`Polyface` entity.
 
 All vertices in :ref:`WCS` as (x, y, z) tuples
@@ -34,11 +31,11 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.blend_crease
 
-        ``0`` = off, ``1`` = on
+        0 = off, 1 = on
 
     .. attribute:: dxf.subdivision_levels
 
-        ``0`` for no smoothing else integer greater than ``0``.
+        0 for no smoothing else integer greater than 0.
 
     .. autoattribute:: vertices
 

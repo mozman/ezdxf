@@ -272,7 +272,7 @@ class Dictionary(DXFObject):
         return self._data.get(key, default)  # type: ignore
 
     def add(self, key: str, entity: DXFObject) -> None:
-        """Add entry ``(key, value)``.
+        """Add entry (key, value).
 
         Raises:
             DXFValueError: invalid entity handle

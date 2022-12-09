@@ -4,9 +4,10 @@ Shape
 .. module:: ezdxf.entities
     :noindex:
 
-SHAPES  (`DXF Reference`_) are objects that are used like block references, each SHAPE reference can be scaled and
-rotated individually.
-The SHAPE definitions are stored in external shape files (\*.SHX), and `ezdxf` can not create this shape files.
+The SHAPE entity (`DXF Reference`_) is used like a block references, each SHAPE
+reference can be scaled and rotated individually.
+The SHAPE definitions are stored in external shape files (\*.SHX), and
+`ezdxf` can not load or create these shape files.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`

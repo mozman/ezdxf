@@ -4,7 +4,7 @@ Region
 .. module:: ezdxf.entities
     :noindex:
 
-REGION (`DXF Reference`_) created by an ACIS geometry kernel provided by
+REGION entity (`DXF Reference`_) created by an ACIS geometry kernel provided by
 the `Spatial Corp.`_
 
 .. seealso::

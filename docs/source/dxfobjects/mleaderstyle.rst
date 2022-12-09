@@ -4,7 +4,7 @@ MLeaderStyle
 .. module:: ezdxf.entities
     :noindex:
 
-The MLEADERSTYLE object (`DXF Reference`_) store all attributes required to
+The MLEADERSTYLE entity (`DXF Reference`_) stores all attributes required to
 create new :class:`MultiLeader` entities. The meaning of these attributes are
 not really documented in the `DXF Reference`_.
 The default style "Standard" always exist.

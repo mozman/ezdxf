@@ -4,7 +4,7 @@ Body
 .. module:: ezdxf.entities
     :noindex:
 
-BODY (`DXF Reference`_) created by an ACIS geometry kernel provided by
+BODY entity (`DXF Reference`_) created by an ACIS geometry kernel provided by
 the `Spatial Corp.`_
 
 .. seealso::

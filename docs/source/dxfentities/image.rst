@@ -4,7 +4,7 @@ Image
 .. module:: ezdxf.entities
     :noindex:
 
-The IMAGE (`DXF Reference`_) entity represents a raster image, the image file itself is
+The IMAGE entity (`DXF Reference`_) represents a raster image, the image file itself is
 not embedded into the DXF file, it is always a separated file.
 The IMAGE entity is like a block reference, it can be used to add the image multiple times
 at different locations with different scale and rotation angles.  Every IMAGE entity

@@ -4,7 +4,8 @@ Ray
 .. module:: ezdxf.entities
     :noindex:
 
-RAY entity (`DXF Reference`_) starts at :attr:`Ray.dxf.point` and continues to infinity (construction line).
+The RAY entity (`DXF Reference`_) starts at :attr:`Ray.dxf.point` and continues to
+infinity (construction line).
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.XLine`

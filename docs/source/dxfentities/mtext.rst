@@ -4,8 +4,9 @@ MText
 .. module:: ezdxf.entities
     :noindex:
 
-The MTEXT entity (`DXF Reference`_) fits a multiline text in a specified width but can extend vertically to an indefinite
-length. You can format individual words or characters within the :class:`MText`.
+The MTEXT entity (`DXF Reference`_) fits a multiline text in a specified width but can
+extend vertically to an indefinite length. You can format individual words or characters
+within the :class:`MText`.
 
 .. seealso::
 
@@ -68,16 +69,17 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.style
 
-        Text style (string); default = ``'STANDARD'``
+        Text style (string); default is "STANDARD"
 
     .. attribute:: dxf.text_direction
 
-        X-axis direction vector in :ref:`WCS` (3D Point); default value is ``(1, 0, 0)``; if :attr:`dxf.rotation` and
-        :attr:`dxf.text_direction` are present,  :attr:`dxf.text_direction` wins.
+        X-axis direction vector in :ref:`WCS` (3D Point); default value is (1, 0, 0);
+        if :attr:`dxf.rotation` and :attr:`dxf.text_direction` are present,
+        :attr:`dxf.text_direction` wins.
 
     .. attribute:: dxf.rotation
 
-        Text rotation in degrees (float); default = ``0``
+        Text rotation in degrees (float); default is 0
 
     .. attribute:: dxf.line_spacing_style
 
@@ -85,7 +87,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.line_spacing_factor
 
-        Percentage of default (3-on-5) line spacing to be applied. Valid values range from ``0.25`` to ``4.00`` (float).
+        Percentage of default (3-on-5) line spacing to be applied. Valid values range
+        from 0.25 to 4.00 (float).
 
         Constants defined in :mod:`ezdxf.lldxf.const`:
 
@@ -113,40 +116,44 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         Determines how much border there is around the text.  (DXF R2007)
 
-        Requires: `bg_fill`, `bg_fill_color` else AutoCAD complains
+        Requires that the attributes `bg_fill`, `bg_fill_color` are present otherwise
+        AutoCAD complains.
 
-        Better use :meth:`set_bg_color`
+        It's recommended to use :meth:`set_bg_color`
 
     .. attribute:: dxf.bg_fill_color
 
         Background fill color as :ref:`ACI` (DXF R2007)
 
-        Better use :meth:`set_bg_color`
+        It's recommended to use :meth:`set_bg_color`
 
     .. attribute:: dxf.bg_fill_true_color
 
-        Background fill color as true color value (DXF R2007), also :attr:`dxf.bg_fill_color` must be present,
-        else AutoCAD complains.
+        Background fill color as true color value (DXF R2007), also the
+        :attr:`dxf.bg_fill_color` attribute must be present otherwise AutoCAD complains.
 
-        Better use :meth:`set_bg_color`
+        It's recommended to use :meth:`set_bg_color`
 
     .. attribute:: dxf.bg_fill_color_name
 
-        Background fill color as name string (?) (DXF R2007), also :attr:`dxf.bg_fill_color` must be present,
-        else AutoCAD complains.
+        Background fill color as name string (?) (DXF R2007), also the
+        :attr:`dxf.bg_fill_color` attribute must be present otherwise AutoCAD complains.
 
-        Better use :meth:`set_bg_color`
+        It's recommended to use :meth:`set_bg_color`
 
     .. attribute:: dxf.transparency
 
-        Transparency of background fill color (DXF R2007), not supported by AutoCAD or BricsCAD.
+        Transparency of background fill color (DXF R2007), not supported by AutoCAD nor
+        BricsCAD.
 
     .. attribute:: text
 
         MTEXT content as string (read/write).
 
-        Line endings ``\n`` will be replaced by the MTEXT line endings ``\P`` at DXF export, but **not**
-        vice versa ``\P`` by ``\n`` at DXF file loading.
+        The line ending character ``\n`` will be replaced by the MTEXT line ending
+        ``\P`` at DXF export, but **not** vice versa the ``\P`` character by ``\n`` at
+        DXF file loading, therefore loaded MTEXT entities always use the ``\P``
+        character for line endings.
 
     .. automethod:: set_location
 

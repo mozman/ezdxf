@@ -4,7 +4,7 @@ Wipeout
 .. module:: ezdxf.entities
     :noindex:
 
-THE WIPEOUT (`DXF Reference`_) entity is a polygonal area that masks underlying
+The WIPEOUT entity (`DXF Reference`_) is a polygonal area that masks underlying
 objects with the current background color. The WIPEOUT entity is based on the
 IMAGE entity, but usage does not require any knowledge about the IMAGE entity.
 

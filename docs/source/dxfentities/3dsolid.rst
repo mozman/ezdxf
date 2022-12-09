@@ -4,7 +4,7 @@ Solid3d
 .. module:: ezdxf.entities
     :noindex:
 
-3DSOLID (`DXF Reference`_) created by an ACIS geometry kernel provided by
+3DSOLID entity (`DXF Reference`_) created by an ACIS geometry kernel provided by
 the `Spatial Corp.`_
 
 

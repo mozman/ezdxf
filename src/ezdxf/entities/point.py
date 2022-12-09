@@ -119,7 +119,8 @@ class Point(DXFGraphic):
     def virtual_entities(
         self, pdsize: float = 1, pdmode: int = 0
     ) -> Iterator[DXFGraphic]:
-        """Yields point graphic as DXF primitives LINE and CIRCLE entities.
+        """Yields the graphical representation of POINT as virtual DXF
+        primitives (LINE and CIRCLE).
         The dimensionless point is rendered as zero-length line!
 
         Check for this condition::

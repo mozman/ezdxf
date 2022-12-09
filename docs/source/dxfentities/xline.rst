@@ -4,7 +4,8 @@ XLine
 .. module:: ezdxf.entities
     :noindex:
 
-XLINE entity (`DXF Reference`_) is a construction line that extents to infinity in both directions.
+The XLINE entity (`DXF Reference`_) is a construction line that extents to infinity in
+both directions.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`

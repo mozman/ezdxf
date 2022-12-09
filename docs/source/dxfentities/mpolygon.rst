@@ -4,29 +4,24 @@ MPolygon
 .. module:: ezdxf.entities
     :noindex:
 
-The MPOLYGON entity is not a core DXF entity and is not supported by every CAD
-application or DXF library.
-
+The MPOLYGON entity is not a core DXF entity and is not supported by all CAD
+applications and DXF libraries.
 The :class:`MPolygon` class is very similar to the :class:`Hatch` class with
-small differences in supported DXF attributes and features.
+small differences in the supported features and DXF attributes.
 
 The boundary paths of the MPOLYGON are visible and use the graphical DXF
 attributes of the main entity like :attr:`dxf.color`, :attr:`dxf.linetype` and so on.
 The solid filling is only visible if the attribute :attr:`dxf.solid_fill` is 1,
 the color of the solid fill is defined by :attr:`dxf.fill_color` as :ref:`ACI`.
-
-MPOLYGON supports :class:`ezdxf.entities.Gradient` settings like HATCH
-for DXF R2004+. This feature is used by method :meth:`MPolygon.set_solid_fill`
+The MPOLYGON supports :class:`ezdxf.entities.Gradient` settings like HATCH
+for DXF R2004 and newer. This feature is used by method :meth:`MPolygon.set_solid_fill`
 to set a solid RGB fill color as linear gradient, this disables pattern fill
 automatically.
-
 The MPOLYGON does not support associated source path entities, because the
 MPOLYGON also represents the boundary paths as visible graphical objects.
-
 Hatch patterns are supported, but the hatch style tag is not supported, the
 default hatch style is :attr:`ezdxf.const.HATCH_STYLE_NESTED` and the style
 flags of the boundary paths are ignored.
-
 Background color for pattern fillings is supported, set background color
 by property :attr:`MPolygon.bgcolor` as RGB tuple.
 

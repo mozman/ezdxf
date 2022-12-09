@@ -4,14 +4,15 @@ Underlay
 .. module:: ezdxf.entities
     :noindex:
 
-UNDERLAY entity (`DXF Reference`_) links an underlay file to the DXF file, the file itself is not embedded into the
-DXF file, it is always a separated file. The (PDF)UNDERLAY entity is like a block reference, you can use it
-multiple times to add the underlay on different locations with different scales and rotations. But therefore
+The UNDERLAY entity (`DXF Reference`_) links an underlay file to the DXF file, the file
+itself is not embedded into the DXF file, it is always a separated file.
+The (PDF)UNDERLAY entity is like a block reference, you can use it multiple times to add
+the underlay on different locations with different scales and rotations. But therefore
 you need a also a (PDF)DEFINITION entity, see :class:`UnderlayDefinition`.
 
-The DXF standard supports three different file formats: PDF, DWF (DWFx) and DGN. An Underlay can be clipped by a
-rectangle or a polygon path. The clipping coordinates are 2D :ref:`OCS` coordinates in drawing units but
-without scaling.
+The DXF standard supports three different file formats: PDF, DWF (DWFx) and DGN.
+An Underlay can be clipped by a rectangle or a polygon path. The clipping coordinates
+are 2D :ref:`OCS` coordinates in drawing units but without scaling.
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3EC8FBCC-A85A-4B0B-93CD-C6C785959077
 
@@ -49,7 +50,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.extrusion
 
-        extrusion vector, default = ``(0, 0, 1)``
+        extrusion vector, default is (0, 0, 1)
 
     .. attribute:: dxf.underlay_def_handle
 
@@ -68,11 +69,11 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.contrast
 
-        Contrast value (20 - 100; default = 100)
+        Contrast value (20 - 100; default is 100)
 
     .. attribute:: dxf.fade
 
-        Fade value (0 - 80; default = 0)
+        Fade value (0 - 80; default is 0)
 
 
     .. attribute:: clipping
@@ -99,8 +100,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         Boundary path as list of vertices (read/write).
 
-        Two vertices describe a rectangle (lower left and upper right corner), more than two vertices
-        is a polygon as clipping path.
+        Two vertices describe a rectangle (lower left and upper right corner), more than
+        two vertices is a polygon as clipping path.
 
     .. method:: get_underlay_def
 

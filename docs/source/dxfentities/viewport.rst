@@ -4,7 +4,8 @@ Viewport
 .. module:: ezdxf.entities
     :noindex:
 
-The VIEWPORT (`DXF Reference`_) entity is a window from a paperspace layout to the modelspace.
+The VIEWPORT entity (`DXF Reference`_) is a window from a paperspace layout to the
+modelspace.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`

@@ -4,8 +4,7 @@ Point
 .. module:: ezdxf.entities
     :noindex:
 
-POINT (`DXF Reference`_) at location :attr:`dxf.location`. The POINT entity has
-:ref:`WCS` coordinates.
+The POINT entity (`DXF Reference`_) represents a dimensionless point in :ref:`WCS`.
 
 The POINT styling is a global setting, stored as header variable `$PDMODE`_,
 this also means **all** POINT entities in a DXF document have the same styling:

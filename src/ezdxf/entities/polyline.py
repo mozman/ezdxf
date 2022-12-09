@@ -216,10 +216,10 @@ class Polyline(LinkedEntities):
     def get_mode(self) -> str:
         """Returns POLYLINE type as string:
 
-        - 'AcDb2dPolyline'
-        - 'AcDb3dPolyline'
-        - 'AcDbPolygonMesh'
-        - 'AcDbPolyFaceMesh'
+        - "AcDb2dPolyline"
+        - "AcDb3dPolyline"
+        - "AcDbPolygonMesh"
+        - "AcDbPolyFaceMesh"
 
         """
         if self.is_3d_polyline:
@@ -275,8 +275,7 @@ class Polyline(LinkedEntities):
         """Returns ``True`` if 2D POLYLINE has an arc segment."""
         if self.is_2d_polyline:
             return any(
-                v.dxf.hasattr("bulge") and bool(v.dxf.bulge)
-                for v in self.vertices
+                v.dxf.hasattr("bulge") and bool(v.dxf.bulge) for v in self.vertices
             )
         else:
             return False
@@ -326,13 +325,12 @@ class Polyline(LinkedEntities):
         return len(self.vertices)
 
     def __getitem__(self, pos) -> DXFVertex:
-        """Get :class:`Vertex` entity at position `pos`, supports ``list``
-        slicing.
+        """Get :class:`Vertex` entity at position `pos`, supports list-like slicing.
         """
         return self.vertices[pos]
 
     def points(self) -> Iterator[Vec3]:
-        """Returns iterable of all polyline vertices as ``(x, y, z)`` tuples,
+        """Returns iterable of all polyline vertices as (x, y, z) tuples,
         not as :class:`Vertex` objects.
         """
         return (vertex.dxf.location for vertex in self.vertices)
@@ -344,7 +342,7 @@ class Polyline(LinkedEntities):
         """Append multiple :class:`Vertex` entities at location `points`.
 
         Args:
-            points: iterable of ``(x, y[, z])`` tuples
+            points: iterable of (x, y[, z]) tuples
             dxfattribs: dict of DXF attributes for the VERTEX objects
 
         """
@@ -363,14 +361,12 @@ class Polyline(LinkedEntities):
         Args:
             points: iterable of (x, y, [start_width, [end_width, [bulge]]])
                     tuple
-            format: format string, default is ``'xy'``, see: :ref:`format codes`
+            format: format string, default is "xy", see: :ref:`format codes`
             dxfattribs: dict of DXF attributes for the VERTEX objects
 
         """
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs["flags"] = (
-            dxfattribs.get("flags", 0) | self.get_vertex_flags()
-        )
+        dxfattribs["flags"] = dxfattribs.get("flags", 0) | self.get_vertex_flags()
 
         # same DXF attributes for VERTEX entities as for POLYLINE
         dxfattribs["owner"] = self.dxf.owner
@@ -381,16 +377,14 @@ class Polyline(LinkedEntities):
         for point in points:
             attribs = vertex_attribs(point, format)
             attribs.update(dxfattribs)
-            vertex = cast(
-                DXFVertex, self._new_compound_entity("VERTEX", attribs)
-            )
+            vertex = cast(DXFVertex, self._new_compound_entity("VERTEX", attribs))
             self._append_vertex(vertex)
 
     def append_vertex(self, point: UVec, dxfattribs=None) -> None:
         """Append a single :class:`Vertex` entity at location `point`.
 
         Args:
-            point: as ``(x, y[, z])`` tuple
+            point: as (x, y[, z]) tuple
             dxfattribs: dict of DXF attributes for :class:`Vertex` class
 
         """
@@ -406,27 +400,23 @@ class Polyline(LinkedEntities):
 
         Args:
             pos: insertion position of list :attr:`Polyline.vertices`
-            points: list of ``(x, y[, z])`` tuples
+            points: list of (x, y[, z]) tuples
             dxfattribs: dict of DXF attributes for :class:`Vertex` class
 
         """
         dxfattribs = dict(dxfattribs or {})
-        self.vertices[pos:pos] = list(
-            self._build_dxf_vertices(points, dxfattribs)
-        )
+        self.vertices[pos:pos] = list(self._build_dxf_vertices(points, dxfattribs))
 
     def _build_dxf_vertices(
         self, points: Iterable[UVec], dxfattribs: dict
     ) -> Iterator[DXFVertex]:
-        """Converts point (x, y, z)-tuples into DXFVertex objects.
+        """Converts point (x, y, z) tuples into DXFVertex objects.
 
         Args:
             points: list of (x, y, z)-tuples
             dxfattribs: dict of DXF attributes
         """
-        dxfattribs["flags"] = (
-            dxfattribs.get("flags", 0) | self.get_vertex_flags()
-        )
+        dxfattribs["flags"] = dxfattribs.get("flags", 0) | self.get_vertex_flags()
 
         # same DXF attributes for VERTEX entities as for POLYLINE
         dxfattribs["owner"] = self.dxf.owner
@@ -435,9 +425,7 @@ class Polyline(LinkedEntities):
             dxfattribs["linetype"] = self.dxf.linetype
         for point in points:
             dxfattribs["location"] = Vec3(point)
-            yield cast(
-                DXFVertex, self._new_compound_entity("VERTEX", dxfattribs)
-            )
+            yield cast(DXFVertex, self._new_compound_entity("VERTEX", dxfattribs))
 
     def cast(self) -> Union[Polyline, Polymesh, Polyface]:
         mode = self.get_mode()
@@ -486,8 +474,7 @@ class Polyline(LinkedEntities):
             else:
                 z_axis = None
             vertices = [
-                ocs.transform_vertex(vertex)
-                for vertex in _ocs_locations(z_axis)
+                ocs.transform_vertex(vertex) for vertex in _ocs_locations(z_axis)
             ]
 
             # All vertices of a 2D polyline must have the same z-axis, which is
@@ -504,13 +491,9 @@ class Polyline(LinkedEntities):
                     vdxf.end_width = ocs.transform_width(vdxf.end_width)
 
             if dxf.hasattr("default_start_width"):
-                dxf.default_start_width = ocs.transform_width(
-                    dxf.default_start_width
-                )
+                dxf.default_start_width = ocs.transform_width(dxf.default_start_width)
             if dxf.hasattr("default_end_width"):
-                dxf.default_end_width = ocs.transform_width(
-                    dxf.default_end_width
-                )
+                dxf.default_end_width = ocs.transform_width(dxf.default_end_width)
             if dxf.hasattr("thickness"):
                 dxf.thickness = ocs.transform_thickness(dxf.thickness)
 
@@ -526,7 +509,7 @@ class Polyline(LinkedEntities):
         into the target layout, if the target layout is ``None``, the target
         layout is the layout of the POLYLINE entity.
 
-        Returns an :class:`~ezdxf.query.EntityQuery` container of all
+        Returns an :class:`~ezdxf.query.EntityQuery` container referencing all
         DXF primitives.
 
         Args:
@@ -610,11 +593,11 @@ class Polyface(Polyline):
         return polyface
 
     def append_face(self, face: FaceType, dxfattribs=None) -> None:
-        """Append a single face. A `face` is a list of ``(x, y, z)`` tuples.
+        """Append a single face. A `face` is a sequence of (x, y, z) tuples.
 
         Args:
-            face: list[``(x, y, z)`` tuples]
-            dxfattribs: dict of DXF attributes for VERTEX objects
+            face: sequence of (x, y, z) tuples
+            dxfattribs: dict of DXF attributes for the VERTEX objects
 
         """
         self.append_faces([face], dxfattribs)
@@ -622,16 +605,14 @@ class Polyface(Polyline):
     def _points_to_dxf_vertices(
         self, points: Iterable[UVec], dxfattribs
     ) -> list[DXFVertex]:
-        """Convert (x, y, z)-tuples into DXFVertex objects.
+        """Convert (x, y, z) tuples into DXFVertex objects.
 
         Args:
-            points: list[``(x, y, z)`` tuples]
-            dxfattribs: dict of DXF attributes for :class:`Vertex` entity
+            points: sequence of (x, y, z) tuples
+            dxfattribs: dict of DXF attributes for the VERTEX entity
 
         """
-        dxfattribs["flags"] = (
-            dxfattribs.get("flags", 0) | self.get_vertex_flags()
-        )
+        dxfattribs["flags"] = dxfattribs.get("flags", 0) | self.get_vertex_flags()
 
         # All vertices have to be on the same layer as the POLYLINE entity:
         dxfattribs["layer"] = self.get_dxf_attrib("layer", "0")
@@ -639,19 +620,17 @@ class Polyface(Polyline):
         for point in points:
             dxfattribs["location"] = point
             vertices.append(
-                cast(
-                    "DXFVertex", self._new_compound_entity("VERTEX", dxfattribs)
-                )
+                cast("DXFVertex", self._new_compound_entity("VERTEX", dxfattribs))
             )
         return vertices
 
     def append_faces(self, faces: Iterable[FaceType], dxfattribs=None) -> None:
         """Append multiple `faces`. `faces` is a list of single faces and a
-        single face is a list of ``(x, y, z)`` tuples.
+        single face is a sequence of (x, y, z) tuples.
 
         Args:
-            faces: list of list[``(x, y, z)`` tuples]
-            dxfattribs: dict of DXF attributes for the VERTEX objects
+            faces: iterable of sequences of (x, y, z) tuples
+            dxfattribs: dict of DXF attributes for the VERTEX entity
 
         """
 
@@ -659,9 +638,7 @@ class Polyface(Polyline):
             dxfattribs["flags"] = const.VTX_3D_POLYFACE_MESH_VERTEX
             # location of face record vertex is always (0, 0, 0)
             dxfattribs["location"] = Vec3()
-            return cast(
-                DXFVertex, self._new_compound_entity("VERTEX", dxfattribs)
-            )
+            return cast(DXFVertex, self._new_compound_entity("VERTEX", dxfattribs))
 
         dxfattribs = dict(dxfattribs or {})
 
@@ -675,9 +652,7 @@ class Polyface(Polyline):
             face_record = FaceProxy(new_face_record(), existing_vertices)
 
             # Set VERTEX indices:
-            face_record.indices = tuple(
-                range(index, index + len(face_mesh_vertices))
-            )
+            face_record.indices = tuple(range(index, index + len(face_mesh_vertices)))
             new_faces.append(face_record)
         self._rebuild(chain(existing_faces, new_faces))
 
@@ -699,8 +674,8 @@ class Polyface(Polyline):
         self.dxf.n_count = nfaces
 
     def optimize(self, precision: int = 6) -> None:
-        """Rebuilds :class:`Polyface` including vertex optimization by merging
-        vertices with nearly same vertex locations.
+        """Rebuilds the :class:`Polyface` by merging vertices with nearly same vertex
+        locations.
 
         Args:
             precision: floating point precision for determining identical
@@ -714,7 +689,7 @@ class Polyface(Polyline):
         """Iterable of all faces, a face is a tuple of vertices.
 
         Returns:
-             list: [vertex, vertex, vertex, [vertex,] face_record]
+             list of [vertex, vertex, vertex, [vertex,] face_record]
 
         """
         _, faces = self.indexed_faces()
@@ -732,13 +707,11 @@ class Polyface(Polyline):
         vertices: list[DXFVertex] = []
         face_records: list[DXFVertex] = []
         for vertex in self.vertices:
-            (
-                vertices if vertex.is_poly_face_mesh_vertex else face_records
-            ).append(vertex)
+            (vertices if vertex.is_poly_face_mesh_vertex else face_records).append(
+                vertex
+            )
 
-        faces = (
-            FaceProxy(face_record, vertices) for face_record in face_records
-        )
+        faces = (FaceProxy(face_record, vertices) for face_record in face_records)
         return vertices, faces
 
 
@@ -792,15 +765,10 @@ class FaceProxy:
         return (vertex.dxf.location for vertex in self)
 
     def _raw_indices(self) -> Iterable[int]:
-        return (
-            self.face_record.get_dxf_attrib(name, 0)
-            for name in const.VERTEXNAMES
-        )
+        return (self.face_record.get_dxf_attrib(name, 0) for name in const.VERTEXNAMES)
 
     def _indices(self) -> Sequence[int]:
-        return tuple(
-            abs(index) - 1 for index in self._raw_indices() if index != 0
-        )
+        return tuple(abs(index) - 1 for index in self._raw_indices() if index != 0)
 
     def is_edge_visible(self, pos: int) -> bool:
         """Returns ``True`` if edge starting at vertex `pos` is visible.
@@ -880,14 +848,12 @@ class Polymesh(Polyline):
         polymesh.seqend = polyline.seqend
         return polymesh
 
-    def set_mesh_vertex(
-        self, pos: tuple[int, int], point: UVec, dxfattribs=None
-    ):
+    def set_mesh_vertex(self, pos: tuple[int, int], point: UVec, dxfattribs=None):
         """Set location and DXF attributes of a single mesh vertex.
 
         Args:
-            pos: 0-based (row, col)-tuple, position of mesh vertex
-            point: (x, y, z)-tuple, new 3D coordinates of the mesh vertex
+            pos: 0-based (row, col) tuple, position of mesh vertex
+            point: (x, y, z) tuple, new 3D coordinates of the mesh vertex
             dxfattribs: dict of DXF attributes
 
         """
@@ -900,7 +866,7 @@ class Polymesh(Polyline):
         """Get location of a single mesh vertex.
 
         Args:
-            pos: 0-based ``(row, col)`` tuple, position of mesh vertex
+            pos: 0-based (row, col) tuple, position of mesh vertex
 
         """
         m_count = self.dxf.m_count
@@ -1045,17 +1011,11 @@ class DXFVertex(DXFGraphic):
             else:
                 tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbVertex")
                 if self.is_3d_polyline_vertex:
-                    tagwriter.write_tag2(
-                        SUBCLASS_MARKER, "AcDb3dPolylineVertex"
-                    )
+                    tagwriter.write_tag2(SUBCLASS_MARKER, "AcDb3dPolylineVertex")
                 elif self.is_poly_face_mesh_vertex:
-                    tagwriter.write_tag2(
-                        SUBCLASS_MARKER, "AcDbPolyFaceMeshVertex"
-                    )
+                    tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbPolyFaceMeshVertex")
                 elif self.is_polygon_mesh_vertex:
-                    tagwriter.write_tag2(
-                        SUBCLASS_MARKER, "AcDbPolygonMeshVertex"
-                    )
+                    tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbPolygonMeshVertex")
                 else:
                     tagwriter.write_tag2(SUBCLASS_MARKER, "AcDb2dVertex")
 

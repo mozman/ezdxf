@@ -4,8 +4,8 @@ Line
 .. module:: ezdxf.entities
     :noindex:
 
-LINE (`DXF Reference`_) entity is a 3D line from :attr:`Line.dxf.start` to
-:attr:`Line.dxf.end`. The LINE entity has :ref:`WCS` coordinates.
+The LINE entity (`DXF Reference`_) is a 3D line defined by the DXF attributes
+:attr:`dxf.start` and :attr:`dxf.end`. The LINE entity has :ref:`WCS` coordinates.
 
 .. seealso::
 

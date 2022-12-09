@@ -4,17 +4,18 @@ Spline
 .. module:: ezdxf.entities
     :noindex:
 
-SPLINE curve (`DXF Reference`_), all coordinates have to be 3D coordinates even
-the spline is only a 2D planar curve.
+The SPLINE entity (`DXF Reference`_) is a 3D curve, all coordinates have to be 3D
+coordinates even if the spline is just a 2D planar curve.
 
 The spline curve is defined by control points, knot values and weights. The
 control points establish the spline, the various types of knot vector determines
 the shape of the curve and the weights of rational splines define how
 strong a control point influences the shape.
 
-To create a :class:`Spline` curve you just need a bunch of fit points - knot
-values and weights are optional (tested with AutoCAD 2010). If you add
-additional data, be sure that you know what you do.
+A SPLINE can be created just from fit points - knot values and weights are
+optional (tested with AutoCAD 2010). If you add additional data,
+be sure you know what you do, because invalid data may invalidate
+the whole DXF file.
 
 The function :func:`ezdxf.math.fit_points_to_cad_cv` calculates control
 vertices from given fit points. This control vertices define a cubic
@@ -86,23 +87,23 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. attribute:: dxf.knot_tolerance
 
-        Knot tolerance (float); default = ``1e-10``
+        Knot tolerance (float); default is 1e-10
 
     .. attribute:: dxf.fit_tolerance
 
-        Fit tolerance (float); default = ``1e-10``
+        Fit tolerance (float); default is 1e-10
 
     .. attribute:: dxf.control_point_tolerance
 
-        Control point tolerance (float); default = ``1e-10``
+        Control point tolerance (float); default is 1e-10
 
     .. attribute:: dxf.start_tangent
 
-        Start tangent vector as (3D vector in :ref:`WCS`)
+        Start tangent vector as 3D vector in :ref:`WCS`
 
     .. attribute:: dxf.end_tangent
 
-        End tangent vector as (3D vector in :ref:`WCS`)
+        End tangent vector as 3D vector in :ref:`WCS`
 
     .. autoattribute:: closed
 

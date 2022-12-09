@@ -4,7 +4,7 @@ Sun
 .. module:: ezdxf.entities
     :noindex:
 
-`SUN`_ entity defines properties of the sun.
+The `SUN`_ entity defines properties of the sun.
 
 ======================== ===========================================================
 Subclass of              :class:`ezdxf.entities.DXFObject`
@@ -20,11 +20,11 @@ Factory function         creating a new SUN entity is not supported
 
     .. attribute:: dxf.version
 
-        Current version is ``1``.
+        Current version is 1.
 
     .. attribute:: dxf.status
 
-        on = ``1`` or off = ``0``
+        on = 1 or off = 0
 
     .. attribute:: dxf.color
 
@@ -36,11 +36,12 @@ Factory function         creating a new SUN entity is not supported
 
     .. attribute:: dxf.intensity
 
-        Intensity value in the range of ``0`` to ``1``. (float)
+        Intensity value in the range of [0, 1]. (float)
 
     .. attribute:: dxf.julian_day
 
-        use :func:`~ezdxf.tools.calendardate` to convert :attr:`dxf.julian_day` to :class:`datetime.datetime` object.
+        use :func:`~ezdxf.tools.calendardate` to convert :attr:`dxf.julian_day` to
+        :class:`datetime.datetime` object.
 
     .. attribute:: dxf.time
 

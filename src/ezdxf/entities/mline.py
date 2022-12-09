@@ -636,7 +636,8 @@ class MLine(DXFGraphic):
             yield e
 
     def virtual_entities(self) -> Iterator[DXFGraphic]:
-        """Yields 'virtual' parts of MLINE as LINE, ARC and HATCH entities.
+        """Yields virtual DXF primitives of the MLINE entity  as LINE, ARC and HATCH
+        entities.
 
         These entities are located at the original positions, but are not stored
         in the entity database, have no handle and are not assigned to any
@@ -648,14 +649,15 @@ class MLine(DXFGraphic):
     def explode(
         self, target_layout: Optional[BaseLayout] = None
     ) -> EntityQuery:
-        """Explode parts of MLINE as LINE, ARC and HATCH entities into target
+        """Explode the MLINE entity as LINE, ARC and HATCH entities into target
         layout, if target layout is ``None``, the target layout is the layout
-        of the MLINE.
+        of the MLINE. This method destroys the source entity.
 
-        Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF parts.
+        Returns an :class:`~ezdxf.query.EntityQuery` container referencing all DXF
+        primitives.
 
         Args:
-            target_layout: target layout for DXF parts, ``None`` for same layout
+            target_layout: target layout for DXF primitives, ``None`` for same layout
                 as source entity.
         """
         from ezdxf.explode import explode_entity
