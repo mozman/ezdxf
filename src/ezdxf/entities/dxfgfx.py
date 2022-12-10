@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.layouts import BaseLayout
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.xref import ResourceTransfer
 
 __all__ = [
     "DXFGraphic",
@@ -642,6 +643,24 @@ class DXFGraphic(DXFEntity):
         entity.dxf.owner = self.dxf.owner
         entity.dxf.paperspace = self.dxf.paperspace
         return entity  # type: ignore
+
+    def register_resources(self, transfer: ResourceTransfer) -> None:
+        """Register required resources to the ResourceTransfer class."""
+        transfer.register_layer(self)
+        transfer.register_linetype(self)
+        transfer.register_handle(self, "material_handle")
+        transfer.register_handle(self, "visualstyle_handle")
+        transfer.register_handle(self, "plotstyle_handle")
+
+    def transfer_resources(self, copy: DXFEntity, transfer: ResourceTransfer) -> None:
+        """Transfer registered resources from self to entity via the ResourceTransfer
+        class.
+        """
+        transfer.transfer_layer(self, copy)
+        transfer.transfer_linetype(self, copy)
+        transfer.transfer_handle(self, copy, "material_handle")
+        transfer.transfer_handle(self, copy, "visualstyle_handle")
+        transfer.transfer_handle(self, copy, "plotstyle_handle")
 
 
 @factory.register_entity

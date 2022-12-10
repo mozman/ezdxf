@@ -46,7 +46,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFGraphic, Insert
     from ezdxf.lldxf.attributes import DXFAttr
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
-    from ezdxf.resmgr import ResourceTransfer
+    from ezdxf.xref import ResourceTransfer
 
 __all__ = ["DXFEntity", "DXFTagStorage", "base_class", "SubclassProcessor"]
 logger = logging.getLogger("ezdxf")
@@ -938,11 +938,13 @@ class DXFEntity:
             self.reactors.discard(handle)
 
     def register_resources(self, transfer: ResourceTransfer) -> None:
-        """Register required resources into Transfer class."""
+        """Register required resources to the ResourceTransfer class."""
         pass
 
-    def copy_resources(self, copy: DXFEntity, transfer: ResourceTransfer) -> None:
-        """Copy registered resources from self to entity copy via Transfer class."""
+    def transfer_resources(self, copy: DXFEntity, transfer: ResourceTransfer) -> None:
+        """Transfer registered resources from self to entity via the ResourceTransfer
+        class.
+        """
         pass
 
 

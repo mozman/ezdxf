@@ -42,6 +42,36 @@ class ResourceTransfer(Protocol):
     def get_block_copy(self, block_id: int) -> Sequence[DXFEntity]:
         ...
 
+    def register_handle(self, entity: DXFEntity, name: str) -> None:
+        ...
+
+    def register_layer(self, entity: DXFEntity) -> None:
+        ...
+
+    def register_linetype(self, entity: DXFEntity) -> None:
+        ...
+
+    def register_style(self, entity: DXFEntity) -> None:
+        ...
+
+    def register_dimstyle(self, entity: DXFEntity) -> None:
+        ...
+
+    def transfer_handle(self, source: DXFEntity, copy: DXFEntity, name: str):
+        ...
+
+    def transfer_layer(self, source: DXFEntity, copy: DXFEntity) -> None:
+        ...
+
+    def transfer_linetype(self, source: DXFEntity, copy: DXFEntity) -> None:
+        ...
+
+    def transfer_style(self, source: DXFEntity, copy: DXFEntity) -> None:
+        ...
+
+    def transfer_dimstyle(self, source: DXFEntity, copy: DXFEntity) -> None:
+        ...
+
 
 def import_entities(entities: Sequence[DXFEntity], target: BaseLayout):
     if len(entities) == 0:
@@ -53,7 +83,6 @@ def import_entities(entities: Sequence[DXFEntity], target: BaseLayout):
     transfer = Transfer()
     for e in entities:
         transfer.add_entity(e, block_id=0)
-        e.register_resources(transfer)
 
     cpm = CopyMachine()
     transfer.copied_blocks = cpm.copy_blocks(transfer.source_blocks)
@@ -122,7 +151,7 @@ def import_entities(entities: Sequence[DXFEntity], target: BaseLayout):
     for block_id, block in transfer.copied_blocks.items():
         for entity_id, entity in block.items():
             copy = transfer.get_entity_copy(entity_id, block_id)
-            entity.copy_resources(copy, transfer)
+            entity.transfer_resources(copy, transfer)
 
     # 4. add entities to layout and objects section
     for block_id, block in transfer.copied_blocks.items():
@@ -157,9 +186,12 @@ class Transfer:
     def add_entity(self, entity: DXFEntity, block_id: int = 0):
         block = self.source_blocks.setdefault(block_id, {})
         block[id(entity)] = entity
+        entity.register_resources(self)
 
     def add_block(self, entities: Sequence[DXFEntity], block_id: int) -> None:
         self.source_blocks[block_id] = {id(e): e for e in entities}
+        for entity in entities:
+            entity.register_resources(self)
 
     def get_entity_copy(self, entity_id: int, block_id: int = 0) -> Optional[DXFEntity]:
         block = self.copied_blocks.get(block_id)
@@ -179,6 +211,72 @@ class Transfer:
         if block_record:
             return block_record.dxf.name
         return "*ERROR"  # block record was not copied
+
+    def register_handle(self, entity: DXFEntity, name: str) -> None:
+        handle = entity.dxf.get(name)
+        if handle:
+            source = entity.doc.entitydb.get(handle)
+            if source:
+                self.add_entity(source)
+
+    def register_layer(self, entity: DXFEntity) -> None:
+        layer_name = entity.dxf.layer
+        if layer_name == "0":
+            # Layer name "0" gets never mangled and always exist in the target document.
+            return
+        layer = entity.doc.layers.get(layer_name)
+        # the layer table entry is optional
+        if layer:
+            self.add_entity(layer)
+
+    def register_linetype(self, entity: DXFEntity) -> None:
+        linetype_name = entity.dxf.linetype.lower()
+        # These linetype names get never mangled and always exist in the target document.
+        if linetype_name not in {"continuous", "bylayer", "byblock"}:
+            self.add_entity(entity.doc.linetypes.get(linetype_name))
+
+    def register_style(self, entity: DXFEntity) -> None:
+        pass
+
+    def register_dimstyle(self, entity: DXFEntity) -> None:
+        pass
+
+    def transfer_handle(self, source: DXFEntity, copy: DXFEntity, name: str) -> None:
+        handle = source.dxf.get(name)
+        if handle:
+            source_object = source.doc.entitydb.get(handle)
+            if source_object:
+                copy_object = self.get_entity_copy(id(source_object))
+                if copy_object:
+                    copy.dxf.set(name, copy_object.dxf.handle)
+
+    def transfer_layer(self, source: DXFEntity, copy: DXFEntity) -> None:
+        layer_name = source.dxf.layer
+        if layer_name == "0":   # Layer name "0" gets never mangled
+            return
+
+        layer = source.doc.layers.get(layer_name)
+        # the layer table entry is optional
+        if layer:
+            # the layer name was maybe mangled at import: LayerA -> xref$0$LayerA
+            layer_copy = self.get_entity_copy(id(layer))
+            if layer_copy:
+                copy.dxf.layer = layer_copy.dxf.name
+
+    def transfer_linetype(self, source: DXFEntity, copy: DXFEntity) -> None:
+        linetype_name = source.dxf.linetype.lower()
+        # These linetype names get never mangled and always exist in the target document.
+        if linetype_name not in {"continuous", "bylayer", "byblock"}:
+            linetype = source.doc.linetypes.get(linetype_name)
+            linetype_copy = self.get_entity_copy(id(linetype))
+            if linetype_copy:
+                copy.dxf.linetype = linetype_copy.dxf.linetype
+
+    def transfer_style(self, source: DXFEntity, copy: DXFEntity) -> None:
+        pass
+
+    def transfer_dimstyle(self, source: DXFEntity, copy: DXFEntity) -> None:
+        pass
 
 
 class CopyMachine:
