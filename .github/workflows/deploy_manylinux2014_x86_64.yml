@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build manylinux2014_x86_64 wheels
-        uses: pypa/cibuildwheel@v2.3.1
+        uses: pypa/cibuildwheel@v2.11.3
         env:
           CIBW_BEFORE_BUILD: "pip install wheel cython"
           CIBW_ARCHS_LINUX: "x86_64"
