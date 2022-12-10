@@ -8,206 +8,155 @@ Planning state!!!
 
 """
 from __future__ import annotations
-from typing import Iterator, cast, Callable, Iterable
-from ezdxf.respkg import RTP
-from ezdxf.entities import DXFEntity, factory
+from typing import Iterable, Optional, Sequence
+from typing_extensions import Protocol
+
+from ezdxf.lldxf.const import DXFError, DXFTableEntryError
 from ezdxf.document import Drawing
+from ezdxf.layouts import BaseLayout
 
-# The goal is that this module should not be imported from any module which
-# implements DXF entities, so that this module can import necessary resource
-# entities like Layer, Linetype or MLeaderStyle
-
-__all__ = ["ResourceTransferManager"]
-
-"""
-Extension dictionaries: handled in DXFEntity.copy() and factory.bind()
-
-Reactors? 
-I think reactors in resources can be dropped. 
-Under no circumstances should reactors initiate a copy process of the 
-referenced entities.
-
-Block references? 
-The BLOCK_RECORD is a table entry and somehow a resource. 
-But the BLOCK_RECORD also represents paperspace layouts, block layouts, the
-modelspace and whole documents as XREFs.
-
-Handles in the XDATA section? 
-Handle references in XDATA in order of appearance:
-
-class DXFEntity:
-    def dump_resources(self, package: ResourcePackage):
-        package.push(self.get_entities_in_xdata())
-
-    def get_entities_in_xdata(self):
-        # in order of appearance
-        e1 = 1. 1005 -> 1. get entity by handle
-        e2 = 2. 1003 -> 2. get layer entity by name
-        e3 = 3. 1005 -> 3. get entity by handle
-        return [e1, e2, e3]
-    
-    def put_entities_in_xdata(self, entities):
-        for e in entities:
-            # 1. 1005 <- 1. entity.dxf.handle
-            # 2. 1003 <- 2. layer.dxf.name
-            # 3. 1005 <- 3. entity.dxf.handle
-
-    def load_resources(self, package: ResourcePackage):
-        xdata = package.pop()
-        self.put_entities_in_xdata(xdata)  
-
-Each subclass puts its own list on top, variable data has to be appended at 
-the end and has to be checked by isinstance().
-  
-class Layer(DXFEntity):
-    def dump_resources(self, package: ResourcePackage):
-        super().dump_resources(package)
-        linetype = self.doc.linetypes.get(self.dxf.linetype)
-        package.push([linetype])
-
-    def load_resources(self, package: ResourcePackage):
-        linetype, *_ = package.pop()
-        self.dxf.name = linetype.dxf.name
-        super().load_resources(package)
-
-"""
+from ezdxf.entities import (
+    is_graphic_entity,
+    is_dxf_object,
+    DXFEntity,
+    DXFClass,
+    factory,
+)
 
 
-class _ResourcePackage:
-    def __init__(self, entity: DXFEntity):
-        self.entity = entity
-        self._resources: list[list[DXFEntity]] = list()
-
-    def push(self, resources: list[DXFEntity]):
-        self._resources.append(resources)
-
-    def pop(self) -> list[DXFEntity]:
-        return self._resources.pop()
-
-    def resources(self) -> Iterator[DXFEntity]:
-        for data in self._resources:
-            yield from data
-
-    def foreach(self, func: Callable[[DXFEntity], DXFEntity]):
-        self._resources = [
-            [func(entity) for entity in entities]
-            for entities in self._resources
-        ]
+__all__ = ["ResourceTransfer"]
 
 
-class ResourceTransferManager:
-    def __init__(self) -> None:
-        self.packages: dict[int, _ResourcePackage] = dict()
-        self.copy_machine = CopyMachine()
+class ResourceTransfer(Protocol):
+    def add_entity(self, entity: DXFEntity) -> None:
+        ...
 
-    def register(self, entity: DXFEntity):
-        """Register resources."""
-        if id(entity) not in self.packages:
-            package = _ResourcePackage(entity)
-            assert isinstance(entity, RTP)
-            entity.dump_resources(package)
-            self.packages[id(entity)] = package
+    def get_copy(self, uid: int) -> Optional[DXFEntity]:
+        ...
 
-    def transfer(self, target: Drawing):
-        """Transfer resources if the transaction can be finished completely.
-        """
-        self.copy_all()
-        if self.copy_machine.has_finished():
-            # TODO: order of execution?
-            self.swap_resources()
-            self.update_entities()
-            bind(self.copy_machine.copies, target)
-            assign_resources(self.copy_machine.copies, target)
 
-    def copy_all(self):
-        """Copy resources."""
-        for pkg in self.packages.values():
-            # Important: copy only the resources, the entity copy itself is
-            # another task!
-            self.copy_machine.append(pkg.resources())
-        self.copy_machine.run()
+def import_entities(entities: Sequence[DXFEntity], target: BaseLayout):
+    doc: Drawing = target.doc
+    assert doc is not None, "valid target document required"
+    objects = doc.objects
+    transfer = Transfer()
+    for e in entities:
+        e.register_resources(transfer)
 
-    def swap_resources(self):
-        """Replace resources by copies."""
-        for pkg in self.packages.values():
-            pkg.foreach(self.copy_machine.swap)
+    cpm = CopyMachine()
+    cpm.copy(transfer.source_entities())
+    transfer.set_copied_entities(cpm.copies)
+    if cpm.classes:
+        doc.classes.register(cpm.classes)
 
-    def update_entities(self):
-        """Update entity resources."""
-        for pkg in self.packages.values():
-            rtp = cast("RTP", pkg.entity)
-            rtp.load_resources(pkg)
+    new_entities: list[DXFEntity] = []
+    replace: list[tuple[DXFEntity, DXFEntity]] = []
+
+    for e in cpm.copies.values():
+        if e.dxf.owner is not None:
+            continue  # already processed!
+
+        # 1. assign entity to document
+        factory.bind(e, doc)
+
+        # 2. add copied resources to tables and collections
+        # TODO: resolve resource conflicts
+        dxftype = e.dxftype()
+        if dxftype == "LAYER":
+            try:
+                doc.layers.add_entry(e)  # type: ignore
+            except DXFTableEntryError:
+                # use existing layer
+                replace.append((e, doc.layers.get(e.dxf.name)))
+        elif dxftype == "LINETYPE":
+            doc.linetypes.add_entry(e)  # type: ignore
+        elif dxftype == "STYLE":
+            doc.styles.add_entry(e)  # type: ignore
+        elif dxftype == "DIMSTYLE":
+            doc.dimstyles.add_entry(e)  # type: ignore
+        elif dxftype == "APPID":
+            try:
+                doc.appids.add_entry(e)  # type: ignore
+            except DXFTableEntryError:
+                pass
+        elif dxftype == "UCS":
+            doc.ucs.add_entry(e)  # type: ignore
+        elif dxftype == "BLOCK_RECORD":
+            doc.block_records.add_entry(e)  # type: ignore
+        elif dxftype == "MATERIAL":
+            objects.add_object(e)  # type: ignore
+            add_collection_entry(doc.materials, e)
+        elif dxftype == "MLINESTYLE":
+            objects.add_object(e)  # type: ignore
+            add_collection_entry(doc.mline_styles, e)
+        elif dxftype == "MLEADERSTYLE":
+            objects.add_object(e)  # type: ignore
+            add_collection_entry(doc.mleader_styles, e)
+        else:
+            new_entities.append(e)
+
+    for old, new in replace:
+        transfer.replace(old, new)
+        old.destroy()
+
+    # 3. copy resources
+    for e in entities:
+        copy = transfer.get_copy(id(e))
+        e.copy_resources(copy, transfer)
+
+    # 4. add entities to layout and objects section
+    for e in new_entities:
+        if e.dxf.owner is not None:
+            continue  # already processed!
+        if is_graphic_entity(e):
+            target.add_entity(e)  # type: ignore
+        elif is_dxf_object(e):
+            objects.add_object(e)  # type: ignore
+
+
+def add_collection_entry(collection, entry: DXFEntity):
+    collection.object_dict.add(entry.dxf.name, entry)
+
+
+class Transfer:
+    def __init__(self):
+        self._source_entities: list[DXFEntity] = []
+        self._copied_entities: dict[int, DXFEntity] = {}
+
+    def source_entities(self):
+        return self._source_entities
+
+    def set_copied_entities(self, entities: dict[int, DXFEntity]):
+        self._copied_entities = entities
+
+    def add_entity(self, entity: DXFEntity) -> None:
+        self._source_entities.append(entity)
+
+    def get_copy(self, uid: int) -> Optional[DXFEntity]:
+        return self._copied_entities.get(uid)
+
+    def replace(self, old: DXFEntity, new: DXFEntity) -> None:
+        self._copied_entities[id(old)] = new
 
 
 class CopyMachine:
     def __init__(self) -> None:
-        self._copies: dict[int, DXFEntity] = dict()
-        self._originals: dict[int, DXFEntity] = dict()
+        self.copies: dict[int, DXFEntity] = dict()
+        self.classes: list[DXFClass] = []
+        self.log: list[str] = []
 
-    @property
-    def copies(self) -> Iterable[DXFEntity]:
-        """Returns the copies"""
-        return self._copies.values()
+    def copy(self, entities: Iterable[DXFEntity]):
+        for entity in entities:
+            if isinstance(entity, DXFClass):
+                self._copy_dxf_class(entity)
+                continue
+            if id(entity) in self.copies:
+                continue
 
-    def has_finished(self) -> bool:
-        """All resources are copied?"""
-        return not len(self._originals)
+            try:
+                self.copies[id(entity)] = entity.copy()
+            except DXFError:
+                self.log.append(f"cannot copy {str(entity)}")
 
-    def append(self, entities: Iterable[DXFEntity]):
-        """Append entities to copy."""
-        for e in entities:
-            if id(e) not in self._copies:
-                self._originals[id(e)] = e
-
-    def run(self):
-        """Execute copy process."""
-        trash = list()
-        new = list()
-        while self._originals:
-            # do not add/delete while iterating
-            trash.clear()
-            new.clear()
-            for entity in self._originals.values():
-                pkg = _ResourcePackage(entity)
-                entity.dump_resources(pkg)  # type: ignore
-                resources = list(pkg.resources())
-                if all(id(e) in self._copies for e in resources):
-                    # all resources are copied
-                    trash.append(self.copy_entity(entity))
-                else:
-                    # add required resources to copy
-                    new.extend(resources)
-            count = len(self._originals)
-            stuck = True
-            self.append(new)
-            if len(self._originals) != count:
-                stuck = False
-            for _id in trash:
-                if _id:
-                    del self._originals[_id]
-            if stuck and len(self._originals) == count:
-                break
-
-    def copy_entity(self, entity: DXFEntity) -> int:
-        """Copy a single entity and returns the id or 0 if the entity is
-        already copied.
-        """
-        if id(entity) in self._copies:
-            return 0
-        self._copies[id(entity)] = entity.copy()
-        return id(entity)
-
-    def swap(self, entity: DXFEntity) -> DXFEntity:
-        """Swap original entity against copy."""
-        return self._copies[id(entity)]
-
-
-def bind(entities: Iterable[DXFEntity], doc: Drawing):
-    """Bind all entities to the DXF document."""
-    for entity in entities:
-        factory.bind(entity, doc)
-
-
-def assign_resources(entities: Iterable[DXFEntity], doc: Drawing):
-    """Add entities to the correct resource tables."""
-    pass
+    def _copy_dxf_class(self, cls: DXFClass) -> None:
+        self.classes.append(cls.copy())
