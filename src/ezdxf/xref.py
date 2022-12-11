@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Optional, Sequence
 from typing_extensions import Protocol
 import enum
+import pathlib
 from ezdxf.lldxf.const import DXFError, DXFTableEntryError
 from ezdxf.document import Drawing
 from ezdxf.layouts import BaseLayout
@@ -27,7 +28,9 @@ from ezdxf.entities import (
     Linetype,
     Textstyle,
     DimStyle,
-    AppID,
+    Material,
+    MLineStyle,
+    MLeaderStyle,
 )
 
 
@@ -233,12 +236,14 @@ class _Transfer:
         self.registry = registry
         self.copied_blocks = copies
         self.rename_policy = rename_policy
+        self.xref_name = get_xref_name(registry.target_doc)
         self.layer_mapping: dict[str, str] = {}
         self.linetype_mapping: dict[str, str] = {}
         self.text_style_mapping: dict[str, str] = {}
         self.dim_style_mapping: dict[str, str] = {}
         self.block_name_mapping: dict[str, str] = {}
         self.handle_mapping: dict[str, str] = {}
+        self._replace_handles: dict[str, str] = {}
 
     def get_entity_copy(
         self, entity_handle: str, block_handle: str = NONE_HANDLE
@@ -273,7 +278,6 @@ class _Transfer:
 
     def create_target_resources(self) -> None:
         tdoc = self.registry.target_doc
-        rename_policy = self.rename_policy
         self.create_appids()
 
         # process resource objects and entities without assigned layout: block_id == 0
@@ -281,44 +285,40 @@ class _Transfer:
             if entity.dxf.owner is not None:
                 continue  # already processed!
 
-            # 1. assign entity to document
-            factory.bind(entity, tdoc)
-            self.handle_mapping[handle] = entity.dxf.handle
-
-            # 2. add copied resources to tables and collections
-            dxftype = entity.dxftype()
+            # add copied resources to tables and collections of the target document
             if isinstance(entity, Layer):
-                old_name = entity.dxf.name
-                add_layer_entry(entity, tdoc, rename_policy)
-                if entity.is_alive:
-                    self.layer_mapping[old_name] = entity.dxf.name
+                self.add_layer_entry(entity)
             elif isinstance(entity, Linetype):
-                old_name = entity.dxf.name
-                add_linetype_entry(entity, tdoc, rename_policy)
-                if entity.is_alive:
-                    self.linetype_mapping[old_name] = entity.dxf.name
+                self.add_linetype_entry(entity)
             elif isinstance(entity, Textstyle):
-                old_name = entity.dxf.name
-                add_text_style_entry(entity, tdoc, rename_policy)
-                if entity.is_alive:
-                    self.text_style_mapping[old_name] = entity.dxf.name
+                self.add_text_style_entry(entity)
             elif isinstance(entity, DimStyle):
-                old_name = entity.dxf.name
-                add_dim_style_entry(entity, tdoc, rename_policy)
-                if entity.is_alive:
-                    self.dim_style_mapping[old_name] = entity.dxf.name
+                self.add_dim_style_entry(entity)
             elif isinstance(entity, BlockRecord):
-                old_name = entity.dxf.name
-                add_block_record_entry(entity, tdoc, rename_policy)
-                if entity.is_alive:
-                    self.block_name_mapping[old_name] = entity.dxf.name
-                    tdoc.blocks.add(entity)  # create BlockLayout
-            elif dxftype == "MATERIAL":
-                add_collection_entry(tdoc.materials, entity, rename_policy)
-            elif dxftype == "MLINESTYLE":
-                add_collection_entry(tdoc.mline_styles, entity, rename_policy)
-            elif dxftype == "MLEADERSTYLE":
-                add_collection_entry(tdoc.mleader_styles, entity, rename_policy)
+                self.add_block_record_entry(entity)
+            elif isinstance(entity, Material):
+                self.add_collection_entry(tdoc.materials, entity)
+            elif isinstance(entity, MLineStyle):
+                self.add_collection_entry(tdoc.mline_styles, entity)
+            elif isinstance(entity, MLeaderStyle):
+                self.add_collection_entry(tdoc.mleader_styles, entity)
+
+        self.update_handle_mapping()
+
+    def replace_handle_mapping(self, old_target, new_target):
+        self._replace_handles[old_target] = new_target
+
+    def update_handle_mapping(self):
+        temp_mapping: dict[str, str] = {}
+        replace_handles = self._replace_handles
+        # redirect source entity -> new target entity
+        for source_handle, target_handle in self.handle_mapping.items():
+            if target_handle in replace_handles:
+                # build temp mapping, while iterating dict
+                temp_mapping[source_handle] = replace_handles[target_handle]
+
+        for source_handle, new_target_handle in temp_mapping.items():
+            self.handle_mapping[source_handle] = new_target_handle
 
     def create_appids(self):
         tdoc = self.registry.target_doc
@@ -332,68 +332,123 @@ class _Transfer:
         for block_handle, block in self.copied_blocks.items():
             for entity_handle, entity in block.items():
                 copy = self.get_entity_copy(entity_handle, block_handle)
-                entity.map_resources(copy, self)
+                if copy is not None and copy.is_alive:
+                    entity.map_resources(copy, self)
+
+    def add_layer_entry(self, layer: Layer):
+        tdoc = self.registry.target_doc
+        layer_name = layer.dxf.name.upper()
+        if layer_name == "0":
+            standard = tdoc.layers.get("0")
+            self.replace_handle_mapping(layer.dxf.handle, standard.dxf.handle)
+            layer.destroy()
+            return
+        old_name = layer.dxf.name
+        self.add_table_entry(tdoc.layers, layer)
+        if layer.is_alive:
+            self.layer_mapping[old_name] = layer.dxf.name
+
+    def add_linetype_entry(self, linetype: Linetype):
+        tdoc = self.registry.target_doc
+        if linetype.dxf.name.upper() in DEFAULT_LINETYPES:
+            standard = tdoc.linetypes.get(linetype.dxf.name)
+            self.replace_handle_mapping(linetype.dxf.handle, standard.dxf.handle)
+            linetype.destroy()
+            return
+        old_name = linetype.dxf.name
+        self.add_table_entry(tdoc.linetypes, linetype)
+        if linetype.is_alive:
+            self.linetype_mapping[old_name] = linetype.dxf.name
+
+    def add_text_style_entry(self, text_style: Textstyle):
+        tdoc = self.registry.target_doc
+        text_style_name = text_style.dxf.name.upper()
+        if text_style_name == STANDARD:
+            standard = tdoc.styles.get(STANDARD)
+            self.replace_handle_mapping(text_style.dxf.handle, standard.dxf.handle)
+            text_style.destroy()
+            return
+        old_name = text_style.dxf.name
+        self.add_table_entry(tdoc.styles, text_style)
+        if text_style.is_alive:
+            self.text_style_mapping[old_name] = text_style.dxf.name
+
+    def add_dim_style_entry(self, dim_style: DimStyle):
+        tdoc = self.registry.target_doc
+        dim_style_name = dim_style.dxf.name.upper()
+        if dim_style_name == STANDARD:
+            standard = tdoc.dimstyles.get(STANDARD)
+            self.replace_handle_mapping(dim_style.dxf.handle, standard.dxf.handle)
+            dim_style.destroy()
+            return
+        old_name = dim_style.dxf.name
+        self.add_table_entry(tdoc.dimstyles, dim_style)
+        if dim_style.is_alive:
+            self.dim_style_mapping[old_name] = dim_style.dxf.name
+
+    def add_block_record_entry(self, block_record: BlockRecord):
+        tdoc = self.registry.target_doc
+        block_name = block_record.dxf.name.upper()
+        if is_special_block_name(block_name):
+            standard = tdoc.block_records.get(block_name)
+            self.replace_handle_mapping(block_record.dxf.handle, standard.dxf.handle)
+            block_record.destroy()
+            return
+        old_name = block_record.dxf.name
+        self.add_table_entry(tdoc.block_records, block_record)
+        if block_record.is_alive:
+            self.block_name_mapping[old_name] = block_record.dxf.name
+            tdoc.blocks.add(block_record)  # create BlockLayout
+
+    def add_table_entry(self, table, entity: DXFEntity):
+        name = entity.dxf.name
+        if self.rename_policy == RenamePolicy.KEEP:
+            if table.has_entry(name):
+                existing_entry = table.get(name)
+                self.replace_handle_mapping(
+                    entity.dxf.handle, existing_entry.dxf.handle
+                )
+                entity.destroy()
+                return
+        elif self.rename_policy == RenamePolicy.XREF:
+            entity.dxf.name = find_table_name(
+                "{xref}${index}${name}", name, self.xref_name, table
+            )
+        elif self.rename_policy == RenamePolicy.NUMBERED:
+            entity.dxf.name = find_table_name(
+                "${index}${name}", name, self.xref_name, table
+            )
+        table.add_entry(entity)
+
+    def add_collection_entry(self, collection, entry: DXFEntity):
+        name = entry.dxf.name
+        if name.upper() == STANDARD:
+            standard = collection.object_dict.get(name)
+            self.replace_handle_mapping(entry.dxf.handle, standard.dxf.handle)
+            entry.destroy()
+            return
+
+        if name not in collection:
+            collection.object_dict.add(name, entry)
 
 
-def add_layer_entry(layer: Layer, tdoc: Drawing, rename_policy: RenamePolicy):
-    layer_name = layer.dxf.name.upper()
-    if layer_name == "0":
-        layer.destroy()
-        return
-    # todo: mangle name
-    tdoc.layers.add_entry(layer)
-
-
-def add_linetype_entry(linetype: Linetype, tdoc: Drawing, rename_policy: RenamePolicy):
-    linetype_name = linetype.dxf.name.upper()
-    if linetype_name in DEFAULT_LINETYPES:
-        linetype.destroy()
-        return
-    # todo: mangle name
-    tdoc.linetypes.add_entry(linetype)
-
-
-def add_text_style_entry(
-    text_style: Textstyle, tdoc: Drawing, rename_policy: RenamePolicy
-):
-    text_style_name = text_style.dxf.name.upper()
-    if text_style_name == STANDARD:
-        text_style.destroy()
-        return
-    # todo: mangle name
-    tdoc.styles.add_entry(text_style)
-
-
-def add_dim_style_entry(
-    dim_style: DimStyle, tdoc: Drawing, rename_policy: RenamePolicy
-):
-    dim_style_name = dim_style.dxf.name.upper()
-    if dim_style_name == STANDARD:
-        dim_style.destroy()
-        return
-    # todo: mangle name
-    tdoc.dimstyles.add_entry(dim_style)
+def get_xref_name(doc: Drawing) -> str:
+    if doc.filename:
+        return pathlib.Path(doc.filename).stem
+    return ""
 
 
 def is_special_block_name(name: str) -> bool:
     return False
 
 
-def add_block_record_entry(
-    block_record: BlockRecord, tdoc: Drawing, rename_policy: RenamePolicy
-):
-    block_name = block_record.dxf.name.upper()
-    if is_special_block_name(block_name):
-        block_record.destroy()
-        return
-    # todo: mangle name
-    tdoc.block_records.add_entry(block_record)
-
-
-def add_collection_entry(collection, entry: DXFEntity, rename_policy: RenamePolicy):
-    name = entry.dxf.name
-    if name not in collection:
-        collection.object_dict.add(name, entry)
+def find_table_name(fmt: str, name: str, xref: str, table) -> str:
+    index = 0
+    while True:
+        new_name = fmt.format(name=name, xref=xref, index=index)
+        if not table.has_entry(new_name):
+            return new_name
+        index += 1
 
 
 class CopyMachine:

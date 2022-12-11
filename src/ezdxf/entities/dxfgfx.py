@@ -638,6 +638,7 @@ class DXFGraphic(DXFEntity):
 
     def register_resources(self, registry: xref.Registry) -> None:
         """Register required resources to resource register."""
+        super().register_resources(registry)
         dxf = self.dxf
         registry.add_layer(dxf.layer)
         registry.add_linetype(dxf.linetype)
@@ -647,16 +648,17 @@ class DXFGraphic(DXFEntity):
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate registered resources from self to entity by ResourceMapper."""
-        dxf = self.dxf
-        dxf.layer = mapping.get_layer(self.dxf.layer)
-        if dxf.hasattr("linetype"):
-            self.dxf.linetype = mapping.get_linetype(self.dxf.linetype)
-        if dxf.hasattr("material_handle"):
-            dxf.material_handle = mapping.get_handle(dxf.material_handle)
-        if dxf.hasattr("visualstyle_handle"):
-            dxf.visualstyle_handle = mapping.get_handle(dxf.visualstyle_handle)
-        if dxf.hasattr("plotstyle_handle"):
-            dxf.plotstyle_handle = mapping.get_handle(dxf.plotstyle_handle)
+        super().map_resources(copy, mapping)
+        copy.dxf.layer = mapping.get_layer(self.dxf.layer)
+        attrib_exist = self.dxf.hasattr
+        if attrib_exist("linetype"):
+            copy.dxf.linetype = mapping.get_linetype(self.dxf.linetype)
+        if attrib_exist("material_handle"):
+            copy.dxf.material_handle = mapping.get_handle(self.dxf.material_handle)
+        if attrib_exist("visualstyle_handle"):
+            copy.dxf.visualstyle_handle = mapping.get_handle(self.dxf.visualstyle_handle)
+        if attrib_exist("plotstyle_handle"):
+            copy.dxf.plotstyle_handle = mapping.get_handle(self.dxf.plotstyle_handle)
 
 
 @factory.register_entity

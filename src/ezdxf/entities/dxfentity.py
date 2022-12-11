@@ -939,6 +939,8 @@ class DXFEntity:
 
     def register_resources(self, registry: xref.Registry) -> None:
         """Register required resources to the xref.Register class."""
+        # todo: register AppIDs in XDATA
+        # todo: register group code 1005 handles in XDATA
         pass
 
     def map_resources(self, copy: DXFEntity, mapper: xref.ResourceMapper) -> None:
