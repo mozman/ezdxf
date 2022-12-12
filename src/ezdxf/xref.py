@@ -35,7 +35,7 @@ from ezdxf.entities import (
 )
 
 
-__all__ = ["Registry", "ResourceMapper", "RenamePolicy"]
+__all__ = ["Registry", "ResourceMapper", "ConflictPolicy"]
 
 logger = logging.getLogger("ezdxf")
 NO_BLOCK = "0"
@@ -44,13 +44,16 @@ DEFAULT_LAYER = "0"
 STANDARD = "STANDARD"
 
 
-class RenamePolicy(enum.Enum):
-    # keep <name> and existing table entry - ignores imported table settings
+class ConflictPolicy(enum.Enum):
+    # what to do when a name conflict of existing and imported resources occur:
+    # keep existing resource <name> and ignore imported resource
     KEEP = enum.auto()
-    # rename to <xref>$0$<name> if <name> exists
-    XREF = enum.auto()
-    # rename to $0$<name> if <name> exists
-    NUMBERED = enum.auto()
+    # replace existing resource <name> by imported resource
+    REPLACE = enum.auto()
+    # rename imported resource to <xref>$0$<name>
+    XREF_NUM_PREFIX = enum.auto()
+    # rename imported resource to $0$<name>
+    NUM_PREFIX = enum.auto()
 
 
 class Registry(Protocol):
@@ -103,7 +106,7 @@ class ResourceMapper(Protocol):
 
 
 def import_entities(
-    entities: Sequence[DXFEntity], target: BaseLayout, rename_policy=RenamePolicy.KEEP
+    entities: Sequence[DXFEntity], target: BaseLayout, rename_policy=ConflictPolicy.KEEP
 ):
     if len(entities) == 0:
         return
@@ -111,6 +114,7 @@ def import_entities(
     assert sdoc is not None, "a valid source document is mandatory"
     tdoc: Drawing = target.doc
     assert tdoc is not None, "a valid target document is mandatory"
+    assert sdoc is not tdoc, "source and target document cannot be the same"
 
     registry = _Registry(sdoc, tdoc)
     for e in entities:
@@ -159,6 +163,7 @@ class _Registry:
             return
         entity = self.source_doc.entitydb.get(handle)
         if entity is None:
+            logger.debug(f"source entity #{handle} does not exist")
             return
         self.add_entity(entity)
 
@@ -169,6 +174,8 @@ class _Registry:
         layer = self.source_doc.layers.get(name)
         if layer:
             self.add_entity(layer)
+        else:
+            logger.debug(f"source layer '{name}' does not exist")
 
     def add_linetype(self, name: str) -> None:
         # These linetype names get never mangled and always exist in the target document.
@@ -177,6 +184,8 @@ class _Registry:
         linetype = self.source_doc.linetypes.get(name)
         if linetype:
             self.add_entity(linetype)
+        else:
+            logger.debug(f"source linetype '{name}' does not exist")
 
     def add_text_style(self, name) -> None:
         # Text style name "STANDARD" gets never mangled and always exist in the target
@@ -186,6 +195,8 @@ class _Registry:
         text_style = self.source_doc.styles.get(name)
         if text_style:
             self.add_entity(text_style)
+        else:
+            logger.debug(f"source text style '{name}' does not exist")
 
     def add_dim_style(self, name: str) -> None:
         # Dimension style name "STANDARD" gets never mangled and always exist in the
@@ -196,11 +207,15 @@ class _Registry:
         dim_style = self.source_doc.dimstyles.get(name)
         if dim_style:
             self.add_entity(dim_style)
+        else:
+            logger.debug(f"source dimension style '{name}' does not exist")
 
     def add_block_name(self, name: str) -> None:
         block_record = self.source_doc.block_records.get(name)
         if block_record:
             self.add_entity(block_record)
+        else:
+            logger.debug(f"source block '{name}' does not exist")
 
     def add_appid(self, name: str) -> None:
         self.appids.add(name.upper())
@@ -215,7 +230,7 @@ class _Transfer:
         blocks: dict[str, dict[str, DXFEntity]],
         objects: Sequence[DXFEntity],
         *,
-        rename_policy=RenamePolicy.KEEP,
+        rename_policy=ConflictPolicy.KEEP,
     ):
         self.registry = registry
         self.copied_blocks = blocks
@@ -409,7 +424,7 @@ class _Transfer:
 
     def add_table_entry(self, table, entity: DXFEntity) -> None:
         name = entity.dxf.name
-        if self.rename_policy == RenamePolicy.KEEP:
+        if self.rename_policy == ConflictPolicy.KEEP:
             if table.has_entry(name):
                 existing_entry = table.get(name)
                 self.replace_handle_mapping(
@@ -417,11 +432,11 @@ class _Transfer:
                 )
                 entity.destroy()
                 return
-        elif self.rename_policy == RenamePolicy.XREF:
+        elif self.rename_policy == ConflictPolicy.XREF_NUM_PREFIX:
             entity.dxf.name = find_table_name(
                 "{xref}${index}${name}", name, self.xref_name, table
             )
-        elif self.rename_policy == RenamePolicy.NUMBERED:
+        elif self.rename_policy == ConflictPolicy.NUM_PREFIX:
             entity.dxf.name = find_table_name(
                 "${index}${name}", name, self.xref_name, table
             )
