@@ -12,11 +12,10 @@ from typing import Optional, Sequence
 from typing_extensions import Protocol
 import enum
 import pathlib
-from ezdxf.lldxf.const import DXFError, DXFTableEntryError
+import logging
+from ezdxf.lldxf import const
 from ezdxf.document import Drawing
 from ezdxf.layouts import BaseLayout
-
-
 from ezdxf.entities import (
     is_graphic_entity,
     is_dxf_object,
@@ -31,12 +30,15 @@ from ezdxf.entities import (
     Material,
     MLineStyle,
     MLeaderStyle,
+    Block,
+    EndBlk,
 )
 
 
 __all__ = ["Registry", "ResourceMapper", "RenamePolicy"]
 
-NONE_HANDLE = "0"
+logger = logging.getLogger("ezdxf")
+NO_BLOCK = "0"
 DEFAULT_LINETYPES = {"CONTINUOUS", "BYLAYER", "BYBLOCK"}
 DEFAULT_LAYER = "0"
 STANDARD = "STANDARD"
@@ -52,12 +54,10 @@ class RenamePolicy(enum.Enum):
 
 
 class Registry(Protocol):
-    def add_entity(self, entity: DXFEntity, block_handle: str = NONE_HANDLE):
+    def add_entity(self, entity: DXFEntity, block_handle: str = NO_BLOCK) -> None:
         ...
 
-    def add_block(
-        self, entities: Sequence[DXFEntity], block_handle: NONE_HANDLE
-    ) -> None:
+    def add_block(self, block_record: BlockRecord) -> None:
         ...
 
     def add_handle(self, handle: Optional[str]) -> None:
@@ -102,13 +102,6 @@ class ResourceMapper(Protocol):
         ...
 
 
-def find_source_doc(entities: Sequence[DXFEntity]) -> Optional[Drawing]:
-    for entity in entities:
-        if entity.doc is not None:
-            return entity.doc
-    return None
-
-
 def import_entities(
     entities: Sequence[DXFEntity], target: BaseLayout, rename_policy=RenamePolicy.KEEP
 ):
@@ -119,60 +112,50 @@ def import_entities(
     tdoc: Drawing = target.doc
     assert tdoc is not None, "a valid target document is mandatory"
 
-    objects = tdoc.objects
     registry = _Registry(sdoc, tdoc)
     for e in entities:
         registry.add_entity(e)
 
     cpm = CopyMachine(tdoc)
-    copies = cpm.copy_blocks(registry.source_blocks)
-    cpm.register_classes()
+    cpm.copy_blocks(registry.source_blocks)
 
-    transfer = _Transfer(registry, copies, rename_policy=rename_policy)
-    transfer.create_target_resources()
+    transfer = _Transfer(registry, cpm.copies, cpm.objects, rename_policy=rename_policy)
+    transfer.create_appids()
+    transfer.register_classes(cpm.classes)
+    transfer.add_target_objects()
+    transfer.create_table_resources()  # restores also BLOCK content
+    transfer.create_object_resources()
+    transfer.update_handle_mapping()
     transfer.map_resources()
-
-    # 4. add entities to layout and objects section
-    for block_handle, block in transfer.copied_blocks.items():
-        layout: BaseLayout
-        if block_handle == NONE_HANDLE:
-            layout = target
-        else:
-            source_block_record = sdoc.entitydb.get(block_handle)
-            new_block_name = transfer.get_block_name(source_block_record.dxf.name)
-            layout = tdoc.blocks.get(new_block_name)
-        if layout is None:
-            continue
-        for entity in block.values():
-            if entity.dxf.owner is not None:
-                continue  # already processed!
-            if is_graphic_entity(entity):
-                layout.add_entity(entity)  # type: ignore
-            elif is_dxf_object(entity):
-                objects.add_object(entity)  # type: ignore
-
-    tdoc.entitydb.purge()
+    transfer.add_entities_to_layout(target)
+    transfer.finalize()
 
 
 class _Registry:
-    # The block_id 0 contains resource objects and entities without assigned layout:
+    # The block "0" contains resource objects and entities without assigned layout:
     def __init__(self, sdoc: Drawing, tdoc: Drawing):
         self.source_doc = sdoc
         self.target_doc = tdoc
-        self.source_blocks: dict[str, dict[str, DXFEntity]] = {NONE_HANDLE: {}}
+        self.source_blocks: dict[str, dict[str, DXFEntity]] = {NO_BLOCK: {}}
         self.appids: set[str] = set()
 
-    def add_entity(self, entity: DXFEntity, block_handle: str = NONE_HANDLE):
+    def add_entity(self, entity: DXFEntity, block_handle: str = NO_BLOCK):
         block = self.source_blocks.setdefault(block_handle, {})
         block[entity.dxf.handle] = entity
         entity.register_resources(self)
 
-    def add_block(self, entities: Sequence[DXFEntity], block_handle: str) -> None:
-        for entity in entities:
+    def add_block(self, block_record: BlockRecord) -> None:
+        # add resource entity BLOCK_RECORD to NO_BLOCK
+        self.add_entity(block_record)
+        # block content in block <block_handle>
+        block_handle = block_record.dxf.handle
+        self.add_entity(block_record.block, block_handle)  # type: ignore
+        for entity in block_record.entity_space:
             self.add_entity(entity, block_handle)
+        self.add_entity(block_record.endblk, block_handle)  # type: ignore
 
     def add_handle(self, handle: Optional[str]) -> None:
-        if handle is None or handle == NONE_HANDLE:
+        if handle is None or handle == NO_BLOCK:
             return
         entity = self.source_doc.entitydb.get(handle)
         if entity is None:
@@ -229,14 +212,16 @@ class _Transfer:
     def __init__(
         self,
         registry: _Registry,
-        copies: dict[str, dict[str, DXFEntity]],
+        blocks: dict[str, dict[str, DXFEntity]],
+        objects: Sequence[DXFEntity],
         *,
         rename_policy=RenamePolicy.KEEP,
     ):
         self.registry = registry
-        self.copied_blocks = copies
+        self.copied_blocks = blocks
+        self.copied_objects = objects
         self.rename_policy = rename_policy
-        self.xref_name = get_xref_name(registry.target_doc)
+        self.xref_name = get_xref_name(registry.source_doc)
         self.layer_mapping: dict[str, str] = {}
         self.linetype_mapping: dict[str, str] = {}
         self.text_style_mapping: dict[str, str] = {}
@@ -246,20 +231,15 @@ class _Transfer:
         self._replace_handles: dict[str, str] = {}
 
     def get_entity_copy(
-        self, entity_handle: str, block_handle: str = NONE_HANDLE
+        self, entity_handle: str, block_handle: str = NO_BLOCK
     ) -> Optional[DXFEntity]:
         block = self.copied_blocks.get(block_handle)
         if isinstance(block, dict):
             return block.get(entity_handle)
         return None
 
-    def get_block_copy(self, block_handle: str) -> Sequence[DXFEntity]:
-        block = self.copied_blocks.get(block_handle)
-        if isinstance(block, dict):
-            return list(block.values())
-
     def get_handle(self, handle: str) -> str:
-        return self.handle_mapping.get(handle, NONE_HANDLE)
+        return self.handle_mapping.get(handle, NO_BLOCK)
 
     def get_layer(self, name: str) -> str:
         return self.layer_mapping.get(name, name)
@@ -276,12 +256,11 @@ class _Transfer:
     def get_block_name(self, name: str) -> str:
         return self.block_name_mapping.get(name, name)
 
-    def create_target_resources(self) -> None:
-        tdoc = self.registry.target_doc
+    def create_table_resources(self) -> None:
         self.create_appids()
 
-        # process resource objects and entities without assigned layout: block_id == 0
-        for handle, entity in self.copied_blocks.get(NONE_HANDLE).items():
+        # process resource objects and entities without assigned layout:
+        for handle, entity in self.copied_blocks[NO_BLOCK].items():
             if entity.dxf.owner is not None:
                 continue  # already processed!
 
@@ -295,20 +274,22 @@ class _Transfer:
             elif isinstance(entity, DimStyle):
                 self.add_dim_style_entry(entity)
             elif isinstance(entity, BlockRecord):
-                self.add_block_record_entry(entity)
-            elif isinstance(entity, Material):
+                self.add_block_record_entry(entity, handle)
+
+    def create_object_resources(self):
+        tdoc = self.registry.target_doc
+        for entity in self.copied_objects:
+            if isinstance(entity, Material):
                 self.add_collection_entry(tdoc.materials, entity)
             elif isinstance(entity, MLineStyle):
                 self.add_collection_entry(tdoc.mline_styles, entity)
             elif isinstance(entity, MLeaderStyle):
                 self.add_collection_entry(tdoc.mleader_styles, entity)
 
-        self.update_handle_mapping()
-
-    def replace_handle_mapping(self, old_target, new_target):
+    def replace_handle_mapping(self, old_target, new_target) -> None:
         self._replace_handles[old_target] = new_target
 
-    def update_handle_mapping(self):
+    def update_handle_mapping(self) -> None:
         temp_mapping: dict[str, str] = {}
         replace_handles = self._replace_handles
         # redirect source entity -> new target entity
@@ -320,22 +301,25 @@ class _Transfer:
         for source_handle, new_target_handle in temp_mapping.items():
             self.handle_mapping[source_handle] = new_target_handle
 
-    def create_appids(self):
+    def create_appids(self) -> None:
         tdoc = self.registry.target_doc
         for appid in self.registry.appids:
             try:
                 tdoc.appids.new(appid)
-            except DXFTableEntryError:
+            except const.DXFTableEntryError:
                 pass
 
-    def map_resources(self):
+    def register_classes(self, classes: Sequence[DXFClass]):
+        self.registry.target_doc.classes.register(classes)
+
+    def map_resources(self) -> None:
         for block_handle, block in self.copied_blocks.items():
             for entity_handle, entity in block.items():
                 copy = self.get_entity_copy(entity_handle, block_handle)
                 if copy is not None and copy.is_alive:
                     entity.map_resources(copy, self)
 
-    def add_layer_entry(self, layer: Layer):
+    def add_layer_entry(self, layer: Layer) -> None:
         tdoc = self.registry.target_doc
         layer_name = layer.dxf.name.upper()
         if layer_name == "0":
@@ -348,7 +332,7 @@ class _Transfer:
         if layer.is_alive:
             self.layer_mapping[old_name] = layer.dxf.name
 
-    def add_linetype_entry(self, linetype: Linetype):
+    def add_linetype_entry(self, linetype: Linetype) -> None:
         tdoc = self.registry.target_doc
         if linetype.dxf.name.upper() in DEFAULT_LINETYPES:
             standard = tdoc.linetypes.get(linetype.dxf.name)
@@ -360,7 +344,7 @@ class _Transfer:
         if linetype.is_alive:
             self.linetype_mapping[old_name] = linetype.dxf.name
 
-    def add_text_style_entry(self, text_style: Textstyle):
+    def add_text_style_entry(self, text_style: Textstyle) -> None:
         tdoc = self.registry.target_doc
         text_style_name = text_style.dxf.name.upper()
         if text_style_name == STANDARD:
@@ -373,7 +357,7 @@ class _Transfer:
         if text_style.is_alive:
             self.text_style_mapping[old_name] = text_style.dxf.name
 
-    def add_dim_style_entry(self, dim_style: DimStyle):
+    def add_dim_style_entry(self, dim_style: DimStyle) -> None:
         tdoc = self.registry.target_doc
         dim_style_name = dim_style.dxf.name.upper()
         if dim_style_name == STANDARD:
@@ -386,7 +370,7 @@ class _Transfer:
         if dim_style.is_alive:
             self.dim_style_mapping[old_name] = dim_style.dxf.name
 
-    def add_block_record_entry(self, block_record: BlockRecord):
+    def add_block_record_entry(self, block_record: BlockRecord, handle: str) -> None:
         tdoc = self.registry.target_doc
         block_name = block_record.dxf.name.upper()
         if is_special_block_name(block_name):
@@ -398,9 +382,32 @@ class _Transfer:
         self.add_table_entry(tdoc.block_records, block_record)
         if block_record.is_alive:
             self.block_name_mapping[old_name] = block_record.dxf.name
+            self.restore_block_content(block_record, handle)
             tdoc.blocks.add(block_record)  # create BlockLayout
 
-    def add_table_entry(self, table, entity: DXFEntity):
+    def restore_block_content(self, block_record: BlockRecord, handle: str):
+        content = self.copied_blocks.get(handle, dict())
+        block: Optional[Block] = None
+        endblk: Optional[EndBlk] = None
+        for entity in content.values():
+            if isinstance(entity, (Block, EndBlk)):
+                if isinstance(entity, Block):
+                    block = block
+                else:
+                    endblk = endblk
+            elif is_graphic_entity(entity):
+                block_record.add_entity(entity)  # type: ignore
+            else:
+                name = block_record.dxf.name
+                logging.warning(
+                    f"skipping non-graphic DXF entity in BLOCK_RECORD('{name}', #{handle}): {str(entity)}"
+                )
+        if isinstance(block, Block) and isinstance(endblk, EndBlk):
+            block_record.set_block(block, endblk)
+        else:
+            raise const.DXFInternalEzdxfError("invalid BLOCK_RECORD copy")
+
+    def add_table_entry(self, table, entity: DXFEntity) -> None:
         name = entity.dxf.name
         if self.rename_policy == RenamePolicy.KEEP:
             if table.has_entry(name):
@@ -420,7 +427,7 @@ class _Transfer:
             )
         table.add_entry(entity)
 
-    def add_collection_entry(self, collection, entry: DXFEntity):
+    def add_collection_entry(self, collection, entry: DXFEntity) -> None:
         name = entry.dxf.name
         if name.upper() == STANDARD:
             standard = collection.object_dict.get(name)
@@ -430,6 +437,22 @@ class _Transfer:
 
         if name not in collection:
             collection.object_dict.add(name, entry)
+
+    def add_entities_to_layout(self, layout: BaseLayout):
+        for entity in self.copied_blocks[NO_BLOCK].values():
+            if entity.dxf.owner is not None:
+                continue  # already processed!
+            elif is_graphic_entity(entity):
+                layout.add_entity(entity)  # type: ignore
+
+    def add_target_objects(self):
+        objects = self.registry.target_doc.objects
+        for obj in self.copied_objects:
+            objects.add_object(obj)  # type: ignore
+
+    def finalize(self):
+        # remove replaced entities:
+        self.registry.target_doc.entitydb.purge()
 
 
 def get_xref_name(doc: Drawing) -> str:
@@ -456,6 +479,7 @@ class CopyMachine:
         self.target_doc = tdoc
         self.copies: dict[str, dict[str, DXFEntity]] = {}
         self.classes: list[DXFClass] = []
+        self.objects: list[DXFEntity] = []
         self.log: list[str] = []
 
     def copy_block(self, block: dict[str, DXFEntity]) -> dict[str, DXFEntity]:
@@ -469,22 +493,20 @@ class CopyMachine:
                 continue
             try:
                 new_entity = entity.copy()
-            except DXFError:
+            except const.DXFError:
                 self.log.append(f"cannot copy entity {str(entity)}")
                 continue
-            copies[handle] = new_entity
             factory.bind(new_entity, tdoc)
+            if is_dxf_object(new_entity):
+                self.objects.append(new_entity)
+            else:
+                copies[handle] = new_entity
         return copies
 
-    def copy_blocks(
-        self, blocks: dict[str, dict[str, DXFEntity]]
-    ) -> dict[str, dict[str, DXFEntity]]:
+    def copy_blocks(self, blocks: dict[str, dict[str, DXFEntity]]):
         for handle, block in blocks.items():
             self.copies[handle] = self.copy_block(block)
         return self.copies
-
-    def register_classes(self):
-        self.target_doc.classes.register(self.classes)
 
     def _copy_dxf_class(self, cls: DXFClass) -> None:
         self.classes.append(cls.copy())
