@@ -2,6 +2,13 @@
 News
 ====
 
+Version 1.0.1 - dev
+-------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v1-0.html
+- BUGFIX: [#793](https://github.com/mozman/ezdxf/issues/793)
+  fix LWPOLYLINE parsing in `ProxyGraphic` class
+
 Version 1.0.0 - 2022-12-09
 --------------------------
 

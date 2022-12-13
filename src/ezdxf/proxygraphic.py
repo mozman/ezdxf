@@ -503,14 +503,14 @@ class ProxyGraphic:
 
     def lwpolyline(self, data: bytes):
         # OpenDesign Specs LWPLINE: 20.4.85 Page 211
-        # TODO: MLEADER exploration example "explore_mleader_block.dxf" has
-        #  LWPOLYLINE proxy graphic and raises an exception!
         attribs = self._build_dxf_attribs()
         num_bulges = 0
         num_vertex_ids = 0
         num_width = 0
-
+        is_closed = False
         bs = BitStream(data)
+
+        num_data_bytes: int = bs.read_unsigned_long()
         flag: int = bs.read_bit_short()
         if flag & 4:
             attribs["const_width"] = bs.read_bit_double()
@@ -520,7 +520,8 @@ class ProxyGraphic:
             attribs["thickness"] = bs.read_bit_double()
         if flag & 1:
             attribs["extrusion"] = Vec3(bs.read_bit_double(3))
-
+        if flag & 512:  # todo: is this correct? not documented by the ODA DWG ref.
+            is_closed = True
         num_points = bs.read_bit_long()
         if flag & 16:
             num_bulges = bs.read_bit_long()
@@ -553,6 +554,7 @@ class ProxyGraphic:
             points.append((v[0], v[1], w[0], w[1], b))
         lwpolyline = cast("LWPolyline", self._factory("LWPOLYLINE", dxfattribs=attribs))
         lwpolyline.set_points(points)
+        lwpolyline.closed = is_closed
         return lwpolyline
 
     def mesh(self, data: bytes):

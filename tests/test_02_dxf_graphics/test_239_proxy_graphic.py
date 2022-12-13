@@ -6,12 +6,11 @@ import pytest
 
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.tagwriter import TagCollector
-from ezdxf.entities import Hatch
+from ezdxf.entities import Hatch, LWPolyline
 from ezdxf.proxygraphic import (
     load_proxy_graphic,
     export_proxy_graphic,
     ProxyGraphic,
-    ProxyGraphicError,
 )
 from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
 
@@ -175,36 +174,29 @@ class TestProxyGraphic:
         assert arc2.dxf.end_angle == pytest.approx(-0.0003859699524042526)
         assert arc2.dxf.radius == pytest.approx(850)
 
-    def test_reading_R2000_lwpolyline_does_not_raise_exception(self):
+    def test_can_parse_R2000_lwpolyline(self):
         # proxy graphic data from example "explore_mleader_block.dxf"
         parser = ProxyGraphic(
             load_proxy_graphic(Tags.from_text(LWPOLYLINE_DATA_R2000)),
             dxfversion="AC1015",
         )
-        types = set(e.dxftype() for e in parser.virtual_entities())
-        assert "POLYLINE" in types
-        # but still does not parse LWPOLYLINE entities correctly
-        assert "LWPOLYLINE" not in types
+        plines = [e for e in parser.virtual_entities() if e.dxftype() == "LWPOLYLINE"]
+        assert len(plines) == 1
+        pline = cast(LWPolyline, plines[0])
+        assert len(pline.lwpoints) == 4
+        assert pline.is_closed is True
 
-    def test_reading_raw_R2000_lwpolyline_does_not_raise_exception(self):
-        # proxy graphic data from example "explore_mleader_block.dxf"
-        parser = ProxyGraphic(
-            load_proxy_graphic(Tags.from_text(LWPOLYLINE_DATA_R2000)),
-            dxfversion="AC1015",
-        )
-        types = set(e.dxftype() for e in parser.virtual_entities())
-        assert "POLYLINE" in types
-        # but still does not parse LWPOLYLINE entities correctly
-        assert "LWPOLYLINE" not in types
-
-    def test_reading_R2018_lwpolyline_still_raises_exception(self):
+    def test_can_parse_R2018_lwpolyline(self):
         # proxy graphic data from issue #793 MULTILEADER
         parser = ProxyGraphic(
             load_proxy_graphic(Tags.from_text(LWPOLYLINE_IN_MLEADER_R2018)),
             dxfversion="AC1032",
         )
-        with pytest.raises(IndexError):
-            list(parser.unsafe_virtual_entities())
+        plines = [e for e in parser.virtual_entities() if e.dxftype() == "LWPOLYLINE"]
+        assert len(plines) == 1
+        pline = cast(LWPolyline, plines[0])
+        assert len(pline.lwpoints) == 2
+        assert pline.is_closed is True
 
     def test_polygon_creation(self):
         parser = ProxyGraphic(
