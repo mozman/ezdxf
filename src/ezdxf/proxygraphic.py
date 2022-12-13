@@ -247,12 +247,14 @@ class ProxyGraphicTypes(IntEnum):
 
 
 class ProxyGraphic:
-    def __init__(self, data: bytes, doc: Optional[Drawing] = None):
+    def __init__(
+        self, data: bytes, doc: Optional[Drawing] = None, *, dxfversion=const.DXF2000
+    ):
         self._doc = doc
         self._factory = factory.new
         self._buffer: bytes = data
         self._index: int = 8
-        self.dxfversion = doc.dxfversion if doc else "AC1015"
+        self.dxfversion = doc.dxfversion if doc else dxfversion
         self.color: int = const.BYLAYER
         self.layer: str = "0"
         self.linetype: str = "BYLAYER"
@@ -503,9 +505,13 @@ class ProxyGraphic:
         # OpenDesign Specs LWPLINE: 20.4.85 Page 211
         # TODO: MLEADER exploration example "explore_mleader_block.dxf" has
         #  LWPOLYLINE proxy graphic and raises an exception!
+        attribs = self._build_dxf_attribs()
+        num_bulges = 0
+        num_vertex_ids = 0
+        num_width = 0
+
         bs = BitStream(data)
         flag: int = bs.read_bit_short()
-        attribs = self._build_dxf_attribs()
         if flag & 4:
             attribs["const_width"] = bs.read_bit_double()
         if flag & 8:
@@ -518,21 +524,15 @@ class ProxyGraphic:
         num_points = bs.read_bit_long()
         if flag & 16:
             num_bulges = bs.read_bit_long()
-        else:
-            num_bulges = 0
 
         if self.dxfversion >= "AC1024":  # R2010+
-            vertex_id_count = bs.read_bit_long()
-        else:
-            vertex_id_count = 0
-
-        if flag & 32:
-            num_width = bs.read_bit_long()
-        else:
-            num_width = 0
+            if flag & 1024:
+                num_vertex_ids = bs.read_bit_long()
+            if flag & 32:
+                num_width = bs.read_bit_long()
         # ignore DXF R13/14 special vertex order
 
-        vertices: list[luple[float, float]] = [bs.read_raw_double(2)]  # type: ignore
+        vertices: list[tuple[float, float]] = [bs.read_raw_double(2)]  # type: ignore
         prev_point = vertices[-1]
         for _ in range(num_points - 1):
             x = bs.read_bit_double_default(default=prev_point[0])  # type: ignore
@@ -540,7 +540,7 @@ class ProxyGraphic:
             prev_point = (x, y)
             vertices.append(prev_point)
         bulges: list[float] = [bs.read_bit_double() for _ in range(num_bulges)]
-        vertex_ids: list[int] = [bs.read_bit_long() for _ in range(vertex_id_count)]
+        vertex_ids: list[int] = [bs.read_bit_long() for _ in range(num_vertex_ids)]
         widths: list[tuple[float, float]] = [
             (bs.read_bit_double(), bs.read_bit_double()) for _ in range(num_width)
         ]
