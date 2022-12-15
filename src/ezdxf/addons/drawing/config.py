@@ -101,10 +101,12 @@ class Configuration:
         hatch_policy: the method to use when drawing HATCH entities
         infinite_line_length: the length to use when drawing infinite lines
         lineweight_scaling:
-            set to 0.0 for a constant minimal width the current result is
-            correct, in SVG the line width is 0.7 points for 0.25mm as
-            required, but it often looks too thick
-        min_lineweight: the minimum line width in 1/300 inch, set to None for
+            multiplies every lineweight by this factor; set this factor to 0.0 for a
+            constant minimum line width defined by the :attr:`min_lineweight` setting
+            for all lineweights;
+            the correct DXF lineweight often looks too thick in SVG, so setting a
+            factor < 1 can improve the visual appearance
+        min_lineweight: the minimum line width in 1/300 inch; set to ``None`` for
             let the backend choose.
         min_dash_length: the minimum length for a dash when drawing a styled line
             (default value is arbitrary)

@@ -165,7 +165,7 @@ Additional options for the drawing add-on can be passed by the `config`
 argument of the :class:`Frontend` constructor :meth:`__init__()`. Not every
 option will be supported by all backends.
 
-.. autoclass:: ezdxf.addons.drawing.config.Configuration()
+.. autoclass:: ezdxf.addons.drawing.config.Configuration
 
     .. method:: defaults()
 

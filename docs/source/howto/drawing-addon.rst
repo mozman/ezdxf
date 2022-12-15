@@ -499,6 +499,26 @@ scale, but not all content may be rendered.
         plt.close(fig)
 
 
+.. _matplotlib_how_to_control_the_line_width:
+
+How to Control the Line Width
++++++++++++++++++++++++++++++
+
+The DXF :attr:`lineweight` attribute defines the line width as absolute width on the
+output medium (e.g. 25 = 0.25mm) and therefore depends only on the DPI (dots per inch)
+setting of the :class:`Figure` class and the :meth:`savefig` method.
+
+There are two additional settings in the :class:`~ezdxf.addons.drawing.config.Configuration`
+class which influences the line width:
+
+- :attr:`~ezdxf.addons.drawing.config.Configuration.min_lineweight` sets the minimum line
+  width in 1/300 inch - a value of 300 is a line width of 1 inch
+- :attr:`~ezdxf.addons.drawing.config.Configuration.lineweight_scaling`, multiply the
+  line width by a this factor
+
+.. seealso::
+
+    Discussion: https://github.com/mozman/ezdxf/discussions/797
 
 .. _FAQ: https://github.com/mozman/ezdxf/discussions/550
 .. _wcs_to_image_coordinates.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/wcs_to_image_coodinates.py
