@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 
 __all__ = ["Ellipse"]
 
-MIN_RATIO = 1e-6
+MIN_RATIO = 1e-10
 MAX_RATIO = 1.0
 
 
@@ -82,7 +82,7 @@ acdb_ellipse = DefSubclass(
             validator=validator.is_not_null_vector,
             fixer=RETURN_DEFAULT,
         ),
-        # Ratio has to be in the range from 1e-6 to 1, but could be negative:
+        # Ratio has to be in the range: -1.0 ... -1e-10 and +1e-10 ... +1.0:
         "ratio": DXFAttr(
             40, default=MAX_RATIO, validator=is_valid_ratio, fixer=fix_ratio
         ),
