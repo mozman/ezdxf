@@ -8,6 +8,8 @@ Version 1.0.1 - dev
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
 - BUGFIX: [#793](https://github.com/mozman/ezdxf/issues/793)
   fix LWPOLYLINE parsing in `ProxyGraphic` class
+- BUGFIX: [#800](https://github.com/mozman/ezdxf/issues/800)
+  fix minimum axis-ratio for the ELLIPSE entity
 
 Version 1.0.0 - 2022-12-09
 --------------------------
