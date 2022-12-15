@@ -516,6 +516,12 @@ class which influences the line width:
 - :attr:`~ezdxf.addons.drawing.config.Configuration.lineweight_scaling`, multiply the
   line width by a this factor
 
+The following table shows the line width in pixels for all valid DXF lineweights for a
+resolution of 72, 100, 200 and 300 dpi:
+
+.. image:: gfx/lineweight_table.png
+    :align: center
+
 .. seealso::
 
     Discussion: https://github.com/mozman/ezdxf/discussions/797
