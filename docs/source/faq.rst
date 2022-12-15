@@ -96,7 +96,7 @@ or the underlying technology is no longer supported.
 All of this is unacceptable for a data storage format that should be accessed
 for many years or decades (e.g. construction drawings for buildings or bridges).
 
-Rendering SHX Fonts
+Rendering SHX fonts
 -------------------
 
 The SHX font format is not documented nor supported by many libraries/packages
@@ -108,5 +108,17 @@ Drawing Add-on
 --------------
 
 There is a dedicated how-to section for the :ref:`how_to_drawing_addon`.
+
+Is the AutoCAD command XYZ available?
+-------------------------------------
+
+TLDR; Would you expect Photoshop features from a JPG library?
+
+The package is designed as an interface to the DXF format and therefore does not offer
+any advanced features of interactive CAD applications. First, some tasks are difficult
+to perform without human guidance, and second, in complex situations, it's not that easy
+to tell a "headless" system what exactly to do, so it's very likely that not many users
+would ever use these features, despite the fact that a lot of time and effort would have
+to be spent on development, testing and long-term support.
 
 .. _OLE: https://en.wikipedia.org/wiki/Object_Linking_and_Embedding
