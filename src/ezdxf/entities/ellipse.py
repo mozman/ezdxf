@@ -301,15 +301,20 @@ class Ellipse(DXFGraphic):
                 message=f"Removed {entity} with invalid major axis: (0, 0, 0).",
             )
             return
-        if abs(self.dxf.ratio) > MAX_RATIO:
+        axis_ratio = self.dxf.ratio
+        if is_valid_ratio(axis_ratio):
+            # remove possible floating point imprecision:
+            self.dxf.ratio = clamp_axis_ratio(axis_ratio)
+            return
+        if abs(axis_ratio) > MAX_RATIO:
             self.swap_axis()
             auditor.fixed_error(
                 code=AuditError.INVALID_ELLIPSE_RATIO,
-                message=f"Fixed invalid ratio in {entity} by swapping axis.",
+                message=f"Fixed invalid axis-ratio in {entity} by swapping axis.",
             )
-        elif abs(self.dxf.ratio) < MIN_RATIO:
-            self.dxf.ratio = clamp_axis_ratio(self.dxf.ratio)
+        elif abs(axis_ratio) < MIN_RATIO:
+            self.dxf.ratio = clamp_axis_ratio(axis_ratio)
             auditor.fixed_error(
                 code=AuditError.INVALID_ELLIPSE_RATIO,
-                message=f"Fixed invalid ratio in {entity}, set to {MIN_RATIO}.",
+                message=f"Fixed invalid axis-ratio in {entity}, set to {MIN_RATIO}.",
             )
