@@ -9,7 +9,8 @@ Version 1.0.1 - dev
 - BUGFIX: [#793](https://github.com/mozman/ezdxf/issues/793)
   fix LWPOLYLINE parsing in `ProxyGraphic` class
 - BUGFIX: [#800](https://github.com/mozman/ezdxf/issues/800)
-  fix minimum axis-ratio for the ELLIPSE entity
+  fix minimum axis-ratio for the ELLIPSE entity, added upperbound tolerance to axis-ratio 
+  validator to take floating point imprecision into account
 
 Version 1.0.0 - 2022-12-09
 --------------------------
