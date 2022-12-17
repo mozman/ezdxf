@@ -1,4 +1,4 @@
-name: PyPI source deployer
+name: PyPI pure Python wheel deployer
 on:
   push:
     tags:
