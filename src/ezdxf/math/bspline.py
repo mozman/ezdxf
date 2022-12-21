@@ -677,27 +677,30 @@ def cad_fit_point_interpolation(
         as list of floats
 
     """
-    def eq1_params() -> list[float]:
+
+    def coefficients1() -> list[float]:
         """Returns the coefficients for equation [1]."""
-        u = knots
-        f = p * (p - 1) / u[p + 1]
+        # Piegl & Tiller: "The NURBS Book" formula (3.9)
+        up1 = knots[p + 1]
+        up2 = knots[p + 2]
+        f = p * (p - 1) / up1
         return [
-            +f / knots[p + 1],  # P0
-            -f * (u[p + 1] + u[p + 2]) / (u[p + 1] * u[p + 2]),  # P1
-            +f / u[p + 2],  # P2
+            f / up1,  # P0
+            -f * (up1 + up2) / (up1 * up2),  # P1
+            f / up2,  # P2
         ]
 
-    def eq2_params() -> list[float]:
+    def coefficients2() -> list[float]:
         """Returns the coefficients for equation [n-1]."""
-        u = knots
+        # Piegl & Tiller: "The NURBS Book" formula (3.10)
         m = len(knots) - 1
-        mp1 = m - p - 1
-        mp2 = m - p - 2
-        f = p * (p - 1) / (1 - u[mp1])
+        ump1 = knots[m - p - 1]
+        ump2 = knots[m - p - 2]
+        f = p * (p - 1) / (1.0 - ump1)
         return [
-            +f / (1 - u[mp2]),  # Pn-2
-            -f * (2 - u[mp1] - u[mp2]) / (1 - u[mp1]) / (1 - u[mp2]),  # Pn-1
-            +f / (1 - u[mp1]),  # Pn
+            f / (1.0 - ump2),  # Pn-2
+            -f * (2.0 - ump1 - ump2) / (1.0 - ump1) / (1.0 - ump2),  # Pn-1
+            f / (1.0 - ump1),  # Pn
         ]
 
     t_vector = list(create_t_vector(fit_points, "chord"))
@@ -710,8 +713,8 @@ def cad_fit_point_interpolation(
     N = Basis(knots=knots, order=p + 1, count=n + 3)
     rows = [N.basis_vector(u) for u in t_vector]
     spacing = [0.0] * n
-    rows.insert(1, eq1_params() + spacing)
-    rows.insert(-1, spacing + eq2_params())
+    rows.insert(1, coefficients1() + spacing)
+    rows.insert(-1, spacing + coefficients2())
 
     # C"(0) == 0
     fit_points.insert(1, Vec3(0, 0, 0))
