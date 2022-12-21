@@ -954,25 +954,18 @@ class CreatorInterface:
         self,
         fit_points: Iterable[UVec],
         tangents: Optional[Iterable[UVec]] = None,
-        estimate: str = "5-p",
         dxfattribs=None,
     ) -> Spline:
         """Add a :class:`~ezdxf.entities.Spline` entity passing through the
         given fit points.
-        This method tries to create the same curve as CAD applications do.
-        To understand the limitations and for more information see function
-        :func:`ezdxf.math.fit_points_to_cad_cv`.
 
         Args:
             fit_points: iterable of fit points as (x, y[, z]) in :ref:`WCS`
             tangents: start- and end tangent, default is autodetect
-            estimate: tangent direction estimation method
             dxfattribs: additional DXF attributes
 
         """
-        s = fit_points_to_cad_cv(
-            fit_points, tangents=tangents, estimate=estimate
-        )
+        s = fit_points_to_cad_cv(fit_points, tangents=tangents)
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.apply_construction_tool(s)
         return spline

@@ -94,7 +94,6 @@ __all__ = [
 def fit_points_to_cad_cv(
     fit_points: Iterable[UVec],
     tangents: Optional[Iterable[UVec]] = None,
-    estimate: str = "5-p",
 ) -> BSpline:
     """Returns a cubic :class:`BSpline` from fit points as close as possible
     to common CAD applications like BricsCAD.
@@ -102,58 +101,32 @@ def fit_points_to_cad_cv(
     There exist infinite numerical correct solution for this setup, but some
     facts are known:
 
-    - Global curve interpolation with start- and end derivatives, e.g. 6 fit points
-      creates 8 control vertices in BricsCAD
-    - Degree of B-spline is always 3, the stored degree is ignored,
-      this is only valid for B-splines defined by fit points
+    - CAD applications use the global curve interpolation with start- and end
+      derivatives if the end tangents are defined otherwise the equation system will
+      be completed by setting the second derivatives of the start and end point to 0,
+      for more information read this answer on stackoverflow: https://stackoverflow.com/a/74863330/6162864
+    - The degree of the B-spline is always 3 regardless which degree is stored in the
+      SPLINE entity, this is only valid for B-splines defined by fit points
     - Knot parametrization method is "chord"
     - Knot distribution is "natural"
-
-    The last missing parameter is the start- and end tangents estimation method
-    used by BricsCAD, if these tangents are stored in the DXF file provide them
-    as argument `tangents` as 2-tuple (start, end) and the interpolated control
-    vertices will match the BricsCAD calculation, except for floating point
-    imprecision.
-
-    If the end tangents are not given, the start- and ent tangent directions
-    will be estimated. The argument `estimate` lets choose from different
-    estimation methods (first 3 letters are significant):
-
-    - "3-points": 3 point interpolation
-    - "5-points": 5 point interpolation
-    - "bezier": tangents from an interpolated cubic bezier curve
-    - "diff": finite difference
-
-    The estimation method "5-p" yields the closest match to the BricsCAD
-    rendering, but sometimes "bez" creates a better result.
-
-    If I figure out how BricsCAD estimates the end tangents directions, the
-    argument `estimate` gets an additional value for that case. The existing
-    estimation methods will perform the same way as now, except for bug fixes.
-    But the default value may change, therefore set argument `estimate` to
-    specific value to always get the same result in the future.
 
     Args:
         fit_points: points the spline is passing through
         tangents: start- and end tangent, default is autodetect
-        estimate: tangent direction estimation method
 
     """
     # See also Spline class in ezdxf/entities/spline.py:
-    # degree has no effect. A spline with degree=3 is always constructed when
-    # interpolating a series of fit points.
     points = Vec3.list(fit_points)
     if len(points) < 2:
         raise ValueError("two or more points required ")
-    m1, m2 = estimate_end_tangent_magnitude(points, method="chord")
+
     if tangents is None:
-        t = estimate_tangents(points, method=estimate, normalize=False)
-        start_tangent = t[0].normalize(m1)
-        end_tangent = t[-1].normalize(m2)
-    else:
-        t = Vec3.list(tangents)
-        start_tangent = t[0].normalize(m1)
-        end_tangent = t[-1].normalize(m2)
+        control_points, knots = cad_fit_point_interpolation(points)
+        return BSpline(control_points, order=4, knots=knots)
+    t = Vec3.list(tangents)
+    m1, m2 = estimate_end_tangent_magnitude(points, method="chord")
+    start_tangent = t[0].normalize(m1)
+    end_tangent = t[-1].normalize(m2)
 
     return global_bspline_interpolation(
         points,
