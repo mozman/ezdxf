@@ -21,7 +21,6 @@ from ezdxf.math.bspline import (
     natural_knots_unconstrained,
     double_knots,
     create_t_vector,
-    normalize_knots,
 )
 
 POINTS1 = Vec3.list([(1, 1), (2, 4), (4, 1), (7, 6)])
@@ -279,9 +278,22 @@ def test_check_values():
         assert isclose(p1[1], p2[1], abs_tol=1e-6)
 
 
-def test_cad_fit_point_interpolation():
+def test_cad_fit_point_interpolation_for_2_points():
+    points = Vec3.list([(0, 0), (0, 10)])
+    control_points, knots = cad_fit_point_interpolation(points)
+    assert control_points[0].isclose(points[0])
+    assert control_points[-1].isclose(points[-1])
+    assert len(control_points) == 4
+    assert len(knots) == required_knot_values(4, 4) == 8
+
+
+def test_cad_fit_point_interpolation_for_5_points():
     points = Vec3.list([(0, 0), (0, 10), (10, 10), (20, 10), (20, 0)])
     control_points, knots = cad_fit_point_interpolation(points)
+    assert len(control_points) == 7
+    assert len(knots) == required_knot_values(7, 4) == 11
+
+    # Checked visually by BricsCAD 2022 and TrieView 2022:
     assert control_points[0].isclose(points[0])
     assert control_points[1].isclose(Vec3(-0.8333333333333334, 4.285714285714286, -0.0))
     assert control_points[2].isclose(Vec3(-2.5, 12.857142857142858, 0.0))
@@ -289,3 +301,5 @@ def test_cad_fit_point_interpolation():
     assert control_points[4].isclose(Vec3(22.5, 12.857142857142858, 0.0))
     assert control_points[5].isclose(Vec3(20.833333333333332, 4.2857142857142865, -0.0))
     assert control_points[6].isclose(points[-1])
+
+

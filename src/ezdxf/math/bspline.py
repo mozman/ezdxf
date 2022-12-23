@@ -34,7 +34,6 @@ from ezdxf.math import (
     Evaluator,
     create_t_vector,
     estimate_end_tangent_magnitude,
-    estimate_tangents,
     linspace,
     distance_point_line_3d,
     arc_angle_span_deg,
@@ -285,7 +284,7 @@ def local_cubic_bspline_interpolation(
 
 
 def required_knot_values(count: int, order: int) -> int:
-    """Returns the count of required knot values for a B-spline of `order` and
+    """Returns the count of required knot-values for a B-spline of `order` and
     `count` control points.
 
     Args:
