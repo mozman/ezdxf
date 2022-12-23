@@ -293,7 +293,9 @@ def test_cad_fit_point_interpolation_for_5_points():
     assert len(control_points) == 7
     assert len(knots) == required_knot_values(7, 4) == 11
 
-    # Checked visually by BricsCAD 2022 and TrieView 2022:
+    # Checked visually by BricsCAD 2022 and TrueView 2022:
+    # See function check_visually_fit_points_to_cad_cv() in script
+    # exploration/spline_end_tangent_estimation.py
     assert control_points[0].isclose(points[0])
     assert control_points[1].isclose(Vec3(-0.8333333333333334, 4.285714285714286, -0.0))
     assert control_points[2].isclose(Vec3(-2.5, 12.857142857142858, 0.0))
