@@ -2,7 +2,6 @@
 #  License: MIT License
 from __future__ import annotations
 import pathlib
-import math
 import ezdxf
 from ezdxf import zoom
 from ezdxf.math import (
@@ -10,7 +9,6 @@ from ezdxf.math import (
     estimate_tangents,
     estimate_end_tangent_magnitude,
     global_bspline_interpolation,
-    linspace,
     cubic_bezier_interpolation,
     bezier_to_bspline,
     fit_points_to_cad_cv,
