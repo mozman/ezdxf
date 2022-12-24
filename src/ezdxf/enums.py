@@ -235,3 +235,19 @@ class ACI(IntEnum):
     WHITE = 7
     GRAY = 8
     LIGHT_GRAY = 9
+
+
+class EndCaps(IntEnum):
+    """ Lineweight end caps setting for new objects. """
+    NONE = 0
+    ROUND = 1
+    ANGLE = 2
+    SQUARE = 3
+
+
+class JoinStyle(IntEnum):
+    """ Lineweight joint setting for new objects. """
+    NONE = 0
+    ROUND = 1
+    ANGLE = 2
+    FLAT = 3

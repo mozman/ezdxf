@@ -288,3 +288,30 @@ ACI
     .. attribute:: GRAY
 
     .. attribute:: LIGHT_GRAY
+
+EndCaps
+-------
+
+.. autoclass:: EndCaps
+
+    .. attribute:: NONE
+
+    .. attribute:: ROUND
+
+    .. attribute:: ANGLE
+
+    .. attribute:: SQUARE
+
+JoinStyle
+---------
+
+.. autoclass:: JoinStyle
+
+    .. attribute:: NONE
+
+    .. attribute:: ROUND
+
+    .. attribute:: ANGLE
+
+    .. attribute:: FLAT
+

@@ -6,6 +6,7 @@ Version 1.0.1b1 - dev
 -------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
+- NEW: function `set_lineweight_display_style()` in module `ezdxf.appsettings`
 - CHANGE: the function `fit_points_to_cad_cv()` can calculate the control points of 
   B-splines from fit points like BricsCAD, the argument `estimate` is not necessary 
   anymore and is removed
