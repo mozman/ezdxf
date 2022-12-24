@@ -104,9 +104,7 @@ class Importer:
         if entity.is_supported_dxf_attrib("style"):
             self.used_styles.add(entity.get_dxf_attrib("style", "Standard"))
         if entity.is_supported_dxf_attrib("dimstyle"):
-            self.used_dimstyles.add(
-                entity.get_dxf_attrib("dimstyle", "Standard")
-            )
+            self.used_dimstyles.add(entity.get_dxf_attrib("dimstyle", "Standard"))
 
     def _add_dimstyle_resources(self, dimstyle: DimStyle) -> None:
         self.used_styles.add(dimstyle.get_dxf_attrib("dimtxsty", "Standard"))
@@ -119,15 +117,17 @@ class Importer:
         self.used_arrows.add(dimstyle.get_dxf_attrib("dimldrblk", ""))
 
     def _add_linetype_resources(self, linetype: Linetype) -> None:
-        if linetype.pattern_tags.is_complex_type():
-            style_handle = linetype.pattern_tags.get_style_handle()
-            style = self.source.entitydb.get(style_handle)
-            if style:
-                if style.dxf.name == "":
-                    # Shape file entries have no name!
-                    self.used_shape_files.add(style.dxf.font)
-                else:
-                    self.used_styles.add(style.dxf.name)
+        if not linetype.pattern_tags.is_complex_type():
+            return
+        style_handle = linetype.pattern_tags.get_style_handle()
+        style = self.source.entitydb.get(style_handle)
+        if style is None:
+            return
+        if style.dxf.name == "":
+            # Shape file entries have no name!
+            self.used_shape_files.add(style.dxf.font)
+        else:
+            self.used_styles.add(style.dxf.name)
 
     def import_tables(
         self, table_names: Union[str, Iterable[str]] = "*", replace=False
@@ -218,9 +218,7 @@ class Importer:
             target_table.add_entry(new_table_entry)
 
             # Register resource handles for mapping:
-            self.handle_mapping[
-                table_entry.dxf.handle
-            ] = new_table_entry.dxf.handle
+            self.handle_mapping[table_entry.dxf.handle] = new_table_entry.dxf.handle
 
     def import_shape_files(self, fonts: set[str]) -> None:
         """Import shape file table entries from the source document into the
@@ -234,9 +232,7 @@ class Importer:
             new_table_entry = self.target.styles.get_shx(font)
             if table_entry:
                 # Register resource handles for mapping:
-                self.handle_mapping[
-                    table_entry.dxf.handle
-                ] = new_table_entry.dxf.handle
+                self.handle_mapping[table_entry.dxf.handle] = new_table_entry.dxf.handle
             else:
                 logger.warning(f'Required shape file entry "{font}" not found.')
 
@@ -284,8 +280,7 @@ class Importer:
             target_layout = self.target.modelspace()
         elif target_layout.doc != self.target:
             raise const.DXFStructureError(
-                "Target layout has to be a layout or block from the target "
-                "document."
+                "Target layout has to be a layout or block from the target " "document."
             )
 
         dxftype = entity.dxftype()
@@ -343,9 +338,7 @@ class Importer:
                     self.import_block(entity.dxf.name, rename=False)
                 self._add_used_resources(entity)
         else:
-            logger.error(
-                "The required geometry block for DIMENSION is not defined."
-            )
+            logger.error("The required geometry block for DIMENSION is not defined.")
 
     def import_entities(
         self,
@@ -367,9 +360,7 @@ class Importer:
         for entity in entities:
             self.import_entity(entity, target_layout)
 
-    def import_modelspace(
-        self, target_layout: Optional[BaseLayout] = None
-    ) -> None:
+    def import_modelspace(self, target_layout: Optional[BaseLayout] = None) -> None:
         """Import all entities from source modelspace into `target_layout` or
         the modelspace of the target document, if `target_layout` is ``None``.
 
@@ -381,9 +372,7 @@ class Importer:
             DXFStructureError: `target_layout` is not a layout of target document
 
         """
-        self.import_entities(
-            self.source.modelspace(), target_layout=target_layout
-        )
+        self.import_entities(self.source.modelspace(), target_layout=target_layout)
 
     def recreate_source_layout(self, name: str) -> Layout:
         """Recreate source paperspace layout `name` in the target document.
@@ -431,9 +420,7 @@ class Importer:
         source_layout = self.source.layouts.get(name)  # raises KeyError
         target_name = get_target_name()
         dxfattribs = clear(source_layout.dxf_layout.dxfattribs())
-        target_layout = self.target.layouts.new(
-            target_name, dxfattribs=dxfattribs
-        )
+        target_layout = self.target.layouts.new(target_name, dxfattribs=dxfattribs)
         return target_layout
 
     def import_paperspace_layout(self, name: str) -> Layout:
@@ -619,13 +606,21 @@ class Importer:
         # 6. Update text style handles of imported complex linetypes:
         self.update_complex_linetypes()
 
+    def _add_required_complex_linetype_resources(self):
+        for ltype_name in self.used_linetypes:
+            try:
+                ltype = self.source.linetypes.get(ltype_name)
+            except const.DXFTableEntryError:
+                continue
+            self._add_linetype_resources(ltype)
+
     def update_complex_linetypes(self):
+        std_handle = self.target.styles.get("STANDARD").dxf.handle
         for linetype in self.target.linetypes:
             if linetype.pattern_tags.is_complex_type():
                 old_handle = linetype.pattern_tags.get_style_handle()
-                new_handle = self.handle_mapping.get(old_handle)
-                if new_handle:
-                    linetype.pattern_tags.set_style_handle(new_handle)
+                new_handle = self.handle_mapping.get(old_handle, std_handle)
+                linetype.pattern_tags.set_style_handle(new_handle)
 
     def finalize(self) -> None:
         """Finalize the import by importing required table entries and BLOCK
@@ -635,13 +630,12 @@ class Importer:
 
         """
         self._resolve_inserts()
+        self._add_required_complex_linetype_resources()
         self._import_required_table_entries()
         self._create_missing_arrows()
 
 
-def new_clean_entity(
-    entity: DXFEntity, keep_xdata: bool = False
-) -> DXFEntity:
+def new_clean_entity(entity: DXFEntity, keep_xdata: bool = False) -> DXFEntity:
     """Copy entity and remove all external dependencies.
 
     Args:
@@ -654,9 +648,7 @@ def new_clean_entity(
     return remove_dependencies(new_entity, keep_xdata=keep_xdata)
 
 
-def remove_dependencies(
-    entity: DXFEntity, keep_xdata: bool = False
-) -> DXFEntity:
+def remove_dependencies(entity: DXFEntity, keep_xdata: bool = False) -> DXFEntity:
     """Remove all external dependencies.
 
     Args:
