@@ -24,9 +24,7 @@ def test_close_polygon():
 
 
 def test_close_polygon_without_doublets():
-    p = forms.close_polygon(
-        Vec3.generate([(1, 0), (2, 0), (3, 0), (4, 0), (1, 0)])
-    )
+    p = forms.close_polygon(Vec3.generate([(1, 0), (2, 0), (3, 0), (4, 0), (1, 0)]))
     assert len(p) == 5
 
 
@@ -257,8 +255,7 @@ def test_intersection_profiles():
     profiles = forms._intersection_profiles([p0, p2], [p1, p3])
     assert profiles[0] == p0
     assert (
-        close_vectors(profiles[1], [(0, 0, 1), (1, 0, 2), (1, 1, 2), (0, 1, 1)])
-        is True
+        close_vectors(profiles[1], [(0, 0, 1), (1, 0, 2), (1, 1, 2), (0, 1, 1)]) is True
     )
     assert profiles[2] == p3
 
@@ -347,17 +344,13 @@ class TestExtrude2:
     def test_extrude_square_without_intermediate_profiles(self):
         profile = forms.square(center=True)
         path = [(0, 0), (10, 0)]
-        mesh = forms.extrude_twist_scale(
-            profile, path, close=True, step_size=0.0
-        )
+        mesh = forms.extrude_twist_scale(profile, path, close=True, step_size=0.0)
         assert len(mesh.vertices) == 8
 
     def test_extrude_square_with_intermediate_profiles(self):
         profile = forms.square(center=True)
         path = [(0, 0), (0, 0, 10)]
-        mesh = forms.extrude_twist_scale(
-            profile, path, close=True, step_size=1.0
-        )
+        mesh = forms.extrude_twist_scale(profile, path, close=True, step_size=1.0)
         assert len(mesh.vertices) == 11 * 4
         assert len(mesh.faces) == 10 * 4
 
@@ -430,3 +423,46 @@ def test_turtle_move_relative():
     vertices = list(forms.turtle("@10,10"))
     assert len(vertices) == 2
     assert vertices[-1].isclose((10, 10))
+
+
+class TestCylinder2p:
+    def test_default_arguments(self):
+        cylinder = forms.cylinder_2p(16)
+        diag = cylinder.diagnose()
+        assert diag.n_faces == 16 + 2
+
+    def test_cylinder_height_of_0_raises_value_error(self):
+        with pytest.raises(ValueError):
+            forms.cylinder_2p(16, base_center=(0, 0, 0), top_center=(0, 0, 0))
+
+    @pytest.mark.parametrize(
+        "s,e",
+        [
+            [(1, 2, 3), (3, 2, 1)],
+            [(0, 0, -3), (0, 0, 3)],
+            [(0, 0, 3), (0, 0, -3)],
+            [(1, 0, 0), (3, 0, 0)],
+            [(-1, 0, 0), (-3, 0, 0)],
+            [(0, 1, 0), (0, 3, 0)],
+            [(0, -1, 0), (0, -3, 0)],
+        ],
+        ids=[
+            "arbitrary",
+            "+z axis",
+            "-z axis",
+            "+x axis",
+            "-x axis",
+            "+y axis",
+            "-y axis",
+        ],
+    )
+    def test_various_directions(self, s, e):
+        cylinder = forms.cylinder_2p(16, base_center=s, top_center=e)
+        diag = cylinder.diagnose()
+        assert diag.n_faces == 16 + 2
+
+    def test_final_location_for_negative_z_axis(self):
+        cylinder = forms.cylinder_2p(16, base_center=(0, 0, -2), top_center=(0, 0, -4))
+        bbox = cylinder.bbox()
+        assert bbox.extmax.isclose((1, 1, -2))
+        assert bbox.extmin.isclose((-1, -1, -4))

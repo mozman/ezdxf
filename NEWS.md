@@ -16,6 +16,10 @@ Version 1.0.1b1 - dev
 - BUGFIX: [#800](https://github.com/mozman/ezdxf/issues/800)
   fix minimum axis-ratio for the ELLIPSE entity, added upperbound tolerance to axis-ratio 
   validator to take floating point imprecision into account
+- BUGFIX: [#810](https://github.com/mozman/ezdxf/issues/810)
+  fix function `ezdxf.render.forms.cylinder_2p()` for cylinder axis parallel to the 
+  z-axis 
+
 
 Version 1.0.0 - 2022-12-09
 --------------------------

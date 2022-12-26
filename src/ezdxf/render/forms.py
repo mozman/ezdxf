@@ -14,6 +14,7 @@ from ezdxf.math import (
     arc_angle_span_rad,
     NULLVEC,
     Z_AXIS,
+    X_AXIS,
     UCS,
     intersection_ray_ray_3d,
 )
@@ -178,9 +179,7 @@ def box(
         return Vec3(0, 0), Vec3(sx, 0), Vec3(sx, sy), Vec3(0, sy)
 
 
-def open_arrow(
-    size: float = 1.0, angle: float = 30.0
-) -> tuple[Vec3, Vec3, Vec3]:
+def open_arrow(size: float = 1.0, angle: float = 30.0) -> tuple[Vec3, Vec3, Vec3]:
     """Returns 3 vertices for an open arrow `<` with a length of the given
     `size`, argument `angle` defines the enclosing angle in degrees.
     Vertex order: upward end vertex, tip (0, 0) , downward end vertex (counter-
@@ -396,12 +395,8 @@ def gear(
         raise ValueError("Argument `height` has to be smaller than `radius`")
 
     base_radius = outside_radius - height
-    alpha_top = math.asin(
-        top_width / 2.0 / outside_radius
-    )  # angle at tooth top
-    alpha_bottom = math.asin(
-        bottom_width / 2.0 / base_radius
-    )  # angle at tooth bottom
+    alpha_top = math.asin(top_width / 2.0 / outside_radius)  # angle at tooth top
+    alpha_bottom = math.asin(bottom_width / 2.0 / base_radius)  # angle at tooth bottom
     alpha_difference = (
         alpha_bottom - alpha_top
     ) / 2.0  # alpha difference at start and end of tooth
@@ -481,9 +476,7 @@ def turtle(commands: str, start=Vec2(0, 0), angle: float = 0) -> Iterator[Vec2]:
             yield cursor
 
 
-def translate(
-    vertices: Iterable[UVec], vec: UVec = (0, 0, 0)
-) -> Iterable[Vec3]:
+def translate(vertices: Iterable[UVec], vec: UVec = (0, 0, 0)) -> Iterable[Vec3]:
     """Translate `vertices` along `vec`, faster than a Matrix44 transformation.
 
     Args:
@@ -678,9 +671,7 @@ def _partial_path_factors(path: list[Vec3]) -> list[float]:
     return factors
 
 
-def _divide_path_into_steps(
-    path: Sequence[Vec3], max_step_size: float
-) -> list[Vec3]:
+def _divide_path_into_steps(path: Sequence[Vec3], max_step_size: float) -> list[Vec3]:
     new_path: list[Vec3] = [path[0]]
     for v0, v1 in zip(path, path[1:]):
         segment_vec = v1 - v0
@@ -769,9 +760,7 @@ def extrude_twist_scale(
     prev_profile = sweeping_profile
     face_generator = _quad_connection_faces if quads else _tri_connection_faces
     for target_point, factor in zip(extrusion_path[1:], factors[1:]):
-        target_profile = list(
-            matrix(factor).transform_vertices(sweeping_profile)
-        )
+        target_profile = list(matrix(factor).transform_vertices(sweeping_profile))
         for face in face_generator(prev_profile, target_profile):
             mesh.add_face(face)
         prev_profile = target_profile
@@ -807,9 +796,7 @@ def cylinder(
         return cone(count=count, radius=radius, apex=top_center)
 
     base_profile = list(circle(count, radius, close=True))
-    top_profile = list(
-        translate(circle(count, top_radius, close=True), top_center)
-    )
+    top_profile = list(translate(circle(count, top_radius, close=True), top_center))
     return from_profiles_linear(
         [base_profile, top_profile],
         close=False,
@@ -821,32 +808,38 @@ def cylinder(
 def cylinder_2p(
     count: int = 16,
     radius: float = 1,
-    base_center=(0, 0, 0),
-    top_center=(0, 0, 1),
+    base_center: UVec = (0, 0, 0),
+    top_center: UVec = (0, 0, 1),
     caps=True,
 ) -> MeshTransformer:
-    """Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as
+    """Creates a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as
     :class:`~ezdxf.render.MeshTransformer` object from two points,
     `base_center` is the center of the base circle and, `top_center` the center
     of the top circle.
 
     Args:
-        count: profiles edge count
+        count: cylinder profile edge count
         radius: radius for bottom profile
         base_center: center of base circle
         top_center: center of top circle
         caps: close hull with top- and  bottom faces (ngons)
 
-    Returns: :class:`~ezdxf.render.MeshTransformer`
+    Raises:
+        ValueError: the cylinder orientation cannot be detected (base center == top center)
 
     """
-
     origin = Vec3(base_center)
     heading = Vec3(top_center) - origin
-    mesh = cylinder(
-        count, radius, top_center=(0, 0, heading.magnitude), caps=caps
-    )
-    ucs = reference_frame_z(heading, origin=origin)
+    if heading.is_null:
+        raise ValueError(
+            "cylinder orientation cannot be detected (base center == top center)"
+        )
+    mesh = cylinder(count, radius, top_center=(0, 0, heading.magnitude), caps=caps)
+    try:
+        ucs = UCS(origin=origin, uy=Z_AXIS.cross(heading), uz=heading)
+    except ZeroDivisionError:
+        # heading vector is parallel to the z-axis
+        ucs = UCS(origin=origin, ux=X_AXIS, uz=heading)
     mesh.transform(ucs.matrix)
     return mesh
 
@@ -872,9 +865,7 @@ def from_profiles_linear(
     if close:
         profiles = [close_polygon(p) for p in profiles]
     if caps:
-        mesh.add_face(
-            reversed(profiles[0])
-        )  # for correct outside pointing normals
+        mesh.add_face(reversed(profiles[0]))  # for correct outside pointing normals
     face_generator = _quad_connection_faces if quads else _tri_connection_faces
     for p0, p1 in zip(profiles, profiles[1:]):
         for face in face_generator(p0, p1):
@@ -906,9 +897,7 @@ def spline_interpolation(
 
     """
     vertices = list(vertices)
-    spline = global_bspline_interpolation(
-        vertices, degree=degree, method=method
-    )
+    spline = global_bspline_interpolation(vertices, degree=degree, method=method)
     return list(spline.approximate(segments=(len(vertices) - 1) * subdivide))
 
 
@@ -930,9 +919,7 @@ def spline_interpolated_profiles(
         raise ValueError("All profiles have to have the same vertex count")
 
     vertex_count = len(profiles[0])
-    edges = (
-        []
-    )  # interpolated spline vertices, where profile vertices are fit points
+    edges = []  # interpolated spline vertices, where profile vertices are fit points
     for index in range(vertex_count):
         edge_vertices = [p[index] for p in profiles]
         edges.append(spline_interpolation(edge_vertices, subdivide=subdivide))
@@ -1220,9 +1207,7 @@ def torus(
 def connection_faces(
     start_profile: list[Vec3], end_profile: list[Vec3], quad: bool
 ) -> Iterator[Sequence[Vec3]]:
-    assert len(start_profile) == len(
-        end_profile
-    ), "profiles differ in vertex count"
+    assert len(start_profile) == len(end_profile), "profiles differ in vertex count"
     if quad:
         yield from _quad_connection_faces(start_profile, end_profile)
     else:
