@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Sequence, Iterable
+from typing import TYPE_CHECKING, Sequence, Iterable, Optional
 from ezdxf.math import Vec3, UVec, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 
 if TYPE_CHECKING:
@@ -111,7 +111,7 @@ class OCS:
 
 
 class UCS:
-    """Establish an user coordinate system (:ref:`UCS`). The UCS is defined by
+    """Establish a user coordinate system (:ref:`UCS`). The UCS is defined by
     the origin and two unit vectors for the x-, y- or z-axis, all axis in
     :ref:`WCS`. The missing axis is the cross product of the given axis.
 
@@ -133,9 +133,9 @@ class UCS:
     def __init__(
         self,
         origin: UVec = (0, 0, 0),
-        ux: UVec = None,
-        uy: UVec = None,
-        uz: UVec = None,
+        ux: Optional[UVec] = None,
+        uy: Optional[UVec] = None,
+        uz: Optional[UVec] = None,
     ):
         if ux is None and uy is None:
             _ux: Vec3 = X_AXIS
