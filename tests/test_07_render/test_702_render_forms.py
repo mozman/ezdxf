@@ -466,3 +466,46 @@ class TestCylinder2p:
         bbox = cylinder.bbox()
         assert bbox.extmax.isclose((1, 1, -2))
         assert bbox.extmin.isclose((-1, -1, -4))
+
+
+class TestCone2p:
+    def test_default_arguments(self):
+        cone = forms.cone_2p(16)
+        diag = cone.diagnose()
+        assert diag.n_faces == 16 + 1
+
+    def test_cylinder_height_of_0_raises_value_error(self):
+        with pytest.raises(ValueError):
+            forms.cone_2p(16, base_center=(0, 0, 0), apex=(0, 0, 0))
+
+    @pytest.mark.parametrize(
+        "s,e",
+        [
+            [(1, 2, 3), (3, 2, 1)],
+            [(0, 0, -3), (0, 0, 3)],
+            [(0, 0, 3), (0, 0, -3)],
+            [(1, 0, 0), (3, 0, 0)],
+            [(-1, 0, 0), (-3, 0, 0)],
+            [(0, 1, 0), (0, 3, 0)],
+            [(0, -1, 0), (0, -3, 0)],
+        ],
+        ids=[
+            "arbitrary",
+            "+z axis",
+            "-z axis",
+            "+x axis",
+            "-x axis",
+            "+y axis",
+            "-y axis",
+        ],
+    )
+    def test_various_directions(self, s, e):
+        cone = forms.cone_2p(16, base_center=s, apex=e)
+        diag = cone.diagnose()
+        assert diag.n_faces == 16 + 1
+
+    def test_final_location_for_negative_z_axis(self):
+        cone = forms.cone_2p(16, base_center=(0, 0, -2), apex=(0, 0, -4))
+        bbox = cone.bbox()
+        assert bbox.extmax.isclose((1, 1, -2))
+        assert bbox.extmin.isclose((-1, -1, -4))

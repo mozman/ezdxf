@@ -810,6 +810,7 @@ def cylinder_2p(
     radius: float = 1,
     base_center: UVec = (0, 0, 0),
     top_center: UVec = (0, 0, 1),
+    *,
     caps=True,
 ) -> MeshTransformer:
     """Creates a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as
@@ -994,8 +995,8 @@ def cone(
 def cone_2p(
     count: int = 16,
     radius: float = 1.0,
-    base_center=(0, 0, 0),
-    apex=(0, 0, 1),
+    base_center: UVec = (0, 0, 0),
+    apex: UVec = (0, 0, 1),
     *,
     caps=True,
 ) -> MeshTransformer:
@@ -1010,11 +1011,23 @@ def cone_2p(
         apex: tip of the cone
         caps: add a bottom face as ngon if ``True``
 
+    Raises:
+        ValueError: the cone orientation cannot be detected (base center == apex)
+
     """
     origin = Vec3(base_center)
     heading = Vec3(apex) - origin
+    if heading.is_null:
+        raise ValueError(
+            "the cone orientation cannot be detected (base center == apex)"
+        )
+
     mesh = cone(count, radius, apex=(0, 0, heading.magnitude), caps=caps)
-    ucs = reference_frame_z(heading, origin=origin)
+    try:
+        ucs = UCS(origin=origin, uy=Z_AXIS.cross(heading), uz=heading)
+    except ZeroDivisionError:
+        # heading vector is parallel to the z-axis
+        ucs = UCS(origin=origin, ux=X_AXIS, uz=heading)
     mesh.transform(ucs.matrix)
     return mesh
 
