@@ -57,9 +57,7 @@ class Table(Generic[T]):
         if isinstance(table_head, TableHead):
             self._head = table_head
         else:
-            raise const.DXFStructureError(
-                "Critical structure error in TABLES section."
-            )
+            raise const.DXFStructureError("Critical structure error in TABLES section.")
         expected_entry_dxftype = self.TABLE_TYPE
         for table_entry in entities:
             if table_entry.dxftype() == expected_entry_dxftype:
@@ -187,9 +185,7 @@ class Table(Generic[T]):
         Duplicate entries are possible for Viewports.
         """
         assert self.doc is not None, "valid DXF document expected"
-        entry = cast(
-            T, factory.create_db_entry(self.TABLE_TYPE, dxfattribs, self.doc)
-        )
+        entry = cast(T, factory.create_db_entry(self.TABLE_TYPE, dxfattribs, self.doc))
 
         self._append(entry)
         return entry
@@ -222,28 +218,17 @@ class Table(Generic[T]):
     def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         """Export DXF representation. (internal API)"""
 
-        def prologue():
-            self.update_owner_handles()
-            # The table head itself has no owner and is therefore always '0':
-            self._head.dxf.owner = "0"
-            self._head.dxf.count = len(self)
-            self._head.export_dxf(tagwriter)
+        self.update_owner_handles()
+        # The table head itself has no owner and is therefore always '0':
+        self._head.dxf.owner = "0"
+        self._head.dxf.count = len(self)
+        self._head.export_dxf(tagwriter)
+        self.export_table_entries(tagwriter)
+        tagwriter.write_tag2(0, "ENDTAB")
 
-        def content():
-            for entry in self.entries.values():
-                # VPORT
-                if isinstance(entry, list):
-                    for e in entry:
-                        e.export_dxf(tagwriter)
-                else:
-                    entry.export_dxf(tagwriter)
-
-        def epilogue():
-            tagwriter.write_tag2(0, "ENDTAB")
-
-        prologue()
-        content()
-        epilogue()
+    def export_table_entries(self, tagwriter: AbstractTagWriter) -> None:
+        for entry in self.entries.values():
+            entry.export_dxf(tagwriter)
 
     def update_owner_handles(self) -> None:
         owner_handle = self._head.dxf.handle
@@ -422,9 +407,25 @@ class LinetypeTable(Table[Linetype]):
 class TextstyleTable(Table[Textstyle]):
     TABLE_TYPE = "STYLE"
 
-    def add(
-        self, name: str, *, font: str, dxfattribs=None
-    ) -> Textstyle:
+    def __init__(self) -> None:
+        super().__init__()
+        self.shx_files: dict[str, Textstyle] = dict()
+
+    def export_table_entries(self, tagwriter: AbstractTagWriter) -> None:
+        super().export_table_entries(tagwriter)
+        for shx_file in self.shx_files.values():
+            shx_file.export_dxf(tagwriter)
+
+    def _append(self, entry: Textstyle) -> None:
+        """Add a table entry, replaces existing entries with same name.
+        (internal API).
+        """
+        if entry.dxf.name == "" and (entry.dxf.flags & 1):  # shx shape file
+            self.shx_files[self.key(entry.dxf.font)] = entry
+        else:
+            self.entries[self.key(entry.dxf.name)] = entry
+
+    def add(self, name: str, *, font: str, dxfattribs=None) -> Textstyle:
         """Add a new text style entry for TTF fonts. The entry must not yet
         exist, otherwise an :class:`DXFTableEntryError` exception will be
         raised.
@@ -435,7 +436,7 @@ class TextstyleTable(Table[Textstyle]):
         Args:
             name (str): text style name
             font (str): TTF font file name like "Arial.ttf", the real font file
-                name from the file system is required and remember only Windows
+                name from the file system is required and only the Windows filesystem
                 is case-insensitive.
             dxfattribs (dict): additional DXF attributes
 
@@ -450,23 +451,23 @@ class TextstyleTable(Table[Textstyle]):
         )
         return self.new_entry(dxfattribs)
 
-    def add_shx(self, shx_file: str, *, dxfattribs=None) -> Textstyle:
+    def add_shx(self, shx_file_name: str, *, dxfattribs=None) -> Textstyle:
         """Add a new shape font (SHX file) entry. These are special text style
         entries and have no name. The entry must not yet exist, otherwise an
         :class:`DXFTableEntryError` exception will be raised.
 
-        Finding the SHX files is the task of the DXF viewer and each
+        Locating the SHX files in the filesystem is the task of the DXF viewer and each
         viewer is different (hint: support files).
 
         Args:
-            shx_file (str): shape file name like "gdt.shx"
+            shx_file_name (str): shape file name like "gdt.shx"
             dxfattribs (dict): additional DXF attributes
 
         """
-        if self.find_shx(shx_file) is not None:
+        if self.find_shx(shx_file_name) is not None:
             raise const.DXFTableEntryError(
                 f"{self._head.dxf.name} shape file entry for "
-                f"'{shx_file}' already exists!"
+                f"'{shx_file_name}' already exists!"
             )
 
         dxfattribs = dict(dxfattribs or {})
@@ -474,29 +475,29 @@ class TextstyleTable(Table[Textstyle]):
             {
                 "name": "",  # shape file entry has no name
                 "flags": 1,  # shape file flag
-                "font": shx_file,
+                "font": shx_file_name,
                 "last_height": 2.5,  # maybe required by AutoCAD
             }
         )
         return self.new_entry(dxfattribs)
 
-    def get_shx(self, shx_file: str) -> Textstyle:
+    def get_shx(self, shx_file_name: str) -> Textstyle:
         """Get existing entry for a shape file (SHX file), or create a new
         entry.
 
-        Finding the SHX files is the task of the DXF viewer and each
+        Locating the SHX files in the filesystem is the task of the DXF viewer and each
         viewer is different (hint: support files).
 
         Args:
-            shx_file (str): shape file name like "gdt.shx"
+            shx_file_name (str): shape file name like "gdt.shx"
 
         """
-        shape_file = self.find_shx(shx_file)
+        shape_file = self.find_shx(shx_file_name)
         if shape_file is None:
-            return self.add_shx(shx_file)
+            return self.add_shx(shx_file_name)
         return shape_file
 
-    def find_shx(self, shx_file: str) -> Optional[Textstyle]:
+    def find_shx(self, shx_file_name: str) -> Optional[Textstyle]:
         """Find the shape file (SHX file) text style table entry, by a
         case-insensitive search.
 
@@ -504,20 +505,35 @@ class TextstyleTable(Table[Textstyle]):
         font attribute.
 
         Args:
-            shx_file (str): shape file name like "gdt.shx"
+            shx_file_name (str): shape file name like "gdt.shx"
 
         """
-        lower_name = shx_file.lower()
-        for entry in iter(self):
-            if entry.dxf.font.lower() == lower_name:
-                return entry
-        return None
+        return self.shx_files.get(self.key(shx_file_name))
+
+    def discard_shx(self, shx_file_name: str) -> None:
+        """Discard the shape file (SHX file) text style table entry. Does not raise an
+        exception if the entry does not exist.
+
+        Args:
+            shx_file_name (str): shape file name like "gdt.shx"
+
+        """
+        try:
+            del self.shx_files[self.key(shx_file_name)]
+        except KeyError:
+            pass
 
 
 class ViewportTable(Table[VPort]):
     TABLE_TYPE = "VPORT"
     # Viewport-Table can have multiple entries with same name
     # each table entry is a list of VPORT entries
+
+    def export_table_entries(self, tagwriter: AbstractTagWriter) -> None:
+        for entry in self.entries.values():
+            assert isinstance(entry, list)
+            for e in entry:
+                e.export_dxf(tagwriter)
 
     def new(self, name: str, dxfattribs=None) -> VPort:
         """Create a new table entry."""

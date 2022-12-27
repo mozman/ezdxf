@@ -1,8 +1,9 @@
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
 from ezdxf.sections.tables import TablesSection
+from ezdxf.lldxf.tagwriter import TagCollector
 
 
 @pytest.fixture(scope="module")
@@ -78,6 +79,12 @@ class TestTextStyleTable:
         with pytest.raises(ezdxf.const.DXFTableEntryError):
             tables.styles.add_shx("shapes1.shx")
 
+    def test_add_multiple_shape_files(self, tables: TablesSection):
+        style1 = tables.styles.add_shx("shapes4.shx")
+        style2 = tables.styles.add_shx("shapes5.shx")
+        assert tables.styles.find_shx(style1.dxf.font) is not None
+        assert tables.styles.find_shx(style2.dxf.font) is not None
+
     def test_get_shape_file(self, tables: TablesSection):
         style = tables.styles.get_shx("shapes2.shx")
         assert style.dxf.name == "", "shape files have no name"
@@ -94,6 +101,31 @@ class TestTextStyleTable:
 
     def test_if_shape_file_entry_exist(self, tables: TablesSection):
         assert tables.styles.find_shx("unknown.shx") is None
+
+    def test_discard_shape_files(self, tables: TablesSection):
+        style1 = tables.styles.add_shx("shapes6.shx")
+        style2 = tables.styles.add_shx("shapes7.shx")
+        tables.styles.discard_shx("shapes6.shx")
+        tables.styles.discard_shx("shapes7.shx")
+        assert tables.styles.find_shx(style1.dxf.font) is None
+        assert tables.styles.find_shx(style2.dxf.font) is None
+
+    def test_discard_not_existing_shape_file(self, tables: TablesSection):
+        assert tables.styles.find_shx("shapes8.shx") is None
+        tables.styles.discard_shx("shapes8.shx")  # should not raise an exception
+
+    def test_export_multiple_shape_file_entries(self, tables: TablesSection):
+        doc = ezdxf.new()
+        doc.styles.add_shx("export1.shx")
+        doc.styles.add_shx("export2.shx")
+
+        tagwriter = TagCollector()
+        doc.styles.export_dxf(tagwriter)
+        font_names = [tag.value for tag in tagwriter.tags if tag.code == 3]
+        assert len(font_names) == 3
+        assert "export1.shx" in font_names
+        assert "export2.shx" in font_names
+        assert "txt" in font_names, "expected font of default text style STANDARD"
 
 
 def test_add_new_line_type(tables: TablesSection):

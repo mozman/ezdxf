@@ -68,6 +68,8 @@ Style Table
 
     .. automethod:: find_shx
 
+    .. automethod:: discard_shx
+
 
 DimStyle Table
 --------------

@@ -20,6 +20,7 @@ Version 1.0.1b1 - dev
   fix function `ezdxf.render.forms.cylinder_2p()` for cylinder axis parallel to z-axis 
 - BUGFIX: [#811](https://github.com/mozman/ezdxf/issues/811)
   fix function `ezdxf.render.forms.cone_2p()` for cone axis parallel to z-axis 
+- BUGFIX: add support for multiple shape file entries in the `TextstyleTable` class 
 
 
 Version 1.0.0 - 2022-12-09
