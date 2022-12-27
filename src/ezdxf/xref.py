@@ -75,6 +75,9 @@ class Registry(Protocol):
     def add_text_style(self, name: str) -> None:
         ...
 
+    def add_shape_file(self, name: str) -> None:
+        ...
+
     def add_dim_style(self, name: str) -> None:
         ...
 
@@ -198,6 +201,13 @@ class _Registry:
         else:
             logger.debug(f"source text style '{name}' does not exist")
 
+    def add_shape_file(self, name) -> None:
+        shape_file = self.source_doc.styles.get_shx(name)
+        if shape_file:
+            self.add_entity(shape_file)
+        else:
+            logger.debug(f"source shape file '{name}' does not exist")
+
     def add_dim_style(self, name: str) -> None:
         # Dimension style name "STANDARD" gets never mangled and always exist in the
         # target document.
@@ -285,7 +295,10 @@ class _Transfer:
             elif isinstance(entity, Linetype):
                 self.add_linetype_entry(entity)
             elif isinstance(entity, Textstyle):
-                self.add_text_style_entry(entity)
+                if entity.dxf.name == "":
+                    self.add_shape_file_entry(entity)
+                else:
+                    self.add_text_style_entry(entity)
             elif isinstance(entity, DimStyle):
                 self.add_dim_style_entry(entity)
             elif isinstance(entity, BlockRecord):
@@ -371,6 +384,20 @@ class _Transfer:
         self.add_table_entry(tdoc.styles, text_style)
         if text_style.is_alive:
             self.text_style_mapping[old_name] = text_style.dxf.name
+
+    def add_shape_file_entry(self, text_style: Textstyle) -> None:
+        # A shape file (SHX file) entry is a special text style entry which name is "".
+        tdoc = self.registry.target_doc
+        shape_file_name = text_style.dxf.font
+        if not shape_file_name:
+            return
+        # The shape file entry just have to exist, all references are done by the
+        # shape file name, which is the same in source and target document.
+        shape_file = tdoc.styles.find_shx(shape_file_name)
+        if shape_file is None:
+            tdoc.styles.add_shx(shape_file_name)
+        else:  # for the case that shape files also get referenced by handle:
+            self.replace_handle_mapping(text_style.dxf.handle, shape_file.dxf.handle)
 
     def add_dim_style_entry(self, dim_style: DimStyle) -> None:
         tdoc = self.registry.target_doc
