@@ -425,6 +425,12 @@ class TextstyleTable(Table[Textstyle]):
         else:
             self.entries[self.key(entry.dxf.name)] = entry
 
+    def update_owner_handles(self) -> None:
+        super().update_owner_handles()
+        owner_handle = self._head.dxf.handle
+        for entry in self.shx_files.values():
+            entry.dxf.owner = owner_handle
+
     def add(self, name: str, *, font: str, dxfattribs=None) -> Textstyle:
         """Add a new text style entry for TTF fonts. The entry must not yet
         exist, otherwise an :class:`DXFTableEntryError` exception will be
