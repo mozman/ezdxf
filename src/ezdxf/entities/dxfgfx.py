@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.layouts import BaseLayout
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf import xref
 
 __all__ = [
     "DXFGraphic",
@@ -57,13 +58,13 @@ GRAPHIC_PROPERTIES = {
     "transparency",
 }
 
+NONE_HANDLE = "0"
+
 acdb_entity: DefSubclass = DefSubclass(
     "AcDbEntity",
     {
         # Layer name as string, no auto fix for invalid names!
-        "layer": DXFAttr(
-            8, default="0", validator=validator.is_valid_layer_name
-        ),
+        "layer": DXFAttr(8, default="0", validator=validator.is_valid_layer_name),
         # Linetype name as string, no auto fix for invalid names!
         "linetype": DXFAttr(
             6,
@@ -133,9 +134,7 @@ acdb_entity: DefSubclass = DefSubclass(
         "visualstyle_handle": DXFAttr(348, dxfversion=DXF2007, optional=True),
         # PlotStyleName type enum (AcDb::PlotStyleNameType). Stored and moved around
         # as a 16-bit integer. Custom non-entity
-        "plotstyle_enum": DXFAttr(
-            380, dxfversion=DXF2007, default=1, optional=True
-        ),
+        "plotstyle_enum": DXFAttr(380, dxfversion=DXF2007, default=1, optional=True),
         # Handle value of the PlotStyleName object, basically a hard pointer, but
         # has a different range to make backward compatibility easier to deal with.
         "plotstyle_handle": DXFAttr(390, dxfversion=DXF2007, optional=True),
@@ -585,11 +584,7 @@ class DXFGraphic(DXFEntity):
         description = ""
         location = ""
         if self.xdata and "PE_URL" in self.xdata:
-            xdata = [
-                tag.value
-                for tag in self.get_xdata("PE_URL")
-                if tag.code == 1000
-            ]
+            xdata = [tag.value for tag in self.get_xdata("PE_URL") if tag.code == 1000]
             if len(xdata):
                 link = xdata[0]
             if len(xdata) > 1:
@@ -610,9 +605,7 @@ class DXFGraphic(DXFEntity):
         # The layer attribute is preserved because layer doesn't need a layer
         # table entry, the layer attributes are reset to default attributes
         # like color is 7 and linetype is CONTINUOUS
-        has_linetype = other is not None and (
-            self.dxf.linetype in other.linetypes
-        )
+        has_linetype = other is not None and (self.dxf.linetype in other.linetypes)
         if not has_linetype:
             self.dxf.linetype = "BYLAYER"
         self.dxf.discard("material_handle")
@@ -643,6 +636,30 @@ class DXFGraphic(DXFEntity):
         entity.dxf.paperspace = self.dxf.paperspace
         return entity  # type: ignore
 
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to resource register."""
+        super().register_resources(registry)
+        dxf = self.dxf
+        registry.add_layer(dxf.layer)
+        registry.add_linetype(dxf.linetype)
+        registry.add_handle(dxf.get("material_handle", NONE_HANDLE))
+        registry.add_handle(dxf.get("visualstyle_handle", NONE_HANDLE))
+        registry.add_handle(dxf.get("plotstyle_handle", NONE_HANDLE))
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate registered resources from self to entity by ResourceMapper."""
+        super().map_resources(copy, mapping)
+        copy.dxf.layer = mapping.get_layer(self.dxf.layer)
+        attrib_exist = self.dxf.hasattr
+        if attrib_exist("linetype"):
+            copy.dxf.linetype = mapping.get_linetype(self.dxf.linetype)
+        if attrib_exist("material_handle"):
+            copy.dxf.material_handle = mapping.get_handle(self.dxf.material_handle)
+        if attrib_exist("visualstyle_handle"):
+            copy.dxf.visualstyle_handle = mapping.get_handle(self.dxf.visualstyle_handle)
+        if attrib_exist("plotstyle_handle"):
+            copy.dxf.plotstyle_handle = mapping.get_handle(self.dxf.plotstyle_handle)
+
 
 @factory.register_entity
 class SeqEnd(DXFGraphic):
@@ -668,9 +685,7 @@ def add_entity(entity: DXFGraphic, layout: BaseLayout) -> None:
     layout.add_entity(entity)
 
 
-def replace_entity(
-    source: DXFGraphic, target: DXFGraphic, layout: BaseLayout
-) -> None:
+def replace_entity(source: DXFGraphic, target: DXFGraphic, layout: BaseLayout) -> None:
     """Add `target` entity to the entity database and to the given `layout`
     and replace the `source` entity by the `target` entity.
 

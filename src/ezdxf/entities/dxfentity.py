@@ -46,7 +46,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFGraphic, Insert
     from ezdxf.lldxf.attributes import DXFAttr
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
-
+    from ezdxf import xref
 
 __all__ = ["DXFEntity", "DXFTagStorage", "base_class", "SubclassProcessor"]
 logger = logging.getLogger("ezdxf")
@@ -193,9 +193,7 @@ class DXFEntity:
         pass
 
     @classmethod
-    def load(
-        cls: Type[T], tags: ExtendedTags, doc: Optional[Drawing] = None
-    ) -> T:
+    def load(cls: Type[T], tags: ExtendedTags, doc: Optional[Drawing] = None) -> T:
         """Constructor to generate entities loaded from an external source.
 
         LOAD process:
@@ -224,9 +222,7 @@ class DXFEntity:
         entity.load_tags(tags, dxfversion=dxfversion)
         return entity
 
-    def load_tags(
-        self, tags: ExtendedTags, dxfversion: Optional[str] = None
-    ) -> None:
+    def load_tags(self, tags: ExtendedTags, dxfversion: Optional[str] = None) -> None:
         """Generic tag loading interface, called if DXF document is loaded
         from external sources.
 
@@ -245,9 +241,7 @@ class DXFEntity:
                     self.xdata = XData(tags.xdata)
                 except const.DXFValueError:  # contains invalid group codes
                     self.xdata = XData.safe_init(tags.xdata)
-                    logger.debug(
-                        f"removed invalid XDATA from {tags.entity_name()}"
-                    )
+                    logger.debug(f"removed invalid XDATA from {tags.entity_name()}")
 
             processor = SubclassProcessor(tags, dxfversion=dxfversion)
             self.dxf = self.load_dxf_attribs(processor)
@@ -353,7 +347,7 @@ class DXFEntity:
     def set_source_of_copy(self, source: Optional[DXFEntity]):
         """Set immediate source entity of a copy.
 
-        Also used from outside of DFXEntity to set the source of sub-entities
+        Also used from outside of DXFEntity to set the source of sub-entities
         of disassembled entities (POLYLINE, LWPOLYLINE, ...).
 
         (Internal API)
@@ -395,11 +389,7 @@ class DXFEntity:
         """
         source = self.source_of_copy
         # follow source entities references until the first non-virtual entity:
-        while (
-            isinstance(source, DXFEntity)
-            and source.is_alive
-            and source.is_virtual
-        ):
+        while isinstance(source, DXFEntity) and source.is_alive and source.is_virtual:
             source = source.source_of_copy
         return source
 
@@ -947,6 +937,18 @@ class DXFEntity:
         if self.reactors:
             self.reactors.discard(handle)
 
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the xref.Register class."""
+        # todo: register AppIDs in XDATA
+        # todo: register group code 1005 handles in XDATA
+        pass
+
+    def map_resources(self, copy: DXFEntity, mapper: xref.ResourceMapper) -> None:
+        """Translate registered resources from self to entity via the ResourceMapper
+        class.
+        """
+        pass
+
 
 @factory.set_default_class
 class DXFTagStorage(DXFEntity):
@@ -977,9 +979,7 @@ class DXFTagStorage(DXFEntity):
         return self.xtags.has_subclass("AcDbEntity")
 
     @classmethod
-    def load(
-        cls, tags: ExtendedTags, doc: Optional[Drawing] = None
-    ) -> DXFTagStorage:
+    def load(cls, tags: ExtendedTags, doc: Optional[Drawing] = None) -> DXFTagStorage:
         assert isinstance(tags, ExtendedTags)
         entity = cls.new(doc=doc)
         dxfversion = doc.dxfversion if doc else None
@@ -1035,9 +1035,7 @@ class DXFTagStorage(DXFEntity):
         from ezdxf.proxygraphic import ProxyGraphic
 
         if self.proxy_graphic:
-            for e in ProxyGraphic(
-                self.proxy_graphic, self.doc
-            ).virtual_entities():
+            for e in ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities():
                 e.set_source_of_copy(self)
                 yield e
         return []
