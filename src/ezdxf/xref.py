@@ -1,6 +1,5 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
-
 """
 Resource management module for transferring DXF resources between documents.
 
@@ -147,8 +146,12 @@ class _Registry:
         self.appids: set[str] = set()
 
     def add_entity(self, entity: DXFEntity, block_handle: str = NO_BLOCK):
+        assert entity is not None, "internal error: entity is None"
         block = self.source_blocks.setdefault(block_handle, {})
-        block[entity.dxf.handle] = entity
+        entity_handle = entity.dxf.handle
+        if entity_handle in block:
+            return
+        block[entity_handle] = entity
         entity.register_resources(self)
 
     def add_block(self, block_record: BlockRecord) -> None:
@@ -387,17 +390,14 @@ class _Transfer:
 
     def add_shape_file_entry(self, text_style: Textstyle) -> None:
         # A shape file (SHX file) entry is a special text style entry which name is "".
-        tdoc = self.registry.target_doc
         shape_file_name = text_style.dxf.font
         if not shape_file_name:
             return
-        # The shape file entry just have to exist, all references are done by the
-        # shape file name, which is the same in source and target document.
+        tdoc = self.registry.target_doc
         shape_file = tdoc.styles.find_shx(shape_file_name)
         if shape_file is None:
-            tdoc.styles.add_shx(shape_file_name)
-        else:  # for the case that shape files also get referenced by handle:
-            self.replace_handle_mapping(text_style.dxf.handle, shape_file.dxf.handle)
+            shape_file = tdoc.styles.add_shx(shape_file_name)
+        self.replace_handle_mapping(text_style.dxf.handle, shape_file.dxf.handle)
 
     def add_dim_style_entry(self, dim_style: DimStyle) -> None:
         tdoc = self.registry.target_doc

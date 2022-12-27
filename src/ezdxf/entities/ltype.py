@@ -27,6 +27,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf import xref
 
 __all__ = ["Linetype", "compile_line_pattern", "CONTINUOUS_PATTERN"]
 
@@ -246,3 +247,21 @@ class Linetype(DXFEntity):
         or shapes are not supported and return a continuous line pattern.
         """
         return self.pattern_tags.compile()
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to resource register."""
+        super().register_resources(registry)
+        # register text styles and shape files for complex linetypes
+        style_handle = self.pattern_tags.get_style_handle()
+        style = self.doc.entitydb.get(style_handle)
+        if style is not None:
+            registry.add_entity(style)
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate registered resources from self to entity by ResourceMapper."""
+        assert isinstance(copy, Linetype)
+        super().map_resources(copy, mapping)
+        style_handle = self.pattern_tags.get_style_handle()
+        if style_handle != "0":
+            # map text style or shape file handle of complex linetype
+            copy.pattern_tags.set_style_handle(mapping.get_handle(style_handle))
