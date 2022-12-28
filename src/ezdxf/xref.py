@@ -7,14 +7,14 @@ Planning state!!!
 
 """
 from __future__ import annotations
-from typing import Optional, Sequence
-from typing_extensions import Protocol
+from typing import Optional, Sequence, Callable
+from typing_extensions import Protocol, TypeAlias
 import enum
 import pathlib
 import logging
 from ezdxf.lldxf import const
 from ezdxf.document import Drawing
-from ezdxf.layouts import BaseLayout
+from ezdxf.layouts import BaseLayout, Paperspace, BlockLayout
 from ezdxf.entities import (
     is_graphic_entity,
     is_dxf_object,
@@ -34,13 +34,19 @@ from ezdxf.entities import (
 )
 
 
-__all__ = ["Registry", "ResourceMapper", "ConflictPolicy"]
+__all__ = [
+    "Registry",
+    "ResourceMapper",
+    "ConflictPolicy",
+    "Loader",
+]
 
 logger = logging.getLogger("ezdxf")
 NO_BLOCK = "0"
 DEFAULT_LINETYPES = {"CONTINUOUS", "BYLAYER", "BYBLOCK"}
 DEFAULT_LAYER = "0"
 STANDARD = "STANDARD"
+FilterFunction: TypeAlias = Callable[[DXFEntity], bool]
 
 
 class ConflictPolicy(enum.Enum):
@@ -107,34 +113,210 @@ class ResourceMapper(Protocol):
         ...
 
 
-def import_entities(
-    entities: Sequence[DXFEntity], target: BaseLayout, rename_policy=ConflictPolicy.KEEP
-):
-    if len(entities) == 0:
-        return
-    sdoc = entities[0].doc
-    assert sdoc is not None, "a valid source document is mandatory"
-    tdoc: Drawing = target.doc
-    assert tdoc is not None, "a valid target document is mandatory"
-    assert sdoc is not tdoc, "source and target document cannot be the same"
+class LoadingCommand:
+    def register_resources(self, registry: Registry) -> None:
+        pass
 
-    registry = _Registry(sdoc, tdoc)
-    for e in entities:
-        registry.add_entity(e)
+    def execute(self, transfer: _Transfer) -> None:
+        pass
 
-    cpm = CopyMachine(tdoc)
-    cpm.copy_blocks(registry.source_blocks)
 
-    transfer = _Transfer(registry, cpm.copies, cpm.objects, rename_policy=rename_policy)
-    transfer.create_appids()
-    transfer.register_classes(cpm.classes)
-    transfer.add_target_objects()
-    transfer.create_table_resources()  # restores also BLOCK content
-    transfer.create_object_resources()
-    transfer.update_handle_mapping()
-    transfer.map_resources()
-    transfer.add_entities_to_layout(target)
-    transfer.finalize()
+class LoadEntities(LoadingCommand):
+    def __init__(
+        self, entities: Sequence[DXFEntity], target_layout: BaseLayout
+    ) -> None:
+        self.entities = entities
+        self.target_layout = target_layout
+
+
+class LoadPaperspaceLayout(LoadingCommand):
+    def __init__(self, psp: Paperspace, filter_fn: Optional[FilterFunction]) -> None:
+        self.paperspace_layout = psp
+        self.filter_fn = filter_fn
+
+
+class LoadBlockLayout(LoadingCommand):
+    def __init__(self, block: BlockLayout) -> None:
+        self.block_layout = block
+
+
+class LoadResources(LoadingCommand):
+    def __init__(self, entities: Sequence[DXFEntity]) -> None:
+        self.entities = entities
+
+
+class Loader:
+    """Load entities and resources from the source DXF document `sdoc` into a
+    target DXF document.
+    """
+
+    def __init__(
+        self, sdoc: Drawing, tdoc: Drawing, conflict_policy=ConflictPolicy.KEEP
+    ) -> None:
+        assert sdoc is not None, "a valid source document is mandatory"
+        assert tdoc is not None, "a valid target document is mandatory"
+        assert sdoc is not tdoc, "source and target document cannot be the same"
+        if tdoc.dxfversion < sdoc.dxfversion:
+            logger.warning(
+                "target document has older DXF version than the source document"
+            )
+        self.sdoc: Drawing = sdoc
+        self.tdoc: Drawing = tdoc
+        self.conflict_policy = conflict_policy
+        self._commands: list[LoadingCommand] = []
+
+    def add_command(self, command: LoadingCommand) -> None:
+        self._commands.append(command)
+
+    def load_modelspace(
+        self,
+        target_layout: Optional[BaseLayout] = None,
+        filter_fn: Optional[FilterFunction] = None,
+    ):
+        """Loads the content of the modelspace of the source document into a layout of
+        the target document the modelspace of the target document is the default target
+        layout.  The target layout can be any layout: modelspace, paperspace layout or
+        block layout.
+        """
+        if target_layout is None:
+            target_layout = self.tdoc.modelspace()
+        if filter_fn is None:
+            entities = list(self.sdoc.modelspace())
+        else:
+            entities = [e for e in self.sdoc.modelspace() if filter_fn(e)]
+        self.add_command(LoadEntities(entities, target_layout))
+
+    def load_paperspace_layout(
+        self,
+        psp: Paperspace,
+        filter_fn: Optional[FilterFunction] = None,
+    ):
+        """Loads a paperspace layout as a new paperspace layout into the target document.
+        If a paperspace layout with same name already exists the layout will be renamed
+        to  "<layout name> (2)" or "<layout name> (3)" and so on. The content of the
+        modelspace which may be displayed through a VIEWPORT entity will **not** be
+        loaded!
+        """
+        self.add_command(LoadPaperspaceLayout(psp, filter_fn))
+
+    def load_paperspace_layout_into(
+        self,
+        psp: Paperspace,
+        target_layout: BaseLayout,
+        filter_fn: Optional[FilterFunction] = None,
+    ):
+        """Loads the content of a paperspace layout into an existing layout of the target
+        document. The target layout can be any layout: modelspace, paperspace layout
+        or block layout.  The content of the modelspace which may be displayed through a
+        VIEWPORT entity will **not** be loaded!
+        """
+        if filter_fn is None:
+            entities = list(psp)
+        else:
+            entities = [e for e in psp if filter_fn(e)]
+        self.add_command(LoadEntities(entities, target_layout))
+
+    def load_block_layout(
+        self,
+        block_layout: BlockLayout,
+    ):
+        """Loads a block layout (block definition) as a new block layout into the target
+        document. If a block layout with the same name exists the conflict policy will
+        be applied.
+        """
+        self.add_command(LoadBlockLayout(block_layout))
+
+    def load_block_layout_into(
+        self,
+        block_layout: BlockLayout,
+        target_layout: BaseLayout,
+    ):
+        """Loads the content of a block layout (block definition) into an existing layout
+        of the target document. The target layout can be any layout: modelspace,
+        paperspace layout or block layout.
+        """
+        self.add_command(LoadEntities(list(block_layout), target_layout))
+
+    def load_layers(self, names: Sequence[str]):
+        """Loads the layers defined by the argument `names` into the target document.
+        In the case of a name conflict the conflict policy will be applied.
+        """
+        entities = _get_table_entries(names, self.sdoc.layers)
+        self.add_command(LoadResources(entities))
+
+    def load_linetypes(self, names: Sequence[str]):
+        """Loads the linetypes defined by the argument `names` into the target document.
+        In the case of a name conflict the conflict policy will be applied.
+        """
+        entities = _get_table_entries(names, self.sdoc.linetypes)
+        self.add_command(LoadResources(entities))
+
+    def load_text_styles(self, names: Sequence[str]):
+        """Loads the TEXT styles defined by the argument `names` into the target document.
+        In the case of a name conflict the conflict policy will be applied.
+        """
+        entities = _get_table_entries(names, self.sdoc.styles)
+        self.add_command(LoadResources(entities))
+
+    def load_dim_styles(self, names: Sequence[str]):
+        """Loads the DIMENSION styles defined by the argument `names` into the target
+        document. In the case of a name conflict the conflict policy will be applied.
+        """
+        entities = _get_table_entries(names, self.sdoc.dimstyles)
+        self.add_command(LoadResources(entities))
+
+    def load_mline_styles(self, names: Sequence[str]):
+        """Loads the MLINE styles defined by the argument `names` into the target
+        document. In the case of a name conflict the conflict policy will be applied.
+        """
+        entities = _get_table_entries(names, self.sdoc.mline_styles)
+        self.add_command(LoadResources(entities))
+
+    def load_mleader_styles(self, names: Sequence[str]):
+        """Loads the MULTILEADER styles defined by the argument `names` into the target
+        document. In the case of a name conflict the conflict policy will be applied.
+        """
+        entities = _get_table_entries(names, self.sdoc.mleader_styles)
+        self.add_command(LoadResources(entities))
+
+    def load_materials(self, names: Sequence[str]):
+        """Loads the MATERIALS defined by the argument `names` into the target
+        document. In the case of a name conflict the conflict policy will be applied.
+        """
+        entities = _get_table_entries(names, self.sdoc.materials)
+        self.add_command(LoadResources(entities))
+
+    def execute(self):
+        registry = _Registry(self.sdoc, self.tdoc)
+        for cmd in self._commands:
+            cmd.register_resources(registry)
+
+        cpm = CopyMachine(self.tdoc)
+        cpm.copy_blocks(registry.source_blocks)
+        transfer = _Transfer(
+            registry, cpm.copies, cpm.objects, conflict_policy=self.conflict_policy
+        )
+        transfer.register_classes(cpm.classes)
+        transfer.create_appids()
+        transfer.add_target_objects()
+        transfer.create_table_resources()
+        transfer.create_object_resources()
+        transfer.update_handle_mapping()
+        transfer.map_resources()
+
+        for cmd in self._commands:
+            cmd.execute(transfer)
+        transfer.finalize()
+
+
+def _get_table_entries(names, table) -> list[DXFEntity]:
+    entities: list[DXFEntity] = []
+    for name in names:
+        try:
+            entities.append(table.get(name))  # type: ignore
+        except const.DXFTableEntryError:
+            pass
+    return entities
 
 
 class _Registry:
@@ -243,12 +425,12 @@ class _Transfer:
         blocks: dict[str, dict[str, DXFEntity]],
         objects: Sequence[DXFEntity],
         *,
-        rename_policy=ConflictPolicy.KEEP,
+        conflict_policy=ConflictPolicy.KEEP,
     ):
         self.registry = registry
         self.copied_blocks = blocks
         self.copied_objects = objects
-        self.rename_policy = rename_policy
+        self.conflict_policy = conflict_policy
         self.xref_name = get_xref_name(registry.source_doc)
         self.layer_mapping: dict[str, str] = {}
         self.linetype_mapping: dict[str, str] = {}
@@ -351,6 +533,9 @@ class _Transfer:
                     entity.map_resources(copy, self)
 
     def add_layer_entry(self, layer: Layer) -> None:
+        # TODO: special cases - do not copy, but create if doesn't exist
+        #   DEFPOINTS
+        #   *ADSK_... layers
         tdoc = self.registry.target_doc
         layer_name = layer.dxf.name.upper()
         if layer_name == "0":
@@ -413,6 +598,7 @@ class _Transfer:
             self.dim_style_mapping[old_name] = dim_style.dxf.name
 
     def add_block_record_entry(self, block_record: BlockRecord, handle: str) -> None:
+        # TODO: special case arrow blocks: do not rename!
         tdoc = self.registry.target_doc
         block_name = block_record.dxf.name.upper()
         if is_special_block_name(block_name):
@@ -451,7 +637,7 @@ class _Transfer:
 
     def add_table_entry(self, table, entity: DXFEntity) -> None:
         name = entity.dxf.name
-        if self.rename_policy == ConflictPolicy.KEEP:
+        if self.conflict_policy == ConflictPolicy.KEEP:
             if table.has_entry(name):
                 existing_entry = table.get(name)
                 self.replace_handle_mapping(
@@ -459,11 +645,11 @@ class _Transfer:
                 )
                 entity.destroy()
                 return
-        elif self.rename_policy == ConflictPolicy.XREF_NUM_PREFIX:
+        elif self.conflict_policy == ConflictPolicy.XREF_NUM_PREFIX:
             entity.dxf.name = find_table_name(
                 "{xref}${index}${name}", name, self.xref_name, table
             )
-        elif self.rename_policy == ConflictPolicy.NUM_PREFIX:
+        elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
             entity.dxf.name = find_table_name(
                 "${index}${name}", name, self.xref_name, table
             )
