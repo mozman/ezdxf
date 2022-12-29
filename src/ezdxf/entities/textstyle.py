@@ -35,7 +35,7 @@ acdb_style = DefSubclass(
         # Flags: Standard flag values (bit-coded values):
         # 1 = If set, this entry describes a shape
         # 4 = Vertical text
-        # 16 = If set, table entry is externally dependent on an xref
+        # 16 = If set, table entry is externally dependent on a xref
         # 32 = If both this bit and bit 16 are set, the externally dependent xref ...
         # 64 = If set, the table entry was referenced by at least one entity in ...
         # Vertical text works only for SHX fonts in AutoCAD and BricsCAD
@@ -204,6 +204,11 @@ class Textstyle(DXFEntity):
     @is_vertical_stacked.setter
     def is_vertical_stacked(self, state) -> None:
         self.set_flag_state(const.VERTICAL_STACKED, state, "flags")
+
+    @property
+    def is_shape_file(self) -> bool:
+        """``True`` if entry describes a shape."""
+        return self.dxf.name == "" and bool(self.dxf.flags & 1)
 
     def make_font(
         self,

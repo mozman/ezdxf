@@ -74,6 +74,7 @@ class TestTextStyleTable:
         assert style.dxf.name == "", "shape files have no name"
         assert style.dxf.font == "shapes1.shx"
         assert style.dxf.flags == 1
+        assert style.is_shape_file is True
 
         # can not add same shape file twice:
         with pytest.raises(ezdxf.const.DXFTableEntryError):

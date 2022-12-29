@@ -107,6 +107,8 @@ Factory function         :meth:`Drawing.styles.new`
 
     .. autoproperty:: is_vertical_stacked
 
+    .. autoproperty:: is_shape_file
+
     .. attribute:: dxf.handle
 
         DXF handle (feature for experts).
