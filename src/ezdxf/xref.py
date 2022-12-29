@@ -144,6 +144,10 @@ class LoadResources(LoadingCommand):
     def __init__(self, entities: Sequence[DXFEntity]) -> None:
         self.entities = entities
 
+    def register_resources(self, registry: Registry) -> None:
+        for e in self.entities:
+            registry.add_entity(e, block_handle=NO_BLOCK)
+
 
 class Loader:
     """Load entities and resources from the source DXF document `sdoc` into a
@@ -480,7 +484,7 @@ class _Transfer:
             elif isinstance(entity, Linetype):
                 self.add_linetype_entry(entity)
             elif isinstance(entity, Textstyle):
-                if entity.dxf.name == "":
+                if entity.is_shape_file:
                     self.add_shape_file_entry(entity)
                 else:
                     self.add_text_style_entry(entity)
@@ -646,11 +650,11 @@ class _Transfer:
                 entity.destroy()
                 return
         elif self.conflict_policy == ConflictPolicy.XREF_NUM_PREFIX:
-            entity.dxf.name = find_table_name(
+            entity.dxf.name = create_valid_table_name(
                 "{xref}${index}${name}", name, self.xref_name, table
             )
         elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
-            entity.dxf.name = find_table_name(
+            entity.dxf.name = create_valid_table_name(
                 "${index}${name}", name, self.xref_name, table
             )
         table.add_entry(entity)
@@ -667,6 +671,8 @@ class _Transfer:
             collection.object_dict.add(name, entry)
 
     def add_entities_to_layout(self, layout: BaseLayout):
+        """Add copied graphical DXF entities from NO_BLOCK to the given layout.
+        """
         for entity in self.copied_blocks[NO_BLOCK].values():
             if entity.dxf.owner is not None:
                 continue  # already processed!
@@ -674,6 +680,8 @@ class _Transfer:
                 layout.add_entity(entity)  # type: ignore
 
     def add_target_objects(self):
+        """Add copied DXF objects to the OBJECTS section of the target document.
+        """
         objects = self.registry.target_doc.objects
         for obj in self.copied_objects:
             objects.add_object(obj)  # type: ignore
@@ -693,7 +701,7 @@ def is_special_block_name(name: str) -> bool:
     return False
 
 
-def find_table_name(fmt: str, name: str, xref: str, table) -> str:
+def create_valid_table_name(fmt: str, name: str, xref: str, table) -> str:
     index = 0
     while True:
         new_name = fmt.format(name=name, xref=xref, index=index)
@@ -716,8 +724,6 @@ class CopyMachine:
         for handle, entity in block.items():
             if isinstance(entity, DXFClass):
                 self._copy_dxf_class(entity)
-                continue
-            if handle in self.copies:
                 continue
             try:
                 new_entity = entity.copy()
