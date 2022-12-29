@@ -121,26 +121,61 @@ class LoadingCommand:
         pass
 
 
+def _register_block_entities(entities: Sequence[DXFEntity], registry: Registry) -> None:
+    if len(entities) == 0:
+        return
+    block_handle = entities[0].dxf.owner
+    for e in entities:
+        registry.add_entity(e, block_handle=block_handle)
+
+
 class LoadEntities(LoadingCommand):
+    """Loads all given entities into the target layout."""
     def __init__(
         self, entities: Sequence[DXFEntity], target_layout: BaseLayout
     ) -> None:
         self.entities = entities
         self.target_layout = target_layout
 
+    def register_resources(self, registry: Registry) -> None:
+        _register_block_entities(self.entities, registry)
+
 
 class LoadPaperspaceLayout(LoadingCommand):
+    """Loads a paperspace layout as a new paperspace layout into the target document.
+    If a paperspace layout with same name already exists the layout will be renamed
+    to  "<layout name> (x)" where x is the next free number.
+    """
     def __init__(self, psp: Paperspace, filter_fn: Optional[FilterFunction]) -> None:
         self.paperspace_layout = psp
         self.filter_fn = filter_fn
 
+    def source_entities(self) -> list[DXFEntity]:
+        filter_fn = self.filter_fn
+        if filter_fn:
+            return [e for e in self.paperspace_layout if filter_fn(e)]
+        else:
+            return list(self.paperspace_layout)
+
+    def register_resources(self, registry: Registry) -> None:
+        _register_block_entities(self.source_entities(), registry)
+
 
 class LoadBlockLayout(LoadingCommand):
+    """Loads a block layout as a new block layout into the target document. If a block
+    layout with the same name exists the conflict policy will be applied.
+    """
     def __init__(self, block: BlockLayout) -> None:
         self.block_layout = block
 
+    def register_resources(self, registry: Registry) -> None:
+        _register_block_entities(list(self.block_layout), registry)
+
 
 class LoadResources(LoadingCommand):
+    """Loads table entries into the target document. If a table entry with the same name
+    exists the conflict policy will be applied.
+    """
     def __init__(self, entities: Sequence[DXFEntity]) -> None:
         self.entities = entities
 
@@ -671,8 +706,7 @@ class _Transfer:
             collection.object_dict.add(name, entry)
 
     def add_entities_to_layout(self, layout: BaseLayout):
-        """Add copied graphical DXF entities from NO_BLOCK to the given layout.
-        """
+        """Add copied graphical DXF entities from NO_BLOCK to the given layout."""
         for entity in self.copied_blocks[NO_BLOCK].values():
             if entity.dxf.owner is not None:
                 continue  # already processed!
@@ -680,8 +714,7 @@ class _Transfer:
                 layout.add_entity(entity)  # type: ignore
 
     def add_target_objects(self):
-        """Add copied DXF objects to the OBJECTS section of the target document.
-        """
+        """Add copied DXF objects to the OBJECTS section of the target document."""
         objects = self.registry.target_doc.objects
         for obj in self.copied_objects:
             objects.add_object(obj)  # type: ignore
