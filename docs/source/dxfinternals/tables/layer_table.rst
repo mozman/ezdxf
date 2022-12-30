@@ -12,11 +12,11 @@ Table Structure DXF R2000+
 
     0           <<< start of table
     TABLE
-    2           <<< set table type
+    2           <<< name of table "LAYER"
     LAYER
-    5           <<< LAYER table handle
+    5           <<< handle of the TABLE
     2
-    330         <<< owner tag, tables has no owner
+    330         <<< owner tag is always "0"
     0
     100         <<< subclass marker
     AcDbSymbolTable
@@ -28,6 +28,8 @@ Table Structure DXF R2000+
     0           <<< 2. LAYER table entry
     LAYER
     ...         <<< LAYER entity tags
+    0           <<< end of TABLE
+    ENDTAB
 
 Layer Entity Tags DXF R2000+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

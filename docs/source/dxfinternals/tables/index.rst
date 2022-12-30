@@ -2,11 +2,15 @@ DXF Tables
 ==========
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
-   view_table
-   vport_table
-   linetype_table
-   dimstyle_table
-   block_record_table
-   layer_table
+    appid_table
+    block_record_table
+    dimstyle_table
+    layer_table
+    linetype_table
+    style_table
+    ucs_table
+    view_table
+    vport_table
+

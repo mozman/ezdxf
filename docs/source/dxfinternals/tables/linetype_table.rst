@@ -3,13 +3,15 @@
 LTYPE Table
 ===========
 
-The `LTYPE`_ table stores all line type definitions of a DXF drawing. Every line type used in the drawing has to have a
-table entry, or the DXF drawing is invalid for AutoCAD.
+The `LTYPE`_ table stores all line type definitions of a DXF drawing. Every line type
+used in the drawing has to have a table entry, or the DXF drawing is invalid for AutoCAD.
 
-DXF R12 supports just simple line types, DXF R2000+ supports also complex line types with text or shapes included.
+DXF R12 supports just simple line types, DXF R2000+ supports also complex line types with
+text or shapes included.
 
-You have access to the line types table by the attribute :attr:`Drawing.linetypes`. The line type table itself is not
-stored in the entity database, but the table entries are stored in entity database, and can be accessed by its handle.
+You have access to the line types table by the attribute :attr:`Drawing.linetypes`.
+The line type table itself is not stored in the entity database, but the table entries
+are stored in entity database, and can be accessed by its handle.
 
 
 .. seealso::

@@ -3,33 +3,36 @@
 VPORT Configuration Table
 =========================
 
-The `VPORT`_ table stores the modelspace viewport configurations. A viewport configuration is a tiled view of multiple
-viewports or just one viewport.
+The `VPORT`_ table stores the modelspace viewport configurations. A viewport configuration
+is a tiled view of multiple viewports or just one viewport.
 
 .. image:: gfx/tiled_view.png
     :align: center
 
-In contrast to other tables the VPORT table can have multiple entries with the same name, because all VPORT entries
-of a multi-viewport configuration are having the same name - the viewport configuration name. The name of the actual
-displayed viewport configuration is ``'*ACTIVE'``, as always table entry names are case insensitive
+In contrast to other tables the VPORT table can have multiple entries with the same name,
+because all VPORT entries of a multi-viewport configuration are having the same name -
+the viewport configuration name. The name of the actual displayed viewport configuration
+is ``'*ACTIVE'``, as always table entry names are case insensitive
 (:code:`'*ACTIVE' == '*Active'`).
 
-The available display area in AutoCAD has normalized coordinates, the lower-left corner is (0, 0) and the
-upper-right corner is (1, 1) regardless of the true aspect ratio and available display area in pixels.
-A single viewport configuration has one VPORT entry ``'*ACTIVE'`` with the lower-left corner (0, 0) and the upper-right
-corner (1, 1).
+The available display area in AutoCAD has normalized coordinates, the lower-left corner
+is (0, 0) and the upper-right corner is (1, 1) regardless of the true aspect ratio and
+available display area in pixels.  A single viewport configuration has one VPORT entry
+``'*ACTIVE'`` with the lower-left corner (0, 0) and the upper-right corner (1, 1).
 
-The following statements refer to a 2D plan view: the view-target-point defines the origin of the DCS
-(Display Coordinate system), the view-direction vector defines the z-axis of the :ref:`DCS`, the
-view-center-point (in DCS) defines the point in modelspace translated to the center point of the viewport,
-the view height and the aspect-ratio defines how much of the modelspace is displayed. AutoCAD tries to fit
-the modelspace area into the available viewport space e.g. view height is 15 units and aspect-ratio is 2.0
-the modelspace to display is 30 units wide and 15 units high, if the viewport has an aspect ratio of 1.0,
-AutoCAD displays 30x30 units of the modelspace in the viewport. If the modelspace aspect-ratio is 1.0 the
-modelspace to display is 15x15 units and fits properly into the viewport area.
+The following statements refer to a 2D plan view: the view-target-point defines the
+origin of the DCS (Display Coordinate system), the view-direction vector defines the
+z-axis of the :ref:`DCS`, the view-center-point (in DCS) defines the point in modelspace
+translated to the center point of the viewport, the view height and the aspect-ratio
+defines how much of the modelspace is displayed. AutoCAD tries to fit the modelspace
+area into the available viewport space e.g. view height is 15 units and aspect-ratio is
+2.0 the modelspace to display is 30 units wide and 15 units high, if the viewport has an
+aspect ratio of 1.0, AutoCAD displays 30x30 units of the modelspace in the viewport.
+If the modelspace aspect-ratio is 1.0 the modelspace to display is 15x15 units and fits
+properly into the viewport area.
 
-But tests show that the translation of the view-center-point to the middle of the viewport not always work as I
-expected. (still digging...)
+But tests show that the translation of the view-center-point to the middle of the
+viewport not always work as I expected. (still digging...)
 
 .. note::
 
