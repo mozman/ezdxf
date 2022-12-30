@@ -7,7 +7,7 @@ Planning state!!!
 
 """
 from __future__ import annotations
-from typing import Optional, Sequence, Callable
+from typing import Optional, Sequence, Callable, Any
 from typing_extensions import Protocol, TypeAlias
 import enum
 import pathlib
@@ -92,6 +92,9 @@ class Registry(Protocol):
     def add_appid(self, name: str) -> None:
         ...
 
+    def add_transfer_hint(self, key: int, data: Any) -> None:
+        ...
+
 
 class ResourceMapper(Protocol):
     def get_handle(self, handle: str) -> str:
@@ -110,6 +113,9 @@ class ResourceMapper(Protocol):
         ...
 
     def get_block_name(self, name: str) -> str:
+        ...
+
+    def get_transfer_hint(self, key: int) -> Any:
         ...
 
 
@@ -365,6 +371,7 @@ class _Registry:
         self.target_doc = tdoc
         self.source_blocks: dict[str, dict[str, DXFEntity]] = {NO_BLOCK: {}}
         self.appids: set[str] = set()
+        self.transfer_hints: dict[int, Any] = dict()
 
     def add_entity(self, entity: DXFEntity, block_handle: str = NO_BLOCK):
         assert entity is not None, "internal error: entity is None"
@@ -454,6 +461,13 @@ class _Registry:
     def add_appid(self, name: str) -> None:
         self.appids.add(name.upper())
 
+    def add_transfer_hint(self, key: int, data: Any) -> None:
+        """Store a transfer hint, which can be any data which may sped up the transfer
+        process. The key should be the id of the entity, if multiple hints for an entity
+        are required (inheritance), just add an offset (1, 2, 3, ...) to the id.
+        """
+        self.transfer_hints[key] = data
+
 
 class _Transfer:
     # The block with handle "0" contains resource objects and entities without an
@@ -504,6 +518,9 @@ class _Transfer:
 
     def get_block_name(self, name: str) -> str:
         return self.block_name_mapping.get(name, name)
+
+    def get_transfer_hint(self, key: int) -> Any:
+        return self.registry.transfer_hints[key]
 
     def create_table_resources(self) -> None:
         self.create_appids()
