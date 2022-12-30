@@ -7,7 +7,7 @@ Planning state!!!
 
 """
 from __future__ import annotations
-from typing import Optional, Sequence, Callable, Any
+from typing import Optional, Sequence, Callable, Any, Iterable
 from typing_extensions import Protocol, TypeAlias
 import enum
 import pathlib
@@ -62,7 +62,7 @@ class ConflictPolicy(enum.Enum):
 
 
 class Registry(Protocol):
-    def add_entity(self, entity: DXFEntity, block_handle: str = NO_BLOCK) -> None:
+    def add_entity(self, entity: DXFEntity, block_key: str = NO_BLOCK) -> None:
         ...
 
     def add_block(self, block_record: BlockRecord) -> None:
@@ -130,13 +130,14 @@ class LoadingCommand:
 def _register_block_entities(entities: Sequence[DXFEntity], registry: Registry) -> None:
     if len(entities) == 0:
         return
-    block_handle = entities[0].dxf.owner
+    owner_handle = entities[0].dxf.owner
     for e in entities:
-        registry.add_entity(e, block_handle=block_handle)
+        registry.add_entity(e, block_key=owner_handle)
 
 
 class LoadEntities(LoadingCommand):
     """Loads all given entities into the target layout."""
+
     def __init__(
         self, entities: Sequence[DXFEntity], target_layout: BaseLayout
     ) -> None:
@@ -147,11 +148,33 @@ class LoadEntities(LoadingCommand):
         _register_block_entities(self.entities, registry)
 
 
+class CopyEntities(LoadingCommand):
+    """Loads copies of all given entities into the target layout.
+
+    The DXF format requires that all entities reside in one layout, which is
+    automatically the owner of that entity. This command can be used to load multiple
+    copies of the same entities into different layouts e.g. msp -> MspBlk1, msp -> MspBlk2.
+    """
+
+    def __init__(
+        self, entities: Sequence[DXFEntity], target_layout: BaseLayout
+    ) -> None:
+        self.entities = entities
+        self.target_layout = target_layout
+        self.copy_block_id = f"copy_to_{target_layout.block_record_handle}"
+
+    def register_resources(self, registry: Registry) -> None:
+        key = self.copy_block_id
+        for e in self.entities:
+            registry.add_entity(e, block_key=key)
+
+
 class LoadPaperspaceLayout(LoadingCommand):
     """Loads a paperspace layout as a new paperspace layout into the target document.
     If a paperspace layout with same name already exists the layout will be renamed
     to  "<layout name> (x)" where x is the next free number.
     """
+
     def __init__(self, psp: Paperspace, filter_fn: Optional[FilterFunction]) -> None:
         self.paperspace_layout = psp
         self.filter_fn = filter_fn
@@ -171,6 +194,7 @@ class LoadBlockLayout(LoadingCommand):
     """Loads a block layout as a new block layout into the target document. If a block
     layout with the same name exists the conflict policy will be applied.
     """
+
     def __init__(self, block: BlockLayout) -> None:
         self.block_layout = block
 
@@ -182,12 +206,13 @@ class LoadResources(LoadingCommand):
     """Loads table entries into the target document. If a table entry with the same name
     exists the conflict policy will be applied.
     """
+
     def __init__(self, entities: Sequence[DXFEntity]) -> None:
         self.entities = entities
 
     def register_resources(self, registry: Registry) -> None:
         for e in self.entities:
-            registry.add_entity(e, block_handle=NO_BLOCK)
+            registry.add_entity(e, block_key=NO_BLOCK)
 
 
 class Loader:
@@ -217,7 +242,7 @@ class Loader:
         self,
         target_layout: Optional[BaseLayout] = None,
         filter_fn: Optional[FilterFunction] = None,
-    ):
+    ) -> None:
         """Loads the content of the modelspace of the source document into a layout of
         the target document the modelspace of the target document is the default target
         layout.  The target layout can be any layout: modelspace, paperspace layout or
@@ -235,7 +260,7 @@ class Loader:
         self,
         psp: Paperspace,
         filter_fn: Optional[FilterFunction] = None,
-    ):
+    ) -> None:
         """Loads a paperspace layout as a new paperspace layout into the target document.
         If a paperspace layout with same name already exists the layout will be renamed
         to  "<layout name> (2)" or "<layout name> (3)" and so on. The content of the
@@ -249,7 +274,7 @@ class Loader:
         psp: Paperspace,
         target_layout: BaseLayout,
         filter_fn: Optional[FilterFunction] = None,
-    ):
+    ) -> None:
         """Loads the content of a paperspace layout into an existing layout of the target
         document. The target layout can be any layout: modelspace, paperspace layout
         or block layout.  The content of the modelspace which may be displayed through a
@@ -264,7 +289,7 @@ class Loader:
     def load_block_layout(
         self,
         block_layout: BlockLayout,
-    ):
+    ) -> None:
         """Loads a block layout (block definition) as a new block layout into the target
         document. If a block layout with the same name exists the conflict policy will
         be applied.
@@ -275,63 +300,72 @@ class Loader:
         self,
         block_layout: BlockLayout,
         target_layout: BaseLayout,
-    ):
+    ) -> None:
         """Loads the content of a block layout (block definition) into an existing layout
         of the target document. The target layout can be any layout: modelspace,
         paperspace layout or block layout.
         """
         self.add_command(LoadEntities(list(block_layout), target_layout))
 
-    def load_layers(self, names: Sequence[str]):
+    def copy_entities_into(
+        self, entities: Sequence[DXFEntity], target_layout: BaseLayout
+    ) -> None:
+        """Loads copies of the given entities into an existing layout of the target
+        document.  This method can load the same entities multiple times into different
+        layouts.
+        """
+        self.add_command(CopyEntities(entities, target_layout))
+
+    def load_layers(self, names: Sequence[str]) -> None:
         """Loads the layers defined by the argument `names` into the target document.
         In the case of a name conflict the conflict policy will be applied.
         """
         entities = _get_table_entries(names, self.sdoc.layers)
         self.add_command(LoadResources(entities))
 
-    def load_linetypes(self, names: Sequence[str]):
+    def load_linetypes(self, names: Sequence[str]) -> None:
         """Loads the linetypes defined by the argument `names` into the target document.
         In the case of a name conflict the conflict policy will be applied.
         """
         entities = _get_table_entries(names, self.sdoc.linetypes)
         self.add_command(LoadResources(entities))
 
-    def load_text_styles(self, names: Sequence[str]):
+    def load_text_styles(self, names: Sequence[str]) -> None:
         """Loads the TEXT styles defined by the argument `names` into the target document.
         In the case of a name conflict the conflict policy will be applied.
         """
         entities = _get_table_entries(names, self.sdoc.styles)
         self.add_command(LoadResources(entities))
 
-    def load_dim_styles(self, names: Sequence[str]):
+    def load_dim_styles(self, names: Sequence[str]) -> None:
         """Loads the DIMENSION styles defined by the argument `names` into the target
         document. In the case of a name conflict the conflict policy will be applied.
         """
         entities = _get_table_entries(names, self.sdoc.dimstyles)
         self.add_command(LoadResources(entities))
 
-    def load_mline_styles(self, names: Sequence[str]):
+    def load_mline_styles(self, names: Sequence[str]) -> None:
         """Loads the MLINE styles defined by the argument `names` into the target
         document. In the case of a name conflict the conflict policy will be applied.
         """
         entities = _get_table_entries(names, self.sdoc.mline_styles)
         self.add_command(LoadResources(entities))
 
-    def load_mleader_styles(self, names: Sequence[str]):
+    def load_mleader_styles(self, names: Sequence[str]) -> None:
         """Loads the MULTILEADER styles defined by the argument `names` into the target
         document. In the case of a name conflict the conflict policy will be applied.
         """
         entities = _get_table_entries(names, self.sdoc.mleader_styles)
         self.add_command(LoadResources(entities))
 
-    def load_materials(self, names: Sequence[str]):
+    def load_materials(self, names: Sequence[str]) -> None:
         """Loads the MATERIALS defined by the argument `names` into the target
         document. In the case of a name conflict the conflict policy will be applied.
         """
         entities = _get_table_entries(names, self.sdoc.materials)
         self.add_command(LoadResources(entities))
 
-    def execute(self):
+    def execute(self) -> None:
         registry = _Registry(self.sdoc, self.tdoc)
         for cmd in self._commands:
             cmd.register_resources(registry)
@@ -354,7 +388,7 @@ class Loader:
         transfer.finalize()
 
 
-def _get_table_entries(names, table) -> list[DXFEntity]:
+def _get_table_entries(names: Iterable[str], table) -> list[DXFEntity]:
     entities: list[DXFEntity] = []
     for name in names:
         try:
@@ -366,16 +400,16 @@ def _get_table_entries(names, table) -> list[DXFEntity]:
 
 class _Registry:
     # The block "0" contains resource objects and entities without assigned layout:
-    def __init__(self, sdoc: Drawing, tdoc: Drawing):
+    def __init__(self, sdoc: Drawing, tdoc: Drawing) -> None:
         self.source_doc = sdoc
         self.target_doc = tdoc
         self.source_blocks: dict[str, dict[str, DXFEntity]] = {NO_BLOCK: {}}
         self.appids: set[str] = set()
         self.transfer_hints: dict[int, Any] = dict()
 
-    def add_entity(self, entity: DXFEntity, block_handle: str = NO_BLOCK):
+    def add_entity(self, entity: DXFEntity, block_key: str = NO_BLOCK) -> None:
         assert entity is not None, "internal error: entity is None"
-        block = self.source_blocks.setdefault(block_handle, {})
+        block = self.source_blocks.setdefault(block_key, {})
         entity_handle = entity.dxf.handle
         if entity_handle in block:
             return
@@ -385,7 +419,7 @@ class _Registry:
     def add_block(self, block_record: BlockRecord) -> None:
         # add resource entity BLOCK_RECORD to NO_BLOCK
         self.add_entity(block_record)
-        # block content in block <block_handle>
+        # block content in block <block_key>
         block_handle = block_record.dxf.handle
         self.add_entity(block_record.block, block_handle)  # type: ignore
         for entity in block_record.entity_space:
@@ -479,7 +513,7 @@ class _Transfer:
         objects: Sequence[DXFEntity],
         *,
         conflict_policy=ConflictPolicy.KEEP,
-    ):
+    ) -> None:
         self.registry = registry
         self.copied_blocks = blocks
         self.copied_objects = objects
@@ -494,9 +528,9 @@ class _Transfer:
         self._replace_handles: dict[str, str] = {}
 
     def get_entity_copy(
-        self, entity_handle: str, block_handle: str = NO_BLOCK
+        self, entity_handle: str, block_key: str = NO_BLOCK
     ) -> Optional[DXFEntity]:
-        block = self.copied_blocks.get(block_handle)
+        block = self.copied_blocks.get(block_key)
         if isinstance(block, dict):
             return block.get(entity_handle)
         return None
@@ -545,7 +579,7 @@ class _Transfer:
             elif isinstance(entity, BlockRecord):
                 self.add_block_record_entry(entity, handle)
 
-    def create_object_resources(self):
+    def create_object_resources(self) -> None:
         tdoc = self.registry.target_doc
         for entity in self.copied_objects:
             if isinstance(entity, Material):
@@ -578,13 +612,13 @@ class _Transfer:
             except const.DXFTableEntryError:
                 pass
 
-    def register_classes(self, classes: Sequence[DXFClass]):
+    def register_classes(self, classes: Sequence[DXFClass]) -> None:
         self.registry.target_doc.classes.register(classes)
 
     def map_resources(self) -> None:
-        for block_handle, block in self.copied_blocks.items():
+        for block_key, block in self.copied_blocks.items():
             for entity_handle, entity in block.items():
-                copy = self.get_entity_copy(entity_handle, block_handle)
+                copy = self.get_entity_copy(entity_handle, block_key)
                 if copy is not None and copy.is_alive:
                     entity.map_resources(copy, self)
 
@@ -669,7 +703,7 @@ class _Transfer:
             self.restore_block_content(block_record, handle)
             tdoc.blocks.add(block_record)  # create BlockLayout
 
-    def restore_block_content(self, block_record: BlockRecord, handle: str):
+    def restore_block_content(self, block_record: BlockRecord, handle: str) -> None:
         content = self.copied_blocks.get(handle, dict())
         block: Optional[Block] = None
         endblk: Optional[EndBlk] = None
@@ -722,7 +756,7 @@ class _Transfer:
         if name not in collection:
             collection.object_dict.add(name, entry)
 
-    def add_entities_to_layout(self, layout: BaseLayout):
+    def add_entities_to_layout(self, layout: BaseLayout) -> None:
         """Add copied graphical DXF entities from NO_BLOCK to the given layout."""
         for entity in self.copied_blocks[NO_BLOCK].values():
             if entity.dxf.owner is not None:
@@ -730,13 +764,13 @@ class _Transfer:
             elif is_graphic_entity(entity):
                 layout.add_entity(entity)  # type: ignore
 
-    def add_target_objects(self):
+    def add_target_objects(self) -> None:
         """Add copied DXF objects to the OBJECTS section of the target document."""
         objects = self.registry.target_doc.objects
         for obj in self.copied_objects:
             objects.add_object(obj)  # type: ignore
 
-    def finalize(self):
+    def finalize(self) -> None:
         # remove replaced entities:
         self.registry.target_doc.entitydb.purge()
 
