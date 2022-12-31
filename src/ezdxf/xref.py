@@ -154,6 +154,9 @@ class CopyEntities(LoadingCommand):
     The DXF format requires that all entities reside in one layout, which is
     automatically the owner of that entity. This command can be used to load multiple
     copies of the same entities into different layouts e.g. msp -> MspBlk1, msp -> MspBlk2.
+
+    This command should be added after the first main loading task of entities, because
+    a proper handle mapping can only be done for the first entity copy.
     """
 
     def __init__(
@@ -373,7 +376,11 @@ class Loader:
         cpm = CopyMachine(self.tdoc)
         cpm.copy_blocks(registry.source_blocks)
         transfer = _Transfer(
-            registry, cpm.copies, cpm.objects, conflict_policy=self.conflict_policy
+            registry=registry,
+            blocks=cpm.copies,
+            objects=cpm.objects,
+            handle_mapping=cpm.handle_mapping,
+            conflict_policy=self.conflict_policy,
         )
         transfer.register_classes(cpm.classes)
         transfer.create_appids()
@@ -511,6 +518,7 @@ class _Transfer:
         registry: _Registry,
         blocks: dict[str, dict[str, DXFEntity]],
         objects: Sequence[DXFEntity],
+        handle_mapping: dict[str, str],
         *,
         conflict_policy=ConflictPolicy.KEEP,
     ) -> None:
@@ -524,7 +532,7 @@ class _Transfer:
         self.text_style_mapping: dict[str, str] = {}
         self.dim_style_mapping: dict[str, str] = {}
         self.block_name_mapping: dict[str, str] = {}
-        self.handle_mapping: dict[str, str] = {}
+        self.handle_mapping: dict[str, str] = handle_mapping
         self._replace_handles: dict[str, str] = {}
 
     def get_entity_copy(
@@ -536,7 +544,7 @@ class _Transfer:
         return None
 
     def get_handle(self, handle: str) -> str:
-        return self.handle_mapping.get(handle, NO_BLOCK)
+        return self.handle_mapping.get(handle, "0")
 
     def get_layer(self, name: str) -> str:
         return self.layer_mapping.get(name, name)
@@ -800,11 +808,16 @@ class CopyMachine:
         self.copies: dict[str, dict[str, DXFEntity]] = {}
         self.classes: list[DXFClass] = []
         self.objects: list[DXFEntity] = []
+
+        # mapping from the source entity handle to the handle of the copied entity
+        self.handle_mapping: dict[str, str] = {}
         self.log: list[str] = []
 
     def copy_block(self, block: dict[str, DXFEntity]) -> dict[str, DXFEntity]:
         copies: dict[str, DXFEntity] = {}
         tdoc = self.target_doc
+        handle_mapping = self.handle_mapping
+
         for handle, entity in block.items():
             if isinstance(entity, DXFClass):
                 self._copy_dxf_class(entity)
@@ -815,6 +828,10 @@ class CopyMachine:
                 self.log.append(f"cannot copy entity {str(entity)}")
                 continue
             factory.bind(new_entity, tdoc)
+            if handle not in handle_mapping:
+                # For graphical entities which are copied multiple times, just store
+                # the first handle mapping.
+                handle_mapping[handle] = new_entity.dxf.handle
             if is_dxf_object(new_entity):
                 self.objects.append(new_entity)
             else:
