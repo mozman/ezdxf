@@ -885,3 +885,26 @@ def decode_octant_specs(specs: int) -> tuple[int, int, bool]:
     start_octant = (specs >> 4) & 0xF
     octant_span = specs & 0xF
     return start_octant, octant_span, ccw
+
+
+def find_shape_number(filename: str, name: bytes) -> int:
+    """Returns the shape number for shape `name` from the shape-file, returns -1 if not
+    found.
+
+    The filename can be an absolute path or the shape-file will be searched in the
+    current directory and all directories stored in :attr:`ezdxf.options.support_dirs`.
+    Supports shape files of type ".shx" and ".shp".
+    """
+    from ezdxf.filemanagement import find_support_file
+    from ezdxf import options
+
+    shape_file_name = find_support_file(filename, options.support_dirs)
+    index = -1
+    try:
+        shapes = readfile(shape_file_name)
+    except (IOError, ShapeFileException):
+        return index
+    shx_symbol = shapes.find(name)
+    if shx_symbol is not None:
+        return shx_symbol.number
+    return index

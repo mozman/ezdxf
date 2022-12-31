@@ -2,11 +2,12 @@
 # License: MIT License
 import pathlib
 import ezdxf
-from ezdxf import zoom
+from ezdxf import zoom, shapefile
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = pathlib.Path(".")
+
 
 # ------------------------------------------------------------------------------
 # This example shows how to create complex linetypes.
@@ -17,14 +18,12 @@ if not CWD.exists():
 doc = ezdxf.new("R2018")  # DXF R13 or later is required
 
 # This linetype contains the text "GAS" with text-style "STANDARD"
-doc.linetypes.new(
+doc.linetypes.add(
     "GASLEITUNG2",
-    dxfattribs={
-        "description": "Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--",
-        "length": 1,  # required for complex linetypes
-        # linetype definition in acadlt.lin:
-        "pattern": 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
-    },
+    # linetype definition in acadlt.lin:
+    pattern='A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
+    description="Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--",
+    length=1,  # required for complex linetypes
 )
 
 # This linetype contains a box shape from the ltypeshp.shx file.
@@ -32,19 +31,19 @@ doc.linetypes.new(
 # Shapes in linetypes require the referenced shape-file (ltypeshp.shx in this
 # case) to be located in the search path of the CAD application or in the same
 # folder as the DXF file.
-doc.linetypes.new(
+doc.linetypes.add(
     "GRENZE2",
-    dxfattribs={
-        "description": "Grenze eckig ----[]-----[]----[]-----[]----[]--",
-        "length": 1.45,  # required for complex line types
-        # linetype definition in acadlt.lin:
-        # A,.25,-.1,[BOX,ltypeshp.shx,x=-.1,s=.1],-.1,1
-        # replaced "BOX" by the shape number 132. I got this number from the
-        # ltypeshp.shp file, ezdxf can't get the shape number from ltypeshp.shx.
-        "pattern": "A,.25,-.1,[132,ltypeshp.shx,x=-.1,s=.1],-.1,1",
-    },
+    # Get the linetype definition from acadlt.lin:
+    # "A,.25,-.1,[BOX,ltypeshp.shx,x=-.1,s=.1],-.1,1" and replace "BOX" by
+    # shape-number 132.
+    # Find the shape-number by function find_shape_number(), the SHX file "ltypeshp.shx"
+    # will be searched in the current directory and the directories stored in
+    # `ezdxf.options.support_dirs`.
+    pattern="A,.25,-.1,[132,ltypeshp.shx,x=-.1,s=.1],-.1,1",
+    description="Grenze eckig -[]-----[]-----[]-----[]-----[]----",
+    length=1.45,  # required for complex line types
 )
-
+print(shapefile.find_shape_number("ltypeshp.shx", b"BOX"))
 
 msp = doc.modelspace()
 msp.add_line((0, 0), (100, 0), dxfattribs={"linetype": "GASLEITUNG2"})
