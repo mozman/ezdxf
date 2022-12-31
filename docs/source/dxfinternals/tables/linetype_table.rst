@@ -70,14 +70,14 @@ Table Structure DXF R2000+
 Simple Line Type
 ----------------
 
-`ezdxf` setup for line type 'CENTER':
+`ezdxf` setup for line type "CENTER":
 
 .. code-block:: python
 
-    dwg.linetypes.new("CENTER", dxfattribs={
-        description = "Center ____ _ ____ _ ____ _ ____ _ ____ _ ____",
+    dwg.linetypes.add("CENTER",
+        description="Center ____ _ ____ _ ____ _ ____ _ ____ _ ____",
         pattern=[2.0, 1.25, -0.25, 0.25, -0.25],
-     })
+    )
 
 
 Simple Line Type Tag Structure DXF R2000+
@@ -101,25 +101,25 @@ Simple Line Type Tag Structure DXF R2000+
     0
     3
     Center ____ _ ____ _ ____ _ ____ _ ____ _ ____
-    72
-    65
-    73
-    4
-    40
+    72          <<<< signature tag
+    65          <<<< ascii code for "A"
+    73          <<<< count of pattern groups starting with a code 49 tag
+    4           <<<< 4 pattern groups
+    40          <<<< overall pattern length in drawing units
     2.0
-    49
-    1.25
-    74
-    0
-    49
+    49          <<<< 1. pattern group
+    1.25        <<<< >0 line, <0 gap, =0 point
+    74          <<<< type marker
+    0           <<<< 0 for line group
+    49          <<<< 2. pattern group
     -0.25
     74
     0
-    49
+    49          <<<< 3. pattern group
     0.25
     74
     0
-    49
+    49          <<<< 4. pattern group
     -0.25
     74
     0
@@ -127,15 +127,15 @@ Simple Line Type Tag Structure DXF R2000+
 Complex Line Type TEXT
 ----------------------
 
-`ezdxf` setup for line type 'GASLEITUNG':
+`ezdxf` setup for line type "GASLEITUNG":
 
 .. code-block:: python
 
-    dwg.linetypes.new('GASLEITUNG', dxfattribs={
-        'description': 'Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--',
-        'length': 1,
-        'pattern': 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
-    })
+    dwg.linetypes.add("GASLEITUNG",
+        description="Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--",
+        length=1,
+        pattern='A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
+    )
 
 TEXT Tag Structure
 ~~~~~~~~~~~~~~~~~~
@@ -158,35 +158,35 @@ TEXT Tag Structure
     0
     3
     Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--
-    72
-    65
-    73
-    3
-    40
+    72          <<<< signature tag
+    65          <<<< ascii code for "A"
+    73          <<<< count of pattern groups starting with a code 49 tag
+    3           <<<< 3 pattern groups
+    40          <<<< overall pattern length in drawing units
     1
-    49
-    0.5
-    74
-    0
-    49
+    49          <<<< 1. pattern group
+    0.5         <<<< >0 line, <0 gap, =0 point
+    74          <<<< type marker
+    0           <<<< 0 for line group
+    49          <<<< 2. pattern group
     -0.2
-    74
-    2
-    75
-    0
-    340
+    74          <<<< type marker
+    2           <<<< 2 for text group
+    75          <<<< shape number in shape-file
+    0           <<<< always 0 for text group
+    340         <<<< handle to text style "STANDARD"
     11
-    46
+    46          <<<< scaling factor: "s" in pattern definition
     0.1
-    50
+    50          <<<< rotation angle: "r" and "u" in pattern definition
     0.0
-    44
+    44          <<<< shift x units: "x" in pattern definition = parallel to line direction
     -0.1
-    45
+    45          <<<< shift y units: "y" in pattern definition = normal to line direction
     -0.05
-    9
+    9           <<<< text
     GAS
-    49
+    49          <<<< 3. pattern group
     -0.25
     74
     0
@@ -223,37 +223,37 @@ SHAPE Tag Structure
     0
     3
     Grenze eckig ----[]-----[]----[]-----[]----[]--
-    72
-    65
-    73
-    4
-    40
+    72          <<<< signature tag
+    65          <<<< ascii code for "A"
+    73          <<<< count of pattern groups starting with a code 49 tag
+    4           <<<< 4 pattern groups
+    40          <<<< overall pattern length in drawing units
     1.45
-    49
-    0.25
-    74
-    0
-    49
+    49          <<<< 1. pattern group
+    0.25        <<<< >0 line, <0 gap, =0 point
+    74          <<<< type marker
+    0           <<<< 0 for line group
+    49          <<<< 2. pattern group
     -0.1
-    74
-    4
-    75
+    74          <<<< type marker
+    4           <<<< 4 for shape group
+    75          <<<< shape number in shape-file
     132
-    340
+    340         <<<< handle to shape-file entry "ltypeshp.shx"
     616
-    46
+    46          <<<< scaling factor: "s" in pattern definition
     0.1
-    50
+    50          <<<< rotation angle: "r" and "u" in pattern definition
     0.0
-    44
+    44          <<<< shift x units: "x" in pattern definition = parallel to line direction
     -0.1
-    45
+    45          <<<< shift y units: "y" in pattern definition = normal to line direction
     0.0
-    49
+    49          <<<< 3. pattern group
     -0.1
     74
     0
-    49
+    49          <<<< 4. pattern group
     1.0
     74
     0

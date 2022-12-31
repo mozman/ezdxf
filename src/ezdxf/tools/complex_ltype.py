@@ -74,7 +74,7 @@ def lin_compiler(definition: str) -> Sequence[DXFTag]:
                 DXFTag(49, token)
             )  # Dash, dot or space length (one entry per element)
         elif isinstance(token, list):  # yield from
-            tags.append(compile_complex_defnition(token))  # type: ignore
+            tags.append(compile_complex_definition(token))  # type: ignore
     return tags
 
 
@@ -119,15 +119,15 @@ class ComplexLineTypePart:
 
 
 CMD_CODES = {
-    "s": 46,
-    "r": 50,  # r == u
-    "u": 50,
-    "x": 44,
-    "y": 45,
+    "s": 46,  # scaling factor
+    "r": 50,  # rotation angle, r == u
+    "u": 50,  # rotation angle
+    "x": 44,  # shift x units = parallel to line direction
+    "y": 45,  # shift y units = normal to line direction
 }
 
 
-def compile_complex_defnition(tokens: Sequence) -> ComplexLineTypePart:
+def compile_complex_definition(tokens: Sequence) -> ComplexLineTypePart:
     part = ComplexLineTypePart(tokens[0], tokens[1], tokens[2])
     commands = list(reversed(tokens[3:]))
     params = {}

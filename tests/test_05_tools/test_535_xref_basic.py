@@ -40,13 +40,13 @@ class TestLoadResources:
         assert layer.dxf.handle in tdoc.entitydb, "entity not in database"
         assert layer.dxf.owner == tdoc.layers.head.dxf.handle, "invalid owner handle"
 
-    def test_loading_a_complex_linetype(self, sdoc):
-        """The next step is to load complex linetypes which requires to load the
-        dependent shape file entry too.
+    def test_loading_a_shape_linetype(self, sdoc):
+        """Load a complex linetype with shapes which requires to load the dependent
+        shape-file entry too.
         """
         tdoc = ezdxf.new()
         # handles shouldn't be synchronized to the source document!
-        forward_handles(tdoc, 10)
+        forward_handles(tdoc, 7)
         assert (
             sdoc.styles.find_shx("ltypeshp.shx").dxf.font == "ltypeshp.shx"
         ), "expected ltypeshp.shx entry to exist in the source document"
@@ -63,6 +63,14 @@ class TestLoadResources:
         assert (
             ltype.pattern_tags.get_style_handle() == style.dxf.handle
         ), "expected handle of shape-file 'ltypeshp.shx' in the target document"
+
+    def test_loading_a_text_linetype(self, sdoc):
+        """Load a complex linetype which contains text, the handle to the text style
+        should point to the STANDARD text style in the target document.
+        """
+        tdoc = ezdxf.new()
+        # handles shouldn't be synchronized to the source document!
+        forward_handles(tdoc, 11)
 
 
 if __name__ == "__main__":
