@@ -160,8 +160,8 @@ acdb_dimension = DefSubclass(
         ),
         # Dimension text explicitly entered by the user
         # default is the measurement.
-        # If null or “<>”, the dimension measurement is drawn as the text,
-        # if “ “ (one blank space), the text is suppressed.
+        # If null or "<>", the dimension measurement is drawn as the text,
+        # if " " (one blank space), the text is suppressed.
         # Anything else is drawn as the text.
         "text": DXFAttr(1, default="", optional=True),
         # Linear dimension types with an oblique angle have an optional group

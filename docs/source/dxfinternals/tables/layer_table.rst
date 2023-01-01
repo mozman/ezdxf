@@ -5,6 +5,12 @@ LAYER Table
 
 TODO
 
+.. seealso::
+
+    - DXF Reference: `TABLES Section`_
+    - DXF Reference: `LAYER`_ Table
+    - :class:`~ezdxf.entities.Layer` class
+
 Table Structure DXF R2000+
 --------------------------
 
@@ -223,3 +229,15 @@ Lineweight override XRECORD:
     13          <<< lineweight value
     102
     }
+
+Name References
+---------------
+
+LAYER table entries are referenced by name:
+
+    - all graphical DXF entities
+    - VIEWPORT entity
+
+.. _LAYER: https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-D94802B0-8BE8-4AC9-8054-17197688AFDB
+
+.. _TABLES Section: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A9FD9590-C97B-4E41-9F26-BD82C34A4F9F

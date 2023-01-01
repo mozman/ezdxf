@@ -18,6 +18,7 @@ are stored in entity database, and can be accessed by its handle.
 
     - DXF Reference: `TABLES Section`_
     - DXF Reference: `LTYPE`_ Table
+    - :class:`~ezdxf.entities.Linetype` class
 
 Table Structure DXF R12
 -----------------------
@@ -26,9 +27,9 @@ Table Structure DXF R12
 
     0           <<< start of table
     TABLE
-    2           <<< set table type
+    2           <<< table type
     LTYPE
-    70          <<< count of line types defined in this table, AutoCAD ignores this value
+    70          <<< count of table entries, AutoCAD ignores this value
     9
     0           <<< 1. LTYPE table entry
     LTYPE
@@ -47,15 +48,15 @@ Table Structure DXF R2000+
 
     0           <<< start of table
     TABLE
-    2           <<< set table type
+    2           <<< table type
     LTYPE
-    5           <<< LTYPE table handle
+    5           <<< table handle
     5F
-    330         <<< owner tag, tables has no owner
+    330         <<< owner tag, tables have no owner
     0
     100         <<< subclass marker
     AcDbSymbolTable
-    70          <<< count of line types defined in this table, AutoCAD ignores this value
+    70          <<< count of table entiries, AutoCAD ignores this value
     9
     0           <<< 1. LTYPE table entry
     LTYPE
@@ -101,25 +102,25 @@ Simple Line Type Tag Structure DXF R2000+
     0
     3
     Center ____ _ ____ _ ____ _ ____ _ ____ _ ____
-    72          <<<< signature tag
-    65          <<<< ascii code for "A"
-    73          <<<< count of pattern groups starting with a code 49 tag
-    4           <<<< 4 pattern groups
-    40          <<<< overall pattern length in drawing units
+    72          <<< signature tag
+    65          <<< ascii code for "A"
+    73          <<< count of pattern groups starting with a code 49 tag
+    4           <<< 4 pattern groups
+    40          <<< overall pattern length in drawing units
     2.0
-    49          <<<< 1. pattern group
-    1.25        <<<< >0 line, <0 gap, =0 point
-    74          <<<< type marker
-    0           <<<< 0 for line group
-    49          <<<< 2. pattern group
+    49          <<< 1. pattern group
+    1.25        <<< >0 line, <0 gap, =0 point
+    74          <<< type marker
+    0           <<< 0 for line group
+    49          <<< 2. pattern group
     -0.25
     74
     0
-    49          <<<< 3. pattern group
+    49          <<< 3. pattern group
     0.25
     74
     0
-    49          <<<< 4. pattern group
+    49          <<< 4. pattern group
     -0.25
     74
     0
@@ -158,35 +159,35 @@ TEXT Tag Structure
     0
     3
     Gasleitung2 ----GAS----GAS----GAS----GAS----GAS----GAS--
-    72          <<<< signature tag
-    65          <<<< ascii code for "A"
-    73          <<<< count of pattern groups starting with a code 49 tag
-    3           <<<< 3 pattern groups
-    40          <<<< overall pattern length in drawing units
+    72          <<< signature tag
+    65          <<< ascii code for "A"
+    73          <<< count of pattern groups starting with a code 49 tag
+    3           <<< 3 pattern groups
+    40          <<< overall pattern length in drawing units
     1
-    49          <<<< 1. pattern group
-    0.5         <<<< >0 line, <0 gap, =0 point
-    74          <<<< type marker
-    0           <<<< 0 for line group
-    49          <<<< 2. pattern group
+    49          <<< 1. pattern group
+    0.5         <<< >0 line, <0 gap, =0 point
+    74          <<< type marker
+    0           <<< 0 for line group
+    49          <<< 2. pattern group
     -0.2
-    74          <<<< type marker
-    2           <<<< 2 for text group
-    75          <<<< shape number in shape-file
-    0           <<<< always 0 for text group
-    340         <<<< handle to text style "STANDARD"
+    74          <<< type marker
+    2           <<< 2 for text group
+    75          <<< shape number in shape-file
+    0           <<< always 0 for text group
+    340         <<< handle to text style "STANDARD"
     11
-    46          <<<< scaling factor: "s" in pattern definition
+    46          <<< scaling factor: "s" in pattern definition
     0.1
-    50          <<<< rotation angle: "r" and "u" in pattern definition
+    50          <<< rotation angle: "r" and "u" in pattern definition
     0.0
-    44          <<<< shift x units: "x" in pattern definition = parallel to line direction
+    44          <<< shift x units: "x" in pattern definition = parallel to line direction
     -0.1
-    45          <<<< shift y units: "y" in pattern definition = normal to line direction
+    45          <<< shift y units: "y" in pattern definition = normal to line direction
     -0.05
-    9           <<<< text
+    9           <<< text
     GAS
-    49          <<<< 3. pattern group
+    49          <<< 3. pattern group
     -0.25
     74
     0
@@ -223,41 +224,51 @@ SHAPE Tag Structure
     0
     3
     Grenze eckig ----[]-----[]----[]-----[]----[]--
-    72          <<<< signature tag
-    65          <<<< ascii code for "A"
-    73          <<<< count of pattern groups starting with a code 49 tag
-    4           <<<< 4 pattern groups
-    40          <<<< overall pattern length in drawing units
+    72          <<< signature tag
+    65          <<< ascii code for "A"
+    73          <<< count of pattern groups starting with a code 49 tag
+    4           <<< 4 pattern groups
+    40          <<< overall pattern length in drawing units
     1.45
-    49          <<<< 1. pattern group
-    0.25        <<<< >0 line, <0 gap, =0 point
-    74          <<<< type marker
-    0           <<<< 0 for line group
-    49          <<<< 2. pattern group
+    49          <<< 1. pattern group
+    0.25        <<< >0 line, <0 gap, =0 point
+    74          <<< type marker
+    0           <<< 0 for line group
+    49          <<< 2. pattern group
     -0.1
-    74          <<<< type marker
-    4           <<<< 4 for shape group
-    75          <<<< shape number in shape-file
+    74          <<< type marker
+    4           <<< 4 for shape group
+    75          <<< shape number in shape-file
     132
-    340         <<<< handle to shape-file entry "ltypeshp.shx"
+    340         <<< handle to shape-file entry "ltypeshp.shx"
     616
-    46          <<<< scaling factor: "s" in pattern definition
+    46          <<< scaling factor: "s" in pattern definition
     0.1
-    50          <<<< rotation angle: "r" and "u" in pattern definition
+    50          <<< rotation angle: "r" and "u" in pattern definition
     0.0
-    44          <<<< shift x units: "x" in pattern definition = parallel to line direction
+    44          <<< shift x units: "x" in pattern definition = parallel to line direction
     -0.1
-    45          <<<< shift y units: "y" in pattern definition = normal to line direction
+    45          <<< shift y units: "y" in pattern definition = normal to line direction
     0.0
-    49          <<<< 3. pattern group
+    49          <<< 3. pattern group
     -0.1
     74
     0
-    49          <<<< 4. pattern group
+    49          <<< 4. pattern group
     1.0
     74
     0
 
+Name References
+---------------
+
+LTYPE table entries are referenced by name:
+
+    - all graphical DXF entities
+    - LAYER table entry
+    - DIMSTYLE table entry
+    - DIMSTYLE override
+    - MLINESTYLE
 
 .. _LTYPE: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F57A316C-94A2-416C-8280-191E34B182AC
 
