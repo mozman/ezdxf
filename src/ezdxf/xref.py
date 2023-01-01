@@ -80,9 +80,6 @@ class Registry(Protocol):
     def add_text_style(self, name: str) -> None:
         ...
 
-    def add_shape_file(self, name: str) -> None:
-        ...
-
     def add_dim_style(self, name: str) -> None:
         ...
 
@@ -472,13 +469,6 @@ class _Registry:
             self.add_entity(text_style)
         else:
             logger.debug(f"source text style '{name}' does not exist")
-
-    def add_shape_file(self, name) -> None:
-        shape_file = self.source_doc.styles.get_shx(name)
-        if shape_file:
-            self.add_entity(shape_file)
-        else:
-            logger.debug(f"source shape file '{name}' does not exist")
 
     def add_dim_style(self, name: str) -> None:
         # Dimension style name "STANDARD" gets never mangled and always exist in the
