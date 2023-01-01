@@ -250,7 +250,7 @@ class Linetype(DXFEntity):
 
     def register_resources(self, registry: xref.Registry) -> None:
         """Register required resources to resource register."""
-        assert self.doc is not None
+        assert self.doc is not None, "LTYPE entity must be assigned to a document"
         super().register_resources(registry)
         # register text styles and shape files for complex linetypes
         style_handle = self.pattern_tags.get_style_handle()

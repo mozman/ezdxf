@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, Viewport, XRecord
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.entitydb import EntityDB
+    from ezdxf import xref
 
 
 __all__ = ["Layer", "acdb_symbol_table_record", "LayerOverrides"]
@@ -381,6 +382,29 @@ class Layer(DXFEntity):
     def get_vp_overrides(self) -> LayerOverrides:
         """Returns the :class:`LayerOverrides` object for this layer."""
         return LayerOverrides(self)
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to resource register."""
+        assert self.doc is not None, "LAYER entity must be assigned to a document"
+        super().register_resources(registry)
+        registry.add_linetype(self.dxf.linetype)
+        # todo: register plot style- and material handles
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate registered resources from self to entity by ResourceMapper."""
+        assert isinstance(copy, Layer)
+        super().map_resources(copy, mapping)
+        self.dxf.linetype = mapping.get_linetype(self.dxf.linetype)
+        # todo: map plot style and material handles
+        # remove handles pointing into the source document:
+        copy.dxf.discard("plotstyle_handle")
+        copy.dxf.discard("material_handle")
+        copy.dxf.discard("unknown1")
+        # create required handles to resources in the target document
+        copy.set_required_attributes()
+        # todo: map layer overrides
+        # remove layer overrides
+        copy.discard_extension_dict()
 
 
 @dataclass

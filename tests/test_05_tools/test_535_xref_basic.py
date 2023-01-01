@@ -30,6 +30,7 @@ class TestLoadResourcesWithoutNamingConflicts:
         )
         arial = doc.styles.add("ARIAL", font="Arial.ttf")
         arial.set_extended_font_data(family="Arial", italic=False, bold=True)
+        doc.layers.add("SECOND", linetype="SQUARE")
         return doc
 
     def test_loading_a_simple_layer(self, sdoc):
@@ -94,6 +95,22 @@ class TestLoadResourcesWithoutNamingConflicts:
         assert (
             pattern_style_handle == style.dxf.handle
         ), "expected handle of the 'STANDARD' text style in the target document"
+
+    def test_loading_layer_with_complex_linetype(self, sdoc):
+        """Loading a layer which references a complex linetype that also requires
+        loading of an additional text style.
+        """
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+        loader.load_layers(["second"])
+        loader.execute()
+        layer = tdoc.layers.get("second")
+        assert layer.dxf.name == "SECOND", "expected the original layer name"
+
+        # Test if required resources are loaded:
+        ltype = tdoc.linetypes.get(layer.dxf.linetype)
+        assert ltype.dxf.name == "SQUARE"
+        assert tdoc.styles.find_shx("ltypeshp.shx") is not None
 
     def test_loading_a_text_style_with_extended_font_data(self, sdoc):
         """The extended font data is stored into XDATA section of the STYLE table entry."""

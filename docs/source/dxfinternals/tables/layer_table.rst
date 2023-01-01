@@ -236,7 +236,9 @@ Name References
 LAYER table entries are referenced by name:
 
     - all graphical DXF entities
-    - VIEWPORT entity
+    - VIEWPORT entity, frozen layers
+    - LAYER_FILTER
+    - LAYER_INDEX
 
 .. _LAYER: https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-D94802B0-8BE8-4AC9-8054-17197688AFDB
 

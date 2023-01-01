@@ -578,6 +578,8 @@ class _Transfer:
                 self.add_block_record_entry(entity, handle)
 
     def create_object_resources(self) -> None:
+        # todo: ACAD_PLOTSTYLENAME dictionary in the root dict.
+        #  The Layer.dxf.plot_style_handle points to objects stored in that dict.
         tdoc = self.registry.target_doc
         for entity in self.copied_objects:
             if isinstance(entity, Material):
