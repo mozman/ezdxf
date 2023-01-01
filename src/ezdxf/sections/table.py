@@ -113,7 +113,7 @@ class Table(Generic[T]):
         """Create a new table entry `name`.
 
         Args:
-            name: name of table entry, case-insensitive
+            name: name of table entry
             dxfattribs: additional DXF attributes for table entry
 
         """
@@ -127,19 +127,54 @@ class Table(Generic[T]):
         return self.new_entry(dxfattribs)
 
     def get(self, name: str) -> T:
-        """Get table entry `name` (case insensitive).
-        Raises :class:`DXFValueError` if table entry does not exist.
+        """Returns table entry `name`.
+
+        Args:
+            name: name of table entry, case-insensitive
+
+        Raises:
+            DXFTableEntryError: table entry does not exist
+
         """
-        key = self.key(name)
-        entry = self.entries.get(key, None)
+        entry = self.entries.get(self.key(name))
         if entry:
             return entry
         else:
             raise const.DXFTableEntryError(name)
 
+    def get_entry_by_handle(self, handle: str) -> Optional[T]:
+        """Returns table entry by handle or ``None`` if entry does not exist.
+
+        (internal API)
+        """
+        entry = self.doc.entitydb.get(handle)  # type: ignore
+        if entry and entry.dxftype() == self.TABLE_TYPE:
+            return entry  # type: ignore
+        return None
+
+    def get_handle_of_entry(self, name: str) -> str:
+        """Returns the handle of table entry by `name`, returns an empty string if no
+        entry for the given name exist.
+
+        Args:
+            name: name of table entry, case-insensitive
+
+        (internal API)
+        """
+        entry = self.entries.get(self.key(name))
+        if entry is not None:
+            return entry.dxf.handle
+        return ""
+
     def remove(self, name: str) -> None:
-        """Removes table entry `name`. Raises :class:`DXFValueError`
-        if table-entry does not exist.
+        """Removes table entry `name`.
+
+        Args:
+            name: name of table entry, case-insensitive
+
+        Raises:
+            DXFTableEntryError: table entry does not exist
+
         """
         key = self.key(name)
         entry = self.get(name)
@@ -150,8 +185,12 @@ class Table(Generic[T]):
         """Returns a new table entry `new_name` as copy of `name`,
         replaces entry `new_name` if already exist.
 
+        Args:
+            name: name of table entry, case-insensitive
+            new_name: name of duplicated table entry
+
         Raises:
-             DXFValueError: `name` does not exist
+            DXFTableEntryError: table entry does not exist
 
         """
         entry = self.get(name)
@@ -166,7 +205,13 @@ class Table(Generic[T]):
         return entry
 
     def discard(self, name: str) -> None:
-        """Remove table entry without destroying object. (internal API)"""
+        """Remove table entry without destroying object.
+
+        Args:
+            name: name of table entry, case-insensitive
+
+        (internal API)
+        """
         del self.entries[self.key(name)]
 
     def replace(self, name: str, entry: T) -> None:
@@ -184,7 +229,7 @@ class Table(Generic[T]):
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
-        assert self.doc is not None, "valid DXF document expected"
+        assert self.doc is not None, "valid DXF document required"
         entry = cast(T, factory.create_db_entry(self.TABLE_TYPE, dxfattribs, self.doc))
 
         self._append(entry)

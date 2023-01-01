@@ -254,7 +254,7 @@ class Linetype(DXFEntity):
         super().register_resources(registry)
         # register text styles and shape files for complex linetypes
         style_handle = self.pattern_tags.get_style_handle()
-        style = self.doc.entitydb.get(style_handle)
+        style = self.doc.styles.get_entry_by_handle(style_handle)
         if style is not None:
             registry.add_entity(style)
 
