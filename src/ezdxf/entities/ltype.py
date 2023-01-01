@@ -249,7 +249,7 @@ class Linetype(DXFEntity):
         return self.pattern_tags.compile()
 
     def register_resources(self, registry: xref.Registry) -> None:
-        """Register required resources to resource register."""
+        """Register required resources to the resource registry."""
         assert self.doc is not None, "LTYPE entity must be assigned to a document"
         super().register_resources(registry)
         # register text styles and shape files for complex linetypes
@@ -259,7 +259,7 @@ class Linetype(DXFEntity):
             registry.add_entity(style)
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
-        """Translate registered resources from self to entity by ResourceMapper."""
+        """Translate registered resources from self to the copied entity."""
         assert isinstance(copy, Linetype)
         super().map_resources(copy, mapping)
         style_handle = self.pattern_tags.get_style_handle()

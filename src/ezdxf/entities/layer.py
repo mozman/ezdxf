@@ -384,14 +384,14 @@ class Layer(DXFEntity):
         return LayerOverrides(self)
 
     def register_resources(self, registry: xref.Registry) -> None:
-        """Register required resources to resource register."""
+        """Register required resources to the resource registry."""
         assert self.doc is not None, "LAYER entity must be assigned to a document"
         super().register_resources(registry)
         registry.add_linetype(self.dxf.linetype)
         # todo: register plot style- and material handles
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
-        """Translate registered resources from self to entity by ResourceMapper."""
+        """Translate registered resources from self to the copied entity."""
         assert isinstance(copy, Layer)
         super().map_resources(copy, mapping)
         self.dxf.linetype = mapping.get_linetype(self.dxf.linetype)

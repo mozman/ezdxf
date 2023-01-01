@@ -637,7 +637,7 @@ class DXFGraphic(DXFEntity):
         return entity  # type: ignore
 
     def register_resources(self, registry: xref.Registry) -> None:
-        """Register required resources to resource register."""
+        """Register required resources to the resource registry."""
         super().register_resources(registry)
         dxf = self.dxf
         registry.add_layer(dxf.layer)
@@ -647,7 +647,7 @@ class DXFGraphic(DXFEntity):
         registry.add_handle(dxf.get("plotstyle_handle", NONE_HANDLE))
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
-        """Translate registered resources from self to entity by ResourceMapper."""
+        """Translate registered resources from self to the copied entity."""
         super().map_resources(copy, mapping)
         copy.dxf.layer = mapping.get_layer(self.dxf.layer)
         attrib_exist = self.dxf.hasattr

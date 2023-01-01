@@ -938,15 +938,13 @@ class DXFEntity:
             self.reactors.discard(handle)
 
     def register_resources(self, registry: xref.Registry) -> None:
-        """Register required resources to the xref.Register class."""
+        """Register required resources to the resource registry."""
         # todo: register AppIDs in XDATA
         # todo: register group code 1005 handles in XDATA
         pass
 
     def map_resources(self, copy: DXFEntity, mapper: xref.ResourceMapper) -> None:
-        """Translate registered resources from self to entity via the ResourceMapper
-        class.
-        """
+        """Translate registered resources from self to the copied entity."""
         pass
 
 

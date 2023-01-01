@@ -384,7 +384,7 @@ class Loader:
         transfer.add_target_objects()
         transfer.create_table_resources()
         transfer.create_object_resources()
-        transfer.update_handle_mapping()
+        transfer.redirect_handle_mapping()
         transfer.map_resources()
 
         for cmd in self._commands:
@@ -579,7 +579,7 @@ class _Transfer:
 
     def create_object_resources(self) -> None:
         # todo: ACAD_PLOTSTYLENAME dictionary in the root dict.
-        #  The Layer.dxf.plot_style_handle points to objects stored in that dict.
+        #  The Layer.dxf.plotstyle_handle points to objects stored in that dict.
         tdoc = self.registry.target_doc
         for entity in self.copied_objects:
             if isinstance(entity, Material):
@@ -592,7 +592,7 @@ class _Transfer:
     def replace_handle_mapping(self, old_target, new_target) -> None:
         self._replace_handles[old_target] = new_target
 
-    def update_handle_mapping(self) -> None:
+    def redirect_handle_mapping(self) -> None:
         temp_mapping: dict[str, str] = {}
         replace_handles = self._replace_handles
         # redirect source entity -> new target entity
@@ -623,7 +623,7 @@ class _Transfer:
                     entity.map_resources(copy, self)
 
     def add_layer_entry(self, layer: Layer) -> None:
-        # TODO: special cases - do not copy, but create if doesn't exist
+        # TODO: special cases - do not copy, but create them if do not exist
         #   DEFPOINTS
         #   *ADSK_... layers
         tdoc = self.registry.target_doc
