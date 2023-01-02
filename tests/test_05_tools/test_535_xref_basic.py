@@ -3,7 +3,7 @@
 
 import pytest
 import ezdxf
-from ezdxf import xref
+from ezdxf import xref, colors
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.render.arrows import ARROWS
 
@@ -17,6 +17,7 @@ class TestLoadResourcesWithoutNamingConflicts:
     @pytest.fixture(scope="class")
     def sdoc(self):
         doc = ezdxf.new()
+        doc.filename = "source.dxf"
         doc.layers.add("FIRST")
         doc.linetypes.add(  # see also: complex_line_type_example.py
             "SQUARE",
@@ -38,6 +39,11 @@ class TestLoadResourcesWithoutNamingConflicts:
         )
         dimstyle.dxf.dimltype = "GAS"
         dimstyle.dxf.dimblk = ARROWS.dot
+
+        material = doc.materials.new("ExoticBlue")
+        material.dxf.ambient_color_value = colors.encode_raw_color((0, 0, 255))
+        layer = doc.layers.add("Layer_with_material")
+        layer.dxf.material_handle = material.dxf.handle
         return doc
 
     def test_loading_a_simple_layer(self, sdoc):
@@ -153,6 +159,22 @@ class TestLoadResourcesWithoutNamingConflicts:
         assert dimstyle.dxf.dimblk == ARROWS.dot
         # Note: ACAD arrow head blocks are created automatically at export in
         # DimStyle.set_blk_handle() if they do not exist
+
+    def test_loading_layer_with_custom_default_material(self, sdoc):
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+        loader.load_layers(["Layer_with_material"])
+        loader.execute()
+
+        assert (
+            "ExoticBlue" in tdoc.materials
+        ), "expected copied entry in MATERIAL collection in target doc"
+        layer = tdoc.layers.get("Layer_with_material")
+        handle = layer.dxf.material_handle
+        material = tdoc.entitydb.get(handle)
+        assert material.dxf.name == "ExoticBlue"
+        ambient_color = material.dxf.ambient_color_value
+        assert colors.decode_raw_color(ambient_color)[1] == (0, 0, 255)
 
 
 if __name__ == "__main__":

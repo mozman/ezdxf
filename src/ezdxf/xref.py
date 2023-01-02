@@ -59,9 +59,12 @@ class ConflictPolicy(enum.Enum):
     # rename imported resource to $0$<name>
     NUM_PREFIX = enum.auto()
 
+
 # Exceptions from the ConflictPolicy
 # ----------------------------------
-# All resources named "STANDARD" will be kept.
+# Resources named "STANDARD" will be kept.
+# Material "GLOBAL" will be kept.
+# Plot style "NORMAL" will be kept.
 # Layers "0", "DEFPOINTS" and layers starting with "*ADSK_" will be kept.
 # Linetypes "CONTINUOUS", "BYLAYER" and "BYBLOCK" will be kept
 # Special blocks like arrow heads will be kept.
@@ -499,14 +502,6 @@ class _Transfer:
         self.handle_mapping: dict[str, str] = handle_mapping
         self._replace_handles: dict[str, str] = {}
 
-    def get_entity_copy(
-        self, entity_handle: str, block_key: str = NO_BLOCK
-    ) -> Optional[DXFEntity]:
-        block = self.copied_blocks.get(block_key)
-        if isinstance(block, dict):
-            return block.get(entity_handle)
-        return None
-
     def get_handle(self, handle: str) -> str:
         return self.handle_mapping.get(handle, "0")
 
@@ -557,7 +552,7 @@ class _Transfer:
         tdoc = self.registry.target_doc
         for entity in self.copied_objects:
             if isinstance(entity, Material):
-                self.add_collection_entry(tdoc.materials, entity)
+                self.add_collection_entry(tdoc.materials, entity, default="GLOBAL")
             elif isinstance(entity, MLineStyle):
                 self.add_collection_entry(tdoc.mline_styles, entity)
             elif isinstance(entity, MLeaderStyle):
@@ -590,11 +585,16 @@ class _Transfer:
         self.registry.target_doc.classes.register(classes)
 
     def map_resources(self) -> None:
+        source_db = self.registry.source_doc.entitydb
         for block_key, block in self.copied_blocks.items():
-            for entity_handle, entity in block.items():
-                copy = self.get_entity_copy(entity_handle, block_key)
+            for source_entity_handle, copy in block.items():
+                source_entity = source_db.get(source_entity_handle)
+                if source_entity is None:
+                    raise const.DXFInternalEzdxfError(
+                        "database error, source entity not found"
+                    )
                 if copy is not None and copy.is_alive:
-                    entity.map_resources(copy, self)
+                    source_entity.map_resources(copy, self)
 
     def add_layer_entry(self, layer: Layer) -> None:
         # TODO: special cases - do not copy, but create them if do not exist
@@ -719,9 +719,11 @@ class _Transfer:
             )
         table.add_entry(entity)
 
-    def add_collection_entry(self, collection, entry: DXFEntity) -> None:
+    def add_collection_entry(
+        self, collection, entry: DXFEntity, default=STANDARD
+    ) -> None:
         name = entry.dxf.name
-        if name.upper() == STANDARD:
+        if name.upper() == default:
             standard = collection.object_dict.get(name)
             self.replace_handle_mapping(entry.dxf.handle, standard.dxf.handle)
             entry.destroy()

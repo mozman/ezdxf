@@ -163,7 +163,7 @@ class Layer(DXFEntity):
         )
 
     def set_required_attributes(self):
-        if not self.dxf.hasattr("material"):
+        if not self.dxf.hasattr("material_handle"):
             global_ = self.doc.materials["Global"]
             if isinstance(global_, DXFEntity):
                 handle = global_.dxf.handle
@@ -388,17 +388,23 @@ class Layer(DXFEntity):
         assert self.doc is not None, "LAYER entity must be assigned to a document"
         super().register_resources(registry)
         registry.add_linetype(self.dxf.linetype)
-        # todo: register plot style- and material handles
+        material = self.doc.entitydb.get(self.dxf.material_handle)
+        if material and material.dxf.name.upper() != "GLOBAL":
+            registry.add_entity(material)
+        # todo: register plot style handle
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate registered resources from self to the copied entity."""
         assert isinstance(copy, Layer)
         super().map_resources(copy, mapping)
         self.dxf.linetype = mapping.get_linetype(self.dxf.linetype)
-        # todo: map plot style and material handles
+        material = self.doc.entitydb.get(self.dxf.material_handle)  # type: ignore
+        if material:
+            copy.dxf.material_handle = mapping.get_handle(material.dxf.handle)
+
+        # todo: map plot style handle
         # remove handles pointing into the source document:
         copy.dxf.discard("plotstyle_handle")
-        copy.dxf.discard("material_handle")
         copy.dxf.discard("unknown1")
         # create required handles to resources in the target document
         copy.set_required_attributes()
