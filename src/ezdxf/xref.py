@@ -60,6 +60,14 @@ class ConflictPolicy(enum.Enum):
     # rename imported resource to $0$<name>
     NUM_PREFIX = enum.auto()
 
+# Exceptions from the ConflictPolicy
+# ----------------------------------
+# All resources named "STANDARD" will be kept.
+# Layers "0", "DEFPOINTS" and layers starting with "*ADSK_" will be kept.
+# Linetypes "CONTINUOUS", "BYLAYER" and "BYBLOCK" will be kept
+# Special blocks like arrow heads will be kept.
+# Anonymous blocks get a new arbitrary name following the rules of anonymous block names.
+
 
 class Registry(Protocol):
     def add_entity(self, entity: DXFEntity, block_key: str = NO_BLOCK) -> None:
@@ -143,30 +151,6 @@ class LoadEntities(LoadingCommand):
 
     def register_resources(self, registry: Registry) -> None:
         _register_block_entities(self.entities, registry)
-
-
-class CopyEntities(LoadingCommand):
-    """Loads copies of all given entities into the target layout.
-
-    The DXF format requires that all entities reside in one layout, which is
-    automatically the owner of that entity. This command can be used to load multiple
-    copies of the same entities into different layouts e.g. msp -> MspBlk1, msp -> MspBlk2.
-
-    This command should be added after the first main loading task of entities, because
-    a proper handle mapping can only be done for the first entity copy.
-    """
-
-    def __init__(
-        self, entities: Sequence[DXFEntity], target_layout: BaseLayout
-    ) -> None:
-        self.entities = entities
-        self.target_layout = target_layout
-        self.copy_block_id = f"copy_to_{target_layout.block_record_handle}"
-
-    def register_resources(self, registry: Registry) -> None:
-        key = self.copy_block_id
-        for e in self.entities:
-            registry.add_entity(e, block_key=key)
 
 
 class LoadPaperspaceLayout(LoadingCommand):
@@ -306,15 +290,6 @@ class Loader:
         paperspace layout or block layout.
         """
         self.add_command(LoadEntities(list(block_layout), target_layout))
-
-    def copy_entities_into(
-        self, entities: Sequence[DXFEntity], target_layout: BaseLayout
-    ) -> None:
-        """Loads copies of the given entities into an existing layout of the target
-        document.  This method can load the same entities multiple times into different
-        layouts.
-        """
-        self.add_command(CopyEntities(entities, target_layout))
 
     def load_layers(self, names: Sequence[str]) -> None:
         """Loads the layers defined by the argument `names` into the target document.
@@ -820,10 +795,7 @@ class CopyMachine:
                 self.log.append(f"cannot copy entity {str(entity)}")
                 continue
             factory.bind(new_entity, tdoc)
-            if handle not in handle_mapping:
-                # For graphical entities which are copied multiple times, just store
-                # the first handle mapping.
-                handle_mapping[handle] = new_entity.dxf.handle
+            handle_mapping[handle] = new_entity.dxf.handle
             if is_dxf_object(new_entity):
                 self.objects.append(new_entity)
             else:
