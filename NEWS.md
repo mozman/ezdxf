@@ -3,13 +3,14 @@ News
 ====
 
 Version 1.0.1b1 - dev
--------------------
+---------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
 - NEW: function `set_lineweight_display_style()` in module `ezdxf.appsettings`
+- NEW: `ezdxf info` command shows unknown/unsupported entities in stats
 - CHANGE: the function `fit_points_to_cad_cv()` can calculate the control points of 
   B-splines from fit points like BricsCAD, the argument `estimate` is not necessary 
-  anymore and is removed
+  anymore and was removed
 - CHANGE: removed argument `estimate` from factory method `add_cad_spline_control_frame()`, see above
 - BUGFIX: [#793](https://github.com/mozman/ezdxf/issues/793)
   fix LWPOLYLINE parsing in `ProxyGraphic` class

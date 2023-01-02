@@ -1386,4 +1386,18 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> list[str]:
         if verbose:
             data.extend(count(doc.objects))
 
+        unknown_entities = _get_unknown_entities(doc)
+        if len(unknown_entities):
+            data.append(f"Unknown/unsupported entities: {len(unknown_entities)}")
+            if verbose:
+                data.extend(count(unknown_entities))
+    return data
+
+
+def _get_unknown_entities(doc: Drawing) -> list[DXFEntity]:
+    from ezdxf.entities import DXFTagStorage, ACADProxyEntity, OLE2Frame
+    data: list[DXFEntity] = []
+    for entity in doc.entitydb.values():
+        if isinstance(entity, (DXFTagStorage, ACADProxyEntity, OLE2Frame)):
+            data.append(entity)
     return data
