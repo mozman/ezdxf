@@ -651,8 +651,8 @@ class Drawing:
         if material is None or material.dxftype() != "MATERIAL":
             if "ByLayer" in self.materials:
                 self.header["$CMATERIAL"] = self.materials.get("ByLayer").dxf.handle
-            else:  # set any handle, except '0' which crashes BricsCAD
-                self.header["$CMATERIAL"] = "45"
+            else:  # material "Global" must exist!
+                self.header["$CMATERIAL"] = self.materials.get("Global").dxf.handle
 
         # set ACAD maintenance version - same values as used by BricsCAD
         self.header["$ACADMAINTVER"] = acad_maint_ver.get(self.dxfversion, 0)
