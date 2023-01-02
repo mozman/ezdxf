@@ -391,7 +391,7 @@ class Layer(DXFEntity):
         material = self.doc.entitydb.get(self.dxf.material_handle)
         if material and material.dxf.name.upper() != "GLOBAL":
             registry.add_entity(material)
-        # todo: register plot style handle
+        # current plot style will be replaced by default plot style "Normal"
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate registered resources from self to the copied entity."""
@@ -401,7 +401,7 @@ class Layer(DXFEntity):
 
         # remove handles pointing to the source document:
         copy.dxf.discard("material_handle")
-        copy.dxf.discard("plotstyle_handle")
+        copy.dxf.discard("plotstyle_handle")  # replaced by plot style "Normal"
         copy.dxf.discard("unknown1")
 
         material = self.doc.entitydb.get(self.dxf.material_handle)  # type: ignore
@@ -410,7 +410,6 @@ class Layer(DXFEntity):
             if mapped_handle:
                 copy.dxf.material_handle = mapped_handle
 
-        # todo: map plot style handle
         # create required handles to resources in the target document
         copy.set_required_attributes()
         # todo: map layer overrides
