@@ -383,6 +383,10 @@ EXPORT_MAP_R12 = [
     "dimclrt",
 ]
 
+DIM_TEXT_STYLE_ATTR = "dimtxsty"
+DIM_ARROW_HEAD_ATTRIBS = ("dimblk", "dimblk1", "dimblk2", "dimldrblk")
+DIM_LINETYPE_ATTRIBS = ("dimltype", "dimltex1", "dimltex2")
+
 
 def dim_filter(name: str) -> bool:
     return name.startswith("dim")
@@ -415,7 +419,7 @@ class DimStyle(DXFEntity):
         # data, handles are set at export.
         super().post_load_hook(doc)
         db = doc.entitydb
-        for attrib_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
+        for attrib_name in DIM_ARROW_HEAD_ATTRIBS:
             if self.dxf.hasattr(attrib_name):
                 continue
             block_record_handle = self.dxf.get(attrib_name + "_handle")
@@ -439,7 +443,7 @@ class DimStyle(DXFEntity):
             except (KeyError, AttributeError):
                 logger.info(f"Ignore undefined text style #{style_handle}.")
 
-        for attrib_name in ("dimltype", "dimltex1", "dimltex2"):
+        for attrib_name in DIM_LINETYPE_ATTRIBS:
             lt_handle = self.dxf.get(attrib_name + "_handle", None)
             if lt_handle and lt_handle != "0":
                 try:
@@ -483,7 +487,7 @@ class DimStyle(DXFEntity):
             pass
 
         # register linetypes
-        for attr_name in ("dimltype", "dimltex1", "dimltex2"):
+        for attr_name in DIM_LINETYPE_ATTRIBS:
             ltype_name = self.dxf.get(attr_name)
             if ltype_name is None:
                 continue
@@ -493,7 +497,7 @@ class DimStyle(DXFEntity):
             except const.DXFTableEntryError:
                 pass
 
-        for attr_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
+        for attr_name in DIM_ARROW_HEAD_ATTRIBS:
             arrow_name = self.dxf.get(attr_name)
             # ignore default CLOSED_FILLED arrow head, which is named ""
             if arrow_name:
@@ -505,31 +509,31 @@ class DimStyle(DXFEntity):
         super().map_resources(copy, mapping)
         # ezdxf uses names for blocks, linetypes and text style as internal data
         # map text style
-        text_style = self.dxf.get("dimtxsty")
+        text_style = self.dxf.get(DIM_TEXT_STYLE_ATTR)
         if text_style is not None:
             copy.dxf.dimtxsty = mapping.get_text_style(text_style)
         # map linetypes
-        for attr_name in ("dimltype", "dimltex1", "dimltex2"):
+        for attr_name in DIM_LINETYPE_ATTRIBS:
             ltype_name = self.dxf.get(attr_name)
             if ltype_name:
                 copy.dxf.set(attr_name, mapping.get_linetype(ltype_name))
-        for attr_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
+        for attr_name in DIM_ARROW_HEAD_ATTRIBS:
             arrow_name = self.dxf.get(attr_name)
             # ignore default CLOSED_FILLED arrow head, which is named ""
             if arrow_name:
                 copy.dxf.set(attr_name, mapping.get_arrow_head_name(arrow_name))
 
     def set_handles(self):
-        style = self.dxf.get("dimtxsty")
+        style = self.dxf.get(DIM_TEXT_STYLE_ATTR)
         if style:
             self.dxf.dimtxsty_handle = self.doc.styles.get(style).dxf.handle
 
-        for attr_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
+        for attr_name in DIM_ARROW_HEAD_ATTRIBS:
             block_name = self.dxf.get(attr_name)
             if block_name:
                 self.set_blk_handle(attr_name + "_handle", block_name)
 
-        for attr_name in ("dimltype", "dimltex1", "dimltex2"):
+        for attr_name in DIM_LINETYPE_ATTRIBS:
             get_linetype = self.doc.linetypes.get
             ltype_name = self.dxf.get(attr_name)
             if ltype_name:
