@@ -4,6 +4,7 @@
 import pytest
 import ezdxf
 from ezdxf import xref
+from ezdxf.tools.standards import setup_dimstyle
 
 
 def forward_handles(doc, count: int) -> None:
@@ -31,6 +32,10 @@ class TestLoadResourcesWithoutNamingConflicts:
         arial = doc.styles.add("ARIAL", font="Arial.ttf")
         arial.set_extended_font_data(family="Arial", italic=False, bold=True)
         doc.layers.add("SECOND", linetype="SQUARE")
+        dimstyle = setup_dimstyle(
+            doc, "EZ_M_100_H25_CM", style="ARIAL", name="TestDimStyle"
+        )
+        dimstyle.dxf.dimltype = "GAS"
         return doc
 
     def test_loading_a_simple_layer(self, sdoc):
@@ -73,7 +78,7 @@ class TestLoadResourcesWithoutNamingConflicts:
         assert pattern_style_handle != "0"
         assert (
             pattern_style_handle == style.dxf.handle
-        ), "expected handle of shape-file 'ltypeshp.shx' in the target document"
+        ), "expected handle of shape-file 'ltypeshp.shx' as pattern style handle"
 
     def test_loading_a_text_linetype(self, sdoc):
         """Load a complex linetype which contains text, the handle to the text style
@@ -94,7 +99,7 @@ class TestLoadResourcesWithoutNamingConflicts:
         assert pattern_style_handle != "0"
         assert (
             pattern_style_handle == style.dxf.handle
-        ), "expected handle of the 'STANDARD' text style in the target document"
+        ), "expected handle of text style STANDARD as pattern style handle"
 
     def test_loading_layer_with_complex_linetype(self, sdoc):
         """Loading a layer which references a complex linetype that also requires
@@ -109,7 +114,7 @@ class TestLoadResourcesWithoutNamingConflicts:
 
         # Test if required resources are loaded:
         ltype = tdoc.linetypes.get(layer.dxf.linetype)
-        assert ltype.dxf.name == "SQUARE"
+        assert ltype.dxf.name == "SQUARE", "expected linetype SQUARE in target doc"
         assert tdoc.styles.find_shx("ltypeshp.shx") is not None
 
     def test_loading_a_text_style_with_extended_font_data(self, sdoc):
@@ -119,12 +124,29 @@ class TestLoadResourcesWithoutNamingConflicts:
         loader.load_text_styles(["arial"])
         loader.execute()
         arial = tdoc.styles.get("arial")
-        assert arial.dxf.name == "ARIAL"
+        assert arial.dxf.name == "ARIAL", "expected text style ARIAL in target doc"
 
         family, italic, bold = arial.get_extended_font_data()
         assert family == "Arial"
         assert italic is False
         assert bold is True
+
+    def test_loading_dimstyle(self, sdoc):
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+        loader.load_dim_styles(["TestDimStyle"])
+        loader.execute()
+
+        dimstyle = tdoc.dimstyles.get("TestDimStyle")
+        assert dimstyle.dxf.name == "TestDimStyle"
+
+        assert dimstyle.dxf.dimtxsty == "ARIAL"
+        arial = tdoc.styles.get("arial")
+        assert arial.dxf.name == "ARIAL", "expected text style ARIAL in target doc"
+
+        assert dimstyle.dxf.dimltype == "GAS"
+        ltype = tdoc.linetypes.get("GAS")
+        assert ltype.dxf.name == "GAS", "expected linetype GAS in target doc"
 
 
 if __name__ == "__main__":

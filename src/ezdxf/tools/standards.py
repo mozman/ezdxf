@@ -270,7 +270,7 @@ def setup_dimstyle(
         doc: DXF drawing
         fmt: format string
         style: text style for measurement
-        blk: block name for arrow None for oblique stroke
+        blk: block name of arrow head, ``None`` for oblique stroke
         name: dimension style name, if name is '', `fmt` string is used as name
 
     """
@@ -296,9 +296,7 @@ def setup_dimstyle(
     dimstyle.dxf.dimtix = 0  # Draws dimension text between the extension lines even if it would ordinarily be placed outside those lines
     dimstyle.dxf.dimtih = 0  # Align text inside extension lines with dimension line; 1 = Draws text horizontally
     dimstyle.dxf.dimtoh = 0  # Align text outside of extension lines with dimension line; 1 = Draws text horizontally
-    dimstyle.dxf.dimzin = (
-        12  # Suppresses leading trailing zeros in linear dimensions
-    )
+    dimstyle.dxf.dimzin = 12  # Suppresses leading trailing zeros in linear dimensions
     dimstyle.dxf.dimazin = (
         3  # Suppresses leading + trailing zeros in angular dimensions
     )

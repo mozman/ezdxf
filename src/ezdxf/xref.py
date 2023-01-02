@@ -32,7 +32,7 @@ from ezdxf.entities import (
     Block,
     EndBlk,
 )
-
+from ezdxf.render.arrows import ARROWS
 
 __all__ = [
     "Registry",
@@ -94,6 +94,9 @@ class Registry(Protocol):
     def add_block_name(self, name: str) -> None:
         ...
 
+    def add_arrow_head_name(self, name: str) -> None:
+        ...
+
     def add_appid(self, name: str) -> None:
         ...
 
@@ -118,6 +121,9 @@ class ResourceMapper(Protocol):
         ...
 
     def get_block_name(self, name: str) -> str:
+        ...
+
+    def get_arrow_head_name(self, name: str) -> str:
         ...
 
     def get_transfer_hint(self, key: int) -> Any:
@@ -464,6 +470,11 @@ class _Registry:
         else:
             logger.debug(f"source block '{name}' does not exist")
 
+    def add_arrow_head_name(self, name: str) -> None:
+        # ignore default CLOSED_FILLED arrow head, which is named ""
+        if name:
+            self.add_block_name(ARROWS.block_name(ARROWS.block_name(name)))
+
     def add_appid(self, name: str) -> None:
         self.appids.add(name.upper())
 
@@ -525,6 +536,10 @@ class _Transfer:
 
     def get_block_name(self, name: str) -> str:
         return self.block_name_mapping.get(name, name)
+
+    def get_arrow_head_name(self, name: str) -> str:
+        block_name = ARROWS.block_name(name)
+        return self.block_name_mapping.get(block_name, block_name)
 
     def get_transfer_hint(self, key: int) -> Any:
         return self.registry.transfer_hints[key]

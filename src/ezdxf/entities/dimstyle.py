@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf import xref
 
 __all__ = ["DimStyle"]
 logger = logging.getLogger("ezdxf")
@@ -31,9 +32,7 @@ logger = logging.getLogger("ezdxf")
 acdb_dimstyle = DefSubclass(
     "AcDbDimStyleTableRecord",
     {
-        "name": DXFAttr(
-            2, default="Standard", validator=validator.is_valid_table_name
-        ),
+        "name": DXFAttr(2, default="Standard", validator=validator.is_valid_table_name),
         "flags": DXFAttr(70, default=0),
         "dimpost": DXFAttr(3, default=""),
         "dimapost": DXFAttr(4, default=""),
@@ -187,13 +186,9 @@ acdb_dimstyle = DefSubclass(
         # handle of linetype for extension line 2
         "dimltex2_handle": DXFAttr(347, dxfversion=DXF2007),
         # dimension line lineweight enum value, default BYBLOCK
-        "dimlwd": DXFAttr(
-            371, default=const.LINEWEIGHT_BYBLOCK, dxfversion=DXF2000
-        ),
+        "dimlwd": DXFAttr(371, default=const.LINEWEIGHT_BYBLOCK, dxfversion=DXF2000),
         # extension line lineweight enum value, default BYBLOCK
-        "dimlwe": DXFAttr(
-            372, default=const.LINEWEIGHT_BYBLOCK, dxfversion=DXF2000
-        ),
+        "dimlwe": DXFAttr(372, default=const.LINEWEIGHT_BYBLOCK, dxfversion=DXF2000),
     },
 )
 acdb_dimstyle_group_codes = group_code_mapping(acdb_dimstyle)
@@ -398,9 +393,7 @@ class DimStyle(DXFEntity):
     """DXF BLOCK_RECORD table entity"""
 
     DXFTYPE = "DIMSTYLE"
-    DXFATTRIBS = DXFAttributes(
-        base_class, acdb_symbol_table_record, acdb_dimstyle
-    )
+    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_dimstyle)
     CODE_TO_DXF_ATTRIB = dict(DXFATTRIBS.build_group_code_items(dim_filter))
 
     @property
@@ -462,9 +455,7 @@ class DimStyle(DXFEntity):
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
-            tagwriter.write_tag2(
-                const.SUBCLASS_MARKER, acdb_symbol_table_record.name
-            )
+            tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_dimstyle.name)
 
         if tagwriter.dxfversion > DXF12:
@@ -479,22 +470,71 @@ class DimStyle(DXFEntity):
             attribs = EXPORT_MAP_R2007
         self.dxf.export_dxf_attribs(tagwriter, attribs)
 
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        assert self.doc is not None, "DIMSTYLE entity must be assigned to a document"
+        super().register_resources(registry)
+        # ezdxf uses names for blocks, linetypes and text style as internal data
+        # register text style
+        try:
+            style = self.doc.styles.get(self.dxf.dimtxsty)
+            registry.add_entity(style)
+        except const.DXFTableEntryError:
+            pass
+
+        # register linetypes
+        for attr_name in ("dimltype", "dimltex1", "dimltex2"):
+            ltype_name = self.dxf.get(attr_name)
+            if ltype_name is None:
+                continue
+            try:
+                ltype = self.doc.linetypes.get(ltype_name)
+                registry.add_entity(ltype)
+            except const.DXFTableEntryError:
+                pass
+
+        for attr_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
+            arrow_name = self.dxf.get(attr_name)
+            # ignore default CLOSED_FILLED arrow head, which is named ""
+            if arrow_name:
+                registry.add_arrow_head_name(arrow_name)
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate registered resources from self to the copied entity."""
+        assert isinstance(copy, DimStyle)
+        super().map_resources(copy, mapping)
+        # ezdxf uses names for blocks, linetypes and text style as internal data
+        # map text style
+        text_style = self.dxf.get("dimtxsty")
+        if text_style is not None:
+            copy.dxf.dimtxsty = mapping.get_text_style(text_style)
+        # map linetypes
+        for attr_name in ("dimltype", "dimltex1", "dimltex2"):
+            ltype_name = self.dxf.get(attr_name)
+            if ltype_name:
+                copy.dxf.set(attr_name, mapping.get_linetype(ltype_name))
+        for attr_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
+            arrow_name = self.dxf.get(attr_name)
+            # ignore default CLOSED_FILLED arrow head, which is named ""
+            if arrow_name:
+                copy.dxf.set(attr_name, mapping.get_arrow_head_name(arrow_name))
+
     def set_handles(self):
-        style = self.dxf.get("dimtxsty", None)
-        if style is not None:
+        style = self.dxf.get("dimtxsty")
+        if style:
             self.dxf.dimtxsty_handle = self.doc.styles.get(style).dxf.handle
 
-        for blk_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
-            name = self.dxf.get(blk_name)
-            if name is not None:
-                self.set_blk_handle(blk_name + "_handle", name)
+        for attr_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
+            block_name = self.dxf.get(attr_name)
+            if block_name:
+                self.set_blk_handle(attr_name + "_handle", block_name)
 
-        for ltype_name in ("dimltype", "dimltex1", "dimltex2"):
+        for attr_name in ("dimltype", "dimltex1", "dimltex2"):
             get_linetype = self.doc.linetypes.get
-            name = self.dxf.get(ltype_name, None)
-            if name is not None:
-                handle = get_linetype(name).dxf.handle
-                self.dxf.set(ltype_name + "_handle", handle)
+            ltype_name = self.dxf.get(attr_name)
+            if ltype_name:
+                handle = get_linetype(ltype_name).dxf.handle
+                self.dxf.set(attr_name + "_handle", handle)
 
     def discard_handles(self):
         for attr in (
@@ -598,9 +638,7 @@ class DimStyle(DXFEntity):
                     ARROWS.create_block(blocks, b)
                     continue
                 if b and b not in blocks:
-                    raise const.DXFValueError(
-                        'BLOCK "{}" does not exist.'.format(blk)
-                    )
+                    raise const.DXFValueError(f'BLOCK "{blk}" does not exist.')
 
     def set_tick(self, size: float = 1) -> None:
         """Set tick `size`, which also disables arrows, a tick is just an
