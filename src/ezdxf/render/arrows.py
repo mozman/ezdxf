@@ -486,7 +486,7 @@ class _Arrows:
             return False
         return item.upper() in self.__all_arrows__
 
-    def create_block(self, blocks: BlocksSection, name: str):
+    def create_block(self, blocks: BlocksSection, name: str) -> str:
         """Creates the BLOCK definition for arrow `name`."""
         block_name = self.block_name(name)
         if block_name not in blocks:
@@ -496,13 +496,13 @@ class _Arrows:
         return block_name
 
     def arrow_handle(self, blocks: BlocksSection, name: str) -> str:
-        """Returns the BLOCK_RECORD handle or arrow `name`."""
+        """Returns the BLOCK_RECORD handle for arrow `name`."""
         arrow_name = self.arrow_name(name)
         block_name = self.create_block(blocks, arrow_name)
         block = blocks.get(block_name)
         return block.block_record_handle
 
-    def block_name(self, name):
+    def block_name(self, name: str) -> str:
         """Returns the block name."""
         if not self.is_acad_arrow(name):  # common BLOCK definition
             # e.g. Dimension.dxf.bkl = 'EZ_ARROW' == Insert.dxf.name

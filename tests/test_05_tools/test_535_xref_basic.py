@@ -5,6 +5,7 @@ import pytest
 import ezdxf
 from ezdxf import xref
 from ezdxf.tools.standards import setup_dimstyle
+from ezdxf.render.arrows import ARROWS
 
 
 def forward_handles(doc, count: int) -> None:
@@ -36,6 +37,7 @@ class TestLoadResourcesWithoutNamingConflicts:
             doc, "EZ_M_100_H25_CM", style="ARIAL", name="TestDimStyle"
         )
         dimstyle.dxf.dimltype = "GAS"
+        dimstyle.dxf.dimblk = ARROWS.dot
         return doc
 
     def test_loading_a_simple_layer(self, sdoc):
@@ -147,6 +149,10 @@ class TestLoadResourcesWithoutNamingConflicts:
         assert dimstyle.dxf.dimltype == "GAS"
         ltype = tdoc.linetypes.get("GAS")
         assert ltype.dxf.name == "GAS", "expected linetype GAS in target doc"
+
+        assert dimstyle.dxf.dimblk == ARROWS.dot
+        # Note: ACAD arrow head blocks are created automatically at export in
+        # DimStyle.set_blk_handle() if they do not exist
 
 
 if __name__ == "__main__":

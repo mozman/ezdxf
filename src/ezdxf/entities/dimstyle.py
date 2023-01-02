@@ -497,11 +497,14 @@ class DimStyle(DXFEntity):
             except const.DXFTableEntryError:
                 pass
 
+        # Note: ACAD arrow head blocks are created automatically at export in set_blk_handle()
         for attr_name in DIM_ARROW_HEAD_ATTRIBS:
             arrow_name = self.dxf.get(attr_name)
-            # ignore default CLOSED_FILLED arrow head, which is named ""
-            if arrow_name:
-                registry.add_arrow_head_name(arrow_name)
+            if arrow_name is None:
+                continue
+            if not ARROWS.is_acad_arrow(arrow_name):
+                # user defined arrow head block
+                registry.add_block_name(arrow_name)
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate registered resources from self to the copied entity."""
@@ -517,11 +520,16 @@ class DimStyle(DXFEntity):
             ltype_name = self.dxf.get(attr_name)
             if ltype_name:
                 copy.dxf.set(attr_name, mapping.get_linetype(ltype_name))
+
+        # Note: ACAD arrow head blocks are created automatically at export in set_blk_handle()
         for attr_name in DIM_ARROW_HEAD_ATTRIBS:
             arrow_name = self.dxf.get(attr_name)
-            # ignore default CLOSED_FILLED arrow head, which is named ""
-            if arrow_name:
-                copy.dxf.set(attr_name, mapping.get_arrow_head_name(arrow_name))
+            if arrow_name is None:
+                continue
+            if not ARROWS.is_acad_arrow(arrow_name):
+                # user defined arrow head block
+                arrow_name = mapping.get_block_name(arrow_name)
+            copy.dxf.set(attr_name, arrow_name)
 
     def set_handles(self):
         style = self.dxf.get(DIM_TEXT_STYLE_ATTR)
@@ -563,7 +571,7 @@ class DimStyle(DXFEntity):
         assert self.doc is not None, "valid DXF document required"
         blocks = self.doc.blocks
         if ARROWS.is_acad_arrow(arrow_name):
-            # create block, because need block record handle is needed here
+            # create block, because the block record handle is needed here
             block_name = ARROWS.create_block(blocks, arrow_name)
         else:
             block_name = arrow_name
