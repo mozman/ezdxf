@@ -104,7 +104,7 @@ class Registry(Protocol):
 
 
 class ResourceMapper(Protocol):
-    def get_handle(self, handle: str) -> str:
+    def get_handle(self, handle: str, default="0") -> str:
         ...
 
     def get_layer(self, name: str) -> str:
@@ -502,8 +502,8 @@ class _Transfer:
         self.handle_mapping: dict[str, str] = handle_mapping
         self._replace_handles: dict[str, str] = {}
 
-    def get_handle(self, handle: str) -> str:
-        return self.handle_mapping.get(handle, "0")
+    def get_handle(self, handle: str, default="0") -> str:
+        return self.handle_mapping.get(handle, default)
 
     def get_layer(self, name: str) -> str:
         return self.layer_mapping.get(name, name)

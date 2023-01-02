@@ -61,6 +61,7 @@ class TestLoadResourcesWithoutNamingConflicts:
         assert layer.doc is tdoc, "bound to wrong document"
         assert layer.dxf.handle in tdoc.entitydb, "entity not in database"
         assert layer.dxf.owner == tdoc.layers.head.dxf.handle, "invalid owner handle"
+        assert layer.dxf.material_handle == tdoc.materials["global"].dxf.handle
 
     def test_loading_a_shape_linetype(self, sdoc):
         """Load a complex linetype with shapes which requires to load the dependent
