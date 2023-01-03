@@ -819,6 +819,10 @@ class CopyMachine:
             except const.DXFError:
                 self.log.append(f"cannot copy entity {str(entity)}")
                 continue
+            # remove references for copy tracking, not valid in the target document
+            new_entity.del_source_of_copy()
+            new_entity.del_source_block_reference()
+
             factory.bind(new_entity, tdoc)
             handle_mapping[handle] = new_entity.dxf.handle
             if is_dxf_object(new_entity):

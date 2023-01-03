@@ -58,8 +58,6 @@ GRAPHIC_PROPERTIES = {
     "transparency",
 }
 
-NONE_HANDLE = "0"
-
 acdb_entity: DefSubclass = DefSubclass(
     "AcDbEntity",
     {
@@ -642,12 +640,13 @@ class DXFGraphic(DXFEntity):
         dxf = self.dxf
         registry.add_layer(dxf.layer)
         registry.add_linetype(dxf.linetype)
-        registry.add_handle(dxf.get("material_handle", NONE_HANDLE))
-        registry.add_handle(dxf.get("visualstyle_handle", NONE_HANDLE))
-        registry.add_handle(dxf.get("plotstyle_handle", NONE_HANDLE))
+        registry.add_handle(dxf.get("material_handle"))
+        # unsupported resource attributes:
+        # - visualstyle_handle
+        # - plotstyle_handle
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
-        """Translate registered resources from self to the copied entity."""
+        """Translate resources from self to the copied entity."""
         super().map_resources(copy, mapping)
         copy.dxf.layer = mapping.get_layer(self.dxf.layer)
         attrib_exist = self.dxf.hasattr
@@ -655,10 +654,10 @@ class DXFGraphic(DXFEntity):
             copy.dxf.linetype = mapping.get_linetype(self.dxf.linetype)
         if attrib_exist("material_handle"):
             copy.dxf.material_handle = mapping.get_handle(self.dxf.material_handle)
-        if attrib_exist("visualstyle_handle"):
-            copy.dxf.visualstyle_handle = mapping.get_handle(self.dxf.visualstyle_handle)
-        if attrib_exist("plotstyle_handle"):
-            copy.dxf.plotstyle_handle = mapping.get_handle(self.dxf.plotstyle_handle)
+
+        # unsupported attributes:
+        copy.dxf.discard("visualstyle_handle")
+        copy.dxf.discard("plotstyle_handle")
 
 
 @factory.register_entity

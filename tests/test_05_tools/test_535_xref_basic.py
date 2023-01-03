@@ -17,7 +17,6 @@ class TestLoadResourcesWithoutNamingConflicts:
     @pytest.fixture(scope="class")
     def sdoc(self):
         doc = ezdxf.new()
-        doc.filename = "source.dxf"
         doc.layers.add("FIRST")
         doc.linetypes.add(  # see also: complex_line_type_example.py
             "SQUARE",
@@ -179,17 +178,17 @@ class TestLoadResourcesWithoutNamingConflicts:
 
 
 class TestLoadEntities:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def sdoc(self):
         doc = ezdxf.new()
-        doc.filename = "source.dxf"
         doc.layers.add("Layer0")
-        doc.styles.add("ARIAL", font="Arial.ttf")
+        doc.linetypes.add("LType0", [0.0])  # CONTINUOUS
+        doc.appids.add("TEST_ID")
         return doc
 
     def test_load_plain_entity(self, sdoc):
         msp = sdoc.modelspace()
-        msp.add_point((0, 0), dxfattribs={"layer": "Layer0"})
+        msp.add_point((0, 0), dxfattribs={"layer": "Layer0", "linetype": "LType0"})
 
         tdoc = ezdxf.new()
         loader = xref.Loader(sdoc, tdoc)
@@ -197,6 +196,7 @@ class TestLoadEntities:
         loader.execute()
 
         assert tdoc.layers.has_entry("Layer0") is True
+        assert tdoc.linetypes.has_entry("LType0") is True
 
         target_msp = tdoc.modelspace()
         assert len(target_msp) == 1
@@ -204,6 +204,75 @@ class TestLoadEntities:
         assert point.doc is tdoc, "wrong document assigment"
         assert point.dxf.owner == target_msp.block_record_handle, "wrong owner handle"
         assert point.dxf.layer == "Layer0", "layer attribute not copied"
+
+    def test_load_entity_with_xdata(self, sdoc):
+        msp = sdoc.modelspace()
+        point0 = msp.add_point((0, 0), dxfattribs={"layer": "Layer0"})
+        point1 = msp.add_point((0, 0), dxfattribs={"layer": "Layer0"})
+        point0.set_xdata(
+            "TEST_ID",
+            [
+                (1000, "some text"),
+                (1005, point1.dxf.handle),
+                (1005, "FEFE"),  # FEFE to nothing and should be replaced by handle "0"
+            ],
+        )
+
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+        loader.load_modelspace()
+        loader.execute()
+
+        assert tdoc.appids.has_entry("TEST_ID")
+        tp0, tp1 = tdoc.modelspace()
+        assert tp0.xdata is not None
+        xdata = tp0.get_xdata("TEST_ID")
+        assert xdata[0] == (1000, "some text")
+        assert xdata[1] == (
+            1005,
+            tp1.dxf.handle,
+        ), "expected handle of point1 to be mapped"
+        assert xdata[2] == (
+            1005,
+            "0",
+        ), "expected un-mappable handle to be 0"
+
+    def test_load_entity_with_reactors(self, sdoc):
+        msp = sdoc.modelspace()
+        point0 = msp.add_point((0, 0), dxfattribs={"layer": "Layer0"})
+        point1 = msp.add_point((0, 0), dxfattribs={"layer": "Layer0"})
+        point0.set_reactors([point1.dxf.handle, "FEFE"])
+
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+        loader.load_modelspace()
+        loader.execute()
+
+        tp0, tp1 = tdoc.modelspace()
+        reactors = tp0.reactors.get()
+        assert len(reactors) == 1
+        assert reactors[0] == tp1.dxf.handle
+
+    def test_load_entity_with_extension_dict(self, sdoc):
+        msp = sdoc.modelspace()
+        point0 = msp.add_point((0, 0), dxfattribs={"layer": "Layer0"})
+        xdict = point0.new_extension_dict()
+        xdict.add_dictionary_var("Test0", "Content0")
+
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+        loader.load_modelspace()
+        loader.execute()
+
+        copy = tdoc.modelspace()[0]
+        assert copy.has_extension_dict is True
+        xdict = copy.get_extension_dict()
+        assert xdict.dictionary.doc is tdoc
+        assert (xdict.dictionary in tdoc.objects) is True
+
+        dict_var = xdict["Test0"]
+        assert dict_var.dxf.value == "Content0"
+        assert (dict_var in tdoc.objects) is True
 
 
 if __name__ == "__main__":

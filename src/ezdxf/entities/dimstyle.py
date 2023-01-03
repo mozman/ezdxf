@@ -507,7 +507,7 @@ class DimStyle(DXFEntity):
                 registry.add_block_name(arrow_name)
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
-        """Translate registered resources from self to the copied entity."""
+        """Translate resources from self to the copied entity."""
         assert isinstance(copy, DimStyle)
         super().map_resources(copy, mapping)
         # ezdxf uses names for blocks, linetypes and text style as internal data

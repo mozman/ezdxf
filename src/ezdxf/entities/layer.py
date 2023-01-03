@@ -394,7 +394,7 @@ class Layer(DXFEntity):
         # current plot style will be replaced by default plot style "Normal"
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
-        """Translate registered resources from self to the copied entity."""
+        """Translate resources from self to the copied entity."""
         assert isinstance(copy, Layer)
         super().map_resources(copy, mapping)
         self.dxf.linetype = mapping.get_linetype(self.dxf.linetype)

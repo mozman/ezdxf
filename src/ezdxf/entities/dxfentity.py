@@ -31,6 +31,7 @@ import uuid
 from ezdxf import options
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.types import DXFTag
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.attributes import DXFAttr, DXFAttributes, DefSubclass
 from ezdxf.tools import set_flag_state
@@ -939,13 +940,30 @@ class DXFEntity:
 
     def register_resources(self, registry: xref.Registry) -> None:
         """Register required resources to the resource registry."""
-        # todo: register AppIDs in XDATA
-        # todo: register group code 1005 handles in XDATA
-        pass
+        if self.xdata:
+            for name in self.xdata.data.keys():
+                registry.add_appid(name)
 
     def map_resources(self, copy: DXFEntity, mapper: xref.ResourceMapper) -> None:
-        """Translate registered resources from self to the copied entity."""
-        pass
+        """Translate resources from self to the copied entity."""
+
+        def map_xdata_resources():
+            for index, (code, value) in enumerate(tags):
+                if code == 1005:  # map handles
+                    tags[index] = DXFTag(code, mapper.get_handle(value))
+                elif code == 1003:  # map layer name
+                    tags[index] = DXFTag(code, mapper.get_layer(value))
+
+        if copy.xdata:
+            for tags in copy.xdata.data.values():
+                map_xdata_resources()
+
+        # reactors are not copied automatically, copy.reactors is always None:
+        if self.reactors:
+            mapped_handles = [mapper.get_handle(h) for h in self.reactors.reactors]
+            mapped_handles = [h for h in mapped_handles if h != "0"]
+            if mapped_handles:
+                copy.set_reactors(mapped_handles)
 
 
 @factory.set_default_class
