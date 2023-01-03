@@ -178,5 +178,33 @@ class TestLoadResourcesWithoutNamingConflicts:
         assert colors.decode_raw_color(ambient_color)[1] == (0, 0, 255)
 
 
+class TestLoadEntities:
+    @pytest.fixture(scope="class")
+    def sdoc(self):
+        doc = ezdxf.new()
+        doc.filename = "source.dxf"
+        doc.layers.add("Layer0")
+        doc.styles.add("ARIAL", font="Arial.ttf")
+        return doc
+
+    def test_load_plain_entity(self, sdoc):
+        msp = sdoc.modelspace()
+        msp.add_point((0, 0), dxfattribs={"layer": "Layer0"})
+
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+        loader.load_modelspace()
+        loader.execute()
+
+        assert tdoc.layers.has_entry("Layer0") is True
+
+        target_msp = tdoc.modelspace()
+        assert len(target_msp) == 1
+        point = target_msp[0]
+        assert point.doc is tdoc, "wrong document assigment"
+        assert point.dxf.owner == target_msp.block_record_handle, "wrong owner handle"
+        assert point.dxf.layer == "Layer0", "layer attribute not copied"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

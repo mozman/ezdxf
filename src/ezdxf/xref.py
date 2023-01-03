@@ -154,6 +154,12 @@ class LoadEntities(LoadingCommand):
     def register_resources(self, registry: Registry) -> None:
         _register_block_entities(self.entities, registry)
 
+    def execute(self, transfer: _Transfer) -> None:
+        for entity in self.entities:
+            copy = transfer.get_entity_copy(entity)
+            if copy:
+                self.target_layout.add_entity(copy)  # type: ignore
+
 
 class LoadPaperspaceLayout(LoadingCommand):
     """Loads a paperspace layout as a new paperspace layout into the target document.
@@ -380,10 +386,17 @@ def _get_table_entries(names: Iterable[str], table) -> list[DXFEntity]:
 
 
 class _Registry:
-    # The block "0" contains resource objects and entities without assigned layout:
     def __init__(self, sdoc: Drawing, tdoc: Drawing) -> None:
         self.source_doc = sdoc
         self.target_doc = tdoc
+
+        # source_blocks:
+        # - key is the owner handle (layout key)
+        # - value is a dict(): key is source-entity-handle, value is source-entity
+        #   Storing the entities to copy in a dict() guarantees that each entity is only
+        #   copied once and a dict() preserves the order which a set() doesn't and
+        #   that is nice for testing.
+        # - entry NO_BLOCK (layout key "0") contains all table entries and resource objects
         self.source_blocks: dict[str, dict[str, DXFEntity]] = {NO_BLOCK: {}}
         self.appids: set[str] = set()
         self.transfer_hints: dict[int, Any] = dict()
@@ -522,6 +535,13 @@ class _Transfer:
 
     def get_transfer_hint(self, key: int) -> Any:
         return self.registry.transfer_hints[key]
+
+    def get_entity_copy(self, entity: DXFEntity) -> Optional[DXFEntity]:
+        try:
+            return self.copied_blocks[entity.dxf.owner][entity.dxf.handle]
+        except KeyError:
+            pass
+        return None
 
     def create_table_resources(self) -> None:
         self.create_appids()
