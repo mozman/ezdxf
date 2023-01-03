@@ -63,9 +63,9 @@ class ConflictPolicy(enum.Enum):
 # Exceptions from the ConflictPolicy
 # ----------------------------------
 # Resources named "STANDARD" will be kept.
-# Material "GLOBAL" will be kept.
+# Materials "GLOBAL", "BYLAYER" and "BYBLOCK" will be kept.
 # Plot style "NORMAL" will be kept.
-# Layers "0", "DEFPOINTS" and layers starting with "*ADSK_" will be kept.
+# Layers "0", "DEFPOINTS" and special Autodesk layers starting with "*" will be kept.
 # Linetypes "CONTINUOUS", "BYLAYER" and "BYBLOCK" will be kept
 # Special blocks like arrow heads will be kept.
 # Anonymous blocks get a new arbitrary name following the rules of anonymous block names.
@@ -99,9 +99,6 @@ class Registry(Protocol):
     def add_appid(self, name: str) -> None:
         ...
 
-    def add_transfer_hint(self, key: int, data: Any) -> None:
-        ...
-
 
 class ResourceMapper(Protocol):
     def get_handle(self, handle: str, default="0") -> str:
@@ -120,9 +117,6 @@ class ResourceMapper(Protocol):
         ...
 
     def get_block_name(self, name: str) -> str:
-        ...
-
-    def get_transfer_hint(self, key: int) -> Any:
         ...
 
 
@@ -394,10 +388,9 @@ class _Registry:
         #   Storing the entities to copy in a dict() guarantees that each entity is only
         #   copied once and a dict() preserves the order which a set() doesn't and
         #   that is nice for testing.
-        # - entry NO_BLOCK (layout key "0") contains all table entries and resource objects
+        # - entry NO_BLOCK (layout key "0") contains table entries
         self.source_blocks: dict[str, dict[str, DXFEntity]] = {NO_BLOCK: {}}
         self.appids: set[str] = set()
-        self.transfer_hints: dict[int, Any] = dict()
 
     def add_entity(self, entity: DXFEntity, block_key: str = NO_BLOCK) -> None:
         assert entity is not None, "internal error: entity is None"
@@ -480,17 +473,8 @@ class _Registry:
     def add_appid(self, name: str) -> None:
         self.appids.add(name.upper())
 
-    def add_transfer_hint(self, key: int, data: Any) -> None:
-        """Store a transfer hint, which can be any data which may sped up the transfer
-        process. The key should be the id of the entity, if multiple hints for an entity
-        are required (inheritance), just add an offset (1, 2, 3, ...) to the id.
-        """
-        self.transfer_hints[key] = data
-
 
 class _Transfer:
-    # The block with handle "0" contains resource objects and entities without an
-    # assigned layout.
     def __init__(
         self,
         registry: _Registry,
@@ -500,6 +484,7 @@ class _Transfer:
         conflict_policy=ConflictPolicy.KEEP,
     ) -> None:
         self.registry = registry
+        # entry NO_BLOCK (layout key "0") contains table entries
         self.copied_blocks = copies
         self.conflict_policy = conflict_policy
         self.xref_name = get_xref_name(registry.source_doc)
@@ -528,9 +513,6 @@ class _Transfer:
 
     def get_block_name(self, name: str) -> str:
         return self.block_name_mapping.get(name, name)
-
-    def get_transfer_hint(self, key: int) -> Any:
-        return self.registry.transfer_hints[key]
 
     def get_entity_copy(self, entity: DXFEntity) -> Optional[DXFEntity]:
         try:
@@ -747,11 +729,11 @@ class _Transfer:
                 entity.destroy()
                 return
         elif self.conflict_policy == ConflictPolicy.XREF_NUM_PREFIX:
-            entity.dxf.name = create_valid_table_name(
+            entity.dxf.name = get_unique_table_name(
                 "{xref}${index}${name}", name, self.xref_name, table
             )
         elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
-            entity.dxf.name = create_valid_table_name(
+            entity.dxf.name = get_unique_table_name(
                 "${index}${name}", name, self.xref_name, table
             )
         table.add_entry(entity)
@@ -791,8 +773,8 @@ def is_special_block_name(name: str) -> bool:
     return False
 
 
-def create_valid_table_name(fmt: str, name: str, xref: str, table) -> str:
-    index = 0
+def get_unique_table_name(fmt: str, name: str, xref: str, table) -> str:
+    index: int = 0
     while True:
         new_name = fmt.format(name=name, xref=xref, index=index)
         if not table.has_entry(new_name):
@@ -833,10 +815,9 @@ class CopyMachine:
                 copies[handle] = new_entity
         return copies
 
-    def copy_blocks(self, blocks: dict[str, dict[str, DXFEntity]]):
+    def copy_blocks(self, blocks: dict[str, dict[str, DXFEntity]]) -> None:
         for handle, block in blocks.items():
             self.copies[handle] = self.copy_block(block)
-        return self.copies
 
     def _copy_dxf_class(self, cls: DXFClass) -> None:
         self.classes.append(cls.copy())
