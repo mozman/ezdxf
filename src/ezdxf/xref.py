@@ -388,7 +388,7 @@ class _Registry:
         #   Storing the entities to copy in a dict() guarantees that each entity is only
         #   copied once and a dict() preserves the order which a set() doesn't and
         #   that is nice for testing.
-        # - entry NO_BLOCK (layout key "0") contains table entries
+        # - entry NO_BLOCK (layout key "0") contains table entries and DXF objects
         self.source_blocks: dict[str, dict[str, DXFEntity]] = {NO_BLOCK: {}}
         self.appids: set[str] = set()
 
@@ -412,12 +412,20 @@ class _Registry:
         self.add_entity(block_record.endblk, block_handle)  # type: ignore
 
     def add_handle(self, handle: Optional[str]) -> None:
-        if handle is None or handle == NO_BLOCK:
+        """Add resource by handle (table entry or object), cannot add graphic entities.
+
+        Raises:
+            TypeError: cannot add graphic entity
+
+        """
+        if handle is None or handle == "0":
             return
         entity = self.source_doc.entitydb.get(handle)
         if entity is None:
             logger.debug(f"source entity #{handle} does not exist")
             return
+        if is_graphic_entity(entity):
+            raise TypeError(f"cannot add graphic entity: {str(entity)}")
         self.add_entity(entity)
 
     def add_layer(self, name: str) -> None:
@@ -515,6 +523,7 @@ class _Transfer:
         return self.block_name_mapping.get(name, name)
 
     def get_entity_copy(self, entity: DXFEntity) -> Optional[DXFEntity]:
+        """Returns the copy of graphic entities."""
         try:
             return self.copied_blocks[entity.dxf.owner][entity.dxf.handle]
         except KeyError:
@@ -522,14 +531,14 @@ class _Transfer:
         return None
 
     def register_table_resources(self) -> None:
-        """Register copied table entries in resource tables."""
+        """Register copied table-entries in resource tables of the target document."""
         self.register_appids()
-        # process resource objects and entities without assigned layout:
+        # process copied table-entries, layout key is "0":
         for source_entity_handle, entity in self.copied_blocks[NO_BLOCK].items():
             if entity.dxf.owner is not None:
                 continue  # already processed!
 
-            # add copied resources to tables and collections of the target document
+            # add copied table-entries to tables in the target document
             if isinstance(entity, Layer):
                 self.add_layer_entry(entity)
             elif isinstance(entity, Linetype):
@@ -545,7 +554,7 @@ class _Transfer:
                 self.add_block_record_entry(entity, source_entity_handle)
 
     def register_object_resources(self, copies: Iterable[DXFEntity]) -> None:
-        """Register copied objects in object collections."""
+        """Register copied objects in object collections of the target document."""
         tdoc = self.registry.target_doc
         for entity in copies:
             if isinstance(entity, Material):
@@ -575,6 +584,9 @@ class _Transfer:
         self._replace_handles[old_target] = new_target
 
     def redirect_handle_mapping(self) -> None:
+        """Redirect handle mapping to copied entity to a handle of an existing entity in
+        the target document.
+        """
         temp_mapping: dict[str, str] = {}
         replace_handles = self._replace_handles
         # redirect source entity -> new target entity
