@@ -357,16 +357,14 @@ class Loader:
         cpm.copy_blocks(registry.source_blocks)
         transfer = _Transfer(
             registry=registry,
-            blocks=cpm.copies,
-            objects=cpm.objects,
+            copies=cpm.copies,
             handle_mapping=cpm.handle_mapping,
             conflict_policy=self.conflict_policy,
         )
+        transfer.add_object_copies(cpm.objects)
         transfer.register_classes(cpm.classes)
-        transfer.create_appids()
-        transfer.add_target_objects()
-        transfer.create_table_resources()
-        transfer.create_object_resources()
+        transfer.register_table_resources()
+        transfer.register_object_resources(cpm.objects)
         transfer.redirect_handle_mapping()
         transfer.map_resources()
 
@@ -496,15 +494,13 @@ class _Transfer:
     def __init__(
         self,
         registry: _Registry,
-        blocks: dict[str, dict[str, DXFEntity]],
-        objects: Sequence[DXFEntity],
+        copies: dict[str, dict[str, DXFEntity]],
         handle_mapping: dict[str, str],
         *,
         conflict_policy=ConflictPolicy.KEEP,
     ) -> None:
         self.registry = registry
-        self.copied_blocks = blocks
-        self.copied_objects = objects
+        self.copied_blocks = copies
         self.conflict_policy = conflict_policy
         self.xref_name = get_xref_name(registry.source_doc)
         self.layer_mapping: dict[str, str] = {}
@@ -543,9 +539,9 @@ class _Transfer:
             pass
         return None
 
-    def create_table_resources(self) -> None:
-        self.create_appids()
-
+    def register_table_resources(self) -> None:
+        """Register copied table entries in resource tables."""
+        self.register_appids()
         # process resource objects and entities without assigned layout:
         for source_entity_handle, entity in self.copied_blocks[NO_BLOCK].items():
             if entity.dxf.owner is not None:
@@ -566,9 +562,10 @@ class _Transfer:
             elif isinstance(entity, BlockRecord):
                 self.add_block_record_entry(entity, source_entity_handle)
 
-    def create_object_resources(self) -> None:
+    def register_object_resources(self, copies: Iterable[DXFEntity]) -> None:
+        """Register copied objects in object collections."""
         tdoc = self.registry.target_doc
-        for entity in self.copied_objects:
+        for entity in copies:
             if isinstance(entity, Material):
                 self.add_collection_entry(
                     tdoc.materials,
@@ -607,7 +604,7 @@ class _Transfer:
         for source_handle, new_target_handle in temp_mapping.items():
             self.handle_mapping[source_handle] = new_target_handle
 
-    def create_appids(self) -> None:
+    def register_appids(self) -> None:
         tdoc = self.registry.target_doc
         for appid in self.registry.appids:
             try:
@@ -773,10 +770,10 @@ class _Transfer:
         if name not in collection:
             collection.object_dict.add(name, entry)
 
-    def add_target_objects(self) -> None:
+    def add_object_copies(self, copies: Iterable[DXFEntity]) -> None:
         """Add copied DXF objects to the OBJECTS section of the target document."""
         objects = self.registry.target_doc.objects
-        for obj in self.copied_objects:
+        for obj in copies:
             objects.add_object(obj)  # type: ignore
 
     def finalize(self) -> None:
