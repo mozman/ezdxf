@@ -12,7 +12,7 @@ from typing_extensions import Protocol, TypeAlias
 import enum
 import pathlib
 import logging
-from ezdxf.lldxf import const
+from ezdxf.lldxf import const, validator
 from ezdxf.document import Drawing
 from ezdxf.layouts import BaseLayout, Paperspace, BlockLayout
 from ezdxf.entities import (
@@ -527,7 +527,7 @@ class _Transfer:
         self.create_appids()
 
         # process resource objects and entities without assigned layout:
-        for handle, entity in self.copied_blocks[NO_BLOCK].items():
+        for source_entity_handle, entity in self.copied_blocks[NO_BLOCK].items():
             if entity.dxf.owner is not None:
                 continue  # already processed!
 
@@ -544,19 +544,33 @@ class _Transfer:
             elif isinstance(entity, DimStyle):
                 self.add_dim_style_entry(entity)
             elif isinstance(entity, BlockRecord):
-                self.add_block_record_entry(entity, handle)
+                self.add_block_record_entry(entity, source_entity_handle)
 
     def create_object_resources(self) -> None:
-        # todo: ACAD_PLOTSTYLENAME dictionary in the root dict.
-        #  The Layer.dxf.plotstyle_handle points to objects stored in that dict.
         tdoc = self.registry.target_doc
         for entity in self.copied_objects:
             if isinstance(entity, Material):
-                self.add_collection_entry(tdoc.materials, entity, default="GLOBAL")
+                self.add_collection_entry(
+                    tdoc.materials,
+                    entity,
+                    system_entries={"GLOBAL", "BYLAYER", "BYBLOCK"},
+                )
             elif isinstance(entity, MLineStyle):
-                self.add_collection_entry(tdoc.mline_styles, entity)
+                self.add_collection_entry(
+                    tdoc.mline_styles,
+                    entity,
+                    system_entries={
+                        STANDARD,
+                    },
+                )
             elif isinstance(entity, MLeaderStyle):
-                self.add_collection_entry(tdoc.mleader_styles, entity)
+                self.add_collection_entry(
+                    tdoc.mleader_styles,
+                    entity,
+                    system_entries={
+                        STANDARD,
+                    },
+                )
 
     def replace_handle_mapping(self, old_target, new_target) -> None:
         self._replace_handles[old_target] = new_target
@@ -597,16 +611,22 @@ class _Transfer:
                     source_entity.map_resources(copy, self)
 
     def add_layer_entry(self, layer: Layer) -> None:
-        # TODO: special cases - do not copy, but create them if do not exist
-        #   DEFPOINTS
-        #   *ADSK_... layers
         tdoc = self.registry.target_doc
         layer_name = layer.dxf.name.upper()
-        if layer_name == "0":
-            standard = tdoc.layers.get("0")
-            self.replace_handle_mapping(layer.dxf.handle, standard.dxf.handle)
-            layer.destroy()
-            return
+
+        # special layers - only copy if not exist
+        if layer_name in ("0", "DEFPOINTS") or validator.is_adsk_special_layer(
+            layer_name
+        ):
+            try:
+                special = tdoc.layers.get(layer_name)
+            except const.DXFTableEntryError:
+                special = None
+            if special:
+                # map copied layer handle to existing special layer
+                self.replace_handle_mapping(layer.dxf.handle, special.dxf.handle)
+                layer.destroy()
+                return
         old_name = layer.dxf.name
         self.add_table_entry(tdoc.layers, layer)
         if layer.is_alive:
@@ -720,25 +740,18 @@ class _Transfer:
         table.add_entry(entity)
 
     def add_collection_entry(
-        self, collection, entry: DXFEntity, default=STANDARD
+        self, collection, entry: DXFEntity, system_entries: set[str]
     ) -> None:
         name = entry.dxf.name
-        if name.upper() == default:
-            standard = collection.object_dict.get(name)
-            self.replace_handle_mapping(entry.dxf.handle, standard.dxf.handle)
-            entry.destroy()
-            return
-
+        if name.upper() in system_entries:
+            special = collection.object_dict.get(name)
+            if special:
+                self.replace_handle_mapping(entry.dxf.handle, special.dxf.handle)
+                entry.destroy()
+                return
+        # todo: apply ConflictPolicy
         if name not in collection:
             collection.object_dict.add(name, entry)
-
-    def add_entities_to_layout(self, layout: BaseLayout) -> None:
-        """Add copied graphical DXF entities from NO_BLOCK to the given layout."""
-        for entity in self.copied_blocks[NO_BLOCK].values():
-            if entity.dxf.owner is not None:
-                continue  # already processed!
-            elif is_graphic_entity(entity):
-                layout.add_entity(entity)  # type: ignore
 
     def add_target_objects(self) -> None:
         """Add copied DXF objects to the OBJECTS section of the target document."""
