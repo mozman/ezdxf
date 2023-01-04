@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
@@ -36,8 +36,9 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
-    from ezdxf.entities import DXFNamespace
+    from ezdxf.entities import DXFNamespace, DXFEntity
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf import xref
 
 __all__ = ["Text", "acdb_text", "acdb_text_group_codes"]
 
@@ -373,6 +374,18 @@ class Text(DXFGraphic):
         has_style = other is not None and (self.dxf.style in other.styles)
         if not has_style:
             self.dxf.style = "Standard"
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        super().register_resources(registry)
+        if self.dxf.hasattr("style"):
+            registry.add_text_style(self.dxf.style)
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        super().map_resources(copy, mapping)
+        if copy.dxf.hasattr("style"):
+            copy.dxf.style = mapping.get_text_style(copy.dxf.style)
 
     def plain_text(self) -> str:
         """Returns text content without formatting codes."""

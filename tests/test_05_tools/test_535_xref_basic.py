@@ -275,5 +275,28 @@ class TestLoadEntities:
         assert (dict_var in tdoc.objects) is True
 
 
+class TestLoadTextEntities:
+    @pytest.fixture(scope="class")
+    def sdoc(self):
+        doc = ezdxf.new()
+        doc.layers.add("Layer0")
+        doc.linetypes.add("LType0", [0.0])  # CONTINUOUS
+        doc.styles.add("ARIAL", font="Arial.ttf")
+        setup_dimstyle(
+            doc, "EZ_M_100_H25_CM", style="ARIAL", name="DimStyle0"
+        )
+        return doc
+
+    def test_load_text_entity(self, sdoc):
+        msp = sdoc.modelspace()
+        msp.add_text("MyText", dxfattribs={"style": "ARIAL"})
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+        loader.load_modelspace()
+        loader.execute()
+
+        assert tdoc.styles.has_entry("ARIAL")
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
