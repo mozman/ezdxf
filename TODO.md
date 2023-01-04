@@ -1,5 +1,12 @@
 TODO
 ====
+
+Xref Module
+-----------
+
+(v1.1) A core module `ezdxf.xref` as replacement for the `Importer` add-on.
+This module adds management features for external references, but also improve
+import and exchange of data and ressources with DXF documents.
  
 Add-ons
 -------
@@ -164,37 +171,6 @@ Issues:
 - How to handle 2D/3D selections?
 - 2D selections always in top-view mode?
 - Using special box- and sphere selections for 3D selection?
-
-Xref Module
------------
-
-(>v1.0) A core module `ezdxf.xref` as replacement for the `Importer` add-on.
-This module adds management features for external references, but also improve
-import and exchange of data and ressources with DXF documents.
-
-- AutoCAD does not support DXF files as XREF objects!
-- ezdxf will only support DXF files as XREF objects, use the `odafc` add-on to 
-  convert DWG to DXF
-- has to be much more versatile than the current `Importer` add-on otherwise 
-  just improve and extend the `Importer` add-on 
-
-Features:
-- resource management like CAD applications, e.g. layer names of xrefs: 
-  <dwg-name>$0$layername
-- `xref.bind(xref_block)`: convert a XREF into a common BLOCK, this replaces 
-  the modelspace import of the `Importer` add-on
-- `xref.attach(doc, "xref_filename.dxf")`, replaces `Drawing.add_xref_def()`
-- manage resources by the `XRefManager` class
-
-XRefManager:
-- create: `xmgr = xref.XRefManager(source_doc, target_doc)`
-- `xmgr.import_modelspace()` import all modelspace entities
-- `xmgr.import_entities(entities)` import selected entities
-- modify entities on import (transform, change DXF properties)
-- `xmgr.import_block("block_name")`
-- `xmgr.import_resources(resource_desc)`
-- `xmgr.import_paperspace("layout_name")`???
-- `xmgr.finalize()`
 
 Convert Document to DXF R12
 ---------------------------

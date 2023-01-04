@@ -7,11 +7,13 @@ Planning state!!!
 
 """
 from __future__ import annotations
-from typing import Optional, Sequence, Callable, Any, Iterable
+from typing import Optional, Sequence, Callable, Iterable
 from typing_extensions import Protocol, TypeAlias
 import enum
 import pathlib
 import logging
+
+import ezdxf
 from ezdxf.lldxf import const, validator
 from ezdxf.document import Drawing
 from ezdxf.layouts import BaseLayout, Paperspace, BlockLayout
@@ -31,9 +33,15 @@ from ezdxf.entities import (
     MLeaderStyle,
     Block,
     EndBlk,
+    Insert,
 )
+from ezdxf.math import UVec, Vec3
 
 __all__ = [
+    "embed",
+    "attach",
+    "detach",
+    "write_block",
     "Registry",
     "ResourceMapper",
     "ConflictPolicy",
@@ -46,6 +54,7 @@ DEFAULT_LINETYPES = {"CONTINUOUS", "BYLAYER", "BYBLOCK"}
 DEFAULT_LAYER = "0"
 STANDARD = "STANDARD"
 FilterFunction: TypeAlias = Callable[[DXFEntity], bool]
+LoadFunction: TypeAlias = Callable[[str], Drawing]
 
 
 class ConflictPolicy(enum.Enum):
@@ -69,6 +78,132 @@ class ConflictPolicy(enum.Enum):
 # Linetypes "CONTINUOUS", "BYLAYER" and "BYBLOCK" will be kept
 # Special blocks like arrow heads will be kept.
 # Anonymous blocks get a new arbitrary name following the rules of anonymous block names.
+
+
+def embed(
+    xref: BlockLayout,
+    *,
+    load_fn: Optional[LoadFunction] = None,
+    conflict_policy=ConflictPolicy.XREF_NUM_PREFIX,
+) -> None:
+    """Loads the modelspace of the XREF as content of the block definition.
+
+    The loader function loads the XREF as `Drawing` object, by default the
+    function :func:`ezdxf.readfile` is used to load DXF files. To load DWG files use the
+    :func:`~ezdxf.addons.odafc.readfile` function from the :mod:`ezdxf.addons.odafc`
+    add-on. The :func:`ezdxf.recover.readfile` function is very robust for reading DXF
+    files with errors.
+
+    Args:
+        xref: :class:`BlockLayout` of the XREF document
+        load_fn: function to load the content of the XREF as `Drawing` object
+        conflict_policy: how to resolve name conflicts
+
+    Raises:
+        ValueError: argument `xref` is not a XREF definition
+        FileNotFoundError: XREF file not found
+        DXFVersionError: cannot load a XREF with a newer DXF version than the host
+            document, try the :mod:`~ezdxf.addons.odafc` add-on to downgrade the XREF
+            document or upgrade the host document
+
+    .. versionadded:: 1.1
+
+    """
+    assert isinstance(xref, BlockLayout), "expected BLOCK definition of XREF"
+    target_doc = xref.doc
+    assert target_doc is not None, "valid DXF document required"
+    block = xref.block
+    assert isinstance(block, Block)
+    if not block.is_xref:
+        raise ValueError("argument 'xref' is not a XREF definition")
+    filepath = pathlib.Path(block.dxf.get("xref_path", ""))
+    if not filepath.exists():
+        raise FileNotFoundError(f"file not found: '{filepath}'")
+
+    if load_fn:
+        source_doc = load_fn(str(filepath))
+    else:
+        source_doc = ezdxf.readfile(filepath)
+    if source_doc.dxfversion > target_doc.dxfversion:
+        raise const.DXFVersionError(
+            "cannot embed a XREF with a newer DXF version into the host document"
+        )
+    loader = Loader(source_doc, target_doc, conflict_policy=conflict_policy)
+    loader.load_modelspace(xref)
+    loader.execute()
+    # reset XREF flags:
+    block.set_flag_state(const.BLK_XREF | const.BLK_EXTERNAL, state=False)
+    # update BLOCK origin:
+    origin = source_doc.header.get("$INSBASE")
+    if origin:
+        block.dxf.origin = Vec3(origin)
+
+
+def attach(
+    doc: Drawing, *, block_name: str, filename: str, insert: UVec = (0, 0, 0)
+) -> Insert:
+    """Attach the file `filename` to the host document as external reference (XREF).
+
+    This function creates the required XREF block definition and a default block
+    reference at location `insert`.
+
+    .. important::
+
+        If the XREF has different drawing units than the host document, the scale
+        factor between these units must be applied as a uniform scale factor to the
+        block reference!  Unfortunately the XREF drawing units can only be detected by
+        loading the whole document and is therefore not done automatically by this
+        function. Advice: always use the same units for all drawings of a project!
+
+    Args:
+        doc: host DXF document
+        block_name: name of the XREF definition block
+        filename: file name of the XREF
+        insert: location of the default block reference
+
+    Returns:
+        Insert: default block reference for the XREF at location `insert`
+
+    Raises:
+        ValueError: block with same name exist
+
+    .. versionadded:: 1.1
+
+    """
+    if block_name in doc.blocks:
+        raise ValueError(f"block '{block_name}' already exist")
+    flags = const.BLK_XREF | const.BLK_EXTERNAL
+    doc.blocks.new(name=block_name, dxfattribs={"flags": flags, "xref_path": filename})
+    location = Vec3(insert)
+    msp = doc.modelspace()
+    return msp.add_blockref(block_name, insert=location)
+
+
+def detach(block: BlockLayout, *, filename: str) -> None:
+    """Write the content of `block` into the modelspace of a new DXF file and
+    convert `block` to an external reference (XREF).
+
+    Args:
+        block: block definition to detach
+        filename: filename of the new DXF file
+
+    .. versionadded:: 1.1
+
+    """
+    raise NotImplementedError()
+
+
+def write_block(entities: Sequence[DXFEntity], *, filename: str) -> None:
+    """Write `entities` into the modelspace of a new DXF file.
+
+    Args:
+        entities: DXF entities to write
+        filename: filename of the new DXF file
+
+    .. versionadded:: 1.1
+
+    """
+    raise NotImplementedError()
 
 
 class Registry(Protocol):
