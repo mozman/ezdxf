@@ -305,28 +305,32 @@ class TestLoadTextEntities:
 
 def test_load_mtext_with_columns():
     sdoc = ezdxf.new("R2000")
-    sdoc.styles.add("ARIAL", font="Arial.ttf")
-    sdoc.modelspace().add_mtext_static_columns(
+    sdoc.styles.add("ARIAL1", font="Arial.ttf")
+    sdoc.styles.add("ARIAL2", font="Arial.ttf")
+    mtext = sdoc.modelspace().add_mtext_static_columns(
         ["mtext0", "column1", "column2"],
         width=5,
         gutter_width=1,
         height=5,
-        dxfattribs={"style": "ARIAL"},
+        dxfattribs={"style": "ARIAL1"},
     )
+    mtext.columns.linked_columns[1].dxf.style = "ARIAL2"
 
     tdoc = ezdxf.new("R2000")
     loader = xref.Loader(sdoc, tdoc)
     loader.load_modelspace()
     loader.execute()
+    assert tdoc.styles.has_entry("ARIAL1")
+    assert tdoc.styles.has_entry("ARIAL2")
 
     copy = tdoc.modelspace()[0]
     assert copy.has_columns is True
     columns = copy.columns.linked_columns
     assert len(columns) == 2
     assert columns[0].doc is tdoc
-    assert columns[0].dxf.style == "ARIAL"
+    assert columns[0].dxf.handle in tdoc.entitydb
     assert columns[1].doc is tdoc
-    assert columns[0].dxf.style == "ARIAL"
+    assert columns[1].dxf.handle in tdoc.entitydb
 
 
 if __name__ == "__main__":
