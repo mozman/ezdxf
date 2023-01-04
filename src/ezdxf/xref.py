@@ -206,8 +206,8 @@ def write_block(entities: Sequence[DXFEntity], *, origin: UVec = (0, 0, 0)) -> D
     an external referenced block.  This function is similar to the WBLOCK command of CAD
     applications.
 
-    All entities have to be assigned to the same layout and virtual entities are not
-    supported.
+    Virtual entities are not supported, because each entity needs a real database- and
+    owner handle.
 
     Args:
         entities: DXF entities to write
@@ -215,21 +215,17 @@ def write_block(entities: Sequence[DXFEntity], *, origin: UVec = (0, 0, 0)) -> D
             at the insert location of the block reference
 
     Raises:
-        ValueError: no entities to write
-        ValueError: entities from different layouts or virtual entities are not supported
+        ValueError: virtual entities are not supported
 
     .. versionadded:: 1.1
 
     """
     if len(entities) == 0:
-        raise ValueError("no entities to write")
-    owner = set(e.dxf.owner for e in entities)
-    if len(owner) > 1:
-        raise ValueError("entities from different layouts are not supported")
-    if None in owner:
+        return ezdxf.new()
+    if any(e.dxf.owner is None for e in entities):
         raise ValueError("virtual entities are not supported")
     source_doc = entities[0].doc
-    assert source_doc is not None, "expected a valid document"
+    assert source_doc is not None, "expected a valid source document"
     target_doc = ezdxf.new(dxfversion=source_doc.dxfversion, units=source_doc.units)
     loader = Loader(source_doc, target_doc)
     loader.add_command(LoadEntities(entities, target_doc.modelspace()))
@@ -295,14 +291,6 @@ class LoadingCommand:
         pass
 
 
-def _register_block_entities(entities: Sequence[DXFEntity], registry: Registry) -> None:
-    if len(entities) == 0:
-        return
-    owner_handle = entities[0].dxf.owner
-    for e in entities:
-        registry.add_entity(e, block_key=owner_handle)
-
-
 class LoadEntities(LoadingCommand):
     """Loads all given entities into the target layout."""
 
@@ -313,7 +301,8 @@ class LoadEntities(LoadingCommand):
         self.target_layout = target_layout
 
     def register_resources(self, registry: Registry) -> None:
-        _register_block_entities(self.entities, registry)
+        for e in self.entities:
+            registry.add_entity(e, block_key=e.dxf.owner)
 
     def execute(self, transfer: _Transfer) -> None:
         for entity in self.entities:
@@ -340,7 +329,8 @@ class LoadPaperspaceLayout(LoadingCommand):
             return list(self.paperspace_layout)
 
     def register_resources(self, registry: Registry) -> None:
-        _register_block_entities(self.source_entities(), registry)
+        for e in self.source_entities():
+            registry.add_entity(e, block_key=e.dxf.owner)
 
 
 class LoadBlockLayout(LoadingCommand):
@@ -352,7 +342,8 @@ class LoadBlockLayout(LoadingCommand):
         self.block_layout = block
 
     def register_resources(self, registry: Registry) -> None:
-        _register_block_entities(list(self.block_layout), registry)
+        for e in self.block_layout:
+            registry.add_entity(e, block_key=e.dxf.owner)
 
 
 class LoadResources(LoadingCommand):
