@@ -179,13 +179,19 @@ def attach(
     return msp.add_blockref(block_name, insert=location)
 
 
-def detach(block: BlockLayout, *, filename: str) -> None:
-    """Write the content of `block` into the modelspace of a new DXF file and
-    convert `block` to an external reference (XREF).
+def detach(block: BlockLayout, *, xref_filename: str) -> Drawing:
+    """Write the content of `block` into the modelspace of a new DXF document and
+    convert `block` to an external reference (XREF).  The new DXF document has to be
+    written by the caller: :code:`xref_doc.saveas(xref_filename)`.
+    This way it is possible to convert the DXF document to DWG by the
+    :mod:`~ezdxf.addons.odafc` add-on if necessary::
+
+        xref_doc = xref.detach(my_block, "my_block.dwg")
+        odafc.export_dwg(xref_doc, "my_block.dwg")
 
     Args:
         block: block definition to detach
-        filename: filename of the new DXF file
+        xref_filename: name of the external referenced file
 
     .. versionadded:: 1.1
 
@@ -193,17 +199,43 @@ def detach(block: BlockLayout, *, filename: str) -> None:
     raise NotImplementedError()
 
 
-def write_block(entities: Sequence[DXFEntity], *, filename: str) -> None:
-    """Write `entities` into the modelspace of a new DXF file.
+def write_block(entities: Sequence[DXFEntity], *, origin: UVec = (0, 0, 0)) -> Drawing:
+    """Write `entities` into the modelspace of a new DXF document.
+
+    This function is called "write_block" because the new DXF document can be used as
+    an external referenced block.  This function is similar to the WBLOCK command of CAD
+    applications.
+
+    All entities have to be assigned to the same layout and virtual entities are not
+    supported.
 
     Args:
         entities: DXF entities to write
-        filename: filename of the new DXF file
+        origin: block origin, defines the point in the modelspace which will be inserted
+            at the insert location of the block reference
+
+    Raises:
+        ValueError: no entities to write
+        ValueError: entities from different layouts or virtual entities are not supported
 
     .. versionadded:: 1.1
 
     """
-    raise NotImplementedError()
+    if len(entities) == 0:
+        raise ValueError("no entities to write")
+    owner = set(e.dxf.owner for e in entities)
+    if len(owner) > 1:
+        raise ValueError("entities from different layouts are not supported")
+    if None in owner:
+        raise ValueError("virtual entities are not supported")
+    source_doc = entities[0].doc
+    assert source_doc is not None, "expected a valid document"
+    target_doc = ezdxf.new(dxfversion=source_doc.dxfversion, units=source_doc.units)
+    loader = Loader(source_doc, target_doc)
+    loader.add_command(LoadEntities(entities, target_doc.modelspace()))
+    loader.execute()
+    target_doc.header["$INSBASE"] = Vec3(origin)
+    return target_doc
 
 
 class Registry(Protocol):
