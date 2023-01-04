@@ -646,7 +646,7 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError("MTEXT requires DXF R2000")
         dxfattribs = dict(dxfattribs or {})
-        mtext: "MText" = self.new_entity("MTEXT", dxfattribs)  # type: ignore
+        mtext: MText = self.new_entity("MTEXT", dxfattribs)  # type: ignore
         mtext.text = str(text)
         return mtext
 

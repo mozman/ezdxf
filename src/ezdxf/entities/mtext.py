@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, DXFEntity
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.entitydb import EntityDB
+    from ezdxf import xref
 
 __all__ = [
     "MText",
@@ -253,7 +254,7 @@ class MTextColumns:
         # Storage for handles of linked MTEXT entities at loading stage:
         self.linked_handles: Optional[list[str]] = None
         # Storage for linked MTEXT entities for DXF versions < R2018:
-        self.linked_columns: list["MText"] = []
+        self.linked_columns: list[MText] = []
         # R2018+: heights of all columns if auto_height is False
         self.heights: list[float] = []
 
@@ -325,9 +326,7 @@ class MTextColumns:
     def update_total_width(self):
         count = self.count
         if count > 0:
-            self.total_width = (
-                count * self.width + (count - 1) * self.gutter_width
-            )
+            self.total_width = count * self.width + (count - 1) * self.gutter_width
         else:
             self.total_width = 0.0
 
@@ -418,9 +417,7 @@ class MTextColumns:
             if column.is_alive:
                 handle = column.dxf.handle
                 if handle is None:
-                    raise const.DXFStructureError(
-                        "Linked MTEXT column has no handle."
-                    )
+                    raise const.DXFStructureError("Linked MTEXT column has no handle.")
                 handles.append(handle)
             else:
                 raise const.DXFStructureError("Linked MTEXT column deleted!")
@@ -578,9 +575,7 @@ def load_mtext_defined_height(tags: Tags) -> float:
     return height
 
 
-def load_columns_from_xdata(
-    dxf: DXFNamespace, xdata: XData
-) -> Optional[MTextColumns]:
+def load_columns_from_xdata(dxf: DXFNamespace, xdata: XData) -> Optional[MTextColumns]:
     # The ACAD section in XDATA of the main MTEXT entity stores all column
     # related information:
     if "ACAD" in xdata:
@@ -755,9 +750,7 @@ class MText(DXFGraphic):
         columns = self._columns
         if columns and tagwriter.dxfversion < const.DXF2018:
             if columns.count != len(columns.linked_columns) + 1:
-                logger.debug(
-                    f"{str(self)}: column count does not match linked columns"
-                )
+                logger.debug(f"{str(self)}: column count does not match linked columns")
                 # just log for debugging, because AutoCAD accept this!
             if not all(column.is_alive for column in columns.linked_columns):
                 logger.debug(f"{str(self)}: contains destroyed linked columns")
@@ -860,9 +853,7 @@ class MText(DXFGraphic):
     def export_linked_entities(self, tagwriter: AbstractTagWriter):
         for mtext in self._columns.linked_columns:  # type: ignore
             if mtext.dxf.handle is None:
-                raise const.DXFStructureError(
-                    "Linked MTEXT column has no handle."
-                )
+                raise const.DXFStructureError("Linked MTEXT column has no handle.")
             # Export linked columns as separated DXF entities:
             mtext.export_dxf(tagwriter)
 
@@ -1053,12 +1044,8 @@ class MText(DXFGraphic):
         dxf.text_direction = new_text_direction
         dxf.extrusion = new_extrusion
         if self.has_columns:
-            hscale = m.transform_direction(
-                old_text_direction.normalize()
-            ).magnitude
-            vscale = m.transform_direction(
-                old_vertical_direction.normalize()
-            ).magnitude
+            hscale = m.transform_direction(old_text_direction.normalize()).magnitude
+            vscale = m.transform_direction(old_vertical_direction.normalize()).magnitude
             self._columns.transform(m, hscale, vscale)  # type: ignore
         self.post_transform(m)
         return self
@@ -1173,9 +1160,7 @@ class MText(DXFGraphic):
                 if entity.is_alive:
                     func(entity)
 
-    def setup_columns(
-        self, columns: MTextColumns, linked: bool = False
-    ) -> None:
+    def setup_columns(self, columns: MTextColumns, linked: bool = False) -> None:
         assert columns.column_type != ColumnType.NONE
         assert columns.count > 0, "one or more columns required"
         assert columns.width > 0, "column width has to be > 0"
@@ -1230,6 +1215,28 @@ class MText(DXFGraphic):
         # WCS entity which supports the "extrusion" attribute in a
         # different way!
         return OCS()
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        super().register_resources(registry)
+        if self.dxf.hasattr("style"):
+            registry.add_text_style(self.dxf.style)
+        if self._columns:
+            for mtext in self._columns.linked_columns:
+                mtext.register_resources(registry)
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        assert isinstance(copy, MText)
+        super().map_resources(copy, mapping)
+
+        if copy.dxf.hasattr("style"):
+            copy.dxf.style = mapping.get_text_style(copy.dxf.style)
+        if self._columns and copy._columns:
+            for col_self, col_copy in zip(
+                self._columns.linked_columns, copy._columns.linked_columns
+            ):
+                col_self.map_resources(col_copy, mapping)
 
 
 def export_mtext_content(text, tagwriter: AbstractTagWriter) -> None:

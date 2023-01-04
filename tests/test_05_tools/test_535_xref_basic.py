@@ -276,15 +276,10 @@ class TestLoadEntities:
 
 
 class TestLoadTextEntities:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def sdoc(self):
         doc = ezdxf.new()
-        doc.layers.add("Layer0")
-        doc.linetypes.add("LType0", [0.0])  # CONTINUOUS
         doc.styles.add("ARIAL", font="Arial.ttf")
-        setup_dimstyle(
-            doc, "EZ_M_100_H25_CM", style="ARIAL", name="DimStyle0"
-        )
         return doc
 
     def test_load_text_entity(self, sdoc):
@@ -296,6 +291,42 @@ class TestLoadTextEntities:
         loader.execute()
 
         assert tdoc.styles.has_entry("ARIAL")
+
+    def test_load_mtext_entity(self, sdoc):
+        msp = sdoc.modelspace()
+        msp.add_mtext("MyText", dxfattribs={"style": "ARIAL"})
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+        loader.load_modelspace()
+        loader.execute()
+
+        assert tdoc.styles.has_entry("ARIAL")
+
+
+def test_load_mtext_with_columns():
+    sdoc = ezdxf.new("R2000")
+    sdoc.styles.add("ARIAL", font="Arial.ttf")
+    sdoc.modelspace().add_mtext_static_columns(
+        ["mtext0", "column1", "column2"],
+        width=5,
+        gutter_width=1,
+        height=5,
+        dxfattribs={"style": "ARIAL"},
+    )
+
+    tdoc = ezdxf.new("R2000")
+    loader = xref.Loader(sdoc, tdoc)
+    loader.load_modelspace()
+    loader.execute()
+
+    copy = tdoc.modelspace()[0]
+    assert copy.has_columns is True
+    columns = copy.columns.linked_columns
+    assert len(columns) == 2
+    assert columns[0].doc is tdoc
+    assert columns[0].dxf.style == "ARIAL"
+    assert columns[1].doc is tdoc
+    assert columns[0].dxf.style == "ARIAL"
 
 
 if __name__ == "__main__":
