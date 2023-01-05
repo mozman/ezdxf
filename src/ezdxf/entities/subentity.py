@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFEntity
     from ezdxf.entitydb import EntityDB
+    from ezdxf import xref
 
 
 __all__ = ["entity_linker", "LinkedEntities"]
@@ -119,6 +120,18 @@ class LinkedEntities(DXFGraphic):
         del self._sub_entities
         del self.seqend
         super().destroy()
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        super().register_resources(registry)
+        self.process_sub_entities(lambda e: e.register_resources(registry))
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        assert isinstance(copy, LinkedEntities)
+        super().map_resources(copy, mapping)
+        for source, copy in zip(self.all_sub_entities(), copy.all_sub_entities()):
+            source.map_resources(copy, mapping)
 
 
 LINKED_ENTITIES = {"INSERT": "ATTRIB", "POLYLINE": "VERTEX"}

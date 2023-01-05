@@ -1,11 +1,12 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
-
+from typing import cast
 import pytest
 import ezdxf
 from ezdxf import xref, colors
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.render.arrows import ARROWS
+from ezdxf.entities import Polyline, Polyface
 
 
 def forward_handles(doc, count: int) -> None:
@@ -191,9 +192,7 @@ class TestLoadEntities:
         msp.add_point((0, 0), dxfattribs={"layer": "Layer0", "linetype": "LType0"})
 
         tdoc = ezdxf.new()
-        loader = xref.Loader(sdoc, tdoc)
-        loader.load_modelspace()
-        loader.execute()
+        xref.load_modelspace(sdoc, tdoc)
 
         assert tdoc.layers.has_entry("Layer0") is True
         assert tdoc.linetypes.has_entry("LType0") is True
@@ -219,9 +218,7 @@ class TestLoadEntities:
         )
 
         tdoc = ezdxf.new()
-        loader = xref.Loader(sdoc, tdoc)
-        loader.load_modelspace()
-        loader.execute()
+        xref.load_modelspace(sdoc, tdoc)
 
         assert tdoc.appids.has_entry("TEST_ID")
         tp0, tp1 = tdoc.modelspace()
@@ -244,9 +241,7 @@ class TestLoadEntities:
         point0.set_reactors([point1.dxf.handle, "FEFE"])
 
         tdoc = ezdxf.new()
-        loader = xref.Loader(sdoc, tdoc)
-        loader.load_modelspace()
-        loader.execute()
+        xref.load_modelspace(sdoc, tdoc)
 
         tp0, tp1 = tdoc.modelspace()
         reactors = tp0.reactors.get()
@@ -260,9 +255,7 @@ class TestLoadEntities:
         xdict.add_dictionary_var("Test0", "Content0")
 
         tdoc = ezdxf.new()
-        loader = xref.Loader(sdoc, tdoc)
-        loader.load_modelspace()
-        loader.execute()
+        xref.load_modelspace(sdoc, tdoc)
 
         copy = tdoc.modelspace()[0]
         assert copy.has_extension_dict is True
@@ -286,9 +279,7 @@ class TestLoadTextEntities:
         msp = sdoc.modelspace()
         msp.add_text("MyText", dxfattribs={"style": "ARIAL"})
         tdoc = ezdxf.new()
-        loader = xref.Loader(sdoc, tdoc)
-        loader.load_modelspace()
-        loader.execute()
+        xref.load_modelspace(sdoc, tdoc)
 
         assert tdoc.styles.has_entry("ARIAL")
 
@@ -296,9 +287,7 @@ class TestLoadTextEntities:
         msp = sdoc.modelspace()
         msp.add_mtext("MyText", dxfattribs={"style": "ARIAL"})
         tdoc = ezdxf.new()
-        loader = xref.Loader(sdoc, tdoc)
-        loader.load_modelspace()
-        loader.execute()
+        xref.load_modelspace(sdoc, tdoc)
 
         assert tdoc.styles.has_entry("ARIAL")
 
@@ -317,9 +306,7 @@ def test_load_mtext_with_columns():
     mtext.columns.linked_columns[1].dxf.style = "ARIAL2"
 
     tdoc = ezdxf.new("R2000")
-    loader = xref.Loader(sdoc, tdoc)
-    loader.load_modelspace()
-    loader.execute()
+    xref.load_modelspace(sdoc, tdoc)
     assert tdoc.styles.has_entry("ARIAL1")
     assert tdoc.styles.has_entry("ARIAL2")
 
@@ -331,6 +318,39 @@ def test_load_mtext_with_columns():
     assert columns[0].dxf.handle in tdoc.entitydb
     assert columns[1].doc is tdoc
     assert columns[1].dxf.handle in tdoc.entitydb
+
+
+class TestLoadLinkedEntities:
+    @pytest.fixture
+    def sdoc(self):
+        doc = ezdxf.new()
+        doc.layers.add("Layer0")
+        doc.linetypes.add("LType0", [0.0])  # CONTINUOUS
+        return doc
+
+    def test_load_polyline(self, sdoc):
+        polyline = sdoc.modelspace().add_polyline2d([(0, 0), (1, 0), (1, 1)])
+        polyline.vertices[0].dxf.linetype = "LType0"
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+
+        assert tdoc.linetypes.has_entry("LType0")
+        copy = cast(Polyline, tdoc.modelspace()[0])
+        assert isinstance(copy, Polyline)
+        assert len(copy.vertices) == 3
+        assert all(v.doc is tdoc for v in copy.vertices)
+
+    def test_load_polyface(self, sdoc):
+        polyface = sdoc.modelspace().add_polyface()
+        polyface.append_face([(0, 0), (1, 0), (1, 1)])
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+
+        copy = cast(Polyface, tdoc.modelspace()[0])
+        assert isinstance(copy, Polyface)
+        faces = list(copy.faces())
+        assert len(faces[0]) == 3 + 1  # vertices + face-record
+        assert all(v.doc is tdoc for v in copy.vertices)
 
 
 if __name__ == "__main__":

@@ -42,6 +42,7 @@ __all__ = [
     "attach",
     "detach",
     "write_block",
+    "load_modelspace",
     "Registry",
     "ResourceMapper",
     "ConflictPolicy",
@@ -232,6 +233,28 @@ def write_block(entities: Sequence[DXFEntity], *, origin: UVec = (0, 0, 0)) -> D
     loader.execute()
     target_doc.header["$INSBASE"] = Vec3(origin)
     return target_doc
+
+
+def load_modelspace(
+    sdoc: Drawing,
+    tdoc: Drawing,
+    filter_fn: Optional[FilterFunction] = None,
+    conflict_policy=ConflictPolicy.KEEP,
+) -> None:
+    """Loads the modelspace content of the source document into the modelspace
+    of the target document.  The filter function `filter_fn` gets every source entity as
+    input and returns ``True`` to load the entity or ``False`` otherwise.
+
+    Args:
+        sdoc: source document
+        tdoc: target document
+        filter_fn: optional function to filter entities from the source modelspace
+        conflict_policy: how to resolve name conflicts
+
+    """
+    loader = Loader(sdoc, tdoc, conflict_policy=conflict_policy)
+    loader.load_modelspace(filter_fn=filter_fn)
+    loader.execute()
 
 
 class Registry(Protocol):
