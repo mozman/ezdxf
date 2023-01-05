@@ -986,6 +986,10 @@ class CopyMachine:
         self.handle_mapping: dict[str, str] = {}
         self.log: list[str] = []
 
+    def copy_blocks(self, blocks: dict[str, dict[str, DXFEntity]]) -> None:
+        for handle, block in blocks.items():
+            self.copies[handle] = self.copy_block(block)
+
     def copy_block(self, block: dict[str, DXFEntity]) -> dict[str, DXFEntity]:
         copies: dict[str, DXFEntity] = {}
         tdoc = self.target_doc
@@ -993,28 +997,29 @@ class CopyMachine:
 
         for handle, entity in block.items():
             if isinstance(entity, DXFClass):
-                self._copy_dxf_class(entity)
+                self.copy_dxf_class(entity)
                 continue
-            try:
-                new_entity = entity.copy()
-            except const.DXFError:
-                self.log.append(f"cannot copy entity {str(entity)}")
+            clone = self.copy_entity(entity)
+            if clone is None:
                 continue
-            # remove references for copy tracking, not valid in the target document
-            new_entity.del_source_of_copy()
-            new_entity.del_source_block_reference()
-
-            factory.bind(new_entity, tdoc)
-            handle_mapping[handle] = new_entity.dxf.handle
-            if is_dxf_object(new_entity):
-                self.objects.append(new_entity)
+            factory.bind(clone, tdoc)
+            handle_mapping[handle] = clone.dxf.handle
+            if is_dxf_object(clone):
+                self.objects.append(clone)
             else:
-                copies[handle] = new_entity
+                copies[handle] = clone
         return copies
 
-    def copy_blocks(self, blocks: dict[str, dict[str, DXFEntity]]) -> None:
-        for handle, block in blocks.items():
-            self.copies[handle] = self.copy_block(block)
+    def copy_entity(self, entity: DXFEntity) -> Optional[DXFEntity]:
+        try:
+            new_entity = entity.copy()
+        except const.DXFError:
+            self.log.append(f"cannot copy entity {str(entity)}")
+            return None
+        # remove references for copy tracking, not valid in the target document
+        new_entity.del_source_of_copy()
+        new_entity.del_source_block_reference()
+        return new_entity
 
-    def _copy_dxf_class(self, cls: DXFClass) -> None:
+    def copy_dxf_class(self, cls: DXFClass) -> None:
         self.classes.append(cls.copy())
