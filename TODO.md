@@ -1,20 +1,42 @@
-TODO
-====
+Planned for v1.1
+================
 
 Xref Module
 -----------
 
-(v1.1) New core module `ezdxf.xref` as replacement for the `Importer` add-on.
+New core module `ezdxf.xref` as replacement for the `Importer` add-on.
 This module adds management features for external references, but also improves
-import and exchange of data and ressources with DXF documents. The the documentation 
-of the `Importer` add-on will refer to the new `xref` module. The `Importer` add-on 
-itself will remain as it is until it breaks, a deprecation warning will be shown at 
-instantiation of the `Importer()` class.
+import of data and resources from other DXF documents.  
+The documentation of the `Importer` add-on will refer to the new `xref` module. 
+The `Importer` add-on itself will remain as it is until it breaks, a deprecation warning 
+will be shown at instantiation of the `Importer()` class.
 
-(v1.1) ACIS copy() methjod support:
-ACIS data does not reference any DXF resources and copying
-is not expensive, all copies can share the same immutable ACIS data.
-Body.transform() method raises NotImplementdError().
+DXF Entities
+------------
+
+ACIS copy() method support: ACIS data does not reference any DXF resources and copying
+is not expensive, all copies share the same immutable ACIS data. 
+This feature allows loading ACIS entities from external references by the `xref` module.
+
+Increase Minimal Required Python Version to Python 3.8
+------------------------------------------------------
+
+- https://docs.python.org/3/whatsnew/3.8.html
+- import `Protocol` from `typing` instead from `typing_extensions`
+- `typing.Literal`
+- walrus operator `:=`
+
+Apply minimal Python version update to:
+
+- README.md
+- setup.py
+- toplevel index.rst
+- introduction.rst
+- setup.rst
+
+
+Ideas for Future Releases
+=========================
 
 Add-ons
 -------
@@ -215,13 +237,6 @@ DXF Document
 
 Increase Minimal Required Python Version
 ----------------------------------------
-
-(v1.1) Python 3.8
-
-- https://docs.python.org/3/whatsnew/3.8.html
-- import `Protocol` from `typing` instead from `typing_extensions`
-- `typing.Literal`
-- walrus operator `:=`
 
 Python 3.9 in late 2023, after release of Python 3.12
 
