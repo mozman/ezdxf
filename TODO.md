@@ -10,7 +10,12 @@ import and exchange of data and ressources with DXF documents. The the documenta
 of the `Importer` add-on will refer to the new `xref` module. The `Importer` add-on 
 itself will remain as it is until it breaks, a deprecation warning will be shown at 
 instantiation of the `Importer()` class.
- 
+
+(v1.1) ACIS copy() methjod support:
+ACIS data does not reference any DXF resources and copying
+is not expensive, all copies can share the same immutable ACIS data.
+Body.transform() method raises NotImplementdError().
+
 Add-ons
 -------
 
@@ -88,14 +93,12 @@ DXF Entities
   zero-length LINE entities, because the POINT entity has a special meaning.
 - (>v1.1) HATCH: shift hatch pattern origin, see discussion #769 
   and examples/entities/hatch_pattern_modify_origin.py
-- (>v1.1) extend ACIS support
-  - copy() method support: ACIS data does not reference any DXF resources and copying
-    is not expensive, all copies can share the same immutable ACIS data
-  - transform() method support: each ACIS entity has a transformation matrix which can 
-    be modified, but this is expensive, the ACIS data has to be parsed, the 
-    transformation matrix modified and the data recompiled.  
-    The transformation feature has to be enabled manually for each DXF document by 
-    doc.enable_acis_transfromation() 
+- (>v1.1) extend ACIS support:
+  transform() method support: each ACIS entity has a transformation matrix which can 
+  be modified, but this is expensive, the ACIS data has to be parsed, the 
+  transformation matrix modified and the data recompiled.  
+  The transformation feature has to be enabled manually for each DXF document by 
+  doc.enable_acis_transfromation() 
 - (>v1.1) clipping path support for block references, see XCLIP command and 
   discussion #760
 

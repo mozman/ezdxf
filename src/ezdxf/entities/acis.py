@@ -200,6 +200,9 @@ class Body(DXFGraphic):
             self.doc.acdsdata.del_acis_data(self.dxf.handle)  # type: ignore
         super().destroy()
 
+    def transform(self, m: Matrix44) -> DXFGraphic:
+        raise NotImplementedError("cannot transform ACIS entities")
+
 
 def tags2textlines(tags: Iterable) -> Iterable[str]:
     """Yields text lines from code 1 and 3 tags, code 1 starts a line following
