@@ -133,6 +133,11 @@ acdb_attdef_group_codes = group_code_mapping(acdb_attdef)
 acdb_attrib = DefSubclass("AcDbAttribute", attrib_fields)
 acdb_attrib_group_codes = group_code_mapping(acdb_attrib)
 
+# --------------------------------------------------------------------------------------
+# Does subclass AcDbXrecord really exist? Only the documentation in the DXF reference
+# exists, no real world examples seen so far - it wouldn't be the first error or misleading
+# information in the DXF reference.
+# --------------------------------------------------------------------------------------
 # For XRECORD the tag order is important and group codes appear multiple times,
 # therefore this attribute definition needs a special treatment!
 acdb_attdef_xrecord = DefSubclass(
@@ -160,7 +165,7 @@ acdb_attdef_xrecord = DefSubclass(
         # Number of secondary attributes or attribute definitions:
         ("secondary_attribs_count", DXFAttr(70, default=0)),
         # Hard-pointer id of secondary attribute(s) or attribute definition(s):
-        ("secondary_attribs_handle", DXFAttr(70, default=0)),
+        ("secondary_attribs_handle", DXFAttr(340, default="0")),
         # Alignment point of attribute or attribute definition:
         ("align_point", DXFAttr(10, xtype=XType.point3d, default=NULLVEC)),
         ("current_annotation_scale", DXFAttr(40, default=0)),
