@@ -291,6 +291,19 @@ class TestLoadTextEntities:
 
         assert tdoc.styles.has_entry("ARIAL")
 
+    def test_attdef_with_embedded_mtext_entity(self, sdoc):
+        msp = sdoc.modelspace()
+        attdef = msp.add_attdef("TEST", insert=(0, 0))
+        mtext = msp.add_mtext("TEST", dxfattribs={"style": "ARIAL"})
+        attdef.embed_mtext(mtext)
+        # hack: embed_mtext() copies the style of the mtext into attdef
+        # this may not always be true for loaded entities:
+        attdef.dxf.style = "Standard"
+
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        assert tdoc.styles.has_entry("ARIAL") is True
+
 
 def test_load_mtext_with_columns():
     sdoc = ezdxf.new("R2000")
@@ -352,6 +365,27 @@ class TestLoadLinkedEntities:
         assert len(faces[0]) == 3 + 1  # vertices + face-record
         assert all(v.doc is tdoc for v in copy.vertices)
 
+
+# TODO:
+# Name conflict handling
+# LEADER
+# TOLERANCE
+# INSERT/BLOCKS
+# DIMENSION
+# HATCH/MPOLYGON
+# IMAGE/IMAGEDEF/IMAGEDEF_REACTOR
+# MLINE
+# MULTILEADER
+# UNDERLAY/UNDERLAYDEFINITION
+# VIEWPORT
+# Paperspace Layout
+# SORTENTSTABLE
+# GEODATA?, linked by extension dictionary of the modelspace
+# ACIS entities
+# ACAD_PROXY_ENTITY?
+# OLE2FRAME?
+# SUN?
+# IDBUFFER/LAYERFILTER?
 
 if __name__ == "__main__":
     pytest.main([__file__])

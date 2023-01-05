@@ -368,7 +368,7 @@ class Modelspace(Layout):
         xdict["ACAD_GEOGRAPHICDATA"] = geodata
         return geodata
 
-    def get_geodata(self) -> Optional["GeoData"]:
+    def get_geodata(self) -> Optional[GeoData]:
         """Returns the :class:`~ezdxf.entities.GeoData` entity associated to
         the modelspace or ``None``.
         """

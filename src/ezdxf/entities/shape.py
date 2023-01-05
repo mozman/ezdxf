@@ -32,6 +32,11 @@ if TYPE_CHECKING:
 
 __all__ = ["Shape"]
 
+# Description of the "name" attribute from the DWG documentation: 20.4.37 SHAPE (33)
+# In DXF the shape name is stored. When reading from DXF, the shape is found by
+# iterating over all the text styles and when the text style contains a shape file,
+# iterating over all the shapes until the one with the matching name is found.
+
 acdb_shape = DefSubclass(
     "AcDbShape",
     {

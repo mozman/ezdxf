@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.lldxf.tags import Tags
     from ezdxf.entities import DXFEntity
+    from ezdxf import xref
 
 
 __all__ = ["AttDef", "Attrib", "copy_attrib_as_text", "BaseAttrib"]
@@ -362,6 +363,20 @@ class BaseAttrib(Text):
         self.set_mtext(mtext, graphic_properties)
         mtext.destroy()
 
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        super().register_resources(registry)
+        if self._embedded_mtext:
+            self._embedded_mtext.register_resources(registry)
+
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        assert isinstance(clone, BaseAttrib)
+        super().map_resources(clone, mapping)
+        if self._embedded_mtext and clone._embedded_mtext:
+            self._embedded_mtext.map_resources(clone._embedded_mtext, mapping)
+        # todo: map handles in embedded XRECORD if a real world example shows up
+
 
 def _update_content_from_mtext(text: Text, mtext: MText) -> None:
     content = mtext.plain_text(split=True, fast=True)
@@ -666,3 +681,13 @@ class EmbeddedMText:
                 "bg_fill_transparency",
             ],
         )
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        if self.dxf.hasattr("style"):
+            registry.add_text_style(self.dxf.style)
+
+    def map_resources(self, clone: EmbeddedMText, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        if clone.dxf.hasattr("style"):
+            clone.dxf.style = mapping.get_text_style(clone.dxf.style)
