@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator, Iterable
@@ -7,6 +7,7 @@ from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFGraphic, DXFEntity
+    from ezdxf.math import Matrix44
 
 
 # Protocol implemented for:
@@ -63,10 +64,16 @@ class ReferencedBlocks(Protocol):
         ...
 
 
+class SupportsTransform(Protocol):
+    def transform(self, m: Matrix44) -> DXFGraphic:
+        """Raises NotImplementedError() if transformation is not supported."""
+        ...
+
+
 _EMPTY_TUPLE: tuple = tuple()
 
 
-def referenced_blocks(entity: "DXFEntity") -> Iterable[str]:
+def referenced_blocks(entity: DXFEntity) -> Iterable[str]:
     """Returns the handles to the BLOCK_RECORD entities for all BLOCK
     definitions used by an entity.
     """
