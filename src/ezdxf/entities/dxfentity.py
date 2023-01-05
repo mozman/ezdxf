@@ -47,6 +47,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFGraphic, Insert
     from ezdxf.lldxf.attributes import DXFAttr
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf.math import Matrix44
     from ezdxf import xref
 
 __all__ = ["DXFEntity", "DXFTagStorage", "base_class", "SubclassProcessor"]
@@ -980,6 +981,9 @@ class DXFTagStorage(DXFEntity):
         raise const.DXFTypeError(
             f"Cloning of tag storage {self.dxftype()} not supported."
         )
+
+    def transform(self, m: Matrix44) -> DXFGraphic:
+        raise NotImplementedError("cannot transform DXF tag storage")
 
     @property
     def base_class(self):
