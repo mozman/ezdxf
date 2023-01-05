@@ -18,7 +18,7 @@ Required DXF version     R2010 (``'AC1024'``)
 
 .. seealso::
 
-    `using_geodata.py <https://github.com/mozman/ezdxf/blob/master/examples/using_geodata.py>`_
+    `geodata_setup_local_grid.py <https://github.com/mozman/ezdxf/blob/master/examples/entities/geodata_setup_local_grid.py>`_
 
 .. warning::
 
