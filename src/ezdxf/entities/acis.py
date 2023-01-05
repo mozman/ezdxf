@@ -1,7 +1,7 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Union, Optional
+from typing import TYPE_CHECKING, Iterable, Union, Optional, Sequence
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -84,12 +84,14 @@ class Body(DXFGraphic):
 
     def __init__(self) -> None:
         super().__init__()
-        self._sat: list[str] = []
+        # Store SAT data as immutable sequence of strings, so the data can be shared
+        # across multiple copies of an ACIS entity.
+        self._sat: Sequence[str] = tuple()
         self._sab: bytes = b""
         self._update = False
 
     @property
-    def acis_data(self) -> Union[bytes, list[str]]:
+    def acis_data(self) -> Union[bytes, Sequence[str]]:
         """Returns :term:`SAT` data  for DXF R2000 up to R2010 and :term:`SAB`
         data for DXF R2013 and later
         """
@@ -98,14 +100,14 @@ class Body(DXFGraphic):
         return self.sat
 
     @property
-    def sat(self) -> list[str]:
-        """Get/Set :term:`SAT` data as list of strings."""
+    def sat(self) -> Sequence[str]:
+        """Get/Set :term:`SAT` data as sequence of strings."""
         return self._sat
 
     @sat.setter
-    def sat(self, data: list[str]) -> None:
-        """Set :term:`SAT` data as list of strings."""
-        self._sat = data
+    def sat(self, data: Sequence[str]) -> None:
+        """Set :term:`SAT` data as sequence of strings."""
+        self._sat = tuple(data)
 
     @property
     def sab(self) -> bytes:
@@ -154,7 +156,7 @@ class Body(DXFGraphic):
     def load_sat_data(self, tags: Tags):
         """Loading interface. (internal API)"""
         text_lines = tags2textlines(tag for tag in tags if tag.code in (1, 3))
-        self._sat = list(crypt.decode(text_lines))
+        self._sat = tuple(crypt.decode(text_lines))
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
