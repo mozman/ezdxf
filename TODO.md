@@ -4,18 +4,21 @@ TODO
 Xref Module
 -----------
 
-(v1.1) A core module `ezdxf.xref` as replacement for the `Importer` add-on.
-This module adds management features for external references, but also improve
-import and exchange of data and ressources with DXF documents.
+(v1.1) New core module `ezdxf.xref` as replacement for the `Importer` add-on.
+This module adds management features for external references, but also improves
+import and exchange of data and ressources with DXF documents. The the documentation 
+of the `Importer` add-on will refer to the new `xref` module. The `Importer` add-on 
+itself will remain as it is until it breaks, a deprecation warning will be shown at 
+instantiation of the `Importer()` class.
  
 Add-ons
 -------
 
 - drawing add-on improvements:
-  - (>v1.0) render SHX fonts and SHAPE entities as paths by the frontend 
+  - (>v1.1) render SHX fonts and SHAPE entities as paths by the frontend 
     from `.shx` or `.shp` files
   
-  - (>v1.0) proper rendering pipeline: Frontend -> Stage0 -> ... -> Backend 
+  - (>v1.1) proper rendering pipeline: Frontend -> Stage0 -> ... -> Backend 
     Introducing the Designer() class was the first step, but the implementation 
     is not as flexible as required. Possible rendering stages:
     - linetype rendering
@@ -32,10 +35,9 @@ Add-ons
     is very important, the first proof of concept was too tightly 
     coupled (viewport rendering)!!!!
 
-  - (>v1.0) Native SVG exporter, planned after the matplotlib backend supports 
-    all v1.0 features. 
+  - (>v1.1) Native SVG exporter
 
-  - (>v1.0) Native PDF exporter? Problem: The PDF 1.7 reference has ~1300 pages, 
+  - (>v1.1) Native PDF exporter? Problem: The PDF 1.7 reference has ~1300 pages, 
     but I assume I only need a fraction of that information for a simple exporter. 
     I can use Matplotlib for text rendering as Bèzier curves if required.  
   
@@ -61,39 +63,46 @@ Add-ons
     
     VIEWPORT borders are not plotted at all by the `drawing` add-on
     
-- (>v1.0) DWG loader, planned for the future. Cython will be required for the 
+- (>v1.1) DWG loader, planned for the future. Cython will be required for the 
   low level stuff, no pure Python implementation.
-- (>v1.0) text2path: add support for SHX fonts
+- (>v1.1) text2path: add support for SHX fonts
 
 Render Tools
 ------------
 
-- (>v1.0) ACAD_TABLE tool to render content as DXF primitives to create the 
+- (>v1.1) ACAD_TABLE tool to render content as DXF primitives to create the 
   content of the anonymous block `*T...`
-- (>v1.0) factory methods to create ACAD_TABLE entities
-- (>v1.0) fix LWPOLYLINE parsing error in ProxyGraphic, see test script 239
-- (>v1.0) tool to create proxy graphic 
-- (>v1.0) add `ShxFont` and `ShpFont` classes to `ezdxf.tools.fonts`
+- (>v1.1) factory methods to create ACAD_TABLE entities
+- (>v1.1) fix LWPOLYLINE parsing error in ProxyGraphic, see test script 239
+- (>v1.1) tool to create proxy graphic 
+- (>v1.1) add `ShxFont` and `ShpFont` classes to `ezdxf.tools.fonts`
 
 DXF Entities
 ------------
 
-- (>v1.0) ACAD_TABLE entity load and export support beyond `AcadTableBlockContent`
-- (>v1.0) ACAD_TABLE tool to manage content at table and cell basis
-- (>v1.0) GEODATA version 1 support, see mpolygon examples and DXF reference R2009
-- (>v1.0) FIELD, used by ACAD_TABLE and MTEXT
-- (>v1.0) explode HATCH pattern into LINE entities, points are represented by 
+- (>v1.1) ACAD_TABLE entity load and export support beyond `AcadTableBlockContent`
+- (>v1.1) ACAD_TABLE tool to manage content at table and cell basis
+- (>v1.1) GEODATA version 1 support, see mpolygon examples and DXF reference R2009
+- (>v1.1) FIELD, used by ACAD_TABLE and MTEXT
+- (>v1.1) explode HATCH pattern into LINE entities, points are represented by 
   zero-length LINE entities, because the POINT entity has a special meaning.
-- (>v1.0) HATCH: shift hatch pattern origin, see discussion #769 
+- (>v1.1) HATCH: shift hatch pattern origin, see discussion #769 
   and examples/entities/hatch_pattern_modify_origin.py
-- (>v1.0) extend ACIS support
-- (>v1.0) clipping path support for block references, see XCLIP command and 
+- (>v1.1) extend ACIS support
+  - copy() method support: ACIS data does not reference any DXF resources and copying
+    is not expensive, all copies can share the same immutable ACIS data
+  - transform() method support: each ACIS entity has a transformation matrix which can 
+    be modified, but this is expensive, the ACIS data has to be parsed, the 
+    transformation matrix modified and the data recompiled.  
+    The transformation feature has to be enabled manually for each DXF document by 
+    doc.enable_acis_transfromation() 
+- (>v1.1) clipping path support for block references, see XCLIP command and 
   discussion #760
 
 Selection Module
 ----------------
 
-(>1.0) A module to select entities based on their spatial location and shape 
+(>v1.1) A module to select entities based on their spatial location and shape 
 like in CAD applications, but using the bounding box of the entities instead 
 their real geometry for simplicity.
 
@@ -175,7 +184,7 @@ Issues:
 Convert Document to DXF R12
 ---------------------------
 
-(>v1.0) A module to convert a whole DXF document into DXF R12 inplace, this is 
+(>v1.1) A module to convert a whole DXF document into DXF R12 inplace, this is 
 a destructive process and converts or explodes DXF entities:
 - explode MTEXT, MULTILEADER, MLINE, ACAD_TABLE, ARC_DIMENSION
 - convert MESH to PolyFaceMesh
@@ -198,13 +207,13 @@ Removes all data not supported by DXF R12:
 DXF Document
 ------------
 
-- (>v1.0) copy DXF document by serializing and reloading the document in memory 
+- (>v1.1) copy DXF document by serializing and reloading the document in memory 
   or by file-system, this is not efficient but safe.
 
 Increase Minimal Required Python Version
 ----------------------------------------
 
-(v1.1) Python 3.8 - maybe jumping straight to Python 3.9
+(v1.1) Python 3.8
 
 - https://docs.python.org/3/whatsnew/3.8.html
 - import `Protocol` from `typing` instead from `typing_extensions`
