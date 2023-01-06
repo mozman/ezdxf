@@ -345,5 +345,34 @@ class TestLoadMaterials:
         assert tdoc.materials.has_entry("Mat1") is True
 
 
+class TestLoadMLineStyles:
+    """MLineStyles are stored in object collections like Materials."""
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new()
+        doc.filename = "xref.dxf"
+        doc.mline_styles.new("Style0").dxf.description = "XrefStyle0"
+        doc.mline_styles.new("Style1").dxf.description = "XrefStyle1"
+        return doc
+
+    @staticmethod
+    def load_mline_styles(sdoc, tdoc, policy):
+        loader = xref.Loader(sdoc, tdoc, conflict_policy=policy)
+        loader.load_mline_styles(["style0", "style1"])
+        loader.execute()
+
+    def test_conflict_policy_keep(self, sdoc):
+        tdoc = ezdxf.new()
+        tdoc.mline_styles.new("Style0").dxf.description = "preserve"
+        self.load_mline_styles(sdoc, tdoc, xref.ConflictPolicy.KEEP)
+
+        # style "Standard" should not be loaded:
+        assert len(tdoc.mline_styles) == 1 + 2
+
+        style0 = tdoc.mline_styles.get("Style0")
+        assert style0.dxf.description == "preserve"
+        assert tdoc.mline_styles.has_entry("Style1") is True
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

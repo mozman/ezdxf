@@ -553,7 +553,9 @@ def _get_table_entries(names: Iterable[str], table) -> list[DXFEntity]:
     entities: list[DXFEntity] = []
     for name in names:
         try:
-            entities.append(table.get(name))  # type: ignore
+            entry = table.get(name)
+            if entry:
+                entities.append(entry)  # type: ignore
         except const.DXFTableEntryError:
             pass
     return entities
