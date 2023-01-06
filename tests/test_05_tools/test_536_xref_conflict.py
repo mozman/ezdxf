@@ -53,6 +53,7 @@ class TestLoadLayers:
         # check if all loaded layers are renamed:
         xref_layer0 = tdoc.layers.get("xref$0$Layer0")
         assert xref_layer0.dxf.color == colors.RED, "expected loaded Layer0"
+        assert xref_layer0.dxf.name == "xref$0$Layer0", "expected updated name"
         assert tdoc.layers.has_entry("xref$0$Layer1"), "expected loaded Layer1"
         assert tdoc.layers.has_entry("xref$0$Layer2"), "expected loaded Layer2"
 
@@ -66,7 +67,7 @@ class TestLoadLayers:
         self.load_layers(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
 
         # check if layers of 2nd loading process exist:
-        assert tdoc.layers.has_entry("xref$1$Layer0") is True
+        assert tdoc.layers.get("xref$1$Layer0").dxf.name == "xref$1$Layer0"
         assert tdoc.layers.has_entry("xref$1$Layer1") is True
         assert tdoc.layers.has_entry("xref$1$Layer2") is True
 
@@ -88,6 +89,7 @@ class TestLoadLayers:
         # check if loaded layers with name conflicts are renamed:
         xref_layer0 = tdoc.layers.get("$0$Layer0")
         assert xref_layer0.dxf.color == colors.RED, "expected loaded Layer0"
+        assert xref_layer0.dxf.name == "$0$Layer0", "expected updated name"
 
         # check if loaded layers without name conflicts preserve their names:
         assert tdoc.layers.has_entry("Layer1") is True
@@ -124,8 +126,8 @@ class TestLoadLinetypes:
     def sdoc(self) -> Drawing:
         doc = ezdxf.new()
         doc.filename = "xref.dxf"
-        doc.linetypes.add("Ltype0", [0.0], description="xref0")
-        doc.linetypes.add("Ltype1", [0.0], description="xref1")
+        doc.linetypes.add("LType0", [0.0], description="xref0")
+        doc.linetypes.add("LType1", [0.0], description="xref1")
         return doc
 
     @staticmethod
@@ -156,7 +158,7 @@ class TestLoadLinetypes:
 
         ltype0 = tdoc.linetypes.get("LType0")
         assert ltype0.dxf.description == "preserve"
-        assert tdoc.linetypes.has_entry("xref$0$LType0") is True
+        assert tdoc.linetypes.get("xref$0$LType0").dxf.name == "xref$0$LType0"
         assert tdoc.linetypes.has_entry("xref$0$LType1") is True
 
     def test_numbered_rename_policy(self, sdoc):
@@ -169,7 +171,7 @@ class TestLoadLinetypes:
 
         ltype0 = tdoc.linetypes.get("LType0")
         assert ltype0.dxf.description == "preserve"
-        assert tdoc.linetypes.has_entry("$0$LType0") is True
+        assert tdoc.linetypes.get("$0$LType0").dxf.name == "$0$LType0"
         assert tdoc.linetypes.has_entry("LType1") is True
 
 
@@ -214,7 +216,7 @@ class TestLoadTextStyles:
 
         style0 = tdoc.styles.get("Style0")
         assert style0.dxf.font == "preserve.ttf"
-        assert tdoc.styles.has_entry("xref$0$Style0") is True
+        assert tdoc.styles.get("xref$0$Style0").dxf.name == "xref$0$Style0"
         assert tdoc.styles.has_entry("xref$0$Style1") is True
 
     def test_numbered_rename_policy(self, sdoc):
@@ -227,7 +229,7 @@ class TestLoadTextStyles:
 
         style0 = tdoc.styles.get("Style0")
         assert style0.dxf.font == "preserve.ttf"
-        assert tdoc.styles.has_entry("$0$Style0") is True
+        assert tdoc.styles.get("$0$Style0").dxf.name == "$0$Style0"
         assert tdoc.styles.has_entry("Style1") is True
 
 
@@ -272,7 +274,7 @@ class TestLoadDimStyles:
 
         style0 = tdoc.dimstyles.get("Style0")
         assert style0.dxf.dimpost == "preserve"
-        assert tdoc.dimstyles.has_entry("xref$0$Style0") is True
+        assert tdoc.dimstyles.get("xref$0$Style0").dxf.name == "xref$0$Style0"
         assert tdoc.dimstyles.has_entry("xref$0$Style1") is True
 
     def test_numbered_rename_policy(self, sdoc):
@@ -285,13 +287,13 @@ class TestLoadDimStyles:
 
         style0 = tdoc.dimstyles.get("Style0")
         assert style0.dxf.dimpost == "preserve"
-        assert tdoc.dimstyles.has_entry("$0$Style0") is True
+        assert tdoc.dimstyles.get("$0$Style0").dxf.name == "$0$Style0"
         assert tdoc.dimstyles.has_entry("Style1") is True
 
 
 class TestLoadMaterials:
-    """Materials are stored in object collections which work differently than tables.
-    """
+    """Materials are stored in object collections which work differently than tables."""
+
     @pytest.fixture(scope="class")
     def sdoc(self) -> Drawing:
         doc = ezdxf.new()
@@ -328,7 +330,7 @@ class TestLoadMaterials:
 
         mat0 = tdoc.materials.get("Mat0")
         assert mat0.dxf.description == "preserve"
-        assert tdoc.materials.has_entry("xref$0$Mat0") is True
+        assert tdoc.materials.get("xref$0$Mat0").dxf.name == "xref$0$Mat0"
         assert tdoc.materials.has_entry("xref$0$Mat1") is True
 
     def test_numbered_rename_policy(self, sdoc):
@@ -341,12 +343,13 @@ class TestLoadMaterials:
 
         mat0 = tdoc.materials.get("Mat0")
         assert mat0.dxf.description == "preserve"
-        assert tdoc.materials.has_entry("$0$Mat0") is True
+        assert tdoc.materials.get("$0$Mat0").dxf.name == "$0$Mat0"
         assert tdoc.materials.has_entry("Mat1") is True
 
 
 class TestLoadMLineStyles:
     """MLineStyles are stored in object collections like Materials."""
+
     @pytest.fixture(scope="class")
     def sdoc(self) -> Drawing:
         doc = ezdxf.new()
@@ -383,7 +386,7 @@ class TestLoadMLineStyles:
 
         style0 = tdoc.mline_styles.get("Style0")
         assert style0.dxf.description == "preserve"
-        assert tdoc.mline_styles.has_entry("xref$0$Style0") is True
+        assert tdoc.mline_styles.get("xref$0$Style0").dxf.name == "xref$0$Style0"
         assert tdoc.mline_styles.has_entry("xref$0$Style1") is True
 
     def test_numbered_rename_policy(self, sdoc):
@@ -396,12 +399,13 @@ class TestLoadMLineStyles:
 
         style0 = tdoc.mline_styles.get("Style0")
         assert style0.dxf.description == "preserve"
-        assert tdoc.mline_styles.has_entry("$0$Style0") is True
+        assert tdoc.mline_styles.get("$0$Style0").dxf.name == "$0$Style0"
         assert tdoc.mline_styles.has_entry("Style1") is True
 
 
 class TestLoadMLeaderStyles:
     """MLeaderStyles are stored in object collections like Materials."""
+
     @pytest.fixture(scope="class")
     def sdoc(self) -> Drawing:
         doc = ezdxf.new()
@@ -438,7 +442,7 @@ class TestLoadMLeaderStyles:
 
         style0 = tdoc.mleader_styles.get("Style0")
         assert style0.dxf.default_text_content == "preserve"
-        assert tdoc.mleader_styles.has_entry("xref$0$Style0") is True
+        assert tdoc.mleader_styles.get("xref$0$Style0").dxf.name == "xref$0$Style0"
         assert tdoc.mleader_styles.has_entry("xref$0$Style1") is True
 
     def test_numbered_rename_policy(self, sdoc):
@@ -451,8 +455,167 @@ class TestLoadMLeaderStyles:
 
         style0 = tdoc.mleader_styles.get("Style0")
         assert style0.dxf.default_text_content == "preserve"
-        assert tdoc.mleader_styles.has_entry("$0$Style0") is True
+        assert tdoc.mleader_styles.get("$0$Style0").dxf.name == "$0$Style0"
         assert tdoc.mleader_styles.has_entry("Style1") is True
+
+
+class TestLoadTextWithExistingTextstyle:
+    def make_doc(self, font: str) -> Drawing:
+        doc = ezdxf.new()
+        doc.styles.add("Style0", font=font)
+        msp = doc.modelspace()
+        msp.add_text("MyText", dxfattribs={"style": "Style0"})
+        return doc
+
+    def test_keep_policy(self):
+        sdoc = self.make_doc("arial.ttf")
+        tdoc = self.make_doc("times.ttf")
+
+        xref.load_modelspace(sdoc, tdoc, conflict_policy=xref.ConflictPolicy.KEEP)
+        assert len(tdoc.styles) == 2
+        assert tdoc.styles.get("Style0").dxf.font == "times.ttf"
+
+        existing_text, loaded_text = tdoc.modelspace()
+        assert existing_text.dxf.style == "Style0"
+        assert loaded_text.dxf.style == "Style0"
+
+    def test_xref_policy(self):
+        sdoc = self.make_doc("arial.ttf")
+        sdoc.filename = "xref.dxf"
+        tdoc = self.make_doc("times.ttf")
+
+        xref.load_modelspace(
+            sdoc, tdoc, conflict_policy=xref.ConflictPolicy.XREF_PREFIX
+        )
+        assert len(tdoc.styles) == 3  # includes "Standard" style
+        assert tdoc.styles.get("Style0").dxf.font == "times.ttf"
+        assert tdoc.styles.get("xref$0$Style0").dxf.font == "arial.ttf"
+
+        existing_text, loaded_text = tdoc.modelspace()
+        assert existing_text.dxf.style == "Style0", "expected style for tdoc"
+        assert loaded_text.dxf.style == "xref$0$Style0", "expected mapped style name"
+
+
+class TestLoadLineWithExistingLinetype:
+    def make_doc(self, desc: str) -> Drawing:
+        doc = ezdxf.new()
+        doc.linetypes.add("LType0", [0.0], description=desc)
+        msp = doc.modelspace()
+        msp.add_line((0, 0), (1, 0), dxfattribs={"linetype": "LType0"})
+        return doc
+
+    def test_keep_policy(self):
+        sdoc = self.make_doc("source")
+        tdoc = self.make_doc("keep")
+
+        xref.load_modelspace(sdoc, tdoc, conflict_policy=xref.ConflictPolicy.KEEP)
+        assert len(tdoc.linetypes) == 4  # incl. CONTINUOUS, BYLAYER, BYBLOCK
+        assert tdoc.linetypes.get("LType0").dxf.description == "keep"
+
+        existing_line, loaded_line = tdoc.modelspace()
+        assert existing_line.dxf.linetype == "LType0"
+        assert loaded_line.dxf.linetype == "LType0"
+
+    def test_xref_policy(self):
+        sdoc = self.make_doc("source")
+        sdoc.filename = "xref.dxf"
+        tdoc = self.make_doc("keep")
+
+        xref.load_modelspace(
+            sdoc, tdoc, conflict_policy=xref.ConflictPolicy.XREF_PREFIX
+        )
+        assert len(tdoc.linetypes) == 5  # incl. CONTINUOUS, BYLAYER, BYBLOCK
+        assert tdoc.linetypes.get("LType0").dxf.description == "keep"
+        assert tdoc.linetypes.get("xref$0$LType0").dxf.description == "source"
+
+        existing_line, loaded_line = tdoc.modelspace()
+        assert existing_line.dxf.linetype == "LType0", "expected style for tdoc"
+        assert (
+            loaded_line.dxf.linetype == "xref$0$LType0"
+        ), "expected mapped linetype name"
+
+
+class TestLoadLineWithExistingComplexLinetype:
+    def make_doc(self) -> Drawing:
+        doc = ezdxf.new()
+        doc.styles.add_shx("ltypeshp.shx")
+        doc.linetypes.add(  # see also: complex_line_type_example.py
+            "SQUARE",
+            pattern="A,.25,-.1,[132,ltypeshp.shx,x=-.1,s=.1],-.1,1",
+            description="Square -[]-----[]-----[]-----[]----[]----",
+            length=1.45,
+        )
+        msp = doc.modelspace()
+        msp.add_line((0, 0), (1, 0), dxfattribs={"linetype": "SQUARE"})
+        return doc
+
+    def test_xref_policy(self):
+        """Shape files do not get renamed at loading process.
+
+        The style handle of the loaded linetype 'xref$0$SQUARE' should be replaced by
+        the handle of the existing shape file 'ltypeshp.shx' in tdoc.
+        """
+        sdoc = self.make_doc()
+        sdoc.filename = "xref.dxf"
+
+        tdoc = self.make_doc()
+        existing_shape_file = tdoc.styles.find_shx("ltypeshp.shx")
+        xref.load_modelspace(
+            sdoc, tdoc, conflict_policy=xref.ConflictPolicy.XREF_PREFIX
+        )
+        shape_file = tdoc.styles.find_shx("ltypeshp.shx")
+        assert shape_file is existing_shape_file
+        loaded_ltype = tdoc.linetypes.get("xref$0$SQUARE")
+        assert (
+            loaded_ltype.pattern_tags.get_style_handle() == shape_file.dxf.handle
+        ), "expected handle is mapped to existing shape file"
+
+
+class TestLoadEntityWithExistingMaterial:
+    def make_doc(self, desc: str) -> Drawing:
+        doc = ezdxf.new()
+        mat0 = doc.materials.new("Mat0")
+        mat0.dxf.description = desc
+        msp = doc.modelspace()
+        msp.add_line((0, 0), (1, 0), dxfattribs={"material_handle": mat0.dxf.handle})
+        return doc
+
+    def test_keep_policy(self):
+        """The material_handle of the loaded entity should be the handle of the existing
+        material "Mat0" in tdoc
+        """
+        sdoc = self.make_doc("source")
+        tdoc = self.make_doc("keep")
+
+        xref.load_modelspace(sdoc, tdoc, conflict_policy=xref.ConflictPolicy.KEEP)
+        assert len(tdoc.materials) == 4  # incl. GLOBAL, BYLAYER, BYBLOCK
+        mat0 = tdoc.materials.get("Mat0")
+        assert mat0.dxf.description == "keep"
+        existing_line, loaded_line = tdoc.modelspace()
+        assert existing_line.dxf.material_handle == mat0.dxf.handle
+        assert loaded_line.dxf.material_handle == mat0.dxf.handle
+
+    def test_xref_policy(self):
+        """The material_handle of the loaded entity should be the handle of the loaded
+        material "xref$0$Mat0".
+        """
+        sdoc = self.make_doc("source")
+        sdoc.filename = "xref.dxf"
+        tdoc = self.make_doc("keep")
+
+        xref.load_modelspace(
+            sdoc, tdoc, conflict_policy=xref.ConflictPolicy.XREF_PREFIX
+        )
+        assert len(tdoc.materials) == 5  # incl. GLOBAL, BYLAYER, BYBLOCK
+
+        existing_mat0 = tdoc.materials.get("Mat0")
+        loaded_mat0 = tdoc.materials.get("xref$0$Mat0")
+        assert loaded_mat0.dxf.name == "xref$0$Mat0"
+        assert loaded_mat0.dxf.description == "source"
+
+        existing_line, loaded_line = tdoc.modelspace()
+        assert existing_line.dxf.material_handle == existing_mat0.dxf.handle
+        assert loaded_line.dxf.material_handle == loaded_mat0.dxf.handle
 
 
 if __name__ == "__main__":
