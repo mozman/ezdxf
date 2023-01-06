@@ -373,6 +373,32 @@ class TestLoadMLineStyles:
         assert style0.dxf.description == "preserve"
         assert tdoc.mline_styles.has_entry("Style1") is True
 
+    def test_xref_rename_policy(self, sdoc):
+        tdoc = ezdxf.new()
+        tdoc.mline_styles.new("Style0").dxf.description = "preserve"
+        self.load_mline_styles(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
+
+        # style "Standard" should not be loaded:
+        assert len(tdoc.mline_styles) == 1 + 3
+
+        style0 = tdoc.mline_styles.get("Style0")
+        assert style0.dxf.description == "preserve"
+        assert tdoc.mline_styles.has_entry("xref$0$Style0") is True
+        assert tdoc.mline_styles.has_entry("xref$0$Style1") is True
+
+    def test_numbered_rename_policy(self, sdoc):
+        tdoc = ezdxf.new()
+        tdoc.mline_styles.new("Style0").dxf.description = "preserve"
+        self.load_mline_styles(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
+
+        # style "Standard" should not be loaded:
+        assert len(tdoc.mline_styles) == 1 + 3
+
+        style0 = tdoc.mline_styles.get("Style0")
+        assert style0.dxf.description == "preserve"
+        assert tdoc.mline_styles.has_entry("$0$Style0") is True
+        assert tdoc.mline_styles.has_entry("Style1") is True
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
