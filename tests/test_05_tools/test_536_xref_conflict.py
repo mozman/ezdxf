@@ -400,5 +400,60 @@ class TestLoadMLineStyles:
         assert tdoc.mline_styles.has_entry("Style1") is True
 
 
+class TestLoadMLeaderStyles:
+    """MLeaderStyles are stored in object collections like Materials."""
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new()
+        doc.filename = "xref.dxf"
+        doc.mleader_styles.new("Style0").dxf.default_text_content = "XrefStyle0"
+        doc.mleader_styles.new("Style1").dxf.default_text_content = "XrefStyle1"
+        return doc
+
+    @staticmethod
+    def load_mleader_styles(sdoc, tdoc, policy):
+        loader = xref.Loader(sdoc, tdoc, conflict_policy=policy)
+        loader.load_mleader_styles(["style0", "style1"])
+        loader.execute()
+
+    def test_conflict_policy_keep(self, sdoc):
+        tdoc = ezdxf.new()
+        tdoc.mleader_styles.new("Style0").dxf.default_text_content = "preserve"
+        self.load_mleader_styles(sdoc, tdoc, xref.ConflictPolicy.KEEP)
+
+        # style "Standard" should not be loaded:
+        assert len(tdoc.mleader_styles) == 1 + 2
+
+        style0 = tdoc.mleader_styles.get("Style0")
+        assert style0.dxf.default_text_content == "preserve"
+        assert tdoc.mleader_styles.has_entry("Style1") is True
+
+    def test_xref_rename_policy(self, sdoc):
+        tdoc = ezdxf.new()
+        tdoc.mleader_styles.new("Style0").dxf.default_text_content = "preserve"
+        self.load_mleader_styles(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
+
+        # style "Standard" should not be loaded:
+        assert len(tdoc.mleader_styles) == 1 + 3
+
+        style0 = tdoc.mleader_styles.get("Style0")
+        assert style0.dxf.default_text_content == "preserve"
+        assert tdoc.mleader_styles.has_entry("xref$0$Style0") is True
+        assert tdoc.mleader_styles.has_entry("xref$0$Style1") is True
+
+    def test_numbered_rename_policy(self, sdoc):
+        tdoc = ezdxf.new()
+        tdoc.mleader_styles.new("Style0").dxf.default_text_content = "preserve"
+        self.load_mleader_styles(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
+
+        # style "Standard" should not be loaded:
+        assert len(tdoc.mleader_styles) == 1 + 3
+
+        style0 = tdoc.mleader_styles.get("Style0")
+        assert style0.dxf.default_text_content == "preserve"
+        assert tdoc.mleader_styles.has_entry("$0$Style0") is True
+        assert tdoc.mleader_styles.has_entry("Style1") is True
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
