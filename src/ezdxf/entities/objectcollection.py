@@ -53,13 +53,16 @@ class ObjectCollection(Generic[T]):
         return len(self.object_dict)
 
     def __contains__(self, name: str) -> bool:
-        return self.get(name) is not None
+        return self.has_entry(name)
 
     def __getitem__(self, name: str) -> T:
         entry = self.get(name)
         if entry is None:
             raise DXFKeyError(name)
         return entry
+
+    def has_entry(self, name: str) -> bool:
+        return self.get(name) is not None
 
     def is_unique_name(self, name: str) -> bool:
         name = make_table_key(name)
@@ -69,7 +72,7 @@ class ObjectCollection(Generic[T]):
         return True
 
     def get(self, name: str, default: Optional[T] = None) -> Optional[T]:
-        """Get object by name. Object collection entries are case insensitive.
+        """Get object by name. Object collection entries are case-insensitive.
 
         Args:
             name: object name as string

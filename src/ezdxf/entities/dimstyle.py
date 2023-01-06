@@ -480,11 +480,13 @@ class DimStyle(DXFEntity):
         super().register_resources(registry)
         # ezdxf uses names for blocks, linetypes and text style as internal data
         # register text style
-        try:
-            style = self.doc.styles.get(self.dxf.dimtxsty)
-            registry.add_entity(style)
-        except const.DXFTableEntryError:
-            pass
+        text_style_name = self.dxf.get(DIM_TEXT_STYLE_ATTR)
+        if text_style_name:
+            try:
+                style = self.doc.styles.get(text_style_name)
+                registry.add_entity(style)
+            except const.DXFTableEntryError:
+                pass
 
         # register linetypes
         for attr_name in DIM_LINETYPE_ATTRIBS:
@@ -513,7 +515,7 @@ class DimStyle(DXFEntity):
         # ezdxf uses names for blocks, linetypes and text style as internal data
         # map text style
         text_style = self.dxf.get(DIM_TEXT_STYLE_ATTR)
-        if text_style is not None:
+        if text_style:
             copy.dxf.dimtxsty = mapping.get_text_style(text_style)
         # map linetypes
         for attr_name in DIM_LINETYPE_ATTRIBS:

@@ -4,6 +4,7 @@ from typing import cast
 import pytest
 import ezdxf
 from ezdxf import xref, colors
+from ezdxf.document import Drawing
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities import Polyline, Polyface
@@ -16,7 +17,7 @@ def forward_handles(doc, count: int) -> None:
 
 class TestLoadResourcesWithoutNamingConflicts:
     @pytest.fixture(scope="class")
-    def sdoc(self):
+    def sdoc(self) -> Drawing:
         doc = ezdxf.new()
         doc.layers.add("FIRST")
         doc.linetypes.add(  # see also: complex_line_type_example.py
@@ -180,7 +181,7 @@ class TestLoadResourcesWithoutNamingConflicts:
 
 class TestLoadEntities:
     @pytest.fixture
-    def sdoc(self):
+    def sdoc(self) -> Drawing:
         doc = ezdxf.new()
         doc.layers.add("Layer0")
         doc.linetypes.add("LType0", [0.0])  # CONTINUOUS
@@ -270,7 +271,7 @@ class TestLoadEntities:
 
 class TestLoadTextEntities:
     @pytest.fixture
-    def sdoc(self):
+    def sdoc(self) -> Drawing:
         doc = ezdxf.new()
         doc.styles.add("ARIAL", font="Arial.ttf")
         return doc
@@ -335,7 +336,7 @@ def test_load_mtext_with_columns():
 
 class TestLoadLinkedEntities:
     @pytest.fixture
-    def sdoc(self):
+    def sdoc(self) -> Drawing:
         doc = ezdxf.new()
         doc.layers.add("Layer0")
         doc.linetypes.add("LType0", [0.0])  # CONTINUOUS
@@ -367,7 +368,6 @@ class TestLoadLinkedEntities:
 
 
 # TODO:
-# Name conflict handling
 # LEADER
 # TOLERANCE
 # INSERT/BLOCKS

@@ -59,25 +59,26 @@ LoadFunction: TypeAlias = Callable[[str], Drawing]
 
 
 class ConflictPolicy(enum.Enum):
-    # what to do when a name conflict of existing and imported resources occur:
-    # keep existing resource <name> and ignore imported resource
+    # What to do when a name conflict of existing and loaded resources occur:
+    # keep existing resource <name> and ignore loaded resource
     KEEP = enum.auto()
-    # replace existing resource <name> by imported resource
-    REPLACE = enum.auto()
-    # rename imported resource to <xref>$0$<name>
-    XREF_NUM_PREFIX = enum.auto()
-    # rename imported resource to $0$<name>
-    NUM_PREFIX = enum.auto()
 
+    # ALWAYS rename imported resources to <xref>$0$<name>
+    # This is the default behavior of BricsCAD when binding an external reference.
+    XREF_PREFIX = enum.auto()
+
+    # rename loaded resource to $0$<name> if the loaded resource <name> already exist
+    NUM_PREFIX = enum.auto()
+    # REPLACE policy was removed, adds too much complexity!
 
 # Exceptions from the ConflictPolicy
 # ----------------------------------
-# Resources named "STANDARD" will be kept.
-# Materials "GLOBAL", "BYLAYER" and "BYBLOCK" will be kept.
-# Plot style "NORMAL" will be kept.
-# Layers "0", "DEFPOINTS" and special Autodesk layers starting with "*" will be kept.
-# Linetypes "CONTINUOUS", "BYLAYER" and "BYBLOCK" will be kept
-# Special blocks like arrow heads will be kept.
+# Resources named "STANDARD" will be preserved (KEEP).
+# Materials "GLOBAL", "BYLAYER" and "BYBLOCK" will be preserved (KEEP).
+# Plot style "NORMAL" will be preserved (KEEP).
+# Layers "0", "DEFPOINTS" and special Autodesk layers starting with "*" will be preserved (KEEP).
+# Linetypes "CONTINUOUS", "BYLAYER" and "BYBLOCK" will be preserved (KEEP)
+# Special blocks like arrow heads will be preserved (KEEP).
 # Anonymous blocks get a new arbitrary name following the rules of anonymous block names.
 
 
@@ -85,7 +86,7 @@ def embed(
     xref: BlockLayout,
     *,
     load_fn: Optional[LoadFunction] = None,
-    conflict_policy=ConflictPolicy.XREF_NUM_PREFIX,
+    conflict_policy=ConflictPolicy.XREF_PREFIX,
 ) -> None:
     """Loads the modelspace of the XREF as content of the block definition.
 
@@ -921,14 +922,16 @@ class _Transfer:
                 )
                 entity.destroy()
                 return
-        elif self.conflict_policy == ConflictPolicy.XREF_NUM_PREFIX:
+        elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
+            # always rename
             entity.dxf.name = get_unique_table_name(
                 "{xref}${index}${name}", name, self.xref_name, table
             )
         elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
-            entity.dxf.name = get_unique_table_name(
-                "${index}${name}", name, self.xref_name, table
-            )
+            if table.has_entry(name):  # rename only if exist
+                entity.dxf.name = get_unique_table_name(
+                    "${index}${name}", name, self.xref_name, table
+                )
         table.add_entry(entity)
 
     def add_collection_entry(
@@ -941,9 +944,24 @@ class _Transfer:
                 self.replace_handle_mapping(entry.dxf.handle, special.dxf.handle)
                 entry.destroy()
                 return
-        # todo: apply ConflictPolicy
-        if name not in collection:
-            collection.object_dict.add(name, entry)
+        if self.conflict_policy == ConflictPolicy.KEEP:
+            existing_entry = collection.get(name)
+            if existing_entry:
+                self.replace_handle_mapping(entry.dxf.handle, existing_entry.dxf.handle)
+                entry.destroy()
+                return
+        elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
+            # always rename
+            entry.dxf.name = get_unique_table_name(
+                "{xref}${index}${name}", name, self.xref_name, collection
+            )
+
+        elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
+            if collection.has_entry(name):  # rename only if exist
+                entry.dxf.name = get_unique_table_name(
+                    "${index}${name}", name, self.xref_name, collection
+                )
+        collection.object_dict.add(entry.dxf.name, entry)
 
     def add_object_copies(self, copies: Iterable[DXFEntity]) -> None:
         """Add copied DXF objects to the OBJECTS section of the target document."""

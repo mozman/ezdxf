@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -289,9 +289,7 @@ class EntityDB:
         """
         # Important: operate on underlying data structure:
         db = self._database
-        dead_handles = [
-            handle for handle, entity in db.items() if not entity.is_alive
-        ]
+        dead_handles = [handle for handle, entity in db.items() if not entity.is_alive]
         for handle in dead_handles:
             del db[handle]
 
@@ -321,9 +319,7 @@ class EntityDB:
             :ref:`entity query string` and :ref:`entity queries`
 
         """
-        return EntityQuery(
-            (e for e in self._database.values() if e.is_alive), query
-        )
+        return EntityQuery((e for e in self._database.values() if e.is_alive), query)
 
 
 class EntitySpace:
