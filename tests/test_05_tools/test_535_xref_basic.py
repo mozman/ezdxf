@@ -7,7 +7,7 @@ from ezdxf import xref, colors, const
 from ezdxf.document import Drawing
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import Polyline, Polyface, factory
+from ezdxf.entities import Polyline, Polyface, factory, Insert
 
 
 def forward_handles(doc, count: int) -> None:
@@ -324,14 +324,13 @@ def test_load_mtext_with_columns():
     assert tdoc.styles.has_entry("ARIAL1")
     assert tdoc.styles.has_entry("ARIAL2")
 
-    copy = tdoc.modelspace()[0]
-    assert copy.has_columns is True
-    columns = copy.columns.linked_columns
+    loaded_mtext = tdoc.modelspace()[0]
+    assert loaded_mtext.has_columns is True
+    columns = loaded_mtext.columns.linked_columns
     assert len(columns) == 2
-    assert columns[0].doc is tdoc
-    assert columns[0].dxf.handle in tdoc.entitydb
-    assert columns[1].doc is tdoc
-    assert columns[1].dxf.handle in tdoc.entitydb
+    assert all(
+        factory.is_bound(column, tdoc) for column in columns
+    ), "all columns (MTEXT) should be bound to tdoc"
 
 
 class TestLoadLinkedEntities:
@@ -349,10 +348,18 @@ class TestLoadLinkedEntities:
         xref.load_modelspace(sdoc, tdoc)
 
         assert tdoc.linetypes.has_entry("LType0")
-        copy = cast(Polyline, tdoc.modelspace()[0])
-        assert isinstance(copy, Polyline)
-        assert len(copy.vertices) == 3
-        assert all(v.doc is tdoc for v in copy.vertices)
+        loaded_polyline = cast(Polyline, tdoc.modelspace()[0])
+        assert isinstance(loaded_polyline, Polyline)
+        assert len(loaded_polyline.vertices) == 3
+        assert all(
+            factory.is_bound(v, tdoc) for v in loaded_polyline.vertices
+        ), "all vertices should be bound to tdoc"
+        assert all(
+            v.dxf.owner == loaded_polyline.dxf.owner for v in loaded_polyline.vertices
+        ), "all vertices should have the same owner as POLYLINE"
+        assert (
+            loaded_polyline.seqend.dxf.owner == loaded_polyline.dxf.owner
+        ), "SEQEND owner should be the POLYLINE owner"
 
     def test_load_polyface(self, sdoc):
         polyface = sdoc.modelspace().add_polyface()
@@ -360,15 +367,15 @@ class TestLoadLinkedEntities:
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
 
-        copy = cast(Polyface, tdoc.modelspace()[0])
-        assert isinstance(copy, Polyface)
-        faces = list(copy.faces())
+        loaded_polyface = cast(Polyface, tdoc.modelspace()[0])
+        assert isinstance(loaded_polyface, Polyface)
+        faces = list(loaded_polyface.faces())
         assert len(faces[0]) == 3 + 1  # vertices + face-record
-        assert all(v.doc is tdoc for v in copy.vertices)
+        assert all(factory.is_bound(v, tdoc) for v in loaded_polyface.vertices)
 
 
 class TestBlocks:
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def sdoc(self) -> Drawing:
         doc = ezdxf.new()
         doc.layers.add("Layer0")
@@ -377,6 +384,8 @@ class TestBlocks:
         block.add_line(
             (0, 0), (1, 1), dxfattribs={"linetype": "LType0", "layer": "Layer0"}
         )
+        block_ref = doc.modelspace().add_blockref("TestBlock", insert=(0, 0))
+        block_ref.add_attrib("TestTag", "Content")
         return doc
 
     def test_load_block_layout(self, sdoc):
@@ -423,8 +432,39 @@ class TestBlocks:
         with pytest.raises(const.DXFTypeError):
             loader.load_block_layout(None)
 
+    def test_load_block_reference(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+
+        assert (
+            "TestBlock" in tdoc.blocks
+        ), "expected TestBlock layout in target document"
+        insert = cast(Insert, tdoc.modelspace()[0])
+        assert isinstance(insert, Insert)
+        assert factory.is_bound(insert, tdoc), "INSERT entity not bound to target doc"
+        assert insert.dxf.name == "TestBlock"
+        assert (
+            insert.seqend.dxf.owner == insert.dxf.owner
+        ), "SEQEND owner should be the INSERT owner"
+
+    def test_load_block_reference_attributes(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+
+        insert = cast(Insert, tdoc.modelspace()[0])
+        assert len(insert.attribs) == 1, "expected loaded ATTRIB entities"
+
+        attrib = insert.attribs[0]
+        assert attrib.dxf.tag == "TestTag"
+        assert attrib.dxf.text == "Content"
+
+        assert factory.is_bound(attrib, tdoc), "ATTRIB entity not bound to target doc"
+        assert (
+            attrib.dxf.owner == insert.dxf.owner
+        ), "ATTRIB owner should be the INSERT owner"
+
+
 # TODO:
-# INSERT
 # LEADER
 # TOLERANCE
 # DIMENSION

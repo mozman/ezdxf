@@ -59,9 +59,10 @@ from .attrib import Attrib
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
-    from ezdxf.entities import DXFNamespace, AttDef
+    from ezdxf.entities import DXFNamespace, AttDef, DXFEntity
     from ezdxf.layouts import BaseLayout, BlockLayout
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf import xref
 
 __all__ = ["Insert"]
 
@@ -153,7 +154,7 @@ NON_ORTHO_MSG = (
 # ATTRIB entities, but the LinkedEntities.post_bind_hook() method creates
 # always a new SEQEND after binding the INSERT entity to a document.
 #
-# Nonetheless the Insert.add_attrib() method also creates a requires SEQEND if
+# Nonetheless, the Insert.add_attrib() method also creates the required SEQEND entity if
 # necessary.
 
 
@@ -217,6 +218,16 @@ class Insert(LinkedEntities):
         # Do no export SEQEND if no ATTRIBS attached:
         if self.attribs_follow:
             self.process_sub_entities(lambda e: e.export_dxf(tagwriter))
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        # The attached ATTRIB entities are registered by the parent class LinkedEntities
+        super().register_resources(registry)
+        registry.add_block_name(self.dxf.name)
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        # The attached ATTRIB entities are mapped by the parent class LinkedEntities
+        super().map_resources(copy, mapping)
+        copy.dxf.name = mapping.get_block_name(self.dxf.name)
 
     @property
     def has_scaling(self) -> bool:

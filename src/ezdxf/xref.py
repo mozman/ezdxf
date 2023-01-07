@@ -627,6 +627,7 @@ class _Registry:
     def __init__(self, sdoc: Drawing, tdoc: Drawing) -> None:
         self.source_doc = sdoc
         self.target_doc = tdoc
+        self.debug_log: list[str] = []
 
         # source_blocks:
         # - key is the owner handle (layout key)
@@ -637,6 +638,9 @@ class _Registry:
         # - entry NO_BLOCK (layout key "0") contains table entries and DXF objects
         self.source_blocks: dict[str, dict[str, DXFEntity]] = {NO_BLOCK: {}}
         self.appids: set[str] = set()
+
+    def debug(self, msg: str) -> None:
+        self.debug_log.append(msg)
 
     def add_entity(self, entity: DXFEntity, block_key: str = NO_BLOCK) -> None:
         assert entity is not None, "internal error: entity is None"
@@ -668,7 +672,7 @@ class _Registry:
             return
         entity = self.source_doc.entitydb.get(handle)
         if entity is None:
-            logger.debug(f"source entity #{handle} does not exist")
+            self.debug(f"source entity #{handle} does not exist")
             return
         if is_graphic_entity(entity):
             raise TypeError(f"cannot add graphic entity: {str(entity)}")
@@ -682,7 +686,7 @@ class _Registry:
         if layer:
             self.add_entity(layer)
         else:
-            logger.debug(f"source layer '{name}' does not exist")
+            self.debug(f"source layer '{name}' does not exist")
 
     def add_linetype(self, name: str) -> None:
         # These linetype names get never mangled and always exist in the target document.
@@ -692,7 +696,7 @@ class _Registry:
         if linetype:
             self.add_entity(linetype)
         else:
-            logger.debug(f"source linetype '{name}' does not exist")
+            self.debug(f"source linetype '{name}' does not exist")
 
     def add_text_style(self, name) -> None:
         # Text style name "STANDARD" gets never mangled and always exist in the target
@@ -703,7 +707,7 @@ class _Registry:
         if text_style:
             self.add_entity(text_style)
         else:
-            logger.debug(f"source text style '{name}' does not exist")
+            self.debug(f"source text style '{name}' does not exist")
 
     def add_dim_style(self, name: str) -> None:
         # Dimension style name "STANDARD" gets never mangled and always exist in the
@@ -715,14 +719,14 @@ class _Registry:
         if dim_style:
             self.add_entity(dim_style)
         else:
-            logger.debug(f"source dimension style '{name}' does not exist")
+            self.debug(f"source dimension style '{name}' does not exist")
 
     def add_block_name(self, name: str) -> None:
         block_record = self.source_doc.block_records.get(name)
         if block_record:
             self.add_entity(block_record)
         else:
-            logger.debug(f"source block '{name}' does not exist")
+            self.debug(f"source block '{name}' does not exist")
 
     def add_appid(self, name: str) -> None:
         self.appids.add(name.upper())
