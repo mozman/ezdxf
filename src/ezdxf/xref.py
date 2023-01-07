@@ -58,6 +58,13 @@ FilterFunction: TypeAlias = Callable[[DXFEntity], bool]
 LoadFunction: TypeAlias = Callable[[str], Drawing]
 
 
+# I prefer to see the debug messages stored in the object, because I mostly debug test
+# code and pytest does not show logging or print messages by default.
+def _log_debug_messages(messages: Iterable[str]) -> None:
+    for msg in messages:
+        logger.debug(msg)
+
+
 class ConflictPolicy(enum.Enum):
     # What to do when a name conflict of existing and loaded resources occur:
     # keep existing resource <name> and ignore loaded resource
@@ -588,10 +595,19 @@ class Loader:
 
     def execute(self) -> None:
         registry = _Registry(self.sdoc, self.tdoc)
+        debug = ezdxf.options.debug
+
         for cmd in self._commands:
             cmd.register_resources(registry)
 
+        if debug:
+            _log_debug_messages(registry.debug_messages)
+
         cpm = CopyMachine(self.tdoc)
+
+        if debug:
+            _log_debug_messages(cpm.debug_messages)
+
         cpm.copy_blocks(registry.source_blocks)
         transfer = _Transfer(
             registry=registry,
@@ -627,7 +643,7 @@ class _Registry:
     def __init__(self, sdoc: Drawing, tdoc: Drawing) -> None:
         self.source_doc = sdoc
         self.target_doc = tdoc
-        self.debug_log: list[str] = []
+        self.debug_messages: list[str] = []
 
         # source_blocks:
         # - key is the owner handle (layout key)
@@ -640,7 +656,7 @@ class _Registry:
         self.appids: set[str] = set()
 
     def debug(self, msg: str) -> None:
-        self.debug_log.append(msg)
+        self.debug_messages.append(msg)
 
     def add_entity(self, entity: DXFEntity, block_key: str = NO_BLOCK) -> None:
         assert entity is not None, "internal error: entity is None"
@@ -753,6 +769,10 @@ class _Transfer:
         self.block_name_mapping: dict[str, str] = {}
         self.handle_mapping: dict[str, str] = handle_mapping
         self._replace_handles: dict[str, str] = {}
+        self.debug_messages: list[str] = []
+
+    def debug(self, msg: str) -> None:
+        self.debug_messages.append(msg)
 
     def get_handle(self, handle: str, default="0") -> str:
         return self.handle_mapping.get(handle, default)
@@ -979,9 +999,9 @@ class _Transfer:
                 block_record.add_entity(entity)  # type: ignore
             else:
                 name = block_record.dxf.name
-                logging.warning(
-                    f"skipping non-graphic DXF entity in BLOCK_RECORD('{name}', #{handle}): {str(entity)}"
-                )
+                msg = f"skipping non-graphic DXF entity in BLOCK_RECORD('{name}', #{handle}): {str(entity)}"
+                logging.warning(msg)  # this is a DXF structure error
+                self.debug(msg)
         if isinstance(block, Block) and isinstance(endblk, EndBlk):
             block_record.set_block(block, endblk)
         else:
@@ -1077,7 +1097,10 @@ class CopyMachine:
 
         # mapping from the source entity handle to the handle of the copied entity
         self.handle_mapping: dict[str, str] = {}
-        self.log: list[str] = []
+        self.debug_messages: list[str] = []
+
+    def debug(self, msg: str) -> None:
+        self.debug_messages.append(msg)
 
     def copy_blocks(self, blocks: dict[str, dict[str, DXFEntity]]) -> None:
         for handle, block in blocks.items():
@@ -1107,7 +1130,7 @@ class CopyMachine:
         try:
             new_entity = entity.copy()
         except const.DXFError:
-            self.log.append(f"cannot copy entity {str(entity)}")
+            self.debug(f"cannot copy entity {str(entity)}")
             return None
         # remove references for copy tracking, not valid in the target document
         new_entity.del_source_of_copy()
