@@ -326,6 +326,10 @@ class LoadEntities(LoadingCommand):
         self, entities: Sequence[DXFEntity], target_layout: BaseLayout
     ) -> None:
         self.entities = entities
+        if not isinstance(target_layout, BaseLayout):
+            raise const.DXFTypeError(
+                f"invalid target layout type: {type(target_layout)}"
+            )
         self.target_layout = target_layout
 
     def register_resources(self, registry: Registry) -> None:
@@ -346,6 +350,8 @@ class LoadPaperspaceLayout(LoadingCommand):
     """
 
     def __init__(self, psp: Paperspace, filter_fn: Optional[FilterFunction]) -> None:
+        if not isinstance(psp, Paperspace):
+            raise const.DXFTypeError(f"invalid paperspace layout type: {type(psp)}")
         self.paperspace_layout = psp
         self.filter_fn = filter_fn
 
@@ -367,6 +373,8 @@ class LoadBlockLayout(LoadingCommand):
     """
 
     def __init__(self, block: BlockLayout) -> None:
+        if not isinstance(block, BlockLayout):
+            raise const.DXFTypeError(f"invalid block layout type: {type(block)}")
         self.block_layout = block
 
     def register_resources(self, registry: Registry) -> None:
@@ -396,8 +404,8 @@ class Loader:
     def __init__(
         self, sdoc: Drawing, tdoc: Drawing, conflict_policy=ConflictPolicy.KEEP
     ) -> None:
-        assert sdoc is not None, "a valid source document is mandatory"
-        assert tdoc is not None, "a valid target document is mandatory"
+        assert isinstance(sdoc, Drawing), "a valid source document is mandatory"
+        assert isinstance(tdoc, Drawing), "a valid target document is mandatory"
         assert sdoc is not tdoc, "source and target document cannot be the same"
         if tdoc.dxfversion < sdoc.dxfversion:
             logger.warning(
@@ -417,12 +425,20 @@ class Loader:
         filter_fn: Optional[FilterFunction] = None,
     ) -> None:
         """Loads the content of the modelspace of the source document into a layout of
-        the target document the modelspace of the target document is the default target
+        the target document, the modelspace of the target document is the default target
         layout.  The target layout can be any layout: modelspace, paperspace layout or
         block layout.
         """
         if target_layout is None:
             target_layout = self.tdoc.modelspace()
+        elif not isinstance(target_layout, BaseLayout):
+            raise const.DXFTypeError(
+                f"invalid target layout type: {type(target_layout)}"
+            )
+        if target_layout.doc is not self.tdoc:
+            raise const.DXFValueError(
+                f"given target layout does not belong to the target document"
+            )
         if filter_fn is None:
             entities = list(self.sdoc.modelspace())
         else:
@@ -440,6 +456,12 @@ class Loader:
         modelspace which may be displayed through a VIEWPORT entity will **not** be
         loaded!
         """
+        if not isinstance(psp, Paperspace):
+            raise const.DXFTypeError(f"invalid paperspace layout type: {type(psp)}")
+        if psp.doc is not self.sdoc:
+            raise const.DXFValueError(
+                f"given paperspace layout does not belong to the source document"
+            )
         self.add_command(LoadPaperspaceLayout(psp, filter_fn))
 
     def load_paperspace_layout_into(
@@ -453,6 +475,20 @@ class Loader:
         or block layout.  The content of the modelspace which may be displayed through a
         VIEWPORT entity will **not** be loaded!
         """
+        if not isinstance(psp, Paperspace):
+            raise const.DXFTypeError(f"invalid paperspace layout type: {type(psp)}")
+        if not isinstance(target_layout, BaseLayout):
+            raise const.DXFTypeError(
+                f"invalid target layout type: {type(target_layout)}"
+            )
+        if psp.doc is not self.sdoc:
+            raise const.DXFValueError(
+                f"given paperspace layout does not belong to the source document"
+            )
+        if target_layout.doc is not self.tdoc:
+            raise const.DXFValueError(
+                f"given target layout does not belong to the target document"
+            )
         if filter_fn is None:
             entities = list(psp)
         else:
@@ -468,7 +504,11 @@ class Loader:
         be applied.  This method cannot load modelspace or paperspace layouts.
         """
         if not isinstance(block_layout, BlockLayout):
-            raise const.DXFTypeError("invalid block layout type")
+            raise const.DXFTypeError(f"invalid block layout type: {type(block_layout)}")
+        if block_layout.doc is not self.sdoc:
+            raise const.DXFValueError(
+                f"given block layout does not belong to the source document"
+            )
         self.add_command(LoadBlockLayout(block_layout))
 
     def load_block_layout_into(
@@ -482,7 +522,19 @@ class Loader:
         modelspace or paperspace layouts.
         """
         if not isinstance(block_layout, BlockLayout):
-            raise const.DXFTypeError("invalid block layout type")
+            raise const.DXFTypeError(f"invalid block layout type: {type(block_layout)}")
+        if not isinstance(target_layout, BaseLayout):
+            raise const.DXFTypeError(
+                f"invalid target layout type: {type(target_layout)}"
+            )
+        if block_layout.doc is not self.sdoc:
+            raise const.DXFValueError(
+                f"given block layout does not belong to the source document"
+            )
+        if target_layout.doc is not self.tdoc:
+            raise const.DXFValueError(
+                f"given target layout does not belong to the target document"
+            )
         self.add_command(LoadEntities(list(block_layout), target_layout))
 
     def load_layers(self, names: Sequence[str]) -> None:
