@@ -154,6 +154,7 @@ class Options:
         # Activate/deactivate Matplotlib support (e.g. for testing)
         self._use_matplotlib = MATPLOTLIB
         self._use_c_ext = False  # set ezdxf.acc.__init__!
+        self.debug = False
         self.update_cached_options()
 
     def set(self, section: str, key: str, value: str) -> None:
@@ -217,9 +218,7 @@ class Options:
 
     @property
     def filter_invalid_xdata_group_codes(self) -> bool:
-        return self.get_bool(
-            CORE, "FILTER_INVALID_XDATA_GROUP_CODES", default=True
-        )
+        return self.get_bool(CORE, "FILTER_INVALID_XDATA_GROUP_CODES", default=True)
 
     @property
     def default_dimension_text_style(self) -> str:
@@ -289,9 +288,7 @@ class Options:
     def write_fixed_meta_data_for_testing(self) -> bool:
         # Enable this option to always create same meta data for testing
         # scenarios, e.g. to use a diff like tool to compare DXF documents.
-        return self.get_bool(
-            CORE, "WRITE_FIXED_META_DATA_FOR_TESTING", default=False
-        )
+        return self.get_bool(CORE, "WRITE_FIXED_META_DATA_FOR_TESTING", default=False)
 
     @write_fixed_meta_data_for_testing.setter
     def write_fixed_meta_data_for_testing(self, state: bool) -> None:
