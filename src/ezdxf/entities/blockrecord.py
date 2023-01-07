@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from ezdxf.entitydb import EntitySpace
     from ezdxf.layouts import BlockLayout
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf import xref
 
 __all__ = ["BlockRecord"]
 logger = logging.getLogger("ezdxf")
@@ -87,9 +88,7 @@ class BlockRecord(DXFEntity):
     """
 
     DXFTYPE = "BLOCK_RECORD"
-    DXFATTRIBS = DXFAttributes(
-        base_class, acdb_symbol_table_record, acdb_blockrec
-    )
+    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_blockrec)
 
     def __init__(self) -> None:
         from ezdxf.entitydb import EntitySpace
@@ -157,6 +156,45 @@ class BlockRecord(DXFEntity):
         if not (self.is_modelspace or self.is_active_paperspace):
             self.entity_space.export_dxf(tagwriter)
         self.endblk.export_dxf(tagwriter)
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        assert self.doc is not None, "BLOCK_RECORD entity must be assigned to document"
+        assert self.doc.entitydb is not None, "entity database required"
+        super().register_resources(registry)
+        key = self.dxf.handle
+        assert key in self.doc.entitydb, "invalid BLOCK_RECORD handle"
+
+        if self.block is not None:
+            registry.add_entity(self.block, block_key=key)
+        else:
+            raise DXFInternalEzdxfError(
+                f"BLOCK entity in BLOCK_RECORD #{key} is invalid"
+            )
+        if self.endblk is not None:
+            registry.add_entity(self.endblk, block_key=key)
+        else:
+            raise DXFInternalEzdxfError(
+                f"ENDBLK entity in BLOCK_RECORD #{key} is invalid"
+            )
+        for e in self.entity_space:
+            registry.add_entity(e, block_key=key)
+        # todo: Modelspace and Paperspace layouts
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        assert isinstance(copy, BlockRecord)
+        super().map_resources(copy, mapping)
+
+        assert self.block is not None
+        mapping.map_resources_of_copy(self.block)
+
+        assert self.endblk is not None
+        mapping.map_resources_of_copy(self.endblk)
+
+        for entity in self.entity_space:
+            mapping.map_resources_of_copy(entity)
+        # todo: Modelspace and Paperspace layouts
 
     def destroy(self):
         """Destroy associated data:
@@ -227,13 +265,9 @@ class BlockRecord(DXFEntity):
         """
         # assign layout
         try:
-            entity.set_owner(
-                self.dxf.handle, paperspace=int(self.is_any_paperspace)
-            )
+            entity.set_owner(self.dxf.handle, paperspace=int(self.is_any_paperspace))
         except AttributeError:
-            logger.debug(
-                f"Unexpected DXF entity {str(entity)} in {str(self.block)}"
-            )
+            logger.debug(f"Unexpected DXF entity {str(entity)} in {str(self.block)}")
         # Add unexpected entities also to the entity space - auditor should fix
         # errors!
         self.entity_space.add(entity)

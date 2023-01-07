@@ -71,6 +71,7 @@ class ConflictPolicy(enum.Enum):
     NUM_PREFIX = enum.auto()
     # REPLACE policy was removed, adds too much complexity!
 
+
 # Exceptions from the ConflictPolicy
 # ----------------------------------
 # Resources named "STANDARD" will be preserved (KEEP).
@@ -306,6 +307,9 @@ class ResourceMapper(Protocol):
     def get_block_name(self, name: str) -> str:
         ...
 
+    def map_resources_of_copy(self, entity: DXFEntity) -> None:
+        ...
+
 
 class LoadingCommand:
     def register_resources(self, registry: Registry) -> None:
@@ -366,8 +370,9 @@ class LoadBlockLayout(LoadingCommand):
         self.block_layout = block
 
     def register_resources(self, registry: Registry) -> None:
-        for e in self.block_layout:
-            registry.add_entity(e, block_key=e.dxf.owner)
+        block_record = self.block_layout.block_record
+        if isinstance(block_record, BlockRecord):
+            registry.add_entity(block_record)
 
 
 class LoadResources(LoadingCommand):
@@ -460,8 +465,10 @@ class Loader:
     ) -> None:
         """Loads a block layout (block definition) as a new block layout into the target
         document. If a block layout with the same name exists the conflict policy will
-        be applied.
+        be applied.  This method cannot load modelspace or paperspace layouts.
         """
+        if not isinstance(block_layout, BlockLayout):
+            raise const.DXFTypeError("invalid block layout type")
         self.add_command(LoadBlockLayout(block_layout))
 
     def load_block_layout_into(
@@ -471,8 +478,11 @@ class Loader:
     ) -> None:
         """Loads the content of a block layout (block definition) into an existing layout
         of the target document. The target layout can be any layout: modelspace,
-        paperspace layout or block layout.
+        paperspace layout or block layout.  This method cannot load the content of
+        modelspace or paperspace layouts.
         """
+        if not isinstance(block_layout, BlockLayout):
+            raise const.DXFTypeError("invalid block layout type")
         self.add_command(LoadEntities(list(block_layout), target_layout))
 
     def load_layers(self, names: Sequence[str]) -> None:
@@ -714,6 +724,13 @@ class _Transfer:
             pass
         return None
 
+    def map_resources_of_copy(self, entity: DXFEntity) -> None:
+        clone = self.get_entity_copy(entity)
+        if clone:
+            entity.map_resources(clone, self)
+        else:
+            raise const.DXFInternalEzdxfError(f"copy of {entity} not found")
+
     def register_table_resources(self) -> None:
         """Register copied table-entries in resource tables of the target document."""
         self.register_appids()
@@ -899,9 +916,9 @@ class _Transfer:
         for entity in content.values():
             if isinstance(entity, (Block, EndBlk)):
                 if isinstance(entity, Block):
-                    block = block
+                    block = entity
                 else:
-                    endblk = endblk
+                    endblk = entity
             elif is_graphic_entity(entity):
                 block_record.add_entity(entity)  # type: ignore
             else:

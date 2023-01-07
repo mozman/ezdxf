@@ -3,11 +3,11 @@
 from typing import cast
 import pytest
 import ezdxf
-from ezdxf import xref, colors
+from ezdxf import xref, colors, const
 from ezdxf.document import Drawing
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import Polyline, Polyface
+from ezdxf.entities import Polyline, Polyface, factory
 
 
 def forward_handles(doc, count: int) -> None:
@@ -367,10 +367,66 @@ class TestLoadLinkedEntities:
         assert all(v.doc is tdoc for v in copy.vertices)
 
 
+class TestBlocks:
+    @pytest.fixture
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new()
+        doc.layers.add("Layer0")
+        doc.linetypes.add("LType0", [0.0])  # CONTINUOUS
+        block = doc.blocks.new("TestBlock")
+        block.add_line(
+            (0, 0), (1, 1), dxfattribs={"linetype": "LType0", "layer": "Layer0"}
+        )
+        return doc
+
+    def test_load_block_layout(self, sdoc):
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+        loader.load_block_layout(sdoc.blocks.get("TestBlock"))
+        loader.execute()
+
+        assert tdoc.layers.has_entry("Layer0"), "expected loaded LAYER"
+        assert tdoc.linetypes.has_entry("LType0"), "expected loaded LTYPE"
+        assert tdoc.block_records.has_entry("TestBlock"), "expected loaded BLOCK_RECORD"
+
+        loaded_block = tdoc.blocks.get("TestBlock")
+        assert loaded_block is not None, "loaded BlockLayout does not exist"
+        assert len(loaded_block) == 1, "expected loaded block content"
+        loaded_content = loaded_block[0]
+        assert factory.is_bound(
+            loaded_content, tdoc
+        ), "invalid document binding of loaded block content"
+        block_record = loaded_block.block_record
+        assert (
+            loaded_content.dxf.owner == block_record.dxf.handle
+        ), "loaded content has invalid owner handle"
+        assert (
+            block_record.block.dxf.name == block_record.dxf.name
+        ), "block name mismatch of BLOCK_RECORD and BLOCK"
+        assert (
+            factory.is_bound(block_record.block, tdoc) is True
+        ), "BLOCK entity not bound to target doc"
+        assert (
+            factory.is_bound(block_record.endblk, tdoc) is True
+        ), "ENDBLK entity not bound to target doc"
+
+    def test_load_block_layout_does_type_checking(self, sdoc):
+        tdoc = ezdxf.new()
+        loader = xref.Loader(sdoc, tdoc)
+
+        with pytest.raises(const.DXFTypeError):
+            loader.load_block_layout(sdoc.modelspace())
+
+        with pytest.raises(const.DXFTypeError):
+            loader.load_block_layout(sdoc.paperspace())
+
+        with pytest.raises(const.DXFTypeError):
+            loader.load_block_layout(None)
+
 # TODO:
+# INSERT
 # LEADER
 # TOLERANCE
-# INSERT/BLOCKS
 # DIMENSION
 # HATCH/MPOLYGON
 # IMAGE/IMAGEDEF/IMAGEDEF_REACTOR
