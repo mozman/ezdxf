@@ -300,20 +300,10 @@ class DXFEntity:
         # Do not set copy state, this is not a real copy!
         return entity
 
-    def copy(self: T) -> T:
-        """Returns a copy of `self` but without handle, owner and reactors.
-        This copy is NOT stored in the entity database and does NOT reside
-        in any layout, block, table or objects section!
-        The extension dictionary will be copied for entities bound to a valid
-        DXF document. The reactors are not copied.
+    def raw_copy(self: T) -> T:
+        """Returns a raw copy of `self` but without handle, owner and reactors.
 
-        Don't use this function to duplicate DXF entities in drawing,
-        use :meth:`EntityDB.duplicate_entity` instead for this task.
-
-        Copying is not trivial, because of linked resources and the lack of
-        documentation how to handle this linked resources: extension dictionary,
-        handles in appdata, xdata or embedded objects.
-
+        This is the first stage of the copy process, see copy() method
         (internal API)
         """
         entity = self.__class__()
@@ -339,12 +329,47 @@ class DXFEntity:
 
         # if xdata contains handles, they are treated as shared resources
         entity.xdata = copy.deepcopy(self.xdata)
+        return entity
+
+    def _copy_data(self, entity: DXFEntity) -> None:
+        """Copy entity data like vertices or attribs and store the copies into
+        the entity database.
+        This is the second stage of the copy process, see copy() method
+        (internal API)
+        """
+        pass
+
+    def copy(self: T) -> T:
+        """Returns a copy of `self` but without handle, owner and reactors.
+        This copy is NOT stored in the entity database and does NOT reside
+        in any layout, block, table or objects section!
+        The extension dictionary will be copied for entities bound to a valid
+        DXF document. The reactors are not copied.
+
+        raw_copy() + copy_data()
+
+        (internal API)
+        """
+        entity = self.raw_copy()
         entity.set_source_of_copy(self)
         # DO NOT COPY DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE.
         # Copying an entity from a block reference, takes it out of context of
         # this block reference!
         self._copy_data(entity)
         return entity
+
+    def __deepcopy__(self, memodict: Optional[dict] = None):
+        """Some entities maybe linked by more than one entity, to be safe use
+        `memodict` for bookkeeping.
+        (internal API)
+        """
+        memodict = memodict or {}
+        try:
+            return memodict[id(self)]
+        except KeyError:
+            copy = self.copy()
+            memodict[id(self)] = copy
+            return copy
 
     def set_source_of_copy(self, source: Optional[DXFEntity]):
         """Set immediate source entity of a copy.
@@ -394,26 +419,6 @@ class DXFEntity:
         while isinstance(source, DXFEntity) and source.is_alive and source.is_virtual:
             source = source.source_of_copy
         return source
-
-    def _copy_data(self, entity: DXFEntity) -> None:
-        """Copy entity data like vertices or attribs and store the copies into
-        the entity database.
-        (internal API)
-        """
-        pass
-
-    def __deepcopy__(self, memodict: Optional[dict] = None):
-        """Some entities maybe linked by more than one entity, to be safe use
-        `memodict` for bookkeeping.
-        (internal API)
-        """
-        memodict = memodict or {}
-        try:
-            return memodict[id(self)]
-        except KeyError:
-            copy = self.copy()
-            memodict[id(self)] = copy
-            return copy
 
     def update_dxf_attribs(self, dxfattribs: dict) -> None:
         """Set DXF attributes by a ``dict`` like :code:`{'layer': 'test',
