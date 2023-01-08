@@ -68,6 +68,7 @@ GROUP_MARKERS = {
 BINARY_FLAGS = {70, 90}
 HANDLE_CODES = {5, 105}
 POINTER_CODES = set(chain(range(320, 370), range(390, 400), (480, 481, 1005)))
+TRANSLATABLE_POINTER_CODES = set(chain(range(330, 370), range(390, 400), (480, 481, 1005)))
 HEX_HANDLE_CODES = set(chain(HANDLE_CODES, POINTER_CODES))
 BINARY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 EMBEDDED_OBJ_STR = "Embedded Object"
@@ -229,6 +230,46 @@ def is_embedded_object_marker(tag: DXFTag) -> bool:
     return tag.code == EMBEDDED_OBJ_MARKER and tag.value == EMBEDDED_OBJ_STR
 
 
+def is_arbitrary_pointer(tag: DXFTag) -> bool:
+    """Arbitrary object handles; handle values that are taken "as is".
+    They are not translated during INSERT and XREF operations.
+    """
+    return 319 < tag.code < 330
+
+
+def is_soft_pointer(tag: DXFTag) -> bool:
+    """Soft-pointer handle; arbitrary soft pointers to other objects within same DXF
+    file or drawing. Translated during INSERT and XREF operations.
+    """
+    return 329 < tag.code < 340 or tag.code == 1005
+
+
+def is_hard_pointer(tag: DXFTag) -> bool:
+    """Hard-pointer handle; arbitrary hard pointers to other objects within same DXF
+    file or drawing. Translated during INSERT and XREF operations.
+    """
+    code = tag.code
+    return 339 < code < 350 or 389 < code < 400 or 479 < code < 482
+
+
+def is_soft_owner(tag: DXFTag) -> bool:
+    """Soft-owner handle; arbitrary soft ownership links to other objects within same
+    DXF file or drawing. Translated during INSERT and XREF operations.
+    """
+    return 349 < tag.code < 360
+
+
+def is_hard_owner(tag: DXFTag) -> bool:
+    """Hard-owner handle; arbitrary hard ownership links to other objects within same
+    DXF file or drawing. Translated during INSERT and XREF operations.
+    """
+    return 359 < tag.code < 370
+
+
+def is_translatable_pointer(tag: DXFTag) -> bool:
+    return tag.code in TRANSLATABLE_POINTER_CODES
+
+
 class DXFVertex(DXFTag):
     """Represents a 2D or 3D vertex, stores only the group code of the
     x-component of the vertex, because the y-group-code is x-group-code + 10
@@ -265,8 +306,7 @@ class DXFVertex(DXFTag):
         """Returns all vertex components as single :class:`DXFTag` objects."""
         c = self.code
         return (
-            DXFTag(code, value)
-            for code, value in zip((c, c + 10, c + 20), self.value)
+            DXFTag(code, value) for code, value in zip((c, c + 10, c + 20), self.value)
         )
 
     def dxfstr(self) -> str:

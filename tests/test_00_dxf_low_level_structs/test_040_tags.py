@@ -7,6 +7,7 @@ from copy import deepcopy
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.lldxf.const import DXFValueError
+from ezdxf.lldxf import types
 
 TEST_TAGREADER = """  0
 SECTION
@@ -232,6 +233,118 @@ class TestTags:
         assert tags[-1] == (1, "name4")
 
 
+class TestGetPointers:
+    @pytest.fixture
+    def tags(self) -> Tags:
+        return Tags.from_tuples(
+            [
+                (0, "Entity"),
+                # entity handle
+                (5, "1"),
+                # DIMSTYLE entity handle
+                (105, "2"),
+                # soft pointers - Translated during INSERT and XREF operations
+                (330, "100"),
+                (339, "101"),
+                # soft owners - Translated during INSERT and XREF operations
+                (350, "102"),
+                (359, "103"),
+                # hard pointers - Translated during INSERT and XREF operations
+                (340, "200"),
+                (349, "202"),
+                # hard owners - Translated during INSERT and XREF operations
+                (360, "203"),
+                (369, "205"),
+                # plotstylename (hard pointer) Translated during INSERT and XREF operations
+                (390, "206"),
+                (399, "207"),
+                # hard pointers - Translated during INSERT and XREF operations
+                (480, "208"),
+                (481, "209"),
+                # Arbitrary object handles; handle values that are taken "as is". They are not translated during INSERT and XREF operations
+                (320, "300"),
+                (329, "301"),
+                # XDATA soft-pointer
+                (1005, "400"),
+            ]
+        )
+
+    def test_get_handle(self, tags):
+        assert tags.get_handle() == "1"
+
+    def test_get_soft_pointers(self, tags):
+        assert tags.get_soft_pointers() == Tags.from_tuples(
+            [
+                (330, "100"),
+                (339, "101"),
+                (1005, "400"),
+            ]
+        )
+
+    def test_get_soft_owners(self, tags):
+        assert tags.get_soft_owners() == Tags.from_tuples(
+            [
+                (350, "102"),
+                (359, "103"),
+            ]
+        )
+
+    def test_get_hard_pointers(self, tags):
+        assert tags.get_hard_pointers() == Tags.from_tuples(
+            [
+                (340, "200"),
+                (349, "202"),
+                (390, "206"),
+                (399, "207"),
+                (480, "208"),
+                (481, "209"),
+            ]
+        )
+
+    def test_get_hard_owners(self, tags):
+        assert tags.get_hard_owners() == Tags.from_tuples(
+            [
+                (360, "203"),
+                (369, "205"),
+            ]
+        )
+
+    def test_get_translatable_pointers(self, tags):
+        assert tags.get_hard_owners() == Tags.from_tuples(
+            [
+                (360, "203"),
+                (369, "205"),
+            ]
+        )
+
+    def test_is_translatable_pointer(self, tags):
+        assert tags.get_translatable_pointers() == Tags.from_tuples(
+            [
+                # soft pointers - Translated during INSERT and XREF operations
+                (330, "100"),
+                (339, "101"),
+                # soft owners - Translated during INSERT and XREF operations
+                (350, "102"),
+                (359, "103"),
+                # hard pointers - Translated during INSERT and XREF operations
+                (340, "200"),
+                (349, "202"),
+                # hard owners - Translated during INSERT and XREF operations
+                (360, "203"),
+                (369, "205"),
+                # plotstylename (hard pointer) Translated during INSERT and XREF operations
+                (390, "206"),
+                (399, "207"),
+                # hard pointers - Translated during INSERT and XREF operations
+                (480, "208"),
+                (481, "209"),
+                (1005, "400"),  # XDATA soft-pointer
+            ]
+        )
+
+
+
+
 DUPLICATETAGS = """  0
 FIRST
   0
@@ -279,9 +392,7 @@ class TestTagsCollect:
         assert "TWO" == collected_tags[2].value
 
     def test_with_start_and_end_param(self, tags):
-        collected_tags = tags.collect_consecutive_tags(
-            [1, 2, 3], start=6, end=9
-        )
+        collected_tags = tags.collect_consecutive_tags([1, 2, 3], start=6, end=9)
         assert 3 == len(collected_tags)
         assert "THREE" == collected_tags[2].value
 

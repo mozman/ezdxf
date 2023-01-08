@@ -643,7 +643,6 @@ class _Registry:
     def __init__(self, sdoc: Drawing, tdoc: Drawing) -> None:
         self.source_doc = sdoc
         self.target_doc = tdoc
-        self.debug_messages: list[str] = []
 
         # source_blocks:
         # - key is the owner handle (layout key)
@@ -654,6 +653,7 @@ class _Registry:
         # - entry NO_BLOCK (layout key "0") contains table entries and DXF objects
         self.source_blocks: dict[str, dict[str, DXFEntity]] = {NO_BLOCK: {}}
         self.appids: set[str] = set()
+        self.debug_messages: list[str] = []
 
     def debug(self, msg: str) -> None:
         self.debug_messages.append(msg)

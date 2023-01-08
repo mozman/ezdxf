@@ -18,6 +18,7 @@ from typing import Iterable, Iterator, Any, Optional
 from .const import DXFStructureError, DXFValueError, STRUCTURE_MARKER
 from .types import DXFTag, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR, dxftag
 from .tagger import internal_tag_compiler
+from . import types
 
 COMMENT_CODE = 999
 
@@ -57,7 +58,7 @@ class Tags(list):
             return handle
 
         for code, handle in self:
-            if code in (5, 105):
+            if code == 5 or code == 105:
                 return handle
         raise DXFValueError("No handle found.")
 
@@ -264,6 +265,37 @@ class Tags(list):
 
         """
         return cls((tag for tag in tags if tag.code not in frozenset(codes)))
+
+    @classmethod
+    def from_tuples(cls, tags: Iterable[tuple[int, Any]]) -> Tags:
+        return Tags(DXFTag(code, value) for code, value in tags)
+
+    def get_soft_pointers(self) -> Tags:
+        """Returns all soft-pointer handles in group code range 330-339.
+        """
+        return Tags(tag for tag in self if types.is_soft_pointer(tag))
+
+    def get_hard_pointers(self) -> Tags:
+        """Returns all hard-pointer handles in group code range 340-349, 390-399 and
+        480-481.
+        """
+        return Tags(tag for tag in self if types.is_hard_pointer(tag))
+
+    def get_soft_owners(self) -> Tags:
+        """Returns all soft-owner handles in group code range 350-359.
+        """
+        return Tags(tag for tag in self if types.is_soft_owner(tag))
+
+    def get_hard_owners(self) -> Tags:
+        """Returns all hard-owner handles in group code range 360-369.
+        """
+        return Tags(tag for tag in self if types.is_hard_owner(tag))
+
+    def get_translatable_pointers(self) -> Tags:
+        """Returns all pointer handles which should be translated during INSERT and XREF
+        operations.
+        """
+        return Tags(tag for tag in self if types.is_translatable_pointer(tag))
 
 
 def text2tags(text: str) -> Tags:

@@ -62,6 +62,8 @@ their attrib and seqend entities.
 When establishing a reference to another object, it is recommended that you think about
 whether the reference should protect an object from the PURGE command.
 
+A hard- and soft pointers will be translated during INSERT and XREF operations.
+
 Arbitrary Handles
 -----------------
 

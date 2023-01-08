@@ -43,8 +43,11 @@ Group Code   Value Type
 290-299      Boolean flag value
 300-309      Arbitrary text string
 310-319      String representing hex value of binary chunk
-320-329      String representing hex handle value
-330-369      String representing hex object IDs
+320-329      Arbitrary pointer, hex object ID, not translated during INSERT and XREF operations
+330-339      Soft-pointer, hex object ID, translated during INSERT and XREF operations
+340-349      Hard-pointer, hex object ID, translated during INSERT and XREF operations
+350-359      Soft-owner, hex object ID, translated during INSERT and XREF operations
+360-369      Hard-owner, hex object ID, translated during INSERT and XREF operations
 370-379      16-bit integer value
 380-389      16-bit integer value
 390-399      String representing hex handle value
@@ -56,7 +59,7 @@ Group Code   Value Type
 450-459      Long
 460-469      Double-precision floating-point value
 470-479      String
-480-481      String representing hex handle value
+480-481      Hard-pointer, hex object ID, translated during INSERT and XREF operations
 999          Comment (string)
 1000-1009    String
 1010-1059    Double-precision floating-point value
@@ -103,6 +106,7 @@ Group Code        Meaning
                   active, or is off
 69                Viewport identification number
 70-78             Integer values such as repeat counts, flag bits, or modes
+105               DIMSTYLE entity handle as hex string (fixed)
 210, 220, 230     X, Y, and Z components of extrusion direction (fixed)
 310               Proxy entity graphics as binary encoded data
 330               Owner handle as hex string
