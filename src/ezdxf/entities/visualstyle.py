@@ -150,7 +150,7 @@ class VisualStyle(DXFObject):
         super().__init__()
         self.acad_xdata = None  # to preserve AutoCAD xdata
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         """Copy acad internal data."""
         assert isinstance(entity, VisualStyle)
         entity.acad_xdata = copy.deepcopy(self.acad_xdata)

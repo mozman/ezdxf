@@ -58,7 +58,7 @@ class DXFPolygon(DXFGraphic):
         self.gradient: Optional[Gradient] = None
         self.seeds: list[tuple[float, float]] = []  # not supported/exported by MPOLYGON
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         """Copy paths, pattern, gradient, seeds."""
         assert isinstance(entity, DXFPolygon)
         entity.paths = copy.deepcopy(self.paths)

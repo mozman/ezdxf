@@ -35,6 +35,7 @@ from ezdxf.entities import (
     Block,
     EndBlk,
     Insert,
+    Dimension,
 )
 from ezdxf.math import UVec, Vec3
 
@@ -57,7 +58,6 @@ DEFAULT_LAYER = "0"
 STANDARD = "STANDARD"
 FilterFunction: TypeAlias = Callable[[DXFEntity], bool]
 LoadFunction: TypeAlias = Callable[[str], Drawing]
-
 
 # I prefer to see the debug messages stored in the object, because I mostly debug test
 # code and pytest does not show logging or print messages by default.
@@ -1156,14 +1156,16 @@ class CopyMachine:
 
     def copy_entity(self, entity: DXFEntity) -> Optional[DXFEntity]:
         try:
-            new_entity = entity.copy()
+            clone = entity.raw_copy()
         except const.DXFError:
             self.debug(f"cannot copy entity {str(entity)}")
             return None
-        # remove references for copy tracking, not valid in the target document
-        new_entity.del_source_of_copy()
-        new_entity.del_source_block_reference()
-        return new_entity
+
+        # The DIMENSION entity creates a virtual copy of the associated geometry block
+        # this is not required nor a good practice for XREF loading.
+        if not isinstance(entity, Dimension):
+            entity.copy_data(clone)
+        return clone
 
     def copy_dxf_class(self, cls: DXFClass) -> None:
         self.classes.append(cls.copy())

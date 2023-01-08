@@ -486,7 +486,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         virtual_copy.dxf.discard("geometry")
         return virtual_copy  # type: ignore
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, Dimension)
         if self.virtual_block_content:
             # another copy of a virtual entity:

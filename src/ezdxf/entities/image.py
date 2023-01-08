@@ -61,7 +61,7 @@ class ImageBase(DXFGraphic):
         # see also WCS coordinate calculation
         self._boundary_path: list[Vec2] = []
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, ImageBase)
         entity._boundary_path = list(self._boundary_path)
 

@@ -272,7 +272,7 @@ class Viewport(DXFGraphic):
         super().__init__()
         self._frozen_layers: list[str] = []
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, Viewport)
         entity._frozen_layers = self._frozen_layers
 

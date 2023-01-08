@@ -164,7 +164,7 @@ class Spline(DXFGraphic):
         self.knots = []
         self.weights = []
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         """Copy data: control_points, fit_points, weights, knot_values."""
         assert isinstance(entity, Spline)
         entity._control_points = copy.deepcopy(self._control_points)

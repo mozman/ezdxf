@@ -266,7 +266,7 @@ class Material(DXFObject):
         self.refraction_mapper_matrix: Optional[Matrix44] = None  # code 147
         self.normal_mapper_matrix: Optional[Matrix44] = None  # code 43 ???
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         """Copy material mapper matrices"""
 
         def copy(matrix):

@@ -281,7 +281,7 @@ class AcadTable(DXFGraphic):
         super().__init__()
         self.data = None
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         """Copy data."""
         assert isinstance(entity, AcadTable)
         entity.data = copy.deepcopy(self.data)

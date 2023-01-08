@@ -167,7 +167,7 @@ class Leader(DXFGraphic, OverrideMixin):
         super().__init__()
         self.vertices: list[Vec3] = []
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         """Copy vertices."""
         assert isinstance(entity, Leader)
         entity.vertices = Vec3.list(self.vertices)

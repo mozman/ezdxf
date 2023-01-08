@@ -161,7 +161,7 @@ class Linetype(DXFEntity):
         super().__init__()
         self.pattern_tags = LinetypePattern(Tags())
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         """Copy pattern_tags."""
         assert isinstance(entity, Linetype)
         entity.pattern_tags = deepcopy(self.pattern_tags)

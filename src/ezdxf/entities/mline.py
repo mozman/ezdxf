@@ -329,7 +329,7 @@ class MLine(DXFGraphic):
         """Count of MLINE vertices."""
         return len(self.vertices)
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, MLine)
         entity.vertices = [v.copy() for v in self.vertices]
 
@@ -853,7 +853,7 @@ class MLineStyle(DXFObject):
         super().__init__()
         self.elements = MLineStyleElements()
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, MLineStyle)
         entity.elements = self.elements.copy()
 

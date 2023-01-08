@@ -34,7 +34,7 @@ class IDBuffer(DXFObject):
         super().__init__()
         self.handles: list[str] = []
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         """Copy handles"""
         assert isinstance(entity, IDBuffer)
         entity.handles = list(self.handles)

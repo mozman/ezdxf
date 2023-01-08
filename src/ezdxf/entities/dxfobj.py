@@ -92,7 +92,7 @@ class XRecord(DXFObject):
         super().__init__()
         self.tags = Tags()
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, XRecord)
         entity.tags = Tags(self.tags)
 
@@ -167,7 +167,7 @@ class VBAProject(DXFObject):
         super().__init__()
         self.data = b""
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, VBAProject)
         entity.data = entity.data
 
@@ -250,7 +250,7 @@ class SortEntsTable(DXFObject):
         super().__init__()
         self.table: dict[str, str] = dict()
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, SortEntsTable)
         entity.table = dict(entity.table)
 

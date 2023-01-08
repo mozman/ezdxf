@@ -30,7 +30,7 @@ class LinkedEntities(DXFGraphic):
         self._sub_entities: list[DXFGraphic] = []
         self.seqend: Optional[SeqEnd] = None
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         """Copy all sub-entities ands SEQEND. (internal API)"""
         assert isinstance(entity, LinkedEntities)
         entity._sub_entities = [e.copy() for e in self._sub_entities]

@@ -303,7 +303,8 @@ class DXFEntity:
     def raw_copy(self: T) -> T:
         """Returns a raw copy of `self` but without handle, owner and reactors.
 
-        This is the first stage of the copy process, see copy() method
+        This is the first stage of the copy process, see copy() method.
+
         (internal API)
         """
         entity = self.__class__()
@@ -331,10 +332,11 @@ class DXFEntity:
         entity.xdata = copy.deepcopy(self.xdata)
         return entity
 
-    def _copy_data(self, entity: DXFEntity) -> None:
-        """Copy entity data like vertices or attribs and store the copies into
-        the entity database.
-        This is the second stage of the copy process, see copy() method
+    def copy_data(self, entity: DXFEntity) -> None:
+        """Copy entity data like vertices or attribs to the copy of the entity.
+
+        This is the second stage of the copy process, see copy() method.
+
         (internal API)
         """
         pass
@@ -346,21 +348,20 @@ class DXFEntity:
         The extension dictionary will be copied for entities bound to a valid
         DXF document. The reactors are not copied.
 
-        raw_copy() + copy_data()
-
         (internal API)
         """
-        entity = self.raw_copy()
-        entity.set_source_of_copy(self)
+        clone = self.raw_copy()
+        clone.set_source_of_copy(self)
         # DO NOT COPY DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE.
         # Copying an entity from a block reference, takes it out of context of
         # this block reference!
-        self._copy_data(entity)
-        return entity
+        self.copy_data(clone)
+        return clone
 
     def __deepcopy__(self, memodict: Optional[dict] = None):
         """Some entities maybe linked by more than one entity, to be safe use
         `memodict` for bookkeeping.
+
         (internal API)
         """
         memodict = memodict or {}
@@ -374,7 +375,7 @@ class DXFEntity:
     def set_source_of_copy(self, source: Optional[DXFEntity]):
         """Set immediate source entity of a copy.
 
-        Also used from outside of DXFEntity to set the source of sub-entities
+        Also used from outside to set the source of sub-entities
         of disassembled entities (POLYLINE, LWPOLYLINE, ...).
 
         (Internal API)

@@ -333,7 +333,7 @@ class MultiLeader(DXFGraphic):
                     block_attribs[index] = attr._replace(text=new_text)
         return tags
 
-    def _copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity) -> None:
         """Copy leaders"""
         assert isinstance(entity, MultiLeader)
         entity.context = copy.deepcopy(self.context)
