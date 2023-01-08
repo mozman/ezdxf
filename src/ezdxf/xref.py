@@ -300,6 +300,9 @@ class ResourceMapper(Protocol):
     def get_handle(self, handle: str, default="0") -> str:
         ...
 
+    def get_reference_of_copy(self, handle: str) -> Optional[DXFEntity]:
+        ...
+
     def get_layer(self, name: str) -> str:
         ...
 
@@ -781,6 +784,12 @@ class _Transfer:
     def get_handle(self, handle: str, default="0") -> str:
         return self.handle_mapping.get(handle, default)
 
+    def get_reference_of_copy(self, handle: str) -> Optional[DXFEntity]:
+        handle_of_copy = self.handle_mapping.get(handle)
+        if handle_of_copy:
+            return self.registry.target_doc.entitydb.get(handle_of_copy)
+        return None
+
     def get_layer(self, name: str) -> str:
         return self.layer_mapping.get(name, name)
 
@@ -1135,6 +1144,10 @@ class CopyMachine:
                 continue
             factory.bind(clone, tdoc)
             handle_mapping[handle] = clone.dxf.handle
+            # Get handle mapping for in-object copies: DICTIONARY
+            if hasattr(entity, "get_handle_mapping"):
+                self.handle_mapping.update(entity.get_handle_mapping(clone))
+
             if is_dxf_object(clone):
                 self.objects.append(clone)
             else:

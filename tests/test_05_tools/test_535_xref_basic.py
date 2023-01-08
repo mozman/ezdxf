@@ -483,6 +483,35 @@ def test_load_hard_owned_XRecord_within_appdata_section():
     assert loaded_xrecord.dxf.owner == loaded_line.dxf.handle
 
 
+def test_load_hard_owned_XRecord_by_extension_dict():
+    """Any object of the extension dictionary is hard-owned by the entity and should
+    automatically be loaded.
+    """
+    sdoc = ezdxf.new()
+    line = sdoc.modelspace().add_line((0, 0), (1, 0))
+    xdict = line.new_extension_dict()
+    xrec = xdict.add_xrecord("EZDXF")
+    xrec.extend([(3, "Content")])
+
+    tdoc = ezdxf.new()
+    xref.load_modelspace(sdoc, tdoc)
+    loaded_line = tdoc.modelspace()[0]
+
+    loaded_xdict = loaded_line.extension_dict
+    assert loaded_xdict is not None
+    assert (
+        loaded_xdict.dictionary.dxf.owner == loaded_line.dxf.handle
+    ), "Extension dictionary should be owned by the loaded entity"
+    assert factory.is_bound(loaded_xdict.dictionary, tdoc)
+
+    loaded_xrecord = loaded_xdict["EZDXF"]
+    assert factory.is_bound(loaded_xrecord, tdoc)
+    assert (
+        loaded_xrecord.dxf.owner == loaded_xdict.dictionary.dxf.handle
+    ), "XRecord should be owned by the extension dictionary"
+    assert loaded_xrecord.tags[0] == (3, "Content")
+
+
 # TODO:
 # LEADER
 # TOLERANCE
@@ -494,10 +523,11 @@ def test_load_hard_owned_XRecord_within_appdata_section():
 # UNDERLAY/UNDERLAYDEFINITION
 # VIEWPORT
 # Paperspace Layout
-# XRECORD, pointers and hard-owner handles
-# DXFTagStorage, pointers and hard-owner handles
+# DICTIONARY, test soft-ownership
+# XRECORD, register and map pointers and hard-owner handles
+# DXFTagStorage, register and map pointers and hard-owner handles
 # SORTENTSTABLE
-# GEODATA?, linked by extension dictionary of the modelspace
+# GEODATA, map block_table_record, linked by extension dictionary of the modelspace
 # ACIS entities
 # ACAD_PROXY_ENTITY?
 # OLE2FRAME?

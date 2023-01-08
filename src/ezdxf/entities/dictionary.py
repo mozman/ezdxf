@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.document import Drawing
     from ezdxf.audit import Auditor
+    from ezdxf import xref
 
 __all__ = ["Dictionary", "DictionaryWithDefault", "DictionaryVar"]
 logger = logging.getLogger("ezdxf")
@@ -104,6 +105,36 @@ class Dictionary(DXFObject):
             entity._data = {key: entity.copy() for key, entity in self.items()}
         else:
             entity._data = dict(self._data)
+
+    def get_handle_mapping(self, clone: Dictionary) -> dict[str, str]:
+        """Returns handle mapping for in-object copies."""
+        handle_mapping: dict[str, str] = dict()
+        if not self.is_hard_owner:
+            return handle_mapping
+
+        for key, entity in self.items():
+            copied_entry = clone.get(key)
+            if copied_entry:
+                handle_mapping[entity.dxf.handle] = copied_entry.dxf.handle
+        return handle_mapping
+
+    def map_resources(self, clone: DXFEntity, mapper: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        assert isinstance(clone, Dictionary)
+        super().map_resources(clone, mapper)
+        if self.is_hard_owner:
+            return
+        data = dict()
+        for key, entity in self.items():
+            entity_copy = mapper.get_reference_of_copy(entity.dxf.handle)
+            if entity_copy:
+                data[key] = entity
+        clone._data = data  # type: ignore
+
+    def del_source_of_copy(self) -> None:
+        super().del_source_of_copy()
+        for _, entity in self.items():
+            entity.del_source_of_copy()
 
     def post_bind_hook(self) -> None:
         """Called by binding a new or copied dictionary to the document,

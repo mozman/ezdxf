@@ -967,6 +967,11 @@ class DXFEntity:
             for tags in clone.appdata.tags():
                 mapper.map_pointers(tags, new_owner_handle=clone.dxf.handle)
 
+        if clone.extension_dict:
+            assert self.extension_dict is not None
+            self.extension_dict.dictionary.map_resources(
+                clone.extension_dict.dictionary, mapper
+            )
         # reactors are not copied automatically, clone.reactors is always None:
         if self.reactors:
             # reactors are soft-pointers (group code 330)
