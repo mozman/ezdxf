@@ -34,6 +34,10 @@ class Tags(list):
         """Constructor from DXF string."""
         return cls(internal_tag_compiler(text))
 
+    @classmethod
+    def from_tuples(cls, tags: Iterable[tuple[int, Any]]) -> Tags:
+        return cls(DXFTag(code, value) for code, value in tags)
+
     def __copy__(self) -> Tags:
         return self.__class__(tag.clone() for tag in self)
 
@@ -260,10 +264,6 @@ class Tags(list):
 
         """
         return cls((tag for tag in tags if tag.code not in frozenset(codes)))
-
-    @classmethod
-    def from_tuples(cls, tags: Iterable[tuple[int, Any]]) -> Tags:
-        return Tags(DXFTag(code, value) for code, value in tags)
 
     def get_soft_pointers(self) -> Tags:
         """Returns all soft-pointer handles in group code range 330-339."""

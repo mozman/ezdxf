@@ -14,7 +14,8 @@ import pathlib
 import logging
 
 import ezdxf
-from ezdxf.lldxf import const, validator
+from ezdxf.lldxf import const, validator, types
+from ezdxf.lldxf.tags import Tags
 from ezdxf.document import Drawing
 from ezdxf.layouts import BaseLayout, Paperspace, BlockLayout
 from ezdxf.entities import (
@@ -315,6 +316,9 @@ class ResourceMapper(Protocol):
         ...
 
     def map_resources_of_copy(self, entity: DXFEntity) -> None:
+        ...
+
+    def map_pointers(self, tags: Tags) -> None:
         ...
 
 
@@ -806,6 +810,13 @@ class _Transfer:
             entity.map_resources(clone, self)
         else:
             raise const.DXFInternalEzdxfError(f"copy of {entity} not found")
+
+    def map_pointers(self, tags: Tags) -> None:
+        for index, tag in enumerate(tags):
+            if types.is_translatable_pointer(tag):
+                tags[index] = types.DXFTag(
+                    tag.code, self.get_handle(tag.value, default="0")
+                )
 
     def register_table_resources(self) -> None:
         """Register copied table-entries in resource tables of the target document."""

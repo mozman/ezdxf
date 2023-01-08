@@ -944,27 +944,36 @@ class DXFEntity:
         if self.xdata:
             for name in self.xdata.data.keys():
                 registry.add_appid(name)
+        if self.appdata:  # add hard owned entities
+            for tags in self.appdata.tags():
+                for tag in tags.get_hard_owners():
+                    registry.add_handle(tag.value)
 
-    def map_resources(self, copy: DXFEntity, mapper: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapper: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
 
         def map_xdata_resources():
             for index, (code, value) in enumerate(tags):
-                if code == 1005:  # map handles
+                if code == 1005:  # map soft-pointer handles
                     tags[index] = DXFTag(code, mapper.get_handle(value))
                 elif code == 1003:  # map layer name
                     tags[index] = DXFTag(code, mapper.get_layer(value))
 
-        if copy.xdata:
-            for tags in copy.xdata.data.values():
+        if clone.xdata:
+            for tags in clone.xdata.data.values():
                 map_xdata_resources()
 
-        # reactors are not copied automatically, copy.reactors is always None:
+        if clone.appdata:
+            for tags in clone.appdata.tags():
+                mapper.map_pointers(tags)
+
+        # reactors are not copied automatically, clone.reactors is always None:
         if self.reactors:
+            # reactors are soft-pointers (group code 330)
             mapped_handles = [mapper.get_handle(h) for h in self.reactors.reactors]
             mapped_handles = [h for h in mapped_handles if h != "0"]
             if mapped_handles:
-                copy.set_reactors(mapped_handles)
+                clone.set_reactors(mapped_handles)
 
 
 @factory.set_default_class
