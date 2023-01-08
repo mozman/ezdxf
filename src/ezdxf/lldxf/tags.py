@@ -134,9 +134,7 @@ class Tags(list):
         """
         return self.__class__(tag for tag in self if tag.code == code)
 
-    def tag_index(
-        self, code: int, start: int = 0, end: Optional[int] = None
-    ) -> int:
+    def tag_index(self, code: int, start: int = 0, end: Optional[int] = None) -> int:
         """Return index of first :class:`~ezdxf.lldxf.types.DXFTag` with given
         group code.
 
@@ -247,10 +245,7 @@ class Tags(list):
 
     def has_embedded_objects(self) -> bool:
         for tag in self:
-            if (
-                tag.code == EMBEDDED_OBJ_MARKER
-                and tag.value == EMBEDDED_OBJ_STR
-            ):
+            if tag.code == EMBEDDED_OBJ_MARKER and tag.value == EMBEDDED_OBJ_STR:
                 return True
         return False
 
@@ -271,8 +266,7 @@ class Tags(list):
         return Tags(DXFTag(code, value) for code, value in tags)
 
     def get_soft_pointers(self) -> Tags:
-        """Returns all soft-pointer handles in group code range 330-339.
-        """
+        """Returns all soft-pointer handles in group code range 330-339."""
         return Tags(tag for tag in self if types.is_soft_pointer(tag))
 
     def get_hard_pointers(self) -> Tags:
@@ -282,14 +276,18 @@ class Tags(list):
         return Tags(tag for tag in self if types.is_hard_pointer(tag))
 
     def get_soft_owners(self) -> Tags:
-        """Returns all soft-owner handles in group code range 350-359.
-        """
+        """Returns all soft-owner handles in group code range 350-359."""
         return Tags(tag for tag in self if types.is_soft_owner(tag))
 
     def get_hard_owners(self) -> Tags:
-        """Returns all hard-owner handles in group code range 360-369.
-        """
+        """Returns all hard-owner handles in group code range 360-369."""
         return Tags(tag for tag in self if types.is_hard_owner(tag))
+
+    def has_translatable_pointers(self) -> bool:
+        """Returns ``True`` if any pointer handle has to be translated during INSERT
+        and XREF operations.
+        """
+        return any(types.is_translatable_pointer(tag) for tag in self)
 
     def get_translatable_pointers(self) -> Tags:
         """Returns all pointer handles which should be translated during INSERT and XREF
@@ -381,9 +379,7 @@ class NotFoundException(Exception):
     pass
 
 
-def get_start_and_end_of_named_list_in_xdata(
-    name: str, tags: Tags
-) -> tuple[int, int]:
+def get_start_and_end_of_named_list_in_xdata(name: str, tags: Tags) -> tuple[int, int]:
     start = None
     end = None
     level = 0
@@ -407,15 +403,11 @@ def get_start_and_end_of_named_list_in_xdata(
     if start is None:
         raise NotFoundException
     if end is None:
-        raise DXFStructureError(
-            'Invalid XDATA structure: missing  (1002, "}").'
-        )
+        raise DXFStructureError('Invalid XDATA structure: missing  (1002, "}").')
     return start, end + 1
 
 
-def find_begin_and_end_of_encoded_xdata_tags(
-    name: str, tags: Tags
-) -> tuple[int, int]:
+def find_begin_and_end_of_encoded_xdata_tags(name: str, tags: Tags) -> tuple[int, int]:
     """Find encoded XDATA tags, surrounded by group code 1000 tags
     name_BEGIN and name_END (e.g. MTEXT column specification).
 

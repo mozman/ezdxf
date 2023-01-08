@@ -342,7 +342,10 @@ class TestGetPointers:
             ]
         )
 
-
+    def test_has_translatable_pointer(self):
+        assert Tags.from_tuples([(5, "100")]).has_translatable_pointers() is False
+        assert Tags.from_tuples([(330, "100")]).has_translatable_pointers() is True
+        assert Tags.from_tuples([(320, "100")]).has_translatable_pointers() is False
 
 
 DUPLICATETAGS = """  0
