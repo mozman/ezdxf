@@ -85,3 +85,12 @@ About 1005 Group Codes
 means that they are translated whenever the host object is merged into a different
 drawing. However, 1005 items are not translated to session-persistent identifiers or
 internal entity names in AutoLISP and ObjectARX. They are stored as handles.
+
+When a drawing with handles and extended data handles is imported into another
+drawing using INSERT, INSERT *, XREF Bind, XBIND, or partial OPEN, the extended
+data handles are **translated** in the same manner as their corresponding entity
+handles, thus maintaining their binding. This is also done in the EXPLODE
+block operation or for any other AutoCAD operation. When AUDIT detects an
+extended data handle that doesn't match the handle of an entity in the drawing
+file, it is considered an error. If AUDIT is fixing entities, it sets the
+handle to "0"

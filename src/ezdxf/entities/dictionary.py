@@ -61,6 +61,8 @@ acdb_dictionary = DefSubclass(
         # 350: entry handle, some DICTIONARY objects have 360 as handle group code,
         # this is accepted by AutoCAD but not documented by the DXF reference!
         # ezdxf replaces group code 360 by 350.
+        # - group code 350 is a soft-owner handle
+        # - group code 360 is a hard-owner handle
     },
 )
 acdb_dictionary_group_codes = group_code_mapping(acdb_dictionary)
