@@ -282,7 +282,7 @@ class TestGetPointers:
         )
 
     def test_get_soft_owners(self, tags):
-        assert tags.get_soft_owners() == Tags.from_tuples(
+        assert tags.get_soft_owner_handles() == Tags.from_tuples(
             [
                 (350, "102"),
                 (359, "103"),
@@ -302,7 +302,7 @@ class TestGetPointers:
         )
 
     def test_get_hard_owners(self, tags):
-        assert tags.get_hard_owners() == Tags.from_tuples(
+        assert tags.get_hard_owner_handles() == Tags.from_tuples(
             [
                 (360, "203"),
                 (369, "205"),
@@ -310,7 +310,7 @@ class TestGetPointers:
         )
 
     def test_get_translatable_pointers(self, tags):
-        assert tags.get_hard_owners() == Tags.from_tuples(
+        assert tags.get_hard_owner_handles() == Tags.from_tuples(
             [
                 (360, "203"),
                 (369, "205"),

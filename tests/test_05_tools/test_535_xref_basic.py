@@ -464,6 +464,25 @@ class TestBlocks:
         ), "ATTRIB owner should be the INSERT owner"
 
 
+def test_load_hard_owned_XRecord_within_appdata_section():
+    """Any object which is hard-owned by another entity should automatically be loaded."""
+    sdoc = ezdxf.new()
+    line = sdoc.modelspace().add_line((0, 0), (1, 0))
+    xrec = sdoc.objects.add_xrecord(line.dxf.handle)
+    # The LINE entity owns the XRECORD by a hard-owner handle in the app-data
+    # section "EZDXF":
+    line.set_app_data("EZDXF", [(360, xrec.dxf.handle)])
+
+    tdoc = ezdxf.new()
+    xref.load_modelspace(sdoc, tdoc)
+    loaded_line = tdoc.modelspace()[0]
+    appdata = loaded_line.get_app_data("EZDXF")
+    group_code, xrecord_handle = appdata[0]
+    assert group_code == 360, "expected the group code of a hard-owner handle"
+    loaded_xrecord = tdoc.entitydb.get(xrecord_handle)
+    assert loaded_xrecord.dxf.owner == loaded_line.dxf.handle
+
+
 # TODO:
 # LEADER
 # TOLERANCE
@@ -475,6 +494,8 @@ class TestBlocks:
 # UNDERLAY/UNDERLAYDEFINITION
 # VIEWPORT
 # Paperspace Layout
+# XRECORD, pointers and hard-owner handles
+# DXFTagStorage, pointers and hard-owner handles
 # SORTENTSTABLE
 # GEODATA?, linked by extension dictionary of the modelspace
 # ACIS entities

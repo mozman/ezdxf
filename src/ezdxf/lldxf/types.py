@@ -68,7 +68,11 @@ GROUP_MARKERS = {
 BINARY_FLAGS = {70, 90}
 HANDLE_CODES = {5, 105}
 POINTER_CODES = set(chain(range(320, 370), range(390, 400), (480, 481, 1005)))
-TRANSLATABLE_POINTER_CODES = set(chain(range(330, 370), range(390, 400), (480, 481, 1005)))
+
+# pointer group codes 320-329 are not translated during INSERT and XREF operations
+TRANSLATABLE_POINTER_CODES = set(
+    chain(range(330, 370), range(390, 400), (480, 481, 1005))
+)
 HEX_HANDLE_CODES = set(chain(HANDLE_CODES, POINTER_CODES))
 BINARY_DATA = {310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 1004}
 EMBEDDED_OBJ_STR = "Embedded Object"
@@ -246,7 +250,8 @@ def is_soft_pointer(tag: DXFTag) -> bool:
 
 def is_hard_pointer(tag: DXFTag) -> bool:
     """Hard-pointer handle; arbitrary hard pointers to other objects within same DXF
-    file or drawing. Translated during INSERT and XREF operations.
+    file or drawing. Translated during INSERT and XREF operations. Hard pointers
+    protect an object from being purged.
     """
     code = tag.code
     return 339 < code < 350 or 389 < code < 400 or 479 < code < 482
@@ -261,12 +266,14 @@ def is_soft_owner(tag: DXFTag) -> bool:
 
 def is_hard_owner(tag: DXFTag) -> bool:
     """Hard-owner handle; arbitrary hard ownership links to other objects within same
-    DXF file or drawing. Translated during INSERT and XREF operations.
+    DXF file or drawing. Translated during INSERT and XREF operations. Hard owner handle
+    protect an object from being purged.
     """
     return 359 < tag.code < 370
 
 
 def is_translatable_pointer(tag: DXFTag) -> bool:
+    # pointer group codes 320-329 are not translated during INSERT and XREF operations
     return tag.code in TRANSLATABLE_POINTER_CODES
 
 

@@ -946,7 +946,7 @@ class DXFEntity:
                 registry.add_appid(name)
         if self.appdata:  # add hard owned entities
             for tags in self.appdata.tags():
-                for tag in tags.get_hard_owners():
+                for tag in tags.get_hard_owner_handles():
                     registry.add_handle(tag.value)
 
     def map_resources(self, clone: DXFEntity, mapper: xref.ResourceMapper) -> None:
@@ -965,7 +965,7 @@ class DXFEntity:
 
         if clone.appdata:
             for tags in clone.appdata.tags():
-                mapper.map_pointers(tags)
+                mapper.map_pointers(tags, new_owner_handle=clone.dxf.handle)
 
         # reactors are not copied automatically, clone.reactors is always None:
         if self.reactors:

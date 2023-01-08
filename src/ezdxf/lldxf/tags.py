@@ -271,15 +271,15 @@ class Tags(list):
 
     def get_hard_pointers(self) -> Tags:
         """Returns all hard-pointer handles in group code range 340-349, 390-399 and
-        480-481.
+        480-481. Hard pointers protect an object from being purged.
         """
         return Tags(tag for tag in self if types.is_hard_pointer(tag))
 
-    def get_soft_owners(self) -> Tags:
+    def get_soft_owner_handles(self) -> Tags:
         """Returns all soft-owner handles in group code range 350-359."""
         return Tags(tag for tag in self if types.is_soft_owner(tag))
 
-    def get_hard_owners(self) -> Tags:
+    def get_hard_owner_handles(self) -> Tags:
         """Returns all hard-owner handles in group code range 360-369."""
         return Tags(tag for tag in self if types.is_hard_owner(tag))
 

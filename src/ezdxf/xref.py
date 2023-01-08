@@ -318,7 +318,7 @@ class ResourceMapper(Protocol):
     def map_resources_of_copy(self, entity: DXFEntity) -> None:
         ...
 
-    def map_pointers(self, tags: Tags) -> None:
+    def map_pointers(self, tags: Tags, new_owner_handle: str = "") -> None:
         ...
 
 
@@ -811,12 +811,16 @@ class _Transfer:
         else:
             raise const.DXFInternalEzdxfError(f"copy of {entity} not found")
 
-    def map_pointers(self, tags: Tags) -> None:
+    def map_pointers(self, tags: Tags, new_owner_handle: str = "") -> None:
         for index, tag in enumerate(tags):
             if types.is_translatable_pointer(tag):
-                tags[index] = types.DXFTag(
-                    tag.code, self.get_handle(tag.value, default="0")
-                )
+                handle = self.get_handle(tag.value, default="0")
+                tags[index] = types.DXFTag(tag.code, handle)
+                if new_owner_handle and types.is_hard_owner(tag):
+                    copied_object = self.registry.target_doc.entitydb.get(handle)
+                    if copied_object is None:
+                        continue
+                    copied_object.dxf.owner = new_owner_handle
 
     def register_table_resources(self) -> None:
         """Register copied table-entries in resource tables of the target document."""
