@@ -1,8 +1,7 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Sequence, Optional, Iterator
-from collections import OrderedDict
 from ezdxf.lldxf.types import dxftag, uniform_appid
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
@@ -23,7 +22,7 @@ ERR_DXF_ATTRIB_NOT_EXITS = "DXF attribute {} does not exist"
 
 class AppData:
     def __init__(self) -> None:
-        self.data: dict[str, Tags] = OrderedDict()
+        self.data: dict[str, Tags] = dict()
 
     def __contains__(self, appid: str) -> bool:
         """Returns ``True`` if application-defined data exist for `appid`."""
@@ -32,6 +31,9 @@ class AppData:
     def __len__(self) -> int:
         """Returns the count of AppData."""
         return len(self.data)
+
+    def tags(self) -> Iterable[Tags]:
+        return self.data.values()
 
     def get(self, appid: str) -> Tags:
         """Get application-defined data for `appid` as
