@@ -61,7 +61,7 @@ def set_current_linetype_scale(doc: Drawing, scale: float):
 
 
 def set_current_textstyle(doc: Drawing, name: str):
-    """Set current textstyle."""
+    """Set current text style."""
     if name not in doc.styles:
         raise const.DXFValueError(f'undefined textstyle: "{name}"')
     doc.header[CURRENT_TEXTSTYLE] = name
@@ -72,6 +72,13 @@ def set_current_dimstyle(doc: Drawing, name: str):
     if name not in doc.dimstyles:
         raise const.DXFValueError(f'undefined dimstyle: "{name}"')
     doc.header[CURRENT_DIMSTYLE] = name
+
+
+def set_current_dimstyle_attribs(doc: Drawing, name: str):
+    """Set current dimstyle and copy all dimstyle attributes to the HEADER section."""
+    set_current_dimstyle(doc, name)
+    dimstyle = doc.dimstyles.get(name)
+    dimstyle.copy_to_header(doc)
 
 
 def restore_wcs(doc: Drawing):
