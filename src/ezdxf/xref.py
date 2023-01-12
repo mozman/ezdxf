@@ -90,6 +90,21 @@ class ConflictPolicy(enum.Enum):
 # Special blocks like arrow heads will be preserved (KEEP).
 # Anonymous blocks get a new arbitrary name following the rules of anonymous block names.
 
+# Notes about DXF files as XREFs
+# ------------------------------
+# AutoCAD cannot use DXF R12 files as external references (BricsCAD can)!
+# AutoCAD may use DXF R2000+ as external references, but do not accept DXF files created
+# by ezdxf nor BricsCAD, which opened for itself are total valid DXF documents.
+#
+# Autodesk DWG TrueView V2022:
+# > Error: Unable to load <absolute file path>.
+# > Drawing may need recovery.
+#
+# Using the RECOVER command of BricsCAD and rewriting the DXF files by BricsCAD does
+# not work.  Replacing the XREF by a newly created DXF file by BricsCAD does not work
+# either.
+#
+# BricsCAD accepts any DXF/DWG file as XREF!
 
 def embed(
     xref: BlockLayout,
