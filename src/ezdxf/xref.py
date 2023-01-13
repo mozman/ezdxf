@@ -106,6 +106,41 @@ class ConflictPolicy(enum.Enum):
 #
 # BricsCAD accepts any DXF/DWG file as XREF!
 
+# Idea for automated object loading from the OBJECTS section:
+# -----------------------------------------------------------
+# EXT_DICT = Extension  DICTIONARY; ROOT_DICT = "unnamed" DICTIONARY
+# Pointer and owner handles in XRECORD or unknown objects and entities have well-defined
+# group codes, if the creator app follow the rules of the DXF reference.
+#
+# Object types:
+# A. object owner path ends at a graphical entity, e.g. LINE -> EXT_DICT -> XRECORD
+# B. owner path of an object ends at the root dictionary and contains only objects
+#    from the OBJECTS section, e.g. ROOT_DICT -> DICTIONARY -> MATERIAL
+#    or ROOT_DICT -> XRECORD -> CUSTOM_OBJECT -> XRECORD.
+#    The owner path of object type B cannot contain a graphical entity because the owner
+#    of a graphical entity is always a BLOCK_RECORD.
+# C. owner path ends at an object that does not exist or with an owner handle "0",
+#    so the last owner handle of the owner path is invalid, this seems to be an invalid
+#    construct
+#
+# Automated object loading with reconstruction of the owner path:
+# ---------------------------------------------------------------
+# example MATERIAL object:
+# - find the owner path of the source MATERIAL object:
+#   ROOT_DICT -> DICTIONARY (material collection) -> MATERIAL
+# 1 does the parent object of MATERIAL in the target doc exist:
+#   2 YES: add MATERIAL to the owner DICTIONARY (conflict policy!)
+#   3 NO:
+#     4 create the immediate parent DICTIONARY of MATERIAL in the target dict and add
+#       it to the ROOT_DICT of the target doc
+#     GOTO 2 add the MATERIAL to the new owner DICTIONARY
+#
+# Top management layer of the OBJECTS section
+# -------------------------------------------
+# Create a standard mapping for the ROOT_DICT and its entries (DICTIONARY objects)
+# from the source doc to the target doc.  I think these are always basic management
+# structures which shouldn't be duplicated.
+
 def embed(
     xref: BlockLayout,
     *,
