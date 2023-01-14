@@ -1044,16 +1044,23 @@ class _Transfer:
             self.dim_style_mapping[old_name] = dim_style.dxf.name
 
     def add_block_record_entry(self, block_record: BlockRecord, handle: str) -> None:
-        # TODO: special case arrow blocks: do not rename!
         tdoc = self.registry.target_doc
         block_name = block_record.dxf.name.upper()
-        if is_special_block_name(block_name):
-            standard = tdoc.block_records.get(block_name)
-            self.replace_handle_mapping(block_record.dxf.handle, standard.dxf.handle)
-            block_record.destroy()
-            return
         old_name = block_record.dxf.name
-        self.add_table_entry(tdoc.block_records, block_record)
+
+        # is anonymous block name?
+        if len(block_name) > 1 and block_name[0] == "*":
+            # anonymous block names are always translated to another non-existing
+            # anonymous block name in the target document of the same type:
+            # e.g. "*D01" -> "*D0815"
+            block_record.dxf.name = tdoc.blocks.anonymous_blockname(block_name[1])
+            tdoc.block_records.add_entry(block_record)
+        else:
+            # Standard arrow blocks are handled the same way as every other block,
+            # tested with BricsCAD V23:
+            # e.g. arrow block "_Dot" is loaded as "<xref-name>$0$_Dot"
+            self.add_table_entry(tdoc.block_records, block_record)
+
         if block_record.is_alive:
             self.block_name_mapping[old_name] = block_record.dxf.name
             self.restore_block_content(block_record, handle)
@@ -1149,8 +1156,8 @@ def get_xref_name(doc: Drawing) -> str:
     return ""
 
 
-def is_special_block_name(name: str) -> bool:
-    return False
+def is_anonymous_block_name(name: str) -> bool:
+    return len(name) > 1 and name.startswith("*")
 
 
 def get_unique_table_name(fmt: str, name: str, xref: str, table) -> str:

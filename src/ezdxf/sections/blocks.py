@@ -329,9 +329,9 @@ class BlocksSection:
         """
         while True:
             self._anonymous_block_counter += 1
-            blockname = f"*{type_char}{self._anonymous_block_counter}"
-            if not self.__contains__(blockname):
-                return blockname
+            block_name = f"*{type_char}{self._anonymous_block_counter}"
+            if not self.block_records.has_entry(block_name):
+                return block_name
 
     def rename_block(self, old_name: str, new_name: str) -> None:
         """Rename :class:`~ezdxf.layouts.BlockLayout` `old_name` to `new_name`

@@ -464,6 +464,27 @@ class TestBlocks:
         ), "ATTRIB owner should be the INSERT owner"
 
 
+class TestAnonymousBlocks:
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new()
+        anonymous_block = doc.blocks.new_anonymous_block("U")
+        doc.modelspace().add_blockref(anonymous_block.dxf.name, insert=(0, 0))
+        return doc
+
+    def test_load_anonymous_block(self, sdoc):
+        tdoc = ezdxf.new()
+        for _ in range(3):  # increase anonymous block name counter
+            tdoc.blocks.anonymous_blockname("U")
+        xref.load_modelspace(sdoc, tdoc)
+
+        loaded_block_ref = cast(Insert, tdoc.modelspace()[0])
+        loaded_block_name = loaded_block_ref.dxf.name
+        assert (
+            loaded_block_name == "*U4"
+        ), "expected next available anonymous block name in tdoc"
+
+
 def test_load_hard_owned_XRecord_within_appdata_section():
     """Any object which is hard-owned by another entity should automatically be loaded."""
     sdoc = ezdxf.new()
