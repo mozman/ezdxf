@@ -512,10 +512,43 @@ def test_load_hard_owned_XRecord_by_extension_dict():
     assert loaded_xrecord.tags[0] == (3, "Content")
 
 
+class TestDimension:
+    """Load a simple DIMENSION entity without DIMSTYLE overrides in the XDATA section."""
+
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new(setup="dimstyles")
+        msp = doc.modelspace()
+        dim = msp.add_linear_dim(
+            base=(3, 2),
+            p1=(0, 0),
+            p2=(3, 0),
+            dimstyle="EZDXF",
+        )
+        dim.render()
+        return doc
+
+    def test_load_dimension_style_exist(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        assert tdoc.dimstyles.has_entry("EZDXF")
+
+    def test_loaded_geometry_block_exist(self, sdoc):
+        source_dim_block_name = sdoc.modelspace()[0].dxf.geometry
+        source_block = sdoc.blocks.get(source_dim_block_name)
+        assert len(source_block) == 9
+
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        loaded_dim = tdoc.modelspace()[0]
+        geometry = loaded_dim.dxf.geometry
+        loaded_block = tdoc.blocks.get(geometry)
+        assert len(loaded_block) == 9
+
+
 # TODO:
 # LEADER
 # TOLERANCE
-# DIMENSION
 # HATCH/MPOLYGON
 # IMAGE/IMAGEDEF/IMAGEDEF_REACTOR
 # MLINE

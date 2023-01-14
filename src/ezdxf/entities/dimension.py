@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from ezdxf.audit import Auditor
     from ezdxf.query import EntityQuery
     from ezdxf.math import OCS
+    from ezdxf import xref
 
 logger = logging.getLogger("ezdxf")
 ADSK_CONSTRAINTS = "*ADSK_CONSTRAINTS"
@@ -621,6 +622,19 @@ class Dimension(DXFGraphic, OverrideMixin):
         elif dim_type == 6:  # ordinate
             tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbOrdinateDimension")
             self.dxf.export_dxf_attribs(tagwriter, ["defpoint2", "defpoint3"])
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        assert self.doc is not None
+        super().register_resources(registry)
+        registry.add_dim_style(self.dxf.dimstyle)
+        geometry = self.dxf.geometry
+        if self.doc.block_records.has_entry(geometry):
+            registry.add_block_name(geometry)
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        super().map_resources(copy, mapping)
+        copy.dxf.dimstyle = mapping.get_dim_style(self.dxf.dimstyle)
+        copy.dxf.geometry = mapping.get_block_name(self.dxf.geometry)
 
     @property
     def dimtype(self) -> int:

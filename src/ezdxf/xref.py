@@ -1211,8 +1211,8 @@ class CopyMachine:
             self.debug(f"cannot copy entity {str(entity)}")
             return None
 
-        # The DIMENSION entity creates a virtual copy of the associated geometry block
-        # this is not required nor a good practice for XREF loading.
+        # The DIMENSION entity should not create a virtual copy of the associated
+        # geometry block!
         if not isinstance(entity, Dimension):
             entity.copy_data(clone)
         return clone
