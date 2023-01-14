@@ -475,7 +475,7 @@ class TestAnonymousBlocks:
     def test_load_anonymous_block(self, sdoc):
         tdoc = ezdxf.new()
         for _ in range(3):  # increase anonymous block name counter
-            tdoc.blocks.anonymous_blockname("U")
+            tdoc.blocks.anonymous_block_name("U")
         xref.load_modelspace(sdoc, tdoc)
 
         loaded_block_ref = cast(Insert, tdoc.modelspace()[0])

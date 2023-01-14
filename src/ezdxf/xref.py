@@ -1053,7 +1053,7 @@ class _Transfer:
             # anonymous block names are always translated to another non-existing
             # anonymous block name in the target document of the same type:
             # e.g. "*D01" -> "*D0815"
-            block_record.dxf.name = tdoc.blocks.anonymous_blockname(block_name[1])
+            block_record.dxf.name = tdoc.blocks.anonymous_block_name(block_name[1])
             tdoc.block_records.add_entry(block_record)
         else:
             # Standard arrow blocks are handled the same way as every other block,

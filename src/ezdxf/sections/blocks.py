@@ -309,11 +309,11 @@ class BlocksSection:
             ========= ==========
 
         """
-        blockname = self.anonymous_blockname(type_char)
-        block = self.new(blockname, base_point, {"flags": const.BLK_ANONYMOUS})
+        block_name = self.anonymous_block_name(type_char)
+        block = self.new(block_name, base_point, {"flags": const.BLK_ANONYMOUS})
         return block
 
-    def anonymous_blockname(self, type_char: str) -> str:
+    def anonymous_block_name(self, type_char: str) -> str:
         """Create name for an anonymous block. (internal API)
 
         Args:
