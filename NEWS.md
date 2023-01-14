@@ -2,8 +2,8 @@
 News
 ====
 
-Version 1.0.1b1 - dev
----------------------
+Version 1.0.1 - 2023-01-14
+--------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
 - NEW: function `set_lineweight_display_style()` in module `ezdxf.appsettings`
