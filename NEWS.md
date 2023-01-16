@@ -6,7 +6,7 @@ Version 1.0.2b0 - dev
 ---------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
-
+- NEW: `Drawing.validate()` also prints report of resolved issues
 
 Version 1.0.1 - 2023-01-14
 --------------------------

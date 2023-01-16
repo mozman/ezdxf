@@ -827,6 +827,11 @@ class Drawing:
         """Returns ``True`` if drawing is AutoCAD compatible."""
         return self._acad_compatible
 
+    @property
+    def acad_incompatibility_reasons(self) -> list[str]:
+        """Returns a list of AutoCAD incompatibility reasons."""
+        return list(self._acad_incompatibility_reason)
+
     def add_acad_incompatibility_message(self, msg: str):
         """Add AutoCAD incompatibility message. (internal API)"""
         self._acad_compatible = False
@@ -1114,22 +1119,24 @@ class Drawing:
 
     def validate(self, print_report=True) -> bool:
         """Simple way to run an audit process. Fixes all fixable problems,
-        return ``False`` if not fixable errors occurs, to get more information
-        about not fixable errors use :meth:`audit` method instead.
+        return ``False`` if not fixable errors occurs. Prints a report of resolved and
+        unrecoverable errors, if requested.
 
         Args:
             print_report: print report to stdout
 
-        Returns: ``True`` if no errors occurred
+        Returns: ``False`` if unrecoverable errors exist
 
         """
         auditor = self.audit()
-        if len(auditor):
-            if print_report:
-                auditor.print_error_report()
-            return False
-        else:
-            return True
+        if print_report:
+            auditor.print_fixed_errors()
+            auditor.print_error_report()
+            if not self.acad_compatible:
+                print("DXF document is not AutoCAD compatible:")
+                for msg in self.acad_incompatibility_reasons:
+                    print(msg)
+        return len(auditor.errors) == 0
 
     def set_modelspace_vport(self, height, center=(0, 0), *, dxfattribs=None) -> VPort:
         r"""Set initial view/zoom location for the modelspace, this replaces
