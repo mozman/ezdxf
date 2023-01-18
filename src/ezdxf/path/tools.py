@@ -696,7 +696,7 @@ def add_2d_polyline(
         path.end, rel_tol=IS_CLOSE_TOL, abs_tol=0
     ):
         if prev_bulge:
-            bulge_to(path.end, path.start, prev_bulge)
+            bulge_to(path.end, path.start, prev_bulge, segments)
         else:
             path.line_to(path.start)
 
