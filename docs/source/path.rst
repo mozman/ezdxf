@@ -106,7 +106,7 @@ Functions to create :class:`Path` objects from other objects.
 
     :param entity: DXF entity
     :param segments: minimal count of cubic Bézier-curves for elliptical arcs
-        like CIRCLE, ARC, ELLIPSE, see :meth:`Path.add_ellipse`
+        like CIRCLE, ARC, ELLIPSE, BULGE see :meth:`Path.add_ellipse`
     :param level: subdivide level for SPLINE approximation,
         see :meth:`Path.add_spline`
 

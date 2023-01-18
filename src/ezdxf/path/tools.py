@@ -27,6 +27,7 @@ from ezdxf.math import (
     reverse_bezier_curves,
     bulge_to_arc,
     linear_vertex_spacing,
+    linspace,
     inscribe_circle_tangent_length,
     cubic_bezier_arc_parameters,
     cubic_bezier_bbox,
@@ -640,24 +641,28 @@ def add_2d_polyline(
     close: bool,
     ocs: OCS,
     elevation: float,
+    segments: int = 1,
 ) -> None:
     """Internal API to add 2D polylines which may include bulges to an
     **empty** path.
 
     """
 
-    def bulge_to(p1: Vec3, p2: Vec3, bulge: float):
+    def bulge_to(p1: Vec3, p2: Vec3, bulge: float, segments: int):
         if p1.isclose(p2, rel_tol=IS_CLOSE_TOL, abs_tol=0):
             return
         center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
-        ellipse = ConstructionEllipse.from_arc(
-            center,
-            radius,
-            Z_AXIS,
-            math.degrees(start_angle),
-            math.degrees(end_angle),
-        )
-        curves = list(cubic_bezier_from_ellipse(ellipse))
+        angles = list(linspace(start_angle, end_angle, segments + 1))
+        curves = []
+        for i in range(segments):
+            ellipse = ConstructionEllipse.from_arc(
+                center,
+                radius,
+                Z_AXIS,
+                math.degrees(angles[i]),
+                math.degrees(angles[i + 1]),
+            )
+            curves.extend(list(cubic_bezier_from_ellipse(ellipse)))
         curve0 = curves[0]
         cp0 = curve0.control_points[0]
         if cp0.isclose(p2, rel_tol=IS_CLOSE_TOL, abs_tol=0):
@@ -681,7 +686,7 @@ def add_2d_polyline(
             continue
 
         if prev_bulge:
-            bulge_to(prev_point, point, prev_bulge)
+            bulge_to(prev_point, point, prev_bulge, segments)
         else:
             path.line_to(point)
         prev_point = point
