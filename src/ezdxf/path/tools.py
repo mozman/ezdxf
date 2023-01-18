@@ -649,12 +649,13 @@ def add_2d_polyline(
     """
 
     def bulge_to(p1: Vec3, p2: Vec3, bulge: float, segments: int):
+        num_bez = math.ceil(segments / 3)  # each cubic_bezier adds 3 segments, need 1 minimum
         if p1.isclose(p2, rel_tol=IS_CLOSE_TOL, abs_tol=0):
             return
         center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
-        angles = list(linspace(start_angle, end_angle, segments + 1))
+        angles = list(linspace(start_angle, end_angle, num_bez + 1))
         curves = []
-        for i in range(segments):
+        for i in range(num_bez):
             ellipse = ConstructionEllipse.from_arc(
                 center,
                 radius,
