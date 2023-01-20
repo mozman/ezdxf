@@ -122,6 +122,7 @@ def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> "Path":
         close=lwpolyline.closed,
         ocs=lwpolyline.ocs(),
         elevation=lwpolyline.dxf.elevation,
+        segments=kwargs.get("segments", 1)
     )
     return path
 
@@ -152,6 +153,7 @@ def _from_polyline(polyline: Polyline, **kwargs) -> "Path":
         close=polyline.is_closed,
         ocs=ocs,
         elevation=elevation,
+        segments=kwargs.get("segments", 1)
     )
     return path
 
