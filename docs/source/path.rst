@@ -102,7 +102,7 @@ Functions to create :class:`Path` objects from other objects.
     - SOLID, TRACE, 3DFACE
     - IMAGE, WIPEOUT clipping path
     - VIEWPORT clipping path
-    - HATCH as :term:`Multi-Path` object, new in v0.17
+    - HATCH as :term:`Multi-Path` object
 
     :param entity: DXF entity
     :param segments: minimal count of cubic Bézier-curves for elliptical arcs

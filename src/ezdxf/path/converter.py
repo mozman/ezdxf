@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -114,7 +114,7 @@ def make_path(entity, segments: int = 1, level: int = 4) -> Path:
 
 
 @make_path.register(LWPolyline)
-def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> "Path":
+def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> Path:
     path = Path()
     tools.add_2d_polyline(
         path,
@@ -128,7 +128,7 @@ def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> "Path":
 
 
 @make_path.register(Polyline)
-def _from_polyline(polyline: Polyline, **kwargs) -> "Path":
+def _from_polyline(polyline: Polyline, **kwargs) -> Path:
     if polyline.is_polygon_mesh or polyline.is_poly_face_mesh:
         raise TypeError("Unsupported DXF type PolyMesh or PolyFaceMesh")
 
@@ -144,8 +144,8 @@ def _from_polyline(polyline: Polyline, **kwargs) -> "Path":
     if polyline.dxf.hasattr("elevation"):
         elevation = Vec3(polyline.dxf.elevation).z
     else:
-        # Elevation attribute is mandatory, but you never know,
-        # take elevation from first vertex.
+        # the elevation attribute is mandatory, but if it's missing
+        # take the elevation value of the first vertex.
         elevation = Vec3(polyline.vertices[0].dxf.location).z
     tools.add_2d_polyline(
         path,
@@ -160,7 +160,7 @@ def _from_polyline(polyline: Polyline, **kwargs) -> "Path":
 
 @make_path.register(Helix)
 @make_path.register(Spline)
-def _from_spline(spline: Spline, **kwargs) -> "Path":
+def _from_spline(spline: Spline, **kwargs) -> Path:
     level = kwargs.get("level", 4)
     path = Path()
     tools.add_spline(path, spline.construction_tool(), level=level, reset=True)
@@ -168,7 +168,7 @@ def _from_spline(spline: Spline, **kwargs) -> "Path":
 
 
 @make_path.register(Ellipse)
-def _from_ellipse(ellipse: Ellipse, **kwargs) -> "Path":
+def _from_ellipse(ellipse: Ellipse, **kwargs) -> Path:
     segments = kwargs.get("segments", 1)
     path = Path()
     tools.add_ellipse(
@@ -178,14 +178,14 @@ def _from_ellipse(ellipse: Ellipse, **kwargs) -> "Path":
 
 
 @make_path.register(Line)
-def _from_line(line: Line, **kwargs) -> "Path":
+def _from_line(line: Line, **kwargs) -> Path:
     path = Path(line.dxf.start)
     path.line_to(line.dxf.end)
     return path
 
 
 @make_path.register(Arc)
-def _from_arc(arc: Arc, **kwargs) -> "Path":
+def _from_arc(arc: Arc, **kwargs) -> Path:
     segments = kwargs.get("segments", 1)
     path = Path()
     radius = abs(arc.dxf.radius)
@@ -202,7 +202,7 @@ def _from_arc(arc: Arc, **kwargs) -> "Path":
 
 
 @make_path.register(Circle)
-def _from_circle(circle: Circle, **kwargs) -> "Path":
+def _from_circle(circle: Circle, **kwargs) -> Path:
     segments = kwargs.get("segments", 1)
     path = Path()
     radius = abs(circle.dxf.radius)
@@ -219,7 +219,7 @@ def _from_circle(circle: Circle, **kwargs) -> "Path":
 @make_path.register(Face3d)
 @make_path.register(Trace)
 @make_path.register(Solid)
-def _from_quadrilateral(solid: "Solid", **kwargs) -> "Path":
+def _from_quadrilateral(solid: "Solid", **kwargs) -> Path:
     vertices = solid.wcs_vertices()
     return from_vertices(vertices, close=True)
 

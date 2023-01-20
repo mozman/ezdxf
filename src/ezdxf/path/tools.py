@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -259,7 +259,7 @@ def _get_non_uniform_scaling(current_size: Vec3, target_size: Vec3):
 
 
 def render_lwpolylines(
-    layout: "Layout",
+    layout: Layout,
     paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
@@ -301,7 +301,7 @@ def render_lwpolylines(
 
 
 def render_polylines2d(
-    layout: "Layout",
+    layout: Layout,
     paths: Iterable[Path],
     *,
     distance: float = 0.01,
@@ -343,7 +343,7 @@ def render_polylines2d(
 
 
 def render_hatches(
-    layout: "Layout",
+    layout: Layout,
     paths: Iterable[Path],
     *,
     edge_path: bool = True,
@@ -392,7 +392,7 @@ def render_hatches(
 
 
 def render_mpolygons(
-    layout: "Layout",
+    layout: Layout,
     paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
@@ -436,7 +436,7 @@ def render_mpolygons(
 
 
 def render_polylines3d(
-    layout: "Layout",
+    layout: Layout,
     paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
@@ -472,7 +472,7 @@ def render_polylines3d(
 
 
 def render_lines(
-    layout: "Layout",
+    layout: Layout,
     paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
@@ -507,7 +507,7 @@ def render_lines(
 
 
 def render_splines_and_polylines(
-    layout: "Layout",
+    layout: Layout,
     paths: Iterable[Path],
     *,
     g1_tol: float = G1_TOL,
@@ -649,9 +649,10 @@ def add_2d_polyline(
     """
 
     def bulge_to(p1: Vec3, p2: Vec3, bulge: float, segments: int):
-        num_bez = math.ceil(segments / 3)  # each cubic_bezier adds 3 segments, need 1 minimum
         if p1.isclose(p2, rel_tol=IS_CLOSE_TOL, abs_tol=0):
             return
+        # each cubic_bezier adds 3 segments, need 1 minimum
+        num_bez = math.ceil(segments / 3)
         center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
         angles = list(linspace(start_angle, end_angle, num_bez + 1))
         curves = []
@@ -709,7 +710,7 @@ def add_spline(path: Path, spline: BSpline, level=4, reset=True) -> None:
     """Add a B-spline as multiple cubic Bèzier-curves.
 
     Non-rational B-splines of 3rd degree gets a perfect conversion to
-    cubic bezier curves with a minimal count of curve segments, all other
+    cubic Bézier curves with a minimal count of curve segments, all other
     B-spline require much more curve segments for approximation.
 
     Auto-detect the connection point to the given `path`, if neither the start-
@@ -717,7 +718,7 @@ def add_spline(path: Path, spline: BSpline, level=4, reset=True) -> None:
     from the path end point to the start point of the B-spline will be added
     automatically. (see :meth:`add_bezier4p`).
 
-    By default the start of an **empty** path is set to the start point of
+    By default, the start of an **empty** path is set to the start point of
     the spline, setting argument `reset` to ``False`` prevents this
     behavior.
 
@@ -824,8 +825,7 @@ def _get_local_fillet_ucs(p0, p1, p2, radius) -> tuple[Vec3, float, UCS]:
 
 
 def fillet(points: Sequence[Vec3], radius: float) -> Path:
-    """
-    Returns a :class:`Path` with circular fillets of given `radius` between
+    """Returns a :class:`Path` with circular fillets of given `radius` between
     straight line segments.
 
     Args:
