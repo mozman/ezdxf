@@ -772,10 +772,6 @@ class _Registry:
             self.debug(f"source linetype '{name}' does not exist")
 
     def add_text_style(self, name) -> None:
-        # Text style name "STANDARD" gets never mangled and always exist in the target
-        # document.
-        if name.upper() == STANDARD:
-            return
         text_style = self.source_doc.styles.get(name)
         if text_style:
             self.add_entity(text_style)
@@ -783,11 +779,6 @@ class _Registry:
             self.debug(f"source text style '{name}' does not exist")
 
     def add_dim_style(self, name: str) -> None:
-        # Dimension style name "STANDARD" gets never mangled and always exist in the
-        # target document.
-        if name.upper() == STANDARD:
-            return
-
         dim_style = self.source_doc.dimstyles.get(name)
         if dim_style:
             self.add_entity(dim_style)
@@ -906,6 +897,13 @@ class _Transfer:
 
     def register_object_resources(self, copies: Iterable[DXFEntity]) -> None:
         """Register copied objects in object collections of the target document."""
+        # Note: BricsCAD does not rename conflicting entries in object collections and
+        # always keeps the existing entry:
+        # - MATERIAL
+        # - MLINESTYLE
+        # - MLEADERSTYLE
+        # Ezdxf does rename conflicting entries according to self.conflict_policy,
+        # exceptions are only the system entries.
         tdoc = self.registry.target_doc
         for entity in copies:
             if isinstance(entity, Material):
@@ -1008,12 +1006,6 @@ class _Transfer:
 
     def add_text_style_entry(self, text_style: Textstyle) -> None:
         tdoc = self.registry.target_doc
-        text_style_name = text_style.dxf.name.upper()
-        if text_style_name == STANDARD:
-            standard = tdoc.styles.get(STANDARD)
-            self.replace_handle_mapping(text_style.dxf.handle, standard.dxf.handle)
-            text_style.destroy()
-            return
         old_name = text_style.dxf.name
         self.add_table_entry(tdoc.styles, text_style)
         if text_style.is_alive:
@@ -1032,12 +1024,6 @@ class _Transfer:
 
     def add_dim_style_entry(self, dim_style: DimStyle) -> None:
         tdoc = self.registry.target_doc
-        dim_style_name = dim_style.dxf.name.upper()
-        if dim_style_name == STANDARD:
-            standard = tdoc.dimstyles.get(STANDARD)
-            self.replace_handle_mapping(dim_style.dxf.handle, standard.dxf.handle)
-            dim_style.destroy()
-            return
         old_name = dim_style.dxf.name
         self.add_table_entry(tdoc.dimstyles, dim_style)
         if dim_style.is_alive:
@@ -1113,6 +1099,13 @@ class _Transfer:
     def add_collection_entry(
         self, collection, entry: DXFEntity, system_entries: set[str]
     ) -> None:
+        # Note: BricsCAD does not rename conflicting entries in object collections and
+        # always keeps the existing entry:
+        # - MATERIAL
+        # - MLINESTYLE
+        # - MLEADERSTYLE
+        # Ezdxf does rename conflicting entries according to self.conflict_policy,
+        # exceptions are only the given `system_entries`.
         name = entry.dxf.name
         if name.upper() in system_entries:
             special = collection.object_dict.get(name)

@@ -191,7 +191,7 @@ class TestLoadTextStyles:
     @staticmethod
     def load_styles(sdoc, tdoc, policy):
         loader = xref.Loader(sdoc, tdoc, conflict_policy=policy)
-        loader.load_text_styles(["Style0", "Style1"])
+        loader.load_text_styles(["Style0", "Style1", "Standard"])
         loader.execute()
 
     def test_conflict_policy_keep(self, sdoc):
@@ -211,26 +211,32 @@ class TestLoadTextStyles:
         tdoc.styles.add("Style0", font="preserve.ttf")
         self.load_styles(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
 
-        # style "STANDARD" should not be loaded:
-        assert len(tdoc.styles) == 3 + 1
+        # Load 3 text styles from source doc
+        assert len(tdoc.styles) == 2 + 3
 
         style0 = tdoc.styles.get("Style0")
         assert style0.dxf.font == "preserve.ttf"
         assert tdoc.styles.get("xref$0$Style0").dxf.name == "xref$0$Style0"
         assert tdoc.styles.has_entry("xref$0$Style1") is True
 
+        # Text style "Standard" should be loaded and renamed
+        assert tdoc.styles.get("xref$0$Standard").dxf.name == "xref$0$Standard"
+
     def test_numbered_rename_policy(self, sdoc):
         tdoc = ezdxf.new()
         tdoc.styles.add("Style0", font="preserve.ttf")
         self.load_styles(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
 
-        # style "STANDARD" should not be loaded:
-        assert len(tdoc.styles) == 3 + 1
+        # Load 3 text styles from source doc
+        assert len(tdoc.styles) == 3 + 2
 
         style0 = tdoc.styles.get("Style0")
         assert style0.dxf.font == "preserve.ttf"
         assert tdoc.styles.get("$0$Style0").dxf.name == "$0$Style0"
         assert tdoc.styles.has_entry("Style1") is True
+
+        # Text style "Standard" should be loaded and renamed
+        assert tdoc.styles.get("$0$Standard").dxf.name == "$0$Standard"
 
 
 class TestLoadDimStyles:
@@ -249,7 +255,7 @@ class TestLoadDimStyles:
     @staticmethod
     def load_styles(sdoc, tdoc, policy):
         loader = xref.Loader(sdoc, tdoc, conflict_policy=policy)
-        loader.load_dim_styles(["Style0", "Style1"])
+        loader.load_dim_styles(["Style0", "Style1", "Standard"])
         loader.execute()
 
     def test_conflict_policy_keep(self, sdoc):
@@ -257,7 +263,6 @@ class TestLoadDimStyles:
         tdoc.dimstyles.add("Style0", dxfattribs={"dimpost": "preserve"})
         self.load_styles(sdoc, tdoc, xref.ConflictPolicy.KEEP)
 
-        # style "STANDARD" should not be loaded:
         assert len(tdoc.dimstyles) == 1 + 2
 
         style0 = tdoc.dimstyles.get("Style0")
@@ -269,26 +274,32 @@ class TestLoadDimStyles:
         tdoc.dimstyles.add("Style0", dxfattribs={"dimpost": "preserve"})
         self.load_styles(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
 
-        # style "STANDARD" should not be loaded:
-        assert len(tdoc.dimstyles) == 3 + 1
+        # Load 3 dim styles from source doc
+        assert len(tdoc.dimstyles) == 2 + 3
 
         style0 = tdoc.dimstyles.get("Style0")
         assert style0.dxf.dimpost == "preserve"
         assert tdoc.dimstyles.get("xref$0$Style0").dxf.name == "xref$0$Style0"
         assert tdoc.dimstyles.has_entry("xref$0$Style1") is True
 
+        # Dim style "Standard" should be loaded and renamed
+        assert tdoc.dimstyles.get("xref$0$Standard").dxf.name == "xref$0$Standard"
+
     def test_numbered_rename_policy(self, sdoc):
         tdoc = ezdxf.new()
         tdoc.dimstyles.add("Style0", dxfattribs={"dimpost": "preserve"})
         self.load_styles(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
 
-        # style "STANDARD" should not be loaded:
-        assert len(tdoc.dimstyles) == 3 + 1
+        # Load 3 dim styles from source doc
+        assert len(tdoc.dimstyles) == 2 + 3
 
         style0 = tdoc.dimstyles.get("Style0")
         assert style0.dxf.dimpost == "preserve"
         assert tdoc.dimstyles.get("$0$Style0").dxf.name == "$0$Style0"
         assert tdoc.dimstyles.has_entry("Style1") is True
+
+        # Dim style "Standard" should be loaded and renamed
+        assert tdoc.dimstyles.get("$0$Standard").dxf.name == "$0$Standard"
 
 
 class TestLoadMaterials:
