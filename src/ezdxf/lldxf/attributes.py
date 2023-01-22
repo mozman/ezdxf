@@ -1,10 +1,11 @@
-# Copyright (c) 2011-2022, Manfred Moitzi
+# Copyright (c) 2011-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
     Optional,
     TYPE_CHECKING,
     Iterable,
+    Iterator,
     Callable,
     Any,
     Union,
@@ -117,9 +118,7 @@ class DXFAttr:
         setter: str = "",
         alias: str = "",
         validator: Optional[Callable[[Any], bool]] = None,
-        fixer: Optional[
-            Union[Callable[[Any], Any], None, ReturnDefault]
-        ] = None,
+        fixer: Optional[Union[Callable[[Any], Any], None, ReturnDefault]] = None,
     ):
 
         # Attribute name set by DXFAttributes.__init__()
@@ -248,10 +247,9 @@ class DXFAttributes:
     def get(self, key: str) -> Optional[DXFAttr]:
         return self._attribs.get(key)
 
-    def build_group_code_items(
-        self, func=lambda x: True
-    ) -> Iterable[tuple[int, str]]:
-        for name, attrib in self._attribs.items():
-            # code < 0 is internal tag
-            if attrib.code > 0 and func(name):
-                yield attrib.code, name
+    def build_group_code_items(self, func=lambda x: True) -> Iterator[tuple[int, str]]:
+        return (
+            (attrib.code, name)
+            for name, attrib in self._attribs.items()
+            if attrib.code > 0 and func(name)
+        )
