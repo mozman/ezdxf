@@ -343,7 +343,8 @@ class OverrideMixin:
                 code = dxf_attr.code
                 tags.append((1070, code))
                 if code == 5:
-                    # DimStyle 'dimblk' has group code 5 but is not a handle
+                    # DimStyle 'dimblk' has group code 5 but is not a handle, only used
+                    # for DXF R12
                     tags.append((1000, value))
                 else:
                     tags.append((get_xcode_for(code), value))
@@ -631,10 +632,37 @@ class Dimension(DXFGraphic, OverrideMixin):
         if self.doc.block_records.has_entry(geometry):
             registry.add_block_name(geometry)
 
+        if not self.has_xdata_list("ACAD", "DSTYLE"):
+            return
+
+        if self.doc.dxfversion > const.DXF12:
+            # overridden resources are referenced by handle
+            self._register_override_handles(registry)
+        else:
+            # overridden resources are referenced by name
+            self.override().register_resources_r12(registry)
+
+    def _register_override_handles(self, registry: xref.Registry) -> None:
+        override_tags = self.get_xdata_list("ACAD", "DSTYLE")
+        for code, value in override_tags:
+            if code == 1005:
+                registry.add_handle(value)
+
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
         super().map_resources(copy, mapping)
         copy.dxf.dimstyle = mapping.get_dim_style(self.dxf.dimstyle)
         copy.dxf.geometry = mapping.get_block_name(self.dxf.geometry)
+
+        # DXF R2000+ references overridden resources by group code 1005 handles in the
+        # XDATA section, which are automatically mapped by the parent class DXFEntity!
+        assert self.doc is not None
+        if self.doc.dxfversion > const.DXF12:
+            return
+        self_override = self.override()
+        if not self_override.dimstyle_attribs:
+            return  # has no overrides
+        assert isinstance(copy, Dimension)
+        self_override.map_resources_r12(copy, mapping)
 
     @property
     def dimtype(self) -> int:

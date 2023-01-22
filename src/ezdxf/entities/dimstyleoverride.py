@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Any, TYPE_CHECKING, Optional
@@ -8,11 +8,13 @@ from ezdxf.enums import MTextLineAlignment
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
 from ezdxf.math import Vec3, UVec, UCS
+from ezdxf.render.arrows import ARROWS
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DimStyle, Dimension
     from ezdxf.render.dim_base import BaseDimensionRenderer
+    from ezdxf import xref
 
 logger = logging.getLogger("ezdxf")
 
@@ -110,6 +112,43 @@ class DimStyleOverride:
             del self.dimstyle_attribs[key]
         except KeyError:  # silent discard
             pass
+
+    def register_resources_r12(self, registry: xref.Registry) -> None:
+        # DXF R2000+ references overridden resources by group code 1005 handles in the
+        # XDATA section, which are automatically mapped by the parent class DXFEntity!
+        assert self.doc.dxfversion == const.DXF12
+        # register arrow heads
+        for attrib_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
+            arrow_name = self.get(attrib_name, "")
+            if arrow_name:
+                # arrow head names will be renamed like user blocks
+                # e.g. "_DOT" -> "xref$0$_DOT"
+                registry.add_block_name(ARROWS.block_name(arrow_name))
+        # linetype and text style attributes are not supported by DXF R12!
+
+    def map_resources_r12(self, copy: Dimension, mapping: xref.ResourceMapper) -> None:
+        # DXF R2000+ references overridden resources by group code 1005 handles in the
+        # XDATA section, which are automatically mapped by the parent class DXFEntity!
+        assert self.doc.dxfversion == const.DXF12
+        copy_override = copy.override()
+        # map arrow heads
+        for attrib_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
+            arrow_name = self.get(attrib_name, "")
+            if arrow_name:
+                block_name = mapping.get_block_name(ARROWS.block_name(arrow_name))
+                copy_override[attrib_name] = ARROWS.arrow_name(block_name)
+        copy_override.commit()
+        # The linetype attributes dimltype, dimltex1 and dimltex2 and the text style
+        # attribute dimtxsty are not supported by DXF R12!
+        #
+        # Weired behavior for DXF R12 detected
+        # ------------------------------------
+        # BricsCAD writes the handles of overridden linetype- and text style attributes
+        # into the ACAD-DSTYLE dictionary like for DXF R2000+, but exports the table
+        # entries without handles, so remapping of these handles is only possible if the
+        # application (which loads this DXF file) assigns internally the same handles
+        # as BricsCAD does and this also works with Autodesk TrueView (oO = wtf!).
+        # Ezdxf cannot remap these handles!
 
     def commit(self) -> None:
         """Writes overridden DIMSTYLE attributes into ACAD:DSTYLE section of
@@ -445,9 +484,9 @@ class DimStyleOverride:
     def set_text(self, text: str = "<>") -> None:
         """Set dimension text.
 
-            - `text` = " " to suppress dimension text
-            - `text` = "" or "<>" to use measured distance as dimension text
-            - otherwise display `text` literally
+        - `text` = " " to suppress dimension text
+        - `text` = "" or "<>" to use measured distance as dimension text
+        - otherwise display `text` literally
 
         """
         self.dimension.dxf.text = text
