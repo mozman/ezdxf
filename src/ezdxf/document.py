@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022, Manfred Moitzi
+# Copyright (c) 2011-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -124,7 +124,7 @@ class Drawing:
         # see class-methods new() and read().
 
         # named objects dictionary
-        self.rootdict: "Dictionary" = None  # type: ignore
+        self.rootdict: Dictionary = None  # type: ignore
 
         # DXF sections
         self.header: HeaderSection = None  # type: ignore
@@ -564,7 +564,7 @@ class Drawing:
 
         Args:
             stream: output text stream or binary stream
-            fmt: ``'asc'`` for ASCII DXF (default) or ``'bin'`` for binary DXF
+            fmt: "asc" for ASCII DXF (default) or "bin" for binary DXF
 
         """
         dxfversion = self.dxfversion
@@ -700,7 +700,7 @@ class Drawing:
 
     @property
     def acad_release(self) -> str:
-        """Returns the AutoCAD release number like ``'R12'`` or ``'R2000'``."""
+        """Returns the AutoCAD release abbreviation like "R12" or "R2000"."""
         return const.acad_release.get(self.dxfversion, "unknown")
 
     @property
@@ -758,8 +758,8 @@ class Drawing:
         self._dimension_renderer = renderer
 
     def modelspace(self) -> Modelspace:
-        """Returns the modelspace layout, displayed as ``'Model'`` tab in CAD
-        applications, defined by block record named ``'*Model_Space'``.
+        """Returns the modelspace layout, displayed as "Model" tab in CAD
+        applications, defined by block record named "*Model_Space".
         """
         return self.layouts.modelspace()
 
@@ -797,21 +797,17 @@ class Drawing:
             return self.active_layout()
 
     def active_layout(self) -> Paperspace:
-        """Returns the active paperspace layout, defined by block record
-        name ``'*Paper_Space'``.
+        """Returns the active paperspace layout, defined by block record name
+        "*Paper_Space".
         """
         return self.layouts.active_layout()
 
     def layout_names(self) -> Iterable[str]:
-        """Returns all layout names (modelspace ``'Model'`` included) in
-        arbitrary order.
-        """
+        """Returns all layout names in arbitrary order."""
         return list(self.layouts.names())
 
     def layout_names_in_taborder(self) -> Iterable[str]:
-        """Returns all layout names in tab-order, layout "Model" (model space)
-        is always the first name.
-        """
+        """Returns all layout names in tab-order, "Model" is always the first name."""
         return list(self.layouts.names_in_taborder())
 
     def reset_fingerprint_guid(self):
@@ -823,21 +819,25 @@ class Drawing:
         self.header["$VERSIONGUID"] = guid()
 
     @property
-    def acad_compatible(self) -> bool:
-        """Returns ``True`` if drawing is AutoCAD compatible."""
+    def is_acad_compatible(self) -> bool:
+        """Returns ``True`` if the current state of the document is compatible to
+        AutoCAD.
+        """
         return self._acad_compatible
 
     @property
     def acad_incompatibility_reasons(self) -> list[str]:
-        """Returns a list of AutoCAD incompatibility reasons."""
+        """Returns a list of reasons why this document is not compatible to AutoCAD."""
         return list(self._acad_incompatibility_reason)
 
     def add_acad_incompatibility_message(self, msg: str):
-        """Add AutoCAD incompatibility message. (internal API)"""
+        """Add a reason why this document is not compatible to AutoCAD.
+        (internal API)
+        """
         self._acad_compatible = False
         if msg not in self._acad_incompatibility_reason:
             self._acad_incompatibility_reason.add(msg)
-            logger.warning(f"DXF document is not AutoCAD compatible! {msg}.")
+            logger.warning(f"DXF document is not compatible to AutoCAD! {msg}.")
 
     def query(self, query: str = "*") -> EntityQuery:
         """
@@ -1132,7 +1132,7 @@ class Drawing:
         if print_report:
             auditor.print_fixed_errors()
             auditor.print_error_report()
-            if not self.acad_compatible:
+            if not self.is_acad_compatible:
                 print("DXF document is not AutoCAD compatible:")
                 for msg in self.acad_incompatibility_reasons:
                     print(msg)
@@ -1403,6 +1403,7 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> list[str]:
 
 def _get_unknown_entities(doc: Drawing) -> list[DXFEntity]:
     from ezdxf.entities import DXFTagStorage, ACADProxyEntity, OLE2Frame
+
     data: list[DXFEntity] = []
     for entity in doc.entitydb.values():
         if isinstance(entity, (DXFTagStorage, ACADProxyEntity, OLE2Frame)):
