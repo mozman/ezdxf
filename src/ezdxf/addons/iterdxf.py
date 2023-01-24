@@ -362,7 +362,7 @@ def single_pass_modelspace(
     errors: str = "surrogateescape",
 ) -> Iterable[DXFGraphic]:
     """Iterate over all modelspace entities as :class:`DXFGraphic` objects in
-    one single pass.
+    a single pass.
 
     Use this function to 'quick' iterate over modelspace entities of a **not**
     seekable binary DXF stream, filtering DXF types may speed up things if many

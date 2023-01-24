@@ -840,8 +840,7 @@ class Drawing:
             logger.warning(f"DXF document is not compatible to AutoCAD! {msg}.")
 
     def query(self, query: str = "*") -> EntityQuery:
-        """
-        Entity query over all layouts and blocks, excluding the OBJECTS section.
+        """Entity query over all layouts and blocks, excluding the OBJECTS section.
 
         Args:
             query: query string
@@ -858,7 +857,7 @@ class Drawing:
         OBJECTS section) by a DXF attribute or a key function.
 
         Args:
-            dxfattrib: grouping DXF attribute like ``'layer'``
+            dxfattrib: grouping DXF attribute like "layer"
             key: key function, which accepts a :class:`DXFEntity` as argument
                 and returns a hashable grouping key or ``None`` to ignore
                 this entity.
@@ -873,24 +872,19 @@ class Drawing:
     def chain_layouts_and_blocks(self) -> Iterator[DXFEntity]:
         """Chain entity spaces of all layouts and blocks. Yields an iterator
         for all entities in all layouts and blocks.
-
         """
         layouts = list(self.layouts_and_blocks())
         return chain.from_iterable(layouts)
 
     def layouts_and_blocks(self) -> Iterator[GenericLayoutType]:
-        """Iterate over all layouts (modelspace and paperspace) and all
-        block definitions.
-
+        """Iterate over all layouts (modelspace and paperspace) and all block definitions.
         """
         return iter(self.blocks)
 
     def delete_layout(self, name: str) -> None:
-        """
-        Delete paper space layout `name` and all entities owned by this layout.
+        """Delete paper space layout `name` and all entities owned by this layout.
         Available only for DXF R2000 or later, DXF R12 supports only one
         paperspace, and it can't be deleted.
-
         """
         if name not in self.layouts:
             raise const.DXFValueError(f"Layout '{name}' does not exist.")
@@ -898,10 +892,8 @@ class Drawing:
             self.layouts.delete(name)
 
     def new_layout(self, name, dxfattribs=None) -> Layout:
-        """
-        Create a new paperspace layout `name`. Returns a
-        :class:`~ezdxf.layouts.Layout` object.
-        DXF R12 (AC1009) supports only one paperspace layout, only the active
+        """Create a new paperspace layout `name`. Returns a :class:`~ezdxf.layouts.Layout`
+        object. DXF R12 (AC1009) supports only one paperspace layout, only the active
         paperspace layout is saved, other layouts are dismissed.
 
         Args:
@@ -924,8 +916,7 @@ class Drawing:
         fmt: str = "ISO A3",
         landscape=True,
     ) -> Paperspace:
-        """
-        Creates a new paperspace layout if `name` does not exist or reset the
+        """Creates a new paperspace layout if `name` does not exist or reset the
         existing layout.  This method requires DXF R2000 or newer.
         The paper format name `fmt` defines one of the following paper sizes,
         measures in landscape orientation:
@@ -1006,7 +997,7 @@ class Drawing:
         create an image reference. `name` is the internal image name, if set to
         ``None``, name is auto-generated.
 
-        Absolute image paths works best for AutoCAD but not really good, you
+        Absolute image paths works best for AutoCAD but not perfect, you
         have to update external references manually in AutoCAD, which is not
         possible in TrueView. If the drawing units differ from 1 meter, you
         also have to use: :meth:`set_raster_variables`.
@@ -1029,12 +1020,11 @@ class Drawing:
         return self.objects.add_image_def(filename, size_in_pixel, name)
 
     def set_raster_variables(self, frame: int = 0, quality: int = 1, units: str = "m"):
-        """
-        Set raster variables.
+        """Set raster variables.
 
         Args:
-            frame: ``0`` = do not show image frame; ``1`` = show image frame
-            quality: ``0`` = draft; ``1`` = high
+            frame: 0 = do not show image frame; 1 = show image frame
+            quality: 0 = draft; 1 = high
             units: units for inserting images. This defines the real world unit
                 for one drawing unit for the purpose of inserting and scaling
                 images with an associated resolution.
@@ -1054,11 +1044,10 @@ class Drawing:
         self.objects.set_raster_variables(frame=frame, quality=quality, units=units)
 
     def set_wipeout_variables(self, frame=0):
-        """
-        Set wipeout variables.
+        """Set wipeout variables.
 
         Args:
-            frame: ``0`` = do not show image frame; ``1`` = show image frame
+            frame: 0 = do not show image frame; 1 = show image frame
 
         """
         self.objects.set_wipeout_variables(frame=frame)
@@ -1068,18 +1057,16 @@ class Drawing:
     def add_underlay_def(
         self, filename: str, fmt: str = "ext", name: Optional[str] = None
     ):
-        """Add an :class:`~ezdxf.entities.underlay.UnderlayDef` entity to the
-        drawing (OBJECTS section).
-        `filename` is the underlay file name as relative or absolute path and
-        `fmt` as string (pdf, dwf, dgn).
+        """Add an :class:`~ezdxf.entities.underlay.UnderlayDef` entity to the drawing
+        (OBJECTS section). The `filename` is the underlay file name as relative or
+        absolute path and `fmt` as string (pdf, dwf, dgn).
         The underlay definition is required to create an underlay reference.
 
         Args:
             filename: underlay file name
-            fmt: file format as string ``'pdf'|'dwf'|'dgn'`` or ``'ext'``
+            fmt: file format as string "pdf"|"dwf"|"dgn" or "ext"
                 for getting file format from filename extension
-            name: pdf format = page number to display; dgn format =
-                ``'default'``; dwf: ????
+            name: pdf format = page number to display; dgn format = "default"; dwf: ????
 
         .. seealso::
 
@@ -1093,8 +1080,7 @@ class Drawing:
     def add_xref_def(
         self, filename: str, name: str, flags: int = BLK_XREF | BLK_EXTERNAL
     ):
-        """
-        Add an external reference (xref) definition to the blocks section.
+        """Add an external reference (xref) definition to the blocks section.
 
         Args:
             filename: external reference filename
