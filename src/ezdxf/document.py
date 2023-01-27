@@ -759,7 +759,7 @@ class Drawing:
 
     def modelspace(self) -> Modelspace:
         """Returns the modelspace layout, displayed as "Model" tab in CAD
-        applications, defined by block record named "*Model_Space".
+        applications, defined by block record named "\*Model_Space".
         """
         return self.layouts.modelspace()
 
@@ -798,7 +798,7 @@ class Drawing:
 
     def active_layout(self) -> Paperspace:
         """Returns the active paperspace layout, defined by block record name
-        "*Paper_Space".
+        "\*Paper_Space".
         """
         return self.layouts.active_layout()
 

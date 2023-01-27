@@ -280,6 +280,7 @@ class MultiLeader(DXFGraphic):
 
     @property
     def has_mtext_content(self) -> bool:
+        """``True`` if MULTILEADER has MTEXT content."""
         return self.context.mtext is not None
 
     def get_mtext_content(self) -> str:
@@ -301,6 +302,7 @@ class MultiLeader(DXFGraphic):
 
     @property
     def has_block_content(self) -> bool:
+        """``True`` if MULTILEADER has BLOCK content."""
         return self.context.block is not None
 
     def get_block_content(self) -> dict[str, str]:

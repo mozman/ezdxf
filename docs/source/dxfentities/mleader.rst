@@ -247,6 +247,18 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         list of :class:`AttribData`
 
+    .. autoproperty:: has_mtext_content
+
+    .. automethod:: get_mtext_content
+
+    .. automethod:: set_mtext_content
+
+    .. autoproperty:: has_block_content
+
+    .. automethod:: get_block_content
+
+    .. automethod:: set_block_content
+
     .. automethod:: virtual_entities
 
     .. automethod:: explode
