@@ -8,7 +8,7 @@ from ezdxf import xref, colors, const
 from ezdxf.document import Drawing
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import Polyline, Polyface, factory, Insert, Dimension
+from ezdxf.entities import Polyline, Polyface, factory, Insert, Dimension, Hatch
 
 
 def forward_handles(doc, count: int) -> None:
@@ -680,8 +680,26 @@ def test_tolerance_entity_register_dimstyle():
     assert tdoc.dimstyles.has_entry("EZDXF")
 
 
+def test_associative_hatch_has_updated_source_boundary_handles():
+    sdoc = ezdxf.new()
+    msp = sdoc.modelspace()
+    line0 = msp.add_line((0, 0), (2, 1))
+    line1 = msp.add_line((2, 1), (1, 2))
+    line2 = msp.add_line((1, 2), (0, 0))
+    hatch = msp.add_hatch()
+    path = hatch.paths.add_polyline_path([(0, 0), (2, 1), (1, 2)])
+    path.source_boundary_objects = [e.dxf.handle for e in (line0, line1, line2)]
+
+    tdoc = ezdxf.new()
+    xref.load_modelspace(sdoc, tdoc)
+    loaded_hatch = cast(Hatch, tdoc.modelspace().query("HATCH").first)
+    loaded_handles = loaded_hatch.paths[0].source_boundary_objects
+
+    assert len(loaded_handles) == 3
+    assert all(h in tdoc.entitydb for h in loaded_handles)
+
+
 # TODO:
-# HATCH/MPOLYGON
 # IMAGE/IMAGEDEF/IMAGEDEF_REACTOR
 # MLINE
 # MULTILEADER

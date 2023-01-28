@@ -1,7 +1,7 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Sequence, Optional, Union
+from typing import Sequence, Optional, Union, TYPE_CHECKING
 import abc
 import copy
 
@@ -17,6 +17,9 @@ from .dxfgfx import DXFGraphic
 from .gradient import Gradient
 from .pattern import Pattern, PatternLine
 from .dxfentity import DXFEntity
+
+if TYPE_CHECKING:
+    from ezdxf import xref
 
 RGB = colors.RGB
 
@@ -135,6 +138,17 @@ class DXFPolygon(DXFGraphic):
         # Remove gradient data from tags
         del tags[index:]
         return tags
+
+    def map_resources(self, clone: DXFEntity, mapper: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        assert isinstance(clone, DXFPolygon)
+        assert clone.doc is not None
+
+        super().map_resources(clone, mapper)
+        db = clone.doc.entitydb
+        for path in clone.paths:
+            handles = [mapper.get_handle(h) for h in path.source_boundary_objects]
+            path.source_boundary_objects = [h for h in handles if h in db]
 
     def load_seeds(self, tags: Tags) -> Tags:
         return tags
