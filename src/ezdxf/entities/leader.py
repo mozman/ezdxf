@@ -262,11 +262,11 @@ class Leader(DXFGraphic, OverrideMixin):
             # overridden resources are referenced by name
             self.override().register_resources_r12(registry)
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
-        super().map_resources(copy, mapping)
+        super().map_resources(clone, mapping)
         if self.dxf.hasattr("annotation_handle"):
-            copy.dxf.annotation_handle = mapping.get_handle(self.dxf.annotation_handle)
+            clone.dxf.annotation_handle = mapping.get_handle(self.dxf.annotation_handle)
 
         # DXF R2000+ references overridden resources by group code 1005 handles in the
         # XDATA section, which are automatically mapped by the parent class DXFEntity!
@@ -277,8 +277,8 @@ class Leader(DXFGraphic, OverrideMixin):
         if not self_override.dimstyle_attribs:
             return  # has no overrides
 
-        assert isinstance(copy, Leader)
-        self_override.map_resources_r12(copy, mapping)
+        assert isinstance(clone, Leader)
+        self_override.map_resources_r12(clone, mapping)
 
     def override(self) -> DimStyleOverride:
         """Returns the :class:`~ezdxf.entities.DimStyleOverride` object.

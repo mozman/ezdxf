@@ -91,9 +91,9 @@ class Tolerance(DXFGraphic):
         super().register_resources(registry)
         registry.add_dim_style(self.dxf.dimstyle)
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
-        super().map_resources(copy, mapping)
-        copy.dxf.dimstyle = mapping.get_dim_style(self.dxf.dimstyle)
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        super().map_resources(clone, mapping)
+        clone.dxf.dimstyle = mapping.get_dim_style(self.dxf.dimstyle)
 
     def transform(self, m: Matrix44) -> Tolerance:
         """Transform the TOLERANCE entity by transformation matrix `m` inplace."""

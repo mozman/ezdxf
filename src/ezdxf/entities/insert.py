@@ -224,10 +224,10 @@ class Insert(LinkedEntities):
         super().register_resources(registry)
         registry.add_block_name(self.dxf.name)
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         # The attached ATTRIB entities are mapped by the parent class LinkedEntities
-        super().map_resources(copy, mapping)
-        copy.dxf.name = mapping.get_block_name(self.dxf.name)
+        super().map_resources(clone, mapping)
+        clone.dxf.name = mapping.get_block_name(self.dxf.name)
 
     @property
     def has_scaling(self) -> bool:

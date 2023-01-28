@@ -919,10 +919,10 @@ class MLineStyle(DXFObject):
         for element in self.elements:
             registry.add_linetype(element.linetype)
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
-        assert isinstance(copy, MLineStyle)
-        super().map_resources(copy, mapping)
+        assert isinstance(clone, MLineStyle)
+        super().map_resources(clone, mapping)
         self.elements.elements = [
             MLineStyleElement(
                 element.offset,

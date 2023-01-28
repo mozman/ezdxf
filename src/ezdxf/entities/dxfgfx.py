@@ -645,19 +645,19 @@ class DXFGraphic(DXFEntity):
         # - visualstyle_handle
         # - plotstyle_handle
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
-        super().map_resources(copy, mapping)
-        copy.dxf.layer = mapping.get_layer(self.dxf.layer)
+        super().map_resources(clone, mapping)
+        clone.dxf.layer = mapping.get_layer(self.dxf.layer)
         attrib_exist = self.dxf.hasattr
         if attrib_exist("linetype"):
-            copy.dxf.linetype = mapping.get_linetype(self.dxf.linetype)
+            clone.dxf.linetype = mapping.get_linetype(self.dxf.linetype)
         if attrib_exist("material_handle"):
-            copy.dxf.material_handle = mapping.get_handle(self.dxf.material_handle)
+            clone.dxf.material_handle = mapping.get_handle(self.dxf.material_handle)
 
         # unsupported attributes:
-        copy.dxf.discard("visualstyle_handle")
-        copy.dxf.discard("plotstyle_handle")
+        clone.dxf.discard("visualstyle_handle")
+        clone.dxf.discard("plotstyle_handle")
 
 
 @factory.register_entity

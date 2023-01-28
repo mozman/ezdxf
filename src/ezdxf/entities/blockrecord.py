@@ -181,10 +181,10 @@ class BlockRecord(DXFEntity):
             registry.add_entity(e, block_key=key)
         # todo: Modelspace and Paperspace layouts
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
-        assert isinstance(copy, BlockRecord)
-        super().map_resources(copy, mapping)
+        assert isinstance(clone, BlockRecord)
+        super().map_resources(clone, mapping)
 
         assert self.block is not None
         mapping.map_resources_of_copy(self.block)

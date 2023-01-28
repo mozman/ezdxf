@@ -258,11 +258,11 @@ class Linetype(DXFEntity):
         if style is not None:
             registry.add_entity(style)
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate registered resources from self to the copied entity."""
-        assert isinstance(copy, Linetype)
-        super().map_resources(copy, mapping)
+        assert isinstance(clone, Linetype)
+        super().map_resources(clone, mapping)
         style_handle = self.pattern_tags.get_style_handle()
         if style_handle != "0":
             # map text style or shape file handle of complex linetype
-            copy.pattern_tags.set_style_handle(mapping.get_handle(style_handle))
+            clone.pattern_tags.set_style_handle(mapping.get_handle(style_handle))

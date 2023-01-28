@@ -508,20 +508,20 @@ class DimStyle(DXFEntity):
                 # user defined arrow head block
                 registry.add_block_name(arrow_name)
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
-        assert isinstance(copy, DimStyle)
-        super().map_resources(copy, mapping)
+        assert isinstance(clone, DimStyle)
+        super().map_resources(clone, mapping)
         # ezdxf uses names for blocks, linetypes and text style as internal data
         # map text style
         text_style = self.dxf.get(DIM_TEXT_STYLE_ATTR)
         if text_style:
-            copy.dxf.dimtxsty = mapping.get_text_style(text_style)
+            clone.dxf.dimtxsty = mapping.get_text_style(text_style)
         # map linetypes
         for attr_name in DIM_LINETYPE_ATTRIBS:
             ltype_name = self.dxf.get(attr_name)
             if ltype_name:
-                copy.dxf.set(attr_name, mapping.get_linetype(ltype_name))
+                clone.dxf.set(attr_name, mapping.get_linetype(ltype_name))
 
         # Note: ACAD arrow head blocks are created automatically at export in set_blk_handle()
         for attr_name in DIM_ARROW_HEAD_ATTRIBS:
@@ -531,7 +531,7 @@ class DimStyle(DXFEntity):
             if not ARROWS.is_acad_arrow(arrow_name):
                 # user defined arrow head block
                 arrow_name = mapping.get_block_name(arrow_name)
-            copy.dxf.set(attr_name, arrow_name)
+            clone.dxf.set(attr_name, arrow_name)
 
     def set_handles(self):
         style = self.dxf.get(DIM_TEXT_STYLE_ATTR)

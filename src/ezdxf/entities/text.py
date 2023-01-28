@@ -381,11 +381,11 @@ class Text(DXFGraphic):
         if self.dxf.hasattr("style"):
             registry.add_text_style(self.dxf.style)
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
-        super().map_resources(copy, mapping)
-        if copy.dxf.hasattr("style"):
-            copy.dxf.style = mapping.get_text_style(copy.dxf.style)
+        super().map_resources(clone, mapping)
+        if clone.dxf.hasattr("style"):
+            clone.dxf.style = mapping.get_text_style(clone.dxf.style)
 
     def plain_text(self) -> str:
         """Returns text content without formatting codes."""

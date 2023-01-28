@@ -1225,18 +1225,18 @@ class MText(DXFGraphic):
             for mtext in self._columns.linked_columns:
                 mtext.register_resources(registry)
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
-        assert isinstance(copy, MText)
-        super().map_resources(copy, mapping)
+        assert isinstance(clone, MText)
+        super().map_resources(clone, mapping)
 
-        if copy.dxf.hasattr("style"):
-            copy.dxf.style = mapping.get_text_style(copy.dxf.style)
-        if self._columns and copy._columns:
-            for col_self, col_copy in zip(
-                self._columns.linked_columns, copy._columns.linked_columns
+        if clone.dxf.hasattr("style"):
+            clone.dxf.style = mapping.get_text_style(clone.dxf.style)
+        if self._columns and clone._columns:
+            for col_self, col_clone in zip(
+                self._columns.linked_columns, clone._columns.linked_columns
             ):
-                col_self.map_resources(col_copy, mapping)
+                col_self.map_resources(col_clone, mapping)
 
 
 def export_mtext_content(text, tagwriter: AbstractTagWriter) -> None:

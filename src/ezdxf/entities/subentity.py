@@ -126,12 +126,12 @@ class LinkedEntities(DXFGraphic):
         super().register_resources(registry)
         self.process_sub_entities(lambda e: e.register_resources(registry))
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
-        assert isinstance(copy, LinkedEntities)
-        super().map_resources(copy, mapping)
-        for source, copy in zip(self.all_sub_entities(), copy.all_sub_entities()):
-            source.map_resources(copy, mapping)
+        assert isinstance(clone, LinkedEntities)
+        super().map_resources(clone, mapping)
+        for source, clone in zip(self.all_sub_entities(), clone.all_sub_entities()):
+            source.map_resources(clone, mapping)
 
 
 LINKED_ENTITIES = {"INSERT": "ATTRIB", "POLYLINE": "VERTEX"}

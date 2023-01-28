@@ -643,10 +643,10 @@ class Dimension(DXFGraphic, OverrideMixin):
             # overridden resources are referenced by name
             self.override().register_resources_r12(registry)
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
-        super().map_resources(copy, mapping)
-        copy.dxf.dimstyle = mapping.get_dim_style(self.dxf.dimstyle)
-        copy.dxf.geometry = mapping.get_block_name(self.dxf.geometry)
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        super().map_resources(clone, mapping)
+        clone.dxf.dimstyle = mapping.get_dim_style(self.dxf.dimstyle)
+        clone.dxf.geometry = mapping.get_block_name(self.dxf.geometry)
 
         # DXF R2000+ references overridden resources by group code 1005 handles in the
         # XDATA section, which are automatically mapped by the parent class DXFEntity!
@@ -656,8 +656,8 @@ class Dimension(DXFGraphic, OverrideMixin):
         self_override = self.override()
         if not self_override.dimstyle_attribs:
             return  # has no overrides
-        assert isinstance(copy, Dimension)
-        self_override.map_resources_r12(copy, mapping)
+        assert isinstance(clone, Dimension)
+        self_override.map_resources_r12(clone, mapping)
 
     @property
     def dimtype(self) -> int:

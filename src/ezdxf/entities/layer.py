@@ -393,28 +393,28 @@ class Layer(DXFEntity):
             registry.add_entity(material)
         # current plot style will be replaced by default plot style "Normal"
 
-    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
-        assert isinstance(copy, Layer)
-        super().map_resources(copy, mapping)
+        assert isinstance(clone, Layer)
+        super().map_resources(clone, mapping)
         self.dxf.linetype = mapping.get_linetype(self.dxf.linetype)
 
         # remove handles pointing to the source document:
-        copy.dxf.discard("material_handle")
-        copy.dxf.discard("plotstyle_handle")  # replaced by plot style "Normal"
-        copy.dxf.discard("unknown1")
+        clone.dxf.discard("material_handle")
+        clone.dxf.discard("plotstyle_handle")  # replaced by plot style "Normal"
+        clone.dxf.discard("unknown1")
 
         material = self.doc.entitydb.get(self.dxf.material_handle)  # type: ignore
         if material:
             mapped_handle = mapping.get_handle(material.dxf.handle, "")
             if mapped_handle:
-                copy.dxf.material_handle = mapped_handle
+                clone.dxf.material_handle = mapped_handle
 
         # create required handles to resources in the target document
-        copy.set_required_attributes()
+        clone.set_required_attributes()
         # todo: map layer overrides
         # remove layer overrides
-        copy.discard_extension_dict()
+        clone.discard_extension_dict()
 
 
 @dataclass
