@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
@@ -14,7 +14,7 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from ezdxf.math import NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
-from .dxfentity import base_class, SubclassProcessor
+from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.math import Matrix44
+    from ezdxf import xref
 
 
 __all__ = ["Tolerance"]
@@ -85,6 +86,14 @@ class Tolerance(DXFGraphic):
             tagwriter,
             ["dimstyle", "insert", "content", "extrusion", "x_axis_vector"],
         )
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        super().register_resources(registry)
+        registry.add_dim_style(self.dxf.dimstyle)
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        super().map_resources(copy, mapping)
+        copy.dxf.dimstyle = mapping.get_dim_style(self.dxf.dimstyle)
 
     def transform(self, m: Matrix44) -> Tolerance:
         """Transform the TOLERANCE entity by transformation matrix `m` inplace."""

@@ -665,8 +665,22 @@ class TestLeader:
         assert block_record.dxf.name == "_DOT"
 
 
+def test_tolerance_entity_register_dimstyle():
+    from ezdxf.entities import Tolerance
+
+    sdoc = ezdxf.new(setup="dimstyles")
+    msp = sdoc.modelspace()
+
+    # no factory method exist:
+    tolerance = Tolerance.new(dxfattribs={"dimstyle": "EZDXF"}, doc=sdoc)
+    msp.add_entity(tolerance)
+
+    tdoc = ezdxf.new()
+    xref.load_modelspace(sdoc, tdoc)
+    assert tdoc.dimstyles.has_entry("EZDXF")
+
+
 # TODO:
-# TOLERANCE
 # HATCH/MPOLYGON
 # IMAGE/IMAGEDEF/IMAGEDEF_REACTOR
 # MLINE
