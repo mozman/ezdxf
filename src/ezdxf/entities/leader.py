@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional, Iterator
@@ -13,7 +13,8 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.lldxf.tags import Tags, DXFTag
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFStructureError
+from ezdxf.lldxf import const
+
 from ezdxf.math import Vec3, UVec, X_AXIS, Z_AXIS, NULLVEC
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.explode import explode_entity
@@ -21,7 +22,8 @@ from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
-from .dimension import OverrideMixin
+from .dimension import OverrideMixin, register_override_handles
+from .dimstyleoverride import DimStyleOverride
 
 if TYPE_CHECKING:
     from audit import Auditor
@@ -30,6 +32,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.math import Matrix44
     from ezdxf.query import EntityQuery
+    from ezdxf import xref
 
 __all__ = ["Leader"]
 logger = logging.getLogger("ezdxf")
@@ -161,7 +164,7 @@ class Leader(DXFGraphic, OverrideMixin):
 
     DXFTYPE = "LEADER"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_leader)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+    MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
 
     def __init__(self) -> None:
         super().__init__()
@@ -184,7 +187,7 @@ class Leader(DXFGraphic, OverrideMixin):
                     dxf, acdb_leader_group_codes, tags, recover=True
                 )
             else:
-                raise DXFStructureError(
+                raise const.DXFStructureError(
                     f"missing 'AcDbLeader' subclass in LEADER(#{dxf.handle})"
                 )
 
@@ -210,7 +213,7 @@ class Leader(DXFGraphic, OverrideMixin):
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_leader.name)
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_leader.name)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -241,6 +244,55 @@ class Leader(DXFGraphic, OverrideMixin):
         tagwriter.write_tag2(76, len(self.vertices))
         for vertex in self.vertices:
             tagwriter.write_vertex(10, vertex)
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        assert self.doc is not None
+        super().register_resources(registry)
+        registry.add_dim_style(self.dxf.dimstyle)
+
+        # The leader entity cannot register the annotation entity!
+        if not self.has_xdata_list("ACAD", "DSTYLE"):
+            return
+
+        if self.doc.dxfversion > const.DXF12:
+            # overridden resources are referenced by handle
+            register_override_handles(self, registry)
+        else:
+            # overridden resources are referenced by name
+            self.override().register_resources_r12(registry)
+
+    def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        super().map_resources(copy, mapping)
+        if self.dxf.hasattr("annotation_handle"):
+            copy.dxf.annotation_handle = mapping.get_handle(self.dxf.annotation_handle)
+
+        # DXF R2000+ references overridden resources by group code 1005 handles in the
+        # XDATA section, which are automatically mapped by the parent class DXFEntity!
+        assert self.doc is not None
+        if self.doc.dxfversion > const.DXF12:
+            return
+        self_override = self.override()
+        if not self_override.dimstyle_attribs:
+            return  # has no overrides
+
+        assert isinstance(copy, Leader)
+        self_override.map_resources_r12(copy, mapping)
+
+    def override(self) -> DimStyleOverride:
+        """Returns the :class:`~ezdxf.entities.DimStyleOverride` object.
+
+        .. warning::
+
+            The LEADER entity shares only the DIMSTYLE override infrastructure with the
+            DIMENSION entity but does not support any other features of the DIMENSION
+            entity!
+
+            HANDLE WITH CARE!
+
+        """
+        return DimStyleOverride(self)  # type: ignore
 
     def set_vertices(self, vertices: Iterable[UVec]):
         """Set vertices of the leader, vertices is an iterable of

@@ -55,6 +55,7 @@ __all__ = [
     "RadialDimensionLarge",
     "OverrideMixin",
     "DXF_DIMENSION_TYPES",
+    "register_override_handles",
 ]
 
 DXF_DIMENSION_TYPES = {"DIMENSION", "ARC_DIMENSION", "LARGE_RADIAL_DIMENSION"}
@@ -637,16 +638,10 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         if self.doc.dxfversion > const.DXF12:
             # overridden resources are referenced by handle
-            self._register_override_handles(registry)
+            register_override_handles(self, registry)
         else:
             # overridden resources are referenced by name
             self.override().register_resources_r12(registry)
-
-    def _register_override_handles(self, registry: xref.Registry) -> None:
-        override_tags = self.get_xdata_list("ACAD", "DSTYLE")
-        for code, value in override_tags:
-            if code == 1005:
-                registry.add_handle(value)
 
     def map_resources(self, copy: DXFEntity, mapping: xref.ResourceMapper) -> None:
         super().map_resources(copy, mapping)
@@ -891,6 +886,13 @@ class Dimension(DXFGraphic, OverrideMixin):
             dxf.discard("dimstyle")
         # AutoCAD ignores invalid data in the XDATA section, no need to
         # check or repair. Ezdxf also ignores invalid XDATA overrides.
+
+
+def register_override_handles(entity: DXFEntity, registry: xref.Registry) -> None:
+    override_tags = entity.get_xdata_list("ACAD", "DSTYLE")
+    for code, value in override_tags:
+        if code == 1005:
+            registry.add_handle(value)
 
 
 acdb_arc_dimension = DefSubclass(

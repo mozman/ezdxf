@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator, cast
@@ -9,14 +9,7 @@ from ezdxf.lldxf.const import BYBLOCK
 from ezdxf.math import Vec3, fit_points_to_cad_cv
 
 if TYPE_CHECKING:
-    from ezdxf.entities import (
-        DXFGraphic,
-        Leader,
-        Insert,
-        Spline,
-        Dimension,
-        Line,
-    )
+    from ezdxf.entities import DXFGraphic, Leader, Insert, Spline, Dimension, Line
 
 
 def virtual_entities(leader: Leader) -> Iterator[DXFGraphic]:
@@ -25,8 +18,6 @@ def virtual_entities(leader: Leader) -> Iterator[DXFGraphic]:
     # https://github.com/OSGeo/gdal/blob/master/gdal/ogr/ogrsf_frmts/dxf/ogrdxf_leader.cpp
     # LEADER DXF Reference:
     # http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-396B2369-F89F-47D7-8223-8B7FB794F9F3
-    from ezdxf.entities import DimStyleOverride
-
     assert leader.dxftype() == "LEADER"
 
     vertices = Vec3.list(leader.vertices)  # WCS
@@ -55,7 +46,7 @@ def virtual_entities(leader: Leader) -> Iterator[DXFGraphic]:
 
     if doc:
         # get styling attributes from associated DIMSTYLE and/or XDATA override
-        override = DimStyleOverride(cast("Dimension", leader))
+        override = leader.override()
         dimtad = override.get("dimtad", dimtad)
         dimgap = override.get("dimgap", dimgap)
         dimscale = override.get("dimscale", dimscale)
@@ -87,9 +78,7 @@ def virtual_entities(leader: Leader) -> Iterator[DXFGraphic]:
     if dxf.path_type == 1:  # Spline
         start_tangent = vertices[1] - vertices[0]
         end_tangent = vertices[-1] - vertices[-2]
-        bspline = fit_points_to_cad_cv(
-            vertices, tangents=[start_tangent, end_tangent]
-        )
+        bspline = fit_points_to_cad_cv(vertices, tangents=[start_tangent, end_tangent])
         spline = cast("Spline", factory.new("SPLINE", doc=doc))
         spline.apply_construction_tool(bspline)
         yield spline

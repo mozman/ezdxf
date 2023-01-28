@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Any, TYPE_CHECKING, Optional
+from typing_extensions import Protocol
 import logging
 
 from ezdxf.enums import MTextLineAlignment
@@ -17,6 +18,11 @@ if TYPE_CHECKING:
     from ezdxf import xref
 
 logger = logging.getLogger("ezdxf")
+
+
+class SupportsOverride(Protocol):
+    def override(self) -> DimStyleOverride:
+        ...
 
 
 class DimStyleOverride:
@@ -126,7 +132,9 @@ class DimStyleOverride:
                 registry.add_block_name(ARROWS.block_name(arrow_name))
         # linetype and text style attributes are not supported by DXF R12!
 
-    def map_resources_r12(self, copy: Dimension, mapping: xref.ResourceMapper) -> None:
+    def map_resources_r12(
+        self, copy: SupportsOverride, mapping: xref.ResourceMapper
+    ) -> None:
         # DXF R2000+ references overridden resources by group code 1005 handles in the
         # XDATA section, which are automatically mapped by the parent class DXFEntity!
         assert self.doc.dxfversion == const.DXF12

@@ -620,15 +620,52 @@ class TestDimensionDimStyleOverride:
         handles = [value for code, value in override_tags if code == 1005]
         assert len(handles) == 1
 
-        block_record_handle = handles[0]
-        assert block_record_handle in tdoc.entitydb
+        block_record = tdoc.entitydb.get(handles[0])
+        assert block_record.dxf.name == "_DOT"
 
-        block_record = tdoc.entitydb.get(block_record_handle)
+
+class TestLeader:
+    """Load a LEADER with DIMSTYLE overrides in the XDATA section.
+
+    Note: loading a LEADER entity does not automatically trigger the import of the
+    linked TEXT, TOLERANCE or BLOCK entity, only handles are mapped correctly.
+
+    """
+
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new(setup="dimstyles")
+        msp = doc.modelspace()
+        text = msp.add_text("LEADER").set_placement((3, 1))
+        msp.add_leader(
+            vertices=[(0, 0), (1, 1), (2, 1)],
+            dimstyle="EZDXF",
+            override={"dimldrblk": ARROWS.dot},
+            dxfattribs={"annotation_type": 0, "annotation_handle": text.dxf.handle},
+        )
+        return doc
+
+    def test_loaded_leader_is_linked_to_loaded_text(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        text, leader = tdoc.modelspace()
+
+        assert leader.dxf.annotation_handle == text.dxf.handle
+
+    def test_loaded_xdata_override_has_handle_to_existing_block(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        text, leader = tdoc.modelspace()
+        override_tags = leader.get_xdata_list("ACAD", "DSTYLE")
+
+        handles = [value for code, value in override_tags if code == 1005]
+        assert len(handles) == 1
+
+        block_record = tdoc.entitydb.get(handles[0])
         assert block_record.dxf.name == "_DOT"
 
 
 # TODO:
-# LEADER
 # TOLERANCE
 # HATCH/MPOLYGON
 # IMAGE/IMAGEDEF/IMAGEDEF_REACTOR
