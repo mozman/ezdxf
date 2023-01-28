@@ -2,12 +2,13 @@
 #  License: MIT License
 from typing import cast
 import pytest
+from collections import Counter
 import ezdxf
 from ezdxf import xref, colors, const
 from ezdxf.document import Drawing
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import Polyline, Polyface, factory, Insert
+from ezdxf.entities import Polyline, Polyface, factory, Insert, Dimension
 
 
 def forward_handles(doc, count: int) -> None:
@@ -565,6 +566,65 @@ class TestDimension:
         geometry = loaded_dim.dxf.geometry
         loaded_block = tdoc.blocks.get(geometry)
         assert len(loaded_block) == 9
+
+
+class TestDimensionDimStyleOverride:
+    """Load a DIMENSION with DIMSTYLE overrides in the XDATA section."""
+
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new(setup="dimstyles")
+        msp = doc.modelspace()
+        dim = msp.add_linear_dim(
+            base=(3, 2),
+            p1=(0, 0),
+            p2=(3, 0),
+            dimstyle="EZDXF",
+            override={"dimblk": ARROWS.dot},
+        )
+        dim.render()
+        return doc
+
+    def test_load_dimension_style_exist(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        assert tdoc.dimstyles.has_entry("EZDXF")
+
+    def test_dot_blocks_in_source_doc(self, sdoc):
+        source_dim_block_name = sdoc.modelspace()[0].dxf.geometry
+        source_block = sdoc.blocks.get(source_dim_block_name)
+        counter = Counter(
+            block_ref.dxf.name for block_ref in source_block.query("INSERT")
+        )
+        assert counter["_DOT"] == 2
+
+    def test_loaded_geometry_block_has_two_block_refs_of_dot(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+
+        assert tdoc.block_records.has_entry("_DOT")
+        loaded_dim = tdoc.modelspace()[0]
+        geometry = loaded_dim.dxf.geometry
+        loaded_block = tdoc.blocks.get(geometry)
+        counter = Counter(
+            block_ref.dxf.name for block_ref in loaded_block.query("INSERT")
+        )
+        assert counter["_DOT"] == 2
+
+    def test_loaded_xdata_override_has_handle_to_existing_block(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        loaded_dim = cast(Dimension, tdoc.modelspace()[0])
+        override_tags = loaded_dim.get_xdata_list("ACAD", "DSTYLE")
+
+        handles = [value for code, value in override_tags if code == 1005]
+        assert len(handles) == 1
+
+        block_record_handle = handles[0]
+        assert block_record_handle in tdoc.entitydb
+
+        block_record = tdoc.entitydb.get(block_record_handle)
+        assert block_record.dxf.name == "_DOT"
 
 
 # TODO:
