@@ -11,7 +11,7 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.lldxf.validator import is_valid_table_name
 from .layout import Layout, Modelspace, Paperspace
-from ezdxf.entities import DXFEntity
+from ezdxf.entities import DXFEntity, BlockRecord
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -262,11 +262,18 @@ class Layouts:
     def get_layout_by_key(self, layout_key: str) -> Layout:
         """Returns a layout by its `layout_key`. (internal API)"""
         assert isinstance(layout_key, str), type(layout_key)
+        error_msg = f'Layout with key "{layout_key}" does not exist.'
         try:
             block_record = self.doc.entitydb[layout_key]
+        except KeyError:
+            raise DXFKeyError(error_msg)
+        if not isinstance(block_record, BlockRecord):
+            # VERTEX, ATTRIB, SEQEND are owned by the parent entity
+            raise DXFKeyError(error_msg)
+        try:
             dxf_layout = self.doc.entitydb[block_record.dxf.layout]
         except KeyError:
-            raise DXFKeyError(f'Layout with key "{layout_key}" does not exist.')
+            raise DXFKeyError(error_msg)
         return self.get(dxf_layout.dxf.name)
 
     def get_active_layout_key(self):

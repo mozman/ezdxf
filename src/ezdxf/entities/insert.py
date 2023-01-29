@@ -160,7 +160,19 @@ NON_ORTHO_MSG = (
 
 @factory.register_entity
 class Insert(LinkedEntities):
-    """DXF INSERT entity"""
+    """DXF INSERT entity
+
+    The INSERT entity is hard owner of its ATTRIB entities and the SEQEND entity:
+
+        ATTRIB.dxf.owner == INSERT.dxf.handle
+        SEQEND.dxf.owner == INSERT.dxf.handle
+
+    Note:
+
+        The ATTDEF entity in block definitions is owned by the BLOCK_RECORD like
+        all graphical entities.
+
+    """
 
     DXFTYPE = "INSERT"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_block_reference)

@@ -23,7 +23,7 @@ def test_delete_polyline3d(msp):
         msp.entitydb
     ), "database should get 4 vertices and 1 seqend"
 
-    assert pline.seqend.dxf.owner == pline.dxf.owner
+    assert pline.seqend.dxf.owner == pline.dxf.handle, "POLYLINE is owner of SEQEND"
     assert pline.seqend.dxf.handle is not None
     assert pline.seqend.dxf.handle in msp.doc.entitydb
 

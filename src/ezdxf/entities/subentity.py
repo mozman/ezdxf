@@ -40,7 +40,7 @@ class LinkedEntities(DXFGraphic):
     def link_entity(self, entity: DXFEntity) -> None:
         """Link VERTEX to ATTRIB entities."""
         assert isinstance(entity, DXFGraphic)
-        entity.set_owner(self.dxf.owner, self.dxf.paperspace)
+        entity.set_owner(self.dxf.handle, self.dxf.paperspace)
         self._sub_entities.append(entity)
 
     def link_seqend(self, seqend: DXFEntity) -> None:
@@ -95,14 +95,16 @@ class LinkedEntities(DXFGraphic):
         # vertices/attrib entities are linked, so set_owner() of POLYLINE does
         # not set owner of vertices at loading time.
         super().set_owner(owner, paperspace)
+        self.take_ownership()
 
-        def set_owner(entity):
-            if isinstance(entity, DXFGraphic):
-                entity.set_owner(owner, paperspace)
-            else:  # SEQEND
-                entity.dxf.owner = owner
-
-        self.process_sub_entities(set_owner)
+    def take_ownership(self):
+        """Take ownership of all sub-entities and SEQEND. (internal API)"""
+        handle = self.dxf.handle
+        paperspace = self.dxf.paperspace
+        for entity in self.all_sub_entities():
+            if entity.is_alive:
+                entity.dxf.owner = handle
+                entity.dxf.paperspace = paperspace
 
     def remove_dependencies(self, other: Optional[Drawing] = None):
         """Remove all dependencies from current document to bind entity to
@@ -130,8 +132,8 @@ class LinkedEntities(DXFGraphic):
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, LinkedEntities)
         super().map_resources(clone, mapping)
-        for source, clone in zip(self.all_sub_entities(), clone.all_sub_entities()):
-            source.map_resources(clone, mapping)
+        for source, _clone in zip(self.all_sub_entities(), clone.all_sub_entities()):
+            source.map_resources(_clone, mapping)
 
 
 LINKED_ENTITIES = {"INSERT": "ATTRIB", "POLYLINE": "VERTEX"}

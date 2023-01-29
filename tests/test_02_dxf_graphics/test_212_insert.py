@@ -148,9 +148,7 @@ def test_load_from_text(entity):
     assert entity.has_scaling is False
 
 
-@pytest.mark.parametrize(
-    "txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)]
-)
+@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     vertex = Insert.from_text(txt)
@@ -239,7 +237,9 @@ def test_copy_with_insert(doc):
     db_len = len(doc.entitydb)
 
     insert = msp.add_blockref("Test", insert=(0, 0))
-    assert insert.seqend.dxf.owner == insert.dxf.owner
+    assert (
+        insert.seqend.dxf.owner == insert.dxf.handle
+    ), "INSERT is owner of the SEQEND entity"
     assert insert.seqend.dxf.handle is not None
     assert insert.seqend.dxf.handle in doc.entitydb
 
@@ -265,7 +265,9 @@ def test_copy_with_insert(doc):
     assert copy.dxf.handle is not None
     assert copy.dxf.handle != insert.dxf.handle
     assert copy.dxf.owner == psp.layout_key
-    assert copy.attribs[0].dxf.owner == psp.layout_key
+    assert (
+        copy.attribs[0].dxf.owner == copy.dxf.handle
+    ), "INSERT is owner of ATTRIB entities"
 
 
 def test_matrix44_no_transform():

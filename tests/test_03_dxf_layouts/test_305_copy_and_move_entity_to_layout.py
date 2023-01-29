@@ -63,7 +63,9 @@ def test_move_polyline_to_paperspace(doc):
     assert len_psp + 1 == len(psp)
     for vertex in polyline.vertices:
         assert vertex.dxf.paperspace == polyline.dxf.paperspace
-        assert vertex.dxf.owner == polyline.dxf.owner
+        assert (
+            vertex.dxf.owner == polyline.dxf.handle
+        ), "POLYLINE is owner of VERTEX entities"
 
 
 def test_move_polyline_to_block(doc):
@@ -79,15 +81,15 @@ def test_move_polyline_to_block(doc):
     assert len_block + 1 == len(block)
     for vertex in polyline.vertices:
         assert vertex.dxf.paperspace == polyline.dxf.paperspace
-        assert vertex.dxf.owner == polyline.dxf.owner
+        assert (
+            vertex.dxf.owner == polyline.dxf.handle
+        ), "POLYLINE is owner of VERTEX entities"
 
 
 def test_move_from_block_to_block(doc):
     source_block = doc.blocks.new("Test2")
     target_block = doc.blocks.new("Test3")
-    polyline = source_block.add_polyline3d(
-        points=[(1, 1, 1), (3, 2, -1), (7, 4, 4)]
-    )
+    polyline = source_block.add_polyline3d(points=[(1, 1, 1), (3, 2, -1), (7, 4, 4)])
 
     polyline.move_to_layout(target_block)
     assert len(source_block) == 0

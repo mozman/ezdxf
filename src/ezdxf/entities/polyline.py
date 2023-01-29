@@ -124,7 +124,14 @@ merged_polyline_group_codes = merge_group_code_mappings(
 
 @factory.register_entity
 class Polyline(LinkedEntities):
-    """DXF POLYLINE entity"""
+    """DXF POLYLINE entity
+
+    The POLYLINE entity is hard owner of its VERTEX entities and the SEQEND entity:
+
+       VERTEX.dxf.owner == POLYLINE.dxf.handle
+       SEQEND.dxf.owner == POLYLINE.dxf.handle
+
+    """
 
     DXFTYPE = "POLYLINE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_polyline)

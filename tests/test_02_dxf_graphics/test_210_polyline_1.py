@@ -138,8 +138,8 @@ def test_copy_polyline():
     assert polyline.dxf.owner == copy.dxf.owner
     for vertex in copy.vertices:
         assert (
-            vertex.dxf.owner == copy.dxf.owner
-        ), "vertices should have same owner as polyline"
+            vertex.dxf.owner == copy.dxf.handle
+        ), "POLYLINE is owner of the VERTEX entities"
 
 
 @pytest.mark.parametrize(
