@@ -1233,7 +1233,7 @@ class CreatorInterface:
 
         """
         dxfattribs = dict(dxfattribs or {})
-        wipeout: "Wipeout" = self.new_entity("WIPEOUT", dxfattribs=dxfattribs)  # type: ignore
+        wipeout: Wipeout = self.new_entity("WIPEOUT", dxfattribs=dxfattribs)  # type: ignore
         wipeout.set_masking_area(vertices)
         doc = self.doc
         if doc and ("ACAD_WIPEOUT_VARS" not in doc.rootdict):
@@ -1242,7 +1242,7 @@ class CreatorInterface:
 
     def add_underlay(
         self,
-        underlay_def: "UnderlayDefinition",
+        underlay_def: UnderlayDefinition,
         insert: UVec = (0, 0, 0),
         scale=(1, 1, 1),
         rotation: float = 0.0,

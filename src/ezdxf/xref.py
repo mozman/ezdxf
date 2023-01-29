@@ -375,6 +375,11 @@ class ResourceMapper(Protocol):
     def map_pointers(self, tags: Tags, new_owner_handle: str = "") -> None:
         ...
 
+    def map_acad_dict_entry(
+        self, dict_name: str, entry_name: str, entity: DXFEntity
+    ) -> tuple[str, DXFEntity]:
+        ...
+
 
 class LoadingCommand:
     def register_resources(self, registry: Registry) -> None:
@@ -1141,6 +1146,25 @@ class _Transfer:
         objects = self.registry.target_doc.objects
         for obj in copies:
             objects.add_object(obj)  # type: ignore
+
+    def map_acad_dict_entry(
+        self, dict_name: str, entry_name: str, entity: DXFEntity
+    ) -> tuple[str, DXFEntity]:
+        """Map and add `entity` to a top level ACAD dictionary `dict_name` in root
+        dictionary.
+        """
+        tdoc = self.registry.target_doc
+        # todo: apply conflict policy
+        acad_dict = tdoc.rootdict.get_required_dict(dict_name)
+        existing_entry = acad_dict.get(entry_name)
+        if isinstance(existing_entry, DXFEntity):  # keep policy
+            return entry_name, existing_entry
+        loaded_entry = self.get_reference_of_copy(entity.dxf.handle)
+        if loaded_entry is None:
+            return "", entity
+        acad_dict.add(entry_name, loaded_entry)  # type: ignore
+        loaded_entry.dxf.owner = acad_dict.dxf.handle
+        return entry_name, loaded_entry
 
     def copy_settings(self):
         self.copy_raster_vars()

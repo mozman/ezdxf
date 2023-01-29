@@ -394,28 +394,24 @@ class Image(ImageBase):
     def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, Image)
-        assert self.doc is not None
         super().map_resources(clone, mapping)
         source_image_def = self.image_def
         if isinstance(source_image_def, ImageDef):
-            clone_image_def = mapping.get_reference_of_copy(source_image_def.dxf.handle)
-            if not isinstance(clone_image_def, ImageDef):
-                return
-
-            clone.image_def = clone_image_def
-            clone._create_image_def_reactor()
             name = self.get_image_def_name()
-            clone_image_def.add_to_acad_image_dict(name)
+            name, clone_image_def = mapping.map_acad_dict_entry(
+                "ACAD_IMAGE_DICT", name, source_image_def
+            )
+            if isinstance(clone_image_def, ImageDef):
+                clone.image_def = clone_image_def
+                clone._create_image_def_reactor()
 
     def get_image_def_name(self) -> str:
-        """Returns the name of the `image_def` entry which is not stored in IMAGE_DEF
-        itself.
-        """
+        """Returns the name of the `image_def` entry in the ACAD_IMAGE_DICT."""
         if self.doc is None:
             return ""
         image_dict = self.doc.rootdict.get_required_dict("ACAD_IMAGE_DICT")
         for name, entry in image_dict.items():
-            if entry is self:
+            if entry is self._image_def:
                 return name
         return ""
 
@@ -568,15 +564,6 @@ class ImageDef(DXFObject):
                 "resolution_units",
             ],
         )
-
-    def add_to_acad_image_dict(self, name: str) -> None:
-        """Add this IMAGE_DEF to ACAD_IMAGE_DICT and update owner. (internal API)"""
-        assert self.doc is not None
-
-        image_dict = self.doc.rootdict.get_required_dict("ACAD_IMAGE_DICT")
-        if name not in image_dict:
-            image_dict.add(name, self)
-            self.dxf.owner = image_dict.dxf.handle
 
 
 acdb_image_def_reactor = DefSubclass(
