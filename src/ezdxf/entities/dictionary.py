@@ -305,6 +305,9 @@ class Dictionary(DXFObject):
     def add(self, key: str, entity: DXFObject) -> None:
         """Add entry (key, value).
 
+        If the DICTIONARY is hard owner of its entries, the :meth:`add` does NOT take
+        ownership of the entity automatically.
+
         Raises:
             DXFValueError: invalid entity handle
             DXFTypeError: invalid DXF type

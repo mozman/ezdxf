@@ -1131,6 +1131,8 @@ class _Transfer:
                     "${index}${name}", name, self.xref_name, collection
                 )
         collection.object_dict.add(entry.dxf.name, entry)
+        # a resource collection is hard owner
+        entry.dxf.owner = collection.handle
 
     def add_object_copies(self, copies: Iterable[DXFEntity]) -> None:
         """Add copied DXF objects to the OBJECTS section of the target document."""
