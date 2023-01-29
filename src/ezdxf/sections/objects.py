@@ -39,9 +39,7 @@ logger = logging.getLogger("ezdxf")
 
 
 class ObjectsSection:
-    def __init__(
-        self, doc: Drawing, entities: Optional[Iterable[DXFObject]] = None
-    ):
+    def __init__(self, doc: Drawing, entities: Optional[Iterable[DXFObject]] = None):
         self.doc = doc
         self.underlay_key_generator = UnderlayKeyGenerator()
         self._entity_space = EntitySpace()
@@ -66,9 +64,10 @@ class ObjectsSection:
     def _build(self, entities: Iterator[DXFObject]) -> None:
         section_head = cast("DXFTagStorage", next(entities))
 
-        if section_head.dxftype() != "SECTION" or section_head.base_class[
-            1
-        ] != (2, "OBJECTS"):
+        if section_head.dxftype() != "SECTION" or section_head.base_class[1] != (
+            2,
+            "OBJECTS",
+        ):
             raise const.DXFStructureError(
                 "Critical structure error in the OBJECTS section."
             )
@@ -129,9 +128,7 @@ class ObjectsSection:
                 owner=rootdict.dxf.handle,
                 hard_owned=False,
             )
-            placeholder = self.add_placeholder(
-                owner=plot_style_name_dict.dxf.handle
-            )
+            placeholder = self.add_placeholder(owner=plot_style_name_dict.dxf.handle)
             plot_style_name_dict.set_default(placeholder)
             plot_style_name_dict["Normal"] = placeholder
             rootdict["ACAD_PLOTSTYLENAME"] = plot_style_name_dict
@@ -141,9 +138,9 @@ class ObjectsSection:
             # used by some DXF entities. Try to restore the original table
             # handle.
             new_table = rootdict.get(table_name)
-            if isinstance(
-                new_table, Dictionary
-            ) and self.doc.entitydb.reset_handle(new_table, handle):
+            if isinstance(new_table, Dictionary) and self.doc.entitydb.reset_handle(
+                new_table, handle
+            ):
                 logger.debug(f"reset handle of table {table_name} to #{handle}")
 
         # check required object tables:
@@ -173,9 +170,7 @@ class ObjectsSection:
                 f"invalid DXF type {entity.dxftype()} for OBJECTS section"
             )
 
-    def add_dxf_object_with_reactor(
-        self, dxftype: str, dxfattribs
-    ) -> DXFObject:
+    def add_dxf_object_with_reactor(self, dxftype: str, dxfattribs) -> DXFObject:
         """Add DXF object with reactor. (internal API)"""
         dxfobject = self.new_entity(dxftype, dxfattribs)
         dxfobject.set_reactors([dxfattribs["owner"]])
@@ -257,9 +252,7 @@ class ObjectsSection:
                 )
                 auditor.trash(entity)
 
-    def add_dictionary(
-        self, owner: str = "0", hard_owned: bool = True
-    ) -> Dictionary:
+    def add_dictionary(self, owner: str = "0", hard_owned: bool = True) -> Dictionary:
         """Add new :class:`~ezdxf.entities.Dictionary` object.
 
         Args:
@@ -297,9 +290,7 @@ class ObjectsSection:
         )
         return cast("DictionaryWithDefault", entity)
 
-    def add_dictionary_var(
-        self, owner: str = "0", value: str = ""
-    ) -> DictionaryVar:
+    def add_dictionary_var(self, owner: str = "0", value: str = "") -> DictionaryVar:
         """Add a new :class:`~ezdxf.entities.DictionaryVar` object.
 
         Args:
@@ -318,9 +309,7 @@ class ObjectsSection:
             owner: handle to owner as hex string.
 
         """
-        return self.new_entity(  # type: ignore
-            "XRECORD", dxfattribs={"owner": owner}
-        )
+        return self.new_entity("XRECORD", dxfattribs={"owner": owner})  # type: ignore
 
     def add_placeholder(self, owner: str = "0") -> Placeholder:
         """Add a new :class:`~ezdxf.entities.Placeholder` object.
@@ -343,8 +332,9 @@ class ObjectsSection:
         Args:
             frame: ``0`` = do not show image frame; ``1`` = show image frame
             quality: ``0`` = draft; ``1`` = high
-            units: units for inserting images. This defines the real world unit for one drawing unit for the purpose of
-                   inserting and scaling images with an associated resolution.
+            units: units for inserting images. This defines the real world unit for one
+                drawing unit for the purpose of inserting and scaling images with an
+                associated resolution.
 
                    ===== ===========================
                    mm    Millimeter
@@ -355,6 +345,7 @@ class ObjectsSection:
                    ft    Foot
                    yd    Yard
                    mi    Mile
+                   none  None
                    ===== ===========================
 
         (internal API), public interface :meth:`~ezdxf.drawing.Drawing.set_raster_variables`
@@ -378,6 +369,17 @@ class ObjectsSection:
             raster_vars.dxf.frame = frame
             raster_vars.dxf.quality = quality
             raster_vars.dxf.units = units_
+
+    def get_raster_variables(self) -> tuple[int, int, str]:
+        try:
+            raster_vars = self.rootdict["ACAD_IMAGE_VARS"]
+        except const.DXFKeyError:
+            return 0, 1, "none"
+        return (
+            raster_vars.dxf.frame,
+            raster_vars.dxf.quality,
+            const.REVERSE_RASTER_UNITS.get(raster_vars.dxf.units, "none")
+        )
 
     def set_wipeout_variables(self, frame: int = 0) -> None:
         """Set wipeout variables.
@@ -501,9 +503,7 @@ class ObjectsSection:
         underlay_dict[key] = underlay_def.dxf.handle
         return cast("UnderlayDefinition", underlay_def)
 
-    def add_geodata(
-        self, owner: str = "0", dxfattribs=None
-    ) -> GeoData:
+    def add_geodata(self, owner: str = "0", dxfattribs=None) -> GeoData:
         """Creates a new :class:`GeoData` entity and replaces existing ones.
         The GEODATA entity resides in the OBJECTS section and NOT in the layout
         entity space and it is linked to the layout by an extension dictionary
@@ -522,9 +522,7 @@ class ObjectsSection:
         if dxfattribs is None:
             dxfattribs = {}
         dxfattribs["owner"] = owner
-        return cast(
-            "GeoData", self.add_dxf_object_with_reactor("GEODATA", dxfattribs)
-        )
+        return cast("GeoData", self.add_dxf_object_with_reactor("GEODATA", dxfattribs))
 
 
 _OBJECT_TABLE_NAMES = [

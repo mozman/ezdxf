@@ -1193,7 +1193,7 @@ class CreatorInterface:
         size_in_units: tuple[float, float],
         rotation: float = 0.0,
         dxfattribs=None,
-    ) -> "Image":
+    ) -> Image:
         """
         Add an :class:`~ezdxf.entities.Image` entity, requires a
         :class:`~ezdxf.entities.ImageDef` entity, see :ref:`tut_image`.

@@ -141,6 +141,7 @@ class ConflictPolicy(enum.Enum):
 # from the source doc to the target doc.  I think these are always basic management
 # structures which shouldn't be duplicated.
 
+
 def embed(
     xref: BlockLayout,
     *,
@@ -678,6 +679,7 @@ class Loader:
         transfer.register_object_resources(cpm.objects)
         transfer.redirect_handle_mapping()
         transfer.map_resources()
+        transfer.copy_settings()
 
         for cmd in self._commands:
             cmd.execute(transfer)
@@ -1139,6 +1141,24 @@ class _Transfer:
         objects = self.registry.target_doc.objects
         for obj in copies:
             objects.add_object(obj)  # type: ignore
+
+    def copy_settings(self):
+        self.copy_raster_vars()
+        self.copy_wipeout_vars()
+
+    def copy_raster_vars(self):
+        sdoc = self.registry.source_doc
+        tdoc = self.registry.target_doc
+        if (
+            "ACAD_IMAGE_VARS" not in sdoc.rootdict  # not required
+            or "ACAD_IMAGE_VARS" in tdoc.rootdict  # do not replace existing values
+        ):
+            return
+        frame, quality, units = sdoc.objects.get_raster_variables()
+        tdoc.objects.set_raster_variables(frame=frame, quality=quality, units=units)
+
+    def copy_wipeout_vars(self):
+        pass  # todo
 
     def finalize(self) -> None:
         # remove replaced entities:

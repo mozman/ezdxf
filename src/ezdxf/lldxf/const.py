@@ -608,6 +608,7 @@ STD_SCALES = {
 }
 
 RASTER_UNITS = {
+    "none": 0,
     "mm": 1,
     "cm": 2,
     "m": 3,
@@ -617,6 +618,7 @@ RASTER_UNITS = {
     "yd": 7,
     "mi": 8,
 }
+REVERSE_RASTER_UNITS = {value: name for name, value in RASTER_UNITS.items()}
 
 MODEL_SPACE_R2000 = "*Model_Space"
 MODEL_SPACE_R12 = "$Model_Space"

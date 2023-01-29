@@ -29,11 +29,12 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
-    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.entities import DXFNamespace, DXFEntity, Dictionary
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.lldxf.types import DXFTag
     from ezdxf.document import Drawing
     from ezdxf.math import Matrix44
+    from ezdxf import xref
 
 __all__ = ["Image", "ImageDef", "ImageDefReactor", "RasterVariables", "Wipeout"]
 logger = logging.getLogger("ezdxf")
@@ -321,15 +322,15 @@ class Image(ImageBase):
         image.image_def = image_def
         return image
 
-    def copy(self) -> Image:
-        image_copy = cast("Image", super().copy())
+    def copy_data(self, entity: DXFEntity) -> None:
+        assert isinstance(entity, Image)
+        super().copy_data(entity)
         # Each Image has its own ImageDefReactor object,
         # which will be created by binding the copy to the
         # document.
-        image_copy.dxf.discard("image_def_reactor_handle")
-        image_copy._image_def_reactor = None
-        image_copy._image_def = self._image_def
-        return image_copy
+        entity.dxf.discard("image_def_reactor_handle")
+        entity._image_def_reactor = None
+        entity._image_def = self._image_def
 
     def post_bind_hook(self) -> None:
         # Document in LOAD process -> post_load_hook()
@@ -382,6 +383,41 @@ class Image(ImageBase):
         self._image_def_reactor = image_def_reactor
         # Link ImageDef to ImageDefReactor:
         self._image_def.append_reactor_handle(reactor_handle)
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        super().register_resources(registry)
+        if isinstance(self.image_def, ImageDef):
+            registry.add_handle(self.image_def.dxf.handle)
+        # note: IMAGEDEF_REACTOR is created automatically
+
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        assert isinstance(clone, Image)
+        assert self.doc is not None
+        super().map_resources(clone, mapping)
+        source_image_def = self.image_def
+        if isinstance(source_image_def, ImageDef):
+            clone_image_def = mapping.get_reference_of_copy(source_image_def.dxf.handle)
+            if not isinstance(clone_image_def, ImageDef):
+                return
+
+            clone.image_def = clone_image_def
+            clone._create_image_def_reactor()
+            name = self.get_image_def_name()
+            clone_image_def.add_to_acad_image_dict(name)
+
+    def get_image_def_name(self) -> str:
+        """Returns the name of the `image_def` entry which is not stored in IMAGE_DEF
+        itself.
+        """
+        if self.doc is None:
+            return ""
+        image_dict = self.doc.rootdict.get_required_dict("ACAD_IMAGE_DICT")
+        for name, entry in image_dict.items():
+            if entry is self:
+                return name
+        return ""
 
     @property
     def image_def(self) -> Optional[ImageDef]:
@@ -532,6 +568,15 @@ class ImageDef(DXFObject):
                 "resolution_units",
             ],
         )
+
+    def add_to_acad_image_dict(self, name: str) -> None:
+        """Add this IMAGE_DEF to ACAD_IMAGE_DICT and update owner. (internal API)"""
+        assert self.doc is not None
+
+        image_dict = self.doc.rootdict.get_required_dict("ACAD_IMAGE_DICT")
+        if name not in image_dict:
+            image_dict.add(name, self)
+            self.dxf.owner = image_dict.dxf.handle
 
 
 acdb_image_def_reactor = DefSubclass(

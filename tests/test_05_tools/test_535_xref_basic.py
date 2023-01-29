@@ -8,7 +8,7 @@ from ezdxf import xref, colors, const
 from ezdxf.document import Drawing
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import Polyline, Polyface, factory, Insert, Dimension, Hatch
+from ezdxf.entities import Polyline, Polyface, factory, Insert, Dimension, Hatch, Image
 
 
 def forward_handles(doc, count: int) -> None:
@@ -747,8 +747,42 @@ def test_associative_hatch_has_updated_source_boundary_handles():
     assert all(h in tdoc.entitydb for h in loaded_handles)
 
 
+class TestLoadImage:
+    """Load a IMAGE, IMAGEDEF and IMAGEDEF_REACTOR"""
+
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new(setup="dimstyles")
+        msp = doc.modelspace()
+        my_image_def = doc.add_image_def(
+            filename="example.jpg", size_in_pixel=(640, 360)
+        )
+        msp.add_image(  # first image
+            image_def=my_image_def, insert=(4, 5), size_in_units=(3.2, 1.8), rotation=30
+        )
+        msp.add_image(  # second image
+            image_def=my_image_def, insert=(10, 5), size_in_units=(6.4, 3.6), rotation=0
+        )
+        return doc
+
+    def test_load_image(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
+
+        image0, image1 = tdoc.modelspace()
+        assert isinstance(image0, Image)
+        assert isinstance(image1, Image)
+
+        image_def = image0.image_def
+        assert image_def.dxf.filename == "example.jpg"
+        assert factory.is_bound(image_def, tdoc)
+
+        assert image_def is image1.image_def, "same IMAGE_DEF expected"
+        assert "ACAD_IMAGE_VARS" in tdoc.rootdict, "expected required image vars"
+
 # TODO:
-# IMAGE/IMAGEDEF/IMAGEDEF_REACTOR
+# WIPEOUT
 # MLINE
 # MULTILEADER
 # UNDERLAY/UNDERLAYDEFINITION
