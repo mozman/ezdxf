@@ -61,6 +61,18 @@ class ObjectCollection(Generic[T]):
             raise DXFKeyError(name)
         return entry
 
+    @property
+    def handle(self) -> str:
+        """Returns the DXF handle of the DICTIONARY object."""
+        return self.object_dict.dxf.handle
+
+    @property
+    def is_hard_owner(self) -> bool:
+        """Returns ``True`` if the collection is hard owner of entities.
+        Hard owned entities will be destroyed by deleting the dictionary.
+        """
+        return self.object_dict.is_hard_owner
+
     def has_entry(self, name: str) -> bool:
         return self.get(name) is not None
 
