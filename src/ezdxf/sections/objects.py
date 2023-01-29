@@ -442,7 +442,7 @@ class ObjectsSection:
                 "image_size": size_in_pixel,
             },
         )
-        image_dict[name] = image_def.dxf.handle
+        image_dict[name] = image_def
         return cast("ImageDef", image_def)
 
     def add_image_def_reactor(self, image_handle: str) -> ImageDefReactor:
@@ -500,13 +500,13 @@ class ObjectsSection:
 
         # auto-generated underlay key
         key = self.next_underlay_key(lambda k: k not in underlay_dict)
-        underlay_dict[key] = underlay_def.dxf.handle
+        underlay_dict[key] = underlay_def
         return cast("UnderlayDefinition", underlay_def)
 
     def add_geodata(self, owner: str = "0", dxfattribs=None) -> GeoData:
         """Creates a new :class:`GeoData` entity and replaces existing ones.
         The GEODATA entity resides in the OBJECTS section and NOT in the layout
-        entity space and it is linked to the layout by an extension dictionary
+        entity space, and it is linked to the layout by an extension dictionary
         located in BLOCK_RECORD of the layout.
 
         The GEODATA entity requires DXF version R2010+. The DXF Reference does
