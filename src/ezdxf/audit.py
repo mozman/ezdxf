@@ -142,11 +142,18 @@ class Auditor:
 
     @property
     def has_errors(self) -> bool:
+        """Returns ``True`` if any unrecoverable errors were detected."""
         return bool(self.errors)
 
     @property
     def has_fixes(self) -> bool:
+        """Returns ``True`` if any recoverable errors were fixed while auditing."""
         return bool(self.fixes)
+
+    @property
+    def has_issues(self) -> bool:
+        """Returns ``True`` if the DXF document has any errors or fixes."""
+        return self.has_fixes or self.has_errors
 
     def print_error_report(
         self,
@@ -287,8 +294,7 @@ class Auditor:
         db = self.doc.entitydb
         db.locked = True
         # To create new entities while auditing, add a post audit job by calling
-        # Auditor.app_post_audit_job() with a callable object or
-        # function as argument.
+        # Auditor.app_post_audit_job() with a callable object or function as argument.
         self._post_audit_jobs = []
         for entity in db.values():
             if entity.is_alive:
