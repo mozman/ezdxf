@@ -7,6 +7,11 @@ from ezdxf import xref, colors
 from ezdxf.document import Drawing
 
 
+def document_has_no_errors(doc: Drawing) -> bool:
+    auditor = doc.audit()
+    return not auditor.has_issues
+
+
 class TestLoadLayers:
     @pytest.fixture(scope="class")
     def sdoc(self) -> Drawing:
@@ -28,6 +33,7 @@ class TestLoadLayers:
         tdoc = ezdxf.new()
         tdoc.layers.add("Layer0", color=colors.CYAN)
         self.load_layers(sdoc, tdoc, xref.ConflictPolicy.KEEP)
+        assert document_has_no_errors(tdoc) is True
 
         # Layers "0" and "DEFPOINTS" should not be loaded:
         assert len(tdoc.layers) == 3 + 2
@@ -43,6 +49,7 @@ class TestLoadLayers:
         tdoc = ezdxf.new()
         tdoc.layers.add("Layer0", color=colors.CYAN)
         self.load_layers(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # Layers "0" and "DEFPOINTS" should not be loaded:
         assert len(tdoc.layers) == 4 + 2
@@ -65,6 +72,7 @@ class TestLoadLayers:
         tdoc.layers.add("Layer0", color=colors.CYAN)
         self.load_layers(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
         self.load_layers(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # check if layers of 2nd loading process exist:
         assert tdoc.layers.get("xref$1$Layer0").dxf.name == "xref$1$Layer0"
@@ -79,6 +87,7 @@ class TestLoadLayers:
         tdoc = ezdxf.new()
         tdoc.layers.add("Layer0", color=colors.CYAN)
         self.load_layers(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # Layers "0" and "DEFPOINTS" should not be loaded:
         assert len(tdoc.layers) == 4 + 2
@@ -103,6 +112,7 @@ class TestLoadLayers:
         tdoc.layers.add("Layer0", color=colors.CYAN)
         self.load_layers(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
         self.load_layers(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         assert tdoc.layers.has_entry("Layer0") is True, "expected preserved Layer0"
 
@@ -140,6 +150,7 @@ class TestLoadLinetypes:
         tdoc = ezdxf.new()
         tdoc.linetypes.add("LType0", [0.0], description="preserve")
         self.load_linetypes(sdoc, tdoc, xref.ConflictPolicy.KEEP)
+        assert document_has_no_errors(tdoc) is True
 
         # Linetypes "CONTINUOUS", "BYLAYER" and "BYBLOCK" should not be loaded:
         assert len(tdoc.linetypes) == 2 + 3
@@ -152,6 +163,7 @@ class TestLoadLinetypes:
         tdoc = ezdxf.new()
         tdoc.linetypes.add("LType0", [0.0], description="preserve")
         self.load_linetypes(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # Linetypes "CONTINUOUS", "BYLAYER" and "BYBLOCK" should not be loaded:
         assert len(tdoc.linetypes) == 3 + 3
@@ -165,6 +177,7 @@ class TestLoadLinetypes:
         tdoc = ezdxf.new()
         tdoc.linetypes.add("LType0", [0.0], description="preserve")
         self.load_linetypes(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # Linetypes "CONTINUOUS", "BYLAYER" and "BYBLOCK" should not be loaded:
         assert len(tdoc.linetypes) == 3 + 3
@@ -210,6 +223,7 @@ class TestLoadTextStyles:
         tdoc = ezdxf.new()
         tdoc.styles.add("Style0", font="preserve.ttf")
         self.load_styles(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # Load 3 text styles from source doc
         assert len(tdoc.styles) == 2 + 3
@@ -226,6 +240,7 @@ class TestLoadTextStyles:
         tdoc = ezdxf.new()
         tdoc.styles.add("Style0", font="preserve.ttf")
         self.load_styles(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # Load 3 text styles from source doc
         assert len(tdoc.styles) == 3 + 2
@@ -262,7 +277,7 @@ class TestLoadDimStyles:
         tdoc = ezdxf.new()
         tdoc.dimstyles.add("Style0", dxfattribs={"dimpost": "preserve"})
         self.load_styles(sdoc, tdoc, xref.ConflictPolicy.KEEP)
-
+        assert document_has_no_errors(tdoc) is True
         assert len(tdoc.dimstyles) == 1 + 2
 
         style0 = tdoc.dimstyles.get("Style0")
@@ -273,6 +288,7 @@ class TestLoadDimStyles:
         tdoc = ezdxf.new()
         tdoc.dimstyles.add("Style0", dxfattribs={"dimpost": "preserve"})
         self.load_styles(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # Load 3 dim styles from source doc
         assert len(tdoc.dimstyles) == 2 + 3
@@ -289,6 +305,7 @@ class TestLoadDimStyles:
         tdoc = ezdxf.new()
         tdoc.dimstyles.add("Style0", dxfattribs={"dimpost": "preserve"})
         self.load_styles(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # Load 3 dim styles from source doc
         assert len(tdoc.dimstyles) == 2 + 3
@@ -323,6 +340,7 @@ class TestLoadMaterials:
         tdoc = ezdxf.new()
         tdoc.materials.new("Mat0").dxf.description = "preserve"
         self.load_materials(sdoc, tdoc, xref.ConflictPolicy.KEEP)
+        assert document_has_no_errors(tdoc) is True
 
         # material "GLOBAL", "BYLAYER" and "BYBLOCK" should not be loaded:
         assert len(tdoc.materials) == 3 + 2
@@ -335,6 +353,7 @@ class TestLoadMaterials:
         tdoc = ezdxf.new()
         tdoc.materials.new("Mat0").dxf.description = "preserve"
         self.load_materials(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # material "GLOBAL", "BYLAYER" and "BYBLOCK" should not be loaded:
         assert len(tdoc.materials) == 3 + 3
@@ -348,6 +367,7 @@ class TestLoadMaterials:
         tdoc = ezdxf.new()
         tdoc.materials.new("Mat0").dxf.description = "preserve"
         self.load_materials(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # material "GLOBAL", "BYLAYER" and "BYBLOCK" should not be loaded:
         assert len(tdoc.materials) == 3 + 3
@@ -365,8 +385,13 @@ class TestLoadMLineStyles:
     def sdoc(self) -> Drawing:
         doc = ezdxf.new()
         doc.filename = "xref.dxf"
-        doc.mline_styles.new("Style0").dxf.description = "XrefStyle0"
-        doc.mline_styles.new("Style1").dxf.description = "XrefStyle1"
+        mline_style0 = doc.mline_styles.new("Style0")
+        mline_style0.dxf.description = "XrefStyle0"
+        mline_style0.elements.append(1)  # type: ignore
+
+        mline_style1 = doc.mline_styles.new("Style1")
+        mline_style1.dxf.description = "XrefStyle1"
+        mline_style1.elements.append(1)  # type: ignore
         return doc
 
     @staticmethod
@@ -377,8 +402,12 @@ class TestLoadMLineStyles:
 
     def test_conflict_policy_keep(self, sdoc):
         tdoc = ezdxf.new()
-        tdoc.mline_styles.new("Style0").dxf.description = "preserve"
+        mline_style0 = tdoc.mline_styles.new("Style0")
+        mline_style0.dxf.description = "preserve"
+        mline_style0.elements.append(1)  # type: ignore
+
         self.load_mline_styles(sdoc, tdoc, xref.ConflictPolicy.KEEP)
+        assert document_has_no_errors(tdoc) is True
 
         # style "Standard" should not be loaded:
         assert len(tdoc.mline_styles) == 1 + 2
@@ -389,8 +418,12 @@ class TestLoadMLineStyles:
 
     def test_xref_rename_policy(self, sdoc):
         tdoc = ezdxf.new()
-        tdoc.mline_styles.new("Style0").dxf.description = "preserve"
+        mline_style0 = tdoc.mline_styles.new("Style0")
+        mline_style0.dxf.description = "preserve"
+        mline_style0.elements.append(1)  # type: ignore
+
         self.load_mline_styles(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # style "Standard" should not be loaded:
         assert len(tdoc.mline_styles) == 1 + 3
@@ -402,8 +435,12 @@ class TestLoadMLineStyles:
 
     def test_numbered_rename_policy(self, sdoc):
         tdoc = ezdxf.new()
-        tdoc.mline_styles.new("Style0").dxf.description = "preserve"
+        mline_style0 = tdoc.mline_styles.new("Style0")
+        mline_style0.dxf.description = "preserve"
+        mline_style0.elements.append(1)  # type: ignore
+
         self.load_mline_styles(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # style "Standard" should not be loaded:
         assert len(tdoc.mline_styles) == 1 + 3
@@ -435,6 +472,7 @@ class TestLoadMLeaderStyles:
         tdoc = ezdxf.new()
         tdoc.mleader_styles.new("Style0").dxf.default_text_content = "preserve"
         self.load_mleader_styles(sdoc, tdoc, xref.ConflictPolicy.KEEP)
+        assert document_has_no_errors(tdoc) is True
 
         # style "Standard" should not be loaded:
         assert len(tdoc.mleader_styles) == 1 + 2
@@ -447,6 +485,7 @@ class TestLoadMLeaderStyles:
         tdoc = ezdxf.new()
         tdoc.mleader_styles.new("Style0").dxf.default_text_content = "preserve"
         self.load_mleader_styles(sdoc, tdoc, xref.ConflictPolicy.XREF_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # style "Standard" should not be loaded:
         assert len(tdoc.mleader_styles) == 1 + 3
@@ -460,6 +499,7 @@ class TestLoadMLeaderStyles:
         tdoc = ezdxf.new()
         tdoc.mleader_styles.new("Style0").dxf.default_text_content = "preserve"
         self.load_mleader_styles(sdoc, tdoc, xref.ConflictPolicy.NUM_PREFIX)
+        assert document_has_no_errors(tdoc) is True
 
         # style "Standard" should not be loaded:
         assert len(tdoc.mleader_styles) == 1 + 3
@@ -483,6 +523,8 @@ class TestLoadTextWithExistingTextstyle:
         tdoc = self.make_doc("times.ttf")
 
         xref.load_modelspace(sdoc, tdoc, conflict_policy=xref.ConflictPolicy.KEEP)
+        assert document_has_no_errors(tdoc) is True
+
         assert len(tdoc.styles) == 2
         assert tdoc.styles.get("Style0").dxf.font == "times.ttf"
 
@@ -498,6 +540,8 @@ class TestLoadTextWithExistingTextstyle:
         xref.load_modelspace(
             sdoc, tdoc, conflict_policy=xref.ConflictPolicy.XREF_PREFIX
         )
+        assert document_has_no_errors(tdoc) is True
+
         assert len(tdoc.styles) == 3  # includes "Standard" style
         assert tdoc.styles.get("Style0").dxf.font == "times.ttf"
         assert tdoc.styles.get("xref$0$Style0").dxf.font == "arial.ttf"
@@ -520,6 +564,8 @@ class TestLoadLineWithExistingLinetype:
         tdoc = self.make_doc("keep")
 
         xref.load_modelspace(sdoc, tdoc, conflict_policy=xref.ConflictPolicy.KEEP)
+        assert document_has_no_errors(tdoc) is True
+
         assert len(tdoc.linetypes) == 4  # incl. CONTINUOUS, BYLAYER, BYBLOCK
         assert tdoc.linetypes.get("LType0").dxf.description == "keep"
 
@@ -535,6 +581,8 @@ class TestLoadLineWithExistingLinetype:
         xref.load_modelspace(
             sdoc, tdoc, conflict_policy=xref.ConflictPolicy.XREF_PREFIX
         )
+        assert document_has_no_errors(tdoc) is True
+
         assert len(tdoc.linetypes) == 5  # incl. CONTINUOUS, BYLAYER, BYBLOCK
         assert tdoc.linetypes.get("LType0").dxf.description == "keep"
         assert tdoc.linetypes.get("xref$0$LType0").dxf.description == "source"
@@ -574,6 +622,8 @@ class TestLoadLineWithExistingComplexLinetype:
         xref.load_modelspace(
             sdoc, tdoc, conflict_policy=xref.ConflictPolicy.XREF_PREFIX
         )
+        assert document_has_no_errors(tdoc) is True
+
         shape_file = tdoc.styles.find_shx("ltypeshp.shx")
         assert shape_file is existing_shape_file
         loaded_ltype = tdoc.linetypes.get("xref$0$SQUARE")
@@ -599,6 +649,8 @@ class TestLoadEntityWithExistingMaterial:
         tdoc = self.make_doc("keep")
 
         xref.load_modelspace(sdoc, tdoc, conflict_policy=xref.ConflictPolicy.KEEP)
+        assert document_has_no_errors(tdoc) is True
+
         assert len(tdoc.materials) == 4  # incl. GLOBAL, BYLAYER, BYBLOCK
         mat0 = tdoc.materials.get("Mat0")
         assert mat0.dxf.description == "keep"
@@ -617,6 +669,7 @@ class TestLoadEntityWithExistingMaterial:
         xref.load_modelspace(
             sdoc, tdoc, conflict_policy=xref.ConflictPolicy.XREF_PREFIX
         )
+        assert document_has_no_errors(tdoc) is True
         assert len(tdoc.materials) == 5  # incl. GLOBAL, BYLAYER, BYBLOCK
 
         existing_mat0 = tdoc.materials.get("Mat0")

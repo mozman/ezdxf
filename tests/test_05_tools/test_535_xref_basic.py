@@ -16,6 +16,11 @@ def forward_handles(doc, count: int) -> None:
         doc.entitydb.next_handle()
 
 
+def document_has_no_errors(doc: Drawing) -> bool:
+    auditor = doc.audit()
+    return not auditor.has_issues
+
+
 class TestLoadResourcesWithoutNamingConflicts:
     @pytest.fixture(scope="class")
     def sdoc(self) -> Drawing:
@@ -56,6 +61,8 @@ class TestLoadResourcesWithoutNamingConflicts:
         loader = xref.Loader(sdoc, tdoc)
         loader.load_layers(["first"])
         loader.execute()
+        assert document_has_no_errors(tdoc) is True
+
         layer = tdoc.layers.get("first")
 
         assert layer is not sdoc.layers.get("first"), "expected a copy"
@@ -79,6 +86,8 @@ class TestLoadResourcesWithoutNamingConflicts:
         loader = xref.Loader(sdoc, tdoc)
         loader.load_linetypes(["square"])
         loader.execute()
+        assert document_has_no_errors(tdoc) is True
+
         ltype = tdoc.linetypes.get("square")
         assert ltype.dxf.name == "SQUARE"
         # do not repeat more tests from test_loading_a_simple_layer()
@@ -101,6 +110,8 @@ class TestLoadResourcesWithoutNamingConflicts:
         loader = xref.Loader(sdoc, tdoc)
         loader.load_linetypes(["gas"])
         loader.execute()
+        assert document_has_no_errors(tdoc) is True
+
         ltype = tdoc.linetypes.get("gas")
         assert ltype.dxf.name == "GAS"
         # do not repeat more tests from test_loading_a_simple_layer()
@@ -120,6 +131,8 @@ class TestLoadResourcesWithoutNamingConflicts:
         loader = xref.Loader(sdoc, tdoc)
         loader.load_layers(["second"])
         loader.execute()
+        assert document_has_no_errors(tdoc) is True
+
         layer = tdoc.layers.get("second")
         assert layer.dxf.name == "SECOND", "expected the original layer name"
 
@@ -134,6 +147,8 @@ class TestLoadResourcesWithoutNamingConflicts:
         loader = xref.Loader(sdoc, tdoc)
         loader.load_text_styles(["arial"])
         loader.execute()
+        assert document_has_no_errors(tdoc) is True
+
         arial = tdoc.styles.get("arial")
         assert arial.dxf.name == "ARIAL", "expected text style ARIAL in target doc"
 
@@ -147,6 +162,7 @@ class TestLoadResourcesWithoutNamingConflicts:
         loader = xref.Loader(sdoc, tdoc)
         loader.load_dim_styles(["TestDimStyle"])
         loader.execute()
+        assert document_has_no_errors(tdoc) is True
 
         dimstyle = tdoc.dimstyles.get("TestDimStyle")
         assert dimstyle.dxf.name == "TestDimStyle"
@@ -168,6 +184,7 @@ class TestLoadResourcesWithoutNamingConflicts:
         loader = xref.Loader(sdoc, tdoc)
         loader.load_layers(["Layer_with_material"])
         loader.execute()
+        assert document_has_no_errors(tdoc) is True
 
         assert (
             "ExoticBlue" in tdoc.materials
@@ -195,6 +212,7 @@ class TestLoadEntities:
 
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         assert tdoc.layers.has_entry("Layer0") is True
         assert tdoc.linetypes.has_entry("LType0") is True
@@ -221,6 +239,7 @@ class TestLoadEntities:
 
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         assert tdoc.appids.has_entry("TEST_ID")
         tp0, tp1 = tdoc.modelspace()
@@ -244,6 +263,7 @@ class TestLoadEntities:
 
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         tp0, tp1 = tdoc.modelspace()
         reactors = tp0.reactors.get()
@@ -258,6 +278,7 @@ class TestLoadEntities:
 
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         copy = tdoc.modelspace()[0]
         assert copy.has_extension_dict is True
@@ -282,6 +303,7 @@ class TestLoadTextEntities:
         msp.add_text("MyText", dxfattribs={"style": "ARIAL"})
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         assert tdoc.styles.has_entry("ARIAL")
 
@@ -290,6 +312,7 @@ class TestLoadTextEntities:
         msp.add_mtext("MyText", dxfattribs={"style": "ARIAL"})
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         assert tdoc.styles.has_entry("ARIAL")
 
@@ -322,6 +345,8 @@ def test_load_mtext_with_columns():
 
     tdoc = ezdxf.new("R2000")
     xref.load_modelspace(sdoc, tdoc)
+    assert document_has_no_errors(tdoc) is True
+
     assert tdoc.styles.has_entry("ARIAL1")
     assert tdoc.styles.has_entry("ARIAL2")
 
@@ -347,6 +372,7 @@ class TestLoadLinkedEntities:
         polyline.vertices[0].dxf.linetype = "LType0"
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        # assert document_has_no_errors(tdoc) is True
 
         assert tdoc.linetypes.has_entry("LType0")
         loaded_polyline = cast(Polyline, tdoc.modelspace()[0])
@@ -356,17 +382,18 @@ class TestLoadLinkedEntities:
             factory.is_bound(v, tdoc) for v in loaded_polyline.vertices
         ), "all vertices should be bound to tdoc"
         assert all(
-            v.dxf.owner == loaded_polyline.dxf.owner for v in loaded_polyline.vertices
-        ), "all vertices should have the same owner as POLYLINE"
+            v.dxf.owner == loaded_polyline.dxf.handle for v in loaded_polyline.vertices
+        ), "all vertices are owned by the POLYLINE"
         assert (
-            loaded_polyline.seqend.dxf.owner == loaded_polyline.dxf.owner
-        ), "SEQEND owner should be the POLYLINE owner"
+            loaded_polyline.seqend.dxf.owner == loaded_polyline.dxf.handle
+        ), "SEQEND is owned by the POLYLINE"
 
     def test_load_polyface(self, sdoc):
         polyface = sdoc.modelspace().add_polyface()
         polyface.append_face([(0, 0), (1, 0), (1, 1)])
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         loaded_polyface = cast(Polyface, tdoc.modelspace()[0])
         assert isinstance(loaded_polyface, Polyface)
@@ -394,6 +421,7 @@ class TestBlocks:
         loader = xref.Loader(sdoc, tdoc)
         loader.load_block_layout(sdoc.blocks.get("TestBlock"))
         loader.execute()
+        assert document_has_no_errors(tdoc) is True
 
         assert tdoc.layers.has_entry("Layer0"), "expected loaded LAYER"
         assert tdoc.linetypes.has_entry("LType0"), "expected loaded LTYPE"
@@ -436,6 +464,7 @@ class TestBlocks:
     def test_load_block_reference(self, sdoc):
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         assert (
             "TestBlock" in tdoc.blocks
@@ -445,12 +474,13 @@ class TestBlocks:
         assert factory.is_bound(insert, tdoc), "INSERT entity not bound to target doc"
         assert insert.dxf.name == "TestBlock"
         assert (
-            insert.seqend.dxf.owner == insert.dxf.owner
-        ), "SEQEND owner should be the INSERT owner"
+            insert.seqend.dxf.owner == insert.dxf.handle
+        ), "SEQEND owner should be the INSERT entity"
 
     def test_load_block_reference_attributes(self, sdoc):
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         insert = cast(Insert, tdoc.modelspace()[0])
         assert len(insert.attribs) == 1, "expected loaded ATTRIB entities"
@@ -461,8 +491,8 @@ class TestBlocks:
 
         assert factory.is_bound(attrib, tdoc), "ATTRIB entity not bound to target doc"
         assert (
-            attrib.dxf.owner == insert.dxf.owner
-        ), "ATTRIB owner should be the INSERT owner"
+            attrib.dxf.owner == insert.dxf.handle
+        ), "ATTRIB owner should be the INSERT entity"
 
 
 class TestAnonymousBlocks:
@@ -478,6 +508,7 @@ class TestAnonymousBlocks:
         for _ in range(3):  # increase anonymous block name counter
             tdoc.blocks.anonymous_block_name("U")
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         loaded_block_ref = cast(Insert, tdoc.modelspace()[0])
         loaded_block_name = loaded_block_ref.dxf.name
@@ -497,6 +528,8 @@ def test_load_hard_owned_XRecord_within_appdata_section():
 
     tdoc = ezdxf.new()
     xref.load_modelspace(sdoc, tdoc)
+    assert document_has_no_errors(tdoc) is True
+
     loaded_line = tdoc.modelspace()[0]
     appdata = loaded_line.get_app_data("EZDXF")
     group_code, xrecord_handle = appdata[0]
@@ -517,6 +550,8 @@ def test_load_hard_owned_XRecord_by_extension_dict():
 
     tdoc = ezdxf.new()
     xref.load_modelspace(sdoc, tdoc)
+    assert document_has_no_errors(tdoc) is True
+
     loaded_line = tdoc.modelspace()[0]
 
     loaded_xdict = loaded_line.extension_dict
@@ -553,6 +588,7 @@ class TestDimension:
     def test_load_dimension_style_exist(self, sdoc):
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
         assert tdoc.dimstyles.has_entry("EZDXF")
 
     def test_loaded_geometry_block_exist(self, sdoc):
@@ -562,6 +598,8 @@ class TestDimension:
 
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
+
         loaded_dim = tdoc.modelspace()[0]
         geometry = loaded_dim.dxf.geometry
         loaded_block = tdoc.blocks.get(geometry)
@@ -588,6 +626,7 @@ class TestDimensionDimStyleOverride:
     def test_load_dimension_style_exist(self, sdoc):
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
         assert tdoc.dimstyles.has_entry("EZDXF")
 
     def test_dot_blocks_in_source_doc(self, sdoc):
@@ -601,6 +640,7 @@ class TestDimensionDimStyleOverride:
     def test_loaded_geometry_block_has_two_block_refs_of_dot(self, sdoc):
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
 
         assert tdoc.block_records.has_entry("_DOT")
         loaded_dim = tdoc.modelspace()[0]
@@ -614,6 +654,8 @@ class TestDimensionDimStyleOverride:
     def test_loaded_xdata_override_has_handle_to_existing_block(self, sdoc):
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
+
         loaded_dim = cast(Dimension, tdoc.modelspace()[0])
         override_tags = loaded_dim.get_xdata_list("ACAD", "DSTYLE")
 
@@ -648,13 +690,16 @@ class TestLeader:
     def test_loaded_leader_is_linked_to_loaded_text(self, sdoc):
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
-        text, leader = tdoc.modelspace()
+        assert document_has_no_errors(tdoc) is True
 
+        text, leader = tdoc.modelspace()
         assert leader.dxf.annotation_handle == text.dxf.handle
 
     def test_loaded_xdata_override_has_handle_to_existing_block(self, sdoc):
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
+
         text, leader = tdoc.modelspace()
         override_tags = leader.get_xdata_list("ACAD", "DSTYLE")
 
@@ -677,6 +722,7 @@ def test_tolerance_entity_register_dimstyle():
 
     tdoc = ezdxf.new()
     xref.load_modelspace(sdoc, tdoc)
+    assert document_has_no_errors(tdoc) is True
     assert tdoc.dimstyles.has_entry("EZDXF")
 
 
@@ -692,6 +738,8 @@ def test_associative_hatch_has_updated_source_boundary_handles():
 
     tdoc = ezdxf.new()
     xref.load_modelspace(sdoc, tdoc)
+    assert document_has_no_errors(tdoc) is True
+
     loaded_hatch = cast(Hatch, tdoc.modelspace().query("HATCH").first)
     loaded_handles = loaded_hatch.paths[0].source_boundary_objects
 
