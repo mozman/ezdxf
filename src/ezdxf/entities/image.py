@@ -325,11 +325,11 @@ class Image(ImageBase):
     def copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, Image)
         super().copy_data(entity)
-        # Each Image has its own ImageDefReactor object,
-        # which will be created by binding the copy to the
-        # document.
+        # Each IMAGE has its own ImageDefReactor object, which will be created by
+        # binding the copy to the document.
         entity.dxf.discard("image_def_reactor_handle")
         entity._image_def_reactor = None
+        # shared IMAGE_DEF
         entity._image_def = self._image_def
 
     def post_bind_hook(self) -> None:
@@ -381,15 +381,15 @@ class Image(ImageBase):
         # Link Image to ImageDefReactor:
         self.dxf.image_def_reactor_handle = reactor_handle
         self._image_def_reactor = image_def_reactor
-        # Link ImageDef to ImageDefReactor:
-        self._image_def.append_reactor_handle(reactor_handle)
+        # Link ImageDef to ImageDefReactor if in same document (XREF mapping!):
+        if self.doc is self._image_def.doc:
+            self._image_def.append_reactor_handle(reactor_handle)
 
     def register_resources(self, registry: xref.Registry) -> None:
         """Register required resources to the resource registry."""
         super().register_resources(registry)
         if isinstance(self.image_def, ImageDef):
             registry.add_handle(self.image_def.dxf.handle)
-        # note: IMAGEDEF_REACTOR is created automatically
 
     def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
@@ -403,7 +403,15 @@ class Image(ImageBase):
             )
             if isinstance(clone_image_def, ImageDef):
                 clone.image_def = clone_image_def
-                clone._create_image_def_reactor()
+                if isinstance(clone._image_def_reactor, ImageDefReactor):
+                    clone_image_def.append_reactor_handle(
+                        clone._image_def_reactor.dxf.handle
+                    )
+        # Note:
+        # The IMAGEDEF_REACTOR was created automatically at binding the copy to
+        # a new document, but the handle of the IMAGEDEF_REACTOR was not add to the
+        # IMAGEDEF reactor handles, because at this point the IMAGE had still a reference
+        # to the IMAGEDEF of the source document.
 
     def get_image_def_name(self) -> str:
         """Returns the name of the `image_def` entry in the ACAD_IMAGE_DICT."""
@@ -428,6 +436,11 @@ class Image(ImageBase):
         else:
             self.dxf.discard("image_def_handle")
             self._image_def = None
+
+    @property
+    def image_def_reactor(self) -> Optional[ImageDefReactor]:
+        """Returns the associated IMAGEDEF_REACTOR entity."""
+        return self._image_def_reactor
 
     def destroy(self) -> None:
         if not self.is_alive:

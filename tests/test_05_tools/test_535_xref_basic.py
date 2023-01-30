@@ -765,21 +765,49 @@ class TestLoadImage:
         )
         return doc
 
-    def test_load_image(self, sdoc):
+    def test_loaded_infrastructure(self, sdoc):
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
         assert document_has_no_errors(tdoc) is True
+        assert "ACAD_IMAGE_VARS" in tdoc.rootdict, "expected required image vars"
+        assert (
+            len(tdoc.objects.query("IMAGEDEF_REACTOR")) == 2
+        ), "expected two IMAGEDEF_REACTOR objects"
+        assert len(tdoc.objects.query("IMAGEDEF")) == 1, "expected one IMAGEDEF object"
+
+    def test_loaded_images_share_image_definition(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
 
         image0, image1 = tdoc.modelspace()
         assert isinstance(image0, Image)
         assert isinstance(image1, Image)
 
-        image_def = image0.image_def
-        assert image_def.dxf.filename == "example.jpg"
-        assert factory.is_bound(image_def, tdoc)
+        image0_def = image0.image_def
+        assert image0_def.dxf.filename == "example.jpg"
+        assert factory.is_bound(image0_def, tdoc)
+        assert image0_def is image1.image_def
 
-        assert image_def is image1.image_def, "same IMAGE_DEF expected"
-        assert "ACAD_IMAGE_VARS" in tdoc.rootdict, "expected required image vars"
+    def test_loaded_image_def_reactors(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+
+        image0, image1 = tdoc.modelspace()
+        assert isinstance(image0, Image)
+        assert isinstance(image1, Image)
+
+        # IMAGEDEF_REACTOR for image0
+        assert factory.is_bound(image0.image_def_reactor, tdoc)
+        assert image0.image_def_reactor.dxf.image_handle == image0.dxf.handle
+
+        # IMAGEDEF_REACTOR for image1
+        assert factory.is_bound(image1.image_def_reactor, tdoc)
+        assert image1.image_def_reactor.dxf.image_handle == image1.dxf.handle
+
+        # IMAGEDEF_REACTOR in IMAGEDEF reactor handles
+        assert image0.image_def_reactor.dxf.handle in image0.image_def.get_reactors()
+        assert image1.image_def_reactor.dxf.handle in image1.image_def.get_reactors()
+
 
 # TODO:
 # WIPEOUT
