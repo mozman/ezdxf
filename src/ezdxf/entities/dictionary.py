@@ -36,11 +36,15 @@ logger = logging.getLogger("ezdxf")
 acdb_dictionary = DefSubclass(
     "AcDbDictionary",
     {
-        # If set to 1, indicates that elements of the dictionary are to be treated
-        # as hard-owned:
+        # If hard_owned is set to 1 the entries are owned by the DICTIONARY.
+        # The 1 state seems to be the default value, but is not documented by
+        # the DXF reference.
+        # BricsCAD creates the root DICTIONARY and the top level DICTIONARY entries
+        # without group code 280 tags, and they are all definitely hard owner of their
+        # entries, because their entries have the DICTIONARY handle as owner handle.
         "hard_owned": DXFAttr(
             280,
-            default=0,
+            default=1,
             optional=True,
             validator=validator.is_integer_bool,
             fixer=RETURN_DEFAULT,

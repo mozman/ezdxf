@@ -18,13 +18,18 @@ from ezdxf.audit import Auditor, AuditError
 
 
 class MockDoc:
-    class MockEntityDB:
+    class Objects:
+        def delete_entity(self, entity):
+            pass
+
+    class EntityDB:
         def __getitem__(self, item):
             return item
 
     def __init__(self):
-        self.entitydb = MockDoc.MockEntityDB()
+        self.entitydb = MockDoc.EntityDB()
         self.dxfversion = "AC1015"
+        self.objects = MockDoc.Objects()
 
 
 class TestNoneEmptyDXFDict:
