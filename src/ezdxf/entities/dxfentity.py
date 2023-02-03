@@ -342,7 +342,9 @@ class DXFEntity:
         pass
 
     def copy(self: T) -> T:
-        """Returns a copy of `self` but without handle, owner and reactors.
+        """Internal entity copy for usage in the same document or as virtual entity.
+
+        Returns a copy of `self` but without handle, owner and reactors.
         This copy is NOT stored in the entity database and does NOT reside
         in any layout, block, table or objects section!
         The extension dictionary will be copied for entities bound to a valid
@@ -355,6 +357,22 @@ class DXFEntity:
         # DO NOT COPY DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE.
         # Copying an entity from a block reference, takes it out of context of
         # this block reference!
+        self.copy_data(clone)
+        return clone
+
+    def copy_external(self: T) -> T:
+        """External entity copy for usage in another document, this copy mode requires
+        registering and mapping of resources, see also:
+
+            - DXFEntity.register_resources()
+            - DXFEntity.map_resources()
+
+        Introduced for usage by the xref module.
+
+        (internal API)
+        """
+        clone = self.raw_copy()
+        # source of copy is not required
         self.copy_data(clone)
         return clone
 

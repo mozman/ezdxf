@@ -503,6 +503,10 @@ class Dimension(DXFGraphic, OverrideMixin):
             entity.dxf.discard("insert")
         entity.virtual_block_content = virtual_content
 
+    def copy_external(self) -> Dimension:
+        # virtual content is not required
+        return self.raw_copy()  # type: ignore
+
     def post_bind_hook(self):
         """Called after binding a virtual dimension entity to a document.
 

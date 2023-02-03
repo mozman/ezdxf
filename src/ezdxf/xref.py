@@ -1252,16 +1252,10 @@ class CopyMachine:
 
     def copy_entity(self, entity: DXFEntity) -> Optional[DXFEntity]:
         try:
-            clone = entity.raw_copy()
+            return entity.copy_external()
         except const.DXFError:
             self.debug(f"cannot copy entity {str(entity)}")
-            return None
-
-        # The DIMENSION entity should not create a virtual copy of the associated
-        # geometry block!
-        if not isinstance(entity, Dimension):
-            entity.copy_data(clone)
-        return clone
+        return None
 
     def copy_dxf_class(self, cls: DXFClass) -> None:
         self.classes.append(cls.copy())
