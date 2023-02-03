@@ -79,7 +79,7 @@ class DXFGroup(DXFObject):
         self._handles: set[str] = set()  # only needed at the loading stage
         self._data: list[DXFEntity] = []
 
-    def copy(self):
+    def raw_copy(self):
         raise const.DXFTypeError("Copying of GROUP not supported.")
 
     def load_dxf_attribs(

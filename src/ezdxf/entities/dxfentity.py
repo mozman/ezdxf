@@ -1015,7 +1015,7 @@ class DXFTagStorage(DXFEntity):
         self.xtags = ExtendedTags()
         self.embedded_objects: Optional[list[Tags]] = None
 
-    def copy(self: T) -> T:
+    def raw_copy(self: T) -> T:
         raise const.DXFTypeError(
             f"Cloning of tag storage {self.dxftype()} not supported."
         )

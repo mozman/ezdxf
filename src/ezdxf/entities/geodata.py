@@ -256,7 +256,7 @@ class GeoData(DXFObject):
         self.faces: list[Sequence[int]] = []
         self.coordinate_system_definition = ""
 
-    def copy(self):
+    def raw_copy(self):
         raise DXFTypeError(f"Cloning of {self.DXFTYPE} not supported.")
 
     def load_dxf_attribs(

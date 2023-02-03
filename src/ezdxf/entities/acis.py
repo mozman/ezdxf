@@ -136,7 +136,7 @@ class Body(DXFGraphic):
         else:
             return False
 
-    def copy(self):
+    def raw_copy(self):
         """Prevent copying. (internal interface)"""
         raise DXFTypeError("Copying of ACIS data not supported.")
 

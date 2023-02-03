@@ -51,7 +51,7 @@ class ACADProxyEntity(DXFGraphic):
         super().__init__()
         self.acdb_proxy_entity: Optional[Tags] = None
 
-    def copy(self):
+    def raw_copy(self):
         raise const.DXFTypeError(f"Cloning of {self.dxftype()} not supported.")
 
     def load_dxf_attribs(

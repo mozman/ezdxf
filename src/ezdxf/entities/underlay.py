@@ -111,7 +111,7 @@ class Underlay(DXFGraphic):
         self._boundary_path: list[UVec] = []
         self._underlay_def: Optional[UnderlayDefinition] = None
 
-    def copy(self):
+    def raw_copy(self):
         raise DXFTypeError("Copying of underlay not supported.")
 
     def load_dxf_attribs(

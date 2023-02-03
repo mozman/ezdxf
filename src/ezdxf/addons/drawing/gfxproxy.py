@@ -39,7 +39,7 @@ class DXFGraphicProxy(DXFGraphic):
     def virtual_entities(self) -> Iterable[DXFGraphic]:
         return self.__virtual_entities__()
 
-    def copy(self) -> DXFGraphicProxy:
+    def raw_copy(self) -> DXFGraphicProxy:
         raise const.DXFTypeError(f"Cloning of DXFGraphicProxy() not supported.")
 
     def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
