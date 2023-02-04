@@ -1182,7 +1182,16 @@ class _Transfer:
         tdoc.objects.set_raster_variables(frame=frame, quality=quality, units=units)
 
     def copy_wipeout_vars(self):
-        pass  # todo
+        sdoc = self.registry.source_doc
+        tdoc = self.registry.target_doc
+        if (
+            "ACAD_WIPEOUT_VARS" not in sdoc.rootdict  # not required
+            or "ACAD_WIPEOUT_VARS" in tdoc.rootdict  # do not replace existing values
+        ):
+            return
+        tdoc.objects.set_wipeout_variables(
+            frame=sdoc.objects.get_wipeout_frame_setting()
+        )
 
     def finalize(self) -> None:
         # remove replaced entities:

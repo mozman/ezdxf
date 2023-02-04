@@ -403,6 +403,13 @@ class ObjectsSection:
         else:
             wipeout_vars.dxf.frame = int(frame)
 
+    def get_wipeout_frame_setting(self) -> int:
+        try:
+            wipeout_vars = self.rootdict["ACAD_WIPEOUT_VARS"]
+        except const.DXFKeyError:
+            return 0
+        return wipeout_vars.dxf.frame
+
     def add_image_def(
         self,
         filename: str,

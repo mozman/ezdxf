@@ -752,7 +752,7 @@ class TestLoadImage:
 
     @pytest.fixture(scope="class")
     def sdoc(self) -> Drawing:
-        doc = ezdxf.new(setup="dimstyles")
+        doc = ezdxf.new()
         msp = doc.modelspace()
         my_image_def = doc.add_image_def(
             filename="example.jpg", size_in_pixel=(640, 360)
@@ -809,8 +809,41 @@ class TestLoadImage:
         assert image1.image_def_reactor.dxf.handle in image1.image_def.get_reactors()
 
 
+class TestLoadWipeout:
+    """Load a WIPEOUT entity"""
+
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+        msp.add_wipeout(vertices=[(0, 0), (2, 1), (1, 1)])
+        return doc
+
+    def test_loaded_infrastructure(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
+        assert "ACAD_WIPEOUT_VARS" in tdoc.rootdict, "expected required wipeout vars"
+
+    def test_loaded_wipeout_has_same_boundary_path(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        source_wipeout = sdoc.modelspace()[0]
+        loaded_wipeout = tdoc.modelspace()[0]
+
+        assert all(
+            v0.isclose(v1)
+            for v0, v1 in zip(
+                source_wipeout.boundary_path, loaded_wipeout.boundary_path
+            )
+        )
+        # these handles are always "0"
+        assert loaded_wipeout.dxf.image_def_reactor_handle == "0"
+        assert loaded_wipeout.dxf.image_def_handle == "0"
+
+
 # TODO:
-# WIPEOUT
+
 # MLINE
 # MULTILEADER
 # UNDERLAY/UNDERLAYDEFINITION
