@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING
@@ -27,6 +27,7 @@ __all__ = [
     "transform_thickness_and_extrusion_without_ocs",
     "OCSTransform",
     "WCSTransform",
+    "InsertCoordinateSystem",
 ]
 
 _FLIPPED_Z_AXIS = Vec3(0, 0, -1)
@@ -80,9 +81,7 @@ def transform_extrusion(extrusion: UVec, m: Matrix44) -> tuple[Vec3, bool]:
     ocs = OCS(extrusion)
     ocs_x_axis_in_wcs = ocs.to_wcs(X_AXIS)
     ocs_y_axis_in_wcs = ocs.to_wcs(Y_AXIS)
-    x_axis, y_axis = m.transform_directions(
-        (ocs_x_axis_in_wcs, ocs_y_axis_in_wcs)
-    )
+    x_axis, y_axis = m.transform_directions((ocs_x_axis_in_wcs, ocs_y_axis_in_wcs))
 
     # Check for uniform scaled xy-plane:
     is_uniform = math.isclose(
@@ -105,9 +104,7 @@ class OCSTransform:
             new_extrusion, scale_uniform = transform_extrusion(extrusion, m)
             self._reset_ocs(OCS(extrusion), OCS(new_extrusion), scale_uniform)
 
-    def _reset_ocs(
-        self, old_ocs: OCS, new_ocs: OCS, scale_uniform: bool
-    ) -> None:
+    def _reset_ocs(self, old_ocs: OCS, new_ocs: OCS, scale_uniform: bool) -> None:
         self.old_ocs = old_ocs
         self.new_ocs = new_ocs
         self.scale_uniform = scale_uniform
@@ -132,9 +129,9 @@ class OCSTransform:
         """Returns magnitude of `length` direction vector transformed from
         old OCS into new OCS including `reflection` correction applied.
         """
-        return self.m.transform_direction(
-            self.old_ocs.to_wcs(length)
-        ).magnitude * sign(reflection)
+        return self.m.transform_direction(self.old_ocs.to_wcs(length)).magnitude * sign(
+            reflection
+        )
 
     def transform_width(self, width: float) -> float:
         """Transform the width of a linear OCS entity from the old OCS
@@ -174,16 +171,12 @@ class OCSTransform:
 
     def transform_vertex(self, vertex: UVec) -> Vec3:
         """Returns vertex transformed from old OCS into new OCS."""
-        return self.new_ocs.from_wcs(
-            self.m.transform(self.old_ocs.to_wcs(vertex))
-        )
+        return self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(vertex)))
 
     def transform_2d_vertex(self, vertex: UVec, elevation: float) -> Vec2:
         """Returns 2D vertex transformed from old OCS into new OCS."""
         v = Vec3(vertex).replace(z=elevation)
-        return Vec2(
-            self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(v)))
-        )
+        return Vec2(self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(v))))
 
     def transform_direction(self, direction: UVec) -> Vec3:
         """Returns direction transformed from old OCS into new OCS."""
@@ -199,9 +192,7 @@ class OCSTransform:
         """Returns angle (in degrees) from old OCS transformed into new OCS."""
         return self.transform_angle(angle * RADIANS) * DEG
 
-    def transform_ccw_arc_angles(
-        self, start: float, end: float
-    ) -> tuple[float, float]:
+    def transform_ccw_arc_angles(self, start: float, end: float) -> tuple[float, float]:
         """Returns arc start- and end angle (in radians) from old OCS
         transformed into new OCS in counter-clockwise orientation.
         """
@@ -230,9 +221,7 @@ class OCSTransform:
         """Returns start- and end angle (in degrees) from old OCS transformed
         into new OCS in counter-clockwise orientation.
         """
-        start, end = self.transform_ccw_arc_angles(
-            start * RADIANS, end * RADIANS
-        )
+        start, end = self.transform_ccw_arc_angles(start * RADIANS, end * RADIANS)
         return start * DEG, end * DEG
 
     def transform_scale_vector(self, vec: Vec3) -> Vec3:
@@ -258,9 +247,8 @@ class WCSTransform:
         self.has_uniform_xy_scaling = math.isclose(
             new_x_mag_squ, new_y.magnitude_square
         )
-        self.has_uniform_xyz_scaling = (
-            self.has_uniform_xy_scaling
-            and math.isclose(new_x_mag_squ, new_z.magnitude_square)
+        self.has_uniform_xyz_scaling = self.has_uniform_xy_scaling and math.isclose(
+            new_x_mag_squ, new_z.magnitude_square
         )
         self.uniform_scale = self.transform_length(1.0)
 
@@ -274,3 +262,67 @@ class WCSTransform:
         else:
             raise ValueError(f"invalid axis '{axis}'")
         return self.m.transform_direction(v).magnitude
+
+
+class InsertCoordinateSystem:
+    def __init__(
+        self,
+        insert: UVec,
+        scale: tuple[float, float, float],
+        rotation: float,
+        extrusion: UVec,
+    ):
+        """Defines an INSERT coordinate system.
+
+        Args:
+            insert: insertion location
+            scale: scaling factors for x-, y- and z-axis
+            rotation: rotation angle around the extrusion vector in degrees
+            extrusion: extrusion vector which defines the :ref:`OCS`
+
+        """
+        self.insert = Vec3(insert)
+        self.scale_factor_x = float(scale[0])
+        self.scale_factor_y = float(scale[1])
+        self.scale_factor_z = float(scale[2])
+        self.rotation = float(rotation)
+        self.extrusion = Vec3(extrusion)
+
+    def transform(self, m: Matrix44, tol=1e-9) -> InsertCoordinateSystem:
+        """Returns the transformed INSERT coordinate system.
+
+        Args:
+            m: transformation matrix
+            tol: tolerance value
+
+        """
+        ocs = OCS(self.extrusion)
+
+        # Transform source OCS axis into the target coordinate system:
+        ux, uy, uz = m.transform_directions((ocs.ux, ocs.uy, ocs.uz))
+
+        # Calculate new axis scaling factors:
+        x_scale = ux.magnitude * self.scale_factor_x
+        y_scale = uy.magnitude * self.scale_factor_y
+        z_scale = uz.magnitude * self.scale_factor_z
+
+        ux = ux.normalize()
+        uy = uy.normalize()
+        uz = uz.normalize()
+        # check for orthogonal x-, y- and z-axis
+        if abs(ux.dot(uz)) > tol or abs(ux.dot(uy)) > tol or abs(uz.dot(uy)) > tol:
+            raise InsertTransformationError("Non-orthogonal target system.")
+
+        # expected y-axis for an orthogonal right-handed coordinate system:
+        expected_uy = uz.cross(ux)
+        if not expected_uy.isclose(uy, abs_tol=tol):
+            # new y-axis points into opposite direction:
+            y_scale = -y_scale
+
+        ocs_transform = OCSTransform.from_ocs(OCS(self.extrusion), OCS(uz), m)
+        return InsertCoordinateSystem(
+            insert=ocs_transform.transform_vertex(self.insert),
+            scale=(x_scale, y_scale, z_scale),
+            rotation=ocs_transform.transform_deg_angle(self.rotation),
+            extrusion=uz,
+        )

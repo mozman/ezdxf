@@ -18,6 +18,20 @@ ACIS copy() method support: ACIS data does not reference any DXF resources and c
 is not expensive, all copies share the same immutable ACIS data. 
 This feature allows loading ACIS entities from external references by the `xref` module.
 
+Adding a `transform_matrix` attribute to entities which do not have transformation 
+support (yet) like ACIS entities which enables to add support for the `transform()` 
+method.  A new method `apply_transform_martix()` has to be called to apply the 
+`transform_matrix` to the entity itself before export or it should raise a 
+`NotImplementedError` exception.
+
+This could be implemented for:
+- ACIS Entities (BODY)
+- ACAD_PROXY_ENTITY
+- ACAD_TABLE
+- OLE2FRAME
+- DXFTagStorage, all unknown entities
+
+
 Increase Minimal Required Python Version to Python 3.8
 ------------------------------------------------------
 
@@ -80,7 +94,7 @@ Add-ons
   
     In consideration, if the SVG exporter works well.
   
-  - (>1.0) Support for `Layout.dxf.plot_layout_options` in export mode of 
+  - (>v1.1) Support for `Layout.dxf.plot_layout_options` in export mode of 
     class `RenderContext`:
     - plot with plot-styles; disable loading of the ctb-table in set_currrent_layout()
     - plot entity lineweights; if disabled which linewidth should be used instead?
@@ -100,7 +114,6 @@ Render Tools
 - (>v1.1) ACAD_TABLE tool to render content as DXF primitives to create the 
   content of the anonymous block `*T...`
 - (>v1.1) factory methods to create ACAD_TABLE entities
-- (>v1.1) fix LWPOLYLINE parsing error in ProxyGraphic, see test script 239
 - (>v1.1) tool to create proxy graphic 
 - (>v1.1) add `ShxFont` and `ShpFont` classes to `ezdxf.tools.fonts`
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -35,11 +35,13 @@ from ezdxf.math import (
     Y_AXIS,
     Z_AXIS,
     Matrix44,
-    OCS,
     UCS,
     NULLVEC,
 )
-from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
+from ezdxf.math.transformtools import (
+    InsertTransformationError,
+    InsertCoordinateSystem,
+)
 from ezdxf.explode import (
     explode_block_reference,
     virtual_block_reference_entities,
@@ -138,10 +140,6 @@ acdb_block_reference = DefSubclass(
 acdb_block_reference_group_codes = group_code_mapping(acdb_block_reference)
 merged_insert_group_codes = merge_group_code_mappings(
     acdb_entity_group_codes, acdb_block_reference_group_codes  # type: ignore
-)
-
-NON_ORTHO_MSG = (
-    "INSERT entity can not represent a non-orthogonal target " "coordinate system."
 )
 
 
@@ -466,43 +464,25 @@ class Insert(LinkedEntities):
         :class:`InsertTransformationError` will be raised in that case.
 
         """
-
         dxf = self.dxf
-        ocs = self.ocs()
-
-        # Transform source OCS axis into the target coordinate system:
-        ux, uy, uz = m.transform_directions((ocs.ux, ocs.uy, ocs.uz))
-
-        # Calculate new axis scaling factors:
-        x_scale = ux.magnitude * dxf.xscale
-        y_scale = uy.magnitude * dxf.yscale
-        z_scale = uz.magnitude * dxf.zscale
-
-        ux = ux.normalize()
-        uy = uy.normalize()
-        uz = uz.normalize()
-        # check for orthogonal x-, y- and z-axis
-        if (
-            abs(ux.dot(uz)) > ABS_TOL
-            or abs(ux.dot(uy)) > ABS_TOL
-            or abs(uz.dot(uy)) > ABS_TOL
-        ):
-            raise InsertTransformationError(NON_ORTHO_MSG)
-
-        # expected y-axis for an orthogonal right handed coordinate system:
-        expected_uy = uz.cross(ux)
-        if not expected_uy.isclose(uy, abs_tol=ABS_TOL):
-            # new y-axis points into opposite direction:
-            y_scale = -y_scale
-
-        ocs_transform = OCSTransform.from_ocs(OCS(dxf.extrusion), OCS(uz), m)
-        dxf.insert = ocs_transform.transform_vertex(dxf.insert)
-        dxf.rotation = ocs_transform.transform_deg_angle(dxf.rotation)
-
-        dxf.extrusion = uz
-        dxf.xscale = x_scale
-        dxf.yscale = y_scale
-        dxf.zscale = z_scale
+        source_system = InsertCoordinateSystem(
+            insert=Vec3(dxf.insert),
+            scale=(dxf.xscale, dxf.yscale, dxf.zscale),
+            rotation=dxf.rotation,
+            extrusion=dxf.extrusion,
+        )
+        try:
+            target_system = source_system.transform(m, ABS_TOL)
+        except InsertTransformationError:
+            raise InsertTransformationError(
+                "INSERT entity can not represent a non-orthogonal target coordinate system."
+            )
+        dxf.insert = target_system.insert
+        dxf.rotation = target_system.rotation
+        dxf.extrusion = target_system.extrusion
+        dxf.xscale = target_system.scale_factor_x
+        dxf.yscale = target_system.scale_factor_y
+        dxf.zscale = target_system.scale_factor_z
 
         for attrib in self.attribs:
             attrib.transform(m)
