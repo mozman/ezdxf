@@ -810,8 +810,6 @@ class TestLoadImage:
 
 
 class TestLoadWipeout:
-    """Load a WIPEOUT entity"""
-
     @pytest.fixture(scope="class")
     def sdoc(self) -> Drawing:
         doc = ezdxf.new()
@@ -842,9 +840,55 @@ class TestLoadWipeout:
         assert loaded_wipeout.dxf.image_def_handle == "0"
 
 
-# TODO:
+class TestLoadMLine:
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new()
+        style = doc.mline_styles.new("above")
+        style.elements.append(0.5, 1)
+        style.elements.append(0.25, 3)
 
-# MLINE
+        msp = doc.modelspace()
+        msp.add_mline(
+            [(0, 0), (10, 0), (15, 5), (15, 10)],
+            dxfattribs={
+                "style_name": style.dxf.name,
+                "justification": const.MLINE_BOTTOM,
+            },
+        )
+        return doc
+
+    def test_loaded_infrastructure(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
+        assert "above" in tdoc.mline_styles
+
+    def test_loaded_mline_has_correct_style_attributes(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+
+        loaded_mline = tdoc.modelspace()[0]
+        assert loaded_mline.style.dxf.name == "above"
+        assert (
+            loaded_mline.dxf.style_handle == tdoc.mline_styles.get("above").dxf.handle
+        )
+
+    def test_loaded_mline_has_same_vertices(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+
+        source_mline = sdoc.modelspace()[0]
+        loaded_mline = tdoc.modelspace()[0]
+        assert all(
+            v0.isclose(v1)
+            for v0, v1 in zip(
+                source_mline.get_locations(), loaded_mline.get_locations()
+            )
+        )
+
+
+# TODO:
 # MULTILEADER
 # UNDERLAY/UNDERLAYDEFINITION
 # VIEWPORT

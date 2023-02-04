@@ -368,6 +368,25 @@ class MLine(DXFGraphic):
         for vertex in self.vertices:
             vertex.export_dxf(tagwriter)
 
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        super().register_resources(registry)
+        registry.add_handle(self.dxf.style_handle)
+
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        super().map_resources(clone, mapping)
+        style = mapping.get_reference_of_copy(self.dxf.style_handle)
+        if not isinstance(style, MLineStyle):
+            assert clone.doc is not None
+            style = clone.doc.mline_styles.get("Standard")
+        if isinstance(style, MLineStyle):
+            clone.dxf.style_handle = style.dxf.handle
+            clone.dxf.style_name = style.dxf.name
+        else:
+            clone.dxf.style_handle = "0"
+            clone.dxf.style_name = "Standard"
+
     @property
     def is_closed(self) -> bool:
         """Returns ``True`` if MLINE is closed.
@@ -678,7 +697,7 @@ class MLine(DXFGraphic):
 
         # Audit associated MLINESTYLE name and handle:
         style = doc.entitydb.get(self.dxf.style_handle)
-        if style is None:  # handle is invalid, get style by name
+        if not isinstance(style, MLineStyle):  # handle is invalid, get style by name
             style = doc.mline_styles.get(self.dxf.style_name, None)
             if style is None:
                 reset_mline_style()

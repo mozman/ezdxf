@@ -2626,7 +2626,7 @@ class CreatorInterface:
             raise DXFVersionError("MLine requires DXF R2000")
         dxfattribs = dict(dxfattribs or {})
         style_name = dxfattribs.pop("style_name", "Standard")
-        mline: "MLine" = self.new_entity("MLINE", dxfattribs)  # type: ignore
+        mline: MLine = self.new_entity("MLINE", dxfattribs)  # type: ignore
         # close() method regenerates geometry!
         mline.set_flag_state(mline.CLOSED, close)
         mline.set_style(style_name)
