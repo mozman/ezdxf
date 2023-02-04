@@ -1093,14 +1093,10 @@ class _Transfer:
                 return
         elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
             # always rename
-            entity.dxf.name = get_unique_table_name(
-                "{xref}${index}${name}", name, self.xref_name, table
-            )
+            entity.dxf.name = get_unique_table_name(name, self.xref_name, table)
         elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
             if table.has_entry(name):  # rename only if exist
-                entity.dxf.name = get_unique_table_name(
-                    "${index}${name}", name, self.xref_name, table
-                )
+                entity.dxf.name = get_unique_table_name(name, "", table)
         table.add_entry(entity)
 
     def add_collection_entry(
@@ -1128,15 +1124,10 @@ class _Transfer:
                 return
         elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
             # always rename
-            entry.dxf.name = get_unique_table_name(
-                "{xref}${index}${name}", name, self.xref_name, collection
-            )
-
+            entry.dxf.name = get_unique_table_name(name, self.xref_name, collection)
         elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
             if collection.has_entry(name):  # rename only if exist
-                entry.dxf.name = get_unique_table_name(
-                    "${index}${name}", name, self.xref_name, collection
-                )
+                entry.dxf.name = get_unique_table_name(name, "", collection)
         collection.object_dict.add(entry.dxf.name, entry)
         # a resource collection is hard owner
         entry.dxf.owner = collection.handle
@@ -1154,11 +1145,19 @@ class _Transfer:
         dictionary.
         """
         tdoc = self.registry.target_doc
-        # todo: apply conflict policy
         acad_dict = tdoc.rootdict.get_required_dict(dict_name)
         existing_entry = acad_dict.get(entry_name)
-        if isinstance(existing_entry, DXFEntity):  # keep policy
-            return entry_name, existing_entry
+
+        # DICTIONARY entries are only renamed if they exist, this is different to TABLE
+        # entries:
+        if isinstance(existing_entry, DXFEntity):
+            if self.conflict_policy == ConflictPolicy.KEEP:
+                return entry_name, existing_entry
+            elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
+                entry_name = get_unique_dict_key(entry_name, self.xref_name, acad_dict)
+            elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
+                entry_name = get_unique_dict_key(entry_name, "", acad_dict)
+
         loaded_entry = self.get_reference_of_copy(entity.dxf.handle)
         if loaded_entry is None:
             return "", entity
@@ -1208,12 +1207,21 @@ def is_anonymous_block_name(name: str) -> bool:
     return len(name) > 1 and name.startswith("*")
 
 
-def get_unique_table_name(fmt: str, name: str, xref: str, table) -> str:
+def get_unique_table_name(name: str, xref: str, table) -> str:
     index: int = 0
     while True:
-        new_name = fmt.format(name=name, xref=xref, index=index)
+        new_name = f"{xref}${index}${name}"
         if not table.has_entry(new_name):
             return new_name
+        index += 1
+
+
+def get_unique_dict_key(key: str, xref: str, dictionary) -> str:
+    index: int = 0
+    while True:
+        new_key = f"{xref}${index}${key}"
+        if new_key not in dictionary:
+            return new_key
         index += 1
 
 
