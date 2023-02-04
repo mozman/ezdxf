@@ -139,15 +139,15 @@ class DXFPolygon(DXFGraphic):
         del tags[index:]
         return tags
 
-    def map_resources(self, clone: DXFEntity, mapper: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, DXFPolygon)
         assert clone.doc is not None
 
-        super().map_resources(clone, mapper)
+        super().map_resources(clone, mapping)
         db = clone.doc.entitydb
         for path in clone.paths:
-            handles = [mapper.get_handle(h) for h in path.source_boundary_objects]
+            handles = [mapping.get_handle(h) for h in path.source_boundary_objects]
             path.source_boundary_objects = [h for h in handles if h in db]
 
     def load_seeds(self, tags: Tags) -> Tags:

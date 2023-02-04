@@ -122,15 +122,15 @@ class Dictionary(DXFObject):
                 handle_mapping[entity.dxf.handle] = copied_entry.dxf.handle
         return handle_mapping
 
-    def map_resources(self, clone: DXFEntity, mapper: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, Dictionary)
-        super().map_resources(clone, mapper)
+        super().map_resources(clone, mapping)
         if self.is_hard_owner:
             return
         data = dict()
         for key, entity in self.items():
-            entity_copy = mapper.get_reference_of_copy(entity.dxf.handle)
+            entity_copy = mapping.get_reference_of_copy(entity.dxf.handle)
             if entity_copy:
                 data[key] = entity
         clone._data = data  # type: ignore

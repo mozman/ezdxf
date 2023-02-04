@@ -675,15 +675,17 @@ class Loader:
         transfer = _Transfer(
             registry=registry,
             copies=cpm.copies,
+            objects=cpm.objects,
             handle_mapping=cpm.handle_mapping,
             conflict_policy=self.conflict_policy,
         )
         transfer.add_object_copies(cpm.objects)
         transfer.register_classes(cpm.classes)
         transfer.register_table_resources()
-        transfer.register_object_resources(cpm.objects)
+        transfer.register_object_resources()
         transfer.redirect_handle_mapping()
-        transfer.map_resources()
+        transfer.map_object_resources()
+        transfer.map_entity_resources()
         transfer.copy_settings()
 
         for cmd in self._commands:
@@ -808,6 +810,7 @@ class _Transfer:
         self,
         registry: _Registry,
         copies: dict[str, dict[str, DXFEntity]],
+        objects: dict[str, DXFEntity],
         handle_mapping: dict[str, str],
         *,
         conflict_policy=ConflictPolicy.KEEP,
@@ -815,6 +818,7 @@ class _Transfer:
         self.registry = registry
         # entry NO_BLOCK (layout key "0") contains table entries
         self.copied_blocks = copies
+        self.copied_objects = objects
         self.conflict_policy = conflict_policy
         self.xref_name = get_xref_name(registry.source_doc)
         self.layer_mapping: dict[str, str] = {}
@@ -902,7 +906,7 @@ class _Transfer:
             elif isinstance(entity, BlockRecord):
                 self.add_block_record_entry(entity, source_entity_handle)
 
-    def register_object_resources(self, copies: Iterable[DXFEntity]) -> None:
+    def register_object_resources(self) -> None:
         """Register copied objects in object collections of the target document."""
         # Note: BricsCAD does not rename conflicting entries in object collections and
         # always keeps the existing entry:
@@ -912,7 +916,7 @@ class _Transfer:
         # Ezdxf does rename conflicting entries according to self.conflict_policy,
         # exceptions are only the system entries.
         tdoc = self.registry.target_doc
-        for entity in copies:
+        for _, entity in self.copied_objects.items():
             if isinstance(entity, Material):
                 self.add_collection_entry(
                     tdoc.materials,
@@ -965,7 +969,7 @@ class _Transfer:
     def register_classes(self, classes: Sequence[DXFClass]) -> None:
         self.registry.target_doc.classes.register(classes)
 
-    def map_resources(self) -> None:
+    def map_entity_resources(self) -> None:
         source_db = self.registry.source_doc.entitydb
         for block_key, block in self.copied_blocks.items():
             for source_entity_handle, copy in block.items():
@@ -976,6 +980,17 @@ class _Transfer:
                     )
                 if copy is not None and copy.is_alive:
                     source_entity.map_resources(copy, self)
+
+    def map_object_resources(self) -> None:
+        source_db = self.registry.source_doc.entitydb
+        for source_object_handle, clone in self.copied_objects.items():
+            source_entity = source_db.get(source_object_handle)
+            if source_entity is None:
+                raise const.DXFInternalEzdxfError(
+                    "database error, source object not found"
+                )
+            if clone is not None and clone.is_alive:
+                source_entity.map_resources(clone, self)
 
     def add_layer_entry(self, layer: Layer) -> None:
         tdoc = self.registry.target_doc
@@ -1132,11 +1147,12 @@ class _Transfer:
         # a resource collection is hard owner
         entry.dxf.owner = collection.handle
 
-    def add_object_copies(self, copies: Iterable[DXFEntity]) -> None:
+    def add_object_copies(self, copies: dict[str, DXFEntity]) -> None:
         """Add copied DXF objects to the OBJECTS section of the target document."""
         objects = self.registry.target_doc.objects
-        for obj in copies:
-            objects.add_object(obj)  # type: ignore
+        for _, obj in copies.items():
+            if obj and obj.is_alive:
+                objects.add_object(obj)  # type: ignore
 
     def map_acad_dict_entry(
         self, dict_name: str, entry_name: str, entity: DXFEntity
@@ -1230,7 +1246,7 @@ class CopyMachine:
         self.target_doc = tdoc
         self.copies: dict[str, dict[str, DXFEntity]] = {}
         self.classes: list[DXFClass] = []
-        self.objects: list[DXFEntity] = []
+        self.objects: dict[str, DXFEntity] = {}
 
         # mapping from the source entity handle to the handle of the copied entity
         self.handle_mapping: dict[str, str] = {}
@@ -1262,7 +1278,7 @@ class CopyMachine:
                 self.handle_mapping.update(entity.get_handle_mapping(clone))
 
             if is_dxf_object(clone):
-                self.objects.append(clone)
+                self.objects[handle] = clone
             else:
                 copies[handle] = clone
         return copies

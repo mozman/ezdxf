@@ -5,10 +5,20 @@ import pytest
 from collections import Counter
 import ezdxf
 from ezdxf import xref, colors, const
+from ezdxf.math import Vec2
 from ezdxf.document import Drawing
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import Polyline, Polyface, factory, Insert, Dimension, Hatch, Image
+from ezdxf.entities import (
+    Polyline,
+    Polyface,
+    factory,
+    Insert,
+    Dimension,
+    Hatch,
+    Image,
+    MultiLeader,
+)
 
 
 def forward_handles(doc, count: int) -> None:
@@ -888,8 +898,44 @@ class TestLoadMLine:
         )
 
 
+class TestMultiLeaderMText:
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+
+        doc.styles.add("OpenSans", font="OpenSans-Regular.ttf")
+        mleader_style = doc.mleader_styles.duplicate_entry("Standard", "_EZDXF_")
+        mleader_style.set_mtext_style("OpenSans")
+        mleader_style.set_leader_properties(linetype="CONTINUOUS")
+        ml_builder = msp.add_multileader_mtext("_EZDXF_")
+        ml_builder.quick_leader(
+            "MTEXT CONTENT", target=Vec2(40, 15), segment1=Vec2.from_deg_angle(45, 14)
+        )
+        return doc
+
+    def test_loaded_infrastructure(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
+        assert tdoc.styles.has_entry("OpenSans") is True
+        assert "_EZDXF_" in tdoc.mleader_styles
+
+    def test_loaded_mleader_style(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        loaded_mleader_style = tdoc.mleader_styles.get("_EZDXF_")
+        text_style = tdoc.styles.get("OpenSans")
+        assert loaded_mleader_style.dxf.text_style_handle == text_style.dxf.handle
+        ltype = tdoc.linetypes.get("CONTINUOUS")
+        assert loaded_mleader_style.dxf.leader_linetype_handle == ltype.dxf.handle
+
+
+class TestMultiLeaderBlock:
+    pass
+
+
 # TODO:
-# MULTILEADER
 # UNDERLAY/UNDERLAYDEFINITION
 # VIEWPORT
 # Paperspace Layout

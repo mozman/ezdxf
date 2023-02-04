@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.lldxf.types import DXFTag
     from ezdxf.query import EntityQuery
+    from ezdxf import xref
 
 __all__ = [
     "MultiLeader",
@@ -158,12 +159,8 @@ acdb_mleader = DefSubclass(
         "has_text_frame": DXFAttr(292, default=0),
         # Block Content:
         "block_record_handle": DXFAttr(344),
-        "block_color": DXFAttr(
-            93, default=colors.BY_BLOCK_RAW_VALUE
-        ),  # raw color
-        "block_scale_vector": DXFAttr(
-            10, xtype=XType.point3d, default=Vec3(1, 1, 1)
-        ),
+        "block_color": DXFAttr(93, default=colors.BY_BLOCK_RAW_VALUE),  # raw color
+        "block_scale_vector": DXFAttr(10, xtype=XType.point3d, default=Vec3(1, 1, 1)),
         "block_rotation": DXFAttr(43, default=0),  # in radians!!!
         "block_connection_type": DXFAttr(176, default=0),
         # 0 = center extents
@@ -180,13 +177,9 @@ acdb_mleader = DefSubclass(
         # attrib_text: 302, collision with group code (302, "LEADER{") in context data
         # END "block attribs"
         # Text Content:
-        "is_text_direction_negative": DXFAttr(
-            294, default=0, dxfversion=const.DXF2007
-        ),
+        "is_text_direction_negative": DXFAttr(294, default=0, dxfversion=const.DXF2007),
         "text_IPE_align": DXFAttr(178, default=0, dxfversion=const.DXF2007),
-        "text_attachment_point": DXFAttr(
-            179, default=1, dxfversion=const.DXF2007
-        ),
+        "text_attachment_point": DXFAttr(179, default=1, dxfversion=const.DXF2007),
         # 1 = left
         # 2 = center
         # 3 = right
@@ -195,9 +188,7 @@ acdb_mleader = DefSubclass(
         # block/text, or attach to the top/bottom:
         # 0 = horizontal
         # 1 = vertical
-        "text_attachment_direction": DXFAttr(
-            271, default=0, dxfversion=const.DXF2010
-        ),
+        "text_attachment_direction": DXFAttr(271, default=0, dxfversion=const.DXF2010),
         # like 173, but
         # 9 = center
         # 10= underline and center
@@ -207,12 +198,8 @@ acdb_mleader = DefSubclass(
         # like 173, but
         # 9 = center
         # 10= overline and center
-        "text_top_attachment_type": DXFAttr(
-            273, default=9, dxfversion=const.DXF2010
-        ),
-        "leader_extend_to_text": DXFAttr(
-            295, default=0, dxfversion=const.DXF2013
-        ),
+        "text_top_attachment_type": DXFAttr(273, default=9, dxfversion=const.DXF2010),
+        "leader_extend_to_text": DXFAttr(295, default=0, dxfversion=const.DXF2013),
     },
 )
 # The text frame shape is stored in XDATA except for the default rectangle:
@@ -446,9 +433,7 @@ class MultiLeader(DXFGraphic):
 
         end = start
         collector: dict[int, Any] = dict()
-        for code, value in data.collect_consecutive_tags(
-            {330, 177, 44, 302}, start
-        ):
+        for code, value in data.collect_consecutive_tags({330, 177, 44, 302}, start):
             end += 1
             if code == 330 and len(collector):
                 store_attrib()
@@ -464,9 +449,7 @@ class MultiLeader(DXFGraphic):
         if self.context.is_valid:
             return True
         else:
-            logger.debug(
-                f"Ignore {str(self)} at DXF export, invalid context data."
-            )
+            logger.debug(f"Ignore {str(self)} at DXF export, invalid context data.")
             return False
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
@@ -542,6 +525,47 @@ class MultiLeader(DXFGraphic):
             tagwriter.write_tag2(44, attrib.width)
             tagwriter.write_tag2(302, safe_string(attrib.text, EXT_MAX_STR_LEN))
 
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        super().register_resources(registry)
+        dxf = self.dxf
+        registry.add_handle(dxf.style_handle)
+        registry.add_handle(dxf.leader_linetype_handle)
+        registry.add_handle(dxf.arrow_head_handle)
+        registry.add_handle(dxf.text_style_handle)
+        registry.add_handle(dxf.block_record_handle)
+        for arrow_head in self.arrow_heads:
+            registry.add_handle(arrow_head.handle)
+        # block attdef entities are included in the block definition!
+        self.context.register_resources(registry)
+
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        assert isinstance(clone, MultiLeader)
+        super().map_resources(clone, mapping)
+        dxf = self.dxf
+        clone_dxf = clone.dxf
+        clone_dxf.style_handle = mapping.get_handle(dxf.style_handle)
+        clone_dxf.leader_linetype_handle = mapping.get_handle(dxf.leader_linetype_handle)
+        clone_dxf.arrow_head_handle = mapping.get_handle(dxf.arrow_head_handle)
+        clone_dxf.text_style_handle = mapping.get_handle(dxf.text_style_handle)
+        clone_dxf.block_record_handle = mapping.get_handle(dxf.block_record_handle)
+        clone.map_arrow_head_handles(mapping)
+        clone.map_block_attrib_handles(mapping)
+        clone.context.map_resources(mapping)
+
+    def map_arrow_head_handles(self, mapping: xref.ResourceMapper):
+        self.arrow_heads = [
+            arrow._replace(handle=mapping.get_handle(arrow.handle))
+            for arrow in self.arrow_heads
+        ]
+
+    def map_block_attrib_handles(self, mapping: xref.ResourceMapper):
+        self.block_attribs = [
+            attrib._replace(handle=mapping.get_handle(attrib.handle))
+            for attrib in self.block_attribs
+        ]
+
     def virtual_entities(self) -> Iterator[DXFGraphic]:
         """Yields the graphical representation of MULTILEADER as virtual DXF
         primitives.
@@ -553,9 +577,7 @@ class MultiLeader(DXFGraphic):
         """
         return self.__virtual_entities__()
 
-    def explode(
-        self, target_layout: Optional[BaseLayout] = None
-    ) -> EntityQuery:
+    def explode(self, target_layout: Optional[BaseLayout] = None) -> EntityQuery:
         """Explode MULTILEADER as DXF primitives into target layout,
         if target layout is ``None``, the target layout is the layout of the
         source entity.
@@ -620,10 +642,7 @@ class MultiLeader(DXFGraphic):
             raise NonUniformScalingError(
                 "MULTILEADER does not support non uniform scaling"
             )
-        if (
-            abs(context.plane_x_axis.z) > 1e-12
-            or abs(context.plane_y_axis.z) > 1e-12
-        ):
+        if abs(context.plane_x_axis.z) > 1e-12 or abs(context.plane_y_axis.z) > 1e-12:
             # check only if not parallel to xy-plane
             if not wcs.has_uniform_xyz_scaling:
                 # caller has to catch this exception and explode the MULTILEADER
@@ -741,6 +760,20 @@ class MLeaderContext:
                     ctx.__setattr__(name, cast_value(code, value))
         return ctx
 
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        if self.mtext is not None:
+            self.mtext.register_resources(registry)
+        if self.block is not None:
+            self.block.register_resources(registry)
+
+    def map_resources(self, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        if self.mtext is not None:
+            self.mtext.map_resources(mapping)
+        if self.block is not None:
+            self.block.map_resources(mapping)
+
     @property
     def is_valid(self) -> bool:
         return True
@@ -802,15 +835,9 @@ class MLeaderContext:
         self.char_height *= scale
         self.arrow_head_size *= scale
         self.landing_gap_size *= scale
-        self.plane_origin = m.transform(
-            self.plane_origin
-        )  # confirmed by BricsCAD
-        self.plane_x_axis = m.transform_direction(
-            self.plane_x_axis, normalize=True
-        )
-        self.plane_y_axis = m.transform_direction(
-            self.plane_y_axis, normalize=True
-        )
+        self.plane_origin = m.transform(self.plane_origin)  # confirmed by BricsCAD
+        self.plane_x_axis = m.transform_direction(self.plane_x_axis, normalize=True)
+        self.plane_y_axis = m.transform_direction(self.plane_y_axis, normalize=True)
         self.plane_normal_reversed = 0
         z_axis = m.transform_direction(Z_AXIS, normalize=True)
         if z_axis.isclose(-self.plane_z_axis):  # reversed z-axis?
@@ -889,6 +916,14 @@ class MTextData:
         self.column_flow_reversed: int = 0
         self.column_sizes: list[float] = []  # heights?, not scaled
         self.use_word_break: int = 1
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        registry.add_handle(self.style_handle)
+
+    def map_resources(self, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        self.style_handle = mapping.get_handle(self.style_handle)
 
     def parse(self, code: int, value) -> bool:
         # return True if data belongs to mtext else False (end of mtext section)
@@ -978,6 +1013,15 @@ class BlockData:
         # of ezdxf.math.Matrix44()!
         self._matrix: list[float] = []  # group code 47 x 16
 
+    def register_resources(self, registry: xref.Registry) -> None:
+        """Register required resources to the resource registry."""
+        registry.add_handle(self.block_record_handle)
+
+    def map_resources(self, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        assert self.block_record_handle is not None
+        self.block_record_handle = mapping.get_handle(self.block_record_handle)
+
     @property
     def matrix44(self) -> Matrix44:
         if len(self._matrix) == 16:
@@ -1058,9 +1102,7 @@ class LeaderData:
 
         # 0=horizontal; 1=vertical
         self.attachment_direction: int = 0  # group code 271, R2010+
-        self.breaks: list[
-            Vec3
-        ] = []  # group code 12, 13 - multiple breaks possible!
+        self.breaks: list[Vec3] = []  # group code 12, 13 - multiple breaks possible!
 
     @property
     def has_horizontal_attachment(self) -> bool:
@@ -1265,6 +1307,13 @@ acdb_mleader_style = DefSubclass(
 )
 acdb_mleader_style_group_codes = group_code_mapping(acdb_mleader_style)
 
+MLEADER_STYLE_HANDLE_ATTRIBS = (
+    "leader_linetype_handle",
+    "arrow_head_handle",
+    "text_style_handle",
+    "block_record_handle",
+)
+
 
 @register_entity
 class MLeaderStyle(DXFObject):
@@ -1281,6 +1330,21 @@ class MLeaderStyle(DXFObject):
                 dxf, acdb_mleader_style_group_codes, subclass=1
             )
         return dxf
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        super().register_resources(registry)
+        dxf = self.dxf
+        for attrib_name in MLEADER_STYLE_HANDLE_ATTRIBS:
+            registry.add_handle(dxf.get(attrib_name, "0"))
+
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        super().map_resources(clone, mapping)
+        dxf = self.dxf
+        for attrib_name in MLEADER_STYLE_HANDLE_ATTRIBS:
+            if dxf.hasattr(attrib_name):
+                clone.dxf.set(attrib_name, mapping.get_handle(dxf.get(attrib_name)))
+            else:
+                clone.dxf.discard(attrib_name)
 
     def set_mtext_style(self, name: str) -> None:
         assert self.doc is not None, "valid DXF document required"
@@ -1311,9 +1375,7 @@ class MLeaderStyle(DXFObject):
 
         assert self.doc is not None, "valid DXF document required"
         if name:
-            self.dxf.arrow_head_handle = ARROWS.arrow_handle(
-                self.doc.blocks, name
-            )
+            self.dxf.arrow_head_handle = ARROWS.arrow_handle(self.doc.blocks, name)
         else:
             # empty string is the default "closed filled" arrow,
             # no handle needed
@@ -1322,9 +1384,7 @@ class MLeaderStyle(DXFObject):
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_mleader_style.name)
-        self.dxf.export_dxf_attribs(
-            tagwriter, acdb_mleader_style.attribs.keys()
-        )
+        self.dxf.export_dxf_attribs(tagwriter, acdb_mleader_style.attribs.keys())
 
     def __referenced_blocks__(self) -> Iterable[str]:
         """Support for "ReferencedBlocks" protocol."""
@@ -1376,9 +1436,7 @@ class MLeaderStyle(DXFObject):
 
 class MLeaderStyleCollection(ObjectCollection[MLeaderStyle]):
     def __init__(self, doc: Drawing):
-        super().__init__(
-            doc, dict_name="ACAD_MLEADERSTYLE", object_type="MLEADERSTYLE"
-        )
+        super().__init__(doc, dict_name="ACAD_MLEADERSTYLE", object_type="MLEADERSTYLE")
         self.create_required_entries()
 
     def create_required_entries(self) -> None:
