@@ -1,7 +1,5 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
-from typing import cast
 import pytest
 
 from ezdxf.entities.image import Image

@@ -1,6 +1,5 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
 
 from ezdxf.entities.underlay import PdfUnderlay, DwfUnderlay, DgnUnderlay

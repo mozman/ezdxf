@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2022, Manfred Moitzi
+# Copyright (c) 2016-2023, Manfred Moitzi
 # License: MIT License
 import pytest
 import logging

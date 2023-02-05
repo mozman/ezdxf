@@ -62,9 +62,7 @@ def test_reset_boundary_path(pdf):
 
 
 def test_set_boundary_path(pdf):
-    pdf.set_boundary_path(
-        [(0, 0), (640, 180), (320, 360)]
-    )  # 3 vertices triangle
+    pdf.set_boundary_path([(0, 0), (640, 180), (320, 360)])  # 3 vertices triangle
     assert pdf.clipping == 1
     assert pdf.boundary_path == [(0, 0), (640, 180), (320, 360)]
 
@@ -86,9 +84,7 @@ def new_doc():
 def test_new_pdf_underlay_def(new_doc):
     rootdict = new_doc.rootdict
     assert "ACAD_PDFDEFINITIONS" not in rootdict
-    underlay_def = new_doc.add_underlay_def(
-        "underlay.pdf", fmt="pdf", name="u1"
-    )
+    underlay_def = new_doc.add_underlay_def("underlay.pdf", fmt="pdf", name="u1")
 
     # check internals pdf_def_owner -> ACAD_PDFDEFINITIONS
     pdf_dict = rootdict["ACAD_PDFDEFINITIONS"]
@@ -115,6 +111,49 @@ def test_new_pdf(new_doc):
 
     underlay_def2 = underlay.get_underlay_def()
     assert underlay_def.dxf.handle == underlay_def2.dxf.handle
+
+
+class TestCopyAndTransformUnderlay:
+    @pytest.fixture(scope="class")
+    def doc(self):
+        return ezdxf.new()
+
+    @pytest.fixture(scope="class")
+    def underlay_def(self, doc):
+        return doc.add_underlay_def("underlay.pdf")
+
+    @pytest.fixture(scope="class")
+    def msp(self, doc):
+        return doc.modelspace()
+
+    def test_copied_underlay_has_same_underlay_definition(self, msp, underlay_def):
+        underlay = msp.add_underlay(underlay_def, insert=(0, 0, 0), scale=2)
+        clone = underlay.copy()
+        msp.add_entity(clone)
+        assert (
+            underlay.get_underlay_def() is clone.get_underlay_def()
+        ), "expected the same underlay definition"
+
+    def test_underlay_definition_has_reactor_handles_to_copies(self, msp, underlay_def):
+        underlay = msp.add_underlay(underlay_def, insert=(0, 0, 0), scale=2)
+        clone = underlay.copy()
+        msp.add_entity(clone)
+
+        assert (
+            underlay.dxf.handle in underlay_def.reactors
+        ), "expected reactor handle of original underlay"
+        assert (
+            clone.dxf.handle in underlay_def.reactors
+        ), "expected reactor handle of cloned underlay"
+
+    def test_transform_underlay(self, msp, underlay_def):
+        """The UNDERLAY entity uses the same low-level transform function as INSERT,
+        no extensive transformation testing is required.
+        """
+        underlay = msp.add_underlay(underlay_def, insert=(0, 0, 0), scale=2)
+        underlay.translate(1, 2, 3)
+
+        assert underlay.dxf.insert == (1, 2, 3)
 
 
 PDF_DEFINITION = """  0
