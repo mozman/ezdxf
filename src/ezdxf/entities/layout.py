@@ -1,4 +1,4 @@
-#  Copyright (c) 2020-2022, Manfred Moitzi
+#  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
@@ -13,13 +13,14 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.math import Vec3, Vec2, NULLVEC, X_AXIS, Y_AXIS
-from .dxfentity import base_class, SubclassProcessor
+from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.entities.dxfns import DXFNamespace
+    from ezdxf import xref
 
 __all__ = ["PlotSettings", "DXFLayout"]
 
@@ -206,9 +207,7 @@ class PlotSettings(DXFObject):
     ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_plot_settings_group_codes, 1
-            )
+            processor.fast_load_dxfattribs(dxf, acdb_plot_settings_group_codes, 1)
         return dxf
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
@@ -252,6 +251,18 @@ class PlotSettings(DXFObject):
             ],
         )
 
+    def register_resources(self, registry: xref.Registry) -> None:
+        super().register_resources(registry)
+        registry.add_handle(self.dxf.get("shade_plot_handle"))
+
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        super().map_resources(clone, mapping)
+        shade_plot_handle = self.dxf.get("shade_plot_handle")
+        if shade_plot_handle and shade_plot_handle != "0":
+            clone.dxf.shade_plot_handle = mapping.get_handle(shade_plot_handle)
+        else:
+            clone.dxf.discard("shade_plot_handle")
+
 
 acdb_layout = DefSubclass(
     "AcDbLayout",
@@ -274,13 +285,9 @@ acdb_layout = DefSubclass(
         # Insertion base point for this layout:
         "insert_base": DXFAttr(12, xtype=XType.point3d, default=NULLVEC),
         # Minimum extents for this layout:
-        "extmin": DXFAttr(
-            14, xtype=XType.point3d, default=Vec3(1e20, 1e20, 1e20)
-        ),
+        "extmin": DXFAttr(14, xtype=XType.point3d, default=Vec3(1e20, 1e20, 1e20)),
         # Maximum extents for this layout:
-        "extmax": DXFAttr(
-            15, xtype=XType.point3d, default=Vec3(-1e20, -1e20, -1e20)
-        ),
+        "extmax": DXFAttr(15, xtype=XType.point3d, default=Vec3(-1e20, -1e20, -1e20)),
         "elevation": DXFAttr(146, default=0.0),
         "ucs_origin": DXFAttr(13, xtype=XType.point3d, default=NULLVEC),
         "ucs_xaxis": DXFAttr(
@@ -343,9 +350,7 @@ class DXFLayout(PlotSettings):
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         # Set correct model type flag
-        self.set_flag_state(
-            1024, self.dxf.name.upper() == "MODEL", "plot_layout_flags"
-        )
+        self.set_flag_state(1024, self.dxf.name.upper() == "MODEL", "plot_layout_flags")
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_layout.name)
         self.dxf.export_dxf_attribs(
@@ -370,3 +375,14 @@ class DXFLayout(PlotSettings):
                 "base_ucs_handle",
             ],
         )
+
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        super().map_resources(clone, mapping)
+        # The content of paperspace layouts is not copied automatically and the
+        # associated BLOCK_RECORD is created and assigned in a special method.
+        clone.dxf.discard("ucs_handle")
+        clone.dxf.discard("base_ucs_handle")
+        clone.dxf.viewport_handle = mapping.get_handle(self.dxf.get("viewport_handle"))
+
+
+

@@ -7,6 +7,7 @@ import ezdxf
 from ezdxf import xref, colors, const
 from ezdxf.math import Vec2
 from ezdxf.document import Drawing
+from ezdxf.layouts import Paperspace
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities import (
@@ -1119,8 +1120,72 @@ class TestUnderlay:
         assert pdf_underlay0.get_underlay_def() is pdf_underlay1.get_underlay_def()
 
 
+class TestLoadPaperspaceLayout:
+    @pytest.fixture(scope="class")
+    def psp(self) -> Paperspace:
+        doc = ezdxf.new()
+        psp = doc.new_layout("MyLayout")
+        psp.add_line((0, 0), (1, 0))
+        return psp
+
+    def test_loaded_infrastructure(self, psp):
+        tdoc = ezdxf.new()
+        xref.load_paperspace(psp, tdoc)
+        assert document_has_no_errors(tdoc) is True
+
+        loaded_psp = tdoc.paperspace("MyLayout")
+        assert isinstance(loaded_psp, Paperspace)
+
+    def test_loaded_paperspace_without_name_conflict(self, psp):
+        tdoc = ezdxf.new()
+        xref.load_paperspace(psp, tdoc)
+        assert document_has_no_errors(tdoc) is True
+
+        loaded_psp = tdoc.paperspace("MyLayout")
+        assert isinstance(loaded_psp, Paperspace)
+
+        assert loaded_psp.name == "MyLayout"
+        assert loaded_psp.name in loaded_psp.doc.layouts
+
+        block_record = loaded_psp.block_record
+        assert block_record.dxf.name == "*Paper_Space0"
+        assert loaded_psp.doc.block_records.has_entry("*Paper_Space0")
+
+        # does the required block layout structure exist:
+        block_layout = loaded_psp.doc.blocks.get("*Paper_Space0")
+        assert block_layout.is_any_paperspace is True
+
+        # check valid link structures
+        dxf_layout = loaded_psp.dxf_layout
+        assert block_record.dxf.layout == dxf_layout.dxf.handle
+        assert dxf_layout.dxf.block_record_handle == block_record.dxf.handle
+
+    def test_loaded_paperspace_content(self, psp):
+        tdoc = ezdxf.new()
+        xref.load_paperspace(psp, tdoc)
+        loaded_psp = tdoc.paperspace("MyLayout")
+        assert len(loaded_psp) == 1
+        line = loaded_psp[0]
+        assert line.dxftype() == "LINE"
+        assert factory.is_bound(line, tdoc)
+
+    def test_paperspace_name_conflict(self, psp):
+        tdoc = ezdxf.new()
+        tdoc.layouts.new("MyLayout")  # *Paper_Space0
+
+        xref.load_paperspace(psp, tdoc)
+        loaded_psp = tdoc.paperspace("MyLayout (2)")
+        assert isinstance(loaded_psp, Paperspace)
+
+        assert loaded_psp.name == "MyLayout (2)"
+        assert loaded_psp.name in loaded_psp.doc.layouts
+
+        block_record = loaded_psp.block_record
+        assert block_record.dxf.name == "*Paper_Space1"
+        assert loaded_psp.doc.block_records.has_entry("*Paper_Space1")
+
+
 # TODO:
-# Paperspace Layout
 # VIEWPORT
 # DICTIONARY, test soft-ownership
 # XRECORD, register and map pointers and hard-owner handles

@@ -891,8 +891,8 @@ class Drawing:
         else:
             self.layouts.delete(name)
 
-    def new_layout(self, name, dxfattribs=None) -> Layout:
-        """Create a new paperspace layout `name`. Returns a :class:`~ezdxf.layouts.Layout`
+    def new_layout(self, name, dxfattribs=None) -> Paperspace:
+        """Create a new paperspace layout `name`. Returns a :class:`~ezdxf.layouts.Paperspace`
         object. DXF R12 (AC1009) supports only one paperspace layout, only the active
         paperspace layout is saved, other layouts are dismissed.
 
@@ -902,7 +902,7 @@ class Drawing:
                 :class:`~ezdxf.entities.layout.DXFLayout` entity
 
         Raises:
-            DXFValueError: :class:`~ezdxf.layouts.Layout` `name` already exist
+            DXFValueError: paperspace layout `name` already exist
 
         """
         if name in self.layouts:
@@ -968,7 +968,7 @@ class Drawing:
         try:
             psp = self.paperspace(name)
         except KeyError:
-            psp = cast(Paperspace, self.new_layout(name))
+            psp = self.new_layout(name)
 
         psp.page_setup(size=(width, height), margins=(0, 0, 0, 0), units=units)
         return psp

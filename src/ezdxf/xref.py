@@ -35,7 +35,7 @@ from ezdxf.entities import (
     Block,
     EndBlk,
     Insert,
-    Dimension,
+    DXFLayout,
 )
 from ezdxf.math import UVec, Vec3
 
@@ -45,6 +45,7 @@ __all__ = [
     "detach",
     "write_block",
     "load_modelspace",
+    "load_paperspace",
     "Registry",
     "ResourceMapper",
     "ConflictPolicy",
@@ -58,6 +59,7 @@ DEFAULT_LAYER = "0"
 STANDARD = "STANDARD"
 FilterFunction: TypeAlias = Callable[[DXFEntity], bool]
 LoadFunction: TypeAlias = Callable[[str], Drawing]
+
 
 # I prefer to see the debug messages stored in the object, because I mostly debug test
 # code and pytest does not show logging or print messages by default.
@@ -318,6 +320,30 @@ def load_modelspace(
     loader.execute()
 
 
+def load_paperspace(
+    psp: Paperspace,
+    tdoc: Drawing,
+    filter_fn: Optional[FilterFunction] = None,
+    conflict_policy=ConflictPolicy.KEEP,
+) -> None:
+    """Loads the paperspace layout `psp` into the target document.  The filter function
+    `filter_fn` gets every source entity as input and returns ``True`` to load the
+    entity or ``False`` otherwise.
+
+    Args:
+        psp: paperspace layout to load
+        tdoc: target document
+        filter_fn: optional function to filter entities from the source paperspace layout
+        conflict_policy: how to resolve name conflicts
+
+    """
+    if psp.doc is tdoc:
+        raise const.DXFValueError("Paperspace layout cannot be from target document.")
+    loader = Loader(psp.doc, tdoc, conflict_policy=conflict_policy)
+    loader.load_paperspace_layout(psp, filter_fn=filter_fn)
+    loader.execute()
+
+
 class Registry(Protocol):
     def add_entity(self, entity: DXFEntity, block_key: str = NO_BLOCK) -> None:
         ...
@@ -407,16 +433,21 @@ class LoadEntities(LoadingCommand):
             registry.add_entity(e, block_key=e.dxf.owner)
 
     def execute(self, transfer: _Transfer) -> None:
+        target_layout = self.target_layout
         for entity in self.entities:
-            copy = transfer.get_entity_copy(entity)
-            if copy:
-                self.target_layout.add_entity(copy)  # type: ignore
+            clone = transfer.get_entity_copy(entity)
+            if clone and is_graphic_entity(clone):
+                target_layout.add_entity(clone)  # type: ignore
+            else:
+                transfer.debug(
+                    f"found non-graphic entity {str(clone)} as layout content"
+                )
 
 
 class LoadPaperspaceLayout(LoadingCommand):
     """Loads a paperspace layout as a new paperspace layout into the target document.
     If a paperspace layout with same name already exists the layout will be renamed
-    to  "<layout name> (x)" where x is the next free number.
+    to  "<layout name> (x)" where x is 2 or the next free number.
     """
 
     def __init__(self, psp: Paperspace, filter_fn: Optional[FilterFunction]) -> None:
@@ -433,8 +464,26 @@ class LoadPaperspaceLayout(LoadingCommand):
             return list(self.paperspace_layout)
 
     def register_resources(self, registry: Registry) -> None:
+        registry.add_entity(self.paperspace_layout.dxf_layout)
+        block_key = self.paperspace_layout.layout_key
         for e in self.source_entities():
-            registry.add_entity(e, block_key=e.dxf.owner)
+            registry.add_entity(e, block_key=block_key)
+
+    def execute(self, transfer: _Transfer) -> None:
+        source_dxf_layout = self.paperspace_layout.dxf_layout
+        target_dxf_layout = transfer.get_reference_of_copy(source_dxf_layout.dxf.handle)
+        assert isinstance(target_dxf_layout, DXFLayout)
+        target_layout = transfer.registry.target_doc.layouts.get(
+            target_dxf_layout.dxf.name
+        )
+        for entity in self.source_entities():
+            clone = transfer.get_entity_copy(entity)
+            if clone and is_graphic_entity(clone):
+                target_layout.add_entity(clone)  # type: ignore
+            else:
+                transfer.debug(
+                    f"found non-graphic entity {str(clone)} as layout content"
+                )
 
 
 class LoadBlockLayout(LoadingCommand):
@@ -939,6 +988,8 @@ class _Transfer:
                         STANDARD,
                     },
                 )
+            elif isinstance(entity, DXFLayout):
+                self.create_empty_paperspace_layout(entity)
 
     def replace_handle_mapping(self, old_target, new_target) -> None:
         self._replace_handles[old_target] = new_target
@@ -1146,6 +1197,19 @@ class _Transfer:
         collection.object_dict.add(entry.dxf.name, entry)
         # a resource collection is hard owner
         entry.dxf.owner = collection.handle
+
+    def create_empty_paperspace_layout(self, layout: DXFLayout) -> None:
+        tdoc = self.registry.target_doc
+        # The layout content will not be copied automatically!
+        # create new empty block layout:
+        block_name = tdoc.layouts.unique_paperspace_name()
+        block_layout = tdoc.blocks.new(block_name)
+        # link block layout and layout entity:
+        layout.dxf.block_record_handle = block_layout.block_record_handle
+        block_layout.block_record.dxf.layout = layout.dxf.handle
+
+        paperspace = Paperspace(layout, tdoc)
+        tdoc.layouts.append_layout(paperspace)
 
     def add_object_copies(self, copies: dict[str, DXFEntity]) -> None:
         """Add copied DXF objects to the OBJECTS section of the target document."""
