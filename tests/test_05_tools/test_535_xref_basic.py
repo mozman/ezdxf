@@ -18,6 +18,7 @@ from ezdxf.entities import (
     Hatch,
     Image,
     MultiLeader,
+    BlockRecord,
 )
 
 
@@ -907,6 +908,7 @@ class TestMultiLeaderMText:
         doc.styles.add("OpenSans", font="OpenSans-Regular.ttf")
         mleader_style = doc.mleader_styles.duplicate_entry("Standard", "_EZDXF_")
         mleader_style.set_mtext_style("OpenSans")
+        mleader_style.set_arrow_head(ARROWS.dot)
         mleader_style.set_leader_properties(linetype="CONTINUOUS")
         ml_builder = msp.add_multileader_mtext("_EZDXF_")
         ml_builder.quick_leader(
@@ -925,10 +927,50 @@ class TestMultiLeaderMText:
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
         loaded_mleader_style = tdoc.mleader_styles.get("_EZDXF_")
+        assert loaded_mleader_style.dxf.name == "_EZDXF_"
+
         text_style = tdoc.styles.get("OpenSans")
         assert loaded_mleader_style.dxf.text_style_handle == text_style.dxf.handle
+
         ltype = tdoc.linetypes.get("CONTINUOUS")
         assert loaded_mleader_style.dxf.leader_linetype_handle == ltype.dxf.handle
+
+        arrow_head_handle = loaded_mleader_style.dxf.arrow_head_handle
+        arrow_head_block_record = tdoc.entitydb.get(arrow_head_handle)
+        assert isinstance(arrow_head_block_record, BlockRecord)
+        assert arrow_head_block_record.dxf.name == ARROWS.block_name(ARROWS.dot)
+
+    def test_loader_multileader_attributes(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        db = tdoc.entitydb
+        loaded_mleader = tdoc.modelspace()[0]
+        assert isinstance(loaded_mleader, MultiLeader)
+
+        mleader_style = db.get(loaded_mleader.dxf.style_handle)
+        assert mleader_style.dxf.name == "_EZDXF_", "invalid mleader_style_handle"
+
+        ltype = db.get(loaded_mleader.dxf.leader_linetype_handle)
+        assert ltype.dxf.name.upper() == "CONTINUOUS", "invalid linetype handle"
+
+        text_style = db.get(loaded_mleader.dxf.text_style_handle)
+        assert text_style.dxf.name == "OpenSans", "invalid text style handle"
+
+        arrow_head = db.get(loaded_mleader.dxf.arrow_head_handle)
+        assert arrow_head.dxf.name == ARROWS.block_name(
+            ARROWS.dot
+        ), "invalid arrowhead handle"
+
+        assert (
+            loaded_mleader.dxf.block_record_handle == "0"
+        ), "expected null-ptr as block record handle"
+
+        mtext_data = loaded_mleader.context.mtext
+        assert (
+            mtext_data.style_handle == text_style.dxf.handle
+        ), "MTEXT data has invalid text style handle"
+
+        assert mtext_data.default_content == "MTEXT CONTENT"
 
 
 class TestMultiLeaderBlock:
