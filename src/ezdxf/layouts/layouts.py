@@ -66,9 +66,11 @@ class Layouts:
         return iter(self._layouts.values())
 
     def _add_layout(self, name: str, layout: Layout):
-        layout.dxf.name = name
+        dxf_layout = layout.dxf_layout
+        dxf_layout.dxf.name = name
+        dxf_layout.dxf.owner = self._dxf_layouts.dxf.handle
         self._layouts[key(name)] = layout
-        self._dxf_layouts[name] = layout.dxf_layout
+        self._dxf_layouts[name] = dxf_layout
 
     def _discard(self, layout: Layout):
         name = layout.name
@@ -84,7 +86,6 @@ class Layouts:
             index += 1
             layout_name = base_layout_name + f" ({index})"
         layout.dxf.taborder = len(self._layouts) + 1
-        layout.dxf.owner = self._dxf_layouts.dxf.handle
         self._add_layout(layout_name, layout)
 
     def setup_modelspace(self):
