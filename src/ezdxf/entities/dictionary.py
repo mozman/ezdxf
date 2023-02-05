@@ -306,6 +306,15 @@ class Dictionary(DXFObject):
         """
         return self._data.get(key, default)  # type: ignore
 
+    def find_key(self, entity: DXFEntity) -> str:
+        """Returns the DICTIONARY key string for `entity` or an empty string if not
+        found.
+        """
+        for key, entry in self._data.items():
+            if entry is entity:
+                return key
+        return ""
+
     def add(self, key: str, entity: DXFObject) -> None:
         """Add entry (key, value).
 

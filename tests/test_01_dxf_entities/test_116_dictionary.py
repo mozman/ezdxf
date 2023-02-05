@@ -108,6 +108,10 @@ class TestNoneEmptyDXFDict:
     def test_items(self, dxfdict):
         assert 14 == len(list(dxfdict.items()))
 
+    def test_find_key(self, dxfdict):
+        entry = dxfdict["ACAD_COLOR"]
+        assert dxfdict.find_key(entry) == "ACAD_COLOR"
+
 
 class TestEmptyDXFDict:
     @pytest.fixture
@@ -420,9 +424,7 @@ class TestCopyNotHardOwnerDictionary:
         dict_var = dictionary.add_dict_var("DICTVAR", "VarContent")
         xrecord = dictionary.add_xrecord("XRECORD")
         xrecord.reset([(1, "String"), (40, 3.1415), (90, 4711)])
-        dictionary2 = doc.rootdict.get_required_dict(
-            "COPYTEST2", hard_owned=False
-        )
+        dictionary2 = doc.rootdict.get_required_dict("COPYTEST2", hard_owned=False)
         dictionary2["DICTVAR"] = dict_var
         dictionary2["XRECORD"] = xrecord
         return dictionary2
@@ -584,4 +586,3 @@ AcDbDictionary
 281
 1
 """
-
