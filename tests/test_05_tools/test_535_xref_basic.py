@@ -529,6 +529,24 @@ class TestAnonymousBlocks:
         ), "expected next available anonymous block name in tdoc"
 
 
+def test_loaded_external_reference():
+    sdoc = ezdxf.new()
+    sdoc.add_xref_def("my.dxf", "my_xref")
+    sdoc.modelspace().add_blockref("my_xref", insert=(0, 0))
+
+    tdoc = ezdxf.new()
+    xref.load_modelspace(sdoc, tdoc)
+
+    assert tdoc.block_records.has_entry("my_xref")
+    block_layout = tdoc.blocks.get("my_xref")
+    assert block_layout.block.is_xref is True
+    assert block_layout.block.dxf.xref_path == "my.dxf"
+
+    insert = tdoc.modelspace()[0]
+    assert isinstance(insert, Insert)
+    assert insert.dxf.name == "my_xref"
+
+
 def test_load_hard_owned_XRecord_within_appdata_section():
     """Any object which is hard-owned by another entity should automatically be loaded."""
     sdoc = ezdxf.new()
@@ -1102,8 +1120,8 @@ class TestUnderlay:
 
 
 # TODO:
-# VIEWPORT
 # Paperspace Layout
+# VIEWPORT
 # DICTIONARY, test soft-ownership
 # XRECORD, register and map pointers and hard-owner handles
 # DXFTagStorage, register and map pointers and hard-owner handles
