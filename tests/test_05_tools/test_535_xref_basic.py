@@ -899,6 +899,9 @@ class TestLoadMLine:
         )
 
 
+MTEXT_STYLE = "EZDXF_MTEXT"
+
+
 class TestMultiLeaderMText:
     @pytest.fixture(scope="class")
     def sdoc(self) -> Drawing:
@@ -906,11 +909,11 @@ class TestMultiLeaderMText:
         msp = doc.modelspace()
 
         doc.styles.add("OpenSans", font="OpenSans-Regular.ttf")
-        mleader_style = doc.mleader_styles.duplicate_entry("Standard", "_EZDXF_")
+        mleader_style = doc.mleader_styles.duplicate_entry("Standard", MTEXT_STYLE)
         mleader_style.set_mtext_style("OpenSans")
         mleader_style.set_arrow_head(ARROWS.dot)
         mleader_style.set_leader_properties(linetype="CONTINUOUS")
-        ml_builder = msp.add_multileader_mtext("_EZDXF_")
+        ml_builder = msp.add_multileader_mtext(MTEXT_STYLE)
         ml_builder.quick_leader(
             "MTEXT CONTENT", target=Vec2(40, 15), segment1=Vec2.from_deg_angle(45, 14)
         )
@@ -921,13 +924,13 @@ class TestMultiLeaderMText:
         xref.load_modelspace(sdoc, tdoc)
         assert document_has_no_errors(tdoc) is True
         assert tdoc.styles.has_entry("OpenSans") is True
-        assert "_EZDXF_" in tdoc.mleader_styles
+        assert MTEXT_STYLE in tdoc.mleader_styles
 
-    def test_loaded_mleader_style(self, sdoc):
+    def test_loaded_mleader_mtext_style(self, sdoc):
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
-        loaded_mleader_style = tdoc.mleader_styles.get("_EZDXF_")
-        assert loaded_mleader_style.dxf.name == "_EZDXF_"
+        loaded_mleader_style = tdoc.mleader_styles.get(MTEXT_STYLE)
+        assert loaded_mleader_style.dxf.name == MTEXT_STYLE
 
         text_style = tdoc.styles.get("OpenSans")
         assert loaded_mleader_style.dxf.text_style_handle == text_style.dxf.handle
@@ -944,11 +947,10 @@ class TestMultiLeaderMText:
         tdoc = ezdxf.new()
         xref.load_modelspace(sdoc, tdoc)
         db = tdoc.entitydb
-        loaded_mleader = tdoc.modelspace()[0]
-        assert isinstance(loaded_mleader, MultiLeader)
+        loaded_mleader: MultiLeader = tdoc.modelspace()[0]
 
         mleader_style = db.get(loaded_mleader.dxf.style_handle)
-        assert mleader_style.dxf.name == "_EZDXF_", "invalid mleader_style_handle"
+        assert mleader_style.dxf.name == MTEXT_STYLE, "invalid mleader_style_handle"
 
         ltype = db.get(loaded_mleader.dxf.leader_linetype_handle)
         assert ltype.dxf.name.upper() == "CONTINUOUS", "invalid linetype handle"
@@ -973,8 +975,96 @@ class TestMultiLeaderMText:
         assert mtext_data.default_content == "MTEXT CONTENT"
 
 
+BLOCK_STYLE = "EZDXF_BLOCK"
+
+
 class TestMultiLeaderBlock:
-    pass
+    @staticmethod
+    def create_block(doc, name: str, size: float = 8, margin: float = 0.25):
+        from ezdxf.render import forms
+        from ezdxf.enums import TextEntityAlignment
+
+        block = doc.blocks.new(name, base_point=(0, 0))
+        block.add_lwpolyline(forms.square(size), close=True)
+        attdef_attribs = {"height": 1.0, "style": "OpenSans"}
+        bottom_left_attdef = block.add_attdef(
+            "ONE", text="ONE", dxfattribs=attdef_attribs
+        )
+        bottom_left_attdef.set_placement(
+            (margin, margin), align=TextEntityAlignment.BOTTOM_LEFT
+        )
+        top_right_attdef = block.add_attdef(
+            "TWO", text="TWO", dxfattribs=attdef_attribs
+        )
+        top_right_attdef.set_placement(
+            (size - margin, size - margin), align=TextEntityAlignment.TOP_RIGHT
+        )
+        return block
+
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        from ezdxf.render import mleader
+
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+
+        doc.styles.add("OpenSans", font="OpenSans-Regular.ttf")
+        block = self.create_block(doc, "SQUARE")
+
+        mleader_style = doc.mleader_styles.duplicate_entry("Standard", BLOCK_STYLE)
+        mleader_style.dxf.block_record_handle = block.block_record_handle
+
+        ml_builder = msp.add_multileader_block(style=BLOCK_STYLE)
+        ml_builder.set_content(name=block.name)
+        ml_builder.set_attribute("ONE", "Data1")
+        ml_builder.set_attribute("TWO", "Data2")
+        ml_builder.add_leader_line(mleader.ConnectionSide.right, [Vec2(20, 10)])
+        ml_builder.build(insert=Vec2(5, 2))
+        return doc
+
+    def test_loaded_mleader_block_style(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        loaded_mleader_style = tdoc.mleader_styles.get(BLOCK_STYLE)
+        assert loaded_mleader_style.dxf.name == BLOCK_STYLE
+
+        block_record_handle = loaded_mleader_style.dxf.block_record_handle
+        loaded_block = tdoc.blocks.get("SQUARE")
+        assert loaded_block.block_record_handle == block_record_handle
+
+    def test_loaded_mleader_attributes(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        db = tdoc.entitydb
+        loaded_mleader: MultiLeader = tdoc.modelspace()[0]
+        block_record_handle = loaded_mleader.dxf.block_record_handle
+
+        loaded_block_record = db.get(block_record_handle)
+        assert isinstance(loaded_block_record, BlockRecord)
+        assert loaded_block_record.dxf.name == "SQUARE"
+
+        block_data = loaded_mleader.context.block
+        assert block_data.block_record_handle == block_record_handle
+
+    def test_loaded_block_attributes(self, sdoc):
+        """Block attributes are virtual ATTRIB entities attached to the MLEADER BLOCK,
+        created by the DXF renderer from ATTDEF entities in the BLOCK definition.
+
+        """
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+
+        loaded_mleader: MultiLeader = tdoc.modelspace()[0]
+        block = tdoc.blocks.get("SQUARE")
+
+        attdef0, attdef1 = block.query("ATTDEF")
+        block_attrib0, block_attrib1 = loaded_mleader.block_attribs
+
+        assert attdef0.dxf.handle == block_attrib0.handle
+        assert attdef1.dxf.handle == block_attrib1.handle
+
+        assert block_attrib0.text == "Data1"
+        assert block_attrib1.text == "Data2"
 
 
 # TODO:

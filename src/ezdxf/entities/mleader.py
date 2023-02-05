@@ -237,7 +237,7 @@ def compile_context_tags(
             if tag.code == START_LEADER:
                 collector.append(build_structure(tag, END_LEADER))  # type: ignore
             # Group code 304 is used also for MTEXT content, therefore always
-            # test for group code AND and value string:
+            # test for group code and value string:
             elif tag.code == START_LEADER_LINE and tag.value == LEADER_LINE_STR:
                 collector.append(build_structure(tag, END_LEADER_LINE))  # type: ignore
             else:
