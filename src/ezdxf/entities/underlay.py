@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf import xref
 
 
 __all__ = [
@@ -158,8 +159,12 @@ class Underlay(DXFGraphic):
 
     def post_bind_hook(self):
         assert isinstance(self.dxf.handle, str)
-        if isinstance(self._underlay_def, UnderlayDefinition):
-            self._underlay_def.append_reactor_handle(self.dxf.handle)
+        underlay_def = self._underlay_def
+        if (
+            isinstance(underlay_def, UnderlayDefinition)
+            and self.doc is underlay_def.doc  # it's not a xref copy!
+        ):
+            underlay_def.append_reactor_handle(self.dxf.handle)
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
@@ -185,6 +190,40 @@ class Underlay(DXFGraphic):
     def export_boundary_path(self, tagwriter: AbstractTagWriter):
         for vertex in self.boundary_path:
             tagwriter.write_vertex(11, vertex[:2])
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        super().register_resources(registry)
+        if isinstance(self._underlay_def, UnderlayDefinition):
+            registry.add_handle(self._underlay_def.dxf.handle)
+
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        assert isinstance(clone, Underlay)
+        super().map_resources(clone, mapping)
+        underlay_def_copy = self.map_underlay_def(clone, mapping)
+        clone._underlay_def = underlay_def_copy
+        clone.dxf.underlay_def_handle = underlay_def_copy.dxf.handle
+        underlay_def_copy.append_reactor_handle(clone.dxf.handle)
+
+    def map_underlay_def(
+        self, clone: Underlay, mapping: xref.ResourceMapper
+    ) -> UnderlayDefinition:
+        underlay_def = self._underlay_def
+        assert isinstance(underlay_def, UnderlayDefinition)
+
+        underlay_def_copy = mapping.get_reference_of_copy(underlay_def.dxf.handle)
+        assert isinstance(underlay_def_copy, UnderlayDefinition)
+
+        doc = clone.doc
+        assert doc is not None
+
+        underlay_dict = doc.rootdict.get_required_dict(underlay_def.acad_dict_name)
+        if underlay_dict.find_key(underlay_def_copy):  # entry already exist
+            return underlay_def_copy
+
+        # create required dictionary entry
+        key = doc.objects.next_underlay_key(lambda k: k not in underlay_dict)
+        underlay_dict.take_ownership(key, underlay_def_copy)
+        return underlay_def_copy
 
     def set_underlay_def(self, underlay_def: UnderlayDefinition) -> None:
         self._underlay_def = underlay_def
@@ -369,8 +408,16 @@ class UnderlayDefinition(DXFObject):
         self.dxf.export_dxf_attribs(tagwriter, ["filename", "name"])
 
     @property
-    def entity_name(self):
-        return self.DXFTYPE[:3] + "UNDERLAY"
+    def file_format(self) -> str:
+        return self.DXFTYPE[:3]
+
+    @property
+    def entity_name(self) -> str:
+        return self.file_format + "UNDERLAY"
+
+    @property
+    def acad_dict_name(self) -> str:
+        return f"ACAD_{self.file_format}DEFINITIONS"
 
     def post_new_hook(self):
         self.set_reactors([self.dxf.owner])

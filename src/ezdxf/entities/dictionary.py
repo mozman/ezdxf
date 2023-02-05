@@ -342,6 +342,11 @@ class Dictionary(DXFObject):
                 raise DXFTypeError(f"Graphic entities not allowed: {entity.dxftype()}")
         self._data[key] = entity
 
+    def take_ownership(self, key: str, entity: DXFObject):
+        """Add entry (key, value) and take ownership."""
+        self.add(key, entity)
+        entity.dxf.owner = self.dxf.handle
+
     def remove(self, key: str) -> None:
         """Delete entry `key`. Raises :class:`DXFKeyError`, if `key` does not
         exist. Destroys hard owned DXF entities.

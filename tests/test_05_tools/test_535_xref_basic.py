@@ -19,6 +19,7 @@ from ezdxf.entities import (
     Image,
     MultiLeader,
     BlockRecord,
+    Underlay,
 )
 
 
@@ -1067,8 +1068,40 @@ class TestMultiLeaderBlock:
         assert block_attrib1.text == "Data2"
 
 
+class TestUnderlay:
+    @pytest.fixture(scope="class")
+    def sdoc(self) -> Drawing:
+        doc = ezdxf.new()
+        pdf_underlay_def = doc.add_underlay_def(
+            filename="underlay.pdf", name="1"
+        )  # name = page to display
+        msp = doc.modelspace()
+        msp.add_underlay(pdf_underlay_def, insert=(0, 0, 0), scale=1.0)
+        msp.add_underlay(pdf_underlay_def, insert=(10, 0, 0), scale=2.0)
+        return doc
+
+    def test_loaded_infrastructure(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        assert document_has_no_errors(tdoc) is True
+        assert "ACAD_PDFDEFINITIONS" in tdoc.rootdict
+        acad_dict = tdoc.rootdict.get("ACAD_PDFDEFINITIONS")
+        assert len(acad_dict) == 1, "expected one loaded pdf definition"
+
+    def test_loaded_attributes(self, sdoc):
+        tdoc = ezdxf.new()
+        xref.load_modelspace(sdoc, tdoc)
+        pdf_underlay0, pdf_underlay1 = tdoc.modelspace()
+        assert isinstance(pdf_underlay0, Underlay)
+        assert isinstance(pdf_underlay1, Underlay)
+
+        pdf_definition = pdf_underlay0.get_underlay_def()
+        assert pdf_definition.dxf.handle == pdf_underlay0.dxf.underlay_def_handle
+        assert pdf_definition.dxf.handle == pdf_underlay1.dxf.underlay_def_handle
+        assert pdf_underlay0.get_underlay_def() is pdf_underlay1.get_underlay_def()
+
+
 # TODO:
-# UNDERLAY/UNDERLAYDEFINITION
 # VIEWPORT
 # Paperspace Layout
 # DICTIONARY, test soft-ownership
