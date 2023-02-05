@@ -8,6 +8,7 @@ Version 1.0.2b0 - dev
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
 - NEW: `Drawing.validate()` also prints report of resolved issues
 - NEW: copy and transform support for `PDFUNDERLAY`, `DWFUNDERLAY` and `DGNUNDERLAY`
+- CHANGE: default flags for `UNDERLAY` entities is now 10 (underlay is on, adjust for background)
 - BUGFIX: fix ownership of sub-entities of `INSERT` and `POLYLINE` entities
 
 Version 1.0.1 - 2023-01-14

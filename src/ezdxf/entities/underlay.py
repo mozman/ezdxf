@@ -83,7 +83,7 @@ acdb_underlay = DefSubclass(
         # 2 = Underlay is on
         # 4 = Monochrome
         # 8 = Adjust for background
-        "flags": DXFAttr(280, default=2),
+        "flags": DXFAttr(280, default=10),
         # Contrast value (20-100; default = 100)
         "contrast": DXFAttr(
             281,
@@ -304,9 +304,18 @@ class Underlay(DXFGraphic):
 
 @register_entity
 class PdfUnderlay(Underlay):
-    """DXF PDFUNDERLAY entity - BricsCAD exports PDFREFERENCE"""
+    """DXF PDFUNDERLAY entity"""
 
     DXFTYPE = "PDFUNDERLAY"
+
+
+@register_entity
+class PdfReference(Underlay):
+    """PDFREFERENCE ia a synonym for PDFUNDERLAY, ezdxf creates always PDFUNDERLAY
+    entities.
+    """
+
+    DXFTYPE = "PDFREFERENCE"
 
 
 @register_entity
@@ -369,7 +378,7 @@ class UnderlayDefinition(DXFObject):
 
 @register_entity
 class PdfDefinition(UnderlayDefinition):
-    """DXF PDFDEFINITION entity  - BricsCAD export PDFREFERENCE"""
+    """DXF PDFDEFINITION entity"""
 
     DXFTYPE = "PDFDEFINITION"
 

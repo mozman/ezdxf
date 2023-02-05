@@ -70,7 +70,7 @@ def test_default_new():
     assert entity.dxf.scale_y == 1
     assert entity.dxf.rotation == 0
     assert entity.dxf.extrusion == (0, 0, 1)
-    assert entity.dxf.flags == 2
+    assert entity.dxf.flags == 10
     assert entity.dxf.contrast == 100
     assert entity.dxf.fade == 0
     assert entity.boundary_path == []

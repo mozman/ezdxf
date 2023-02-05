@@ -106,8 +106,8 @@ def test_new_pdf(new_doc):
     assert underlay.clipping is False
     assert underlay.on is True
     assert underlay.monochrome is False
-    assert underlay.adjust_for_background is False
-    assert underlay.dxf.flags == 2
+    assert underlay.adjust_for_background is True
+    assert underlay.dxf.flags == 10
 
     underlay_def2 = underlay.get_underlay_def()
     assert underlay_def.dxf.handle == underlay_def2.dxf.handle
