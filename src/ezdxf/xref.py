@@ -40,8 +40,9 @@ from ezdxf.entities import (
 from ezdxf.math import UVec, Vec3
 
 __all__ = [
-    "embed",
+    "define",
     "attach",
+    "embed",
     "detach",
     "write_block",
     "load_modelspace",
@@ -95,8 +96,8 @@ class ConflictPolicy(enum.Enum):
 # Notes about DXF files as XREFs
 # ------------------------------
 # AutoCAD cannot use DXF R12 files as external references (BricsCAD can)!
-# AutoCAD may use DXF R2000+ as external references, but do not accept DXF files created
-# by ezdxf nor BricsCAD, which opened for itself are total valid DXF documents.
+# AutoCAD may use DXF R2000+ as external references, but does not accept DXF files
+# created by ezdxf nor BricsCAD, which opened for itself are total valid DXF documents.
 #
 # Autodesk DWG TrueView V2022:
 # > Error: Unable to load <absolute file path>.
@@ -142,6 +143,95 @@ class ConflictPolicy(enum.Enum):
 # Create a standard mapping for the ROOT_DICT and its entries (DICTIONARY objects)
 # from the source doc to the target doc.  I think these are always basic management
 # structures which shouldn't be duplicated.
+
+
+def define(doc: Drawing, block_name: str, filename: str, overlay=False) -> None:
+    """Add an external reference (xref) definition to a document.
+
+    XREF attachment types:
+
+    - attached: the XREF that’s inserted into this drawing is also present in a
+      document to which this document is inserted as an XREF.
+    - overlay: the XREF that’s inserted into this document is **not** present in a
+      document to which this document is inserted as an XREF.
+
+    Args:
+        doc: host document
+        block_name: name of the xref block
+        filename: external reference filename
+        overlay: creates an XREF overlay if ``True`` and an XREF attachment otherwise
+
+    Raises:
+        ValueError: block with same name exist
+
+    .. versionadded:: 1.1
+
+    """
+    if block_name in doc.blocks:
+        raise ValueError(f"block '{block_name}' already exist")
+    if overlay:
+        flags = const.BLK_XREF_OVERLAY | const.BLK_EXTERNAL
+    else:
+        flags = const.BLK_XREF | const.BLK_EXTERNAL
+    doc.blocks.new(name=block_name, dxfattribs={"flags": flags, "xref_path": filename})
+
+
+def attach(
+    doc: Drawing,
+    *,
+    block_name: str,
+    filename: str,
+    insert: UVec = (0, 0, 0),
+    scale: float = 1.0,
+    rotation: float = 0.0,
+    overlay=False,
+) -> Insert:
+    """Attach the file `filename` to the host document as external reference (XREF) and
+    creates a default block reference for the XREF in the modelspace of the document.
+    The function raises a :class:`ValueError` exception if the block definition
+    already exist, but an XREF can be inserted multiple times by adding additional block
+    references::
+
+        msp.add_blockref(block_name, insert=another_location)
+
+    .. important::
+
+        If the XREF has different drawing units than the host document, the scale
+        factor between these units must be applied as a uniform scale factor to the
+        block reference!  Unfortunately the XREF drawing units can only be detected by
+        loading the whole document and is therefore not done automatically by this
+        function. Advice: always use the same units for all drawings of a project!
+
+    Args:
+        doc: host DXF document
+        block_name: name of the XREF definition block
+        filename: file name of the XREF
+        insert: location of the default block reference
+        scale: uniform scaling factor
+        rotation: rotation angle in degrees
+        overlay: creates an XREF overlay if ``True`` and an XREF attachment otherwise
+
+    Returns:
+        Insert: default block reference for the XREF
+
+    Raises:
+        ValueError: block with same name exist
+
+    .. versionadded:: 1.1
+
+    """
+    define(doc, block_name, filename, overlay=overlay)
+    dxfattribs = dict()
+    if rotation:
+        dxfattribs["rotation"] = float(rotation)
+    if scale != 1.0:
+        scale = float(scale)
+        dxfattribs["xscale"] = scale
+        dxfattribs["yscale"] = scale
+        dxfattribs["zscale"] = scale
+    location = Vec3(insert)
+    msp = doc.modelspace()
+    return msp.add_blockref(block_name, insert=location, dxfattribs=dxfattribs)
 
 
 def embed(
@@ -201,46 +291,6 @@ def embed(
     origin = source_doc.header.get("$INSBASE")
     if origin:
         block.dxf.origin = Vec3(origin)
-
-
-def attach(
-    doc: Drawing, *, block_name: str, filename: str, insert: UVec = (0, 0, 0)
-) -> Insert:
-    """Attach the file `filename` to the host document as external reference (XREF).
-
-    This function creates the required XREF block definition and a default block
-    reference at location `insert`.
-
-    .. important::
-
-        If the XREF has different drawing units than the host document, the scale
-        factor between these units must be applied as a uniform scale factor to the
-        block reference!  Unfortunately the XREF drawing units can only be detected by
-        loading the whole document and is therefore not done automatically by this
-        function. Advice: always use the same units for all drawings of a project!
-
-    Args:
-        doc: host DXF document
-        block_name: name of the XREF definition block
-        filename: file name of the XREF
-        insert: location of the default block reference
-
-    Returns:
-        Insert: default block reference for the XREF at location `insert`
-
-    Raises:
-        ValueError: block with same name exist
-
-    .. versionadded:: 1.1
-
-    """
-    if block_name in doc.blocks:
-        raise ValueError(f"block '{block_name}' already exist")
-    flags = const.BLK_XREF | const.BLK_EXTERNAL
-    doc.blocks.new(name=block_name, dxfattribs={"flags": flags, "xref_path": filename})
-    location = Vec3(insert)
-    msp = doc.modelspace()
-    return msp.add_blockref(block_name, insert=location)
 
 
 def detach(block: BlockLayout, *, xref_filename: str) -> Drawing:
