@@ -48,6 +48,11 @@ Apply minimal Python version update to:
 - introduction.rst
 - setup.rst
 
+Other
+-----
+
+- add `BaseLayout.transform()` method to transform the content of any layout inplace by
+  a transformation matrix `Matrix44`
 
 Ideas for Future Releases
 =========================
