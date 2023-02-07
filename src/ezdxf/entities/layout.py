@@ -376,13 +376,25 @@ class DXFLayout(PlotSettings):
             ],
         )
 
+    def register_resources(self, registry: xref.Registry) -> None:
+        super().register_resources(registry)
+        registry.add_handle(self.dxf.get("ucs_handle"))
+        registry.add_handle(self.dxf.get("base_ucs_handle"))
+
     def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        def map_handle(attrib_name):
+            handle = self.dxf.get(attrib_name, "")
+            if not handle:
+                return
+            new_handle = mapping.get_handle(handle)
+            if new_handle and new_handle != "0":
+                clone.dxf.set(attrib_name, new_handle)
+            else:
+                clone.dxf.discard(attrib_name)
         super().map_resources(clone, mapping)
+
         # The content of paperspace layouts is not copied automatically and the
         # associated BLOCK_RECORD is created and assigned in a special method.
-        clone.dxf.discard("ucs_handle")
-        clone.dxf.discard("base_ucs_handle")
-        clone.dxf.viewport_handle = mapping.get_handle(self.dxf.get("viewport_handle"))
-
-
-
+        map_handle("ucs_handle")
+        map_handle("base_ucs_handle")
+        map_handle("viewport_handle")

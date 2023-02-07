@@ -29,6 +29,7 @@ from ezdxf.entities import (
     Linetype,
     Textstyle,
     DimStyle,
+    UCSTableEntry,
     Material,
     MLineStyle,
     MLeaderStyle,
@@ -1196,6 +1197,11 @@ class _Transfer:
             block_record.set_block(block, endblk)
         else:
             raise const.DXFInternalEzdxfError("invalid BLOCK_RECORD copy")
+
+    def add_ucs_entry(self, ucs: UCSTableEntry) -> None:
+        # name mapping is not supported for UCS table entries
+        tdoc = self.registry.target_doc
+        self.add_table_entry(tdoc.ucs, ucs)
 
     def add_table_entry(self, table, entity: DXFEntity) -> None:
         name = entity.dxf.name
