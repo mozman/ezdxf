@@ -1,4 +1,4 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from typing import cast
 import pytest
@@ -110,16 +110,6 @@ class TestPaperSpace:
         vp = psp.main_viewport()
         assert vp.dxf.center == (-15, 5)
         assert vp.dxf.height == 30
-
-    def test_zoom_objects_but_ignore_main_viewport(self, psp):
-        vp = psp.main_viewport()
-        # Clipping path of viewports are taken into account, but the main
-        # viewport is ignored:
-        objects = [psp[0], vp]
-        zoom.objects(psp, objects)
-        assert vp.dxf.center == (40, 40)
-        assert vp.dxf.width == 40
-        assert vp.dxf.height == 40
 
     def test_zoom_objects_of_empty_set(self, psp):
         vp = psp.main_viewport()

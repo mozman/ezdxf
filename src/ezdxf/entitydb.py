@@ -394,3 +394,9 @@ class EntitySpace:
         """Remove all entities."""
         # Do not destroy entities!
         self.entities = list()
+
+    def pop(self, index: int = -1) -> DXFEntity:
+        return self.entities.pop(index)
+
+    def insert(self, index: int, entity: DXFEntity) -> None:
+        self.entities.insert(index, entity)
