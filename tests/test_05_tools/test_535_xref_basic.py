@@ -1189,7 +1189,7 @@ class TestLoadPaperspaceLayout:
 
 
 # TODO:
-# VIEWPORT
+# VIEWPORT -> VISUAL_STYLE
 # DICTIONARY, test soft-ownership
 # XRECORD, register and map pointers and hard-owner handles
 # DXFTagStorage, register and map pointers and hard-owner handles
@@ -1198,7 +1198,6 @@ class TestLoadPaperspaceLayout:
 # ACIS entities
 # ACAD_PROXY_ENTITY?
 # OLE2FRAME?
-# SUN?
 # IDBUFFER/LAYERFILTER?
 
 if __name__ == "__main__":

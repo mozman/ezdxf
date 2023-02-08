@@ -538,26 +538,32 @@ class Viewport(DXFGraphic):
         registry.add_handle(self.dxf.get("background_handle"))
         registry.add_handle(self.dxf.get("shade_plot_handle"))
         registry.add_handle(self.dxf.get("sun_handle"))
-        registry.add_handle(self.dxf.get("ref_vp_object_1"))
-        registry.add_handle(self.dxf.get("ref_vp_object_2"))
-        registry.add_handle(self.dxf.get("ref_vp_object_3"))
 
     def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         assert isinstance(clone, Viewport)
         super().map_resources(clone, mapping)
+
+        mapping.map_existing_handle(
+            self, clone, "clipping_boundary_handle", optional=True
+        )
         mapping.map_existing_handle(self, clone, "ucs_handle", optional=True)
         mapping.map_existing_handle(self, clone, "base_ucs_handle", optional=True)
         mapping.map_existing_handle(self, clone, "visual_style_handle", optional=True)
-        mapping.map_existing_handle(self, clone, "background_handle", optional=True)
-        mapping.map_existing_handle(self, clone, "shade_plot_handle", optional=True)
         mapping.map_existing_handle(self, clone, "sun_handle", optional=True)
-        mapping.map_existing_handle(self, clone, "ref_vp_object_1", optional=True)
-        mapping.map_existing_handle(self, clone, "ref_vp_object_2", optional=True)
-        mapping.map_existing_handle(self, clone, "ref_vp_object_3", optional=True)
-        clone.frozen_layers = [mapping.get_layer(name) for name in self.frozen_layers]
-
         # VIEWPORT entity is hard owner of the SUN object
         clone.take_sun_ownership()
+        clone.frozen_layers = [mapping.get_layer(name) for name in self.frozen_layers]
+
+        # I have no information to what entities the background- and the shade_plot
+        # handles are pointing to and I don't have any examples for that!
+        mapping.map_existing_handle(self, clone, "background_handle", optional=True)
+        mapping.map_existing_handle(self, clone, "shade_plot_handle", optional=True)
+
+        # No information if these attributes really exist or any examples where these
+        # attributes are used. BricsCAD does not create these attributes when using
+        # viewport layer overrides:
+        for num in range(1, 5):
+            clone.dxf.discard(f"ref_vp_object_{num}")
 
     def take_sun_ownership(self) -> None:
         assert self.doc is not None
