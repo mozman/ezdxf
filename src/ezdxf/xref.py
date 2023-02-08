@@ -458,7 +458,7 @@ class ResourceMapper(Protocol):
         ...
 
     def map_existing_handle(
-        self, source: DXFEntity, clone: DXFEntity, attrib_name: str, optional=False
+        self, source: DXFEntity, clone: DXFEntity, attrib_name: str, *, optional=False
     ) -> None:
         ...
 
@@ -1030,7 +1030,7 @@ class _Transfer:
         return entry_name, loaded_entry
 
     def map_existing_handle(
-        self, source: DXFEntity, clone: DXFEntity, attrib_name: str, optional=False
+        self, source: DXFEntity, clone: DXFEntity, attrib_name: str, *, optional=False
     ) -> None:
         """Map handle attribute if the original handle exist and the references entity
         was really copied.

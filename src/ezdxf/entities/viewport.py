@@ -83,9 +83,7 @@ acdb_viewport = DefSubclass(
         "snap_spacing": DXFAttr(14, xtype=XType.point2d, default=Vec2(10, 10)),
         "grid_spacing": DXFAttr(15, xtype=XType.point2d, default=Vec2(10, 10)),
         # View direction vector (WCS):
-        "view_direction_vector": DXFAttr(
-            16, xtype=XType.point3d, default=Z_AXIS
-        ),
+        "view_direction_vector": DXFAttr(16, xtype=XType.point3d, default=Z_AXIS),
         # View target point (in WCS):
         "view_target_point": DXFAttr(17, xtype=XType.point3d, default=NULLVEC),
         "perspective_lens_length": DXFAttr(42, default=50),
@@ -204,9 +202,9 @@ acdb_viewport = DefSubclass(
         ),
         # Frequency of major grid lines compared to minor grid lines
         "grid_frequency": DXFAttr(61, dxfversion="AC1021"),
-        "background_handle": DXFAttr(332, dxfversion="AC1021"),
-        "shade_plot_handle": DXFAttr(333, dxfversion="AC1021"),
-        "visual_style_handle": DXFAttr(348, dxfversion="AC1021"),
+        "background_handle": DXFAttr(332, dxfversion="AC1021", optional=True),
+        "shade_plot_handle": DXFAttr(333, dxfversion="AC1021", optional=True),
+        "visual_style_handle": DXFAttr(348, dxfversion="AC1021", optional=True),
         "default_lighting_flag": DXFAttr(
             292, dxfversion="AC1021", default=1, optional=True
         ),
@@ -232,15 +230,13 @@ acdb_viewport = DefSubclass(
         "ambient_light_color_2": DXFAttr(421, dxfversion="AC1021"),
         # as True Color:
         "ambient_light_color_3": DXFAttr(431, dxfversion="AC1021"),
-        "sun_handle": DXFAttr(361, dxfversion="AC1021"),
-        "ref_vp_object_1": DXFAttr(335, dxfversion="AC1021"),
-        # unknown meaning, don't ask mozman
-        "ref_vp_object_2": DXFAttr(343, dxfversion="AC1021"),
-        # unknown meaning, don't ask mozman
-        "ref_vp_object_3": DXFAttr(344, dxfversion="AC1021"),
-        # unknown meaning, don't ask mozman
-        "ref_vp_object_4": DXFAttr(91, dxfversion="AC1021"),
-        # unknown meaning, don't ask mozman
+        "sun_handle": DXFAttr(361, dxfversion="AC1021", optional=True),
+        # The following attributes are mentioned in the DXF reference but may not really exist:
+        # "Soft pointer reference to viewport object (for layer VP property override)"
+        "ref_vp_object_1": DXFAttr(335, dxfversion="AC1021"),  # soft-pointer
+        "ref_vp_object_2": DXFAttr(343, dxfversion="AC1021"),  # hard-pointer
+        "ref_vp_object_3": DXFAttr(344, dxfversion="AC1021"),  # hard-pointer
+        "ref_vp_object_4": DXFAttr(91, dxfversion="AC1021"),  # this is not a pointer!
     },
 )
 acdb_viewport_group_codes = group_code_mapping(acdb_viewport)
@@ -269,7 +265,7 @@ class Viewport(DXFGraphic):
 
     def copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, Viewport)
-        entity._frozen_layers = self._frozen_layers
+        entity._frozen_layers = list(self._frozen_layers)
 
     @property
     def frozen_layers(self) -> list[str]:
@@ -329,9 +325,7 @@ class Viewport(DXFGraphic):
                 if len(tags):
                     tags = self.load_frozen_layer_handles(tags)
                 if len(tags):
-                    processor.log_unprocessed_tags(
-                        tags, subclass=acdb_viewport.name
-                    )
+                    processor.log_unprocessed_tags(tags, subclass=acdb_viewport.name)
         return dxf
 
     def post_load_hook(self, doc: Drawing):
@@ -365,9 +359,7 @@ class Viewport(DXFGraphic):
         flags = set_flag_state(flags, const.VSF_FAST_ZOOM, bool(tags[11]))
         flags = set_flag_state(flags, const.VSF_SNAP_MODE, bool(tags[13]))
         flags = set_flag_state(flags, const.VSF_GRID_MODE, bool(tags[14]))
-        flags = set_flag_state(
-            flags, const.VSF_ISOMETRIC_SNAP_STYLE, bool(tags[15])
-        )
+        flags = set_flag_state(flags, const.VSF_ISOMETRIC_SNAP_STYLE, bool(tags[15]))
         flags = set_flag_state(flags, const.VSF_HIDE_PLOT_MODE, bool(tags[24]))
         try:
             dxf.view_target_point = tags[0]
@@ -436,9 +428,7 @@ class Viewport(DXFGraphic):
                     except DXFTableEntryError:
                         pass
                     else:
-                        tagwriter.write_tag2(
-                            FROZEN_LAYER_GROUP_CODE, layer.dxf.handle
-                        )
+                        tagwriter.write_tag2(FROZEN_LAYER_GROUP_CODE, layer.dxf.handle)
 
             self.dxf.export_dxf_attribs(
                 tagwriter,
@@ -529,9 +519,7 @@ class Viewport(DXFGraphic):
             DXFTag(1070, flag(const.VSF_HIDE_PLOT_MODE)),
             DXFTag(1002, "{"),  # start frozen layer list
         ]
-        tags.extend(
-            DXFTag(1003, layer_name) for layer_name in self.frozen_layers
-        )
+        tags.extend(DXFTag(1003, layer_name) for layer_name in self.frozen_layers)
         tags.extend(
             [
                 DXFTag(1002, "}"),  # end of frozen layer list
@@ -553,7 +541,6 @@ class Viewport(DXFGraphic):
         registry.add_handle(self.dxf.get("ref_vp_object_1"))
         registry.add_handle(self.dxf.get("ref_vp_object_2"))
         registry.add_handle(self.dxf.get("ref_vp_object_3"))
-        registry.add_handle(self.dxf.get("ref_vp_object_4"))
 
     def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         assert isinstance(clone, Viewport)
@@ -567,16 +554,23 @@ class Viewport(DXFGraphic):
         mapping.map_existing_handle(self, clone, "ref_vp_object_1", optional=True)
         mapping.map_existing_handle(self, clone, "ref_vp_object_2", optional=True)
         mapping.map_existing_handle(self, clone, "ref_vp_object_3", optional=True)
-        mapping.map_existing_handle(self, clone, "ref_vp_object_4", optional=True)
         clone.frozen_layers = [mapping.get_layer(name) for name in self.frozen_layers]
+
+        # VIEWPORT entity is hard owner of the SUN object
+        clone.take_sun_ownership()
+
+    def take_sun_ownership(self) -> None:
+        assert self.doc is not None
+        sun = self.doc.entitydb.get(self.dxf.get("sun_handle"))
+        if sun:
+            sun.dxf.owner = self.dxf.handle
 
     def rename_frozen_layer(self, old_name: str, new_name: str) -> None:
         assert self.doc is not None, "valid DXF document required"
         key = self.doc.layers.key
         old_key = key(old_name)
         self.frozen_layers = [
-            (name if key(name) != old_key else new_name)
-            for name in self.frozen_layers
+            (name if key(name) != old_key else new_name) for name in self.frozen_layers
         ]
 
     def clipping_rect_corners(self) -> list[Vec2]:
@@ -667,9 +661,7 @@ class Viewport(DXFGraphic):
         if rotation_angle:
             frame = Vec2.list(((-w2, -h2), (w2, -h2), (w2, h2), (-w2, h2)))
             angle = math.radians(rotation_angle)
-            bbox = BoundingBox2d(
-                v.rotate(angle) + msp_center_point for v in frame
-            )
+            bbox = BoundingBox2d(v.rotate(angle) + msp_center_point for v in frame)
             return bbox.extmin.x, bbox.extmin.y, bbox.extmax.x, bbox.extmax.y  # type: ignore
         else:
             mx, my, _ = msp_center_point
