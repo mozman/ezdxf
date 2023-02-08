@@ -457,6 +457,11 @@ class ResourceMapper(Protocol):
     ) -> tuple[str, DXFEntity]:
         ...
 
+    def map_existing_handle(
+        self, source: DXFEntity, clone: DXFEntity, attrib_name: str, optional=False
+    ) -> None:
+        ...
+
 
 class LoadingCommand:
     def register_resources(self, registry: Registry) -> None:
@@ -493,6 +498,19 @@ class LoadEntities(LoadingCommand):
                 transfer.debug(
                     f"found non-graphic entity {str(clone)} as layout content"
                 )
+        if isinstance(target_layout, Paperspace):
+            _reorganize_paperspace_viewports(target_layout)
+
+
+def _reorganize_paperspace_viewports(paperspace: Paperspace) -> None:
+    main_vp = paperspace.main_viewport()
+    if main_vp is None:
+        main_vp = paperspace.add_new_main_viewport()
+    # destroy loaded main VIEWPORT entities
+    for vp in paperspace.viewports():
+        if vp.dxf.id == 1 and vp is not main_vp:
+            paperspace.delete_entity(vp)
+    paperspace.set_current_viewport_handle(main_vp.dxf.handle)
 
 
 class LoadPaperspaceLayout(LoadingCommand):
@@ -524,7 +542,7 @@ class LoadPaperspaceLayout(LoadingCommand):
         source_dxf_layout = self.paperspace_layout.dxf_layout
         target_dxf_layout = transfer.get_reference_of_copy(source_dxf_layout.dxf.handle)
         assert isinstance(target_dxf_layout, DXFLayout)
-        target_layout = transfer.registry.target_doc.layouts.get(
+        target_layout = transfer.registry.target_doc.paperspace(
             target_dxf_layout.dxf.name
         )
         for entity in self.source_entities():
@@ -535,6 +553,7 @@ class LoadPaperspaceLayout(LoadingCommand):
                 transfer.debug(
                     f"found non-graphic entity {str(clone)} as layout content"
                 )
+        _reorganize_paperspace_viewports(target_layout)
 
 
 class LoadBlockLayout(LoadingCommand):
@@ -983,6 +1002,51 @@ class _Transfer:
                         continue
                     copied_object.dxf.owner = new_owner_handle
 
+    def map_acad_dict_entry(
+        self, dict_name: str, entry_name: str, entity: DXFEntity
+    ) -> tuple[str, DXFEntity]:
+        """Map and add `entity` to a top level ACAD dictionary `dict_name` in root
+        dictionary.
+        """
+        tdoc = self.registry.target_doc
+        acad_dict = tdoc.rootdict.get_required_dict(dict_name)
+        existing_entry = acad_dict.get(entry_name)
+
+        # DICTIONARY entries are only renamed if they exist, this is different to TABLE
+        # entries:
+        if isinstance(existing_entry, DXFEntity):
+            if self.conflict_policy == ConflictPolicy.KEEP:
+                return entry_name, existing_entry
+            elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
+                entry_name = get_unique_dict_key(entry_name, self.xref_name, acad_dict)
+            elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
+                entry_name = get_unique_dict_key(entry_name, "", acad_dict)
+
+        loaded_entry = self.get_reference_of_copy(entity.dxf.handle)
+        if loaded_entry is None:
+            return "", entity
+        acad_dict.add(entry_name, loaded_entry)  # type: ignore
+        loaded_entry.dxf.owner = acad_dict.dxf.handle
+        return entry_name, loaded_entry
+
+    def map_existing_handle(
+        self, source: DXFEntity, clone: DXFEntity, attrib_name: str, optional=False
+    ) -> None:
+        """Map handle attribute if the original handle exist and the references entity
+        was really copied.
+        """
+        handle = source.dxf.get(attrib_name, "")
+        if not handle:
+            return  # handle does not exist in source entity
+        new_handle = self.get_handle(handle)
+        if new_handle and new_handle != "0":  # copied entity exist
+            clone.dxf.set(attrib_name, new_handle)
+        else:
+            if optional:  # discard handle attribute
+                clone.dxf.discard(attrib_name)
+            else:  # set mandatory attribute to null-ptr
+                clone.dxf.set(attrib_name, "0")
+
     def register_table_resources(self) -> None:
         """Register copied table-entries in resource tables of the target document."""
         self.register_appids()
@@ -1273,33 +1337,6 @@ class _Transfer:
         for _, obj in copies.items():
             if obj and obj.is_alive:
                 objects.add_object(obj)  # type: ignore
-
-    def map_acad_dict_entry(
-        self, dict_name: str, entry_name: str, entity: DXFEntity
-    ) -> tuple[str, DXFEntity]:
-        """Map and add `entity` to a top level ACAD dictionary `dict_name` in root
-        dictionary.
-        """
-        tdoc = self.registry.target_doc
-        acad_dict = tdoc.rootdict.get_required_dict(dict_name)
-        existing_entry = acad_dict.get(entry_name)
-
-        # DICTIONARY entries are only renamed if they exist, this is different to TABLE
-        # entries:
-        if isinstance(existing_entry, DXFEntity):
-            if self.conflict_policy == ConflictPolicy.KEEP:
-                return entry_name, existing_entry
-            elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
-                entry_name = get_unique_dict_key(entry_name, self.xref_name, acad_dict)
-            elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
-                entry_name = get_unique_dict_key(entry_name, "", acad_dict)
-
-        loaded_entry = self.get_reference_of_copy(entity.dxf.handle)
-        if loaded_entry is None:
-            return "", entity
-        acad_dict.add(entry_name, loaded_entry)  # type: ignore
-        loaded_entry.dxf.owner = acad_dict.dxf.handle
-        return entry_name, loaded_entry
 
     def copy_settings(self):
         self.copy_raster_vars()

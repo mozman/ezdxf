@@ -336,7 +336,7 @@ class DXFNamespace:
         """
         export_dxf_version = tagwriter.dxfversion
         not_force_optional = not tagwriter.force_optional
-        attrib: Optional["DXFAttr"] = self.dxfattribs.get(name)
+        attrib: Optional[DXFAttr] = self.dxfattribs.get(name)
 
         if attrib:
             optional = attrib.optional

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional
@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFNamespace, DXFEntity
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf import xref
 
 __all__ = ["Viewport"]
 
@@ -57,7 +58,7 @@ acdb_viewport = DefSubclass(
         # Height in paper space units:
         "height": DXFAttr(41, default=1),
         # Viewport status field: (according to the DXF Reference)
-        # -1 = On, but is fully off screen, or is one of the viewports that is not
+        # -1 = On, but is fully off-screen, or is one of the viewports that is not
         #      active because the $MAXACTVP count is currently being exceeded.
         #  0 = Off
         # <positive value> = On and active. The value indicates the order of
@@ -174,7 +175,7 @@ acdb_viewport = DefSubclass(
         # Handle of AcDbUCSTableRecord of base UCS if UCS is orthographic (79 code
         # is non-zero). If not present and 79 code is non-zero, then base UCS is
         # taken to be WORLD:
-        "ucs_base_handle": DXFAttr(346, optional=True),
+        "base_ucs_handle": DXFAttr(346, optional=True),
         # UCS ortho type:
         # 0 = not orthographic
         # 1 = Top
@@ -256,17 +257,11 @@ class Viewport(DXFGraphic):
 
     DXFTYPE = "VIEWPORT"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_viewport)
-    viewport_id = 2
 
     # Notes to viewport_id:
     # The id of the first viewport has to be 1, which is the definition of
     # paper space. For the following viewports it seems only important, that
     # the id is greater than 1.
-
-    def get_next_viewport_id(self) -> int:
-        current_id = Viewport.viewport_id
-        Viewport.viewport_id += 1
-        return current_id
 
     def __init__(self) -> None:
         super().__init__()
@@ -458,7 +453,7 @@ class Viewport(DXFGraphic):
                     "ucs_x_axis",
                     "ucs_y_axis",
                     "ucs_handle",
-                    "ucs_base_handle",
+                    "base_ucs_handle",
                     "ucs_ortho_type",
                     "elevation",
                     "shade_plot_mode",
@@ -544,6 +539,36 @@ class Viewport(DXFGraphic):
             ]
         )
         return Tags(tags)
+
+    def register_resources(self, registry: xref.Registry) -> None:
+        assert self.doc is not None
+        super().register_resources(registry)
+        # The clipping path entity should not be added here!
+        registry.add_handle(self.dxf.get("ucs_handle"))
+        registry.add_handle(self.dxf.get("base_ucs_handle"))
+        registry.add_handle(self.dxf.get("visual_style_handle"))
+        registry.add_handle(self.dxf.get("background_handle"))
+        registry.add_handle(self.dxf.get("shade_plot_handle"))
+        registry.add_handle(self.dxf.get("sun_handle"))
+        registry.add_handle(self.dxf.get("ref_vp_object_1"))
+        registry.add_handle(self.dxf.get("ref_vp_object_2"))
+        registry.add_handle(self.dxf.get("ref_vp_object_3"))
+        registry.add_handle(self.dxf.get("ref_vp_object_4"))
+
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        assert isinstance(clone, Viewport)
+        super().map_resources(clone, mapping)
+        mapping.map_existing_handle(self, clone, "ucs_handle", optional=True)
+        mapping.map_existing_handle(self, clone, "base_ucs_handle", optional=True)
+        mapping.map_existing_handle(self, clone, "visual_style_handle", optional=True)
+        mapping.map_existing_handle(self, clone, "background_handle", optional=True)
+        mapping.map_existing_handle(self, clone, "shade_plot_handle", optional=True)
+        mapping.map_existing_handle(self, clone, "sun_handle", optional=True)
+        mapping.map_existing_handle(self, clone, "ref_vp_object_1", optional=True)
+        mapping.map_existing_handle(self, clone, "ref_vp_object_2", optional=True)
+        mapping.map_existing_handle(self, clone, "ref_vp_object_3", optional=True)
+        mapping.map_existing_handle(self, clone, "ref_vp_object_4", optional=True)
+        clone.frozen_layers = [mapping.get_layer(name) for name in self.frozen_layers]
 
     def rename_frozen_layer(self, old_name: str, new_name: str) -> None:
         assert self.doc is not None, "valid DXF document required"

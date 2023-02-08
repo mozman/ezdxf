@@ -1125,6 +1125,7 @@ class TestLoadPaperspaceLayout:
     def psp(self) -> Paperspace:
         doc = ezdxf.new()
         psp = doc.new_layout("MyLayout")
+        # without a page setup no main viewport was created!
         psp.add_line((0, 0), (1, 0))
         return psp
 
@@ -1164,10 +1165,12 @@ class TestLoadPaperspaceLayout:
         tdoc = ezdxf.new()
         xref.load_paperspace(psp, tdoc)
         loaded_psp = tdoc.paperspace("MyLayout")
-        assert len(loaded_psp) == 1
-        line = loaded_psp[0]
+        new_main_vp, line = loaded_psp
         assert line.dxftype() == "LINE"
         assert factory.is_bound(line, tdoc)
+        # a new main VIEWPORT entity was created automatically:
+        assert new_main_vp.dxftype() == "VIEWPORT"
+        assert new_main_vp.dxf.id == 1
 
     def test_paperspace_name_conflict(self, psp):
         tdoc = ezdxf.new()
