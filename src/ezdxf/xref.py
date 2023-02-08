@@ -82,7 +82,6 @@ class ConflictPolicy(enum.Enum):
 
     # rename loaded resource to $0$<name> if the loaded resource <name> already exist
     NUM_PREFIX = enum.auto()
-    # REPLACE policy was removed, adds too much complexity!
 
 
 # Exceptions from the ConflictPolicy
@@ -1111,7 +1110,6 @@ class _Transfer:
             elif isinstance(entity, DXFLayout):
                 self.create_empty_paperspace_layout(entity)
             # TODO:
-            #  add VISUALSTYLE to ACAD_VISUALSTYLE dictionary
             #  add GROUP to ACAD_GROUP dictionary
             #  add SCALE to ACAD_SCALELIST dictionary
             #  add TABLESTYLE to ACAD_TABLESTYLE dictionary
@@ -1120,8 +1118,8 @@ class _Transfer:
         self._replace_handles[old_target] = new_target
 
     def redirect_handle_mapping(self) -> None:
-        """Redirect handle mapping to copied entity to a handle of an existing entity in
-        the target document.
+        """Redirect handle mapping from copied entity to a handle of an existing entity
+        in the target document.
         """
         temp_mapping: dict[str, str] = {}
         replace_handles = self._replace_handles
@@ -1148,14 +1146,14 @@ class _Transfer:
     def map_entity_resources(self) -> None:
         source_db = self.registry.source_doc.entitydb
         for block_key, block in self.copied_blocks.items():
-            for source_entity_handle, copy in block.items():
+            for source_entity_handle, clone in block.items():
                 source_entity = source_db.get(source_entity_handle)
                 if source_entity is None:
                     raise const.DXFInternalEzdxfError(
                         "database error, source entity not found"
                     )
-                if copy is not None and copy.is_alive:
-                    source_entity.map_resources(copy, self)
+                if clone is not None and clone.is_alive:
+                    source_entity.map_resources(clone, self)
 
     def map_object_resources(self) -> None:
         source_db = self.registry.source_doc.entitydb
