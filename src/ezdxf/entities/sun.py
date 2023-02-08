@@ -136,19 +136,19 @@ acdb_sunstudy = DefSubclass(
         # 95 Interval in seconds. If range of dates flag is true.
         "hours_count": DXFAttr(73),
         # 290 Hour. One entry for every hour as specified by the number of hours entry above.
-        "page_setup_wizard_id": DXFAttr(
+        "page_setup_wizard_handle": DXFAttr(
             340
         ),  # Page setup wizard hard pointer ID
-        "view_id": DXFAttr(341),  # View hard pointer ID
-        "visual_style_id": DXFAttr(342),  # Visual Style ID
+        "view_handle": DXFAttr(341),  # View hard pointer ID
+        "visual_style_handle": DXFAttr(342),  # Visual Style ID
         "shade_plot_type": DXFAttr(74),
         "viewports_per_page": DXFAttr(75),
-        "nrows": DXFAttr(76),  # Number of rows for viewport distribution
-        "ncols": DXFAttr(77),  # Number of columns for viewport distribution
+        "row_count": DXFAttr(76),  # Number of rows for viewport distribution
+        "column_count": DXFAttr(77),  # Number of columns for viewport distribution
         "spacing": DXFAttr(40),
         "lock_viewports": DXFAttr(293),
         "label_viewports": DXFAttr(294),
-        "text_style_id": DXFAttr(343),
+        "text_style_handle": DXFAttr(343),
     },
 )
 acdb_sunstudy_group_codes = group_code_mapping(acdb_sunstudy)
