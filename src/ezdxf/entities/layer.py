@@ -388,9 +388,7 @@ class Layer(DXFEntity):
         assert self.doc is not None, "LAYER entity must be assigned to a document"
         super().register_resources(registry)
         registry.add_linetype(self.dxf.linetype)
-        material = self.doc.entitydb.get(self.dxf.material_handle)
-        if material and material.dxf.name.upper() != "GLOBAL":
-            registry.add_entity(material)
+        registry.add_handle(self.dxf.get("material_handle"))
         # current plot style will be replaced by default plot style "Normal"
 
     def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
@@ -399,16 +397,10 @@ class Layer(DXFEntity):
         super().map_resources(clone, mapping)
         self.dxf.linetype = mapping.get_linetype(self.dxf.linetype)
 
+        mapping.map_existing_handle(self, clone, "material_handle", optional=True)
         # remove handles pointing to the source document:
-        clone.dxf.discard("material_handle")
         clone.dxf.discard("plotstyle_handle")  # replaced by plot style "Normal"
         clone.dxf.discard("unknown1")
-
-        material = self.doc.entitydb.get(self.dxf.material_handle)  # type: ignore
-        if material:
-            mapped_handle = mapping.get_handle(material.dxf.handle, "")
-            if mapped_handle:
-                clone.dxf.material_handle = mapped_handle
 
         # create required handles to resources in the target document
         clone.set_required_attributes()

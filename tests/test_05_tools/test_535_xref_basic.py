@@ -1189,7 +1189,7 @@ class TestLoadPaperspaceLayout:
 
 
 # TODO:
-# VIEWPORT -> VISUAL_STYLE
+# VIEWPORT -> VISUALSTYLE
 # DICTIONARY, test soft-ownership
 # XRECORD, register and map pointers and hard-owner handles
 # DXFTagStorage, register and map pointers and hard-owner handles

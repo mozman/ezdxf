@@ -1105,6 +1105,11 @@ class _Transfer:
                 )
             elif isinstance(entity, DXFLayout):
                 self.create_empty_paperspace_layout(entity)
+            # TODO:
+            #  add VISUALSTYLE to ACAD_VISUALSTYLE dictionary
+            #  add GROUP to ACAD_GROUP dictionary
+            #  add SCALE to ACAD_SCALELIST dictionary
+            #  add TABLESTYLE to ACAD_TABLESTYLE dictionary
 
     def replace_handle_mapping(self, old_target, new_target) -> None:
         self._replace_handles[old_target] = new_target
