@@ -883,41 +883,41 @@ class _Registry:
         if name == DEFAULT_LAYER:
             # Layer name "0" gets never mangled and always exist in the target document.
             return
-        layer = self.source_doc.layers.get(name)
-        if layer:
+        try:
+            layer = self.source_doc.layers.get(name)
             self.add_entity(layer)
-        else:
+        except const.DXFTableEntryError:
             self.debug(f"source layer '{name}' does not exist")
 
     def add_linetype(self, name: str) -> None:
         # These linetype names get never mangled and always exist in the target document.
         if name.upper() in DEFAULT_LINETYPES:
             return
-        linetype = self.source_doc.linetypes.get(name)
-        if linetype:
+        try:
+            linetype = self.source_doc.linetypes.get(name)
             self.add_entity(linetype)
-        else:
+        except const.DXFTableEntryError:
             self.debug(f"source linetype '{name}' does not exist")
 
     def add_text_style(self, name) -> None:
-        text_style = self.source_doc.styles.get(name)
-        if text_style:
+        try:
+            text_style = self.source_doc.styles.get(name)
             self.add_entity(text_style)
-        else:
+        except const.DXFTableEntryError:
             self.debug(f"source text style '{name}' does not exist")
 
     def add_dim_style(self, name: str) -> None:
-        dim_style = self.source_doc.dimstyles.get(name)
-        if dim_style:
+        try:
+            dim_style = self.source_doc.dimstyles.get(name)
             self.add_entity(dim_style)
-        else:
+        except const.DXFTableEntryError:
             self.debug(f"source dimension style '{name}' does not exist")
 
     def add_block_name(self, name: str) -> None:
-        block_record = self.source_doc.block_records.get(name)
-        if block_record:
+        try:
+            block_record = self.source_doc.block_records.get(name)
             self.add_entity(block_record)
-        else:
+        except const.DXFTableEntryError:
             self.debug(f"source block '{name}' does not exist")
 
     def add_appid(self, name: str) -> None:
