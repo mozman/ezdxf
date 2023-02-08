@@ -1188,8 +1188,56 @@ class TestLoadPaperspaceLayout:
         assert loaded_psp.doc.block_records.has_entry("*Paper_Space1")
 
 
+class TestLoadPaperspaceViewport:
+    @pytest.fixture(scope="class")
+    def psp(self) -> Paperspace:
+        doc = ezdxf.new(setup=True)
+        psp = doc.page_setup("MyLayout", fmt="ISO A3")
+        ucs = doc.tables.ucs.add("MyUCS")
+        visualstyle = doc.rootdict["ACAD_VISUALSTYLE"]["2dWireframe"]
+        circle = psp.add_circle((100, 100), radius=50)
+        vp = psp.add_viewport(
+            center=(100, 100), size=(100, 100), view_center_point=(0, 0), view_height=10
+        )
+        vp.dxf.clipping_boundary_handle = circle.dxf.handle
+        vp.dxf.ucs_handle = ucs.dxf.handle
+        vp.dxf.visual_style_handle = visualstyle.dxf.handle
+        sun = factory.create_db_entry("SUN", {"owner": vp.dxf.handle}, doc)
+        doc.objects.add_object(sun)
+        vp.dxf.sun_handle = sun.dxf.handle
+        return psp
+
+    @pytest.fixture(scope="class")
+    def loaded_psp(self, psp: Paperspace) -> Paperspace:
+        tdoc = ezdxf.new()
+        xref.load_paperspace(psp, tdoc)
+        assert document_has_no_errors(tdoc) is True
+        return tdoc.paperspace("MyLayout")
+
+    def test_loaded_viewport_attributes(self, loaded_psp):
+        tdoc = loaded_psp.doc
+        loaded_vp = loaded_psp.viewports()[1]
+        assert loaded_vp.dxf.center.isclose((100, 100))
+
+        loaded_ucs = tdoc.tables.ucs.get("MyUCS")
+        assert loaded_vp.dxf.ucs_handle == loaded_ucs.dxf.handle
+
+        loaded_visual_style = tdoc.rootdict["ACAD_VISUALSTYLE"]["2dWireframe"]
+        assert loaded_vp.dxf.visual_style_handle == loaded_visual_style.dxf.handle
+
+    def test_loaded_clipping_entity(self, loaded_psp):
+        loaded_vp = loaded_psp.viewports()[1]
+        loaded_circle = loaded_psp.query("CIRCLE").first
+        assert loaded_vp.dxf.clipping_boundary_handle == loaded_circle.dxf.handle
+
+    def test_loaded_sun(self, loaded_psp):
+        tdoc = loaded_psp.doc
+        loaded_vp = loaded_psp.viewports()[1]
+        loaded_sun = tdoc.entitydb.get(loaded_vp.dxf.sun_handle)
+        assert factory.is_bound(loaded_sun, tdoc)
+
+
 # TODO:
-# VIEWPORT -> VISUALSTYLE
 # DICTIONARY, test soft-ownership
 # XRECORD, register and map pointers and hard-owner handles
 # DXFTagStorage, register and map pointers and hard-owner handles

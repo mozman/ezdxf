@@ -37,6 +37,7 @@ from ezdxf.entities import (
     EndBlk,
     Insert,
     DXFLayout,
+    VisualStyle,
 )
 from ezdxf.math import UVec, Vec3
 
@@ -1069,6 +1070,8 @@ class _Transfer:
                 self.add_dim_style_entry(entity)
             elif isinstance(entity, BlockRecord):
                 self.add_block_record_entry(entity, source_entity_handle)
+            elif isinstance(entity, UCSTableEntry):
+                self.add_ucs_entry(entity)
 
     def register_object_resources(self) -> None:
         """Register copied objects in object collections of the target document."""
@@ -1103,6 +1106,8 @@ class _Transfer:
                         STANDARD,
                     },
                 )
+            elif isinstance(entity, VisualStyle):
+                self.add_visualstyle_entry(entity)
             elif isinstance(entity, DXFLayout):
                 self.create_empty_paperspace_layout(entity)
             # TODO:
@@ -1322,6 +1327,20 @@ class _Transfer:
         collection.object_dict.add(entry.dxf.name, entry)
         # a resource collection is hard owner
         entry.dxf.owner = collection.handle
+
+    def add_visualstyle_entry(self, visualstyle: VisualStyle) -> None:
+        visualstyle_dict = self.registry.target_doc.rootdict.get_required_dict(
+            "ACAD_VISUALSTYLE"
+        )
+        name = visualstyle.dxf.description
+        existing_entry = visualstyle_dict.get(name)
+        if existing_entry:  # keep existing
+            self.replace_handle_mapping(
+                visualstyle.dxf.handle, existing_entry.dxf.handle
+            )
+            visualstyle.destroy()
+        else:  # add new entry; rename policy is not supported
+            visualstyle_dict.take_ownership(name, visualstyle)
 
     def create_empty_paperspace_layout(self, layout: DXFLayout) -> None:
         tdoc = self.registry.target_doc
