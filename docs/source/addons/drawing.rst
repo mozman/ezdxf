@@ -3,11 +3,13 @@
 Drawing / Export Addon
 ======================
 
-This add-on provides the functionality to render a DXF document to produce a rasterized or vector-graphic image which
-can be saved to a file or viewed interactively depending on the backend being used.
+This add-on provides the functionality to render a DXF document to produce a
+rasterized or vector-graphic image which can be saved to a file or viewed
+interactively depending on the backend being used.
 
-The module provides two example scripts in the folder ``examples/addons/drawing`` which can be run to save rendered
-images to files or view an interactive visualisation
+The module provides two example scripts in the folder ``examples/addons/drawing``
+which can be run to save rendered images to files or view an interactive
+visualisation.
 
 .. code-block::
 
@@ -24,8 +26,55 @@ images to files or view an interactive visualisation
     # opens a GUI application to view CAD files
     $ ./cad_viewer.py
 
+.. seealso::
 
-Example for the usage of the :mod:`matplotlib` backend:
+    How-to section for the FAQ about the :ref:`how_to_drawing_addon`.
+
+Design
+------
+
+The implementation of the :mod:`drawing` add-on is divided into a frontend and
+multiple backends. The frontend handles the translation of DXF features and
+properties into simplified structures, which are then processed by the backends.
+
+Common Limitations to all Backends
+----------------------------------
+
+- rich text formatting of the MTEXT entity is close to AutoCAD but not pixel perfect
+- relative size of POINT entities cannot be replicated exactly
+- rendering of ACIS entities is not supported
+- no 3D rendering engine, therefore:
+
+    - 3D entities are projected into the xy-plane and 3D text is not supported
+    - only top view rendering of the modelspace
+    - VIEWPORTS are always rendered as top view
+    - no visual style support
+
+- only basic support for:
+
+  - infinite lines (rendered as lines with a finite length)
+  - OLE2FRAME entities (rendered as rectangles)
+  - vertical text (will render as horizontal text)
+  - rendering of additional MTEXT columns may be incorrect
+
+MatplotlibBackend
+-----------------
+
+.. autoclass:: ezdxf.addons.drawing.matplotlib.MatplotlibBackend(ax, *, adjust_figure=True, font=FontProperties(), use_text_cache=True)
+
+The :class:`MatplotlibBackend` is used by the :ref:`draw_command` command of the
+`ezdxf` launcher.
+
+Limitations
++++++++++++
+
+- the text path rendering is different to AutoCAD, therefore
+  text placement and wrapping may appear slightly different
+- the SVG export of dimensionless POINT entities is rendered as circles
+- has no VIEWPORT clipping support (yet?) and is therefore not very suitable
+  for exporting paperspace layouts
+
+Example for the usage of the :mod:`Matplotlib` backend:
 
 .. code-block:: Python
 
@@ -69,142 +118,264 @@ Simplified render workflow but with less control:
 
 .. autofunction:: ezdxf.addons.drawing.matplotlib.qsave
 
-MatplotlibBackend
------------------
-
-.. class:: ezdxf.addons.drawing.matplotlib.MatplotlibBackend
-
-    .. method:: __init__(ax: plt.Axes, *, adjust_figure: bool = True, font: FontProperties,  use_text_cache: bool = True, params: Dict = None)
 
 PyQtBackend
 -----------
 
-.. class:: ezdxf.addons.drawing.pyqt.PyQtBackend
+.. autoclass:: ezdxf.addons.drawing.pyqt.PyQtBackend(scene=None, *,extra_lineweight_scaling=2.0, use_text_cache=True)
 
-    .. method:: __init__(scene: qw.QGraphicsScene = None, *, use_text_cache: bool = True, debug_draw_rect: bool = False, params: Dict = None)
+The :class:`PyQtBackend` is used by the :ref:`view_command` command of the
+`ezdxf` launcher.
 
-Backend Options `params`
-------------------------
+Limitations
++++++++++++
 
-Additional options for a backend can be passed by the `params` argument of the
-backend constructor :meth:`__init__()`. Not every option will be supported by
-all backends and currently most options are only supported by the matplotlib
-backend.
+- the text path rendering is different to AutoCAD, therefore
+  text placement and wrapping may appear slightly different
 
+.. seealso::
 
-pdsize
-    size for the POINT entity:
+    The `qtviewer.py`_ module implements the core of a simple DXF viewer and the
+    `cad_viewer.py`_ example is a skeleton to show how to launch the
+    :class:`CADViewer` class.
 
-    - 0 for 5% of draw area height
-    - < 0 specifies a percentage of the viewport size
-    - > 0 specifies an absolute size
+PillowBackend
+-------------
 
+.. autoclass:: ezdxf.addons.drawing.pillow.PillowBackend
 
-pdmode
-    see :class:`~ezdxf.entities.Point` class documentation
+The :class:`PillowBackend` is used by the :ref:`pillow_command` command of the
+`ezdxf` launcher.  The `pillow.py`_ example script is the development prototype
+for the :ref:`pillow_command` command.
 
-linetype_renderer
-    - "internal" uses the matplotlib linetype renderer which is oriented on the
-      output medium and dpi setting, This method is simpler and faster but may
-      not replicate the results of CAD applications.
-    - "ezdxf" replicate AutoCAD linetype rendering oriented on drawing units and
-      various ltscale factors.This rendering method break lines into small
-      segments which causes a longer rendering time!
+Limitations
++++++++++++
 
-linetype_scaling
-    Overall linetype scaling factor. Set to 0 to disable linetype support at
-    all.
+- text paths are generated by :mod:`matplotlib`
+- the text path rendering is different to AutoCAD, therefore
+  text placement and wrapping may appear slightly different
+- no real solid fill for HATCH entities and text glyphs; simulated by a dense
+  line pattern filling, to improve this, a triangulation algorithm with support
+  for nested holes (hole in hole in hole ...) is required
 
-lineweight_scaling
-    Overall lineweight scaling factor. Set to 0 to disable lineweight support
-    at all. The current result is correct, in SVG the line width is 0.7 points
-    for 0.25mm as required, but this often looks too thick.
+Configuration
+-------------
 
-min_lineweight
-    Minimum lineweight.
+Additional options for the drawing add-on can be passed by the `config`
+argument of the :class:`Frontend` constructor :meth:`__init__()`. Not every
+option will be supported by all backends.
 
-min_dash_length
-    Minimum dash length.
+.. autoclass:: ezdxf.addons.drawing.config.Configuration
 
-max_flattening_distance
-    Maximum flattening distance in drawing units for curve approximations.
+    .. method:: defaults()
 
-show_defpoints
-    - 0 to disable defpoints (default)
-    - 1 to show defpoints
+        Returns a frozen :class:`Configuration` object with default values.
 
-show_hatch
-    - 0 to disable HATCH entities
-    - 1 to show HATCH entities
+    .. method:: with_changes()
 
-hatch_pattern
-    - 0 to disable hatch pattern
-    - 1 to use predefined matplotlib pattern by pattern-name matching, or a
-      simplified pattern in the PyQt backend. The PyQt support for hatch pattern
-      is not good, it is often better to turn hatch pattern support off and
-      disable HATCHES by setting **show_hatch** to 0 or use a solid filling.
-    - 2 to draw HATCH pattern as solid fillings.
+        Returns a new frozen :class:`Configuration` object with modified values.
 
-Default Values
-++++++++++++++
+        Usage::
 
-=========================== ======================= ===================
-Backend Option              MatplotlibBackend       PyQtBackend
-=========================== ======================= ===================
-point_size                  2.0                     1.0
-point_size_relative         ``True``                not supported
-linetype_renderer           "internal"              "internal"
-linetype_scaling            1.0                     1.0
-lineweight_scaling          1.0                     2.0
-min_lineweight              0.24                    0.24
-min_dash_length             0.1                     0.1
-max_flattening_distance     0.01                    0.01
-show_hatch                  1                       1
-hatch_pattern               1                       1
-=========================== ======================= ===================
+            my_config = Configuration.defaults()
+            my_config = my_config.with_changes(lineweight_scaling=2)
+
+LinePolicy
+----------
+
+.. autoclass:: ezdxf.addons.drawing.config.LinePolicy
+
+HatchPolicy
+-----------
+
+.. autoclass:: ezdxf.addons.drawing.config.HatchPolicy
+
+ProxyGraphicPolicy
+------------------
+
+.. autoclass:: ezdxf.addons.drawing.config.ProxyGraphicPolicy
 
 Properties
 ----------
 
-.. class:: ezdxf.addons.drawing.properties.Properties
+.. autoclass:: ezdxf.addons.drawing.properties.Properties
+
+    .. attribute:: color
+
+        The actual color value of the DXF entity as "#RRGGBB" or "#RRGGBBAA"
+        string. An alpha value of "00" is opaque and "ff" is fully transparent.
+
+    .. attribute:: rgb
+
+        RGB values extract from the :attr:`color` value as tuple of integers.
+
+    .. attribute:: luminance
+
+        Perceived luminance calculated from the :attr:`color` value as float in
+        the range [0.0, 1.0].
+
+    .. attribute:: linetype_name
+
+        The actual linetype name as string like "CONTINUOUS"
+
+    .. attribute:: linetype_pattern
+
+        The simplified DXF linetype pattern as tuple of floats, all line
+        elements and gaps are values greater than 0.0 and 0.0 represents a
+        point. Line or point elements do always alternate with gap elements:
+        line-gap-line-gap-point-gap and the pattern always ends with a gap.
+        The continuous line is an empty tuple.
+
+    .. attribute:: linetype_scale
+
+        The scaling factor as float to apply to the :attr:`linetype_pattern`.
+
+    .. attribute:: lineweight
+
+        The absolute lineweight to render in mm as float.
+
+    .. attribute:: is_visible
+
+        Visibility flag as bool.
+
+    .. attribute:: layer
+
+        The actual layer name the entity resides on as UPPERCASE string.
+
+    .. attribute:: font
+
+        The :class:`FontFace` used for text rendering or ``None``.
+
+    .. attribute:: filling
+
+        The actual :class:`Filling` properties of the entity or ``None``.
+
+    .. attribute:: units
+
+        The actual drawing units as :class:`~ezdxf.enums.InsertUnits` enum.
+
 
 LayerProperties
 ---------------
 
 .. class:: ezdxf.addons.drawing.properties.LayerProperties
 
+    Actual layer properties, inherits from class :class:`Properties`.
+
+    .. attribute:: is_visible
+
+        Modified meaning: whether entities belonging to this layer should be drawn
+
+    .. attribute:: layer
+
+        Modified meaning: stores real layer name (mixed case)
+
+LayoutProperties
+----------------
+
+.. class:: ezdxf.addons.drawing.properties.LayoutProperties
+
+    Actual layout properties.
+
+    .. attribute:: name
+
+        Layout name as string
+
+    .. attribute:: units
+
+        Layout units as :class:`~ezdxf.enums.InsertUnits` enum.
+
+    .. autoproperty:: background_color
+
+    .. autoproperty:: default_color
+
+    .. autoproperty:: has_dark_background
+
+    .. automethod:: set_colors
+
 RenderContext
 -------------
 
-.. class:: ezdxf.addons.drawing.properties.RenderContext
+.. autoclass:: ezdxf.addons.drawing.properties.RenderContext
+
+    .. automethod:: resolve_aci_color
+
+    .. automethod:: resolve_all
+
+    .. automethod:: resolve_color
+
+    .. automethod:: resolve_filling
+
+    .. automethod:: resolve_font
+
+    .. automethod:: resolve_layer
+
+    .. automethod:: resolve_layer_properties
+
+    .. automethod:: resolve_linetype
+
+    .. automethod:: resolve_lineweight
+
+    .. automethod:: resolve_units
+
+    .. automethod:: resolve_visible
+
+    .. automethod:: set_current_layout
+
+    .. automethod:: set_layer_properties_override
+
+The :class:`RenderContext` class can be used isolated from the :mod:`drawing`
+add-on to resolve DXF properties.
 
 Frontend
 --------
 
-.. class:: ezdxf.addons.drawing.frontend.Frontend
+.. autoclass:: ezdxf.addons.drawing.frontend.Frontend(ctx: RenderContext, out: BackendInterface, config: Configuration = Configuration.defaults(), bbox_cache: ezdxf.bbox.Cache = None)
+
+    .. automethod:: log_message
+
+    .. automethod:: skip_entity
+
+    .. automethod:: override_properties
+
+    .. automethod:: draw_layout
+
+
+BackendInterface
+----------------
+
+.. class:: ezdxf.addons.drawing.backend.BackendInterface
+
+    The public interface definition for the rendering backend.
+
+    For more information read the source code: `backend.py`_
+
 
 Backend
 --------
 
 .. class:: ezdxf.addons.drawing.backend.Backend
 
+    Abstract base class for concrete backend implementations and
+    implements some default features.
+
+    For more information read the source code: `backend.py`_
+
+
 Details
 -------
 
-The rendering is performed in two stages. The front-end traverses the DXF document
+The rendering is performed in two stages. The frontend traverses the DXF document
 structure, converting each encountered entity into primitive drawing commands.
-These commands are fed to a back-end which implements the interface:
+These commands are fed to a backend which implements the interface:
 :class:`~ezdxf.addons.drawing.backend.Backend`.
-
-Currently a :class:`PyQtBackend` (QGraphicsScene based) and a
-:class:`MatplotlibBackend` are implemented.
 
 Although the resulting images will not be pixel-perfect with AutoCAD (which was
 taken as the ground truth when developing this add-on) great care has been taken
 to achieve similar behavior in some areas:
 
 - The algorithm for determining color should match AutoCAD. However, the color
-  palette is not stored in the dxf file, so the chosen colors may be different
+  palette is not stored in the DXF file, so the chosen colors may be different
   to what is expected. The :class:`~ezdxf.addons.drawing.properties.RenderContext`
   class supports passing a plot style table (:term:`CTB`-file) as custom color
   palette but uses the same palette as AutoCAD by default.
@@ -214,42 +385,19 @@ to achieve similar behavior in some areas:
   measurements are taken of the font being used to match text as closely as possible.
 - Visibility determination (based on which layers are visible) should match AutoCAD
 
-See ``examples/addons/drawing/cad_viewer.py`` for an advanced use of the module.
+.. seealso::
 
-See ``examples/addons/drawing/draw_cad.py`` for a simple use of the module.
+    - `draw_cad.py`_ for a simple use of this module
+    - `cad_viewer.py`_ for an advanced use of this module
+    - :ref:`notes_on_rendering_dxf_content` for additional behaviours documented
+      during the development of this add-on.
 
-See ``drawing.md`` in the ezdxf repository for additional behaviours documented
-during the development of this add-on.
-
-Limitations
------------
-
-- Line types and hatch patterns/gradients are ignored by the :class:`PyQtBackend`
-- Rich text formatting is ignored (drawn as plain text)
-- If the backend does not match the font then the exact text placement and
-  wrapping may appear slightly different
-- No support for MULTILEADER
-- The style which POINT entities are drawn in are not stored in the dxf file and
-  so cannot be replicated exactly
-- only basic support for:
-
-  - infinite lines (rendered as lines with a finite length)
-  - viewports (rendered as rectangles)
-  - 3D (some entities may not display correctly in 3D (see possible improvements below))
-    however many things should already work in 3D.
-  - vertical text (will render as horizontal text)
-  - multiple columns of text (placement of additional columns may be incorrect)
-
-
-Future Possible Improvements
-----------------------------
-
-- pass the font to backend if available
-- text formatting commands could be interpreted and broken into text chunks
-  which can be drawn with a single font weight or modification such as italics
 
 .. _Triangulation: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 .. _MatplotlibHatch: https://matplotlib.org/3.2.1/gallery/shapes_and_collections/hatch_demo.html
 .. _QtBrushHatch: https://doc.qt.io/qt-5/qbrush.html
-
-
+.. _cad_viewer.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/cad_viewer.py
+.. _draw_cad.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/draw_cad.py
+.. _qtviewer.py: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/qtviewer.py
+.. _pillow.py: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/pillow.py
+.. _backend.py: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/backend.py

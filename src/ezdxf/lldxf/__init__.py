@@ -1,3 +1,3 @@
 # Low Level DXF modules
-# Copyright (c) 2015-2020, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License

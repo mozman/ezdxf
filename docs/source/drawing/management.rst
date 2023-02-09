@@ -3,12 +3,10 @@
 Document Management
 ===================
 
-.. module:: ezdxf
-
 Create New Drawings
 -------------------
 
-.. autofunction:: new(dxfversion='AC1027', setup=False, units=6) -> Drawing
+.. autofunction:: ezdxf.new(dxfversion='AC1027', setup=False, units=6) -> Drawing
 
 Open Drawings
 -------------
@@ -35,13 +33,13 @@ AC1027      R2013      UTF-8          AutoCAD R2013
 AC1032      R2018      UTF-8          AutoCAD R2018
 =========== ========== ============== ===================================
 
-.. autofunction:: readfile(filename: str, encoding: str = None, errors: str="surrogateescape") -> Drawing
+.. autofunction:: ezdxf.readfile
 
-.. autofunction:: read(stream: TextIO) -> Drawing
+.. autofunction:: ezdxf.read
 
-.. autofunction:: readzip(zipfile: str, filename: str = None, errors: str="surrogateescape") -> Drawing
+.. autofunction:: ezdxf.readzip
 
-.. autofunction:: decode_base64(data: bytes, errors: str="surrogateescape") -> Drawing
+.. autofunction:: ezdxf.decode_base64
 
 .. hint::
 
@@ -90,3 +88,66 @@ $VERSIONGUID     every saved version gets a new GUID
 
     - Howto: :ref:`set/get header variables`
     - Howto: :ref:`set drawing units`
+
+.. _ezdxf_metadata:
+
+Ezdxf Metadata
+~~~~~~~~~~~~~~
+
+Store internal metadata like *ezdxf* version and creation time for
+a new created document as metadata in the DXF file. Only standard DXF features
+are used to store meta data and this meta data is preserved by Autodesk products,
+BricsCAD and of course *ezdxf*. Other 3rd party DXF libraries may remove this
+meta data.
+
+For DXF R12 the meta data is stored as XDATA by AppID ``EZDXF`` in the model
+space BLOCK entity in the BLOCKS section.
+
+For DXF R2000+ the meta data is stored in the "root" DICTIONARY in the
+OBJECTS section as a DICTIONARY object by the key ``EZDXF_META``.
+
+
+The :class:`MetaData` object has a dict-like interface and can also store
+custom metadata::
+
+    metadata = doc.ezdxf_metadata()
+
+    # set data
+    metadata["MY_CUSTOM_META_DATA"] = "a string with max. length of 254"
+
+    # get data, raises a KeyError() if key not exist
+    value = metadata["MY_CUSTOM_META_DATA"]
+
+    # get data, returns an empty string if key not exist
+    value = metadata.get("MY_CUSTOM_META_DATA")
+
+    # delete entry, raises a KeyError() if key not exist
+    del metadata["MY_CUSTOM_META_DATA"]
+
+    # discard entry, does not raise a KeyError() if key not exist
+    metadata.discard("MY_CUSTOM_META_DATA")
+
+Keys and values are limited to strings with a max. length of 254 characters
+and line ending ``\n`` will be replaced by ``\P``.
+
+Keys used by *ezdxf*:
+
+    - ``WRITTEN_BY_EZDXF``: *ezdxf* version and UTC time in ISO format
+    - ``CREATED_BY_EZDXF``: *ezdxf* version and UTC time in ISO format
+
+Example of the ezdxf marker string: ``0.16.4b1 @ 2021-06-12T07:35:34.898808+00:00``
+
+.. class:: ezdxf.document.MetaData
+
+    .. automethod:: __contains__
+
+    .. automethod:: __getitem__
+
+    .. automethod:: get
+
+    .. automethod:: __setitem__
+
+    .. automethod:: __delitem__
+
+    .. automethod:: discard
+

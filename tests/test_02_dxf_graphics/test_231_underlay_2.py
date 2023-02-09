@@ -6,9 +6,9 @@ import ezdxf
 from ezdxf.entities.underlay import PdfDefinition, PdfUnderlay
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc():
-    return ezdxf.new('R2000')
+    return ezdxf.new("R2000")
 
 
 @pytest.fixture
@@ -17,13 +17,13 @@ def pdf_def(doc):
 
 
 def test_pdf_def_properties(pdf_def):
-    assert 'PDFDEFINITION' == pdf_def.dxftype()
-    assert 'PDFUNDERLAY' == pdf_def.entity_name
+    assert "PDFDEFINITION" == pdf_def.dxftype()
+    assert "PDFUNDERLAY" == pdf_def.entity_name
 
 
 def test_pdf_def_dxf_attribs(pdf_def):
-    assert 'underlay.pdf' == pdf_def.dxf.filename
-    assert 'underlay_key' == pdf_def.dxf.name
+    assert "underlay.pdf" == pdf_def.dxf.filename
+    assert "underlay_key" == pdf_def.dxf.name
 
 
 @pytest.fixture
@@ -32,11 +32,11 @@ def pdf(doc):
 
 
 def test_pdf_properties(pdf):
-    assert 'PDFUNDERLAY' == pdf.dxftype()
+    assert "PDFUNDERLAY" == pdf.dxftype()
 
 
 def test_pdf_dxf_attribs(pdf):
-    assert pdf.dxf.insert == (0., 0., 0.)
+    assert pdf.dxf.insert == (0.0, 0.0, 0.0)
     assert pdf.dxf.scale_x == 2.5
     assert pdf.dxf.scale_y == 2.5
     assert pdf.dxf.scale_z == 2.5
@@ -48,7 +48,7 @@ def test_pdf_dxf_attribs(pdf):
     assert pdf.adjust_for_background == 0
     assert pdf.dxf.contrast == 100
     assert pdf.dxf.fade == 0
-    assert pdf.dxf.underlay_def_handle == 'DEAD1'
+    assert pdf.dxf.underlay_def_handle == "DEAD1"
 
 
 def test_get_boundary_path(pdf):
@@ -72,31 +72,31 @@ def test_set_scale(pdf):
     assert pdf.scaling == (1.2, 1.3, 1.4)
 
     pdf.scaling = 1.7
-    assert  pdf.scaling == (1.7, 1.7, 1.7)
+    assert pdf.scaling == (1.7, 1.7, 1.7)
 
 
 @pytest.fixture
 def new_doc():
     # setting up a drawing is expensive - use as few test methods as possible
-    return ezdxf.new('R2000')
+    return ezdxf.new("R2000")
 
 
 def test_new_pdf_underlay_def(new_doc):
     rootdict = new_doc.rootdict
-    assert 'ACAD_PDFDEFINITIONS' not in rootdict
-    underlay_def = new_doc.add_underlay_def('underlay.pdf', format='pdf', name='u1')
+    assert "ACAD_PDFDEFINITIONS" not in rootdict
+    underlay_def = new_doc.add_underlay_def("underlay.pdf", fmt="pdf", name="u1")
 
     # check internals pdf_def_owner -> ACAD_PDFDEFINITIONS
-    pdf_dict = rootdict['ACAD_PDFDEFINITIONS']
+    pdf_dict = rootdict["ACAD_PDFDEFINITIONS"]
     assert underlay_def.dxf.owner == pdf_dict.dxf.handle
 
-    assert 'underlay.pdf' == underlay_def.dxf.filename
-    assert 'u1' == underlay_def.dxf.name
+    assert "underlay.pdf" == underlay_def.dxf.filename
+    assert "u1" == underlay_def.dxf.name
 
 
 def test_new_pdf(new_doc):
     msp = new_doc.modelspace()
-    underlay_def = new_doc.add_underlay_def('underlay.pdf')
+    underlay_def = new_doc.add_underlay_def("underlay.pdf")
     underlay = msp.add_underlay(underlay_def, insert=(0, 0, 0), scale=2)
     assert underlay.dxf.insert == (0, 0, 0)
     assert underlay.dxf.scale_x == 2
@@ -106,11 +106,54 @@ def test_new_pdf(new_doc):
     assert underlay.clipping is False
     assert underlay.on is True
     assert underlay.monochrome is False
-    assert underlay.adjust_for_background is False
-    assert underlay.dxf.flags == 2
+    assert underlay.adjust_for_background is True
+    assert underlay.dxf.flags == 10
 
     underlay_def2 = underlay.get_underlay_def()
     assert underlay_def.dxf.handle == underlay_def2.dxf.handle
+
+
+class TestCopyAndTransformUnderlay:
+    @pytest.fixture(scope="class")
+    def doc(self):
+        return ezdxf.new()
+
+    @pytest.fixture(scope="class")
+    def underlay_def(self, doc):
+        return doc.add_underlay_def("underlay.pdf")
+
+    @pytest.fixture(scope="class")
+    def msp(self, doc):
+        return doc.modelspace()
+
+    def test_copied_underlay_has_same_underlay_definition(self, msp, underlay_def):
+        underlay = msp.add_underlay(underlay_def, insert=(0, 0, 0), scale=2)
+        clone = underlay.copy()
+        msp.add_entity(clone)
+        assert (
+            underlay.get_underlay_def() is clone.get_underlay_def()
+        ), "expected the same underlay definition"
+
+    def test_underlay_definition_has_reactor_handles_to_copies(self, msp, underlay_def):
+        underlay = msp.add_underlay(underlay_def, insert=(0, 0, 0), scale=2)
+        clone = underlay.copy()
+        msp.add_entity(clone)
+
+        assert (
+            underlay.dxf.handle in underlay_def.reactors
+        ), "expected reactor handle of original underlay"
+        assert (
+            clone.dxf.handle in underlay_def.reactors
+        ), "expected reactor handle of cloned underlay"
+
+    def test_transform_underlay(self, msp, underlay_def):
+        """The UNDERLAY entity uses the same low-level transform function as INSERT,
+        no extensive transformation testing is required.
+        """
+        underlay = msp.add_underlay(underlay_def, insert=(0, 0, 0), scale=2)
+        underlay.translate(1, 2, 3)
+
+        assert underlay.dxf.insert == (1, 2, 3)
 
 
 PDF_DEFINITION = """  0

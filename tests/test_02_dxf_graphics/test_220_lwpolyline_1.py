@@ -5,7 +5,7 @@ import pytest
 
 from ezdxf.entities.lwpolyline import LWPolyline
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.lldxf.const import DXFAttributeError
+from ezdxf.lldxf.const import DXFAttributeError, DXFStructureError
 
 LWPOLYLINE = """0
 LWPOLYLINE
@@ -27,6 +27,18 @@ AcDbPolyline
 0.0
 """
 
+LWPOLYLINE_ERR = """0
+LWPOLYLINE
+5
+0
+330
+0
+100
+AcDbEntity
+8
+0
+"""
+
 
 @pytest.fixture
 def entity():
@@ -35,25 +47,30 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'LWPOLYLINE' in ENTITY_CLASSES
+
+    assert "LWPOLYLINE" in ENTITY_CLASSES
 
 
 def test_default_init():
     dxfclass = LWPolyline()
-    assert dxfclass.dxftype() == 'LWPOLYLINE'
+    assert dxfclass.dxftype() == "LWPOLYLINE"
     assert dxfclass.dxf.handle is None
     assert dxfclass.dxf.owner is None
-    assert dxfclass.dxf.hasattr('const_width') is False
+    assert dxfclass.dxf.hasattr("const_width") is False
 
 
 def test_default_new():
-    entity = LWPolyline.new(handle='ABBA', owner='0', dxfattribs={
-        'color': 7,
-        'const_width': 2,
-    })
-    assert entity.dxf.layer == '0'
+    entity = LWPolyline.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": 7,
+            "const_width": 2,
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
-    assert entity.dxf.const_width == 2.
+    assert entity.dxf.const_width == 2.0
     assert len(entity) == 0
     entity.append((1, 2))
     assert len(entity) == 1
@@ -64,8 +81,8 @@ def test_default_new():
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.count == 0
     assert entity.dxf.const_width == 0
 
@@ -74,7 +91,7 @@ def test_write_dxf():
     entity = LWPolyline.from_text(LWPOLYLINE)
     collector = TagCollector()
     entity.export_dxf(collector)
-    assert len(collector.tags) == 0, 'do not export empty polylines'
+    assert len(collector.tags) == 0, "do not export empty polylines"
     entity.append((1, 2))
     entity.export_dxf(collector)
     result = collector.tags
@@ -92,14 +109,14 @@ def test_has_const_width():
 def test_has_any_start_width():
     pline = LWPolyline()
     assert pline.has_width is False
-    pline.lwpoints.append((0, 0, .1, 0, 0))
+    pline.lwpoints.append((0, 0, 0.1, 0, 0))
     assert pline.has_width is True
 
 
 def test_has_any_end_width():
     pline = LWPolyline()
     assert pline.has_width is False
-    pline.lwpoints.append((0, 0, 0, .1, 0))
+    pline.lwpoints.append((0, 0, 0, 0.1, 0))
     assert pline.has_width is True
 
 
@@ -108,6 +125,11 @@ def test_has_arc():
     assert pline.has_arc is False
     pline.lwpoints.append((0, 0, 0, 0, 1))
     assert pline.has_arc is True
+
+
+def test_raises_dxf_structure_error_for_missing_AcDbPolyline_subclass():
+    with pytest.raises(DXFStructureError):
+        LWPolyline.from_text(LWPOLYLINE_ERR)
 
 
 RESULT1 = """0
@@ -133,4 +155,3 @@ AcDbPolyline
 20
 2.
 """
-

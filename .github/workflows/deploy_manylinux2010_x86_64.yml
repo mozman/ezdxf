@@ -1,0 +1,30 @@
+name: PyPI manylinux2010_x86_64 deployer
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  # Build and deploy manylinux2010_x86_64 wheels
+  # follow numpy schema: https://pypi.org/project/numpy/#files
+  Linux-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build manylinux2010_x86_64 wheels
+        uses: pypa/cibuildwheel@v2.3.1
+        env:
+          CIBW_BEFORE_BUILD: "pip install wheel cython"
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
+          # cp310 is deployed for manylinux2014
+          CIBW_BUILD: cp37-* cp38-* cp39-*
+      - name: Upload manylinux2010_x86_64 wheels to PyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+        run: |
+          ls -l ./wheelhouse
+          pip install twine
+          twine upload --skip-existing ./wheelhouse/*.whl

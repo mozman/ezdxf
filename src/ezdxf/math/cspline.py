@@ -1,5 +1,6 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import Iterable
 from ezdxf.math import Vec3
 from .construct2d import linspace
@@ -7,12 +8,14 @@ from .construct2d import linspace
 
 class CSpline:
     """
-    In numerical analysis, a cubic Hermite spline or cubic Hermite interpolator is a spline where each piece is a
-    third-degree polynomial specified in Hermite form, that is, by its values and first derivatives at the end points
+    In numerical analysis, a cubic Hermite spline or cubic Hermite interpolator
+    is a spline where each piece is a third-degree polynomial specified in
+    Hermite form, that is, by its values and first derivatives at the end points
     of the corresponding domain interval.
 
     Source: https://en.wikipedia.org/wiki/Cubic_Hermite_spline
     """
+
     # https://de.wikipedia.org/wiki/Kubisch_Hermitescher_Spline
     def __init__(self, p0: Vec3, p1: Vec3, m0: Vec3, m1: Vec3):
         self.p0 = p0

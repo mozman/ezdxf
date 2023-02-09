@@ -1,37 +1,44 @@
-# Copyright (c) 2010-2020 Manfred Moitzi
+# Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
 import pytest
+import pickle
 import math
-from ezdxf.math import Vec3, Vec2, Matrix44, ConstructionEllipse
+from ezdxf.math import Vec3, Vec2, Matrix44, ConstructionEllipse, close_vectors
+
 # Import from 'ezdxf.math._bezier4p' to test Python implementation
 from ezdxf.math._bezier4p import Bezier4P
 from ezdxf.math._bezier4p import cubic_bezier_arc_parameters
 from ezdxf.math._bezier4p import cubic_bezier_from_arc
 from ezdxf.math._bezier4p import cubic_bezier_from_ellipse
+from ezdxf.acc import USE_C_EXT
 
 curve_classes = [Bezier4P]
 arc_params_funcs = [cubic_bezier_arc_parameters]
 arc_funcs = [cubic_bezier_from_arc]
 ellipse_funcs = [cubic_bezier_from_ellipse]
 
-try:
+if USE_C_EXT:
     from ezdxf.acc.bezier4p import Bezier4P as CBezier4P
-    from ezdxf.acc.bezier4p import \
-        cubic_bezier_arc_parameters as cython_arc_parameters
+    from ezdxf.acc.bezier4p import (
+        cubic_bezier_arc_parameters as cython_arc_parameters,
+    )
     from ezdxf.acc.bezier4p import cubic_bezier_from_arc as cython_arc_func
-    from ezdxf.acc.bezier4p import \
-        cubic_bezier_from_ellipse as cython_ellipse_func
+    from ezdxf.acc.bezier4p import (
+        cubic_bezier_from_ellipse as cython_ellipse_func,
+    )
 
     curve_classes.append(CBezier4P)
     arc_params_funcs.append(cython_arc_parameters)
     arc_funcs.append(cython_arc_func)
     ellipse_funcs.append(cython_ellipse_func)
-except ImportError:
-    pass
 
-DEFPOINTS2D = [(0., 0.), (3., 0.), (7., 10.), (10., 10.)]
-DEFPOINTS3D = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.),
-               (40., 10., 25.)]
+DEFPOINTS2D = [(0.0, 0.0), (3.0, 0.0), (7.0, 10.0), (10.0, 10.0)]
+DEFPOINTS3D = [
+    (0.0, 0.0, 0.0),
+    (10.0, 20.0, 20.0),
+    (30.0, 10.0, 25.0),
+    (40.0, 10.0, 25.0),
+]
 
 
 @pytest.fixture(params=curve_classes)
@@ -57,7 +64,7 @@ def ellipse(request):
 def test_accepts_2d_points(bezier):
     curve = bezier(DEFPOINTS2D)
     for index, chk in enumerate(Vec2.generate(POINTS2D)):
-        assert curve.point(index * .1).isclose(chk)
+        assert curve.point(index * 0.1).isclose(chk)
 
 
 def test_objects_are_immutable(bezier):
@@ -69,7 +76,7 @@ def test_objects_are_immutable(bezier):
 def test_2d_tangent_computation(bezier):
     dbcurve = bezier(DEFPOINTS2D)
     for index, chk in enumerate(Vec2.generate(TANGENTS2D)):
-        assert dbcurve.tangent(index * .1).isclose(chk)
+        assert dbcurve.tangent(index * 0.1).isclose(chk)
 
 
 def test_approximate(bezier):
@@ -85,15 +92,16 @@ def test_reverse(bezier):
     vertices = list(curve.approximate(10))
     rev_curve = curve.reverse()
     rev_vertices = list(rev_curve.approximate(10))
-    assert list(reversed(vertices)) == rev_vertices
+    assert close_vectors(reversed(vertices), rev_vertices)
 
 
 def test_transform_interface(bezier):
     curve = bezier(DEFPOINTS3D)
     new = curve.transform(Matrix44.translate(1, 2, 3))
     assert new.control_points[0] == Vec3(DEFPOINTS3D[0]) + (1, 2, 3)
-    assert new.control_points[0] != curve.control_points[
-        0], 'expected a new object'
+    assert (
+        new.control_points[0] != curve.control_points[0]
+    ), "expected a new object"
 
 
 def test_transform_returns_always_3d_curves(bezier):
@@ -106,6 +114,80 @@ def test_flattening(bezier):
     curve = bezier([(0, 0), (1, 1), (2, -1), (3, 0)])
     assert len(list(curve.flattening(1.0, segments=4))) == 5
     assert len(list(curve.flattening(0.1, segments=4))) == 7
+
+
+def test_flattening_for_equal_start_and_end_points(bezier):
+    curve = bezier([(0, 0), (1, 0), (1, 1), (0, 0)])
+    assert len(list(curve.flattening(0.1, segments=4))) == 5
+
+
+def test_flattening_with_large_elevation(bezier):
+    elevation = 1.391912e19
+    curve = bezier(
+        [
+            (0, 0, elevation),
+            (1, 1, elevation),
+            (2, -1, elevation),
+            (3, 0, elevation),
+        ]
+    )
+    assert len(list(curve.flattening(0.1, segments=4))) > 3
+
+
+def test_flattening_for_equal_start_and_end_points_large_elevation(bezier):
+    elevation = 1.391912e19
+    curve = bezier(
+        [
+            (0, 0, elevation),
+            (1, 0, elevation),
+            (1, 1, elevation),
+            (0, 0, elevation),
+        ]
+    )
+    assert len(list(curve.flattening(0.1, segments=4))) == 5
+
+
+@pytest.mark.parametrize(
+    "z",
+    [
+        1e99,
+        1e79,
+        1e59,
+        1e39,
+        1e19,
+        1e9,
+        1e6,
+        1000,
+        0,
+        -1e99,
+        -1e79,
+        -1e59,
+        -1e39,
+        -1e19,
+        -1e9,
+        -1e6,
+        -1000,
+    ],
+)
+def test_flattening_big_z_coordinates(bezier, z):
+    """Test based on issue #574"""
+    cp = [
+        (888, 770, z),
+        (887, 623, z),
+        (901, 478, z),
+        (930, 335, z),
+    ]
+    curve = bezier(cp)
+    points = list(curve.flattening(0.01))
+    # Don't care about the result, it should just not break!
+    assert len(points) > 0
+
+
+def test_pickle_support(bezier):
+    curve = bezier(DEFPOINTS3D)
+    pickled_curve = pickle.loads(pickle.dumps(curve))
+    for index in range(4):
+        assert pickled_curve.control_points[index] == DEFPOINTS3D[index]
 
 
 def test_cubic_bezier_arc_parameters_computation(arc_params):
@@ -151,6 +233,11 @@ def test_from_circular_arc(arc):
     assert cpoints[3].isclose((0, 1, 0))
 
 
+def test_from_circular_full_arc(arc):
+    curves = list(arc(start_angle=180, end_angle=-180))
+    assert len(curves) == 4
+
+
 def test_bezier_curves_from_simple_elliptic_arc(ellipse):
     ellipse_ = ConstructionEllipse(
         center=(1, 1),
@@ -185,17 +272,36 @@ def test_bezier_curves_from_complex_elliptic_arc(ellipse):
 
 def test_arc_params_issue_708(arc_params):
     cpts = list(arc_params(-2.498091544796509, -0.6435011087932844))
-    assert cpts[0] == (
-        Vec3(-0.8, -0.6, 0.0),
-        Vec3(-0.6111456180001683, -0.8518058426664423, 0.0),
-        Vec3(-0.3147573033330529, -1.0, 0.0),
-        Vec3(6.123233995736766e-17, -1.0, 0.0)
+    assert (
+        all(
+            a.isclose(b)
+            for a, b in zip(
+                cpts[0],
+                (
+                    Vec3(-0.8, -0.6, 0.0),
+                    Vec3(-0.6111456180001683, -0.8518058426664423, 0.0),
+                    Vec3(-0.3147573033330529, -1.0, 0.0),
+                    Vec3(6.123233995736766e-17, -1.0, 0.0),
+                ),
+            )
+        )
+        is True
     )
-    assert cpts[1] == (
-        Vec3(6.123233995736766e-17, -1.0, 0.0),
-        Vec3(0.314757303333053, -1.0, 0.0),
-        Vec3(0.6111456180001683, -0.8518058426664423, 0.0),
-        Vec3(0.8, -0.5999999999999999, 0.0)
+
+    assert (
+        all(
+            a.isclose(b)
+            for a, b in zip(
+                cpts[1],
+                (
+                    Vec3(6.123233995736766e-17, -1.0, 0.0),
+                    Vec3(0.314757303333053, -1.0, 0.0),
+                    Vec3(0.6111456180001683, -0.8518058426664423, 0.0),
+                    Vec3(0.8, -0.5999999999999999, 0.0),
+                ),
+            )
+        )
+        is True
     )
 
 
@@ -208,17 +314,35 @@ def test_bezier_curves_ellipse_issue_708(ellipse):
         end_param=-0.6435011087932844,
     )
     curves = list(ellipse(ellipse_))
-    assert curves[0].control_points == (
-        Vec3(0.9999999999999999, 1.6653345369377348e-16, 0.0),
-        Vec3(1.1180339887498947, -0.15737865166652631, 0.0),
-        Vec3(1.3032766854168418, -0.2499999999999999, 0.0),
-        Vec3(1.4999999999999998, -0.25, 0.0)
+    assert (
+        all(
+            a.isclose(b)
+            for a, b in zip(
+                curves[0].control_points,
+                (
+                    Vec3(0.9999999999999999, 1.6653345369377348e-16, 0.0),
+                    Vec3(1.1180339887498947, -0.15737865166652631, 0.0),
+                    Vec3(1.3032766854168418, -0.2499999999999999, 0.0),
+                    Vec3(1.4999999999999998, -0.25, 0.0),
+                ),
+            )
+        )
+        is True
     )
-    assert curves[1].control_points == (
-        Vec3(1.4999999999999998, -0.25, 0.0),
-        Vec3(1.696723314583158, -0.25, 0.0),
-        Vec3(1.881966011250105, -0.15737865166652654, 0.0),
-        Vec3(2.0, -5.551115123125783e-17, 0.0)
+    assert (
+        all(
+            a.isclose(b)
+            for a, b in zip(
+                curves[1].control_points,
+                (
+                    Vec3(1.4999999999999998, -0.25, 0.0),
+                    Vec3(1.696723314583158, -0.25, 0.0),
+                    Vec3(1.881966011250105, -0.15737865166652654, 0.0),
+                    Vec3(2.0, -5.551115123125783e-17, 0.0),
+                ),
+            )
+        )
+        is True
     )
 
 

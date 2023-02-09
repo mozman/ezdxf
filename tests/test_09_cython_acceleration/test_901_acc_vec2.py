@@ -6,9 +6,8 @@
 
 import pytest
 import math
-import array
 
-cyvec = pytest.importorskip('ezdxf.acc.vector')
+cyvec = pytest.importorskip("ezdxf.acc.vector")
 Vec2 = cyvec.Vec2
 
 
@@ -62,17 +61,19 @@ def test_init_type_error():
     with pytest.raises(TypeError):
         Vec2(1, 2, 3, 4)
     with pytest.raises(TypeError):
-        Vec2('xyz')
+        Vec2("xyz")
     with pytest.raises(TypeError):
-        Vec2('xyz', 'abc')
+        Vec2("xyz", "abc")
 
 
 def test_compare():
     assert Vec2(1, 2) == Vec2(1, 2)
     assert Vec2(1, 2) == (1, 2)
-    # abs_tol is 1e-12
-    assert Vec2(1, 2) == (1, 2.0000000000001)
     assert (1, 2) == Vec2(1, 2)
+    assert Vec2(1, 2) != (
+        1,
+        2.0000000000001,
+    ), "__eq__() should use the full floating point precision"
     assert Vec2(1, 2) != (2, 1)
 
 
@@ -94,20 +95,30 @@ def test_does_not_support_slicing():
         _ = Vec2(2, 1)[:]
 
 
-@pytest.mark.parametrize('angle', [
-    90, -90, 600, -600, 0.0, 360.0, -360.0, 720.0, -720.0
-])
+@pytest.mark.parametrize(
+    "angle", [90, -90, 600, -600, 0.0, 360.0, -360.0, 720.0, -720.0]
+)
 def test_normalize_deg_angle(angle):
     assert cyvec._normalize_deg_angle(angle) == angle % 360.0
 
 
-@pytest.mark.parametrize('angle', [
-    3.0, -3.0, 10.0, -10.0, 0.0, math.tau, -math.tau,
-    2 * math.tau, -2 * math.tau
-])
+@pytest.mark.parametrize(
+    "angle",
+    [
+        3.0,
+        -3.0,
+        10.0,
+        -10.0,
+        0.0,
+        math.tau,
+        -math.tau,
+        2 * math.tau,
+        -2 * math.tau,
+    ],
+)
 def test_normalize_rad_angle(angle):
     assert cyvec._normalize_rad_angle(angle) == angle % math.tau
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

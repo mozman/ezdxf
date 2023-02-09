@@ -7,7 +7,7 @@ DXF Units
 
 The `DXF reference`_ has no explicit information how to handle units in DXF, any
 information in this section is based on experiments with BricsCAD and may differ
-in other CAD application, BricsCAD tries to be as compatible with AutoCAD as
+in other CAD applications, BricsCAD tries to be as compatible with AutoCAD as
 possible. Therefore, this information should also apply to AutoCAD.
 
 Please open an issue on `github`_ if you have any corrections or additional
@@ -20,7 +20,7 @@ Any length or coordinate value in DXF is unitless in the first place, there is
 no unit information attached to the value. The unit information comes from the
 context where a DXF entity is used. The document/modelspace get the unit
 information from the header variable $INSUNITS, paperspace and block layouts get
-their unit information form the attribute :attr:`~ezdxf.layouts.BaseLayout.units`.
+their unit information from the attribute :attr:`~ezdxf.layouts.BaseLayout.units`.
 The modelspace object has also a :attr:`units` property, but this value do not
 represent the modelspace units, this value is always set to 0 "unitless".
 
@@ -42,11 +42,11 @@ Block Units
 -----------
 
 As said each block definition can have independent units, but there is no
-implicit unit conversion applied, not in CAD applications and not in ezdxf.
+implicit unit conversion applied, not in CAD applications and not in `ezdxf`.
 
 When inserting a block reference (INSERT) into the modelspace or another block
 layout with different units, the scaling factor between these units **must** be
-applied explicit as scaling DXF attributes (:attr:`xscale`, ...) of the
+applied explicit as DXF attributes (:attr:`xscale`, ...) of the
 :class:`~ezdxf.entities.Insert` entity, e.g. modelspace in meters and block in
 centimeters, x-, y- and z-scaling has to be 0.01:
 
@@ -72,7 +72,7 @@ scaling factor between units:
 .. hint::
 
     It is never a good idea to use different measurement system in one
-    document, ask the NASA about their Mars Climate Orbiter from 1999.
+    project, ask the NASA about their Mars Climate Orbiter from 1999.
     The same applies for units of the same measurement system, just use one unit
     like meters or inches.
 
@@ -80,7 +80,7 @@ scaling factor between units:
 Angle Units
 -----------
 
-Angles are always in degrees (360 deg = full circle) and in counter clockwise
+Angles are always in degrees (360 deg = full circle) in counter-clockwise
 orientation, unless stated explicit otherwise.
 
 Display Format
@@ -135,22 +135,21 @@ The most common units are 6 for meters and 1 for inches.
 24  US Survey Mile
 === ===============
 
+See also enumeration :class:`ezdxf.enums.InsertUnits`.
+
 $MEASUREMENT
 ------------
 
 The header variable $MEASUREMENT controls whether the current drawing uses
-imperial or metric hatch pattern and linetype files, this setting is not applied
-correct in `ezdxf` yet, but will be fixed in the future:
+imperial or metric hatch pattern and linetype files:
 
 This setting is independent from $INSUNITS, it is possible to set the drawing
 units to inch and use metric linetypes and hatch pattern.
 
-In BricsCAD the base scaling of the linetypes is only depending from the
-$MEASUREMENT value, is not relevant if $INSUNITS is meter, centimeter,
-millimeter, ... and so on and the same is valid for hatch pattern.
+In BricsCAD the base scaling of linetypes and hatch pattern is defined by
+the $MEASUREMENT value, the value of $INSUNITS is ignored.
 
 .. code-block:: python
-
 
     doc.header['$MEASUREMENT'] = 1
 
@@ -159,14 +158,15 @@ millimeter, ... and so on and the same is valid for hatch pattern.
 1   Metric
 === ===============
 
+See also enumeration :class:`ezdxf.enums.Measurement`
+
 $LUNITS
 -------
 
-The header variable $LUNITS defines how CAD applications show linear values in
-the GUI and has no meaning for `ezdxf`:
+The header variable $LUNITS defines how CAD applications display linear values
+in the GUI and has no meaning for `ezdxf`:
 
 .. code-block:: python
-
 
     doc.header['$LUNITS'] = 2
 
@@ -178,12 +178,14 @@ the GUI and has no meaning for `ezdxf`:
 5   Fractional
 === ===============
 
+See also enumeration :class:`ezdxf.enums.LengthUnits`
+
 $AUNITS
 -------
 
-The header variable $AUNITS defines how CAD applications show angular values in
-the GUI and has no meaning for `ezdxf`, DXF angles are always degrees in
-counter-clockwise orientation, unless stated explicit otherwise:
+The header variable $AUNITS defines how CAD applications display angular values
+in the GUI and has no meaning for `ezdxf`, DXF angles are always stored as
+degrees in counter-clockwise orientation, unless stated explicit otherwise:
 
 .. code-block:: python
 
@@ -196,10 +198,16 @@ counter-clockwise orientation, unless stated explicit otherwise:
 3   Radians
 === ===============
 
+See also enumeration :class:`ezdxf.enums.AngularUnits`
+
 Helper Tools
 ------------
 
 .. autofunction:: conversion_factor
+
+.. autofunction:: unit_name
+
+.. autofunction:: angle_unit_name
 
 .. _github: https://github.com/mozman/ezdxf/issues
 .. _DXF reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3

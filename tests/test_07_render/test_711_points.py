@@ -8,10 +8,12 @@ from ezdxf.math.shape import Shape2d
 
 
 def pnt(location=(0, 0), angle: float = 0):
-    return Point.new(dxfattribs={
-        'angle': angle,
-        'location': location,
-    })
+    return Point.new(
+        dxfattribs={
+            "angle": angle,
+            "location": location,
+        }
+    )
 
 
 def test_dimensionless_point():
@@ -19,7 +21,7 @@ def test_dimensionless_point():
     p = pnt(location=loc)
     result = point.virtual_entities(p, pdmode=0)
     line = result[0]
-    assert line.dxftype() == 'LINE'
+    assert line.dxftype() == "LINE"
     assert line.dxf.start.isclose(loc)
     assert line.dxf.end.isclose(loc)
 
@@ -98,5 +100,5 @@ def test_rotated_cross_point():
     assert line2.dxf.end.isclose(e2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

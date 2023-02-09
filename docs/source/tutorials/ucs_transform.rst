@@ -6,19 +6,20 @@
 Tutorial for UCS Based Transformations
 ======================================
 
-With `ezdxf` v0.11 a new feature for entity transformation was introduced, which makes working with OCS/UCS much
-easier, this is a new edition of the older :ref:`tut_ocs`. For the basic information read the old tutorial
-please. In `ezdxf` v0.13 the :meth:`transform_to_wcs()` interface was replaced by the general transformation
-interface: :meth:`transform()`.
+The `ezdxf` version v0.13 introduced a transformation interface for DXF
+primitives, which makes working with OCS/UCS much easier.  This is a new
+edition of the :ref:`tut_ocs`.  Please read the old tutorial for the basics
+about the OCS.
 
-For this tutorial we don't have to worry about the OCS and the extrusion vector, this is done automatically
-by the :meth:`transform` method of each DXF entity.
+For this tutorial we don't have to worry about the OCS and the extrusion vector,
+this is done automatically by the :meth:`transform` method of each DXF entity.
 
 Placing 2D Circle in 3D Space
 -----------------------------
 
-To recreate the situation of the old tutorial instantiate a new UCS and rotate it around the local x-axis.
-Use UCS coordinates to place the 2D CIRCLE in 3D space, and transform the UCS coordinates to the WCS.
+To recreate the situation of the old tutorial instantiate a new UCS and rotate
+it around the local x-axis.  Use UCS coordinates to place the 2D CIRCLE in
+3D space and transform the UCS coordinates to the WCS.
 
 .. literalinclude:: src/ucs/circle.py
     :lines: 6-26
@@ -46,8 +47,8 @@ The 2D pentagon in 3D space in BricsCAD `Left` and `Front` view.
 Using UCS to Place 3D Polyline
 ------------------------------
 
-Simplified POLYLINE example: Using a first UCS to transform the POLYLINE and a second UCS to
-place the POLYLINE in 3D space.
+Simplified POLYLINE example: Using a first UCS to transform the POLYLINE and a
+second UCS to place the POLYLINE in 3D space.
 
 .. literalinclude:: src/ucs/polyline3d.py
     :lines: 13-37
@@ -59,10 +60,11 @@ place the POLYLINE in 3D space.
 Placing 2D Text in 3D Space
 ---------------------------
 
-The problem with the text rotation in the old tutorial disappears (or better it is hidden in :meth:`transform`)
-with the new UCS based transformation method:
+The problem with the text rotation in the old tutorial disappears with the new
+UCS based transformation method:
 
-AutoCAD supports thickness for the TEXT entity only for `.shx` fonts and not for true type fonts.
+AutoCAD supports thickness for the TEXT entity only for `.shx` fonts and not for
+true type fonts.
 
 .. literalinclude:: src/ucs/text.py
     :lines: 13-29
@@ -91,12 +93,14 @@ Placing Block References in 3D Space
 
 Despite the fact that block references (INSERT) can contain true 3D entities like
 LINE or MESH, the INSERT entity uses the same placing principe as TEXT or ARC
-shown in the previous chapters.
+shown in the previous sections.
 
-To rotate the block reference 15 degrees around the WCS x-axis, we place the block reference in the origin of the UCS,
-and rotate the UCS 90 degrees around its local y-axis, to align the UCS z-axis with the WCS x-axis:
+To rotate the block reference 15 degrees around the WCS x-axis, we place the
+block reference in the origin of the UCS, and rotate the UCS 90 degrees around
+its local y-axis, to align the UCS z-axis with the WCS x-axis:
 
-This is just an excerpt of the important parts, see the whole code of `insert.py`_ at github.
+This is just an excerpt of the important parts, see the whole code of
+`insert.py`_ at github.
 
 .. literalinclude:: src/ucs/insert.py
     :lines: 47-58
@@ -104,10 +108,10 @@ This is just an excerpt of the important parts, see the whole code of `insert.py
 .. image:: gfx/ucs-insert-01-iso.png
 .. image:: gfx/ucs-insert-01-side.png
 
-A more simple approach is to ignore the :attr:`rotate` attribute at all and just rotate the UCS.
-To rotate a block reference around any axis rather than the block z-axis, rotate the
-UCS into the desired position. Following example rotates the block reference around
-the block x-axis by 15 degrees:
+A more simple approach is to ignore the :attr:`rotate` attribute at all and just
+rotate the UCS.  To rotate a block reference around any axis rather than the
+block z-axis, rotate the UCS into the desired position.  The following example
+rotates the block reference around the block x-axis by 15 degrees:
 
 .. literalinclude:: src/ucs/insert.py
     :lines: 66-68
@@ -115,7 +119,8 @@ the block x-axis by 15 degrees:
 .. image:: gfx/ucs-insert-02-iso.png
 .. image:: gfx/ucs-insert-02-side.png
 
-The next example shows how to translate a block references with an already established OCS:
+The next example shows how to translate a block references with an already
+established OCS:
 
 .. literalinclude:: src/ucs/insert.py
     :lines: 72-76
@@ -123,15 +128,18 @@ The next example shows how to translate a block references with an already estab
 .. image:: gfx/ucs-insert-03-iso.png
 .. image:: gfx/ucs-insert-03-side.png
 
-The next operation is to rotate a block reference with an established OCS, rotation axis is the block y-axis,
-rotation angle is -90 degrees. The idea is to create an UCS in the origin of the already placed block reference,
-UCS axis aligned to the block axis and resetting the block reference parameters for a new WCS transformation.
+The next operation is to rotate a block reference with an established OCS,
+rotation axis is the block y-axis, rotation angle is -90 degrees. The idea is
+to create an UCS in the origin of the already placed block reference, UCS axis
+aligned to the block axis and resetting the block reference parameters for a
+new WCS transformation.
 
 .. literalinclude:: src/ucs/insert.py
     :lines: 82-86
 
-Reset block reference parameters, this places the block reference in the UCS origin and aligns the block axis
-to the UCS axis, now we do a new transformation from UCS to WCS:
+Reset block reference parameters, this places the block reference in the UCS
+origin and aligns the block axis to the UCS axis, now we do a new transformation
+from UCS to WCS:
 
 .. literalinclude:: src/ucs/insert.py
     :lines: 88-93

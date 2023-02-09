@@ -3,15 +3,24 @@
 import pytest
 from pathlib import Path
 from ezdxf.addons.dwg.loader import DwgDocument
-from ezdxf.addons.dwg.header_section import load_commands, HEADER_DESCRIPTION, \
-    CMD_SET_VERSION, CMD_SKIP_BITS, CMD_SKIP_NEXT_IF, CMD_SET_VAR, ACAD_LATEST
+from ezdxf.addons.dwg.header_section import (
+    load_commands,
+    HEADER_DESCRIPTION,
+    CMD_SET_VERSION,
+    CMD_SKIP_BITS,
+    CMD_SKIP_NEXT_IF,
+    CMD_SET_VAR,
+    ACAD_LATEST,
+)
 from ezdxf.addons.dwg.crc import crc8, crc32
 
-FILE1 = Path(__file__).parent / '807_1.dwg'
-pytestmark = pytest.mark.skipif(not FILE1.exists(), reason=f"Data file '{FILE1}' not present.")
+FILE1 = Path(__file__).parent / "807_1.dwg"
+pytestmark = pytest.mark.skipif(
+    not FILE1.exists(), reason=f"Data file '{FILE1}' not present."
+)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dwg1() -> bytes:
     return FILE1.read_bytes()
 
@@ -20,28 +29,40 @@ def test_load_classes(dwg1):
     doc = DwgDocument(dwg1, crc_check=True)
     doc.load()
     assert len(doc.dxf_object_types) == 15
-    assert doc.dxf_object_types[500] == 'ACDBDICTIONARYWDFLT'
-    assert doc.dxf_object_types[514] == 'LAYOUT'
+    assert doc.dxf_object_types[500] == "ACDBDICTIONARYWDFLT"
+    assert doc.dxf_object_types[514] == "LAYOUT"
 
     classes = doc.doc.classes
     cls_dict = classes.classes
     assert len(cls_dict) == 15
-    assert classes.get('ACDBDICTIONARYWDFLT') is not None
-    assert classes.get('LAYOUT') is not None
+    assert classes.get("ACDBDICTIONARYWDFLT") is not None
+    assert classes.get("LAYOUT") is not None
 
 
 def test_header_commands():
-    assert load_commands('ver: all') == [(CMD_SET_VERSION, ('AC1012', ACAD_LATEST))]
-    assert load_commands('ver: R13') == [(CMD_SET_VERSION, ('AC1012', 'AC1012'))]
-    assert load_commands('ver: R2000') == [(CMD_SET_VERSION, ('AC1015', 'AC1015'))]
-    assert load_commands('ver: R2004+') == [(CMD_SET_VERSION, ('AC1018', ACAD_LATEST))]
-    assert load_commands('ver: R13 - R14  # comment') == [(CMD_SET_VERSION, ('AC1012', 'AC1014'))]
-    assert load_commands('$TEST: H  # comment') == [(CMD_SET_VAR, ('$TEST', 'H'))]
-    assert load_commands('$TEST : BLL') == [(CMD_SET_VAR, ('$TEST', 'BLL'))]
-    assert load_commands('skip_bits : 7') == [(CMD_SKIP_BITS, '7')]
-    assert load_commands('skip_next_if: 1 == 1\n$TEST : BLL') == [
-        (CMD_SKIP_NEXT_IF, '1 == 1'),
-        (CMD_SET_VAR, ('$TEST', 'BLL')),
+    assert load_commands("ver: all") == [
+        (CMD_SET_VERSION, ("AC1012", ACAD_LATEST))
+    ]
+    assert load_commands("ver: R13") == [
+        (CMD_SET_VERSION, ("AC1012", "AC1012"))
+    ]
+    assert load_commands("ver: R2000") == [
+        (CMD_SET_VERSION, ("AC1015", "AC1015"))
+    ]
+    assert load_commands("ver: R2004+") == [
+        (CMD_SET_VERSION, ("AC1018", ACAD_LATEST))
+    ]
+    assert load_commands("ver: R13 - R14  # comment") == [
+        (CMD_SET_VERSION, ("AC1012", "AC1014"))
+    ]
+    assert load_commands("$TEST: H  # comment") == [
+        (CMD_SET_VAR, ("$TEST", "H"))
+    ]
+    assert load_commands("$TEST : BLL") == [(CMD_SET_VAR, ("$TEST", "BLL"))]
+    assert load_commands("skip_bits : 7") == [(CMD_SKIP_BITS, "7")]
+    assert load_commands("skip_next_if: 1 == 1\n$TEST : BLL") == [
+        (CMD_SKIP_NEXT_IF, "1 == 1"),
+        (CMD_SET_VAR, ("$TEST", "BLL")),
     ]
 
 
@@ -51,17 +72,18 @@ def test_load_all():
 
 
 def test_crc8_is_runnable():
-    result = crc8(b'mozman')
+    result = crc8(b"mozman")
     assert bool(result)
 
 
 def test_crc32_is_runnable():
-    result = crc32(b'mozman')
+    result = crc32(b"mozman")
     assert bool(result)
 
 
 def test_parse_hex_dump():
     from ezdxf.tools.test import parse_hex_dump
+
     result = parse_hex_dump(R14_TEST_HDR)
     assert len(result) == 584
 
@@ -142,5 +164,5 @@ R14_TEST_HDR = """
 00240 47 B1 92 CC A0 00 00 00
 """
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

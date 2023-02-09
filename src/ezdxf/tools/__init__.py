@@ -1,12 +1,11 @@
-# Created: 16.07.2015
-# Copyright (c) 2015-2018, Manfred Moitzi
+# Copyright (c) 2015-2022, Manfred Moitzi
 # License: MIT License
-from typing import Tuple, Any, Iterable
-from uuid import uuid1
+from __future__ import annotations
+from typing import Any, Iterable
+from uuid import uuid4
 import functools
 import html
 from .juliandate import juliandate, calendardate
-from .rgb import int2rgb, rgb2int, aci2rgb
 from .binarydata import hex_strings_to_bytes, bytes_to_hexstr
 
 escape = functools.partial(html.escape, quote=True)
@@ -22,7 +21,7 @@ def float2transparency(value: float) -> int:
                and ``1`` is 100% transparency.
 
     """
-    return int((1. - float(value)) * 255) | 0x02000000
+    return int((1.0 - float(value)) * 255) | 0x02000000
 
 
 def transparency2float(value: int) -> float:
@@ -36,11 +35,11 @@ def transparency2float(value: int) -> float:
     """
     # 255 -> 0.
     # 0 -> 1.
-    return 1. - float(int(value) & 0xFF) / 255.
+    return 1.0 - float(int(value) & 0xFF) / 255.0
 
 
 def set_flag_state(flags: int, flag: int, state: bool = True) -> int:
-    """ Set/clear binary `flag` in data `flags`.
+    """Set/clear binary `flag` in data `flags`.
 
     Args:
         flags: data value
@@ -56,12 +55,18 @@ def set_flag_state(flags: int, flag: int, state: bool = True) -> int:
 
 
 def guid() -> str:
-    """ Returns a general unique ID, based on :func:`uuid.uuid1`. """
-    return str(uuid1()).upper()
+    """Returns a general unique ID, based on :func:`uuid.uuid4`.
+
+    This function creates a GUID for the header variables $VERSIONGUID and
+    $FINGERPRINTGUID, which matches the AutoCAD pattern
+    ``{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}``.
+
+    """
+    return "{" + str(uuid4()).upper() + "}"
 
 
-def take2(iterable: Iterable) -> Tuple[Any, Any]:
-    """ Iterate `iterable` as 2-tuples.
+def take2(iterable: Iterable) -> Iterable[tuple[Any, Any]]:
+    """Iterate `iterable` as 2-tuples.
 
     :code:`[1, 2, 3, 4, ...] -> (1, 2), (3, 4), ...`
 
@@ -76,7 +81,7 @@ def take2(iterable: Iterable) -> Tuple[Any, Any]:
 
 
 def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
-    """ Suppress trailing and/or leading ``0`` of string `s`.
+    """Suppress trailing and/or leading ``0`` of string `s`.
 
     Args:
          s: data string
@@ -89,11 +94,11 @@ def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
         return s
 
     # if `s` represents zero
-    if float(s) == 0.:
-        return '0'
+    if float(s) == 0.0:
+        return "0"
 
     # preserve sign
-    if s[0] in '-+':
+    if s[0] in "-+":
         sign = s[0]
         s = s[1:]
     else:
@@ -101,12 +106,12 @@ def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
 
     # strip zeros
     if leading:
-        s = s.lstrip('0')
-    if trailing:
-        s = s.rstrip('0')
+        s = s.lstrip("0")
+    if trailing and "." in s:
+        s = s.rstrip("0")
 
     # remove comma if no decimals follow
-    if s[-1] in '.,':
+    if s[-1] in ".,":
         s = s[:-1]
 
     return sign + s
@@ -121,8 +126,8 @@ def normalize_text_angle(angle: float, fix_upside_down=True) -> float:
         fix_upside_down: rotate upside down text angle about 180 degree
 
     """
-    angle = angle % 360.  # normalize angle (0 .. 360)
+    angle = angle % 360.0  # normalize angle (0 .. 360)
     if fix_upside_down and (90 < angle <= 270):  # flip text orientation
         angle -= 180
-        angle = angle % 360.  # normalize again
+        angle = angle % 360.0  # normalize again
     return angle

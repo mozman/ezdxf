@@ -41,11 +41,23 @@ Common base class for all DXF entities and objects.
 
         Get the associated :class:`~ezdxf.document.Drawing` instance.
 
-    .. autoattribute:: is_alive
+    .. autoproperty:: is_alive
 
-    .. autoattribute:: is_virtual
+    .. autoproperty:: is_virtual
 
-    .. autoattribute:: is_bound
+    .. autoproperty:: is_bound
+
+    .. autoproperty:: is_copy
+
+    .. autoproperty:: uuid
+
+    .. autoproperty:: source_of_copy
+
+    .. autoproperty:: origin_of_copy
+
+    .. autoproperty:: has_source_block_reference
+
+    .. autoproperty:: source_block_reference
 
     .. automethod:: dxftype
 
@@ -73,35 +85,37 @@ Common base class for all DXF entities and objects.
 
     .. autoattribute:: has_extension_dict
 
-    .. automethod:: get_extension_dict() -> ExtensionDict
+    .. automethod:: get_extension_dict
 
-    .. automethod:: new_extension_dict() -> ExtensionDict
+    .. automethod:: new_extension_dict
+
+    .. automethod:: discard_extension_dict
 
     .. automethod:: has_app_data
 
-    .. automethod:: get_app_data(appid: str) -> Tags
+    .. automethod:: get_app_data
 
-    .. automethod:: set_app_data(appid: str, tags: Iterable)
+    .. automethod:: set_app_data
 
     .. automethod:: discard_app_data
 
     .. automethod:: has_xdata
 
-    .. automethod:: get_xdata(appid: str) -> Tags
+    .. automethod:: get_xdata
 
-    .. automethod:: set_xdata(appid: str, tags: Iterable)
+    .. automethod:: set_xdata
 
     .. automethod:: discard_xdata
 
     .. automethod:: has_xdata_list
 
-    .. automethod:: get_xdata_list(appid: str, name: str) -> Tags
+    .. automethod:: get_xdata_list
 
-    .. automethod:: set_xdata_list(appid: str, name: str, tags: Iterable)
+    .. automethod:: set_xdata_list
 
     .. automethod:: discard_xdata_list
 
-    .. automethod:: replace_xdata_list(appid: str, name: str, tags: Iterable)
+    .. automethod:: replace_xdata_list
 
     .. automethod:: has_reactors
 

@@ -38,19 +38,19 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'RASTERVARIABLES' in ENTITY_CLASSES
+
+    assert "RASTERVARIABLES" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = RasterVariables()
-    assert entity.dxftype() == 'RASTERVARIABLES'
+    assert entity.dxftype() == "RASTERVARIABLES"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = RasterVariables.new(handle='ABBA', owner='0', dxfattribs={
-    })
+    entity = RasterVariables.new(handle="ABBA", owner="0", dxfattribs={})
     assert entity.dxf.class_version == 0
     assert entity.dxf.frame == 0
     assert entity.dxf.quality == 1

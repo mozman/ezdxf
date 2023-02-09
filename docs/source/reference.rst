@@ -25,6 +25,7 @@ DXF Document
     drawing/management
     drawing/drawing
     drawing/recover
+    appsettings
 
 DXF Structures
 --------------
@@ -39,6 +40,36 @@ DXF Structures
     groups
     dxfentities/index
     dxfobjects/index
+    xdata
+    appdata
+    xdict
+    reactors
+    blkrefs
+    const
+
+DXF Entity Creation
+-------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    entity_creation
+
+Enums
+-----
+
+.. toctree::
+    :maxdepth: 1
+
+    enums
+
+Colors
+------
+
+.. toctree::
+    :maxdepth: 1
+
+    colors
 
 Data Query
 ----------
@@ -49,13 +80,63 @@ Data Query
     query
     groupby
 
-Math Utilities
+Math
+----
+
+.. toctree::
+    :maxdepth: 2
+
+    math/core
+    math/clipping
+    math/clustering
+    math/linalg
+    math/rtree
+    math/triangulation
+
+Construction
+------------
+
+.. toctree::
+    :maxdepth: 1
+
+    path
+    disassemble
+    bbox
+    upright
+    reorder
+    math_construction_tools
+
+Custom Data
+-----------
+
+.. toctree::
+    :maxdepth: 1
+
+    user_xdata
+    user_record
+
+Tools
+-----
+
+.. toctree::
+    :maxdepth: 2
+
+    tools/functions
+    tools/gfxattribs
+    tools/text
+    tools/text_size
+    tools/fonts
+    tools/acis
+
+
+Global Options
 --------------
 
 .. toctree::
     :maxdepth: 1
 
-    math
+    options
+
 
 Miscellaneous
 -------------
@@ -63,10 +144,8 @@ Miscellaneous
 .. toctree::
     :maxdepth: 1
 
-    options
+    zoom
     comments
-    tools
-    reorder
 
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301
 .. _Autodesk: http://usa.autodesk.com/

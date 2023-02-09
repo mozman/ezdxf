@@ -7,10 +7,13 @@ from ezdxf.entities.vport import VPort
 
 @pytest.fixture
 def vport():
-    return VPort.new('FFFF', dxfattribs={
-        'name': 'VP1',
-    })
+    return VPort.new(
+        "FFFF",
+        dxfattribs={
+            "name": "VP1",
+        },
+    )
 
 
 def test_name(vport):
-    assert vport.dxf.name == 'VP1'
+    assert vport.dxf.name == "VP1"

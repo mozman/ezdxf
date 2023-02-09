@@ -1,0 +1,11 @@
+bezier3p.cpp
+bezier4p.cpp
+bspline.cpp
+construct.cpp
+matrix44.cpp
+vector.cpp
+mapbox_earcut.cpp
+linetypes.cpp
+*.so
+*.pyd
+*.html

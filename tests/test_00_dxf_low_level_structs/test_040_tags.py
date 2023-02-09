@@ -7,6 +7,7 @@ from copy import deepcopy
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.tagwriter import TagWriter
 from ezdxf.lldxf.const import DXFValueError
+from ezdxf.lldxf import types
 
 TEST_TAGREADER = """  0
 SECTION
@@ -85,7 +86,7 @@ class HandlesMock:
     @property
     def next(self):
         self.calls += 1
-        return 'FF'
+        return "FF"
 
 
 class TestTags:
@@ -105,20 +106,20 @@ class TestTags:
         assert TEST_TAGREADER == result
 
     def test_update(self, tags):
-        tags.update(DXFTag(2, 'XHEADER'))
-        assert 'XHEADER' == tags[1].value
+        tags.update(DXFTag(2, "XHEADER"))
+        assert "XHEADER" == tags[1].value
 
     def test_update_error(self, tags):
         with pytest.raises(DXFValueError):
-            tags.update(DXFTag(999, 'DOESNOTEXIST'))
+            tags.update(DXFTag(999, "DOESNOTEXIST"))
 
     def test_set_first(self, tags):
-        tags.set_first(DXFTag(999, 'NEWTAG'))
-        assert 'NEWTAG' == tags[-1].value
+        tags.set_first(DXFTag(999, "NEWTAG"))
+        assert "NEWTAG" == tags[-1].value
 
     def test_find_first(self, tags):
         value = tags.get_first_value(9)
-        assert '$ACADVER' == value
+        assert "$ACADVER" == value
 
     def test_find_first_default(self, tags):
         value = tags.get_first_value(1234, default=999)
@@ -130,11 +131,11 @@ class TestTags:
 
     def test_get_handle_5(self):
         tags = Tags.from_text(TESTHANDLE5)
-        assert 'F5' == tags.get_handle()
+        assert "F5" == tags.get_handle()
 
     def test_get_handle_105(self):
         tags = Tags.from_text(TESTHANDLE105)
-        assert 'F105' == tags.get_handle()
+        assert "F105" == tags.get_handle()
 
     def test_get_handle_create_new(self, tags):
         with pytest.raises(DXFValueError):
@@ -170,7 +171,7 @@ class TestTags:
         tags = Tags.from_text(TAGS_WITH_VERTEX)
         assert len(tags) == 2
         v = tags[1]
-        assert v.value == (1., 2., 3.)
+        assert v.value == (1.0, 2.0, 3.0)
 
         tags2 = deepcopy(tags)
         assert id(tags) != id(tags2)
@@ -180,16 +181,16 @@ class TestTags:
 
     def test_replace_handle_5(self):
         tags = Tags.from_text(TESTHANDLE5)
-        tags.replace_handle('AA')
-        assert 'AA' == tags.get_handle()
+        tags.replace_handle("AA")
+        assert "AA" == tags.get_handle()
 
     def test_replace_handle_105(self):
         tags = Tags.from_text(TESTHANDLE105)
-        tags.replace_handle('AA')
-        assert 'AA' == tags.get_handle()
+        tags.replace_handle("AA")
+        assert "AA" == tags.get_handle()
 
     def test_replace_no_handle_without_error(self, tags):
-        tags.replace_handle('AA')
+        tags.replace_handle("AA")
         with pytest.raises(DXFValueError):
             tags.get_handle()  # handle still doesn't exist
 
@@ -210,25 +211,141 @@ class TestTags:
         assert tags.has_tag(7) is False
 
     def test_pop_tags(self):
-        tags = Tags([
-            DXFTag(1, 'name1'),
-            DXFTag(40, 1),
-            DXFTag(40, 2),
-
-            DXFTag(1, 'name2'),
-            DXFTag(40, 3),
-            DXFTag(1, 'name3'),
-            DXFTag(40, 4),
-            DXFTag(1, 'name4'),
-        ])
-        result = list(tags.pop_tags(codes=(40, )))
+        tags = Tags(
+            [
+                DXFTag(1, "name1"),
+                DXFTag(40, 1),
+                DXFTag(40, 2),
+                DXFTag(1, "name2"),
+                DXFTag(40, 3),
+                DXFTag(1, "name3"),
+                DXFTag(40, 4),
+                DXFTag(1, "name4"),
+            ]
+        )
+        result = list(tags.pop_tags(codes=(40,)))
         assert len(result) == 4
         assert result[0] == (40, 1)
         assert result[-1] == (40, 4)
 
         assert len(tags) == 4
-        assert tags[0] == (1, 'name1')
-        assert tags[-1] == (1, 'name4')
+        assert tags[0] == (1, "name1")
+        assert tags[-1] == (1, "name4")
+
+
+class TestGetPointers:
+    @pytest.fixture
+    def tags(self) -> Tags:
+        return Tags.from_tuples(
+            [
+                (0, "Entity"),
+                # entity handle
+                (5, "1"),
+                # DIMSTYLE entity handle
+                (105, "2"),
+                # soft pointers - Translated during INSERT and XREF operations
+                (330, "100"),
+                (339, "101"),
+                # soft owners - Translated during INSERT and XREF operations
+                (350, "102"),
+                (359, "103"),
+                # hard pointers - Translated during INSERT and XREF operations
+                (340, "200"),
+                (349, "202"),
+                # hard owners - Translated during INSERT and XREF operations
+                (360, "203"),
+                (369, "205"),
+                # plotstylename (hard pointer) Translated during INSERT and XREF operations
+                (390, "206"),
+                (399, "207"),
+                # hard pointers - Translated during INSERT and XREF operations
+                (480, "208"),
+                (481, "209"),
+                # Arbitrary object handles; handle values that are taken "as is". They are not translated during INSERT and XREF operations
+                (320, "300"),
+                (329, "301"),
+                # XDATA soft-pointer
+                (1005, "400"),
+            ]
+        )
+
+    def test_get_handle(self, tags):
+        assert tags.get_handle() == "1"
+
+    def test_get_soft_pointers(self, tags):
+        assert tags.get_soft_pointers() == Tags.from_tuples(
+            [
+                (330, "100"),
+                (339, "101"),
+                (1005, "400"),
+            ]
+        )
+
+    def test_get_soft_owners(self, tags):
+        assert tags.get_soft_owner_handles() == Tags.from_tuples(
+            [
+                (350, "102"),
+                (359, "103"),
+            ]
+        )
+
+    def test_get_hard_pointers(self, tags):
+        assert tags.get_hard_pointers() == Tags.from_tuples(
+            [
+                (340, "200"),
+                (349, "202"),
+                (390, "206"),
+                (399, "207"),
+                (480, "208"),
+                (481, "209"),
+            ]
+        )
+
+    def test_get_hard_owners(self, tags):
+        assert tags.get_hard_owner_handles() == Tags.from_tuples(
+            [
+                (360, "203"),
+                (369, "205"),
+            ]
+        )
+
+    def test_get_translatable_pointers(self, tags):
+        assert tags.get_hard_owner_handles() == Tags.from_tuples(
+            [
+                (360, "203"),
+                (369, "205"),
+            ]
+        )
+
+    def test_is_translatable_pointer(self, tags):
+        assert tags.get_translatable_pointers() == Tags.from_tuples(
+            [
+                # soft pointers - Translated during INSERT and XREF operations
+                (330, "100"),
+                (339, "101"),
+                # soft owners - Translated during INSERT and XREF operations
+                (350, "102"),
+                (359, "103"),
+                # hard pointers - Translated during INSERT and XREF operations
+                (340, "200"),
+                (349, "202"),
+                # hard owners - Translated during INSERT and XREF operations
+                (360, "203"),
+                (369, "205"),
+                # plotstylename (hard pointer) Translated during INSERT and XREF operations
+                (390, "206"),
+                (399, "207"),
+                # hard pointers - Translated during INSERT and XREF operations
+                (480, "208"),
+                (481, "209"),
+                (1005, "400"),  # XDATA soft-pointer
+            ]
+        )
+
+    def test_has_translatable_pointer(self):
+        assert Tags.from_tuples([(5, "100")]).has_translatable_pointers() is False
+        assert Tags.from_tuples([(330, "100")]).has_translatable_pointers() is True
+        assert Tags.from_tuples([(320, "100")]).has_translatable_pointers() is False
 
 
 DUPLICATETAGS = """  0

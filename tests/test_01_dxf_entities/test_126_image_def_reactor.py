@@ -28,27 +28,28 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'IMAGEDEF_REACTOR' in ENTITY_CLASSES
+
+    assert "IMAGEDEF_REACTOR" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = ImageDefReactor()
-    assert entity.dxftype() == 'IMAGEDEF_REACTOR'
+    assert entity.dxftype() == "IMAGEDEF_REACTOR"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = ImageDefReactor.new(handle='ABBA', owner='0', dxfattribs={
-        'image_handle': 'FEFE'
-    })
+    entity = ImageDefReactor.new(
+        handle="ABBA", owner="0", dxfattribs={"image_handle": "FEFE"}
+    )
     assert entity.dxf.class_version == 2
-    assert entity.dxf.image_handle == 'FEFE'
+    assert entity.dxf.image_handle == "FEFE"
 
 
 def test_load_from_text(entity):
     assert entity.dxf.class_version == 2
-    assert entity.dxf.image_handle == '0'
+    assert entity.dxf.image_handle == "0"
 
 
 def test_write_dxf():

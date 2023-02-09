@@ -4,10 +4,11 @@ View
 .. module:: ezdxf.entities
     :noindex:
 
-The View table (`DXF Reference`_) stores named views of the model or paperspace layouts. This stored views makes parts
-of the drawing or some view points of the model in a CAD applications more accessible. This views have no influence
-to the drawing content or to the generated output by exporting PDFs or plotting on paper sheets, they are just for the
-convenience of CAD application users.
+The View table (`DXF Reference`_) stores named views of the model or paperspace
+layouts. This stored views makes parts of the drawing or some view points of the
+model in a CAD applications more accessible. This views have no influence to the
+drawing content or to the generated output by exporting PDFs or plotting on paper
+sheets, they are just for the convenience of CAD application users.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
@@ -36,9 +37,11 @@ Factory function         :meth:`Drawing.views.new`
         === =========================================================
         1   If set, this is a paper space view
         16  If set, table entry is externally dependent on an xref
-        32  If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
-        64  If set, the table entry was referenced by at least one entity in the drawing the last time the drawing was
-            edited. (This flag is only for the benefit of AutoCAD)
+        32  If both this bit and bit 16 are set, the externally dependent xref
+            has been successfully resolved
+        64  If set, the table entry was referenced by at least one entity in the
+            drawing the last time the drawing was edited. (This flag is only for
+            the benefit of AutoCAD)
         === =========================================================
 
     .. attribute:: dxf.height
@@ -95,23 +98,23 @@ Factory function         :meth:`Drawing.views.new`
 
     .. attribute:: dxf.ucs
 
-        ``1`` if there is a UCS associated to this view; ``0`` otherwise
+        1 if there is a UCS associated to this view; 0 otherwise
 
     .. attribute:: dxf.ucs_origin
 
-        UCS origin as (x, y, z) tuple (appears only if :attr:`ucs` is set to ``1``)
+        UCS origin as (x, y, z) tuple (appears only if :attr:`ucs` is set to 1)
 
     .. attribute:: dxf.ucs_xaxis
 
-        UCS x-axis as (x, y, z) tuple (appears only if :attr:`ucs` is set to ``1``)
+        UCS x-axis as (x, y, z) tuple (appears only if :attr:`ucs` is set to 1)
 
     .. attribute:: dxf.ucs_yaxis
 
-        UCS y-axis as (x, y, z) tuple (appears only if :attr:`ucs` is set to ``1``)
+        UCS y-axis as (x, y, z) tuple (appears only if :attr:`ucs` is set to 1)
 
     .. attribute:: dxf.ucs_ortho_type
 
-        Orthographic type of UCS (appears only if :attr:`ucs` is set to ``1``)
+        Orthographic type of UCS (appears only if :attr:`ucs` is set to 1)
 
         === =======================
         0   UCS is not orthographic
@@ -129,18 +132,19 @@ Factory function         :meth:`Drawing.views.new`
 
     .. attribute:: dxf.ucs_handle
 
-        Handle of :class:`~ezdxf.entities.UCSTable` if UCS is a named UCS. If not present, then UCS is unnamed
-        (appears only if :attr:`ucs` is set to ``1``)
+        Handle of :class:`~ezdxf.entities.UCSTable` if UCS is a named UCS. If not
+        present, then UCS is unnamed (appears only if :attr:`ucs` is set to 1)
 
     .. attribute:: dxf.base_ucs_handle
 
-        Handle of :class:`~ezdxf.entities.UCSTable` of base UCS if UCS is orthographic.
-        If not present and :attr:`ucs_ortho_type` is non-zero, then base UCS is taken to be WORLD
-        (appears only if :attr:`ucs` is set to ``1``)
+        Handle of :class:`~ezdxf.entities.UCSTable` of base UCS if UCS is
+        orthographic. If not present and :attr:`ucs_ortho_type` is non-zero,
+        then base UCS is taken to be WORLD (appears only if :attr:`ucs` is
+        set to 1)
 
     .. attribute:: dxf.camera_plottable
 
-        ``1`` if the camera is plottable
+        1 if the camera is plottable
 
     .. attribute:: dxf.background_handle
 

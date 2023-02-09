@@ -1,10 +1,10 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math import Vec3
 from ezdxf.entities.leader import Leader
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.layouts import VirtualLayout
+from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
 
 LEADER = """0
 LEADER
@@ -62,6 +62,7 @@ FEFE
 0.0
 """
 
+
 @pytest.fixture
 def entity():
     return Leader.from_text(LEADER)
@@ -69,23 +70,28 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'LEADER' in ENTITY_CLASSES
+
+    assert "LEADER" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Leader()
-    assert entity.dxftype() == 'LEADER'
+    assert entity.dxftype() == "LEADER"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = Leader.new(handle='ABBA', owner='0', dxfattribs={
-        'color': 7,
-    })
-    assert entity.dxf.layer == '0'
+    entity = Leader.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": 7,
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
-    assert entity.dxf.dimstyle == 'Standard'
+    assert entity.dxf.dimstyle == "Standard"
     assert entity.dxf.has_arrowhead == 1
     assert entity.dxf.path_type == 0
     assert entity.dxf.annotation_type == 3
@@ -94,7 +100,7 @@ def test_default_new():
     assert entity.dxf.text_height == 1
     assert entity.dxf.text_width == 1
     assert entity.dxf.block_color == 7
-    assert entity.dxf.annotation_handle == '0'
+    assert entity.dxf.annotation_handle == "0"
     assert entity.dxf.normal_vector == (0, 0, 1)
     assert entity.dxf.horizontal_direction == (1, 0, 0)
     assert entity.dxf.leader_offset_block_ref == (0, 0, 0)
@@ -103,9 +109,9 @@ def test_default_new():
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
-    assert entity.dxf.dimstyle == 'DIMSTYLE'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
+    assert entity.dxf.dimstyle == "DIMSTYLE"
     assert entity.dxf.has_arrowhead == 1
     assert entity.dxf.path_type == 0
     assert entity.dxf.annotation_type == 3
@@ -114,7 +120,7 @@ def test_load_from_text(entity):
     assert entity.dxf.text_height == 1
     assert entity.dxf.text_width == 1
     assert entity.dxf.block_color == 7
-    assert entity.dxf.annotation_handle == 'FEFE'
+    assert entity.dxf.annotation_handle == "FEFE"
     assert entity.dxf.normal_vector == (0, 0, 1)
     assert entity.dxf.horizontal_direction == (1, 0, 0)
     assert entity.dxf.leader_offset_block_ref == (0, 0, 0)
@@ -129,22 +135,33 @@ def test_write_dxf():
     assert result == expected
 
 
+VERTICES = [
+    (0, 0, 0),
+    (1, 1, 0),
+    (2, 1, 0),
+]
+
+
 def test_add_leader():
     msp = VirtualLayout()
-    leader = msp.new_entity('LEADER', {})  # type: Leader
-    assert leader.dxftype() == 'LEADER'
+    leader = msp.add_leader(vertices=VERTICES)
+    assert leader.dxftype() == "LEADER"
     assert leader.dxf.annotation_type == 3
-    leader.vertices.append(Vec3(0, 0, 0))
-    assert len(leader.vertices) == 1
-    assert leader.vertices[0] == (0, 0, 0)
+    assert len(leader.vertices) == 3
+    assert leader.vertices == VERTICES
 
 
-def test_virtual_etities():
+def test_supports_virtual_entities_protocol():
     leader = Leader.new()
-    leader.vertices = [
-        (0, 0, 0),
-        (1, 1, 0),
-        (2, 1, 0),
-    ]
-    result = list(leader.virtual_entities())
-    assert len(result) == 2
+    leader.vertices = VERTICES
+    assert isinstance(leader, SupportsVirtualEntities)
+    assert len(query_virtual_entities(leader)) == 2
+
+
+def test_virtual_sub_entities_source_tracking():
+    leader = Leader.new()
+    leader.vertices = VERTICES
+
+    result = set(e.source_of_copy for e in leader.virtual_entities())
+    assert len(result) == 1, "only one source of copy expected"
+    assert leader in result, "lwpolyline should be the source of copy"

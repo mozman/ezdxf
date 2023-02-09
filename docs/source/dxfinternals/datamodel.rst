@@ -10,18 +10,19 @@ Database Objects
 
 (from the DXF Reference)
 
-AutoCAD drawings consist largely of structured containers for database objects. Database objects each have the following
-features:
+AutoCAD drawings consist largely of structured containers for database objects. Database
+objects each have the following features:
 
-    - A handle whose value is unique to the drawing/DXF file, and is constant for the lifetime of the drawing. This
-      format has existed since AutoCAD Release 10, and as of AutoCAD Release 13, handles are always enabled.
+    - A handle whose value is unique to the drawing/DXF file, and is constant for the
+      lifetime of the drawing. This format has existed since AutoCAD Release 10, and as
+      of AutoCAD Release 13, handles are always enabled.
     - An optional XDATA table, as entities have had since AutoCAD Release 11.
     - An optional persistent reactor table.
-    - An optional ownership pointer to an extension dictionary which, in turn, owns subobjects placed in it by an
-      application.
+    - An optional ownership pointer to an extension dictionary which, in turn, owns
+      subobjects placed in it by an application.
 
-Symbol tables and symbol table records are database objects and, thus, have a handle. They can also have xdata and
-persistent reactors in their DXF records.
+Symbol tables and symbol table records are database objects and, thus, have a handle.
+They can also have xdata and persistent reactors in their DXF records.
 
 .. _DXF R12 Data Model:
 
@@ -35,15 +36,17 @@ The DXF R12 data model is identical to the file structure:
     - BLOCKS section: block definitions and its content
     - ENTITIES section: modelspace and paperspace content
 
-References are realized by simple names. The INSERT entity references the BLOCK definition by the BLOCK name, a TEXT
-entity defines the associated STYLE and LAYER by its name and so on, handles are not needed. Layout association of
-graphical entities in the ENTITIES section by the paper_space tag :code:`(67, 0 or 1)`, 0 or missing tag means model
-space, 1 means paperspace. The content of BLOCK definitions is enclosed by the BLOCK and the ENDBLK entity, no
-additional references are needed.
+References are realized by simple names. The INSERT entity references the BLOCK definition
+by the BLOCK name, a TEXT entity defines the associated STYLE and LAYER by its name and
+so on, handles are not needed. Layout association of graphical entities in the ENTITIES
+section by the paper_space tag :code:`(67, 0 or 1)`, 0 or missing tag means modelspace,
+1 means paperspace. The content of BLOCK definitions is enclosed by the BLOCK and the
+ENDBLK entity, no additional references are needed.
 
-A clean and simple file structure and data model, which seems to be the reason why the DXF R12 Reference (released 1992)
-is still a widely used file format and Autodesk/AutoCAD supports the format by reading and writing DXF R12 files until
-today (DXF R13/R14 has no writing support by AutoCAD!).
+A clean and simple file structure and data model, which seems to be the reason why the
+DXF R12 Reference (released 1992) is still a widely used file format and Autodesk/AutoCAD
+supports the format by reading and writing DXF R12 files until today (DXF R13/R14 has no
+writing support by AutoCAD!).
 
 **TODO: list of available entities**
 
@@ -56,18 +59,20 @@ today (DXF R13/R14 has no writing support by AutoCAD!).
 DXF R13+ Data Model
 -------------------
 
-With the DXF R13 file format, handles are mandatory and they are really used for organizing the new data structures
-introduced with DXF R13.
+With the DXF R13 file format, handles are mandatory and they are really used for organizing
+the new data structures introduced with DXF R13.
 
 The HEADER section is still the same with just more available settings.
 
-The new CLASSES section contains AutoCAD specific data, has to be written like AutoCAD it does, but must not be
-understood.
+The new CLASSES section contains AutoCAD specific data, has to be written like AutoCAD
+it does, but must not be understood.
 
-The TABLES section got a new BLOCK_RECORD table - see :ref:`Block Management Structures` for more information.
+The TABLES section got a new BLOCK_RECORD table - see :ref:`Block Management Structures`
+for more information.
 
-The BLOCKS sections is mostly the same, but with handles, owner tags and new ENTITY types. Not active paperspace
-layouts store their content also in the BLOCKS section - see :ref:`Layout Management Structures` for more information.
+The BLOCKS sections is mostly the same, but with handles, owner tags and new ENTITY types.
+Not active paperspace layouts store their content also in the BLOCKS section - see
+:ref:`Layout Management Structures` for more information.
 
 The ENTITIES section is also mostly same, but with handles, owner tags and new ENTITY types.
 
@@ -75,18 +80,21 @@ The ENTITIES section is also mostly same, but with handles, owner tags and new E
 
 And the new OBJECTS section - now its getting complicated!
 
-Most information about the OBJECTS section is just guessed or gathered by trail and error, because
-the documentation of the OBJECTS section and its objects in the DXF reference provided by Autodesk is very shallow.
-This is also the reason why I started the DXF Internals section, may be it helps other developers to start one or two
-steps above level zero.
+Most information about the OBJECTS section is just guessed or gathered by trail and error,
+because the documentation of the OBJECTS section and its objects in the DXF reference
+provided by Autodesk is very shallow.
+This is also the reason why I started the DXF Internals section, may be it helps other
+developers to start one or two steps above level zero.
 
 The OBJECTS sections stores all the non-graphical entities of the DXF drawing.
-Non-graphical entities from now on just called 'DXF objects' to differentiate them from graphical entities, just called
-'entities'. The OBJECTS section follows commonly the ENTITIES section, but this is not mandatory.
+Non-graphical entities from now on just called 'DXF objects' to differentiate them from
+graphical entities, just called 'entities'. The OBJECTS section follows commonly the
+ENTITIES section, but this is not mandatory.
 
-DXF R13 introduces several new DXF objects, which resides exclusive in the OBJECTS section, taken from the DXF R14
-reference, because I have no access to the DXF R13 reference, the DXF R13 reference is a compiled .hlp file which can't
-be read on Windows 10, a drastic real world example why it is better to avoid closed (proprietary) data formats ;):
+DXF R13 introduces several new DXF objects, which resides exclusive in the OBJECTS
+section, taken from the DXF R14 reference, because I have no access to the DXF R13
+reference, the DXF R13 reference is a compiled .hlp file which can't be read on Windows 10
+or later, this a perfect example for not using closed (proprietary) data formats ;):
 
     - DICTIONARY: a general structural entity as a <name: handle> container
     - ACDBDICTIONARYWDFLT: a DICTIONARY with a default value
@@ -103,13 +111,15 @@ be read on Windows 10, a drastic real world example why it is better to avoid cl
     - SPATIAL_INDEX: is always written out empty to a DXF file. This object can be ignored.
     - SPATIAL_FILTER
     - SORTENTSTABLE: control for regeneration/redraw order of entities
-    - XRECORD: used to store and manage arbitrary data. This object is similar in concept to XDATA but is not
-      limited by size or order. Not supported by R13c0 through R13c3.
+    - XRECORD: used to store and manage arbitrary data. This object is similar in concept
+      to XDATA but is not limited by size or order. Not supported by R13c0 through R13c3.
 
-Still missing the LAYOUT object, which is mandatory in DXF R2000 to manage multiple paperspace layouts. I don't know
-how DXF R13/R14 manages multiple layouts or if they even support this feature, but I don't care much about DXF R13/R14,
-because AutoCAD has no write support for this two formats anymore. ezdxf tries to upgrade this two DXF versions to DXF
-R2000 with the advantage of only two different data models to support: DXF R12 and DXF R2000+
+Still missing the LAYOUT object, which is mandatory in DXF R2000 to manage multiple
+paperspace layouts. I don't know how DXF R13/R14 manages multiple layouts or if they
+even support this feature, but I don't care much about DXF R13/R14, because AutoCAD has
+no write support for this two formats anymore. Ezdxf tries to upgrade this two DXF
+versions to DXF R2000 with the advantage of only two different data models to support:
+DXF R12 and DXF R2000+
 
 New objects introduced by DXF R2000:
 
@@ -159,21 +169,24 @@ Undocumented objects:
 Objects Organisation
 --------------------
 
-Many objects in the OBJECTS section are organized in a tree-like structure of DICTIONARY objects.
-Starting point for this data structure is the 'root' DICTIONARY with several entries to other DICTIONARY objects.
-The root DICTIONARY has to be the first object in the OBJECTS section. The management dicts for GROUP and LAYOUT objects
-are really important, but IMHO most of the other management tables are optional and for the most use cases not
-necessary. The ezdxf template for DXF R2018 contains only these entries in the root dict and most of them pointing to
-an empty DICTIONARY:
+Many objects in the OBJECTS section are organized in a tree-like structure of DICTIONARY
+objects.
+
+Starting point for this data structure is the 'root' DICTIONARY with several entries to
+other DICTIONARY objects.  The root DICTIONARY has to be the first object in the OBJECTS
+section.  The management dicts for GROUP and LAYOUT objects are really important, but
+IMHO most of the other management tables are optional and for the most use cases not
+necessary.  Ezdxf creates only these entries in the root dict and most of them pointing
+to an empty DICTIONARY:
 
     - ACAD_COLOR: points to an empty DICTIONARY
-    - **ACAD_GROUP:** supported by ezdxf
-    - **ACAD_LAYOUT:** supported by ezdxf
+    - ACAD_GROUP: required
+    - ACAD_LAYOUT: required
     - ACAD_MATERIAL: points to an empty DICTIONARY
     - ACAD_MLEADERSTYLE: points to an empty DICTIONARY
     - ACAD_MLINESTYLE: points to an empty DICTIONARY
     - ACAD_PLOTSETTINGS: points to an empty DICTIONARY
-    - **ACAD_PLOTSTYLENAME:** points to ACDBDICTIONARYWDFLT with one entry: 'Normal'
+    - ACAD_PLOTSTYLENAME: required, points to ACDBDICTIONARYWDFLT with one entry: 'Normal'
     - ACAD_SCALELIST: points to an empty DICTIONARY
     - ACAD_TABLESTYLE: points to an empty DICTIONARY
     - ACAD_VISUALSTYLE: points to an empty DICTIONARY
@@ -203,7 +216,7 @@ Root DICTIONARY content for DXF R2018
     ACAD_CIP_PREVIOUS_PRODUCT_INFO
     350     <<< handle to target (pointer)
     78B     <<< points to a XRECORD with product info about the creator application
-    3       <<< entry with unknown meaning, if I shoul guess: something with about colors ...
+    3       <<< entry with unknown meaning, if I should guess: something with about colors ...
     ACAD_COLOR
     350
     4FB     <<< points to a DICTIONARY

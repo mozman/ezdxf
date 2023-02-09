@@ -1,20 +1,27 @@
-# Created: 05.03.2016
-# Copyright (c) 2016-2020, Manfred Moitzi
+# Copyright (c) 2016-2022, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Optional, List, TYPE_CHECKING, Sequence
+from __future__ import annotations
+from typing import (
+    Iterable,
+    Optional,
+    TYPE_CHECKING,
+    Sequence,
+    Any,
+    Iterator,
+)
 from functools import partial
 import logging
 from .tags import DXFTag
-from .types import POINT_CODES
-
-logger = logging.getLogger('ezdxf')
+from .types import POINT_CODES, NONE_TAG, VALID_XDATA_GROUP_CODES
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Tags
 
+logger = logging.getLogger("ezdxf")
 
-def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
-    """ Reorder coordinates of legacy DXF Entities, for now only LINE.
+
+def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterator[DXFTag]:
+    """Reorder coordinates of legacy DXF Entities, for now only LINE.
 
     Input Raw tag filter.
 
@@ -23,31 +30,25 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     """
 
-    def value(v) -> str:
-        if type(v) is bytes:
-            return v.decode('ascii', errors='ignore')
-        else:
-            return v
-
-    collector: Optional[List] = None
+    collector: Optional[list] = None
     for tag in tagger:
         if tag.code == 0:
             if collector is not None:
-                # stop collecting if inside of an supported entity
-                entity = value(collector[0].value)
+                # stop collecting if inside a supported entity
+                entity = _s(collector[0].value)
                 yield from COORDINATE_FIXING_TOOLBOX[entity](collector)
                 collector = None
 
-            if value(tag.value) in COORDINATE_FIXING_TOOLBOX:
+            if _s(tag.value) in COORDINATE_FIXING_TOOLBOX:
                 collector = [tag]
                 # do not yield collected tag yet
-                tag = None
+                tag = NONE_TAG
         else:  # tag.code != 0
             if collector is not None:
                 collector.append(tag)
                 # do not yield collected tag yet
-                tag = None
-        if tag is not None:
+                tag = NONE_TAG
+        if tag is not NONE_TAG:
             yield tag
 
 
@@ -62,7 +63,7 @@ X_CODES = POINT_CODES
 
 
 def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
-    """ Filter invalid and misplaced point group codes.
+    """Filter invalid and misplaced point group codes.
 
     - removes x-axis without following y-axis
     - removes y- and z-axis without leading x-axis
@@ -74,14 +75,13 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     def entity() -> str:
         if handle_tag:
-            handle = handle_tag[1].decode(errors='ignore')
-            return f"in entity #{handle}"
+            return f"in entity #{_s(handle_tag[1])}"
         else:
             return ""
 
     expected_code = -1
     z_code = 0
-    point = []
+    point: list[Any] = []
     handle_tag = None
     for tag in tagger:
         code = tag[0]
@@ -93,7 +93,8 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
                 yield from point
             else:
                 logger.info(
-                    f'remove misplaced x-axis tag: {str(point[0])}' + entity())
+                    f"remove misplaced x-axis tag: {str(point[0])}" + entity()
+                )
             point.clear()
 
         if code in X_CODES:
@@ -110,17 +111,18 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
             if code not in INVALID_CODES:
                 yield tag
             else:
-                axis = 'y-axis' if code in INVALID_Y_CODES else 'z-axis'
+                axis = "y-axis" if code in INVALID_Y_CODES else "z-axis"
                 logger.info(
-                    f'remove misplaced {axis} tag: {str(tag)}' + entity())
+                    f"remove misplaced {axis} tag: {str(tag)}" + entity()
+                )
 
     if len(point) == 1:
-        logger.info(f'remove misplaced x-axis tag: {str(point[0])}' + entity())
+        logger.info(f"remove misplaced x-axis tag: {str(point[0])}" + entity())
     elif len(point) > 1:
         yield from point
 
 
-def fix_coordinate_order(tags: 'Tags', codes: Sequence[int] = (10, 11)):
+def fix_coordinate_order(tags: Tags, codes: Sequence[int] = (10, 11)):
     def extend_codes():
         for code in codes:
             yield code  # x tag
@@ -170,15 +172,41 @@ def fix_coordinate_order(tags: 'Tags', codes: Sequence[int] = (10, 11)):
 
 
 COORDINATE_FIXING_TOOLBOX = {
-    'LINE': partial(fix_coordinate_order, codes=(10, 11)),
-    b'LINE': partial(fix_coordinate_order, codes=(10, 11)),
+    "LINE": partial(fix_coordinate_order, codes=(10, 11)),
 }
-
-VALID_XDATA_CODES = set(range(1000, 1019)) | set(range(1040, 1072))
 
 
 def filter_invalid_xdata_group_codes(
-        tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
-    for tag in tagger:
-        if tag.code < 1000 or tag.code in VALID_XDATA_CODES:
-            yield tag
+    tags: Iterable[DXFTag],
+) -> Iterator[DXFTag]:
+    return (tag for tag in tags if tag.code in VALID_XDATA_GROUP_CODES)
+
+
+def filter_invalid_handles(tags: Iterable[DXFTag]) -> Iterator[DXFTag]:
+    line = -1
+    handle_code = 5
+    structure_tag = ""
+    for tag in tags:
+        line += 2
+        if tag.code == 0:
+            structure_tag = tag.value
+            if _s(tag.value) == "DIMSTYLE":
+                handle_code = 105
+            else:
+                handle_code = 5
+        elif tag.code == handle_code:
+            try:
+                int(tag.value, 16)
+            except ValueError:
+                logger.warning(
+                    f'skipped invalid handle "{_s(tag.value)}" in '
+                    f'DXF entity "{_s(structure_tag)}" near line {line}'
+                )
+                continue
+        yield tag
+
+
+def _s(b) -> str:
+    if isinstance(b, bytes):
+        return b.decode(encoding="ascii", errors="ignore")
+    return b

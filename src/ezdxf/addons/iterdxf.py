@@ -1,7 +1,14 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
-    Iterable, cast, BinaryIO, Tuple, Dict, Optional, List, Set, Union,
+    Iterable,
+    Iterator,
+    cast,
+    BinaryIO,
+    Optional,
+    Union,
+    Any,
 )
 from io import StringIO
 from pathlib import Path
@@ -12,25 +19,51 @@ from ezdxf.lldxf.tagger import tag_compiler, ascii_tags_loader
 from ezdxf.filemanagement import dxf_file_info
 from ezdxf.lldxf import fileindex
 
-from ezdxf.entities import DXFGraphic, DXFEntity
+from ezdxf.entities import DXFGraphic, DXFEntity, Polyline, Insert
 from ezdxf.entities import factory
 from ezdxf.entities.subentity import entity_linker
 from ezdxf.tools.codepage import toencoding
 
-__all__ = ['opendxf', 'single_pass_modelspace', 'modelspace']
+__all__ = ["opendxf", "single_pass_modelspace", "modelspace"]
 
 SUPPORTED_TYPES = {
-    'ARC', 'LINE', 'CIRCLE', 'ELLIPSE', 'POINT', 'LWPOLYLINE', 'SPLINE',
-    '3DFACE', 'SOLID', 'TRACE', 'SHAPE', 'POLYLINE', 'VERTEX', 'SEQEND', 'MESH',
-    'TEXT', 'MTEXT', 'HATCH', 'INSERT', 'ATTRIB', 'ATTDEF', 'RAY', 'XLINE',
-    'DIMENSION', 'LEADER', 'IMAGE', 'WIPEOUT', 'HELIX', 'MLINE', 'MLEADER',
+    "ARC",
+    "LINE",
+    "CIRCLE",
+    "ELLIPSE",
+    "POINT",
+    "LWPOLYLINE",
+    "SPLINE",
+    "3DFACE",
+    "SOLID",
+    "TRACE",
+    "SHAPE",
+    "POLYLINE",
+    "VERTEX",
+    "SEQEND",
+    "MESH",
+    "TEXT",
+    "MTEXT",
+    "HATCH",
+    "INSERT",
+    "ATTRIB",
+    "ATTDEF",
+    "RAY",
+    "XLINE",
+    "DIMENSION",
+    "LEADER",
+    "IMAGE",
+    "WIPEOUT",
+    "HELIX",
+    "MLINE",
+    "MLEADER",
 }
 
 Filename = Union[Path, str]
 
 
 class IterDXF:
-    """ Iterator for DXF entities stored in the modelspace.
+    """Iterator for DXF entities stored in the modelspace.
 
     Args:
         name: filename, has to be a seekable file.
@@ -46,19 +79,20 @@ class IterDXF:
 
     """
 
-    def __init__(self, name: Filename, errors: str = 'surrogateescape'):
-        self.structure, self.sections = self._load_index(name)
+    def __init__(self, name: Filename, errors: str = "surrogateescape"):
+        self.structure, self.sections = self._load_index(str(name))
         self.errors = errors
-        self.file: BinaryIO = open(name, mode='rb')
-        if 'ENTITIES' not in self.sections:
-            raise DXFStructureError('ENTITIES section not found.')
-        if self.structure.version > 'AC1009' and 'OBJECTS' not in self.sections:
-            raise DXFStructureError('OBJECTS section not found.')
+        self.file: BinaryIO = open(name, mode="rb")
+        if "ENTITIES" not in self.sections:
+            raise DXFStructureError("ENTITIES section not found.")
+        if self.structure.version > "AC1009" and "OBJECTS" not in self.sections:
+            raise DXFStructureError("OBJECTS section not found.")
 
-    def _load_index(self, name: str) -> Tuple[
-        fileindex.FileStructure, Dict[str, int]]:
+    def _load_index(
+        self, name: str
+    ) -> tuple[fileindex.FileStructure, dict[str, int]]:
         structure = fileindex.load(name)
-        sections: Dict[str, int] = dict()
+        sections: dict[str, int] = dict()
         new_index = []
         for e in structure.index:
             if e.code == 0:
@@ -77,8 +111,8 @@ class IterDXF:
     def dxfversion(self):
         return self.structure.version
 
-    def export(self, name: Filename) -> 'IterDXFWriter':
-        """ Returns a companion object to export parts from the source DXF file
+    def export(self, name: Filename) -> IterDXFWriter:
+        """Returns a companion object to export parts from the source DXF file
         into another DXF file, the new file will have the same HEADER, CLASSES,
         TABLES, BLOCKS and OBJECTS sections, which guarantees all necessary
         dependencies are present in the new file.
@@ -90,18 +124,18 @@ class IterDXF:
         doc = IterDXFWriter(name, self)
         # Copy everything from start of source DXF until the first entity
         # of the ENTITIES section to the new DXF.
-        location = self.structure.index[self.sections['ENTITIES'] + 1].location
+        location = self.structure.index[self.sections["ENTITIES"] + 1].location
         self.file.seek(0)
         data = self.file.read(location)
         doc.write_data(data)
         return doc
 
     def copy_objects_section(self, f: BinaryIO) -> None:
-        start_index = self.sections['OBJECTS']
+        start_index = self.sections["OBJECTS"]
         try:
-            end_index = self.structure.get(0, 'ENDSEC', start_index)
+            end_index = self.structure.get(0, "ENDSEC", start_index)
         except ValueError:
-            raise DXFStructureError(f'ENDSEC of OBJECTS section not found.')
+            raise DXFStructureError(f"ENDSEC of OBJECTS section not found.")
 
         start_location = self.structure.index[start_index].location
         end_location = self.structure.index[end_index + 1].location
@@ -110,8 +144,10 @@ class IterDXF:
         data = self.file.read(count)
         f.write(data)
 
-    def modelspace(self, types: Iterable[str] = None) -> Iterable[DXFGraphic]:
-        """ Returns an iterator for all supported DXF entities in the
+    def modelspace(
+        self, types: Optional[Iterable[str]] = None
+    ) -> Iterable[DXFGraphic]:
+        """Returns an iterator for all supported DXF entities in the
         modelspace. These entities are regular :class:`~ezdxf.entities.DXFGraphic`
         objects but without a valid document assigned. It is **not**
         possible to add these entities to other `ezdxf` documents.
@@ -130,8 +166,9 @@ class IterDXF:
         linked_entity = entity_linker()
         queued = None
         requested_types = _requested_types(types)
-        for entity in self.load_entities(self.sections['ENTITIES'] + 1,
-                                         requested_types):
+        for entity in self.load_entities(
+            self.sections["ENTITIES"] + 1, requested_types
+        ):
             if not linked_entity(entity) and entity.dxf.paperspace == 0:
                 # queue one entity for collecting linked entities:
                 # VERTEX, ATTRIB
@@ -141,35 +178,36 @@ class IterDXF:
         if queued:
             yield queued
 
-    def load_entities(self, start: int,
-                      requested_types: Iterable[str] = None) -> Iterable[
-        DXFGraphic]:
+    def load_entities(
+        self, start: int, requested_types: set[str]
+    ) -> Iterable[DXFGraphic]:
         def to_str(data: bytes) -> str:
-            return data.decode(
-                self.encoding, errors=self.errors).replace('\r\n', '\n')
+            return data.decode(self.encoding, errors=self.errors).replace(
+                "\r\n", "\n"
+            )
 
         index = start
         entry = self.structure.index[index]
         self.file.seek(entry.location)
-        while entry.value != 'ENDSEC':
+        while entry.value != "ENDSEC":
             index += 1
             next_entry = self.structure.index[index]
             size = next_entry.location - entry.location
             data = self.file.read(size)
             if entry.value in requested_types:
                 xtags = ExtendedTags.from_text(to_str(data))
-                yield factory.load(xtags)
+                yield factory.load(xtags)  # type: ignore
             entry = next_entry
 
     def close(self):
-        """ Safe closing source DXF file. """
+        """Safe closing source DXF file."""
         self.file.close()
 
 
 class IterDXFWriter:
     def __init__(self, name: Filename, loader: IterDXF):
         self.name = str(name)
-        self.file: BinaryIO = open(name, mode='wb')
+        self.file: BinaryIO = open(name, mode="wb")
         self.text = StringIO()
         self.entity_writer = TagWriter(self.text, loader.dxfversion)
         self.loader = loader
@@ -178,7 +216,7 @@ class IterDXFWriter:
         self.file.write(data)
 
     def write(self, entity: DXFGraphic):
-        """ Write a DXF entity from the source DXF file to the export file.
+        """Write a DXF entity from the source DXF file to the export file.
 
         Don't write entities from different documents than the source DXF file,
         dependencies and resources will not match, maybe it will work once, but
@@ -201,34 +239,34 @@ class IterDXFWriter:
             self.entity_writer.write_handles = False
 
         entity.export_dxf(self.entity_writer)
-        if entity.dxftype() == 'POLYLINE':
-            polyline = cast('Polyline', entity)
+        if entity.dxftype() == "POLYLINE":
+            polyline = cast(Polyline, entity)
             for vertex in polyline.vertices:
                 vertex.export_dxf(self.entity_writer)
-            polyline.seqend.export_dxf(self.entity_writer)
-        elif entity.dxftype() == 'INSERT':
-            insert = cast('Insert', entity)
+            polyline.seqend.export_dxf(self.entity_writer)  # type: ignore
+        elif entity.dxftype() == "INSERT":
+            insert = cast(Insert, entity)
             if insert.attribs_follow:
                 for attrib in insert.attribs:
                     attrib.export_dxf(self.entity_writer)
-                insert.seqend.export_dxf(self.entity_writer)
+                insert.seqend.export_dxf(self.entity_writer)  # type: ignore
         data = self.text.getvalue().encode(self.loader.encoding)
         self.file.write(data)
 
     def close(self):
-        """ Safe closing of exported DXF file. Copying of OBJECTS section
+        """Safe closing of exported DXF file. Copying of OBJECTS section
         happens only at closing the file, without closing the new DXF file is
         invalid.
         """
-        self.file.write(b'  0\r\nENDSEC\r\n')  # for ENTITIES section
-        if self.loader.dxfversion > 'AC1009':
+        self.file.write(b"  0\r\nENDSEC\r\n")  # for ENTITIES section
+        if self.loader.dxfversion > "AC1009":
             self.loader.copy_objects_section(self.file)
-        self.file.write(b'  0\r\nEOF\r\n')
+        self.file.write(b"  0\r\nEOF\r\n")
         self.file.close()
 
 
-def opendxf(filename: Filename, errors: str = 'surrogateescape') -> IterDXF:
-    """ Open DXF file for iterating, be sure to open valid DXF files, no DXF
+def opendxf(filename: Filename, errors: str = "surrogateescape") -> IterDXF:
+    """Open DXF file for iterating, be sure to open valid DXF files, no DXF
     structure checks will be applied.
 
     Use this function to split up big DXF files as shown in the example above.
@@ -249,10 +287,12 @@ def opendxf(filename: Filename, errors: str = 'surrogateescape') -> IterDXF:
     return IterDXF(filename, errors=errors)
 
 
-def modelspace(filename: Filename,
-               types: Iterable[str] = None,
-               errors: str = 'surrogateescape') -> Iterable[DXFGraphic]:
-    """ Iterate over all modelspace entities as :class:`DXFGraphic` objects of
+def modelspace(
+    filename: Filename,
+    types: Optional[Iterable[str]] = None,
+    errors: str = "surrogateescape",
+) -> Iterable[DXFGraphic]:
+    """Iterate over all modelspace entities as :class:`DXFGraphic` objects of
     a seekable file.
 
     Use this function to iterate "quick" over modelspace entities of a DXF file,
@@ -273,16 +313,16 @@ def modelspace(filename: Filename,
         UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
     """
-    info = dxf_file_info(filename)
+    info = dxf_file_info(str(filename))
     prev_code: int = -1
-    prev_value: str = ''
+    prev_value: Any = ""
     entities = False
     requested_types = _requested_types(types)
 
-    with open(filename, mode='rt', encoding=info.encoding, errors=errors) as fp:
+    with open(filename, mode="rt", encoding=info.encoding, errors=errors) as fp:
         tagger = ascii_tags_loader(fp)
         queued: Optional[DXFEntity] = None
-        tags: List[DXFTag] = []
+        tags: list[DXFTag] = []
         linked_entity = entity_linker()
 
         for tag in tag_compiler(tagger):
@@ -292,34 +332,37 @@ def modelspace(filename: Filename,
                 if code == 0:
                     if len(tags) and tags[0].value in requested_types:
                         entity = factory.load(ExtendedTags(tags))
-                        if not linked_entity(
-                                entity) and entity.dxf.paperspace == 0:
+                        if (
+                            not linked_entity(entity)
+                            and entity.dxf.paperspace == 0
+                        ):
                             # queue one entity for collecting linked entities:
                             # VERTEX, ATTRIB
                             if queued:
-                                yield queued
+                                yield queued  # type: ignore
                             queued = entity
                     tags = [tag]
                 else:
                     tags.append(tag)
-                if code == 0 and value == 'ENDSEC':
+                if code == 0 and value == "ENDSEC":
                     if queued:
-                        yield queued
+                        yield queued  # type: ignore
                     return
                 continue  # if entities - nothing else matters
-            elif code == 2 and prev_code == 0 and prev_value == 'SECTION':
-                entities = (value == 'ENTITIES')
+            elif code == 2 and prev_code == 0 and prev_value == "SECTION":
+                entities = value == "ENTITIES"
 
             prev_code = code
             prev_value = value
 
 
 def single_pass_modelspace(
-        stream: BinaryIO,
-        types: Iterable[str] = None,
-        errors: str = 'surrogateescape') -> Iterable[DXFGraphic]:
-    """ Iterate over all modelspace entities as :class:`DXFGraphic` objects in
-    one single pass.
+    stream: BinaryIO,
+    types: Optional[Iterable[str]] = None,
+    errors: str = "surrogateescape",
+) -> Iterable[DXFGraphic]:
+    """Iterate over all modelspace entities as :class:`DXFGraphic` objects in
+    a single pass.
 
     Use this function to 'quick' iterate over modelspace entities of a **not**
     seekable binary DXF stream, filtering DXF types may speed up things if many
@@ -341,51 +384,51 @@ def single_pass_modelspace(
 
     """
     fetch_header_var: Optional[str] = None
-    encoding = 'cp1252'
-    version = 'AC1009'
+    encoding = "cp1252"
+    version = "AC1009"
     prev_code: int = -1
-    prev_value: str = ''
+    prev_value: str = ""
     entities = False
     requested_types = _requested_types(types)
 
     for code, value in binary_tagger(stream):
-        if code == 0 and value == b'ENDSEC':
+        if code == 0 and value == b"ENDSEC":
             break
-        elif code == 2 and prev_code == 0 and value != b'HEADER':
+        elif code == 2 and prev_code == 0 and value != b"HEADER":
             # (0, SECTION), (2, name)
             # First section is not the HEADER section
-            entities = (value == b'ENTITIES')
+            entities = value == b"ENTITIES"
             break
-        elif code == 9 and value == b'$DWGCODEPAGE':
-            fetch_header_var = 'ENCODING'
-        elif code == 9 and value == b'$ACADVER':
-            fetch_header_var = 'VERSION'
-        elif fetch_header_var == 'ENCODING':
+        elif code == 9 and value == b"$DWGCODEPAGE":
+            fetch_header_var = "ENCODING"
+        elif code == 9 and value == b"$ACADVER":
+            fetch_header_var = "VERSION"
+        elif fetch_header_var == "ENCODING":
             encoding = toencoding(value.decode())
             fetch_header_var = None
-        elif fetch_header_var == 'VERSION':
+        elif fetch_header_var == "VERSION":
             version = value.decode()
             fetch_header_var = None
         prev_code = code
 
-    if version >= 'AC1021':
-        encoding = 'utf-8'
+    if version >= "AC1021":
+        encoding = "utf-8"
 
-    queued: Optional[DXFEntity] = None
-    tags: List[DXFTag] = []
+    queued: Optional[DXFGraphic] = None
+    tags: list[DXFTag] = []
     linked_entity = entity_linker()
 
     for tag in tag_compiler(binary_tagger(stream, encoding, errors)):
         code = tag.code
         value = tag.value
         if entities:
-            if code == 0 and value == 'ENDSEC':
+            if code == 0 and value == "ENDSEC":
                 if queued:
                     yield queued
                 return
             if code == 0:
                 if len(tags) and tags[0].value in requested_types:
-                    entity = factory.load(ExtendedTags(tags))
+                    entity = cast(DXFGraphic, factory.load(ExtendedTags(tags)))
                     if not linked_entity(entity) and entity.dxf.paperspace == 0:
                         # queue one entity for collecting linked entities:
                         # VERTEX, ATTRIB
@@ -396,39 +439,42 @@ def single_pass_modelspace(
             else:
                 tags.append(tag)
             continue  # if entities - nothing else matters
-        elif code == 2 and prev_code == 0 and prev_value == 'SECTION':
-            entities = (value == 'ENTITIES')
+        elif code == 2 and prev_code == 0 and prev_value == "SECTION":
+            entities = value == "ENTITIES"
 
         prev_code = code
         prev_value = value
 
 
-def binary_tagger(file: BinaryIO, encoding: str = None,
-                  errors: str = 'surrogateescape') -> DXFTag:
+def binary_tagger(
+    file: BinaryIO,
+    encoding: Optional[str] = None,
+    errors: str = "surrogateescape",
+) -> Iterator[DXFTag]:
     while True:
         try:
             try:
                 code = int(file.readline())
             except ValueError:
-                raise DXFStructureError(f'Invalid group code')
-            value = file.readline().rstrip(b'\r\n')
+                raise DXFStructureError(f"Invalid group code")
+            value = file.readline().rstrip(b"\r\n")
             yield DXFTag(
                 code,
-                value.decode(encoding, errors=errors)
-                if encoding else value)
+                value.decode(encoding, errors=errors) if encoding else value,
+            )
         except IOError:
             return
 
 
-def _requested_types(types: Optional[Iterable[str]]) -> Set[str]:
+def _requested_types(types: Optional[Iterable[str]]) -> set[str]:
     if types:
         requested = SUPPORTED_TYPES.intersection(set(types))
-        if 'POLYLINE' in requested:
-            requested.add('SEQEND')
-            requested.add('VERTEX')
-        if 'INSERT' in requested:
-            requested.add('SEQEND')
-            requested.add('ATTRIB')
+        if "POLYLINE" in requested:
+            requested.add("SEQEND")
+            requested.add("VERTEX")
+        if "INSERT" in requested:
+            requested.add("SEQEND")
+            requested.add("ATTRIB")
     else:
         requested = SUPPORTED_TYPES
     return requested

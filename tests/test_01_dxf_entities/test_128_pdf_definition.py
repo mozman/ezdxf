@@ -28,28 +28,33 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'PDFDEFINITION' in ENTITY_CLASSES
+
+    assert "PDFDEFINITION" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = PdfDefinition()
-    assert entity.dxftype() == 'PDFDEFINITION'
+    assert entity.dxftype() == "PDFDEFINITION"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = PdfDefinition.new(handle='ABBA', owner='0', dxfattribs={
-        'filename': 'doc.pdf',
-        'name': '1',
-    })
-    assert entity.dxf.filename == 'doc.pdf'
-    assert entity.dxf.name == '1'
+    entity = PdfDefinition.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "filename": "doc.pdf",
+            "name": "1",
+        },
+    )
+    assert entity.dxf.filename == "doc.pdf"
+    assert entity.dxf.name == "1"
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.filename == 'doc.pdf'
-    assert entity.dxf.name == '1'
+    assert entity.dxf.filename == "doc.pdf"
+    assert entity.dxf.name == "1"
 
 
 def test_write_dxf():
@@ -60,8 +65,8 @@ def test_write_dxf():
 
 
 def test_dwf_definition():
-    assert DwfDefinition.DXFTYPE == 'DWFDEFINITION'
+    assert DwfDefinition.DXFTYPE == "DWFDEFINITION"
 
 
 def test_dgn_definition():
-    assert DgnDefinition.DXFTYPE == 'DGNDEFINITION'
+    assert DgnDefinition.DXFTYPE == "DGNDEFINITION"

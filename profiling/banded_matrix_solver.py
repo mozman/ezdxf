@@ -1,12 +1,19 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 import time
 import random
 import csv
-from pathlib import Path
-from ezdxf.math.linalg import Matrix, BandedMatrixLU, banded_matrix, LUDecomposition
+import pathlib
+from ezdxf.math.linalg import (
+    Matrix,
+    BandedMatrixLU,
+    banded_matrix,
+    LUDecomposition,
+)
 
-DIR = Path('~/Desktop/Outbox').expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 
 def random_values(n, spread=1.0):
@@ -43,19 +50,46 @@ def profile(func, *args):
 
 REPEAT = 5
 
-with open(DIR / 'profiling_banded_matrix.csv', mode='wt', newline='') as f:
-    writer = csv.writer(f, dialect='excel')
-    writer.writerow(['Parameters', 'Standard LU', 'Banded LU', 'Factor'])
+with open(CWD / "profiling_banded_matrix.csv", mode="wt", newline="") as f:
+    writer = csv.writer(f, dialect="excel")
+    writer.writerow(["Parameters", "Standard LU", "Banded LU", "Factor"])
     for size in range(10, 101, 5):
-        for m1, m2 in [(1, 1), (2, 1), (1, 2), (2, 2), (2, 3), (3, 2), (3, 3), (3, 4), (4, 3), (4, 4)]:
+        for m1, m2 in [
+            (1, 1),
+            (2, 1),
+            (1, 2),
+            (2, 2),
+            (2, 3),
+            (3, 2),
+            (3, 3),
+            (3, 4),
+            (4, 3),
+            (4, 4),
+        ]:
             A = random_matrix((size, size), m1, m2)
-            B = Matrix(list(zip(random_values(size), random_values(size), random_values(size))))
+            B = Matrix(
+                list(
+                    zip(
+                        random_values(size),
+                        random_values(size),
+                        random_values(size),
+                    )
+                )
+            )
             t0 = profile(profile_LU_matrix_solver, REPEAT, A, B)
             t1 = profile(profile_banded_matrix_solver, REPEAT, A, B)
             factor = t0 / t1
             print(
-                f'Matrix {size}x{size}, m1={m1}, m2={m2}, {REPEAT}x: Standard LU {t0:0.3f}s Banded LU {t1:0.3}s factor: x{factor:.1f}')
-            writer.writerow([f"N={size}, m1+m2+1={m1 + m2 + 1}", round(t0, 3), round(t1, 3), round(factor, 1)])
+                f"Matrix {size}x{size}, m1={m1}, m2={m2}, {REPEAT}x: Standard LU {t0:0.3f}s Banded LU {t1:0.3}s factor: x{factor:.1f}"
+            )
+            writer.writerow(
+                [
+                    f"N={size}, m1+m2+1={m1 + m2 + 1}",
+                    round(t0, 3),
+                    round(t1, 3),
+                    round(factor, 1),
+                ]
+            )
 
 # Advantage Banded Matrix starts at ~ N=15
 # Matrix 10x10, m1=1, m2=1, 5x: Standard LU 0.001s Banded LU 0.00057s factor: x2.1

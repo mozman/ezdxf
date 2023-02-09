@@ -1,12 +1,11 @@
-# Created: 25.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2019, Manfred Moitzi
+# Copyright (C) 2011-2021, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
-from ezdxf.entities.dxfgfx import DXFGraphic
+from ezdxf.entities import DXFGraphic, DXFTagStorage
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def msp():
     doc = ezdxf.new()
     return doc.modelspace()
@@ -18,11 +17,13 @@ def test_delete_polyline3d(msp):
     db_count = len(db)
     pline = msp.add_polyline3d([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
     assert entity_count + 1 == len(
-        msp), 'vertices should be linked to the POLYLINE entity'
+        msp
+    ), "vertices should be linked to the POLYLINE entity"
     assert db_count + 5 == len(
-        msp.entitydb), 'database should get 4 vertices and 1 seqend'
+        msp.entitydb
+    ), "database should get 4 vertices and 1 seqend"
 
-    assert pline.seqend.dxf.owner == pline.dxf.owner
+    assert pline.seqend.dxf.owner == pline.dxf.handle, "POLYLINE is owner of SEQEND"
     assert pline.seqend.dxf.handle is not None
     assert pline.seqend.dxf.handle in msp.doc.entitydb
 
@@ -30,7 +31,7 @@ def test_delete_polyline3d(msp):
     assert pline.vertices[0].dxf.location == (0, 0, 0)
     assert pline.vertices[1].dxf.location == (1, 2, 3)
     assert pline.vertices[2].dxf.location == (4, 5, 6)
-    assert pline.get_mode() == 'AcDb3dPolyline'
+    assert pline.get_mode() == "AcDb3dPolyline"
     assert pline.is_3d_polyline is True
     assert pline.is_2d_polyline is False
     assert pline.is_closed is False
@@ -42,10 +43,36 @@ def test_delete_polyline3d(msp):
     assert len(db) == db_count
 
 
+def test_unlink_unsupported_graphic_entity(msp):
+    size = len(msp)
+    alien = DXFTagStorage.from_text(ALIEN_ENTITY)
+    msp.add_entity(alien)
+    assert alien.dxf.handle is not None
+    assert alien.dxf.owner is None
+    assert len(msp) == size + 1
+    msp.unlink_entity(alien)
+    assert len(msp) == size
+    assert alien.is_alive is True
+
+
+def test_delete_unsupported_graphic_entity(msp):
+    size = len(msp)
+    alien = DXFTagStorage.from_text(ALIEN_ENTITY)
+    msp.add_entity(alien)
+    msp.delete_entity(alien)
+    assert len(msp) == size
+    assert alien.is_alive is False
+
+
+def test_cannot_add_invalid_dxf_objects(msp):
+    with pytest.raises(ezdxf.DXFTypeError):
+        msp.add_entity(DXFTagStorage())
+
+
 def test_create_line(msp):
     line = msp.add_line((0, 0), (1, 1))
-    assert line.dxf.start == (0., 0.)
-    assert line.dxf.end == (1., 1.)
+    assert line.dxf.start == (0.0, 0.0)
+    assert line.dxf.end == (1.0, 1.0)
 
 
 def test_create_point(msp):
@@ -55,16 +82,16 @@ def test_create_point(msp):
 
 def test_create_circle(msp):
     circle = msp.add_circle((3, 3), 5)
-    assert circle.dxf.center == (3., 3.)
-    assert circle.dxf.radius == 5.
+    assert circle.dxf.center == (3.0, 3.0)
+    assert circle.dxf.radius == 5.0
 
 
 def test_create_arc(msp):
     arc = msp.add_arc((3, 3), 5, 30, 60)
-    assert arc.dxf.center == (3., 3.)
-    assert arc.dxf.radius == 5.
-    assert arc.dxf.start_angle == 30.
-    assert arc.dxf.end_angle == 60.
+    assert arc.dxf.center == (3.0, 3.0)
+    assert arc.dxf.radius == 5.0
+    assert arc.dxf.start_angle == 30.0
+    assert arc.dxf.end_angle == 60.0
 
 
 def test_create_trace(msp):
@@ -92,8 +119,8 @@ def test_create_3dface(msp):
 
 
 def test_create_text(msp):
-    text = msp.add_text('text')
-    assert text.dxf.text == 'text'
+    text = msp.add_text("text")
+    assert text.dxf.text == "text"
 
 
 def test_create_shape(msp):
@@ -116,3 +143,20 @@ def test_post_bind_hook_call(msp):
     checker.doc = msp.doc
     msp.add_entity(checker)
     assert checker._post_bind_hook is True
+
+
+ALIEN_ENTITY = """0
+POINT
+100
+AcDbEntity
+8
+0
+100
+AcDbPoint
+10
+0.0
+20
+0.0
+30
+0.0
+"""

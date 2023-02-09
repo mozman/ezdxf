@@ -4,7 +4,12 @@ import pytest
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.entities.mesh import Mesh
-from ezdxf.entities.mesh import create_vertex_array, create_face_list, create_edge_array, create_crease_array
+from ezdxf.entities.mesh import (
+    create_vertex_array,
+    create_face_list,
+    create_edge_array,
+    create_crease_array,
+)
 from ezdxf.entities.mesh import face_to_array
 
 
@@ -68,13 +73,13 @@ def test_create_crease_array(mesh_tags):
 
 def test_face_indices_as_array():
     a = face_to_array([0, 1, 2, 3])
-    assert a.typecode == 'B'
+    assert a.typecode == "B"
 
     a = face_to_array([0, 1, 2, 512])
-    assert a.typecode == 'I'
+    assert a.typecode == "I"
 
     a = face_to_array([0, 1, 2, 100000])
-    assert a.typecode == 'L'
+    assert a.typecode == "L"
 
 
 MESH = """  0

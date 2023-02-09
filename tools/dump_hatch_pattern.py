@@ -9,12 +9,12 @@ def main(filename):
     doc = ezdxf.readfile(filename)
     msp = doc.modelspace()
     hatches = msp.query("HATCH[solid_fill==0]")
-    filename.with_suffix('.py')
-    dump_pattern(filename.with_suffix('.py'), hatches)
+    filename.with_suffix(".py")
+    dump_pattern(filename.with_suffix(".py"), hatches)
 
 
 def dump_pattern(filename, hatches):
-    with open(filename, 'wt') as f:
+    with open(filename, "wt") as f:
         f.write(FILE_HEADER)
         for hatch in hatches:
             f.write(get_pattern_definition_string(hatch))
@@ -38,5 +38,5 @@ def get_pattern_definition_string(hatch):
     return "'{}': {},\n".format(name, pattern)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(Path(sys.argv[1]))

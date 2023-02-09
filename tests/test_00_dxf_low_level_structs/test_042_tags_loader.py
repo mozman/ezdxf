@@ -3,34 +3,49 @@
 import pytest
 from io import StringIO
 
-from ezdxf.lldxf.tagger import internal_tag_compiler, ascii_tags_loader, tag_compiler, DXFStructureError
+from ezdxf.lldxf.tagger import (
+    internal_tag_compiler,
+    ascii_tags_loader,
+    tag_compiler,
+    DXFStructureError,
+)
 from ezdxf.lldxf.types import strtag, DXFTag, DXFVertex
 from ezdxf.math import Vec3
 
 
 def test_strtag_int():
-    assert '  1\n1\n' == strtag((1, 1))
+    assert "  1\n1\n" == strtag((1, 1))
 
 
 def test_strtag_float():
-    assert ' 10\n3.1415\n' == strtag((10, 3.1415))
+    assert " 10\n3.1415\n" == strtag((10, 3.1415))
 
 
 def test_strtag_str():
-    assert '  0\nSECTION\n' == strtag((0, 'SECTION'))
+    assert "  0\nSECTION\n" == strtag((0, "SECTION"))
 
 
 def test_strtag2_vector():
-    assert ' 10\n1.0\n 20\n2.0\n 30\n3.0\n' == DXFVertex(10, Vec3(1, 2, 3)).dxfstr()
-    assert ' 10\n1.0\n 20\n2.0\n 30\n3.0\n' == DXFVertex(10, Vec3((1, 2, 3))).dxfstr()
-    assert ' 10\n1.0\n 20\n2.0\n 30\n0.0\n' == DXFVertex(10, Vec3(1, 2)).dxfstr()
-    assert ' 10\n1.0\n 20\n2.0\n 30\n0.0\n' == DXFVertex(10, Vec3((1, 2))).dxfstr()
+    assert (
+        " 10\n1.0\n 20\n2.0\n 30\n3.0\n"
+        == DXFVertex(10, Vec3(1, 2, 3)).dxfstr()
+    )
+    assert (
+        " 10\n1.0\n 20\n2.0\n 30\n3.0\n"
+        == DXFVertex(10, Vec3((1, 2, 3))).dxfstr()
+    )
+    assert (
+        " 10\n1.0\n 20\n2.0\n 30\n0.0\n" == DXFVertex(10, Vec3(1, 2)).dxfstr()
+    )
+    assert (
+        " 10\n1.0\n 20\n2.0\n 30\n0.0\n" == DXFVertex(10, Vec3((1, 2))).dxfstr()
+    )
 
 
 def test_int_not_skip_comments():
     tags = list(internal_tag_compiler(TAGS1))
     assert 9 == len(tags)
-    assert DXFTag(999, 'comment') == tags[0]
+    assert DXFTag(999, "comment") == tags[0]
 
 
 def test_int_3d_coords():
@@ -68,7 +83,7 @@ def test_int_float_to_int():
 def test_int_no_eof():
     tags = list(internal_tag_compiler(TEST_NO_EOF))
     assert 7 == len(tags)
-    assert (0, 'ENDSEC') == tags[-1]
+    assert (0, "ENDSEC") == tags[-1]
 
 
 def external_tag_compiler(text):
@@ -76,15 +91,19 @@ def external_tag_compiler(text):
 
 
 def test_low_level_tagger_skip_comments():
-    tags = list(ascii_tags_loader(StringIO('999\ncomment\n0\nEOF\n')))
-    assert (0, 'EOF') == tags[0]
+    tags = list(ascii_tags_loader(StringIO("999\ncomment\n0\nEOF\n")))
+    assert (0, "EOF") == tags[0]
     assert len(tags) == 1
 
 
 def test_low_level_tagger_not_skip_comments():
-    tags = list(ascii_tags_loader(StringIO('999\ncomment\n0\nEOF\n'), skip_comments=False))
-    assert (999, 'comment') == tags[0]
-    assert (0, 'EOF') == tags[1]
+    tags = list(
+        ascii_tags_loader(
+            StringIO("999\ncomment\n0\nEOF\n"), skip_comments=False
+        )
+    )
+    assert (999, "comment") == tags[0]
+    assert (0, "EOF") == tags[1]
     assert len(tags) == 2
 
 
@@ -94,7 +113,7 @@ def reader():
 
 
 def test_ext_next(reader):
-    assert (0, 'SECTION') == next(reader)
+    assert (0, "SECTION") == next(reader)
 
 
 def test_ext_to_list(reader):
@@ -119,11 +138,11 @@ def test_ext_read_2D_points():
     tag = tags[0]  # 2D point
     assert (100, 200) == tag.value
     tag = tags[1]  # check mark
-    assert 'check mark 1' == tag.value
+    assert "check mark 1" == tag.value
     tag = tags[2]  # 3D point
     assert (100, 200, 300) == tag.value
     tag = tags[3]  # check mark
-    assert 'check mark 2' == tag.value
+    assert "check mark 2" == tag.value
 
 
 def test_ext_error_tag():

@@ -69,7 +69,7 @@ def test_matrix44_rotation():
     assert m.is_cartesian
     v = m.transform((1, 2, 3))
     assert v == ucs.to_wcs((1, 2, 3))
-    assert m.ucs_vertex_from_wcs(v) == (1, 2, 3)
+    assert m.ucs_vertex_from_wcs(v).isclose((1, 2, 3))
 
 
 def test_transformation():
@@ -110,12 +110,14 @@ def test_arbitrary_ucs():
 
     assert def_point_in_ucs == m.ucs_vertex_from_wcs(def_point_in_xy_plane)
     assert def_point_in_ucs.z == 0
-    assert ucs.to_wcs(def_point_in_ucs) == def_point_in_xy_plane
+    assert ucs.to_wcs(def_point_in_ucs).isclose(def_point_in_xy_plane)
     assert ucs.is_cartesian is True
 
 
 def test_ucs_direction_to_ocs_direction():
-    ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
+    ucs = UCS.from_x_axis_and_point_in_xy(
+        origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5)
+    )
     assert ucs.is_cartesian is True
     expected = (-3.350073025395333, 2.9626020192591795, 6)
     assert ucs.ucs_direction_to_ocs_direction(Vec3(2, 4, 6)).isclose(expected)
@@ -136,7 +138,9 @@ def test_points_to_ocs():
 
 
 def test_to_ocs_angle_deg():
-    ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
+    ucs = UCS.from_x_axis_and_point_in_xy(
+        origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5)
+    )
     expected = 120.077450607124
     assert isclose(ucs.to_ocs_angle_deg(45), expected)
 

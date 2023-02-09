@@ -34,7 +34,9 @@ STRING
 
 def test_invalid_app_data_without_closing_tag():
     with pytest.raises(DXFAppDataError):
-        list(entity_structure_validator(compile(INVALID_APPDATA_NO_CLOSING_TAG)))
+        list(
+            entity_structure_validator(compile(INVALID_APPDATA_NO_CLOSING_TAG))
+        )
 
 
 INVALID_APPDATA_NO_CLOSING_TAG = """0
@@ -52,7 +54,9 @@ STRING
 
 def test_invalid_app_data_without_opening_tag():
     with pytest.raises(DXFAppDataError):
-        list(entity_structure_validator(compile(INVALID_APPDATA_NO_OPENING_TAG)))
+        list(
+            entity_structure_validator(compile(INVALID_APPDATA_NO_OPENING_TAG))
+        )
 
 
 INVALID_APPDATA_NO_OPENING_TAG = """0
@@ -87,8 +91,10 @@ STRING
 
 
 def test_xrecord_with_group_code_102():
-    tags = list(entity_structure_validator(compile(XRECORD_WITH_GROUP_CODE_102)))
-    assert tags[0] == (0, 'XRECORD')
+    tags = list(
+        entity_structure_validator(compile(XRECORD_WITH_GROUP_CODE_102))
+    )
+    assert tags[0] == (0, "XRECORD")
 
 
 XRECORD_WITH_GROUP_CODE_102 = """0
@@ -129,8 +135,10 @@ kbez
 
 
 def test_xrecord_with_long_closing_tag():
-    tags = list(entity_structure_validator(compile(XRECORD_APP_DATA_LONG_CLOSING_TAG)))
-    assert tags[0] == (0, 'XRECORD')
+    tags = list(
+        entity_structure_validator(compile(XRECORD_APP_DATA_LONG_CLOSING_TAG))
+    )
+    assert tags[0] == (0, "XRECORD")
 
 
 XRECORD_APP_DATA_LONG_CLOSING_TAG = """  0
@@ -361,8 +369,12 @@ AcDbBlockBasepointParameter
 
 
 def test_extended_group_code_before_XDATA():
-    tags = list(entity_structure_validator(compile(BLOCKBASEPOINTPARAMETER_CVIL_3D_2018)))
-    assert tags[0] == (0, 'BLOCKBASEPOINTPARAMETER')
+    tags = list(
+        entity_structure_validator(
+            compile(BLOCKBASEPOINTPARAMETER_CVIL_3D_2018)
+        )
+    )
+    assert tags[0] == (0, "BLOCKBASEPOINTPARAMETER")
 
 
 ENTITY_W_EMBEDDED_OBJECT = """0
@@ -387,4 +399,4 @@ Text
 def test_embedded_object_follows_XDATA():
     tags = list(entity_structure_validator(compile(ENTITY_W_EMBEDDED_OBJECT)))
     assert len(tags) == 8
-    assert tags[-1] == (1, 'Text')
+    assert tags[-1] == (1, "Text")

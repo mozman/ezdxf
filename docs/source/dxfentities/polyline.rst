@@ -4,9 +4,10 @@ Polyline
 .. module:: ezdxf.entities
     :noindex:
 
-The POLYLINE entity (`POLYLINE DXF Reference`_) is very complex, it's used to build 2D/3D polylines,
-3D meshes and 3D polyfaces. For every type exists a different wrapper class but they all have the
-same dxftype of ``'POLYLINE'``. Detect POLYLINE type by :meth:`Polyline.get_mode`.
+The POLYLINE entity (`POLYLINE DXF Reference`_) is very complex, it's used to build
+2D/3D polylines, 3D meshes and 3D polyfaces.  For every type exists a different wrapper
+class but they all have the same DXF type "POLYLINE". Detect the actual POLYLINE
+type by the method :meth:`Polyline.get_mode`.
 
 POLYLINE types returned by :meth:`Polyline.get_mode`:
 
@@ -36,8 +37,9 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
 .. class:: Polyline
 
-    :class:`Vertex` entities are stored in a standard Python list :attr:`Polyline.vertices`.
-    Vertices can be retrieved and deleted by direct access to :attr:`Polyline.vertices` attribute:
+    The :class:`Vertex` entities are stored in the Python list :attr:`Polyline.vertices`.
+    The VERTEX entities can be retrieved and deleted by direct access to the
+    :attr:`Polyline.vertices` attribute:
 
     .. code-block:: python
 
@@ -46,8 +48,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.elevation
 
-        Elevation point, the X and Y values are always ``0``, and the Z value is the polyline's elevation
-        (3D Point in :ref:`OCS` when 2D, :ref:`WCS` when 3D).
+        Elevation point, the X and Y values are always 0, and the Z value is the
+        polyline elevation (3D Point).
 
     .. attribute:: dxf.flags
 
@@ -74,31 +76,31 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.default_start_width
 
-        Default line start width (float); default = ``0``
+        Default line start width (float); default is 0
 
     .. attribute:: dxf.default_end_width
 
-        Default line end width (float); default = ``0``
+        Default line end width (float); default is 0
 
     .. attribute:: dxf.m_count
 
-        Polymesh M vertex count (int); default = ``1``
+        Polymesh M vertex count (int); default is 1
 
     .. attribute:: dxf.n_count
 
-        Polymesh N vertex count (int); default = ``1``
+        Polymesh N vertex count (int); default is 1
 
     .. attribute:: dxf.m_smooth_density
 
-        Smooth surface M density (int); default = ``0``
+        Smooth surface M density (int); default is 0
 
     .. attribute:: dxf.n_smooth_density
 
-        Smooth surface N density (int); default = ``0``
+        Smooth surface N density (int); default is 0
 
     .. attribute:: dxf.smooth_type
 
-        Curves and smooth surface type (int); default=0, see table below
+        Curves and smooth surface type (int); default is 0, see table below
 
         Constants for :attr:`smooth_type` defined in :mod:`ezdxf.lldxf.const`:
 
@@ -155,11 +157,11 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: insert_vertices
 
-    .. automethod:: transform(m: Matrix44) -> Polyline
+    .. automethod:: transform
 
-    .. automethod:: virtual_entities() -> Iterable[Union[Line, Arc]]
+    .. automethod:: virtual_entities
 
-    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
+    .. automethod:: explode
 
 Vertex
 ======
@@ -185,15 +187,15 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.start_width
 
-        Line segment start width (float); default = ``0``
+        Line segment start width (float); default is 0
 
     .. attribute:: dxf.end_width
 
-        Line segment end width (float); default = ``0``
+        Line segment end width (float); default is 0
 
     .. attribute:: dxf.bulge
 
-        :ref:`bulge value` (float); default = ``0``.
+        :ref:`bulge value` (float); default is 0.
 
         The bulge value is used to create arc shaped line segments.
 
@@ -260,8 +262,6 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
         Args:
             format: format string, default is "xyz"
 
-        .. versionadded:: 0.14
-
 
 Polymesh
 ========
@@ -275,9 +275,9 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
 .. class:: Polymesh
 
-    A polymesh is a grid of :attr:`m_count` x :attr:`n_count` vertices, every vertex has its own
-    ``(x, y, z)`` location. The :class:`Polymesh` is an subclass of :class:`Polyline`, DXF type is also
-    ``'POLYLINE'`` but :meth:`get_mode` returns ``'AcDbPolygonMesh'``.
+    A polymesh is a grid of :attr:`m_count` by :attr:`n_count` vertices, every vertex has
+    its own (x, y, z) location. The :class:`Polymesh` is a subclass of :class:`Polyline`,
+    the DXF type is also "POLYLINE", the method :meth:`get_mode` returns "AcDbPolygonMesh".
 
     .. automethod:: get_mesh_vertex
 
@@ -291,7 +291,7 @@ MeshVertexCache
 
 .. class:: MeshVertexCache
 
-    Cache mesh vertices in a dict, keys are 0-based ``(row, col)`` tuples.
+    Cache mesh vertices in a dict, keys are 0-based (row, col) tuples.
 
     Set vertex location: :code:`cache[row, col] = (x, y, z)`
 
@@ -299,7 +299,7 @@ MeshVertexCache
 
     .. attribute:: vertices
 
-        Dict of mesh vertices, keys are 0-based ``(row, col)`` tuples.
+        Dict of mesh vertices, keys are 0-based (row, col) tuples.
 
     .. automethod:: __getitem__
 
@@ -321,15 +321,16 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
 .. class:: Polyface
 
-    A polyface consist of multiple location independent 3D areas called faces.
-    The :class:`Polyface` is a subclass of :class:`Polyline`, DXF type is also ``'POLYLINE'`` but
-    :meth:`~Polyline.get_mode` returns ``'AcDbPolyFaceMesh'``.
+    A polyface consist of multiple 3D areas called faces, only faces with 3 or 4
+    vertices are supported.
+    The :class:`Polyface` is a subclass of :class:`Polyline`, the DXF type is also
+    "POLYLINE", the :meth:`~Polyline.get_mode` returns "AcDbPolyFaceMesh".
 
     .. automethod:: append_face
 
     .. automethod:: append_faces
 
-    .. automethod:: faces() -> Iterable[List[Vertex]]
+    .. automethod:: faces
 
     .. automethod:: optimize
 

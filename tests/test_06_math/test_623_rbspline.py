@@ -4,13 +4,23 @@
 import math
 from math import isclose
 from ezdxf.math import (
-    rational_spline_from_arc, rational_spline_from_ellipse, ConstructionEllipse,
-    ConstructionArc, linspace, BSpline, BSplineU,
+    rational_bspline_from_arc,
+    rational_bspline_from_ellipse,
+    ConstructionEllipse,
+    ConstructionArc,
+    linspace,
+    BSpline,
+    open_uniform_bspline,
 )
 from ezdxf.math.bspline import nurbs_arc_parameters, required_knot_values
 
-DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.),
-             (50., 0., 30.)]
+DEFPOINTS = [
+    (0.0, 0.0, 0.0),
+    (10.0, 20.0, 20.0),
+    (30.0, 10.0, 25.0),
+    (40.0, 10.0, 25.0),
+    (50.0, 0.0, 30.0),
+]
 DEFWEIGHTS = [1, 10, 10, 10, 1]
 
 
@@ -28,7 +38,7 @@ def test_rbspline():
 
 
 def test_rbsplineu():
-    curve = BSplineU(DEFPOINTS, order=3, weights=DEFWEIGHTS)
+    curve = open_uniform_bspline(DEFPOINTS, order=3, weights=DEFWEIGHTS)
     expected = RBSPLINEU
     points = list(curve.approximate(40))
 
@@ -40,9 +50,9 @@ def test_rbsplineu():
         assert isclose(epz, rpz)
 
 
-def test_rational_splines_from_circular_arc():
+def test_rational_spline_from_circular_arc_has_expected_parameters():
     arc = ConstructionArc(end_angle=90)
-    spline = rational_spline_from_arc(end_angle=arc.end_angle)
+    spline = rational_bspline_from_arc(end_angle=arc.end_angle)
     assert spline.degree == 2
 
     cpoints = spline.control_points
@@ -62,9 +72,18 @@ def test_rational_splines_from_circular_arc():
     assert spline.control_points == s2.control_points
 
 
-def test_rational_splines_points_with_nurbs_python():
+def test_rational_spline_from_circular_arc_has_same_end_points():
+    arc = ConstructionArc(start_angle=30, end_angle=330)
+    spline = rational_bspline_from_arc(
+        start_angle=arc.start_angle, end_angle=arc.end_angle
+    )
+    assert arc.start_point.isclose(spline.control_points[0])
+    assert arc.end_point.isclose(spline.control_points[-1])
+
+
+def test_rational_spline_curve_points_by_nurbs_python():
     arc = ConstructionArc(end_angle=90)
-    spline = rational_spline_from_arc(end_angle=arc.end_angle)
+    spline = rational_bspline_from_arc(end_angle=arc.end_angle)
     curve = spline.to_nurbs_python_curve()
 
     t = list(linspace(0, 1, 10))
@@ -74,9 +93,9 @@ def test_rational_splines_points_with_nurbs_python():
         assert p.isclose(e)
 
 
-def test_rational_splines_derivatives_with_nurbs_python():
+def test_rational_spline_derivatives_by_nurbs_python():
     arc = ConstructionArc(end_angle=90)
-    spline = rational_spline_from_arc(end_angle=arc.end_angle)
+    spline = rational_bspline_from_arc(end_angle=arc.end_angle)
     curve = spline.to_nurbs_python_curve()
 
     t = list(linspace(0, 1, 10))
@@ -87,7 +106,7 @@ def test_rational_splines_derivatives_with_nurbs_python():
         assert d1.isclose(ed1)
 
 
-def test_rational_spline_from_elliptic_arc():
+def test_rational_spline_from_elliptic_arc_has_expected_parameters():
     ellipse = ConstructionEllipse(
         center=(1, 1),
         major_axis=(2, 0),
@@ -95,7 +114,7 @@ def test_rational_spline_from_elliptic_arc():
         start_param=0,
         end_param=math.pi / 2,
     )
-    spline = rational_spline_from_ellipse(ellipse)
+    spline = rational_bspline_from_ellipse(ellipse)
     assert spline.degree == 2
 
     cpoints = spline.control_points
@@ -115,10 +134,25 @@ def test_rational_spline_from_elliptic_arc():
     assert spline.control_points == s2.control_points
 
 
+def test_rational_spline_from_elliptic_arc_has_same_end_points():
+    ellipse = ConstructionEllipse(
+        center=(1, 1),
+        major_axis=(2, 0),
+        ratio=0.5,
+        start_param=math.radians(30),
+        end_param=math.radians(330),
+    )
+    start_point = ellipse.start_point
+    end_point = ellipse.end_point
+    spline = rational_bspline_from_ellipse(ellipse)
+    assert start_point.isclose(spline.control_points[0])
+    assert end_point.isclose(spline.control_points[-1])
+
+
 def test_nurbs_arc_parameter_quarter_arc_1_segment():
-    control_points, weights, knots = nurbs_arc_parameters(start_angle=0,
-                                                          end_angle=math.pi / 2,
-                                                          segments=1)
+    control_points, weights, knots = nurbs_arc_parameters(
+        start_angle=0, end_angle=math.pi / 2, segments=1
+    )
 
     assert len(control_points) == 3
     assert len(weights) == len(control_points)
@@ -134,23 +168,44 @@ def test_nurbs_arc_parameter_quarter_arc_1_segment():
 
 
 def test_nurbs_arc_parameter_quarter_arc_4_segments():
-    control_points, weights, knots = nurbs_arc_parameters(start_angle=0,
-                                                          end_angle=math.pi / 2,
-                                                          segments=4)
+    control_points, weights, knots = nurbs_arc_parameters(
+        start_angle=0, end_angle=math.pi / 2, segments=4
+    )
     assert len(control_points) == 9
     assert len(weights) == len(control_points)
     assert len(knots) == required_knot_values(len(control_points), order=3)
 
 
 def test_nurbs_arc_parameter_full_circle():
-    control_points, weights, knots = nurbs_arc_parameters(start_angle=0,
-                                                          end_angle=2 * math.pi,
-                                                          segments=4)
+    control_points, weights, knots = nurbs_arc_parameters(
+        start_angle=0, end_angle=2 * math.pi, segments=4
+    )
     cos_pi_4 = math.cos(math.pi / 4)
-    assert knots == [0.0, 0.0, 0.0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1.0, 1.0,
-                     1.0]
-    assert weights == [1.0, cos_pi_4, 1.0, cos_pi_4, 1.0, cos_pi_4, 1.0,
-                       cos_pi_4, 1.0]
+    assert knots == [
+        0.0,
+        0.0,
+        0.0,
+        0.25,
+        0.25,
+        0.5,
+        0.5,
+        0.75,
+        0.75,
+        1.0,
+        1.0,
+        1.0,
+    ]
+    assert weights == [
+        1.0,
+        cos_pi_4,
+        1.0,
+        cos_pi_4,
+        1.0,
+        cos_pi_4,
+        1.0,
+        cos_pi_4,
+        1.0,
+    ]
 
 
 RBSPLINE = [
@@ -194,7 +249,7 @@ RBSPLINE = [
     [40.75635967895525, 8.692694871446063, 25.653652564276967],
     [41.74410293066476, 7.9342387419585405, 26.03288062902073],
     [43.59880402283228, 6.278880130470243, 26.860559934764876],
-    [50.0, 0.0, 30.0]
+    [50.0, 0.0, 30.0],
 ]
 
 RBSPLINEU = [
@@ -238,5 +293,47 @@ RBSPLINEU = [
     [40.06466532482549, 9.588454455911952, 25.205772772044025],
     [40.36858677532876, 9.464715688090386, 25.267642155954803],
     [40.6499313989532, 9.304334569846029, 25.347832715076986],
-    [40.90909090909091, 9.09090909090909, 25.454545454545453]
+    [40.90909090909091, 9.09090909090909, 25.454545454545453],
 ]
+
+
+def test_flattening_issue():
+    from ezdxf.layouts import VirtualLayout
+
+    layout = VirtualLayout()
+    # this configuration caused an math domain error in distance_point_line_3d()
+    # sqrt() of negative number, cause by floating point imprecision for very
+    # small numbers.
+    e = layout.add_spline(
+        degree=2,
+        dxfattribs={
+            "layer": "0",
+            "linetype": "Continuous",
+            "color": 84,
+            "lineweight": 0,
+            "extrusion": (0.0, 0.0, 1.0),
+            "flags": 12,
+            "knot_tolerance": 1e-09,
+            "control_point_tolerance": 1e-10,
+        },
+    )
+    e.control_points = [
+        (696603.8306266892, 5711646.357537143, -2.8298889e-09),
+        (696603.8352219285, 5711646.36068357, -2.8298889e-09),
+        (696603.8392015211, 5711646.363408451, -2.8298889e-09),
+    ]
+    e.knots = [
+        -6.110343499933633,
+        -6.110343499933633,
+        -6.110343499933633,
+        -4.326590114514485,
+        -4.326590114514485,
+        -4.326590114514485,
+    ]
+    e.weights = [
+        1.607007851100765,
+        1.731310340973351,
+        1.731310340973339,
+    ]
+    points = list(e.flattening(0.01))
+    assert len(points) > 4

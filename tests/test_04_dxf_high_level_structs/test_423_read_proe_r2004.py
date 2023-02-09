@@ -5,12 +5,13 @@ import pytest
 import ezdxf
 import os
 
-FILE = os.path.join(ezdxf.EZDXF_TEST_FILES, 'ProE_AC1018.dxf')
+FILE = os.path.join(ezdxf.EZDXF_TEST_FILES, "ProE_AC1018.dxf")
 
 
 @pytest.mark.skipif(
     not os.path.exists(FILE),
-    reason=f"Skip reading ProE AC1018: test file '{FILE}' not available.")
+    reason=f"Skip reading ProE AC1018: test file '{FILE}' not available.",
+)
 def test_open_proe_ac1018():
     doc = ezdxf.readfile(FILE)
     modelspace = doc.modelspace()
@@ -19,7 +20,7 @@ def test_open_proe_ac1018():
     assert 17 == len(modelspace)
 
     # can you get entities
-    lines = modelspace.query('LINE')
+    lines = modelspace.query("LINE")
     assert 12 == len(lines)
 
     # is owner tag correct

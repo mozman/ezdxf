@@ -4,7 +4,8 @@ ImageDef
 .. module:: ezdxf.entities
     :noindex:
 
-`IMAGEDEF`_ entity defines an image file, which can be placed by the :class:`Image` entity.
+The `IMAGEDEF`_ entity defines an image file, which can be placed by the :class:`Image`
+entity.
 
 ======================== ===========================================================
 Subclass of              :class:`ezdxf.entities.DXFObject`
@@ -24,7 +25,7 @@ Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_image_
 
     .. attribute:: dxf.class_version
 
-        Current version is ``0``.
+        Current version is 0.
 
     .. attribute:: dxf.filename
 
@@ -32,15 +33,15 @@ Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_image_
 
     .. attribute:: dxf.image_size
 
-        Image size in pixel as ``(x, y)`` tuple.
+        Image size in pixel as (x, y) tuple.
 
     .. attribute:: dxf.pixel_size
 
-        Default size of one pixel in drawing units as ``(x, y)`` tuple.
+        Default size of one pixel in drawing units as (x, y) tuple.
 
     .. attribute:: dxf.loaded
 
-        ``0`` = unloaded; ``1`` = loaded, default = ``1``
+        0 = unloaded; 1 = loaded, default is 1
 
     .. attribute:: dxf.resolution_units
 
@@ -50,7 +51,7 @@ Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_image_
         5   Inch
         === ==================
 
-        Default = ``0``
+        default is 0
 
 
 ImageDefReactor

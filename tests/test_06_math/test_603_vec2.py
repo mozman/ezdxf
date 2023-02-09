@@ -2,18 +2,20 @@
 # License: MIT License
 import pytest
 import math
+import pickle
+
 # Import from 'ezdxf.math._vector' to test Python implementation
 from ezdxf.math._vector import Vec2, Vec3
+from ezdxf.acc import USE_C_EXT
 
 all_vec_classes = [Vec2, Vec3]
 vec2_only = [Vec2]
-try:
+
+if USE_C_EXT:
     from ezdxf.acc.vector import Vec2 as CVec2
 
     all_vec_classes.append(CVec2)
     vec2_only.append(CVec2)
-except ImportError:
-    pass
 
 
 # Vec2 is a sub set of Vec3, Vec3 can do everything Vec2 can do, but not every
@@ -32,6 +34,12 @@ def test_init_tuple(vcls):
     v = vcls((2, 3))
     assert v.x == 2
     assert v.y == 3
+
+
+def test_empty_init(vcls):
+    v = vcls()
+    assert v.x == 0.
+    assert v.y == 0.
 
 
 def test_init_vec2(vcls):
@@ -65,9 +73,10 @@ def test_round(vec2):
 
 def test_from_angle(vcls):
     angle = math.radians(50)
-    length = 3.
+    length = 3.0
     assert vcls.from_angle(angle, length) == vcls(
-        (math.cos(angle) * length, math.sin(angle) * length))
+        (math.cos(angle) * length, math.sin(angle) * length)
+    )
 
 
 def test_vec2_as_tuple(vec2):
@@ -133,6 +142,14 @@ def test_is_null(vcls):
     assert (v2 - v1).is_null
 
 
+def test_is_not_null_default_abs_tol(vcls):
+    assert vcls(1e-11, 0).is_null is False
+
+
+def test_is_null_default_abs_tol(vcls):
+    assert vcls(1e-12, 0).is_null is True
+
+
 def test_bool(vcls):
     v = vcls((0, 0))
     assert bool(v) is False
@@ -188,6 +205,25 @@ def test_iadd_vector(vec2):
     v = Vec2(2, 3)
     v += Vec2(7, 7)
     assert v == (9, 10)
+
+
+def test_inplace_operations_do_not_mutate_vec2_inplace():
+    v = Vec2(2, 3)
+    v_check = v
+    v += Vec2(7, 7)
+    assert v_check is not v, "__iadd__ should not operate inplace"
+
+    v_check = v
+    v -= Vec2(7, 7)
+    assert v_check is not v, "__isub__ should not operate inplace"
+
+    v_check = v
+    v *= 1
+    assert v_check is not v, "__imul__ should not operate inplace"
+
+    v_check = v
+    v /= 1
+    assert v_check is not v, "__itruediv__ should not operate inplace"
 
 
 def test_add_scalar_type_erorr(vcls):
@@ -311,11 +347,14 @@ def test_angle_between(vcls):
     assert math.isclose(angle, math.pi / 4)
 
 
-@pytest.mark.parametrize('v1, v2', [
-    [(1, 0), (0, 0)],
-    [(0, 0), (1, 0)],
-    [(0, 0), (0, 0)],
-])
+@pytest.mark.parametrize(
+    "v1, v2",
+    [
+        [(1, 0), (0, 0)],
+        [(0, 0), (1, 0)],
+        [(0, 0), (0, 0)],
+    ],
+)
 def test_angle_between_null_vector(vcls, v1, v2):
     with pytest.raises(ZeroDivisionError):
         vcls(v1).angle_between(vcls(v2))
@@ -332,13 +371,13 @@ def test_angle_between_outside_domain():
 
 
 def test_rotate(vcls):
-    assert vcls(2, 2).rotate_deg(90) == (-2, 2)
+    assert vcls(2, 2).rotate_deg(90).isclose(vcls(-2, 2))
 
 
 def test_lerp(vcls):
     v1 = vcls(1, 1)
     v2 = vcls(4, 4)
-    assert v1.lerp(v2, .5) == (2.5, 2.5)
+    assert v1.lerp(v2, 0.5) == (2.5, 2.5)
     assert v1.lerp(v2, 0) == (1, 1)
     assert v1.lerp(v2, 1) == (4, 4)
 
@@ -350,7 +389,7 @@ def test_project(vcls):
     assert v.project(vcls(5, 5)) == (5, 0)
 
     v = vcls(10, 10)
-    assert v.project(vcls(10, 0)) == (5, 5)
+    assert v.project(vcls(10, 0)).isclose(vcls(5, 5))
 
 
 def test_det(vec2):
@@ -362,3 +401,10 @@ def test_sum(vcls):
     assert vcls.sum([]).is_null is True
     assert vcls.sum([vcls(1, 1)]) == (1, 1)
     assert vcls.sum([vcls(1, 1), vcls(2, 2)]) == (3, 3)
+
+
+def test_picklable(vec2):
+    for v in [vec2((1, 2.5)), vec2(1, 2.5)]:
+        pickled_v = pickle.loads(pickle.dumps(v))
+        assert v == pickled_v
+        assert type(v) is type(pickled_v)

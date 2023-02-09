@@ -1,0 +1,35 @@
+MLEADERSTYLE Scaling Factor
+===========================
+
+The scaling factor (group code 142) is not applied to the values stored in
+MLEADERSTYLE.
+
+MLEADERSTYLE: scale=1.0
+-----------------------
+
+'align_space': 4.0,
+'arrow_head_size': 4.0,
+'block_scale_x': 1.0,
+'block_scale_y': 1.0,
+'block_scale_z': 1.0,
+'break_gap_size': 3.75,
+'char_height': 4.0,
+'dogleg_length': 8.0,
+'landing_gap': 2.0,
+'scale': 1.0,
+ 
+MLEADERSTYLE: scale=3.0
+-----------------------
+
+'align_space': 4.0,
+'arrow_head_size': 4.0,
+'block_scale_x': 1.0,
+'block_scale_y': 1.0,
+'block_scale_z': 1.0,
+'break_gap_size': 3.75,
+'char_height': 4.0,
+'dogleg_length': 8.0,
+'landing_gap': 2.0,
+'scale': 3.0,
+
+

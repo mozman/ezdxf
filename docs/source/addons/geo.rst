@@ -46,7 +46,8 @@ proxy by :meth:`GeoProxy.parse` from an external ``__geo_interface__`` mapping.
 Returns "Point" as :class:`~ezdxf.entities.Point` entity,  "LineString" as
 :class:`~ezdxf.entities.LWPolyline` entity and "Polygon" as
 :class:`~ezdxf.entities.Hatch` entity or as separated
-:class:`~ezdxf.entities.LWPolyline` entities (or both).
+:class:`~ezdxf.entities.LWPolyline` entities (or both) and new in v0.16.6 as
+:class:`~ezdxf.entities.MPolygon`.
 Supports "MultiPoint", "MultiLineString", "MultiPolygon",
 "GeometryCollection", "Feature"  and "FeatureCollection".
 Add new DXF entities to a layout by the :meth:`Layout.add_entity` method.
@@ -69,7 +70,7 @@ Supported DXF entities are:
 - SOLID, TRACE, 3DFACE as "Polygon"
 - CIRCLE, ARC, ELLIPSE and SPLINE by approximation as "LineString" if open and
   "Polygon" if closed
-- HATCH as "Polygon", holes are supported
+- HATCH and MPOLYGON as "Polygon", holes are supported
 
 .. warning::
 
@@ -82,11 +83,11 @@ Supported DXF entities are:
 Module Functions
 ----------------
 
-.. autofunction:: proxy(entity: Union[DXFGraphic, Iterable[DXFGraphic]], distance=0.1, force_line_string=False) -> GeoProxy
+.. autofunction:: proxy
 
-.. autofunction:: dxf_entities(geo_mapping, polygon=1, dxfattribs: Dict = None) -> Iterable[DXFGraphic]
+.. autofunction:: dxf_entities
 
-.. autofunction:: gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]
+.. autofunction:: gfilter
 
 GeoProxy Class
 --------------
@@ -99,11 +100,11 @@ GeoProxy Class
 
     .. automethod:: parse(geo_mapping: Dict) -> GeoProxy
 
-    .. automethod:: from_dxf_entities(entity: Union[DXFGraphic, Iterable[DXFGraphic]], distance=0.1, force_line_string=False) -> GeoProxy
+    .. automethod:: from_dxf_entities
 
-    .. automethod:: to_dxf_entities(polygon=1, dxfattribs: Dict = None) -> Iterable[DXFGraphic]
+    .. automethod:: to_dxf_entities
 
-    .. automethod:: copy() -> GeoProxy
+    .. automethod:: copy
 
     .. automethod:: __iter__
 
@@ -111,20 +112,20 @@ GeoProxy Class
 
     .. automethod:: crs_to_wcs
 
-    .. automethod:: globe_to_map(func: Callable[[Vec3], Vec3] = None)->None
+    .. automethod:: globe_to_map
 
-    .. automethod:: map_to_globe(func: Callable[[Vec3], Vec3] = None)->None
+    .. automethod:: map_to_globe
 
-    .. automethod:: apply(func: Callable[[Vec3], Vec3])->None
+    .. automethod:: apply
 
-    .. automethod:: filter(func: Callable[[GeoProxy], bool])->None
+    .. automethod:: filter
 
 Helper Functions
 ----------------
 
-.. autofunction:: wgs84_4326_to_3395(location: Vec3) -> Vec3
+.. autofunction:: wgs84_4326_to_3395
 
-.. autofunction:: wgs84_3395_to_4326(location: Vec3, tol=1e-6) -> Vec3
+.. autofunction:: wgs84_3395_to_4326
 
 .. autofunction:: dms2dd
 

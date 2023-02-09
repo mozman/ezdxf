@@ -1,14 +1,20 @@
-# Copyright (c) 2010-2020, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Union
+from __future__ import annotations
+from typing import Iterable, Sequence
 
 from functools import partial
 import math
-from ezdxf.math import Vec3, Vec2
+from ezdxf.math import (
+    Vec3,
+    Vec2,
+    UVec,
+    Matrix44,
+    X_AXIS,
+    Y_AXIS,
+    arc_angle_span_rad,
+)
 from decimal import Decimal
-
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
 
 TOLERANCE = 1e-10
 RADIANS_90 = math.pi / 2.0
@@ -16,32 +22,31 @@ RADIANS_180 = math.pi
 RADIANS_270 = RADIANS_90 * 3.0
 RADIANS_360 = 2.0 * math.pi
 
-
-def is_close_points(p1: 'Vertex', p2: 'Vertex', abs_tol=TOLERANCE) -> bool:
-    """
-    Returns ``True`` if `p1` is very close to `p2`.
-
-    Args:
-        p1: first vertex as :class:`Vec3` compatible object
-        p2: second vertex as :class:`Vec3` compatible object
-        abs_tol: absolute tolerance
-
-    Raises:
-        TypeError: for incompatible vertices
-
-    """
-    if len(p1) != len(p2):
-        raise TypeError('incompatible points')
-
-    for v1, v2 in zip(p1, p2):
-        if not math.isclose(v1, v2, abs_tol=abs_tol):
-            return False
-    return True
+__all__ = [
+    "closest_point",
+    "convex_hull_2d",
+    "distance_point_line_2d",
+    "is_convex_polygon_2d",
+    "is_point_on_line_2d",
+    "is_point_in_polygon_2d",
+    "is_point_left_of_line",
+    "point_to_line_relation",
+    "linspace",
+    "enclosing_angles",
+    "sign",
+    "area",
+    "circle_radius_3p",
+    "TOLERANCE",
+    "has_matrix_2d_stretching",
+    "decdeg2dms",
+    "ellipse_param_span",
+]
 
 
-def linspace(start: float, stop: float, num: int,
-             endpoint=True) -> Iterable[float]:
-    """ Return evenly spaced numbers over a specified interval, like
+def linspace(
+    start: float, stop: float, num: int, endpoint=True
+) -> Iterable[float]:
+    """Return evenly spaced numbers over a specified interval, like
     numpy.linspace().
 
     Returns `num` evenly spaced samples, calculated over the interval
@@ -49,62 +54,56 @@ def linspace(start: float, stop: float, num: int,
 
     """
     if num < 0:
-        raise ValueError(f'Number of samples, {num}, must be non-negative.')
+        raise ValueError(f"Number of samples, {num}, must be non-negative.")
     elif num == 0:
         return
     elif num == 1:
         yield start
         return
 
-    start = Decimal(start)
+    start_dec = Decimal(start)
     count = (num - 1) if endpoint else num
-    delta = (Decimal(stop) - start) / count
+    delta = (Decimal(stop) - start_dec) / count
     for _ in range(num):
-        yield float(start)
-        start += delta
+        yield float(start_dec)
+        start_dec += delta
 
 
 def sign(f: float) -> float:
-    """ Return sign of float `f` as -1 or +1, 0 returns +1 """
+    """Return sign of float `f` as -1 or +1, 0 returns +1"""
     return -1.0 if f < 0.0 else +1.0
 
 
-def reflect_angle_x_deg(a: float) -> float:
-    """
-    Returns reflected angle of `a` in x-direction in degrees.
-    Angles are counter clockwise orientated and +x-axis is at 0 degrees.
-
-    Args:
-        a: angle to reflect in degrees
-
-    .. versionadded:: 0.13
-
-    """
-    return (180. - (a % 360.)) % 360.
+def decdeg2dms(value: float) -> tuple[float, float, float]:
+    """Return decimal degrees as tuple (Degrees, Minutes, Seconds)."""
+    mnt, sec = divmod(value * 3600.0, 60.0)
+    deg, mnt = divmod(mnt, 60.0)
+    return deg, mnt, sec
 
 
-def reflect_angle_y_deg(a: float) -> float:
-    """
-    Returns reflected angle of `a` in y-direction in degrees.
-    Angles are counter clockwise orientated and +y-axis is at 90 degrees.
+def ellipse_param_span(start_param: float, end_param: float) -> float:
+    """Returns the counter-clockwise params span of an elliptic arc from start-
+    to end param.
 
-    Args:
-        a: angle to reflect in degrees
+    Returns the param span in the range [0, 2π], 2π is a full ellipse.
+    Full ellipse handling is a special case, because normalization of params
+    which describe a full ellipse would return 0 if treated as regular params.
+    e.g. (0, 2π) → 2π, (0, -2π) → 2π, (π, -π) → 2π.
+    Input params with the same value always return 0 by definition:
+    (0, 0) → 0, (-π, -π) → 0, (2π, 2π) → 0.
 
-    .. versionadded:: 0.13
+    Alias to function: :func:`ezdxf.math.arc_angle_span_rad`
 
     """
-    return (360. - (a % 360.)) % 360.
+    return arc_angle_span_rad(float(start_param), float(end_param))
 
 
-def closest_point(base: 'Vertex', points: Iterable['Vertex']) -> 'Vec3':
-    """
-    Returns closest point to `base`.
+def closest_point(base: UVec, points: Iterable[UVec]) -> "Vec3":
+    """Returns the closest point to a give `base` point.
 
     Args:
         base: base point as :class:`Vec3` compatible object
         points: iterable of points as :class:`Vec3` compatible object
-
 
     """
     base = Vec3(base)
@@ -119,49 +118,47 @@ def closest_point(base: 'Vertex', points: Iterable['Vertex']) -> 'Vec3':
     return found
 
 
-def convex_hull_2d(points: Iterable['Vertex']) -> List['Vertex']:
-    """ Returns 2D convex hull for `points`.
+def convex_hull_2d(points: Iterable[UVec]) -> list[Vec2]:
+    """Returns the 2D convex hull of given `points`.
+
+    Returns a closed polyline, first vertex is equal to the last vertex.
 
     Args:
-        points: iterable of points as :class:`Vec3` compatible objects,
-            z-axis is ignored
+        points: iterable of points, z-axis is ignored
 
     """
+    # Source: https://massivealgorithms.blogspot.com/2019/01/convex-hull-sweep-line.html?m=1
+    def cross(o: Vec2, a: Vec2, b: Vec2) -> float:
+        return (a - o).det(b - o)
 
-    def _convexhull(hull):
-        while len(hull) > 2:
-            # the last three points
-            start_point, check_point, destination_point = hull[-3:]
-            # curve not turns right
-            if not is_point_left_of_line(check_point, start_point,
-                                         destination_point):
-                # remove the penultimate point
-                del hull[-2]
-            else:
-                break
-        return hull
-
-    points = sorted(set(Vec2.generate(points)))  # remove duplicate points
-
-    if len(points) < 3:
+    vertices = Vec2.list(set(points))
+    vertices.sort()
+    if len(vertices) < 3:
         raise ValueError(
-            "Convex hull calculation requires 3 or more unique points.")
+            "Convex hull calculation requires 3 or more unique points."
+        )
 
-    upper_hull = points[:2]  # first two points
-    for next_point in points[2:]:
-        upper_hull.append(next_point)
-        upper_hull = _convexhull(upper_hull)
-    lower_hull = [points[-1], points[-2]]  # last two points
+    n: int = len(vertices)
+    hull: list[Vec2] = [Vec2()] * (2 * n)
+    k: int = 0
+    i: int
+    for i in range(n):
+        while k >= 2 and cross(hull[k - 2], hull[k - 1], vertices[i]) <= 0.0:
+            k -= 1
+        hull[k] = vertices[i]
+        k += 1
+    t: int = k + 1
+    for i in range(n - 2, -1, -1):
+        while k >= t and cross(hull[k - 2], hull[k - 1], vertices[i]) <= 0.0:
+            k -= 1
+        hull[k] = vertices[i]
+        k += 1
+    return hull[:k]
 
-    for next_point in reversed(points[:-2]):
-        lower_hull.append(next_point)
-        lower_hull = _convexhull(lower_hull)
-    upper_hull.extend(lower_hull[1:-1])
-    return upper_hull
 
-
-def enclosing_angles(angle, start_angle, end_angle, ccw=True,
-                     abs_tol=TOLERANCE):
+def enclosing_angles(
+    angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE
+):
     isclose = partial(math.isclose, abs_tol=abs_tol)
 
     s = start_angle % math.tau
@@ -177,9 +174,10 @@ def enclosing_angles(angle, start_angle, end_angle, ccw=True,
     return r if ccw else not r
 
 
-def is_point_on_line_2d(point: Vec2, start: Vec2, end: Vec2, ray=True,
-                        abs_tol=TOLERANCE) -> bool:
-    """ Returns ``True`` if `point` is on `line`.
+def is_point_on_line_2d(
+    point: Vec2, start: Vec2, end: Vec2, ray=True, abs_tol=TOLERANCE
+) -> bool:
+    """Returns ``True`` if `point` is on `line`.
 
     Args:
         point: 2D point to test as :class:`Vec2`
@@ -187,15 +185,20 @@ def is_point_on_line_2d(point: Vec2, start: Vec2, end: Vec2, ray=True,
         end: line definition point as :class:`Vec2`
         ray: if ``True`` point has to be on the infinite ray, if ``False``
             point has to be on the line segment
-        abs_tol: tolerance for on line test
+        abs_tol: tolerance for on the line test
 
     """
     point_x, point_y = point
     start_x, start_y = start
     end_x, end_y = end
-    on_line = math.fabs(
-        (end_y - start_y) * point_x - (end_x - start_x) * point_y + (
-                end_x * start_y - end_y * start_x)) <= abs_tol
+    on_line = (
+        math.fabs(
+            (end_y - start_y) * point_x
+            - (end_x - start_x) * point_y
+            + (end_x * start_y - end_y * start_x)
+        )
+        <= abs_tol
+    )
     if not on_line or ray:
         return on_line
     else:
@@ -210,9 +213,10 @@ def is_point_on_line_2d(point: Vec2, start: Vec2, end: Vec2, ray=True,
         return True
 
 
-def point_to_line_relation(point: Vec2, start: Vec2, end: Vec2,
-                           abs_tol=TOLERANCE) -> int:
-    """ Returns ``-1`` if `point` is left `line`, ``+1`` if `point` is right of
+def point_to_line_relation(
+    point: Vec2, start: Vec2, end: Vec2, abs_tol=TOLERANCE
+) -> int:
+    """Returns ``-1`` if `point` is left `line`, ``+1`` if `point` is right of
     `line` and ``0`` if `point` is on the `line`. The `line` is defined by two
     vertices given as arguments `start` and `end`.
 
@@ -224,8 +228,9 @@ def point_to_line_relation(point: Vec2, start: Vec2, end: Vec2,
 
     """
     rel = (end.x - start.x) * (point.y - start.y) - (end.y - start.y) * (
-            point.x - start.x)
-    if math.isclose(rel, 0, abs_tol=abs_tol):
+        point.x - start.x
+    )
+    if abs(rel) <= abs_tol:
         return 0
     elif rel < 0:
         return +1
@@ -233,9 +238,10 @@ def point_to_line_relation(point: Vec2, start: Vec2, end: Vec2,
         return -1
 
 
-def is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2,
-                          colinear=False) -> bool:
-    """ Returns ``True`` if `point` is "left of line" defined by `start-` and
+def is_point_left_of_line(
+    point: Vec2, start: Vec2, end: Vec2, colinear=False
+) -> bool:
+    """Returns ``True`` if `point` is "left of line" defined by `start-` and
     `end` point, a colinear point is also "left of line" if argument `colinear`
     is ``True``.
 
@@ -254,22 +260,26 @@ def is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2,
 
 
 def distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float:
-    """ Returns the normal distance from `point` to 2D line defined by `start-`
+    """Returns the normal distance from `point` to 2D line defined by `start-`
     and `end` point.
     """
     # wikipedia: https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line.
     if start.isclose(end):
-        raise ZeroDivisionError('Not a line.')
+        raise ZeroDivisionError("Not a line.")
     return math.fabs((start - point).det(end - point)) / (end - start).magnitude
 
 
-def is_point_in_polygon_2d(point: Union[Vec2, Vec3], polygon: Iterable[Vec2],
-                           abs_tol=TOLERANCE) -> int:
-    """ Test if `point` is inside `polygon`.
+# Candidate for a faster Cython implementation:
+# is also used for testing 3D ray and line intersection with polygon
+def is_point_in_polygon_2d(
+    point: Vec2, polygon: Sequence[Vec2], abs_tol=TOLERANCE
+) -> int:
+    """Test if `point` is inside `polygon`. Returns ``-1`` (for outside) if the
+    polygon is degenerated, no exception will be raised.
 
     Args:
         point: 2D point to test as :class:`Vec2`
-        polygon: iterable of 2D points as :class:`Vec2`
+        polygon: sequence of 2D points as :class:`Vec2`
         abs_tol: tolerance for distance check
 
     Returns:
@@ -278,30 +288,34 @@ def is_point_in_polygon_2d(point: Union[Vec2, Vec3], polygon: Iterable[Vec2],
     """
     # Source: http://www.faqs.org/faqs/graphics/algorithms-faq/
     # Subject 2.03: How do I find if a point lies within a polygon?
-    polygon = list(polygon)  # shallow copy, because list will be modified
-    if not polygon[0].isclose(polygon[-1]):
-        polygon.append(polygon[0])
-    if len(polygon) < 4:  # 3+1 because first point == last point
-        raise ValueError('At least 3 polygon points required.')
+    if not polygon:  # empty polygon
+        return -1
+
+    if polygon[0].isclose(polygon[-1]):  # open polygon is required
+        polygon = polygon[:-1]
+    if len(polygon) < 3:
+        return -1
     x = point.x
     y = point.y
-    # ignore z-axis of Vec3()
     inside = False
-    for i in range(len(polygon) - 1):
-        x1, y1 = polygon[i]
-        x2, y2 = polygon[i + 1]
+    x1, y1 = polygon[-1]
+    for x2, y2 in polygon:
         # is point on polygon boundary line:
         # is point in x-range of line
         a, b = (x2, x1) if x2 < x1 else (x1, x2)
         if a <= x <= b:
             # is point in y-range of line
             c, d = (y2, y1) if y2 < y1 else (y1, y2)
-            if (c <= y <= d) and math.fabs((y2 - y1) * x - (x2 - x1) * y + (
-                    x2 * y1 - y2 * x1)) <= abs_tol:
+            if (c <= y <= d) and math.fabs(
+                (y2 - y1) * x - (x2 - x1) * y + (x2 * y1 - y2 * x1)
+            ) <= abs_tol:
                 return 0
         if ((y1 <= y < y2) or (y2 <= y < y1)) and (
-                x < (x2 - x1) * (y - y1) / (y2 - y1) + x1):
+            x < (x2 - x1) * (y - y1) / (y2 - y1) + x1
+        ):
             inside = not inside
+        x1 = x2
+        y1 = y2
     if inside:
         return 1
     else:
@@ -317,18 +331,73 @@ def circle_radius_3p(a: Vec3, b: Vec3, c: Vec3) -> float:
     return upper / lower
 
 
-def area(vertices: Iterable['Vertex']) -> float:
-    """ Returns the area of a polygon, returns the projected area in the
-    xy-plane for 3D vertices.
+def area(vertices: Iterable[UVec]) -> float:
+    """Returns the area of a polygon, returns the projected area in the
+    xy-plane for any vertices (z-axis will be ignored).
     """
-    vertices = Vec3.list(vertices)
-    if len(vertices) < 3:
-        raise ValueError('At least 3 vertices required.')
+    _vertices = Vec2.list(vertices)
+    if len(_vertices) < 3:
+        return 0.0
 
-    # Close polygon:
-    if not vertices[0].isclose(vertices[-1]):
-        vertices.append(vertices[0])
+    # close polygon:
+    if not _vertices[0].isclose(_vertices[-1]):
+        _vertices.append(_vertices[0])
 
-    return abs(sum(
-        (p1.x * p2.y - p1.y * p2.x) for p1, p2 in zip(vertices, vertices[1:])
-    ) / 2)
+    return abs(
+        sum(
+            (p1.x * p2.y - p1.y * p2.x)
+            for p1, p2 in zip(_vertices, _vertices[1:])
+        )
+        * 0.5
+    )
+
+
+def has_matrix_2d_stretching(m: Matrix44) -> bool:
+    """Returns ``True`` if matrix `m` performs a non-uniform xy-scaling.
+    Uniform scaling is not stretching in this context.
+
+    Does not check if the target system is a cartesian coordinate system, use the
+    :class:`~ezdxf.math.Matrix44` property :attr:`~ezdxf.math.Matrix44.is_cartesian`
+    for that.
+    """
+    ux = m.transform_direction(X_AXIS)
+    uy = m.transform_direction(Y_AXIS)
+    return not math.isclose(ux.magnitude_square, uy.magnitude_square)
+
+
+def is_convex_polygon_2d(
+    polygon: list[Vec2], *, strict=False, epsilon=1e-6
+) -> bool:
+    """Returns ``True`` if the 2D `polygon` is convex. This function works with
+    open and closed polygons and clockwise or counter-clockwise vertex
+    orientation.
+    Coincident vertices will always be skipped and if argument `strict`
+    is ``True``, polygons with collinear vertices are not considered as
+    convex.
+
+    This solution works only for simple non-self-intersecting polygons!
+
+    """
+    if len(polygon) < 3:
+        return False
+
+    signs: list[int] = []
+    prev = polygon[-1]
+    prev_prev = polygon[-2]
+    for vertex in polygon:
+        if vertex.isclose(prev):  # skip coincident vertices
+            continue
+
+        det = (prev - vertex).det(prev_prev - prev)
+        if abs(det) >= epsilon:
+            signs.append(-1 if det < 0.0 else +1)
+        elif strict:  # collinear vertices
+            return False
+        prev_prev = prev
+        prev = vertex
+
+    if signs:
+        # Do all determinants have the same sign?
+        m = signs[0]
+        return all(m == s for s in signs)
+    return False

@@ -4,8 +4,16 @@
 import pytest
 import math
 
-from ezdxf.entities.acis import Body, Solid3d, Region, Surface, ExtrudedSurface, LoftedSurface, RevolvedSurface, \
-    SweptSurface
+from ezdxf.entities.acis import (
+    Body,
+    Solid3d,
+    Region,
+    Surface,
+    ExtrudedSurface,
+    LoftedSurface,
+    RevolvedSurface,
+    SweptSurface,
+)
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 BODY = """0
@@ -27,7 +35,7 @@ AcDbModelerGeometry
 
 class MockDoc:
     def __init__(self):
-        self.dxfversion = 'AC1024'
+        self.dxfversion = "AC1024"
 
 
 @pytest.fixture
@@ -37,53 +45,58 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'BODY' in ENTITY_CLASSES
-    assert '3DSOLID' in ENTITY_CLASSES
-    assert 'REGION' in ENTITY_CLASSES
-    assert 'SURFACE' in ENTITY_CLASSES
-    assert 'EXTRUDEDSURFACE' in ENTITY_CLASSES
-    assert 'LOFTEDSURFACE' in ENTITY_CLASSES
-    assert 'REVOLVEDSURFACE' in ENTITY_CLASSES
-    assert 'SWEPTSURFACE' in ENTITY_CLASSES
+
+    assert "BODY" in ENTITY_CLASSES
+    assert "3DSOLID" in ENTITY_CLASSES
+    assert "REGION" in ENTITY_CLASSES
+    assert "SURFACE" in ENTITY_CLASSES
+    assert "EXTRUDEDSURFACE" in ENTITY_CLASSES
+    assert "LOFTEDSURFACE" in ENTITY_CLASSES
+    assert "REVOLVEDSURFACE" in ENTITY_CLASSES
+    assert "SWEPTSURFACE" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Body()
-    assert entity.dxftype() == 'BODY'
+    assert entity.dxftype() == "BODY"
 
     entity = Solid3d()
-    assert entity.dxftype() == '3DSOLID'
+    assert entity.dxftype() == "3DSOLID"
 
     entity = Region()
-    assert entity.dxftype() == 'REGION'
+    assert entity.dxftype() == "REGION"
 
     entity = Surface()
-    assert entity.dxftype() == 'SURFACE'
+    assert entity.dxftype() == "SURFACE"
 
     entity = ExtrudedSurface()
-    assert entity.dxftype() == 'EXTRUDEDSURFACE'
+    assert entity.dxftype() == "EXTRUDEDSURFACE"
 
     entity = LoftedSurface()
-    assert entity.dxftype() == 'LOFTEDSURFACE'
+    assert entity.dxftype() == "LOFTEDSURFACE"
 
     entity = RevolvedSurface()
-    assert entity.dxftype() == 'REVOLVEDSURFACE'
+    assert entity.dxftype() == "REVOLVEDSURFACE"
 
     entity = SweptSurface()
-    assert entity.dxftype() == 'SWEPTSURFACE'
+    assert entity.dxftype() == "SWEPTSURFACE"
 
 
 def test_default_new():
-    entity = Body.new(handle='ABBA', owner='0', dxfattribs={
-        'color': 7,
-    })
-    assert entity.dxf.layer == '0'
+    entity = Body.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": 7,
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.version == 1
 
 

@@ -3,9 +3,10 @@ Entities Section
 
 .. module:: ezdxf.sections.entities
 
-The ENTITIES section is the home of all :class:`~ezdxf.layouts.Modelspace` and active
-:class:`~ezdxf.layouts.Paperspace` layout entities. This is a real section in the DXF file,
-for `ezdxf` the :class:`EntitySection` is just a proxy for modelspace and the active paperspace linked together.
+The ENTITIES section is the home of all entities of the :class:`~ezdxf.layouts.Modelspace`
+and the active :class:`~ezdxf.layouts.Paperspace` layout.  This is a real section in the
+DXF file but in `ezdxf` the :class:`EntitySection` is just a linked entity space of
+these two layouts.
 
 .. seealso::
 
@@ -13,7 +14,7 @@ for `ezdxf` the :class:`EntitySection` is just a proxy for modelspace and the ac
 
 .. class:: EntitySection
 
-    .. automethod:: __iter__() -> Iterable[DXFEntity]
+    .. automethod:: __iter__
 
-    .. automethod:: __len__() -> int
+    .. automethod:: __len__
 

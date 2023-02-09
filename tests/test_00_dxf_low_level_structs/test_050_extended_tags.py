@@ -16,7 +16,7 @@ def xtags1():
 
 
 def test_init_appdata(xtags1):
-    assert xtags1.get_app_data('{ACAD_XDICTIONARY') is not None
+    assert xtags1.get_app_data("{ACAD_XDICTIONARY") is not None
 
 
 def test_init_with_tags():
@@ -27,12 +27,12 @@ def test_init_with_tags():
 
 
 def test_init_xdata(xtags1):
-    assert xtags1.get_xdata('RAK') is not None
+    assert xtags1.get_xdata("RAK") is not None
 
 
 def test_init_one_tag():
-    xtags = ExtendedTags([DXFTag(0, 'SECTION')])
-    assert xtags.noclass[0] == (0, 'SECTION')
+    xtags = ExtendedTags([DXFTag(0, "SECTION")])
+    assert xtags.noclass[0] == (0, "SECTION")
 
 
 def test_getitem(xtags1):
@@ -40,12 +40,12 @@ def test_getitem(xtags1):
 
 
 def test_appdata_content_count(xtags1):
-    xdict = xtags1.get_app_data('{ACAD_XDICTIONARY')
+    xdict = xtags1.get_app_data("{ACAD_XDICTIONARY")
     assert 3 == len(xdict)
 
 
 def test_appdata_content(xtags1):
-    xdict = xtags1.get_app_data('{ACAD_XDICTIONARY')
+    xdict = xtags1.get_app_data("{ACAD_XDICTIONARY")
     assert xdict.get_first_value(360) == "63D5"
 
 
@@ -55,7 +55,7 @@ def test_tags_skips_appdata_content(xtags1):
 
 
 def test_xdata_content_count(xtags1):
-    rak = xtags1.get_xdata('RAK')
+    rak = xtags1.get_xdata("RAK")
     assert 17 == len(rak)
 
 
@@ -73,7 +73,7 @@ def test_copy(xtags1):
 
 
 def test_getitem_layer(xtags1):
-    assert xtags1.noclass[0] == (0, 'LAYER')
+    assert xtags1.noclass[0] == (0, "LAYER")
 
 
 def test_getitem_xdict(xtags1):
@@ -81,25 +81,25 @@ def test_getitem_xdict(xtags1):
 
 
 def test_getitem_parent(xtags1):
-    assert xtags1.noclass[3] == (330, '18')
+    assert xtags1.noclass[3] == (330, "18")
 
 
 def test_get_last_item(xtags1):
-    assert xtags1.noclass[-1] == (330, '18')
+    assert xtags1.noclass[-1] == (330, "18")
 
 
 def test_tagscount(xtags1):
-    """ apdata counts as one tag and xdata counts as one tag. """
+    """apdata counts as one tag and xdata counts as one tag."""
     assert 4 == len(xtags1.noclass)
 
 
 def test_subclass_AcDbSymbolTableRecord(xtags1):
-    subclass = xtags1.get_subclass('AcDbSymbolTableRecord')
+    subclass = xtags1.get_subclass("AcDbSymbolTableRecord")
     assert 1 == len(subclass)
 
 
 def test_subclass_AcDbLayerTableRecord(xtags1):
-    subclass = xtags1.get_subclass('AcDbLayerTableRecord')
+    subclass = xtags1.get_subclass("AcDbLayerTableRecord")
     assert 8 == len(subclass)
 
 
@@ -113,8 +113,8 @@ def test_clone_is_equal(xtags1):
 
 
 def test_replace_handle(xtags1):
-    xtags1.replace_handle('AA')
-    assert 'AA' == xtags1.get_handle()
+    xtags1.replace_handle("AA")
+    assert "AA" == xtags1.get_handle()
 
 
 XTAGS1 = """  0
@@ -194,42 +194,42 @@ def test_xdata_count(xtags2):
 
 
 def test_tags_count(xtags2):
-    """ 3 xdata chunks and two 'normal' tag. """
+    """3 xdata chunks and two 'normal' tag."""
     assert 2 == len(xtags2.noclass)
 
 
 def test_xdata3_tags(xtags2):
-    xdata = xtags2.get_xdata('XDATA3')
-    assert xdata[0] == (1001, 'XDATA3')
-    assert xdata[1] == (1000, 'TEXT-XDATA3')
+    xdata = xtags2.get_xdata("XDATA3")
+    assert xdata[0] == (1001, "XDATA3")
+    assert xdata[1] == (1000, "TEXT-XDATA3")
     assert xdata[2] == (1070, 2)
     assert xdata[3] == (1070, 3)
 
 
 def test_new_data(xtags2):
-    xtags2.new_xdata('NEWXDATA', [(1000, 'TEXT')])
-    assert xtags2.has_xdata('NEWXDATA') is True
+    xtags2.new_xdata("NEWXDATA", [(1000, "TEXT")])
+    assert xtags2.has_xdata("NEWXDATA") is True
 
-    xdata = xtags2.get_xdata('NEWXDATA')
-    assert xdata[0] == (1001, 'NEWXDATA')
-    assert xdata[1] == (1000, 'TEXT')
+    xdata = xtags2.get_xdata("NEWXDATA")
+    assert xdata[0] == (1001, "NEWXDATA")
+    assert xdata[1] == (1000, "TEXT")
 
 
 def test_set_new_data(xtags2):
-    xtags2.new_xdata('NEWXDATA', tags=[(1000, "Extended Data String")])
-    assert xtags2.has_xdata('NEWXDATA') is True
+    xtags2.new_xdata("NEWXDATA", tags=[(1000, "Extended Data String")])
+    assert xtags2.has_xdata("NEWXDATA") is True
 
-    xdata = xtags2.get_xdata('NEWXDATA')
-    assert (1001, 'NEWXDATA') == xdata[0]
+    xdata = xtags2.get_xdata("NEWXDATA")
+    assert (1001, "NEWXDATA") == xdata[0]
     assert (1000, "Extended Data String") == xdata[1]
 
 
 def test_append_xdata(xtags2):
-    xdata = xtags2.get_xdata('MOZMAN')
+    xdata = xtags2.get_xdata("MOZMAN")
     assert 4 == len(xdata)
 
     xdata.append(DXFTag(1000, "Extended Data String"))
-    xdata = xtags2.get_xdata('MOZMAN')
+    xdata = xtags2.get_xdata("MOZMAN")
     assert 5 == len(xdata)
 
     assert DXFTag(1000, "Extended Data String") == xdata[4]
@@ -272,31 +272,31 @@ def xtags3():
 
 
 def test_read_tags(xtags3):
-    subclass2 = xtags3.get_subclass('AcDbText')
-    assert (100, 'AcDbText') == subclass2[0]
+    subclass2 = xtags3.get_subclass("AcDbText")
+    assert (100, "AcDbText") == subclass2[0]
 
 
 def test_read_tags_2(xtags3):
-    subclass2 = xtags3.get_subclass('AcDbText')
-    assert (100, 'AcDbText') == subclass2[0]
-    assert (1, 'Title:') == subclass2[3]
+    subclass2 = xtags3.get_subclass("AcDbText")
+    assert (100, "AcDbText") == subclass2[0]
+    assert (1, "Title:") == subclass2[3]
 
 
 def test_read_tags_3(xtags3):
-    subclass2 = xtags3.get_subclass('AcDbText', 3)
-    assert (100, 'AcDbText') == subclass2[0]
+    subclass2 = xtags3.get_subclass("AcDbText", 3)
+    assert (100, "AcDbText") == subclass2[0]
     assert (73, 2) == subclass2[1]
 
 
 def test_key_error(xtags3):
     with pytest.raises(DXFKeyError):
-        xtags3.get_subclass('AcDbText', pos=4)
+        xtags3.get_subclass("AcDbText", pos=4)
 
 
 def test_skip_empty_subclass(xtags3):
     xtags3.subclasses[1] = Tags()  # create empty subclass
-    subclass2 = xtags3.get_subclass('AcDbText')
-    assert (100, 'AcDbText') == subclass2[0]
+    subclass2 = xtags3.get_subclass("AcDbText")
+    assert (100, "AcDbText") == subclass2[0]
 
 
 SPECIALCASE_TEXT = """  0
@@ -331,7 +331,7 @@ AcDbText
 2
 """
 
-ACAD_REACTORS = '{ACAD_REACTORS'
+ACAD_REACTORS = "{ACAD_REACTORS"
 
 
 @pytest.fixture
@@ -346,25 +346,27 @@ def test_get_not_existing_reactor(xtags4):
 
 def test_new_reactors(xtags4):
     xtags4.new_app_data(ACAD_REACTORS)
-    assert (102, 0) == xtags4.noclass[-1]  # code = 102, value = index in appdata list
+    assert (102, 0) == xtags4.noclass[
+        -1
+    ]  # code = 102, value = index in appdata list
 
 
 def test_append_not_existing_reactors(xtags4):
-    xtags4.new_app_data(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
+    xtags4.new_app_data(ACAD_REACTORS, [DXFTag(330, "DEAD")])
     reactors = xtags4.get_app_data_content(ACAD_REACTORS)
     assert 1 == len(reactors)
-    assert DXFTag(330, 'DEAD') == reactors[0]
+    assert DXFTag(330, "DEAD") == reactors[0]
 
 
 def test_append_to_existing_reactors(xtags4):
-    xtags4.new_app_data(ACAD_REACTORS, [DXFTag(330, 'DEAD')])
+    xtags4.new_app_data(ACAD_REACTORS, [DXFTag(330, "DEAD")])
     reactors = xtags4.get_app_data_content(ACAD_REACTORS)
-    reactors.append(DXFTag(330, 'DEAD2'))
+    reactors.append(DXFTag(330, "DEAD2"))
     xtags4.set_app_data_content(ACAD_REACTORS, reactors)
 
     reactors = xtags4.get_app_data_content(ACAD_REACTORS)
-    assert DXFTag(330, 'DEAD') == reactors[0]
-    assert DXFTag(330, 'DEAD2') == reactors[1]
+    assert DXFTag(330, "DEAD") == reactors[0]
+    assert DXFTag(330, "DEAD2") == reactors[1]
 
 
 NO_REACTORS = """  0
@@ -397,12 +399,12 @@ ARIALNARROW
 
 
 def test_legacy_mode():
-    """ Legacy mode does the same job as filter_subclass_markers(). """
+    """Legacy mode does the same job as filter_subclass_markers()."""
     tags = ExtendedTags.from_text(LEICA_DISTO_TAGS, legacy=True)
     assert 9 == len(tags.noclass)
     assert 1 == len(tags.subclasses)
-    assert tags.noclass[0] == (0, 'LINE')
-    assert tags.noclass[1] == (8, 'LEICA_DISTO_3D')
+    assert tags.noclass[0] == (0, "LINE")
+    assert tags.noclass[1] == (8, "LEICA_DISTO_3D")
     assert tags.noclass[-1] == (210, (0, 0, 1))
 
 
@@ -445,15 +447,17 @@ AcDbLine
 
 def test_group_code_1000_outside_XDATA():
     tags = ExtendedTags(Tags.from_text(BLOCKBASEPOINTPARAMETER_CVIL_3D_2018))
-    assert tags.dxftype() == 'BLOCKBASEPOINTPARAMETER'
+    assert tags.dxftype() == "BLOCKBASEPOINTPARAMETER"
     assert len(tags.subclasses) == 6
-    block_base_point_parameter = tags.get_subclass('AcDbBlockBasepointParameter')
+    block_base_point_parameter = tags.get_subclass(
+        "AcDbBlockBasepointParameter"
+    )
     assert len(block_base_point_parameter) == 3
-    assert block_base_point_parameter[0] == (100, 'AcDbBlockBasepointParameter')
-    assert block_base_point_parameter[1] == (1011, (0., 0., 0.))
-    assert block_base_point_parameter[2] == (1012, (0., 0., 0.))
+    assert block_base_point_parameter[0] == (100, "AcDbBlockBasepointParameter")
+    assert block_base_point_parameter[1] == (1011, (0.0, 0.0, 0.0))
+    assert block_base_point_parameter[2] == (1012, (0.0, 0.0, 0.0))
 
-    block_element = tags.get_subclass('AcDbBlockElement')
+    block_element = tags.get_subclass("AcDbBlockElement")
     assert block_element[4] == (1071, 0)
 
     stream = StringIO()
@@ -461,7 +465,9 @@ def test_group_code_1000_outside_XDATA():
     tagwriter.write_tags(tags)
     lines = stream.getvalue()
     stream.close()
-    assert len(lines.split('\n')) == len(BLOCKBASEPOINTPARAMETER_CVIL_3D_2018.split('\n'))
+    assert len(lines.split("\n")) == len(
+        BLOCKBASEPOINTPARAMETER_CVIL_3D_2018.split("\n")
+    )
 
 
 BLOCKBASEPOINTPARAMETER_CVIL_3D_2018 = """0
@@ -527,14 +533,16 @@ AcDbBlockBasepointParameter
 
 def test_xrecord_with_group_code_102():
     tags = ExtendedTags(Tags.from_text(XRECORD_WITH_GROUP_CODE_102))
-    assert tags.dxftype() == 'XRECORD'
+    assert tags.dxftype() == "XRECORD"
     assert len(tags.appdata) == 1
     assert tags.noclass[2] == (102, 0)  # 0 == index in appdata list
-    assert tags.appdata[0][0] == (102, '{ACAD_REACTORS')
+    assert tags.appdata[0][0] == (102, "{ACAD_REACTORS")
 
-    xrecord = tags.get_subclass('AcDbXrecord')
-    assert xrecord[2] == (102, 'ACAD_ROUNDTRIP_PRE2007_TABLESTYLE')
-    assert len(list(tags)) * 2 + 1 == len(XRECORD_WITH_GROUP_CODE_102.split('\n'))  # +1 == appending '\n'
+    xrecord = tags.get_subclass("AcDbXrecord")
+    assert xrecord[2] == (102, "ACAD_ROUNDTRIP_PRE2007_TABLESTYLE")
+    assert len(list(tags)) * 2 + 1 == len(
+        XRECORD_WITH_GROUP_CODE_102.split("\n")
+    )  # +1 == appending '\n'
 
 
 XRECORD_WITH_GROUP_CODE_102 = """0
@@ -578,7 +586,7 @@ ACAD_ROUNDTRIP_PRE2007_TABLESTYLE
 
 def test_xrecord_with_long_closing_tag():
     tags = ExtendedTags(Tags.from_text(XRECORD_APP_DATA_LONG_CLOSING_TAG))
-    assert tags.dxftype() == 'XRECORD'
+    assert tags.dxftype() == "XRECORD"
     # real app data just exists only in the base class, app data marker in AcDbXrecord are just tags, interpreted by
     # the associated application
     assert len(tags.appdata) == 1

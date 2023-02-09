@@ -1,17 +1,16 @@
-#  Copyright (c) 2020, Manfred Moitzi
-#  License: MIT License
-from typing import TYPE_CHECKING, List
+# Copyright (c) 2020-2022, Manfred Moitzi
+# License: MIT License
+from __future__ import annotations
+from typing import cast
 import math
-from ezdxf.entities import factory
+from ezdxf.entities import factory, Point, DXFGraphic
 from ezdxf.math import Vec3, UCS, NULLVEC
 
-if TYPE_CHECKING:
-    from ezdxf.entities import Point, DXFGraphic
 
-
-def virtual_entities(point: 'Point', pdsize: float = 1,
-                     pdmode: int = 0) -> List['DXFGraphic']:
-    """ Yields point graphic as DXF primitives LINE and CIRCLE entities.
+def virtual_entities(
+    point: Point, pdsize: float = 1, pdmode: int = 0
+) -> list[DXFGraphic]:
+    """Yields point graphic as DXF primitives LINE and CIRCLE entities.
     The dimensionless point is rendered as zero-length line!
 
     Check for this condition::
@@ -26,19 +25,17 @@ def virtual_entities(point: 'Point', pdsize: float = 1,
         pdsize: point size in drawing units
         pdmode: point styling mode, see :class:`~ezdxf.entities.Point` class
 
-    .. versionadded:: 0.15
-
     """
 
     def add_line_symmetrical(offset: Vec3):
-        dxfattribs['start'] = ucs.to_wcs(-offset)
-        dxfattribs['end'] = ucs.to_wcs(offset)
-        entities.append(factory.new('LINE', dxfattribs))
+        dxfattribs["start"] = ucs.to_wcs(-offset)
+        dxfattribs["end"] = ucs.to_wcs(offset)
+        entities.append(cast(DXFGraphic, factory.new("LINE", dxfattribs)))
 
     def add_line(s: Vec3, e: Vec3):
-        dxfattribs['start'] = ucs.to_wcs(s)
-        dxfattribs['end'] = ucs.to_wcs(e)
-        entities.append(factory.new('LINE', dxfattribs))
+        dxfattribs["start"] = ucs.to_wcs(s)
+        dxfattribs["end"] = ucs.to_wcs(e)
+        entities.append(cast(DXFGraphic, factory.new("LINE", dxfattribs)))
 
     center = point.dxf.location
     # This is not a real OCS! Defines just the point orientation,
@@ -49,7 +46,7 @@ def virtual_entities(point: 'Point', pdsize: float = 1,
     # The point angle is clockwise oriented:
     ucs = ucs.rotate_local_z(math.radians(-point.dxf.angle))
 
-    entities = []
+    entities: list[DXFGraphic] = []
     gfx = point.graphic_properties()
 
     radius = pdsize * 0.5
@@ -80,13 +77,12 @@ def virtual_entities(point: 'Point', pdsize: float = 1,
         add_line(Vec3(x1, y2), Vec3(x1, y1))
     if has_circle:
         dxfattribs = dict(gfx)
-        if point.dxf.hasattr('extrusion'):
-            dxfattribs['extrusion'] = ocs.uz
-            dxfattribs['center'] = ocs.from_wcs(center)
+        if point.dxf.hasattr("extrusion"):
+            dxfattribs["extrusion"] = ocs.uz
+            dxfattribs["center"] = ocs.from_wcs(center)
         else:
-            dxfattribs['center'] = center
-        dxfattribs['radius'] = radius
-        entities.append(factory.new('CIRCLE', dxfattribs))
+            dxfattribs["center"] = center
+        dxfattribs["radius"] = radius
+        entities.append(cast(DXFGraphic, factory.new("CIRCLE", dxfattribs)))
 
-    # noinspection PyTypeChecker
     return entities

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -8,7 +8,7 @@ from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vec3, Matrix44, OCS, NonUniformScalingError
 
 TEST_CLASS = Circle
-TEST_TYPE = 'CIRCLE'
+TEST_TYPE = "CIRCLE"
 
 ENTITY_R12 = """0
 CIRCLE
@@ -56,6 +56,7 @@ def entity(request):
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
+
     assert TEST_TYPE in ENTITY_CLASSES
 
 
@@ -67,45 +68,49 @@ def test_default_init():
 
 
 def test_negative_radius():
-    circle = Circle.new(dxfattribs={'radius': -1})
-    assert circle.dxf.radius == -1, 'Radius < 0 is valid'
+    circle = Circle.new(dxfattribs={"radius": -1})
+    assert circle.dxf.radius == -1, "Radius < 0 is valid"
 
 
 def test_zero_radius():
-    circle = Circle.new(dxfattribs={'radius': 0})
-    assert circle.dxf.radius == 0, 'Radius == 0 is valid'
+    circle = Circle.new(dxfattribs={"radius": 0})
+    assert circle.dxf.radius == 0, "Radius == 0 is valid"
 
 
 def test_extrusion_can_not_be_a_null_vector():
-    circle = Circle.new(dxfattribs={'extrusion': (0, 0, 0)})
-    assert circle.dxf.extrusion == (0, 0, 1), 'expected default extrusion'
+    circle = Circle.new(dxfattribs={"extrusion": (0, 0, 0)})
+    assert circle.dxf.extrusion == (0, 0, 1), "expected default extrusion"
 
 
 def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'color': '7',
-        'center': (1, 2, 3),
-        'radius': 2.5,
-    })
-    assert entity.dxf.layer == '0'
+    entity = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": "7",
+            "center": (1, 2, 3),
+            "radius": 2.5,
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
-    assert entity.dxf.linetype == 'BYLAYER'
+    assert entity.dxf.linetype == "BYLAYER"
 
     assert entity.dxf.center == (1, 2, 3)
-    assert entity.dxf.center.x == 1, 'is not Vec3 compatible'
-    assert entity.dxf.center.y == 2, 'is not Vec3 compatible'
-    assert entity.dxf.center.z == 3, 'is not Vec3 compatible'
+    assert entity.dxf.center.x == 1, "is not Vec3 compatible"
+    assert entity.dxf.center.y == 2, "is not Vec3 compatible"
+    assert entity.dxf.center.z == 3, "is not Vec3 compatible"
     assert entity.dxf.radius == 2.5
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
     assert entity.dxf.extrusion == (0.0, 0.0, 1.0)
-    assert entity.dxf.hasattr('extrusion') is False, 'just the default value'
+    assert entity.dxf.hasattr("extrusion") is False, "just the default value"
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.center == (0, 0, 0)
     assert entity.dxf.radius == 1
 
@@ -113,27 +118,36 @@ def test_load_from_text(entity):
 def test_get_point_2d_circle():
     radius = 2.5
     z = 3.0
-    circle = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'center': (1, 2, z),
-        'radius': radius,
-    })
+    circle = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "center": (1, 2, z),
+            "radius": radius,
+        },
+    )
     vertices = list(circle.vertices([90]))
     assert vertices[0].isclose(Vec3(1, 2 + radius, z))
 
 
 def test_get_point_with_ocs():
-    circle = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'center': (1, 2, 3),
-        'radius': 2.5,
-        'extrusion': (0, 0, -1),
-    })
+    circle = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "center": (1, 2, 3),
+            "radius": 2.5,
+            "extrusion": (0, 0, -1),
+        },
+    )
     vertices = list(circle.vertices([90, 180]))
     assert vertices[0].isclose(Vec3(-1, 4.5, -3), abs_tol=1e-6)
     assert vertices[1].isclose(Vec3(1.5, 2, -3), abs_tol=1e-6)
 
 
-@pytest.mark.parametrize("txt,ver",
-                         [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize(
+    "txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)]
+)
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     circle = TEST_CLASS.from_text(txt)
@@ -147,7 +161,7 @@ def test_write_dxf(txt, ver):
 
 
 def test_circle_default_ocs():
-    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'thickness': 2})
+    circle = Circle.new(dxfattribs={"center": (2, 3, 4), "thickness": 2})
     # 1. rotation - 2. scaling - 3. translation
     m = Matrix44.chain(Matrix44.scale(2, 2, 3), Matrix44.translate(1, 1, 1))
     # default extrusion is (0, 0, 1), therefore scale(2, 2, ..) is a uniform
@@ -161,7 +175,8 @@ def test_circle_default_ocs():
 
 def test_circle_fast_translation():
     circle = Circle.new(
-        dxfattribs={'center': (2, 3, 4), 'extrusion': Vec3.random()})
+        dxfattribs={"center": (2, 3, 4), "extrusion": Vec3.random()}
+    )
     ocs = circle.ocs()
     offset = Vec3(1, 2, 3)
     center = ocs.to_wcs(circle.dxf.center) + offset
@@ -170,8 +185,9 @@ def test_circle_fast_translation():
 
 
 def test_circle_non_uniform_scaling():
-    circle = Circle.new(dxfattribs={'center': (2, 3, 4), 'extrusion': (0, 1, 0),
-                                    'thickness': 2})
+    circle = Circle.new(
+        dxfattribs={"center": (2, 3, 4), "extrusion": (0, 1, 0), "thickness": 2}
+    )
     # extrusion in WCS y-axis, therefore scale(2, ..., 3) is a non uniform
     # scaling in the xy-play of the OCS which is the xz-plane of the WCS
     with pytest.raises(NonUniformScalingError):
@@ -188,7 +204,8 @@ def test_circle_user_ocs():
     extrusion = (0, 1, 0)
 
     circle = Circle.new(
-        dxfattribs={'center': center, 'extrusion': extrusion, 'thickness': 2})
+        dxfattribs={"center": center, "extrusion": extrusion, "thickness": 2}
+    )
     ocs = OCS(extrusion)
     v = ocs.to_wcs(center)  # (-2, 4, 3)
     v = Vec3(v.x * 2, v.y * 4, v.z * 2)
@@ -203,11 +220,53 @@ def test_circle_user_ocs():
     assert circle.dxf.thickness == 8  # in WCS y-axis
 
 
-@pytest.mark.parametrize('radius, sagitta, count', [
-    (1, 0.35, 5), (1, 0.10, 8),
-    (0, 0.35, 0), (0, 0.10, 0),  # radius 0 works but yields nothing
-    (-1, 0.35, 5), (-1, 0.10, 8),  # negative radius same as positive radius
-])
+@pytest.mark.parametrize(
+    "radius, sagitta, count",
+    [
+        (1, 0.35, 5),
+        (1, 0.10, 8),
+        (0, 0.35, 0),
+        (0, 0.10, 0),  # radius 0 works but yields nothing
+        (-1, 0.35, 5),
+        (-1, 0.10, 8),  # negative radius same as positive radius
+    ],
+)
 def test_circle_flattening(radius, sagitta, count):
-    circle = Circle.new(dxfattribs={'radius': radius})
+    circle = Circle.new(dxfattribs={"radius": radius})
     assert len(list(circle.flattening(sagitta))) == count
+
+
+MALFORMED_CIRCLE = """0
+CIRCLE
+5
+0
+62
+7
+330
+0
+6
+LT_EZDXF
+8
+LY_EZDXF
+100
+AcDbCircle
+10
+1.0
+20
+2.0
+30
+3.0
+100
+AcDbEntity
+40
+2.0
+"""
+
+
+def test_load_malformed_circle():
+    circle = Circle.from_text(MALFORMED_CIRCLE)
+    assert circle.dxf.layer == "LY_EZDXF"
+    assert circle.dxf.linetype == "LT_EZDXF"
+    assert circle.dxf.color == 7
+    assert circle.dxf.center.isclose((1, 2, 3))
+    assert circle.dxf.radius == 2.0

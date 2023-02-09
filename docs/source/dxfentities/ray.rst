@@ -4,7 +4,8 @@ Ray
 .. module:: ezdxf.entities
     :noindex:
 
-RAY entity (`DXF Reference`_) starts at :attr:`Ray.dxf.point` and continues to infinity (construction line).
+The RAY entity (`DXF Reference`_) starts at :attr:`Ray.dxf.point` and continues to
+infinity (construction line).
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.XLine`
@@ -26,6 +27,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     Unit direction vector as (3D Point in :ref:`WCS`)
 
-    .. automethod:: transform(m: Matrix44) -> Ray
+    .. automethod:: transform
 
-    .. automethod:: translate(dx: float, dy: float, dz: float) -> Ray
+    .. automethod:: translate

@@ -110,11 +110,11 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: __len__
 
-    .. automethod:: start_location() -> Vec3
+    .. automethod:: start_location
 
-    .. automethod:: get_locations() -> List[Vec3]
+    .. automethod:: get_locations
 
-    .. automethod:: extend(vertices: Iterable[Vec3]) -> None
+    .. automethod:: extend
 
     .. automethod:: clear
 
@@ -122,11 +122,11 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: generate_geometry
 
-    .. automethod:: transform(m: Matrix44) -> MLine
+    .. automethod:: transform
 
-    .. automethod:: virtual_entities() -> Iterable[DXFGraphic]
+    .. automethod:: virtual_entities
 
-    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
+    .. automethod:: explode
 
 .. class:: MLineVertex
 

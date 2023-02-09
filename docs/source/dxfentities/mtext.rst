@@ -4,8 +4,9 @@ MText
 .. module:: ezdxf.entities
     :noindex:
 
-The MTEXT entity (`DXF Reference`_) fits a multiline text in a specified width but can extend vertically to an indefinite
-length. You can format individual words or characters within the :class:`MText`.
+The MTEXT entity (`DXF Reference`_) fits a multiline text in a specified width but can
+extend vertically to an indefinite length. You can format individual words or characters
+within the :class:`MText`.
 
 .. seealso::
 
@@ -19,7 +20,7 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
 
-.. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-5E5DB93B-F8D3-4433-ADF7-E92E250D2BAB
+.. _DXF Reference: https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-5E5DB93B-F8D3-4433-ADF7-E92E250D2BAB
 
 .. class:: MText
 
@@ -68,16 +69,17 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.style
 
-        Text style (string); default = ``'STANDARD'``
+        Text style (string); default is "STANDARD"
 
     .. attribute:: dxf.text_direction
 
-        X-axis direction vector in :ref:`WCS` (3D Point); default value is ``(1, 0, 0)``; if :attr:`dxf.rotation` and
-        :attr:`dxf.text_direction` are present,  :attr:`dxf.text_direction` wins.
+        X-axis direction vector in :ref:`WCS` (3D Point); default value is (1, 0, 0);
+        if :attr:`dxf.rotation` and :attr:`dxf.text_direction` are present,
+        :attr:`dxf.text_direction` wins.
 
     .. attribute:: dxf.rotation
 
-        Text rotation in degrees (float); default = ``0``
+        Text rotation in degrees (float); default is 0
 
     .. attribute:: dxf.line_spacing_style
 
@@ -85,7 +87,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.line_spacing_factor
 
-        Percentage of default (3-on-5) line spacing to be applied. Valid values range from ``0.25`` to ``4.00`` (float).
+        Percentage of default (3-on-5) line spacing to be applied. Valid values range
+        from 0.25 to 4.00 (float).
 
         Constants defined in :mod:`ezdxf.lldxf.const`:
 
@@ -113,40 +116,44 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         Determines how much border there is around the text.  (DXF R2007)
 
-        Requires: `bg_fill`, `bg_fill_color` else AutoCAD complains
+        Requires that the attributes `bg_fill`, `bg_fill_color` are present otherwise
+        AutoCAD complains.
 
-        Better use :meth:`set_bg_color`
+        It's recommended to use :meth:`set_bg_color`
 
     .. attribute:: dxf.bg_fill_color
 
         Background fill color as :ref:`ACI` (DXF R2007)
 
-        Better use :meth:`set_bg_color`
+        It's recommended to use :meth:`set_bg_color`
 
     .. attribute:: dxf.bg_fill_true_color
 
-        Background fill color as true color value (DXF R2007), also :attr:`dxf.bg_fill_color` must be present,
-        else AutoCAD complains.
+        Background fill color as true color value (DXF R2007), also the
+        :attr:`dxf.bg_fill_color` attribute must be present otherwise AutoCAD complains.
 
-        Better use :meth:`set_bg_color`
+        It's recommended to use :meth:`set_bg_color`
 
     .. attribute:: dxf.bg_fill_color_name
 
-        Background fill color as name string (?) (DXF R2007), also :attr:`dxf.bg_fill_color` must be present,
-        else AutoCAD complains.
+        Background fill color as name string (?) (DXF R2007), also the
+        :attr:`dxf.bg_fill_color` attribute must be present otherwise AutoCAD complains.
 
-        Better use :meth:`set_bg_color`
+        It's recommended to use :meth:`set_bg_color`
 
     .. attribute:: dxf.transparency
 
-        Transparency of background fill color (DXF R2007), not supported by AutoCAD or BricsCAD.
+        Transparency of background fill color (DXF R2007), not supported by AutoCAD nor
+        BricsCAD.
 
     .. attribute:: text
 
         MTEXT content as string (read/write).
 
-        Line endings ``\n`` will be replaced by the MTEXT line endings ``\P`` at DXF export, but **not**
-        vice versa ``\P`` by ``\n`` at DXF file loading.
+        The line ending character ``\n`` will be replaced by the MTEXT line ending
+        ``\P`` at DXF export, but **not** vice versa the ``\P`` character by ``\n`` at
+        DXF file loading, therefore loaded MTEXT entities always use the ``\P``
+        character for line endings.
 
     .. automethod:: set_location
 
@@ -154,21 +161,23 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: set_rotation
 
+    .. automethod:: get_text_direction
+
     .. automethod:: set_bg_color
 
-    .. automethod:: __iadd__(text: str) -> MText
+    .. automethod:: __iadd__
 
-    .. automethod:: append(text: str) -> MText
-
-    .. automethod:: set_font
-
-    .. automethod:: set_color
-
-    .. automethod:: add_stacked_text
+    .. automethod:: append
 
     .. automethod:: plain_text
 
-    .. automethod:: transform(m: Matrix44) -> MText
+    .. automethod:: all_columns_plain_text
+
+    .. automethod:: all_columns_raw_content
+
+    .. automethod:: transform
+
+    .. automethod:: ucs
 
 .. _mtext_inline_codes:
 
@@ -180,18 +189,20 @@ Code    Description
 ======= ===========
 \\L     Start underline
 \\l     Stop underline
-\\O	    Start overstrike
-\\o	    Stop overstrike
+\\O	    Start overline
+\\o	    Stop overline
 \\K	    Start strike-through
 \\k	    Stop strike-through
 \\P	    New paragraph (new line)
-\\pxi   Control codes for bullets, numbered paragraphs and columns
+\\p     Paragraphs properties: indentation, alignment, tabulator stops
 \\X	    Paragraph wrap on the dimension line (only in dimensions)
-\\Q	    Slanting (obliquing) text by angle - e.g. \\Q30;
-\\H     Text height - e.g. \\H3x;
-\\W	    Text width - e.g. \\W0.8x;
+\\Q	    Slanting (oblique) text by angle - e.g. \\Q30;
+\\H     Text height - e.g. relative \\H3x; absolut \\H3;
+\\W	    Text width - e.g. relative \\W0.8x; absolut \\W0.8;
+\\T     Tracking, character spacing - e.g. relative \\T0.5x; absolut \\T2;
 \\F	    Font selection e.g. \\Fgdt;o - GDT-tolerance
-\\S	    Stacking, fractions e.g. \\SA^B or \\SX/Y or \\S1#4
+\\S     Stacking, fractions e.g. \\SA^ B; space after "^" is required to avoid
+        caret decoding, \\SX/Y; \\S1#4;
 \\A     Alignment
 
         - \\A0; = bottom
@@ -208,30 +219,26 @@ Code    Description
         - \\C6; = magenta
         - \\C7; = white
 
-\\T     Tracking, char.spacing - e.g. \\T2;
-\\~     Non-wrapping space, hard space
-{}	    Braces - define the text area influenced by the code, codes and braces can be nested up to 8 levels deep
-\\	    Escape character - e.g. \\{ = "{"
+\\~     Non breaking space
+{}      Braces - define the text area influenced by the code, codes and braces
+        can be nested up to 8 levels deep
+\\      Escape character - e.g. \\{ = "{"
 ======= ===========
 
-Convenient constants defined in MText:
---------------------------------------
+Convenient constants defined in MTextEditor:
+--------------------------------------------
 
 =================== ===========
 Constant            Description
 =================== ===========
-UNDERLINE_START     start underline text (:code:`b += b.UNDERLINE_START`)
-UNDERLINE_STOP      stop underline text (:code:`b += b.UNDERLINE_STOP`)
-UNDERLINE           underline text (:code:`b += b.UNDERLINE % "Text"`)
-OVERSTRIKE_START    start overstrike
-OVERSTRIKE_STOP     stop overstrike
-OVERSTRIKE          overstrike text
-STRIKE_START        start strike trough
-STRIKE_STOP         stop strike trough
-STRIKE              strike trough text
+UNDERLINE_START     start underline text
+UNDERLINE_STOP      stop underline text
+OVERSTRIKE_START    start overline
+OVERSTRIKE_STOP     stop overline
+STRIKE_START        start strike through
+STRIKE_STOP         stop strike through
 GROUP_START         start of group
 GROUP_END           end of group
-GROUP               group text
-NEW_LINE            start in new line (:code:`b += "Text" + b.NEW_LINE`)
-NBSP                none breaking space (:code:`b += "Python" + b.NBSP + "3.4"`)
+NEW_LINE            start in new line
+NBSP                none breaking space
 =================== ===========

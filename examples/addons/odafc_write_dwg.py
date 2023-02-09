@@ -1,15 +1,26 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from pathlib import Path
-
+import pathlib
 import ezdxf
 from ezdxf.addons import odafc
 
-OUTDIR = Path('~/Desktop/Outbox').expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
-doc = ezdxf.new(setup=True)
-msp = doc.modelspace()
+# ------------------------------------------------------------------------------
+# This example shows how to export DWG files by the "Open Design Alliance File Converter" (odafc).
+#
+# docs: https://ezdxf.mozman.at/docs/addons/odafc.html
+# ------------------------------------------------------------------------------
 
-msp.add_text('DXF File created by ezdxf.')
 
-odafc.export_dwg(doc, OUTDIR / 'xyz.dwg')
+def main():
+    doc = ezdxf.new(setup=True)
+    msp = doc.modelspace()
+    msp.add_text("DXF File created by ezdxf.")
+    odafc.export_dwg(doc, str(CWD / "xyz.dwg"))
+
+
+if __name__ == "__main__":
+    main()

@@ -37,6 +37,8 @@ Short example:
 
 .. autofunction:: table_entries_to_code
 
+.. autofunction:: black
+
 .. class:: Code
 
     Source code container.
@@ -70,6 +72,8 @@ Short example:
         Blocks used by the generated source code, these blocks require a BLOCK definition in the BLOCKS section or AutoCAD will crash.
 
     .. automethod:: code_str
+
+    .. automethod:: black_code_str
 
     .. automethod:: import_str
 

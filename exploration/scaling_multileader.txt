@@ -1,0 +1,209 @@
+==================================
+MULTILEADER #A1 MTEXT: Scale = 1.0
+==================================
+
+DXF Attributes
+--------------
+
+'arrow_head_size': 4.0
+'block_scale_vector': Vec3(1.0, 1.0, 1.0)
+'dogleg_length': 8.0
+'scale': 1.0
+
+MLeaderContext
+--------------
+
+scale: 1.0
+base_point: (90.996, 154.966, 0.0)
+char_height: 4.0
+arrow_head_size: 4.0
+landing_gap_size: 2.0
+
+LeaderData
+----------
+
+1. leader line:
+  vertices: [Vec3(176.0, 129.0, 0.0)]
+
+last_leader_point: (158.0, 154.966, 0.0)
+dogleg_vector: (-1.0, 0.0, 0.0)
+dogleg_length: 8.0
+
+MTextData
+---------
+
+insert: (148.0, 157.0, 0.0)
+width: 20.5
+defined_height: 0.0
+
+==================================
+MULTILEADER MTEXT #A1: Scale = 3.0
+==================================
+
+DXF Attributes
+--------------
+
+'arrow_head_size': 4.0,                     not scaled
+'block_scale_vector': Vec3(1.0, 1.0, 1.0),  not scaled
+'dogleg_length': 24.0,                      scaled
+'scale': 3.0,
+
+MLeaderContext
+--------------
+
+scale: 3.0
+base_point: (-43.012, 154.966, 0.0)         insert point in WCS
+char_height: 12.0                           scaled
+arrow_head_size: 12.0                       scaled
+landing_gap_size: 6.0                       scaled
+
+LeaderData
+----------
+
+1. leader line:
+  vertices: [Vec3(176.0, 129.0, 0.0)]       pointing to, in WCS
+
+last_leader_point: (158.0, 154.966, 0.0)    geometry not changed
+dogleg_vector: (-1.0, 0.0, 0.0)
+dogleg_length: 24.0                         scaled
+
+MTextData
+---------
+
+insert: (128.0, 161.068, 0.0)               insert point in WCS
+width: 20.5                                 not scaled (error in BricsCAD?)
+defined_height: 0.0
+
+==================================
+MULTILEADER #E5 BLOCK: Scale = 1.0
+==================================
+
+DXF Attributes
+--------------
+
+'arrow_head_size': 4.0,
+'block_scale_vector': Vec3(1.0, 1.0, 1.0),
+'dogleg_length': 3.0,
+'scale': 1.0,
+
+MLeaderContext
+--------------
+
+scale: 1.0
+base_point: (149.2, 185.9, 0.0)
+char_height: 4.0
+arrow_head_size: 4.0
+landing_gap_size: 2.0
+
+
+BlockData
+---------
+
+insert: (149.2, 180.9, 0.0)
+scale: (1.0, 1.0, 1.0)
+matrix: [
+    1.0, 0.0, 0.0, 149.2,
+    0.0, 1.0, 0.0, 180.9,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+]
+
+==================================
+MULTILEADER #E5 BLOCK: Scale = 3.0
+==================================
+
+DXF Attributes
+--------------
+
+'arrow_head_size': 4.0,                     not scaled
+'block_scale_vector': Vec3(1.0, 1.0, 1.0),  not scaled
+'dogleg_length': 9.0,                       scaled
+'scale': 3.0,
+
+MLeaderContext
+--------------
+
+scale: 3.0
+base_point: (155.2, 185.9, 0.0)             insert point in WCS
+char_height: 12.0                           scaled
+arrow_head_size: 12.0                       scaled
+landing_gap_size: 6.0                       scaled
+
+BlockData
+---------
+
+insert: (155.2, 170.9, 0.0)
+scale: (3.0, 3.0, 3.0)                      scaled
+matrix: [
+    3.0, 0.0, 0.0, 155.2,
+    0.0, 3.0, 0.0, 170.9,
+    0.0, 0.0, 3.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+]
+
+=======================================
+MULTILEADER #E5 BLOCK (2x): Scale = 1.0
+=======================================
+
+DXF Attributes
+--------------
+
+'arrow_head_size': 4.0,
+'block_scale_vector': Vec3(2.0, 2.0, 2.0),  basic block scaling
+'dogleg_length': 3.0,
+'scale': 1.0,
+
+MLeaderContext
+--------------
+
+scale: 1.0
+base_point: (149.2, 185.9, 0.0)
+char_height: 4.0
+arrow_head_size: 4.0
+landing_gap_size: 2.0
+
+BlockData
+---------
+
+insert: (149.2, 175.9, 0.0)
+scale: (2.0, 2.0, 2.0)
+matrix: [
+    2.0, 0.0, 0.0, 149.2,
+    0.0, 2.0, 0.0, 175.9,
+    0.0, 0.0, 2.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+]
+
+
+=======================================
+MULTILEADER #E5 BLOCK (2x): Scale = 3.0
+=======================================
+
+DXF Attributes
+--------------
+
+'arrow_head_size': 4.0,                     not scaled
+'block_scale_vector': Vec3(2.0, 2.0, 2.0),  not scaled
+'dogleg_length': 9.0,                       scaled
+'scale': 3.0,
+
+MLeaderContext
+--------------
+
+scale: 3.0
+base_point: (155.2, 185.9, 0.0)             insert point in WCS
+char_height: 12.0                           scaled
+arrow_head_size: 12.0                       scaled
+landing_gap_size: 6.0                       scaled
+
+BlockData
+---------
+
+insert: (155.2, 155.9, 0.0)                 insert point in WCS
+scale: (6.0, 6.0, 6.0)                      scaled: block_scale_vector * 3
+matrix: [
+    6.0, 0.0, 0.0, 155.2,
+    0.0, 6.0, 0.0, 155.9,
+    0.0, 0.0, 6.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+]

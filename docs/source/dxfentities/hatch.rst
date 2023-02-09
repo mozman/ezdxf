@@ -4,8 +4,8 @@ Hatch
 .. module:: ezdxf.entities
     :noindex:
 
-The HATCH entity (`DXF Reference`_) fills an enclosed area defined by one or
-more boundary paths with a hatch pattern, solid fill, or gradient fill.
+The HATCH entity (`DXF Reference`_) fills a closed area defined by one or
+more boundary paths by a hatch pattern, a solid fill, or a gradient fill.
 
 All points in :ref:`OCS` as (x, y) tuples (:attr:`Hatch.dxf.elevation` is the
 z-axis value).
@@ -14,16 +14,13 @@ There are two different hatch pattern default scaling, depending on the HEADER
 variable $MEASUREMENT, one for ISO measurement (m, cm, mm, ...) and one for
 imperial measurement (in, ft, yd, ...).
 
-Starting with `ezdxf` v0.15 the default scaling for predefined hatch pattern
-will be chosen according this measurement setting in the HEADER section, this
-replicates the behavior of BricsCAD and other CAD applications. `ezdxf` uses
-the ISO pattern definitions as a base line and scales this pattern down by
-factor 1/25.6 for imperial measurement usage.
+The default scaling for predefined hatch pattern will be chosen according this
+measurement setting in the HEADER section, this replicates the behavior of
+BricsCAD and other CAD applications. `Ezdxf` uses the ISO pattern definitions as
+a base line and scales this pattern down by factor 1/25.6 for imperial
+measurement usage.
 The pattern scaling is independent from the drawing units of the document
 defined by the HEADER variable $INSUNITS.
-
-Prior to `ezdxf` v0.15 the default scaling was always the ISO
-measurement scaling, no matter which value $MEASUREMENT had.
 
 .. seealso::
 
@@ -39,7 +36,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-C6C71CED-CE0F-4184-82A5-07AD6241F15B
 
-.. rubric:: Boundary paths helper classes
+.. rubric:: Boundary paths classes
 
 Path manager: :class:`BoundaryPaths`
 
@@ -50,7 +47,7 @@ Path manager: :class:`BoundaryPaths`
     - :class:`EllipseEdge`
     - :class:`SplineEdge`
 
-.. rubric:: Pattern and gradient helper classes
+.. rubric:: Pattern and gradient classes
 
 - :class:`Pattern`
 - :class:`PatternLine`
@@ -62,11 +59,11 @@ Path manager: :class:`BoundaryPaths`
 
         Pattern name as string
 
-    .. attribute:: Hatch.dxf.solid_fill
+    .. attribute:: dxf.solid_fill
 
         === ==========================================================
-        1   solid fill, better use: :meth:`Hatch.set_solid_fill`
-        0   pattern fill, better use: :meth:`Hatch.set_pattern_fill`
+        1   solid fill,  use method :meth:`Hatch.set_solid_fill`
+        0   pattern fill, use method :meth:`Hatch.set_pattern_fill`
         === ==========================================================
 
     .. attribute:: dxf.associative
@@ -76,7 +73,7 @@ Path manager: :class:`BoundaryPaths`
         0   not associative hatch
         === =========================
 
-        Associations not handled by `ezdxf`, you have to set the handles to the associated DXF entities by yourself.
+        Associations are not managed by `ezdxf`.
 
     .. attribute:: dxf.hatch_style
 
@@ -98,13 +95,13 @@ Path manager: :class:`BoundaryPaths`
 
     .. attribute:: dxf.pattern_angle
 
-        Actual pattern angle in degrees (float). Changing this value does not rotate the pattern,
-        use :meth:`~Hatch.set_pattern_angle` for this task.
+        The actual pattern rotation angle in degrees (float). Changing this value does not
+        rotate the pattern, use :meth:`~Hatch.set_pattern_angle` for this task.
 
     .. attribute:: dxf.pattern_scale
 
-        Actual pattern scaling factor (float). Changing this value does not scale the pattern
-        use :meth:`~Hatch.set_pattern_scale` for this task.
+        The actual pattern scale factor (float). Changing this value does not
+        scale the pattern use :meth:`~Hatch.set_pattern_scale` for this task.
 
     .. attribute:: dxf.pattern_double
 
@@ -112,7 +109,7 @@ Path manager: :class:`BoundaryPaths`
 
     .. attribute:: dxf.n_seed_points
 
-        Count of seed points (better user: :meth:`get_seed_points`)
+        Count of seed points (use :meth:`get_seed_points`)
 
     .. attribute:: dxf.elevation
 
@@ -132,15 +129,15 @@ Path manager: :class:`BoundaryPaths`
 
     .. attribute:: seeds
 
-        List of ``(x, y)`` tuples.
+        A list of seed points as (x, y) tuples.
 
-    .. autoattribute:: has_solid_fill
+    .. autoproperty:: has_solid_fill
 
-    .. autoattribute:: has_pattern_fill
+    .. autoproperty:: has_pattern_fill
 
-    .. autoattribute:: has_gradient_data
+    .. autoproperty:: has_gradient_data
 
-    .. autoattribute:: bgcolor
+    .. autoproperty:: bgcolor
 
     .. automethod:: set_pattern_definition
 
@@ -165,7 +162,7 @@ Path manager: :class:`BoundaryPaths`
 Boundary Paths
 --------------
 
-The hatch entity is build by different functional path types, this are
+The hatch entity is build by different path types, these are the
 filter flags for the :attr:`Hatch.dxf.hatch_style`:
 
 - EXTERNAL: defines the outer boundary of the hatch
@@ -196,8 +193,8 @@ Hatch Style
   marked as EXTERNAL or OUTERMOST.
 - HATCH_STYLE_NESTED: Use all existing paths.
 
-Hatch Boundary Helper Classes
------------------------------
+Hatch Boundary Classes
+----------------------
 
 .. class:: BoundaryPaths
 
@@ -205,21 +202,24 @@ Hatch Boundary Helper Classes
 
     .. attribute:: paths
 
-        List of all boundary paths. Contains :class:`PolylinePath` and :class:`EdgePath` objects. (read/write)
+        List of all boundary paths. Contains :class:`PolylinePath` and
+        :class:`EdgePath` objects. (read/write)
 
-    .. automethod:: external_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+    .. automethod:: external_paths
 
-    .. automethod:: outermost_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+    .. automethod:: outermost_paths
 
-    .. automethod:: default_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+    .. automethod:: default_paths
 
-    .. automethod:: rendering_paths(hatch_style: int) -> Iterable[Union[PolylinePath, EdgePath]]
+    .. automethod:: rendering_paths
 
-    .. automethod:: add_polyline_path(path_vertices, is_closed=1, flags=1) -> PolylinePath
+    .. automethod:: add_polyline_path
 
-    .. automethod:: add_edge_path(flags=1) -> EdgePath
+    .. automethod:: add_edge_path
 
-    .. automethod:: polyline_to_edge_path
+    .. automethod:: polyline_to_edge_paths
+
+    .. automethod:: edge_to_polyline_paths
 
     .. automethod:: arc_edges_to_ellipse_edges
 
@@ -233,9 +233,25 @@ Hatch Boundary Helper Classes
 
     .. automethod:: clear
 
+
+.. class:: BoundaryPathType
+
+    .. attribute:: POLYLINE
+
+        polyline path type
+
+    .. attribute:: EDGE
+
+        edge path type
+
+
 .. class:: PolylinePath
 
     A polyline as hatch boundary path.
+
+    .. attribute:: type
+
+        Path type as :attr:`BoundaryPathType.POLYLINE` enum
 
     .. attribute:: path_type_flags
 
@@ -250,13 +266,15 @@ Hatch Boundary Helper Classes
 
         My interpretation of the :attr:`path_type_flags`, see also :ref:`tut_hatch`:
 
-            * external - path is part of the hatch outer border
-            * outermost - path is completely inside of one or more external paths
-            * default - path is completely inside of one or more outermost paths
+            - external: path is part of the hatch outer border
+            - outermost: path is completely inside of one or more external paths
+            - default: path is completely inside of one or more outermost paths
 
-        If there are troubles with AutoCAD, maybe the hatch entity has the :attr:`Hatch.dxf.pixel_size` attribute set -
-        delete it :code:`del hatch.dxf.pixel_size` and maybe the problem is solved. `ezdxf` does not use the
-        :attr:`Hatch.dxf.pixel_size` attribute, but it can occur in DXF files created by other applications.
+        If there are troubles with AutoCAD, maybe the hatch entity has the
+        :attr:`Hatch.dxf.pixel_size` attribute set - delete it
+        :code:`del hatch.dxf.pixel_size` and maybe the problem is solved.
+        `Ezdxf` does not use the :attr:`Hatch.dxf.pixel_size` attribute, but it
+        can occur in DXF files created by other applications.
 
     .. attribute:: PolylinePath.is_closed
 
@@ -268,8 +286,9 @@ Hatch Boundary Helper Classes
 
     .. attribute:: source_boundary_objects
 
-        List of handles of the associated DXF entities for associative hatches. There is no support for
-        associative hatches by `ezdxf`, you have to do it all by yourself. (read/write)
+        List of handles of the associated DXF entities for associative hatches.
+        There is no support for associative hatches by `ezdxf`, you have to do
+        it all by yourself. (read/write)
 
     .. automethod:: set_vertices
 
@@ -278,9 +297,24 @@ Hatch Boundary Helper Classes
 
 .. class:: EdgePath
 
-    Boundary path build by edges. There are four different edge types: :class:`LineEdge`, :class:`ArcEdge`,
-    :class:`EllipseEdge` of :class:`SplineEdge`. Make sure there are no gaps between edges. AutoCAD in this regard is
-    very picky. `ezdxf` performs no checks on gaps between the edges.
+    Boundary path build by edges. There are four different edge types:
+    :class:`LineEdge`, :class:`ArcEdge`, :class:`EllipseEdge` of :class:`SplineEdge`.
+    Make sure there are no gaps between edges and the edge path must be closed
+    to be recognized as path. AutoCAD is very picky in this regard.
+    `Ezdxf` performs no checks on gaps between the edges and does not prevent
+    creating open loops.
+
+    .. note::
+
+        :class:`ArcEdge` and :class:`EllipseEdge` are ALWAYS represented in
+        counter-clockwise orientation, even if an clockwise oriented edge is
+        required to build a closed loop. To add a clockwise oriented curve swap
+        start- and end angles and set the `ccw` flag to `False` and `ezdxf`
+        will export a correct clockwise orientated curve.
+
+    .. attribute:: type
+
+        Path type as :attr:`BoundaryPathType.EDGE` enum
 
     .. attribute:: path_type_flags
 
@@ -296,26 +330,43 @@ Hatch Boundary Helper Classes
 
     .. attribute:: edges
 
-        List of boundary edges of type :class:`LineEdge`, :class:`ArcEdge`, :class:`EllipseEdge` of :class:`SplineEdge`
+        List of boundary edges of type :class:`LineEdge`, :class:`ArcEdge`,
+        :class:`EllipseEdge` of :class:`SplineEdge`
 
     .. attribute:: source_boundary_objects
 
-        Required for associative hatches, list of handles to the associated DXF entities.
+        Required for associative hatches, list of handles to the associated DXF
+        entities.
 
     .. automethod:: clear
 
-    .. automethod:: add_line(start, end) -> LineEdge
+    .. automethod:: add_line
 
-    .. automethod:: add_arc(center, radius=1., start_angle=0., end_angle=360., ccw:bool=True) -> ArcEdge
+    .. automethod:: add_arc
 
-    .. automethod:: add_ellipse(center, major_axis_vector=(1., 0.), minor_axis_length=1., start_angle=0., end_angle=360., ccw:bool=True) -> EllipsePath
+    .. automethod:: add_ellipse
 
-    .. automethod:: add_spline(fit_points=None, control_points=None, knot_values=None, weights=None, degree=3, rational=0, periodic=0) -> SplinePath
+    .. automethod:: add_spline
+
+
+.. class:: EdgeType
+
+    .. attribute:: LINE
+
+    .. attribute:: ARC
+
+    .. attribute:: ELLIPSE
+
+    .. attribute:: SPLINE
 
 
 .. class:: LineEdge
 
     Straight boundary edge.
+
+    .. attribute:: type
+
+        Edge type as :attr:`EdgeType.LINE` enum
 
     .. attribute:: start
 
@@ -328,7 +379,12 @@ Hatch Boundary Helper Classes
 
 .. class:: ArcEdge
 
-    Arc as boundary edge.
+    Arc as boundary edge in counter-clockwise orientation,
+    see :meth:`EdgePath.add_arc`.
+
+    .. attribute:: type
+
+        Edge type as :attr:`EdgeType.ARC` enum
 
     .. attribute:: center
 
@@ -340,11 +396,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: start_angle
 
-        Arc start angle in degrees. (read/write)
+        Arc start angle in counter-clockwise orientation in degrees. (read/write)
 
     .. attribute:: end_angle
 
-        Arc end angle in degrees. (read/write)
+        Arc end angle in counter-clockwise orientation in degrees. (read/write)
 
     .. attribute:: ccw
 
@@ -353,7 +409,12 @@ Hatch Boundary Helper Classes
 
 .. class:: EllipseEdge
 
-    Elliptic arc as boundary edge.
+    Elliptic arc as boundary edge in counter-clockwise orientation,
+    see :meth:`EdgePath.add_ellipse`.
+
+    .. attribute:: type
+
+        Edge type as :attr:`EdgeType.ELLIPSE` enum
 
     .. attribute:: major_axis_vector
 
@@ -369,11 +430,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: start_angle
 
-        Ellipse start angle in degrees. (read/write)
+        Ellipse start angle in counter-clockwise orientation in degrees. (read/write)
 
     .. attribute:: end_angle
 
-        Ellipse end angle in degrees. (read/write)
+        Ellipse end angle in counter-clockwise orientation in degrees. (read/write)
 
     .. attribute:: ccw
 
@@ -383,6 +444,10 @@ Hatch Boundary Helper Classes
 .. class:: SplineEdge
 
     Spline as boundary edge.
+
+    .. attribute:: type
+
+        Edge type as :attr:`EdgeType.SPLINE` enum
 
     .. attribute:: degree
 
@@ -421,8 +486,8 @@ Hatch Boundary Helper Classes
         Spline end tangent (vector)  as (x, y)-tuple. (read/write)
 
 
-Hatch Pattern Definition Helper Classes
----------------------------------------
+Hatch Pattern Definition Classes
+--------------------------------
 
 .. class:: Pattern
 
@@ -439,8 +504,8 @@ Hatch Pattern Definition Helper Classes
 
 .. class:: PatternLine
 
-    Represents a pattern definition line, use factory function :meth:`Pattern.add_line` to create new pattern
-    definition lines.
+    Represents a pattern definition line, use factory function :meth:`Pattern.add_line`
+    to create new pattern definition lines.
 
     .. attribute:: angle
 
@@ -458,8 +523,8 @@ Hatch Pattern Definition Helper Classes
 
         List of dash length items (item > 0 is line, < 0 is gap, 0.0 = dot). (read/write)
 
-Hatch Gradient Fill Helper Classes
-----------------------------------
+Hatch Gradient Fill Class
+-------------------------
 
 .. class:: Gradient
 
@@ -482,14 +547,14 @@ Hatch Gradient Fill Helper Classes
 
     .. attribute:: centered
 
-        Specifies a symmetrical gradient configuration. If this option is not selected, the gradient
-        fill is shifted up and to the left, creating the illusion of a light source to the left of
-        the object. (read/write)
+        Specifies a symmetrical gradient configuration. If this option is not
+        selected, the gradient fill is shifted up and to the left, creating the
+        illusion of a light source to the left of the object. (read/write)
 
     .. attribute:: tint
 
-        Specifies the tint (:attr:`color1` mixed with white) of a color to be used for a gradient
-        fill of one color. (read/write)
+        Specifies the tint (:attr:`color1` mixed with white) of a color to be
+        used for a gradient fill of one color. (read/write)
 
 .. seealso::
 

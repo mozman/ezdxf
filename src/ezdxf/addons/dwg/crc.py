@@ -1,8 +1,7 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import Union
 
-__all__ = ['crc8', 'crc32']
+__all__ = ["crc8", "crc32"]
 
 from .const import Bytes
 
@@ -18,10 +17,13 @@ def crc8(data: Bytes, seed: int = 0) -> int:
 def crc32(data: Bytes, seed: int = 0) -> int:
     inverted_crc = ~seed
     for byte in data:
-        inverted_crc = (inverted_crc >> 8) ^ CRC32_TABLE[(inverted_crc ^ byte) & 0xff]
+        inverted_crc = (inverted_crc >> 8) ^ CRC32_TABLE[
+            (inverted_crc ^ byte) & 0xFF
+        ]
     return ~inverted_crc
 
 
+# fmt: off
 # Source: Open Design Specification for .dwg
 CRC8_TABLE = [
     0x0000, 0xC0C1, 0xC181, 0x0140, 0xC301, 0x03C0, 0x0280, 0xC241, 0xC601, 0x06C0, 0x0780, 0xC741, 0x0500, 0xC5C1,
@@ -77,3 +79,5 @@ CRC32_TABLE = [
     0x24b4a3a6, 0xbad03605, 0xcdd70693, 0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d,
 ]
+
+# fmt: on

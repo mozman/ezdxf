@@ -138,33 +138,33 @@ CSG Class
 
 .. autoclass:: CSG(mesh: MeshBuilder, meshid: int = 0)
 
-    .. automethod:: mesh(meshid: int = 0) -> MeshTransformer
+    .. automethod:: mesh
 
-    .. automethod:: union(other: CSG) -> CSG
+    .. automethod:: union
 
-    .. method:: __add__(other: CSG) -> CSG
+    .. method:: __add__
 
        .. code-block:: Python
 
             union = A + B
 
-    .. automethod:: subtract(other: CSG) -> CSG
+    .. automethod:: subtract
 
-    .. method:: __sub__(other: CSG) -> CSG
+    .. method:: __sub__
 
        .. code-block:: Python
 
             difference = A - B
 
-    .. automethod:: intersect(other: CSG) -> CSG
+    .. automethod:: intersect
 
-    .. method:: __mul__(other: CSG) -> CSG
+    .. method:: __mul__
 
        .. code-block:: Python
 
             intersection = A * B
 
-    .. automethod:: inverse() -> CSG
+    .. automethod:: inverse
 
 License
 -------

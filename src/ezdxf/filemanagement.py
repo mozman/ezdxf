@@ -1,20 +1,25 @@
-# Copyright (C) 2018-2020, Manfred Moitzi
+# Copyright (C) 2018-2022, Manfred Moitzi
 # License: MIT License
-from typing import TextIO, TYPE_CHECKING, Union, Sequence
+from __future__ import annotations
+from typing import TextIO, TYPE_CHECKING, Union, Sequence, Optional
 import base64
 import io
+import pathlib
+
 from ezdxf.tools.standards import setup_drawing
 from ezdxf.lldxf.const import DXF2013
 from ezdxf.document import Drawing
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFInfo
+    from ezdxf.lldxf.validator import DXFInfo
 
 
-def new(dxfversion: str = DXF2013,
-        setup: Union[str, bool, Sequence[str]] = False,
-        units: int = 6) -> 'Drawing':
-    """ Create a new :class:`~ezdxf.drawing.Drawing` from scratch, `dxfversion`
+def new(
+    dxfversion: str = DXF2013,
+    setup: Union[str, bool, Sequence[str]] = False,
+    units: int = 6,
+) -> Drawing:
+    """Create a new :class:`~ezdxf.drawing.Drawing` from scratch, `dxfversion`
     can be either "AC1009" the official DXF version name or "R12" the
     AutoCAD release name.
 
@@ -57,14 +62,14 @@ def new(dxfversion: str = DXF2013,
     """
     doc = Drawing.new(dxfversion)
     doc.units = units
-    doc.header['$MEASUREMENT'] = 0 if units in (1, 2, 3, 8, 9, 10) else 1
+    doc.header["$MEASUREMENT"] = 0 if units in (1, 2, 3, 8, 9, 10) else 1
     if setup:
         setup_drawing(doc, topics=setup)
     return doc
 
 
-def read(stream: TextIO) -> 'Drawing':
-    """ Read a DXF document from a text-stream. Open stream in text mode
+def read(stream: TextIO) -> Drawing:
+    """Read a DXF document from a text-stream. Open stream in text mode
     (``mode='rt'``) and set correct text encoding, the stream requires at least
     a :meth:`readline` method.
 
@@ -83,19 +88,18 @@ def read(stream: TextIO) -> 'Drawing':
     Raises:
         DXFStructureError: for invalid or corrupted DXF structures
 
-    .. deprecated:: v0.14
-
-        argument `legacy_mode`, use module :mod:`ezdxf.recover`
-        to load DXF documents with structural flaws.
-
     """
     from ezdxf.document import Drawing
+
     return Drawing.read(stream)
 
 
-def readfile(filename: str, encoding: str = None,
-             errors: str = 'surrogateescape') -> 'Drawing':
-    """  Read the DXF document `filename` from the file-system.
+def readfile(
+    filename: Union[str, pathlib.Path],
+    encoding: Optional[str] = None,
+    errors: str = "surrogateescape",
+) -> Drawing:
+    """Read the DXF document `filename` from the file-system.
 
     This is the preferred method to load existing ASCII or Binary DXF files,
     the required text encoding will be detected automatically and decoding
@@ -124,11 +128,6 @@ def readfile(filename: str, encoding: str = None,
         DXFStructureError: for invalid or corrupted DXF structures
         UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
-    .. deprecated:: v0.14
-
-        argument `legacy_mode`, use module :mod:`ezdxf.recover`
-        to load DXF documents with structural flaws.
-
     """
     from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
     from ezdxf.tools.codepage import is_supported_encoding
@@ -136,10 +135,12 @@ def readfile(filename: str, encoding: str = None,
 
     filename = str(filename)
     if is_binary_dxf_file(filename):
-        with open(filename, 'rb') as fp:
+        with open(filename, "rb") as fp:
             data = fp.read()
             loader = binary_tags_loader(data, errors=errors)
-            return Drawing.load(loader)
+            doc = Drawing.load(loader)
+            doc.filename = filename
+            return doc
 
     if not is_dxf_file(filename):
         raise IOError(f"File '{filename}' is not a DXF file.")
@@ -148,9 +149,8 @@ def readfile(filename: str, encoding: str = None,
     if encoding is not None:
         # override default encodings if absolute necessary
         info.encoding = encoding
-    with open(filename, mode='rt', encoding=info.encoding,
-              errors=errors) as fp:
-        doc = read(fp)
+    with open(filename, mode="rt", encoding=info.encoding, errors=errors) as fp:  # type: ignore
+        doc = read(fp)  # type: ignore
 
     doc.filename = filename
     if encoding is not None and is_supported_encoding(encoding):
@@ -161,17 +161,17 @@ def readfile(filename: str, encoding: str = None,
     return doc
 
 
-def dxf_file_info(filename: str) -> 'DXFInfo':
-    """ Reads basic file information from a DXF document: DXF version, encoding
+def dxf_file_info(filename: str) -> DXFInfo:
+    """Reads basic file information from a DXF document: DXF version, encoding
     and handle seed.
 
     """
-    with open(filename, mode='rt', encoding='utf-8', errors='ignore') as fp:
+    with open(filename, mode="rt", encoding="utf-8", errors="ignore") as fp:
         return dxf_stream_info(fp)
 
 
-def dxf_stream_info(stream: TextIO) -> 'DXFInfo':
-    """ Reads basic DXF information from a text stream: DXF version, encoding
+def dxf_stream_info(stream: TextIO) -> DXFInfo:
+    """Reads basic DXF information from a text stream: DXF version, encoding
     and handle seed.
 
     """
@@ -179,14 +179,17 @@ def dxf_stream_info(stream: TextIO) -> 'DXFInfo':
 
     info = dxf_info(stream)
     # R2007 files and later are always encoded as UTF-8
-    if info.version >= 'AC1021':
-        info.encoding = 'utf-8'
+    if info.version >= "AC1021":
+        info.encoding = "utf-8"
     return info
 
 
-def readzip(zipfile: str, filename: str = None,
-            errors: str = 'surrogateescape') -> 'Drawing':
-    """ Load a DXF document specified by `filename` from a zip archive, or if
+def readzip(
+    zipfile: str,
+    filename: Optional[str] = None,
+    errors: str = "surrogateescape",
+) -> Drawing:
+    """Load a DXF document specified by `filename` from a zip archive, or if
     `filename` is ``None`` the first DXF document in the zip archive.
 
     Args:
@@ -208,14 +211,14 @@ def readzip(zipfile: str, filename: str = None,
     """
     from ezdxf.tools.zipmanager import ctxZipReader
 
-    with ctxZipReader(zipfile, filename, errors=errors) as zipstream:
+    with ctxZipReader(zipfile, filename, errors=errors) as zipstream:  # type: ignore
         doc = read(zipstream)
         doc.filename = zipstream.dxf_file_name
     return doc
 
 
-def decode_base64(data: bytes, errors: str = 'surrogateescape') -> 'Drawing':
-    """ Load a DXF document from base64 encoded binary data, like uploaded data
+def decode_base64(data: bytes, errors: str = "surrogateescape") -> "Drawing":
+    """Load a DXF document from base64 encoded binary data, like uploaded data
     to web applications.
 
     Args:
@@ -237,12 +240,12 @@ def decode_base64(data: bytes, errors: str = 'surrogateescape') -> 'Drawing':
     binary_data = base64.b64decode(data)
 
     # Replace windows line ending '\r\n' by universal line ending '\n'
-    binary_data = binary_data.replace(b'\r\n', b'\n')
+    binary_data = binary_data.replace(b"\r\n", b"\n")
 
     # Read DXF file info from data, basic DXF information in the HEADER
     # section is ASCII encoded so encoding setting here is not important
     # for this task:
-    text = binary_data.decode('utf-8', errors='ignore')
+    text = binary_data.decode("utf-8", errors="ignore")
     stream = io.StringIO(text)
     info = dxf_stream_info(stream)
     stream.close()
@@ -255,3 +258,18 @@ def decode_base64(data: bytes, errors: str = 'surrogateescape') -> 'Drawing':
     doc = read(stream)
     stream.close()
     return doc
+
+
+def find_support_file(
+    filename: str, support_dirs: Optional[Sequence[str]] = None
+) -> str:
+    """Find file `filename` in the support directories`."""
+    if pathlib.Path(filename).exists():
+        return filename
+    if support_dirs is None:
+        support_dirs = []
+    for directory in support_dirs:
+        filepath = pathlib.Path(directory).expanduser() / filename
+        if filepath.exists():
+            return str(filepath)
+    return filename

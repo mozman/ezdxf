@@ -1,6 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import Sequence, Iterable, Tuple, TYPE_CHECKING
 from itertools import chain
@@ -10,12 +10,14 @@ Vec3, v3_normalize, v3_isclose, v3_cross, v3_dot,
 )
 from .vector import X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 
-from libc.math cimport fabs, sin, cos
+from libc.math cimport fabs, sin, cos, tan
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.math import UVec
 
 DEF ABS_TOL = 1e-12
+DEF REL_TOL = 1e-9
+
 cdef double[16] IDENTITY = [
     1.0, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0,
@@ -44,6 +46,9 @@ cdef class Matrix44:
         else:
             raise ValueError("invalid argument count: 4 row vectors or "
                              "iterable of 16 numbers")
+
+    def __reduce__(self):
+        return Matrix44, (tuple(self),)
 
     def __getitem__(self, tuple index: Tuple[int, int]) -> float:
         cdef int row = index[0]
@@ -141,7 +146,7 @@ cdef class Matrix44:
         return v
 
     @origin.setter
-    def origin(self, v: 'Vertex') -> None:
+    def origin(self, v: UVec) -> None:
         cdef Vec3 origin = Vec3(v)
         self.m[12] = origin.x
         self.m[13] = origin.y
@@ -183,7 +188,7 @@ cdef class Matrix44:
     @property
     def is_cartesian(self) -> bool:
         cdef Vec3 x_axis = v3_cross(self.get_uy(), self.get_uz())
-        return v3_isclose(x_axis, self.get_ux(), ABS_TOL)
+        return v3_isclose(x_axis, self.get_ux(), REL_TOL, ABS_TOL)
 
     @property
     def is_orthogonal(self) -> bool:
@@ -244,7 +249,7 @@ cdef class Matrix44:
         return mat
 
     @staticmethod
-    def axis_rotate(axis: 'Vertex', double angle) -> 'Matrix44':
+    def axis_rotate(axis: UVec, double angle) -> 'Matrix44':
         cdef Matrix44 mat = Matrix44()
         cdef double cos_a = cos(angle)
         cdef double sin_a = sin(angle)
@@ -290,6 +295,15 @@ cdef class Matrix44:
         mat.m[8] = sy
         mat.m[9] = -sx * cy
         mat.m[10] = cx * cy
+        return mat
+
+    @staticmethod
+    def shear_xy(double angle_x = 0, double angle_y = 0) -> 'Matrix44':
+        cdef Matrix44 mat = Matrix44()
+        cdef double tx = tan(angle_x)
+        cdef double ty = tan(angle_y)
+        mat.m[1] = ty
+        mat.m[4] = tx
         return mat
 
     @staticmethod
@@ -491,7 +505,7 @@ cdef class Matrix44:
 
         return mat
 
-    def transform(self, vector: 'Vertex') -> Vec3:
+    def transform(self, vector: UVec) -> Vec3:
         cdef Vec3 res = Vec3(vector)
         cdef double x = res.x
         cdef double y = res.y
@@ -503,7 +517,7 @@ cdef class Matrix44:
         res.z = x * m[2] + y * m[6] + z * m[10] + m[14]
         return res
 
-    def transform_direction(self, vector: 'Vertex', normalize=False) -> Vec3:
+    def transform_direction(self, vector: UVec, normalize=False) -> Vec3:
         cdef Vec3 res = Vec3(vector)
         cdef double x = res.x
         cdef double y = res.y
@@ -520,7 +534,7 @@ cdef class Matrix44:
 
     ocs_to_wcs = transform_direction
 
-    def transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vec3]:
+    def transform_vertices(self, vectors: Iterable[UVec]) -> Iterable[Vec3]:
         cdef double *m = self.m
         cdef Vec3 res
         cdef double x, y, z
@@ -536,7 +550,7 @@ cdef class Matrix44:
             res.z = x * m[2] + y * m[6] + z * m[10] + m[14]
             yield res
 
-    def transform_directions(self, vectors: Iterable['Vertex'],
+    def transform_directions(self, vectors: Iterable[UVec],
                              normalize=False) -> Iterable[Vec3]:
         cdef double *m = self.m
         cdef Vec3 res
@@ -557,7 +571,7 @@ cdef class Matrix44:
     def ucs_vertex_from_wcs(self, wcs: Vec3) -> Vec3:
         return self.ucs_direction_from_wcs(wcs - self.origin)
 
-    def ucs_direction_from_wcs(self, wcs: 'Vertex') -> Vec3:
+    def ucs_direction_from_wcs(self, wcs: UVec) -> Vec3:
         cdef double *m = self.m
         cdef Vec3 res = Vec3(wcs)
         cdef double x = res.x

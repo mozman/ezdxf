@@ -1,6 +1,5 @@
 # Purpose: compiler for line type definitions
-# Created: 12.01.2018
-# Copyright (c) 2018, Manfred Moitzi
+# Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
 
 # Auszug acadlt.lin
@@ -42,21 +41,21 @@
 # A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25
 # *ZICKZACK,Zickzack /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 # A,.0001,-.2,[ZIG,ltypeshp.shx,x=-.2,s=.2],-.4,[ZIG,ltypeshp.shx,r=180,x=.2,s=.2],-.2
-
-from typing import TYPE_CHECKING, Iterable, Sequence, Union
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Sequence, Union, Any
 from ezdxf.lldxf.const import DXFValueError, DXFTableEntryError
 from ezdxf.lldxf.tags import DXFTag, Tags
 
 if TYPE_CHECKING:  # import forward references
-    from ezdxf.eztypes import Drawing
+    from ezdxf.document import Drawing
 
 Token = Union[str, float, list]
 
 
 def lin_compiler(definition: str) -> Sequence[DXFTag]:
     """
-    Compiles line type definitions like 'A,.5,-.25,.5,-.25,0,-.25' or 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25'
-    into DXFTags().
+    Compiles line type definitions like 'A,.5,-.25,.5,-.25,0,-.25' or
+    'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25' into DXFTags().
 
     Args:
         definition: definition string
@@ -68,33 +67,35 @@ def lin_compiler(definition: str) -> Sequence[DXFTag]:
     # ['A', .5, -.2, ['TEXT', 'GAS', 'STANDARD', 's', .1, 'u', 0.0, 'x', -.1, 'y', -.05], -.25]
     tags = []
     for token in lin_parser(definition):
-        if token == 'A':
+        if token == "A":
             continue
         elif isinstance(token, float):
-            tags.append(DXFTag(49, token))  # Dash, dot or space length (one entry per element)
+            tags.append(
+                DXFTag(49, token)
+            )  # Dash, dot or space length (one entry per element)
         elif isinstance(token, list):  # yield from
-            tags.append(compile_complex_defnition(token))
+            tags.append(compile_complex_definition(token))  # type: ignore
     return tags
 
 
 class ComplexLineTypePart:
-    def __init__(self, type_: str, value, font: str = 'STANDARD'):
+    def __init__(self, type_: str, value, font: str = "STANDARD"):
         self.type = type_
         self.value = value
         self.font = font
         self.tags = Tags()
 
-    def complex_ltype_tags(self, doc: 'Drawing') -> Sequence[DXFTag]:
+    def complex_ltype_tags(self, doc: "Drawing") -> Sequence[DXFTag]:
         def get_font_handle() -> str:
-            if self.type == 'SHAPE':
+            if self.type == "SHAPE":
                 # Create new shx or returns existing entry:
                 font = doc.styles.get_shx(self.font)
             else:
                 try:
                     # Case insensitive search for text style:
-                    font = doc.styles.get(self.font)
+                    font = doc.styles.get(self.font)  # type: ignore
                 except DXFTableEntryError:
-                    font = doc.styles.new(self.font)
+                    font = doc.styles.new(self.font)  # type: ignore
             return font.dxf.handle
 
         # Note: AutoCAD/BricsCAD do NOT report an error or even crash, if the
@@ -102,24 +103,9 @@ class ComplexLineTypePart:
         if doc is not None:
             handle = get_font_handle()
         else:
-            handle = '0'
+            handle = "0"
         tags = []
-
-        # ODA complex linetype specification (20.4.58):
-        # code 49: dash or dot specifier (float)
-        # code 75: complex_shape_code (int)
-        # code 44: x-offset (float)
-        # code 45: y-offset (float)
-        # code 46: scale (float)
-        # code 50: rotation in degrees (float)
-        # code 74: shape_flag (bit coded)
-        # - 1: text is rotated 0 deg, otherwise follows the segment
-        # - 2: complex_shape_code holds the index of the shape
-        # - 4: complex_shape_code holds the index into the text area of the string to be drawn
-        # code 340: handle to STYLE entry
-        # code 9: string area
-
-        if self.type == 'TEXT':
+        if self.type == "TEXT":
             tags.append(DXFTag(74, 2))
             tags.append(DXFTag(75, 0))
         else:  # SHAPE
@@ -127,21 +113,21 @@ class ComplexLineTypePart:
             tags.append(DXFTag(75, self.value))
         tags.append(DXFTag(340, handle))
         tags.extend(self.tags)
-        if self.type == 'TEXT':
+        if self.type == "TEXT":
             tags.append(DXFTag(9, self.value))
         return tags
 
 
 CMD_CODES = {
-    's': 46,
-    'r': 50,  # r == u
-    'u': 50,
-    'x': 44,
-    'y': 45,
+    "s": 46,  # scaling factor
+    "r": 50,  # rotation angle, r == u
+    "u": 50,  # rotation angle
+    "x": 44,  # shift x units = parallel to line direction
+    "y": 45,  # shift y units = normal to line direction
 }
 
 
-def compile_complex_defnition(tokens: Sequence) -> ComplexLineTypePart:
+def compile_complex_definition(tokens: Sequence) -> ComplexLineTypePart:
     part = ComplexLineTypePart(tokens[0], tokens[1], tokens[2])
     commands = list(reversed(tokens[3:]))
     params = {}
@@ -152,17 +138,17 @@ def compile_complex_defnition(tokens: Sequence) -> ComplexLineTypePart:
         params[code] = DXFTag(code, value)
 
     for code in (46, 50, 44, 45):
-        tag = params.get(code, DXFTag(code, 0.))
+        tag = params.get(code, DXFTag(code, 0.0))
         part.tags.append(tag)
     return part
 
 
 def lin_parser(definition: str) -> Sequence[Token]:
-    bag = []
+    bag: list[Any] = []
     sublist = None
     first = True
     for token in lin_tokenizer(definition):
-        if token == 'A' and first:
+        if token == "A" and first:
             bag.append(token)
             first = False
             continue
@@ -174,42 +160,50 @@ def lin_parser(definition: str) -> Sequence[Token]:
         except ValueError:
             pass
 
-        if token.startswith('['):
+        if token.startswith("["):
             if sublist is not None:
-                raise DXFValueError('Complex line type error. {}'.format(definition))
+                raise DXFValueError(
+                    "Complex line type error. {}".format(definition)
+                )
             sublist = []
             if token.startswith('["'):
-                sublist.append('TEXT')
-                sublist.append(token[2:-1])  # text without surrounding '["' and '"'
+                sublist.append("TEXT")
+                sublist.append(
+                    token[2:-1]
+                )  # text without surrounding '["' and '"'
             else:
-                sublist.append('SHAPE')
+                sublist.append("SHAPE")
                 try:
-                    sublist.append(int(token[1:]))  # shape index! required
+                    sublist.append(int(token[1:]))  # type: ignore # shape index! required
                 except ValueError:
-                    raise DXFValueError('Complex line type with shapes requires shape index not shape name!')
+                    raise DXFValueError(
+                        "Complex line type with shapes requires shape index not shape name!"
+                    )
         else:
-            _token = token.rstrip(']')
-            subtokens = _token.split('=')
+            _token = token.rstrip("]")
+            subtokens = _token.split("=")
             if len(subtokens) == 2:
                 sublist.append(subtokens[0].lower())
-                sublist.append(float(subtokens[1]))
+                sublist.append(float(subtokens[1]))  # type: ignore
             else:
                 sublist.append(_token)
-        if token.endswith(']'):
+        if token.endswith("]"):
             if sublist is None:
-                raise DXFValueError('Complex line type error. {}'.format(definition))
+                raise DXFValueError(
+                    "Complex line type error. {}".format(definition)
+                )
             bag.append(sublist)
-            sublist = None
+            sublist = None  # type: ignore
     return bag
 
 
 def lin_tokenizer(definition: str) -> Iterable[str]:
-    token = ''
+    token = ""
     escape = False
     for char in definition:
-        if char == ',' and not escape:
+        if char == "," and not escape:
             yield token.strip()
-            token = ''
+            token = ""
             continue
         token += char
         if char == '"':

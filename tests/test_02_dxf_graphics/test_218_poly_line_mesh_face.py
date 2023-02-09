@@ -14,38 +14,42 @@ def msp():
 
 def test_create_polyline2D(msp):
     polyline = msp.add_polyline2d([(0, 0), (1, 1)])
-    assert (0., 0.) == polyline[0].dxf.location
-    assert (1., 1.) == polyline[1].dxf.location
-    assert 'AcDb2dPolyline' == polyline.get_mode()
+    assert (0.0, 0.0) == polyline[0].dxf.location
+    assert (1.0, 1.0) == polyline[1].dxf.location
+    assert "AcDb2dPolyline" == polyline.get_mode()
 
 
 def test_create_polyline3D(msp):
     polyline = msp.add_polyline3d([(1, 2, 3), (4, 5, 6)])
-    assert (1., 2., 3.) == polyline[0].dxf.location
-    assert (4., 5., 6.) == polyline[1].dxf.location
+    assert (1.0, 2.0, 3.0) == polyline[0].dxf.location
+    assert (4.0, 5.0, 6.0) == polyline[1].dxf.location
     assert VTX_3D_POLYLINE_VERTEX == polyline[0].dxf.flags
-    assert 'AcDb3dPolyline' == polyline.get_mode()
+    assert "AcDb3dPolyline" == polyline.get_mode()
 
 
 def test_polyline3d_vertex_layer(msp):
-    attribs = {'layer': 'polyline_layer'}
+    attribs = {"layer": "polyline_layer"}
     polyline = msp.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)
     for vertex in polyline.vertices:
-        assert 'polyline_layer' == vertex.dxf.layer, "VERTEX entity not on the same layer as the POLYLINE entity."
+        assert (
+            "polyline_layer" == vertex.dxf.layer
+        ), "VERTEX entity not on the same layer as the POLYLINE entity."
 
 
 def test_polyline3d_change_polyline_layer(msp):
-    attribs = {'layer': 'polyline_layer'}
+    attribs = {"layer": "polyline_layer"}
     polyline = msp.add_polyline3d([(1, 2, 3), (4, 5, 6)], dxfattribs=attribs)
     polyline.dxf.layer = "changed_layer"
     for vertex in polyline.vertices:
-        assert 'changed_layer' == vertex.dxf.layer, "VERTEX entity not on the same layer as the POLYLINE entity."
+        assert (
+            "changed_layer" == vertex.dxf.layer
+        ), "VERTEX entity not on the same layer as the POLYLINE entity."
 
 
 def test_polyline2d_set_vertex(msp):
     polyline = msp.add_polyline2d([(0, 0), (1, 1), (2, 2), (3, 3)])
     polyline[2].dxf.location = (7, 7)
-    assert (7., 7.) == polyline[2].dxf.location
+    assert (7.0, 7.0) == polyline[2].dxf.location
 
 
 def test_polyline2d_points(msp):
@@ -63,7 +67,7 @@ def test_polyline2d_point_slicing(msp):
 def test_poyline2d_append_vertices(msp):
     polyline = msp.add_polyline2d([(0, 0), (1, 1)])
     polyline.append_vertices([(7, 7), (8, 8)])
-    assert (7., 7.) == polyline[2].dxf.location
+    assert (7.0, 7.0) == polyline[2].dxf.location
     assert 4 == len(polyline)
 
 

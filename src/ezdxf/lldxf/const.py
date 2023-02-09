@@ -1,31 +1,32 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from enum import IntEnum
+from __future__ import annotations
+from dataclasses import dataclass
 
-DXF9 = 'AC1004'
-DXF10 = 'AC1006'
-DXF12 = 'AC1009'
-DXF13 = 'AC1012'
-DXF14 = 'AC1014'
-DXF2000 = 'AC1015'
-DXF2004 = 'AC1018'
-DXF2007 = 'AC1021'
-DXF2010 = 'AC1024'
-DXF2013 = 'AC1027'
-DXF2018 = 'AC1032'
+DXF9 = "AC1004"
+DXF10 = "AC1006"
+DXF12 = "AC1009"
+DXF13 = "AC1012"
+DXF14 = "AC1014"
+DXF2000 = "AC1015"
+DXF2004 = "AC1018"
+DXF2007 = "AC1021"
+DXF2010 = "AC1024"
+DXF2013 = "AC1027"
+DXF2018 = "AC1032"
 
 acad_release = {
-    DXF9: 'R9',
-    DXF10: 'R10',
-    DXF12: 'R12',
-    DXF13: 'R13',
-    DXF14: 'R14',
-    DXF2000: 'R2000',
-    DXF2004: 'R2004',
-    DXF2007: 'R2007',
-    DXF2010: 'R2010',
-    DXF2013: 'R2013',
-    DXF2018: 'R2018',
+    DXF9: "R9",
+    DXF10: "R10",
+    DXF12: "R12",
+    DXF13: "R13",
+    DXF14: "R14",
+    DXF2000: "R2000",
+    DXF2004: "R2004",
+    DXF2007: "R2007",
+    DXF2010: "R2010",
+    DXF2013: "R2013",
+    DXF2018: "R2018",
 }
 
 acad_maint_ver = {
@@ -39,16 +40,22 @@ acad_maint_ver = {
 }
 
 versions_supported_by_new = [
-    DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018]
+    DXF12,
+    DXF2000,
+    DXF2004,
+    DXF2007,
+    DXF2010,
+    DXF2013,
+    DXF2018,
+]
 versions_supported_by_save = versions_supported_by_new
 LATEST_DXF_VERSION = versions_supported_by_new[-1]
 
-acad_release_to_dxf_version = {
-    acad: dxf for dxf, acad in acad_release.items()
-}
+acad_release_to_dxf_version = {acad: dxf for dxf, acad in acad_release.items()}
 
 
 class DXFError(Exception):
+    """Base exception for all `ezdxf` exceptions. """
     pass
 
 
@@ -57,6 +64,10 @@ class InvalidGeoDataException(DXFError):
 
 
 class DXFStructureError(DXFError):
+    pass
+
+
+class DXFLoadError(DXFError):
     pass
 
 
@@ -69,17 +80,17 @@ class DXFXDataError(DXFStructureError):
 
 
 class DXFVersionError(DXFError):
-    """ Errors related to features not supported by the chosen DXF Version """
+    """Errors related to features not supported by the chosen DXF Version"""
     pass
 
 
 class DXFInternalEzdxfError(DXFError):
-    """ Indicates internal errors -  should be fixed by mozman """
+    """Indicates internal errors -  should be fixed by mozman"""
     pass
 
 
 class DXFUnsupportedFeature(DXFError):
-    """ Indicates unsupported features for DXFEntities e.g. translation for
+    """Indicates unsupported features for DXFEntities e.g. translation for
     ACIS data
     """
     pass
@@ -129,20 +140,49 @@ class DXFUndefinedBlockError(DXFKeyError):
     pass
 
 
+class DXFRenderError(DXFError):
+    """Errors related to DXF "rendering" tasks.
+
+    In this context "rendering" means creating the graphical representation of
+    complex DXF entities by DXF primitives (LINE, TEXT, ...)
+    e.g. for DIMENSION or LEADER entities.
+    """
+    pass
+
+
+class DXFMissingDefinitionPoint(DXFRenderError):
+    """Missing required definition points in the DIMENSION entity."""
+
+
+def normalize_dxfversion(dxfversion: str, check_save=True) -> str:
+    """Normalizes the DXF version string to "AC10xx"."""
+    dxfversion = dxfversion.upper()
+    dxfversion = acad_release_to_dxf_version.get(dxfversion, dxfversion)
+    if check_save and dxfversion not in versions_supported_by_save:
+        raise DXFVersionError(f"Invalid DXF version: {dxfversion}")
+    return dxfversion
+
+
 MANAGED_SECTIONS = {
-    'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'
+    "HEADER",
+    "CLASSES",
+    "TABLES",
+    "BLOCKS",
+    "ENTITIES",
+    "OBJECTS",
+    "ACDSDATA",
 }
 
 TABLE_NAMES_ACAD_ORDER = [
-    'VPORT',
-    'LTYPE',
-    'LAYER',
-    'STYLE',
-    'VIEW',
-    'UCS',
-    'APPID',
-    'DIMSTYLE',
-    'BLOCK_RECORD',
+    "VPORT",
+    "LTYPE",
+    "LAYER",
+    "STYLE",
+    "VIEW",
+    "UCS",
+    "APPID",
+    "DIMSTYLE",
+    "BLOCK_RECORD",
 ]
 
 APP_DATA_MARKER = 102
@@ -151,11 +191,15 @@ XDATA_MARKER = 1001
 COMMENT_MARKER = 999
 STRUCTURE_MARKER = 0
 HEADER_VAR_MARKER = 9
-ACAD_REACTORS = '{ACAD_REACTORS'
-ACAD_XDICTIONARY = '{ACAD_XDICTIONARY'
+ACAD_REACTORS = "{ACAD_REACTORS"
+ACAD_XDICTIONARY = "{ACAD_XDICTIONARY"
 XDICT_HANDLE_CODE = 360
 REACTOR_HANDLE_CODE = 330
 OWNER_CODE = 330
+
+# https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-2553CF98-44F6-4828-82DD-FE3BC7448113
+MAX_STR_LEN = 255  # DXF R12 without line endings
+EXT_MAX_STR_LEN = 2049  # DXF R2000+ without line endings
 
 # Special tag codes for internal purpose:
 # -1 to -5 id reserved by AutoCAD for internal use, but this tags will never be
@@ -164,6 +208,7 @@ OWNER_CODE = 330
 # normal tags before saved to file.
 COMPRESSED_TAGS = -10
 
+# All color related constants are located in colors.py
 BYBLOCK = 0
 BYLAYER = 256
 BYOBJECT = 257
@@ -176,19 +221,8 @@ MAGENTA = 6
 BLACK = 7
 WHITE = 7
 
-
-class ACI(IntEnum):
-    BYBLOCK = 0
-    BYLAYER = 256
-    BYOBJECT = 257
-    RED = 1
-    YELLOW = 2
-    GREEN = 3
-    CYAN = 4
-    BLUE = 5
-    MAGENTA = 6
-    BLACK = 7
-    WHITE = 7
+# All transparency related constants are located in colors.py
+TRANSPARENCY_BYBLOCK = 0x01000000
 
 
 LINEWEIGHT_BYLAYER = -1
@@ -196,12 +230,37 @@ LINEWEIGHT_BYBLOCK = -2
 LINEWEIGHT_DEFAULT = -3
 
 VALID_DXF_LINEWEIGHTS = (
-    0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50, 53, 60, 70, 80, 90,
-    100, 106, 120, 140, 158, 200, 211,
+    0,
+    5,
+    9,
+    13,
+    15,
+    18,
+    20,
+    25,
+    30,
+    35,
+    40,
+    50,
+    53,
+    60,
+    70,
+    80,
+    90,
+    100,
+    106,
+    120,
+    140,
+    158,
+    200,
+    211,
 )
 MAX_VALID_LINEWEIGHT = VALID_DXF_LINEWEIGHTS[-1]
 VALID_DXF_LINEWEIGHT_VALUES = set(VALID_DXF_LINEWEIGHTS) | {
-    LINEWEIGHT_DEFAULT, LINEWEIGHT_BYLAYER, LINEWEIGHT_BYBLOCK}
+    LINEWEIGHT_DEFAULT,
+    LINEWEIGHT_BYLAYER,
+    LINEWEIGHT_BYBLOCK,
+}
 
 # Entity: Polyline, Polymesh
 # 70 flags
@@ -224,7 +283,7 @@ POLYMESH_BEZIER_SURFACE = 8
 
 # Entity: Vertex
 # 70 flags
-VERTEXNAMES = ('vtx0', 'vtx1', 'vtx2', 'vtx3')
+VERTEXNAMES = ("vtx0", "vtx1", "vtx2", "vtx3")
 VTX_EXTRA_VERTEX_CREATED = 1  # Extra vertex created by curve-fitting
 VTX_CURVE_FIT_TANGENT = 2  # Curve-fit tangent defined for this vertex.
 # A curve-fit tangent direction of 0 may be omitted from the DXF output, but is
@@ -237,16 +296,17 @@ VTX_3D_POLYGON_MESH_VERTEX = 64
 VTX_3D_POLYFACE_MESH_VERTEX = 128
 
 VERTEX_FLAGS = {
-    'AcDb2dPolyline': 0,
-    'AcDb3dPolyline': VTX_3D_POLYLINE_VERTEX,
-    'AcDbPolygonMesh': VTX_3D_POLYGON_MESH_VERTEX,
-    'AcDbPolyFaceMesh': VTX_3D_POLYGON_MESH_VERTEX | VTX_3D_POLYFACE_MESH_VERTEX,
+    "AcDb2dPolyline": 0,
+    "AcDb3dPolyline": VTX_3D_POLYLINE_VERTEX,
+    "AcDbPolygonMesh": VTX_3D_POLYGON_MESH_VERTEX,
+    "AcDbPolyFaceMesh": VTX_3D_POLYGON_MESH_VERTEX
+    | VTX_3D_POLYFACE_MESH_VERTEX,
 }
 POLYLINE_FLAGS = {
-    'AcDb2dPolyline': 0,
-    'AcDb3dPolyline': POLYLINE_3D_POLYLINE,
-    'AcDbPolygonMesh': POLYLINE_3D_POLYMESH,
-    'AcDbPolyFaceMesh': POLYLINE_POLYFACE,
+    "AcDb2dPolyline": 0,
+    "AcDb3dPolyline": POLYLINE_3D_POLYLINE,
+    "AcDbPolygonMesh": POLYLINE_3D_POLYMESH,
+    "AcDbPolyFaceMesh": POLYLINE_POLYFACE,
 }
 
 # block-type flags (bit coded values, may be combined):
@@ -281,44 +341,42 @@ BLK_REFERENCED = 64
 LWPOLYLINE_CLOSED = 1
 LWPOLYLINE_PLINEGEN = 128
 
-TEXT_ALIGN_FLAGS = {
-    'LEFT': (0, 0),
-    'CENTER': (1, 0),
-    'RIGHT': (2, 0),
-    'ALIGNED': (3, 0),
-    'MIDDLE': (4, 0),
-    'FIT': (5, 0),
-    'BOTTOM_LEFT': (0, 1),
-    'BOTTOM_CENTER': (1, 1),
-    'BOTTOM_RIGHT': (2, 1),
-    'MIDDLE_LEFT': (0, 2),
-    'MIDDLE_CENTER': (1, 2),
-    'MIDDLE_RIGHT': (2, 2),
-    'TOP_LEFT': (0, 3),
-    'TOP_CENTER': (1, 3),
-    'TOP_RIGHT': (2, 3),
-}
-TEXT_ALIGNMENT_BY_FLAGS = dict(
-    (flags, name) for name, flags in TEXT_ALIGN_FLAGS.items()
-)
+DEFAULT_TTF = "DejaVuSans.ttf"
 
+# TextHAlign enum
 LEFT = 0
 CENTER = 1
 RIGHT = 2
+ALIGNED = 3
+FIT = 5
+
 BASELINE = 0
 BOTTOM = 1
 MIDDLE = 2
 TOP = 3
 MIRROR_X = 2
+BACKWARD = MIRROR_X
 MIRROR_Y = 4
+UPSIDE_DOWN = MIRROR_Y
 
-# Special char and encodings and formatting codes used in TEXT
-# %%d: "°"
-# %%u in TEXT start underline formatting until next %%u or until end of line
-SPECIAL_CHARS_ENCODING = {
-    'd': '°'
+VERTICAL_STACKED = 4  # only stored in TextStyle.dxf.flags!
+
+# Special char and encodings used in TEXT, ATTRIB and ATTDEF:
+# "%%d" -> "°"
+SPECIAL_CHAR_ENCODING = {
+    "c": "Ø",  # alt-0216
+    "d": "°",  # alt-0176
+    "p": "±",  # alt-0177
 }
+# Inline codes for strokes in TEXT, ATTRIB and ATTDEF
+# %%u underline
+# %%o overline
+# %%k strike through
+# Formatting will be applied until the same code appears again or the end
+# of line.
+# Special codes and formatting is case insensitive: d=D, u=U
 
+# MTextEntityAlignment enum
 MTEXT_TOP_LEFT = 1
 MTEXT_TOP_CENTER = 2
 MTEXT_TOP_RIGHT = 3
@@ -329,45 +387,32 @@ MTEXT_BOTTOM_LEFT = 7
 MTEXT_BOTTOM_CENTER = 8
 MTEXT_BOTTOM_RIGHT = 9
 
-MTEXT_ALIGN_FLAGS = {
-    'TOP_LEFT': 1,
-    'TOP_CENTER': 2,
-    'TOP_RIGHT': 3,
-    'MIDDLE_LEFT': 4,
-    'MIDDLE_CENTER': 5,
-    'MIDDLE_RIGHT': 6,
-    'BOTTOM_LEFT': 7,
-    'BOTTOM_CENTER': 8,
-    'BOTTOM_RIGHT': 9,
-}
-
+# MTextFlowDirection enum
 MTEXT_LEFT_TO_RIGHT = 1
 MTEXT_TOP_TO_BOTTOM = 3
 MTEXT_BY_STYLE = 5
 
+# MTextLineSpacing enum
 MTEXT_AT_LEAST = 1
 MTEXT_EXACT = 2
 
 MTEXT_COLOR_INDEX = {
-    'red': RED,
-    'yellow': YELLOW,
-    'green': GREEN,
-    'cyan': CYAN,
-    'blue': BLUE,
-    'magenta': MAGENTA,
-    'white': WHITE,
+    "red": RED,
+    "yellow": YELLOW,
+    "green": GREEN,
+    "cyan": CYAN,
+    "blue": BLUE,
+    "magenta": MAGENTA,
+    "white": WHITE,
 }
 
+# MTextBackgroundColor enum
 MTEXT_BG_OFF = 0
 MTEXT_BG_COLOR = 1
 MTEXT_BG_WINDOW_COLOR = 2
 MTEXT_BG_CANVAS_COLOR = 3
+MTEXT_TEXT_FRAME = 16
 
-MTEXT_INLINE_ALIGN = {
-    'BOTTOM': 0,
-    'MIDDLE': 1,
-    'TOP': 2,
-}
 
 CLOSED_SPLINE = 1
 PERIODIC_SPLINE = 2
@@ -379,7 +424,9 @@ LINEAR_SPLINE = 16
 HATCH_TYPE_USER_DEFINED = 0
 HATCH_TYPE_PREDEFINED = 1
 HATCH_TYPE_CUSTOM = 2
+HATCH_PATTERN_TYPE = ["user-defined", "predefined", "custom"]
 
+ISLAND_DETECTION = ["nested", "outermost", "ignore"]
 HATCH_STYLE_NORMAL = 0
 HATCH_STYLE_NESTED = 0
 HATCH_STYLE_OUTERMOST = 1
@@ -392,17 +439,60 @@ BOUNDARY_PATH_DERIVED = 4
 BOUNDARY_PATH_TEXTBOX = 8
 BOUNDARY_PATH_OUTERMOST = 16
 
-GRADIENT_TYPES = frozenset([
-    'LINEAR',
-    'CYLINDER',
-    'INVCYLINDER',
-    'SPHERICAL',
-    'INVSPHERICAL',
-    'HEMISPHERICAL',
-    'INVHEMISPHERICAL',
-    'CURVED',
-    'INVCURVED'
-])
+
+def boundary_path_flag_names(flags: int) -> list[str]:
+    if flags == 0:
+        return ["default"]
+    types: list[str] = []
+    if flags & BOUNDARY_PATH_EXTERNAL:
+        types.append("external")
+    if flags & BOUNDARY_PATH_POLYLINE:
+        types.append("polyline")
+    if flags & BOUNDARY_PATH_DERIVED:
+        types.append("derived")
+    if flags & BOUNDARY_PATH_TEXTBOX:
+        types.append("textbox")
+    if flags & BOUNDARY_PATH_OUTERMOST:
+        types.append("outermost")
+    return types
+
+
+@dataclass(frozen=True)
+class BoundaryPathState:
+    external: bool = False
+    derived: bool = False
+    textbox: bool = False
+    outermost: bool = False
+
+    @staticmethod
+    def from_flags(flag: int) -> "BoundaryPathState":
+        return BoundaryPathState(
+            external=bool(flag & BOUNDARY_PATH_EXTERNAL),
+            derived=bool(flag & BOUNDARY_PATH_DERIVED),
+            textbox=bool(flag & BOUNDARY_PATH_TEXTBOX),
+            outermost=bool(flag & BOUNDARY_PATH_OUTERMOST),
+        )
+
+    @property
+    def default(self) -> bool:
+        return not (
+            self.external or self.derived or self.outermost or self.textbox
+        )
+
+
+GRADIENT_TYPES = frozenset(
+    [
+        "LINEAR",
+        "CYLINDER",
+        "INVCYLINDER",
+        "SPHERICAL",
+        "INVSPHERICAL",
+        "HEMISPHERICAL",
+        "INVHEMISPHERICAL",
+        "CURVED",
+        "INVCURVED",
+    ]
+)
 
 # Viewport Status Flags (VSF) group code=90
 VSF_PERSPECTIVE_MODE = 0x1  # enabled if set
@@ -425,9 +515,14 @@ VSF_KISOPAIR_TOP = 0x1000
 # If set and kIsoPairTop is not set, then isopair right is enabled:
 VSF_KISOPAIR_RIGHT = 0x2000
 VSF_VIEWPORT_ZOOM_LOCKING = 0x4000  # enabled if set
+VSF_LOCK_ZOOM = 0x4000  # enabled if set
 VSF_CURRENTLY_ALWAYS_ENABLED = 0x8000  # always set without a meaning :)
 VSF_NON_RECTANGULAR_CLIPPING = 0x10000  # enabled if set
 VSF_TURN_VIEWPORT_OFF = 0x20000
+VSF_NO_GRID_LIMITS = 0x40000
+VSF_ADAPTIVE_GRID_DISPLAY = 0x80000
+VSF_SUBDIVIDE_GRID = 0x100000
+VSF_GRID_FOLLOW_WORKPLANE = 0x200000
 
 # Viewport Render Mode (VRM) group code=281
 VRM_2D_OPTIMIZED = 0
@@ -455,8 +550,9 @@ DIM_DIAMETER = 3
 DIM_RADIUS = 4
 DIM_ANGULAR_3P = 5
 DIM_ORDINATE = 6
+DIM_ARC = 8
 DIM_BLOCK_EXCLUSIVE = 32
-DIM_ORDINATE_TYPE = 64
+DIM_ORDINATE_TYPE = 64  # unset for x-type, set for y-type
 DIM_USER_LOCATION_OVERRIDE = 128
 
 DIMZIN_SUPPRESS_ZERO_FEET_AND_PRECISELY_ZERO_INCHES = 0
@@ -477,56 +573,58 @@ INVALID_NAME_CHARACTERS = '<>/\\":;?*=`'
 INVALID_LAYER_NAME_CHARACTERS = set(INVALID_NAME_CHARACTERS)
 
 STD_SCALES = {
-    1: (1. / 128., 12.),
-    2: (1. / 64., 12.),
-    3: (1. / 32., 12.),
-    4: (1. / 16., 12.),
-    5: (3. / 32., 12.),
-    6: (1. / 8., 12.),
-    7: (3. / 16., 12.),
-    8: (1. / 4., 12.),
-    9: (3. / 8., 12.),
-    10: (1. / 2., 12.),
-    11: (3. / 4., 12.),
-    12: (1., 12.),
-    13: (3., 12.),
-    14: (6., 12.),
-    15: (12., 12.),
-    16: (1., 1.),
-    17: (1., 2.),
-    18: (1., 4.),
-    19: (1., 8.),
-    20: (1., 10.),
-    21: (1., 16.),
-    22: (1., 20.),
-    23: (1., 30.),
-    24: (1., 40.),
-    25: (1., 50.),
-    26: (1., 100.),
-    27: (2., 1.),
-    28: (4., 1.),
-    29: (8., 1.),
-    30: (10., 1.),
-    31: (100., 1.),
-    32: (1000., 1.),
+    1: (1.0 / 128.0, 12.0),
+    2: (1.0 / 64.0, 12.0),
+    3: (1.0 / 32.0, 12.0),
+    4: (1.0 / 16.0, 12.0),
+    5: (3.0 / 32.0, 12.0),
+    6: (1.0 / 8.0, 12.0),
+    7: (3.0 / 16.0, 12.0),
+    8: (1.0 / 4.0, 12.0),
+    9: (3.0 / 8.0, 12.0),
+    10: (1.0 / 2.0, 12.0),
+    11: (3.0 / 4.0, 12.0),
+    12: (1.0, 12.0),
+    13: (3.0, 12.0),
+    14: (6.0, 12.0),
+    15: (12.0, 12.0),
+    16: (1.0, 1.0),
+    17: (1.0, 2.0),
+    18: (1.0, 4.0),
+    19: (1.0, 8.0),
+    20: (1.0, 10.0),
+    21: (1.0, 16.0),
+    22: (1.0, 20.0),
+    23: (1.0, 30.0),
+    24: (1.0, 40.0),
+    25: (1.0, 50.0),
+    26: (1.0, 100.0),
+    27: (2.0, 1.0),
+    28: (4.0, 1.0),
+    29: (8.0, 1.0),
+    30: (10.0, 1.0),
+    31: (100.0, 1.0),
+    32: (1000.0, 1.0),
 }
 
 RASTER_UNITS = {
-    'mm': 1,
-    'cm': 2,
-    'm': 3,
-    'km': 4,
-    'in': 5,
-    'ft': 6,
-    'yd': 7,
-    'mi': 8,
+    "none": 0,
+    "mm": 1,
+    "cm": 2,
+    "m": 3,
+    "km": 4,
+    "in": 5,
+    "ft": 6,
+    "yd": 7,
+    "mi": 8,
 }
+REVERSE_RASTER_UNITS = {value: name for name, value in RASTER_UNITS.items()}
 
-MODEL_SPACE_R2000 = '*Model_Space'
-MODEL_SPACE_R12 = '$Model_Space'
-PAPER_SPACE_R2000 = '*Paper_Space'
-PAPER_SPACE_R12 = '$Paper_Space'
-TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
+MODEL_SPACE_R2000 = "*Model_Space"
+MODEL_SPACE_R12 = "$Model_Space"
+PAPER_SPACE_R2000 = "*Paper_Space"
+PAPER_SPACE_R12 = "$Paper_Space"
+TMP_PAPER_SPACE_NAME = "*Paper_Space999999"
 
 MODEL_SPACE = {
     MODEL_SPACE_R2000.lower(),
@@ -546,61 +644,25 @@ LAYOUT_NAMES = {
 }
 
 
-class SortEntities:
-    DISABLE = 0
-    SELECTION = 1  # 1 = Sorts for object selection
-    SNAP = 2  # 2 = Sorts for object snap
-    REDRAW = 4  # 4 = Sorts for redraws; obsolete
-    MSLIDE = 8  # 8 = Sorts for MSLIDE command slide creation; obsolete
-    REGEN = 16  # 16 = Sorts for REGEN commands
-    PLOT = 32  # 32 = Sorts for plotting
-    POSTSCRIPT = 64  # 64 = Sorts for PostScript output; obsolete
-
-
+# TODO: make enum
 DIMJUST = {
-    'center': 0,
-    'left': 1,
-    'right': 2,
-    'above1': 3,
-    'above2': 4,
+    "center": 0,
+    "left": 1,
+    "right": 2,
+    "above1": 3,
+    "above2": 4,
 }
 
+
+# TODO: make enum
 DIMTAD = {
-    'above': 1,
-    'center': 0,
-    'below': 4,
+    "above": 1,
+    "center": 0,
+    "below": 4,
 }
 
 
-class InsertUnits(IntEnum):
-    Unitless = 0
-    Inches = 1
-    Feet = 2
-    Miles = 3
-    Millimeters = 4
-    Centimeters = 5
-    Meters = 6
-    Kilometers = 7
-    Microinches = 8
-    Mils = 9
-    Yards = 10
-    Angstroms = 11
-    Nanometers = 12
-    Microns = 13
-    Decimeters = 14
-    Decameters = 15
-    Hectometers = 16
-    Gigameters = 17
-    AstronomicalUnits = 18
-    Lightyears = 19
-    Parsecs = 20
-    USSurveyFeet = 21
-    USSurveyInch = 22
-    USSurveyYard = 23
-    USSurveyMile = 24
-
-
-DEFAULT_ENCODING = 'cp1252'
+DEFAULT_ENCODING = "cp1252"
 
 MLINE_TOP = 0
 MLINE_ZERO = 1
@@ -612,9 +674,27 @@ MLINE_SUPPRESS_END_CAPS = 8
 
 MLINESTYLE_FILL = 1
 MLINESTYLE_MITER = 2
-MLINESTYLE_START_SQARE = 16
+MLINESTYLE_START_SQUARE = 16
 MLINESTYLE_START_INNER_ARC = 32
 MLINESTYLE_START_ROUND = 64
 MLINESTYLE_END_SQUARE = 256
 MLINESTYLE_END_INNER_ARC = 512
 MLINESTYLE_END_ROUND = 1024
+
+# VP Layer Overrides
+
+OVR_ALPHA_KEY = "ADSK_XREC_LAYER_ALPHA_OVR"
+OVR_COLOR_KEY = "ADSK_XREC_LAYER_COLOR_OVR"
+OVR_LTYPE_KEY = "ADSK_XREC_LAYER_LINETYPE_OVR"
+OVR_LW_KEY = "ADSK_XREC_LAYER_LINEWT_OVR"
+
+OVR_ALPHA_CODE = 440
+OVR_COLOR_CODE = 420
+OVR_LTYPE_CODE = 343
+OVR_LW_CODE = 91
+OVR_VP_HANDLE_CODE = 335
+
+OVR_APP_ALPHA = "{ADSK_LYR_ALPHA_OVERRIDE"
+OVR_APP_COLOR = "{ADSK_LYR_COLOR_OVERRIDE"
+OVR_APP_LTYPE = "{ADSK_LYR_LINETYPE_OVERRIDE"
+OVR_APP_LW = "{ADSK_LYR_LINEWT_OVERRIDE"

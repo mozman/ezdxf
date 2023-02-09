@@ -3,9 +3,10 @@ Header Section
 
 .. module:: ezdxf.sections.header
 
-The drawing settings are stored in the HEADER section, which is accessible by the :attr:`~ezdxf.document.Drawing.header`
-attribute of the :class:`~ezdxf.document.Drawing` object. See the online documentation from Autodesk for available
-`header variables`_.
+The drawing settings are stored in the HEADER section, which is accessible by
+the :attr:`~ezdxf.document.Drawing.header` attribute of the
+:class:`~ezdxf.document.Drawing` object. See the online documentation from
+Autodesk for available `header variables`_.
 
 .. seealso::
 
@@ -31,14 +32,17 @@ attribute of the :class:`~ezdxf.document.Drawing` object. See the online documen
 
     .. automethod:: __delitem__
 
+    .. automethod:: reset_wcs
+
 
 .. autoclass:: CustomVars
 
     .. attribute:: properties
 
-       List of custom drawing properties, stored as string tuples ``(tag, value)``. Multiple occurrence of the same custom
-       tag is allowed, but not well supported by the interface. This is a standard python list and it is save to change this
-       list as long you store just tuples of strings in the format ``(tag, value)``.
+        A list of custom header properties, stored as string tuples ``(tag, value)``.
+        Multiple occurrence of the same custom tag is allowed, but not well
+        supported by the interface. This is a standard Python list and it's safe
+        to modify this list as long as you just use tuples of strings.
 
     .. automethod:: __len__
 

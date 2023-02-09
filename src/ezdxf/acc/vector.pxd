@@ -5,7 +5,7 @@
 
 # C-support functions:
 
-cdef bint isclose(double a, double b, double tol)
+cdef bint isclose(double a, double b, double rel_tol, double abs_tol)
 cdef double normalize_rad_angle(double a)
 cdef double normalize_deg_angle(double a)
 
@@ -28,7 +28,7 @@ cdef double v2_angle_between(Vec2 a, Vec2 b) except -1000
 cdef Vec2 v2_lerp(Vec2 a, Vec2 b, double factor)
 cdef Vec2 v2_ortho(Vec2 a, bint ccw)
 cdef Vec2 v2_project(Vec2 a, Vec2 b)
-cdef bint v2_isclose(Vec2 a, Vec2 b, double tol)
+cdef bint v2_isclose(Vec2 a, Vec2 b, double rel_tol, double abs_tol)
 cdef Vec2 v2_from_cpp_vec3(CppVec3)
 # magnitude = hypot(vec2.x, vec2.y)
 # angle = atan2(vec2.y, vec2.x)
@@ -54,5 +54,5 @@ cdef Vec3 v3_normalize(Vec3 a, double length)
 cdef Vec3 v3_lerp(Vec3 a, Vec3 b, double factor)
 cdef Vec3 v3_ortho(Vec3 a, bint ccw)
 cdef Vec3 v3_project(Vec3 a, Vec3 b)
-cdef bint v3_isclose(Vec3 a, Vec3 b, double tol)
+cdef bint v3_isclose(Vec3 a, Vec3 b, double rel_tol, double abs_tol)
 cdef Vec3 v3_from_cpp_vec3(CppVec3)

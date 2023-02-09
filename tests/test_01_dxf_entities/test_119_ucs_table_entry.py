@@ -2,21 +2,24 @@
 # License: MIT License
 import pytest
 
-from ezdxf.entities.ucs import UCSTable
+from ezdxf.entities.ucs import UCSTableEntry
 
 
 @pytest.fixture
 def ucs():
-    return UCSTable.new('FFFF', dxfattribs={
-        'name': 'UCS+90',
-        'origin': (1.0, 1.0, 1.0),
-        'xaxis': (0.0, 1.0, 0.0),
-        'yaxis': (-1.0, 0.0, 0.0),
-    })
+    return UCSTableEntry.new(
+        "FFFF",
+        dxfattribs={
+            "name": "UCS+90",
+            "origin": (1.0, 1.0, 1.0),
+            "xaxis": (0.0, 1.0, 0.0),
+            "yaxis": (-1.0, 0.0, 0.0),
+        },
+    )
 
 
 def test_name(ucs):
-    assert ucs.dxf.name == 'UCS+90'
+    assert ucs.dxf.name == "UCS+90"
 
 
 def test_origin(ucs):
@@ -40,8 +43,7 @@ def test_ucs(ucs):
 
 
 def test_default_vales():
-    ucs = UCSTable.new()
+    ucs = UCSTableEntry.new()
     assert ucs.dxf.origin == (0, 0, 0)
     assert ucs.dxf.xaxis == (1, 0, 0)
     assert ucs.dxf.yaxis == (0, 1, 0)
-

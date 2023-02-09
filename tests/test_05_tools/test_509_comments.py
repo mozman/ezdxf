@@ -27,32 +27,32 @@ def test_load_only_comments():
     stream = StringIO(DXF)
     tags = list(comments.from_stream(stream))
     assert len(tags) == 3
-    assert tags[0] == (999, 'preceding comment')
-    assert tags[1] == (999, 'comment before LINE')
-    assert tags[2] == (999, 'comment after LINE')
+    assert tags[0] == (999, "preceding comment")
+    assert tags[1] == (999, "comment before LINE")
+    assert tags[2] == (999, "comment after LINE")
 
 
 def test_load_handles_and_comments():
     stream = StringIO(DXF)
     tags = list(comments.from_stream(stream, codes={5}))
     assert len(tags) == 5
-    assert tags[0] == (999, 'preceding comment')
-    assert tags[1] == (5, 'ABBA')
-    assert tags[2] == (999, 'comment before LINE')
-    assert tags[3] == (5, 'FEFE')
+    assert tags[0] == (999, "preceding comment")
+    assert tags[1] == (5, "ABBA")
+    assert tags[2] == (999, "comment before LINE")
+    assert tags[3] == (5, "FEFE")
     # get associated LINE entity:
     # handle = tags[3].value
     # entity = doc.entitydb[handle]
-    assert tags[4] == (999, 'comment after LINE')
+    assert tags[4] == (999, "comment after LINE")
 
 
 def test_load_structure_and_comments():
     stream = StringIO(DXF)
     tags = list(comments.from_stream(stream, codes={0}))
     assert len(tags) == 6
-    assert tags[0] == (999, 'preceding comment')
-    assert tags[1] == (0, 'SECTION')
-    assert tags[2] == (999, 'comment before LINE')
-    assert tags[3] == (0, 'LINE')
-    assert tags[4] == (999, 'comment after LINE')
-    assert tags[5] == (0, 'EOF')
+    assert tags[0] == (999, "preceding comment")
+    assert tags[1] == (0, "SECTION")
+    assert tags[2] == (999, "comment before LINE")
+    assert tags[3] == (0, "LINE")
+    assert tags[4] == (999, "comment after LINE")
+    assert tags[5] == (0, "EOF")

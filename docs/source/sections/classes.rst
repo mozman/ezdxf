@@ -1,8 +1,9 @@
 Classes Section
 ===============
 
-The CLASSES section in DXF files holds the information for application-defined classes whose instances appear in
-:class:`~ezdxf.layouts.Layout` objects. As usual package user there is no need to bother about CLASSES.
+The CLASSES section in DXF files holds the information for application-defined classes
+whose instances appear in :class:`~ezdxf.layouts.Layout` objects. As usual package user
+there is no need to bother about CLASSES.
 
 .. seealso::
 
@@ -14,16 +15,16 @@ The CLASSES section in DXF files holds the information for application-defined c
 
     .. attribute:: classes
 
-        Storage of all :class:`~ezdxf.entities.DXFClass` objects, they are not stored in the entities database, because
-        CLASS has no handle attribute.
+        Storage of all :class:`~ezdxf.entities.DXFClass` objects, they are not stored in
+        the entities database, because CLASS instances do not have a handle attribute.
 
-    .. method:: register(classes: Iterable[DXFClass])
+    .. method:: register
 
     .. automethod:: add_class
 
-    .. automethod:: get(name: str) -> DXFClass
+    .. automethod:: get
 
-    .. automethod:: add_required_classes(name: str) -> DXFClass
+    .. automethod:: add_required_classes
 
     .. automethod:: update_instance_counters
 

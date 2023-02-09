@@ -5,19 +5,21 @@ import pytest
 import ezdxf
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc():
     return ezdxf.new()
 
 
 def test_duplicate_simple_entity(doc):
     msp = doc.modelspace()
-    circle = msp.add_circle(center=(2, 3), radius=1.5, dxfattribs={'layer': 'test', 'color': 4})
+    circle = msp.add_circle(
+        center=(2, 3), radius=1.5, dxfattribs={"layer": "test", "color": 4}
+    )
     new_circle = doc.entitydb.duplicate_entity(circle)
     assert circle.dxf.handle != new_circle.dxf.handle, "expected new handle"
     assert new_circle.dxf.center == (2, 3)
     assert new_circle.dxf.radius == 1.5
-    assert new_circle.dxf.layer == 'test'
+    assert new_circle.dxf.layer == "test"
     assert new_circle.dxf.color == 4
     assert new_circle.dxf.owner is None  # undefined owner/layout
     with pytest.raises(ezdxf.DXFKeyError):
@@ -26,13 +28,16 @@ def test_duplicate_simple_entity(doc):
 
 def test_duplicate_polyline_entity(doc):
     msp = doc.modelspace()
-    polyline = msp.add_polyline3d(points=[(1, 1, 1), (3, 2, -1), (7, 4, 4)], dxfattribs={'layer': 'test', 'color': 4})
+    polyline = msp.add_polyline3d(
+        points=[(1, 1, 1), (3, 2, -1), (7, 4, 4)],
+        dxfattribs={"layer": "test", "color": 4},
+    )
     start_len = len(doc.entitydb)
     new_polyline = doc.entitydb.duplicate_entity(polyline)
 
-    assert len(doc.entitydb) == start_len+5  # POLYLINE, 3x VERTEX, 1x SEQEND
+    assert len(doc.entitydb) == start_len + 5  # POLYLINE, 3x VERTEX, 1x SEQEND
     assert polyline.dxf.handle != new_polyline.dxf.handle, "expected new handle"
-    assert new_polyline.dxf.layer == 'test'
+    assert new_polyline.dxf.layer == "test"
     assert new_polyline.dxf.color == 4
     assert new_polyline.dxf.owner is None  # undefined owner/layout
 
@@ -44,13 +49,13 @@ def test_duplicate_polyline_entity(doc):
 
 def test_duplicate_insert_with_attribs_entity(doc):
     msp = doc.modelspace()
-    insert = msp.add_blockref(name='', insert=(3, 4))
-    insert.add_attrib('TAG1', 'content1', insert=(5, 6))
-    insert.add_attrib('TAG2', 'content2', insert=(6, 6))
+    insert = msp.add_blockref(name="", insert=(3, 4))
+    insert.add_attrib("TAG1", "content1", insert=(5, 6))
+    insert.add_attrib("TAG2", "content2", insert=(6, 6))
     start_len = len(doc.entitydb)
     new_insert = doc.entitydb.duplicate_entity(insert)
 
-    assert len(doc.entitydb) == start_len+4  # INSERT, 2x ATTRIB, 1x SEQEND
+    assert len(doc.entitydb) == start_len + 4  # INSERT, 2x ATTRIB, 1x SEQEND
     assert insert.dxf.handle != new_insert.dxf.handle, "expected new handle"
 
     assert new_insert.dxf.owner is None  # undefined owner/layout

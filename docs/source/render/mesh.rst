@@ -4,12 +4,28 @@
 MeshBuilder
 ===========
 
-The :class:`MeshBuilder` is a helper class  to create :class:`~ezdxf.entities.Mesh` entities.
-Stores a list of vertices, a list of edges where an edge is a list of indices into the
-vertices list, and a faces list where each face is a list of indices into the vertices list.
+The :class:`MeshBuilder` classes are helper tools to manage meshes buildup by
+vertices and faces.
+The vertices are stored in a vertices list as :class:`Vec3` instances.
+The faces are stored as a sequence of vertex indices which is the location of
+the vertex in the vertex list. A single :class:`MeshBuilder` class can contain
+multiple separated meshes at the same time.
 
-The :meth:`MeshBuilder.render` method, renders the mesh into a :class:`~ezdxf.entities.Mesh` entity.
-The :class:`~ezdxf.entities.Mesh` entity supports ngons in AutoCAD, ngons are polygons with more than 4 vertices.
+The method :meth:`MeshBuilder.render_mesh` renders the content as a single DXF
+:class:`~ezdxf.entities.Mesh` entity, which supports ngons, ngons are polygons
+with more than 4 vertices. This entity requires at least DXF R2000.
+
+The method :meth:`MeshBuilder.render_polyface` renders the content as a single
+DXF :class:`~ezdxf.entities.Polyface` entity, which supports only triangles and
+quadrilaterals. This entity is supported by DXF R12.
+
+The method :meth:`MeshBuilder.render_3dfaces` renders each face of the mesh as
+a single  DXF :class:`~ezdxf.entities.Face3d` entity, which supports only
+triangles and quadrilaterals. This entity is supported by DXF R12.
+
+The :class:`MeshTransformer` class is often used as an interface object to
+transfer mesh data between functions and moduls, like for the mesh exchange
+add-on :mod:`~ezdxf.addons.meshex`.
 
 The basic :class:`MeshBuilder` class does not support transformations.
 
@@ -19,46 +35,72 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
         List of vertices as :class:`~ezdxf.math.Vec3` or ``(x, y, z)`` tuple
 
-    .. attribute:: edges
-
-        List of edges as 2-tuple of vertex indices, where a vertex index is the index of the vertex in the
-        :attr:`vertices` list.
-
     .. attribute:: faces
 
-        List of faces as list of vertex indices,  where a vertex index is the index of the vertex in the
-        :attr:`vertices` list. A face requires at least three vertices, :class:`~ezdxf.entities.Mesh` supports ngons,
+        List of faces as list of vertex indices,  where a vertex index is the
+        index of the vertex in the :attr:`vertices` list. A face requires at
+        least three vertices, :class:`~ezdxf.entities.Mesh` supports ngons,
         so the count of vertices is not limited.
-
-    .. automethod:: copy()
-
-    .. automethod:: faces_as_vertices() -> Iterable[List[Vec3]]
-
-    .. automethod:: edges_as_vertices() -> Iterable[Tuple[Vec3, Vec3]]
-
-    .. automethod:: add_vertices
-
-    .. automethod:: add_edge
 
     .. automethod:: add_face
 
-    .. automethod:: add_mesh(vertices=None, faces=None, edges=None, mesh=None) -> None
+    .. automethod:: add_mesh
 
-    .. automethod:: has_none_planar_faces
+    .. automethod:: add_vertices
 
-    .. automethod:: render(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None, ucs: UCS = None)
+    .. automethod:: bbox
 
-    .. automethod:: render_polyface(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None, ucs: UCS = None)
+    .. automethod:: copy
 
-    .. automethod:: render_3dfaces(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None, ucs: UCS = None)
+    .. automethod:: diagnose
 
-    .. automethod:: render_normals(layout: BaseLayout, length: float = 1, relative=True, dxfattribs: dict = None)
+    .. automethod:: face_normals
+
+    .. automethod:: face_orientation_detector
+
+    .. automethod:: faces_as_vertices
+
+    .. automethod:: flip_normals
+
+    .. automethod:: from_builder(other: MeshBuilder)
 
     .. automethod:: from_mesh
 
     .. automethod:: from_polyface
 
-    .. automethod:: from_builder(other: MeshBuilder)
+    .. automethod:: get_face_vertices
+
+    .. automethod:: get_face_normal
+
+    .. automethod:: merge_coplanar_faces
+
+    .. automethod:: mesh_tessellation
+
+    .. automethod:: normalize_faces
+
+    .. automethod:: open_faces
+
+    .. automethod:: optimize_vertices
+
+    .. automethod:: render_3dfaces
+
+    .. automethod:: render_mesh
+
+    .. automethod:: render_normals
+
+    .. automethod:: render_polyface
+
+    .. automethod:: separate_meshes
+
+    .. automethod:: subdivide
+
+    .. automethod:: subdivide_ngons
+
+    .. automethod:: tessellation
+
+    .. automethod:: unify_face_normals
+
+    .. automethod:: unify_face_normals_by_reference
 
 
 MeshTransformer
@@ -70,9 +112,7 @@ Same functionality as :class:`MeshBuilder` but supports inplace transformation.
 
     Subclass of :class:`MeshBuilder`
 
-    .. automethod:: subdivide(level: int = 1, quads=True, edges=False) -> MeshTransformer
-
-    .. automethod:: transform(matrix: Matrix44)
+    .. automethod:: transform
 
     .. automethod:: translate
 
@@ -91,12 +131,14 @@ Same functionality as :class:`MeshBuilder` but supports inplace transformation.
 MeshVertexMerger
 ================
 
-Same functionality as :class:`MeshBuilder`, but created meshes with unique vertices and no doublets,
-but :class:`MeshVertexMerger` needs extra memory for bookkeeping and also does not support transformations.
-Location of merged vertices is the location of the first vertex with the same key.
+Same functionality as :class:`MeshBuilder`, but created meshes with unique
+vertices and no doublets, but :class:`MeshVertexMerger` needs extra memory for
+bookkeeping and also does not support transformations.
+The location of the merged vertices is the location of the first vertex with the
+same key.
 
-This class is intended as intermediate object to create a compact meshes and convert them to :class:`MeshTransformer`
-objects to apply transformations to the mesh:
+This class is intended as intermediate object to create compact meshes and
+convert them to :class:`MeshTransformer` objects to apply transformations:
 
 .. code-block:: Python
 
@@ -114,9 +156,105 @@ MeshAverageVertexMerger
 =======================
 
 This is an extended version of :class:`MeshVertexMerger`.
-Location of merged vertices is the average location of all vertices with the same key, this needs extra
-memory and runtime in comparision to :class:`MeshVertexMerger` and this class also does not support
+The location of the merged vertices is the average location of all vertices with
+the same key, this needs extra memory and runtime in comparison to
+:class:`MeshVertexMerger` and this class also does not support
 transformations.
 
 .. autoclass:: MeshAverageVertexMerger
+
+.. autoclass:: ezdxf.render.mesh.EdgeStat
+
+    .. attribute:: count
+
+        how often the edge `(a, b)` is used in faces as `(a, b)` or `(b, a)`
+
+    .. attribute:: balance
+
+        count of edges `(a, b)` - count of edges `(b, a)` and should be 0 in
+        "healthy" closed surfaces, if the balance is not 0, maybe doubled
+        coincident faces exist or faces may have mixed clockwise and
+        counter-clockwise vertex orders
+
+MeshBuilder Helper Classes
+==========================
+
+.. class:: MeshDiagnose
+
+    Diagnose tool which can be used to analyze and detect errors of
+    :class:`MeshBuilder` objects like topology errors for closed surfaces.
+    The object contains cached values, which do not get updated if the source
+    mesh will be changed!
+
+    .. note::
+
+        There exist no tools in `ezdxf` to repair broken surfaces, but you can
+        use the :mod:`ezdxf.addons.meshex` addon to exchange meshes with the
+        open source tool `MeshLab <https://www.meshlab.net/>`_.
+
+    Create an instance of this tool by the :meth:`MeshBuilder.diagnose` method.
+
+    .. autoproperty:: bbox
+
+    .. autoproperty:: edge_stats
+
+    .. autoproperty:: euler_characteristic
+
+    .. autoproperty:: face_normals
+
+    .. autoproperty:: faces
+
+    .. autoproperty:: is_closed_surface
+
+    .. autoproperty:: is_edge_balance_broken
+
+    .. autoproperty:: is_manifold
+
+    .. autoproperty:: n_edges
+
+    .. autoproperty:: n_faces
+
+    .. autoproperty:: n_vertices
+
+    .. autoproperty:: vertices
+
+    .. automethod:: centroid
+
+    .. automethod:: estimate_face_normals_direction
+
+    .. automethod:: has_non_planar_faces
+
+    .. automethod:: surface_area
+
+    .. automethod:: total_edge_count
+
+    .. automethod:: unique_edges
+
+    .. automethod:: volume
+
+
+.. autoclass:: FaceOrientationDetector
+
+    .. attribute:: is_manifold
+
+        ``True`` if all edges have an edge count < 3. A non-manifold mesh has
+        edges with 3 or more connected faces.
+
+    .. autoproperty:: all_reachable
+
+    .. autoproperty:: count
+
+    .. autoproperty:: backward_faces
+
+    .. autoproperty:: forward_faces
+
+    .. autoproperty:: has_uniform_face_normals
+
+    .. autoproperty:: is_closed_surface
+
+    .. autoproperty:: is_single_mesh
+
+    .. automethod:: classify_faces
+
+    .. automethod:: is_reference_face_pointing_outwards
 

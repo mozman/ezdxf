@@ -4,8 +4,9 @@ VPort
 .. module:: ezdxf.entities
     :noindex:
 
-The viewport table (`DXF Reference`_) stores the modelspace viewport configurations. So this entries just modelspace
-viewports, not paperspace viewports, for paperspace viewports see the :class:`Viewport` entity.
+The viewport table (`DXF Reference`_) stores the modelspace viewport
+configurations. So this entries just modelspace viewports, not paperspace
+viewports, for paperspace viewports see the :class:`Viewport` entity.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
@@ -37,9 +38,11 @@ Factory function         :meth:`Drawing.viewports.new`
 
         === ==============================================================
         16  If set, table entry is externally dependent on an xref
-        32  If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
-        64  If set, the table entry was referenced by at least one entity in the drawing the last time the drawing
-            was edited. (This flag is only for the benefit of AutoCAD)
+        32  If both this bit and bit 16 are set, the externally dependent xref
+            has been successfully resolved
+        64  If set, the table entry was referenced by at least one entity in the
+            drawing the last time the drawing was edited. (This flag is only for
+            the benefit of AutoCAD)
         === ==============================================================
 
     .. attribute:: dxf.lower_left
@@ -110,6 +113,9 @@ Factory function         :meth:`Drawing.viewports.new`
 
     .. attribute:: dxf.ucs_icon
 
+       - bit 0: 0=hide, 1=show
+       - bit 1: 0=display in lower left corner, 1=display at origin
+
     .. attribute:: dxf.snap_on
 
     .. attribute:: dxf.grid_on
@@ -117,5 +123,7 @@ Factory function         :meth:`Drawing.viewports.new`
     .. attribute:: dxf.snap_style
 
     .. attribute:: dxf.snap_isopair
+
+    .. automethod:: reset_wcs
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-8CE7CC87-27BD-4490-89DA-C21F516415A9

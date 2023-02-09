@@ -95,7 +95,9 @@ def test_matrix44_to_wcs():
     ocs = OCS(EXTRUSION)
     matrix = Matrix44.ucs(ocs.ux, ocs.uy, ocs.uz)
     assert is_close_points(
-        matrix.ocs_to_wcs(Vec3(9.41378764657076, 13.15481838975576, 0.8689258932616031)),
+        matrix.ocs_to_wcs(
+            Vec3(9.41378764657076, 13.15481838975576, 0.8689258932616031)
+        ),
         (-9.56460754, 8.44764172, 9.97894327),
         places=6,
     )

@@ -175,7 +175,7 @@ The OBJECTS section requires following entities:
 - DICTIONARY - the root dict
   - one entry named ACAD_GROUP
 
-- DICTONARY ACAD_GROUP can be empty
+- DICTIONARY ACAD_GROUP can be empty
 
 Minimal DXF to download: https://github.com/mozman/ezdxf/tree/master/examples_dxf
 

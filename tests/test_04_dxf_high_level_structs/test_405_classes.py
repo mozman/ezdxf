@@ -14,7 +14,7 @@ def test_init():
 
 def test_add_known_class():
     classes = ClassesSection()
-    classes.add_class('SUN')
+    classes.add_class("SUN")
     assert len(classes.classes) == 1
 
 
@@ -27,16 +27,10 @@ def test_add_required_classes():
 def test_double_keys():
     classes = ClassesSection()
     sun1 = DXFClass()
-    sun1.update_dxf_attribs({
-        'name': 'SUN',
-        'cpp_class_name': 'AcDbSun1'
-    })
+    sun1.update_dxf_attribs({"name": "SUN", "cpp_class_name": "AcDbSun1"})
 
     sun2 = DXFClass()
-    sun2.update_dxf_attribs({
-        'name': 'SUN',
-        'cpp_class_name': 'AcDbSun2'
-    })
+    sun2.update_dxf_attribs({"name": "SUN", "cpp_class_name": "AcDbSun2"})
     # same class 'name' but different 'cpp class name', example: 'CADKitSamples/AEC Plan Elev Sample.dxf'
     classes.register([sun1, sun2])
     assert len(classes.classes) == 2
@@ -44,27 +38,30 @@ def test_double_keys():
 
 def test_export_dxf():
     classes = ClassesSection()
-    classes.add_class('SUN')
+    classes.add_class("SUN")
     collector = TagCollector(dxfversion=ezdxf.DXF2004)
     classes.export_dxf(collector)
     tags = collector.tags
-    assert tags[0] == (0, 'SECTION')
-    assert tags[1] == (2, 'CLASSES')
-    assert tags[2] == (0, 'CLASS')
+    assert tags[0] == (0, "SECTION")
+    assert tags[1] == (2, "CLASSES")
+    assert tags[2] == (0, "CLASS")
     # writing classes is tested in 'test_113_dxfclass.py'
-    assert tags[-1] == (0, 'ENDSEC')
+    assert tags[-1] == (0, "ENDSEC")
 
 
 def test_load_section():
     doc = ezdxf.new()
-    entities = load_entities(TEST_CLASSES, 'CLASSES')
+    entities = load_entities(TEST_CLASSES, "CLASSES")
     classes = ClassesSection(doc, entities)
     assert len(classes.classes) == 3
 
     # this tests internals - use storage key is not exposed by API
-    assert ('ACDBDICTIONARYWDFLT', 'AcDbDictionaryWithDefault') in classes.classes
-    assert ('DICTIONARYVAR', 'AcDbDictionaryVar') in classes.classes
-    assert ('TABLESTYLE', 'AcDbTableStyle') in classes.classes
+    assert (
+        "ACDBDICTIONARYWDFLT",
+        "AcDbDictionaryWithDefault",
+    ) in classes.classes
+    assert ("DICTIONARYVAR", "AcDbDictionaryVar") in classes.classes
+    assert ("TABLESTYLE", "AcDbTableStyle") in classes.classes
 
 
 TEST_CLASSES = """  0

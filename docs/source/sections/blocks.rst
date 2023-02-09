@@ -3,7 +3,16 @@ Blocks Section
 
 .. module:: ezdxf.sections.blocks
 
-The BLOCKS section is the home all block definitions (:class:`~ezdxf.layouts.BlockLayout`) of a DXF document.
+The BLOCKS section is the home all block definitions (:class:`~ezdxf.layouts.BlockLayout`)
+of a DXF document.
+
+.. warning::
+
+    Blocks are an essential building block of the DXF format. Most blocks are referenced
+    are by name, and renaming or deleting a block is not as easy as it seems,
+    since there is no overall index where all block references appear, and such block
+    references can also reside in custom data or even custom entities,
+    therefore renaming or deleting block definitions can damage a DXF file!
 
 .. seealso::
 
@@ -11,25 +20,24 @@ The BLOCKS section is the home all block definitions (:class:`~ezdxf.layouts.Blo
 
 .. class:: BlocksSection
 
-    .. automethod:: __iter__()  -> Iterable[BlockLayout]
+    .. automethod:: __iter__
 
     .. automethod:: __contains__
 
-    .. automethod:: __getitem__(name: str) -> BlockLayout
+    .. automethod:: __getitem__
 
     .. automethod:: __delitem__
 
-    .. automethod:: get(self, name: str, default=None) -> BlockLayout
+    .. automethod:: get
 
-    .. automethod:: new(name: str, base_point: Sequence[float] = (0, 0), dxfattribs: dict = None) -> BlockLayout
+    .. automethod:: new
 
-    .. automethod:: new_anonymous_block(type_char: str = 'U', base_point: Sequence[float] = (0, 0)) -> BlockLayout
+    .. automethod:: new_anonymous_block
 
     .. automethod:: rename_block
 
     .. automethod:: delete_block
 
-    .. automethod:: delete_all_blocks()
+    .. automethod:: delete_all_blocks
 
-    .. automethod:: purge
 

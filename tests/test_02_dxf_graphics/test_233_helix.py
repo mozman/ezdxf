@@ -72,28 +72,33 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'HELIX' in ENTITY_CLASSES
+
+    assert "HELIX" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Helix()
-    assert entity.dxftype() == 'HELIX'
+    assert entity.dxftype() == "HELIX"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = Helix.new(handle='ABBA', owner='0', dxfattribs={
-        'color': 7,
-        'axis_base_point': (1, 2, 3),
-        'start_point': (4, 5, 6),
-        'axis_vector': (7, 7, 7),
-        'radius': 20,
-        'turns': 5,
-        'handedness': 0,
-        'constrain': 2,
-    })
-    assert entity.dxf.layer == '0'
+    entity = Helix.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": 7,
+            "axis_base_point": (1, 2, 3),
+            "start_point": (4, 5, 6),
+            "axis_vector": (7, 7, 7),
+            "radius": 20,
+            "turns": 5,
+            "handedness": 0,
+            "constrain": 2,
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
     assert entity.dxf.major_release_number == 29
     assert entity.dxf.maintenance_release_number == 63
@@ -107,8 +112,8 @@ def test_default_new():
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.major_release_number == 29
     assert entity.dxf.maintenance_release_number == 63
     assert entity.dxf.axis_base_point == (0, 0, 0)
@@ -130,7 +135,7 @@ def test_write_dxf():
 def test_generic_helix():
     doc = ezdxf.new()
     msp = doc.modelspace()
-    helix = msp.new_entity('HELIX', {})
-    assert helix.dxftype() == 'HELIX'
+    helix = msp.new_entity("HELIX", {})
+    assert helix.dxftype() == "HELIX"
     assert helix.dxf.major_release_number == 29
     assert helix.dxf.degree == 3

@@ -5,6 +5,7 @@ import ezdxf
 from ezdxf.entities.mesh import Mesh
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vec3, Matrix44
+from ezdxf.audit import Auditor
 
 MESH = """0
 MESH
@@ -36,6 +37,7 @@ AcDbSubDMesh
 0
 """
 
+
 @pytest.fixture
 def entity():
     return Mesh.from_text(MESH)
@@ -43,24 +45,29 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'MESH' in ENTITY_CLASSES
+
+    assert "MESH" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Mesh()
-    assert entity.dxftype() == 'MESH'
+    assert entity.dxftype() == "MESH"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = Mesh.new(handle='ABBA', owner='0', dxfattribs={
-        'color': 7,
-        'version': 3,
-        'blend_crease': 1,
-        'subdivision_levels': 2,
-    })
-    assert entity.dxf.layer == '0'
+    entity = Mesh.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": 7,
+            "version": 3,
+            "blend_crease": 1,
+            "subdivision_levels": 2,
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
     assert entity.dxf.version == 3
     assert entity.dxf.blend_crease == 1
@@ -68,8 +75,8 @@ def test_default_new():
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.version == 2
     assert entity.dxf.blend_crease == 0
     assert entity.dxf.subdivision_levels == 0
@@ -82,12 +89,12 @@ def test_write_dxf():
     assert result == expected
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc():
-    return ezdxf.new('R2000')
+    return ezdxf.new("R2000")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def msp(doc):
     return doc.modelspace()
 
@@ -98,10 +105,10 @@ def mesh(doc):
 
 
 def test_mesh_properties(mesh):
-    assert 'MESH' == mesh.dxftype()
+    assert "MESH" == mesh.dxftype()
     assert 256 == mesh.dxf.color
-    assert '0' == mesh.dxf.layer
-    assert 'BYLAYER' == mesh.dxf.linetype
+    assert "0" == mesh.dxf.layer
+    assert "BYLAYER" == mesh.dxf.linetype
     assert mesh.dxf.paperspace == 0
 
 
@@ -135,13 +142,61 @@ def test_add_faces(msp):
         assert [0, 1, 2, 3] == mesh_data.faces[0]
 
 
-def test_add_edges(msp):
+def test_add_edge_crease(msp):
     mesh = msp.add_mesh()
     with mesh.edit_data() as mesh_data:
-        mesh_data.add_edge([(0, 0, 0), (1, 0, 0)])
-        assert 2 == len(mesh_data.vertices)
-        assert 1 == len(mesh_data.edges)
-        assert [0, 1] == mesh_data.edges[0]
+        mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        mesh_data.add_edge_crease(v1=0, v2=1, crease=1.0)
+        assert len(mesh_data.edges) == 1
+        assert mesh_data.edges[0] == (0, 1)
+        assert mesh_data.edge_crease_values[0] == 1.0
+        assert len(mesh_data.edge_crease_values) == len(mesh_data.edges)
+
+
+def test_dxf_export_adds_required_crease_values(msp):
+    mesh = msp.add_mesh()
+    with mesh.edit_data() as mesh_data:
+        mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        mesh_data.add_edge_crease(v1=0, v2=1, crease=1.0)
+    mesh.creases = []  # edges count does not math creases count
+    collector = TagCollector()
+    mesh.export_dxf(collector)
+    assert [tag.value for tag in collector.tags if tag.code == 140] == [0.0]
+
+
+def test_dxf_export_removes_crease_not_required(msp):
+    mesh = msp.add_mesh()
+    with mesh.edit_data() as mesh_data:
+        mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        mesh_data.add_edge_crease(v1=0, v2=1, crease=1.0)
+    mesh.creases = [1, 1]  # too much crease values for only one edge
+    collector = TagCollector()
+    mesh.export_dxf(collector)
+    assert [tag.value for tag in collector.tags if tag.code == 140] == [1.0]
+
+
+def test_auditor_fixes_invalid_crease_count(msp):
+    mesh = msp.add_mesh()
+    with mesh.edit_data() as mesh_data:
+        mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        mesh_data.add_edge_crease(v1=0, v2=1, crease=1.0)
+
+    auditor = Auditor(msp.doc)
+    mesh.audit(auditor)
+    assert len(auditor.fixes) == 0
+    assert len(auditor.errors) == 0
+
+    auditor.reset()
+    mesh.creases = [1, 1]  # too much crease values for only one edge
+    mesh.audit(auditor)
+    assert len(auditor.fixes) == 1
+    assert list(mesh.creases) == [1.0]
+
+    auditor.reset()
+    mesh.creases = []  # too few crease values for only one edge
+    mesh.audit(auditor)
+    assert len(auditor.fixes) == 1
+    assert list(mesh.creases) == [0.0]
 
 
 def test_vertex_format(msp):
@@ -170,7 +225,7 @@ def test_optimize(msp):
         [0, 1, 5, 4],
         [1, 2, 6, 5],
         [3, 2, 6, 7],
-        [0, 3, 7, 4]
+        [0, 3, 7, 4],
     ]
     mesh = msp.add_mesh()
     with mesh.edit_data() as mesh_data:

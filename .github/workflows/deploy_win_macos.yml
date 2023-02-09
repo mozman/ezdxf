@@ -1,0 +1,38 @@
+name: PyPI win and macos deployer
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  # Build and deploy Windows AMD64, macOS x86 & macOS arm64 wheels
+  Matrix-build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Install Python 3.x
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.11.3
+      env:
+        CIBW_BEFORE_BUILD: "pip install wheel cython"
+        CIBW_ARCHS_WINDOWS: "AMD64"
+        CIBW_ARCHS_MACOS: "x86_64 arm64 universal2"
+        # Does not fail at unsupported Python versions!
+        CIBW_BUILD: cp37-* cp38-* cp39-* cp310-* cp311-*
+    - name: Upload wheels
+      env:
+        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+      run: |
+        ls -l ./wheelhouse
+        pip install twine
+        twine upload --skip-existing ./wheelhouse/*.whl

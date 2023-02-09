@@ -47,19 +47,19 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'SUN' in ENTITY_CLASSES
+
+    assert "SUN" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Sun()
-    assert entity.dxftype() == 'SUN'
+    assert entity.dxftype() == "SUN"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = Sun.new(handle='ABBA', owner='0', dxfattribs={
-    })
+    entity = Sun.new(handle="ABBA", owner="0", dxfattribs={})
     assert entity.dxf.version == 1
     assert entity.dxf.status == 1
     assert entity.dxf.color == 7
@@ -97,7 +97,7 @@ def test_write_dxf():
 
 
 def test_sun():
-    doc = ezdxf.new('R2007')
-    sun = doc.objects.new_entity('SUN', {})
-    assert sun.dxftype() == 'SUN'
+    doc = ezdxf.new("R2007")
+    sun = doc.objects.new_entity("SUN", {})
+    assert sun.dxftype() == "SUN"
     assert sun.dxf.version == 1

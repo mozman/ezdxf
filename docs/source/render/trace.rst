@@ -18,15 +18,17 @@ Path rendering as quadrilaterals: :class:`~ezdxf.entities.Trace`,
 
     .. automethod:: close
 
-    .. automethod:: faces() -> Iterable[Tuple[Vec2, Vec2, Vec2, Vec2]
+    .. automethod:: faces
+
+    .. automethod:: faces_wcs
 
     .. automethod:: virtual_entities
 
     .. automethod:: from_polyline
 
-    .. method:: __len__()
+    .. method:: __len__
 
-    .. method:: __getitem__(item)
+    .. method:: __getitem__
 
 .. autoclass:: LinearTrace
 
@@ -38,13 +40,13 @@ Path rendering as quadrilaterals: :class:`~ezdxf.entities.Trace`,
 
     .. automethod:: add_station
 
-    .. automethod:: faces() -> Iterable[Tuple[Vec2, Vec2, Vec2, Vec2]
+    .. automethod:: faces
 
     .. automethod:: virtual_entities
 
 .. autoclass:: CurvedTrace
 
-    .. automethod:: faces() -> Iterable[Tuple[Vec2, Vec2, Vec2, Vec2]
+    .. automethod:: faces
 
     .. automethod:: virtual_entities
 

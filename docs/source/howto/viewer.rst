@@ -45,12 +45,17 @@ So far - no solution for showing IMAGES with relative paths on loading.
 Set Initial View/Zoom for the Modelspace
 ----------------------------------------
 
-To show an arbitrary location of the modelspace centered in the CAD application window, set the ``'*Active'`` VPORT to
-this location. The DXF attribute :attr:`dxf.center` defines the location in the modelspace, and the :attr:`dxf.height`
-specifies the area of the modelspace to view. Shortcut function:
+See section "General Document": :ref:`set msp initial view`
+
+Show Lineweights in DXF Viewers
+-------------------------------
+
+By default lines and curves are shown without lineweights in DXF viewers.
+By setting the header variable $LWDISPLAY to 1 the DXF viewer should display
+lineweights, if supported by the viewer.
 
 .. code-block:: Python
 
-    doc.set_modelspace_vport(height=10, center=(10, 10))
+    doc.header["$LWDISPLAY"] = 1
 
 .. _A360: https://a360.autodesk.com/viewer/

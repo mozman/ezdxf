@@ -96,7 +96,7 @@ def test_closed_shape_with_collinear_last_segment():
 def test_3_horiz_collinear_vertices_closed():
     vertices = [(1, 2), (5, 2), (9, 2)]
     result = list(offset_vertices_2d(vertices, 1, closed=True))
-    assert len(result) == len(vertices)+2  # get 2 extra vertices
+    assert len(result) == len(vertices) + 2  # get 2 extra vertices
     # but the first vertex, would be expected as last vertex
     assert result[0] == (1, 1)
     assert result[1] == (1, 3)

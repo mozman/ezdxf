@@ -9,23 +9,23 @@ from ezdxf.math import Matrix44
 from ezdxf.addons import geo
 
 TRACK_DATA = Path(__file__).parent
-GPX_NS = {'gpx': 'http://www.topografix.com/GPX/1/1'}
+GPX_NS = {"gpx": "http://www.topografix.com/GPX/1/1"}
 
 
 def load_gpx_track(p: Path) -> Iterable[Tuple[float, float]]:
-    """ Load all track points from all track segments at once. """
+    """Load all track points from all track segments at once."""
     gpx = ET.parse(p)
     root = gpx.getroot()
-    for track_point in root.findall('.//gpx:trkpt', GPX_NS):
+    for track_point in root.findall(".//gpx:trkpt", GPX_NS):
         data = track_point.attrib
         # Elevation is not supported by the geo add-on.
-        yield float(data['lon']), float(data['lat'])
+        yield float(data["lon"]), float(data["lat"])
 
 
 def add_gpx_track(msp, track_data, layer: str):
     geo_mapping = {
-        'type': 'LineString',
-        'coordinates': track_data,
+        "type": "LineString",
+        "coordinates": track_data,
     }
     geo_track = geo.GeoProxy.parse(geo_mapping)
 
@@ -47,11 +47,11 @@ def add_gpx_track(msp, track_data, layer: str):
         # Transform CRS coordinates into DXF WCS:
         geo_track.crs_to_wcs(m)
         # Create DXF entities (LWPOLYLINE)
-        for entity in geo_track.to_dxf_entities(dxfattribs={'layer': layer}):
+        for entity in geo_track.to_dxf_entities(dxfattribs={"layer": layer}):
             # Add entity to the modelspace:
             msp.add_entity(entity)
     else:
-        print(f'Incompatible CRS EPSG:{epsg}')
+        print(f"Incompatible CRS EPSG:{epsg}")
 
 
 def export_geojson(entity, m):
@@ -63,8 +63,8 @@ def export_geojson(entity, m):
     # representation EPSG:4326
     geo_proxy.map_to_globe()
     # Export GeoJSON data:
-    name = entity.dxf.layer + '.geojson'
-    with open(TRACK_DATA / name, 'wt', encoding='utf8') as fp:
+    name = entity.dxf.layer + ".geojson"
+    with open(TRACK_DATA / name, "wt", encoding="utf8") as fp:
         json.dump(geo_proxy.__geo_interface__, fp, indent=2)
 
 
@@ -73,12 +73,8 @@ def main(dxf_path: Path, out_path: Path, tracks):
     msp = doc.modelspace()
     # Load GPX data into DXF
     for index, track_path in enumerate(tracks, 1):
-        layer = f'track{index}'
-        doc.layers.new(layer, dxfattribs={
-            'color': index,
-            'lineweight': 50,
-        })
-
+        layer = f"track{index}"
+        doc.layers.add(layer, color=index, lineweight=50)
         track_data = list(load_gpx_track(track_path))
         add_gpx_track(msp, track_data, layer)
 
@@ -91,18 +87,18 @@ def main(dxf_path: Path, out_path: Path, tracks):
     else:
         # Identity matrix for DXF files without geo reference data:
         m = Matrix44()
-    for track in msp.query('LWPOLYLINE'):
+    for track in msp.query("LWPOLYLINE"):
         export_geojson(track, m)
     doc.saveas(str(out_path))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(
         TRACK_DATA / "Graz_10km_3m.dxf",
         TRACK_DATA / "gpx_tracks.dxf",
         [
-            TRACK_DATA / 'track1.gpx',
-            TRACK_DATA / 'track2.gpx',
-            TRACK_DATA / 'track3.gpx',
-        ]
+            TRACK_DATA / "track1.gpx",
+            TRACK_DATA / "track2.gpx",
+            TRACK_DATA / "track3.gpx",
+        ],
     )

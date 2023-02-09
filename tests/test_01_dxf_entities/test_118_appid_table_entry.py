@@ -6,13 +6,15 @@ import pytest
 from ezdxf.entities.appid import AppID
 
 
-
 @pytest.fixture
 def appid():
-    return AppID.new('FFFF', dxfattribs={
-        'name': 'EZDXF',
-    })
+    return AppID.new(
+        "FFFF",
+        dxfattribs={
+            "name": "EZDXF",
+        },
+    )
 
 
 def test_name(appid):
-    assert appid.dxf.name == 'EZDXF'
+    assert appid.dxf.name == "EZDXF"

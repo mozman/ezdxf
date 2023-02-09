@@ -16,14 +16,16 @@ def doc(request):
 def test_write_and_read_unicode(doc, tmpdir):
     msp = doc.modelspace()
     msp.add_text(NONE_ASCII)
-    filename = str(tmpdir.join('none_ascii_%s.dxf' % doc.dxfversion))
+    filename = str(tmpdir.join("none_ascii_%s.dxf" % doc.dxfversion))
     try:
         doc.saveas(filename)
     except ezdxf.DXFError as e:
-        pytest.fail("DXFError: {0} for DXF version {1}".format(str(e), doc.dxfversion))
+        pytest.fail(
+            "DXFError: {0} for DXF version {1}".format(str(e), doc.dxfversion)
+        )
     assert os.path.exists(filename)
 
     doc = ezdxf.readfile(filename)
-    text = doc.modelspace().query('TEXT')
+    text = doc.modelspace().query("TEXT")
     assert len(text) == 1
     assert text[0].dxf.text == NONE_ASCII

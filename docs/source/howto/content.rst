@@ -37,11 +37,12 @@ Default value is 256 which means BYLAYER:
     layer = doc.layers.get(entity.dxf.layer)
     aci = layer.get_color()
 
-The special :meth:`~ezdxf.entities.Layer.get_color` method is required, because the color attribute
-:attr:`Layer.dxf.color` is misused as layer on/off flag, a negative color value means the
-layer is off.
+The special :meth:`~ezdxf.entities.Layer.get_color` method is required, because
+the color attribute :attr:`Layer.dxf.color` is misused as layer on/off flag, a
+negative color value means the layer is off.
 
-ACI value 0 means BYBLOCK, which means the color from the block reference (INSERT entity).
+ACI value 0 means BYBLOCK, which means the color from the block reference
+(INSERT entity).
 
 Set color as ACI value as int in range [0, 256]:
 
@@ -50,44 +51,61 @@ Set color as ACI value as int in range [0, 256]:
     entity.dxf.color = 1
 
 
-The RGB values of the AutoCAD default colors are not officially documented, but an accurate
-translation table is included in `ezdxf`:
-
-.. code-block:: python
-
-    from ezdxf.colors import DXF_DEFAULT_COLORS, int2rgb
-
-    # 24 bit value RRRRRRRRGGGGGGGGBBBBBBBB
-    rgb24 = DXF_DEFAULT_COLORS[aci]
-    print(f'RGB Hex Value: #{rgb24:06X}')
-    r, g, b = int2rgb(rgb24)
-    print(f'RGB Channel Values: R={r:02X} G={g:02X} b={b:02X}')
-
-The ACI value 7 has a special meaning, it is white on dark backgrounds and white on light backgrounds.
+The ACI value 7 has a special meaning, it is white on dark backgrounds and white
+on light backgrounds.
 
 .. _howto_get_entity_rgb_color:
 
 Get/Set Entity RGB Color
 ------------------------
 
-RGB true color values are supported since DXF R13 (AC1012), the 24-bit RGB value is stored as integer in
-the DXF attribute :attr:`~ezdxf.entities.DXFGraphic.dxf.true_color`:
+RGB true color values are supported since DXF R13 (AC1012), the 24-bit RGB value
+is stored as integer in the DXF attribute :attr:`~ezdxf.entities.DXFGraphic.dxf.true_color`:
 
 .. code-block:: python
 
+    # 24 bit binary value: 0bRRRRRRRRGGGGGGGGBBBBBBBB or hex value: 0xRRGGBB
     # set true color value to red
     entity.dxf.true_color = 0xFF0000
 
-The :attr:`~ezdxf.entities.DXFGraphic.rgb` property of the :class:`~ezdxf.entities.DXFGraphic` entity
-add support to get/set RGB value as (r, g, b)-tuple:
+Use the helper functions from the :mod:`ezdxf.colors` module for
+RGB integer value handling:
+
+.. code-block:: python
+
+    from ezdxf import colors
+
+    entity.dxf.true_color = colors.rgb2int((0xFF, 0, 0))
+    r, g, b = colors.int2rgb(entity.dxf.true_color)
+
+The RGB values of the AutoCAD default colors are not officially documented,
+but an accurate translation table is included in `ezdxf`:
+
+.. code-block:: python
+
+    # Warning: ACI value 256 (BYLAYER) raises an IndexError!
+    rgb24 = colors.DXF_DEFAULT_COLORS[aci]
+    print(f"RGB Hex Value: #{rgb24:06X}")
+    r, g, b = colors.int2rgb(rgb24)
+    print(f"RGB Channel Values: R={r:02X} G={g:02X} b={b:02X}")
+
+If :attr:`color` and :attr:`true_color` values are set, BricsCAD and AutoCAD use
+the :attr:`true_color` value as display color for the entity.
+
+Get/Set True Color as RGB-Tuple
+-------------------------------
+
+Get/Set the true color value as (r, g, b)-tuple by the
+:attr:`~ezdxf.entities.DXFGraphic.rgb` property of the
+:class:`~ezdxf.entities.DXFGraphic` entity:
 
 .. code-block:: python
 
     # set true color value to red
-    entity.rgb = (255, 0, 0)
+    entity.rgb = (0xFF, 0, 0)
 
-If ``color`` and ``true_color`` values are set, BricsCAD and AutoCAD use the ``true_color`` value
-as display color for the entity.
+    # get true color values
+    r, g, b = entity.rgb
 
 .. _howto_get_attribs:
 
@@ -147,6 +165,10 @@ in the range 1000 - 1071.
 Method :meth:`~ezdxf.entities.DXFEntity.get_xdata` returns the extended data for an entity as
 :class:`~ezdxf.lldxf.tags.Tags` object.
 
+.. seealso::
+
+    Tutorial: :ref:`tut_custom_data`
+
 Get Overridden DIMSTYLE Values from DIMENSION
 ---------------------------------------------
 
@@ -192,5 +214,89 @@ or BricsCAD renderings.
     # recreate geometry block
     dimstyle_override.render()
 
+How to Change the HATCH Pattern Origin Point
+--------------------------------------------
+
+This code sets the origin of the first pattern line to the given `origin` and
+the origins of all remaining pattern lines relative to the first pattern line
+origin.
+
+.. code-block:: python
+
+    from ezdxf.entities import Hatch, Pattern
+    from ezdxf.math import Vec2
+
+    def shift_pattern_origin(hatch: Hatch, offset: Vec2):
+        if isinstance(hatch.pattern, Pattern):
+            for pattern_line in hatch.pattern.lines:
+                pattern_line.base_point += offset
+
+    def reset_pattern_origin_of_first_pattern_line(hatch: Hatch, origin: Vec2):
+        if isinstance(hatch.pattern, Pattern) and len(hatch.pattern.lines):
+            first_pattern_line = hatch.pattern.lines[0]
+            offset = origin - first_pattern_line.base_point
+            shift_pattern_origin(hatch, offset)
+
+.. seealso::
+
+    - Discussion `#769 <https://github.com/mozman/ezdxf/discussions/769>`_
+
+How to Get the Length of a Spline or Polyline
+---------------------------------------------
+
+There exist no analytical function to calculate the length of a `B-spline`_, you
+have to approximate the curve and calculate the length of the polyline.
+The construction tool :class:`ezdxf.math.ConstructionPolyline` is may be useful
+for that.
+
+.. code-block:: python
+
+    import ezdxf
+    from ezdxf.math import ConstructionPolyline
+
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0)]
+
+    spline = msp.add_spline(fit_points)
+    # Adjust the max. sagitta distance to your needs or run the calculation in a loop
+    # reducing the distance until the difference to the previous run is smaller
+    # than your expected precision:
+    polyline = ConstructionPolyline(spline.flattening(distance=0.1))
+    print(f"approximated length = {polyline.length:.2f}")
+
+How to Resolve DXF Properties
+-----------------------------
+
+Graphical properties of DXF entities (color, lineweight, ...) are sometimes
+hard to resolve because of the complex possibilities to inherit properties from
+layers or blocks, or overriding them by :term:`ctb` files.
+
+The :mod:`~ezdxf.addons.drawing` add-on provides the
+:class:`~ezdxf.addons.drawing.properties.RenderContext` class that can be used
+to resolve properties of entities in the context of their use:
+
+.. code-block:: python
+
+    import ezdxf
+    from ezdxf.addons.drawing.properties import RenderContext
+
+    doc = ezdxf.new()
+    doc.layers.add("LINE", color=ezdxf.colors.RED)
+    msp = doc.modelspace()
+    line = msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "LINE"})
+
+    ctx = RenderContext(doc)
+    ctx.set_current_layout(msp)
+    print(f"resolved RGB value: {ctx.resolve_color(line)}")
+
+Output::
+
+    resolved RGB value: #ff0000
+
+This works in most simple cases, resolving properties of objects in viewports or
+nested blocks requires additional information that is beyond the scope of a
+simple guide.
 
 .. _DXF Group Codes in Numerical Order Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3F0380A5-1C15-464D-BC66-2C5F094BCFB9
+.. _B-spline: https://en.wikipedia.org/wiki/B-spline

@@ -1,19 +1,21 @@
-# Created: 2019-01-05
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import Optional
+from ezdxf.enums import InsertUnits
+
+# Documentation: https://ezdxf.mozman.at/docs/concepts/units.html#insunits
 
 MSP_METRIC_UNITS_FACTORS = {
-    'km': .001,
-    'm': 1.0,
-    'dm': 10.,
-    'cm': 100.,
-    'mm': 1000.,
-    'µm': 1000000.,
-    'yd': 1.093613298,
-    'ft': 3.280839895,
-    'in': 39.37007874,
-    'mi': 0.00062137119,
+    "km": 0.001,
+    "m": 1.0,
+    "dm": 10.0,
+    "cm": 100.0,
+    "mm": 1000.0,
+    "µm": 1000000.0,
+    "yd": 1.093613298,
+    "ft": 3.280839895,
+    "in": 39.37007874,
+    "mi": 0.00062137119,
 }
 
 IN = 1
@@ -26,7 +28,18 @@ KM = 7
 YD = 10
 DM = 14
 
-IMPERIAL_UNITS = {1, 2, 3, 8, 9, 10, 21, 22, 23, 24}
+IMPERIAL_UNITS = {
+    InsertUnits.Inches,
+    InsertUnits.Feet,
+    InsertUnits.Miles,
+    InsertUnits.Microinches,
+    InsertUnits.Mils,
+    InsertUnits.Yards,
+    InsertUnits.USSurveyFeet,
+    InsertUnits.USSurveyInch,
+    InsertUnits.USSurveyYard,
+    InsertUnits.USSurveyMile,
+}
 
 # Conversion factor from meters to unit
 # 1 meter is ... [unit]
@@ -60,13 +73,13 @@ METER_FACTOR = [
 
 
 class DrawingUnits:
-    def __init__(self, base: float = 1., unit: str = 'm'):
+    def __init__(self, base: float = 1.0, unit: str = "m"):
         self.base = float(base)
         self.unit = unit.lower()
         self._units = MSP_METRIC_UNITS_FACTORS
         self._msp_factor = base * self._units[self.unit]
 
-    def factor(self, unit: str = 'm') -> float:
+    def factor(self, unit: str = "m") -> float:
         return self._msp_factor / self._units[unit.lower()]
 
     def __call__(self, unit: str) -> float:
@@ -74,7 +87,7 @@ class DrawingUnits:
 
 
 class PaperSpaceUnits:
-    def __init__(self, msp=DrawingUnits(), unit: str = 'mm', scale: float = 1):
+    def __init__(self, msp=DrawingUnits(), unit: str = "mm", scale: float = 1):
         self.unit = unit.lower()
         self.scale = scale
         self._msp = msp
@@ -130,10 +143,31 @@ class PaperSpaceUnits:
 # 23 = US Survey Yard
 # 24 = US Survey Mile
 _unit_spec = [
-    None, 'in', 'ft', 'mi', 'mm', 'cm', 'm', 'km',
-    'µin', 'mil', 'yd', 'Å', 'nm', 'µm', 'dm', 'dam', 'hm', 'gm',
-    'au', 'ly', 'pc',
-    None, None, None, None,
+    None,
+    "in",
+    "ft",
+    "mi",
+    "mm",
+    "cm",
+    "m",
+    "km",
+    "µin",
+    "mil",
+    "yd",
+    "Å",
+    "nm",
+    "µm",
+    "dm",
+    "dam",
+    "hm",
+    "gm",
+    "au",
+    "ly",
+    "pc",
+    None,
+    None,
+    None,
+    None,
 ]
 
 
@@ -141,8 +175,10 @@ def decode(enum: int) -> Optional[str]:
     return _unit_spec[int(enum)]
 
 
-def conversion_factor(source_units: int, target_units: int) -> float:
-    """ Returns the conversion factor to represent `source_units` in
+def conversion_factor(
+    source_units: InsertUnits, target_units: InsertUnits
+) -> float:
+    """Returns the conversion factor to represent `source_units` in
     `target_units`.
 
     E.g. millimeter in centimeter :code:`conversion_factor(MM, CM)` returns 0.1,
@@ -153,8 +189,29 @@ def conversion_factor(source_units: int, target_units: int) -> float:
         source_factor = METER_FACTOR[source_units]
         target_factor = METER_FACTOR[target_units]
         if source_factor is None or target_factor is None:
-            raise TypeError('Unsupported conversion.')
+            raise TypeError("Unsupported conversion.")
         return target_factor / source_factor
 
     except IndexError:
-        raise ValueError('Invalid unit enum.')
+        raise ValueError("Invalid unit enum.")
+
+
+def unit_name(enum: int) -> str:
+    """Returns the name of the unit enum."""
+    try:
+        return str(InsertUnits(enum)).split(".")[1]
+    except (ValueError, IndexError):
+        return "unitless"
+
+
+ANGLE_UNITS = {
+    0: "Decimal Degrees",
+    1: "Degrees/Minutes/Seconds",
+    2: "Grad",
+    3: "Radians",
+}
+
+
+def angle_unit_name(enum: int) -> str:
+    """Returns the name of the angle unit enum."""
+    return ANGLE_UNITS.get(enum, f"unknown unit <{enum}>")

@@ -10,13 +10,13 @@ DEF ABS_TOL = 1e-12
 DEF REL_TOL = 1e-9
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import VecXY, Vertex
+    from ezdxf.math import AnyVec, UVec
 
-cdef bint isclose(double a, double b, double abs_tol):
+cdef bint isclose(double a, double b, double rel_tol, double abs_tol):
     # Has to match the Python implementation!
     cdef double diff = fabs(b - a)
-    return diff <= fabs(REL_TOL * b) or \
-           diff <= fabs(REL_TOL * a) or \
+    return diff <= fabs(rel_tol * b) or \
+           diff <= fabs(rel_tol * a) or \
            diff <= abs_tol
 
 cdef double RAD2DEG = 180.0 / M_PI
@@ -50,7 +50,6 @@ cdef class Vec2:
 
     Init:
 
-    - Vec2()
     - Vec2(vec2)
     - Vec2(vec3)
     - Vec2((x, y))
@@ -91,32 +90,35 @@ cdef class Vec2:
         self.x = args[0]
         self.y = args[1]
 
+    def __reduce__(self):
+        return Vec2, (self.x, self.y)
+
     @property
-    def vec3(self) -> 'Vec3':
+    def vec3(self) -> Vec3:
         return Vec3(self)
 
-    def round(self, ndigits=None) -> 'Vec2':
+    def round(self, ndigits=None) -> Vec2:
         # only used for testing
         return Vec2(round(self.x, ndigits), round(self.y, ndigits))
 
     @staticmethod
-    def list(items: Iterable['Vertex']) -> List['Vec2']:
+    def list(items: Iterable[UVec]) -> List[Vec2]:
         return list(Vec2.generate(items))
 
     @staticmethod
-    def tuple(items: Iterable['Vertex']) -> Sequence['Vec2']:
+    def tuple(items: Iterable[UVec]) -> Sequence[Vec2]:
         return tuple(Vec2.generate(items))
 
     @staticmethod
-    def generate(items: Iterable['Vertex']) -> Iterable['Vec2']:
+    def generate(items: Iterable[UVec]) -> Iterable[Vec2]:
         return (Vec2(item) for item in items)
 
     @staticmethod
-    def from_angle(double angle, double length = 1.0) -> 'Vec2':
+    def from_angle(double angle, double length = 1.0) -> Vec2:
         return v2_from_angle(angle, length)
 
     @staticmethod
-    def from_deg_angle(double angle, double length = 1.0) -> 'Vec2':
+    def from_deg_angle(double angle, double length = 1.0) -> Vec2:
         return v2_from_angle(angle * DEG2RAD, length)
 
     def __str__(self) -> str:
@@ -131,13 +133,13 @@ cdef class Vec2:
     def __hash__(self) -> int:
         return hash((self.x, self.y))
 
-    def copy(self) -> 'Vec2':
+    def copy(self) -> Vec2:
         return self  # immutable
 
-    def __copy__(self) -> 'Vec2':
+    def __copy__(self) -> Vec2:
         return self  # immutable
 
-    def __deepcopy__(self, memodict: dict) -> 'Vec2':
+    def __deepcopy__(self, memodict: dict) -> Vec2:
         return self  # immutable
 
     def __getitem__(self, int index) -> float:
@@ -161,8 +163,7 @@ cdef class Vec2:
 
     @property
     def is_null(self) -> bool:
-        cdef Vec2 zero = Vec2()
-        return bool(v2_isclose(self, zero, ABS_TOL))
+        return fabs(self.x) <= ABS_TOL and fabs(self.y) <= ABS_TOL
 
     @property
     def angle(self) -> float:
@@ -172,21 +173,21 @@ cdef class Vec2:
     def angle_deg(self) -> float:
         return atan2(self.y, self.x) * RAD2DEG
 
-    def orthogonal(self, ccw: bool = True) -> 'Vec2':
+    def orthogonal(self, ccw: bool = True) -> Vec2:
         return v2_ortho(self, ccw)
 
-    def lerp(self, other: 'VecXY', double factor = 0.5) -> 'Vec2':
+    def lerp(self, other: "AnyVec", double factor = 0.5) -> Vec2:
         cdef Vec2 o = Vec2(other)
         return v2_lerp(self, o, factor)
 
     def normalize(self, double length = 1.) -> Vec2:
         return v2_normalize(self, length)
 
-    def project(self, other: 'VecXY') -> 'Vec2':
+    def project(self, other: "AnyVec") -> Vec2:
         cdef Vec2 o = Vec2(other)
         return v2_project(self, o)
 
-    def __neg__(self) -> 'Vec2':
+    def __neg__(self) -> Vec2:
         cdef Vec2 res = Vec2()
         res.x = -self.x
         res.y = -self.y
@@ -197,15 +198,16 @@ cdef class Vec2:
     def __bool__(self) -> bool:
         return self.x != 0 or self.y != 0
 
-    def isclose(self, other: 'VecXY', double abs_tol = ABS_TOL) -> bool:
+    def isclose(self, other: "AnyVec", *, double rel_tol=REL_TOL,
+                double abs_tol = ABS_TOL) -> bool:
         cdef Vec2 o = Vec2(other)
-        return isclose(self.x, o.x, abs_tol) and \
-               isclose(self.y, o.y, abs_tol)
+        return isclose(self.x, o.x, rel_tol, abs_tol) and \
+               isclose(self.y, o.y, rel_tol, abs_tol)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: UVec) -> bool:
         if not isinstance(other, Vec2):
             other = Vec2(other)
-        return bool(v2_isclose(self, other, ABS_TOL))
+        return self.x == other.x and self.y == other.y
 
     def __lt__(self, other) -> bool:
         cdef Vec2 o = Vec2(other)
@@ -214,7 +216,7 @@ cdef class Vec2:
         else:
             return self.x < o.x
 
-    def __add__(self, other: 'VecXY') -> 'Vec2':
+    def __add__(self, other: "AnyVec") -> Vec2:
         if not isinstance(other, Vec2):
             other = Vec2(other)
         return v2_add(self, <Vec2> other)
@@ -223,7 +225,7 @@ cdef class Vec2:
 
     __iadd__ = __add__  # immutable
 
-    def __sub__(self, other: 'VecXY') -> 'Vec2':
+    def __sub__(self, other: "AnyVec") -> Vec2:
         if not isinstance(other, Vec2):
             other = Vec2(other)
         return v2_sub(self, <Vec2> other)
@@ -232,7 +234,7 @@ cdef class Vec2:
 
     __isub__ = __sub__  # immutable
 
-    def __mul__(self, factor) -> 'Vec2':
+    def __mul__(self, factor) -> Vec2:
         if isinstance(self, Vec2):
             return v2_mul(self, factor)
         elif isinstance(factor, Vec2):
@@ -242,43 +244,43 @@ cdef class Vec2:
 
     # Special Cython <(3.0) feature: __rmul__ == __mul__(factor, self)
 
-    def __rmul__(self, double factor) -> 'Vec2':
+    def __rmul__(self, double factor) -> Vec2:
         # for Cython >= 3.0
         return v2_mul(self, factor)
 
     __imul__ = __mul__  # immutable
 
-    def __truediv__(self, double factor) -> 'Vec2':
+    def __truediv__(self, double factor) -> Vec2:
         return v2_mul(self, 1.0 / factor)
 
     # __rtruediv__ not supported -> TypeError
 
-    def dot(self, other: 'VecXY') -> float:
+    def dot(self, other: "AnyVec") -> float:
         cdef Vec2 o = Vec2(other)
         return v2_dot(self, o)
 
-    def det(self, other: 'VecXY') -> float:
+    def det(self, other: "AnyVec") -> float:
         cdef Vec2 o = Vec2(other)
         return v2_det(self, o)
 
-    def distance(self, other: 'VecXY') -> float:
+    def distance(self, other: "AnyVec") -> float:
         cdef Vec2 o = Vec2(other)
         return v2_dist(self, o)
 
-    def angle_between(self, other: 'VecXY') -> float:
+    def angle_between(self, other: "AnyVec") -> float:
         cdef Vec2 o = Vec2(other)
         return v2_angle_between(self, o)
 
-    def rotate(self, double angle: float):
+    def rotate(self, double angle: float) -> Vec2:
         cdef double self_angle = atan2(self.y, self.x)
         cdef double magnitude = hypot(self.x, self.y)
         return v2_from_angle(self_angle + angle, magnitude)
 
-    def rotate_deg(self, double angle) -> 'Vec2':
+    def rotate_deg(self, double angle) -> Vec2:
         return self.rotate(angle * DEG2RAD)
 
     @staticmethod
-    def sum(items: Iterable['Vec2']) -> 'Vec2':
+    def sum(items: Iterable[Vec2]) -> Vec2:
         cdef Vec2 res = Vec2()
         cdef Vec2 tmp
         res.x = 0.0
@@ -361,9 +363,9 @@ cdef Vec2 v2_project(Vec2 a, Vec2 b):
     cdef Vec2 uv = v2_normalize(a, 1.0)
     return v2_mul(uv, v2_dot(uv, b))
 
-cdef bint v2_isclose(Vec2 a, Vec2 b, double abs_tol):
-    return isclose(a.x, b.x, abs_tol) and \
-           isclose(a.y, b.y, abs_tol)
+cdef bint v2_isclose(Vec2 a, Vec2 b, double rel_tol, double abs_tol):
+    return isclose(a.x, b.x, rel_tol, abs_tol) and \
+           isclose(a.y, b.y, rel_tol, abs_tol)
 
 cdef Vec2 v2_from_cpp_vec3(CppVec3 c):
     cdef Vec2 v = Vec2()
@@ -422,8 +424,11 @@ cdef class Vec3:
         else:
             self.z = 0.0
 
+    def __reduce__(self):
+        return Vec3, self.xyz
+
     @property
-    def xy(self) -> 'Vec3':
+    def xy(self) -> Vec3:
         cdef Vec3 res = Vec3()
         res.x = self.x
         res.y = self.y
@@ -434,21 +439,21 @@ cdef class Vec3:
         return self.x, self.y, self.z
 
     @property
-    def vec2(self) -> 'Vec2':
+    def vec2(self) -> Vec2:
         cdef Vec2 res = Vec2()
         res.x = self.x
         res.y = self.y
         return res
 
     def replace(self, x: float = None, y: float = None,
-                z: float = None) -> 'Vec3':
+                z: float = None) -> Vec3:
         cdef Vec3 res = Vec3()
         res.x = self.x if x is None else x
         res.y = self.y if y is None else y
         res.z = self.z if z is None else z
         return res
 
-    def round(self, ndigits: int = None) -> 'Vec3':
+    def round(self, ndigits: int = None) -> Vec3:
         return Vec3(
             round(self.x, ndigits),
             round(self.y, ndigits),
@@ -456,27 +461,27 @@ cdef class Vec3:
         )
 
     @staticmethod
-    def list(items: Iterable['Vertex']) -> List['Vec3']:
+    def list(items: Iterable[UVec]) -> List[Vec3]:
         return list(Vec3.generate(items))
 
     @staticmethod
-    def tuple(items: Iterable['Vertex']) -> Sequence['Vec3']:
+    def tuple(items: Iterable[UVec]) -> Sequence[Vec3]:
         return tuple(Vec3.generate(items))
 
     @staticmethod
-    def generate(items: Iterable['Vertex']) -> Iterable['Vec3']:
+    def generate(items: Iterable[UVec]) -> Iterable[Vec3]:
         return (Vec3(item) for item in items)
 
     @staticmethod
-    def from_angle(double angle, double length = 1.0) -> 'Vec3':
+    def from_angle(double angle, double length = 1.0) -> Vec3:
         return v3_from_angle(angle, length)
 
     @staticmethod
-    def from_deg_angle(double angle, double length = 1.0) -> 'Vec3':
+    def from_deg_angle(double angle, double length = 1.0) -> Vec3:
         return v3_from_angle(angle * DEG2RAD, length)
 
     @staticmethod
-    def random(double length = 1.0) -> 'Vec3':
+    def random(double length = 1.0) -> Vec3:
         cdef Vec3 res = Vec3()
         uniform = random.uniform
         res.x = uniform(-1, 1)
@@ -496,12 +501,12 @@ cdef class Vec3:
     def __hash__(self) -> int:
         return hash(self.xyz)
 
-    def copy(self) -> 'Vec3':
+    def copy(self) -> Vec3:
         return self  # immutable
 
     __copy__ = copy
 
-    def __deepcopy__(self, memodict: dict) -> 'Vec3':
+    def __deepcopy__(self, memodict: dict) -> Vec3:
         return self  # immutable!
 
     def __getitem__(self, int index) -> float:
@@ -536,15 +541,17 @@ cdef class Vec3:
 
     @property
     def is_null(self) -> bool:
-        return bool(v3_isclose(self, <Vec3> NULLVEC, ABS_TOL))
+        return fabs(self.x) <= ABS_TOL and fabs(self.y) <= ABS_TOL and \
+               fabs(self.z) <= ABS_TOL
 
-    def is_parallel(self, other: 'Vertex', double abs_tol = ABS_TOL) -> bool:
+    def is_parallel(self, other: UVec, *, double rel_tol=REL_TOL,
+                    double abs_tol = ABS_TOL) -> bool:
         cdef Vec3 o = Vec3(other)
         cdef Vec3 v1 = v3_normalize(self, 1.0)
         cdef Vec3 v2 = v3_normalize(o, 1.0)
         cdef Vec3 neg_v2 = v3_reverse(v2)
-        return v3_isclose(v1, v2, abs_tol) or \
-               v3_isclose(v1, neg_v2, abs_tol)
+        return v3_isclose(v1, v2, rel_tol, abs_tol) or \
+               v3_isclose(v1, neg_v2, rel_tol, abs_tol)
 
     @property
     def spatial_angle(self) -> float:
@@ -562,42 +569,43 @@ cdef class Vec3:
     def angle_deg(self) -> float:
         return atan2(self.y, self.x) * RAD2DEG
 
-    def orthogonal(self, ccw: bool = True) -> 'Vec3':
+    def orthogonal(self, ccw: bool = True) -> Vec3:
         return v3_ortho(self, ccw)
 
-    def lerp(self, other: 'Vertex', double factor=0.5) -> 'Vec3':
+    def lerp(self, other: UVec, double factor=0.5) -> Vec3:
         if not isinstance(other, Vec3):
             other = Vec3(other)
         return v3_lerp(self, <Vec3> other, factor)
 
-    def project(self, other: 'Vertex') -> 'Vec3':
+    def project(self, other: UVec) -> Vec3:
         if not isinstance(other, Vec3):
             other = Vec3(other)
         return v3_project(self, <Vec3> other)
 
-    def normalize(self, double length = 1.) -> 'Vec3':
+    def normalize(self, double length = 1.) -> Vec3:
         return v3_normalize(self, length)
 
-    def reversed(self) -> 'Vec3':
+    def reversed(self) -> Vec3:
         return v3_reverse(self)
 
-    def __neg__(self) -> 'Vec3':
+    def __neg__(self) -> Vec3:
         return v3_reverse(self)
 
     def __bool__(self) -> bool:
         return not self.is_null
 
-    def isclose(self, other: 'Vertex', double abs_tol = ABS_TOL) -> bool:
+    def isclose(self, other: UVec, *, double rel_tol = REL_TOL,
+                double abs_tol = ABS_TOL) -> bool:
         if not isinstance(other, Vec3):
             other = Vec3(other)
-        return v3_isclose(self, <Vec3> other, abs_tol)
+        return v3_isclose(self, <Vec3> other, rel_tol, abs_tol)
 
-    def __eq__(self, other: 'Vertex') -> bool:
+    def __eq__(self, other: UVec) -> bool:
         if not isinstance(other, Vec3):
             other = Vec3(other)
-        return bool(v3_isclose(self, <Vec3> other, ABS_TOL))
+        return self.x == other.x and self.y == other.y and self.z == other.z
 
-    def __lt__(self, other: 'Vertex') -> bool:
+    def __lt__(self, other: UVec) -> bool:
         if not isinstance(other, Vec3):
             other = Vec3(other)
         if self.x == (<Vec3> other).x:
@@ -606,7 +614,7 @@ cdef class Vec3:
             return self.x < (<Vec3> other).x
 
     # Special Cython (<3.0) feature: __radd__ == __add__(other, self)
-    def __add__(self, other) -> 'Vec3':
+    def __add__(self, other) -> Vec3:
         if not isinstance(self, Vec3):
             # other is the real self
             return v3_add(Vec3(self), <Vec3> other)
@@ -620,7 +628,7 @@ cdef class Vec3:
     __iadd__ = __add__  # immutable
 
     # Special Cython (<3.0) feature: __rsub__ == __sub__(other, self)
-    def __sub__(self, other) -> 'Vec3':
+    def __sub__(self, other) -> Vec3:
         if not isinstance(self, Vec3):
             # other is the real self
             return v3_sub(Vec3(self), <Vec3> other)
@@ -629,31 +637,31 @@ cdef class Vec3:
             other = Vec3(other)
         return v3_sub(<Vec3> self, <Vec3> other)
 
-    def __rsub__(self, other) -> 'Vec3':
+    def __rsub__(self, other) -> Vec3:
         # for Cython >= 3.0
         return v3_sub(Vec3(other), <Vec3> self)
 
     __isub__ = __sub__  # immutable
 
     # Special Cython <(3.0) feature: __rmul__ == __mul__(factor, self)
-    def __mul__(self, factor) -> 'Vec3':
+    def __mul__(self, factor) -> Vec3:
         if isinstance(factor, Vec3):
             return v3_mul(<Vec3> factor, self)
         return v3_mul(<Vec3> self, factor)
 
-    def __rmul__(self, double factor) -> 'Vec3':
+    def __rmul__(self, double factor) -> Vec3:
         # for Cython >= 3.0
         return v3_mul(self, factor)
 
     __imul__ = __mul__  # immutable
 
-    def __truediv__(self, double factor) -> 'Vec3':
+    def __truediv__(self, double factor) -> Vec3:
         return v3_mul(self, 1.0 / factor)
 
     # __rtruediv__ not supported -> TypeError
 
     @staticmethod
-    def sum(items: Iterable['Vertex']) -> 'Vec3':
+    def sum(items: Iterable[UVec]) -> Vec3:
         cdef Vec3 res = Vec3()
         cdef Vec3 tmp
         for v in items:
@@ -663,35 +671,35 @@ cdef class Vec3:
             res.z += tmp.z
         return res
 
-    def dot(self, other: 'Vertex') -> float:
+    def dot(self, other: UVec) -> float:
         cdef Vec3 o = Vec3(other)
         return v3_dot(self, o)
 
-    def cross(self, other: 'Vertex') -> 'Vec3':
+    def cross(self, other: UVec) -> Vec3:
         cdef Vec3 o = Vec3(other)
         return v3_cross(self, o)
 
-    def distance(self, other: 'Vertex') -> float:
+    def distance(self, other: UVec) -> float:
         cdef Vec3 o = Vec3(other)
         return v3_dist(self, o)
 
-    def angle_between(self, other: 'Vertex') -> float:
+    def angle_between(self, other: UVec) -> float:
         cdef Vec3 o = Vec3(other)
         return v3_angle_between(self, o)
 
-    def angle_about(self, base: 'Vertex', target: 'Vertex') -> float:
+    def angle_about(self, base: UVec, target: UVec) -> float:
         cdef Vec3 b = Vec3(base)
         cdef Vec3 t = Vec3(target)
         return v3_angle_about(self, b, t)
 
-    def rotate(self, double angle) -> 'Vec3':
+    def rotate(self, double angle) -> Vec3:
         cdef double angle_ = atan2(self.y, self.x) + angle
         cdef double magnitude_ = hypot(self.x, self.y)
         cdef Vec3 res = Vec3.from_angle(angle_, magnitude_)
         res.z = self.z
         return res
 
-    def rotate_deg(self, double angle) -> 'Vec3':
+    def rotate_deg(self, double angle) -> Vec3:
         return self.rotate(angle * DEG2RAD)
 
     cdef CppVec3 to_cpp_vec3(self):
@@ -701,7 +709,6 @@ X_AXIS = Vec3(1, 0, 0)
 Y_AXIS = Vec3(0, 1, 0)
 Z_AXIS = Vec3(0, 0, 1)
 NULLVEC = Vec3(0, 0, 0)
-Vector = Vec3
 
 cdef Vec3 v3_add(Vec3 a, Vec3 b):
     res = Vec3()
@@ -805,10 +812,10 @@ cdef Vec3 v3_project(Vec3 a, Vec3 b):
     cdef Vec3 uv = v3_normalize(a, 1.0)
     return v3_mul(uv, v3_dot(uv, b))
 
-cdef bint v3_isclose(Vec3 a, Vec3 b, double abs_tol):
-    return isclose(a.x, b.x, abs_tol) and \
-           isclose(a.y, b.y, abs_tol) and \
-           isclose(a.z, b.z, abs_tol)
+cdef bint v3_isclose(Vec3 a, Vec3 b, double rel_tol, double abs_tol):
+    return isclose(a.x, b.x, rel_tol, abs_tol) and \
+           isclose(a.y, b.y, rel_tol, abs_tol) and \
+           isclose(a.z, b.z, rel_tol, abs_tol)
 
 cdef Vec3 v3_from_cpp_vec3(CppVec3 c):
     cdef Vec3 v = Vec3()
@@ -817,12 +824,12 @@ cdef Vec3 v3_from_cpp_vec3(CppVec3 c):
     v.z = c.z
     return v
 
-def distance(p1: 'Vertex', p2: 'Vertex') -> float:
+def distance(p1: UVec, p2: UVec) -> float:
     cdef Vec3 a = Vec3(p1)
     cdef Vec3 b = Vec3(p2)
     return v3_dist(a, b)
 
-def lerp(p1: 'Vertex', p2: 'Vertex', double factor = 0.5) -> 'Vec3':
+def lerp(p1: UVec, p2: UVec, double factor = 0.5) -> Vec3:
     cdef Vec3 a = Vec3(p1)
     cdef Vec3 b = Vec3(p2)
     return v3_lerp(a, b, factor)

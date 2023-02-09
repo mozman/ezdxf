@@ -1,13 +1,24 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 from ezdxf.lldxf.tags import Tags
 from ezdxf.proxygraphic import load_proxy_graphic, ProxyGraphic
 import logging
 import ezdxf
 
 logging.basicConfig(level=logging.ERROR)
-DIR = Path('~/Desktop/outbox').expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example renders DXF proxy-graphic as DXF primitives.
+#
+# The DXF proxy-graphic is an internal data format to add a graphical
+# representation to DXF entities which are unknown (custom DXF entities),
+# not documented or very complex so CAD applications can display them without
+# knowledge about the internal structure of these entities.
+# ------------------------------------------------------------------------------
 
 DATA = """160
 968
@@ -29,18 +40,24 @@ E33F00000000000000000418DC3967E1F83F000000000C0000001200000000000000D00000002600
 000000020000000960E446A3456F405AF2DBF448AB604000000000000000000960E446A3456F405AF2DBF448AB6040000000000000000000000000000000000000000000000000000000000000F03F
 """
 
-doc = ezdxf.new()
-msp = doc.modelspace()
 
-data = load_proxy_graphic(Tags.from_text(DATA))
-proxy = ProxyGraphic(data, doc)
+def main():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
 
-for index, size, name in proxy.info():
-    print(f'Index: {index}, Size: {size}, Type: {name}')
+    data = load_proxy_graphic(Tags.from_text(DATA))
+    proxy = ProxyGraphic(data, doc)
 
-for entity in proxy.virtual_entities():
-    print(str(entity))
-    doc.entitydb.add(entity)
-    msp.add_entity(entity)
+    for index, size, name in proxy.info():
+        print(f"Index: {index}, Size: {size}, Type: {name}")
 
-doc.saveas(DIR / 'proxy.dxf')
+    for entity in proxy.virtual_entities():
+        print(str(entity))
+        doc.entitydb.add(entity)
+        msp.add_entity(entity)
+
+    doc.saveas(CWD / "proxy.dxf")
+
+
+if __name__ == "__main__":
+    main()

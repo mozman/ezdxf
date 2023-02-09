@@ -22,7 +22,7 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     Do not instantiate entity classes by yourself - always use the provided factory functions!
 
-.. class:: Attdef
+.. class:: AttDef
 
     ATTDEF supports all DXF attributes and methods of parent class :class:`Text`.
 
@@ -42,20 +42,22 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
          Just relevant to CAD programs for validating user input
 
-    .. attribute:: is_invisibe
+    .. autoproperty:: is_invisible
 
-        Attribute is invisible (does not appear).
+    .. autoproperty:: is_const
 
-    .. attribute:: is_const
+    .. autoproperty:: is_verify
 
-        This is a constant attribute.
+    .. autoproperty:: is_preset
 
-    .. attribute:: is_verify
+    .. autoproperty:: has_embedded_mtext_entity
 
-        Verification is required on input of this attribute. (CAD application feature)
+    .. automethod:: virtual_mtext_entity
 
-    .. attribute:: is_preset
+    .. automethod:: plain_mtext
 
-        No prompt during insertion. (CAD application feature)
+    .. automethod:: set_mtext
+
+    .. automethod:: embed_mtext
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F0EA099B-6F88-4BCC-BEC7-247BA64838A4

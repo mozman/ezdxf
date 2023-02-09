@@ -25,11 +25,11 @@ Factory function (2)     :meth:`ezdxf.sections.objects.ObjectsSection.add_underl
 
         Defines which part of the underlay file to display.
 
-        ========= ============================
-        ``'pdf'`` PDF page number
-        ``'dgn'`` always ``'default'``
-        ``'dwf'`` ?
-        ========= ============================
+        ======= ============================
+        "pdf"   PDF page number
+        "dgn"   always "default"
+        "dwf"   ?
+        ======= ============================
 
 .. warning::
 

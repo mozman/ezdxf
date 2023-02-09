@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from timeit import Timer
 import ezdxf
@@ -16,12 +16,12 @@ def setup_drawing():
 def main(count):
     t = Timer("setup_drawing()", SETUP)
     time2 = t.timeit(count)
-    print_result(time2, f'setup {count} new style DXF')
+    print_result(time2, f"setting up {count} new DXF documents")
 
 
 def print_result(time, text):
-    print(f"Profiling: {text}; takes {time:.2f} seconds")
+    print(f"Profiling: {text} takes {time:.2f} seconds")
 
 
-if __name__ == '__main__':
-    main(300)
+if __name__ == "__main__":
+    main(1000)

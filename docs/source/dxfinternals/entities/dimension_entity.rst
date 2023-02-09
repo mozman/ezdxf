@@ -1,7 +1,7 @@
-.. _DIMENSION Entity:
+.. _DIMENSION Internals:
 
-DIMENSION Entity
-================
+DIMENSION Internals
+===================
 
 .. seealso::
 

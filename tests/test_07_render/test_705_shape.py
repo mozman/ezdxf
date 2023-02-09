@@ -47,16 +47,15 @@ def test_scale_uniform(square):
 
 def test_rotate(square):
     square.rotate(90)
-    assert square[0] == (0, 0)
-    assert square[2] == (-1, 1)
+    assert square[0].isclose((0, 0))
+    assert square[2].isclose((-1, 1))
     square.rotate(90)
-    assert square[0] == (0, 0)
-    assert square[2] == (-1, -1)
+    assert square[0].isclose((0, 0))
+    assert square[2].isclose((-1, -1))
 
 
 def test_rotate_center(square):
     square.translate((2, 2))
     square.rotate(90, center=(2, 2))
-    assert square[0] == (2, 2)
-    assert square[2] == (1, 3)
-
+    assert square[0].isclose((2, 2))
+    assert square[2].isclose((1, 3))

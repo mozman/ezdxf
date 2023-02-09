@@ -4,7 +4,10 @@ GeoData
 .. module:: ezdxf.entities
     :noindex:
 
-The `GEODATA`_ entity is associated to the :class:`~ezdxf.layouts.Modelspace` object.
+The `GEODATA`_ entity is associated to the :class:`~ezdxf.layouts.Modelspace`
+object. The `GEODATA`_ entity is supported since the DXF version R2000,
+but was officially documented the first time in the DXF reference for version
+R2009.
 
 ======================== =============================================================
 Subclass of              :class:`ezdxf.entities.DXFObject`
@@ -15,7 +18,7 @@ Required DXF version     R2010 (``'AC1024'``)
 
 .. seealso::
 
-    `using_geodata.py <https://github.com/mozman/ezdxf/blob/master/examples/using_geodata.py>`_
+    `geodata_setup_local_grid.py <https://github.com/mozman/ezdxf/blob/master/examples/entities/geodata_setup_local_grid.py>`_
 
 .. warning::
 
@@ -44,10 +47,6 @@ Required DXF version     R2010 (``'AC1024'``)
     .. attribute:: GeoData.dxf.block_record_handle
 
         Handle of host BLOCK_RECORD table entry, in general the :class:`~ezdxf.layouts.Modelspace`.
-
-        .. versionchanged:: 0.10
-
-            renamed from :attr:`dxf.block_record`
 
     .. attribute:: dxf.design_point
 
@@ -135,6 +134,7 @@ Required DXF version     R2010 (``'AC1024'``)
 
     .. automethod:: get_crs
 
-    .. automethod:: get_crs_transformation(no_checks: bool = False) -> Tuple[Matrix44, int]
+    .. automethod:: get_crs_transformation
 
-    .. automethod:: setup_local_grid(design_point: Vec3, reference_point: Vec3, north_direction: Vec2=Y_AXIS, crs: str=EPSG_3395)
+    .. automethod:: setup_local_grid(*, design_point: UVec, reference_point: UVec, north_direction: UVec = (0, 1), crs: str = EPSG_3395)
+

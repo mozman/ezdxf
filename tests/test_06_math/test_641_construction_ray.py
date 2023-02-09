@@ -4,7 +4,7 @@ import pytest
 import math
 from ezdxf.math import ConstructionRay, ParallelRaysError, Vec3
 
-HALF_PI = math.pi / 2.
+HALF_PI = math.pi / 2.0
 
 
 class TestConstructionRay:
@@ -21,7 +21,7 @@ class TestConstructionRay:
         ray1 = ConstructionRay((10, 1), (20, 10))
         y = ray1.yof(15)
         assert math.isclose(y, 5.5)
-        assert math.isclose(ray1.xof(y), 15.)
+        assert math.isclose(ray1.xof(y), 15.0)
 
     def test_ray2d_intersect(self):
         ray1 = ConstructionRay((10, 1), (20, 10))
@@ -45,7 +45,7 @@ class TestConstructionRay:
         ray2 = ConstructionRay((-10, 3), (17, -7))
         point = ray1.intersect(ray2)
         assert point.x == 10
-        assert point.isclose(Vec3(10., -4.4074), abs_tol=1e-4)
+        assert point.isclose(Vec3(10.0, -4.4074), abs_tol=1e-4)
         with pytest.raises(ArithmeticError):
             _ = ray1.yof(1)
 
@@ -83,7 +83,7 @@ class TestConstructionRay:
         assert ray3.is_parallel(ray5) is False
         # vertical rays can't calc a y-value
         with pytest.raises(ArithmeticError):
-            _ = ray1.yof(-1.)
+            _ = ray1.yof(-1.0)
 
     def test_ray2d_normal_vertical(self):
         ray = ConstructionRay((10, 1), (10, -7))  # vertical line
@@ -109,7 +109,7 @@ class TestConstructionRay:
         ray = ConstructionRay((10, 10), angle=0)
         assert ray._is_horizontal is True
         ray = ConstructionRay((10, 10), angle=math.pi / 4)
-        assert math.isclose(ray._slope, 1.)
+        assert math.isclose(ray._slope, 1.0)
 
     def test_bisectrix(self):
         ray1 = ConstructionRay((10, 10), angle=math.pi / 3)
@@ -131,4 +131,6 @@ class TestConstructionRay:
         assert ray1.is_horizontal is True
         assert ray2.is_horizontal is True
         assert ray1.is_parallel(ray2) is True
-        assert math.isclose(ray1.slope, ray2.slope) is False, 'Only slope testing is not sufficient'
+        assert (
+            math.isclose(ray1.slope, ray2.slope) is False
+        ), "Only slope testing is not sufficient"

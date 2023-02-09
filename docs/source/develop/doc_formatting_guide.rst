@@ -3,8 +3,9 @@
 Formatting Guide
 ================
 
-This section is only for me, because of the long pauses between develop
-iterations, I often forget to be consistent in documentation formatting.
+This section is only for `myself <https://github.com/mozman>`_, because of the
+long pauses between develop iterations, I often forget to be consistent in
+documentation formatting.
 
 Documentation is written with `Sphinx`_ and `reSturcturedText`_.
 
@@ -51,18 +52,6 @@ Sphinx theme provided by `Read the Docs <https://readthedocs.org>`_ : ::
     .. attribute:: flag
 
         This is the attribute :attr:`flag`.
-
-        .. versionadded:: 0.9
-
-            New feature `flag`
-
-        .. versionchanged:: 0.10
-
-            The new meaning of `flag` is ...
-
-        .. deprecated:: 0.11
-
-            `flag` is obsolete
 
     .. method:: set_axis(axis)
 

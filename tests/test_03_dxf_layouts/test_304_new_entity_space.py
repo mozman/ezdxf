@@ -28,10 +28,10 @@ def test_existence(space):
     assert len(space) == 7
     e.is_alive = False
     assert e not in space
-    assert len(space) == 7, 'still 7 items'
+    assert len(space) == 7, "still 7 items"
 
     space.purge()
-    assert len(space) == 6, 'removed dead entities'
+    assert len(space) == 6, "removed dead entities"
 
     e = Entity(1)
     assert e not in space

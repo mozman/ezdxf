@@ -4,7 +4,8 @@ Insert
 .. module:: ezdxf.entities
     :noindex:
 
-Block reference (`DXF Reference`_) with maybe attached attributes (:class:`Attrib`).
+The INSERT entity (`DXF Reference`_) represents a block reference with optional
+attached attributes as (:class:`Attrib`) entities.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -21,7 +22,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     Do not instantiate entity classes by yourself - always use the provided factory functions!
 
-TODO: influence of layer, linetype, color DXF attributes to block entities
 
 .. class:: Insert
 
@@ -71,7 +71,7 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. attribute:: attribs
 
-        A ``list`` of all attached :class:`Attrib` entities.
+        A list of all attached :class:`Attrib` entities.
 
     .. autoattribute:: has_scaling
 
@@ -85,7 +85,7 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: place
 
-    .. automethod:: grid(size: Tuple[int, int] = (1, 1), spacing: Tuple[float, float] = (1, 1)) -> Insert
+    .. automethod:: grid
 
     .. automethod:: has_attrib
 
@@ -101,19 +101,22 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: delete_all_attribs
 
+    .. automethod:: transform
+
+    .. automethod:: translate
+
+    .. automethod:: virtual_entities
+
+    .. automethod:: multi_insert
+
+    .. automethod:: explode
+
+    .. automethod:: ucs
+
+    .. automethod:: matrix44
+
     .. automethod:: reset_transformation
 
-    .. automethod:: transform(m: Matrix44) -> Insert
-
-    .. automethod:: translate(dx: float, dy: float, dz: float) -> Insert
-
-    .. automethod:: virtual_entities(skipped_entity_callback: Callable[[DXFGraphic, str], None] = None) -> Iterable[DXFGraphic]
-
-    .. automethod:: multi_insert() -> Iterable[Insert]
-
-    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
-
-    .. automethod:: ucs() -> UCS
 
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-28FA4CFB-9D5E-4880-9F11-36C97578252F

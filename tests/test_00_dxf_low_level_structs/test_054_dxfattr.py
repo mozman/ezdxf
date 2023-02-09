@@ -23,5 +23,5 @@ def test_return_default():
     assert attr2.fixer(7) == 13
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

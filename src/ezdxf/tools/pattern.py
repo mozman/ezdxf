@@ -1,6 +1,8 @@
-# Copyright (c) 2015-2020, Manfred Moitzi
+# Copyright (c) 2015-2022, Manfred Moitzi
 # License: MIT License
-from typing import Dict, List, Sequence, Tuple
+from __future__ import annotations
+from typing import Sequence, Tuple, Optional
+from typing_extensions import TypeAlias
 from ezdxf.math import Vec2
 from ._iso_pattern import ISO_PATTERN
 
@@ -9,17 +11,25 @@ from ._iso_pattern import ISO_PATTERN
 # pattern scaling use load(measurement=0).
 
 __all__ = [
-    'load', 'scale_pattern', 'scale_all', 'parse', 'ISO_PATTERN',
-    'IMPERIAL_PATTERN', 'PatternAnalyser'
+    "load",
+    "scale_pattern",
+    "scale_all",
+    "parse",
+    "ISO_PATTERN",
+    "IMPERIAL_PATTERN",
+    "HatchPatternLineType",
+    "HatchPatternType",
+    "PatternAnalyser",
 ]
 IMPERIAL_SCALE_FACTOR = 1.0 / 25.4
-HatchPatternLineType = Tuple[
-    float, Sequence[float], Sequence[float], Sequence[float]]
-HatchPatternType = Sequence[HatchPatternLineType]
+HatchPatternLineType: TypeAlias = Tuple[
+    float, Sequence[float], Sequence[float], Sequence[float]
+]
+HatchPatternType: TypeAlias = Sequence[HatchPatternLineType]
 
 
-def load(measurement: int = 1, factor: float = None):
-    """ Load hatch pattern definition, default scaling is like the iso.pat of
+def load(measurement: int = 1, factor: Optional[float] = None):
+    """Load hatch pattern definition, default scaling is like the iso.pat of
     BricsCAD, set `measurement` to 0 to use the imperial (US) scaled pattern,
     which has a scaling factor of 1/25.4 = ~0.03937.
 
@@ -39,8 +49,9 @@ def load(measurement: int = 1, factor: float = None):
     return pattern
 
 
-def scale_pattern(pattern: HatchPatternType,
-                  factor: float = 1, angle: float = 0) -> HatchPatternType:
+def scale_pattern(
+    pattern: HatchPatternType, factor: float = 1, angle: float = 0
+) -> HatchPatternType:
     ndigits = 10
 
     def _scale(iterable) -> Sequence[float]:
@@ -54,56 +65,54 @@ def scale_pattern(pattern: HatchPatternType,
             angle0 = (angle0 + angle) % 360.0
 
         # noinspection PyTypeChecker
-        return [
+        return [  # type: ignore
             round(angle0, ndigits),
             tuple(_scale(base_point)),
             tuple(_scale(offset)),
-            _scale(dash_length_items)
+            _scale(dash_length_items),
         ]
 
     return [_scale_line(line) for line in pattern]
 
 
 def scale_all(pattern: dict, factor: float = 1, angle: float = 0):
-    return {name: scale_pattern(p, factor, angle) for name, p in
-            pattern.items()}
+    return {name: scale_pattern(p, factor, angle) for name, p in pattern.items()}
 
 
-def parse(pattern: str) -> Dict:
+def parse(pattern: str) -> dict:
     try:
         comp = PatternFileCompiler(pattern)
         return comp.compile_pattern()
     except Exception:
-        raise ValueError('Incompatible pattern definition.')
+        raise ValueError("Incompatible pattern definition.")
 
 
-def _tokenize_pattern_line(line: str) -> List:
-    return line.split(',', maxsplit=1 if line.startswith('*') else -1)
+def _tokenize_pattern_line(line: str) -> list:
+    return line.split(",", maxsplit=1 if line.startswith("*") else -1)
 
 
 class PatternFileCompiler:
     def __init__(self, content: str):
         self._lines = [
-            _tokenize_pattern_line(line) for line in (
-                line.strip() for line in content.split('\n')
-            )
-            if line and line[0] != ';'
+            _tokenize_pattern_line(line)
+            for line in (line.strip() for line in content.split("\n"))
+            if line and line[0] != ";"
         ]
 
     def _parse_pattern(self):
         pattern = []
         for line in self._lines:
-            if line[0].startswith('*'):
+            if line[0].startswith("*"):
                 if pattern:
                     yield pattern
                 pattern = [[line[0][1:], line[1]]]  # name, description
             else:
-                pattern.append([float(e) for e in line])  # List[floats]
+                pattern.append([float(e) for e in line])  # list[floats]
 
         if pattern:
             yield pattern
 
-    def compile_pattern(self, ndigits: int = 10) -> Dict:
+    def compile_pattern(self, ndigits: int = 10) -> dict:
         pattern = dict()
         for p in self._parse_pattern():
             pat = []
@@ -123,9 +132,7 @@ class PatternFileCompiler:
 
                 # rotate offset:
                 offset = offset.rotate_deg(angle)
-                pat_line.append((
-                    round(offset.x, ndigits), round(offset.y, ndigits)
-                ))
+                pat_line.append((round(offset.x, ndigits), round(offset.y, ndigits)))
 
                 # line dash pattern
                 pat_line.append(line[5:])
@@ -149,7 +156,7 @@ class PatternAnalyser:
     def __init__(self, pattern: HatchPatternType):
         # List of 2-tuples: (angle, is solid line pattern)
         # angle is rounded to a multiple of 15° in the range [0, 180)
-        self._lines: List[Tuple[int, bool]] = [
+        self._lines: list[tuple[int, bool]] = [
             (round_angle_15_deg(angle), is_solid(line_pattern))
             for angle, _, _, line_pattern in pattern
         ]
@@ -161,12 +168,14 @@ class PatternAnalyser:
         return all(angle_ == angle for angle_, _ in self._lines)
 
     def has_line(self, angle: int, solid: bool) -> bool:
-        return any(angle_ == angle and solid_ == solid
-                   for angle_, solid_ in self._lines)
+        return any(
+            angle_ == angle and solid_ == solid for angle_, solid_ in self._lines
+        )
 
     def all_lines(self, angle: int, solid: bool) -> bool:
-        return all(angle_ == angle and solid_ == solid
-                   for angle_, solid_ in self._lines)
+        return all(
+            angle_ == angle and solid_ == solid for angle_, solid_ in self._lines
+        )
 
     def has_solid_line(self) -> bool:
         return any(solid for _, solid in self._lines)

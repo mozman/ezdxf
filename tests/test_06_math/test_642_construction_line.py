@@ -17,7 +17,7 @@ class TestConstructionLine:
         line = ConstructionLine((0, 0), (0, -1))
         assert line.is_point_left_of_line(Vec2(1, 0)) is True
 
-        line = ConstructionLine((0, 0), (-1, .1))
+        line = ConstructionLine((0, 0), (-1, 0.1))
         assert line.is_point_left_of_line(Vec2(-1, 0)) is True
 
         line = ConstructionLine((0, 0), (10, 0))

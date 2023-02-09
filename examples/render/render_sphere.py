@@ -1,24 +1,37 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-
-from pathlib import Path
+import pathlib
 import ezdxf
-
 from ezdxf.render.forms import sphere
 
-DIR = Path('~/Desktop/Outbox').expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
-doc = ezdxf.new()
-doc.layers.new('form', dxfattribs={'color': 5})
-doc.layers.new('csg', dxfattribs={'color': 1})
-doc.layers.new('normals', dxfattribs={'color': 6})
+# ------------------------------------------------------------------------------
+# This example shows how to render a 3D sphere as MESH entity. The added
+# face-normals show if the face-orientation follows the usual count-clockwise
+# order to build outside pointing faces.
+#
+# docs: https://ezdxf.mozman.at/docs/render/forms.html#
+# ------------------------------------------------------------------------------
 
-doc.set_modelspace_vport(6, center=(5, 0))
-msp = doc.modelspace()
 
-sphere1 = sphere(count=32, stacks=16, radius=1, quads=True)
+def main():
+    doc = ezdxf.new()
+    doc.layers.new("mesh", dxfattribs={"color": 5})
+    doc.layers.new("normals", dxfattribs={"color": 6})
 
-sphere1.render_polyface(msp, dxfattribs={'layer': 'form'})
-sphere1.render_normals(msp, dxfattribs={'layer': 'normals'})
+    doc.set_modelspace_vport(6, center=(5, 0))
+    msp = doc.modelspace()
 
-doc.saveas(DIR / 'sphere.dxf')
+    sphere1 = sphere(count=32, stacks=16, radius=1, quads=True)
+
+    sphere1.render_mesh(msp, dxfattribs={"layer": "mesh"})
+    sphere1.render_normals(msp, dxfattribs={"layer": "normals"})
+
+    doc.saveas(CWD / "sphere.dxf")
+
+
+if __name__ == "__main__":
+    main()

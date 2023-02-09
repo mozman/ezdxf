@@ -1,19 +1,29 @@
-# Copyright (c) 2018-2020, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
-from typing import Tuple, List, Any, Iterable, Sequence, TYPE_CHECKING
+from __future__ import annotations
+from typing import (
+    Tuple,
+    Iterable,
+    Sequence,
+    TYPE_CHECKING,
+    Iterator,
+    Optional,
+)
 from functools import partial
 import math
 import random
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import VecXY, Vertex
+    from ezdxf.math import UVec, AnyVec
 
-isclose = partial(math.isclose, abs_tol=1e-12)
+ABS_TOL = 1e-12
+isclose = partial(math.isclose, abs_tol=ABS_TOL)
 
 
 class Vec3:
-    """
-    This is an immutable universal 3D vector object. This class is optimized for universality not for speed.
+    """Immutable 3D vector class.
+
+    This class is optimized for universality not for speed.
     Immutable means you can't change (x, y, z) components after initialization::
 
         v1 = Vec3(1, 2, 3)
@@ -31,7 +41,8 @@ class Vec3:
         - ``Vec3(x, y)``, returns ``Vec3(x, y, 0)``
         - ``Vec3(x, y, z)``, returns  ``Vec3(x, y, z)``
 
-    Addition, subtraction, scalar multiplication and scalar division left and right handed are supported::
+    Addition, subtraction, scalar multiplication and scalar division left and
+    right-handed are supported::
 
         v = Vec3(1, 2, 3)
         v + (1, 2, 3) == Vec3(2, 4, 6)
@@ -53,44 +64,49 @@ class Vec3:
         bool(Vec3(0, 0, 0)) is False
 
     """
-    __slots__ = ['_x', '_y', '_z']
+
+    __slots__ = ["_x", "_y", "_z"]
 
     def __init__(self, *args):
         self._x, self._y, self._z = self.decompose(*args)
 
     @property
     def x(self) -> float:
-        """ x-axis value """
+        """x-axis value"""
         return self._x
 
     @property
     def y(self) -> float:
-        """ y-axis value """
+        """y-axis value"""
         return self._y
 
     @property
     def z(self) -> float:
-        """ z-axis value """
+        """z-axis value"""
         return self._z
 
     @property
-    def xy(self) -> 'Vec3':
-        """ Vec3 as ``(x, y, 0)``, projected on the xy-plane. """
+    def xy(self) -> Vec3:
+        """Vec3 as ``(x, y, 0)``, projected on the xy-plane."""
         return self.__class__(self._x, self._y)
 
     @property
-    def xyz(self) -> Tuple[float, float, float]:
-        """ Vec3 as ``(x, y, z)`` tuple. """
+    def xyz(self) -> tuple[float, float, float]:
+        """Vec3 as ``(x, y, z)`` tuple."""
         return self._x, self._y, self._z
 
     @property
-    def vec2(self) -> 'Vec2':
-        """ Real 2D vector as :class:`Vec2` object. """
+    def vec2(self) -> Vec2:
+        """Real 2D vector as :class:`Vec2` object."""
         return Vec2((self._x, self._y))
 
-    def replace(self, x: float = None, y: float = None,
-                z: float = None) -> 'Vec3':
-        """ Returns a copy of vector with replaced x-, y- and/or z-axis. """
+    def replace(
+        self,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        z: Optional[float] = None,
+    ) -> Vec3:
+        """Returns a copy of vector with replaced x-, y- and/or z-axis."""
         if x is None:
             x = self._x
         if y is None:
@@ -99,9 +115,8 @@ class Vec3:
             z = self._z
         return self.__class__(x, y, z)
 
-    def round(self, ndigits=None) -> 'Vec3':
-        """
-        Returns a new vector where all components are rounded to `ndigits`.
+    def round(self, ndigits=None) -> Vec3:
+        """Returns a new vector where all components are rounded to `ndigits`.
 
         Uses standard Python :func:`round` function for rounding.
         """
@@ -112,39 +127,43 @@ class Vec3:
         )
 
     @classmethod
-    def list(cls, items: Iterable['Vertex']) -> List['Vec3']:
-        """ Returns a list of :class:`Vec3` objects. """
+    def list(cls, items: Iterable[UVec]) -> list[Vec3]:
+        """Returns a list of :class:`Vec3` objects."""
         return list(cls.generate(items))
 
     @classmethod
-    def tuple(cls, items: Iterable['Vertex']) -> Sequence['Vec3']:
-        """ Returns a tuple of :class:`Vec3` objects. """
+    def tuple(cls, items: Iterable[UVec]) -> Sequence[Vec3]:
+        """Returns a tuple of :class:`Vec3` objects."""
         return tuple(cls.generate(items))
 
     @classmethod
-    def generate(cls, items: Iterable['Vertex']) -> Iterable['Vec3']:
-        """ Returns an iterable of :class:`Vec3` objects. """
+    def generate(cls, items: Iterable[UVec]) -> Iterable[Vec3]:
+        """Returns an iterable of :class:`Vec3` objects."""
         return (cls(item) for item in items)
 
     @classmethod
-    def from_angle(cls, angle: float, length: float = 1.) -> 'Vec3':
-        """ Returns a :class:`Vec3` object from `angle` in radians in the xy-plane, z-axis = ``0``. """
-        return cls(math.cos(angle) * length, math.sin(angle) * length, 0.)
+    def from_angle(cls, angle: float, length: float = 1.0) -> Vec3:
+        """Returns a :class:`Vec3` object from `angle` in radians in the
+        xy-plane, z-axis = ``0``.
+        """
+        return cls(math.cos(angle) * length, math.sin(angle) * length, 0.0)
 
     @classmethod
-    def from_deg_angle(cls, angle: float, length: float = 1.) -> 'Vec3':
-        """ Returns a :class:`Vec3` object from `angle` in degrees in the xy-plane, z-axis = ``0``. """
+    def from_deg_angle(cls, angle: float, length: float = 1.0) -> Vec3:
+        """Returns a :class:`Vec3` object from `angle` in degrees in the
+        xy-plane, z-axis = ``0``.
+        """
         return cls.from_angle(math.radians(angle), length)
 
     @staticmethod  # allows overriding by inheritance
     def decompose(*args) -> Tuple[float, float, float]:
-        """
-        Converts input into a (x, y, z) tuple.
+        """Converts input into a (x, y, z) tuple.
 
         Valid arguments are:
 
             - no args: ``decompose()`` returns (0, 0, 0)
-            - 1 arg: ``decompose(arg)``, `arg` is tuple or list, tuple has to be (x, y[, z]): ``decompose((x, y))`` returns (x, y, 0.)
+            - 1 arg: ``decompose(arg)``, `arg` is tuple or list, tuple has to be
+              (x, y[, z]): ``decompose((x, y))`` returns (x, y, 0.)
             - 2 args: ``decompose(x, y)`` returns (x, y, 0)
             - 3 args: ``decompose(x, y, z)`` returns (x, y, z)
 
@@ -156,7 +175,7 @@ class Vec3:
         """
         length = len(args)
         if length == 0:
-            return 0., 0., 0.
+            return 0.0, 0.0, 0.0
         elif length == 1:
             data = args[0]
             if isinstance(data, Vec3):
@@ -173,49 +192,50 @@ class Vec3:
                 return float(x), float(y), float(z)
         elif length == 2:
             x, y = args
-            return float(x), float(y), 0.
+            return float(x), float(y), 0.0
         elif length == 3:
             x, y, z = args
             return float(x), float(y), float(z)
         raise TypeError
 
     @classmethod
-    def random(cls, length: float = 1) -> 'Vec3':
-        """ Returns a random vector. """
+    def random(cls, length: float = 1) -> Vec3:
+        """Returns a random vector."""
         x = random.uniform(-1, 1)
         y = random.uniform(-1, 1)
         z = random.uniform(-1, 1)
         return Vec3(x, y, z).normalize(length)
 
     def __str__(self) -> str:
-        """ Return ``'(x, y, z)'`` as string. """
-        return '({0.x}, {0.y}, {0.z})'.format(self)
+        """Return ``'(x, y, z)'`` as string."""
+        return "({0.x}, {0.y}, {0.z})".format(self)
 
     def __repr__(self) -> str:
-        """ Return ``'Vec3(x, y, z)'`` as string. """
-        return 'Vec3' + self.__str__()
+        """Return ``'Vec3(x, y, z)'`` as string."""
+        return "Vec3" + self.__str__()
 
     def __len__(self) -> int:
-        """ Returns always ``3``. """
+        """Returns always ``3``."""
         return 3
 
     def __hash__(self) -> int:
-        """ Returns hash value of vector, enables the usage of vector as key in ``set`` and ``dict``. """
+        """Returns hash value of vector, enables the usage of vector as key in
+        ``set`` and ``dict``.
+        """
         return hash(self.xyz)
 
-    def copy(self) -> 'Vec3':
-        """ Returns a copy of vector as :class:`Vec3` object. """
+    def copy(self) -> Vec3:
+        """Returns a copy of vector as :class:`Vec3` object."""
         return self  # immutable!
 
     __copy__ = copy
 
-    def __deepcopy__(self, memodict: dict) -> 'Vec3':
-        """ :func:`copy.deepcopy` support. """
+    def __deepcopy__(self, memodict: dict) -> Vec3:
+        """:func:`copy.deepcopy` support."""
         return self  # immutable!
 
     def __getitem__(self, index: int) -> float:
-        """
-        Support for indexing:
+        """Support for indexing:
 
             - v[0] is v.x
             - v[1] is v.y
@@ -223,7 +243,7 @@ class Vec3:
 
         """
         if isinstance(index, slice):
-            raise TypeError('slicing not supported')
+            raise TypeError("slicing not supported")
         if index == 0:
             return self._x
         elif index == 1:
@@ -231,133 +251,148 @@ class Vec3:
         elif index == 2:
             return self._z
         else:
-            raise IndexError(f'invalid index {index}')
+            raise IndexError(f"invalid index {index}")
 
-    def __iter__(self) -> Iterable[float]:
-        """ Returns iterable of x-, y- and z-axis. """
+    def __iter__(self) -> Iterator[float]:
+        """Returns iterable of x-, y- and z-axis."""
         yield self._x
         yield self._y
         yield self._z
 
     def __abs__(self) -> float:
-        """ Returns length (magnitude) of vector. """
+        """Returns length (magnitude) of vector."""
         return self.magnitude
 
     @property
     def magnitude(self) -> float:
-        """ Length of vector. """
-        return self.magnitude_square ** .5
+        """Length of vector."""
+        return self.magnitude_square**0.5
 
     @property
     def magnitude_xy(self) -> float:
-        """ Length of vector in the xy-plane. """
+        """Length of vector in the xy-plane."""
         return math.hypot(self._x, self._y)
 
     @property
     def magnitude_square(self) -> float:
-        """ Square length of vector. """
+        """Square length of vector."""
         x, y, z = self._x, self._y, self._z
         return x * x + y * y + z * z
 
     @property
     def is_null(self) -> bool:
-        """ ``True`` for ``Vec3(0, 0, 0)``. """
-        return isclose(self._x, 0.) and \
-               isclose(self._y, 0.) and \
-               isclose(self._z, 0.)
+        """``True`` if all components are close to zero: ``Vec3(0, 0, 0)``.
+        Has a fixed absolute testing tolerance of 1e-12!
+        """
+        return (
+            abs(self._x) <= ABS_TOL
+            and abs(self._y) <= ABS_TOL
+            and abs(self._z) <= ABS_TOL
+        )
 
-    def is_parallel(self, other: 'Vec3', abs_tol: float = 1e-12) -> bool:
-        """ Returns ``True`` if `self` and `other` are parallel to vectors. """
+    def is_parallel(
+        self, other: Vec3, *, rel_tol: float = 1e-9, abs_tol: float = 1e-12
+    ) -> bool:
+        """Returns ``True`` if `self` and `other` are parallel to vectors."""
         v1 = self.normalize()
         v2 = other.normalize()
-        return v1.isclose(v2, abs_tol) or v1.isclose(-v2, abs_tol)
+        return v1.isclose(v2, rel_tol=rel_tol, abs_tol=abs_tol) or v1.isclose(
+            -v2, rel_tol=rel_tol, abs_tol=abs_tol
+        )
 
     @property
     def spatial_angle(self) -> float:
-        """ Spatial angle between vector and x-axis in radians.  """
+        """Spatial angle between vector and x-axis in radians."""
         return math.acos(X_AXIS.dot(self.normalize()))
 
     @property
     def spatial_angle_deg(self) -> float:
-        """ Spatial angle between vector and x-axis in degrees. """
+        """Spatial angle between vector and x-axis in degrees."""
         return math.degrees(self.spatial_angle)
 
     @property
     def angle(self) -> float:
-        """ Angle between vector and x-axis in the xy-plane in radians. """
+        """Angle between vector and x-axis in the xy-plane in radians."""
         return math.atan2(self._y, self._x)
 
     @property
     def angle_deg(self) -> float:
-        """ Returns angle of vector and x-axis in the xy-plane in degrees. """
+        """Returns angle of vector and x-axis in the xy-plane in degrees."""
         return math.degrees(self.angle)
 
-    def orthogonal(self, ccw: bool = True) -> 'Vec3':
-        """
-        Returns orthogonal 2D vector, z-axis is unchanged.
+    def orthogonal(self, ccw: bool = True) -> Vec3:
+        """Returns orthogonal 2D vector, z-axis is unchanged.
 
         Args:
-            ccw: counter clockwise if ``True`` else clockwise
+            ccw: counter-clockwise if ``True`` else clockwise
 
         """
-        return self.__class__(-self._y, self._x,
-                              self._z) if ccw else self.__class__(self._y,
-                                                                  -self._x,
-                                                                  self._z)
+        return (
+            self.__class__(-self._y, self._x, self._z)
+            if ccw
+            else self.__class__(self._y, -self._x, self._z)
+        )
 
-    def lerp(self, other: 'Vertex', factor=.5) -> 'Vec3':
-        """
-        Returns linear interpolation between `self` and `other`.
-        
+    def lerp(self, other: UVec, factor=0.5) -> Vec3:
+        """Returns linear interpolation between `self` and `other`.
+
         Args:
             other: end point as :class:`Vec3` compatible object
-            factor: interpolation factor (``0`` = self, ``1`` = other, ``0.5`` = mid point)
+            factor: interpolation factor (0 = self, 1 = other,
+                0.5 = mid point)
 
         """
         d = (self.__class__(other) - self) * float(factor)
         return self.__add__(d)
 
-    def project(self, other: 'Vertex') -> 'Vec3':
-        """ Returns projected vector of `other` onto `self`. """
+    def project(self, other: UVec) -> Vec3:
+        """Returns projected vector of `other` onto `self`."""
         uv = self.normalize()
         return uv * uv.dot(other)
 
-    def normalize(self, length: float = 1.) -> 'Vec3':
-        """ Returns normalized vector, optional scaled by `length`. """
+    def normalize(self, length: float = 1.0) -> Vec3:
+        """Returns normalized vector, optional scaled by `length`."""
         return self.__mul__(length / self.magnitude)
 
-    def reversed(self) -> 'Vec3':
-        """ Returns negated vector (-`self`). """
+    def reversed(self) -> Vec3:
+        """Returns negated vector (-`self`)."""
         return self.__class__(-self._x, -self._y, -self._z)
 
     __neg__ = reversed
 
     def __bool__(self) -> bool:
-        """ Returns ``True`` if vector is not ``(0, 0, 0)``. """
+        """Returns ``True`` if vector is not (0, 0, 0)."""
         return not self.is_null
 
-    def isclose(self, other: 'Vertex', abs_tol: float = 1e-12) -> bool:
-        """ Returns ``True`` if `self` is close to `other`. Uses :func:`math.isclose` to compare all axis. """
-        x, y, z = self.decompose(other)
-        return math.isclose(self._x, x, abs_tol=abs_tol) and \
-               math.isclose(self._y, y, abs_tol=abs_tol) and \
-               math.isclose(self._z, z, abs_tol=abs_tol)
+    def isclose(
+        self, other: UVec, *, rel_tol: float = 1e-9, abs_tol: float = 1e-12
+    ) -> bool:
+        """Returns ``True`` if `self` is close to `other`.
+        Uses :func:`math.isclose` to compare all axis.
 
-    def __eq__(self, other: 'Vertex') -> bool:
+        Learn more about the :func:`math.isclose` function in
+        `PEP 485 <https://www.python.org/dev/peps/pep-0485/>`_.
+
         """
-        Equal operator.
+        x, y, z = self.decompose(other)
+        return (
+            math.isclose(self._x, x, rel_tol=rel_tol, abs_tol=abs_tol)
+            and math.isclose(self._y, y, rel_tol=rel_tol, abs_tol=abs_tol)
+            and math.isclose(self._z, z, rel_tol=rel_tol, abs_tol=abs_tol)
+        )
+
+    def __eq__(self, other: UVec) -> bool:
+        """Equal operator.
 
         Args:
             other: :class:`Vec3` compatible object
         """
-        x, y, z = self.decompose(other)
-        return isclose(self._x, x) and \
-               isclose(self._y, y) and \
-               isclose(self._z, z)
+        if not isinstance(other, Vec3):
+            other = Vec3(other)
+        return self.x == other.x and self.y == other.y and self.z == other.z
 
-    def __lt__(self, other: 'Vertex') -> bool:
-        """
-        Lower than operator.
+    def __lt__(self, other: UVec) -> bool:
+        """Lower than operator.
 
         Args:
             other: :class:`Vec3` compatible object
@@ -372,53 +407,54 @@ class Vec3:
         else:
             return self._x < x
 
-    def __add__(self, other: 'Vertex') -> 'Vec3':
-        """ Add :class:`Vec3` operator: `self` + `other`. """
+    def __add__(self, other: UVec) -> Vec3:
+        """Add :class:`Vec3` operator: `self` + `other`."""
         x, y, z = self.decompose(other)
         return self.__class__(self._x + x, self._y + y, self._z + z)
 
-    def __radd__(self, other: 'Vertex') -> 'Vec3':
-        """ RAdd :class:`Vec3` operator: `other` + `self`. """
+    def __radd__(self, other: UVec) -> Vec3:
+        """RAdd :class:`Vec3` operator: `other` + `self`."""
         return self.__add__(other)
 
-    def __sub__(self, other: 'Vertex') -> 'Vec3':
-        """ Sub :class:`Vec3` operator: `self` - `other`. """
+    def __sub__(self, other: UVec) -> Vec3:
+        """Sub :class:`Vec3` operator: `self` - `other`."""
 
         x, y, z = self.decompose(other)
         return self.__class__(self._x - x, self._y - y, self._z - z)
 
-    def __rsub__(self, other: 'Vertex') -> 'Vec3':
-        """ RSub :class:`Vec3` operator: `other` - `self`. """
+    def __rsub__(self, other: UVec) -> Vec3:
+        """RSub :class:`Vec3` operator: `other` - `self`."""
         x, y, z = self.decompose(other)
         return self.__class__(x - self._x, y - self._y, z - self._z)
 
-    def __mul__(self, other: float) -> 'Vec3':
-        """ Scalar Mul operator: `self` * `other`. """
+    def __mul__(self, other: float) -> Vec3:
+        """Scalar Mul operator: `self` * `other`."""
         scalar = float(other)
-        return self.__class__(self._x * scalar, self._y * scalar,
-                              self._z * scalar)
+        return self.__class__(
+            self._x * scalar, self._y * scalar, self._z * scalar
+        )
 
-    def __rmul__(self, other: float) -> 'Vec3':
-        """ Scalar RMul operator: `other` * `self`. """
+    def __rmul__(self, other: float) -> Vec3:
+        """Scalar RMul operator: `other` * `self`."""
         return self.__mul__(other)
 
-    def __truediv__(self, other: float) -> 'Vec3':
-        """ Scalar Div operator: `self` / `other`. """
+    def __truediv__(self, other: float) -> Vec3:
+        """Scalar Div operator: `self` / `other`."""
         scalar = float(other)
-        return self.__class__(self._x / scalar, self._y / scalar,
-                              self._z / scalar)
+        return self.__class__(
+            self._x / scalar, self._y / scalar, self._z / scalar
+        )
 
     @staticmethod
-    def sum(items: Iterable['Vertex']) -> 'Vec3':
-        """ Add all vectors in `items`. """
+    def sum(items: Iterable[UVec]) -> Vec3:
+        """Add all vectors in `items`."""
         s = NULLVEC
         for v in items:
             s += v
         return s
 
-    def dot(self, other: 'Vertex') -> float:
-        """
-        Dot operator: `self` . `other`
+    def dot(self, other: UVec) -> float:
+        """Dot operator: `self` . `other`
 
         Args:
             other: :class:`Vec3` compatible object
@@ -426,25 +462,26 @@ class Vec3:
         x, y, z = self.decompose(other)
         return self._x * x + self._y * y + self._z * z
 
-    def cross(self, other: 'Vertex') -> 'Vec3':
-        """
-        Dot operator: `self` x `other`
+    def cross(self, other: UVec) -> Vec3:
+        """Cross operator: `self` x `other`
 
         Args:
             other: :class:`Vec3` compatible object
         """
         x, y, z = self.decompose(other)
-        return self.__class__(self._y * z - self._z * y,
-                              self._z * x - self._x * z,
-                              self._x * y - self._y * x)
+        return self.__class__(
+            self._y * z - self._z * y,
+            self._z * x - self._x * z,
+            self._x * y - self._y * x,
+        )
 
-    def distance(self, other: 'Vertex') -> float:
-        """ Returns distance between `self` and `other` vector. """
+    def distance(self, other: UVec) -> float:
+        """Returns distance between `self` and `other` vector."""
         v = self.__class__(other)
         return v.__sub__(self).magnitude
 
-    def angle_between(self, other: 'Vertex') -> float:
-        """ Returns angle between `self` and `other` in radians. +angle is
+    def angle_between(self, other: UVec) -> float:
+        """Returns angle between `self` and `other` in radians. +angle is
         counter clockwise orientation.
 
         Args:
@@ -459,10 +496,9 @@ class Vec3:
             cos_theta = 1.0
         return math.acos(cos_theta)
 
-    def angle_about(self, base: 'Vertex', target: 'Vertex') -> float:
+    def angle_about(self, base: UVec, target: UVec) -> float:
         # (c) 2020 by Matt Broadway, MIT License
-        """
-        Returns counter clockwise angle in radians about `self` from `base` to
+        """Returns counter-clockwise angle in radians about `self` from `base` to
         `target` when projected onto the plane defined by `self` as the normal
         vector.
 
@@ -476,21 +512,19 @@ class Vec3:
         target_projected_y = y_axis.dot(target)
         return math.atan2(target_projected_y, target_projected_x) % math.tau
 
-    def rotate(self, angle: float) -> 'Vec3':
-        """
-        Returns vector rotated about `angle` around the z-axis.
+    def rotate(self, angle: float) -> Vec3:
+        """Returns vector rotated about `angle` around the z-axis.
 
         Args:
             angle: angle in radians
 
         """
-        v = self.__class__(self.x, self.y, 0.)
+        v = self.__class__(self.x, self.y, 0.0)
         v = Vec3.from_angle(v.angle + angle, v.magnitude)
         return self.__class__(v.x, v.y, self.z)
 
-    def rotate_deg(self, angle: float) -> 'Vec3':
-        """
-        Returns vector rotated about `angle` around the z-axis.
+    def rotate_deg(self, angle: float) -> Vec3:
+        """Returns vector rotated about `angle` around the z-axis.
 
         Args:
             angle: angle in degrees
@@ -499,16 +533,14 @@ class Vec3:
         return self.rotate(math.radians(angle))
 
 
-Vector = Vec3
 X_AXIS = Vec3(1, 0, 0)
 Y_AXIS = Vec3(0, 1, 0)
 Z_AXIS = Vec3(0, 0, 1)
 NULLVEC = Vec3(0, 0, 0)
 
 
-def distance(p1: 'Vertex', p2: 'Vertex') -> float:
-    """
-    Returns distance between points `p1` and `p2`.
+def distance(p1: UVec, p2: UVec) -> float:
+    """Returns distance between points `p1` and `p2`.
 
     Args:
         p1: first point as :class:`Vec3` compatible object
@@ -518,9 +550,8 @@ def distance(p1: 'Vertex', p2: 'Vertex') -> float:
     return Vec3(p1).distance(p2)
 
 
-def lerp(p1: 'Vertex', p2: 'Vertex', factor: float = 0.5) -> 'Vec3':
-    """
-    Returns linear interpolation between points `p1` and `p2` as :class:`Vec3`.
+def lerp(p1: UVec, p2: UVec, factor: float = 0.5) -> Vec3:
+    """Returns linear interpolation between points `p1` and `p2` as :class:`Vec3`.
 
     Args:
         p1: first point as :class:`Vec3` compatible object
@@ -532,27 +563,21 @@ def lerp(p1: 'Vertex', p2: 'Vertex', factor: float = 0.5) -> 'Vec3':
 
 
 class Vec2:
-    """
-    :class:`Vec2` represents a special 2D vector ``(x, y)``. The :class:`Vec2`
-    class is optimized for speed and not immutable, :meth:`iadd`, :meth:`isub`,
-    :meth:`imul` and :meth:`idiv` modifies the vector itself, the :class:`Vec3`
-    class returns a new object.
-
-    :class:`Vec2` initialization accepts float-tuples ``(x, y[, z])``, two
-    floats or any object providing :attr:`x` and :attr:`y` attributes like
-    :class:`Vec2` and :class:`Vec3` objects.
+    """Immutable 2D vector class.
 
     Args:
-        v: vector object with :attr:`x` and :attr:`y` attributes/properties or a sequence of float ``[x, y, ...]`` or
-           x-axis as float if argument `y` is not ``None``
+        v: vector object with :attr:`x` and :attr:`y` attributes/properties or a
+           sequence of float ``[x, y, ...]`` or x-axis as float if argument `y`
+           is not ``None``
         y: second float for :code:`Vec2(x, y)`
 
     :class:`Vec2` implements a subset of :class:`Vec3`.
 
     """
-    __slots__ = ['x', 'y']
 
-    def __init__(self, v: Any, y: float = None):
+    __slots__ = ["x", "y"]
+
+    def __init__(self, v=(0.0, 0.0), y=None):
         try:  # fast path for Vec2() and Vec3() or any object providing x and y attributes
             self.x = v.x
             self.y = v.y
@@ -565,47 +590,43 @@ class Vec2:
                 self.y = float(y)
 
     @property
-    def vec3(self) -> 'Vec3':
-        """
-        Returns a 3D vector.
-
-        """
+    def vec3(self) -> Vec3:
+        """Returns a 3D vector."""
         return Vec3(self.x, self.y, 0)
 
-    def round(self, ndigits=None) -> 'Vec2':
-        """
-        Returns a new vector where all components are rounded to `ndigits`.
+    def round(self, ndigits=None) -> Vec2:
+        """Returns a new vector where all components are rounded to `ndigits`.
 
         Uses standard Python :func:`round` function for rounding.
         """
-        return self.__class__((round(self.x, ndigits), round(self.y, ndigits)))
+        return self.__class__(round(self.x, ndigits), round(self.y, ndigits))
 
     @classmethod
-    def list(cls, items: Iterable['Vertex']) -> List['Vec2']:
+    def list(cls, items: Iterable[UVec]) -> list[Vec2]:
         return list(cls.generate(items))
 
     @classmethod
-    def tuple(cls, items: Iterable['Vertex']) -> Sequence['Vec2']:
-        """ Returns a tuple of :class:`Vec3` objects. """
+    def tuple(cls, items: Iterable[UVec]) -> Sequence[Vec2]:
+        """Returns a tuple of :class:`Vec3` objects."""
         return tuple(cls.generate(items))
 
     @classmethod
-    def generate(cls, items: Iterable['Vertex']) -> Iterable['Vec2']:
+    def generate(cls, items: Iterable[UVec]) -> Iterable[Vec2]:
         return (cls(item) for item in items)
 
     @classmethod
-    def from_angle(cls, angle: float, length: float = 1.) -> 'Vec2':
+    def from_angle(cls, angle: float, length: float = 1.0) -> Vec2:
         return cls(math.cos(angle) * length, math.sin(angle) * length)
 
     @classmethod
-    def from_deg_angle(cls, angle: float, length: float = 1.) -> 'Vec2':
+    def from_deg_angle(cls, angle: float, length: float = 1.0) -> Vec2:
         return cls.from_angle(math.radians(angle), length)
 
     def __str__(self) -> str:
-        return '({0.x}, {0.y})'.format(self)
+        return "({0.x}, {0.y})".format(self)
 
     def __repr__(self) -> str:
-        return 'Vec2' + self.__str__()
+        return "Vec2" + self.__str__()
 
     def __len__(self) -> int:
         return 2
@@ -613,12 +634,12 @@ class Vec2:
     def __hash__(self) -> int:
         return hash((self.x, self.y))
 
-    def copy(self) -> 'Vec2':
+    def copy(self) -> Vec2:
         return self.__class__((self.x, self.y))
 
     __copy__ = copy
 
-    def __deepcopy__(self, memodict: dict) -> 'Vec2':
+    def __deepcopy__(self, memodict: dict) -> Vec2:
         try:
             return memodict[id(self)]
         except KeyError:
@@ -628,15 +649,15 @@ class Vec2:
 
     def __getitem__(self, index: int) -> float:
         if isinstance(index, slice):
-            raise TypeError('slicing not supported')
+            raise TypeError("slicing not supported")
         if index == 0:
             return self.x
         elif index == 1:
             return self.y
         else:
-            raise IndexError(f'invalid index {index}')
+            raise IndexError(f"invalid index {index}")
 
-    def __iter__(self) -> Iterable[float]:
+    def __iter__(self) -> Iterator[float]:
         yield self.x
         yield self.y
 
@@ -645,38 +666,28 @@ class Vec2:
 
     @property
     def magnitude(self) -> float:
-        """
-        Returns length of vector.
-
-        """
+        """Returns length of vector."""
         return math.hypot(self.x, self.y)
 
     @property
     def is_null(self) -> bool:
-        return isclose(self.x, 0.) and isclose(self.y, 0.)
+        return abs(self.x) <= ABS_TOL and abs(self.y) <= ABS_TOL
 
     @property
     def angle(self) -> float:
-        """
-        Angle of vector in radians.
-
-        """
+        """Angle of vector in radians."""
         return math.atan2(self.y, self.x)
 
     @property
     def angle_deg(self) -> float:
-        """
-        Angle of vector in degrees.
-
-        """
+        """Angle of vector in degrees."""
         return math.degrees(self.angle)
 
-    def orthogonal(self, ccw: bool = True) -> 'Vec2':
-        """
-        Orthogonal vector
+    def orthogonal(self, ccw: bool = True) -> Vec2:
+        """Orthogonal vector
 
         Args:
-            ccw: counter clockwise if ``True`` else clockwise
+            ccw: counter-clockwise if ``True`` else clockwise
 
         """
         if ccw:
@@ -684,9 +695,8 @@ class Vec2:
         else:
             return self.__class__(self.y, -self.x)
 
-    def lerp(self, other: 'VecXY', factor: float = .5) -> 'Vec2':
-        """
-        Linear interpolation between `self` and `other`.
+    def lerp(self, other: AnyVec, factor: float = 0.5) -> Vec2:
+        """Linear interpolation between `self` and `other`.
 
         Args:
             other: target vector/point
@@ -699,18 +709,15 @@ class Vec2:
         y = self.y + (other.y - self.y) * factor
         return self.__class__(x, y)
 
-    def project(self, other: 'VecXY') -> 'Vec2':
-        """
-        Project vector `other` onto `self`.
-
-        """
+    def project(self, other: AnyVec) -> Vec2:
+        """Project vector `other` onto `self`."""
         uv = self.normalize()
         return uv * uv.dot(other)
 
-    def normalize(self, length: float = 1.) -> 'Vec2':
+    def normalize(self, length: float = 1.0) -> Vec2:
         return self.__mul__(length / self.magnitude)
 
-    def reversed(self) -> 'Vec2':
+    def reversed(self) -> Vec2:
         return self.__class__(-self.x, -self.y)
 
     __neg__ = reversed
@@ -718,17 +725,21 @@ class Vec2:
     def __bool__(self) -> bool:
         return not self.is_null
 
-    def isclose(self, other: 'VecXY', abs_tol: float = 1e-12) -> bool:
-        return math.isclose(self.x, other.x, abs_tol=abs_tol) and math.isclose(
-            self.y, other.y, abs_tol=abs_tol)
+    def isclose(
+        self, other: AnyVec, *, rel_tol: float = 1e-9, abs_tol: float = 1e-12
+    ) -> bool:
+        if not isinstance(other, Vec2):
+            other = Vec2(other)
+        return math.isclose(
+            self.x, other.x, rel_tol=rel_tol, abs_tol=abs_tol
+        ) and math.isclose(self.y, other.y, rel_tol=rel_tol, abs_tol=abs_tol)
 
-    def __eq__(self, other: 'Vertex') -> bool:
-        # accepts also tuples, for more convenience at testing
-        x, y, *_ = other
-        return isclose(self.x, x) and \
-               isclose(self.y, y)
+    def __eq__(self, other: UVec) -> bool:
+        if not isinstance(other, Vec2):
+            other = Vec2(other)
+        return self.x == other.x and self.y == other.y
 
-    def __lt__(self, other: 'Vertex') -> bool:
+    def __lt__(self, other: UVec) -> bool:
         # accepts also tuples, for more convenience at testing
         x, y, *_ = other
         if self.x == x:
@@ -736,71 +747,45 @@ class Vec2:
         else:
             return self.x < x
 
-    def __add__(self, other: 'VecXY') -> 'Vec2':
+    def __add__(self, other: AnyVec) -> Vec2:
         try:
             return self.__class__(self.x + other.x, self.y + other.y)
         except AttributeError:
-            raise TypeError('invalid argument')
+            raise TypeError("invalid argument")
 
-    def __iadd__(self, other: 'VecXY') -> 'Vec2':
-        try:
-            self.x += other.x
-            self.y += other.y
-        except AttributeError:
-            raise TypeError('invalid argument')
-        return self
-
-    def __sub__(self, other: 'VecXY') -> 'Vec2':
+    def __sub__(self, other: AnyVec) -> Vec2:
         try:
             return self.__class__(self.x - other.x, self.y - other.y)
         except AttributeError:
-            raise TypeError('invalid argument')
+            raise TypeError("invalid argument")
 
-    def __rsub__(self, other: 'VecXY') -> 'Vec2':
+    def __rsub__(self, other: AnyVec) -> Vec2:
         try:
             return self.__class__(other.x - self.x, other.y - self.y)
         except AttributeError:
-            raise TypeError('invalid argument')
+            raise TypeError("invalid argument")
 
-    def __isub__(self, other: 'VecXY') -> 'Vec2':
-        try:
-            self.x -= other.x
-            self.y -= other.y
-        except AttributeError:
-            raise TypeError('invalid argument')
-        return self
-
-    def __mul__(self, other: float) -> 'Vec2':
+    def __mul__(self, other: float) -> Vec2:
         return self.__class__(self.x * other, self.y * other)
 
-    def __rmul__(self, other: float) -> 'Vec2':
+    def __rmul__(self, other: float) -> Vec2:
         return self.__class__(self.x * other, self.y * other)
 
-    def __imul__(self, other: float) -> 'Vec2':
-        self.x *= other
-        self.y *= other
-        return self
-
-    def __truediv__(self, other: float) -> 'Vec2':
+    def __truediv__(self, other: float) -> Vec2:
         return self.__class__(self.x / other, self.y / other)
 
-    def __itruediv__(self, other: float) -> 'Vec2':
-        self.x /= other
-        self.y /= other
-        return self
-
-    def dot(self, other: 'VecXY') -> float:
+    def dot(self, other: AnyVec) -> float:
         return self.x * other.x + self.y * other.y
 
-    def det(self, other: 'VecXY') -> float:
+    def det(self, other: AnyVec) -> float:
         return self.x * other.y - self.y * other.x
 
-    def distance(self, other: 'VecXY') -> float:
+    def distance(self, other: AnyVec) -> float:
         return math.hypot(self.x - other.x, self.y - other.y)
 
-    def angle_between(self, other: 'VecXY') -> float:
-        """ Calculate angle between `self` and `other` in radians. +angle is
-        counter clockwise orientation.
+    def angle_between(self, other: AnyVec) -> float:
+        """Calculate angle between `self` and `other` in radians. +angle is
+        counter-clockwise orientation.
 
         """
         cos_theta = self.normalize().dot(other.normalize())
@@ -811,9 +796,8 @@ class Vec2:
             cos_theta = 1.0
         return math.acos(cos_theta)
 
-    def rotate(self, angle: float) -> 'Vec2':
-        """
-        Rotate vector around origin.
+    def rotate(self, angle: float) -> Vec2:
+        """Rotate vector around origin.
 
         Args:
             angle: angle in radians
@@ -821,9 +805,8 @@ class Vec2:
         """
         return self.__class__.from_angle(self.angle + angle, self.magnitude)
 
-    def rotate_deg(self, angle: float) -> 'Vec2':
-        """
-        Rotate vector around origin.
+    def rotate_deg(self, angle: float) -> Vec2:
+        """Rotate vector around origin.
 
         Args:
             angle: angle in degrees
@@ -831,12 +814,13 @@ class Vec2:
         Returns: rotated vector
 
         """
-        return self.__class__.from_angle(self.angle + math.radians(angle),
-                                         self.magnitude)
+        return self.__class__.from_angle(
+            self.angle + math.radians(angle), self.magnitude
+        )
 
     @staticmethod
-    def sum(items: Iterable['Vec2']) -> 'Vec2':
-        """ Add all vectors in `items`. """
+    def sum(items: Iterable[Vec2]) -> Vec2:
+        """Add all vectors in `items`."""
         s = Vec2(0, 0)
         for v in items:
             s += v

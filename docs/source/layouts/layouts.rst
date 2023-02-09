@@ -11,23 +11,26 @@ Layout Types
 A Layout represents and manages DXF entities, there are three different layout objects:
 
 - :class:`Modelspace` is the common working space, containing basic drawing entities.
-- :class:`Paperspace` is arrangement of objects for printing and plotting, this layout contains basic drawing entities
-  and viewports to the :class:`Modelspace`.
-- :class:`BlockLayout` works on an associated :class:`~ezdxf.entities.block.Block`, Blocks are collections of drawing
-  entities for reusing by block references.
+- :class:`Paperspace` is the arrangement of objects for printing and plotting,
+  this layout contains basic drawing entities and viewports to the
+  :class:`Modelspace`.
+- :class:`BlockLayout` works on an associated :class:`~ezdxf.entities.block.Block`,
+  Blocks are collections of DXF entities for reusing by block references.
 
 .. warning::
 
-    Do not instantiate layout classes by yourself - always use the provided factory functions!
+    Do not instantiate layout classes by yourself - always use the provided
+    factory functions!
 
 Entity Ownership
 ----------------
 
-A layout owns all entities residing in their entity space, this means the :attr:`dxf.owner` attribute of
-any :class:`~ezdxf.entities.dxfgfx.DXFGraphic` in this layout is the :attr:`dxf.handle` of the layout, and deleting
-an entity from a layout is the end of life of this entity, because it is also deleted from the
-:class:`~ezdxf.entitydb.EntityDB`.
-But it is possible to just unlink an entity from a layout, so it can be assigned to another layout, use the
+A layout owns all entities residing in their entity space, therefore the
+:attr:`dxf.owner` attribute of any :class:`~ezdxf.entities.DXFGraphic` entity
+in this layout is the :attr:`dxf.handle` of the layout, and deleting an entity
+from a layout is the end of life of this entity, because it is also deleted from
+the :class:`~ezdxf.entitydb.EntityDB`. It's possible to just unlink an entity
+from a layout to assign the entity to another layout, use the
 :meth:`~BaseLayout.move_to_layout` method to move entities between layouts.
 
 
@@ -66,11 +69,19 @@ BaseLayout
 
     .. automethod:: unlink_entity
 
-    .. automethod:: query(query: str = '*') -> EntityQuery
+    .. automethod:: purge
+
+    .. automethod:: query
 
     .. automethod:: groupby
 
     .. automethod:: move_to_layout
+
+    .. automethod:: set_redraw_order
+
+    .. automethod:: get_redraw_order
+
+    .. automethod:: entities_in_redraw_order
 
     .. automethod:: add_entity
 
@@ -98,8 +109,6 @@ BaseLayout
 
     .. automethod:: add_auto_blockref
 
-    .. automethod:: add_attrib
-
     .. automethod:: add_attdef
 
     .. automethod:: add_polyline2d
@@ -116,6 +125,12 @@ BaseLayout
 
     .. automethod:: add_mtext
 
+    .. automethod:: add_mtext_static_columns
+
+    .. automethod:: add_mtext_dynamic_manual_height_columns
+
+    .. automethod:: add_mtext_dynamic_auto_height_columns
+
     .. automethod:: add_ray
 
     .. automethod:: add_xline
@@ -124,17 +139,19 @@ BaseLayout
 
     .. automethod:: add_spline
 
+    .. automethod:: add_cad_spline_control_frame
+
     .. automethod:: add_spline_control_frame
 
     .. automethod:: add_open_spline
 
-    .. automethod:: add_closed_spline
-
     .. automethod:: add_rational_spline
 
-    .. automethod:: add_closed_rational_spline
-
     .. automethod:: add_hatch
+
+    .. automethod:: add_helix
+
+    .. automethod:: add_mpolygon
 
     .. automethod:: add_mesh
 
@@ -160,7 +177,31 @@ BaseLayout
 
     .. automethod:: add_diameter_dim_2p
 
+    .. automethod:: add_angular_dim_2l
+
+    .. automethod:: add_angular_dim_3p
+
+    .. automethod:: add_angular_dim_cra
+
+    .. automethod:: add_angular_dim_arc
+
+    .. automethod:: add_arc_dim_3p
+
+    .. automethod:: add_arc_dim_cra
+
+    .. automethod:: add_arc_dim_arc
+
+    .. automethod:: add_ordinate_dim
+
+    .. automethod:: add_ordinate_x_dim
+
+    .. automethod:: add_ordinate_y_dim
+
     .. automethod:: add_leader
+
+    .. automethod:: add_multileader_mtext
+
+    .. automethod:: add_multileader_block
 
     .. automethod:: add_body
 
@@ -192,17 +233,15 @@ Layout
 
     .. automethod:: __contains__
 
-    .. automethod:: reset_extends
+    .. automethod:: reset_extents
+
+    .. automethod:: reset_limits
 
     .. automethod:: set_plot_type
 
     .. automethod:: set_plot_style
 
     .. automethod:: set_plot_window
-
-    .. automethod:: set_redraw_order
-
-    .. automethod:: get_redraw_order
 
     .. automethod:: plot_viewport_borders
 
@@ -263,13 +302,15 @@ Paperspace
 
     .. automethod:: page_setup(size=(297, 210), margins=(10, 15, 10, 15), units='mm', offset=(0, 0), rotation=0, scale=16, name='ezdxf', device='DWG to PDF.pc3')
 
-    .. automethod:: rename
-
     .. automethod:: viewports
+
+    .. automethod:: main_viewport
 
     .. automethod:: add_viewport
 
     .. automethod:: reset_viewports
+
+    .. automethod:: reset_main_viewport
 
     .. automethod:: reset_paper_limits
 
@@ -287,19 +328,19 @@ BlockLayout
     :class:`~ezdxf.entities.Insert` entities. Each reference can be placed, scaled and rotated individually and can
     have it's own set of DXF :class:`~ezdxf.entities.Attrib` entities attached.
 
-    .. attribute:: name
+    .. autoproperty:: name
 
-       name of the associated BLOCK and BLOCK_RECORD entities.
+    .. autoproperty:: block
 
-    .. autoattribute:: block
+    .. autoproperty:: endblk
 
-    .. autoattribute:: endblk
+    .. autoproperty:: dxf
 
-    .. autoattribute:: dxf
+    .. autoproperty:: can_explode
 
-    .. autoattribute:: can_explode
+    .. autoproperty:: scale_uniformly
 
-    .. autoattribute:: scale_uniformly
+    .. autoproperty:: base_point
 
     .. automethod:: __contains__
 
@@ -311,3 +352,8 @@ BlockLayout
 
     .. automethod:: get_attdef_text
 
+
+.. _limits: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2020/ENU/AutoCAD-Core/files/GUID-6CF82FC7-E1BC-4A8C-A23D-4396E3D99632-htm.html
+
+
+.. _extents: https://knowledge.autodesk.com/de/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2020/DEU/AutoCAD-Core/files/GUID-B3926CFA-DE74-4661-A9A5-2738A1FD937B-htm.html

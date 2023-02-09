@@ -5,75 +5,95 @@ ezdxf
 Abstract
 --------
 
-A Python package to create and modify DXF drawings, independent of the DXF
-version. You can open/save every DXF file without losing any content (except comments),
-Unknown tags in the DXF file will be ignored but preserved for saving. With this behavior
-it is possible to open also DXF drawings that contains data from 3rd party applications.
+This Python package is for creating and modifying DXF documents, regardless of 
+the DXF version. The package supports loading and rewriting DXF file without 
+losing any content except comments.
+Unknown DXF tags in the document are ignored but kept for rewriting. 
+This behavior allows processing DXF documents that contain data from third-party 
+applications without loosing information.
 
 Quick-Info
 ----------
 
-- ezdxf is a Python package to create new DXF files and read/modify/write existing DXF files
-- the intended audience are developers
-- requires at least Python 3.6
+- *ezdxf* is a Python package to create new DXF files and read/modify/write 
+  existing DXF documents
+- MIT-License
+- the intended audience are programmers
+- requires at least Python 3.7
 - OS independent
 - tested with CPython and pypy3
-- C-extensions for CPython as binary wheels available on PyPI for Windows, Linux and macOS
-- additional required packages: [pyparsing](https://pypi.org/project/pyparsing/) 
-- optional Cython implementation of some low level math classes
-- MIT-License
+- has type annotations and passes `mypy --ignore-missing-imports -p ezdxf` successful
+- additional required packages for the core package without add-ons: 
+  [typing_extensions](https://pypi.org/project/typing-extensions/), 
+  [pyparsing](https://pypi.org/project/pyparsing/) 
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
-- additional read support for DXF versions R13/R14 (upgraded to R2000)
-- additional read support for older DXF versions than R12 (upgraded to R12)
+- additional read-only support for DXF versions R13/R14 (upgraded to R2000)
+- additional read-only support for older DXF versions than R12 (upgraded to R12)
 - read/write support for ASCII DXF and Binary DXF
-- preserves third-party DXF content
+- retains third-party DXF content
+- optional C-extensions for CPython are included in the binary wheels, available 
+  on [PyPI](https://pypi.org/project/ezdxf/) for Windows, Linux and macOS
 
 Included Extensions
 -------------------
 
-- The `drawing` add-on is a translation layer to send DXF data to a render backend, interfaces to 
-  [matplotlib](https://pypi.org/project/matplotlib/), which can export images as png, pdf or svg, 
-  and [PyQt5](https://pypi.org/project/PyQt5/) are implemented.
-- `geo` add-on to support the [`__geo_interface__`](https://gist.github.com/sgillies/2217756)
-- `r12writer` add-on to write basic DXF entities direct and fast into a DXF R12 file or stream
-- `iterdxf` add-on to iterate over DXF entities of the modelspace of really big (> 5GB) DXF files which
-  do not fit into memory
+Additional packages required for these add-ons are not automatically installed 
+during the *basic* setup, for more information about the setup & dependencies 
+visit the [documentation](https://ezdxf.mozman.at/docs/setup.html).
+
+- The `drawing` add-on is a translation layer to send DXF data to a render backend, 
+  interfaces to [matplotlib](https://pypi.org/project/matplotlib/), which can export 
+  images as PNG, PDF or SVG, and [PyQt5](https://pypi.org/project/PyQt5/) are implemented.
+- `r12writer` add-on to write basic DXF entities direct and fast into a DXF R12 
+  file or stream
+- `iterdxf` add-on to iterate over DXF entities from the modelspace of huge DXF 
+  files (> 5GB) which do not fit into memory
 - `Importer` add-on to import entities, blocks and table entries from another DXF document
 - `dxf2code` add-on to generate Python code for DXF structures loaded from DXF 
   documents as starting point for parametric DXF entity creation
-- Plot Style Files (CTB/STB) read/write add-on
+- `acadctb` add-on to read/write plot style files (CTB/STB)
+- `pycsg` add-on for basic Constructive Solid Geometry (CSG) modeling
+- `MTextExplode` add-on for exploding MTEXT entities into single-line TEXT entities
+- `text2path` add-on to convert text into outline paths
+- `geo` add-on to support the [`__geo_interface__`](https://gist.github.com/sgillies/2217756)
+- `meshex` for exchanging meshes with other tools as STL, OFF or OBJ files
+- `openscad` add-on, an interface to [OpenSCAD](https://openscad.org)
+- `odafc` add-on, an interface to the [ODA File Converter](https://www.opendesign.com/guestfiles/oda_file_converter) 
+  to read and write DWG files
 
 A simple example:
 
-```python
+```Python
 import ezdxf
+from ezdxf import colors
+from ezdxf.enums import TextEntityAlignment
 
 # Create a new DXF document.
-doc = ezdxf.new(dxfversion='R2010')
+doc = ezdxf.new(dxfversion="R2010")
 
 # Create new table entries (layers, linetypes, text styles, ...).
-doc.layers.new('TEXTLAYER', dxfattribs={'color': 2})
+doc.layers.add("TEXTLAYER", color=colors.RED)
 
 # DXF entities (LINE, TEXT, ...) reside in a layout (modelspace, 
 # paperspace layout or block definition).  
 msp = doc.modelspace()
 
 # Add entities to a layout by factory methods: layout.add_...() 
-msp.add_line((0, 0), (10, 0), dxfattribs={'color': 7})
+msp.add_line((0, 0), (10, 0), dxfattribs={"color": colors.YELLOW})
 msp.add_text(
-    'Test', 
+    "Test", 
     dxfattribs={
-        'layer': 'TEXTLAYER'
-    }).set_pos((0, 0.2), align='CENTER')
+        "layer": "TEXTLAYER"
+    }).set_placement((0, 0.2), align=TextEntityAlignment.CENTER)
 
-# Save DXF document.
-doc.saveas('test.dxf')
+# Save the DXF document.
+doc.saveas("test.dxf")
 ```
 
 Example for the *r12writer*, which writes a simple DXF R12 file without 
 in-memory structures:
 
-```python
+```Python
 from random import random
 from ezdxf.addons import r12writer
 
@@ -92,45 +112,18 @@ additional predefined text styles and line types are available.
 Installation
 ------------
 
-Install with pip including the optional C-extensions from PyPI as binary wheels:
+Basic installation by pip including the optional C-extensions from PyPI as 
+binary wheels:
 
     pip install ezdxf
 
-Install from source code. To build the optional C-extensions the Cython package, 
-and a working C++ compiler setup is required:
+Full installation with all dependencies (matplotlib, PySide6) for using the 
+drawing add-on:
 
-    python setup.py install
+    pip install ezdxf[draw]
 
-Install the latest development version with pip from GitHub:
-
-    pip install git+https://github.com/mozman/ezdxf.git@master
-
-
-Dependencies in Detail
-----------------------
-
-The `pyparsing` package is the only hard dependency and will be installed 
-automatically by `pip`!
-
-- INSTALL from PyPI including C-extensions: pyparsing (most common case)
-- INSTALL from PyPI for usage of the `drawing` add-on: pyparsing, matplotlib, pyqt5
-- INSTALL from source code without C-extensions: setuptools, pyparsing
-- INSTALL from source code including C-extensions: setuptools, pyparsing, 
-  Cython, and a working C++ compiler setup 
-- TESTING requires the additional packages: pytest, [geomdl](https://github.com/orbingol/NURBS-Python)
-- BUILD packages from source code without C-extensions: setuptools, wheel
-- BUILD packages from source code including C-extensions: setuptools, wheel, 
-  Cython, and a working C++ compiler setup
-
-Install all optional packages:
-
-    pip install setuptools wheel cython pytest geomdl matplotlib pyqt5
-
-Windows users who want to compile the C-extensions from source code need the 
-build tools from Microsoft: https://visualstudio.microsoft.com/de/downloads/ 
-
-Download and install the required Visual Studio Installer of the community 
-edition and choose the option: `Visual Studio Build Tools 20..`
+For more information about the setup & dependencies visit the 
+[documentation](https://ezdxf.mozman.at/docs/setup.html).
 
 Website
 -------
@@ -140,9 +133,9 @@ https://ezdxf.mozman.at/
 Documentation
 -------------
 
-Documentation of development version at https://ezdxf.mozman.at/docs
+Documentation of the development version at https://ezdxf.mozman.at/docs
 
-Documentation of the latest release at http://ezdxf.readthedocs.io/
+Documentation of the latest release at https://ezdxf.readthedocs.io/
 
 Contribution
 ------------
@@ -150,7 +143,7 @@ Contribution
 The source code of *ezdxf* can be found at __GitHub__, target your pull requests 
 to the `master` branch:
 
-http://github.com/mozman/ezdxf.git
+https://github.com/mozman/ezdxf.git
 
 
 Feedback

@@ -1,0 +1,6 @@
+(defun C:SHOWXDATA (/ appid entity_list xdata_list)
+  (setq appid (getstring "Show XDATA for which AppID:"))
+  (setq entity_list (entget (car (entsel)) (list appid)))
+  (setq xdata_list (assoc -3 entity_list))
+(car (cdr xdata_list))
+)

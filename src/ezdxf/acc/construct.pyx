@@ -1,21 +1,25 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TYPE_CHECKING, Sequence, Optional, Tuple
 from libc.math cimport fabs
-from .vector cimport Vec2, v2_isclose, Vec3, v3_from_cpp_vec3
+from .vector cimport Vec2, v2_isclose, Vec3, v3_from_cpp_vec3, isclose
 from ._cpp_vec3 cimport CppVec3
 
 import cython
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.math import UVec
 
 DEF ABS_TOL = 1e-12
+DEF RAD_ABS_TOL = 1e-15
+DEF DEG_ABS_TOL = 1e-13
+DEF REL_TOL = 1e-9
 DEF TOLERANCE = 1e-10
+DEF TAU = 6.283185307179586
 
-def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
+def has_clockwise_orientation(vertices: Iterable[UVec]) -> bool:
     """ Returns True if 2D `vertices` have clockwise orientation. Ignores
     z-axis of all vertices.
 
@@ -36,7 +40,7 @@ def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
     cdef Py_ssize_t index
 
     # Using the same tolerance as the Python implementation:
-    if not v2_isclose(p1, p2, ABS_TOL):
+    if not v2_isclose(p1, p2, REL_TOL, ABS_TOL):
         _vertices.append(p1)
 
     for index in range(1, len(_vertices)):
@@ -67,81 +71,49 @@ def intersection_line_line_2d(
         intersection point as :class:`Vec2`
 
     """
-    # Sources:
-    # compas: https://github.com/compas-dev/compas/blob/master/src/compas/geometry/_core/intersections.py (MIT)
-    # wikipedia: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-    cdef Vec2 a, b, c, d, res = Vec2()
-    cdef double x1, y1, x2, y2, x3, y3, x4, y4, det
-    cdef double x1_x2, y3_y4, y1_y2, x3_x4, e, f
-    cdef bint in_range
+    # Algorithm based on: http://paulbourke.net/geometry/pointlineplane/
+    # chapter: Intersection point of two line segments in 2 dimensions
+    cdef Vec2 s1, s2, c1, c2, res
+    cdef double s1x, s1y, s2x, s2y, c1x, c1y, c2x, c2y, den, us, uc
+    cdef double lwr = 0.0, upr = 1.0
 
-    a = line1[0]
-    b = line1[1]
-    c = line2[0]
-    d = line2[1]
+    s1 = line1[0]
+    s2 = line1[1]
+    c1 = line2[0]
+    c2 = line2[1]
 
-    x1 = a.x
-    y1 = a.y
-    x2 = b.x
-    y2 = b.y
-    x3 = c.x
-    y3 = c.y
-    x4 = d.x
-    y4 = d.y
+    s1x = s1.x
+    s1y = s1.y
+    s2x = s2.x
+    s2y = s2.y
+    c1x = c1.x
+    c1y = c1.y
+    c2x = c2.x
+    c2y = c2.y
 
-    x1_x2 = x1 - x2
-    y3_y4 = y3 - y4
-    y1_y2 = y1 - y2
-    x3_x4 = x3 - x4
+    den = (c2y - c1y) * (s2x - s1x) - (c2x - c1x) * (s2y - s1y)
 
-    det = x1_x2 * y3_y4 - y1_y2 * x3_x4
-
-    if fabs(det) <= abs_tol:
+    if fabs(den) <= abs_tol:
         return None
 
-    e = x1 * y2 - y1 * x2
-    f = x3 * y4 - y3 * x4
-    # det near zero is checked by if-statement above:
+
+    # den near zero is checked by if-statement above:
     with cython.cdivision(True):
-        x = (e * x3_x4 - x1_x2 * f) / det
-        y = (e * y3_y4 - y1_y2 * f) / det
+        us = ((c2x - c1x) * (s1y - c1y) - (c2y - c1y) * (s1x - c1x)) / den
 
-    if not virtual:
-        if x1 > x2:
-            in_range = (x2 - abs_tol) <= x <= (x1 + abs_tol)
-        else:
-            in_range = (x1 - abs_tol) <= x <= (x2 + abs_tol)
+    res = Vec2(s1x + us * (s2x - s1x), s1y + us * (s2y - s1y))
+    if virtual:
+        return res
 
-        if not in_range:
-            return None
-
-        if x3 > x4:
-            in_range = (x4 - abs_tol) <= x <= (x3 + abs_tol)
-        else:
-            in_range = (x3 - abs_tol) <= x <= (x4 + abs_tol)
-
-        if not in_range:
-            return None
-
-        if y1 > y2:
-            in_range = (y2 - abs_tol) <= y <= (y1 + abs_tol)
-        else:
-            in_range = (y1 - abs_tol) <= y <= (y2 + abs_tol)
-
-        if not in_range:
-            return None
-
-        if y3 > y4:
-            in_range = (y4 - abs_tol) <= y <= (y3 + abs_tol)
-        else:
-            in_range = (y3 - abs_tol) <= y <= (y4 + abs_tol)
-
-        if not in_range:
-            return None
-
-    res.x = x
-    res.y = y
-    return res
+    # 0 = intersection point is the start point of the line
+    # 1 = intersection point is the end point of the line
+    # otherwise: linear interpolation
+    if lwr <= us <= upr:  # intersection point is on the subject line
+        with cython.cdivision(True):
+            uc = ((s2x - s1x) * (s1y - c1y) - (s2y - s1y) * (s1x - c1x)) / den
+        if lwr <= uc <= upr:  # intersection point is on the clipping line
+            return res
+    return None
 
 cdef double _determinant(CppVec3 v1, CppVec3 v2, CppVec3 v3):
     return v1.x * v2.y * v3.z + v1.y * v2.z * v3.x + \
@@ -194,3 +166,33 @@ def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
             # ray1 and ray2 do not have an intersection point,
             # p1 and p2 are the points of closest approach on each ray
             return v3_from_cpp_vec3(p1), v3_from_cpp_vec3(p2)
+
+def arc_angle_span_deg(double start, double end) -> float:
+    if isclose(start, end, REL_TOL, DEG_ABS_TOL):
+        return 0.0
+
+    start %= 360.0
+    if isclose(start, end % 360.0, REL_TOL, DEG_ABS_TOL):
+        return 360.0
+
+    if not isclose(end, 360.0, REL_TOL, DEG_ABS_TOL):
+        end %= 360.0
+
+    if end < start:
+        end += 360.0
+    return end - start
+
+def arc_angle_span_rad(double start, double end) -> float:
+    if isclose(start, end, REL_TOL, RAD_ABS_TOL):
+        return 0.0
+
+    start %= TAU
+    if isclose(start, end % TAU, REL_TOL, RAD_ABS_TOL):
+        return TAU
+
+    if not isclose(end, TAU, REL_TOL, RAD_ABS_TOL):
+        end %= TAU
+
+    if end < start:
+        end += TAU
+    return end - start

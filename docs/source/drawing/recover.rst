@@ -5,8 +5,6 @@
 Recover
 =======
 
-.. versionadded:: v0.14
-
 This module provides functions to "recover" ASCII DXF documents with structural
 flaws, which prevents the regular :func:`ezdxf.read` and :func:`ezdxf.readfile`
 functions to load the document.
@@ -35,9 +33,10 @@ afterwards and return the result of this audit process:
     if auditor.has_errors:
         auditor.print_error_report()
 
-
-This efforts cost some time, loading the DXF document with :func:`ezdxf.read` or
-:func:`ezdxf.readfile` will be faster.
+The loading functions also decode DXF-Unicode encoding automatically
+e.g. "\\U+00FC" -> "ü".
+All these efforts cost some time, loading the DXF document with
+:func:`ezdxf.read` or :func:`ezdxf.readfile` is faster.
 
 .. warning::
 
@@ -117,11 +116,11 @@ recover mode:
             print(f'Invalid or corrupted DXF file: {name}.')
             sys.exit(2)
 
-    # DXF file can still have unrecoverable errors, but this is maybe
-    # just a problem when saving the recovered DXF file.
-    if auditor.has_errors:
-        print(f'Found unrecoverable errors in DXF file: {name}.')
-        auditor.print_error_report()
+        # DXF file can still have unrecoverable errors, but this is maybe
+        # just a problem when saving the recovered DXF file.
+        if auditor.has_errors:
+            print(f'Found unrecoverable errors in DXF file: {name}.')
+            auditor.print_error_report()
 
 4. Just use the slow recover module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -150,7 +149,7 @@ always pay an extra fee for the recover mode:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If files contain binary data which can not be decoded by the document encoding,
-it is maybe the best to ignore this files, this works in normal and recover
+it is maybe the best to ignore these files, this works in normal and recover
 mode:
 
 .. code-block:: Python

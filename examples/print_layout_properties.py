@@ -1,7 +1,13 @@
-# Copyright (c) 2018, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 import sys
 import ezdxf
+
+# ------------------------------------------------------------------------------
+# print DXF attributes of layouts
+#
+# docs about layouts: https://ezdxf.mozman.at/docs/layouts/index.html
+# ------------------------------------------------------------------------------
 
 
 def print_layout(layout):
@@ -61,7 +67,7 @@ def print_layouts(layouts):
 
 def process_file(filename):
     doc = ezdxf.readfile(filename)
-    if doc.dxfversion > 'AC1009':
+    if doc.dxfversion > "AC1009":
         print_layouts(doc.layouts)
     else:
         print(f"DXF R12 not supported: {filename}")
@@ -72,5 +78,5 @@ def run(files):
         process_file(filename)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run(sys.argv[1:])

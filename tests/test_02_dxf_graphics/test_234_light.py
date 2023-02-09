@@ -47,19 +47,19 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'LIGHT' in ENTITY_CLASSES
+
+    assert "LIGHT" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Light()
-    assert entity.dxftype() == 'LIGHT'
+    assert entity.dxftype() == "LIGHT"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = Light.new(handle='ABBA', owner='0', dxfattribs={
-    })
+    entity = Light.new(handle="ABBA", owner="0", dxfattribs={})
     assert entity.dxf.version == 0
     assert entity.dxf.name == ""
     assert entity.dxf.type == 1
@@ -93,8 +93,8 @@ def test_write_dxf():
 
 
 def test_add_light():
-    doc = ezdxf.new('R2007')
+    doc = ezdxf.new("R2007")
     msp = doc.modelspace()
-    light = msp.new_entity('LIGHT', {'name': 'Licht'})
-    assert light.dxftype() == 'LIGHT'
-    assert light.dxf.name == 'Licht'
+    light = msp.new_entity("LIGHT", {"name": "Licht"})
+    assert light.dxftype() == "LIGHT"
+    assert light.dxf.name == "Licht"

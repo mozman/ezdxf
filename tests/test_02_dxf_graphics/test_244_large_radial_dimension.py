@@ -39,12 +39,6 @@ LARGE_RADIAL_DIMENSION
 5
 37C
 102
-{ACAD_XDICTIONARY
-360
-389
-102
-}
-102
 {ACAD_REACTORS
 330
 393
@@ -112,5 +106,5 @@ AcDbRadialDimensionLarge
 0.0
 """
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

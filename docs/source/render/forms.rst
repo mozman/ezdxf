@@ -3,34 +3,42 @@
 Forms
 =====
 
-    This module provides functions to create 2D and 3D forms as vertices or mesh objects.
+    This module provides functions to create 2D and 3D forms as vertices or
+    mesh objects.
 
     2D Forms
 
-    - :meth:`circle`
-    - :meth:`square`
-    - :meth:`box`
-    - :meth:`ellipse`
-    - :meth:`euler_spiral`
-    - :meth:`ngon`
-    - :meth:`star`
-    - :meth:`gear`
+    - :func:`box`
+    - :func:`circle`
+    - :func:`ellipse`
+    - :func:`euler_spiral`
+    - :func:`gear`
+    - :func:`ngon`
+    - :func:`square`
+    - :func:`star`
+    - :func:`turtle`
 
     3D Forms
 
-    - :meth:`cube`
-    - :meth:`cylinder`
-    - :meth:`cylinder_2p`
-    - :meth:`cone`
-    - :meth:`cone_2p`
-    - :meth:`sphere`
+    - :func:`cone_2p`
+    - :func:`cone`
+    - :func:`cube`
+    - :func:`cylinder`
+    - :func:`cylinder_2p`
+    - :func:`helix`
+    - :func:`sphere`
+    - :func:`torus`
 
     3D Form Builder
 
-    - :meth:`extrude`
-    - :meth:`from_profiles_linear`
-    - :meth:`from_profiles_spline`
-    - :meth:`rotation_form`
+    - :func:`extrude`
+    - :func:`extrude_twist_scale`
+    - :func:`from_profiles_linear`
+    - :func:`from_profiles_spline`
+    - :func:`rotation_form`
+    - :func:`sweep`
+    - :func:`sweep_profile`
+
 
 2D Forms
 --------
@@ -38,21 +46,23 @@ Forms
     Basic 2D shapes as iterable of :class:`~ezdxf.math.Vec3`.
 
 
-.. autofunction:: circle(count: int, radius: float = 1, elevation: float = 0, close: bool = False) -> Iterable[Vec3]
+.. autofunction:: box
 
-.. autofunction:: square(size: float = 1.) -> Tuple[Vec3, Vec3, Vec3, Vec3]
+.. autofunction:: circle
 
-.. autofunction:: box(sx: float = 1., sy: float = 1.) -> Tuple[Vec3, Vec3, Vec3, Vec3]
+.. autofunction:: ellipse
 
-.. autofunction:: ellipse(count: int, rx: float = 1, ry: float = 1, start_param: float = 0, end_param: float = 2 * pi, elevation: float = 0) -> Iterable[Vec3]
+.. autofunction:: euler_spiral
 
-.. autofunction:: euler_spiral(count: int, length: float = 1, curvature: float = 1, elevation: float = 0) -> Iterable[Vec3]
+.. autofunction:: gear
 
-.. autofunction:: ngon(count: int, length: float = None, radius: float = None, rotation: float = 0., elevation: float = 0., close: bool = False) -> Iterable[Vec3]
+.. autofunction:: ngon
 
-.. autofunction:: star(count: int, r1: float, r2: float, rotation: float = 0., elevation: float = 0., close: bool = False) -> Iterable[Vec3]
+.. autofunction:: square
 
-.. autofunction:: gear(count: int, top_width: float, bottom_width: float, height: float, outside_radius: float, elevation: float = 0, close: bool = False) -> Iterable[Vec3]
+.. autofunction:: star
+
+.. autofunction:: turtle
 
 
 3D Forms
@@ -60,25 +70,35 @@ Forms
 
 Create 3D forms as :class:`~ezdxf.render.MeshTransformer` objects.
 
-.. autofunction:: cube(center: bool = True) -> MeshTransformer
+.. autofunction:: cube
 
-.. autofunction:: cylinder(count: int, radius: float = 1., top_radius: float = None, top_center: Vertex = (0, 0, 1), caps=True, ngons=True) -> MeshTransformer
+.. autofunction:: cone
 
-.. autofunction:: cylinder_2p(count: int = 16, radius: float = 1, base_center=(0, 0, 0), top_center=(0, 0, 1), ) -> MeshTransformer
+.. autofunction:: cone_2p
 
-.. autofunction:: cone(count: int, radius: float, apex: Vertex = (0, 0, 1), caps=True, ngons=True) -> MeshTransformer
+.. autofunction:: cylinder
 
-.. autofunction:: cone_2p(count: int, radius: float, apex: Vertex = (0, 0, 1)) -> MeshTransformer
+.. autofunction:: cylinder_2p
 
-.. autofunction:: sphere(count: int = 16, stacks: int = 8, radius: float = 1, quads=True) -> MeshTransformer
+.. autofunction:: helix
+
+.. autofunction:: sphere
+
+.. autofunction:: torus
 
 3D Form Builder
 ---------------
 
-.. autofunction:: extrude(profile: Iterable[Vertex], path: Iterable[Vertex], close=True) -> MeshTransformer
+.. autofunction:: extrude
 
-.. autofunction:: from_profiles_linear(profiles: Iterable[Iterable[Vertex]], close=True, caps=False, ngons=True) -> MeshTransformer
+.. autofunction:: extrude_twist_scale
 
-.. autofunction:: from_profiles_spline(profiles: Iterable[Iterable[Vertex]], subdivide: int = 4, close=True, caps=False, ngons=True) -> MeshTransformer
+.. autofunction:: from_profiles_linear
 
-.. autofunction:: rotation_form(count: int, profile: Iterable[Vertex], angle: float = 2 * pi, axis: Vertex = (1, 0, 0)) -> MeshTransformer
+.. autofunction:: from_profiles_spline
+
+.. autofunction:: rotation_form
+
+.. autofunction:: sweep
+
+.. autofunction:: sweep_profile

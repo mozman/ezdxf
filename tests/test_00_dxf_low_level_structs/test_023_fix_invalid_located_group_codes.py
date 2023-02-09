@@ -33,12 +33,11 @@ def test_fix_invalid_located_acdb_entity_group_codes():
     polyline = LWPolyline.from_text(LWPOLYLINE)
 
     print(str(polyline))
-    print(f'Layer: {polyline.dxf.layer}')
+    print(f"Layer: {polyline.dxf.layer}")
 
-    assert polyline.dxf.layer == 'Offline'
+    assert polyline.dxf.layer == "Offline"
     assert polyline.dxf.color == 3
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
-

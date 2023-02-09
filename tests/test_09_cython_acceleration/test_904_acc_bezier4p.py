@@ -7,13 +7,15 @@
 import pytest
 import math
 
-bezier = pytest.importorskip('ezdxf.acc.bezier4p')
+bezier = pytest.importorskip("ezdxf.acc.bezier4p")
 Bezier4P = bezier.Bezier4P
 from ezdxf.acc.vector import Vec3
 from ezdxf.acc.matrix44 import Matrix44
+
 # check functions:
 from ezdxf.math._bezier4p import (
-    cubic_bezier_arc_parameters, cubic_bezier_from_arc,
+    cubic_bezier_arc_parameters,
+    cubic_bezier_from_arc,
     cubic_bezier_from_ellipse,
 )
 from ezdxf.math.ellipse import ConstructionEllipse
@@ -64,42 +66,69 @@ def test_transform(curve):
     assert r.control_points == Vec3.tuple([(1, 1), (2, 1), (2, 2), (1, 2)])
 
 
-@pytest.mark.parametrize('s, e', [
-    (0, math.pi), (math.pi, math.tau), (0, math.tau),
-])
+@pytest.mark.parametrize(
+    "s, e",
+    [
+        (0, math.pi),
+        (math.pi, math.tau),
+        (0, math.tau),
+    ],
+)
 def test_correctness_arc_parameters(s, e):
     expected = list(cubic_bezier_arc_parameters(s, e))
     result = list(bezier.cubic_bezier_arc_parameters(s, e))
     assert result == expected
 
 
-@pytest.mark.parametrize('s, e', [
-    (0, 180), (180, 360), (0, 360),
-])
+@pytest.mark.parametrize(
+    "s, e",
+    [
+        (0, 180),
+        (180, 360),
+        (0, 360),
+    ],
+)
 def test_correctness_bezier_from_arc(s, e):
-    expected = list(cubic_bezier_from_arc(
-        center=Vec3(1, 2), start_angle=s, end_angle=e,
-    ))
-    result = list(bezier.cubic_bezier_from_arc(
-        center=Vec3(1, 2), start_angle=s, end_angle=e,
-    ))
+    expected = list(
+        cubic_bezier_from_arc(
+            center=Vec3(1, 2),
+            start_angle=s,
+            end_angle=e,
+        )
+    )
+    result = list(
+        bezier.cubic_bezier_from_arc(
+            center=Vec3(1, 2),
+            start_angle=s,
+            end_angle=e,
+        )
+    )
     for e, r in zip(expected, result):
         assert e.control_points == r.control_points
 
 
-@pytest.mark.parametrize('s, e', [
-    (0, math.pi), (math.pi, math.tau), (0, math.tau),
-])
+@pytest.mark.parametrize(
+    "s, e",
+    [
+        (0, math.pi),
+        (math.pi, math.tau),
+        (0, math.tau),
+    ],
+)
 def test_correctness_bezier_from_ellipse(s, e):
     ellipse = ConstructionEllipse(
-        center=(1, 2), major_axis=(2, 0), ratio=0.5,
-        start_param=s, end_param=e,
+        center=(1, 2),
+        major_axis=(2, 0),
+        ratio=0.5,
+        start_param=s,
+        end_param=e,
     )
     expected = list(cubic_bezier_from_ellipse(ellipse))
     result = list(bezier.cubic_bezier_from_ellipse(ellipse))
     for e, r in zip(expected, result):
-        assert e.control_points == r.control_points
+        for ep, rp in zip(e.control_points, r.control_points):
+            assert ep.isclose(rp)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

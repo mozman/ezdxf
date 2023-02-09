@@ -91,12 +91,12 @@ unusable - but in valid GeoJSON notation.
 First get epsg code and the CRS transformation matrix:
 
 .. literalinclude:: src/geo/gpx.py
-    :lines: 86-93
+    :lines: 82-89
 
 Query the DXF entities to export:
 
 .. literalinclude:: src/geo/gpx.py
-    :lines: 93-94
+    :lines: 90-91
 
 Create a :class:`GeoProxy` object from the DXF entity:
 
@@ -193,7 +193,7 @@ The same example with the pyproj package:
     gpx_points = list(load_gpx_track('track1.gpx'))
 
     # Create transformation object:
-    ct = Transformer.from_crs('EPSG:4326', 'EPSG:3395)
+    ct = Transformer.from_crs('EPSG:4326', 'EPSG:3395')
 
     # Create GeoProxy() object:
     geo_proxy = GeoProxy.parse({
@@ -216,7 +216,7 @@ to check for valid polygons:
 
     import ezdxf
     from ezdxf.addons import geo
-    from shapley.geometry import shape
+    from shapely.geometry import shape
 
     # Load DXF document including HATCH entities.
     doc = ezdxf.readfile('hatch.dxf')
@@ -230,7 +230,7 @@ to check for valid polygons:
     hatch_proxy = geo.proxy(hatch_entity)
 
     # Shapely supports the __geo_interface__
-    shapley_polygon = shape(hatch_proxy)
+    shapely_polygon = shape(hatch_proxy)
 
     if shapely_polygon.is_valid:
         ...

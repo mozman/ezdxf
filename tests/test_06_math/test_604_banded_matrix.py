@@ -3,33 +3,42 @@
 from typing import Iterable
 import pytest
 import math
-from ezdxf.math import (
-    Matrix, detect_banded_matrix, compact_banded_matrix, BandedMatrixLU,
-    gauss_vector_solver, banded_matrix,
+from ezdxf.math.linalg import (
+    Matrix,
+    detect_banded_matrix,
+    compact_banded_matrix,
+    BandedMatrixLU,
+    gauss_vector_solver,
+    banded_matrix,
 )
 
-BANDED_MATRIX = Matrix(matrix=[
-    [3, 1, 0, 0, 0, 0, 0],
-    [4, 1, 5, 0, 0, 0, 0],
-    [9, 2, 6, 5, 0, 0, 0],
-    [0, 3, 5, 8, 9, 0, 0],
-    [0, 0, 7, 9, 3, 2, 0],
-    [0, 0, 0, 3, 8, 4, 6],
-    [0, 0, 0, 0, 2, 4, 4],
-])
-TRICKY = Matrix(matrix=[
-    [3, 1, 0, 0, 0, 0, 1],
-    [4, 1, 5, 0, 0, 0, 0],
-    [9, 2, 6, 5, 0, 0, 0],
-    [0, 3, 5, 8, 9, 0, 0],
-    [0, 0, 7, 9, 3, 2, 0],
-    [0, 0, 0, 3, 8, 4, 6],
-    [0, 1, 0, 0, 2, 4, 4],
-])
+BANDED_MATRIX = Matrix(
+    matrix=[
+        [3, 1, 0, 0, 0, 0, 0],
+        [4, 1, 5, 0, 0, 0, 0],
+        [9, 2, 6, 5, 0, 0, 0],
+        [0, 3, 5, 8, 9, 0, 0],
+        [0, 0, 7, 9, 3, 2, 0],
+        [0, 0, 0, 3, 8, 4, 6],
+        [0, 0, 0, 0, 2, 4, 4],
+    ]
+)
+TRICKY = Matrix(
+    matrix=[
+        [3, 1, 0, 0, 0, 0, 1],
+        [4, 1, 5, 0, 0, 0, 0],
+        [9, 2, 6, 5, 0, 0, 0],
+        [0, 3, 5, 8, 9, 0, 0],
+        [0, 0, 7, 9, 3, 2, 0],
+        [0, 0, 0, 3, 8, 4, 6],
+        [0, 1, 0, 0, 2, 4, 4],
+    ]
+)
 
 
-def are_close_vectors(v1: Iterable[float], v2: Iterable[float],
-                      abs_tol: float = 1e-12):
+def are_close_vectors(
+    v1: Iterable[float], v2: Iterable[float], abs_tol: float = 1e-12
+):
     for i, j in zip(v1, v2):
         assert math.isclose(i, j, abs_tol=abs_tol)
 
@@ -89,5 +98,5 @@ def test_solve_banded_matrix_matrix():
     assert math.isclose(lu.determinant(), BANDED_MATRIX.determinant())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

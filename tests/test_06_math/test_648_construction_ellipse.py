@@ -5,7 +5,13 @@ import random
 import pytest
 import math
 
-from ezdxf.math import Vec3, angle_to_param, linspace, ConstructionEllipse
+from ezdxf.math import (
+    Vec3,
+    angle_to_param,
+    linspace,
+    ConstructionEllipse,
+    ellipse_param_span,
+)
 
 
 def test_default_init():
@@ -22,13 +28,13 @@ def test_default_init():
 def test_dxfattribs():
     e = ConstructionEllipse()
     attribs = e.dxfattribs()
-    assert attribs['center'] == (0, 0, 0)
-    assert attribs['major_axis'] == (1, 0, 0)
-    assert 'minor_axis' not in attribs
-    assert attribs['extrusion'] == (0, 0, 1)
-    assert attribs['ratio'] == 1.0
-    assert attribs['start_param'] == 0
-    assert attribs['end_param'] == math.tau
+    assert attribs["center"] == (0, 0, 0)
+    assert attribs["major_axis"] == (1, 0, 0)
+    assert "minor_axis" not in attribs
+    assert attribs["extrusion"] == (0, 0, 1)
+    assert attribs["ratio"] == 1.0
+    assert attribs["start_param"] == 0
+    assert attribs["end_param"] == math.tau
 
 
 def test_get_start_and_end_vertex():
@@ -36,15 +42,19 @@ def test_get_start_and_end_vertex():
         center=(1, 2, 3),
         major_axis=(4, 3, 0),
         extrusion=(0, 0, -1),
-        ratio=.7,
+        ratio=0.7,
         start_param=math.pi / 2,
         end_param=math.pi,
     )
 
-    start, end = list(ellipse.vertices([
-        ellipse.start_param,
-        ellipse.end_param,
-    ]))
+    start, end = list(
+        ellipse.vertices(
+            [
+                ellipse.start_param,
+                ellipse.end_param,
+            ]
+        )
+    )
     # test values from BricsCAD
     assert start.isclose(Vec3(3.1, -0.8, 3), abs_tol=1e-6)
     assert end.isclose(Vec3(-3, -1, 3), abs_tol=1e-6)
@@ -163,15 +173,28 @@ def test_angle_to_param():
             end_param=param,
             extrusion=(0, 0, random.choice((1, -1))),
         )
-        calculated_angle = ellipse.extrusion.angle_about(ellipse.major_axis, ellipse.end_point)
-        calculated_angle_without_direction = ellipse.major_axis.angle_between(ellipse.end_point)
+        calculated_angle = ellipse.extrusion.angle_about(
+            ellipse.major_axis, ellipse.end_point
+        )
+        calculated_angle_without_direction = ellipse.major_axis.angle_between(
+            ellipse.end_point
+        )
         assert math.isclose(calculated_angle, angle, abs_tol=1e-9)
-        assert (math.isclose(calculated_angle, calculated_angle_without_direction) or
-                math.isclose(math.tau - calculated_angle, calculated_angle_without_direction))
+        assert math.isclose(
+            calculated_angle, calculated_angle_without_direction
+        ) or math.isclose(
+            math.tau - calculated_angle, calculated_angle_without_direction
+        )
 
 
 def test_vertices():
-    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start_param=0, end_param=math.pi * 1.5)
+    e = ConstructionEllipse(
+        center=(3, 3),
+        major_axis=(2, 0),
+        ratio=0.5,
+        start_param=0,
+        end_param=math.pi * 1.5,
+    )
     params = list(e.params(7))
     result = [
         (5.0, 3.0, 0.0),
@@ -186,11 +209,17 @@ def test_vertices():
         assert v.isclose(r)
 
     v1, v2 = e.vertices([0, math.tau])
-    assert v1 == v2
+    assert v1.isclose(v2)
 
 
 def test_tangents():
-    e = ConstructionEllipse(center=(3, 3), major_axis=(2, 0), ratio=0.5, start_param=0, end_param=math.pi * 1.5)
+    e = ConstructionEllipse(
+        center=(3, 3),
+        major_axis=(2, 0),
+        ratio=0.5,
+        start_param=0,
+        end_param=math.pi * 1.5,
+    )
     params = list(e.params(7))
     result = [
         (0.0, 1.0, 0.0),
@@ -199,7 +228,7 @@ def test_tangents():
         (-0.894427190999916, -0.4472135954999579, 0.0),
         (-2.4492935982947064e-16, -1.0, 0.0),
         (0.8944271909999159, -0.44721359549995804, 0.0),
-        (1.0, 0.0, 0.0)
+        (1.0, 0.0, 0.0),
     ]
     for v, r in zip(e.tangents(params), result):
         assert v.isclose(r)
@@ -226,8 +255,12 @@ def test_params_from_vertices_random():
     # floating point inaccuracy produces unpredictable results:
     p1, p2 = e.params_from_vertices((v1, v2))
 
-    assert math.isclose(p1, 0, abs_tol=1e-9) or math.isclose(p1, math.tau, abs_tol=1e-9)
-    assert math.isclose(p2, 0, abs_tol=1e-9) or math.isclose(p2, math.tau, abs_tol=1e-9)
+    assert math.isclose(p1, 0, abs_tol=1e-9) or math.isclose(
+        p1, math.tau, abs_tol=1e-9
+    )
+    assert math.isclose(p2, 0, abs_tol=1e-9) or math.isclose(
+        p2, math.tau, abs_tol=1e-9
+    )
 
 
 def test_to_ocs():
@@ -235,15 +268,18 @@ def test_to_ocs():
     assert e.center == (0, 0)
 
 
-@pytest.mark.parametrize('s, e, distance, count', [
-    # known tests from ARC
-    (0, 180, 0.35, 3),
-    (0, 180, 0.10, 5),
-    (270, 90, 0.10, 5),  # start angle > end angle
-    (90, -90, 0.10, 5),
-    (0, 0, 0.10, 0),  # angle span 0 works but yields nothing
-    (-45, -45, 0.10, 0),
-])
+@pytest.mark.parametrize(
+    "s, e, distance, count",
+    [
+        # known tests from ARC
+        (0, 180, 0.35, 3),
+        (0, 180, 0.10, 5),
+        (270, 90, 0.10, 5),  # start angle > end angle
+        (90, -90, 0.10, 5),
+        (0, 0, 0.10, 0),  # angle span 0 works but yields nothing
+        (-45, -45, 0.10, 0),
+    ],
+)
 def test_flattening(s, e, distance, count):
     ellipse = ConstructionEllipse(
         start_param=math.radians(s),

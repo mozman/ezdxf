@@ -3,10 +3,20 @@
 Tutorial for LWPolyline
 =======================
 
-The :class:`~ezdxf.entities.LWPolyline` is defined as a single graphic entity, which differs from the
-old-style :class:`~ezdxf.entities.Polyline` entity, which is defined as a group of sub-entities.
-:class:`~ezdxf.entities.LWPolyline` display faster (in AutoCAD) and consume less disk space, it is a planar element,
-therefore all points in :ref:`OCS` as ``(x, y)`` tuples (:attr:`LWPolyline.dxf.elevation` is the z-axis value).
+The :class:`~ezdxf.entities.LWPolyline` (lightweight polyline) was introduced in
+DXF R13/14 and it is defined as a single graphic entity, which differs from the
+old-style :class:`~ezdxf.entities.Polyline` entity, which is defined as a group
+of sub-entities. It is recommended to prefer the LWPOLYLINE over the 2D POLYLINE
+entity because it requires less space in memory and in DXF files and displays
+faster in AutoCAD.
+
+.. important::
+
+    The LWPOLYLINE is a planar element, therefore the (x, y) point coordinates are
+    located in the :ref:`OCS` and the z-axis is stored in the
+    :attr:`LWPolyline.dxf.elevation` attribute.
+    The method :class:`~ezdxf.entities.LWPolyline.vertices_in_wcs` returns the
+    polyline vertices as WCS coordinates.
 
 Create a simple polyline:
 
@@ -14,7 +24,7 @@ Create a simple polyline:
 
     import ezdxf
 
-    doc = ezdxf.new('R2000')
+    doc = ezdxf.new("R2000")
     msp = doc.modelspace()
 
     points = [(0, 0), (3, 0), (6, 3), (6, 6)]
@@ -30,48 +40,54 @@ Append multiple points to a polyline:
     doc = ezdxf.readfile("lwpolyline1.dxf")
     msp = doc.modelspace()
 
-    line = msp.query('LWPOLYLINE')[0]  # take first LWPolyline
-    line.append_points([(8, 7), (10, 7)])
+    line = msp.query("LWPOLYLINE").first
+    if line is not None:
+        line.append_points([(8, 7), (10, 7)])
 
     doc.saveas("lwpolyline2.dxf")
 
-Getting points always returns a 5-tuple ``(x, y, start_width, ent_width, bulge)``, start_width, end_width and
-bulge is ``0`` if not present:
+The index operator ``[]`` always returns polyline points as 5-tuple
+(x, y, start_width, end_width, bulge), the start_width, end_width and
+bulge values are 0 if not present:
 
 .. code-block:: python
 
     first_point = line[0]
     x, y, start_width, end_width, bulge = first_point
 
-Use context manager to edit polyline points, this method was introduced because accessing single points was very slow,
-but since `ezdxf` v0.8.9, direct access by index operator ``[]`` is very fast and using the context manager is not
-required anymore. Advantage of the context manager is the ability to use a user defined point format:
+The context manager :meth:`~ezdxf.entities.LWPolyline.points` can be used to edit
+polyline points, this method was introduced because accessing individual
+points was very slow in early versions of `ezdxf`, in current versions of `ezdxf` the
+direct access by the index operator ``[]`` is very fast and using the context
+manager is not required anymore, but the context manager still exist and has the
+advantage of supporting an user defined point format:
 
 .. code-block:: python
 
     doc = ezdxf.readfile("lwpolyline2.dxf")
     msp = doc.modelspace()
 
-    line = msp.query('LWPOLYLINE').first # take first LWPolyline, 'first' was introduced with v0.10
+    line = msp.query("LWPOLYLINE").first
 
-    with line.points('xyseb') as points:
-        # points is a standard python list
+    with line.points("xyseb") as points:
+        # points is a standard Python list
         # existing points are 5-tuples, but new points can be
         # set as (x, y, [start_width, [end_width, [bulge]]]) tuple
         # set start_width, end_width to 0 to be ignored (x, y, 0, 0, bulge).
 
-        del points[-2:]  # delete last 2 points
-        points.extend([(4, 7), (0, 7)])  # adding 2 other points
-        # the same as one command
-        # points[-2:] = [(4, 7), (0, 7)]
+        # delete last 2 points
+        del points[-2:]
+        # adding two points
+        points.extend([(4, 7), (0, 7)])
 
     doc.saveas("lwpolyline3.dxf")
 
-Each line segment can have a different start- and end-width, if omitted start- and end-width is ``0``:
+Each line segment can have a different start- and end width, if omitted start-
+and end width is 0:
 
 .. code-block:: python
 
-    doc = ezdxf.new('R2000')
+    doc = ezdxf.new("R2000")
     msp = doc.modelspace()
 
     # point format = (x, y, [start_width, [end_width, [bulge]]])
@@ -82,20 +98,24 @@ Each line segment can have a different start- and end-width, if omitted start- a
 
     doc.saveas("lwpolyline4.dxf")
 
-The first point carries the start- and end-width of the first segment, the second point of the second
-segment and so on, the start- and end-width value of the last point is used for the closing segment if polyline is
-closed else the values are ignored. Start- and end-width only works if the DXF attribute :attr:`dxf.const_width` is
-unset, to be sure delete it:
+The first point carries the start- and end-width of the first segment, the
+second point of the second segment and so on, the start- and end width value
+of the last point is used for the closing segment if the polyline is closed
+else these values are ignored.
+Start- and end width only works if the DXF attribute :attr:`dxf.const_width` is
+unset, delete it to be sure it's unset:
 
 .. code-block:: python
 
-    del line.dxf.const_width # no exception will be raised if const_width is already unset
+    # no exception will be raised if const_width is already unset:
+    del line.dxf.const_width
 
-:class:`LWPolyline` can also have curved elements, they are defined by the :ref:`bulge value`:
+:class:`LWPolyline` can also have curved elements, they are defined by the
+:ref:`bulge value`:
 
 .. code-block:: python
 
-    doc = ezdxf.new('R2000')
+    doc = ezdxf.new("R2000")
     msp = doc.modelspace()
 
     # point format = (x, y, [start_width, [end_width, [bulge]]])
@@ -108,12 +128,16 @@ unset, to be sure delete it:
 
 .. image:: gfx/LWPolyline5.PNG
 
-The curved segment is drawn from the point which defines the `bulge` value to the following point, the curved segment
-is always aa arc, The bulge value defines the ratio of the arc sagitta (segment height `h`) to half line segment length
-(point distance), a bulge value of ``1`` defines a semicircle. `bulge` > ``0`` the curve is on the right side of
-the vertex connection line, `bulge` < ``0`` the curve is on the left side.
+The curved segment is drawn from the point which defines the *bulge* value to
+the following point, the curved segment is always an arc. The bulge value
+defines the ratio of the arc sagitta (segment height `h`) to half line segment
+length (point distance), a bulge value of 1 defines a semicircle.
+The curve is on the right side of the line for a bulge value > 0, and on the
+left side of the line for a bulge value < 0.
 
-`ezdxf` v0.8.9 supports a user defined points format, default is ``xyseb``:
+Helper functions to handle bulge values: :ref:`bulge_related_functions`
+
+The user defined point format, default is ``xyseb``:
 
     - ``x`` = x coordinate
     - ``y`` = y coordinate
@@ -124,8 +148,8 @@ the vertex connection line, `bulge` < ``0`` the curve is on the left side.
 
 .. code-block:: python
 
-    msp.add_lwpolyline([(0, 0, 0), (10, 0, 1), (20, 0, 0)], format='xyb')
-    msp.add_lwpolyline([(0, 10, 0), (10, 10, .5), (20, 10, 0)], format='xyb')
+    msp.add_lwpolyline([(0, 0, 0), (10, 0, 1), (20, 0, 0)], format="xyb")
+    msp.add_lwpolyline([(0, 10, 0), (10, 10, .5), (20, 10, 0)], format="xyb")
 
 
 .. image:: gfx/bulge.png

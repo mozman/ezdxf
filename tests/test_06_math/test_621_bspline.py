@@ -1,78 +1,18 @@
-# Copyright (c) 2012-2020 Manfred Moitzi
+# Copyright (c) 2012-2021 Manfred Moitzi
 # License: MIT License
 import pytest
-from math import isclose
-import random
-from ezdxf.math import Vec3, BSpline
-from ezdxf.math.bspline import (
-    bspline_basis_vector, Basis,
-    open_uniform_knot_vector, normalize_knots, subdivide_params,
-)
+from ezdxf.math import Vec3, BSpline, close_vectors
+from ezdxf.math.bspline import normalize_knots, subdivide_params, linspace
 
-DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.),
-             (50., 0., 30.)]
+DEFPOINTS = [
+    (0.0, 0.0, 0.0),
+    (10.0, 20.0, 20.0),
+    (30.0, 10.0, 25.0),
+    (40.0, 10.0, 25.0),
+    (50.0, 0.0, 30.0),
+]
 
-
-def random_point_comparision_to_nurbs_python(spline: BSpline, count: int = 10):
-    curve = spline.to_nurbs_python_curve()
-    for _ in range(count):
-        t = random.random()
-        p1 = spline.point(t)
-        p2 = curve.evaluate_single(t)
-        assert p1.isclose(p2)
-
-
-def random_derivatives_comparision_to_nurbs_python(spline: BSpline,
-                                                   count: int = 10):
-    curve = spline.to_nurbs_python_curve()
-    for _ in range(count):
-        t = random.random()
-        p1, d1_1, d2_1 = spline.derivative(t, n=2)
-        p2, d1_2, d2_2 = curve.derivatives(t, order=2)
-        assert p1.isclose(p2)
-        assert d1_1.isclose(d1_2)
-        assert d2_1.isclose(d2_2)
-
-
-def test_if_nurbs_python_is_reliable():
-    # Testing for some known values, just for the case
-    # that NURBS-Python is incorrect.
-    expected = [
-        (0.0, 0.0, 0.0),
-        (11.840000000000003, 13.760000000000002, 16.64),
-        (22.72, 14.079999999999998, 22.719999999999995),
-        (31.759999999999994, 11.2, 24.399999999999995),
-        (39.92, 7.999999999999999, 26.0),
-        (50.0, 0.0, 30.0)
-    ]
-    params = [0, .2, .4, .6, .8, 1.0]
-    curve = BSpline(DEFPOINTS).to_nurbs_python_curve()
-    points = curve.evaluate_list(params)
-    for expect, point in zip(expected, points):
-        assert Vec3(expect).isclose(point)
-
-
-def test_bspline_basis_vector():
-    degree = 3
-    count = 10
-    knots = list(open_uniform_knot_vector(count, order=degree + 1))
-    max_t = max(knots)
-    basis_func = Basis(knots=knots, order=degree + 1, count=count)
-    for u in (0, 2., 2.5, 3.5, 4., max_t):
-        basis = bspline_basis_vector(u, count=count, degree=degree, knots=knots)
-        basis2 = basis_func.basis_vector(u)
-        assert len(basis) == len(basis2)
-        for v1, v2 in zip(basis, basis2):
-            assert isclose(v1, v2)
-
-
-def iter_points(values, n):
-    return (data[n] for data in values)
-
-
-def test_bspine_points_random():
-    spline = BSpline(DEFPOINTS, order=3)
-    random_point_comparision_to_nurbs_python(spline)
+PARAMS = list(linspace(0, 1, 21))
 
 
 def test_is_clamped(weired_spline1):
@@ -81,14 +21,59 @@ def test_is_clamped(weired_spline1):
     assert weired_spline1.is_clamped is False
 
 
-def test_bspine_derivatives_random():
-    spline = BSpline(DEFPOINTS, order=3)
-    random_derivatives_comparision_to_nurbs_python(spline)
+@pytest.mark.parametrize(
+    "knots",
+    [
+        [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0],
+        [2.0, 2.0, 2.0, 2.0, 3.0, 6.0, 6.0, 6.0, 6.0],
+    ],
+)
+def test_is_a_clamped_bspline(knots):
+    s = BSpline(
+        control_points=DEFPOINTS,
+        knots=knots,
+        order=4,
+    )
+    assert s.is_clamped is True
+
+
+@pytest.mark.parametrize(
+    "knots",
+    [
+        [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+        [0.0, 0.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 8.0],
+        [0.0, 0.0, 0.0, 3.0, 4.0, 5.0, 8.0, 8.0, 8.0],
+        [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0000001],
+        [0.0, 0.0, 0.0, 0.0000001, 0.5, 1.0, 1.0, 1.0, 1.0],
+    ],
+    ids=[
+        "no repetitive knot values",
+        "2 repetitive knot values",
+        "3 repetitive knot values",
+        "inaccuracy at the end",
+        "inaccuracy at the start",
+    ],
+)
+def test_is_not_a_clamped_bspline(knots):
+    """To be a clamped B-spline 4 repetitive knot values at the start and at
+    the end of the knot vector are required.
+    """
+    s = BSpline(
+        control_points=DEFPOINTS,
+        knots=knots,
+        order=4,
+    )
+    assert s.is_clamped is False
 
 
 def test_normalize_knots():
-    assert normalize_knots([0, 0.25, 0.5, 0.75, 1.0]) == [0, 0.25, 0.5, 0.75,
-                                                          1.0]
+    assert normalize_knots([0, 0.25, 0.5, 0.75, 1.0]) == [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1.0,
+    ]
     assert normalize_knots([0, 1, 2, 3, 4]) == [0, 0.25, 0.5, 0.75, 1.0]
     assert normalize_knots([2, 3, 4, 5, 6]) == [0, 0.25, 0.5, 0.75, 1.0]
 
@@ -105,46 +90,80 @@ def test_normalize_knots_if_needed():
 
 def test_bspline_insert_knot():
     bspline = BSpline(
-        [(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50),
-         (80, 70)])
+        [
+            (0, 0),
+            (10, 20),
+            (30, 10),
+            (40, 10),
+            (50, 0),
+            (60, 20),
+            (70, 50),
+            (80, 70),
+        ]
+    )
     t = bspline.max_t / 2
     assert len(bspline.control_points) == 8
-    bspline.insert_knot(t)
-    assert len(bspline.control_points) == 9
+    bspline2 = bspline.insert_knot(t)
+    assert len(bspline2.control_points) == 9
 
 
 def test_transform_interface():
     from ezdxf.math import Matrix44
+
     spline = BSpline(control_points=[(1, 0, 0), (3, 3, 0), (6, 0, 1)], order=3)
-    spline.transform(Matrix44.translate(1, 2, 3))
-    assert spline.control_points[0] == (2, 2, 3)
+    new_spline = spline.transform(Matrix44.translate(1, 2, 3))
+    assert new_spline.control_points[0] == (2, 2, 3)
 
 
 def test_bezier_decomposition():
     bspline = BSpline.from_fit_points(
-        [(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50),
-         (80, 70)])
+        [
+            (0, 0),
+            (10, 20),
+            (30, 10),
+            (40, 10),
+            (50, 0),
+            (60, 20),
+            (70, 50),
+            (80, 70),
+        ]
+    )
     bezier_segments = list(bspline.bezier_decomposition())
     assert len(bezier_segments) == 5
     # results visually checked to be correct
-    assert bezier_segments[0] == [
-        (0.0, 0.0, 0.0),
-        (2.02070813064438, 39.58989657555839, 0.0),
-        (14.645958536022286, 10.410103424441612, 0.0),
-        (30.0, 10.0, 0.0)
-    ]
-    assert bezier_segments[-1] == [
-        (60.0, 20.0, 0.0),
-        (66.33216513897267, 43.20202388489432, 0.0),
-        (69.54617236126121, 50.37880459351478, 0.0),
-        (80.0, 70.0, 0.0)
-    ]
+    assert close_vectors(
+        bezier_segments[0],
+        [
+            (0.0, 0.0, 0.0),
+            (2.02070813064438, 39.58989657555839, 0.0),
+            (14.645958536022286, 10.410103424441612, 0.0),
+            (30.0, 10.0, 0.0),
+        ],
+    )
+    assert close_vectors(
+        bezier_segments[-1],
+        [
+            (60.0, 20.0, 0.0),
+            (66.33216513897267, 43.20202388489432, 0.0),
+            (69.54617236126121, 50.37880459351478, 0.0),
+            (80.0, 70.0, 0.0),
+        ],
+    )
 
 
 def test_cubic_bezier_approximation():
     bspline = BSpline.from_fit_points(
-        [(0, 0), (10, 20), (30, 10), (40, 10), (50, 0), (60, 20), (70, 50),
-         (80, 70)])
+        [
+            (0, 0),
+            (10, 20),
+            (30, 10),
+            (40, 10),
+            (50, 0),
+            (60, 20),
+            (70, 50),
+            (80, 70),
+        ]
+    )
     bezier_segments = list(bspline.cubic_bezier_approximation(level=3))
     assert len(bezier_segments) == 28
     bezier_segments = list(bspline.cubic_bezier_approximation(segments=40))
@@ -155,8 +174,13 @@ def test_cubic_bezier_approximation():
 
 def test_subdivide_params():
     assert list(subdivide_params([0.0, 1.0])) == [0.0, 0.5, 1.0]
-    assert list(subdivide_params([0.0, 0.5, 1.0])) == [0.0, 0.25, 0.5, 0.75,
-                                                       1.0]
+    assert list(subdivide_params([0.0, 0.5, 1.0])) == [
+        0.0,
+        0.25,
+        0.5,
+        0.75,
+        1.0,
+    ]
 
 
 @pytest.fixture
@@ -238,11 +262,29 @@ def weired_spline1():
 
 
 def test_weired_closed_spline(weired_spline1):
+    # knots are normalized
+    assert weired_spline1.knots()[0] == 0
+    assert weired_spline1.max_t == 1.0
+
     first = weired_spline1.point(0)
     last = weired_spline1.point(weired_spline1.max_t)
-    assert first.isclose(last,
-                         1e-9) is False, 'The loaded SPLINE is not a correct closed B-spline.'
-    random_point_comparision_to_nurbs_python(weired_spline1)
+    assert (
+        first.isclose(last, abs_tol=1e-9) is False
+    ), "The loaded SPLINE is not a correct closed B-spline."
+    for t, p in [
+        (0.0, Vec3(-52.08772752271847, 158.6939842216689, 0.0)),
+        (0.1, Vec3(-52.11342028962843, 158.42762802551263, 0.0)),
+        (0.2, Vec3(-52.32946275107123, 158.16060743164581, 0.0)),
+        (0.3, Vec3(-52.61574269538248, 158.1996048336622, 0.0)),
+        (0.4, Vec3(-52.81140581379403, 158.5333668544585, 0.0)),
+        (0.5, Vec3(-52.87434900632459, 158.9876962083887, 0.0)),
+        (0.6, Vec3(-52.81611529394961, 159.33426729288806, 0.0)),
+        (0.7, Vec3(-52.62299843370519, 159.41789638441713, 0.0)),
+        (0.8, Vec3(-52.335530988257595, 159.21191342347686, 0.0)),
+        (0.9, Vec3(-52.11567764442737, 158.81115356150667, 0.0)),
+        (1.0, Vec3(-52.13358634818519, 158.3800216821037, 0.0)),
+    ]:
+        assert weired_spline1.point(t).isclose(p)
 
 
 def test_bezier_decomposition_issue(weired_spline1):
@@ -282,11 +324,249 @@ EXPECTED_FLATTENING = [
     Vec3(2.625, 0.41015625000000044, 0.0),
     Vec3(2.71875, 0.8549194335937504, 0.0),
     Vec3(2.8125, 1.4282226562500002, 0.0),
-    Vec3(3.0, 3.0, 0.0)
+    Vec3(3.0, 3.0, 0.0),
 ]
 
 
 def test_flattening():
     fitpoints = [(0, 0), (1, 3), (2, 0), (3, 3)]
     bspline = BSpline.from_fit_points(fitpoints)
-    assert list(bspline.flattening(0.01, segments=4)) == EXPECTED_FLATTENING
+    assert all(
+        a.isclose(b)
+        for a, b in zip(
+            bspline.flattening(0.01, segments=4), EXPECTED_FLATTENING
+        )
+    )
+
+
+POINTS_ORDER_4 = [
+    Vec3(0.0, 0.0, 0.0),
+    Vec3(2.9975, 5.277500000000001, 5.49125),
+    Vec3(5.980000000000002, 9.220000000000002, 10.030000000000005),
+    Vec3(8.932499999999997, 11.9925, 13.713749999999997),
+    Vec3(11.840000000000003, 13.760000000000002, 16.64),
+    Vec3(14.6875, 14.6875, 18.90625),
+    Vec3(17.459999999999997, 14.939999999999998, 20.61),
+    Vec3(20.1425, 14.682500000000001, 21.84875),
+    Vec3(22.72, 14.079999999999998, 22.719999999999995),
+    Vec3(25.177500000000002, 13.297500000000003, 23.321250000000006),
+    Vec3(27.5, 12.5, 23.75),
+    Vec3(29.682500000000005, 11.8125, 24.09375),
+    Vec3(31.759999999999994, 11.2, 24.399999999999995),
+    Vec3(33.7775, 10.587499999999999, 24.70625),
+    Vec3(35.779999999999994, 9.9, 25.05),
+    Vec3(37.8125, 9.0625, 25.46875),
+    Vec3(39.92, 7.999999999999999, 26.0),
+    Vec3(42.147499999999994, 6.637500000000001, 26.68125),
+    Vec3(44.540000000000006, 4.8999999999999995, 27.550000000000004),
+    Vec3(47.1425, 2.712500000000002, 28.643749999999997),
+    Vec3(50.0, 0.0, 30.0),
+]
+
+DERIVATIVES_ORDER_4 = [
+    [Vec3(0.0, 0.0, 0.0), Vec3(60.0, 120.0, 120.0), Vec3(0.0, -600.0, -420.0)],
+    [
+        Vec3(2.9975, 5.277500000000001, 5.49125),
+        Vec3(59.85, 91.65, 99.975),
+        Vec3(-5.9999999999999964, -534.0000000000001, -381.0000000000001),
+    ],
+    [
+        Vec3(5.980000000000002, 9.220000000000002, 10.030000000000005),
+        Vec3(59.400000000000006, 66.6, 81.9),
+        Vec3(-11.999999999999964, -468.0, -342.0),
+    ],
+    [
+        Vec3(8.932499999999997, 11.9925, 13.713749999999997),
+        Vec3(58.64999999999999, 44.849999999999994, 65.77499999999999),
+        Vec3(-18.0, -402.0, -303.0),
+    ],
+    [
+        Vec3(11.840000000000003, 13.760000000000002, 16.64),
+        Vec3(57.6, 26.4, 51.6),
+        Vec3(-24.0, -336.0, -264.0),
+    ],
+    [
+        Vec3(14.6875, 14.6875, 18.90625),
+        Vec3(56.25, 11.25, 39.375),
+        Vec3(-30.0, -270.0, -225.0),
+    ],
+    [
+        Vec3(17.459999999999997, 14.939999999999998, 20.61),
+        Vec3(54.599999999999994, -0.5999999999999943, 29.1),
+        Vec3(-36.0, -204.0, -186.0),
+    ],
+    [
+        Vec3(20.1425, 14.682500000000001, 21.84875),
+        Vec3(52.65, -9.150000000000002, 20.775000000000002),
+        Vec3(-42.00000000000003, -138.0, -147.0),
+    ],
+    [
+        Vec3(22.72, 14.079999999999998, 22.719999999999995),
+        Vec3(50.39999999999999, -14.399999999999999, 14.399999999999999),
+        Vec3(-47.99999999999997, -71.99999999999997, -107.99999999999999),
+    ],
+    [
+        Vec3(25.177500000000002, 13.297500000000003, 23.321250000000006),
+        Vec3(47.85, -16.35, 9.975000000000001),
+        Vec3(-54.00000000000006, -5.999999999999993, -69.0),
+    ],
+    [Vec3(27.5, 12.5, 23.75), Vec3(45.0, -15.0, 7.5), Vec3(-60.0, 60.0, -30.0)],
+    [
+        Vec3(29.682500000000005, 11.8125, 24.09375),
+        Vec3(42.45000000000001, -12.75, 6.374999999999999),
+        Vec3(-41.99999999999997, 29.99999999999998, -14.999999999999972),
+    ],
+    [
+        Vec3(31.759999999999994, 11.2, 24.399999999999995),
+        Vec3(40.79999999999999, -12.0, 6.000000000000001),
+        Vec3(-24.0, 1.7763568394002505e-14, 0.0),
+    ],
+    [
+        Vec3(33.7775, 10.587499999999999, 24.70625),
+        Vec3(40.050000000000004, -12.749999999999996, 6.375),
+        Vec3(-5.999999999999943, -30.000000000000014, 15.000000000000028),
+    ],
+    [
+        Vec3(35.779999999999994, 9.9, 25.05),
+        Vec3(40.2, -14.999999999999998, 7.499999999999993),
+        Vec3(11.999999999999943, -59.99999999999998, 29.999999999999943),
+    ],
+    [
+        Vec3(37.8125, 9.0625, 25.46875),
+        Vec3(41.25, -18.75, 9.375),
+        Vec3(30.0, -90.0, 45.0),
+    ],
+    [
+        Vec3(39.92, 7.999999999999999, 26.0),
+        Vec3(43.2, -24.000000000000004, 11.999999999999993),
+        Vec3(48.000000000000114, -120.00000000000003, 60.00000000000006),
+    ],
+    [
+        Vec3(42.147499999999994, 6.637500000000001, 26.68125),
+        Vec3(46.04999999999998, -30.75, 15.374999999999986),
+        Vec3(65.99999999999989, -150.0, 74.99999999999989),
+    ],
+    [
+        Vec3(44.540000000000006, 4.8999999999999995, 27.550000000000004),
+        Vec3(49.80000000000001, -39.0, 19.5),
+        Vec3(84.00000000000011, -180.0, 90.00000000000011),
+    ],
+    [
+        Vec3(47.1425, 2.712500000000002, 28.643749999999997),
+        Vec3(54.44999999999999, -48.74999999999999, 24.375),
+        Vec3(102.00000000000023, -209.99999999999994, 104.99999999999989),
+    ],
+    [
+        Vec3(50.0, 0.0, 30.0),
+        Vec3(60.0, -60.0, 30.0),
+        Vec3(120.0, -240.0, 120.0),
+    ],
+]
+
+POINTS_ORDER_3 = [
+    Vec3(0.0, 0.0, 0.0),
+    Vec3(3.0000000000000004, 5.437500000000001, 5.606250000000001),
+    Vec3(6.000000000000001, 9.75, 10.425),
+    Vec3(9.0, 12.937499999999998, 14.456249999999999),
+    Vec3(12.000000000000002, 15.000000000000002, 17.700000000000003),
+    Vec3(15.0, 15.937499999999998, 20.15625),
+    Vec3(18.0, 15.75, 21.825),
+    Vec3(20.9875, 14.5125, 22.74375),
+    Vec3(23.8, 13.199999999999998, 23.4),
+    Vec3(26.387500000000003, 12.1125, 23.943749999999998),
+    Vec3(28.749999999999996, 11.249999999999998, 24.374999999999996),
+    Vec3(30.8875, 10.612499999999997, 24.693749999999994),
+    Vec3(32.8, 10.2, 24.899999999999995),
+    Vec3(34.4875, 10.0125, 24.99375),
+    Vec3(36.05, 9.9, 25.05),
+    Vec3(37.8125, 9.375, 25.3125),
+    Vec3(39.800000000000004, 8.399999999999999, 25.799999999999997),
+    Vec3(42.0125, 6.975, 26.5125),
+    Vec3(44.45, 5.099999999999999, 27.450000000000003),
+    Vec3(47.112500000000004, 2.7750000000000026, 28.612499999999997),
+    Vec3(50.0, 0.0, 30.0),
+]
+
+POINTS_ORDER_2 = [
+    Vec3(0.0, 0.0, 0.0),
+    Vec3(2.0, 4.0, 4.0),
+    Vec3(4.0, 8.0, 8.0),
+    Vec3(6.0, 12.0, 12.0),
+    Vec3(8.0, 16.0, 16.0),
+    Vec3(10.0, 20.0, 20.0),
+    Vec3(13.999999999999998, 18.0, 21.0),
+    Vec3(17.999999999999996, 16.0, 22.0),
+    Vec3(22.000000000000004, 14.0, 23.0),
+    Vec3(26.0, 12.0, 24.0),
+    Vec3(30.0, 10.0, 25.0),
+    Vec3(32.0, 10.0, 25.0),
+    Vec3(34.0, 10.0, 25.0),
+    Vec3(36.0, 10.0, 25.0),
+    Vec3(38.0, 10.0, 25.0),
+    Vec3(40.0, 10.0, 25.0),
+    Vec3(42.0, 7.999999999999998, 26.0),
+    Vec3(44.0, 6.000000000000001, 27.0),
+    Vec3(46.0, 3.999999999999999, 28.0),
+    Vec3(48.0, 2.0000000000000018, 28.999999999999996),
+    Vec3(50.0, 0.0, 30.0),
+]
+
+
+class TestNurbsPythonCorrectness:
+    # Test if package "geomdl" (a.k.a. NURBS Python) is still correct.
+    @pytest.mark.parametrize(
+        "order,results",
+        [
+            [2, POINTS_ORDER_2],
+            [3, POINTS_ORDER_3],
+            [4, POINTS_ORDER_4],
+        ],
+        ids=["degree=1", "degree=2", "degree=3"],
+    )
+    def test_point_calculation_is_correct(self, order, results):
+        curve = BSpline(DEFPOINTS, order=order).to_nurbs_python_curve()
+        points = curve.evaluate_list(PARAMS)
+        for expect, point in zip(results, points):
+            assert expect.isclose(point)
+
+    def test_derivative_calculation_is_correct(self):
+        spline = BSpline(DEFPOINTS, order=4).to_nurbs_python_curve()
+        for t, expected in zip(PARAMS, DERIVATIVES_ORDER_4):
+            results = spline.derivatives(t, order=2)
+            for e, p in zip(expected, results):
+                assert e.isclose(p)
+
+
+@pytest.mark.parametrize(
+    "order,results",
+    [
+        [2, POINTS_ORDER_2],
+        [3, POINTS_ORDER_3],
+        [4, POINTS_ORDER_4],
+    ],
+    ids=["degree=1", "degree=2", "degree=3"],
+)
+def test_bspline_point_calculation_to_pre_calculated_results(order, results):
+    spline = BSpline(DEFPOINTS, order=order)
+    for p, expected in zip(spline.points(PARAMS), results):
+        assert p.isclose(expected)
+
+
+def test_bspline_derivative_calculation_to_pre_calculated_results():
+    spline = BSpline(DEFPOINTS, order=4)
+    for points, expected in zip(
+        spline.derivatives(PARAMS, n=2), DERIVATIVES_ORDER_4
+    ):
+        for p, e in zip(points, expected):
+            assert p.isclose(e)
+
+
+def test_bspline_point_calculation_against_derivative_calculation():
+    # point calculation and derivative calculation are not the same functions
+    # for optimization reasons. The derivatives() function returns the curve
+    # point and n derivatives, check if both functions return the
+    # same curve point:
+    spline = BSpline(DEFPOINTS, order=4)
+    curve_points = [p[0] for p in spline.derivatives(PARAMS, n=1)]
+    for p, expected in zip(curve_points, spline.points(PARAMS)):
+        assert p.isclose(expected)

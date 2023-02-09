@@ -4,27 +4,41 @@ ArcDimension
 .. module:: ezdxf.entities
     :noindex:
 
-The ARC_DIMENSION entity was introduced in DXF R2004 and is **not** documented in the DXF reference.
+The ARC_DIMENSION entity was introduced in DXF R2004 and is **not** documented
+in the DXF reference.
+
+.. seealso::
+
+    :ref:`tut_arc_dimension`
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Dimension`
 DXF type                 ``'ARC_DIMENSION'``
-factory function         :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim` (not implemented)
+factory function         - :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim_3p`
+                         - :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim_cra`
+                         - :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim_arc`
 Inherited DXF attributes :ref:`Common graphical DXF attributes`
-Required DXF version     DXF R2004 (``'AC1018'``)
+Required DXF version     R2004 / AC1018
 ======================== ==========================================
 
 .. warning::
 
-    Do not instantiate entity classes by yourself - always use the provided factory functions!
+    Do not instantiate entity classes by yourself - always use the provided
+    factory functions!
 
 .. class:: ArcDimension
 
-    .. attribute:: dxf.ext_line1_point
+    .. attribute:: dxf.defpoint2
 
-    .. attribute:: dxf.ext_line2_point
+        start point of first extension line in :ref:`OCS`
 
-    .. attribute:: dxf.arc_center
+    .. attribute:: dxf.defpoint3
+
+        start point of second extension line in :ref:`OCS`
+
+    .. attribute:: dxf.defpoint4
+
+        center point of arc in :ref:`OCS`
 
     .. attribute:: dxf.start_angle
 

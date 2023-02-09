@@ -7,25 +7,37 @@ from ezdxf.tools import pattern
 
 def test_load_iso_pattern():
     p = pattern.load()
-    assert p['ANSI31'][0] == [45.0, (0.0, 0.0), (-2.2450640303, 2.2450640303),
-                              []]
+    assert p["ANSI31"][0] == [
+        45.0,
+        (0.0, 0.0),
+        (-2.2450640303, 2.2450640303),
+        [],
+    ]
 
 
 def test_load_scaled_iso_pattern():
     p = pattern.load(factor=2)
-    assert p['ANSI31'][0] == [45.0, (0.0, 0.0), (-4.4901280606, 4.4901280606),
-                              []]
+    assert p["ANSI31"][0] == [
+        45.0,
+        (0.0, 0.0),
+        (-4.4901280606, 4.4901280606),
+        [],
+    ]
 
 
 def test_load_imperial_pattern():
     p = pattern.load(measurement=0)
-    assert p['ANSI31'][0] == [45.0, (0.0, 0.0), (-0.0883883476, 0.0883883476),
-                              []]
+    assert p["ANSI31"][0] == [
+        45.0,
+        (0.0, 0.0),
+        (-0.0883883476, 0.0883883476),
+        [],
+    ]
 
 
 def test_scale_pattern():
     p = pattern.load()
-    ansi31 = p['ANSI31']
+    ansi31 = p["ANSI31"]
     s = pattern.scale_pattern(ansi31, 2, angle=90)
 
     angle, base, offset, lines = s[0]
@@ -75,12 +87,17 @@ TEST_PATTERN = """; Hatch Patterns adapted to ISO scaling
 def test_parse_pattern_file():
     result = pattern.parse(TEST_PATTERN)
     assert len(result) == 9
-    assert result['SOLID'] == [
-        [45.0, (0.0, 0.0), (-0.0883883476, 0.0883883476), []]]
-    assert result['ANSI33'] == [
+    assert result["SOLID"] == [
+        [45.0, (0.0, 0.0), (-0.0883883476, 0.0883883476), []]
+    ]
+    assert result["ANSI33"] == [
         [45.0, (0.0, 0.0), (-4.4901280605, 4.4901280605), []],
-        [45.0, (4.490128053, 0.0), (-4.4901280605, 4.4901280605),
-         [3.175, -1.5875]]
+        [
+            45.0,
+            (4.490128053, 0.0),
+            (-4.4901280605, 4.4901280605),
+            [3.175, -1.5875],
+        ],
     ]
 
 
@@ -89,95 +106,92 @@ def analyse(name):
 
 
 class TestPatternAnalyser:
-    @pytest.mark.parametrize('name', [
-        'ISO02W100', 'DASH', 'CLAY', 'FLEXIBLE'
-    ])
+    @pytest.mark.parametrize("name", ["ISO02W100", "DASH", "CLAY", "FLEXIBLE"])
     def test_has_horizontal_lines(self, name):
         result = analyse(name)
         assert result.has_angle(0) is True
 
-    @pytest.mark.parametrize('name', [
-        'GOST_WOOD', 'V_ZINC',
-    ])
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "GOST_WOOD",
+            "V_ZINC",
+        ],
+    )
     def test_has_vertical_lines(self, name):
         result = analyse(name)
         assert result.has_angle(90) is True
 
-    @pytest.mark.parametrize('name', [
-        'ANSI31', 'BRICK_INSULATING', 'BUTTERFLY', 'CROSSES'
-    ])
+    @pytest.mark.parametrize(
+        "name", ["ANSI31", "BRICK_INSULATING", "BUTTERFLY", "CROSSES"]
+    )
     def test_has_45_deg_lines(self, name):
         result = analyse(name)
         assert result.has_angle(45) is True
 
-    @pytest.mark.parametrize('name', [
-        'BUTTERFLY', 'CROSSES'
-    ])
+    @pytest.mark.parametrize("name", ["BUTTERFLY", "CROSSES"])
     def test_has_135_deg_lines(self, name):
         result = analyse(name)
         assert result.has_angle(135) is True
 
-    @pytest.mark.parametrize('name', [
-        'DIAMONDS', 'ESCHER'
-    ])
+    @pytest.mark.parametrize("name", ["DIAMONDS", "ESCHER"])
     def test_has_60_deg_lines(self, name):
         result = analyse(name)
         assert result.has_angle(60) is True
 
-    @pytest.mark.parametrize('name', [
-        'ANSI31', 'BRICK_EXISTING'
-    ])
+    @pytest.mark.parametrize("name", ["ANSI31", "BRICK_EXISTING"])
     def test_all_45_deg_lines(self, name):
         result = analyse(name)
         assert result.all_angles(45) is True
 
-    @pytest.mark.parametrize('name', [
-        'ANSI31', 'BRICK_EXISTING'
-    ])
+    @pytest.mark.parametrize("name", ["ANSI31", "BRICK_EXISTING"])
     def test_all_solid_lines(self, name):
         result = analyse(name)
         assert result.all_solid_lines() is True
 
     def test_analyse_ansi31(self):
-        result = analyse('ANSI31')
+        result = analyse("ANSI31")
         assert result.has_angle(45) is True
         assert result.all_angles(45) is True
         assert result.all_solid_lines() is True
         assert result.has_dashed_line() is False
 
     def test_analyse_checker(self):
-        result = analyse('CHECKER')
+        result = analyse("CHECKER")
         assert result.has_angle(0) is True
         assert result.has_angle(90) is True
         assert result.all_dashed_lines() is True
 
     def test_rotated_checker(self):
-        pat = pattern.ISO_PATTERN['CHECKER']
+        pat = pattern.ISO_PATTERN["CHECKER"]
         result = pattern.PatternAnalyser(pattern.scale_pattern(pat, 2, 45))
         assert result.has_angle(45) is True
         assert result.has_angle(135) is True
 
     def test_analyse_crosses(self):
-        result = analyse('CROSSES')
+        result = analyse("CROSSES")
         assert result.has_angle(45) is True
         assert result.has_angle(135) is True
         assert result.all_dashed_lines() is True
 
 
-@pytest.mark.parametrize('angle,expected', [
-    (0, 0),
-    (45, 45),
-    (90, 90),
-    (135, 135),
-    (22, 15),  # round to nearest 15° main angle
-    (23, 30),  # round to nearest 15° main angle
-    (45, 45),  # round to nearest 15° main angle
-    (180, 0),  # only 1st and 2nd quadrant
-    (270, 90),  # only 1st and 2nd quadrant
-])
+@pytest.mark.parametrize(
+    "angle,expected",
+    [
+        (0, 0),
+        (45, 45),
+        (90, 90),
+        (135, 135),
+        (22, 15),  # round to nearest 15° main angle
+        (23, 30),  # round to nearest 15° main angle
+        (45, 45),  # round to nearest 15° main angle
+        (180, 0),  # only 1st and 2nd quadrant
+        (270, 90),  # only 1st and 2nd quadrant
+    ],
+)
 def test_round_angle_15_deg(angle, expected):
     assert pattern.round_angle_15_deg(angle) == expected
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

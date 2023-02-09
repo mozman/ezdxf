@@ -1,12 +1,12 @@
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
-from ezdxf.lldxf.const import DXF12, DXF2000, DXF2018
+from ezdxf.lldxf.const import DXF12, DXF2000, DXF2018, DXF2013, DXF2007, DXF2010
 from ezdxf.lldxf.tags import Tags
 from ezdxf.sections.header import HeaderSection
 from ezdxf.lldxf.validator import header_validator
-
+from ezdxf.sections.headervars import version_specific_group_code
 
 INVALID_HEADER_STRUCTURE = """   9
 $ACADVER
@@ -48,8 +48,8 @@ EOF
 
 
 def test_new_drawing():
-    dwg = ezdxf.new('AC1009')
-    assert 'AC1009' == dwg.dxfversion
+    dwg = ezdxf.new("AC1009")
+    assert "AC1009" == dwg.dxfversion
 
 
 def test_valid_header():
@@ -79,76 +79,76 @@ def header():
 
 
 def test_get_acadver(header):
-    result = header['$ACADVER']
-    assert 'AC1009' == result
+    result = header["$ACADVER"]
+    assert "AC1009" == result
 
 
 def test_get_insbase(header):
-    result = header['$INSBASE']
-    assert (0., 0., 0.) == result
+    result = header["$INSBASE"]
+    assert (0.0, 0.0, 0.0) == result
 
 
 def test_getitem_keyerror(header):
     with pytest.raises(ezdxf.DXFKeyError):
-        var = header['$TEST']
+        var = header["$TEST"]
 
 
 def test_get(header):
-    result = header.get('$TEST', 'TEST')
-    assert 'TEST' == result
+    result = header.get("$TEST", "TEST")
+    assert "TEST" == result
 
 
 def test_set_existing_var(header):
-    header['$ACADVER'] = 'AC666'
-    assert 'AC666' == header['$ACADVER']
+    header["$ACADVER"] = "AC666"
+    assert "AC666" == header["$ACADVER"]
 
 
 def test_set_existing_point(header):
-    header['$INSBASE'] = (1, 2, 3)
-    assert (1, 2, 3) == header['$INSBASE']
+    header["$INSBASE"] = (1, 2, 3)
+    assert (1, 2, 3) == header["$INSBASE"]
 
 
 def test_set_unknown_var(header):
     with pytest.raises(ezdxf.DXFKeyError):
-        header['$TEST'] = 'test'
+        header["$TEST"] = "test"
 
 
 def test_create_var(header):
-    header['$LIMMAX'] = (10, 20)
-    assert (10, 20) == header['$LIMMAX']
+    header["$LIMMAX"] = (10, 20)
+    assert (10, 20) == header["$LIMMAX"]
 
 
 def test_create_var_wrong_args_2d(header):
-    header['$LIMMAX'] = (10, 20, 30)
-    assert (10, 20) == header['$LIMMAX']
+    header["$LIMMAX"] = (10, 20, 30)
+    assert (10, 20) == header["$LIMMAX"]
 
 
 def test_create_var_wrong_args_3d(header):
     with pytest.raises(ezdxf.DXFValueError):
-        header['$PUCSORG'] = (10, 20)
+        header["$PUCSORG"] = (10, 20)
 
 
 def test_contains(header):
-    assert '$ACADVER' in header
+    assert "$ACADVER" in header
 
 
 def test_not_contains(header):
-    assert '$MOZMAN' not in header
+    assert "$MOZMAN" not in header
 
 
 def test_remove_headervar(header):
-    del header['$ACADVER']
-    assert '$ACADVER' not in header
+    del header["$ACADVER"]
+    assert "$ACADVER" not in header
 
 
 def test_str_point(header):
-    insbase_str = str(header.hdrvars['$INSBASE'])
+    insbase_str = str(header.hdrvars["$INSBASE"])
     assert INSBASE == insbase_str
 
 
 def test_new_dxf12():
     header = HeaderSection.new(ezdxf.const.DXF12)
-    assert header['$ACADVER'] == DXF12
+    assert header["$ACADVER"] == DXF12
 
 
 @pytest.fixture
@@ -170,17 +170,23 @@ def test_order_of_occurrence(header_custom):
 
 
 def test_get_custom_property(header_custom):
-    assert "Custom Value 1" == header_custom.custom_vars.get("Custom Property 1")
+    assert "Custom Value 1" == header_custom.custom_vars.get(
+        "Custom Property 1"
+    )
 
 
 def test_get_custom_property_2(header_custom):
-    assert "Custom Value 2" == header_custom.custom_vars.get("Custom Property 2")
+    assert "Custom Value 2" == header_custom.custom_vars.get(
+        "Custom Property 2"
+    )
 
 
 def test_add_custom_property(header_custom):
     header_custom.custom_vars.append("Custom Property 3", "Custom Value 3")
     assert 3 == len(header_custom.custom_vars)
-    assert "Custom Value 3" == header_custom.custom_vars.get("Custom Property 3")
+    assert "Custom Value 3" == header_custom.custom_vars.get(
+        "Custom Property 3"
+    )
 
 
 def test_remove_custom_property(header_custom):
@@ -201,6 +207,24 @@ def test_replace_custom_property(header_custom):
 def test_replace_not_existing_property(header_custom):
     with pytest.raises(ValueError):
         header_custom.custom_vars.replace("Does not Exist", "new value")
+
+
+@pytest.mark.parametrize(
+    "name,version,expected",
+    [
+        ("$ACADMAINTVER", DXF2018, 90),
+        ("$ACADMAINTVER", DXF2013, 70),
+        ("$XCLIPFRAME", DXF2007, 290),
+        ("$XCLIPFRAME", DXF2010, 280),
+    ],
+)
+def test_version_specific_header_vars(name, version, expected):
+    assert version_specific_group_code(name, version) == expected
+
+
+def test_version_specific_group_code_raises_key_error_for_unknown_names():
+    with pytest.raises(KeyError):
+        version_specific_group_code("$MOZMAN", DXF2000)
 
 
 INSBASE = """ 10

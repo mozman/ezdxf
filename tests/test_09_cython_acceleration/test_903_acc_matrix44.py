@@ -6,7 +6,7 @@
 
 import pytest
 
-matrix44 = pytest.importorskip('ezdxf.acc.matrix44')
+matrix44 = pytest.importorskip("ezdxf.acc.matrix44")
 Matrix44 = matrix44.Matrix44
 
 
@@ -24,12 +24,7 @@ def test_16_numbers_constructor():
 
 
 def test_4_rows_constructor():
-    m = Matrix44(
-        (0, 0, 0, 0),
-        (1, 1, 1, 1),
-        (2, 2, 2, 2),
-        (3, 3, 3, 3)
-    )
+    m = Matrix44((0, 0, 0, 0), (1, 1, 1, 1), (2, 2, 2, 2), (3, 3, 3, 3))
     assert m[0, 0] == 0
     assert m[3, 3] == 3
 
@@ -79,5 +74,5 @@ def test_get_origin():
     assert m.origin == (7, 8, 9)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

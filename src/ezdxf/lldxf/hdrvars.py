@@ -1,8 +1,6 @@
-# Purpose: header variables factory
-# Created: 20.11.2010
-# Copyright (c) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
-from typing import Sequence, Union
+from typing import Sequence, Union, Callable, Any, NamedTuple, Optional
 from .types import DXFVertex, DXFTag, cast_tag_value
 
 
@@ -11,7 +9,6 @@ def SingleValue(value: Union[str, float], code: int = 1) -> DXFTag:
 
 
 def Point2D(value: Sequence[float]) -> DXFVertex:
-
     return DXFVertex(10, (value[0], value[1]))
 
 
@@ -19,12 +16,11 @@ def Point3D(value: Sequence[float]) -> DXFVertex:
     return DXFVertex(10, (value[0], value[1], value[2]))
 
 
-class HeaderVarDef:
-    def __init__(self, name, code, factory, mindxf, maxdxf, priority, default=None):
-        self.name = name
-        self.code = code
-        self.factory = factory
-        self.mindxf = mindxf
-        self.maxdxf = maxdxf
-        self.priority = priority
-        self.default = default
+class HeaderVarDef(NamedTuple):
+    name: str
+    code: int
+    factory: Callable[[Any], Any]
+    mindxf: str
+    maxdxf: str
+    priority: int
+    default: Optional[Any] = None

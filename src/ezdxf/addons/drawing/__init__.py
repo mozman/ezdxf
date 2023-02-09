@@ -1,5 +1,4 @@
-# Created: 06.2020
-# Copyright (c) 2020, Matthew Broadway
+# Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 
 from .frontend import Frontend

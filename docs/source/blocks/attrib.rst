@@ -6,7 +6,7 @@ Attrib
 
 The ATTRIB (`DXF Reference`_) entity represents a text value associated with a tag.
 In most cases an ATTRIB is appended to an :class:`Insert` entity, but it can also
-appear as standalone entity.
+be used as a standalone entity.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Text`
@@ -36,20 +36,23 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Attribute content as text (str)
 
-    .. attribute:: is_invisible
+    .. autoproperty:: is_invisible
 
-        Attribute is invisible (does not appear).
+    .. autoproperty:: is_const
 
-    .. attribute:: is_const
+    .. autoproperty:: is_verify
 
-        This is a constant attribute.
+    .. autoproperty:: is_preset
 
-    .. attribute:: is_verify
+    .. autoproperty:: has_embedded_mtext_entity
 
-        Verification is required on input of this attribute. (CAD application feature)
+    .. automethod:: virtual_mtext_entity
 
-    .. attribute:: is_preset
+    .. automethod:: plain_mtext
 
-        No prompt during insertion. (CAD application feature)
+    .. automethod:: set_mtext
+
+    .. automethod:: embed_mtext
+
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-7DD8B495-C3F8-48CD-A766-14F9D7D0DD9B

@@ -4,7 +4,7 @@ Point
 .. module:: ezdxf.entities
     :noindex:
 
-POINT (`DXF Reference`_) at location :attr:`dxf.location`.
+The POINT entity (`DXF Reference`_) represents a dimensionless point in :ref:`WCS`.
 
 The POINT styling is a global setting, stored as header variable `$PDMODE`_,
 this also means **all** POINT entities in a DXF document have the same styling:
@@ -36,6 +36,10 @@ The size of the points is defined by the header variable `$PDSIZE`_:
 >0  Specifies an absolute size
 === ==============
 
+.. seealso::
+
+    - :ref:`tut_dxf_primitives`, section :ref:`tut_dxf_primitives_point`
+
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'POINT'``
@@ -57,11 +61,11 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Angle in degrees of the x-axis for the UCS in effect when POINT was drawn (float); used when PDMODE is nonzero.
 
-    .. automethod:: transform(m: Matrix44) -> Point
+    .. automethod:: transform
 
-    .. automethod:: translate(dx: float, dy: float, dz: float) -> Point
+    .. automethod:: translate
 
-    .. automethod:: virtual_entities(pdsize: float = 1, pdmode: int = 0) -> List[DXFGraphic]
+    .. automethod:: virtual_entities
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-9C6AD32D-769D-4213-85A4-CA9CCB5C5317
 .. _$PDMODE: https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2019/ENU/AutoCAD-Core/files/GUID-82F9BB52-D026-4D6A-ABA6-BF29641F459B-htm.html

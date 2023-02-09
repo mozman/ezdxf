@@ -4,13 +4,19 @@ import time
 import random
 
 from ezdxf.math.linalg import (
-    Matrix, gauss_vector_solver, LUDecomposition, gauss_matrix_solver, gauss_jordan_solver,
+    Matrix,
+    gauss_vector_solver,
+    LUDecomposition,
+    gauss_matrix_solver,
+    gauss_jordan_solver,
     gauss_jordan_inverse,
 )
 
 
 def random_matrix(rows, cols):
-    return Matrix.reshape(items=(random.random() for _ in range(rows * cols)), shape=(rows, cols))
+    return Matrix.reshape(
+        items=(random.random() for _ in range(rows * cols)), shape=(rows, cols)
+    )
 
 
 SIZE = 200
@@ -69,14 +75,28 @@ def profile(text, func, *args):
     t0 = time.perf_counter()
     func(*args)
     t1 = time.perf_counter()
-    print(f'{text} {t1 - t0:.3f}s')
+    print(f"{text} {t1 - t0:.3f}s")
 
 
-print(f'Profiling a random {SIZE}x{SIZE} Matrix, 5x each task:')
-profile('Gauss-Jordan matrix solver - 3 vectors: ', profile_gauss_jordan_solver, 5)
-profile('Gauss-Jordan inverse: ', profile_gauss_jordan_inverse, 5)
-profile('Gauss elimination vector solver - 1 vector : ', profile_gauss_vector_solver, 5)
-profile('Gauss elimination matrix solver  - 3 vectors: ', profile_gauss_matrix_solver, 5)
-profile('LU decomposition vector solver - 1 vector: ', profile_LU_vector_solver, 5)
-profile('LU decomposition matrix solver - 3 vectors: ', profile_LU_matrix_solver, 5)
-profile('LU decomposition inverse: ', profile_LU_decomposition_inverse, 5)
+print(f"Profiling a random {SIZE}x{SIZE} Matrix, 5x each task:")
+profile(
+    "Gauss-Jordan matrix solver - 3 vectors: ", profile_gauss_jordan_solver, 5
+)
+profile("Gauss-Jordan inverse: ", profile_gauss_jordan_inverse, 5)
+profile(
+    "Gauss elimination vector solver - 1 vector : ",
+    profile_gauss_vector_solver,
+    5,
+)
+profile(
+    "Gauss elimination matrix solver  - 3 vectors: ",
+    profile_gauss_matrix_solver,
+    5,
+)
+profile(
+    "LU decomposition vector solver - 1 vector: ", profile_LU_vector_solver, 5
+)
+profile(
+    "LU decomposition matrix solver - 3 vectors: ", profile_LU_matrix_solver, 5
+)
+profile("LU decomposition inverse: ", profile_LU_decomposition_inverse, 5)

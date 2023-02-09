@@ -6,7 +6,10 @@ from ezdxf import colors as clr
 
 
 def test_decode_by_block():
-    assert clr.decode_raw_color(-1056964608) == (clr.COLOR_TYPE_BY_BLOCK, BYBLOCK)
+    assert clr.decode_raw_color(-1056964608) == (
+        clr.COLOR_TYPE_BY_BLOCK,
+        BYBLOCK,
+    )
 
 
 def test_encode_by_block():
@@ -14,7 +17,10 @@ def test_encode_by_block():
 
 
 def test_decode_by_layer():
-    assert clr.decode_raw_color(-1073741824) == (clr.COLOR_TYPE_BY_LAYER, BYLAYER)
+    assert clr.decode_raw_color(-1073741824) == (
+        clr.COLOR_TYPE_BY_LAYER,
+        BYLAYER,
+    )
 
 
 def test_encode_by_layer():
@@ -30,7 +36,10 @@ def test_encode_aci():
 
 
 def test_decode_rgb():
-    assert clr.decode_raw_color(-1039526882) == (clr.COLOR_TYPE_RGB, (10, 20, 30))
+    assert clr.decode_raw_color(-1039526882) == (
+        clr.COLOR_TYPE_RGB,
+        (10, 20, 30),
+    )
 
 
 def test_encode_rgb():

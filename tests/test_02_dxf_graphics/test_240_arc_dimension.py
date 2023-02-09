@@ -5,14 +5,14 @@ import pytest
 
 import ezdxf
 from ezdxf.entities.dimension import ArcDimension
-from ezdxf.lldxf.const import DXF2013, DXF2010
+from ezdxf.lldxf.const import DXF2013, DXF2010, DXF2018
 from ezdxf.lldxf.tagwriter import TagCollector
 
 ezdxf.options.preserve_proxy_graphics()
 
 
 @pytest.fixture()
-def arcdim():
+def arcdim() -> ArcDimension:
     return ArcDimension.from_text(ARC_DIM)
 
 
@@ -21,16 +21,42 @@ def test_load_arc_dimension(arcdim):
     assert len(arcdim.proxy_graphic) == 968
 
 
-def test_export_arc_dimension_R2010(arcdim):
+def test_dimtype_is_8_for_R2018(arcdim):
+    assert arcdim.dimtype == 8
+
+
+# fmt: off
+def test_export_proxy_graphic_R2010(arcdim):
     tagwriter = TagCollector(dxfversion=DXF2010)
     arcdim.export_dxf(tagwriter)
-    assert (92, 968) in tagwriter.tags, 'Expected group code 92 for proxy graphic length tag. (< DXF R2013)'
+    assert (92, 968) in tagwriter.tags, (
+        "Expected group code 92 for proxy graphic length tag. (< DXF R2013)"
+    )
 
 
-def test_export_arc_dimension_R2013(arcdim):
+def test_export_proxy_graphic_R2013(arcdim):
     tagwriter = TagCollector(dxfversion=DXF2013)
     arcdim.export_dxf(tagwriter)
-    assert (160, 968) in tagwriter.tags, 'Expected group code 160 for proxy graphic length tag. (>= DXF R2013)'
+    assert (160, 968) in tagwriter.tags, (
+        "Expected group code 160 for proxy graphic length tag. (>= DXF R2013)"
+    )
+
+
+def test_export_dimtype_R2013(arcdim):
+    tagwriter = TagCollector(dxfversion=DXF2013)
+    arcdim.export_dxf(tagwriter)
+    assert (70, 37) in tagwriter.tags, (
+        "Expected dimtype 32+5 for DXF version < R2018"
+    )
+
+
+def test_export_dimtype_R2018(arcdim):
+    tagwriter = TagCollector(dxfversion=DXF2018)
+    arcdim.export_dxf(tagwriter)
+    assert (70, 40) in tagwriter.tags, (
+        "Expected dimtype 32+8 for DXF version R2018+"
+    )
+# fmt: on
 
 
 ARC_DIM = """  0
@@ -43,12 +69,6 @@ ARC_DIMENSION
 97
 102
 }
-102
-{ACAD_XDICTIONARY
-360
-96
-102
-}
 330
 1F
 100
@@ -56,7 +76,7 @@ AcDbEntity
   8
 0
 160
-               968
+968
 310
 C80300000D000000540000002000000002000000033E695D8B227240B00D3CF1FB7B5540000000000000000082C85BAC2FDE7240FB1040429FB05740000000000000000000000000000000000000000000000000000000000000F03F5400000020000000020000004AF9442AE7FA60405A2D686189715A4000000000000000
 310
@@ -147,5 +167,5 @@ AcDbArcDimension
 0.0
 """
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

@@ -32,10 +32,8 @@ corners_wcs = list(ucs.points_to_wcs(transformed_corners_ucs))
 
 msp.add_polyline3d(
     points=corners_wcs,
-    dxfattribs={
-        'closed': True,
-        'color': 1,
-    })
+    close=True,
+)
 
 # add lines from center to corners
 center_wcs = ucs.to_wcs((0, .333, .333))

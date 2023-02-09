@@ -4,7 +4,14 @@ Line
 .. module:: ezdxf.entities
     :noindex:
 
-LINE (`DXF Reference`_) entity is a 3D line from :attr:`Line.dxf.start` to :attr:`Line.dxf.end`.
+The LINE entity (`DXF Reference`_) is a 3D line defined by the DXF attributes
+:attr:`dxf.start` and :attr:`dxf.end`. The LINE entity has :ref:`WCS` coordinates.
+
+.. seealso::
+
+    - :ref:`tut_dxf_primitives`, section :ref:`tut_dxf_primitives_line`
+    - :class:`ezdxf.math.ConstructionRay`
+    - :class:`ezdxf.math.ConstructionLine`
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -15,7 +22,8 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
 .. warning::
 
-    Do not instantiate entity classes by yourself - always use the provided factory functions!
+    Do not instantiate entity classes by yourself - always use the provided
+    factory functions!
 
 .. class:: Line
 
@@ -30,15 +38,16 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.thickness
 
-        Line thickness in 3D space in direction :attr:`extrusion`, default value is ``0``. This value should not be
-        confused with the :attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight` value.
+        Line thickness in 3D space in direction :attr:`extrusion`, default value
+        is 0. This value should not be confused with the
+        :attr:`~ezdxf.entities.DXFGraphic.dxf.lineweight` value.
 
     .. attribute:: dxf.extrusion
 
-        extrusion vector, default value is ``(0, 0, 1)``
+        extrusion vector, default value is (0, 0, 1)
 
-    .. automethod:: transform(m: Matrix44) -> Line
+    .. automethod:: transform
 
-    .. automethod:: translate(dx: float, dy: float, dz: float) -> Line
+    .. automethod:: translate
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-FCEF5726-53AE-4C43-B4EA-C84EB8686A66

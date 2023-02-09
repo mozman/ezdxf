@@ -18,7 +18,7 @@ Factory function         :meth:`Drawing.ucs.new`
 
     :ref:`ucs` and :ref:`ocs`
 
-.. class:: UCSTable
+.. class:: UCSTableEntry
 
     .. attribute:: dxf.owner
 
@@ -34,23 +34,25 @@ Factory function         :meth:`Drawing.ucs.new`
 
         === ========================================================
         16  If set, table entry is externally dependent on an xref
-        32  If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
-        64  If set, the table entry was referenced by at least one entity in the drawing the last time the drawing was
-            edited. (This flag is only for the benefit of AutoCAD)
+        32  If both this bit and bit 16 are set, the externally dependent xref
+            has been successfully resolved
+        64  If set, the table entry was referenced by at least one entity in the
+            drawing the last time the drawing was edited. (This flag is only for
+            the benefit of AutoCAD)
         === ========================================================
 
     .. attribute:: dxf.origin
 
-        Origin  as ``(x, y, z)`` tuple
+        Origin  as (x, y, z) tuple
 
     .. attribute:: dxf.xaxis
 
-        X-axis direction as ``(x, y, z)`` tuple
+        X-axis direction as (x, y, z) tuple
 
     .. attribute:: dxf.yaxis
 
-        Y-axis direction as ``(x, y, z)`` tuple
+        Y-axis direction as (x, y, z) tuple
 
-    .. automethod:: ucs() -> UCS
+    .. automethod:: ucs
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-1906E8A7-3393-4BF9-BD27-F9AE4352FB8B

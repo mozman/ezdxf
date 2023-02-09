@@ -5,7 +5,7 @@ from ezdxf.lldxf.types import DXFVertex
 
 def test_init():
     v = DXFVertex(10, (1, 2, 3))
-    assert v.value == (1., 2., 3.)
+    assert v.value == (1.0, 2.0, 3.0)
 
 
 def test_clone():
@@ -18,9 +18,9 @@ def test_clone():
 def test_dxf_tags():
     v = DXFVertex(10, (1, 2, 3))
     tags = tuple(v.dxftags())
-    assert tags[0] == (10, 1.)
-    assert tags[1] == (20, 2.)
-    assert tags[2] == (30, 3.)
+    assert tags[0] == (10, 1.0)
+    assert tags[1] == (20, 2.0)
+    assert tags[2] == (30, 3.0)
 
 
 def test_dxf_string():

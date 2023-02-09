@@ -10,7 +10,7 @@ from ezdxf.math import Matrix44
 from ezdxf.explode import explode_entity
 
 TEST_CLASS = Point
-TEST_TYPE = 'POINT'
+TEST_TYPE = "POINT"
 
 ENTITY_R12 = """0
 POINT
@@ -19,11 +19,11 @@ POINT
 8
 0
 10
-0.0
+1.0
 20
-0.0
+2.0
 30
-0.0
+3.0
 """
 
 ENTITY_R2000 = """0
@@ -39,11 +39,11 @@ AcDbEntity
 100
 AcDbPoint
 10
-0.0
+1.0
 20
-0.0
+2.0
 30
-0.0
+3.0
 """
 
 
@@ -54,6 +54,7 @@ def entity(request):
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
+
     assert TEST_TYPE in ENTITY_CLASSES
 
 
@@ -63,31 +64,83 @@ def test_default_init():
 
 
 def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'color': '7',
-        'location': (1, 2, 3),
-    })
-    assert entity.dxf.layer == '0'
+    entity = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": "7",
+            "location": (1, 2, 3),
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
-    assert entity.dxf.linetype == 'BYLAYER'
+    assert entity.dxf.linetype == "BYLAYER"
     assert entity.dxf.location == (1, 2, 3)
-    assert entity.dxf.location.x == 1, 'is not Vec3 compatible'
-    assert entity.dxf.location.y == 2, 'is not Vec3 compatible'
-    assert entity.dxf.location.z == 3, 'is not Vec3 compatible'
+    assert entity.dxf.location.x == 1, "is not Vec3 compatible"
+    assert entity.dxf.location.y == 2, "is not Vec3 compatible"
+    assert entity.dxf.location.z == 3, "is not Vec3 compatible"
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
     assert entity.dxf.extrusion == (0.0, 0.0, 1.0)
-    assert entity.dxf.hasattr('extrusion') is False, 'just the default value'
+    assert entity.dxf.hasattr("extrusion") is False, "just the default value"
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
-    assert entity.dxf.location == (0, 0, 0)
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
+    assert entity.dxf.location.isclose((1, 2, 3))
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+MALFORMED_POINT = """0
+POINT
+5
+0
+330
+0
+62
+7
+8
+MALFORMED
+102
+{MOZMAN
+8
+APP_DATA_LAYER_IGNORED
+6
+APP_DATA_LTYPE_IGNORED
+62
+0
+102
+}
+100
+AcDbEntity
+10
+1.0
+20
+2.0
+30
+3.0
+100
+AcDbPoint
+6
+DOTTED
+100
+AcDbInvalidSubclassMarker
+"""
+
+
+def test_load_malformed_entity():
+    """Missing AcDbPoint subclass marker."""
+    entity = TEST_CLASS.from_text(MALFORMED_POINT)
+    assert entity.dxf.layer == "MALFORMED"
+    assert entity.dxf.color == 7
+    assert entity.dxf.linetype == "DOTTED"
+    assert entity.dxf.location.isclose((1, 2, 3))
+
+
+@pytest.mark.parametrize(
+    "txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)]
+)
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     point = TEST_CLASS.from_text(txt)
@@ -101,7 +154,13 @@ def test_write_dxf(txt, ver):
 
 
 def test_transform():
-    point = Point.new(dxfattribs={'location': (2, 3, 4), 'extrusion': (0, 1, 0), 'thickness': 2})
+    point = Point.new(
+        dxfattribs={
+            "location": (2, 3, 4),
+            "extrusion": (0, 1, 0),
+            "thickness": 2,
+        }
+    )
     # 1. rotation - 2. scaling - 3. translation
     m = Matrix44.chain(Matrix44.scale(2, 3, 1), Matrix44.translate(1, 1, 1))
     point.transform(m)
@@ -116,7 +175,13 @@ def test_transform():
 
 
 def test_fast_translation():
-    point = Point.new(dxfattribs={'location': (2, 3, 4), 'extrusion': (0, 1, 0), 'thickness': 2})
+    point = Point.new(
+        dxfattribs={
+            "location": (2, 3, 4),
+            "extrusion": (0, 1, 0),
+            "thickness": 2,
+        }
+    )
     point.translate(1, 2, 3)
     assert point.dxf.location == (3, 5, 7)
 
@@ -125,3 +190,13 @@ def test_do_not_explode_point_entity():
     point = Point()
     with pytest.raises(TypeError):
         explode_entity(point)
+
+
+def test_virtual_sub_entities():
+    point = Point()
+    entities = list(point.virtual_entities())
+    assert len(entities) == 1
+    e = entities[0]
+    assert e.is_copy is True
+    assert e.source_of_copy is point
+

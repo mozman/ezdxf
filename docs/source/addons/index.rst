@@ -16,9 +16,14 @@ Add-ons
     iterdxf
     r12writer
     odafc
+    text2path
+    mtxpl
     pycsg
     acadctb
     forms
-
-
-
+    binpacking
+    meshex
+    openscad
+    tablepainter
+    mtextsurrogate
+    gerber_D6673

@@ -4,14 +4,16 @@ Leader
 .. module:: ezdxf.entities
     :noindex:
 
-The LEADER entity (`DXF Reference`_) represents an arrow, made up of one or more vertices
-(or spline fit points) and an arrowhead. The label or other content to which the :class:`Leader` is attached
-is stored as a separate entity, and is not part of the :class:`Leader` itself.
+The LEADER entity (`DXF Reference`_) represents a pointer line, made up of one or more
+vertices (or spline fit points) and an arrowhead. The label or other content to which
+the :class:`Leader` is attached is stored as a separate entity, and is not part of
+the :class:`Leader` itself.
 
-:class:`Leader` shares its styling infrastructure with :class:`Dimension`.
+The LEADER entity uses parts of the styling infrastructure of the DIMENSION entity.
 
-By default a :class:`Leader` without any annotation is created. For creating more fancy leaders and annotations
-see documentation provided by Autodesk or `Demystifying DXF: LEADER and MULTILEADER implementation notes <https://atlight.github.io/formats/dxf-leader.html>`_  .
+By default a :class:`Leader` without any annotation is created. For creating more fancy
+leaders and annotations see the documentation provided by Autodesk or
+`Demystifying DXF: LEADER and MULTILEADER implementation notes <https://atlight.github.io/formats/dxf-leader.html>`_  .
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -60,8 +62,10 @@ Required DXF version     DXF R2000 (``'AC1015'``)
         Hook line direction flag:
 
         == =================================================================
-        0  Hookline (or end of tangent for a splined leader) is the opposite direction from the horizontal vector
-        1  Hookline (or end of tangent for a splined leader) is the same direction as horizontal vector (see ``has_hook_line``)
+        0  Hookline (or end of tangent for a splined leader) is the opposite
+           direction from the horizontal vector
+        1  Hookline (or end of tangent for a splined leader) is the same
+           direction as horizontal vector (see ``has_hook_line``)
         == =================================================================
 
     .. attribute:: dxf.has_hookline
@@ -90,29 +94,32 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.normal_vector
 
-        Extrusion vector? default = ``(0, 0, 1)``.
+        Extrusion vector? default is (0, 0, 1).
 
     .. attribute:: .dxf.horizontal_direction
 
-        `Horizontal` direction for leader, default = ``(1, 0, 0)``.
+        `Horizontal` direction for leader, default is (1, 0, 0).
 
     .. attribute:: dxf.leader_offset_block_ref
 
-        Offset of last leader vertex from block reference insertion point, default = ``(0, 0, 0)``.
+        Offset of last leader vertex from block reference insertion point, default is
+        (0, 0, 0).
 
     .. attribute:: dxf.leader_offset_annotation_placement
 
-        Offset of last leader vertex from annotation placement point, default = ``(0, 0, 0)``.
+        Offset of last leader vertex from annotation placement point, default
+        (0, 0, 0).
 
 
     .. attribute:: vertices
 
-        List of :class:`~ezdxf.math.Vec3` objects, representing the vertices of the leader (3D Point in :ref:`WCS`).
+        List of :class:`~ezdxf.math.Vec3` objects, representing the vertices of the
+        leader (3D Point in :ref:`WCS`).
 
     .. automethod:: set_vertices
 
-    .. automethod:: transform(m: Matrix44) -> Leader
+    .. automethod:: transform
 
-    .. automethod:: virtual_entities() -> Iterable[Union[Line, Arc]]
+    .. automethod:: virtual_entities
 
-    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
+    .. automethod:: explode
