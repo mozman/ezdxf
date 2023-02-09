@@ -512,7 +512,7 @@ class Drawing:
         """Write drawing to file-system by using the :attr:`filename` attribute
         as filename. Override file encoding by argument `encoding`, handle with
         care, but this option allows you to create DXF files for applications
-        that handles file encoding different than AutoCAD.
+        that handle file encoding different from AutoCAD.
 
         Args:
             encoding: override default encoding as Python encoding string like ``'utf-8'``
@@ -758,7 +758,7 @@ class Drawing:
         self._dimension_renderer = renderer
 
     def modelspace(self) -> Modelspace:
-        """Returns the modelspace layout, displayed as "Model" tab in CAD
+        r"""Returns the modelspace layout, displayed as "Model" tab in CAD
         applications, defined by block record named "\*Model_Space".
         """
         return self.layouts.modelspace()
@@ -797,7 +797,7 @@ class Drawing:
             return self.active_layout()
 
     def active_layout(self) -> Paperspace:
-        """Returns the active paperspace layout, defined by block record name
+        r"""Returns the active paperspace layout, defined by block record name
         "\*Paper_Space".
         """
         return self.layouts.active_layout()
@@ -877,8 +877,7 @@ class Drawing:
         return chain.from_iterable(layouts)
 
     def layouts_and_blocks(self) -> Iterator[GenericLayoutType]:
-        """Iterate over all layouts (modelspace and paperspace) and all block definitions.
-        """
+        """Iterate over all layouts (modelspace and paperspace) and all block definitions."""
         return iter(self.blocks)
 
     def delete_layout(self, name: str) -> None:
