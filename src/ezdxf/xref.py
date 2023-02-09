@@ -94,13 +94,13 @@ def dxf_info(filename: str | os.PathLike) -> DXFInfo:
     units and insertion base point.
 
     Raises:
-        IOError: not a DXF file
+        IOError: not a DXF file or a generic IO error
 
     """
     filename = str(filename)
     if validator.is_binary_dxf_file(filename):
         with open(filename, "rb") as fp:
-            # The HEADER section of a DXF R2018 file has length of ~5300 bytes
+            # The HEADER section of a DXF R2018 file has a length of ~5300 bytes.
             data = fp.read(8192)
         return validator.binary_dxf_info(data)
     if validator.is_dxf_file(filename):
