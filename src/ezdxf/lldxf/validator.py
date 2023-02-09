@@ -75,14 +75,14 @@ class DXFInfo:
             f"insert base point: {self.insert_base}",
         ]
 
-    def set_header_var(self, name: str, value: str) -> int:
+    def set_header_var(self, name: str, value) -> int:
         if name == "$ACADVER":
-            self.version = value
+            self.version = str(value)
             self.release = acad_release.get(value, "R12")
         elif name == "$DWGCODEPAGE":
             self.encoding = toencoding(value)
         elif name == "$HANDSEED":
-            self.handseed = value
+            self.handseed = str(value)
         elif name == "$INSUNITS":
             try:
                 self.insert_units = int(value)
@@ -125,14 +125,29 @@ def _detect_dxf_info(tagger: Iterator[DXFTag]) -> DXFInfo:
         # with only an ENTITIES section.
         return info
     tag = NONE_TAG
+    undo_tag = NONE_TAG
     found: int = 0
     while tag != (0, "ENDSEC"):
-        tag = next(tagger)
+        if undo_tag is NONE_TAG:
+            tag = next(tagger)
+        else:
+            tag = undo_tag
+            undo_tag = NONE_TAG
         if tag.code != HEADER_VAR_MARKER:
             continue
-        name = cast(str, tag.value)
-        value = cast(str, next(tagger).value)
-        found += info.set_header_var(name, value)
+        var_name = str(tag.value)
+        code, value = next(tagger)
+        if code == 10:
+            x = float(value)
+            y = float(next(tagger).value)
+            z = 0.0
+            tag = next(tagger)
+            if tag.code == 30:
+                z = float(tag.value)
+            else:
+                undo_tag = tag
+            value = Vec3(x, y, z)
+        found += info.set_header_var(var_name, value)
         if found >= DXFInfo.EXPECTED_COUNT:
             break
     return info
