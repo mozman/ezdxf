@@ -16,6 +16,7 @@ import logging
 import ezdxf
 from ezdxf.lldxf import const, validator, types
 from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.validator import dxf_info, DXFInfo
 from ezdxf.document import Drawing
 from ezdxf.layouts import BaseLayout, Paperspace, BlockLayout
 from ezdxf.entities import (
@@ -53,6 +54,8 @@ __all__ = [
     "ResourceMapper",
     "ConflictPolicy",
     "Loader",
+    "dxf_info",
+    "DXFInfo",
 ]
 
 logger = logging.getLogger("ezdxf")
@@ -200,8 +203,9 @@ def attach(
         If the XREF has different drawing units than the host document, the scale
         factor between these units must be applied as a uniform scale factor to the
         block reference!  Unfortunately the XREF drawing units can only be detected by
-        loading the whole document and is therefore not done automatically by this
-        function. Advice: always use the same units for all drawings of a project!
+        scanning the HEADER section of a document by the function :func:`dxf_info` and
+        is therefore not done automatically by this function.
+        Advice: always use the same units for all drawings of a project!
 
     Args:
         doc: host DXF document
