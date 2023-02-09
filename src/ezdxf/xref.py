@@ -104,7 +104,8 @@ def dxf_info(filename: str | os.PathLike) -> DXFInfo:
             data = fp.read(8192)
         return validator.binary_dxf_info(data)
     if validator.is_dxf_file(filename):
-        with open(filename, "rt") as fp:
+        # the relevant information has 7-bit ASCII encoding
+        with open(filename, "rt", errors="ignore") as fp:
             return validator.dxf_info(fp)
     else:
         raise IOError("Not a DXF files.")
