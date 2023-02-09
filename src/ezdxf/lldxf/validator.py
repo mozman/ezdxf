@@ -1,7 +1,7 @@
 # Copyright (C) 2018-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TextIO, Iterable, Optional, cast, Sequence
+from typing import TextIO, Iterable, Optional, cast, Sequence, Iterator
 import logging
 import io
 import bisect
@@ -25,7 +25,7 @@ from .const import (
     TRANSPARENCY_BYBLOCK,
 )
 
-from .tagger import ascii_tags_loader
+from .tagger import ascii_tags_loader, binary_tags_loader
 from .types import is_embedded_object_marker, DXFTag, NONE_TAG
 from ezdxf.tools.codepage import toencoding
 from ezdxf.math import NULLVEC, Vec3
@@ -60,6 +60,21 @@ class DXFInfo:
         self.insert_units: int = 0  # unitless
         self.insert_base: Vec3 = NULLVEC
 
+    def __str__(self) -> str:
+        return "\n".join(self.data_strings())
+
+    def data_strings(self) -> list[str]:
+        from ezdxf import units
+
+        return [
+            f"release: {self.release}",
+            f"version: {self.version}",
+            f"encoding: {self.encoding}",
+            f"next handle: 0x{self.handseed}",
+            f"insert units: {self.insert_units} <{units.decode(self.insert_units)}>",
+            f"insert base point: {self.insert_base}",
+        ]
+
     def set_header_var(self, name: str, value: str) -> int:
         if name == "$ACADVER":
             self.version = value
@@ -83,14 +98,24 @@ class DXFInfo:
         return 1
 
 
-# TODO: make dxf_info() scanner for binary DXF files
 def dxf_info(stream: TextIO) -> DXFInfo:
     """Scans the HEADER section of an ASCII DXF document and returns a :class:`DXFInfo`
     object, which contains information about the DXF version, text encoding, drawing
     units and insertion base point.
     """
+    return _detect_dxf_info(ascii_tags_loader(stream))
+
+
+def binary_dxf_info(data: bytes) -> DXFInfo:
+    """Scans the HEADER section of a binary DXF document and returns a :class:`DXFInfo`
+    object, which contains information about the DXF version, text encoding, drawing
+    units and insertion base point.
+    """
+    return _detect_dxf_info(binary_tags_loader(data))
+
+
+def _detect_dxf_info(tagger: Iterator[DXFTag]) -> DXFInfo:
     info = DXFInfo()
-    tagger = ascii_tags_loader(stream)
     # comments will be skipped
     if next(tagger) != (0, "SECTION"):
         # unexpected or invalid DXF structure

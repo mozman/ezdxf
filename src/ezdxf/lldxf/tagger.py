@@ -136,7 +136,7 @@ def ascii_tags_loader(
 
 def binary_tags_loader(
     data: bytes, errors: str = "surrogateescape"
-) -> Iterable[DXFTag]:
+) -> Iterator[DXFTag]:
     """Yields :class:`DXFTag` or :class:`DXFBinaryTag` objects from binary DXF
     `data` (untrusted external source) and does not optimize coordinates.
     ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is either an
@@ -249,7 +249,7 @@ def binary_tags_loader(
 INVALID_POINT_CODES = {1020, 1021, 1022, 1023, 1030, 1031, 1032, 1033}
 
 
-def tag_compiler(tags: Iterator[DXFTag]) -> Iterable[DXFTag]:
+def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
     """Compiles DXF tag values imported by ascii_tags_loader() into Python
     types.
 

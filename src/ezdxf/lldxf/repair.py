@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("ezdxf")
 
 
-def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
+def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterator[DXFTag]:
     """Reorder coordinates of legacy DXF Entities, for now only LINE.
 
     Input Raw tag filter.
