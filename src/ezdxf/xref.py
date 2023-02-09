@@ -12,11 +12,12 @@ from typing_extensions import Protocol, TypeAlias
 import enum
 import pathlib
 import logging
+import os
 
 import ezdxf
 from ezdxf.lldxf import const, validator, types
 from ezdxf.lldxf.tags import Tags
-from ezdxf.lldxf.validator import dxf_info, DXFInfo
+from ezdxf.lldxf.validator import DXFInfo
 from ezdxf.document import Drawing
 from ezdxf.layouts import BaseLayout, Paperspace, BlockLayout
 from ezdxf.entities import (
@@ -85,6 +86,28 @@ class ConflictPolicy(enum.Enum):
 
     # rename loaded resource to $0$<name> if the loaded resource <name> already exist
     NUM_PREFIX = enum.auto()
+
+
+def dxf_info(filename: str | os.PathLike) -> DXFInfo:
+    """Scans the HEADER section of a DXF document and returns a :class:`DXFInfo`
+    object, which contains information about the DXF version, text encoding, drawing
+    units and insertion base point.
+
+    Raises:
+        IOError: not a DXF file
+
+    """
+    filename = str(filename)
+    if validator.is_binary_dxf_file(filename):
+        with open(filename, "rb") as fp:
+            # The HEADER section of a DXF R2018 file has length of ~5300 bytes
+            data = fp.read(8192)
+        return validator.binary_dxf_info(data)
+    if validator.is_dxf_file(filename):
+        with open(filename, "rt") as fp:
+            return validator.dxf_info(fp)
+    else:
+        raise IOError("Not a DXF files.")
 
 
 # Exceptions from the ConflictPolicy
