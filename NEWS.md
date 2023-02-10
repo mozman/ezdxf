@@ -12,6 +12,8 @@ Version 1.0.2b0 - dev
 - BUGFIX: fix ownership of sub-entities of `INSERT` and `POLYLINE` entities
 - BUGFIX: [#830](https://github.com/mozman/ezdxf/issues/830)
   estimation of MTEXT column width when only white-spaces are present
+- BUGFIX: [#831](https://github.com/mozman/ezdxf/issues/831)
+  fix Bezier interpolation for B-splines of length 0
 
 Version 1.0.1 - 2023-01-14
 --------------------------

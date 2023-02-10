@@ -204,6 +204,11 @@ def test_bspline_interpolation(fit_points):
     assert close_vectors(t_points, fit_points)
 
 
+@pytest.mark.parametrize("method", ["distance", "centripetal", "arc"])
+def test_create_t_vectors_for_identical_points(method):
+    assert len(list(create_t_vector(Vec3.list([(0, 0), (0, 0)]), method))) == 0
+
+
 def test_bspline_interpolation_first_derivatives(fit_points):
     tangents = estimate_tangents(fit_points)
     spline = global_bspline_interpolation(
