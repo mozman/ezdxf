@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, Manfred Moitzi
+# Copyright (c) 2021-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Iterable, Optional, Tuple, NamedTuple
@@ -136,6 +136,10 @@ clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
 """
 
 
+class LayoutError(Exception):
+    pass
+
+
 class Stacking(enum.IntEnum):
     OVER = 0
     LINE = 1
@@ -250,9 +254,7 @@ def resolve_margins(margins: Optional[Sequence[float]]) -> Tuple4f:
     return 0, 0, 0, 0
 
 
-def insert_location(
-    align: LayoutAlignment, width: float, height: float
-) -> Tuple2f:
+def insert_location(align: LayoutAlignment, width: float, height: float) -> Tuple2f:
     """Returns the left top corner adjusted to the given alignment."""
     left: float = 0.0
     top: float = 0.0
@@ -312,11 +314,9 @@ class Box(abc.ABC):
         """
         try:
             x, y = self.final_location()
-        except (ValueError, TypeError):
+        except (LayoutError, TypeError):
             x, y = 0, 0
-        return BoundingBox2d(
-            [(x, y), (x + self.total_width, y - self.total_height)]
-        )
+        return BoundingBox2d([(x, y), (x + self.total_width, y - self.total_height)])
 
 
 class Cell(Box):  # ABC
@@ -340,7 +340,10 @@ class Glue(Cell):  # ABC
     EMPTY: tuple = tuple()
 
     def __init__(
-        self, width: float, min_width: Optional[float] = None, max_width: Optional[float] = None
+        self,
+        width: float,
+        min_width: Optional[float] = None,
+        max_width: Optional[float] = None,
     ):
         self._width: float = float(width)
         self._min_width = float(min_width) if min_width else self._width
@@ -583,9 +586,7 @@ class Fraction(ContentCell):
             self._height = top.total_height + bottom.total_height
             self._width = top.total_width + bottom.total_width
         else:
-            self._height = self.HEIGHT_SCALE * (
-                top.total_height + bottom.total_height
-            )
+            self._height = self.HEIGHT_SCALE * (top.total_height + bottom.total_height)
             self._width = max(top.total_width, bottom.total_width)
 
     def place(self, x: float, y: float):
@@ -597,7 +598,7 @@ class Fraction(ContentCell):
         top_content = self._top_content
         bottom_content = self._bottom_content
         if top_content is None or bottom_content is None:
-            raise ValueError("no content set")
+            raise LayoutError("no content set")
 
         if self._stacking == Stacking.SLANTED:
             top_content.place(x, y)  # left/top
@@ -666,10 +667,9 @@ def normalize_cells(cells: Iterable[Cell]) -> list[Cell]:
     cells = list(cells)
     prev = None
     for index, cell in enumerate(cells):
-
         if isinstance(cell, _content):
             if isinstance(prev, _content):
-                raise ValueError("no glue between content cells")
+                raise LayoutError("no glue between content cells")
         elif isinstance(cell, NonBreakingSpace) and is_useless_nbsp():
             cell = cell.to_space()
             replace_pending_nbsp_by_spaces()
@@ -714,7 +714,7 @@ class Container(Box):
 
     def final_location(self):
         if not self.is_placed():
-            raise ValueError("Container is not placed.")
+            raise LayoutError("Container is not placed.")
         return self._final_x, self._final_y
 
     def is_placed(self) -> bool:
@@ -772,7 +772,7 @@ class Container(Box):
         (x, y) is the top/left corner
         """
         if not self.is_placed():
-            raise ValueError("Layout has to be placed before rendering")
+            raise LayoutError("Layout has to be placed before rendering")
         if self.renderer:
             self.render_background(m)
         self.render_content(m)
@@ -870,7 +870,7 @@ class Paragraph(Container):
     def set_total_width(self, width: float):
         self._content_width = width - self.left_margin - self.right_margin
         if self._content_width < 1e-6:
-            raise ValueError("invalid width, no usable space left")
+            raise LayoutError("invalid width, no usable space left")
 
     def append_content(self, content: Iterable[Cell]):
         self._cells.extend(content)
@@ -941,7 +941,7 @@ class Paragraph(Container):
             elif align == ParagraphAlignment.CENTER:
                 return CenterLine(width)
             else:
-                raise ValueError(align)
+                raise LayoutError(align)
 
         cells: list[Cell] = normalize_cells(self._cells)
         cells = group_non_breakable_cells(cells)
@@ -1096,8 +1096,7 @@ class Column(Container):
         height = 0.0
         if paragraphs:
             height = sum(
-                p.total_height + p.distance_to_next_paragraph
-                for p in paragraphs[:-1]
+                p.total_height + p.distance_to_next_paragraph for p in paragraphs[:-1]
             )
             height += paragraphs[-1].total_height
         return height
@@ -1124,9 +1123,7 @@ class Column(Container):
             p.place(x, y)
             y -= p.total_height + p.distance_to_next_paragraph
 
-    def append_paragraphs(
-        self, paragraphs: Iterable[Paragraph]
-    ) -> list[Paragraph]:
+    def append_paragraphs(self, paragraphs: Iterable[Paragraph]) -> list[Paragraph]:
         remainder: list[Paragraph] = []
         for paragraph in paragraphs:
             if remainder:
@@ -1273,11 +1270,11 @@ class Layout(Container):
             self._current_column = len(self._columns) - 1
             remainder = column.append_paragraphs(remainder)
             if self._current_column > 100:
-                raise ValueError("Internal error - not enough space!?")
+                raise LayoutError("Internal error - not enough space!?")
 
     def _new_column(self) -> Column:
         if len(self._columns) == 0:
-            raise ValueError("no column exist")
+            raise LayoutError("no column exist")
         empty = self._columns[-1].clone_empty()
         self._columns.append(empty)
         return empty
@@ -1322,9 +1319,7 @@ class RigidConnection(ContentCell):
 
     def growable_glue(self) -> Iterable[Glue]:
         return (
-            cell
-            for cell in self._cells
-            if isinstance(cell, Glue) and cell.can_grow
+            cell for cell in self._cells if isinstance(cell, Glue) and cell.can_grow
         )
 
 
