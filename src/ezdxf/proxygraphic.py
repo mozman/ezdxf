@@ -13,6 +13,7 @@ from typing import (
 import sys
 import struct
 import math
+import os
 from enum import IntEnum
 from itertools import repeat
 from ezdxf.lldxf import const
@@ -244,6 +245,7 @@ class ProxyGraphicTypes(IntEnum):
     UNICODE_TEXT = 36
     UNKNOWN_37 = 37
     UNICODE_TEXT2 = 38
+    ELLIPTIC_ARC = 44  # found in test data of issue #832
 
 
 class ProxyGraphic:
@@ -458,6 +460,26 @@ class ProxyGraphic:
         attribs["start_angle"] = arc.start_angle
         attribs["end_angle"] = arc.end_angle
         return self._factory("ARC", dxfattribs=attribs)
+
+    def elliptic_arc(self, data: bytes):
+        bs = ByteStream(data)
+        attribs = self._build_dxf_attribs()
+        attribs["center"] = Vec3(bs.read_vertex())
+        extrusion = Vec3(bs.read_vertex())
+        attribs["extrusion"] = extrusion
+        major_axis_length = bs.read_float()
+        minor_axis_length = bs.read_float()
+        attribs["ratio"] = minor_axis_length / major_axis_length
+        start_param = bs.read_float()
+        end_param = bs.read_float()
+        major_axis_angle = bs.read_float()
+
+        ocs = OCS(extrusion)
+        major_axis = ocs.to_wcs(Vec3.from_angle(major_axis_angle, major_axis_length))
+        attribs["major_axis"] = major_axis
+        attribs["start_param"] = start_param
+        attribs["end_param"] = end_param
+        return self._factory("ELLIPSE", dxfattribs=attribs)
 
     def _filled_polygon(self, vertices, attribs):
         hatch = cast("Hatch", self._factory("HATCH", dxfattribs=attribs))
