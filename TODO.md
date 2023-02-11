@@ -51,8 +51,11 @@ Apply minimal Python version update to:
 Other
 -----
 
-- add `BaseLayout.transform()` method to transform the content of any layout inplace by
+- `BaseLayout.transform(m)` method to transform the content of any layout inplace by
   a transformation matrix `Matrix44`
+- `BaseLayout.add_pdf_overlay(filename, insert, scale=1, rotation=0, dxfattribs=None)`
+  a simple interface to add PDF overlays, the management of underlay definitions is 
+  done automatically 
 
 Ideas for Future Releases
 =========================

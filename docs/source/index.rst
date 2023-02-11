@@ -102,6 +102,7 @@ Contents
    usage_for_beginners
    concepts/index
    tutorials/index
+   xref
    howto/index
    faq
    reference

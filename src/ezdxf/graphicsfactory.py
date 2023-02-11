@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2022, Manfred Moitzi
+# Copyright (c) 2013-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -452,7 +452,7 @@ class CreatorInterface:
             )
 
         close = dxfattribs.pop("closed", close)
-        polyline: "Polyline" = self.new_entity("POLYLINE", dxfattribs)  # type: ignore
+        polyline: Polyline = self.new_entity("POLYLINE", dxfattribs)  # type: ignore
         polyline.close(close)
         if format is not None:
             polyline.append_formatted_vertices(points, format=format)
@@ -531,7 +531,7 @@ class CreatorInterface:
         )
         m_close = dxfattribs.pop("m_close", False)
         n_close = dxfattribs.pop("n_close", False)
-        polyface: "Polyface" = self.new_entity("POLYLINE", dxfattribs)  # type: ignore
+        polyface: Polyface = self.new_entity("POLYLINE", dxfattribs)  # type: ignore
         polyface.close(m_close, n_close)
         if self.doc:
             polyface.add_sub_entities_to_entitydb(self.doc.entitydb)
@@ -540,7 +540,7 @@ class CreatorInterface:
 
     def _add_quadrilateral(
         self, type_: str, points: Iterable[UVec], dxfattribs=None
-    ) -> "DXFGraphic":
+    ) -> DXFGraphic:
         dxfattribs = dict(dxfattribs or {})
         entity = self.new_entity(type_, dxfattribs)
         for x, point in enumerate(self._four_points(points)):
@@ -627,7 +627,7 @@ class CreatorInterface:
                 DeprecationWarning,
             )
         close = dxfattribs.pop("closed", close)
-        lwpolyline: "LWPolyline" = self.new_entity("LWPOLYLINE", dxfattribs)  # type: ignore
+        lwpolyline: LWPolyline = self.new_entity("LWPOLYLINE", dxfattribs)  # type: ignore
         lwpolyline.set_points(points, format=format)
         lwpolyline.closed = close
         return lwpolyline
@@ -900,7 +900,7 @@ class CreatorInterface:
             raise DXFVersionError("SPLINE requires DXF R2000")
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["degree"] = int(degree)
-        spline: "Spline" = self.new_entity("SPLINE", dxfattribs)  # type: ignore
+        spline: Spline = self.new_entity("SPLINE", dxfattribs)  # type: ignore
         if fit_points is not None:
             spline.fit_points = Vec3.generate(fit_points)
         return spline
@@ -1290,7 +1290,7 @@ class CreatorInterface:
         base: UVec,
         p1: UVec,
         p2: UVec,
-        location: UVec = None,
+        location: Optional[UVec] = None,
         text: str = "<>",
         angle: float = 0,
         # 0=horizontal, 90=vertical, else=rotated
@@ -1339,7 +1339,7 @@ class CreatorInterface:
 
         """
         type_ = {"dimtype": const.DIM_LINEAR | const.DIM_BLOCK_EXCLUSIVE}
-        dimline: "Dimension" = self.new_entity("DIMENSION", dxfattribs=type_)  # type: ignore
+        dimline: Dimension = self.new_entity("DIMENSION", dxfattribs=type_)  # type: ignore
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
         dxfattribs["defpoint"] = Vec3(base)  # group code 10
@@ -1488,7 +1488,7 @@ class CreatorInterface:
         line1: tuple[UVec, UVec],
         line2: tuple[UVec, UVec],
         *,
-        location: UVec = None,
+        location: Optional[UVec] = None,
         text: str = "<>",
         text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
@@ -1538,7 +1538,7 @@ class CreatorInterface:
 
         """
         type_ = {"dimtype": const.DIM_ANGULAR | const.DIM_BLOCK_EXCLUSIVE}
-        dimline: "Dimension" = self.new_entity("DIMENSION", dxfattribs=type_)  # type: ignore
+        dimline: Dimension = self.new_entity("DIMENSION", dxfattribs=type_)  # type: ignore
 
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
@@ -1567,7 +1567,7 @@ class CreatorInterface:
         p1: UVec,
         p2: UVec,
         *,
-        location: UVec = None,
+        location: Optional[UVec] = None,
         text: str = "<>",
         text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
@@ -1649,7 +1649,7 @@ class CreatorInterface:
         end_angle: float,
         distance: float,
         *,
-        location: UVec = None,
+        location: Optional[UVec] = None,
         text: str = "<>",
         text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
@@ -1720,7 +1720,7 @@ class CreatorInterface:
         arc: ConstructionArc,
         distance: float,
         *,
-        location: UVec = None,
+        location: Optional[UVec] = None,
         text: str = "<>",
         text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
@@ -1779,7 +1779,7 @@ class CreatorInterface:
         p1: UVec,
         p2: UVec,
         *,
-        location: UVec = None,
+        location: Optional[UVec] = None,
         text: str = "<>",
         text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
@@ -1834,7 +1834,7 @@ class CreatorInterface:
         # always set dimtype to 8 for DXF R2013+, the DXF export handles the
         # version dependent dimtype
         type_ = {"dimtype": const.DIM_ARC | const.DIM_BLOCK_EXCLUSIVE}
-        dimline: "ArcDimension" = self.new_entity(  # type: ignore
+        dimline: ArcDimension = self.new_entity(  # type: ignore
             "ARC_DIMENSION", dxfattribs=type_
         )
         dxfattribs = dict(dxfattribs or {})
@@ -1870,7 +1870,7 @@ class CreatorInterface:
         end_angle: float,
         distance: float,
         *,
-        location: UVec = None,
+        location: Optional[UVec] = None,
         text: str = "<>",
         text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
@@ -1942,7 +1942,7 @@ class CreatorInterface:
         arc: ConstructionArc,
         distance: float,
         *,
-        location: UVec = None,
+        location: Optional[UVec] = None,
         text: str = "<>",
         text_rotation: Optional[float] = None,
         dimstyle: str = "EZ_CURVED",
@@ -2664,7 +2664,7 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError("Helix requires DXF R2000")
         dxfattribs = dict(dxfattribs or {})
-        helix: "Helix" = self.new_entity("HELIX", dxfattribs)  # type: ignore
+        helix: Helix = self.new_entity("HELIX", dxfattribs)  # type: ignore
         base = Vec3(0, 0, 0)
         helix.dxf.axis_base_point = base
         helix.dxf.radius = float(radius)
