@@ -269,7 +269,7 @@ def embed(
     load_fn: Optional[LoadFunction] = None,
     conflict_policy=ConflictPolicy.XREF_PREFIX,
 ) -> None:
-    """Loads the modelspace of the XREF as content of the block definition.
+    """Loads the modelspace of the XREF as content into a block layout.
 
     The loader function loads the XREF as `Drawing` object, by default the
     function :func:`ezdxf.readfile` is used to load DXF files. To load DWG files use the
@@ -346,7 +346,7 @@ def write_block(entities: Sequence[DXFEntity], *, origin: UVec = (0, 0, 0)) -> D
     """Write `entities` into the modelspace of a new DXF document.
 
     This function is called "write_block" because the new DXF document can be used as
-    an external referenced block.  This function is similar to the WBLOCK command of CAD
+    an external referenced block.  This function is similar to the WBLOCK command in CAD
     applications.
 
     Virtual entities are not supported, because each entity needs a real database- and
