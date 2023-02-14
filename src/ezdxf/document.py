@@ -17,6 +17,7 @@ import base64
 import io
 import logging
 import os
+import pathlib
 from datetime import datetime, timezone
 from itertools import chain
 
@@ -312,6 +313,12 @@ class Drawing:
                 f"{const.acad_release[version]} can cause lost of features."
             )
         return version
+
+    def get_abs_filepath(self) -> pathlib.Path:
+        """Returns the absolute filepath of the document."""
+        if not self.filename:
+            return pathlib.Path(".")
+        return pathlib.Path(self.filename).resolve()
 
     @classmethod
     def read(cls, stream: TextIO) -> Drawing:
