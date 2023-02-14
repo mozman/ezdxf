@@ -29,6 +29,7 @@ from ezdxf.entities import (
     UCSTableEntry,
     BlockRecord,
     DimStyle,
+    is_graphic_entity,
 )
 
 if TYPE_CHECKING:
@@ -393,6 +394,18 @@ class LayerTable(Table[Layer]):
         if transparency is not None:
             layer.transparency = transparency
         return layer
+
+    def create_referenced_layers(self) -> None:
+        """Create for all referenced layers table entries if not exist."""
+        if self.doc is None:
+            return
+        for e in self.doc.entitydb.values():
+            if not is_graphic_entity(e):
+                continue
+            layer_name = e.dxf.get("layer", "")
+            if layer_name and not self.has_entry(layer_name):
+                # create layer table entry with default settings
+                self.add(layer_name)
 
 
 class LinetypeTable(Table[Linetype]):
