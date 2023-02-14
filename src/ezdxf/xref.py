@@ -357,8 +357,7 @@ def embed(
         )
     loader = Loader(source_doc, target_doc, conflict_policy=conflict_policy)
     loader.load_modelspace(xref)
-    # todo: this does not work
-    loader.execute(xref_name=xref.name)
+    loader.execute(xref_prefix=xref.name)
     # reset XREF flags:
     block.set_flag_state(const.BLK_XREF | const.BLK_EXTERNAL, state=False)
     # update BLOCK origin:
@@ -848,7 +847,7 @@ class Loader:
         entities = _get_table_entries(names, self.sdoc.materials)
         self.add_command(LoadResources(entities))
 
-    def execute(self, xref_name: str = "") -> None:
+    def execute(self, xref_prefix: str = "") -> None:
         registry = _Registry(self.sdoc, self.tdoc)
         debug = ezdxf.options.debug
 
@@ -871,8 +870,8 @@ class Loader:
             handle_mapping=cpm.handle_mapping,
             conflict_policy=self.conflict_policy,
         )
-        if xref_name:
-            transfer.xref_name = str(xref_name)
+        if xref_prefix:
+            transfer.xref_prefix = str(xref_prefix)
         transfer.add_object_copies(cpm.objects)
         transfer.register_classes(cpm.classes)
         transfer.register_table_resources()
@@ -1014,7 +1013,7 @@ class _Transfer:
         self.copied_blocks = copies
         self.copied_objects = objects
         self.conflict_policy = conflict_policy
-        self.xref_name = get_xref_name(registry.source_doc)
+        self.xref_prefix = get_xref_name(registry.source_doc)
         self.layer_mapping: dict[str, str] = {}
         self.linetype_mapping: dict[str, str] = {}
         self.text_style_mapping: dict[str, str] = {}
@@ -1093,7 +1092,9 @@ class _Transfer:
             if self.conflict_policy == ConflictPolicy.KEEP:
                 return entry_name, existing_entry
             elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
-                entry_name = get_unique_dict_key(entry_name, self.xref_name, acad_dict)
+                entry_name = get_unique_dict_key(
+                    entry_name, self.xref_prefix, acad_dict
+                )
             elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
                 entry_name = get_unique_dict_key(entry_name, "", acad_dict)
 
@@ -1362,7 +1363,7 @@ class _Transfer:
                 return
         elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
             # always rename
-            entity.dxf.name = get_unique_table_name(name, self.xref_name, table)
+            entity.dxf.name = get_unique_table_name(name, self.xref_prefix, table)
         elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
             if table.has_entry(name):  # rename only if exist
                 entity.dxf.name = get_unique_table_name(name, "", table)
@@ -1393,7 +1394,7 @@ class _Transfer:
                 return
         elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
             # always rename
-            entry.dxf.name = get_unique_table_name(name, self.xref_name, collection)
+            entry.dxf.name = get_unique_table_name(name, self.xref_prefix, collection)
         elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
             if collection.has_entry(name):  # rename only if exist
                 entry.dxf.name = get_unique_table_name(name, "", collection)
