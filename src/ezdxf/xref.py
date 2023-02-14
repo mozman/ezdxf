@@ -263,10 +263,41 @@ def attach(
     return msp.add_blockref(block_name, insert=location, dxfattribs=dxfattribs)
 
 
+def find_xref(xref_filename: str, search_paths: Sequence[pathlib.Path]) -> pathlib.Path:
+    """Returns the path of the XREF file.
+
+    Args:
+        xref_filename: filename of the XREF, absolute or relative path
+        search_paths: search paths where to look for the XREF file
+
+    """
+    filepath = pathlib.Path(xref_filename)
+    # 1. check absolute xref_filename
+    if filepath.exists():
+        return filepath
+
+    name = filepath.name
+    for path in search_paths:
+        if not path.is_dir():
+            path = path.parent
+        search_path = path.resolve()
+        # 2. check relative xref path to search path
+        filepath = search_path / xref_filename
+        if filepath.exists():
+            return filepath
+        # 3. check if the file is in the search folder
+        filepath = search_path / name
+        if filepath.exists():
+            return filepath
+
+    return pathlib.Path(xref_filename)
+
+
 def embed(
     xref: BlockLayout,
     *,
     load_fn: Optional[LoadFunction] = None,
+    search_paths: Iterable[pathlib.Path | str] = tuple(),
     conflict_policy=ConflictPolicy.XREF_PREFIX,
 ) -> None:
     """Loads the modelspace of the XREF as content into a block layout.
@@ -277,9 +308,14 @@ def embed(
     add-on. The :func:`ezdxf.recover.readfile` function is very robust for reading DXF
     files with errors.
 
+    If the XREF path isn't absolute the XREF is searched in the folder of the host DXF
+    document and in the `search_path` folders.
+
     Args:
         xref: :class:`BlockLayout` of the XREF document
         load_fn: function to load the content of the XREF as `Drawing` object
+        search_paths: list of folders to search for XREFS, default is the folder of the
+            host document or the current directory if no filepath is set
         conflict_policy: how to resolve name conflicts
 
     Raises:
@@ -299,7 +335,15 @@ def embed(
     assert isinstance(block, Block)
     if not block.is_xref:
         raise ValueError("argument 'xref' is not a XREF definition")
-    filepath = pathlib.Path(block.dxf.get("xref_path", ""))
+
+    xref_path: str = block.dxf.get("xref_path", "")
+    if not xref_path:
+        raise ValueError("no xref path defined")
+
+    _search_paths = [pathlib.Path(p) for p in search_paths]
+    _search_paths.insert(0, target_doc.get_abs_filepath())
+
+    filepath = find_xref(xref_path, _search_paths)
     if not filepath.exists():
         raise FileNotFoundError(f"file not found: '{filepath}'")
 
@@ -313,13 +357,14 @@ def embed(
         )
     loader = Loader(source_doc, target_doc, conflict_policy=conflict_policy)
     loader.load_modelspace(xref)
-    loader.execute()
+    # todo: this does not work
+    loader.execute(xref_name=xref.name)
     # reset XREF flags:
     block.set_flag_state(const.BLK_XREF | const.BLK_EXTERNAL, state=False)
     # update BLOCK origin:
     origin = source_doc.header.get("$INSBASE")
     if origin:
-        block.dxf.origin = Vec3(origin)
+        block.dxf.base_point = Vec3(origin)
 
 
 def detach(block: BlockLayout, *, xref_filename: str) -> Drawing:
@@ -803,7 +848,7 @@ class Loader:
         entities = _get_table_entries(names, self.sdoc.materials)
         self.add_command(LoadResources(entities))
 
-    def execute(self) -> None:
+    def execute(self, xref_name: str = "") -> None:
         registry = _Registry(self.sdoc, self.tdoc)
         debug = ezdxf.options.debug
 
@@ -826,6 +871,8 @@ class Loader:
             handle_mapping=cpm.handle_mapping,
             conflict_policy=self.conflict_policy,
         )
+        if xref_name:
+            transfer.xref_name = str(xref_name)
         transfer.add_object_copies(cpm.objects)
         transfer.register_classes(cpm.classes)
         transfer.register_table_resources()
