@@ -59,7 +59,6 @@ class AuditError(IntEnum):
     UNDEFINED_BLOCK_NAME = 115
     INVALID_INTEGER_VALUE = 116
     INVALID_FLOATING_POINT_VALUE = 117
-    REMOVED_ENTITY_FROM_BLOCK_RECORD = 118
 
     # DXF entity property errors:
     INVALID_ENTITY_HANDLE = 201
@@ -162,9 +161,9 @@ class Auditor:
     ) -> None:
         def entity_str(count, code, entity):
             if entity is not None:
-                return f"{count:4d}. Issue [{code}] in {str(entity)}."
+                return f"{count:4d}. Error [{code}] in {str(entity)}."
             else:
-                return f"{count:4d}. Issue [{code}]."
+                return f"{count:4d}. Error [{code}]."
 
         if errors is None:
             errors = self.errors
@@ -175,13 +174,11 @@ class Auditor:
             stream = sys.stdout
 
         if len(errors) == 0:
-            stream.write("No issues found.\n\n")
+            stream.write("No unrecoverable errors found.\n\n")
         else:
-            stream.write(f"{len(errors)} issues found.\n\n")
+            stream.write(f"{len(errors)} errors found.\n\n")
             for count, error in enumerate(errors):
-                stream.write(
-                    entity_str(count + 1, error.code, error.entity) + "\n"
-                )
+                stream.write(entity_str(count + 1, error.code, error.entity) + "\n")
                 stream.write("   " + error.message + "\n\n")
 
     def print_fixed_errors(self, stream: Optional[TextIO] = None) -> None:
@@ -199,9 +196,7 @@ class Auditor:
         else:
             stream.write(f"{len(self.fixes)} issues fixed.\n\n")
             for count, error in enumerate(self.fixes):
-                stream.write(
-                    entity_str(count + 1, error.code, error.entity) + "\n"
-                )
+                stream.write(entity_str(count + 1, error.code, error.entity) + "\n")
                 stream.write("   " + error.message + "\n\n")
 
     def add_error(
@@ -473,9 +468,7 @@ class BlockCycleDetector:
     def _build_block_ledger(self, blocks: BlocksSection) -> dict[str, set[str]]:
         ledger = dict()
         for block in blocks:
-            inserts = {
-                self.key(insert.dxf.name) for insert in block.query("INSERT")
-            }
+            inserts = {self.key(insert.dxf.name) for insert in block.query("INSERT")}
             ledger[self.key(block.name)] = inserts
         return ledger
 

@@ -304,25 +304,4 @@ class BlockRecord(DXFEntity):
         if not self.is_alive:
             return
         super().audit(auditor)
-        entitydb = auditor.entitydb
-        rec_name = self.dxf.name
-        trash = []
-        for entity in self.entity_space:
-            if entity.is_alive:
-                check = entitydb.get(entity.dxf.handle)
-                if check is not entity:
-                    # Different entity stored in the database for this handle,
-                    # scenario #604:
-                    # - document has entities without handles (invalid for DXF R13+)
-                    # - $HANDSEED is not the next usable handle (dubious, causes error #1)
-                    # - entity gets an already used handle (loading error #1)
-                    # - entity overwrites existing entity or will be
-                    #   overwritten by an entity loaded afterwards (loading error #2)
-                    trash.append(entity)
-                    auditor.fixed_error(
-                        code=AuditError.REMOVED_ENTITY_FROM_BLOCK_RECORD,
-                        message=f"Removed invalid database entry {str(entity)}"
-                        f' from BLOCK_RECORD "{rec_name}".',
-                    )
-        for e in trash:
-            self.entity_space.remove(e)
+        self.entity_space.audit(auditor)
