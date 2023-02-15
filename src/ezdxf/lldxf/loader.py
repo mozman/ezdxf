@@ -92,9 +92,7 @@ def load_dxf_structure(
         tag = entity[0]
         if tag == (0, "SECTION"):
             if inside_section():
-                raise DXFStructureError(
-                    "DXFStructureError: missing ENDSEC tag."
-                )
+                raise DXFStructureError("DXFStructureError: missing ENDSEC tag.")
             if len(section):
                 logger.warning(
                     "DXF Structure Warning: found tags outside a SECTION, "
@@ -122,9 +120,7 @@ def load_dxf_structure(
         elif tag == (0, "EOF"):
             # EOF tag is not collected.
             if eof:
-                logger.warning(
-                    "DXF Structure Warning: found more than one EOF tags."
-                )
+                logger.warning("DXF Structure Warning: found more than one EOF tags.")
             eof = True
         else:
             section.append(entity)
@@ -144,10 +140,16 @@ def load_dxf_entities(
 
 def load_and_bind_dxf_content(sections: dict, doc: Drawing) -> None:
     # HEADER has no database entries.
+    db = doc.entitydb
     for name in ["TABLES", "CLASSES", "ENTITIES", "BLOCKS", "OBJECTS"]:
         if name in sections:
             section = sections[name]
             for index, entity in enumerate(load_dxf_entities(section, doc)):
+                handle = entity.dxf.get("handle")
+                if handle and handle in db:
+                    logger.warning(
+                        f"Found non-unique entity handle #{handle}, data validation is required."
+                    )
                 # Replace Tags() by DXFEntity() objects
                 section[index] = entity
                 # Bind entities to the DXF document:
