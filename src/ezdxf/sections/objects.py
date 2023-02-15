@@ -74,7 +74,7 @@ class ObjectsSection:
 
         for entity in entities:
             # No check for valid entities here:
-            # Use the audit- or the recover module to fix invalid DXF files!
+            # Use the audit or the recover module to fix invalid DXF files!
             self._entity_space.add(entity)
 
     def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
@@ -251,6 +251,7 @@ class ObjectsSection:
                     f"from OBJECTS section.",
                 )
                 auditor.trash(entity)
+        self._entity_space.audit(auditor)
 
     def add_dictionary(self, owner: str = "0", hard_owned: bool = True) -> Dictionary:
         """Add new :class:`~ezdxf.entities.Dictionary` object.

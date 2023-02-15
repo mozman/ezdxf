@@ -11,6 +11,7 @@ from ezdxf.lldxf.const import (
 )
 
 if TYPE_CHECKING:
+    from ezdxf.audit import Auditor
     from ezdxf.document import Drawing
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.entities import (
@@ -50,7 +51,7 @@ class ExtensionDict:
         """Returns the underlying :class:`~ezdxf.entities.Dictionary` object."""
         xdict = self._xdict
         assert xdict is not None, "destroyed extension dictionary"
-        assert not isinstance(xdict, str), "dictionary handle not resolved"
+        assert not isinstance(xdict, str), f"dictionary handle #{xdict} not resolved"
         return xdict
 
     @property

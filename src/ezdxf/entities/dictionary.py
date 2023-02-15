@@ -138,7 +138,8 @@ class Dictionary(DXFObject):
     def del_source_of_copy(self) -> None:
         super().del_source_of_copy()
         for _, entity in self.items():
-            entity.del_source_of_copy()
+            if isinstance(entity, DXFEntity) and entity.is_alive:
+                entity.del_source_of_copy()
 
     def post_bind_hook(self) -> None:
         """Called by binding a new or copied dictionary to the document,

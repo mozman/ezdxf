@@ -400,3 +400,22 @@ class EntitySpace:
 
     def insert(self, index: int, entity: DXFEntity) -> None:
         self.entities.insert(index, entity)
+
+    def audit(self, auditor: Auditor) -> None:
+        db = auditor.entitydb
+        purge = False
+        # Check if every entity is the entity that is stored for this handle in the
+        # entity database.  This can happen if the same handle is assigned multiple
+        # times to different entities.
+        for entity in self:
+            handle = entity.dxf.handle
+            db_entry = db.get(handle)
+            if entity is not db_entry:
+                auditor.fixed_error(
+                    AuditError.REMOVED_INVALID_DXF_OBJECT,
+                    f"Removed entity {entity} with conflicting handle and without database entry.",
+                )
+                entity.destroy()
+                purge = True
+        if purge:
+            self.purge()
