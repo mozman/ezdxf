@@ -25,7 +25,7 @@ def cubic_bezier_interpolation(
     # Source: https://towardsdatascience.com/b%C3%A9zier-interpolation-8033e9a262c2
     pnts = Vec3.tuple(points)
     if len(pnts) < 3:
-        raise ValueError("At least 3 points required.")
+        return
 
     num = len(pnts) - 1
 

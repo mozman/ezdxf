@@ -214,6 +214,7 @@ class TestLoadEntities:
     @pytest.fixture
     def sdoc(self) -> Drawing:
         doc = ezdxf.new()
+        doc.filename = "xref"
         doc.layers.add("Layer0")
         doc.linetypes.add("LType0", [0.0])  # CONTINUOUS
         doc.appids.add("TEST_ID")
@@ -236,6 +237,20 @@ class TestLoadEntities:
         assert point.doc is tdoc, "wrong document assigment"
         assert point.dxf.owner == target_msp.block_record_handle, "wrong owner handle"
         assert point.dxf.layer == "Layer0", "layer attribute not copied"
+
+    def test_load_entity_layer_without_layer_table_entry(self, sdoc):
+        msp = sdoc.modelspace()
+        msp.add_point((0, 0), dxfattribs={"layer": "POINT"})
+        tdoc = ezdxf.new()
+        xref.load_modelspace(
+            sdoc, tdoc, conflict_policy=xref.ConflictPolicy.XREF_PREFIX
+        )
+        assert document_has_no_errors(tdoc) is True
+        target_msp = tdoc.modelspace()
+        point = target_msp[0]
+        assert (
+            point.dxf.layer == "POINT"
+        ), "layer names without a layer table entry can not be rename"
 
     def test_load_entity_with_xdata(self, sdoc):
         msp = sdoc.modelspace()

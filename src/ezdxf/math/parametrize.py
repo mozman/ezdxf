@@ -50,6 +50,8 @@ def centripetal_t_vector(fit_points: list[Vec3]) -> Iterable[float]:
 
 def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
     total_length = sum(distances)
+    if abs(total_length) <= 1e-12:
+        return
     s = 0.0
     yield s
     for d in distances:
@@ -88,6 +90,8 @@ def arc_distances(fit_points: list[Vec3]) -> Iterable[float]:
             yield radius
 
     r: list[float] = list(_radii())
+    if len(r) == 0:
+        return
     r.append(r[-1])  # 2x last radius
     for k in range(0, len(p) - 1):
         distance = (p[k + 1] - p[k]).magnitude

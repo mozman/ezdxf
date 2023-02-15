@@ -1,4 +1,4 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from typing import Iterable, List
 import pytest
@@ -207,7 +207,7 @@ class TestParagraphWithUnrestrictedHeight:
 
     def test_distribute_invalid_content(self, par):
         par.append_content(str2cells("ttt"))
-        with pytest.raises(ValueError):
+        with pytest.raises(tl.LayoutError):
             par.distribute_content(height=None)
 
     def test_distribute_common_case_without_nbsp(self, par):
@@ -602,9 +602,7 @@ class TestTextContinueStroke:
         nbsp = tl.NonBreakingSpace(width=0.5)
         tl.render_text_strokes([word, space, nbsp, space, word])
         assert len(result) == 2
-        assert (
-            result[0] == "STROKE(UNDERLINE, 4.5)"
-        ), "3 spaces should be included"
+        assert result[0] == "STROKE(UNDERLINE, 4.5)", "3 spaces should be included"
         assert result[1] == "STROKE(UNDERLINE, 3.0)", "no following spaces"
 
     def test_do_not_continue_stroke_automatically(self):
@@ -629,18 +627,14 @@ class TestFractionCell:
 
     def test_a_over_b(self):
         # y = total height = (a.total_height + b.total_height) * HEIGHT_SCALE
-        result = self.fraction(
-            tl.Stacking.OVER, x=0, y=2 * tl.Fraction.HEIGHT_SCALE
-        )
+        result = self.fraction(tl.Stacking.OVER, x=0, y=2 * tl.Fraction.HEIGHT_SCALE)
         assert len(result) == 2
         assert result[0] == "A(0.0, 1.4, 1.0, 2.4)"  # L, B, R, T
         assert result[1] == "B(0.0, 0.0, 1.0, 1.0)"  # L, B, R, T
 
     def test_a_over_line_b(self):
         # y = total height = (a.total_height + a.total_height) * HEIGHT_SCALE
-        result = self.fraction(
-            tl.Stacking.LINE, x=0, y=2 * tl.Fraction.HEIGHT_SCALE
-        )
+        result = self.fraction(tl.Stacking.LINE, x=0, y=2 * tl.Fraction.HEIGHT_SCALE)
         assert len(result) == 3
         assert result[0] == "A(0.0, 1.4, 1.0, 2.4)"  # L, B, R, T
         assert result[1] == "B(0.0, 0.0, 1.0, 1.0)"  # L, B, R, T
@@ -667,9 +661,7 @@ def str2cells(
         result = []
     for c in s.lower():
         if c == "t":
-            yield tl.Text(
-                width=content, height=1, renderer=Rect("Text", result=result)
-            )
+            yield tl.Text(width=content, height=1, renderer=Rect("Text", result=result))
         elif c == "f":
             cell = tl.Text(content / 2, 1)
             yield tl.Fraction(
@@ -717,7 +709,7 @@ class TestNormalizeCells:
     @pytest.mark.parametrize("content", ["tt", "tf", "ft", "ff"])
     def test_no_glue_between_content_raises_value_error(self, content):
         cells = str2cells(content)
-        with pytest.raises(ValueError):
+        with pytest.raises(tl.LayoutError):
             list(tl.normalize_cells(cells))
 
     @pytest.mark.parametrize("content", ["t~f", "f~f", "f~t"])
@@ -972,9 +964,7 @@ def test_shift_tab_stops_beyond_left_border():
 def test_shift_tab_stops_beyond_right_border():
     result = tl.shift_tab_stops(tab_stops(4, 8), 4, 8)
     assert len(result) == 1
-    assert (
-        result[0].pos == 8
-    ), "tab stop at the right border should be preserved"
+    assert result[0].pos == 8, "tab stop at the right border should be preserved"
 
 
 def test_empty_paragraph():

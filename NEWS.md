@@ -2,14 +2,21 @@
 News
 ====
 
-Version 1.0.2b0 - dev
----------------------
+Version 1.0.2 - 2023-02-15
+--------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
 - NEW: `Drawing.validate()` also prints report of resolved issues
 - NEW: copy and transform support for `PDFUNDERLAY`, `DWFUNDERLAY` and `DGNUNDERLAY`
+- NEW: [#832](https://github.com/mozman/ezdxf/issues/832) 
+  support for elliptic arcs in proxy graphics
+- NEW: `Drawing.get_abs_filepath()`
 - CHANGE: default flags for `UNDERLAY` entities is now 10 (underlay is on, adjust for background)
 - BUGFIX: fix ownership of sub-entities of `INSERT` and `POLYLINE` entities
+- BUGFIX: [#830](https://github.com/mozman/ezdxf/issues/830)
+  estimation of MTEXT column width when only white-spaces are present
+- BUGFIX: [#831](https://github.com/mozman/ezdxf/issues/831)
+  fix Bezier interpolation for B-splines of length 0
 
 Version 1.0.1 - 2023-01-14
 --------------------------

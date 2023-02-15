@@ -94,17 +94,18 @@ def dxf_info(filename: str | os.PathLike) -> DXFInfo:
     units and insertion base point.
 
     Raises:
-        IOError: not a DXF file
+        IOError: not a DXF file or a generic IO error
 
     """
     filename = str(filename)
     if validator.is_binary_dxf_file(filename):
         with open(filename, "rb") as fp:
-            # The HEADER section of a DXF R2018 file has length of ~5300 bytes
+            # The HEADER section of a DXF R2018 file has a length of ~5300 bytes.
             data = fp.read(8192)
         return validator.binary_dxf_info(data)
     if validator.is_dxf_file(filename):
-        with open(filename, "rt") as fp:
+        # the relevant information has 7-bit ASCII encoding
+        with open(filename, "rt", errors="ignore") as fp:
             return validator.dxf_info(fp)
     else:
         raise IOError("Not a DXF files.")
@@ -262,13 +263,44 @@ def attach(
     return msp.add_blockref(block_name, insert=location, dxfattribs=dxfattribs)
 
 
+def find_xref(xref_filename: str, search_paths: Sequence[pathlib.Path]) -> pathlib.Path:
+    """Returns the path of the XREF file.
+
+    Args:
+        xref_filename: filename of the XREF, absolute or relative path
+        search_paths: search paths where to look for the XREF file
+
+    """
+    filepath = pathlib.Path(xref_filename)
+    # 1. check absolute xref_filename
+    if filepath.exists():
+        return filepath
+
+    name = filepath.name
+    for path in search_paths:
+        if not path.is_dir():
+            path = path.parent
+        search_path = path.resolve()
+        # 2. check relative xref path to search path
+        filepath = search_path / xref_filename
+        if filepath.exists():
+            return filepath
+        # 3. check if the file is in the search folder
+        filepath = search_path / name
+        if filepath.exists():
+            return filepath
+
+    return pathlib.Path(xref_filename)
+
+
 def embed(
     xref: BlockLayout,
     *,
     load_fn: Optional[LoadFunction] = None,
+    search_paths: Iterable[pathlib.Path | str] = tuple(),
     conflict_policy=ConflictPolicy.XREF_PREFIX,
 ) -> None:
-    """Loads the modelspace of the XREF as content of the block definition.
+    """Loads the modelspace of the XREF as content into a block layout.
 
     The loader function loads the XREF as `Drawing` object, by default the
     function :func:`ezdxf.readfile` is used to load DXF files. To load DWG files use the
@@ -276,9 +308,14 @@ def embed(
     add-on. The :func:`ezdxf.recover.readfile` function is very robust for reading DXF
     files with errors.
 
+    If the XREF path isn't absolute the XREF is searched in the folder of the host DXF
+    document and in the `search_path` folders.
+
     Args:
         xref: :class:`BlockLayout` of the XREF document
         load_fn: function to load the content of the XREF as `Drawing` object
+        search_paths: list of folders to search for XREFS, default is the folder of the
+            host document or the current directory if no filepath is set
         conflict_policy: how to resolve name conflicts
 
     Raises:
@@ -298,7 +335,15 @@ def embed(
     assert isinstance(block, Block)
     if not block.is_xref:
         raise ValueError("argument 'xref' is not a XREF definition")
-    filepath = pathlib.Path(block.dxf.get("xref_path", ""))
+
+    xref_path: str = block.dxf.get("xref_path", "")
+    if not xref_path:
+        raise ValueError("no xref path defined")
+
+    _search_paths = [pathlib.Path(p) for p in search_paths]
+    _search_paths.insert(0, target_doc.get_abs_filepath())
+
+    filepath = find_xref(xref_path, _search_paths)
     if not filepath.exists():
         raise FileNotFoundError(f"file not found: '{filepath}'")
 
@@ -312,13 +357,13 @@ def embed(
         )
     loader = Loader(source_doc, target_doc, conflict_policy=conflict_policy)
     loader.load_modelspace(xref)
-    loader.execute()
+    loader.execute(xref_prefix=xref.name)
     # reset XREF flags:
     block.set_flag_state(const.BLK_XREF | const.BLK_EXTERNAL, state=False)
     # update BLOCK origin:
     origin = source_doc.header.get("$INSBASE")
     if origin:
-        block.dxf.origin = Vec3(origin)
+        block.dxf.base_point = Vec3(origin)
 
 
 def detach(block: BlockLayout, *, xref_filename: str) -> Drawing:
@@ -345,7 +390,7 @@ def write_block(entities: Sequence[DXFEntity], *, origin: UVec = (0, 0, 0)) -> D
     """Write `entities` into the modelspace of a new DXF document.
 
     This function is called "write_block" because the new DXF document can be used as
-    an external referenced block.  This function is similar to the WBLOCK command of CAD
+    an external referenced block.  This function is similar to the WBLOCK command in CAD
     applications.
 
     Virtual entities are not supported, because each entity needs a real database- and
@@ -802,7 +847,7 @@ class Loader:
         entities = _get_table_entries(names, self.sdoc.materials)
         self.add_command(LoadResources(entities))
 
-    def execute(self) -> None:
+    def execute(self, xref_prefix: str = "") -> None:
         registry = _Registry(self.sdoc, self.tdoc)
         debug = ezdxf.options.debug
 
@@ -825,6 +870,8 @@ class Loader:
             handle_mapping=cpm.handle_mapping,
             conflict_policy=self.conflict_policy,
         )
+        if xref_prefix:
+            transfer.xref_prefix = str(xref_prefix)
         transfer.add_object_copies(cpm.objects)
         transfer.register_classes(cpm.classes)
         transfer.register_table_resources()
@@ -966,7 +1013,7 @@ class _Transfer:
         self.copied_blocks = copies
         self.copied_objects = objects
         self.conflict_policy = conflict_policy
-        self.xref_name = get_xref_name(registry.source_doc)
+        self.xref_prefix = get_xref_name(registry.source_doc)
         self.layer_mapping: dict[str, str] = {}
         self.linetype_mapping: dict[str, str] = {}
         self.text_style_mapping: dict[str, str] = {}
@@ -1045,7 +1092,9 @@ class _Transfer:
             if self.conflict_policy == ConflictPolicy.KEEP:
                 return entry_name, existing_entry
             elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
-                entry_name = get_unique_dict_key(entry_name, self.xref_name, acad_dict)
+                entry_name = get_unique_dict_key(
+                    entry_name, self.xref_prefix, acad_dict
+                )
             elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
                 entry_name = get_unique_dict_key(entry_name, "", acad_dict)
 
@@ -1314,7 +1363,7 @@ class _Transfer:
                 return
         elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
             # always rename
-            entity.dxf.name = get_unique_table_name(name, self.xref_name, table)
+            entity.dxf.name = get_unique_table_name(name, self.xref_prefix, table)
         elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
             if table.has_entry(name):  # rename only if exist
                 entity.dxf.name = get_unique_table_name(name, "", table)
@@ -1345,7 +1394,7 @@ class _Transfer:
                 return
         elif self.conflict_policy == ConflictPolicy.XREF_PREFIX:
             # always rename
-            entry.dxf.name = get_unique_table_name(name, self.xref_name, collection)
+            entry.dxf.name = get_unique_table_name(name, self.xref_prefix, collection)
         elif self.conflict_policy == ConflictPolicy.NUM_PREFIX:
             if collection.has_entry(name):  # rename only if exist
                 entry.dxf.name = get_unique_table_name(name, "", collection)

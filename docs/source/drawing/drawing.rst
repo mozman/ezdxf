@@ -203,6 +203,8 @@ Drawing Class
 
     .. autoattribute:: units
 
+    .. autoattribute:: get_abs_filepath
+
     .. automethod:: save
 
     .. automethod:: saveas

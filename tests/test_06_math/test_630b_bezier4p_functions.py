@@ -45,6 +45,12 @@ def test_vertex_interpolation():
     assert p[3].isclose((0, 8))
 
 
+def test_invalid_bezier_interpolation():
+    """At least 3 points are required."""
+    assert len(list(cubic_bezier_interpolation([(0, 0)]))) == 0
+    assert len(list(cubic_bezier_interpolation([(0, 0), (1, 0)]))) == 0
+
+
 def test_quadratic_to_cubic_bezier():
     r = random.Random(0)
 

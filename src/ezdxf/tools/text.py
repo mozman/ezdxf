@@ -1774,10 +1774,15 @@ def estimate_mtext_content_extents(
     has_column_width: bool = column_width > 0.0
     lines: list[str] = fast_plain_mtext(content, split=True)  # type: ignore
 
-    if any(lines):  # has any non empty lines
+    if any(lines):  # has any non-empty lines
         line_count: int = 0
         for line in lines:
             line_width = font.text_width(line)
+            if line_width == 0 and line:
+                # line contains only white space:
+                # - MatplotlibFont returns 0 as text width
+                # - MonospaceFont returns the correct width
+                line_width = len(line) * font.space_width()
             if has_column_width:
                 # naive line wrapping, does not care about line content
                 line_count += math.ceil(line_width / column_width)

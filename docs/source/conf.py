@@ -37,7 +37,8 @@ extensions = [
     'sphinx.ext.autosummary',
 ]
 autodoc_typehints_format = "short"
-# autodoc_type_aliases = {"Vertex": "UVec"}
+autodoc_preserve_defaults = True
+autodoc_type_aliases = {'UVec': 'UVec'}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -53,7 +54,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ezdxf'
-copyright = u'2011-2022, Manfred Moitzi'
+copyright = u'2011-2023, Manfred Moitzi'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

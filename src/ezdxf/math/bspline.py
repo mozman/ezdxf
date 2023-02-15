@@ -1313,7 +1313,7 @@ class BSpline:
 
         return cubic_bezier_interpolation(points)
 
-    def approximation_params(self, level: int = 3) -> list[float]:
+    def approximation_params(self, level: int = 3) -> Sequence[float]:
         """Returns an educated guess, the first level of approximation
         segments is based on the count of control points and their distribution
         along the B-spline, every additional level is a subdivision of the
@@ -1324,6 +1324,8 @@ class BSpline:
 
         """
         params = list(create_t_vector(self._control_points, "chord"))
+        if len(params) == 0:
+            return params
         if self.max_t != 1.0:
             max_t = self.max_t
             params = [p * max_t for p in params]
