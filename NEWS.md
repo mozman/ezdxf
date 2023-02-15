@@ -2,8 +2,8 @@
 News
 ====
 
-Version 1.0.2b0 - dev
----------------------
+Version 1.0.2 - 2023-02-15
+--------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
 - NEW: `Drawing.validate()` also prints report of resolved issues
