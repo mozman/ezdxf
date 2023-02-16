@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022, Manfred Moitzi
+# Copyright (c) 2011-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -379,7 +379,7 @@ class ObjectsSection:
         return (
             raster_vars.dxf.frame,
             raster_vars.dxf.quality,
-            const.REVERSE_RASTER_UNITS.get(raster_vars.dxf.units, "none")
+            const.REVERSE_RASTER_UNITS.get(raster_vars.dxf.units, "none"),
         )
 
     def set_wipeout_variables(self, frame: int = 0) -> None:
@@ -532,6 +532,14 @@ class ObjectsSection:
         dxfattribs["owner"] = owner
         return cast("GeoData", self.add_dxf_object_with_reactor("GEODATA", dxfattribs))
 
+    def sanitize(self, auditor: Optional[Auditor] = None) -> Auditor:
+        if auditor is None:
+            assert self.doc is not None, "valid document required"
+            auditor = Auditor(self.doc)
+        sanitizer = _Sanitizer(auditor, self)
+        sanitizer.execute()
+        return auditor
+
 
 _OBJECT_TABLE_NAMES = [
     "ACAD_COLOR",
@@ -546,3 +554,84 @@ _OBJECT_TABLE_NAMES = [
     "ACAD_TABLESTYLE",
     "ACAD_VISUALSTYLE",
 ]
+
+KNOWN_DICT_CONTENT: dict[str, str] = {
+    "ACAD_COLOR": "DBCOLOR",
+    "ACAD_GROUP": "GROUP",
+    "ACAD_IMAGE_DICT": "IMAGEDEF",
+    "ACAD_DETAILVIEWSTYLE": "DETAILVIEWSTYLE",
+    "ACAD_LAYOUT": "LAYOUT",
+    "ACAD_MATERIAL": "MATERIAL",
+    "ACAD_MLEADERSTYLE": "MLEADERSTYLE",
+    "ACAD_MLINESTYLE": "MLINESTYLE",
+    "ACAD_PLOTSETTINGS": "PLOTSETTINGS",
+    "ACAD_PLOTSTYLENAME": "ACDBPLACEHOLDER",
+    "ACAD_RENDER_ACTIVE_SETTINGS": "MENTALRAYRENDERSETTINGS",
+    "ACAD_SCALELIST": "SCALE",
+    "ACAD_SECTIONVIEWSTYLE": "ACDBSECTIONVIEWSTYLE",
+    "ACAD_TABLESTYLE": "TABLESTYLE",
+    "ACAD_PDFDEFINITIONS": "PDFDEFINITION",
+    "ACAD_DWFDEFINITIONS": "DWFDEFINITION",
+    "ACAD_DGNDEFINITIONS": "DGNDEFINITION",
+    "ACAD_VISUALSTYLE": "VISUALSTYLE",
+    # Not every orphaned DICTIONARYVAR may belong to AcDbVariableDictionary!
+    "AcDbVariableDictionary": "DICTIONARYVAR",
+}
+
+
+class _Sanitizer:
+    def __init__(self, auditor: Auditor, objects: ObjectsSection) -> None:
+        self.objects = objects
+        self.auditor = auditor
+        self.removed_entity = True
+
+    def execute(self, max_loops=100) -> None:
+        loops = 0
+        self.removed_entity = True
+        while self.removed_entity and loops < max_loops:
+            loops += 1
+            self.removed_entity = False
+            self.remove_orphaned_dictionaries()
+            self.resolve_conflicting_handles()
+            self.validate_known_dictionaries()
+            # Run audit on all entities of the OBJECTS section to take the removed
+            # structures into account.
+            self.audit_objects()
+
+    def remove_orphaned_dictionaries(self) -> None:
+        # remove orphaned dictionaries (dict):
+        # - if owner does not exist
+        # - if owner is a dictionary
+        #   - owner dictionary has no entry for this dict
+        entitydb = self.auditor.entitydb
+        for dictionary in self.objects:
+            if not isinstance(dictionary, Dictionary):
+                continue
+            if dictionary is self.auditor.doc.rootdict:
+                continue
+
+    def resolve_conflicting_handles(self) -> None:
+        # find entities with same handles:
+        # - find the legit owner for them
+        # - remove entities without a legit owner
+        pass
+
+    def validate_known_dictionaries(self) -> None:
+        # check known dictionaries for valid content: KNOWN_DICT_CONTENT
+        pass
+
+    def cleanup_entitydb(self):
+        self.auditor.empty_trashcan()
+        self.auditor.entitydb.purge()
+
+    def audit_objects(self):
+        self.cleanup_entitydb()
+        auditor = self.auditor
+        current_db_size = len(auditor.entitydb)
+
+        for entity in self.objects:
+            entity.audit(auditor)
+
+        auditor.empty_trashcan()
+        if current_db_size != len(auditor.entitydb):
+            self.removed_entity = True
