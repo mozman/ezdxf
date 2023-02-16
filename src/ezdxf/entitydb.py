@@ -421,10 +421,11 @@ class EntitySpace:
                     f"Removed entity {entity} with a conflicting handle and without a "
                     f"database entry.",
                 )
-                # These are invalid entities do not call destroy() on them, because
-                # this method relies on well-defined entities!
                 purge.append(entity)
         if not purge:
             return
         for entity in purge:
             self.entities.remove(entity)
+            # These are invalid entities do not call destroy() on them, because
+            # this method relies on well-defined entities!
+            entity._silent_kill()

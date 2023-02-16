@@ -669,6 +669,22 @@ class DXFEntity:
         self.del_source_of_copy()
         self.del_source_block_reference()
 
+    def _silent_kill(self):  # final - do not override this method!
+        """Delete entity but not the referenced data content!
+
+        DANGER! DON'T USE THIS METHOD!
+
+        (internal API)
+        """
+        if not self.is_alive:
+            return
+        del self.extension_dict
+        del self.appdata
+        del self.reactors
+        del self.xdata
+        del self.doc
+        del self.dxf  # check mark for is_alive
+
     def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         """Pre requirement check and pre-processing for export.
 
