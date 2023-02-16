@@ -708,20 +708,13 @@ class EdgePath(AbstractBoundaryPath):
         edge_path.source_boundary_objects = pop_source_boundary_objects_tags(
             tags
         )
-        edge_groups = group_tags(tags, splitcode=72)
-        for edge_tags in edge_groups:
-            edge_path.edges.append(edge_path.load_edge(edge_tags))
+        for edge_tags in group_tags(tags, splitcode=72):
+            if len(edge_tags) == 0:
+                continue
+            edge_type = edge_tags[0].value
+            if 0 < edge_type < 5:
+                edge_path.edges.append(EDGE_CLASSES[edge_type].load_tags(edge_tags[1:]))
         return edge_path
-
-    @staticmethod
-    def load_edge(tags: Tags) -> AbstractEdge:
-        edge_type = tags[0].value
-        if 0 < edge_type < 5:
-            return EDGE_CLASSES[edge_type].load_tags(tags[1:])
-        else:
-            raise const.DXFStructureError(
-                f"HATCH: unknown edge type: {edge_type}"
-            )
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         """Transform edge boundary paths."""

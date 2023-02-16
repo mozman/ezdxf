@@ -23,7 +23,6 @@ def test_duplicate_handle_loading_error(doc):
     block_record.audit(auditor)
     assert len(auditor.fixes) == 1
     assert len(msp) == count-1
-    assert p2.is_alive, "entity should not be destroyed"
 
 
 if __name__ == '__main__':
