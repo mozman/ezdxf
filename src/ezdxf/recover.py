@@ -1,4 +1,4 @@
-#  Copyright (c) 2020-2022, Manfred Moitzi
+#  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 import typing
@@ -6,6 +6,7 @@ from typing import (
     TYPE_CHECKING,
     BinaryIO,
     Iterable,
+    Iterator,
     Callable,
     Union,
     Optional,
@@ -197,7 +198,7 @@ class Recover:
 
         return recover_tool
 
-    def load_tags(self, stream: BinaryIO, errors: str) -> Iterable[DXFTag]:
+    def load_tags(self, stream: BinaryIO, errors: str) -> Iterator[DXFTag]:
         return safe_tag_loader(
             stream, self.tag_loader, messages=self.errors, errors=errors
         )
@@ -411,7 +412,7 @@ class Recover:
                 header.append(tag)
                 var_name = None
 
-    def check_entities(self, entities: list[Tags]) -> Iterable[Tags]:
+    def check_entities(self, entities: list[Tags]) -> Iterator[Tags]:
         for entity in entities:
             _, dxftype = entity[0]
             if dxftype in EXCLUDE_STRUCTURE_CHECK:
@@ -477,7 +478,7 @@ def safe_tag_loader(
     loader: Optional[Callable] = None,
     messages: Optional[list] = None,
     errors: str = "surrogateescape",
-) -> Iterable[DXFTag]:
+) -> Iterator[DXFTag]:
     """Yields :class:``DXFTag`` objects from a bytes `stream`
     (untrusted external  source), skips all comment tags (group code == 999).
 
@@ -545,7 +546,7 @@ def _search_float(s: Union[str, bytes]) -> float:
 
 
 @typing.no_type_check
-def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
+def bytes_loader(stream: BinaryIO) -> Iterator[DXFTag]:
     """Yields :class:``DXFTag`` objects from a bytes `stream`
     (untrusted external  source), skips all comment tags (group code == 999).
 
@@ -590,7 +591,7 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
             return
 
 
-def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
+def synced_bytes_loader(stream: BinaryIO) -> Iterator[DXFTag]:
     """Yields :class:``DXFTag`` objects from a bytes `stream`
     (untrusted external source), skips all comment tags (group code == 999).
 
@@ -677,7 +678,7 @@ def byte_tag_compiler(
     encoding=const.DEFAULT_ENCODING,
     messages: Optional[list] = None,
     errors: str = "surrogateescape",
-) -> Iterable[DXFTag]:
+) -> Iterator[DXFTag]:
     """Compiles DXF tag values imported by bytes_loader() into Python types.
 
     Raises DXFStructureError() for invalid float values and invalid coordinate
