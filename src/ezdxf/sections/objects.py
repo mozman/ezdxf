@@ -599,16 +599,27 @@ class _Sanitizer:
             self.audit_objects()
 
     def remove_orphaned_dictionaries(self) -> None:
-        # remove orphaned dictionaries (dict):
-        # - if owner does not exist
-        # - if owner is a dictionary
-        #   - owner dictionary has no entry for this dict
         entitydb = self.auditor.entitydb
         for dictionary in self.objects:
+            # self.objects yields only entities that are alive!
             if not isinstance(dictionary, Dictionary):
                 continue
             if dictionary is self.auditor.doc.rootdict:
                 continue
+            owner = entitydb.get(dictionary.dxf.get("owner"))
+            if owner is None:
+                # owner does not exist:
+                # A DICTIONARY without an owner has no purpose and the owner can not be
+                # determined, except for searching all dictionaries for an entry that
+                # references this DICTIONARY, this is done in Dictionary.audit() by
+                # assigning the appropriate owner handle to all entries.
+                dictionary._silent_kill()
+                continue
+            if not isinstance(owner, Dictionary):
+                continue
+            key = owner.find_key(dictionary)
+            if not key:  # owner dictionary has no entry for this dict
+                dictionary._silent_kill()
 
     def resolve_conflicting_handles(self) -> None:
         # find entities with same handles:
