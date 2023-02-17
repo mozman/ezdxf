@@ -251,6 +251,7 @@ class ObjectsSection:
                     f"from OBJECTS section.",
                 )
                 auditor.trash(entity)
+        self.reorg(auditor)
         self._entity_space.audit(auditor)
 
     def add_dictionary(self, owner: str = "0", hard_owned: bool = True) -> Dictionary:
@@ -532,7 +533,8 @@ class ObjectsSection:
         dxfattribs["owner"] = owner
         return cast("GeoData", self.add_dxf_object_with_reactor("GEODATA", dxfattribs))
 
-    def sanitize(self, auditor: Optional[Auditor] = None) -> Auditor:
+    def reorg(self, auditor: Optional[Auditor] = None) -> Auditor:
+        """Validate and recreate the integrity of the OBJECTS section."""
         if auditor is None:
             assert self.doc is not None, "valid document required"
             auditor = Auditor(self.doc)
@@ -585,7 +587,13 @@ class _Sanitizer:
         self.auditor = auditor
         self.removed_entity = True
 
+    def dictionaries(self) -> Iterator[Dictionary]:
+        for d in self.objects:
+            if isinstance(d, Dictionary):
+                yield d
+
     def execute(self, max_loops=100) -> None:
+        self.restore_owner_handles_of_dictionary_entries()
         loops = 0
         self.removed_entity = True
         while self.removed_entity and loops < max_loops:
@@ -598,21 +606,44 @@ class _Sanitizer:
             # structures into account.
             self.audit_objects()
 
+    def restore_owner_handles_of_dictionary_entries(self) -> None:
+        def reclaim_entity() -> None:
+            entity.dxf.owner = dict_handle
+            self.auditor.fixed_error(
+                AuditError.INVALID_OWNER_HANDLE,
+                f"fixed invalid owner handle of {entity}",
+            )
+
+        entitydb = self.auditor.entitydb
+        for dictionary in self.dictionaries():
+            purge: list[str] = []  # list of keys to discard
+            dict_handle = dictionary.dxf.handle
+            for key, entity in dictionary.items():
+                owner_handle = entity.dxf.get("owner")
+                if owner_handle == dict_handle:
+                    continue
+                parent_dict = entitydb.get(owner_handle)
+                if isinstance(parent_dict, Dictionary) and parent_dict.find_key(entity):
+                    # entity belongs to parent_dict, discard key
+                    purge.append(key)
+                else:
+                    reclaim_entity()
+            for key in purge:
+                dictionary.discard(key)
+
     def remove_orphaned_dictionaries(self) -> None:
         entitydb = self.auditor.entitydb
-        for dictionary in self.objects:
-            # self.objects yields only entities that are alive!
-            if not isinstance(dictionary, Dictionary):
-                continue
-            if dictionary is self.auditor.doc.rootdict:
+        rootdict = self.auditor.doc.rootdict
+        for dictionary in self.dictionaries():
+            if dictionary is rootdict:
                 continue
             owner = entitydb.get(dictionary.dxf.get("owner"))
             if owner is None:
                 # owner does not exist:
                 # A DICTIONARY without an owner has no purpose and the owner can not be
                 # determined, except for searching all dictionaries for an entry that
-                # references this DICTIONARY, this is done in Dictionary.audit() by
-                # assigning the appropriate owner handle to all entries.
+                # references this DICTIONARY, this is done in the method
+                # restore_owner_handles_of_dictionary_entries().
                 dictionary._silent_kill()
                 continue
             if not isinstance(owner, Dictionary):
@@ -641,6 +672,7 @@ class _Sanitizer:
         current_db_size = len(auditor.entitydb)
 
         for entity in self.objects:
+            auditor.check_owner_exist(entity)
             entity.audit(auditor)
 
         auditor.empty_trashcan()

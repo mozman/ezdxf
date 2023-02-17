@@ -41,13 +41,6 @@ class DXFObject(DXFEntity):
 
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
-    def audit(self, auditor: Auditor) -> None:
-        """Validity check. (internal API)"""
-        if not self.is_alive:
-            return
-        super().audit(auditor)
-        auditor.check_owner_exist(self)
-
 
 @register_entity
 class Placeholder(DXFObject):

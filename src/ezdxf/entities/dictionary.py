@@ -476,19 +476,11 @@ class Dictionary(DXFObject):
     def audit(self, auditor: Auditor) -> None:
         if not self.is_alive:
             return
-        if not self.dxf.hasattr("owner"):
-            rootdict = auditor.doc.rootdict
-            if self is rootdict:
-                self.dxf.owner = "0"
-            else:  # most likely scenario, avoids deleting required tables
-                self.dxf.owner = rootdict.dxf.handle
-
         super().audit(auditor)
-        self._check_invalid_entries(auditor)
+        self._remove_keys_to_missing_entities(auditor)
 
-    def _check_invalid_entries(self, auditor: Auditor):
-        trash: list[str] = []  # do not delete content while iterating
-        owner_handle = self.dxf.handle
+    def _remove_keys_to_missing_entities(self, auditor: Auditor):
+        trash: list[str] = []
         append = trash.append
         db = auditor.entitydb
         for key, entry in self._data.items():
@@ -499,14 +491,7 @@ class Dictionary(DXFObject):
                 if entry.dxf.handle not in db:
                     append(key)
                     continue
-                # valid entry object
-                if entry.dxf.owner != owner_handle:
-                    entry.dxf.owner = owner_handle
-                    auditor.fixed_error(
-                        code=AuditError.INVALID_OWNER_HANDLE,
-                        message=f"Fixed invalid owner handle in {str(entry)}",
-                    )
-            else:  # entry is destroyed
+            else:  # entity is destroyed, remove key
                 append(key)
         for key in trash:
             del self._data[key]

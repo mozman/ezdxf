@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2022, Manfred Moitzi
+# Copyright (c) 2017-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -40,6 +40,7 @@ class AuditError(IntEnum):
     REMOVED_INVALID_DXF_OBJECT = 12
     REMOVED_STANDALONE_ATTRIB_ENTITY = 13
     MISPLACED_ROOT_DICT = 14
+    ROOT_DICT_NOT_FOUND = 15
 
     UNDEFINED_LINETYPE = 100
     UNDEFINED_DIMENSION_STYLE = 101
@@ -228,7 +229,8 @@ class Auditor:
 
     def run(self) -> list[ErrorEntry]:
         self.doc.entitydb.audit(self)
-        self.check_root_dict()
+        self.check_root_dict_owner()
+        self.check_root_dict_entries()
         self.check_tables()
         self.audit_all_database_entities()
         self.doc.objects.audit(self)
@@ -259,14 +261,32 @@ class Auditor:
     def add_post_audit_job(self, job: Callable):
         self._post_audit_jobs.append(job)
 
-    def check_root_dict(self) -> None:
-        root_dict = self.doc.rootdict
+    def check_root_dict_owner(self):
+        rootdict = self.doc.rootdict
+        if rootdict.dxftype() != "DICTIONARY":
+            self.add_error(
+                AuditError.ROOT_DICT_NOT_FOUND,
+                f"First object in OBJECTS section is not the expected root dictionary, "
+                f"found {str(rootdict)}.",
+            )
+            return
+        if rootdict.dxf.get("owner") != "0":
+            rootdict.dxf.owner = "0"
+            self.fixed_error(
+                code=AuditError.INVALID_OWNER_HANDLE,
+                message=f"Fixed invalid owner handle in root {str(self)}.",
+            )
+
+    def check_root_dict_entries(self) -> None:
+        rootdict = self.doc.rootdict
+        if rootdict.dxftype() != "DICTIONARY":
+            return
         for name in REQUIRED_ROOT_DICT_ENTRIES:
-            if name not in root_dict:
+            if name not in rootdict:
                 self.add_error(
                     code=AuditError.MISSING_REQUIRED_ROOT_DICT_ENTRY,
-                    message=f"Missing root dict entry: {name}",
-                    dxf_entity=root_dict,
+                    message=f"Missing rootdict entry: {name}",
+                    dxf_entity=rootdict,
                 )
 
     def check_tables(self) -> None:

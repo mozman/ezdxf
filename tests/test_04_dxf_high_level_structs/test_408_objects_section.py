@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2023, Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.tools.test import load_entities
@@ -15,14 +15,22 @@ def test_load_section():
     assert section[0].dxftype() == "DICTIONARY"
 
 
-def test_auditor_removes_invalid_entities():
-    doc = ezdxf.new()
-    count = len(doc.objects)
-    # hack hack hack!
-    doc.objects._entity_space.add(Point())
-    auditor = doc.audit()
-    assert len(auditor.fixes) == 1
-    assert len(doc.objects) == count, "should call purge() automatically"
+class TestAuditObjectSection:
+    def test_auditor_removes_invalid_entities(self):
+        doc = ezdxf.new()
+        count = len(doc.objects)
+        # hack hack hack!
+        doc.objects._entity_space.add(Point())
+        auditor = doc.audit()
+        assert len(auditor.fixes) == 1
+        assert len(doc.objects) == count, "should call purge() automatically"
+
+    def test_audit_restores_deleted_owner_tag(self):
+        doc = ezdxf.new()
+        d = doc.rootdict.add_new_dict("TestMe")
+        d.dxf.discard("owner")
+        doc.audit()
+        assert d.dxf.owner == doc.rootdict.dxf.handle, "expected rootdict as owner"
 
 
 TESTOBJECTS = """  0

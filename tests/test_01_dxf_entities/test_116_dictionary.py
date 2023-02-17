@@ -283,15 +283,6 @@ def test_audit_fix_invalid_pointer():
     assert "TEST_VAR_3" not in d
 
 
-def test_audit_restores_deleted_owner_tag():
-    doc = ezdxf.new()
-    d = doc.objects.add_dictionary()
-    d.dxf.discard("owner")
-    auditor = Auditor(doc)
-    d.audit(auditor)
-    assert d.dxf.owner == doc.rootdict.dxf.handle, "assign to root dict"
-
-
 def test_link_dxf_object_to_dictionary():
     from ezdxf.entities import DXFObject
 
