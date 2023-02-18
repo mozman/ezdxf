@@ -161,7 +161,7 @@ class Auditor:
         stream: Optional[TextIO] = None,
     ) -> None:
         def entity_str(count, code, entity):
-            if entity is not None:
+            if entity is not None and entity.is_alive:
                 return f"{count:4d}. Error [{code}] in {str(entity)}."
             else:
                 return f"{count:4d}. Error [{code}]."
@@ -184,7 +184,7 @@ class Auditor:
 
     def print_fixed_errors(self, stream: Optional[TextIO] = None) -> None:
         def entity_str(count, code, entity):
-            if entity is not None:
+            if entity is not None and entity.is_alive:
                 return f"{count:4d}. Issue [{code}] fixed in {str(entity)}."
             else:
                 return f"{count:4d}. Issue [{code}] fixed."
@@ -274,7 +274,7 @@ class Auditor:
             rootdict.dxf.owner = "0"
             self.fixed_error(
                 code=AuditError.INVALID_OWNER_HANDLE,
-                message=f"Fixed invalid owner handle in root {str(self)}.",
+                message=f"Fixed invalid owner handle in root {str(rootdict)}.",
             )
 
     def check_root_dict_entries(self) -> None:

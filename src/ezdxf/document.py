@@ -656,11 +656,12 @@ class Drawing:
         # set or correct $CMATERIAL handle
         material = self.entitydb.get(self.header.get("$CMATERIAL", None))
         if material is None or material.dxftype() != "MATERIAL":
+            handle = "0"
             if "ByLayer" in self.materials:
-                self.header["$CMATERIAL"] = self.materials.get("ByLayer").dxf.handle
-            else:  # material "Global" must exist!
-                self.header["$CMATERIAL"] = self.materials.get("Global").dxf.handle
-
+                handle = self.materials.get("ByLayer").dxf.handle
+            elif "Global" in self.materials:
+                handle = self.materials.get("Global").dxf.handle
+            self.header["$CMATERIAL"] = handle
         # set ACAD maintenance version - same values as used by BricsCAD
         self.header["$ACADMAINTVER"] = acad_maint_ver.get(self.dxfversion, 0)
 

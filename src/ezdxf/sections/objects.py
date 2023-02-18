@@ -585,6 +585,7 @@ class _Sanitizer:
     def __init__(self, auditor: Auditor, objects: ObjectsSection) -> None:
         self.objects = objects
         self.auditor = auditor
+        self.rootdict = objects.rootdict
         self.removed_entity = True
 
     def dictionaries(self) -> Iterator[Dictionary]:
@@ -614,18 +615,30 @@ class _Sanitizer:
                 f"fixed invalid owner handle of {entity}",
             )
 
+        def purge_key():
+            purge.append(key)
+            self.auditor.fixed_error(
+                AuditError.INVALID_OWNER_HANDLE,
+                f"removed invalid key {key} in {str(dictionary)}",
+            )
+
         entitydb = self.auditor.entitydb
         for dictionary in self.dictionaries():
             purge: list[str] = []  # list of keys to discard
             dict_handle = dictionary.dxf.handle
             for key, entity in dictionary.items():
+                if isinstance(entity, str):  # handle is not resolved
+                    entity = entitydb.get(entity)
+                    if entity is None:
+                        purge_key()
+                        continue
                 owner_handle = entity.dxf.get("owner")
                 if owner_handle == dict_handle:
                     continue
                 parent_dict = entitydb.get(owner_handle)
                 if isinstance(parent_dict, Dictionary) and parent_dict.find_key(entity):
                     # entity belongs to parent_dict, discard key
-                    purge.append(key)
+                    purge_key()
                 else:
                     reclaim_entity()
             for key in purge:
@@ -633,7 +646,7 @@ class _Sanitizer:
 
     def remove_orphaned_dictionaries(self) -> None:
         entitydb = self.auditor.entitydb
-        rootdict = self.auditor.doc.rootdict
+        rootdict = self.rootdict
         for dictionary in self.dictionaries():
             if dictionary is rootdict:
                 continue
