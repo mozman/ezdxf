@@ -204,8 +204,12 @@ class Audit(Command):
 
             if args.save:
                 outname = build_outname(filename)
-                doc.saveas(outname)
-                print(f"Saved recovered file as: {outname}")
+                try:
+                    doc.saveas(outname)
+                except IOError as e:
+                    print(f"Can not save recovered file '{outname}':\n{str(e)}")
+                else:
+                    print(f"Saved recovered file as: '{outname}'")
 
         for pattern in args.files:
             names = list(glob.glob(pattern))

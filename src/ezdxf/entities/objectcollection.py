@@ -46,6 +46,9 @@ class ObjectCollection(Generic[T]):
             dict_name
         )
 
+    def create_required_entries(self) -> None:
+        pass
+
     def __iter__(self) -> Iterator[tuple[str, T]]:
         return self.object_dict.items()
 

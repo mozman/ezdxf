@@ -595,6 +595,7 @@ class _Sanitizer:
 
     def execute(self, max_loops=100) -> None:
         self.restore_owner_handles_of_dictionary_entries()
+
         loops = 0
         self.removed_entity = True
         while self.removed_entity and loops < max_loops:
@@ -606,6 +607,7 @@ class _Sanitizer:
             # Run audit on all entities of the OBJECTS section to take the removed
             # structures into account.
             self.audit_objects()
+        self.create_required_structures()
 
     def restore_owner_handles_of_dictionary_entries(self) -> None:
         def reclaim_entity() -> None:
@@ -627,11 +629,10 @@ class _Sanitizer:
             purge: list[str] = []  # list of keys to discard
             dict_handle = dictionary.dxf.handle
             for key, entity in dictionary.items():
-                if isinstance(entity, str):  # handle is not resolved
-                    entity = entitydb.get(entity)
-                    if entity is None:
-                        purge_key()
-                        continue
+                if isinstance(entity, str):
+                    # handle is not resolved -> entity does not exist
+                    purge_key()
+                    continue
                 owner_handle = entity.dxf.get("owner")
                 if owner_handle == dict_handle:
                     continue
@@ -674,6 +675,18 @@ class _Sanitizer:
     def validate_known_dictionaries(self) -> None:
         # check known dictionaries for valid content: KNOWN_DICT_CONTENT
         pass
+
+    def create_required_structures(self):
+        self.objects.setup_object_management_tables(self.rootdict)
+        doc = self.objects.doc
+        # update ObjectCollections:
+        doc.materials.object_dict = self.rootdict.get("ACAD_MATERIAL")
+        doc.materials.create_required_entries()
+        doc.mline_styles.object_dict = self.rootdict.get("ACAD_MLINESTYLE")
+        doc.mline_styles.create_required_entries()
+        doc.mleader_styles.object_dict = self.rootdict.get("ACAD_MLEADERSTYLE")
+        doc.mleader_styles.create_required_entries()
+        doc.groups.object_dict = self.rootdict.get("ACAD_GROUP")
 
     def cleanup_entitydb(self):
         self.auditor.empty_trashcan()
