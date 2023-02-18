@@ -9,6 +9,7 @@ Version 1.0.3b0 - dev
 - NEW: [#833](https://github.com/mozman/ezdxf/issues/833)
   logging non-unique entity handles when loading a DXF document as warnings, auditing 
   the document may fix this issue
+- NEW: improved auditing & fixing capabilities
 
 Version 1.0.2 - 2023-02-15
 --------------------------

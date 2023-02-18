@@ -646,6 +646,10 @@ class _Sanitizer:
                 dictionary.discard(key)
 
     def remove_orphaned_dictionaries(self) -> None:
+        def kill_dictionary():
+            entitydb.discard(dictionary)
+            dictionary._silent_kill()
+
         entitydb = self.auditor.entitydb
         rootdict = self.rootdict
         for dictionary in self.dictionaries():
@@ -658,13 +662,13 @@ class _Sanitizer:
                 # determined, except for searching all dictionaries for an entry that
                 # references this DICTIONARY, this is done in the method
                 # restore_owner_handles_of_dictionary_entries().
-                dictionary._silent_kill()
+                kill_dictionary()
                 continue
             if not isinstance(owner, Dictionary):
                 continue
             key = owner.find_key(dictionary)
             if not key:  # owner dictionary has no entry for this dict
-                dictionary._silent_kill()
+                kill_dictionary()
 
     def resolve_conflicting_handles(self) -> None:
         # find entities with same handles:

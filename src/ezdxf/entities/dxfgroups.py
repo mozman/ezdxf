@@ -116,9 +116,7 @@ class DXFGroup(DXFObject):
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_group.name)
-        self.dxf.export_dxf_attribs(
-            tagwriter, ["description", "unnamed", "selectable"]
-        )
+        self.dxf.export_dxf_attribs(tagwriter, ["description", "unnamed", "selectable"])
         self.export_group(tagwriter)
 
     def export_group(self, tagwriter: AbstractTagWriter):
@@ -161,9 +159,7 @@ class DXFGroup(DXFObject):
             entities = filter_invalid_entities(self._data, self.doc, name)
             if not all_entities_on_same_layout(entities):
                 self.clear()
-                logger.debug(
-                    f"Cleared {name}, had entities from different layouts."
-                )
+                logger.debug(f"Cleared {name}, had entities from different layouts.")
             else:
                 self._data = entities
 
@@ -258,6 +254,18 @@ class DXFGroup(DXFObject):
             )
             self.clear()
 
+        group_handle = self.dxf.handle
+        if not group_handle:
+            return
+        for entity in self._data:
+            if entity.reactors is None or group_handle not in entity.reactors:
+                auditor.fixed_error(
+                    code=AuditError.MISSING_PERSISTENT_REACTOR,
+                    message=f"Entity {entity} in group #{group_handle} does not have "
+                    f"group as persistent reactor",
+                )
+                entity.append_reactor_handle(group_handle)
+
     def purge(self, doc: Drawing) -> None:
         """Remove invalid group entities."""
         self._data = filter_invalid_entities(
@@ -281,17 +289,13 @@ def filter_invalid_entities(
             valid_entities.append(entity)
         elif group_name:
             if entity.is_alive:
-                logger.debug(
-                    f"{str(entity)} in {group_name} has an invalid owner."
-                )
+                logger.debug(f"{str(entity)} in {group_name} has an invalid owner.")
             else:
                 logger.debug(f"Removed deleted entity in {group_name}")
     return valid_entities
 
 
-def _has_valid_owner(
-    owner: str, db: EntityDB, valid_owner_handles: set[str]
-) -> bool:
+def _has_valid_owner(owner: str, db: EntityDB, valid_owner_handles: set[str]) -> bool:
     # no owner -> no layout association
     if owner is None:
         return False

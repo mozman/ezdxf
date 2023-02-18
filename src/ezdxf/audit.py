@@ -60,6 +60,7 @@ class AuditError(IntEnum):
     UNDEFINED_BLOCK_NAME = 115
     INVALID_INTEGER_VALUE = 116
     INVALID_FLOATING_POINT_VALUE = 117
+    MISSING_PERSISTENT_REACTOR = 118
 
     # DXF entity property errors:
     INVALID_ENTITY_HANDLE = 201
@@ -237,9 +238,9 @@ class Auditor:
         self.doc.objects.audit(self)
         self.doc.blocks.audit(self)
         self.doc.groups.audit(self)
-        self.check_block_reference_cycles()
         self.doc.layouts.audit(self)
         self.audit_all_database_entities()
+        self.check_block_reference_cycles()
         self.empty_trashcan()
         self.doc.objects.purge()
         return self.errors
@@ -491,7 +492,9 @@ class BlockCycleDetector:
     def _build_block_ledger(self, blocks: BlocksSection) -> dict[str, set[str]]:
         ledger = dict()
         for block in blocks:
-            inserts = {self.key(insert.dxf.name) for insert in block.query("INSERT")}
+            inserts = {
+                self.key(insert.dxf.get("name", "")) for insert in block.query("INSERT")
+            }
             ledger[self.key(block.name)] = inserts
         return ledger
 

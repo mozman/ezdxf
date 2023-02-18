@@ -670,7 +670,7 @@ class DXFEntity:
         self.del_source_block_reference()
 
     def _silent_kill(self):  # final - do not override this method!
-        """Delete entity but not the referenced data content!
+        """Delete entity but not the referenced content!
 
         DANGER! DON'T USE THIS METHOD!
 
