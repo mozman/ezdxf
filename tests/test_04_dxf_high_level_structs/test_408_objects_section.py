@@ -32,6 +32,19 @@ class TestAuditObjectSection:
         doc.audit()
         assert d.dxf.owner == doc.rootdict.dxf.handle, "expected rootdict as owner"
 
+    def test_validate_known_dictionaries(self):
+        doc = ezdxf.new()
+        materials = doc.rootdict.get_required_dict("ACAD_MATERIAL")
+        v1 = materials.add_dict_var("X", "VAR1")
+        v2 = materials.add_dict_var("Y", "VAR2")
+        assert len(doc.materials) == 5
+
+        auditor = doc.audit()
+        assert len(auditor.fixes) == 2
+        assert len(doc.materials) == 3
+        assert v1.is_alive is False
+        assert v2.is_alive is False
+
 
 TESTOBJECTS = """  0
 SECTION

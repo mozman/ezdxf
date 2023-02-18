@@ -561,13 +561,12 @@ KNOWN_DICT_CONTENT: dict[str, str] = {
     "ACAD_COLOR": "DBCOLOR",
     "ACAD_GROUP": "GROUP",
     "ACAD_IMAGE_DICT": "IMAGEDEF",
-    "ACAD_DETAILVIEWSTYLE": "DETAILVIEWSTYLE",
+    "ACAD_DETAILVIEWSTYLE": "ACDBDETAILVIEWSTYLE",
     "ACAD_LAYOUT": "LAYOUT",
     "ACAD_MATERIAL": "MATERIAL",
     "ACAD_MLEADERSTYLE": "MLEADERSTYLE",
     "ACAD_MLINESTYLE": "MLINESTYLE",
     "ACAD_PLOTSETTINGS": "PLOTSETTINGS",
-    "ACAD_PLOTSTYLENAME": "ACDBPLACEHOLDER",
     "ACAD_RENDER_ACTIVE_SETTINGS": "MENTALRAYRENDERSETTINGS",
     "ACAD_SCALELIST": "SCALE",
     "ACAD_SECTIONVIEWSTYLE": "ACDBSECTIONVIEWSTYLE",
@@ -595,17 +594,15 @@ class _Sanitizer:
 
     def execute(self, max_loops=100) -> None:
         self.restore_owner_handles_of_dictionary_entries()
-
+        self.validate_known_dictionaries()
         loops = 0
         self.removed_entity = True
         while self.removed_entity and loops < max_loops:
             loops += 1
             self.removed_entity = False
             self.remove_orphaned_dictionaries()
-            self.resolve_conflicting_handles()
-            self.validate_known_dictionaries()
             # Run audit on all entities of the OBJECTS section to take the removed
-            # structures into account.
+            # dictionaries into account.
             self.audit_objects()
         self.create_required_structures()
 
@@ -670,15 +667,25 @@ class _Sanitizer:
             if not key:  # owner dictionary has no entry for this dict
                 kill_dictionary()
 
-    def resolve_conflicting_handles(self) -> None:
-        # find entities with same handles:
-        # - find the legit owner for them
-        # - remove entities without a legit owner
-        pass
-
     def validate_known_dictionaries(self) -> None:
-        # check known dictionaries for valid content: KNOWN_DICT_CONTENT
-        pass
+        from ezdxf.entities import DXFEntity
+
+        auditor = self.auditor
+        for dict_name, expected_type in KNOWN_DICT_CONTENT.items():
+            object_dict = self.rootdict.get(dict_name)
+            if not isinstance(object_dict, Dictionary):
+                continue
+            purge_keys: list[str] = []
+            for key, entry in object_dict.items():
+                if isinstance(entry, DXFEntity) and entry.dxftype() != expected_type:
+                    auditor.fixed_error(
+                        AuditError.REMOVED_INVALID_DXF_OBJECT,
+                        f"Removed invalid type {entry} from  {object_dict}<{dict_name}>, expected type {expected_type}",
+                    )
+                    purge_keys.append(key)
+                    auditor.trash(entry)
+            for key in purge_keys:
+                object_dict.discard(key)
 
     def create_required_structures(self):
         self.objects.setup_object_management_tables(self.rootdict)
