@@ -41,10 +41,14 @@ class ObjectCollection(Generic[T]):
         object_type: str = "MATERIAL",
     ):
         self.doc: Drawing = doc
+        self.object_dict_name = dict_name
         self.object_type: str = object_type
         self.object_dict: Dictionary = doc.rootdict.get_required_dict(
             dict_name
         )
+
+    def update_object_dict(self) -> None:
+        self.object_dict = self.doc.rootdict.get_required_dict(self.object_dict_name)
 
     def create_required_entries(self) -> None:
         pass

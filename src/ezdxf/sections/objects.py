@@ -684,13 +684,13 @@ class _Sanitizer:
         self.objects.setup_object_management_tables(self.rootdict)
         doc = self.objects.doc
         # update ObjectCollections:
-        doc.materials.object_dict = self.rootdict.get("ACAD_MATERIAL")
+        doc.materials.update_object_dict()
         doc.materials.create_required_entries()
-        doc.mline_styles.object_dict = self.rootdict.get("ACAD_MLINESTYLE")
+        doc.mline_styles.update_object_dict()
         doc.mline_styles.create_required_entries()
-        doc.mleader_styles.object_dict = self.rootdict.get("ACAD_MLEADERSTYLE")
+        doc.mleader_styles.update_object_dict()
         doc.mleader_styles.create_required_entries()
-        doc.groups.object_dict = self.rootdict.get("ACAD_GROUP")
+        doc.groups.update_object_dict()
 
     def cleanup_entitydb(self):
         self.auditor.empty_trashcan()
