@@ -10,6 +10,7 @@ Version 1.0.3b0 - dev
   logging non-unique entity handles when loading a DXF document as warnings, auditing 
   the document may fix this issue
 - NEW: improved auditing & fixing capabilities
+- BUGFIX: audit process preserves dimensional constraints
 
 Version 1.0.2 - 2023-02-15
 --------------------------

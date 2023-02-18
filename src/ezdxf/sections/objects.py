@@ -614,14 +614,14 @@ class _Sanitizer:
             entity.dxf.owner = dict_handle
             self.auditor.fixed_error(
                 AuditError.INVALID_OWNER_HANDLE,
-                f"fixed invalid owner handle of {entity}",
+                f"Fixed invalid owner handle of {entity}.",
             )
 
         def purge_key():
             purge.append(key)
             self.auditor.fixed_error(
                 AuditError.INVALID_OWNER_HANDLE,
-                f"removed invalid key {key} in {str(dictionary)}",
+                f"Removed invalid key {key} in {str(dictionary)}.",
             )
 
         entitydb = self.auditor.entitydb

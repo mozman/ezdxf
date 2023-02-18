@@ -673,7 +673,6 @@ class Dimension(DXFGraphic, OverrideMixin):
     # No information in the DXF reference:
     # layer name is "*ADSK_CONSTRAINTS"
     # missing group code 2 - geometry block name
-    # missing group code 70 - dimension type
     # has reactor to ACDBASSOCDEPENDENCY object
     # Autodesk example: architectural_example-imperial.dxf
     @property
@@ -682,7 +681,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         constraint object.
         """
         dxf = self.dxf
-        return not dxf.hasattr("dimtype") and dxf.layer == ADSK_CONSTRAINTS
+        return dxf.layer == ADSK_CONSTRAINTS and not dxf.hasattr("geometry")
 
     def get_geometry_block(self) -> Optional[BlockLayout]:
         """Returns :class:`~ezdxf.layouts.BlockLayout` of associated anonymous
@@ -873,7 +872,10 @@ class Dimension(DXFGraphic, OverrideMixin):
         doc = auditor.doc
         dxf = self.dxf
 
-        if dxf.get("geometry", "*") not in doc.blocks:
+        if (
+            not self.is_dimensional_constraint
+            and dxf.get("geometry", "*") not in doc.blocks
+        ):
             auditor.fixed_error(
                 code=AuditError.UNDEFINED_BLOCK,
                 message=f"Removed {str(self)} without valid geometry block.",

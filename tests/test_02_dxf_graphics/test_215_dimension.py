@@ -173,9 +173,7 @@ def test_load_from_text(entity):
     assert entity.dxf.defpoint == (0, 0, 0)
 
 
-@pytest.mark.parametrize(
-    "txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)]
-)
+@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     dimension = TEST_CLASS.from_text(txt)
@@ -286,3 +284,15 @@ def test_audit_invalid_geometry_block(doc):
     assert len(auditor.fixes) == 1
     assert dim.dimension.is_alive is False, "DIMENSION should be destroyed"
 
+
+def test_audit_fake_dimensional_constraints(doc):
+    msp = doc.modelspace()
+    dim = msp.add_linear_dim((5, 2), (0, 0), (10, 0))
+    # fake a dimensional constraint
+    dimension = dim.dimension
+    dimension.dxf.layer = "*ADSK_CONSTRAINTS"
+    # no geometry block was created without calling dim.render()
+
+    auditor = doc.audit()
+    assert len(auditor.fixes) == 0
+    assert dim.dimension.is_alive is True, "dimensional constraint should be preserved"
