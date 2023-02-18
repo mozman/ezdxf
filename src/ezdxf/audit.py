@@ -228,8 +228,10 @@ class Auditor:
         self.errors = [err for err in self.errors if err.code in codes]
 
     def run(self) -> list[ErrorEntry]:
+        if not self.check_root_dict():
+            # no root dict found: abort audit process
+            return self.errors
         self.doc.entitydb.audit(self)
-        self.check_root_dict_owner()
         self.check_root_dict_entries()
         self.check_tables()
         self.doc.objects.audit(self)
@@ -261,21 +263,22 @@ class Auditor:
     def add_post_audit_job(self, job: Callable):
         self._post_audit_jobs.append(job)
 
-    def check_root_dict_owner(self):
+    def check_root_dict(self) -> bool:
         rootdict = self.doc.rootdict
         if rootdict.dxftype() != "DICTIONARY":
             self.add_error(
                 AuditError.ROOT_DICT_NOT_FOUND,
-                f"First object in OBJECTS section is not the expected root dictionary, "
-                f"found {str(rootdict)}.",
+                f"Critical error - first object in OBJECTS section is not the expected "
+                f"root dictionary, found {str(rootdict)}.",
             )
-            return
+            return False
         if rootdict.dxf.get("owner") != "0":
             rootdict.dxf.owner = "0"
             self.fixed_error(
                 code=AuditError.INVALID_OWNER_HANDLE,
                 message=f"Fixed invalid owner handle in root {str(rootdict)}.",
             )
+        return True
 
     def check_root_dict_entries(self) -> None:
         rootdict = self.doc.rootdict
