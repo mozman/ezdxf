@@ -45,6 +45,26 @@ class TestAuditObjectSection:
         assert v1.is_alive is False
         assert v2.is_alive is False
 
+    def test_remove_orphaned_dictionary_and_owned_entries(self):
+        doc = ezdxf.new()
+        orphaned_dict = doc.objects.add_dictionary("ABBA")
+        d1 = orphaned_dict.add_dict_var("D1", "VAR1")
+
+        doc.audit()
+        assert orphaned_dict.is_alive is False
+        assert d1.is_alive is False
+
+    def test_remove_orphaned_dictionary_but_preserve_shared_entries(self):
+        doc = ezdxf.new()
+        valid_dict = doc.rootdict.add_new_dict("MyDict")
+        d1 = valid_dict.add_dict_var("D1", "VAR1")
+        orphaned_dict = doc.objects.add_dictionary("ABBA")
+        orphaned_dict["D1"] = d1
+
+        doc.audit()
+        assert orphaned_dict.is_alive is False
+        assert d1.is_alive is True
+
 
 TESTOBJECTS = """  0
 SECTION

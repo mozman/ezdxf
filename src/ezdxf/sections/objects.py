@@ -575,7 +575,6 @@ KNOWN_DICT_CONTENT: dict[str, str] = {
     "ACAD_DWFDEFINITIONS": "DWFDEFINITION",
     "ACAD_DGNDEFINITIONS": "DGNDEFINITION",
     "ACAD_VISUALSTYLE": "VISUALSTYLE",
-    # Not every orphaned DICTIONARYVAR may belong to AcDbVariableDictionary!
     "AcDbVariableDictionary": "DICTIONARYVAR",
 }
 
@@ -680,7 +679,8 @@ class _Sanitizer:
                 if isinstance(entry, DXFEntity) and entry.dxftype() != expected_type:
                     auditor.fixed_error(
                         AuditError.REMOVED_INVALID_DXF_OBJECT,
-                        f"Removed invalid type {entry} from  {object_dict}<{dict_name}>, expected type {expected_type}",
+                        f"Removed invalid type {entry} from {object_dict}<{dict_name}>, "
+                        f"expected type {expected_type}",
                     )
                     purge_keys.append(key)
                     auditor.trash(entry)
