@@ -1,23 +1,27 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import cast, Any, Optional
+from typing import cast, Any, Optional, TYPE_CHECKING
 import math
 import ezdxf
 from ezdxf.entities import MText, DXFGraphic, Textstyle
 from ezdxf.enums import TextEntityAlignment
-from ezdxf.layouts import BaseLayout
+
+# from ezdxf.layouts import BaseLayout
 from ezdxf.document import Drawing
 from ezdxf.math import Matrix44
 from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import MTextContext
 from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
 
+if TYPE_CHECKING:
+    from ezdxf.eztypes import GenericLayoutType
+
 __all__ = ["MTextExplode"]
 
 
 class FrameRenderer(tl.ContentRenderer):
-    def __init__(self, attribs: dict, layout: BaseLayout):
+    def __init__(self, attribs: dict, layout: GenericLayoutType):
         self.line_attribs = attribs
         self.layout = layout
 
@@ -40,9 +44,7 @@ class FrameRenderer(tl.ContentRenderer):
     def line(
         self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 = None
     ) -> None:
-        line = self.layout.add_line(
-            (x1, y1), (x2, y2), dxfattribs=self.line_attribs
-        )
+        line = self.layout.add_line((x1, y1), (x2, y2), dxfattribs=self.line_attribs)
         if m:
             line.transform(m)
 
@@ -51,7 +53,7 @@ class ColumnBackgroundRenderer(FrameRenderer):
     def __init__(
         self,
         attribs: dict,
-        layout: BaseLayout,
+        layout: GenericLayoutType,
         bg_aci: Optional[int] = None,
         bg_true_color: Optional[int] = None,
         offset: float = 0,
@@ -103,7 +105,7 @@ class TextRenderer(FrameRenderer):
         text: str,
         text_attribs: dict,
         line_attribs: dict,
-        layout: BaseLayout,
+        layout: GenericLayoutType,
     ):
         super().__init__(line_attribs, layout)
         self.text = text
@@ -169,10 +171,7 @@ def get_color_attribs(ctx: MTextContext) -> dict:
     return attribs
 
 
-def make_bg_renderer(mtext: MText):
-    assert mtext.doc is not None, "valid DXF document required"
-    layout = mtext.get_layout()
-    assert layout is not None, "valid layout required"
+def make_bg_renderer(mtext: MText, layout: GenericLayoutType):
     attribs = get_base_attribs(mtext)
     dxf = mtext.dxf
     bg_fill = dxf.get("bg_fill", 0)
@@ -228,23 +227,21 @@ class MTextExplode(AbstractMTextRenderer):
     emulate strokes.
 
     The `layout` argument defines the target layout  for "exploded" parts of the
-    MTEXT entity. Use argument `doc` if the
-    target layout has no DXF document assigned. The `spacing_factor`
-    argument is an advanced tuning parameter to scale the size of space
-    chars.
+    MTEXT entity. Use argument `doc` if the target layout has no DXF document assigned
+    like virtual layouts.  The `spacing_factor` argument is an advanced tuning parameter
+    to scale the size of space chars.
 
     """
 
     def __init__(
         self,
-        layout: BaseLayout,
+        layout: GenericLayoutType,
         doc: Optional[Drawing] = None,
         spacing_factor: float = 1.0,
     ):
         super().__init__()
-        self.layout: BaseLayout = layout
-        self._doc: Drawing = doc if doc else layout.doc
-        assert self._doc is not None, "DXF document required"
+        self.layout: GenericLayoutType = layout
+        self._doc = doc
         # scale the width of spaces by this factor:
         self._spacing_factor = float(spacing_factor)
         self._required_text_styles: dict[str, fonts.FontFace] = {}
@@ -266,9 +263,7 @@ class MTextExplode(AbstractMTextRenderer):
             height=ctx.cap_height,
             valign=tl.CellAlignment(ctx.align),
             stroke=self.get_stroke(ctx),
-            renderer=TextRenderer(
-                text, text_attribs, line_attribs, self.layout
-            ),
+            renderer=TextRenderer(text, text_attribs, line_attribs, self.layout),
         )
 
     def fraction(self, data: tuple, ctx: MTextContext) -> tl.ContentCell:
@@ -288,7 +283,7 @@ class MTextExplode(AbstractMTextRenderer):
         return get_font_face(mtext)
 
     def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer:
-        return make_bg_renderer(mtext)
+        return make_bg_renderer(mtext, self.layout)
 
     # Implementation details of MTextExplode:
 
@@ -343,9 +338,26 @@ class MTextExplode(AbstractMTextRenderer):
 
     def finalize(self):
         """Create required text styles. This method is called automatically if
-        the class is used as context manager.
+        the class is used as context manager. This method does not work with virtual
+        layouts if no document was assigned at initialization!
         """
 
+        doc = self._doc
+        if doc is None:
+            doc = self.layout.doc
+        if doc is None:
+            raise ezdxf.DXFValueError(
+                "DXF document required, finalize() does not work with virtual layouts "
+                "if no document was assigned at initialization."
+            )
+        text_styles = doc.styles
+        for style in self.make_required_style_table_entries():
+            try:
+                text_styles.add_entry(style)
+            except ezdxf.DXFTableEntryError:
+                pass
+
+    def make_required_style_table_entries(self) -> list[Textstyle]:
         def ttf_path(font_face: fonts.FontFace) -> str:
             ttf = font_face.ttf
             if not ttf:
@@ -358,15 +370,16 @@ class MTextExplode(AbstractMTextRenderer):
                     ttf = shx
             return ttf
 
-        text_styles = self._doc.styles
+        text_styles: list[Textstyle] = []
         for name, font_face in self._required_text_styles.items():
-            if name not in text_styles:
-                style = cast(Textstyle, text_styles.new(name))
-                ttf = ttf_path(font_face)
-                style.dxf.font = ttf
-                if not ttf.endswith(".SHX"):
-                    style.set_extended_font_data(
-                        font_face.family,
-                        italic=font_face.is_italic,
-                        bold=font_face.is_bold,
-                    )
+            style = Textstyle.new(name)
+            ttf = ttf_path(font_face)
+            style.dxf.font = ttf
+            if not ttf.endswith(".SHX"):
+                style.set_extended_font_data(
+                    font_face.family,
+                    italic=font_face.is_italic,
+                    bold=font_face.is_bold,
+                )
+            text_styles.append(style)
+        return text_styles
