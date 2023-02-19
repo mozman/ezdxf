@@ -227,21 +227,21 @@ Issues:
 - 2D selections always in top-view mode?
 - Using special box- and sphere selections for 3D selection?
 
-Convert Document to DXF R12
----------------------------
+Export DXF document as DXF R12
+------------------------------
 
-(>v1.1) A module to convert a whole DXF document into DXF R12 inplace, this is 
-a destructive process and converts or explodes DXF entities:
-- explode MTEXT, MULTILEADER, MLINE, ACAD_TABLE, ARC_DIMENSION
-- convert MESH to PolyFaceMesh
-- convert LWPOLYLINE into 2D polyline
-- flatten SPLINE into a 3D polyline
-- flatten ELLIPSE into a 3D polyline
-- ACIS based entities with only flat faces could be converted to PolyFaceMesh 
+(>v1.1) A module to export a DXF document as DXF R12 without handles,  
+convert or explode unsupported DXF entities on the fly:
+- ACAD_TABLE, ARC_DIMENSION export an INSERT for their BLOCK representation
+- explode MTEXT, MULTILEADER, MLINE
+- export MESH as PolyFaceMesh
+- export LWPOLYLINE as 2D POLYLINE
+- export SPLINE and ELLIPSE as flattened 3D polyline
+- export ACIS based entities with only flat faces could as PolyFaceMesh 
 - render HATCH and MPOLYGON entities with pattern filling into a BLOCK as LINE 
-  entities
+  entities, requires preprocessing for creating new BLOCKS
 
-Removes all data not supported by DXF R12:
+Ignores unsupported features:
 - all ACIS based entities which contain curved faces 
 - HATCH and MPOLYGON entities with solid or gradient filling. The mapbox-earcut 
   algorithm for polygon triangulation does not support nested holes. 
@@ -249,6 +249,8 @@ Removes all data not supported by DXF R12:
 - XLINE and RAY entities
 - OBJECTS and the CLASSES sections
 - all but the first paper space layout
+
+- Convert a document to R12: export as R12 and reload the exported document
 
 DXF Document
 ------------
