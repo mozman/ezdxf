@@ -426,7 +426,7 @@ class Polyline(LinkedEntities):
         dxfattribs["flags"] = dxfattribs.get("flags", 0) | self.get_vertex_flags()
 
         # same DXF attributes for VERTEX entities as for POLYLINE
-        dxfattribs["owner"] = self.dxf.owner
+        dxfattribs["owner"] = self.dxf.handle
         dxfattribs["layer"] = self.dxf.layer
         if self.dxf.hasattr("linetype"):
             dxfattribs["linetype"] = self.dxf.linetype
