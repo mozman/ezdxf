@@ -65,6 +65,7 @@ acdb_view = DefSubclass(
         "ucs": DXFAttr(
             72,
             default=0,
+            dxfversion=DXF2000,
             validator=validator.is_integer_bool,
             fixer=RETURN_DEFAULT,
         ),
