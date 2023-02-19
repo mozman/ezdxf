@@ -190,15 +190,21 @@ EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
 }
 
 
-# Planned feature: explode complex newer entity types into DXF primitives:
-#
-# MTextExplode creates new text styles and cannot use a virtual layout.
-# A temporary document will be required or a special MTextExplode class has to be
-# implemented.
-# current state: MTEXT is ignored
-#
-# ACAD_TABLE: original anonymous block "*T..." should not be exported
-# current state: ACAD_TABLE is ignored
+# Planned features: explode complex newer entity types into DXF primitives.
+# currently skipped entity types:
+# - MTEXT: exploding into DXF primitives is possible
+# - LEADER: exploding into DXF primitives is possible
+# - MLEADER: exploding into DXF primitives is possible
+# - MLINE: exploding into DXF primitives is possible
+# - HATCH & MPOLYGON: exploding pattern filling as LINE entities and solid filling as
+#   SOLID entities is possible
+# - ACAD_TABLE: graphic as geometry block is available
+# - ACAD_PROXY_ENTITY: proxy graphic could be exported
+# --------------------------------------------------------------------------------------
+# - all ACIS based entities: tessellated meshes could be exported, but very much work
+#   and beyond my current knowledge
+# - IMAGE and UNDERLAY: no support possible
+# - XRAY and XLINE: no support possible (infinite lines)
 
 # ACAD Releases upto 14: limit names to 31 characters in length.
 # Names can include the letters A to Z, the numerals 0 to 9, and the special characters,
