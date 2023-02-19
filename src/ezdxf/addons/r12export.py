@@ -318,6 +318,11 @@ class R12Exporter:
         for block_record in self.doc.block_records:
             if block_record.is_any_paperspace and not block_record.is_active_paperspace:
                 continue
+            name = block_record.dxf.name.lower()
+            if name in ("$model_space",  "$paper_space"):
+                # These block names collide with the translated names of the *Model_Space
+                # and the *Paper_Space blocks.
+                continue
             self._export_block_record(block_record)
         self._write_endsec()
 
