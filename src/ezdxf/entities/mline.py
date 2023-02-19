@@ -309,6 +309,7 @@ class MLineVertex:
 class MLine(DXFGraphic):
     DXFTYPE = "MLINE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mline)
+    MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
     TOP = const.MLINE_TOP
     ZERO = const.MLINE_ZERO
     BOTTOM = const.MLINE_BOTTOM
