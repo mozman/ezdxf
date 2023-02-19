@@ -3,7 +3,9 @@
 """
 Resource management module for transferring DXF resources between documents.
 
-Planning state!!!
+---------------------------------------------------------
+WARNING: THIS MODULE IS IN PLANNING STATE, DO NOT USE IT!
+---------------------------------------------------------
 
 """
 from __future__ import annotations
