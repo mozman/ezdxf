@@ -1,5 +1,6 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2023, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 from ezdxf.lldxf.types import is_valid_handle
 
@@ -24,6 +25,9 @@ class HandleGenerator:
         return next_handle
 
     __next__ = next
+
+    def copy(self) -> HandleGenerator:
+        return HandleGenerator(str(self))
 
 
 class UnderlayKeyGenerator(HandleGenerator):

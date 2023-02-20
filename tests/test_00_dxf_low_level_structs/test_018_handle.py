@@ -43,3 +43,18 @@ def test_init_and_reset_rejects_invalid_ints():
     handles = HandleGenerator()
     with pytest.raises(ValueError):
         handles.reset("xyz")
+
+
+def test_copy_handle_generator():
+    h0 = HandleGenerator("1")
+    h1 = h0.copy()
+    assert h0.next() == h1.next()
+    h1.next()
+    assert str(h0) != str(h1)
+
+
+def test_copied_handle_generators_are_independent():
+    h0 = HandleGenerator("1")
+    h1 = h0.copy()
+    h1.next()
+    assert str(h0) != str(h1)
