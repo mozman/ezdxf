@@ -10,6 +10,7 @@ from typing import (
     Callable,
 )
 import sys
+import string
 from enum import IntEnum
 from ezdxf.lldxf import const, validator
 from ezdxf.entities import factory, DXFEntity
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
     from ezdxf.sections.blocks import BlocksSection
 
 
-__all__ = ["Auditor", "AuditError", "audit", "BlockCycleDetector"]
+__all__ = ["Auditor", "AuditError", "audit", "BlockCycleDetector", "R12NameTranslator"]
 
 
 class AuditError(IntEnum):
@@ -108,8 +109,8 @@ class ErrorEntry:
 
 
 class Auditor:
-    def __init__(self, doc: Drawing):
-        assert doc is not None
+    def __init__(self, doc: Drawing, r12_strict=False) -> None:
+        assert doc is not None and doc.rootdict is not None and doc.entitydb is not None
         self.doc = doc
         self._rootdict_handle = doc.rootdict.dxf.handle
         self.errors: list[ErrorEntry] = []
@@ -117,10 +118,20 @@ class Auditor:
         self._trashcan = doc.entitydb.new_trashcan()
         self._post_audit_jobs: list[Callable[[], None]] = []
 
+        # Strict mode for DXF R12:
+        # Limit names to 31 characters in length and characters, digits and "$-_*" for
+        # table names and block names.
+        # Most applications do not care about that and work fine with longer names and
+        # any characters used in names for some exceptions, but of course Autodesk
+        # applications are very picky about that.
+        self.r12_strict_mode = bool(r12_strict) and doc.dxfversion == const.DXF12
+        self.r12_name_translator = R12NameTranslator()
+
     def reset(self) -> None:
-        self.errors = []
-        self.fixes = []
+        self.errors.clear()
+        self.fixes.clear()
         self.empty_trashcan()
+        self.r12_name_translator.reset()
 
     def __len__(self) -> int:
         """Returns count of unfixed errors."""
@@ -483,6 +494,11 @@ class Auditor:
                     dxf_entity=block.block_record,
                 )
 
+    def transform_r12_name(self, name: str) -> str:
+        if not self.r12_strict_mode:
+            return name
+        return self.r12_name_translator.translate(name)
+
 
 class BlockCycleDetector:
     def __init__(self, doc: Drawing):
@@ -540,3 +556,47 @@ def audit(entity: DXFEntity, doc: Drawing) -> Auditor:
     auditor = Auditor(doc)
     entity.audit(auditor)
     return auditor
+
+
+class R12NameTranslator:
+    """
+    Transforms table and block names into strict DXF R12 names.
+
+    ACAD Releases upto 14: limit names to 31 characters in length.
+    Names can include the letters A to Z, the numerals 0 to 9, and the special characters,
+    dollar sign ($), underscore (_), and hyphen (-). All names are uppercase.
+    """
+
+    VALID_R12_NAME_CHARS = set(string.ascii_uppercase + string.digits + "_-*$")
+
+    def __init__(self) -> None:
+        self.translated_names: dict[str, str] = {}
+        self.used_r12_names: set[str] = set()
+
+    def reset(self) -> None:
+        self.translated_names.clear()
+        self.used_r12_names.clear()
+
+    def translate(self, name: str) -> str:
+        r12_name = self.translated_names.get(name)
+        if r12_name is None:
+            r12_name = self.name_sanitizer(name, self.VALID_R12_NAME_CHARS)
+            r12_name = self.get_unique_r12_name(r12_name)
+            self.translated_names[name] = r12_name
+        return r12_name
+
+    def get_unique_r12_name(self, name: str) -> str:
+        name0 = name
+        counter = 0
+        while name in self.used_r12_names:
+            ext = str(counter)
+            name = name0[: (31 - len(ext))] + ext
+            counter += 1
+        self.used_r12_names.add(name)
+        return name
+
+    @staticmethod
+    def name_sanitizer(name: str, valid_chars: set[str]) -> str:
+        return "".join(
+            (char if char in valid_chars else "_") for char in name[:31].upper()
+        )
