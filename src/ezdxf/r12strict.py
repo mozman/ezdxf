@@ -6,7 +6,7 @@ from ezdxf import const
 from ezdxf.document import Drawing
 
 
-__all__ = ["translate_names", "R12NameTranslator"]
+__all__ = ["translate_names", "purify", "R12NameTranslator"]
 
 
 def translate_names(doc: Drawing) -> None:
@@ -30,6 +30,17 @@ def translate_names(doc: Drawing) -> None:
             f"expected DXF document version R12, got: {doc.acad_release}"
         )
     _R12StrictRename(doc).execute()
+
+
+def purify(doc: Drawing) -> None:
+    """Remove or destroy all features and entity types that are not supported by DXF
+    version R12.
+    """
+    if doc.dxfversion != const.DXF12:
+        raise const.DXFVersionError(
+            f"expected DXF document version R12, got: {doc.acad_release}"
+        )
+    raise NotImplementedError()
 
 
 class R12NameTranslator:
