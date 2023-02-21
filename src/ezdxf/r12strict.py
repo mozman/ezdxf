@@ -63,6 +63,7 @@ class R12NameTranslator:
         self.used_r12_names.clear()
 
     def translate(self, name: str) -> str:
+        name = name.upper()
         r12_name = self.translated_names.get(name)
         if r12_name is None:
             r12_name = self.name_sanitizer(name, self.VALID_R12_NAME_CHARS)

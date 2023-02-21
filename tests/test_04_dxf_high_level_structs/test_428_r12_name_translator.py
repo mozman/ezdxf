@@ -60,6 +60,13 @@ def test_unique_names_for_same_r12_translations(tr):
     assert tr.translate("#abc") == "_ABC0"  # basic translation is also _ABC
 
 
+def test_names_case_insensitive(tr):
+    assert tr.translate("Continuous") == "CONTINUOUS"
+    assert tr.translate("CONTINUOUS") == "CONTINUOUS"
+    assert len(tr.used_r12_names) == 1
+    assert len(tr.translated_names) == 1
+
+
 def test_limit_length_of_long_names(tr):
     name = string.ascii_letters + string.digits
     assert len(tr.translate(name)) == 31
