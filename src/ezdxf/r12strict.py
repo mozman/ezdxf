@@ -66,12 +66,12 @@ class R12NameTranslator:
         name = name.upper()
         r12_name = self.translated_names.get(name)
         if r12_name is None:
-            r12_name = self.name_sanitizer(name, self.VALID_R12_NAME_CHARS)
-            r12_name = self.get_unique_r12_name(r12_name)
+            r12_name = self._name_sanitizer(name, self.VALID_R12_NAME_CHARS)
+            r12_name = self._get_unique_r12_name(r12_name)
             self.translated_names[name] = r12_name
         return r12_name
 
-    def get_unique_r12_name(self, name: str) -> str:
+    def _get_unique_r12_name(self, name: str) -> str:
         name0 = name
         counter = 0
         while name in self.used_r12_names:
@@ -82,9 +82,10 @@ class R12NameTranslator:
         return name
 
     @staticmethod
-    def name_sanitizer(name: str, valid_chars: set[str]) -> str:
+    def _name_sanitizer(name: str, valid_chars: set[str]) -> str:
+        # `name` has to be upper case!
         return "".join(
-            (char if char in valid_chars else "_") for char in name[:31].upper()
+            (char if char in valid_chars else "_") for char in name[:31]
         )
 
 

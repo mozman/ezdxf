@@ -483,11 +483,6 @@ class Auditor:
                     dxf_entity=block.block_record,
                 )
 
-    def transform_r12_name(self, name: str) -> str:
-        if not self.r12_strict_mode:
-            return name
-        return self.r12_name_translator.translate(name)
-
 
 class BlockCycleDetector:
     def __init__(self, doc: Drawing):

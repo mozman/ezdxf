@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, TextIO, Callable
 import os
 from io import StringIO
 import logging
-import string
 
 import ezdxf
 from ezdxf import const
@@ -35,6 +34,7 @@ from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT
 from ezdxf.lldxf.tagwriter import TagWriter, AbstractTagWriter
 from ezdxf.math import Z_AXIS, Vec3
 from ezdxf.render import MeshBuilder
+from ezdxf.r12strict import R12NameTranslator
 
 if TYPE_CHECKING:
     from ezdxf.entitydb import EntitySpace
@@ -206,26 +206,7 @@ EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
 # - IMAGE and UNDERLAY: no support possible
 # - XRAY and XLINE: no support possible (infinite lines)
 
-# ACAD Releases upto 14: limit names to 31 characters in length.
-# Names can include the letters A to Z, the numerals 0 to 9, and the special characters,
-# dollar sign ($), underscore (_), and hyphen (-).
-
-VALID_CHARS_CODE_2 = set(string.ascii_letters + string.digits + "_-*$")
-VALID_CHARS_CODE_3 = set(string.ascii_letters + string.digits + "_-*$.")
-
-
-# Truncating names from the end to avoid duplicate table names: name[-31:]
-def sanitize_name(code, name):
-    if code in (3, 4):  # only for the '.' in font definitions
-        return "".join(
-            (char if char in VALID_CHARS_CODE_3 else "_") for char in name[-31:]
-        )
-    else:
-        return "".join(
-            (char if char in VALID_CHARS_CODE_2 else "_") for char in name[-31:]
-        )
-
-
+# Possible name tags to translate:
 # 1 The primary text value for an entity
 # 2 A name: Attribute tag, Block name, and so on. Also used to identify a DXF section or
 #   table name
@@ -235,29 +216,50 @@ def sanitize_name(code, name):
 # 6 Line type name (fixed)
 # 7 Text style name (fixed)
 # 8 Layer name (fixed)
-NAME_TAG_CODES = {2, 3, 4, 6, 7, 8, 1001, 1003}
+NAME_TAG_CODES = {2, 3, 6, 7, 8, 1001, 1003}
 
 
 class R12TagWriter(TagWriter):
     def __init__(self, stream: TextIO, dxfversion: str, write_handles: bool):
         super().__init__(stream, dxfversion, write_handles)
         self.skip_xdata = False
+        self.current_entity = ""
+        self.translator = R12NameTranslator()
 
     def write_tag(self, tag: DXFTag) -> None:
         code, value = tag
+        if code == 0:
+            self.current_entity = str(value)
         if self.skip_xdata and tag.code > 999:
             return
         if code in NAME_TAG_CODES:
-            self._stream.write(TAG_STRING_FORMAT % (code, sanitize_name(code, value)))
+            self._stream.write(
+                TAG_STRING_FORMAT % (code, self.sanitize_name(code, value))
+            )
         else:
             self._stream.write(tag.dxfstr())
 
     def write_tag2(self, code: int, value) -> None:
         if self.skip_xdata and code > 999:
             return
+        if code == 0:
+            self.current_entity = str(value)
         if code in NAME_TAG_CODES:
-            value = sanitize_name(code, value)
+            value = self.sanitize_name(code, value)
         self._stream.write(TAG_STRING_FORMAT % (code, value))
+
+    def sanitize_name(self, code: int, name: str):
+        # sanitize group code 3 + 4
+        # LTYPE - <description> has group code (3) NO
+        # STYLE - <font> has group code (3) NO
+        # STYLE - <bigfont> has group code (4) NO
+        # DIMSTYLE - <dimpost> has group code e.g. "<> mm" (3) NO
+        # DIMSTYLE - <dimapost> has group code (4) NO
+        # ATTDEF - <prompt> has group code (3) NO
+        # DIMENSION - <dimstyle> has group code (3) YES
+        if code == 3 and self.current_entity != "DIMENSION":
+            return name
+        return self.translator.translate(name)
 
 
 class R12Exporter:
@@ -319,7 +321,7 @@ class R12Exporter:
             if block_record.is_any_paperspace and not block_record.is_active_paperspace:
                 continue
             name = block_record.dxf.name.lower()
-            if name in ("$model_space",  "$paper_space"):
+            if name in ("$model_space", "$paper_space"):
                 # These block names collide with the translated names of the *Model_Space
                 # and the *Paper_Space blocks.
                 continue
