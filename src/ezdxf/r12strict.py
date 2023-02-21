@@ -1,8 +1,11 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
 import string
 from ezdxf import const
+from ezdxf.lldxf.types import dxftag
+from ezdxf.entities import XData, DXFEntity
 from ezdxf.document import Drawing
 
 
@@ -84,9 +87,7 @@ class R12NameTranslator:
     @staticmethod
     def _name_sanitizer(name: str, valid_chars: set[str]) -> str:
         # `name` has to be upper case!
-        return "".join(
-            (char if char in valid_chars else "_") for char in name[:31]
-        )
+        return "".join((char if char in valid_chars else "_") for char in name[:31])
 
 
 class _R12StrictRename:
@@ -96,16 +97,11 @@ class _R12StrictRename:
         self.translator = R12NameTranslator()
 
     def execute(self) -> None:
-        self.rename_blocks()
-        self.rename_tables()
+        self.process_tables()
         self.process_header_vars()
         self.process_entities()
 
-    def rename_blocks(self) -> None:
-        # - block names
-        pass
-
-    def rename_tables(self) -> None:
+    def process_tables(self) -> None:
         # APPID name
         # DIMSTYLE name
         # - dimblk
@@ -134,24 +130,34 @@ class _R12StrictRename:
         pass
 
     def process_entities(self) -> None:
-        # Common graphic attributes:
-        # - layer
-        # - linetype
-        # XDATA:
-        # - 1001: APPID
-        # - 1003: layer name
-        #
-        # TEXT
-        # - text style
-        # BLOCK
-        # - block name
-        # INSERT
-        # - block name
-        # ATTIB/ATTDEF
-        # - tag name
-        # - text style
-        # VIEWPORT
-        # (frozen layers XDATA 1003)
-        # DIMENSION
-        # - dim style
-        pass
+        for entity in self.doc.entitydb.values():
+            if entity.MIN_DXF_VERSION_FOR_EXPORT > const.DXF12:
+                continue
+            if entity.xdata:
+                self.translate_xdata(entity.xdata)
+            self.translate_entity_attributes(entity)
+
+    def translate_entity_attributes(self, entity: DXFEntity):
+        translate = self.translator.translate
+        for attrib_name in (
+            "layer",
+            "linetype",
+            "style",
+            "tag",
+            "name",
+            "dimstyle",
+        ):
+            if not entity.dxf.hasattr(attrib_name):
+                continue
+            name = entity.dxf.get(attrib_name)
+            if name:
+                entity.dxf.set(attrib_name, translate(name))
+
+    def translate_xdata(self, xdata: XData):
+        translate = self.translator.translate
+        for tags in xdata.data.values():
+            for index, (code, value) in enumerate(tags):
+                # 1001: APPID
+                # 1003: layer name
+                if code == 1001 or code == 1003:
+                    tags[index] = dxftag(code, translate(value))
