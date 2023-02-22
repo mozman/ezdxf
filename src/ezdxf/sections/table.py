@@ -663,6 +663,18 @@ class ViewportTable(Table[VPort]):
         else:
             self.entries[key] = [entry]  # type: ignore # store list of VPORT
 
+    def replace(self, name: str, entry: T) -> None:
+        self.discard(name)
+        config: list[T]
+        if isinstance(entry, list):
+            config = entry
+        else:
+            config = [entry]
+        if not config:
+            return
+        key = self.key(config[0].dxf.name)
+        self.entries[key] = config  # type: ignore
+
     def update_owner_handles(self) -> None:
         owner_handle = self._head.dxf.handle
         for entries in self.entries.values():

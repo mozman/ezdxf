@@ -252,6 +252,10 @@ class BlocksSection:
         else:
             raise DXFKeyError(name)
 
+    def block_names(self) -> list[str]:
+        """Returns a list of all block names."""
+        return list(self.doc.block_records.entries.keys())  # type: ignore
+
     def get(self, name: str, default=None) -> BlockLayout:
         """Returns :class:`~ezdxf.layouts.BlockLayout` `name`, returns
         `default` if `name` not exist.

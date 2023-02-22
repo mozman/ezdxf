@@ -5,9 +5,9 @@ from __future__ import annotations
 import string
 from ezdxf import const
 from ezdxf.lldxf.types import dxftag
-from ezdxf.entities import XData, DXFEntity
+from ezdxf.entities import XData, DXFEntity, is_graphic_entity
 from ezdxf.document import Drawing
-
+from ezdxf.sections.table import Table
 
 __all__ = ["translate_names", "purify", "R12NameTranslator"]
 
@@ -90,6 +90,12 @@ class R12NameTranslator:
         return "".join((char if char in valid_chars else "_") for char in name[:31])
 
 
+COMMON_ATTRIBS = ["layer", "linetype", "style", "tag", "name", "dimstyle"]
+DIMSTYLE_ATTRIBS = ["dimblk", "dimblk1", "dimblk2"]
+LAYER_ATTRIBS = ["linetype"]
+BLOCK_ATTRIBS = ["layer"]
+
+
 class _R12StrictRename:
     def __init__(self, doc: Drawing) -> None:
         assert doc.dxfversion == const.DXF12, "expected DXF version R12"
@@ -102,58 +108,93 @@ class _R12StrictRename:
         self.process_entities()
 
     def process_tables(self) -> None:
-        # APPID name
-        # DIMSTYLE name
-        # - dimblk
-        # - dimblk1
-        # - dimblk2
-        # LTYPE name
-        # LAYER name
-        # - linetype
-        # STYLE name
-        # UCS name
-        # VIEW name
-        # VPORT name
-        pass
+        tables = self.doc.tables
+        self.rename_table_entries(tables.appids)
+        self.rename_table_entries(tables.linetypes)
+        self.rename_table_entries(tables.layers)
+        self.process_table_entries(tables.layers, LAYER_ATTRIBS)
+        self.rename_table_entries(tables.styles)
+        self.rename_table_entries(tables.dimstyles)
+        self.process_table_entries(tables.dimstyles, DIMSTYLE_ATTRIBS)
+        self.rename_table_entries(tables.ucs)
+        self.rename_table_entries(tables.views)
+        self.rename_vports()
+        self.rename_block_layouts()
+        self.process_blocks()
+
+    def rename_table_entries(self, table: Table) -> None:
+        translate = self.translator.translate
+        for entry in list(table):
+            name = entry.dxf.name
+            entry.dxf.name = translate(name)
+            table.replace(name, entry)
+
+    def rename_vports(self):
+        translate = self.translator.translate
+        for config in list(self.doc.viewports.entries.values()):
+            if not config:  # multiple entries in a sequence
+                continue
+            old_name = config[0].dxf.name
+            new_name = translate(old_name)
+            for entry in config:  # type: ignore
+                entry.dxf.name = new_name
+            self.doc.viewports.replace(old_name, config)
+
+    def process_table_entries(self, table: Table, attribute_names: list[str]) -> None:
+        for entry in table:
+            self.translate_entity_attributes(entry, attribute_names)
+
+    def rename_block_layouts(self) -> None:
+        translate = self.translator.translate
+        blocks = self.doc.blocks
+        for name in blocks.block_names():
+            blocks.rename_block(name, translate(name))
+
+    def process_blocks(self):
+        for block_record in self.doc.block_records:
+            self.translate_entity_attributes(block_record.block, BLOCK_ATTRIBS)
 
     def process_header_vars(self) -> None:
-        # HEADER section:
-        # - $CLTYPE
-        # - $CLAYER
-        # - $DIMBLK
-        # - $DIMBLK1
-        # - $DIMBLK2
-        # - $DIMSTYLE
-        # - $UCSNAME
-        # - $PUCSNAME
-        # - $TEXTSTYLE
-        pass
+        header = self.doc.header
+        translate = self.translator.translate
+
+        for key in (
+            "$CELTYPE",
+            "$CLAYER",
+            "$DIMBLK",
+            "$DIMBLK1",
+            "$DIMBLK2",
+            "$DIMSTYLE",
+            "$UCSNAME",
+            "$PUCSNAME",
+            "$TEXTSTYLE",
+        ):
+            value = self.doc.header.get(key)
+            if value:
+                header[key] = translate(value)
 
     def process_entities(self) -> None:
         for entity in self.doc.entitydb.values():
+            if not is_graphic_entity(entity):
+                continue
             if entity.MIN_DXF_VERSION_FOR_EXPORT > const.DXF12:
                 continue
             if entity.xdata:
                 self.translate_xdata(entity.xdata)
-            self.translate_entity_attributes(entity)
+            self.translate_entity_attributes(entity, COMMON_ATTRIBS)
 
-    def translate_entity_attributes(self, entity: DXFEntity):
+    def translate_entity_attributes(
+        self, entity: DXFEntity, attribute_names: list[str]
+    ) -> None:
         translate = self.translator.translate
-        for attrib_name in (
-            "layer",
-            "linetype",
-            "style",
-            "tag",
-            "name",
-            "dimstyle",
-        ):
+        for attrib_name in attribute_names:
             if not entity.dxf.hasattr(attrib_name):
                 continue
             name = entity.dxf.get(attrib_name)
             if name:
                 entity.dxf.set(attrib_name, translate(name))
 
-    def translate_xdata(self, xdata: XData):
+    def translate_xdata(self, xdata: XData) -> None:
         translate = self.translator.translate
         for tags in xdata.data.values():
             for index, (code, value) in enumerate(tags):
