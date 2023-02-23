@@ -9,15 +9,26 @@ from ezdxf.entities import XData, DXFEntity, is_graphic_entity
 from ezdxf.document import Drawing
 from ezdxf.sections.table import Table
 
-__all__ = ["translate_names", "clean", "R12NameTranslator"]
+__all__ = ["make_acad_compatible", "translate_names", "clean", "R12NameTranslator"]
+
+
+def make_acad_compatible(doc: Drawing) -> None:
+    """Apply all DXF R12 requirements, so Autodesk products will load the document."""
+    if doc.dxfversion != const.DXF12:
+        raise const.DXFVersionError(
+            f"expected DXF document version R12, got: {doc.acad_release}"
+        )
+    clean(doc)
+    translate_names(doc)
 
 
 def translate_names(doc: Drawing) -> None:
-    """Translate table and block names into strict DXF R12 names.
+    r"""Translate table and block names into strict DXF R12 names.
 
     ACAD Releases upto 14 limit names to 31 characters in length and all names are
     uppercase.  Names can include the letters A to Z, the numerals 0 to 9, and the
-    special characters, dollar sign ($), underscore (_), hyphen (-) and the asterix (*).
+    special characters, dollar sign ($), underscore (_), hyphen (-) and the
+    asterix (\*) as first character for anonymous blocks.
 
     Most applications do not care about that and work fine with longer names and
     any characters used in names for some exceptions, but of course Autodesk
@@ -36,9 +47,7 @@ def translate_names(doc: Drawing) -> None:
 
 
 def clean(doc: Drawing) -> None:
-    """Remove all features that are not supported for DXF version R12 by Autodesk
-    products.
-    """
+    """Remove all features that are not supported for DXF R12 by Autodesk products."""
     if doc.dxfversion != const.DXF12:
         raise const.DXFVersionError(
             f"expected DXF document version R12, got: {doc.acad_release}"
@@ -62,8 +71,9 @@ def _remove_table_xdata(table: Table) -> None:
 
 def _remove_legacy_blocks(doc: Drawing) -> None:
     """Due to bad conversion some DXF files contain after loading the blocks
-    "$MODEL_SPACE" and "$PAPER_SPACE", delete them (no content) because they will
-    clash with the translated layout names of "*Model_Space" and "*Paper_Space".
+    "$MODEL_SPACE" and "$PAPER_SPACE". This function removes these empty blocks,
+    because they will clash with the translated layout names of "*Model_Space" and
+    "*Paper_Space".
     """
     for name in ("$MODEL_SPACE", "$PAPER_SPACE"):
         try:
@@ -73,11 +83,12 @@ def _remove_legacy_blocks(doc: Drawing) -> None:
 
 
 class R12NameTranslator:
-    """Translate table and block names into strict DXF R12 names.
+    r"""Translate table and block names into strict DXF R12 names.
 
     ACAD Releases upto 14 limit names to 31 characters in length and all names are
     uppercase.  Names can include the letters A to Z, the numerals 0 to 9, and the
-    special characters, dollar sign ($), underscore (_), hyphen (-) and the asterix (*).
+    special characters, dollar sign ($), underscore (_), hyphen (-) and the
+    asterix (\*) as first character for anonymous blocks.
 
     """
 
