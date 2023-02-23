@@ -128,6 +128,10 @@ class _R12StrictRename:
             name = entry.dxf.name
             entry.dxf.name = translate(name)
             table.replace(name, entry)
+            # XDATA for table entries is not accepted by Autodesk products for R12,
+            # but for consistency a translation is applied
+            if entry.xdata:
+                self.translate_xdata(entry.xdata)
 
     def rename_vports(self):
         translate = self.translator.translate
@@ -152,7 +156,10 @@ class _R12StrictRename:
 
     def process_blocks(self):
         for block_record in self.doc.block_records:
-            self.translate_entity_attributes(block_record.block, BLOCK_ATTRIBS)
+            block = block_record.block
+            self.translate_entity_attributes(block, BLOCK_ATTRIBS)
+            if block.xdata:
+                self.translate_xdata(block.xdata)
 
     def process_header_vars(self) -> None:
         header = self.doc.header
@@ -202,3 +209,4 @@ class _R12StrictRename:
                 # 1003: layer name
                 if code == 1001 or code == 1003:
                     tags[index] = dxftag(code, translate(value))
+        xdata.update_keys()

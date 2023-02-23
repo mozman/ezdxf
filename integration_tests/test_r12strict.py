@@ -3,8 +3,13 @@
 
 import pytest
 import ezdxf
+from ezdxf.entities import DXFEntity
 from ezdxf.document import Drawing
 from ezdxf import r12strict
+
+
+def set_xdata(entity: DXFEntity):
+    entity.set_xdata("my appid", [(1003, "my layer")])
 
 
 def setup_drawing(doc: Drawing):
@@ -37,17 +42,22 @@ def setup_drawing(doc: Drawing):
     for name in ["my block 0", "my block 1", "my block 2"]:
         blk = doc.blocks.new(name)
         blk.add_point((0, 0), dxfattribs=common_attribs)
+
     msp = doc.modelspace()
+    set_xdata(msp.block_record.block)
 
     msp.add_line((0, 0), (1, 0), dxfattribs=common_attribs)
 
     text = msp.add_text("any text", dxfattribs=common_attribs)
     text.dxf.style = "my style"
+    set_xdata(text)
 
     insert = msp.add_blockref("my block 0", (0, 0), dxfattribs=common_attribs)
     insert.add_attrib("my attrib", "any value")
 
-    msp.add_linear_dim((0, 0), (0, 0), (1, 0), dimstyle="my dimstyle")
+    msp.add_linear_dim(
+        (0, 0), (0, 0), (1, 0), dimstyle="my dimstyle", dxfattribs=common_attribs
+    )
 
 
 @pytest.fixture(scope="module")
@@ -111,6 +121,57 @@ def test_translated_view(doc: Drawing):
 def test_translated_vport(doc: Drawing):
     my_vport = doc.viewports.get("MY_VPORT")
     assert my_vport[0].dxf.name == "MY_VPORT"
+
+
+def test_translated_common_attributes(doc: Drawing):
+    for entity in doc.modelspace():
+        assert entity.dxf.layer == "MY_LAYER"
+        assert entity.dxf.linetype == "MY_LTYPE"
+
+
+def test_translated_text_attributes(doc: Drawing):
+    text = doc.modelspace().query("TEXT").first
+    assert text.dxf.style == "MY_STYLE"
+
+
+def test_translated_text_xdata(doc: Drawing):
+    text = doc.modelspace().query("TEXT").first
+    xdata = text.get_xdata("MY_APPID")
+    assert xdata[0] == (1003, "MY_LAYER")
+
+
+def test_translated_dimension_attributes(doc: Drawing):
+    dimension = doc.modelspace().query("DIMENSION").first
+    assert dimension.dxf.dimstyle == "MY_DIMSTYLE"
+
+
+def test_translated_block_reference_attributes(doc: Drawing):
+    insert = doc.modelspace().query("INSERT").first
+    attribute = insert.attribs[0]
+    assert attribute.dxf.tag == "MY_ATTRIB"
+
+
+def test_translated_modelspace_xdata(doc: Drawing):
+    msp = doc.modelspace()
+    xdata = msp.block_record.block.get_xdata("MY_APPID")
+    assert xdata[0] == (1003, "MY_LAYER")
+
+
+@pytest.mark.parametrize("name", ["MY_BLOCK_0", "MY_BLOCK_1", "MY_BLOCK_0"])
+def test_translated_block_layout_names(doc: Drawing, name: str):
+    assert name in doc.blocks
+    block_layout = doc.blocks.get(name)
+    assert block_layout.name == name
+    assert block_layout.block_record.dxf.name == name
+    assert block_layout.block_record.block.dxf.name == name
+
+
+def test_translated_block_content_attributes(doc: Drawing):
+    assert "MY_BLOCK_0" in doc.blocks
+    block_layout = doc.blocks.get("MY_BLOCK_0")
+    for entity in block_layout:
+        assert entity.dxf.layer == "MY_LAYER"
+        assert entity.dxf.linetype == "MY_LTYPE"
 
 
 if __name__ == "__main__":
