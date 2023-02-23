@@ -11,7 +11,6 @@ from typing import (
     Union,
     Optional,
 )
-from collections import OrderedDict
 from contextlib import contextmanager
 import logging
 
@@ -43,7 +42,7 @@ def has_valid_xdata_group_codes(tags: Tags) -> bool:
 
 class XData:
     def __init__(self, xdata: Optional[Iterable[Tags]] = None):
-        self.data: dict[str, Tags] = OrderedDict()
+        self.data: dict[str, Tags] = dict()
         if xdata is not None:
             for data in xdata:
                 self._add(data)
@@ -60,6 +59,10 @@ class XData:
     def __contains__(self, appid: str) -> bool:
         """Returns ``True`` if  DXF tags for `appid` exist."""
         return appid in self.data
+
+    def update_keys(self):
+        """Update APPID keys. (internal API)"""
+        self.data = {tags[0].value: tags for tags in self.data.values()}
 
     def _add(self, tags: Tags) -> None:
         tags = Tags(tags)
@@ -225,7 +228,7 @@ class XData:
         1042 inplace. For more information see :ref:`xdata_internals` Internals.
 
         """
-        transformed_data = OrderedDict()
+        transformed_data = dict()
         for key, tags in self.data.items():
             transformed_data[key] = Tags(transform_xdata_tags(tags, m))
         self.data = transformed_data
