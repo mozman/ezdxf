@@ -11,7 +11,7 @@ WARNING: THIS MODULE IS IN PLANNING STATE, DO NOT USE IT!
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, TextIO, Callable
+from typing import TYPE_CHECKING, TextIO, Callable, Optional
 import os
 from io import StringIO
 import logging
@@ -152,14 +152,14 @@ def export_lwpolyline(exporter: R12Exporter, entity: DXFEntity):
     assert isinstance(entity, LWPolyline)
     polyline = lwpolyline_to_polyline(entity)
     if len(polyline.vertices):
-        polyline.export_dxf(exporter.tagwriter)
+        polyline.export_dxf(exporter.tagwriter())
 
 
 def export_mesh(exporter: R12Exporter, entity: DXFEntity):
     assert isinstance(entity, Mesh)
     polyface_mesh = mesh_to_polyface_mesh(entity)
     if len(polyface_mesh.vertices):
-        polyface_mesh.export_dxf(exporter.tagwriter)
+        polyface_mesh.export_dxf(exporter.tagwriter())
 
 
 def export_spline(exporter: R12Exporter, entity: DXFEntity):
@@ -168,7 +168,7 @@ def export_spline(exporter: R12Exporter, entity: DXFEntity):
         entity, exporter.max_sagitta, exporter.min_spline_segments
     )
     if len(polyline.vertices):
-        polyline.export_dxf(exporter.tagwriter)
+        polyline.export_dxf(exporter.tagwriter())
 
 
 def export_ellipse(exporter: R12Exporter, entity: DXFEntity):
@@ -177,7 +177,7 @@ def export_ellipse(exporter: R12Exporter, entity: DXFEntity):
         entity, exporter.max_sagitta, exporter.min_ellipse_segments
     )
     if len(polyline.vertices):
-        polyline.export_dxf(exporter.tagwriter)
+        polyline.export_dxf(exporter.tagwriter())
 
 
 # Exporters are required to convert newer entity types into DXF R12 types.
@@ -220,11 +220,14 @@ NAME_TAG_CODES = {2, 3, 6, 7, 8, 1001, 1003}
 
 
 class R12TagWriter(TagWriter):
-    def __init__(self, stream: TextIO, dxfversion: str, write_handles: bool):
-        super().__init__(stream, dxfversion, write_handles)
+    def __init__(self, stream: TextIO):
+        super().__init__(stream, dxfversion=const.DXF12, write_handles=False)
         self.skip_xdata = False
         self.current_entity = ""
         self.translator = R12NameTranslator()
+
+    def set_stream(self, stream: TextIO) -> None:
+        self._stream = stream
 
     def write_tag(self, tag: DXFTag) -> None:
         code, value = tag
@@ -266,56 +269,49 @@ class R12Exporter:
     def __init__(self, doc: Drawing, max_sagitta: float = 0.01):
         assert isinstance(doc, Drawing)
         self._doc = doc
-        self._tagwriter: R12TagWriter = None  # type: ignore
+        self._tagwriter = R12TagWriter(StringIO())
         self.max_sagitta = float(max_sagitta)  # flattening SPLINE, ELLIPSE
         self.min_spline_segments: int = 4  # flattening SPLINE
         self.min_ellipse_segments: int = 8  # flattening ELLIPSE
-        self.log: list[str] = []
 
     @property
     def doc(self) -> Drawing:
         return self._doc
 
-    @property
-    def tagwriter(self) -> R12TagWriter:
+    def tagwriter(self, stream: Optional[TextIO] = None) -> R12TagWriter:
+        if stream is not None:
+            self._tagwriter.set_stream(stream)
         return self._tagwriter
 
-    def log_msg(self, msg: str) -> None:
-        logger.debug(msg)
-        self.log.append(msg)
-
-    def reset(self, tagwriter: R12TagWriter) -> None:
-        self._tagwriter = tagwriter
-        self.log.clear()
-
     def write(self, stream: TextIO) -> None:
-        self.reset(R12TagWriter(stream, write_handles=False, dxfversion=const.DXF12))
-        self.preprocess()
-        self.export_sections()
+        # write layouts and blocks before HEADER and TABLES sections:
+        # export may create new table entries and blocks
+        blocks_section = self.export_blocks_to_string()
+        entities_section = self.export_layouts_to_string()
+        stream.write(self.export_header_to_string())
+        stream.write(self.export_tables_to_string())
+        stream.write(blocks_section)
+        stream.write(entities_section)
+        stream.write("0\nEOF\n")
 
-    def preprocess(self) -> None:
-        # e.g. explode HATCH entities into blocks
-        pass
+    def export_header_to_string(self) -> str:
+        in_memory_stream = StringIO()
+        self.doc.header.export_dxf(self.tagwriter(in_memory_stream))
+        return in_memory_stream.getvalue()
 
-    def export_sections(self) -> None:
-        assert isinstance(self._tagwriter, AbstractTagWriter)
-        self.export_header()
-        self.export_tables()
-        self.export_blocks()
-        self.export_layouts()
-        self._write_end_of_file()
-
-    def export_header(self) -> None:
-        self.doc.header.export_dxf(self._tagwriter)
-
-    def export_tables(self) -> None:
+    def export_tables_to_string(self) -> str:
         # DXF R12 does not support XDATA in tables according Autodesk DWG TrueView
-        tagwriter = self.tagwriter
+        in_memory_stream = StringIO()
+        tagwriter = self.tagwriter(in_memory_stream)
         tagwriter.skip_xdata = True
         self.doc.tables.export_dxf(tagwriter)
         tagwriter.skip_xdata = False
+        return in_memory_stream.getvalue()
 
-    def export_blocks(self) -> None:
+    def export_blocks_to_string(self) -> str:
+        in_memory_stream = StringIO()
+        self._tagwriter.set_stream(in_memory_stream)
+
         self._write_section_header("BLOCKS")
         for block_record in self.doc.block_records:
             if block_record.is_any_paperspace and not block_record.is_active_paperspace:
@@ -327,12 +323,17 @@ class R12Exporter:
                 continue
             self._export_block_record(block_record)
         self._write_endsec()
+        return in_memory_stream.getvalue()
 
-    def export_layouts(self) -> None:
+    def export_layouts_to_string(self) -> str:
+        in_memory_stream = StringIO()
+        self._tagwriter.set_stream(in_memory_stream)
+
         self._write_section_header("ENTITIES")
         self._export_entity_space(self.doc.modelspace().entity_space)
         self._export_entity_space(self.doc.paperspace().entity_space)
         self._write_endsec()
+        return in_memory_stream.getvalue()
 
     def _export_block_record(self, block_record: BlockRecord):
         tagwriter = self._tagwriter
@@ -350,8 +351,6 @@ class R12Exporter:
                 exporter = EXPORTERS.get(entity.dxftype())
                 if exporter:
                     exporter(self, entity)
-                else:
-                    self.log_msg(f"Entity {str(entity)} not exported.")
             else:
                 entity.export_dxf(tagwriter)
 
@@ -360,6 +359,3 @@ class R12Exporter:
 
     def _write_endsec(self) -> None:
         self._tagwriter.write_tag2(0, "ENDSEC")
-
-    def _write_end_of_file(self):
-        self._tagwriter.write_tag2(0, "EOF")
