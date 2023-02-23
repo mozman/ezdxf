@@ -9,7 +9,7 @@ from ezdxf.entities import XData, DXFEntity, is_graphic_entity
 from ezdxf.document import Drawing
 from ezdxf.sections.table import Table
 
-__all__ = ["translate_names", "purify", "R12NameTranslator"]
+__all__ = ["translate_names", "clean", "R12NameTranslator"]
 
 
 def translate_names(doc: Drawing) -> None:
@@ -35,15 +35,41 @@ def translate_names(doc: Drawing) -> None:
     _R12StrictRename(doc).execute()
 
 
-def purify(doc: Drawing) -> None:
-    """Remove or destroy all features and entity types that are not supported by DXF
-    version R12.
+def clean(doc: Drawing) -> None:
+    """Remove all features that are not supported for DXF version R12 by Autodesk
+    products.
     """
     if doc.dxfversion != const.DXF12:
         raise const.DXFVersionError(
             f"expected DXF document version R12, got: {doc.acad_release}"
         )
-    raise NotImplementedError()
+    _remove_table_xdata(doc.appids)
+    _remove_table_xdata(doc.linetypes)
+    _remove_table_xdata(doc.layers)
+    _remove_table_xdata(doc.styles)
+    _remove_table_xdata(doc.dimstyles)
+    _remove_table_xdata(doc.ucs)
+    _remove_table_xdata(doc.views)
+    _remove_table_xdata(doc.viewports)
+    _remove_legacy_blocks(doc)
+
+
+def _remove_table_xdata(table: Table) -> None:
+    """Autodesk products do not accept XDATA in table entries for DXF R12."""
+    for entry in list(table):
+        entry.xdata = None
+
+
+def _remove_legacy_blocks(doc: Drawing) -> None:
+    """Due to bad conversion some DXF files contain after loading the blocks
+    "$MODEL_SPACE" and "$PAPER_SPACE", delete them (no content) because they will
+    clash with the translated layout names of "*Model_Space" and "*Paper_Space".
+    """
+    for name in ("$MODEL_SPACE", "$PAPER_SPACE"):
+        try:
+            doc.blocks.delete_block(name, safe=False)
+        except const.DXFKeyError:
+            pass
 
 
 class R12NameTranslator:

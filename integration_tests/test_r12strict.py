@@ -174,5 +174,28 @@ def test_translated_block_content_attributes(doc: Drawing):
         assert entity.dxf.linetype == "MY_LTYPE"
 
 
+def test_clean_xdata_from_table_entries():
+    doc = ezdxf.new("R12")
+    doc.appids.new("MY_ID")
+    layer = doc.layers.new("MY_LAYER")
+    layer.set_xdata("MY_ID", [(1000, "Test")])
+
+    r12strict.clean(doc)
+    assert layer.xdata is None, "expected XDATA to be deleted"
+
+
+def test_remove_legacy_blocks():
+    doc = ezdxf.new("R12")
+    doc.blocks.new("$Model_Space")
+    doc.blocks.new("$Paper_Space")
+
+    r12strict.clean(doc)
+    # block names are case-insensitive
+    assert "$MODEL_SPACE" not in doc.blocks
+    assert "$PAPER_SPACE" not in doc.blocks
+    assert doc.block_records.has_entry("$Model_Space") is False
+    assert doc.block_records.has_entry("$Paper_Space") is False
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
