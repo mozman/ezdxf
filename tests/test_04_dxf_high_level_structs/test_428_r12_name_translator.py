@@ -31,12 +31,16 @@ def test_translate_digits(tr):
 
 
 def test_translate_special_chars(tr):
-    assert tr.translate("$_-*") == "$_-*"
+    assert tr.translate("$_-") == "$_-"
+
+
+def test_asterix_is_allowed_as_first_letter(tr):
+    assert tr.translate("*Active") == "*ACTIVE"
 
 
 def test_translate_punctuation(tr):
     """Punctuations are not supported"""
-    assert tr.translate(".,;:!?\\/") == "________"
+    assert tr.translate(".,;:!?\\/*") == "_________"
 
 
 def test_translation_spaces(tr):

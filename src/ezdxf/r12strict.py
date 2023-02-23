@@ -28,7 +28,7 @@ def translate_names(doc: Drawing) -> None:
     ACAD Releases upto 14 limit names to 31 characters in length and all names are
     uppercase.  Names can include the letters A to Z, the numerals 0 to 9, and the
     special characters, dollar sign ($), underscore (_), hyphen (-) and the
-    asterix (\*) as first character for anonymous blocks.
+    asterix (\*) as first character for special names like anonymous blocks.
 
     Most applications do not care about that and work fine with longer names and
     any characters used in names for some exceptions, but of course Autodesk
@@ -88,11 +88,11 @@ class R12NameTranslator:
     ACAD Releases upto 14 limit names to 31 characters in length and all names are
     uppercase.  Names can include the letters A to Z, the numerals 0 to 9, and the
     special characters, dollar sign ($), underscore (_), hyphen (-) and the
-    asterix (\*) as first character for anonymous blocks.
+    asterix (\*) as first character for special names like anonymous blocks.
 
     """
 
-    VALID_R12_NAME_CHARS = set(string.ascii_uppercase + string.digits + "$_-*")
+    VALID_R12_NAME_CHARS = set(string.ascii_uppercase + string.digits + "$_-")
 
     def __init__(self) -> None:
         self.translated_names: dict[str, str] = {}
@@ -124,7 +124,16 @@ class R12NameTranslator:
     @staticmethod
     def _name_sanitizer(name: str, valid_chars: set[str]) -> str:
         # `name` has to be upper case!
-        return "".join((char if char in valid_chars else "_") for char in name[:31])
+        if not name:
+            return ""
+        new_name = "".join(
+                (char if char in valid_chars else "_") for char in name[:31]
+            )
+        # special names like anonymous blocks or the "*ACTIVE" viewport configuration
+        if name[0] == "*":
+            return "*" + new_name[1:31]
+        else:
+            return new_name
 
 
 COMMON_ATTRIBS = ["layer", "linetype", "style", "tag", "name", "dimstyle"]
