@@ -265,6 +265,9 @@ class R12TagWriter(TagWriter):
         return self.translator.translate(name)
 
 
+EOF_STR = "0\nEOF\n"
+
+
 class R12Exporter:
     def __init__(self, doc: Drawing, max_sagitta: float = 0.01):
         assert isinstance(doc, Drawing)
@@ -284,15 +287,24 @@ class R12Exporter:
         return self._tagwriter
 
     def write(self, stream: TextIO) -> None:
-        # write layouts and blocks before HEADER and TABLES sections:
+        """Write DXF document to text stream."""
+        stream.write(self.to_string())
+
+    def to_string(self) -> str:
+        """Export DXF document as string."""
+        # export layouts and blocks before HEADER and TABLES sections:
         # export may create new table entries and blocks
-        blocks_section = self.export_blocks_to_string()
-        entities_section = self.export_layouts_to_string()
-        stream.write(self.export_header_to_string())
-        stream.write(self.export_tables_to_string())
-        stream.write(blocks_section)
-        stream.write(entities_section)
-        stream.write("0\nEOF\n")
+        blocks = self.export_blocks_to_string()
+        entities = self.export_layouts_to_string()
+        return "".join(
+            (
+                self.export_header_to_string(),
+                self.export_tables_to_string(),
+                blocks,
+                entities,
+                EOF_STR,
+            )
+        )
 
     def export_header_to_string(self) -> str:
         in_memory_stream = StringIO()
