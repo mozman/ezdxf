@@ -65,7 +65,8 @@ Add-ons
 
 - drawing add-on improvements:
   - (>v1.1) render SHX fonts and SHAPE entities as paths by the frontend 
-    from `.shx` or `.shp` files
+    from `.shx` or `.shp` files, maybe use `.lff` LiberCAD font files as replacement
+    if `.shx` are not available
   
   - (>v1.1) proper rendering pipeline: Frontend -> Stage0 -> ... -> Backend 
     Introducing the Designer() class was the first step, but the implementation 
@@ -111,6 +112,8 @@ Add-ons
     - hide paperspace entities (`DXFGraphic.dxf.paperspace` attribute is `True`)
     
     VIEWPORT borders are not plotted at all by the `drawing` add-on
+  
+  - (>v1.1) clipping path support for block references
     
 - (>v1.1) DWG loader, planned for the future. Cython will be required for the 
   low level stuff, no pure Python implementation.
@@ -124,6 +127,7 @@ Render Tools
 - (>v1.1) factory methods to create ACAD_TABLE entities
 - (>v1.1) tool to create proxy graphic 
 - (>v1.1) add `ShxFont` and `ShpFont` classes to `ezdxf.tools.fonts`
+- (>v1.1) LibreCAD Font File (`.lff`) support, https://github.com/Rallaz/LibreCAD/wiki/lff-definition
 
 DXF Entities
 ------------
