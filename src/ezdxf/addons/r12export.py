@@ -32,17 +32,18 @@ from ezdxf.entities import (
     MText,
     Textstyle,
 )
-from ezdxf.layouts import BlockLayout, VirtualLayout
-from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT
-from ezdxf.lldxf.tagwriter import TagWriter, AbstractTagWriter
-from ezdxf.math import Z_AXIS, Vec3, NULLVEC
-from ezdxf.render import MeshBuilder
-from ezdxf.r12strict import R12NameTranslator
 from ezdxf.addons import MTextExplode
+from ezdxf.entitydb import EntitySpace
+from ezdxf.layouts import BlockLayout, VirtualLayout
+from ezdxf.lldxf.tagwriter import TagWriter, AbstractTagWriter
+from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT
+from ezdxf.math import Z_AXIS, Vec3, NULLVEC
+from ezdxf.r12strict import R12NameTranslator
+from ezdxf.render import MeshBuilder
 from ezdxf.sections.table import TextstyleTable
 
 if TYPE_CHECKING:
-    from ezdxf.entitydb import EntitySpace
+    from ezdxf.eztypes import GenericLayoutType
 
 __all__ = ["R12Exporter", "convert", "saveas", "write"]
 
@@ -201,22 +202,17 @@ def export_proxy_graphic(exporter: R12Exporter, entity: DXFEntity):
     assert isinstance(entity.proxy_graphic, bytes)
     pg = proxygraphic.ProxyGraphic(entity.proxy_graphic)
     try:
-        entities = list(pg.virtual_entities())
+        entities = EntitySpace(pg.virtual_entities())
     except proxygraphic.ProxyGraphicError:
         return
-    block = exporter.new_block(entity)
-    for e in entities:
-        block.add_entity(e)
-    insert = make_insert(block.name, entity)
-    insert.export_dxf(exporter.tagwriter())
+    exporter.export_entity_space(entities)
 
 
 def export_mtext(exporter: R12Exporter, entity: DXFEntity):
     assert isinstance(entity, MText)
-    block = exporter.new_block(entity)
-    exporter.explode_mtext(entity, block)
-    insert = make_insert(block.name, entity)
-    insert.export_dxf(exporter.tagwriter())
+    layout = VirtualLayout()
+    exporter.explode_mtext(entity, layout)
+    exporter.export_entity_space(layout.entity_space)
 
 
 # Exporters are required to convert newer entity types into DXF R12 types.
@@ -454,8 +450,8 @@ class R12Exporter:
             br for br in self._extra_doc.block_records if br.dxf.name.startswith("*U")
         ]
 
-    def explode_mtext(self, mtext: MText, block: BlockLayout):
-        with MTextExplode(block, self._extra_doc) as xpl:
+    def explode_mtext(self, mtext: MText, layout: GenericLayoutType):
+        with MTextExplode(layout, self._extra_doc) as xpl:
             xpl.explode(mtext, destroy=False)
 
     def export_layouts_to_string(self) -> str:
@@ -463,8 +459,8 @@ class R12Exporter:
         self._tagwriter.set_stream(in_memory_stream)
 
         self._write_section_header("ENTITIES")
-        self._export_entity_space(self.doc.modelspace().entity_space)
-        self._export_entity_space(self.doc.paperspace().entity_space)
+        self.export_entity_space(self.doc.modelspace().entity_space)
+        self.export_entity_space(self.doc.paperspace().entity_space)
         self._write_endsec()
         return in_memory_stream.getvalue()
 
@@ -473,11 +469,11 @@ class R12Exporter:
         assert block_record.block is not None
         block_record.block.export_dxf(tagwriter)
         if not block_record.is_any_layout:
-            self._export_entity_space(block_record.entity_space)
+            self.export_entity_space(block_record.entity_space)
         assert block_record.endblk is not None
         block_record.endblk.export_dxf(tagwriter)
 
-    def _export_entity_space(self, space: EntitySpace):
+    def export_entity_space(self, space: EntitySpace):
         tagwriter = self._tagwriter
         for entity in space:
             if entity.MIN_DXF_VERSION_FOR_EXPORT > const.DXF12:

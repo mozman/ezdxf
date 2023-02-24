@@ -106,12 +106,7 @@ def test_export_proxy_graphic():
     msp.add_entity(proxy_entity)
 
     doc_r12 = r12export.convert(doc)
-    insert = doc_r12.modelspace()[0]
-    assert insert.dxftype() == "INSERT"
-    assert insert.dxf.name == "*U1"
-
-    block = doc_r12.blocks.get(insert.dxf.name)
-    assert len(block) == 9
+    assert len(doc_r12.modelspace()) == 9
 
 
 def test_export_mtext():
@@ -124,12 +119,10 @@ def test_export_mtext():
     msp.add_mtext(editor.text, dxfattribs=DXFATTRIBS)
 
     doc_r12 = r12export.convert(doc)
-    insert = doc_r12.modelspace()[0]
-    assert insert.dxftype() == "INSERT"
-    assert insert.dxf.name == "*U1"
+    text0, text1 = doc_r12.modelspace()
 
-    block = doc_r12.blocks.get(insert.dxf.name)
-    assert len(block) == 2
+    assert text0.dxf.text == "LINE0"
+    assert text1.dxf.text == "LINE1"
     assert doc_r12.styles.has_entry("MTXPL_ARIAL")
     assert doc_r12.styles.has_entry("MTXPL_TXT")
 

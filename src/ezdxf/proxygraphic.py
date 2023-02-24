@@ -506,6 +506,7 @@ class ProxyGraphic:
             polyline.append_vertices(vertices)
             if close:
                 polyline.close()
+            polyline.new_seqend()
         return polyline
 
     def polyline_with_normals(self, data: bytes):
