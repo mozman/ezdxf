@@ -215,6 +215,16 @@ def export_mtext(exporter: R12Exporter, entity: DXFEntity):
     exporter.export_entity_space(layout.entity_space)
 
 
+def export_virtual_entities(exporter: R12Exporter, entity: DXFEntity):
+    layout = VirtualLayout()
+    try:
+        for e in entity.virtual_entities():  # type: ignore
+            layout.add_entity(e)
+    except Exception:
+        return
+    exporter.export_entity_space(layout.entity_space)
+
+
 # Exporters are required to convert newer entity types into DXF R12 types.
 # All newer entity types without an exporter will be ignored.
 EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
@@ -223,15 +233,15 @@ EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
     "SPLINE": export_spline,
     "ELLIPSE": export_ellipse,
     "MTEXT": export_mtext,
+    "LEADER": export_virtual_entities,
+    "MLEADER": export_virtual_entities,
+    "MULTILEADER": export_virtual_entities,
+    "MLINE": export_virtual_entities,
 }
 
 
 # Planned features: explode complex newer entity types into DXF primitives.
 # currently skipped entity types:
-# - MTEXT: exploding into DXF primitives is possible
-# - LEADER: exploding into DXF primitives is possible
-# - MLEADER: exploding into DXF primitives is possible
-# - MLINE: exploding into DXF primitives is possible
 # - HATCH & MPOLYGON: exploding pattern filling as LINE entities and solid filling as
 #   SOLID entities is possible
 # - ACAD_TABLE: graphic as geometry block is available

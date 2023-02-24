@@ -9,6 +9,7 @@ from ezdxf.addons import r12export
 from ezdxf import entities as ents
 from ezdxf.render import forms
 from ezdxf.tools.text import MTextEditor
+from ezdxf.math import Vec2
 
 DXFATTRIBS = {
     "layer": "EZDXF",
@@ -125,6 +126,21 @@ def test_export_mtext():
     assert text1.dxf.text == "LINE1"
     assert doc_r12.styles.has_entry("MTXPL_ARIAL")
     assert doc_r12.styles.has_entry("MTXPL_TXT")
+
+
+def test_export_virtual_entities():
+    doc = ezdxf.new(setup=True)
+    mleaderstyle = doc.mleader_styles.duplicate_entry("Standard", "EZDXF")
+    mleaderstyle.set_mtext_style("OpenSans")
+    msp = doc.modelspace()
+    ml_builder = msp.add_multileader_mtext("EZDXF")
+    ml_builder.quick_leader(
+        "Line1\nLine2",
+        target=Vec2(40, 15),
+        segment1=Vec2.from_deg_angle(45, 14),
+    )
+    doc_r12 = r12export.convert(doc)
+    assert len(doc_r12.modelspace()) == 5
 
 
 DATA = """160
