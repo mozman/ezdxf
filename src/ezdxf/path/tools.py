@@ -42,7 +42,8 @@ from . import converter, nesting
 
 if TYPE_CHECKING:
     from ezdxf.query import EntityQuery
-    from ezdxf.layouts import Layout
+    from ezdxf.eztypes import GenericLayoutType
+
 
 __all__ = [
     "bbox",
@@ -259,7 +260,7 @@ def _get_non_uniform_scaling(current_size: Vec3, target_size: Vec3):
 
 
 def render_lwpolylines(
-    layout: Layout,
+    layout: GenericLayoutType,
     paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
@@ -301,7 +302,7 @@ def render_lwpolylines(
 
 
 def render_polylines2d(
-    layout: Layout,
+    layout: GenericLayoutType,
     paths: Iterable[Path],
     *,
     distance: float = 0.01,
@@ -343,7 +344,7 @@ def render_polylines2d(
 
 
 def render_hatches(
-    layout: Layout,
+    layout: GenericLayoutType,
     paths: Iterable[Path],
     *,
     edge_path: bool = True,
@@ -392,7 +393,7 @@ def render_hatches(
 
 
 def render_mpolygons(
-    layout: Layout,
+    layout: GenericLayoutType,
     paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
@@ -436,7 +437,7 @@ def render_mpolygons(
 
 
 def render_polylines3d(
-    layout: Layout,
+    layout: GenericLayoutType,
     paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
@@ -472,7 +473,7 @@ def render_polylines3d(
 
 
 def render_lines(
-    layout: Layout,
+    layout: GenericLayoutType,
     paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
@@ -507,7 +508,7 @@ def render_lines(
 
 
 def render_splines_and_polylines(
-    layout: Layout,
+    layout: GenericLayoutType,
     paths: Iterable[Path],
     *,
     g1_tol: float = G1_TOL,
