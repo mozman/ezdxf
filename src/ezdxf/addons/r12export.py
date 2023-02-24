@@ -17,7 +17,7 @@ from io import StringIO
 import logging
 
 import ezdxf
-from ezdxf import const
+from ezdxf import const, proxygraphic
 from ezdxf.document import Drawing
 from ezdxf.entities import (
     BlockRecord,
@@ -28,11 +28,12 @@ from ezdxf.entities import (
     Mesh,
     Spline,
     Ellipse,
+    Insert,
 )
-from ezdxf.layouts import VirtualLayout
+from ezdxf.layouts import BlockLayout, VirtualLayout
 from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT
 from ezdxf.lldxf.tagwriter import TagWriter, AbstractTagWriter
-from ezdxf.math import Z_AXIS, Vec3
+from ezdxf.math import Z_AXIS, Vec3, NULLVEC
 from ezdxf.render import MeshBuilder
 from ezdxf.r12strict import R12NameTranslator
 
@@ -180,6 +181,31 @@ def export_ellipse(exporter: R12Exporter, entity: DXFEntity):
         polyline.export_dxf(exporter.tagwriter())
 
 
+def make_insert(name: str, entity: DXFEntity, location=NULLVEC) -> Insert:
+    return Insert.new(
+        dxfattribs={
+            "name": name,
+            "layer": entity.dxf.layer,
+            "linetype": entity.dxf.linetype,
+            "color": entity.dxf.color,
+            "insert": location,
+        }
+    )
+
+
+def export_proxy_graphic(exporter: R12Exporter, entity: DXFEntity):
+    pg = proxygraphic.ProxyGraphic(entity.proxy_graphic)
+    try:
+        entities = list(pg.virtual_entities())
+    except proxygraphic.ProxyGraphicError:
+        return
+    block = exporter.new_block(entity)
+    for e in entities:
+        block.add_entity(e)
+    insert = make_insert(block.name, entity)
+    insert.export_dxf(exporter.tagwriter())
+
+
 # Exporters are required to convert newer entity types into DXF R12 types.
 # All newer entity types without an exporter will be ignored.
 EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
@@ -268,6 +294,20 @@ class R12TagWriter(TagWriter):
 EOF_STR = "0\nEOF\n"
 
 
+def detect_max_block_number(names: list[str]) -> int:
+    max_number = 0
+    for name in names:
+        name = name.upper()
+        if not name.startswith("*"):
+            continue
+        try:  # *U10
+            number = int(name[2:])
+        except ValueError:
+            continue
+        max_number = max(max_number, number)
+    return max_number + 1
+
+
 class R12Exporter:
     def __init__(self, doc: Drawing, max_sagitta: float = 0.01):
         assert isinstance(doc, Drawing)
@@ -276,6 +316,10 @@ class R12Exporter:
         self.max_sagitta = float(max_sagitta)  # flattening SPLINE, ELLIPSE
         self.min_spline_segments: int = 4  # flattening SPLINE
         self.min_ellipse_segments: int = 8  # flattening ELLIPSE
+        self._extra_doc = ezdxf.new("R12")
+        self._next_block_number = detect_max_block_number(
+            [br.dxf.name for br in doc.block_records]
+        )
 
     @property
     def doc(self) -> Drawing:
@@ -292,10 +336,11 @@ class R12Exporter:
 
     def to_string(self) -> str:
         """Export DXF document as string."""
-        # export layouts and blocks before HEADER and TABLES sections:
-        # export may create new table entries and blocks
-        blocks = self.export_blocks_to_string()
+        # export layouts before blocks: may create new anonymous blocks
         entities = self.export_layouts_to_string()
+        # export blocks before HEADER and TABLES sections: may create new text styles
+        blocks = self.export_blocks_to_string()
+
         return "".join(
             (
                 self.export_header_to_string(),
@@ -304,6 +349,21 @@ class R12Exporter:
                 entities,
                 EOF_STR,
             )
+        )
+
+    def next_block_name(self) -> str:
+        name = f"*U{self._next_block_number}"
+        self._next_block_number += 1
+        return name
+
+    def new_block(self, entity: DXFEntity) -> BlockLayout:
+        name = self.next_block_name()
+        return self._extra_doc.blocks.new(
+            name,
+            dxfattribs={
+                "layer": entity.dxf.get("layer", "0"),
+                "flags": const.BLK_ANONYMOUS,
+            },
         )
 
     def export_header_to_string(self) -> str:
@@ -334,8 +394,25 @@ class R12Exporter:
                 # and the *Paper_Space blocks.
                 continue
             self._export_block_record(block_record)
+
+        extra_blocks = self.get_extra_blocks()
+        while len(extra_blocks):
+            for block_record in extra_blocks:
+                self._export_block_record(block_record)
+                self.discard_extra_block(block_record.dxf.name)
+            # block record export can create further blocks
+            extra_blocks = self.get_extra_blocks()
+
         self._write_endsec()
         return in_memory_stream.getvalue()
+
+    def discard_extra_block(self, name: str) -> None:
+        self._extra_doc.block_records.discard(name)
+
+    def get_extra_blocks(self) -> list[BlockRecord]:
+        return [
+            br for br in self._extra_doc.block_records if br.dxf.name.startswith("*U")
+        ]
 
     def export_layouts_to_string(self) -> str:
         in_memory_stream = StringIO()
@@ -363,6 +440,9 @@ class R12Exporter:
                 exporter = EXPORTERS.get(entity.dxftype())
                 if exporter:
                     exporter(self, entity)
+                    continue
+                if entity.proxy_graphic:
+                    export_proxy_graphic(self, entity)
             else:
                 entity.export_dxf(tagwriter)
 
