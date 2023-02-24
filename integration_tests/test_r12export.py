@@ -143,6 +143,20 @@ def test_export_virtual_entities():
     assert len(doc_r12.modelspace()) == 5
 
 
+def test_export_hatch_pattern_fill():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    hatch = msp.add_hatch()
+    hatch.paths.add_polyline_path([(0, 0), (10, 0), (10, 10), (0, 10)])
+    hatch.set_pattern_fill("ANSI31", scale=0.5)
+
+    doc_r12 = r12export.convert(doc)
+    insert = doc_r12.modelspace()[0]
+    block = doc_r12.blocks.get(insert.dxf.name)
+    lines = block.query("LINE")
+    assert len(lines) > 8
+
+
 DATA = """160
 968
 310

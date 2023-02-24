@@ -588,6 +588,7 @@ def to_polylines2d(
         if len(path) > 0:
             p = Polyline.new(dxfattribs=dxfattribs)
             p.append_vertices(path.flattening(distance, segments))
+            p.new_seqend()
             yield p
 
 
@@ -793,6 +794,7 @@ def to_polylines3d(
         if len(path) > 0:
             p = Polyline.new(dxfattribs=dxfattribs)
             p.append_vertices(path.flattening(distance, segments))
+            p.new_seqend()
             yield p
 
 
@@ -941,6 +943,7 @@ def to_splines_and_polylines(
                 attribs["flags"] = const.POLYLINE_3D_POLYLINE
                 polyline = Polyline.new(dxfattribs=dxfattribs)
                 polyline.append_vertices(data)
+                polyline.new_seqend()
                 yield polyline
 
 

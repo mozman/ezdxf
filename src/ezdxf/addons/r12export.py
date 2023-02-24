@@ -11,13 +11,13 @@ WARNING: THIS MODULE IS IN PLANNING STATE, DO NOT USE IT!
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, TextIO, Callable, Optional
+from typing import TYPE_CHECKING, TextIO, Callable, Optional, Any
 import os
 from io import StringIO
 import logging
 
 import ezdxf
-from ezdxf import const, proxygraphic
+from ezdxf import const, proxygraphic, path
 from ezdxf.document import Drawing
 from ezdxf.entities import (
     BlockRecord,
@@ -31,7 +31,10 @@ from ezdxf.entities import (
     Insert,
     MText,
     Textstyle,
+    Hatch,
+    MPolygon,
 )
+from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.addons import MTextExplode
 from ezdxf.entitydb import EntitySpace
 from ezdxf.layouts import BlockLayout, VirtualLayout
@@ -39,7 +42,7 @@ from ezdxf.lldxf.tagwriter import TagWriter, AbstractTagWriter
 from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT
 from ezdxf.math import Z_AXIS, Vec3, NULLVEC
 from ezdxf.r12strict import R12NameTranslator
-from ezdxf.render import MeshBuilder
+from ezdxf.render import MeshBuilder, hatching
 from ezdxf.sections.table import TextstyleTable
 
 if TYPE_CHECKING:
@@ -225,25 +228,72 @@ def export_virtual_entities(exporter: R12Exporter, entity: DXFEntity):
     exporter.export_entity_space(layout.entity_space)
 
 
-# Exporters are required to convert newer entity types into DXF R12 types.
-# All newer entity types without an exporter will be ignored.
-EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
-    "LWPOLYLINE": export_lwpolyline,
-    "MESH": export_mesh,
-    "SPLINE": export_spline,
-    "ELLIPSE": export_ellipse,
-    "MTEXT": export_mtext,
-    "LEADER": export_virtual_entities,
-    "MLEADER": export_virtual_entities,
-    "MULTILEADER": export_virtual_entities,
-    "MLINE": export_virtual_entities,
-}
+def export_pattern_fill(entity: DXFEntity, block: BlockLayout) -> None:
+    assert isinstance(entity, DXFPolygon)
+    dxfattribs = {
+        "layer": entity.dxf.layer,
+        "color": entity.dxf.color,
+    }
+    try:
+        for start, end in hatching.hatch_entity(entity):
+            block.add_line(start, end, dxfattribs=dxfattribs)
+    except hatching.HatchingError:
+        return
+
+
+def export_solid_fill(
+    boundary_path: path.Path, dxfattibs: dict[str, Any], block: BlockLayout
+) -> None:
+    pass
+    # polygons = path.fast_bbox_detection([boundary_path])
+
+
+def export_hatch(exporter: R12Exporter, entity: DXFEntity) -> None:
+    assert isinstance(entity, Hatch)
+    # export hatch into an anonymous block
+    block = exporter.new_block(entity)
+    insert = make_insert(block.name, entity)
+    insert.export_dxf(exporter.tagwriter())
+
+    if entity.has_pattern_fill:
+        export_pattern_fill(entity, block)
+    else:
+        dxfattribs = {
+            "layer": entity.dxf.layer,
+            "linetype": entity.dxf.linetype,
+            "color": entity.dxf.color,
+        }
+        export_solid_fill(path.make_path(entity), dxfattribs, block)
+
+
+def export_mpolygon(exporter: R12Exporter, entity: DXFEntity) -> None:
+    assert isinstance(entity, MPolygon)
+    # export mpolygon into an anonymous block
+    block = exporter.new_block(entity)
+    insert = make_insert(block.name, entity)
+    insert.export_dxf(exporter.tagwriter())
+    dxfattribs = {
+        "layer": entity.dxf.layer,
+        "linetype": entity.dxf.linetype,
+        "color": entity.dxf.color,
+    }
+
+    boundary_path = path.make_path(entity)
+    path.render_polylines3d(
+        block,
+        [boundary_path],
+        distance=exporter.max_sagitta,
+        segments=exporter.min_spline_segments,
+        dxfattribs=dxfattribs,
+    )
+    if entity.has_pattern_fill:
+        export_pattern_fill(entity, block)
+    else:
+        export_solid_fill(boundary_path, dxfattribs, block)
 
 
 # Planned features: explode complex newer entity types into DXF primitives.
 # currently skipped entity types:
-# - HATCH & MPOLYGON: exploding pattern filling as LINE entities and solid filling as
-#   SOLID entities is possible
 # - ACAD_TABLE: graphic as geometry block is available
 # --------------------------------------------------------------------------------------
 # - all ACIS based entities: tessellated meshes could be exported, but very much work
@@ -363,6 +413,21 @@ class R12Exporter:
         self._next_block_number = detect_max_block_number(
             [br.dxf.name for br in doc.block_records]
         )
+        # Exporters are required to convert newer entity types into DXF R12 types.
+        # All newer entity types without an exporter will be ignored.
+        self.exporters: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
+            "LWPOLYLINE": export_lwpolyline,
+            "MESH": export_mesh,
+            "SPLINE": export_spline,
+            "ELLIPSE": export_ellipse,
+            "MTEXT": export_mtext,
+            "LEADER": export_virtual_entities,
+            "MLEADER": export_virtual_entities,
+            "MULTILEADER": export_virtual_entities,
+            "MLINE": export_virtual_entities,
+            "HATCH": export_hatch,
+            "MPOLYGON": export_mpolygon,
+        }
 
     @property
     def doc(self) -> Drawing:
@@ -393,6 +458,9 @@ class R12Exporter:
                 EOF_STR,
             )
         )
+
+    def disable_converter(self, entity_type: str) -> None:
+        del self.exporters[entity_type]
 
     def next_block_name(self) -> str:
         name = f"*U{self._next_block_number}"
@@ -489,7 +557,7 @@ class R12Exporter:
         tagwriter = self._tagwriter
         for entity in space:
             if entity.MIN_DXF_VERSION_FOR_EXPORT > const.DXF12:
-                exporter = EXPORTERS.get(entity.dxftype())
+                exporter = self.exporters.get(entity.dxftype())
                 if exporter:
                     exporter(self, entity)
                     continue
