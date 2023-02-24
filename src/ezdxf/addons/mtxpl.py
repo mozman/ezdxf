@@ -372,9 +372,11 @@ class MTextExplode(AbstractMTextRenderer):
 
         text_styles: list[Textstyle] = []
         for name, font_face in self._required_text_styles.items():
-            style = Textstyle.new(name)
             ttf = ttf_path(font_face)
-            style.dxf.font = ttf
+            style = Textstyle.new(dxfattribs={
+                "name": name,
+                "font": ttf,
+            })
             if not ttf.endswith(".SHX"):
                 style.set_extended_font_data(
                     font_face.family,

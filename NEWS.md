@@ -11,6 +11,7 @@ Version 1.0.3b0 - dev
   the document may fix this issue
 - NEW: improved auditing & fixing capabilities
 - BUGFIX: audit process preserves dimensional constraints
+- BUGFIX: MTextExplode add-on created invalid text style table entries
 
 Version 1.0.2 - 2023-02-15
 --------------------------

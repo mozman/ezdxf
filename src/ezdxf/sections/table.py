@@ -257,7 +257,8 @@ class Table(Generic[T]):
             raise const.DXFTableEntryError(
                 f"{self._head.dxf.name} {name} already exists!"
             )
-        factory.bind(entry, self.doc)
+        if self.doc:
+            factory.bind(entry, self.doc)
         entry.dxf.owner = self._head.dxf.handle
         self._append(entry)
 

@@ -43,6 +43,22 @@ def explode_mtext(doc, destroy=False):
                 mtext.dxf.layer = "SOURCE"
 
 
+def test_created_text_styles_exists():
+    from ezdxf.tools.text import MTextEditor
+
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    editor = MTextEditor()
+    editor.append("LINE0\n")
+    editor.font("Arial")
+    editor.append("LINE1")
+    mtext = msp.add_mtext(editor.text)
+    with MTextExplode(msp) as xpl:
+        xpl.explode(mtext)
+    assert doc.styles.has_entry("MtXpl_Arial")
+    assert doc.styles.has_entry("MtXpl_Txt")
+
+
 def test_addon_is_still_working():
     # Testing only the basic functionality!
     # The text layout engine has its own test suite in test file 517!
