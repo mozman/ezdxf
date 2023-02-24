@@ -29,6 +29,8 @@ from ezdxf.entities import (
     Spline,
     Ellipse,
     Insert,
+    MText,
+    Textstyle,
 )
 from ezdxf.layouts import BlockLayout, VirtualLayout
 from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT
@@ -36,6 +38,8 @@ from ezdxf.lldxf.tagwriter import TagWriter, AbstractTagWriter
 from ezdxf.math import Z_AXIS, Vec3, NULLVEC
 from ezdxf.render import MeshBuilder
 from ezdxf.r12strict import R12NameTranslator
+from ezdxf.addons import MTextExplode
+from ezdxf.sections.table import TextstyleTable
 
 if TYPE_CHECKING:
     from ezdxf.entitydb import EntitySpace
@@ -194,6 +198,7 @@ def make_insert(name: str, entity: DXFEntity, location=NULLVEC) -> Insert:
 
 
 def export_proxy_graphic(exporter: R12Exporter, entity: DXFEntity):
+    assert isinstance(entity.proxy_graphic, bytes)
     pg = proxygraphic.ProxyGraphic(entity.proxy_graphic)
     try:
         entities = list(pg.virtual_entities())
@@ -206,6 +211,14 @@ def export_proxy_graphic(exporter: R12Exporter, entity: DXFEntity):
     insert.export_dxf(exporter.tagwriter())
 
 
+def export_mtext(exporter: R12Exporter, entity: DXFEntity):
+    assert isinstance(entity, MText)
+    block = exporter.new_block(entity)
+    exporter.explode_mtext(entity, block)
+    insert = make_insert(block.name, entity)
+    insert.export_dxf(exporter.tagwriter())
+
+
 # Exporters are required to convert newer entity types into DXF R12 types.
 # All newer entity types without an exporter will be ignored.
 EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
@@ -213,6 +226,7 @@ EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
     "MESH": export_mesh,
     "SPLINE": export_spline,
     "ELLIPSE": export_ellipse,
+    "MTEXT": export_mtext,
 }
 
 
@@ -225,7 +239,6 @@ EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
 # - HATCH & MPOLYGON: exploding pattern filling as LINE entities and solid filling as
 #   SOLID entities is possible
 # - ACAD_TABLE: graphic as geometry block is available
-# - ACAD_PROXY_ENTITY: proxy graphic could be exported
 # --------------------------------------------------------------------------------------
 # - all ACIS based entities: tessellated meshes could be exported, but very much work
 #   and beyond my current knowledge
@@ -289,6 +302,28 @@ class R12TagWriter(TagWriter):
         if code == 3 and self.current_entity != "DIMENSION":
             return name
         return self.translator.translate(name)
+
+
+class SpecialStyleTable:
+    def __init__(self, styles: TextstyleTable, extra_styles: TextstyleTable):
+        self.styles = styles
+        self.extra_styles = extra_styles
+
+    def get_text_styles(self) -> list[Textstyle]:
+        entries = list(self.styles.entries.values())
+        for name, extra_style in self.extra_styles.entries.items():
+            if not self.styles.has_entry(name):
+                entries.append(extra_style)
+        return entries
+
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
+        text_styles = self.get_text_styles()
+        tagwriter.write_tag2(0, "TABLE")
+        tagwriter.write_tag2(2, "STYLE")
+        tagwriter.write_tag2(70, len(text_styles))
+        for style in text_styles:
+            style.export_dxf(tagwriter)
+        tagwriter.write_tag2(0, "ENDTAB")
 
 
 EOF_STR = "0\nEOF\n"
@@ -374,9 +409,14 @@ class R12Exporter:
     def export_tables_to_string(self) -> str:
         # DXF R12 does not support XDATA in tables according Autodesk DWG TrueView
         in_memory_stream = StringIO()
+        tables = self.doc.tables
+        preserve_table = tables.styles
+        tables.styles = SpecialStyleTable(self.doc.styles, self._extra_doc.styles)  # type: ignore
+
         tagwriter = self.tagwriter(in_memory_stream)
         tagwriter.skip_xdata = True
-        self.doc.tables.export_dxf(tagwriter)
+        tables.export_dxf(tagwriter)
+        tables.styles = preserve_table
         tagwriter.skip_xdata = False
         return in_memory_stream.getvalue()
 
@@ -413,6 +453,10 @@ class R12Exporter:
         return [
             br for br in self._extra_doc.block_records if br.dxf.name.startswith("*U")
         ]
+
+    def explode_mtext(self, mtext: MText, block: BlockLayout):
+        with MTextExplode(block, self._extra_doc) as xpl:
+            xpl.explode(mtext, destroy=False)
 
     def export_layouts_to_string(self) -> str:
         in_memory_stream = StringIO()

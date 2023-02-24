@@ -119,14 +119,19 @@ def test_export_mtext():
     msp = doc.modelspace()
     editor = MTextEditor()
     editor.append("LINE0\n")
-    editor.font("Arial.ttf")
+    editor.font("Arial")
     editor.append("LINE1")
     msp.add_mtext(editor.text, dxfattribs=DXFATTRIBS)
 
     doc_r12 = r12export.convert(doc)
-    text = doc_r12.modelspace().query("TEXT")
-    assert len(text) == 2
+    insert = doc_r12.modelspace()[0]
+    assert insert.dxftype() == "INSERT"
+    assert insert.dxf.name == "*U1"
+
+    block = doc_r12.blocks.get(insert.dxf.name)
+    assert len(block) == 2
     assert doc_r12.styles.has_entry("MTXPL_ARIAL")
+    assert doc_r12.styles.has_entry("MTXPL_TXT")
 
 
 DATA = """160
