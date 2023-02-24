@@ -252,15 +252,17 @@ EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
 # - XRAY and XLINE: no support possible (infinite lines)
 
 # Possible name tags to translate:
-# 1 The primary text value for an entity
+# 1 The primary text value for an entity - never a name
 # 2 A name: Attribute tag, Block name, and so on. Also used to identify a DXF section or
 #   table name
-# 3 Other textual or name values: Textstyle.font
-# 4 Other textual or name values: Textstyle.bigfont
+# 3 Other textual or name values - only in DIMENSION a name
+# 4 Other textual values - never a name!
 # 5 Entity handle expressed as a hexadecimal string (fixed)
 # 6 Line type name (fixed)
 # 7 Text style name (fixed)
 # 8 Layer name (fixed)
+# 1001: AppID
+# 1003: layer name in XDATA (fixed)
 NAME_TAG_CODES = {2, 3, 6, 7, 8, 1001, 1003}
 
 
@@ -278,7 +280,7 @@ class R12TagWriter(TagWriter):
         code, value = tag
         if code == 0:
             self.current_entity = str(value)
-        if self.skip_xdata and tag.code > 999:
+        if code > 999 and self.skip_xdata:
             return
         if code in NAME_TAG_CODES:
             self._stream.write(
@@ -288,7 +290,7 @@ class R12TagWriter(TagWriter):
             self._stream.write(tag.dxfstr())
 
     def write_tag2(self, code: int, value) -> None:
-        if self.skip_xdata and code > 999:
+        if code > 999 and self.skip_xdata:
             return
         if code == 0:
             self.current_entity = str(value)
@@ -296,15 +298,15 @@ class R12TagWriter(TagWriter):
             value = self.sanitize_name(code, value)
         self._stream.write(TAG_STRING_FORMAT % (code, value))
 
-    def sanitize_name(self, code: int, name: str):
+    def sanitize_name(self, code: int, name: str) -> str:
         # sanitize group code 3 + 4
-        # LTYPE - <description> has group code (3) NO
-        # STYLE - <font> has group code (3) NO
-        # STYLE - <bigfont> has group code (4) NO
-        # DIMSTYLE - <dimpost> has group code e.g. "<> mm" (3) NO
-        # DIMSTYLE - <dimapost> has group code (4) NO
-        # ATTDEF - <prompt> has group code (3) NO
-        # DIMENSION - <dimstyle> has group code (3) YES
+        # LTYPE - <description> has group code - not a table name
+        # STYLE - <font> has group code (3) - not a table name
+        # STYLE - <bigfont> has group code (4) - not a table name
+        # DIMSTYLE - <dimpost> has group code e.g. "<> mm" (3) - not a table name
+        # DIMSTYLE - <dimapost> has group code (4) - not a table name
+        # ATTDEF - <prompt> has group code (3) - not a table name
+        # DIMENSION - <dimstyle> has group code (3) - is a table name!
         if code == 3 and self.current_entity != "DIMENSION":
             return name
         return self.translator.translate(name)
