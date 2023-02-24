@@ -292,6 +292,23 @@ def export_mpolygon(exporter: R12Exporter, entity: DXFEntity) -> None:
         export_solid_fill(boundary_path, dxfattribs, block)
 
 
+# Exporters are required to convert newer entity types into DXF R12 types.
+# All newer entity types without an exporter will be ignored.
+EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
+    "LWPOLYLINE": export_lwpolyline,
+    "MESH": export_mesh,
+    "SPLINE": export_spline,
+    "ELLIPSE": export_ellipse,
+    "MTEXT": export_mtext,
+    "LEADER": export_virtual_entities,
+    "MLEADER": export_virtual_entities,
+    "MULTILEADER": export_virtual_entities,
+    "MLINE": export_virtual_entities,
+    "HATCH": export_hatch,
+    "MPOLYGON": export_mpolygon,
+}
+
+
 # Planned features: explode complex newer entity types into DXF primitives.
 # currently skipped entity types:
 # - ACAD_TABLE: graphic as geometry block is available
@@ -413,21 +430,6 @@ class R12Exporter:
         self._next_block_number = detect_max_block_number(
             [br.dxf.name for br in doc.block_records]
         )
-        # Exporters are required to convert newer entity types into DXF R12 types.
-        # All newer entity types without an exporter will be ignored.
-        self.exporters: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
-            "LWPOLYLINE": export_lwpolyline,
-            "MESH": export_mesh,
-            "SPLINE": export_spline,
-            "ELLIPSE": export_ellipse,
-            "MTEXT": export_mtext,
-            "LEADER": export_virtual_entities,
-            "MLEADER": export_virtual_entities,
-            "MULTILEADER": export_virtual_entities,
-            "MLINE": export_virtual_entities,
-            "HATCH": export_hatch,
-            "MPOLYGON": export_mpolygon,
-        }
 
     @property
     def doc(self) -> Drawing:
@@ -458,9 +460,6 @@ class R12Exporter:
                 EOF_STR,
             )
         )
-
-    def disable_converter(self, entity_type: str) -> None:
-        del self.exporters[entity_type]
 
     def next_block_name(self) -> str:
         name = f"*U{self._next_block_number}"
@@ -557,7 +556,7 @@ class R12Exporter:
         tagwriter = self._tagwriter
         for entity in space:
             if entity.MIN_DXF_VERSION_FOR_EXPORT > const.DXF12:
-                exporter = self.exporters.get(entity.dxftype())
+                exporter = EXPORTERS.get(entity.dxftype())
                 if exporter:
                     exporter(self, entity)
                     continue
