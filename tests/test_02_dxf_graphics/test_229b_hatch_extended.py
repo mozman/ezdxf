@@ -1,6 +1,7 @@
 # Copyright (c) 2015-2021, Manfred Moitzi
 # License: MIT License
 import pytest
+import math
 
 import ezdxf
 from ezdxf.entities import Hatch, BoundaryPathType, EdgeType
@@ -109,9 +110,7 @@ def test_edge_path_edges(edge_hatch):
     assert (3, 0) == edge.major_axis
     assert 1.0 / 3.0 == edge.ratio
     assert 270 == edge.start_angle
-    assert (
-        450 == edge.end_angle
-    )  # this value was created by AutoCAD == 90 degree
+    assert 450 == edge.end_angle  # this value was created by AutoCAD == 90 degree
     assert 1 == edge.ccw
 
     edge = path.edges[1]
@@ -131,9 +130,7 @@ def test_edge_path_edges(edge_hatch):
     # clockwise arc edge:
     assert 0 == edge.ccw
     # now we get converted and swapped angles
-    assert (
-        360 == 360.0 - edge.end_angle
-    )  # this value was created by AutoCAD (0 degree)
+    assert 360 == 360.0 - edge.end_angle  # this value was created by AutoCAD (0 degree)
     assert (
         540 == 360.0 - edge.start_angle
     )  # this value was created by AutoCAD (-180 degree)
@@ -177,9 +174,7 @@ def test_spline_edge_hatch_get_params(spline_edge_hatch):
     assert 10 == len(spline.knot_values)
     assert 11.86874452602773 == spline.knot_values[-1]
     assert 6 == len(spline.control_points)
-    assert (0, 10) == spline.control_points[
-        0
-    ], "Unexpected start control point."
+    assert (0, 10) == spline.control_points[0], "Unexpected start control point."
     assert (0, 0) == spline.control_points[-1], "Unexpected end control point."
     assert 0 == len(spline.weights)
     assert 4 == len(spline.fit_points)
@@ -190,9 +185,7 @@ def test_spline_edge_hatch_get_params(spline_edge_hatch):
 def test_create_spline_edge(spline_edge_hatch):
     # create the spline
     path = spline_edge_hatch.paths[0]
-    spline = path.add_spline(
-        [(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1
-    )
+    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1)
     # the following values do not represent a mathematically valid spline
     spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
     spline.knot_values = [1, 2, 3, 4, 5, 6]
@@ -223,9 +216,7 @@ def test_create_required_tangents_for_spline_edge_if_fit_points_present(
 ):
     # create the spline
     path = spline_edge_hatch.paths[0]
-    spline = path.add_spline_control_frame(
-        fit_points=[(1, 1), (2, 2), (3, 3), (4, 4)]
-    )
+    spline = path.add_spline_control_frame(fit_points=[(1, 1), (2, 2), (3, 3), (4, 4)])
     writer = TagCollector()
     spline.export_dxf(writer)
     tags = Tags(writer.tags)
@@ -342,9 +333,7 @@ def test_pattern_rotation(hatch, pattern):
     assert line1.base_point == (0, 0)
     assert line1.offset.isclose(Vec3(-0.7071067811865475, 0.7071067811865476))
     assert line2.angle == 90
-    assert line2.base_point.isclose(
-        Vec3(-0.35355339059327373, 0.3535533905932738)
-    )
+    assert line2.base_point.isclose(Vec3(-0.35355339059327373, 0.3535533905932738))
     assert line2.offset.isclose(Vec3(-0.7071067811865475, 0.7071067811865476))
 
 
@@ -480,6 +469,45 @@ def test_can_not_associate_destroyed_entity(msp):
     pline.destroy()
     with pytest.raises(const.DXFStructureError):
         hatch.associate(path, [pline])
+
+
+@pytest.fixture
+def square_hatch():
+    hatch = Hatch()
+    hatch.paths.add_polyline_path([(0, 0), (10, 0), (10, 10), (0, 10)])
+    return hatch
+
+
+def test_triangulate_hatch(square_hatch: Hatch):
+    square_hatch.set_solid_fill(3)
+    triangles = list(square_hatch.triangulate(0.01))
+    assert len(triangles) == 2
+    assert (
+        len(list(square_hatch.render_pattern_lines())) == 0
+    ), "pattern rendering not supported"
+
+
+def test_triangulate_with_elevation(square_hatch: Hatch):
+    square_hatch.dxf.elevation = Vec3(0, 0, 10)
+    square_hatch.set_solid_fill(3)
+    triangles = list(square_hatch.triangulate(0.01))
+    assert all([math.isclose(v.z, 10) for v in t] for t in triangles) is True
+
+
+def test_render_pattern_lines(square_hatch: Hatch):
+    square_hatch.set_pattern_fill("ANSI31", scale=0.5)
+    lines = list(square_hatch.render_pattern_lines())
+    assert len(lines) > 8
+    assert (
+        len(list(square_hatch.triangulate(0.01))) == 2
+    ), "expected triangulation support"
+
+
+def test_render_pattern_lines_with_elevation(square_hatch: Hatch):
+    square_hatch.set_pattern_fill("ANSI31", scale=0.5)
+    square_hatch.dxf.elevation = Vec3(0, 0, 10)
+    lines = list(square_hatch.render_pattern_lines())
+    assert all([math.isclose(v.z, 10) for v in line] for line in lines) is True
 
 
 PATH_HATCH = """  0
