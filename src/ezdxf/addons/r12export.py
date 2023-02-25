@@ -8,10 +8,12 @@ document.
 WARNING: THIS MODULE IS IN PLANNING STATE, DO NOT USE IT!
 ---------------------------------------------------------
 
+.. versionadded:: 1.1
+
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, TextIO, Callable, Optional, Any
+from typing import TYPE_CHECKING, TextIO, Callable, Optional
 import os
 from io import StringIO
 import logging
@@ -42,7 +44,7 @@ from ezdxf.lldxf.tagwriter import TagWriter, AbstractTagWriter
 from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT
 from ezdxf.math import Z_AXIS, Vec3, NULLVEC
 from ezdxf.r12strict import R12NameTranslator
-from ezdxf.render import MeshBuilder, hatching
+from ezdxf.render import MeshBuilder
 from ezdxf.sections.table import TextstyleTable
 
 if TYPE_CHECKING:
@@ -234,21 +236,33 @@ def export_pattern_fill(entity: DXFEntity, block: BlockLayout) -> None:
         "layer": entity.dxf.layer,
         "color": entity.dxf.color,
     }
-    try:
-        for start, end in hatching.hatch_entity(entity):
-            block.add_line(start, end, dxfattribs=dxfattribs)
-    except hatching.HatchingError:
-        return
+    for start, end in entity.render_pattern_lines():
+        block.add_line(start, end, dxfattribs=dxfattribs)
 
 
 def export_solid_fill(
-    boundary_path: path.Path, dxfattibs: dict[str, Any], block: BlockLayout
+    entity: DXFPolygon,
+    block: BlockLayout,
+    max_sagitta: float,
+    min_segments: int,
 ) -> None:
-    pass
-    # polygons = path.fast_bbox_detection([boundary_path])
+    dxfattribs = {
+        "layer": entity.dxf.layer,
+        "color": entity.dxf.color,
+    }
+
+    extrusion = Vec3(entity.dxf.extrusion)
+    if not extrusion.is_null and not extrusion.isclose(Z_AXIS):
+        dxfattribs["extrusion"] = extrusion
+
+    # triangulation in OCS coordinates, including elevation and offset values:
+    for vertices in entity.triangulate(max_sagitta, min_segments):
+        block.add_solid(vertices, dxfattribs=dxfattribs)
 
 
 def export_hatch(exporter: R12Exporter, entity: DXFEntity) -> None:
+    # TODO: DXF R12 has support for HATCH entities as anonymous blocks "*X", "*U" and
+    #  some XDATA
     assert isinstance(entity, Hatch)
     # export hatch into an anonymous block
     block = exporter.new_block(entity)
@@ -258,12 +272,9 @@ def export_hatch(exporter: R12Exporter, entity: DXFEntity) -> None:
     if entity.has_pattern_fill:
         export_pattern_fill(entity, block)
     else:
-        dxfattribs = {
-            "layer": entity.dxf.layer,
-            "linetype": entity.dxf.linetype,
-            "color": entity.dxf.color,
-        }
-        export_solid_fill(path.make_path(entity), dxfattribs, block)
+        export_solid_fill(
+            entity, block, exporter.max_sagitta, exporter.min_spline_segments
+        )
 
 
 def export_mpolygon(exporter: R12Exporter, entity: DXFEntity) -> None:
@@ -272,41 +283,26 @@ def export_mpolygon(exporter: R12Exporter, entity: DXFEntity) -> None:
     block = exporter.new_block(entity)
     insert = make_insert(block.name, entity)
     insert.export_dxf(exporter.tagwriter())
-    dxfattribs = {
-        "layer": entity.dxf.layer,
-        "linetype": entity.dxf.linetype,
-        "color": entity.dxf.color,
-    }
 
-    boundary_path = path.make_path(entity)
-    path.render_polylines3d(
+    # elevation is the z-axis of the vertices
+    path.render_polylines2d(
         block,
-        [boundary_path],
+        path.from_hatch_ocs(entity, offset=Vec3(entity.dxf.offset)),
         distance=exporter.max_sagitta,
         segments=exporter.min_spline_segments,
-        dxfattribs=dxfattribs,
+        extrusion=Vec3(entity.dxf.extrusion),
+        dxfattribs={
+            "layer": entity.dxf.layer,
+            "linetype": entity.dxf.linetype,
+            "color": entity.dxf.color,
+        },
     )
     if entity.has_pattern_fill:
         export_pattern_fill(entity, block)
     else:
-        export_solid_fill(boundary_path, dxfattribs, block)
-
-
-# Exporters are required to convert newer entity types into DXF R12 types.
-# All newer entity types without an exporter will be ignored.
-EXPORTERS: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
-    "LWPOLYLINE": export_lwpolyline,
-    "MESH": export_mesh,
-    "SPLINE": export_spline,
-    "ELLIPSE": export_ellipse,
-    "MTEXT": export_mtext,
-    "LEADER": export_virtual_entities,
-    "MLEADER": export_virtual_entities,
-    "MULTILEADER": export_virtual_entities,
-    "MLINE": export_virtual_entities,
-    "HATCH": export_hatch,
-    "MPOLYGON": export_mpolygon,
-}
+        export_solid_fill(
+            entity, block, exporter.max_sagitta, exporter.min_spline_segments
+        )
 
 
 # Planned features: explode complex newer entity types into DXF primitives.
@@ -430,6 +426,24 @@ class R12Exporter:
         self._next_block_number = detect_max_block_number(
             [br.dxf.name for br in doc.block_records]
         )
+        # Exporters are required to convert newer entity types into DXF R12 types.
+        # All newer entity types without an exporter will be ignored.
+        self.exporters: dict[str, Callable[[R12Exporter, DXFEntity], None]] = {
+            "LWPOLYLINE": export_lwpolyline,
+            "MESH": export_mesh,
+            "SPLINE": export_spline,
+            "ELLIPSE": export_ellipse,
+            "MTEXT": export_mtext,
+            "LEADER": export_virtual_entities,
+            "MLEADER": export_virtual_entities,
+            "MULTILEADER": export_virtual_entities,
+            "MLINE": export_virtual_entities,
+            "HATCH": export_hatch,
+            "MPOLYGON": export_mpolygon,
+        }
+
+    def disable_exporter(self, entity_type: str):
+        del self.exporters[entity_type]
 
     @property
     def doc(self) -> Drawing:
@@ -556,7 +570,7 @@ class R12Exporter:
         tagwriter = self._tagwriter
         for entity in space:
             if entity.MIN_DXF_VERSION_FOR_EXPORT > const.DXF12:
-                exporter = EXPORTERS.get(entity.dxftype())
+                exporter = self.exporters.get(entity.dxftype())
                 if exporter:
                     exporter(self, entity)
                     continue
