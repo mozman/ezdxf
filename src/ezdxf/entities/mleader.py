@@ -630,7 +630,7 @@ class MultiLeader(DXFGraphic):
             m: transformation :class:`~ezdxf.math.Matrix44`
 
         Raises:
-            NonUniformScalingError: for non uniform scaling
+            NonUniformScalingError: for non-uniform scaling
 
         """
         dxf = self.dxf
@@ -640,14 +640,14 @@ class MultiLeader(DXFGraphic):
         if not wcs.has_uniform_xy_scaling:
             # caller has to catch this exception and explode the MULTILEADER
             raise NonUniformScalingError(
-                "MULTILEADER does not support non uniform scaling"
+                "MULTILEADER does not support non-uniform scaling"
             )
         if abs(context.plane_x_axis.z) > 1e-12 or abs(context.plane_y_axis.z) > 1e-12:
             # check only if not parallel to xy-plane
             if not wcs.has_uniform_xyz_scaling:
                 # caller has to catch this exception and explode the MULTILEADER
                 raise NonUniformScalingError(
-                    "MULTILEADER does not support non uniform scaling"
+                    "MULTILEADER does not support non-uniform scaling"
                 )
         context.transform(wcs)
         # copy redundant attributes from sub-structures:

@@ -30,7 +30,7 @@ def _dxfattribs(mline) -> dict[str, Any]:
 def virtual_entities(mline: MLine) -> list[DXFGraphic]:
     """Yields 'virtual' parts of MLINE as LINE, ARC and HATCH entities.
 
-    This entities are located at the original positions, but are not stored
+    These entities are located at the original positions, but are not stored
     in the entity database, have no handle and are not assigned to any
     layout.
     """
