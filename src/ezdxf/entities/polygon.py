@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Sequence, Optional, Union, TYPE_CHECKING
+from typing import Sequence, Optional, Union, TYPE_CHECKING, Iterator
 import abc
 import copy
 
@@ -405,6 +405,29 @@ class DXFPolygon(DXFGraphic):
             self.dxf.pattern_angle = angle
         self.post_transform(m)
         return self
+
+    def triangulate(
+        self, max_flattening_distance, segments=16
+    ) -> Iterator[Sequence[Vec3]]:
+        """Triangulate the HATCH/MPOLYGON in OCS coordinates."""
+        from ezdxf import path
+        elevation = Vec3(self.dxf.elevation)
+        if self.dxf.hasattr("offset"):  # MPOLYGON
+            elevation += Vec3(self.dxf.offset)  # offset in OCS?
+        boundary_paths = [path.from_hatch_boundary_path(p) for p in self.paths]
+        for vertices in path.triangulate(
+            boundary_paths, max_flattening_distance, segments
+        ):
+            yield tuple(elevation + v for v in vertices)
+
+    def render_pattern_lines(self) -> Iterator[tuple[Vec3, Vec3]]:
+        """Yields the pattern lines in WCS coordinates."""
+        from ezdxf.render import hatching
+        if self.has_pattern_fill:
+            try:
+                yield from hatching.hatch_entity(self)
+            except hatching.HatchingError:
+                return
 
     @abc.abstractmethod
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: Optional[RGB] = None):
