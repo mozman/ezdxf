@@ -409,7 +409,12 @@ class DXFPolygon(DXFGraphic):
     def triangulate(
         self, max_flattening_distance, segments=16
     ) -> Iterator[Sequence[Vec3]]:
-        """Triangulate the HATCH/MPOLYGON in OCS coordinates."""
+        """Triangulate the HATCH/MPOLYGON in OCS coordinates, Elevation and offset is
+        applied to all vertices.
+
+        .. versionadded:: 1.1
+
+        """
         from ezdxf import path
         elevation = Vec3(self.dxf.elevation)
         if self.dxf.hasattr("offset"):  # MPOLYGON
@@ -421,7 +426,11 @@ class DXFPolygon(DXFGraphic):
             yield tuple(elevation + v for v in vertices)
 
     def render_pattern_lines(self) -> Iterator[tuple[Vec3, Vec3]]:
-        """Yields the pattern lines in WCS coordinates."""
+        """Yields the pattern lines in WCS coordinates.
+
+        .. versionadded:: 1.1
+
+        """
         from ezdxf.render import hatching
         if self.has_pattern_fill:
             try:

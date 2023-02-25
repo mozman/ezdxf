@@ -57,6 +57,7 @@ from ezdxf.entities import (
     EllipseEdge,
     SplineEdge,
 )
+from ezdxf.entities.polygon import DXFPolygon
 from .path import Path
 from .commands import Command
 from . import tools
@@ -73,6 +74,7 @@ __all__ = [
     "to_bsplines_and_vertices",
     "to_splines_and_polylines",
     "from_hatch",
+    "from_hatch_ocs",
     "from_hatch_boundary_path",
     "from_hatch_edge_path",
     "from_hatch_polyline_path",
@@ -259,12 +261,30 @@ def _from_hatch(hatch: Hatch, **kwargs) -> Path:
     return tools.to_multi_path(paths)
 
 
-def from_hatch(hatch: Hatch) -> Iterator[Path]:
-    """Yield all HATCH boundary paths as separated :class:`Path` objects."""
+def from_hatch(hatch: DXFPolygon, offset: Vec3 = NULLVEC) -> Iterator[Path]:
+    """Yield all HATCH/MPOLYGON boundary paths as separated :class:`Path` objects in WCS
+    coordinates.
+    """
     ocs = hatch.ocs()
     elevation = hatch.dxf.elevation.z
     for boundary in hatch.paths:
-        p = from_hatch_boundary_path(boundary, ocs, elevation)
+        p = from_hatch_boundary_path(boundary, ocs, elevation=elevation, offset=offset)
+        if p.has_sub_paths:
+            yield from p.sub_paths()
+        else:
+            yield p
+
+
+def from_hatch_ocs(hatch: DXFPolygon, offset: Vec3 = NULLVEC) -> Iterator[Path]:
+    """Yield all HATCH/MPOLYGON boundary paths as separated :class:`Path` objects in OCS
+    coordinates. Elevation and offset is applied to all vertices.
+
+    .. versionadded:: 1.1
+
+    """
+    elevation = hatch.dxf.elevation.z
+    for boundary in hatch.paths:
+        p = from_hatch_boundary_path(boundary, elevation=elevation, offset=offset)
         if p.has_sub_paths:
             yield from p.sub_paths()
         else:
