@@ -596,9 +596,9 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
             path.line_to(start)
 
         # add linear bezier segments as LINE_TO commands
-        if start.isclose(
-            ctrl1, rel_tol=rel_tol, abs_tol=abs_tol
-        ) and end.isclose(ctrl2, rel_tol=rel_tol, abs_tol=abs_tol):
+        if start.isclose(ctrl1, rel_tol=rel_tol, abs_tol=abs_tol) and end.isclose(
+            ctrl2, rel_tol=rel_tol, abs_tol=abs_tol
+        ):
             path.line_to(end)
         else:
             path.curve4_to(end, ctrl1, ctrl2)
@@ -695,9 +695,7 @@ def add_2d_polyline(
         prev_point = point
         prev_bulge = bulge
 
-    if close and not path.start.isclose(
-        path.end, rel_tol=IS_CLOSE_TOL, abs_tol=0
-    ):
+    if close and not path.start.isclose(path.end, rel_tol=IS_CLOSE_TOL, abs_tol=0):
         if prev_bulge:
             bulge_to(path.end, path.start, prev_bulge, segments)
         else:
@@ -862,9 +860,7 @@ def _segment_count(angle: float, count: int) -> int:
     return max(int(angle / (math.tau / count)), 1)
 
 
-def polygonal_fillet(
-    points: Sequence[Vec3], radius: float, count: int = 32
-) -> Path:
+def polygonal_fillet(points: Sequence[Vec3], radius: float, count: int = 32) -> Path:
     """
     Returns a :class:`Path` with polygonal fillets of given `radius` between
     straight line segments. The `count` argument defines the vertex count of the
@@ -963,15 +959,24 @@ def chamfer2(points: Sequence[Vec3], a: float, b: float) -> Path:
 
 
 def triangulate(
-    paths: Iterable[Path], max_flattening_distance: float = 0.01
+    paths: Iterable[Path], max_flattening_distance: float = 0.01, min_segments: int = 16
 ) -> Iterator[Sequence[Vec2]]:
     """Tessellate nested 2D paths into triangle-faces. For 3D paths the
     projection onto the xy-plane will be triangulated.
 
+    Args:
+        paths: iterable of nested Path instances
+        max_flattening_distance: maximum distance from the center of the curve to the
+            center of the line segment between two approximation points to determine if
+            a segment should be subdivided.
+        min_segments: minimum segment count per Bézier curve
+
     """
     for polygon in nesting.group_paths(single_paths(paths)):
-        exterior = polygon[0].flattening(max_flattening_distance)
-        holes = [p.flattening(max_flattening_distance) for p in polygon[1:]]
+        exterior = polygon[0].flattening(max_flattening_distance, min_segments)
+        holes = [
+            p.flattening(max_flattening_distance, min_segments) for p in polygon[1:]
+        ]
         yield from mapbox_earcut_2d(exterior, holes)
 
 
