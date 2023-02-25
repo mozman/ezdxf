@@ -122,7 +122,7 @@ def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> Path:
         close=lwpolyline.closed,
         ocs=lwpolyline.ocs(),
         elevation=lwpolyline.dxf.elevation,
-        segments=kwargs.get("segments", 1)
+        segments=kwargs.get("segments", 1),
     )
     return path
 
@@ -153,7 +153,7 @@ def _from_polyline(polyline: Polyline, **kwargs) -> Path:
         close=polyline.is_closed,
         ocs=ocs,
         elevation=elevation,
-        segments=kwargs.get("segments", 1)
+        segments=kwargs.get("segments", 1),
     )
     return path
 
@@ -171,9 +171,7 @@ def _from_spline(spline: Spline, **kwargs) -> Path:
 def _from_ellipse(ellipse: Ellipse, **kwargs) -> Path:
     segments = kwargs.get("segments", 1)
     path = Path()
-    tools.add_ellipse(
-        path, ellipse.construction_tool(), segments=segments, reset=True
-    )
+    tools.add_ellipse(path, ellipse.construction_tool(), segments=segments, reset=True)
     return path
 
 
@@ -278,7 +276,7 @@ def from_hatch_boundary_path(
     ocs: Optional[OCS] = None,
     elevation: float = 0,
     offset: Vec3 = NULLVEC,  # ocs offset!
-) -> "Path":
+) -> Path:
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline- or edge path.
     """
@@ -636,9 +634,7 @@ def to_hatches(
             build_poly_path, distance=distance, segments=segments
         )
 
-    yield from _polygon_converter(
-        Hatch, paths, boundary_factory, extrusion, dxfattribs
-    )
+    yield from _polygon_converter(Hatch, paths, boundary_factory, extrusion, dxfattribs)
 
 
 def to_mpolygons(
@@ -835,12 +831,10 @@ def to_lines(
         prev_vertex = None
 
 
-PathParts:TypeAlias = Union[BSpline, List[Vec3]]
+PathParts: TypeAlias = Union[BSpline, List[Vec3]]
 
 
-def to_bsplines_and_vertices(
-    path: Path, g1_tol: float = G1_TOL
-) -> Iterator[PathParts]:
+def to_bsplines_and_vertices(path: Path, g1_tol: float = G1_TOL) -> Iterator[PathParts]:
     """Convert a :class:`Path` object into multiple cubic B-splines and
     polylines as lists of vertices. Breaks adjacent Bèzier without G1
     continuity into separated B-splines.

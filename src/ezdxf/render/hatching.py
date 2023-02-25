@@ -611,6 +611,7 @@ def hatch_entity(
     ocs = polygon.ocs()
     elevation = polygon.dxf.elevation.z
     paths = hatch_boundary_paths(polygon, filter_text_boxes)
+    # todo: MPOLYGON offset
     # All paths in OCS!
     for baseline in pattern_baselines(polygon):
         for line in hatch_paths(baseline, paths):

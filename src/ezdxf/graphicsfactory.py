@@ -63,6 +63,7 @@ if TYPE_CHECKING:
         Region,
         RevolvedSurface,
         Shape,
+        Solid,
         Solid3d,
         SweptSurface,
         Text,
@@ -230,7 +231,7 @@ class CreatorInterface:
             dxfattribs["end_angle"] = float(start_angle)
         return self.new_entity("ARC", dxfattribs)  # type: ignore
 
-    def add_solid(self, points: Iterable[UVec], dxfattribs=None) -> Spline:
+    def add_solid(self, points: Iterable[UVec], dxfattribs=None) -> Solid:
         """Add a :class:`~ezdxf.entities.Solid` entity, `points` is an iterable
         of 3 or 4 points.
 
