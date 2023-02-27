@@ -42,6 +42,7 @@ from ezdxf.entities import (
     Textstyle,
     Hatch,
     MPolygon,
+    DXFTagStorage,
 )
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.addons import MTextExplode
@@ -310,6 +311,26 @@ def export_mpolygon(exporter: R12Exporter, entity: DXFEntity) -> None:
         )
 
 
+def export_acad_table(exporter: R12Exporter, entity: DXFEntity) -> None:
+    from ezdxf.entities.acad_table import AcadTableBlockContent
+
+    assert isinstance(entity, AcadTableBlockContent)
+    table: AcadTableBlockContent = entity
+    location = table.get_insert_location()
+    block_name = table.get_block_name()
+    if not block_name.startswith("*T"):
+        return
+    try:
+        acdb_entity = table.xtags.get_subclass("AcDbEntity")
+    except const.DXFIndexError:
+        return
+    layer = acdb_entity.get_first_value(8, "0")
+    insert = Insert.new(
+        dxfattribs={"name": block_name, "layer": layer, "insert": location}
+    )
+    insert.export_dxf(exporter.tagwriter())
+
+
 # Planned features: explode complex newer entity types into DXF primitives.
 # currently skipped entity types:
 # - ACAD_TABLE: graphic as geometry block is available
@@ -445,6 +466,7 @@ class R12Exporter:
             "MLINE": export_virtual_entities,
             "HATCH": export_hatch,
             "MPOLYGON": export_mpolygon,
+            "ACAD_TABLE": export_acad_table,
         }
 
     def disable_exporter(self, entity_type: str):
@@ -574,7 +596,9 @@ class R12Exporter:
     def export_entity_space(self, space: EntitySpace):
         tagwriter = self._tagwriter
         for entity in space:
-            if entity.MIN_DXF_VERSION_FOR_EXPORT > const.DXF12:
+            if entity.MIN_DXF_VERSION_FOR_EXPORT > const.DXF12 or isinstance(
+                entity, DXFTagStorage
+            ):
                 exporter = self.exporters.get(entity.dxftype())
                 if exporter:
                     exporter(self, entity)

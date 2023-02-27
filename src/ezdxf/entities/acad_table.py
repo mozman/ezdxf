@@ -35,8 +35,7 @@ class AcadTableBlockContent(DXFTagStorage):
         return super().__virtual_entities__()
 
     def _block_content(self) -> Iterator[DXFGraphic]:
-        tags = self._block_reference_tags()
-        block_name: str = tags.get_first_value(2, "*")
+        block_name: str = self.get_block_name()
         return self.doc.blocks.get(block_name, [])  # type: ignore
 
     def _block_reference_tags(self) -> Tags:
@@ -45,12 +44,16 @@ class AcadTableBlockContent(DXFTagStorage):
         except const.DXFKeyError:
             return Tags()
 
-    def _insert_location(self) -> Vec3:
+    def get_block_name(self) -> str:
+        tags = self._block_reference_tags()
+        return tags.get_first_value(2, "")
+
+    def get_insert_location(self) -> Vec3:
         return self._block_reference_tags().get_first_value(10, Vec3())
 
     def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
-        insert: Vec3 = Vec3(self._insert_location())
+        insert: Vec3 = Vec3(self.get_insert_location())
         m: Optional[Matrix44] = None
         if insert:
             # TODO: OCS transformation (extrusion) is ignored yet
