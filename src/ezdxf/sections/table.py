@@ -10,6 +10,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    Sequence,
 )
 from collections import OrderedDict
 import logging
@@ -422,7 +423,7 @@ class LinetypeTable(Table[Linetype]):
     def add(
         self,
         name: str,
-        pattern: Union[list[float], str],
+        pattern: Union[Sequence[float], str],
         *,
         description: str = "",
         length: float = 0.0,
