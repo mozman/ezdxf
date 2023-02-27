@@ -10,6 +10,12 @@ WARNING: THIS MODULE IS IN PLANNING STATE, DO NOT USE IT!
 
 .. versionadded:: 1.1
 
+To get the best result use the ODA File Converter add-on::
+
+    from ezdxf.addons import odafc
+
+    odafc.convert("any.dxf", "r12.dxf", version="R12")
+
 """
 
 from __future__ import annotations
@@ -17,6 +23,7 @@ from typing import TYPE_CHECKING, TextIO, Callable, Optional
 import os
 from io import StringIO
 import logging
+import math
 
 import ezdxf
 from ezdxf import const, proxygraphic, path
@@ -41,7 +48,7 @@ from ezdxf.addons import MTextExplode
 from ezdxf.entitydb import EntitySpace
 from ezdxf.layouts import BlockLayout, VirtualLayout
 from ezdxf.lldxf.tagwriter import TagWriter, AbstractTagWriter
-from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT
+from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT, dxftag
 from ezdxf.math import Z_AXIS, Vec3, NULLVEC
 from ezdxf.r12strict import R12NameTranslator
 from ezdxf.render import MeshBuilder
@@ -203,6 +210,87 @@ def make_insert(name: str, entity: DXFEntity, location=NULLVEC) -> Insert:
     )
 
 
+class R14HatchData:
+    def __init__(self, entity: DXFPolygon, insert_handle: str):
+        self.entity = entity
+        self.insert_handle = insert_handle
+
+    @classmethod
+    def tags(cls, entity: DXFPolygon, insert_handle: str = "0") -> list[DXFTag]:
+        r14_hatch_data = cls(entity, insert_handle)
+        if entity.has_solid_fill:
+            return r14_hatch_data.solid_fill_tags()
+        else:
+            return r14_hatch_data.pattern_fill_tags()
+
+    def solid_fill_tags(self) -> list[DXFTag]:
+        tags = [dxftag(1002, "{")]
+        tags.extend(self.hatch_data_tags())
+        tags.append(dxftag(1002, "}"))
+        return tags
+
+    def pattern_fill_tags(self) -> list[DXFTag]:
+        entity = self.entity
+        tags = [
+            dxftag(1000, "HATCH"),
+            dxftag(1002, "{"),
+            dxftag(1070, 19),  # ?
+            dxftag(1000, entity.dxf.pattern_name),
+            dxftag(1040, entity.dxf.pattern_scale),
+            dxftag(1040, math.radians(entity.dxf.pattern_angle)),
+        ]
+        tags.extend(self.hatch_data_tags())
+        tags.append(dxftag(1002, "}"))
+        return tags
+
+    def hatch_data_tags(self) -> list[DXFTag]:
+        entity = self.entity
+        extrusion = entity.dxf.extrusion
+        if extrusion.is_null:
+            extrusion = Z_AXIS
+        elevation = Vec3(entity.dxf.elevation).z
+
+        tags = [
+            dxftag(1000, "R14_HATCH_DATA"),
+            dxftag(1000, self.insert_handle),
+            dxftag(1011, (1, 0, 0)),
+            dxftag(1011, (0, 1, 0)),
+            dxftag(1011, (0, 0, 1)),
+            dxftag(1040, elevation),
+            dxftag(1010, extrusion),
+            dxftag(1000, entity.dxf.pattern_name),
+            dxftag(1070, entity.dxf.solid_fill),
+            dxftag(1070, 1),
+            dxftag(1071, 1),
+            dxftag(1071, 3),
+        ]
+        tags.extend(self.path_tags())
+        append = tags.append
+        # end of paths
+        append(dxftag(1071, 0))
+        append(dxftag(1070, 0))
+        append(dxftag(1070, 1))
+        append(dxftag(1071, 0))
+        return tags
+
+    def path_tags(self) -> list[DXFTag]:
+        tags: list[DXFTag] = []
+        append = tags.append
+        # TODO: create boundary path tags
+        append(dxftag(1070, 0))  # path type?
+        append(dxftag(1070, 1))  # count of polyline paths?
+        append(dxftag(1070, 4))  # count of polyline vertices?
+        append(dxftag(1040, 0))  # vertex 0 x
+        append(dxftag(1040, 0))  # vertex 0 y
+        append(dxftag(1040, 10))  # vertex 1 x
+        append(dxftag(1040, 0))  # vertex 1 y
+        append(dxftag(1040, 10))
+        append(dxftag(1040, 10))
+        append(dxftag(1040, 0))
+        append(dxftag(1040, 10))
+        return tags
+
+
 def export_proxy_graphic(exporter: R12Exporter, entity: DXFEntity):
     assert isinstance(entity.proxy_graphic, bytes)
     pg = proxygraphic.ProxyGraphic(entity.proxy_graphic)
@@ -261,13 +349,14 @@ def export_solid_fill(
 
 
 def export_hatch(exporter: R12Exporter, entity: DXFEntity) -> None:
-    # TODO: DXF R12 has support for HATCH entities as anonymous blocks "*X", "*U" and
-    #  some XDATA
     assert isinstance(entity, Hatch)
     # export hatch into an anonymous block
+    # solid fill: *U####
+    # pattern fill: *X####
     block = exporter.new_block(entity)
     insert = make_insert(block.name, entity)
     insert.export_dxf(exporter.tagwriter())
+    # insert.set_xdata("ACAD", R14HatchData.tags(entity))
 
     if entity.has_pattern_fill:
         export_pattern_fill(entity, block)
@@ -475,13 +564,13 @@ class R12Exporter:
             )
         )
 
-    def next_block_name(self) -> str:
-        name = f"*U{self._next_block_number}"
+    def next_block_name(self, char: str) -> str:
+        name = f"*{char}{self._next_block_number}"
         self._next_block_number += 1
         return name
 
-    def new_block(self, entity: DXFEntity) -> BlockLayout:
-        name = self.next_block_name()
+    def new_block(self, entity: DXFEntity, char="U") -> BlockLayout:
+        name = self.next_block_name(char)
         return self._extra_doc.blocks.new(
             name,
             dxfattribs={
@@ -540,7 +629,9 @@ class R12Exporter:
 
     def get_extra_blocks(self) -> list[BlockRecord]:
         return [
-            br for br in self._extra_doc.block_records if br.dxf.name.startswith("*U")
+            br
+            for br in self._extra_doc.block_records
+            if br.dxf.name.startswith("*U") or br.dxf.name.startswith("*X")
         ]
 
     def explode_mtext(self, mtext: MText, layout: GenericLayoutType):
