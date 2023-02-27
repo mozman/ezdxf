@@ -14,8 +14,9 @@ Add-ons
     importer
     dxf2code
     iterdxf
-    r12writer
     odafc
+    r12export
+    r12writer
     text2path
     mtxpl
     pycsg

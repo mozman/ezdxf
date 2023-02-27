@@ -64,7 +64,11 @@ logger = logging.getLogger("ezdxf")
 
 
 def convert(doc: Drawing, *, max_sagitta: float = MAX_SAGITTA) -> Drawing:
-    """Export and reload DXF document as DXF version R12."""
+    """Export and reload DXF document as DXF version R12.
+
+    Writes the DXF document into a temporary file at the file-system and reloads this
+    file by the :func:`ezdxf.readfile` function.
+    """
     stream = StringIO()
     exporter = R12Exporter(doc, max_sagitta=max_sagitta)
     exporter.write(stream)
@@ -73,7 +77,18 @@ def convert(doc: Drawing, *, max_sagitta: float = MAX_SAGITTA) -> Drawing:
 
 
 def write(doc: Drawing, stream: TextIO, *, max_sagitta: float = MAX_SAGITTA) -> None:
-    """Write a DXF document as DXF version R12 to a text stream."""
+    """Write a DXF document as DXF version R12 to a text stream. The `max_sagitta`
+    argument determines the accuracy of the curve flatting for SPLINE and ELLIPSE
+    entities.
+
+    Args:
+        doc: DXF document to export
+        stream: output stream, use :attr:`doc.encoding` as encoding
+        max_sagitta: maximum distance from the center of the curve to the
+            center of the line segment between two approximation points to
+            determine if a segment should be subdivided.
+
+    """
     exporter = R12Exporter(doc, max_sagitta=max_sagitta)
     exporter.write(stream)
 
@@ -81,7 +96,18 @@ def write(doc: Drawing, stream: TextIO, *, max_sagitta: float = MAX_SAGITTA) -> 
 def saveas(
     doc: Drawing, filepath: str | os.PathLike, *, max_sagitta: float = MAX_SAGITTA
 ) -> None:
-    """Write a DXF document as DXF version R12 to a file."""
+    """Write a DXF document as DXF version R12 to a file. The `max_sagitta`
+    argument determines the accuracy of the curve flatting for SPLINE and ELLIPSE
+    entities.
+
+    Args:
+        doc: DXF document to export
+        filepath: output filename
+        max_sagitta: maximum distance from the center of the curve to the
+            center of the line segment between two approximation points to
+            determine if a segment should be subdivided.
+
+    """
     with open(filepath, "wt", encoding=doc.encoding, errors="dxfreplace") as stream:
         write(
             doc,
