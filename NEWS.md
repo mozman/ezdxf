@@ -12,6 +12,8 @@ Version 1.0.3b0 - dev
 - NEW: improved auditing & fixing capabilities
 - BUGFIX: audit process preserves dimensional constraints
 - BUGFIX: MTextExplode add-on created invalid text style table entries
+- PREVIEW: `ezdxf.addons.r12exporter` module exports any DXF document as a simple R12 
+  file, final release in v1.1
 
 Version 1.0.2 - 2023-02-15
 --------------------------

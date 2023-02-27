@@ -23,7 +23,6 @@ from typing import TYPE_CHECKING, TextIO, Callable, Optional
 import os
 from io import StringIO
 import logging
-import math
 
 import ezdxf
 from ezdxf import const, proxygraphic, path
@@ -31,25 +30,25 @@ from ezdxf.document import Drawing
 from ezdxf.entities import (
     BlockRecord,
     DXFEntity,
-    LWPolyline,
-    Polyline,
-    Polyface,
-    Mesh,
-    Spline,
-    Ellipse,
-    Insert,
-    MText,
-    Textstyle,
-    Hatch,
-    MPolygon,
     DXFTagStorage,
+    Ellipse,
+    Hatch,
+    Insert,
+    LWPolyline,
+    MPolygon,
+    MText,
+    Mesh,
+    Polyface,
+    Polyline,
+    Spline,
+    Textstyle,
 )
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.addons import MTextExplode
 from ezdxf.entitydb import EntitySpace
 from ezdxf.layouts import BlockLayout, VirtualLayout
 from ezdxf.lldxf.tagwriter import TagWriter, AbstractTagWriter
-from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT, dxftag
+from ezdxf.lldxf.types import DXFTag, TAG_STRING_FORMAT
 from ezdxf.math import Z_AXIS, Vec3, NULLVEC
 from ezdxf.r12strict import R12NameTranslator
 from ezdxf.render import MeshBuilder
