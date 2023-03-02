@@ -959,24 +959,22 @@ def chamfer2(points: Sequence[Vec3], a: float, b: float) -> Path:
 
 
 def triangulate(
-    paths: Iterable[Path], max_flattening_distance: float = 0.01, min_segments: int = 16
+    paths: Iterable[Path], max_sagitta: float = 0.01, min_segments: int = 16
 ) -> Iterator[Sequence[Vec2]]:
     """Tessellate nested 2D paths into triangle-faces. For 3D paths the
     projection onto the xy-plane will be triangulated.
 
     Args:
         paths: iterable of nested Path instances
-        max_flattening_distance: maximum distance from the center of the curve to the
+        max_sagitta: maximum distance from the center of the curve to the
             center of the line segment between two approximation points to determine if
             a segment should be subdivided.
         min_segments: minimum segment count per Bézier curve
 
     """
     for polygon in nesting.group_paths(single_paths(paths)):
-        exterior = polygon[0].flattening(max_flattening_distance, min_segments)
-        holes = [
-            p.flattening(max_flattening_distance, min_segments) for p in polygon[1:]
-        ]
+        exterior = polygon[0].flattening(max_sagitta, min_segments)
+        holes = [p.flattening(max_sagitta, min_segments) for p in polygon[1:]]
         yield from mapbox_earcut_2d(exterior, holes)
 
 

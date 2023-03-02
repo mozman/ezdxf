@@ -406,23 +406,26 @@ class DXFPolygon(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def triangulate(
-        self, max_flattening_distance, segments=16
-    ) -> Iterator[Sequence[Vec3]]:
+    def triangulate(self, max_sagitta, min_segments=16) -> Iterator[Sequence[Vec3]]:
         """Triangulate the HATCH/MPOLYGON in OCS coordinates, Elevation and offset is
         applied to all vertices.
+
+        Args:
+            max_sagitta: maximum distance from the center of the curve to the
+                center of the line segment between two approximation points to determine
+                if a segment should be subdivided.
+            min_segments: minimum segment count per Bézier curve
 
         .. versionadded:: 1.1
 
         """
         from ezdxf import path
+
         elevation = Vec3(self.dxf.elevation)
         if self.dxf.hasattr("offset"):  # MPOLYGON
             elevation += Vec3(self.dxf.offset)  # offset in OCS?
         boundary_paths = [path.from_hatch_boundary_path(p) for p in self.paths]
-        for vertices in path.triangulate(
-            boundary_paths, max_flattening_distance, segments
-        ):
+        for vertices in path.triangulate(boundary_paths, max_sagitta, min_segments):
             yield tuple(elevation + v for v in vertices)
 
     def render_pattern_lines(self) -> Iterator[tuple[Vec3, Vec3]]:
@@ -432,6 +435,7 @@ class DXFPolygon(DXFGraphic):
 
         """
         from ezdxf.render import hatching
+
         if self.has_pattern_fill:
             try:
                 yield from hatching.hatch_entity(self)
