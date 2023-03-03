@@ -315,7 +315,10 @@ Shortcut attribute:
 Support Directories
 +++++++++++++++++++
 
-Search directories for support files like `.ctb` or `.stb` files.
+Search directories for support files:
+
+- plot style tables, the CTB or STB pen assignment files
+- shape font files of type SHX or SHP
 
 Config file key: ``support_dirs``
 
@@ -430,12 +433,12 @@ This option can deactivate Matplotlib support for testing. This option is not
 stored in the :class:`ConfigParser` object and is therefore not supported by
 config files!
 
-Only attribute access is supported:
+Only access by attribute is supported:
 
 .. attribute:: use_matplotlib
 
     (Read/Write) Activate/deactivate Matplotlib support (e.g. for testing) if
-    Matplotlib is installed, else :attr:`use_matplotlib` is always ``False``.
+    Matplotlib is installed, otherwise :attr:`use_matplotlib` is always ``False``.
 
 
 .. _environment_variables:
