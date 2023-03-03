@@ -5,6 +5,8 @@
 External References (XREF)
 ==========================
 
+.. versionadded:: 1.1
+
 Attached XREFs are links to the modelspace of a specified drawing file. Changes made
 to the referenced drawing are automatically reflected in the current drawing when it's
 opened or if the XREF is reloaded.

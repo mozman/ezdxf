@@ -1,16 +1,6 @@
 Planned for v1.1
 ================
 
-Xref Module
------------
-
-New core module `ezdxf.xref` as replacement for the `Importer` add-on.
-This module adds management features for external references, but also improves
-import of data and resources from other DXF documents.  
-The documentation of the `Importer` add-on will refer to the new `xref` module. 
-The `Importer` add-on itself will remain as it is until it breaks, a deprecation warning 
-will be shown at instantiation of the `Importer()` class.
-
 DXF Entities
 ------------
 
