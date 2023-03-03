@@ -47,7 +47,7 @@ def translate_names(doc: Drawing) -> None:
 
 
 def clean(doc: Drawing) -> None:
-    """Remove all features that are not supported for DXF R12 by Autodesk products."""
+    """Removes all features that are not supported for DXF R12 by Autodesk products."""
     if doc.dxfversion != const.DXF12:
         raise const.DXFVersionError(
             f"expected DXF document version R12, got: {doc.acad_release}"
