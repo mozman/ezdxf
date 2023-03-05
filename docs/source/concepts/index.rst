@@ -14,6 +14,7 @@ specific problems go to the :ref:`Howto` section.
     :maxdepth: 1
 
     dxf
+    entities
     aci
     true_color
     transparency
