@@ -848,7 +848,8 @@ class Drawing:
             logger.warning(f"DXF document is not compatible to AutoCAD! {msg}.")
 
     def query(self, query: str = "*") -> EntityQuery:
-        """Entity query over all layouts and blocks, excluding the OBJECTS section.
+        """Entity query over all layouts and blocks, excluding the OBJECTS section and
+        the resource tables of the TABLES section.
 
         Args:
             query: query string

@@ -7,6 +7,14 @@ Layer
 LAYER (`DXF Reference`_) definition, defines attribute values for entities on
 this layer for their attributes set to ``BYLAYER``.
 
+.. important::
+
+    A layer assignment is just an attribute of a DXF entity, it's not an entity
+    container, the entities are stored in layouts and blocks and the assigned layer is
+    not important for that.
+
+    Deleting a layer entry does not delete the entities which reference this layer!
+
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
 DXF type                 ``'LAYER'``

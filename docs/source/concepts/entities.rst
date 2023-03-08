@@ -27,7 +27,7 @@ Some common types of DXF entities include:
   times by the INSERT entity, making it a useful way to reuse elements of a design.
 
 These entities are defined using specific codes and values in the DXF file format, and
-they can be created, manipulated and edited by `ezdxf`.
+they can be created and manipulated by `ezdxf`.
 
 Objects
 -------
@@ -56,8 +56,8 @@ TagStorage
 ----------
 
 The `ezdxf` package supports many but not all entity types, all these unsupported
-types are stored as :class:`TagStorage` instances to preserver their data when
-exporting the edited DXF content.
+types are stored as :class:`TagStorage` instances to preserve their data when
+exporting the edited DXF content by `ezdxf`.
 
 Access Entity Attributes
 ------------------------
@@ -71,6 +71,10 @@ All DXF attributes are stored in the entity namespace attribute :attr:`dxf`.
 Some attributes are mandatory others are optional in most cases a reasonable values will
 be returned as default value if the attribute is missing.
 
+.. seealso::
+
+    :ref:`tut_getting_data`
+
 Where to Look for Entities
 --------------------------
 
@@ -83,25 +87,54 @@ request data:
     for text in doc.entitydb.query("TEXT"):
         print(text.dxf.text)
 
-For more information about entity queries read the documentation about the
-:mod:`ezdxf.query` module.
+.. seealso::
+
+    - :mod:`ezdxf.query` module
+    - :mod:`ezdxf.entitydb` module
 
 Graphical entities are stored in blocks, the modelspace or paperspace layouts.
-
 
 - The :func:`doc.modelspace` function returns the :class:`~ezdxf.layouts.Modelspace` instance
 - The :func:`doc.paperspace` returns a :class:`~ezdxf.layouts.Paperspace` instance
 - The :attr:`doc.blocks` attribute provides access to the :class:`~ezdxf.sections.blocks.BlocksSection`
+
+The :meth:`~ezdxf.document.Drawing.query` method of the :class:`~ezdxf.document.Drawing`
+class which represents the DXF document, runs the query on all layouts and block
+definitions.
 
 Non-graphical entities are stored in the OBJECTS section:
 
 - The :attr:`doc.objects` attribute provides access to the
   :class:`~ezdxf.sections.objects.ObjectsSection`.
 
-Table entries are stored in resource tables:
+Resource definitions like :class:`~ezdxf.entities.Layer`, :class:`~ezdxf.entities.Linetype`
+or :class:`~ezdxf.entities.Textstyle` are stored in resource tables:
 
 - :attr:`doc.layers`: the :class:`~ezdxf.sections.table.LayerTable`
 - :attr:`doc.linetypes`: the :class:`~ezdxf.sections.table.LinetypeTable`
 - :attr:`doc.styles`: the :class:`~ezdxf.sections.table.TextstyleTable`
 - :attr:`doc.dimstyles`: the :class:`~ezdxf.sections.table.DimStyleTable`
 
+.. important::
+
+    A layer assignment is just an attribute of a DXF entity, it's not an entity
+    container!
+
+.. seealso::
+
+    - Basic concept of the :ref:`modelspace_concept`
+    - Basic concept of :ref:`paperspace_concept` layouts
+    - Basic concept of :ref:`block_concept`
+    - :ref:`tut_getting_data`
+
+How to Create Entities
+----------------------
+
+The recommended way to create new DXF entities is to use the factory methods of
+layouts and blocks to create entities and add them to the entity space automatically.
+
+.. seealso::
+
+    - :ref:`thematic_factory_method_index`
+    - Reference of the :class:`~ezdxf.layouts.BaseLayout` class
+    - :ref:`tut_dxf_primitives`
