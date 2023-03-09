@@ -35,12 +35,34 @@ The ezdxf templates for DXF R2004 and later have :code:`$PROJECTNAME=''` as defa
 
 Thanks to `David Booth <https://github.com/worlds6440>`_:
 
-    If the filename in the IMAGEDEF contains the full path (absolute in AutoCAD) then it shows on loading,
-    otherwise it won't display (reports as unreadable) until you manually reload using XREF manager.
+    If the filename in the IMAGEDEF contains the full path (absolute in AutoCAD) then it
+    shows on loading, otherwise it won't display (reports as unreadable) until you
+    manually reload using XREF manager.
 
-    A workaround (to show IMAGES on loading) appears to be to save the full file path in the DXF or save it as a DWG.
+    A workaround (to show IMAGES on loading) appears to be to save the full file path in
+    the DXF or save it as a DWG.
 
-So far - no solution for showing IMAGES with relative paths on loading.
+Thanks to `Zac Luzader <https://github.com/luzader>`_:
+
+    Has anyone else noticed that very short simple image file names seem to avoid this
+    problem? Once I ensured that the image file's name was short and had no special
+    characters (letters, numbers and underscores only) the problem seemed to go away.
+    I didn't rigorously analyze the behavior as its very time consuming.
+
+    Also: You can safely put the image in a subdirectory and use a relative path. The
+    name of the subdirectory does not seem to trigger this problem, provided that the
+    image file name itself is very short and simple.
+
+    Also pro tip: The XRef manager exists in DWG TrueView 2023, but access to it is only
+    possible if you have a completely broken reference. Create a DXF with a reference
+    to a non-existent file, then the error dialog will let you open the XRef Manager.
+    Once it is open you can pin it and it will be open next time, even if you have no
+    broken references.
+
+.. seealso::
+
+    Discussion on github:
+    `Images don't show in AutoCAD until ... <https://github.com/mozman/ezdxf/discussions/845>`_
 
 Set Initial View/Zoom for the Modelspace
 ----------------------------------------
