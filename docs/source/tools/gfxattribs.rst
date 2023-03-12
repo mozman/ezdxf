@@ -85,3 +85,5 @@ Validation features:
 
     .. automethod:: from_entity
 
+    .. automethod:: from_dict
+

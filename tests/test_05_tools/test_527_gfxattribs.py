@@ -1,9 +1,9 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 
 import pytest
 import ezdxf
-from ezdxf import gfxattribs
+from ezdxf import gfxattribs, const, colors
 from ezdxf.gfxattribs import GfxAttribs
 from ezdxf.entities import factory
 
@@ -37,6 +37,35 @@ class TestDefaultGfxAttribs:
             "ltscale": gfxattribs.DEFAULT_LTSCALE,
         }
 
+
+class TestGfxAttribsFromDict:
+    def test_set_aci_color(self):
+        attribs = GfxAttribs.from_dict({"color": 10})
+        assert attribs.layer == "0"
+        assert attribs.color == 10
+        assert attribs.rgb is None
+        assert attribs.linetype == "ByLayer"
+        assert attribs.lineweight == ezdxf.const.LINEWEIGHT_BYLAYER
+        assert attribs.transparency is None
+        assert attribs.ltscale == 1.0
+
+    def test_set_transparency_as_float(self):
+        attribs = GfxAttribs.from_dict({"transparency": 0.5})
+        assert attribs.transparency == 0.5
+
+    def test_set_transparency_by_block(self):
+        attribs = GfxAttribs.from_dict({"transparency": colors.TRANSPARENCY_BYBLOCK})
+        assert attribs.transparency == -1.0
+
+    def test_set_transparency_as_raw_dxf_value(self):
+        attribs = GfxAttribs.from_dict({"transparency": colors.TRANSPARENCY_40})
+        assert attribs.transparency == pytest.approx(0.4)
+
+    def test_validation_errors(self):
+        with pytest.raises(const.DXFValueError):
+            GfxAttribs.from_dict({"color": 300})
+        with pytest.raises(const.DXFValueError):
+            GfxAttribs.from_dict({"rgb": (0, )})
 
 class TestGfxAttribLayer:
     def test_init_by_value(self):
@@ -117,9 +146,7 @@ class TestGfxAttribTrueColor:
         assert str(GfxAttribs(rgb=(10, 20, 30))) == "rgb=(10, 20, 30)"
 
     def test_repr(self):
-        assert (
-            repr(GfxAttribs(rgb=(10, 20, 30))) == "GfxAttribs(rgb=(10, 20, 30))"
-        )
+        assert repr(GfxAttribs(rgb=(10, 20, 30))) == "GfxAttribs(rgb=(10, 20, 30))"
 
 
 class TestGfxAttribLinetype:
@@ -144,9 +171,7 @@ class TestGfxAttribLinetype:
         assert str(GfxAttribs(linetype="Test")) == "linetype='Test'"
 
     def test_repr(self):
-        assert (
-            repr(GfxAttribs(linetype="Test")) == "GfxAttribs(linetype='Test')"
-        )
+        assert repr(GfxAttribs(linetype="Test")) == "GfxAttribs(linetype='Test')"
 
 
 class TestGfxAttribLineweight:
@@ -211,10 +236,7 @@ class TestGfxAttribTransparency:
         assert str(GfxAttribs(transparency=-1)) == "transparency=-1.0"
 
     def test_repr(self):
-        assert (
-            repr(GfxAttribs(transparency=0.5001))
-            == "GfxAttribs(transparency=0.5)"
-        )
+        assert repr(GfxAttribs(transparency=0.5001)) == "GfxAttribs(transparency=0.5)"
 
 
 class TestGfxAttribLinetypeScale:

@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Any, Optional, Iterator, TYPE_CHECKING
@@ -35,7 +35,7 @@ class GfxAttribs:
         transparency (float): transparency value in the range from 0.0 to 1.0,
             where 0.0 is opaque and 1.0 if fully transparent, -1.0 for
             transparency by block, ``None`` for transparency by layer
-        ltscale (float): linetype scaling value > 0.0, default value is 1.0
+        ltscale (float): linetype scaling factor > 0.0, default factor is 1.0
 
     Raises:
         DXFValueError: invalid attribute value
@@ -162,8 +162,7 @@ class GfxAttribs:
 
     @property
     def rgb(self) -> Optional[colors.RGB]:
-        """true color value as (red, green, blue) tuple, ``None`` for not set
-        """
+        """true color value as (red, green, blue) tuple, ``None`` for not set"""
         return self._true_color
 
     @rgb.setter
@@ -231,7 +230,7 @@ class GfxAttribs:
             raise const.DXFValueError(f"invalid linetype scale value '{value}'")
 
     @classmethod
-    def load_from_header(cls, doc: "Drawing") -> "GfxAttribs":
+    def load_from_header(cls, doc: Drawing) -> GfxAttribs:
         """Load default DXF attributes from the HEADER section.
 
         There is no default true color value and the default transparency is not
@@ -277,22 +276,52 @@ class GfxAttribs:
         header["$CELTSCALE"] = self.ltscale
 
     @classmethod
-    def from_entity(cls, entity: "DXFEntity") -> "GfxAttribs":
+    def from_entity(cls, entity: DXFEntity) -> GfxAttribs:
         """Get the graphical attributes of an `entity` as :class:`GfxAttribs`
         object.
         """
+        try:
+            d = entity.graphic_properties()  # type: ignore
+        except AttributeError:
+            return cls()
+        return cls.from_dict(d)
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> GfxAttribs:
+        """Construct :class:`GfxAttribs` from a dictionary of raw DXF values.
+
+        Supported attributes are:
+
+            - layer: layer name as string
+            - color: :ref:`ACI` value as int
+            - true_color: raw DXF integer value for RGB colors
+            - rgb: RGB tuple of int or ``None``
+            - linetype: linetype name as string
+            - lineweight: lineweight as int, see basic concept of :ref:`lineweights`
+            - transparency: raw DXF integer value of transparency or a float in the
+              range from 0.0 to 1.0
+            - ltscale: linetype scaling factor as float
+
+        """
         attribs = cls()
-        dxf = entity.dxf
-        for name in ["layer", "color", "linetype", "lineweight", "ltscale"]:
-            if dxf.hasattr(name):
-                setattr(attribs, name, dxf.get(name))
-        if dxf.hasattr("true_color"):
-            attribs.rgb = colors.int2rgb(dxf.true_color)
-        if dxf.hasattr("transparency"):
-            if dxf.transparency == colors.TRANSPARENCY_BYBLOCK:
+        for attrib_name in [
+            "layer",
+            "color",
+            "linetype",
+            "lineweight",
+            "ltscale",
+            "rgb",
+        ]:
+            if attrib_name in d:
+                setattr(attribs, attrib_name, d[attrib_name])
+        if "true_color" in d:
+            attribs.rgb = colors.int2rgb(d["true_color"])
+        if "transparency" in d:
+            transparency = d["transparency"]
+            if isinstance(transparency, float):
+                attribs.transparency = transparency
+            elif transparency == colors.TRANSPARENCY_BYBLOCK:
                 attribs.transparency = TRANSPARENCY_BYBLOCK
             else:
-                attribs.transparency = colors.transparency2float(
-                    dxf.transparency
-                )
+                attribs.transparency = colors.transparency2float(transparency)
         return attribs
