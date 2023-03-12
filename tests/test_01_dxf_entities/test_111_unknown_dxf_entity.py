@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Manfred Moitzi
+# Copyright (c) 2021-2023 Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -30,9 +30,19 @@ def test_wrapped_mtext_is_not_a_dxf_object(entity):
     assert is_dxf_object(entity) is False
 
 
+def test_wrapped_mtext_returns_dxfattribs_dict(entity):
+    dxfattribs = entity.graphic_properties()
+    assert len(dxfattribs) == 1
+    assert dxfattribs["layer"] == "0"
+
+
 def test_dxf_tag_storage_is_a_non_graphical_entity_by_default():
     assert DXFTagStorage().is_graphic_entity is False
     assert is_graphic_entity(DXFTagStorage()) is False
+
+
+def test_dxf_tag_storage_returns_empty_dxfattribs_dict_for_non_graphical_objetcs():
+    assert len(DXFTagStorage().graphic_properties()) == 0
 
 
 def test_dxf_export(entity):

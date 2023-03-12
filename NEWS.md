@@ -10,6 +10,8 @@ Version 1.0.3b0 - dev
   logging non-unique entity handles when loading a DXF document as warnings, auditing 
   the document may fix this issue
 - NEW: improved auditing & fixing capabilities
+- NEW: `DXFTagStorage.graphic_properties()` returns the graphical properties for unknown
+  or unsupported DXF entities
 - NEW: `GfxAttribs.from_dict()`
 - BUGFIX: audit process preserves dimensional constraints
 - BUGFIX: MTextExplode add-on created invalid text style table entries

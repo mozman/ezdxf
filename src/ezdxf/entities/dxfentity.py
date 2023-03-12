@@ -1052,6 +1052,29 @@ class DXFTagStorage(DXFEntity):
         """
         return self.xtags.has_subclass("AcDbEntity")
 
+    def graphic_properties(self) -> dict[str, Any]:
+        """Returns the graphical properties like layer, color, linetype, ... as
+        `dxfattribs` dict if the :class:`TagStorage` object represents a graphical
+        entity otherwise returns an empty dictionary.
+
+        These are all the DXF attributes which are stored in the ``AcDbEntity``
+        subclass.
+
+        """
+        from ezdxf.entities.dxfgfx import acdb_entity_group_codes
+
+        attribs: dict[str, Any] = dict()
+        try:
+            tags = self.xtags.get_subclass("AcDbEntity")
+        except const.DXFKeyError:
+            return attribs
+
+        for code, value in tags:
+            attrib_name = acdb_entity_group_codes.get(code)
+            if isinstance(attrib_name, str):
+                attribs[attrib_name] = value
+        return attribs
+
     @classmethod
     def load(cls, tags: ExtendedTags, doc: Optional[Drawing] = None) -> DXFTagStorage:
         assert isinstance(tags, ExtendedTags)
