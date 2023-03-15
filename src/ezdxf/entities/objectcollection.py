@@ -34,6 +34,14 @@ T = TypeVar("T", bound="DXFObject")
 
 
 class ObjectCollection(Generic[T]):
+    """
+    Note:
+    ObjectCollections may contain entries where the name stored in the entity as
+    "name" attribute diverges from the key in the DICTIONARY object e.g. MLEADERSTYLE
+    collection may have entries for "Standard" and "Annotative" but both MLEADERSTYLE
+    objects have the name "Standard".
+
+    """
     def __init__(
         self,
         doc: Drawing,
