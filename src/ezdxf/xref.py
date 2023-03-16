@@ -59,6 +59,10 @@ __all__ = [
     "Loader",
     "dxf_info",
     "DXFInfo",
+    "XrefError",
+    "XrefDefinitionError",
+    "EntityError",
+    "LayoutError",
 ]
 
 logger = logging.getLogger("ezdxf")
@@ -75,6 +79,28 @@ LoadFunction: TypeAlias = Callable[[str], Drawing]
 def _log_debug_messages(messages: Iterable[str]) -> None:
     for msg in messages:
         logger.debug(msg)
+
+
+class XrefError(Exception):
+    """base exception for the xref module"""
+
+    pass
+
+
+class XrefDefinitionError(XrefError):
+    pass
+
+
+class EntityError(XrefError):
+    pass
+
+
+class LayoutError(XrefError):
+    pass
+
+
+class InternalError(XrefError):
+    pass
 
 
 class ConflictPolicy(enum.Enum):
@@ -192,13 +218,13 @@ def define(doc: Drawing, block_name: str, filename: str, overlay=False) -> None:
         overlay: creates an XREF overlay if ``True`` and an XREF attachment otherwise
 
     Raises:
-        ValueError: block with same name exist
+        XrefDefinitionError: block with same name exist
 
     .. versionadded:: 1.1
 
     """
     if block_name in doc.blocks:
-        raise ValueError(f"block '{block_name}' already exist")
+        raise XrefDefinitionError(f"block '{block_name}' already exist")
     if overlay:
         flags = const.BLK_XREF_OVERLAY | const.BLK_EXTERNAL
     else:
@@ -246,7 +272,7 @@ def attach(
         Insert: default block reference for the XREF
 
     Raises:
-        ValueError: block with same name exist
+        XrefDefinitionError: block with same name exist
 
     .. versionadded:: 1.1
 
@@ -321,7 +347,7 @@ def embed(
         conflict_policy: how to resolve name conflicts
 
     Raises:
-        ValueError: argument `xref` is not a XREF definition
+        XrefDefinitionError: argument `xref` is not a XREF definition
         FileNotFoundError: XREF file not found
         DXFVersionError: cannot load a XREF with a newer DXF version than the host
             document, try the :mod:`~ezdxf.addons.odafc` add-on to downgrade the XREF
@@ -336,11 +362,11 @@ def embed(
     block = xref.block
     assert isinstance(block, Block)
     if not block.is_xref:
-        raise ValueError("argument 'xref' is not a XREF definition")
+        raise XrefDefinitionError("argument 'xref' is not a XREF definition")
 
     xref_path: str = block.dxf.get("xref_path", "")
     if not xref_path:
-        raise ValueError("no xref path defined")
+        raise XrefDefinitionError("no xref path defined")
 
     _search_paths = [pathlib.Path(p) for p in search_paths]
     _search_paths.insert(0, target_doc.get_abs_filepath())
@@ -404,7 +430,7 @@ def write_block(entities: Sequence[DXFEntity], *, origin: UVec = (0, 0, 0)) -> D
             at the insert location of the block reference
 
     Raises:
-        ValueError: virtual entities are not supported
+        EntityError: virtual entities are not supported
 
     .. versionadded:: 1.1
 
@@ -412,7 +438,7 @@ def write_block(entities: Sequence[DXFEntity], *, origin: UVec = (0, 0, 0)) -> D
     if len(entities) == 0:
         return ezdxf.new()
     if any(e.dxf.owner is None for e in entities):
-        raise ValueError("virtual entities are not supported")
+        raise EntityError("virtual entities are not supported")
     source_doc = entities[0].doc
     assert source_doc is not None, "expected a valid source document"
     target_doc = ezdxf.new(dxfversion=source_doc.dxfversion, units=source_doc.units)
@@ -463,7 +489,7 @@ def load_paperspace(
 
     """
     if psp.doc is tdoc:
-        raise const.DXFValueError("Paperspace layout cannot be from target document.")
+        raise LayoutError("Source paperspace layout cannot be from target document.")
     loader = Loader(psp.doc, tdoc, conflict_policy=conflict_policy)
     loader.load_paperspace_layout(psp, filter_fn=filter_fn)
     loader.execute()
@@ -553,9 +579,7 @@ class LoadEntities(LoadingCommand):
     ) -> None:
         self.entities = entities
         if not isinstance(target_layout, BaseLayout):
-            raise const.DXFTypeError(
-                f"invalid target layout type: {type(target_layout)}"
-            )
+            raise LayoutError(f"invalid target layout type: {type(target_layout)}")
         self.target_layout = target_layout
 
     def register_resources(self, registry: Registry) -> None:
@@ -595,7 +619,7 @@ class LoadPaperspaceLayout(LoadingCommand):
 
     def __init__(self, psp: Paperspace, filter_fn: Optional[FilterFunction]) -> None:
         if not isinstance(psp, Paperspace):
-            raise const.DXFTypeError(f"invalid paperspace layout type: {type(psp)}")
+            raise LayoutError(f"invalid paperspace layout type: {type(psp)}")
         self.paperspace_layout = psp
         self.filter_fn = filter_fn
 
@@ -637,7 +661,7 @@ class LoadBlockLayout(LoadingCommand):
 
     def __init__(self, block: BlockLayout) -> None:
         if not isinstance(block, BlockLayout):
-            raise const.DXFTypeError(f"invalid block layout type: {type(block)}")
+            raise LayoutError(f"invalid block layout type: {type(block)}")
         self.block_layout = block
 
     def register_resources(self, registry: Registry) -> None:
@@ -695,11 +719,9 @@ class Loader:
         if target_layout is None:
             target_layout = self.tdoc.modelspace()
         elif not isinstance(target_layout, BaseLayout):
-            raise const.DXFTypeError(
-                f"invalid target layout type: {type(target_layout)}"
-            )
+            raise LayoutError(f"invalid target layout type: {type(target_layout)}")
         if target_layout.doc is not self.tdoc:
-            raise const.DXFValueError(
+            raise LayoutError(
                 f"given target layout does not belong to the target document"
             )
         if filter_fn is None:
@@ -722,7 +744,7 @@ class Loader:
         if not isinstance(psp, Paperspace):
             raise const.DXFTypeError(f"invalid paperspace layout type: {type(psp)}")
         if psp.doc is not self.sdoc:
-            raise const.DXFValueError(
+            raise LayoutError(
                 f"given paperspace layout does not belong to the source document"
             )
         self.add_command(LoadPaperspaceLayout(psp, filter_fn))
@@ -739,17 +761,15 @@ class Loader:
         VIEWPORT entity will **not** be loaded!
         """
         if not isinstance(psp, Paperspace):
-            raise const.DXFTypeError(f"invalid paperspace layout type: {type(psp)}")
+            raise LayoutError(f"invalid paperspace layout type: {type(psp)}")
         if not isinstance(target_layout, BaseLayout):
-            raise const.DXFTypeError(
-                f"invalid target layout type: {type(target_layout)}"
-            )
+            raise LayoutError(f"invalid target layout type: {type(target_layout)}")
         if psp.doc is not self.sdoc:
-            raise const.DXFValueError(
+            raise LayoutError(
                 f"given paperspace layout does not belong to the source document"
             )
         if target_layout.doc is not self.tdoc:
-            raise const.DXFValueError(
+            raise LayoutError(
                 f"given target layout does not belong to the target document"
             )
         if filter_fn is None:
@@ -767,9 +787,9 @@ class Loader:
         be applied.  This method cannot load modelspace or paperspace layouts.
         """
         if not isinstance(block_layout, BlockLayout):
-            raise const.DXFTypeError(f"invalid block layout type: {type(block_layout)}")
+            raise LayoutError(f"invalid block layout type: {type(block_layout)}")
         if block_layout.doc is not self.sdoc:
-            raise const.DXFValueError(
+            raise LayoutError(
                 f"given block layout does not belong to the source document"
             )
         self.add_command(LoadBlockLayout(block_layout))
@@ -785,17 +805,15 @@ class Loader:
         modelspace or paperspace layouts.
         """
         if not isinstance(block_layout, BlockLayout):
-            raise const.DXFTypeError(f"invalid block layout type: {type(block_layout)}")
+            raise LayoutError(f"invalid block layout type: {type(block_layout)}")
         if not isinstance(target_layout, BaseLayout):
-            raise const.DXFTypeError(
-                f"invalid target layout type: {type(target_layout)}"
-            )
+            raise LayoutError(f"invalid target layout type: {type(target_layout)}")
         if block_layout.doc is not self.sdoc:
-            raise const.DXFValueError(
+            raise LayoutError(
                 f"given block layout does not belong to the source document"
             )
         if target_layout.doc is not self.tdoc:
-            raise const.DXFValueError(
+            raise LayoutError(
                 f"given target layout does not belong to the target document"
             )
         self.add_command(LoadEntities(list(block_layout), target_layout))
@@ -942,7 +960,7 @@ class _Registry:
         """Add resource by handle (table entry or object), cannot add graphic entities.
 
         Raises:
-            TypeError: cannot add graphic entity
+            EntityError: cannot add graphic entity
 
         """
         if handle is None or handle == "0":
@@ -952,7 +970,7 @@ class _Registry:
             self.debug(f"source entity #{handle} does not exist")
             return
         if is_graphic_entity(entity):
-            raise TypeError(f"cannot add graphic entity: {str(entity)}")
+            raise EntityError(f"cannot add graphic entity: {str(entity)}")
         self.add_entity(entity)
 
     def add_layer(self, name: str) -> None:
@@ -1065,7 +1083,7 @@ class _Transfer:
         if clone:
             entity.map_resources(clone, self)
         else:
-            raise const.DXFInternalEzdxfError(f"copy of {entity} not found")
+            raise InternalError(f"copy of {entity} not found")
 
     def map_pointers(self, tags: Tags, new_owner_handle: str = "") -> None:
         for index, tag in enumerate(tags):
@@ -1227,9 +1245,7 @@ class _Transfer:
             for source_entity_handle, clone in block.items():
                 source_entity = source_db.get(source_entity_handle)
                 if source_entity is None:
-                    raise const.DXFInternalEzdxfError(
-                        "database error, source entity not found"
-                    )
+                    raise InternalError("database error, source entity not found")
                 if clone is not None and clone.is_alive:
                     source_entity.map_resources(clone, self)
 
@@ -1238,9 +1254,7 @@ class _Transfer:
         for source_object_handle, clone in self.copied_objects.items():
             source_entity = source_db.get(source_object_handle)
             if source_entity is None:
-                raise const.DXFInternalEzdxfError(
-                    "database error, source object not found"
-                )
+                raise InternalError("database error, source object not found")
             if clone is not None and clone.is_alive:
                 source_entity.map_resources(clone, self)
 
@@ -1346,7 +1360,7 @@ class _Transfer:
         if isinstance(block, Block) and isinstance(endblk, EndBlk):
             block_record.set_block(block, endblk)
         else:
-            raise const.DXFInternalEzdxfError("invalid BLOCK_RECORD copy")
+            raise InternalError("invalid BLOCK_RECORD copy")
 
     def add_ucs_entry(self, ucs: UCSTableEntry) -> None:
         # name mapping is not supported for UCS table entries

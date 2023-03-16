@@ -480,13 +480,13 @@ class TestBlocks:
         tdoc = ezdxf.new()
         loader = xref.Loader(sdoc, tdoc)
 
-        with pytest.raises(const.DXFTypeError):
+        with pytest.raises(xref.LayoutError):
             loader.load_block_layout(sdoc.modelspace())
 
-        with pytest.raises(const.DXFTypeError):
+        with pytest.raises(xref.LayoutError):
             loader.load_block_layout(sdoc.paperspace())
 
-        with pytest.raises(const.DXFTypeError):
+        with pytest.raises(xref.LayoutError):
             loader.load_block_layout(None)
 
     def test_load_block_reference(self, sdoc):
