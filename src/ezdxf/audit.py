@@ -434,7 +434,7 @@ class Auditor:
                 entity.dxf.owner = "0"
                 self.fixed_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
-                    message=f"Fixed invalid owner handle in root {str(self)}.",
+                    message=f"Fixed invalid owner handle in root {str(entity)}.",
                 )
             elif entity.dxftype() == "TABLE":
                 name = entity.dxf.get("name", "UNKNOWN")
@@ -456,7 +456,7 @@ class Auditor:
             entity.dxf.discard("extrusion")
             self.fixed_error(
                 code=AuditError.INVALID_EXTRUSION_VECTOR,
-                message=f"Fixed extrusion vector for entity: {str(self)}.",
+                message=f"Fixed extrusion vector for entity: {str(entity)}.",
                 dxf_entity=entity,
             )
 
@@ -468,7 +468,7 @@ class Auditor:
             entity.dxf.discard("transparency")
             self.fixed_error(
                 code=AuditError.INVALID_TRANSPARENCY,
-                message=f"Fixed invalid transparency for entity: {str(self)}.",
+                message=f"Fixed invalid transparency for entity: {str(entity)}.",
                 dxf_entity=entity,
             )
 
