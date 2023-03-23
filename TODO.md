@@ -221,6 +221,47 @@ Issues:
 - 2D selections always in top-view mode?
 - Using special box- and sphere selections for 3D selection?
 
+Transformation Module
+---------------------
+
+(v1.1) Module to apply tranformations to multiple DXF entities inplace in a more 
+convenient way:
+
+```Python
+import math
+
+import ezdxf
+from ezdxf import transform
+
+doc = ezdxf.readfile("my.dxf")
+msp = doc.modelspace()
+
+log = transform.matrix(msp, m=transform.Matrix44.rotate_z(math.pi/2))
+
+# or more simple
+log = transform.rotate_z(msp, math.pi/2)
+```
+
+All functions should handle unsupported entities or non-uniform-scaling errors. 
+The input argument `entities` is an iterable of DXFEntity, which can be any layout, 
+EntityQuery or just a list of entities.
+
+Functions: 
+
+- matrix(entities, m: Matrix44) - transform by an arbitrary matrix, non-uniform scaling 
+  is not supported, just log errors
+- matrix_ext(entities, m: Matrix44) - transform by an arbitrary matrix, non-uniform 
+  scaling is supported, converts CIRCLE and ARC to ELLIPSE and explodes INSERT if 
+  necessary
+- translate(entities, offset: UVec)
+- scale_uniform(entities, factor: float) - uniform scaling by matrix()
+- scale(entities, sx: float, sy: float, sz: float) - non-uniform scaling by matrix_ext()
+- rotate_x(entities, angle: float)
+- rotate_y(entities, angle: float)
+- rotate_z(entities, angle: float)
+- rotate_axis(entities, axis: UVec, angle: float)
+
+
 DXF Document
 ------------
 
