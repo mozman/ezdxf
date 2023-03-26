@@ -74,7 +74,7 @@ virtual entities are supported as well.
 
     .. attribute:: NON_UNIFORM_SCALING_ERROR
 
-        Circular arcs (CIRCLE, ARC, bulges in POLYLINE, LWPOLYLINE and HATCH entities)
+        Circular arcs (CIRCLE, ARC, bulges in POLYLINE and LWPOLYLINE entities)
         cannot be scaled non-uniformly.
 
     .. attribute:: INSERT_TRANSFORMATION_ERROR
@@ -82,6 +82,11 @@ virtual entities are supported as well.
         INSERT entities cannot represent a non-orthogonal target coordinate system.
         Maybe exploding the INSERT entities (recursively) beforehand can solve this
         issue, see function :func:`ezdxf.disassemble.recursive_decompose`.
+
+    .. attribute:: VIRTUAL_ENTITY_NOT_SUPPORTED
+
+        Transformation not supported for virtual entities e.g. non-uniform scaling for
+        CIRCLE, ARC or POLYLINE with bulges
 
 .. autoclass:: Logger
 

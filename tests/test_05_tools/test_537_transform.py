@@ -82,5 +82,46 @@ class TestConvenientFunctions:
         assert point.dxf.location.isclose((2, 2, 2))
 
 
+def test_circle_non_uniform_scaling():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    msp.add_circle((0, 0), radius=1)
+    transform.scale(msp, sx=3, sy=2, sz=1)
+
+    ellipse = msp[0]
+    assert ellipse.dxftype() == "ELLIPSE"
+    assert ellipse.dxf.center.isclose((0, 0, 0))
+    assert ellipse.dxf.major_axis.isclose((3, 0, 0))
+    assert ellipse.dxf.ratio == pytest.approx(0.6666666)
+
+
+def test_polyline_non_uniform_scaling():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    # semi-circle: center=(0, 0); radius=1
+    msp.add_lwpolyline([(-1, 0, 0, 0, 1), (1, 0)])
+    transform.scale(msp, sx=3, sy=2, sz=1)
+
+    ellipse = msp[0]
+    assert ellipse.dxftype() == "ELLIPSE"
+    assert ellipse.dxf.center.isclose((0, 0, 0))
+    assert ellipse.dxf.major_axis.isclose((3, 0, 0))
+    assert ellipse.dxf.ratio == pytest.approx(0.6666666)
+
+
+def test_virtual_entities_do_not_support_non_uniform_scaling():
+    msp = VirtualLayout()
+    msp.add_circle((0, 0), radius=1)
+    log = transform.scale(msp, sx=3, sy=2, sz=1)
+
+    # does not transform the CIRCLE
+    circle = msp[0]
+    assert circle.dxftype() == "CIRCLE"
+    assert circle.dxf.radius == pytest.approx(1.0)
+
+    assert len(log) == 1
+    assert log[0].error == transform.Error.VIRTUAL_ENTITY_NOT_SUPPORTED
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

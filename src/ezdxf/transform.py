@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Iterator, NamedTuple, Optional, TYPE_CHECKING
+from typing import Iterable, Iterator, NamedTuple
 import enum
 
 from ezdxf.math import (
@@ -11,10 +11,7 @@ from ezdxf.math import (
     NonUniformScalingError,
     InsertTransformationError,
 )
-from ezdxf.entities import DXFEntity
-
-if TYPE_CHECKING:
-    from ezdxf.eztypes import GenericLayoutType
+from ezdxf.entities import DXFEntity, Circle, LWPolyline, Polyline
 
 MIN_SCALING_FACTOR = 1e-12
 
@@ -23,6 +20,7 @@ class Error(enum.Enum):
     TRANSFORMATION_NOT_SUPPORTED = enum.auto()
     NON_UNIFORM_SCALING_ERROR = enum.auto()
     INSERT_TRANSFORMATION_ERROR = enum.auto()
+    VIRTUAL_ENTITY_NOT_SUPPORTED = enum.auto()
 
 
 class Logger:
@@ -53,6 +51,13 @@ class Logger:
         """Returns all error messages as list of strings."""
         return [entry.message for entry in self._entries]
 
+    def purge(self, entries: Iterable[Entry]) -> None:
+        for entry in entries:
+            try:
+                self._entries.remove(entry)
+            except ValueError:
+                pass
+
 
 def matrix(entities: Iterable[DXFEntity], m: Matrix44) -> Logger:
     """Transforms the given `entities` inplace by the transformation matrix `m`,
@@ -82,17 +87,41 @@ def matrix(entities: Iterable[DXFEntity], m: Matrix44) -> Logger:
 def matrix_ext(
     entities: Iterable[DXFEntity],
     m: Matrix44,
-    target_layout: Optional[GenericLayoutType] = None,
 ) -> Logger:
     """Transforms the given `entities` inplace by the transformation matrix `m`,
     non-uniform scaling is supported. The function converts circular arcs into ellipses
     to perform non-uniform scaling.  The function logs errors and does not raise errors
     for unsupported entities or transformation errors, see enum :class:`Error`.
-    The :func:`matrix_ext` function supports virtual entities as well, but the target
-    layout for converted entities has to be specified explicitly.
+
+    .. important::
+
+        The :func:`matrix_ext` function does not support type conversion for virtual
+        entities e.g. non-uniform scaling for CIRCLE, ARC or POLYLINE with bulges.
 
     """
-    raise NotImplementedError()
+    log = matrix(entities, m)
+    errors: list[Logger.Entry] = []
+    for entry in log:
+        if entry.error != Error.NON_UNIFORM_SCALING_ERROR:
+            continue
+
+        errors.append(entry)
+        entity = entry.entity
+        if entity.is_virtual:
+            msg = f"non-uniform scaling is not supported for virtual entity {str(entity)}"
+            log.add(Error.VIRTUAL_ENTITY_NOT_SUPPORTED, msg, entity)
+            continue
+
+        if isinstance(entity, Circle):  # CIRCLE, ARC
+            ellipse = entity.to_ellipse(replace=True)
+            ellipse.transform(m)
+        elif isinstance(entity, (LWPolyline, Polyline)):  # has bulges (circular arcs)
+            for sub_entity in entity.explode():
+                if isinstance(sub_entity, Circle):
+                    sub_entity = sub_entity.to_ellipse()
+                sub_entity.transform(m)  # type: ignore
+    log.purge(errors)
+    return log
 
 
 def translate(entities: Iterable[DXFEntity], offset: UVec) -> Logger:
@@ -117,6 +146,10 @@ def scale_uniform(entities: Iterable[DXFEntity], factor: float) -> Logger:
 def scale(entities: Iterable[DXFEntity], sx: float, sy: float, sz: float) -> Logger:
     """Scales `entities` inplace by the factors `sx` in x-axis, `sy` in y-axis and `sz`
     in z-axis. Scaling factors smaller than :attr:`MIN_SCALING_FACTOR` are ignored.
+
+    .. important::
+
+        The :func:`scale` function does not support virtual entities!
 
     """
 
