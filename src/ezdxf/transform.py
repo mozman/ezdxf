@@ -17,7 +17,9 @@ MIN_SCALING_FACTOR = 1e-12
 
 
 class Error(enum.Enum):
+    NONE = 0
     TRANSFORMATION_NOT_SUPPORTED = enum.auto()
+    COPY_NOT_SUPPORTED = enum.auto()
     NON_UNIFORM_SCALING_ERROR = enum.auto()
     INSERT_TRANSFORMATION_ERROR = enum.auto()
     VIRTUAL_ENTITY_NOT_SUPPORTED = enum.auto()

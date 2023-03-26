@@ -68,9 +68,18 @@ virtual entities are supported as well.
 
 .. class:: Error
 
+    .. attribute:: NONE
+
+        No error, same as a boolean ``False``, this allows check :code:`if error: ...`
+
+    .. attribute:: COPY_NOT_SUPPORTED
+
+        Entity without copy support.
+
     .. attribute:: TRANSFORMATION_NOT_SUPPORTED
 
-        Entities without transformation support.
+        Entity without transformation support.
+
 
     .. attribute:: NON_UNIFORM_SCALING_ERROR
 
