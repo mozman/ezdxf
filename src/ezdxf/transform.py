@@ -73,6 +73,8 @@ def inplace(entities: Iterable[DXFEntity], m: Matrix44) -> Logger:
     """
     log = Logger()
     for entity in entities:
+        if not entity.is_alive:
+            continue
         try:
             entity.transform(m)  # type: ignore
         except (AttributeError, NotImplementedError):
@@ -161,6 +163,8 @@ def copies(
 def _copy_entities(entities: Iterable[DXFEntity], log: Logger) -> list[DXFEntity]:
     clones: list[DXFEntity] = []
     for entity in entities:
+        if not entity.is_alive:
+            continue
         try:
             clone = entity.copy()
         except const.DXFTypeError:
