@@ -226,8 +226,8 @@ class Ellipse(DXFGraphic):
     def from_arc(cls, entity: DXFGraphic) -> Ellipse:
         """Create a new virtual ELLIPSE entity from an ARC or a CIRCLE entity.
 
-        The new SPLINE entity has no owner, no handle, is not stored in
-        the entity database nor assigned to any layout!
+        The new entity has no owner, no handle, is not stored in the entity database nor
+        assigned to any layout!
 
         """
         assert entity.dxftype() in {"ARC", "CIRCLE"}, "ARC or CIRCLE entity required"
@@ -241,7 +241,7 @@ class Ellipse(DXFGraphic):
             end_angle=attribs.pop("end_angle", 360),
         )
         attribs.update(e.dxfattribs())
-        return Ellipse.new(dxfattribs=attribs, doc=entity.doc)
+        return cls.new(dxfattribs=attribs, doc=entity.doc)
 
     def transform(self, m: Matrix44) -> Ellipse:
         """Transform the ELLIPSE entity by transformation matrix `m` inplace."""
