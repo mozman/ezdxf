@@ -19,6 +19,8 @@ Version 1.0.3b0 - dev
   file, final release in v1.1
 - PREVIEW: `ezdxf.r12strict` module to make DXF R12 drawing 100% compatible to Autodesk 
   products, final release in v1.1
+- PREVIEW: `ezdxf.transform` module to apply transformations to multiple DXF entities 
+  inplace in a more convenient and safe way, final release in v1.1
 
 Version 1.0.2 - 2023-02-15
 --------------------------
