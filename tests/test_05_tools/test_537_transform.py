@@ -138,9 +138,7 @@ class TestVirtualCopies:
         assert all(e.is_virtual for e in entities)
 
     def test_scale_virtual_circular_arcs_non_uniform(self, msp):
-        log, entities = transform.copies(
-            msp, m=transform.Matrix44.scale(2, 3, 1)
-        )
+        log, entities = transform.copies(msp, m=transform.Matrix44.scale(2, 3, 1))
         assert len(log) == 0
         assert entities[0].dxftype() == "ELLIPSE"
         assert entities[1].dxftype() == "POINT"
@@ -149,12 +147,38 @@ class TestVirtualCopies:
         layout = VirtualLayout()
         layout.add_lwpolyline([(-1, 0, 0, 0, 1), (1, 0)])
 
-        log, entities = transform.copies(
-            layout, m=transform.Matrix44.scale(2, 3, 1)
-        )
+        log, entities = transform.copies(layout, m=transform.Matrix44.scale(2, 3, 1))
         assert len(log) == 0
         assert len(entities) == 1
         assert entities[0].dxftype() == "ELLIPSE"
+
+
+class TestMLeader:
+    def build_mleader(self, msp):
+        from ezdxf.render import mleader
+        from ezdxf.math import Vec2
+
+        ml_builder = msp.add_multileader_mtext("Standard")
+        ml_builder.set_content("Line1\nLine2")
+        ml_builder.add_leader_line(mleader.ConnectionSide.right, [Vec2(40, 15)])
+
+        ml_builder.build(insert=Vec2(5, 0))
+
+    def test_inplace(self):
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+        self.build_mleader(msp)
+        log = transform.scale(msp, 2, 3, 1)
+        assert log[0].error == transform.Error.NON_UNIFORM_SCALING_ERROR
+        assert msp[0].dxftype() == "MULTILEADER"
+
+    def test_copies(self):
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+        self.build_mleader(msp)
+        log, clones = transform.copies(msp, m=transform.Matrix44.scale(2, 3, 1))
+        assert log[0].error == transform.Error.NON_UNIFORM_SCALING_ERROR
+        assert len(clones) == 0
 
 
 if __name__ == "__main__":

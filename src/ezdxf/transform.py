@@ -121,9 +121,9 @@ def inplace(
         if entry.error != Error.NON_UNIFORM_SCALING_ERROR:
             continue
 
-        errors.append(entry)
         entity = entry.entity
         if entity.is_virtual:
+            errors.append(entry)
             log.add(
                 Error.VIRTUAL_ENTITY_NOT_SUPPORTED,
                 f"non-uniform scaling is not supported for virtual entity {str(entity)}",
@@ -132,13 +132,16 @@ def inplace(
             continue
 
         if isinstance(entity, Circle):  # CIRCLE, ARC
+            errors.append(entry)
             ellipse = entity.to_ellipse(replace=True)
             ellipse.transform(m)
         elif isinstance(entity, (LWPolyline, Polyline)):  # has bulges (circular arcs)
+            errors.append(entry)
             for sub_entity in entity.explode():
                 if isinstance(sub_entity, Circle):
                     sub_entity = sub_entity.to_ellipse()
                 sub_entity.transform(m)  # type: ignore
+        # else: NON_UNIFORM_SCALING_ERROR stays unchanged
     log.purge(errors)
     return log
 
@@ -196,7 +199,14 @@ def _transform_clones(clones: Iterable[DXFEntity], m: Matrix44, log: Logger):
                 entity,
             )
         except NonUniformScalingError:
-            entities.extend(_scale_non_uniform(entity, m))
+            try:
+                entities.extend(_scale_non_uniform(entity, m))
+            except TypeError:
+                log.add(
+                    Error.NON_UNIFORM_SCALING_ERROR,
+                    f"{str(entity)} entity does not support non-uniform scaling",
+                    entity,
+                )
         else:
             entities.append(entity)
 
@@ -215,6 +225,8 @@ def _scale_non_uniform(entity: DXFEntity, m: Matrix44):
                 sub_entity = Ellipse.from_arc(sub_entity)
             sub_entity.transform(m)
             yield sub_entity
+    else:
+        raise TypeError
 
 
 def translate(entities: Iterable[DXFEntity], offset: UVec) -> Logger:
