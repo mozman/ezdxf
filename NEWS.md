@@ -2,8 +2,8 @@
 News
 ====
 
-Version 1.0.3b0 - dev
----------------------
+Version 1.0.3 - 2023-03-26
+--------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
 - NEW: [#833](https://github.com/mozman/ezdxf/issues/833)
