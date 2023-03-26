@@ -1,9 +1,11 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Iterator, NamedTuple
+from typing import Iterable, Iterator, NamedTuple, Optional, Tuple, List
 import enum
 
+
+from ezdxf import const
 from ezdxf.math import (
     Matrix44,
     UVec,
@@ -11,7 +13,7 @@ from ezdxf.math import (
     NonUniformScalingError,
     InsertTransformationError,
 )
-from ezdxf.entities import DXFEntity, Circle, LWPolyline, Polyline
+from ezdxf.entities import DXFEntity, DXFGraphic, Circle, LWPolyline, Polyline, Ellipse
 
 MIN_SCALING_FACTOR = 1e-12
 
@@ -74,14 +76,23 @@ def matrix(entities: Iterable[DXFEntity], m: Matrix44) -> Logger:
         try:
             entity.transform(m)  # type: ignore
         except (AttributeError, NotImplementedError):
-            msg = f"{str(entity)} entity does not support transformation"
-            log.add(Error.TRANSFORMATION_NOT_SUPPORTED, msg, entity)
+            log.add(
+                Error.TRANSFORMATION_NOT_SUPPORTED,
+                f"{str(entity)} entity does not support transformation",
+                entity,
+            )
         except NonUniformScalingError:
-            msg = f"{str(entity)} entity does not support non-uniform scaling"
-            log.add(Error.NON_UNIFORM_SCALING_ERROR, msg, entity)
+            log.add(
+                Error.NON_UNIFORM_SCALING_ERROR,
+                f"{str(entity)} entity does not support non-uniform scaling",
+                entity,
+            )
         except InsertTransformationError:
-            msg = f"{str(entity)} entity can not represent a non-orthogonal target coordinate system"
-            log.add(Error.INSERT_TRANSFORMATION_ERROR, msg, entity)
+            log.add(
+                Error.INSERT_TRANSFORMATION_ERROR,
+                f"{str(entity)} entity can not represent a non-orthogonal target coordinate system",
+                entity,
+            )
 
     return log
 
@@ -98,7 +109,8 @@ def matrix_ext(
     .. important::
 
         The :func:`matrix_ext` function does not support type conversion for virtual
-        entities e.g. non-uniform scaling for CIRCLE, ARC or POLYLINE with bulges.
+        entities e.g. non-uniform scaling for CIRCLE, ARC or POLYLINE with bulges,
+        see also function :func:`copies`.
 
     """
     log = matrix(entities, m)
@@ -110,8 +122,11 @@ def matrix_ext(
         errors.append(entry)
         entity = entry.entity
         if entity.is_virtual:
-            msg = f"non-uniform scaling is not supported for virtual entity {str(entity)}"
-            log.add(Error.VIRTUAL_ENTITY_NOT_SUPPORTED, msg, entity)
+            log.add(
+                Error.VIRTUAL_ENTITY_NOT_SUPPORTED,
+                f"non-uniform scaling is not supported for virtual entity {str(entity)}",
+                entity,
+            )
             continue
 
         if isinstance(entity, Circle):  # CIRCLE, ARC
@@ -124,6 +139,78 @@ def matrix_ext(
                 sub_entity.transform(m)  # type: ignore
     log.purge(errors)
     return log
+
+
+def copies(
+    entities: Iterable[DXFEntity], m: Optional[Matrix44] = None
+) -> Tuple[Logger, List[DXFEntity]]:
+    """Copy entities and transform them by matrix `m`. Does not raise any exception
+    and ignores all entities that cannot be copied or transformed. Just copies the input
+    entities if matrix `m` is ``None``. Returns a tuple of :class:`Logger` and a list of
+    transformed virtual copies. The function supports virtual entities as input and
+    converts circular arcs into ellipses to perform non-uniform scaling.
+    """
+
+    log = Logger()
+    clones = _copy_entities(entities, log)
+    if isinstance(m, Matrix44):
+        clones = _transform_clones(clones, m, log)
+    return log, clones
+
+
+def _copy_entities(entities: Iterable[DXFEntity], log: Logger) -> list[DXFEntity]:
+    clones: list[DXFEntity] = []
+    for entity in entities:
+        try:
+            clone = entity.copy()
+        except const.DXFTypeError:
+            log.add(
+                Error.COPY_NOT_SUPPORTED,
+                f"{str(entity)} entity does not support copy",
+                entity,
+            )
+        else:
+            clones.append(clone)
+    return clones
+
+
+def _transform_clones(clones: Iterable[DXFEntity], m: Matrix44, log: Logger):
+    entities: List[DXFEntity] = []
+    for entity in clones:
+        try:
+            entity.transform(m)  # type: ignore
+        except (AttributeError, NotImplementedError):
+            log.add(
+                Error.TRANSFORMATION_NOT_SUPPORTED,
+                f"{str(entity)} entity does not support transformation",
+                entity,
+            )
+        except InsertTransformationError:
+            log.add(
+                Error.INSERT_TRANSFORMATION_ERROR,
+                f"{str(entity)} entity can not represent a non-orthogonal target coordinate system",
+                entity,
+            )
+        except NonUniformScalingError:
+            entities.extend(_scale_non_uniform(entity, m))
+        else:
+            entities.append(entity)
+
+    return entities
+
+
+def _scale_non_uniform(entity: DXFEntity, m: Matrix44):
+    sub_entity: DXFGraphic
+    if isinstance(entity, Circle):
+        sub_entity = Ellipse.from_arc(entity)
+        sub_entity.transform(m)
+        yield sub_entity
+    elif isinstance(entity, (LWPolyline, Polyline)):
+        for sub_entity in entity.virtual_entities():
+            if isinstance(sub_entity, Circle):
+                sub_entity = Ellipse.from_arc(sub_entity)
+            sub_entity.transform(m)
+            yield sub_entity
 
 
 def translate(entities: Iterable[DXFEntity], offset: UVec) -> Logger:

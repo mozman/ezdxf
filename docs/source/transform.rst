@@ -8,7 +8,7 @@ Transform
 .. versionadded:: 1.1
 
 This module provides functions to apply transformations to multiple DXF
-entities inplace in a more convenient and safe way:
+entities inplace or to virtual copies of that entities in a convenient and safe way:
 
 .. code-block:: Python
 
@@ -36,6 +36,7 @@ virtual entities are supported as well.
 
     matrix
     matrix_ext
+    copies
     translate
     scale_uniform
     scale
@@ -47,6 +48,8 @@ virtual entities are supported as well.
 .. autofunction:: matrix
 
 .. autofunction:: matrix_ext
+
+.. autofunction:: copies
 
 .. autofunction:: translate
 

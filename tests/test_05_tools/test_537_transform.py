@@ -123,5 +123,38 @@ def test_virtual_entities_do_not_support_non_uniform_scaling():
     assert log[0].error == transform.Error.VIRTUAL_ENTITY_NOT_SUPPORTED
 
 
+class TestVirtualCopies:
+    @pytest.fixture
+    def msp(self):
+        msp = VirtualLayout()
+        msp.add_circle((0, 0), radius=1)
+        msp.add_point((1, 1, 1))
+        return msp
+
+    def test_just_copy(self, msp):
+        log, entities = transform.copies(msp)
+        assert len(entities) == 2
+        assert all(e.is_virtual for e in entities)
+
+    def test_scale_virtual_circular_arcs_non_uniform(self, msp):
+        log, entities = transform.copies(
+            msp, m=transform.Matrix44.scale(2, 3, 1)
+        )
+        assert len(log) == 0
+        assert entities[0].dxftype() == "ELLIPSE"
+        assert entities[1].dxftype() == "POINT"
+
+    def test_scale_virtual_polyline_with_bulge_non_uniform(self):
+        layout = VirtualLayout()
+        layout.add_lwpolyline([(-1, 0, 0, 0, 1), (1, 0)])
+
+        log, entities = transform.copies(
+            layout, m=transform.Matrix44.scale(2, 3, 1)
+        )
+        assert len(log) == 0
+        assert len(entities) == 1
+        assert entities[0].dxftype() == "ELLIPSE"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
