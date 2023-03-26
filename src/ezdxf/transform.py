@@ -63,7 +63,7 @@ class Logger:
                 pass
 
 
-def inplace(entities: Iterable[DXFEntity], m: Matrix44) -> Logger:
+def _inplace(entities: Iterable[DXFEntity], m: Matrix44) -> Logger:
     """Transforms the given `entities` inplace by the transformation matrix `m`,
     non-uniform scaling is not supported. The function logs errors and does not raise
     errors for unsupported entities or transformations that cannot be performed,
@@ -99,7 +99,7 @@ def inplace(entities: Iterable[DXFEntity], m: Matrix44) -> Logger:
     return log
 
 
-def inplace_ext(
+def inplace(
     entities: Iterable[DXFEntity],
     m: Matrix44,
 ) -> Logger:
@@ -110,12 +110,12 @@ def inplace_ext(
 
     .. important::
 
-        The :func:`inplace_ext` function does not support type conversion for virtual
+        The :func:`inplace` function does not support type conversion for virtual
         entities e.g. non-uniform scaling for CIRCLE, ARC or POLYLINE with bulges,
         see also function :func:`copies`.
 
     """
-    log = inplace(entities, m)
+    log = _inplace(entities, m)
     errors: list[Logger.Entry] = []
     for entry in log:
         if entry.error != Error.NON_UNIFORM_SCALING_ERROR:
@@ -221,7 +221,7 @@ def translate(entities: Iterable[DXFEntity], offset: UVec) -> Logger:
     """Translates (moves) `entities` inplace by the `offset` vector."""
     v = Vec3(offset)
     if v:
-        return inplace(entities, m=Matrix44.translate(v.x, v.y, v.z))
+        return _inplace(entities, m=Matrix44.translate(v.x, v.y, v.z))
     return Logger()
 
 
@@ -232,7 +232,7 @@ def scale_uniform(entities: Iterable[DXFEntity], factor: float) -> Logger:
     """
     f = float(factor)
     if abs(f) > MIN_SCALING_FACTOR:
-        return inplace(entities, m=Matrix44.scale(f, f, f))
+        return _inplace(entities, m=Matrix44.scale(f, f, f))
     return Logger()
 
 
@@ -250,14 +250,14 @@ def scale(entities: Iterable[DXFEntity], sx: float, sy: float, sz: float) -> Log
         f = float(f)
         return f if abs(f) > MIN_SCALING_FACTOR else 1.0
 
-    return inplace_ext(entities, Matrix44.scale(safe(sx), safe(sy), safe(sz)))
+    return inplace(entities, Matrix44.scale(safe(sx), safe(sy), safe(sz)))
 
 
 def x_rotate(entities: Iterable[DXFEntity], angle: float) -> Logger:
     """Rotates `entities` inplace by `angle` in radians about the x-axis."""
     a = float(angle)
     if a:
-        return inplace(entities, m=Matrix44.x_rotate(a))
+        return _inplace(entities, m=Matrix44.x_rotate(a))
     return Logger()
 
 
@@ -265,7 +265,7 @@ def y_rotate(entities: Iterable[DXFEntity], angle: float) -> Logger:
     """Rotates `entities` inplace by `angle` in radians about the y-axis."""
     a = float(angle)
     if a:
-        return inplace(entities, m=Matrix44.y_rotate(a))
+        return _inplace(entities, m=Matrix44.y_rotate(a))
     return Logger()
 
 
@@ -273,7 +273,7 @@ def z_rotate(entities: Iterable[DXFEntity], angle: float) -> Logger:
     """Rotates `entities` inplace by `angle` in radians about the x-axis."""
     a = float(angle)
     if a:
-        return inplace(entities, m=Matrix44.z_rotate(a))
+        return _inplace(entities, m=Matrix44.z_rotate(a))
     return Logger()
 
 
@@ -287,5 +287,5 @@ def axis_rotate(entities: Iterable[DXFEntity], axis: UVec, angle: float) -> Logg
 
     v = Vec3(axis)
     if not v.is_null:
-        return inplace(entities, m=Matrix44.axis_rotate(v, a))
+        return _inplace(entities, m=Matrix44.axis_rotate(v, a))
     return Logger()

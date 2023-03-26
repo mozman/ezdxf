@@ -8,7 +8,7 @@ from ezdxf import transform
 from ezdxf.layouts import VirtualLayout
 
 
-class TestMatrixMethod:
+class TestInplaceMethod:
     """The tests do not check if all possible transformations will be performed correct,
     this is done by the tests for the transform() method of the entities.
     """
@@ -40,13 +40,14 @@ class TestMatrixMethod:
         circle = msp[2]
         assert circle.dxf.center.isclose((1, 2, 0))
 
-    @pytest.mark.parametrize("msp", ["doc", "virtual"], indirect=True)
+    @pytest.mark.parametrize("msp", ["doc"], indirect=True)
     def test_non_uniform_transformation(self, msp):
+        # not supported by virtual layouts
         m = transform.Matrix44.scale(1, 2, 1)
         log = transform.inplace(msp, m)
-        assert len(log) == 1
-        entry = log[0]
-        assert entry.entity.dxftype() == "CIRCLE"
+        assert len(log) == 0
+        entity = msp[2]
+        assert entity.dxftype() == "ELLIPSE"
 
     def test_entities_without_transformation_support(self):
         from ezdxf.entities import Layer

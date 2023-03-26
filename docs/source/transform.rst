@@ -35,7 +35,6 @@ virtual entities are supported as well.
     :nosignatures:
 
     inplace
-    inplace_ext
     copies
     translate
     scale_uniform
@@ -46,8 +45,6 @@ virtual entities are supported as well.
     axis_rotate
 
 .. autofunction:: inplace
-
-.. autofunction:: inplace_ext
 
 .. autofunction:: copies
 
