@@ -63,12 +63,12 @@ class Logger:
                 pass
 
 
-def matrix(entities: Iterable[DXFEntity], m: Matrix44) -> Logger:
+def inplace(entities: Iterable[DXFEntity], m: Matrix44) -> Logger:
     """Transforms the given `entities` inplace by the transformation matrix `m`,
     non-uniform scaling is not supported. The function logs errors and does not raise
     errors for unsupported entities or transformations that cannot be performed,
     see enum :class:`Error`.
-    The :func:`matrix` function supports virtual entities as well.
+    The :func:`inplace` function supports virtual entities as well.
 
     """
     log = Logger()
@@ -97,7 +97,7 @@ def matrix(entities: Iterable[DXFEntity], m: Matrix44) -> Logger:
     return log
 
 
-def matrix_ext(
+def inplace_ext(
     entities: Iterable[DXFEntity],
     m: Matrix44,
 ) -> Logger:
@@ -108,12 +108,12 @@ def matrix_ext(
 
     .. important::
 
-        The :func:`matrix_ext` function does not support type conversion for virtual
+        The :func:`inplace_ext` function does not support type conversion for virtual
         entities e.g. non-uniform scaling for CIRCLE, ARC or POLYLINE with bulges,
         see also function :func:`copies`.
 
     """
-    log = matrix(entities, m)
+    log = inplace(entities, m)
     errors: list[Logger.Entry] = []
     for entry in log:
         if entry.error != Error.NON_UNIFORM_SCALING_ERROR:
@@ -217,7 +217,7 @@ def translate(entities: Iterable[DXFEntity], offset: UVec) -> Logger:
     """Translates (moves) `entities` inplace by the `offset` vector."""
     v = Vec3(offset)
     if v:
-        return matrix(entities, m=Matrix44.translate(v.x, v.y, v.z))
+        return inplace(entities, m=Matrix44.translate(v.x, v.y, v.z))
     return Logger()
 
 
@@ -228,7 +228,7 @@ def scale_uniform(entities: Iterable[DXFEntity], factor: float) -> Logger:
     """
     f = float(factor)
     if abs(f) > MIN_SCALING_FACTOR:
-        return matrix(entities, m=Matrix44.scale(f, f, f))
+        return inplace(entities, m=Matrix44.scale(f, f, f))
     return Logger()
 
 
@@ -238,7 +238,7 @@ def scale(entities: Iterable[DXFEntity], sx: float, sy: float, sz: float) -> Log
 
     .. important::
 
-        same limitations for virtual entities as the :func:`matrix_ext` function
+        same limitations for virtual entities as the :func:`inplace_ext` function
 
     """
 
@@ -246,14 +246,14 @@ def scale(entities: Iterable[DXFEntity], sx: float, sy: float, sz: float) -> Log
         f = float(f)
         return f if abs(f) > MIN_SCALING_FACTOR else 1.0
 
-    return matrix_ext(entities, Matrix44.scale(safe(sx), safe(sy), safe(sz)))
+    return inplace_ext(entities, Matrix44.scale(safe(sx), safe(sy), safe(sz)))
 
 
 def x_rotate(entities: Iterable[DXFEntity], angle: float) -> Logger:
     """Rotates `entities` inplace by `angle` in radians about the x-axis."""
     a = float(angle)
     if a:
-        return matrix(entities, m=Matrix44.x_rotate(a))
+        return inplace(entities, m=Matrix44.x_rotate(a))
     return Logger()
 
 
@@ -261,7 +261,7 @@ def y_rotate(entities: Iterable[DXFEntity], angle: float) -> Logger:
     """Rotates `entities` inplace by `angle` in radians about the y-axis."""
     a = float(angle)
     if a:
-        return matrix(entities, m=Matrix44.y_rotate(a))
+        return inplace(entities, m=Matrix44.y_rotate(a))
     return Logger()
 
 
@@ -269,7 +269,7 @@ def z_rotate(entities: Iterable[DXFEntity], angle: float) -> Logger:
     """Rotates `entities` inplace by `angle` in radians about the x-axis."""
     a = float(angle)
     if a:
-        return matrix(entities, m=Matrix44.z_rotate(a))
+        return inplace(entities, m=Matrix44.z_rotate(a))
     return Logger()
 
 
@@ -283,5 +283,5 @@ def axis_rotate(entities: Iterable[DXFEntity], axis: UVec, angle: float) -> Logg
 
     v = Vec3(axis)
     if not v.is_null:
-        return matrix(entities, m=Matrix44.axis_rotate(v, a))
+        return inplace(entities, m=Matrix44.axis_rotate(v, a))
     return Logger()

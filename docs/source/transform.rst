@@ -20,7 +20,7 @@ entities inplace or to virtual copies of that entities in a convenient and safe 
     doc = ezdxf.readfile("my.dxf")
     msp = doc.modelspace()
 
-    log = transform.matrix(msp, m=transform.Matrix44.rotate_z(math.pi/2))
+    log = transform.inplace(msp, m=transform.Matrix44.rotate_z(math.pi/2))
 
     # or more simple
     log = transform.z_rotate(msp, math.pi/2)
@@ -34,8 +34,8 @@ virtual entities are supported as well.
 .. autosummary::
     :nosignatures:
 
-    matrix
-    matrix_ext
+    inplace
+    inplace_ext
     copies
     translate
     scale_uniform
@@ -45,9 +45,9 @@ virtual entities are supported as well.
     z_rotate
     axis_rotate
 
-.. autofunction:: matrix
+.. autofunction:: inplace
 
-.. autofunction:: matrix_ext
+.. autofunction:: inplace_ext
 
 .. autofunction:: copies
 

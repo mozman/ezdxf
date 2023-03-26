@@ -31,7 +31,7 @@ class TestMatrixMethod:
     @pytest.mark.parametrize("msp", ["doc", "virtual"], indirect=True)
     def test_transformation_by_matrix_without_errors(self, msp):
         m = transform.Matrix44.translate(1, 2, 0)
-        log = transform.matrix(msp, m)
+        log = transform.inplace(msp, m)
         assert len(log) == 0
         point = msp[0]
         assert point.dxf.location.isclose((1, 2, 0))
@@ -43,7 +43,7 @@ class TestMatrixMethod:
     @pytest.mark.parametrize("msp", ["doc", "virtual"], indirect=True)
     def test_non_uniform_transformation(self, msp):
         m = transform.Matrix44.scale(1, 2, 1)
-        log = transform.matrix(msp, m)
+        log = transform.inplace(msp, m)
         assert len(log) == 1
         entry = log[0]
         assert entry.entity.dxftype() == "CIRCLE"
@@ -52,7 +52,7 @@ class TestMatrixMethod:
         from ezdxf.entities import Layer
 
         m = transform.Matrix44.translate(1, 0, 0)
-        log = transform.matrix([Layer.new()], m)
+        log = transform.inplace([Layer.new()], m)
         assert log[0].error == transform.Error.TRANSFORMATION_NOT_SUPPORTED
 
     def test_acis_entities(self):
@@ -60,7 +60,7 @@ class TestMatrixMethod:
         msp = VirtualLayout()
         msp.add_body()  # ACIS entity
         m = transform.Matrix44.translate(1, 0, 0)
-        log = transform.matrix(msp, m)
+        log = transform.inplace(msp, m)
         assert log[0].error == transform.Error.TRANSFORMATION_NOT_SUPPORTED
 
 
