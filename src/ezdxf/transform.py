@@ -242,7 +242,7 @@ def scale(entities: Iterable[DXFEntity], sx: float, sy: float, sz: float) -> Log
 
     .. important::
 
-        same limitations for virtual entities as the :func:`inplace_ext` function
+        same limitations for virtual entities as the :func:`inplace` function
 
     """
 
