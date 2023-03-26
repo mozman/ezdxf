@@ -149,7 +149,7 @@ def scale(entities: Iterable[DXFEntity], sx: float, sy: float, sz: float) -> Log
 
     .. important::
 
-        The :func:`scale` function does not support virtual entities!
+        same limitations for virtual entities as the :func:`matrix_ext` function
 
     """
 
