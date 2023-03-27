@@ -2,6 +2,7 @@
 #  License: MIT License
 
 import pytest
+import math
 
 import ezdxf
 from ezdxf import transform
@@ -82,6 +83,26 @@ class TestConvenientFunctions:
         point = msp[0]
         assert point.dxf.location.isclose((2, 2, 2))
 
+    def test_scale(self, msp):
+        transform.scale(msp, sx=2, sy=3, sz=4)
+        point = msp[0]
+        assert point.dxf.location.isclose((2, 3, 4))
+
+    def test_z_rotate(self, msp):
+        transform.z_rotate(msp, angle=math.pi / 2)
+        point = msp[0]
+        assert point.dxf.location.isclose((-1, 1, 1))
+
+    def test_y_rotate(self, msp):
+        transform.y_rotate(msp, angle=math.pi / 2)
+        point = msp[0]
+        assert point.dxf.location.isclose((1, 1, -1))
+
+    def test_x_rotate(self, msp):
+        transform.x_rotate(msp, angle=math.pi / 2)
+        point = msp[0]
+        assert point.dxf.location.isclose((1, -1, 1))
+
 
 def test_circle_non_uniform_scaling():
     doc = ezdxf.new()
@@ -153,29 +174,26 @@ class TestVirtualCopies:
         assert entities[0].dxftype() == "ELLIPSE"
 
 
-class TestMLeader:
-    def build_mleader(self, msp):
+class TestMLeaderNonUniformScaling:
+    @pytest.fixture(scope="class")
+    def msp(self):
         from ezdxf.render import mleader
         from ezdxf.math import Vec2
 
+        doc = ezdxf.new()
+        msp = doc.modelspace()
         ml_builder = msp.add_multileader_mtext("Standard")
         ml_builder.set_content("Line1\nLine2")
         ml_builder.add_leader_line(mleader.ConnectionSide.right, [Vec2(40, 15)])
-
         ml_builder.build(insert=Vec2(5, 0))
+        return msp
 
-    def test_inplace(self):
-        doc = ezdxf.new()
-        msp = doc.modelspace()
-        self.build_mleader(msp)
+    def test_transformation_will_not_be_applied_inplace(self, msp):
         log = transform.scale(msp, 2, 3, 1)
         assert log[0].error == transform.Error.NON_UNIFORM_SCALING_ERROR
         assert msp[0].dxftype() == "MULTILEADER"
 
-    def test_copies(self):
-        doc = ezdxf.new()
-        msp = doc.modelspace()
-        self.build_mleader(msp)
+    def test_mleader_will_not_copied(self, msp):
         log, clones = transform.copies(msp, m=transform.Matrix44.scale(2, 3, 1))
         assert log[0].error == transform.Error.NON_UNIFORM_SCALING_ERROR
         assert len(clones) == 0
