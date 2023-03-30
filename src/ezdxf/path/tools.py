@@ -655,6 +655,13 @@ def add_2d_polyline(
         # each cubic_bezier adds 3 segments, need 1 minimum
         num_bez = math.ceil(segments / 3)
         center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
+        # sample angles of the shortest arc between start and end angles
+        central_angle = end_angle - start_angle
+        if abs(central_angle) > math.pi:  # if difference between angles greater than pi
+            if central_angle > 0:
+                start_angle = start_angle + math.tau  # shift the start point by a full rotation
+            else:
+                end_angle = end_angle + math.tau  # shift the end point by a full rotation
         angles = list(linspace(start_angle, end_angle, num_bez + 1))
         curves = []
         for i in range(num_bez):
