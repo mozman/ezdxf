@@ -788,3 +788,11 @@ class TestIsRectangular:
     def test_non_aligned_square(self):
         p = from_vertices(forms.rotate(forms.square(2), 30))
         assert is_rectangular(p, aligned=False) is True
+
+
+class TestBulgeGreaterOne:
+    msp = VirtualLayout()
+    pline = msp.add_lwpolyline([(0, 0, 0, 0, 2), (1, 0)])
+    p = make_path(pline, segments=9)
+
+    assert len(p) == 3
