@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Optional, Iterable, Any, Iterator
 import copy
 import logging
+import math
 from collections import namedtuple
 
 from ezdxf.lldxf import const
@@ -30,7 +31,7 @@ from ezdxf.math import (
 )
 from ezdxf import colors
 from ezdxf.proxygraphic import ProxyGraphicError
-from ezdxf.tools.text import safe_string
+from ezdxf.tools.text import safe_string, scale_mtext_inline_commands
 from ezdxf.tools.handle import safe_handle
 
 from .dxfentity import base_class, SubclassProcessor
@@ -546,7 +547,9 @@ class MultiLeader(DXFGraphic):
         dxf = self.dxf
         clone_dxf = clone.dxf
         clone_dxf.style_handle = mapping.get_handle(dxf.style_handle)
-        clone_dxf.leader_linetype_handle = mapping.get_handle(dxf.leader_linetype_handle)
+        clone_dxf.leader_linetype_handle = mapping.get_handle(
+            dxf.leader_linetype_handle
+        )
         clone_dxf.arrow_head_handle = mapping.get_handle(dxf.arrow_head_handle)
         clone_dxf.text_style_handle = mapping.get_handle(dxf.text_style_handle)
         clone_dxf.block_record_handle = mapping.get_handle(dxf.block_record_handle)
@@ -977,19 +980,29 @@ class MTextData:
         # don't use rotation ;)
         self.rotation = ocs.transform_angle(self.rotation)
         scale = wcs.uniform_scale
+        if math.isclose(scale, 1.0) or abs(scale) <= 1e-12:
+            return
         self.width *= scale
         self.defined_height *= scale
         self.column_width *= scale
         self.column_gutter_width *= scale
         self.column_sizes = [size * scale for size in self.column_sizes]
+        self.default_content = scale_mtext_inline_commands(
+            self.default_content, scale
+        )
 
     def apply_conversion_factor(self, conversion_factor: float):
         # conversion_factor: convert from an old scaling to a new scaling
+        if math.isclose(conversion_factor, 1.0) or abs(conversion_factor) <= 1e-12:
+            return
         self.width *= conversion_factor
         self.defined_height *= conversion_factor
         self.column_width *= conversion_factor
         self.column_gutter_width *= conversion_factor
         self.column_sizes = [h * conversion_factor for h in self.column_sizes]
+        self.default_content = scale_mtext_inline_commands(
+            self.default_content, conversion_factor
+        )
 
 
 class BlockData:
