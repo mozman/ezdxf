@@ -6,11 +6,13 @@ Tools in this module should be as independent of DXF entities as possible!
 from __future__ import annotations
 from typing import (
     Iterable,
+    Iterator,
     TYPE_CHECKING,
     Union,
     Optional,
     Callable,
     NamedTuple,
+    Any,
 )
 import enum
 import re
@@ -62,9 +64,7 @@ class TextLine:
         self._stretch_x: float = 1.0
         self._stretch_y: float = 1.0
 
-    def stretch(
-        self, alignment: TextEntityAlignment, p1: Vec3, p2: Vec3
-    ) -> None:
+    def stretch(self, alignment: TextEntityAlignment, p1: Vec3, p2: Vec3) -> None:
         """Set stretch factors for FIT and ALIGNED alignments to fit the
         text between `p1` and `p2`, only the distance between these points is
         important. Other given `alignment` values are ignore.
@@ -153,9 +153,7 @@ class TextLine:
             Vec2(0, fm.cap_top),
         ]
         shift = self._shift_vector(halign, valign, fm)
-        return TextLine.transform_2d(
-            vertices, insert, shift, angle, scale, oblique
-        )
+        return TextLine.transform_2d(vertices, insert, shift, angle, scale, oblique)
 
     def _shift_vector(
         self, halign: int, valign: int, fm: FontMeasurements
@@ -262,16 +260,12 @@ def unified_alignment(entity: Union[Text, MText]) -> tuple[int, int]:
             # handles separately.
             halign = CENTER
             valign = BASELINE
-        elif (
-            halign == TextHAlign.MIDDLE
-        ):  # MIDDLE is different to MIDDLE/CENTER
+        elif halign == TextHAlign.MIDDLE:  # MIDDLE is different to MIDDLE/CENTER
             halign = CENTER
             valign = X_MIDDLE
         return halign, valign
     elif dxftype == "MTEXT":
-        return MAP_MTEXT_ALIGN_TO_FLAGS.get(
-            entity.dxf.attachment_point, (LEFT, TOP)
-        )
+        return MAP_MTEXT_ALIGN_TO_FLAGS.get(entity.dxf.attachment_point, (LEFT, TOP))
     else:
         raise TypeError(f"invalid DXF {dxftype}")
 
@@ -353,8 +347,8 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # \Q	Slanting (oblique) text by angle - e.g. \Q30;
 # \H	Text height relative - e.g. \H3x;
 # \H	Text height absolute - e.g. \H3;
-# \W	Text width factor - e.g. \W0.8x;
-# \W	Text width absolute - e.g. \W0.8;
+# \W	Text width factor relative e.g. \W0.8x;
+# \W	Text width factor absolute e.g. \W0.8;
 # \F	Font selection
 # \f	Font selection
 #
@@ -400,8 +394,8 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #     ezdxf.rgb2int((31,224,114)) = 2089074 (r,g,b) wrong!
 #     ezdxf.rgb2int((114,224,31)) = 7528479 (b,g,r) reversed order is correct!
 #
-# \T	Tracking, char.spacing absolute - e.g. \T2;
-# \T	Tracking, char.spacing relative - e.g. \T2x;
+# \T	Tracking, char spacing factor as absolute value e.g. \T2;
+# \T	Tracking, char spacing factor as relative value e.g. \T2x;
 # {}	Braces - define the text area influenced by the code
 #       Multiple codes after the opening brace are valid until the closing
 #       brace.  e.g. {\H0.4x;\A1;small centered text}
@@ -641,10 +635,7 @@ def text_wrap(
             if current_line or on_first_line:
                 current_line += t
         else:
-            if (
-                box_width is not None
-                and get_text_width(current_line + t) > box_width
-            ):
+            if box_width is not None and get_text_width(current_line + t) > box_width:
                 if not current_line:
                     current_line += t
                 else:
@@ -664,9 +655,7 @@ def is_text_vertical_stacked(text: DXFEntity) -> bool:
     is vertical stacked.
     """
     if not text.is_supported_dxf_attrib("style"):
-        raise TypeError(
-            f"{text.dxftype()} does not support the style attribute."
-        )
+        raise TypeError(f"{text.dxftype()} does not support the style attribute.")
 
     if text.doc:
         style = text.doc.styles.get(text.dxf.style)
@@ -841,9 +830,7 @@ class MTextEditor:
         """Reset the content to an empty string."""
         self.text = ""
 
-    def font(
-        self, name: str, bold: bool = False, italic: bool = False
-    ) -> MTextEditor:
+    def font(self, name: str, bold: bool = False, italic: bool = False) -> MTextEditor:
         """Set the text font by the font family name. Changing the font height
         should be done by the :meth:`height` or the :meth:`scale_height` method.
         The font family name is the name shown in font selection widgets in
@@ -1003,11 +990,14 @@ class MTextEditor:
         )
         items.append(
             "".join(
-                b + self.TAB + c + self.NEW_PARAGRAPH
-                for b, c in zip(bullets, content)
+                b + self.TAB + c + self.NEW_PARAGRAPH for b, c in zip(bullets, content)
             )
         )
         return self.group(str(items))
+
+
+class UnknownCommand(Exception):
+    pass
 
 
 class MTextContext:
@@ -1023,9 +1013,7 @@ class MTextContext:
         self.cap_height: float = 1.0
         self.width_factor: float = 1.0
         self.char_tracking_factor: float = 1.0
-        self.oblique: float = (
-            0.0  # in degrees, where 0 is vertical (TEXT entity)
-        )
+        self.oblique: float = 0.0  # in degrees, where 0 is vertical (TEXT entity)
         self.paragraph = ParagraphProperties()
 
     def __copy__(self) -> MTextContext:
@@ -1077,9 +1065,7 @@ class MTextContext:
         else:
             raise ValueError("aci not in range[0,256]")
 
-    def _set_stroke_state(
-        self, stroke: MTextStroke, state: bool = True
-    ) -> None:
+    def _set_stroke_state(self, stroke: MTextStroke, state: bool = True) -> None:
         """Set/clear binary `stroke` flag in `self._stroke`.
 
         Args:
@@ -1202,17 +1188,24 @@ class TextScanner:
         """Returns the unprocessed part of the content."""
         return self._text[self._index :]
 
+    def index(self) -> int:
+        return self._index
+
+    def substr2(self, start: int, stop: int) -> str:
+        return self._text[start:stop]
+
 
 class TokenType(enum.IntEnum):
     NONE = 0
     WORD = 1  # data = str
-    STACK = 2  # data = upr: str, lwr:str, type:str
+    STACK = 2  # data = tuple[upr: str, lwr:str, type:str]
     SPACE = 3  # data = None
     NBSP = 4  # data = None
     TABULATOR = 5  # data = None
     NEW_PARAGRAPH = 6  # data = None
     NEW_COLUMN = 7  # data = None
     WRAP_AT_DIMLINE = 8  # data = None
+    PROPERTIES_CHANGED = 9  # data = full command string e.g. "\H150;"
 
 
 class MTextToken:
@@ -1247,20 +1240,26 @@ class MTextParser:
     Args:
         content: MText content string
         ctx: initial MText context
+        yield_property_commands: yield commands that change properties or context,
+            default is ``False``
 
     """
 
-    __slots__ = ("ctx", "scanner", "_ctx_stack", "_continue_stroke")
-
-    def __init__(self, content: str, ctx: Optional[MTextContext] = None):
+    def __init__(
+        self,
+        content: str,
+        ctx: Optional[MTextContext] = None,
+        yield_property_commands=False,
+    ):
         if ctx is None:
             ctx = MTextContext()
         self.ctx = ctx
         self.scanner = TextScanner(caret_decode(content))
         self._ctx_stack: list[MTextContext] = []
         self._continue_stroke = False
+        self._yield_property_commands = bool(yield_property_commands)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[MTextToken]:
         return self.parse()
 
     def push_ctx(self) -> None:
@@ -1270,7 +1269,7 @@ class MTextParser:
         if self._ctx_stack:
             self.ctx = self._ctx_stack.pop()
 
-    def parse(self) -> Iterable[MTextToken]:
+    def parse(self) -> Iterator[MTextToken]:
         # localize method calls
         scanner = self.scanner
         consume = scanner.fast_consume
@@ -1288,11 +1287,12 @@ class MTextParser:
             else:
                 return token, None
 
-        def next_token():
-            word = ""
+        def next_token() -> tuple[TokenType, Any]:
+            word: str = ""
             while scanner.has_data:
                 escape = False
                 letter = peek()
+                cmd_start_index = scanner.index()
                 if letter == "\\":
                     # known escape sequences: "\\", "\{", "\}"
                     if peek(1) in "\\{}":
@@ -1319,9 +1319,17 @@ class MTextParser:
                         if cmd:
                             try:
                                 self.parse_properties(cmd)
-                            except ValueError:
+                            except UnknownCommand:
                                 # print invalid escaped letters verbatim
                                 word += letter + cmd
+                            else:
+                                if self._yield_property_commands:
+                                    return (
+                                        TokenType.PROPERTIES_CHANGED,
+                                        scanner.substr2(
+                                            cmd_start_index, scanner.index()
+                                        ),
+                                    )
                         continue
 
                 # process control chars, caret decoding is already done!
@@ -1378,7 +1386,7 @@ class MTextParser:
             else:
                 break
 
-    def parse_stacking(self) -> tuple:
+    def parse_stacking(self) -> tuple[TokenType, Any]:
         """Returns a tuple of strings: (numerator, denominator, type).
         The numerator and denominator is always a single and can contain spaces,
         which are not decoded as separate tokens. The type string is "^" for
@@ -1467,8 +1475,8 @@ class MTextParser:
             self.parse_paragraph_properties(new_ctx)
         elif cmd == "f" or cmd == "F":
             self.parse_font_properties(new_ctx)
-        else:  # unknown commands
-            raise ValueError("unknown command")
+        else:
+            raise UnknownCommand(f"unknown command: {cmd}")
         new_ctx.continue_stroke = self._continue_stroke
         self.ctx = new_ctx
 
@@ -1600,9 +1608,7 @@ class MTextParser:
                 pass  # ignore
             elif cmd == "q":
                 adjustment = paragraph_scanner.get()
-                align = CHAR_TO_ALIGN.get(
-                    adjustment, MTextParagraphAlignment.DEFAULT
-                )
+                align = CHAR_TO_ALIGN.get(adjustment, MTextParagraphAlignment.DEFAULT)
                 skip_commas()
             elif cmd == "t":
                 tab_stops = []  # type: ignore

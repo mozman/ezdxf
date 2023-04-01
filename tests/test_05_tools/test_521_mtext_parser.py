@@ -681,9 +681,7 @@ class TestMTextParagraphProperties:
         )
 
     def test_reset_arguments(self):
-        t0, t1 = list(
-            MTextParser(r"\pi1,l2,r3,qc,t1,2,3;word\pi*,l*,r*,q*,t;word")
-        )
+        t0, t1 = list(MTextParser(r"\pi1,l2,r3,qc,t1,2,3;word\pi*,l*,r*,q*,t;word"))
         assert t0.ctx.paragraph == (
             1,
             2,
@@ -697,6 +695,52 @@ class TestMTextParagraphProperties:
         tokens = list(MTextParser(r"\pi0,l0,tz;A"))
         t = tokens[0]
         assert t.ctx.paragraph.tab_stops == tuple()
+
+    def test_unknown_escape_sequence(self):
+        t0, t1 = list(MTextParser(r"word\Yword"))
+        assert t1.type == TokenType.WORD
+        assert t1.data == r"\Yword"
+
+
+class TestMTextParserYieldsPropertyChangeCommands:
+    def test_change_height(self):
+        t0, t1, t2 = list(MTextParser(r"word\H150;word", yield_property_commands=True))
+        assert t1.type == TokenType.PROPERTIES_CHANGED
+        assert t1.ctx.cap_height == 150
+        assert t1.data == r"\H150;"
+
+    def test_change_height_without_semicolon(self):
+        t0, t1, t2 = list(MTextParser(r"word\H150word", yield_property_commands=True))
+        assert t1.type == TokenType.PROPERTIES_CHANGED
+        assert t1.ctx.cap_height == 150
+        assert t1.data == r"\H150"
+
+    def test_change_char_tracking(self):
+        t0, t1, t2 = list(MTextParser(r"word\T150;word", yield_property_commands=True))
+        assert t1.type == TokenType.PROPERTIES_CHANGED
+        assert t1.ctx.char_tracking_factor == 150
+        assert t1.data == r"\T150;"
+
+    def test_change_paragraph(self):
+        t0, t1 = list(
+            MTextParser(r"\pxt4,c5,r6,7.5;word", yield_property_commands=True)
+        )
+        assert t0.type == TokenType.PROPERTIES_CHANGED
+        assert t0.data == r"\pxt4,c5,r6,7.5;"
+
+    def test_one_char_commands(self):
+        t0, t1, t2 = list(
+            MTextParser(r"\Lword\l", yield_property_commands=True)
+        )
+        assert t0.type == TokenType.PROPERTIES_CHANGED
+        assert t0.data == r"\L"
+        assert t2.type == TokenType.PROPERTIES_CHANGED
+        assert t2.data == r"\l"
+
+    def test_unknown_escape_sequence(self):
+        t0, t1 = list(MTextParser(r"word\Yword", yield_property_commands=True))
+        assert t1.type == TokenType.WORD
+        assert t1.data == r"\Yword"
 
 
 if __name__ == "__main__":
