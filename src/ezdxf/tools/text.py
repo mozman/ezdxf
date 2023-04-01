@@ -120,7 +120,7 @@ class TextLine:
             Vec2(self.width, fm.baseline),
         ]
         shift = self._shift_vector(halign, valign, fm)
-        # Oblique angle is deliberately not supported, the base line should be
+        # Oblique angle is deliberately not supported, the baseline should be
         # (near) the y-coordinate=0.
         return TextLine.transform_2d(vertices, insert, shift, angle, scale)
 
@@ -193,7 +193,7 @@ class TextLine:
         # does not pay off.
         # The most expensive rotation transformation is the least frequently
         # used transformation.
-        # IMPORTANT: this assumptions are not verified by profiling!
+        # IMPORTANT: these assumptions are not verified by profiling!
 
         # Use 2D vectors:
         vertices_: Iterable[Vec2] = Vec2.generate(vertices)
@@ -410,7 +410,7 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 #
 # Column types in BricsCAD:
 #   - dynamic auto height: all columns have the same height
-#   - dynamic manual height: each columns has an individual height
+#   - dynamic manual height: each column has an individual height
 #   - no columns
 #   - static: all columns have the same height, like dynamic auto height,
 #     difference is only important for user interaction in CAD applications
@@ -623,7 +623,7 @@ def text_wrap(
     # License: MIT License
     if not text or text.isspace():
         return []
-    manual_lines = re.split(r"(\n)", text)  # includes \n as it's own token
+    manual_lines = re.split(r"(\n)", text)  # includes \n as its own token
     tokens = [t for line in manual_lines for t in re.split(r"(\s+)", line) if t]
     lines: list[str] = []
     current_line: str = ""
@@ -814,7 +814,7 @@ class MTextEditor:
     ALIGN_BOTTOM = r"\A0;"
     ALIGN_MIDDLE = r"\A1;"
     ALIGN_TOP = r"\A2;"
-    NBSP = r"\~"  # non breaking space
+    NBSP = r"\~"  # non-breaking space
     TAB = "^I"
 
     def append(self, text: str) -> MTextEditor:
@@ -860,7 +860,7 @@ class MTextEditor:
         # The current implementation of ezdxf writes everything in one
         # encoding, defined by $DWGCODEPAGE < DXF R2007 or utf8 for DXF R2007+
         # Switching codepage makes no sense!
-        # p0 = current text size
+        # p0 = current text size;
         # Text size should be changed by \H<factor>x;
         return self.append(rf"\f{name}|b{int(bold)}|i{int(italic)};")
 
@@ -1550,8 +1550,8 @@ class MTextParser:
 
     def extract_expression(self, escape=False) -> str:
         """Returns the next expression from the current location until
-        the terminating ";". The terminating semi-colon is not included.
-        Skips escaped "\\;" semi-colons if `escape` is True.
+        the terminating ";". The terminating semicolon is not included.
+        Skips escaped "\\;" semicolons if `escape` is True.
 
         """
         stop = self.scanner.find(";", escape=escape)
