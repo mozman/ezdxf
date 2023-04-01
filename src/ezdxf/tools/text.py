@@ -1812,3 +1812,39 @@ def safe_string(s: Optional[str], max_len: int = MAX_STR_LEN) -> str:
     if isinstance(s, str):
         return escape_dxf_line_endings(s)[:max_len]
     return ""
+
+
+VALID_HEIGHT_CHARS = set("0123456789.")
+
+
+def scale_mtext_inline_commands(content: str, factor: float) -> str:
+    """Scale all inline commands which define an absolute value by a `factor`."""
+
+    def _scale_leading_number(substr: str, prefix: str) -> str:
+        index: int = 0
+        try:
+            while substr[index] in VALID_HEIGHT_CHARS:
+                index += 1
+            if substr[index] == "x":  # relative factor
+                return f"{prefix}{substr}"
+        except IndexError:  # end of string
+            pass
+        try:
+            new_size = float(substr[:index]) * factor
+            value = f"{new_size:.3g}"
+        except ValueError:
+            value = ""  # return a valid construct
+        return rf"{prefix}{value}{substr[index:]}"
+
+    # So far only the "\H<value>;" command will be scaled.
+    # Fast check if scaling is required:
+    if r"\H" not in content:
+        return content
+
+    factor = abs(factor)
+    old_parts = content.split(r"\H")
+    new_parts: list[str] = [old_parts[0]]
+    for part in old_parts[1:]:
+        new_parts.append(_scale_leading_number(part, r"\H"))
+
+    return "".join(new_parts)

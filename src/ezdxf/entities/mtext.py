@@ -40,6 +40,7 @@ from ezdxf.tools.text import (
     escape_dxf_line_endings,
     fast_plain_mtext,
     plain_mtext,
+    scale_mtext_inline_commands,
 )
 from . import factory
 from .dxfentity import base_class, SubclassProcessor
@@ -1031,10 +1032,19 @@ class MText(DXFGraphic):
         new_text_direction = m.transform_direction(old_text_direction)
 
         old_vertical_direction = old_extrusion.cross(old_text_direction)
-        old_char_height_vec = old_vertical_direction.normalize(dxf.char_height)
+        old_char_height = float(dxf.char_height)
+        old_char_height_vec = old_vertical_direction.normalize(old_char_height)
         new_char_height_vec = m.transform_direction(old_char_height_vec)
         oblique = new_text_direction.angle_between(new_char_height_vec)
-        dxf.char_height = new_char_height_vec.magnitude * math.sin(oblique)
+        new_char_height = new_char_height_vec.magnitude * math.sin(oblique)
+        dxf.char_height = new_char_height
+        if (
+            not math.isclose(old_char_height, new_char_height)
+            and abs(old_char_height) > 1e-12
+        ):
+            factor = new_char_height / old_char_height
+            # Column content is transformed by the sub-entities itself!
+            self.text = scale_mtext_inline_commands(self.text, factor)
 
         if dxf.hasattr("width"):
             width_vec = old_text_direction.normalize(dxf.width)
