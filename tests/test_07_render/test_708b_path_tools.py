@@ -790,9 +790,9 @@ class TestIsRectangular:
         assert is_rectangular(p, aligned=False) is True
 
 
-class TestBulgeGreaterOne:
+def test_polyline_with_bulge_value_greater_one():
     msp = VirtualLayout()
     pline = msp.add_lwpolyline([(0, 0, 0, 0, 2), (1, 0)])
-    p = make_path(pline, segments=9)
+    p = make_path(pline, segments=12)
 
-    assert len(p) == 3
+    assert len(p) == 4
