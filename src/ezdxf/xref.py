@@ -225,11 +225,20 @@ def define(doc: Drawing, block_name: str, filename: str, overlay=False) -> None:
     """
     if block_name in doc.blocks:
         raise XrefDefinitionError(f"block '{block_name}' already exist")
+    doc.blocks.new(
+        name=block_name,
+        dxfattribs={
+            "flags": make_xref_flags(overlay),
+            "xref_path": filename,
+        },
+    )
+
+
+def make_xref_flags(overlay: bool) -> int:
     if overlay:
-        flags = const.BLK_XREF_OVERLAY | const.BLK_EXTERNAL
+        return const.BLK_XREF_OVERLAY | const.BLK_EXTERNAL
     else:
-        flags = const.BLK_XREF | const.BLK_EXTERNAL
-    doc.blocks.new(name=block_name, dxfattribs={"flags": flags, "xref_path": filename})
+        return const.BLK_XREF | const.BLK_EXTERNAL
 
 
 def attach(
@@ -394,7 +403,9 @@ def embed(
         block.dxf.base_point = Vec3(origin)
 
 
-def detach(block: BlockLayout, *, xref_filename: str) -> Drawing:
+def detach(
+    block: BlockLayout, *, xref_filename: str | os.PathLike, overlay=False
+) -> Drawing:
     """Write the content of `block` into the modelspace of a new DXF document and
     convert `block` to an external reference (XREF).  The new DXF document has to be
     written by the caller: :code:`xref_doc.saveas(xref_filename)`.
@@ -404,14 +415,41 @@ def detach(block: BlockLayout, *, xref_filename: str) -> Drawing:
         xref_doc = xref.detach(my_block, "my_block.dwg")
         odafc.export_dwg(xref_doc, "my_block.dwg")
 
+    It's recommended to clean up the entity database of the host document afterwards::
+
+        doc.entitydb.purge()
+
     Args:
         block: block definition to detach
         xref_filename: name of the external referenced file
+        overlay: creates an XREF overlay if ``True`` and an XREF attachment otherwise
 
     .. versionadded:: 1.1
 
     """
-    raise NotImplementedError()
+    source_doc = block.doc
+    assert source_doc is not None, "valid DXF document required"
+    target_doc = ezdxf.new(dxfversion=source_doc.dxfversion, units=block.units)
+    loader = Loader(source_doc, target_doc, conflict_policy=ConflictPolicy.KEEP)
+    loader.load_block_layout_into(block, target_doc.modelspace())
+    loader.execute()
+    target_doc.header["$INSBASE"] = block.base_point
+    block_to_xref(block, xref_filename, overlay=overlay)
+    return target_doc
+
+
+def block_to_xref(
+    block: BlockLayout, xref_filename: str | os.PathLike, *, overlay=False
+) -> None:
+    """Convert a block definition into an external reference.
+
+    (internal API)
+    """
+    block.delete_all_entities()
+    block_entity = block.block
+    assert block_entity is not None, "invalid BlockLayout"
+    block_entity.dxf.xref_path = str(xref_filename)
+    block_entity.dxf.flags = make_xref_flags(overlay)
 
 
 def write_block(entities: Sequence[DXFEntity], *, origin: UVec = (0, 0, 0)) -> Drawing:

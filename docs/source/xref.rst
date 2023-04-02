@@ -23,8 +23,8 @@ DXF Files as Attached XREFs
 ---------------------------
 
 AutoCAD can only display DWG files as attached XREFs, which is a problem since `ezdxf`
-can only create DXF files. Consequently, any DXF file attached as XREF to a DXF
-document has be converted to DWG in order to be viewed in AutoCAD.
+can only create DXF files.  Consequently, any DXF file attached as an XREF to a DXF
+document must be converted to DWG in order to be viewed in AutoCAD.
 
 Fortunately, other CAD applications are more cooperative, so BricsCAD has no problem
 displaying DXF files as XREFs, although it is not possible to attach a DXF file as an
