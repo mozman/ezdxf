@@ -6,6 +6,7 @@ Version 1.0.4 - dev
 -------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
+- NEW: added setter to `BlockLayout.base_point` property
 - BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1
 - BUGFIX: [#855](https://github.com/mozman/ezdxf/issues/855)
   scale `MTEXT/MLEADER` inline commands "absolute text height" at transformation

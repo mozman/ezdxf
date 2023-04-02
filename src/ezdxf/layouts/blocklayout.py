@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, Optional
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, UVec
 from ezdxf.lldxf import const
 from .base import BaseLayout
 from ezdxf.entities import DXFGraphic, AttDef, Block, EndBlk
@@ -74,8 +74,12 @@ class BlockLayout(BaseLayout):
 
     @property
     def base_point(self) -> Vec3:
-        """Returns the base point of the block."""
+        """Get/Set the base point of the block."""
         return Vec3(self.block.dxf.base_point)  # type: ignore
+
+    @base_point.setter
+    def base_point(self, value: UVec) -> None:
+        self.block.dxf.base_point = Vec3(value)  # type: ignore
 
     def attdefs(self) -> Iterable[AttDef]:
         """Returns iterable of all :class:`~ezdxf.entities.attrib.Attdef`
