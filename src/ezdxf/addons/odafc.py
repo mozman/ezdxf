@@ -1,8 +1,8 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 # type: ignore
 from __future__ import annotations
-from typing import Optional, Union
+from typing import Optional
 import logging
 import os
 import platform
@@ -108,7 +108,7 @@ def map_version(version: str) -> str:
 
 
 def readfile(
-    filename: str, version: Optional[str] = None, *, audit: bool = False
+    filename: str | os.PathLike, version: Optional[str] = None, *, audit: bool = False
 ) -> Optional[Drawing]:
     """Uses an installed `ODA File Converter`_ to convert a DWG/DXB/DXF file
     into a temporary DXF file and load this file by `ezdxf`.
@@ -153,7 +153,7 @@ def readfile(
 
 def export_dwg(
     doc: Drawing,
-    filename: str,
+    filename: str | os.PathLike,
     version: Optional[str] = None,
     *,
     audit: bool = False,
@@ -211,14 +211,12 @@ def export_dwg(
             )
             _execute_odafc(arguments)
     else:
-        raise FileNotFoundError(
-            f"No such file or directory: '{str(out_folder)}'"
-        )
+        raise FileNotFoundError(f"No such file or directory: '{str(out_folder)}'")
 
 
 def convert(
-    source: Union[str, Path],
-    dest: Union[str, Path] = "",
+    source: str | os.PathLike,
+    dest: str | os.PathLike = "",
     *,
     version="R2018",
     audit=True,
@@ -273,9 +271,7 @@ def convert(
     parent_dir = dest_path.parent
     if not parent_dir.exists() or not parent_dir.is_dir():
         # Cannot copy result to destination folder!
-        raise FileNotFoundError(
-            f"Destination folder does not exist: '{parent_dir}'"
-        )
+        raise FileNotFoundError(f"Destination folder does not exist: '{parent_dir}'")
     ext = dest_path.suffix
     fmt = ext.upper()[1:]
     if fmt not in ("DXF", "DWG"):
@@ -412,9 +408,7 @@ def _linux_dummy_display():
         except OSError:
             pass
     else:
-        logger.warning(
-            f"Install xvfb to prevent the ODAFileConverter GUI from opening"
-        )
+        logger.warning(f"Install xvfb to prevent the ODAFileConverter GUI from opening")
         yield os.environ["DISPLAY"]
 
 
