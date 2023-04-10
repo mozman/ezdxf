@@ -7,20 +7,14 @@ import string
 from .deps import Vec2, NULLVEC2
 from .properties import RGB
 from .plotter import Plotter
-from .polygon_buffer import PolygonBuffer
 from .tokenizer import Command, pe_decode
 
 
 class Interpreter:
     def __init__(self, plotter: Plotter) -> None:
         self.errors: list[str] = []
-        self.unsupported_commands: set[str] = set()
-        # current plotter:
+        self.not_implemented_commands: set[str] = set()
         self.plotter = plotter
-        # real output plotter:
-        self.output_plotter = plotter
-        # fake plotter as polygon buffer:
-        self.polygon_buffer = PolygonBuffer(plotter)
         plotter.reset()
 
     def add_error(self, error: str) -> None:
@@ -32,30 +26,20 @@ class Interpreter:
             if method:
                 method(args)
             elif name[0] in string.ascii_letters:
-                self.unsupported_commands.add(name)
+                self.not_implemented_commands.add(name)
 
-    def enter_polygon_mode(self, status: int):
-        if status == 0:
-            self.polygon_buffer = PolygonBuffer(self.output_plotter)
-            # replace current plotter
-            self.plotter = self.polygon_buffer
-        elif status == 1:
-            self.polygon_buffer.close_polygon()
-        else:
-            self.add_error(f"invalid status {status} for command PM")
-
-    def exit_polygon_mode(self):
-        self.polygon_buffer.close_polygon()
-        # restore output plotter
-        self.plotter = self.output_plotter
-
-    def cmd_escape(self, _):
-        """Embedded PCL5 commands are ignored."""
-        pass
+    def cmd_escape(self, args: list[bytes]):
+        """Embedded PCL5 commands."""
+        if len(args):
+            self.plotter.execute_pcl5_command(args[0])
 
     def cmd_pg(self, _):
-        """Advance full page - not supported."""
-        pass
+        """Advance full page."""
+        self.plotter.advance_full_page()
+
+    def cmd_rp(self, _):
+        """Replot."""
+        self.plotter.replot()
 
     def cmd_wu(self, _):
         """Pen width unit selection - not supported."""
@@ -66,7 +50,7 @@ class Interpreter:
         pass
 
     def cmd_rf(self, _):
-        """define raster fill - not supported."""
+        """Define raster fill - not supported."""
         pass
 
     def cmd_tr(self, _):
@@ -75,9 +59,19 @@ class Interpreter:
         """
         pass
 
+    def cmd_ro(self, args: list[bytes]):
+        """Set rotation."""
+        angle: int = 0
+        if len(args):
+            angle = to_int(args[0], angle)
+        if angle in (0, 90, 180, 270):
+            self.plotter.rotate_coordinate_system(angle)
+        else:
+            self.add_error(f"invalid rotation angle {angle} for RO command")
+
     def cmd_in(self, _):
         """Initialize plotter."""
-        self.plotter.reset()
+        self.plotter.initialize()
 
     def cmd_df(self, _):
         """Reset to defaults."""
@@ -116,8 +110,6 @@ class Interpreter:
         else:
             self.add_error("invalid arguments for PC command")
 
-
-
     def cmd_pw(self, args: list[bytes]):
         """Set pen width."""
         arg_count = len(args)
@@ -140,6 +132,75 @@ class Interpreter:
         """Set number of pens."""
         if len(args):
             self.plotter.set_max_pen_count(to_int(args[0], 2))
+
+    def cmd_ip(self, args: list[bytes]):
+        """Set input points p1 and p2 absolute."""
+        if len(args) == 0:
+            self.plotter.reset_scaling()
+            return
+
+        points = to_points(to_floats(args))
+        if len(points) > 1:
+            self.plotter.set_scaling_points(points[0], points[1])
+        else:
+            self.add_error("invalid arguments for IP command")
+
+    def cmd_ir(self, args: list[bytes]):
+        """Set input points p1 and p2 in percentage of page size."""
+        if len(args) == 0:
+            self.plotter.reset_scaling()
+            return
+
+        values = list(to_floats(args))
+        if len(values) == 2:
+            xp1 = clamp(values[0], 0.0, 100.0)
+            yp1 = clamp(values[1], 0.0, 100.0)
+            self.plotter.set_scaling_points_relative_1(xp1 / 100.0, yp1 / 100.0)
+        elif len(values) == 4:
+            xp1 = clamp(values[0], 0.0, 100.0)
+            yp1 = clamp(values[1], 0.0, 100.0)
+            xp2 = clamp(values[2], 0.0, 100.0)
+            yp2 = clamp(values[3], 0.0, 100.0)
+            self.plotter.set_scaling_points_relative_2(
+                xp1 / 100.0, yp1 / 100.0, xp2 / 100.0, yp2 / 100.0
+            )
+        else:
+            self.add_error("invalid arguments for IP command")
+
+    def cmd_sc(self, args: list[bytes]):
+        if len(args) == 0:
+            self.plotter.reset_scaling()
+            return
+        values = list(to_floats(args))
+        if len(values) < 4:
+            self.add_error("invalid arguments for SC command")
+            return
+        scaling_type = 0
+        if len(values) > 4:
+            scaling_type = int(values[4])
+        if scaling_type == 1:  # isotropic
+            left = 50.0
+            if len(values) > 5:
+                left = clamp(values[5], 0.0, 100.0)
+            bottom = 50.0
+            if len(values) > 6:
+                bottom = clamp(values[6], 0.0, 100.0)
+            self.plotter.set_isotropic_scaling(
+                values[0],
+                values[1],
+                values[2],
+                values[3],
+                left,
+                bottom,
+            )
+        elif scaling_type == 2:  # point factor
+            self.plotter.set_point_factor(
+                Vec2(values[0], values[2]), values[1], values[3]
+            )
+        else:  # anisotropic
+            self.plotter.set_anisotropic_scaling(
+                values[0], values[1], values[2], values[3]
+            )
 
     # pen movement:
     def cmd_pd(self, args: list[bytes]):
@@ -169,15 +230,78 @@ class Interpreter:
     # plot commands:
     def cmd_ci(self, args: list[bytes]):
         """Plot full circle."""
-        if len(args):
-            self.plotter.push_pen_state()
-            # implicit pen down!
-            self.plotter.pen_down()
-            radius = to_float(args[0], 1.0)
-            self.plotter.plot_abs_circle(radius)
-            self.plotter.pop_pen_state()
-        else:
+        arg_count = len(args)
+        if not arg_count:
             self.add_error("invalid arguments for CI command")
+            return
+        self.plotter.push_pen_state()
+        # implicit pen down!
+        self.plotter.pen_down()
+        radius = to_float(args[0], 1.0)
+        chord_angle = 5.0
+        if arg_count > 1:
+            chord_angle = to_float(args[0], chord_angle)
+        self.plotter.plot_abs_circle(radius, chord_angle)
+        self.plotter.pop_pen_state()
+
+    def cmd_aa(self, args: list[bytes]):
+        """Plot arc absolute."""
+        if len(args) < 3:
+            self.add_error("invalid arguments for AR command")
+            return
+        self._arc_out(args, self.plotter.plot_abs_arc)
+
+    def cmd_ar(self, args: list[bytes]):
+        """Plot arc relative."""
+        if len(args) < 3:
+            self.add_error("invalid arguments for AR command")
+            return
+        self._arc_out(args, self.plotter.plot_rel_arc)
+
+    @staticmethod
+    def _arc_out(args: list[bytes], output_method):
+        """Plot arc"""
+        arg_count = len(args)
+        if arg_count < 3:
+            return
+        x = to_float(args[0])
+        y = to_float(args[1])
+        sweep_angle = to_float(args[2])
+        chord_angle = 5.0
+        if arg_count > 3:
+            chord_angle = to_float(args[3], chord_angle)
+        output_method(Vec2(x, y), sweep_angle, chord_angle)
+
+    def cmd_at(self, args: list[bytes]):
+        """Plot arc absolute from three points."""
+        if len(args) < 4:
+            self.add_error("invalid arguments for AT command")
+            return
+        self._arc_3p_out(args, self.plotter.plot_abs_arc_three_points)
+
+    def cmd_rt(self, args: list[bytes]):
+        """Plot arc relative from three points."""
+        if len(args) < 4:
+            self.add_error("invalid arguments for RT command")
+            return
+        self._arc_3p_out(args, self.plotter.plot_rel_arc_three_points)
+
+    @staticmethod
+    def _arc_3p_out(args: list[bytes], output_method):
+        """Plot arc from three points"""
+        arg_count = len(args)
+        if arg_count < 4:
+            return
+        points = to_points(to_floats(args))
+        if len(points) < 2:
+            return
+        chord_angle = 5.0
+        if arg_count > 4:
+            chord_angle = to_float(args[4], chord_angle)
+        try:
+            output_method(points[0], points[1], chord_angle)
+        except ZeroDivisionError:
+            pass
 
     def cmd_bz(self, args: list[bytes]):
         """Plot cubic Bezier curves with absolute user coordinates."""
@@ -270,27 +394,20 @@ class Interpreter:
         if len(args):
             status = to_int(args[0], status)
         if status == 2:
-            self.exit_polygon_mode()
+            self.plotter.exit_polygon_mode()
         else:
-            self.enter_polygon_mode(status)
+            self.plotter.enter_polygon_mode(status)
 
     def cmd_fp(self, args: list[bytes]) -> None:
         """Plot filled polygon."""
         fill_method = 0
         if len(args):
             fill_method = to_int(args[0], fill_method)
-
-        paths = self.polygon_buffer.get_paths(fill_method)
-        location = self.polygon_buffer.user_location
-        self.plotter.plot_filled_polygon(paths, fill_method)
-        self.plotter.move_to_abs(location)
+        self.plotter.fill_polygon(fill_method)
 
     def cmd_ep(self, _) -> None:
         """Plot edged polygon."""
-        paths = self.polygon_buffer.get_paths(0)
-        location = self.polygon_buffer.user_location
-        self.plotter.plot_outline_polygon(paths)
-        self.plotter.move_to_abs(location)
+        self.plotter.edge_polygon()
 
 
 def to_floats(args: Iterable[bytes]) -> Iterator[float]:
@@ -335,3 +452,7 @@ def to_int(s: bytes, default=0) -> int:
         return int(s)
     except ValueError:
         return default
+
+
+def clamp(v, v_min, v_max):
+    return max(min(v_max, v), v_min)

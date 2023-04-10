@@ -8,18 +8,11 @@
 from __future__ import annotations
 from typing import Sequence
 import math
-import enum
 from .deps import Vec2, PAGE_SIZES, NULLVEC2
 
 INCH_TO_PLU = 1016
 MM_TO_PLU = 40
 
-
-class PageRotation(enum.IntEnum):
-    RO_0 = 0
-    RO_90 = 90
-    RO_180 = 180
-    RO_270 = 270
 
 
 class Page:
@@ -33,21 +26,81 @@ class Page:
         self.user_scale_x: float = 1.0
         self.user_scale_y: float = 1.0
         self.user_origin = NULLVEC2  # plu
-        self.page_rotation = PageRotation.RO_0
 
     def set_scaling_points(self, p1: Vec2, p2: Vec2) -> None:
-        self.p1 = p1
-        self.p2 = p2
+        self.reset_scaling()
+        self.p1 = Vec2(p1)
+        self.p2 = Vec2(p2)
 
-    def set_scale(
-        self, x1: float, x2: float, y1: float, y2: float, isotropic=True
+    def set_scaling_points_relative_1(self, xp1: float, yp1: float) -> None:
+        size = self.p2 - self.p1
+        p1 = Vec2(self.size_x * xp1, self.size_y * yp1)
+        self.set_scaling_points(p1, p1 + size)
+
+    def set_scaling_points_relative_2(
+        self, xp1: float, yp1: float, xp2: float, yp2: float
     ) -> None:
-        pass
+        p1 = Vec2(self.size_x * xp1, self.size_y * yp1)
+        p2 = Vec2(self.size_x * xp2, self.size_y * yp2)
+        self.set_scaling_points(p1, p2)
+
+    def reset_scaling(self) -> None:
+        self.p1 = NULLVEC2
+        self.p2 = Vec2(self.size_x, self.size_y)
+        self.set_ucs(NULLVEC2)
+
+    def set_isotropic_scaling(
+        self,
+        x_min: float,
+        x_max: float,
+        y_min: float,
+        y_max: float,
+        left=0.5,
+        bottom=0.5,
+    ) -> None:
+        size = self.p2 - self.p1
+        delta_x = x_max - x_min
+        delta_y = y_max - y_min
+        scale_x = 1.0
+        if abs(delta_x) > 1e-9:
+            scale_x = size.x / delta_x
+        scale_y = 1.0
+        if abs(delta_y) > 1e-9:
+            scale_y = size.y / delta_y
+
+        scale = min(abs(scale_x), abs(scale_y))
+        scale_x = math.copysign(scale, scale_x)
+        scale_y = math.copysign(scale, scale_y)
+        offset_x = (size.x - delta_x * scale_x) * left
+        offset_y = (size.y - delta_y * scale_y) * bottom
+        origin_x = self.p1.x + offset_x - x_min * scale_x
+        origin_y = self.p1.y + offset_y - y_min * scale_y
+        self.set_ucs(Vec2(origin_x, origin_y), scale_x, scale_y)
+
+    def set_anisotropic_scaling(
+        self, x_min: float, x_max: float, y_min: float, y_max: float
+    ) -> None:
+        size = self.p2 - self.p1
+        delta_x = x_max - x_min
+        delta_y = y_max - y_min
+        scale_x = 1.0
+        if abs(delta_x) > 1e-9:
+            scale_x = size.x / delta_x
+        scale_y = 1.0
+        if abs(delta_y) > 1e-9:
+            scale_y = size.y / delta_y
+        origin_x = self.p1.x - x_min * scale_x
+        origin_y = self.p1.y - y_min * scale_y
+        self.set_ucs(Vec2(origin_x, origin_y), scale_x, scale_y)
 
     def set_ucs(self, origin: Vec2, sx: float = 1.0, sy: float = 1.0):
         self.user_origin = Vec2(origin)
         self.user_scale_x = float(sx)
         self.user_scale_y = float(sy)
+        if abs(self.user_scale_x) < 1e-6:
+            self.user_scale_x = 1.0
+        if abs(self.user_scale_y) < 1e-6:
+            self.user_scale_y = 1.0
         if math.isclose(self.user_scale_x, 1.0) and math.isclose(
             self.user_scale_y, 1.0
         ):
@@ -56,6 +109,7 @@ class Page:
             self.user_scaling = True
 
     def set_rotation(self, angle: int) -> None:
+        """Page rotation is not supported."""
         pass
 
     def page_point(self, x: float, y: float) -> Vec2:

@@ -1,60 +1,113 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Sequence, Optional
+import enum
 
 from ezdxf.gfxattribs import GfxAttribs
-from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS
+from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS, BYLAYER
 from ezdxf.entities import Hatch
 import ezdxf.path
 
 from .deps import Vec2, Path
-from .properties import RGB, Properties
+from .properties import Properties, RGB_NONE, RGB
 from .backend import Backend
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GenericLayoutType
 
 
+class ColorMode(enum.Enum):
+    # Use color index as primary color, ignores RGB color except for solid fill
+    ACI = enum.auto()
+
+    # Use always the RGB value
+    RGB = enum.auto()
+
+
+BLACK_RGB = RGB(0, 0, 0)
+WHITE_RGB = RGB(255, 255, 255)
+
+
 class DXFBackend(Backend):
-    def __init__(self, layout: GenericLayoutType) -> None:
+    def __init__(
+        self,
+        layout: GenericLayoutType,
+        color_mode=ColorMode.RGB,
+        map_black_rgb_to_white_rgb=False,
+    ) -> None:
         super().__init__()
         self.layout = layout
 
-    def draw_cubic_bezier(
-        self, properties: Properties, start: Vec2, ctrl1: Vec2, ctrl2: Vec2, end: Vec2
-    ) -> None:
-        pass
+        doc = layout.doc
+        if doc is not None:
+            self.layers = doc.layers
+        else:
+            self.layers = None
+        self.color_mode = color_mode
 
-    def draw_circle(
-        self, properties: Properties, center: Vec2, rx: float, ry: float
-    ) -> None:
-        pass
+        # map black RGB to white RGB, does not affect ACI colors:
+        self.map_black_rgb_to_white_rgb = map_black_rgb_to_white_rgb
 
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
-        if len(points) == 0:
+        count = len(points)
+        if count == 0:
             return
-
         attribs = self.make_dxf_attribs(properties)
-        if len(points) > 2:
+        if count > 2:
             self.layout.add_lwpolyline(points, dxfattribs=attribs)
-        elif len(points) == 2:
+        elif count == 2:
             self.layout.add_line(points[0], points[1], dxfattribs=attribs)
         else:
             self.layout.add_point(points[0], dxfattribs=attribs)
+
+    def draw_filled_polygon_buffer(
+        self, properties: Properties, paths: Sequence[Path], fill_method: int
+    ) -> None:
+        attribs = self.make_dxf_attribs(properties)
+        # max sagitta distance of 10 plu = 0.25 mm
+        hatches = ezdxf.path.render_hatches(
+            self.layout, paths, edge_path=False, dxfattribs=attribs, distance=10
+        )
+        for hatch in hatches:
+            assert isinstance(hatch, Hatch)
+            rgb: Optional[RGB] = properties.pen_color
+            if self.map_black_rgb_to_white_rgb and rgb == BLACK_RGB:
+                rgb = WHITE_RGB
+            if rgb is RGB_NONE:
+                rgb = None
+            hatch.set_solid_fill(color=attribs.color, style=0, rgb=rgb)
+
+    def draw_outline_polygon_buffer(
+        self, properties: Properties, paths: Sequence[Path]
+    ) -> None:
+        attribs = self.make_dxf_attribs(properties)
+        # max sagitta distance of 10 plu = 0.25 mm
+        for lwpolyline in ezdxf.path.to_lwpolylines(
+            paths, distance=10, dxfattribs=attribs
+        ):
+            self.layout.add_entity(lwpolyline)
 
     def make_dxf_attribs(self, properties: Properties):
         aci = properties.pen_index
         if aci < 1 or aci > 255:
             aci = 7
+
+        layer = f"COLOR_{aci}"
+        if self.layers and not self.layers.has_entry(layer):
+            self.layers.add(name=layer, color=aci)
+
         attribs = GfxAttribs(
-            color=aci,
+            color=BYLAYER,
             lineweight=self.make_lineweight(properties.pen_width),
-            layer=f"COLOR_{aci}",
+            layer=layer,
         )
-        color = properties.pen_color
-        if color != RGB(0, 0, 0):
-            attribs.rgb = color
+        if self.color_mode == ColorMode.RGB:
+            color = properties.pen_color
+            if color is not RGB_NONE:
+                if self.map_black_rgb_to_white_rgb and color == BLACK_RGB:
+                    color = WHITE_RGB
+                attribs.rgb = color
         return attribs
 
     @staticmethod
@@ -64,20 +117,3 @@ class DXFBackend(Backend):
             if width_int <= lw:
                 return lw
         return VALID_DXF_LINEWEIGHTS[-1]
-
-    def draw_filled_polygon(
-        self, properties: Properties, paths: Sequence[Path], fill_method: int
-    ) -> None:
-        # path in page coordinates!
-        attribs = self.make_dxf_attribs(properties)
-        hatches = ezdxf.path.render_hatches(self.layout, paths, dxfattribs=attribs)
-        for hatch in hatches:
-            assert isinstance(hatch, Hatch)
-            hatch.set_solid_fill(color=attribs.color, style=0, rgb=attribs.rgb)
-
-    def draw_outline_polygon(
-        self, properties: Properties, paths: Sequence[Path]
-    ) -> None:
-        # path in page coordinates!
-        attribs = self.make_dxf_attribs(properties)
-        ezdxf.path.render_splines_and_polylines(self.layout, paths, dxfattribs=attribs)

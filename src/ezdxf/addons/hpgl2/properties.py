@@ -21,6 +21,9 @@ class RGB(NamedTuple):
     b: int
 
 
+RGB_NONE = RGB(-1, -1, -1)
+
+
 @dataclasses.dataclass
 class Pen:
     index: int
@@ -34,7 +37,7 @@ class Properties:
     def __init__(self) -> None:
         self.max_pen_count: int = 2
         self.pen_index: int = 1
-        self.pen_color = RGB(0, 0, 0)
+        self.pen_color = RGB_NONE
         self.pen_width: float = 0.35
         self.pen_table: dict[int, Pen] = {}
         self.fill_type = FillType.SOLID

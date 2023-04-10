@@ -6,7 +6,7 @@ from ezdxf.addons.hpgl2 import api
 from ezdxf.addons.hpgl2.properties import RGB, FillType
 from ezdxf.addons.hpgl2.backend import Backend
 from ezdxf.addons.hpgl2.deps import Vec2
-
+from ezdxf.addons.hpgl2.page import Page
 
 def test_parse_hpgl_commands():
     s = b"%-1BBP;IN;DF;LA1,4,2,6;FT1;PS38812,33987;IP0,0,38812,33987;PU;PA0,0;PUSP0PG;"
@@ -21,16 +21,13 @@ class MyBackend(Backend):
     def draw_cubic_bezier(self, properties, start, ctrl1, ctrl2, end) -> None:
         self.result.append(["Bezier", start, ctrl1, ctrl2, end])
 
-    def draw_circle(self, properties, center, rx, ry) -> None:
-        self.result.append(["Circle", center, rx, ry])
-
     def draw_polyline(self, properties, points) -> None:
         self.result.append(["Polyline", points])
 
-    def draw_filled_polygon(self, properties, paths, fill_method: int) -> None:
+    def draw_filled_polygon_buffer(self, properties, paths, fill_method: int) -> None:
         self.result.append(["FilledPolygon", paths, fill_method])
 
-    def draw_outline_polygon(self, properties, paths) -> None:
+    def draw_outline_polygon_buffer(self, properties, paths) -> None:
         self.result.append(["OutlinePolygon", paths])
 
 
@@ -129,11 +126,50 @@ class TestRenderEngine:
     def test_circle(self):
         ip = plot(b"PU;PA2000,8000;PD;CI500;")
         command = get_result(ip.plotter)[0]
-        assert command[0] == "Circle"
-        assert command[1] == Vec2(2000, 8000)
-        assert command[2] == 500  # radius x
-        assert command[3] == 500  # radius y
+        assert command[0] == "Polyline"
+        assert len(command[1]) == 73  # default chord_angle is 5 deg
         assert ip.plotter.user_location == Vec2(2000, 8000)
+
+    def test_abs_arc(self):
+        ip = plot(b"PU100,100;PD;AA200,100,-180;")
+        command = get_result(ip.plotter)[0]
+        assert command[0] == "Polyline"
+        assert len(command[1]) == 37  # default chord_angle is 5 deg
+        assert ip.plotter.user_location.isclose((300, 100))
+
+    def test_rel_arc(self):
+        ip = plot(b"PU100,100;PD;AR100,0,-180;")
+        command = get_result(ip.plotter)[0]
+        assert command[0] == "Polyline"
+        assert len(command[1]) == 37  # default chord_angle is 5 deg
+        assert ip.plotter.user_location.isclose((300, 100))
+
+    def test_abs_arc_three_points_clockwise(self):
+        ip = plot(b"PU100,100;PD;AT200,200,300,100;")
+        command = get_result(ip.plotter)[0]
+        assert command[0] == "Polyline"
+        points = command[1]
+        assert len(points) == 37  # default chord_angle is 5 deg
+        assert points[18].isclose((200, 200))
+        assert ip.plotter.user_location.isclose((300, 100))
+
+    def test_abs_arc_three_points_counter_clockwise(self):
+        ip = plot(b"PU100,100;PD;AT200,0,300,100;")
+        command = get_result(ip.plotter)[0]
+        assert command[0] == "Polyline"
+        points = command[1]
+        assert len(points) == 37  # default chord_angle is 5 deg
+        assert points[18].isclose((200, 0))
+        assert ip.plotter.user_location.isclose((300, 100))
+
+    def test_rel_arc_three_points_clockwise(self):
+        ip = plot(b"PU100,100;PD;RT100,100,200,0;")
+        command = get_result(ip.plotter)[0]
+        assert command[0] == "Polyline"
+        points = command[1]
+        assert len(points) == 37  # default chord_angle is 5 deg
+        assert points[18].isclose((200, 200))
+        assert ip.plotter.user_location.isclose((300, 100))
 
     def test_polyline_encoded(self):
         ip = plot(b"PE7=U^xGIh;")
@@ -203,8 +239,6 @@ class TestTokenizer:
 class TestPageCoordinates:
     @pytest.fixture(scope="class")
     def page(self):
-        from ezdxf.addons.hpgl2.page import Page
-
         page_ = Page(1000, 1000)
         page_.set_ucs(Vec2(500, 500), sx=2, sy=3)
         return page_
@@ -216,6 +250,107 @@ class TestPageCoordinates:
     def test_user_vector_to_page_vector(self, page):
         assert page.page_vector(0, 0).isclose((0, 0))
         assert page.page_vector(10, 10).isclose((20, 30))
+
+class TestPageAnisotropicScaling:
+    def test_isotropic_scaling(self):
+        page = Page(1000, 1000)
+        page.set_scaling_points(Vec2(100, 100), Vec2(200, 200))
+        page.set_anisotropic_scaling(-10, 10, -10, 10)
+        assert page.user_scaling is True
+        assert page.page_point(0, 0).isclose((150, 150))
+        assert page.page_point(-10, -10).isclose((100, 100))
+        assert page.page_point(10, 10).isclose((200, 200))
+
+    def test_anisotropic_scaling(self):
+        page = Page(1000, 1000)
+        page.set_scaling_points(Vec2(100, 100), Vec2(200, 200))
+        page.set_anisotropic_scaling(-10, 10, -20, 20)
+        assert page.user_scaling is True
+        assert page.page_point(0, 0).isclose((150, 150))
+        assert page.page_point(-10, -20).isclose((100, 100))
+        assert page.page_point(10, 20).isclose((200, 200))
+
+    def test_reverse_anisotropic_scaling(self):
+        page = Page(1000, 1000)
+        page.set_scaling_points(Vec2(100, 100), Vec2(200, 200))
+        # reverse x and y axis:
+        page.set_anisotropic_scaling(10, -10, 20, -20)
+        assert page.user_scaling is True
+        assert page.page_point(0, 0).isclose((150, 150))
+        assert page.page_point(10, 20).isclose((100, 100))
+        assert page.page_point(-10, -20).isclose((200, 200))
+
+class TestPageIsotropicScaling:
+    def test_isotropic_bottom_window_50(self):
+        page = Page(1000, 1000)
+        page.set_scaling_points(Vec2(100, 100), Vec2(200, 200))
+        page.set_isotropic_scaling(0, 20, 0, 10)
+        assert page.user_scaling is True
+        assert page.page_point(0, 0).isclose((100, 125))
+        assert page.page_point(10, 5).isclose((150, 150))
+        assert page.page_point(20, 10).isclose((200, 175))
+
+    def test_isotropic_bottom_window_0(self):
+        page = Page(1000, 1000)
+        page.set_scaling_points(Vec2(100, 100), Vec2(200, 200))
+        page.set_isotropic_scaling(0, 20, 0, 10, 0, 0)
+        assert page.page_point(0, 0).isclose((100, 100))
+        assert page.page_point(10, 5).isclose((150, 125))
+        assert page.page_point(20, 10).isclose((200, 150))
+
+    def test_isotropic_bottom_window_100(self):
+        page = Page(1000, 1000)
+        page.set_scaling_points(Vec2(100, 100), Vec2(200, 200))
+        page.set_isotropic_scaling(0, 20, 0, 10, 1, 1)
+        assert page.page_point(0, 0).isclose((100, 150))
+        assert page.page_point(10, 5).isclose((150, 175))
+        assert page.page_point(20, 10).isclose((200, 200))
+
+    def test_isotropic_left_window_50(self):
+        page = Page(1000, 1000)
+        page.set_scaling_points(Vec2(100, 100), Vec2(200, 200))
+        page.set_isotropic_scaling(0, 10, 0, 20)
+        assert page.page_point(0, 0).isclose((125, 100))
+        assert page.page_point(5, 10).isclose((150, 150))
+        assert page.page_point(10, 20).isclose((175, 200))
+
+    def test_isotropic_left_window_0(self):
+        page = Page(1000, 1000)
+        page.set_scaling_points(Vec2(100, 100), Vec2(200, 200))
+        page.set_isotropic_scaling(0, 10, 0, 20, 0, 0)
+        assert page.page_point(0, 0).isclose((100, 100))
+        assert page.page_point(5, 10).isclose((125, 150))
+        assert page.page_point(10, 20).isclose((150, 200))
+
+    def test_isotropic_left_window_100(self):
+        page = Page(1000, 1000)
+        page.set_scaling_points(Vec2(100, 100), Vec2(200, 200))
+        page.set_isotropic_scaling(0, 10, 0, 20, 1, 1)
+        assert page.page_point(0, 0).isclose((150, 100))
+        assert page.page_point(5, 10).isclose((175, 150))
+        assert page.page_point(10, 20).isclose((200, 200))
+
+def test_arc_angles():
+    from ezdxf.addons.hpgl2.plotter import arc_angles
+
+    angles = list(arc_angles(0, 360, 5))
+    assert len(angles) == 73
+    assert angles[-1] == pytest.approx(360)
+
+    angles = list(arc_angles(0, -360, 5))
+    assert len(angles) == 73
+    assert angles[-1] == pytest.approx(-360)
+
+
+def test_sweeping_angle():
+    from ezdxf.addons.hpgl2.plotter import sweeping_angle
+
+    assert sweeping_angle(0, 45, 90) == 90
+    assert sweeping_angle(90, 45, 0) == -90
+    assert sweeping_angle(330, 0, 30) == 60
+    assert sweeping_angle(330, 180, 30) == -300
+    assert sweeping_angle(30, 0, 330) == -60
+    assert sweeping_angle(30, 180, 330) == 300
 
 
 if __name__ == "__main__":
