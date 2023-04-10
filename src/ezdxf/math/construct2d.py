@@ -1,7 +1,7 @@
-# Copyright (c) 2011-2022, Manfred Moitzi
+# Copyright (c) 2011-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Iterator
 
 from functools import partial
 import math
@@ -45,7 +45,7 @@ __all__ = [
 
 def linspace(
     start: float, stop: float, num: int, endpoint=True
-) -> Iterable[float]:
+) -> Iterator[float]:
     """Return evenly spaced numbers over a specified interval, like
     numpy.linspace().
 
@@ -98,7 +98,7 @@ def ellipse_param_span(start_param: float, end_param: float) -> float:
     return arc_angle_span_rad(float(start_param), float(end_param))
 
 
-def closest_point(base: UVec, points: Iterable[UVec]) -> "Vec3":
+def closest_point(base: UVec, points: Iterable[UVec]) -> Vec3:
     """Returns the closest point to a give `base` point.
 
     Args:
