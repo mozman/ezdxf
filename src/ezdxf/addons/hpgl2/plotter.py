@@ -4,7 +4,15 @@ from __future__ import annotations
 from typing import Sequence, Iterator, Iterable
 import math
 
-from .deps import Vec2, Path, NULLVEC2, ConstructionCircle, BoundingBox2d, path_bbox
+from .deps import (
+    Vec2,
+    Path,
+    NULLVEC2,
+    ConstructionCircle,
+    BoundingBox2d,
+    path_bbox,
+    Bezier4P,
+)
 from .properties import RGB, Properties
 from .backend import Backend
 from .polygon_buffer import PolygonBuffer
@@ -57,7 +65,6 @@ class Plotter:
 
     def setup_page(self, size_x: int, size_y: int):
         self.page = Page(size_x, size_y)
-        self.properties.set_page_size(size_x, size_y)
 
     def set_scaling_points(self, p1: Vec2, p2: Vec2) -> None:
         self.page.set_scaling_points(p1, p2)
@@ -272,8 +279,10 @@ class Plotter:
             ctrl1, ctrl2, end = self.page.page_points((ctrl1, ctrl2, end))
             # draw cubic bezier curve in absolute page coordinates:
             self.update_bbox((ctrl1, ctrl2, end))
-            self.backend.draw_cubic_bezier(
-                self.properties, current_page_location, ctrl1, ctrl2, end
+            curve = Bezier4P([current_page_location, ctrl1, ctrl2, end])
+            # distance of 10 plu is 0.25 mm
+            self.backend.draw_polyline(
+                self.properties, list(curve.flattening(distance=10))
             )
 
     def plot_rel_cubic_bezier(self, ctrl1: Vec2, ctrl2: Vec2, end: Vec2):

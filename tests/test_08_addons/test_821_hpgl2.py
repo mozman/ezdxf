@@ -10,16 +10,13 @@ from ezdxf.addons.hpgl2.page import Page
 
 def test_parse_hpgl_commands():
     s = b"%-1BBP;IN;DF;LA1,4,2,6;FT1;PS38812,33987;IP0,0,38812,33987;PU;PA0,0;PUSP0PG;"
-    commands = api.parse(s)
+    commands = api.hpgl2_commands(s)
     assert len(commands) == 12
 
 
 class MyBackend(Backend):
     def __init__(self):
         self.result = []
-
-    def draw_cubic_bezier(self, properties, start, ctrl1, ctrl2, end) -> None:
-        self.result.append(["Bezier", start, ctrl1, ctrl2, end])
 
     def draw_polyline(self, properties, points) -> None:
         self.result.append(["Polyline", points])
@@ -32,7 +29,7 @@ class MyBackend(Backend):
 
 
 def plot(s: bytes):
-    commands = api.parse(s)
+    commands = api.hpgl2_commands(s)
     backend = MyBackend()
     api.Plotter(backend)
     plotter = api.Plotter(backend)
@@ -111,11 +108,10 @@ class TestRenderEngine:
     def test_cubic_bezier_curve_pen_down(self):
         ip = plot(b"PD;BZ2000,8000,4000,2000,5000,5000;")
         command = get_result(ip.plotter)[0]
-        assert command[0] == "Bezier"
-        assert command[1] == Vec2(0, 0)
-        assert command[2] == Vec2(2000, 8000)
-        assert command[3] == Vec2(4000, 2000)
-        assert command[4] == Vec2(5000, 5000)
+        points = command[1]
+        assert command[0] == "Polyline"
+        assert points[0] == Vec2(0, 0)
+        assert points[-1] == Vec2(5000, 5000)
         assert ip.plotter.user_location == Vec2(5000, 5000)
 
     def test_cubic_bezier_curve_pen_up(self):
@@ -179,7 +175,7 @@ class TestRenderEngine:
 
 class TestTokenizer:
     def parse(self, s: bytes):
-        return api.parse(s)
+        return api.hpgl2_commands(s)
 
     @pytest.mark.parametrize(
         "s",

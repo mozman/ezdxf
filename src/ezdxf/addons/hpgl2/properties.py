@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import NamedTuple
 import dataclasses
 import enum
+import copy
 from .deps import NULLVEC2
 
 
@@ -32,49 +33,61 @@ class Pen:
 
 
 class Properties:
-    DEFAULT_PEN = Pen(1, 0.35, RGB(0, 0, 0))
+    DEFAULT_PEN = Pen(1, 0.35, RGB_NONE)
 
     def __init__(self) -> None:
-        self.max_pen_count: int = 2
+        # hashed content
         self.pen_index: int = 1
         self.pen_color = RGB_NONE
         self.pen_width: float = 0.35
-        self.pen_table: dict[int, Pen] = {}
         self.fill_type = FillType.SOLID
         self.fill_hatch_line_angle: float = 0.0  # in degrees
         self.fill_hatch_line_spacing: float = 40.0  # in plotter units
         self.fill_shading_density: float = 100.0
-        self.page_width: int = 0  # in plotter units
-        self.page_height: int = 0  # in plotter units
         self.clipping_window = (NULLVEC2, NULLVEC2)  # in plotter units
+        # not hashed content
+        self.max_pen_count: int = 2
+        self.pen_table: dict[int, Pen] = {}
         self.reset()
 
-    def has_clipping_window(self) -> bool:
-        return self.clipping_window[0] is not self.clipping_window[1]
+    def hash(self) -> int:
+        return hash(
+            (
+                self.pen_index,
+                self.pen_color,
+                self.pen_width,
+                self.fill_type,
+                self.fill_hatch_line_angle,
+                self.fill_hatch_line_spacing,
+                self.fill_shading_density,
+                self.clipping_window,
+            )
+        )
+
+    def copy(self) -> Properties:
+        # the pen table is shared across all copies of Properties
+        return copy.copy(self)
 
     def reset(self) -> None:
         self.max_pen_count = 2
-        self.pen_index = 1
-        self.pen_color = RGB(0, 0, 0)
-        self.pen_width = 0.35  # in mm
+        self.pen_index = self.DEFAULT_PEN.index
+        self.pen_color = self.DEFAULT_PEN.color
+        self.pen_width = self.DEFAULT_PEN.width
         self.pen_table = {}
         self.fill_type = FillType.SOLID
         self.fill_hatch_line_angle = 0.0
         self.fill_hatch_line_spacing = 40.0
         self.fill_shading_density = 1.0
         self.reset_clipping_window()
-        # do not reset the page size
+
+    def has_clipping_window(self) -> bool:
+        return self.clipping_window[0] is not self.clipping_window[1]
 
     def reset_clipping_window(self) -> None:
         self.clipping_window = (NULLVEC2, NULLVEC2)
 
     def get_pen(self, index: int) -> Pen:
         return self.pen_table.get(index, self.DEFAULT_PEN)
-
-    def set_page_size(self, width: int, height: int) -> None:
-        # in plotter units
-        self.page_width = int(width)
-        self.page_height = int(height)
 
     def set_max_pen_count(self, count: int) -> None:
         self.max_pen_count = count

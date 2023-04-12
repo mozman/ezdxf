@@ -5,16 +5,16 @@ import ezdxf
 from ezdxf.document import Drawing
 from ezdxf import zoom, transform
 from ezdxf.math import Matrix44
-from .tokenizer import parse
+from .tokenizer import hpgl2_commands
 from .plotter import Plotter
 from .interpreter import Interpreter
-from .backend import BoundingBoxDetector
+from .backend import Recorder
 from .dxf_backend import DXFBackend, ColorMode
 from .svg_backend import SVGBackend
 from .compiler import build
 
 
-def plot_to_dxf(
+def to_dxf(
     b: bytes,
     scale: float = 1.0,
     *,
@@ -23,7 +23,6 @@ def plot_to_dxf(
 ) -> Drawing:
     doc = ezdxf.new()
     msp = doc.modelspace()
-    commands = parse(b)
     plotter = Plotter(
         DXFBackend(
             msp,
@@ -31,12 +30,7 @@ def plot_to_dxf(
             map_black_rgb_to_white_rgb=map_black_rgb_to_white_rgb,
         )
     )
-    interpreter = Interpreter(plotter)
-    interpreter.run(commands)
-    if interpreter.not_implemented_commands:
-        print(
-            f"not implemented commands: {sorted(interpreter.not_implemented_commands)}"
-        )
+    Interpreter(plotter).run(hpgl2_commands(b))
     if plotter.bbox.has_data:  # non-empty page
         _scale_and_zoom(msp, scale, plotter.bbox)
     return doc
@@ -53,24 +47,15 @@ def _scale_and_zoom(layout, scale, bbox):
     zoom.window(layout, extmin, extmax)
 
 
-PROLOG = (
-    '<?xml version="1.0" encoding="UTF-8"?>\n'
-    '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
-)
-
-
-def plot_to_svg(b: bytes) -> str:
-    # 1st pass detect extents
-    detector = BoundingBoxDetector()
-    plotter = Plotter(detector)
-    commands = parse(b)
-    interpreter = Interpreter(plotter)
-    interpreter.run(commands)
-    if not detector.bbox.has_data:
+def to_svg(b: bytes) -> str:
+    # 1st pass records the plotting commands and detects the bounding box
+    recorder = Recorder()
+    plotter = Plotter(recorder)
+    Interpreter(plotter).run(hpgl2_commands(b))
+    if not plotter.bbox.has_data:
         return ""
-    # 2nd pass plot SVG
-    svg_backend = SVGBackend(detector.bbox)
-    plotter = Plotter(svg_backend)
-    interpreter = Interpreter(plotter)
-    interpreter.run(commands)
-    return PROLOG + svg_backend.get_string()
+
+    # 2nd pass replays the plotting commands to plot the SVG
+    svg_backend = SVGBackend(plotter.bbox)
+    recorder.replay(svg_backend)
+    return svg_backend.get_string()

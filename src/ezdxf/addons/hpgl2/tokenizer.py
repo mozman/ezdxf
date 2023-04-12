@@ -17,7 +17,7 @@ CHAR_P = ord("P")
 CHAR_E = ord("E")
 
 
-def parse(s: bytes) -> list[Command]:
+def hpgl2_commands(s: bytes) -> list[Command]:
     def is_letter(c):
         return CHAR_A <= c <= CHAR_Z
 
