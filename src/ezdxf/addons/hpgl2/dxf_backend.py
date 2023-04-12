@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence, Optional
 import enum
 
+from functools import lru_cache
 from ezdxf.gfxattribs import GfxAttribs
 from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS, BYLAYER
 from ezdxf.entities import Hatch
@@ -99,7 +100,7 @@ class DXFBackend(Backend):
 
         attribs = GfxAttribs(
             color=BYLAYER,
-            lineweight=self.make_lineweight(properties.pen_width),
+            lineweight=make_lineweight(properties.pen_width),
             layer=layer,
         )
         if self.color_mode == ColorMode.RGB:
@@ -110,10 +111,11 @@ class DXFBackend(Backend):
                 attribs.rgb = color
         return attribs
 
-    @staticmethod
-    def make_lineweight(width: float) -> int:
-        width_int = int(width * 100)
-        for lw in VALID_DXF_LINEWEIGHTS:
-            if width_int <= lw:
-                return lw
-        return VALID_DXF_LINEWEIGHTS[-1]
+
+@lru_cache(maxsize=None)
+def make_lineweight(width: float) -> int:
+    width_int = int(width * 100)
+    for lw in VALID_DXF_LINEWEIGHTS:
+        if width_int <= lw:
+            return lw
+    return VALID_DXF_LINEWEIGHTS[-1]
