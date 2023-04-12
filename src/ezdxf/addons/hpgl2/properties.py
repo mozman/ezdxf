@@ -56,7 +56,7 @@ class Properties:
         self.max_pen_count = 2
         self.pen_index = 1
         self.pen_color = RGB(0, 0, 0)
-        self.pen_width = 0.35
+        self.pen_width = 0.35  # in mm
         self.pen_table = {}
         self.fill_type = FillType.SOLID
         self.fill_hatch_line_angle = 0.0

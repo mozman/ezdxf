@@ -6,7 +6,7 @@
 # implemented or extracted too. The dependencies of the implemented backends are not
 # listed here.
 
-from ezdxf.math import Vec2, ConstructionCircle, BoundingBox2d, Bezier4P
+from ezdxf.math import Vec2, ConstructionCircle, BoundingBox2d, Bezier4P, AnyVec
 from ezdxf.path import Path, bbox as path_bbox
 from ezdxf.tools.standards import PAGE_SIZES
 

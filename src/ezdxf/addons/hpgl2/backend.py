@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import Sequence
 import abc
-from .deps import Vec2, Path, Bezier4P
+from .deps import Vec2, Path, Bezier4P, BoundingBox2d
 from .properties import Properties
 
 # Page coordinates are always plot units:
@@ -14,6 +14,7 @@ from .properties import Properties
 # positive x-axis is horizontal from left to right
 # positive y-axis is vertical from bottom to top
 
+
 class Backend(abc.ABC):
     def draw_cubic_bezier(
         self, properties: Properties, start: Vec2, ctrl1: Vec2, ctrl2: Vec2, end: Vec2
@@ -22,7 +23,6 @@ class Backend(abc.ABC):
         curve = Bezier4P([start, ctrl1, ctrl2, end])
         # 10 plu = 0.25 mm
         self.draw_polyline(properties, list(curve.flattening(distance=10)))
-
 
     @abc.abstractmethod
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
@@ -39,6 +39,32 @@ class Backend(abc.ABC):
 
     @abc.abstractmethod
     def draw_outline_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path]) -> None:
+        self, properties: Properties, paths: Sequence[Path]
+    ) -> None:
         # input coordinates are page coordinates
         ...
+
+class BoundingBoxDetector(Backend):
+    def __init__(self, max_distance=10):
+        self.max_distance = max_distance
+        self.bbox = BoundingBox2d()
+
+    def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
+        # input coordinates are page coordinates
+        # argument <points> can be zero, one, two or more points.
+        self.bbox.extend(points)
+
+    def draw_filled_polygon_buffer(
+        self, properties: Properties, paths: Sequence[Path], fill_method: int
+    ) -> None:
+        # input coordinates are page coordinates
+        for p in paths:
+            self.bbox.extend(p.flattening(distance=self.max_distance))
+
+    def draw_outline_polygon_buffer(
+        self, properties: Properties, paths: Sequence[Path]
+    ) -> None:
+        # input coordinates are page coordinates
+        for p in paths:
+            self.bbox.extend(p.flattening(distance=self.max_distance))
+
