@@ -25,7 +25,6 @@ class Page:
         self.user_scale_x: float = 1.0
         self.user_scale_y: float = 1.0
         self.user_origin = NULLVEC2  # plu
-        self.rotation: int = 0
 
     def set_scaling_points(self, p1: Vec2, p2: Vec2) -> None:
         self.reset_scaling()
@@ -111,10 +110,6 @@ class Page:
         else:
             self.user_scaling = True
 
-    def set_rotation(self, angle: int) -> None:
-        """Page rotation is not supported."""
-        self.rotation = angle
-
     def page_point(self, x: float, y: float) -> Vec2:
         """Returns the page location as page point in plotter units."""
         return self.page_vector(x, y) + self.user_origin
@@ -124,8 +119,6 @@ class Page:
         if self.user_scaling:
             x = self.user_scale_x * x
             y = self.user_scale_y * y
-        if self.rotation:
-            return Vec2(x, y).rotate_deg(self.rotation)
         return Vec2(x, y)
 
     def page_points(self, points: Sequence[Vec2]) -> list[Vec2]:

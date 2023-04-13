@@ -11,30 +11,52 @@ class Command(NamedTuple):
 
 ESCAPE = 27
 SEMICOLON = ord(";")
+PERCENT = ord("%")
+MINUS = ord("-")
 QUOTE_CHAR = ord('"')
 CHAR_A = ord("A")
+CHAR_B = ord("B")
 CHAR_Z = ord("Z")
 CHAR_P = ord("P")
 CHAR_E = ord("E")
 
-HPGL_START_COMMANDS = [
-    b"%-1B",
-    b"%0B",
-    b"%1B",
-    b"%2B",
-    b"%3B",
-]
+# Enter HPGL/2 mode commands
+# b"%-0B",  # ??? not documented (assumption)
+# b"%-1B",  # ??? not documented (really exist)
+# b"%-2B",  # ??? not documented (assumption)
+# b"%-3B",  # ??? not documented (assumption)
+# b"%0B",  # documented in the HPGL2 reference by HP
+# b"%1B",  # documented
+# b"%2B",  # documented
+# b"%3B",  # documented
 
+def get_enter_hpgl2_mode_command_length(s: bytes, i: int) -> int:
+    try:
+        if s[i] != ESCAPE:
+            return 0
+        if s[i + 1] != PERCENT:
+            return 0
+        length = 4
+        if s[i + 2] == MINUS:
+            i += 1
+            length = 5
+        # 0, 1, 2 or 3 + "B"
+        if 47 < s[i + 2] < 52 and s[i + 3] == CHAR_B:
+            return length
+    except IndexError:
+        pass
+    return 0
 
 def skip_to_hpgl2(s: bytes, start: int) -> int:
-    for command in HPGL_START_COMMANDS:
+    while True:
         try:
-            index = s.index(command, start)
+            index = s.index(b"%", start)
         except ValueError:
-            index = -1
-        if index != -1:
-            return index + len(command)
-    return len(s)
+            return len(s)
+        length = get_enter_hpgl2_mode_command_length(s, index)
+        if length:
+            return index + length
+        start += 2
 
 
 def hpgl2_commands(s: bytes) -> list[Command]:
@@ -69,7 +91,7 @@ def hpgl2_commands(s: bytes) -> list[Command]:
     commands: list[Command] = []
 
     length = len(s)
-    index = 0
+    index = skip_to_hpgl2(s, 0)
     while index < length:
         char = s[index]
 

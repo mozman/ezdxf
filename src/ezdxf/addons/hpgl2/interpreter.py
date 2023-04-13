@@ -30,7 +30,7 @@ class Interpreter:
             elif name[0] in string.ascii_letters:
                 self.not_implemented_commands.add(name)
 
-    def disable_commands(self, commands: Iterable[str]) ->None:
+    def disable_commands(self, commands: Iterable[str]) -> None:
         self._disabled_commands.update(commands)
 
     # Configure pens, line types, fill types
@@ -149,6 +149,12 @@ class Interpreter:
             self.plotter.set_anisotropic_scaling(
                 values[0], values[1], values[2], values[3]
             )
+
+    def cmd_mc(self, args: list[bytes]):
+        status = 0
+        if len(args):
+            status = to_int(args[0], status)
+            self.plotter.set_merge_control(bool(status))
 
     # pen movement:
     def cmd_pd(self, args: list[bytes]):

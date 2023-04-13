@@ -29,6 +29,7 @@ class Plotter:
         self.is_pen_down = False
         self.is_absolute_mode = True
         self.is_polygon_mode = False
+        self.has_merge_control = False
         self._user_location = NULLVEC2
         self._pen_state_stack: list[bool] = []
         self.bbox = BoundingBox2d()
@@ -80,14 +81,8 @@ class Plotter:
     ) -> None:
         self.page.set_anisotropic_scaling(x_min, x_max, y_min, y_max)
 
-    def set_page_rotation(self, angle:int) -> None:
-        if angle in (0, 90, 180, 270):
-            self.page.set_rotation(angle)
-
-    def set_page_flip(self, vertical=False, horizontal=False) -> None:
-        sx = -1 if horizontal else +1
-        sy = -1 if vertical else +1
-        self.page.apply_scaling_factors(sx, sy)
+    def set_merge_control(self, status: bool) -> None:
+        self.has_merge_control = status
 
     def pen_up(self) -> None:
         self.is_pen_down = False

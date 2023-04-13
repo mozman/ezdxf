@@ -4,8 +4,9 @@ from __future__ import annotations
 from typing import Sequence, NamedTuple, Any
 import abc
 import enum
+import math
 
-from .deps import Vec2, Path
+from .deps import Vec2, Path, luminance, Matrix44, transform_paths, BoundingBox2d
 from .properties import Properties
 
 # Page coordinates are always plot units:
@@ -15,6 +16,18 @@ from .properties import Properties
 # 3.39 plu = 1 dot @300 dpi
 # positive x-axis is horizontal from left to right
 # positive y-axis is vertical from bottom to top
+
+
+class Anchor(enum.Enum):
+    BOTTOM_LEFT = enum.auto()
+    BOTTOM_CENTER = enum.auto()
+    BOTTOM_RIGHT = enum.auto()
+    MIDDLE_LEFT = enum.auto()
+    MIDDLE_CENTER = enum.auto()
+    MIDDLE_RIGHT = enum.auto()
+    TOP_LEFT = enum.auto()
+    TOP_CENTER = enum.auto()
+    TOP_RIGHT = enum.auto()
 
 
 class Backend(abc.ABC):
@@ -69,7 +82,7 @@ class Recorder(Backend):
     ) -> None:
         self.store(RecordType.OUTLINE_POLYGON, properties, tuple(paths))
 
-    def store(self, record_type: RecordType, properties: Properties, *args) -> None:
+    def store(self, record_type: RecordType, properties: Properties, args) -> None:
         prop_hash = properties.hash()
         if prop_hash not in self.properties:
             self.properties[prop_hash] = properties.copy()
@@ -85,4 +98,47 @@ class Recorder(Backend):
         }
         for record in self.records:
             current_props = props.get(record.property_hash, current_props)
-            draw[record.type](current_props, *record.args)  # type: ignore
+            draw[record.type](current_props, record.args)  # type: ignore
+
+    def transform(self, m: Matrix44) -> None:
+        records: list[DataRecord] = []
+        for record in self.records:
+            if record.type == RecordType.POLYLINE:
+                vertices = Vec2.list(m.transform_vertices(record.args))
+                records.append(DataRecord(record.type, record.property_hash, vertices))
+            else:
+                paths = transform_paths(record.args, m)
+                records.append(DataRecord(record.type, record.property_hash, paths))
+        self.records = records
+
+    def sort_filled_polygons(self, reverse=True) -> None:
+        polygons = []
+        polylines = []
+        current = Properties()
+        props = self.properties
+        for record in self.records:
+            if record.type == RecordType.FILLED_POLYGON:
+                current = props.get(record.property_hash, current)
+                key = luminance(current.pen_color)
+                polygons.append((key, record))
+            else:
+                polylines.append(record)
+
+        polygons.sort(key=lambda r: r[0], reverse=reverse)
+        records = [sort_rec[1] for sort_rec in polygons]
+        records.extend(polylines)
+        self.records = records
+
+
+def placement_matrix(
+    bbox: BoundingBox2d, sx: float = 1.0, sy: float = 1.0, rotation: float = 0.0
+) -> Matrix44:
+    """Returns a matrix to place the bbox in the first quadrant of the coordinate
+    system (+x, +y).
+    """
+    m = Matrix44.scale(sx, sy, 1.0)
+    if rotation:
+        m @= Matrix44.z_rotate(math.radians(rotation))
+    corners = m.transform_vertices(bbox.rect_vertices())
+    tx, ty = BoundingBox2d(corners).extmin  # type: ignore
+    return m @ Matrix44.translate(-tx, -ty, 0)

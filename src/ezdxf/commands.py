@@ -1015,6 +1015,23 @@ class Plt2Svg(Command):
             required=False,
             help="flip page vertical (in y-axis direction)",
         )
+        parser.add_argument(
+            "-m",
+            "--merge_control",
+            type=int,
+            required=False,
+            default=2,
+            choices=(0, 1, 2),
+            help="provides control over the order of filled polygons, 0=off (print order), "
+            "1=luminance (order by luminance), 2=auto (default)",
+        )
+        parser.add_argument(
+            "-f",
+            "--force",
+            action="store_true",
+            required=False,
+            help="injects the mandatory 'enter HPGL/2 mode' escape sequence into the data stream",
+        )
 
     @staticmethod
     def run(args):
@@ -1030,11 +1047,15 @@ class Plt2Svg(Command):
                 print(str(e), file=sys.stderr)
                 return
 
+            if args.force:
+                data = b"%1B" + data
+
             svg_string = hpgl2.to_svg(
                 data,
                 rotation=args.rotate,
                 flip_vertical=args.flip_vertical,
                 flip_horizontal=args.flip_horizontal,
+                merge_control=args.merge_control,
             )
             svg_filepath = filepath.with_suffix(".svg")
             try:
@@ -1108,6 +1129,23 @@ class Plt2Dxf(Command):
             required=False,
             help="flip page vertical (in y-axis direction)",
         )
+        parser.add_argument(
+            "-m",
+            "--merge_control",
+            type=int,
+            required=False,
+            default=2,
+            choices=(0, 1, 2),
+            help="provides control over the order of filled polygons, 0=off (print order), "
+            "1=luminance (order by luminance), 2=auto (default)",
+        )
+        parser.add_argument(
+            "-f",
+            "--force",
+            action="store_true",
+            required=False,
+            help="injects the mandatory 'enter HPGL/2 mode' escape sequence into the data stream",
+        )
 
     @staticmethod
     def run(args):
@@ -1122,6 +1160,8 @@ class Plt2Dxf(Command):
             except IOError as e:
                 print(str(e), file=sys.stderr)
                 return
+            if args.force:
+                data = b"%1B" + data
 
             color_mode = ColorMode.ACI if args.aci else ColorMode.RGB
             doc = hpgl2.to_dxf(
@@ -1131,6 +1171,7 @@ class Plt2Dxf(Command):
                 flip_vertical=args.flip_vertical,
                 color_mode=color_mode,
                 map_black_rgb_to_white_rgb=args.map_black_to_white,
+                merge_control=args.merge_control,
             )
             dxf_filepath = filepath.with_suffix(".dxf")
             try:

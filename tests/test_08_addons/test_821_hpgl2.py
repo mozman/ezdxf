@@ -2,11 +2,15 @@
 #  License: MIT License
 
 import pytest
+from ezdxf.math import BoundingBox2d
 from ezdxf.addons.hpgl2 import api
 from ezdxf.addons.hpgl2.properties import RGB, FillType
-from ezdxf.addons.hpgl2.backend import Backend
+from ezdxf.addons.hpgl2.backend import Backend, placement_matrix
 from ezdxf.addons.hpgl2.deps import Vec2
 from ezdxf.addons.hpgl2.page import Page
+
+def hpgl2(s: bytes):
+    return b"%1B" + s
 
 def test_parse_hpgl_commands():
     s = b"%-1BBP;IN;DF;LA1,4,2,6;FT1;PS38812,33987;IP0,0,38812,33987;PU;PA0,0;PUSP0PG;"
@@ -14,7 +18,7 @@ def test_parse_hpgl_commands():
     assert len(commands) == 12
 
 def test_skip_all_pcl5_commands():
-    s = b"xxxxxyyyy%-1BBPINescape***%1BDF"
+    s = b"%0Axxxxx%1Ayyyy%-1BBPIN%-1Aescape***%1BDF"
     commands = api.hpgl2_commands(s)
     assert len(commands) == 3
     assert commands[0].name == "BP"
@@ -42,7 +46,7 @@ class MyBackend(Backend):
 
 
 def plot(s: bytes):
-    commands = api.hpgl2_commands(s)
+    commands = api.hpgl2_commands(hpgl2(s))
     backend = MyBackend()
     api.Plotter(backend)
     plotter = api.Plotter(backend)
@@ -215,7 +219,7 @@ class TestTokenizer:
         ],
     )
     def test_short_commands(self, s):
-        result = self.parse(s)
+        result = self.parse(hpgl2(s))
         assert len(result) == 3
         assert result[0].name == "IN"
         assert result[1].name == "PU"
@@ -230,22 +234,25 @@ class TestTokenizer:
         ],
     )
     def test_pe_command(self, s, i):
-        result = self.parse(s)
+        result = self.parse(hpgl2(s))
         assert result[i].name == "PE"
         assert result[i].args[0] == b"TEST"
 
     def test_001(self):
-        result = self.parse(b"PA;PA2000,8000")
+        result = self.parse(hpgl2(b"PA;PA2000,8000"))
         assert result[0].name == "PA"
         assert result[1].name == "PA"
 
     def test_002(self):
-        result = self.parse(b"PUSP0PG")
+        result = self.parse(hpgl2(b"PUSP0PG"))
         assert result[0].name == "PU"
         assert result[1].name == "SP"
         assert result[1].args[0] == b"0"
         assert result[2].name == "PG"
 
+    def test_no_hpgl2_data(self):
+        # Ecape sequence to enter HPGL2 mode is missing:  "%1B"
+        assert len(self.parse(b"ANYTEXT;IN;BP;")) == 0
 
 class TestPageCoordinates:
     @pytest.fixture(scope="class")
@@ -363,6 +370,26 @@ def test_sweeping_angle():
     assert sweeping_angle(30, 0, 330) == -60
     assert sweeping_angle(30, 180, 330) == 300
 
+class TestPlacementMatrix:
+
+    def test_shift_to_origin_Q1(self):
+        bbox = BoundingBox2d([(10, 10), (20, 20)])
+        m = placement_matrix(bbox)
+        assert m.transform((10, 10)).isclose((0, 0))
+        assert m.transform((20, 20)).isclose((10, 10))
+
+    def test_shift_to_origin_Q3(self):
+        bbox = BoundingBox2d([(-10, -10), (-20, -20)])
+        m = placement_matrix(bbox)
+        assert m.transform((-10, -10)).isclose((10, 10))
+        assert m.transform((-20, -20)).isclose((0, 0))
+
+    def test_rotate(self):
+        # size = 10 x 30
+        bbox = BoundingBox2d([(10, 10), (20, 40)])
+        m = placement_matrix(bbox, rotation=90)
+        assert m.transform((10, 10)).isclose((30, 0))
+        assert m.transform((20, 40)).isclose((0, 10))
 
 if __name__ == "__main__":
     pytest.main([__file__])
