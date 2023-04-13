@@ -5,7 +5,7 @@ from typing import Sequence, NamedTuple, Any
 import abc
 import enum
 
-from .deps import Vec2, Path, Bezier4P, BoundingBox2d
+from .deps import Vec2, Path
 from .properties import Properties
 
 # Page coordinates are always plot units:
@@ -26,7 +26,7 @@ class Backend(abc.ABC):
 
     @abc.abstractmethod
     def draw_filled_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path], fill_method: int
+        self, properties: Properties, paths: Sequence[Path]
     ) -> None:
         # input coordinates are page coordinates
         ...
@@ -38,15 +38,18 @@ class Backend(abc.ABC):
         # input coordinates are page coordinates
         ...
 
+
 class RecordType(enum.Enum):
     POLYLINE = enum.auto()
     FILLED_POLYGON = enum.auto()
     OUTLINE_POLYGON = enum.auto()
 
+
 class DataRecord(NamedTuple):
     type: RecordType
     property_hash: int
     args: Any
+
 
 class Recorder(Backend):
     def __init__(self) -> None:
@@ -56,11 +59,10 @@ class Recorder(Backend):
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
         self.store(RecordType.POLYLINE, properties, tuple(points))
 
-
     def draw_filled_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path], fill_method: int
+        self, properties: Properties, paths: Sequence[Path]
     ) -> None:
-        self.store(RecordType.FILLED_POLYGON, properties, tuple(paths), fill_method)
+        self.store(RecordType.FILLED_POLYGON, properties, tuple(paths))
 
     def draw_outline_polygon_buffer(
         self, properties: Properties, paths: Sequence[Path]
@@ -74,12 +76,13 @@ class Recorder(Backend):
         self.records.append(DataRecord(record_type, prop_hash, args))
 
     def replay(self, backend: Backend) -> None:
-        properties = Properties()
+        current_props = Properties()
+        props = self.properties
         draw = {
             RecordType.POLYLINE: backend.draw_polyline,
             RecordType.FILLED_POLYGON: backend.draw_filled_polygon_buffer,
             RecordType.OUTLINE_POLYGON: backend.draw_outline_polygon_buffer,
         }
         for record in self.records:
-            properties = self.properties.get(record.property_hash, properties)
-            draw[record.type](properties, *record.args)  # type: ignore
+            current_props = props.get(record.property_hash, current_props)
+            draw[record.type](current_props, *record.args)  # type: ignore

@@ -15,6 +15,9 @@ class FillType(enum.IntEnum):
     CROSS_HATCHING = 3
     SHADING = 4
 
+class FillMethod(enum.IntEnum):
+    EVEN_ODD = 0
+    NON_ZERO_WINDING = 1
 
 class RGB(NamedTuple):
     r: int
@@ -41,6 +44,7 @@ class Properties:
         self.pen_color = RGB_NONE
         self.pen_width: float = 0.35
         self.fill_type = FillType.SOLID
+        self.fill_method = FillMethod.EVEN_ODD
         self.fill_hatch_line_angle: float = 0.0  # in degrees
         self.fill_hatch_line_spacing: float = 40.0  # in plotter units
         self.fill_shading_density: float = 100.0
@@ -57,6 +61,7 @@ class Properties:
                 self.pen_color,
                 self.pen_width,
                 self.fill_type,
+                self.fill_method,
                 self.fill_hatch_line_angle,
                 self.fill_hatch_line_spacing,
                 self.fill_shading_density,
@@ -75,6 +80,7 @@ class Properties:
         self.pen_width = self.DEFAULT_PEN.width
         self.pen_table = {}
         self.fill_type = FillType.SOLID
+        self.fill_method = FillMethod.EVEN_ODD
         self.fill_hatch_line_angle = 0.0
         self.fill_hatch_line_spacing = 40.0
         self.fill_shading_density = 1.0
@@ -130,3 +136,6 @@ class Properties:
             self.fill_shading_density = spacing
         else:
             self.fill_type = FillType.SOLID
+
+    def set_fill_method(self, fill_method: int) -> None:
+        self.fill_method = FillMethod(fill_method)

@@ -64,7 +64,7 @@ class SVGBackend(Backend):
             polygon.set("stroke", s)
 
     def draw_filled_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path], fill_method: int
+        self, properties: Properties, paths: Sequence[Path]
     ) -> None:
         polygons = []
         for p in paths:

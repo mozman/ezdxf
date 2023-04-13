@@ -10,8 +10,10 @@ Version 1.0.4 - dev
 - BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1
 - BUGFIX: [#855](https://github.com/mozman/ezdxf/issues/855)
   scale `MTEXT/MLEADER` inline commands "absolute text height" at transformation
-- PREVIEW: `ezdxf.addons.hpgl2` add-on to convert HPGL/2 plot files to DXF,  
+- PREVIEW: `ezdxf.addons.hpgl2` add-on to convert HPGL/2 plot files to DXF or SVG,  
   final release in v1.1
+- PREVIEW: `ezdxf plt2dxf` command to convert HPGL/2 plot files to DXF, final release in v1.1
+- PREVIEW: `ezdxf plt2svg` command to convert HPGL/2 plot files to SVG, final release in v1.1
 
 Version 1.0.3 - 2023-03-26
 --------------------------

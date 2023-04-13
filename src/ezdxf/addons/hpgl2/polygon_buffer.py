@@ -28,7 +28,7 @@ class PolygonBuffer(Backend):
             self.path.line_to(p)
 
     def draw_filled_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path], fill_method: int
+        self, properties: Properties, paths: Sequence[Path]
     ) -> None:
         raise NotImplementedError()
 
@@ -37,7 +37,7 @@ class PolygonBuffer(Backend):
     ) -> None:
         raise NotImplementedError()
 
-    def get_paths(self, fill_method: int) -> Sequence[Path]:
+    def get_paths(self) -> Sequence[Path]:
         return list(self.path.sub_paths())
 
     def close_path(self):

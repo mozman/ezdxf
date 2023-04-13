@@ -63,7 +63,7 @@ class DXFBackend(Backend):
             self.layout.add_point(points[0], dxfattribs=attribs)
 
     def draw_filled_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path], fill_method: int
+        self, properties: Properties, paths: Sequence[Path]
     ) -> None:
         attribs = self.make_dxf_attribs(properties)
         # max sagitta distance of 10 plu = 0.25 mm
@@ -73,6 +73,8 @@ class DXFBackend(Backend):
         for hatch in hatches:
             assert isinstance(hatch, Hatch)
             rgb: Optional[RGB] = properties.pen_color
+            if self.color_mode == ColorMode.ACI:
+                rgb = RGB_NONE
             if self.map_black_rgb_to_white_rgb and rgb == BLACK_RGB:
                 rgb = WHITE_RGB
             if rgb is RGB_NONE:

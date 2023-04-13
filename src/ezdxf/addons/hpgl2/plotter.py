@@ -24,7 +24,7 @@ class Plotter:
         self.backend = backend
         self._output_backend = backend
         self._polygon_buffer = PolygonBuffer()
-        self.page = Page(0, 0)
+        self.page = Page(1189, 841)
         self.properties = Properties()
         self.is_pen_down = False
         self.is_absolute_mode = True
@@ -32,7 +32,6 @@ class Plotter:
         self._user_location = NULLVEC2
         self._pen_state_stack: list[bool] = []
         self.bbox = BoundingBox2d()
-        self.reset()
 
     @property
     def user_location(self) -> Vec2:
@@ -44,24 +43,6 @@ class Plotter:
         """Returns the current pen location as page point in plotter units."""
         location = self.user_location
         return self.page.page_point(location.x, location.y)
-
-    def defaults(self) -> None:
-        """DF command"""
-        self.properties.reset()
-        self.is_pen_down = False
-        self.set_absolute_mode()
-        self.exit_polygon_mode()
-        self._pen_state_stack.clear()
-        self.page.reset_scaling()
-
-    def reset(self) -> None:
-        """Reset most settings."""
-        size_x, size_y = get_page_size("ISO A0")
-        self.setup_page(size_x, size_y)
-        self.defaults()
-        self._user_location = NULLVEC2
-        # Do not reset the bounding box!
-        # Many plot files do contain a reset command (like "PG") at the end!
 
     def setup_page(self, size_x: int, size_y: int):
         self.page = Page(size_x, size_y)
@@ -99,26 +80,14 @@ class Plotter:
     ) -> None:
         self.page.set_anisotropic_scaling(x_min, x_max, y_min, y_max)
 
-    def execute_pcl5_command(self, command: bytes) -> None:
-        """PCL5 commands are not supported."""
-        pass
+    def set_page_rotation(self, angle:int) -> None:
+        if angle in (0, 90, 180, 270):
+            self.page.set_rotation(angle)
 
-    def initialize(self) -> None:
-        """Initialize plotter."""
-        self.reset()
-        self.bbox = BoundingBox2d()
-
-    def advance_full_page(self) -> None:
-        """Advance full page."""
-        self.reset()
-
-    def replot(self) -> None:
-        """Replot is not supported."""
-        pass
-
-    def rotate_coordinate_system(self, angle: int) -> None:
-        """Rotate coordinate system about 0, 90, 180 or 270 degrees."""
-        self.page.set_rotation(angle)
+    def set_page_flip(self, vertical=False, horizontal=False) -> None:
+        sx = -1 if horizontal else +1
+        sy = -1 if vertical else +1
+        self.page.apply_scaling_factors(sx, sy)
 
     def pen_up(self) -> None:
         self.is_pen_down = False
@@ -185,12 +154,11 @@ class Plotter:
         self.backend = self._output_backend
 
     def fill_polygon(self, fill_method: int) -> None:
-        self.plot_filled_polygon_buffer(
-            self._polygon_buffer.get_paths(fill_method), fill_method
-        )
+        self.properties.set_fill_method(fill_method)
+        self.plot_filled_polygon_buffer(self._polygon_buffer.get_paths())
 
     def edge_polygon(self) -> None:
-        self.plot_outline_polygon_buffer(self._polygon_buffer.get_paths(0))
+        self.plot_outline_polygon_buffer(self._polygon_buffer.get_paths())
 
     def plot_polyline(self, points: Sequence[Vec2]):
         if not points:
@@ -207,9 +175,9 @@ class Plotter:
         current_page_location = self.page_location
         self.move_to_abs(points[-1])  # user coordinates!
         if self.is_pen_down:
-            self.update_bbox(points)
             # convert to page coordinates:
             points = self.page.page_points(points)
+            self.update_bbox(points)
             # insert current page location as starting point:
             points.insert(0, current_page_location)
             # draw polyline in absolute page coordinates:
@@ -292,10 +260,10 @@ class Plotter:
         )
         self.plot_abs_cubic_bezier(ctrl1, ctrl2, end)
 
-    def plot_filled_polygon_buffer(self, paths: Sequence[Path], fill_method: int):
+    def plot_filled_polygon_buffer(self, paths: Sequence[Path]):
         self.update_bbox(path_bbox(paths, fast=True))
         # input coordinates are page coordinates!
-        self.backend.draw_filled_polygon_buffer(self.properties, paths, fill_method)
+        self.backend.draw_filled_polygon_buffer(self.properties, paths)
 
     def plot_outline_polygon_buffer(self, paths: Sequence[Path]):
         self.update_bbox(path_bbox(paths, fast=True))

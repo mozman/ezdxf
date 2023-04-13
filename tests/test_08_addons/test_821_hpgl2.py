@@ -13,6 +13,19 @@ def test_parse_hpgl_commands():
     commands = api.hpgl2_commands(s)
     assert len(commands) == 12
 
+def test_skip_all_pcl5_commands():
+    s = b"xxxxxyyyy%-1BBPINescape***%1BDF"
+    commands = api.hpgl2_commands(s)
+    assert len(commands) == 3
+    assert commands[0].name == "BP"
+    assert commands[1].name == "IN"
+    assert commands[2].name == "DF"
+
+def debug():
+    from pathlib import Path
+    s = Path(r"C:\Users\mozman\Desktop\Outbox\W2 - 6002.plt").read_bytes()
+    commands = api.hpgl2_commands(s)
+    assert len(commands) == 0
 
 class MyBackend(Backend):
     def __init__(self):
@@ -21,8 +34,8 @@ class MyBackend(Backend):
     def draw_polyline(self, properties, points) -> None:
         self.result.append(["Polyline", points])
 
-    def draw_filled_polygon_buffer(self, properties, paths, fill_method: int) -> None:
-        self.result.append(["FilledPolygon", paths, fill_method])
+    def draw_filled_polygon_buffer(self, properties, paths) -> None:
+        self.result.append(["FilledPolygon", paths])
 
     def draw_outline_polygon_buffer(self, properties, paths) -> None:
         self.result.append(["OutlinePolygon", paths])
@@ -180,14 +193,16 @@ class TestTokenizer:
     @pytest.mark.parametrize(
         "s",
         [
-            b"%0B;",
-            b"%0B;IN;",
+            b"%-1BBP;",
+            b"%0BBP;",
+            b"%1BBP;",
+            b"%2BBP;",
+            b"%3BBP;",
         ],
     )
     def test_escape(self, s):
         result = self.parse(s)
-        assert result[0].name == "ESCAPE"
-        assert result[0].args[0] == b"%0B"
+        assert result[0].name == "BP"
 
     @pytest.mark.parametrize(
         "s",

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Iterable, Optional, Iterator, Sequence
@@ -133,7 +133,7 @@ class AbstractBoundingBox:
             v.extend([self.extmin, self.extmax])
         self.extmin, self.extmax = self.extends_detector(v)
 
-    def union(self, other: "AbstractBoundingBox"):
+    def union(self, other: AbstractBoundingBox):
         """Returns a new bounding box as union of this and `other` bounding
         box.
         """

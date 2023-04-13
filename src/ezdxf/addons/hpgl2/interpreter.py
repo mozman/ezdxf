@@ -14,76 +14,24 @@ class Interpreter:
     def __init__(self, plotter: Plotter) -> None:
         self.errors: list[str] = []
         self.not_implemented_commands: set[str] = set()
+        self._disabled_commands: set[str] = set()
         self.plotter = plotter
-        plotter.reset()
 
     def add_error(self, error: str) -> None:
         self.errors.append(error)
 
     def run(self, commands: list[Command]) -> None:
         for name, args in commands:
+            if name in self._disabled_commands:
+                continue
             method = getattr(self, f"cmd_{name.lower()}", None)
             if method:
                 method(args)
             elif name[0] in string.ascii_letters:
                 self.not_implemented_commands.add(name)
 
-    def cmd_escape(self, args: list[bytes]):
-        """Embedded PCL5 commands."""
-        if len(args):
-            self.plotter.execute_pcl5_command(args[0])
-
-    def cmd_pg(self, _):
-        """Advance full page."""
-        self.plotter.advance_full_page()
-
-    def cmd_rp(self, _):
-        """Replot."""
-        self.plotter.replot()
-
-    def cmd_wu(self, _):
-        """Pen width unit selection - not supported."""
-        pass
-
-    def cmd_la(self, _):
-        """Line attribute selection (line ends and line joins) - not supported."""
-        pass
-
-    def cmd_rf(self, _):
-        """Define raster fill - not supported."""
-        pass
-
-    def cmd_tr(self, _):
-        """Set transparency mode - not supported. Transparency mode is off, white
-        fillings cover graphics beneath.
-        """
-        pass
-
-    def cmd_ro(self, args: list[bytes]):
-        """Set rotation."""
-        angle: int = 0
-        if len(args):
-            angle = to_int(args[0], angle)
-        if angle in (0, 90, 180, 270):
-            self.plotter.rotate_coordinate_system(angle)
-        else:
-            self.add_error(f"invalid rotation angle {angle} for RO command")
-
-    def cmd_in(self, _):
-        """Initialize plotter."""
-        self.plotter.initialize()
-
-    def cmd_df(self, _):
-        """Reset to defaults."""
-        self.plotter.defaults()
-
-    def cmd_ps(self, args: list[bytes]):
-        """Set page size in plotter units - not documented."""
-        values = tuple(to_ints(args))
-        if len(values) != 2:
-            self.add_error("invalid arguments for command PS")
-            return
-        self.plotter.setup_page(values[0], values[1])
+    def disable_commands(self, commands: Iterable[str]) ->None:
+        self._disabled_commands.update(commands)
 
     # Configure pens, line types, fill types
     def cmd_ft(self, args: list[bytes]):
@@ -402,7 +350,7 @@ class Interpreter:
         """Plot filled polygon."""
         fill_method = 0
         if len(args):
-            fill_method = to_int(args[0], fill_method)
+            fill_method = one_of(to_int(args[0], fill_method), (0, 1))
         self.plotter.fill_polygon(fill_method)
 
     def cmd_ep(self, _) -> None:
@@ -456,3 +404,9 @@ def to_int(s: bytes, default=0) -> int:
 
 def clamp(v, v_min, v_max):
     return max(min(v_max, v), v_min)
+
+
+def one_of(value, choice):
+    if value in choice:
+        return value
+    return choice[0]

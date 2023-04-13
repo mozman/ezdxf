@@ -11,18 +11,48 @@ class Command(NamedTuple):
 
 ESCAPE = 27
 SEMICOLON = ord(";")
+QUOTE_CHAR = ord('"')
 CHAR_A = ord("A")
 CHAR_Z = ord("Z")
 CHAR_P = ord("P")
 CHAR_E = ord("E")
+
+HPGL_START_COMMANDS = [
+    b"%-1B",
+    b"%0B",
+    b"%1B",
+    b"%2B",
+    b"%3B",
+]
+
+
+def skip_to_hpgl2(s: bytes, start: int) -> int:
+    for command in HPGL_START_COMMANDS:
+        try:
+            index = s.index(command, start)
+        except ValueError:
+            index = -1
+        if index != -1:
+            return index + len(command)
+    return len(s)
 
 
 def hpgl2_commands(s: bytes) -> list[Command]:
     def is_letter(c):
         return CHAR_A <= c <= CHAR_Z
 
+    def find_closing_quote_char(i: int):
+        while i < length and s[i] != QUOTE_CHAR:
+            i += 1
+        return i
+
     def find_terminator(i: int):
-        while i < length and not is_letter(s[i]) and s[i] != SEMICOLON:
+        while i < length:
+            c = s[i]
+            if c == QUOTE_CHAR:
+                i = find_closing_quote_char(i + 1)
+            elif is_letter(c) or c == SEMICOLON or c == ESCAPE:
+                break
             i += 1
         return i
 
@@ -37,14 +67,15 @@ def hpgl2_commands(s: bytes) -> list[Command]:
         return i + 1
 
     commands: list[Command] = []
-    index = 0
+
     length = len(s)
+    index = 0
     while index < length:
         char = s[index]
 
         start = index
         if char == ESCAPE:
-            index = make_command_until(SEMICOLON)
+            index = skip_to_hpgl2(s, index)
             continue
 
         if char <= 32:  # skip all white space and control chars
@@ -81,8 +112,6 @@ def hpgl2_commands(s: bytes) -> list[Command]:
 def make_command(cmd: bytes) -> Command:
     if not cmd:
         return Command("NOOP", tuple())
-    if cmd[0] == ESCAPE:
-        return Command("ESCAPE", (cmd,))
     name = cmd[:2]
     args = tuple(s for s in cmd[2:].split(b","))
     return Command(name.decode(), args)

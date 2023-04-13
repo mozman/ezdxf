@@ -130,9 +130,7 @@ class Audit(Command):
 
     @staticmethod
     def add_parser(subparsers):
-        parser = subparsers.add_parser(
-            Audit.NAME, help="audit and repair DXF files"
-        )
+        parser = subparsers.add_parser(Audit.NAME, help="audit and repair DXF files")
         parser.add_argument(
             "files",
             metavar="FILE",
@@ -246,9 +244,7 @@ def load_document(filename: str):
 
     if auditor.has_errors:
         # But is most likely good enough for rendering.
-        msg = (
-            f"Audit process found {len(auditor.errors)} unrecoverable error(s)."
-        )
+        msg = f"Audit process found {len(auditor.errors)} unrecoverable error(s)."
         print(msg)
         logger.error(msg)
     if auditor.has_fixes:
@@ -265,8 +261,7 @@ HELP_LTYPE = (
     "but this approach is slower."
 )
 HELP_LWSCALE = (
-    "set custom line weight scaling, default is 0 to disable line "
-    "weights at all"
+    "set custom line weight scaling, default is 0 to disable line " "weights at all"
 )
 
 
@@ -593,16 +588,12 @@ class Pillow(Command):
             try:
                 layout_properties.set_colors(bg)
             except ValueError:
-                print(
-                    f'ERROR: invalid background color value "{args.background}"'
-                )
+                print(f'ERROR: invalid background color value "{args.background}"')
                 sys.exit(4)
 
         ctx = RenderContext(doc)
         # force accurate linetype rendering by the frontend
-        config = Configuration.defaults().with_changes(
-            line_policy=LinePolicy.ACCURATE
-        )
+        config = Configuration.defaults().with_changes(line_policy=LinePolicy.ACCURATE)
         if verbose:
             print(f"detecting extents...\n")
         bbox_cache = bbox.Cache()
@@ -614,15 +605,9 @@ class Pillow(Command):
         img_x, img_y = parse_image_size(args.image_size)
         if verbose:
             print(f"    units: {units.unit_name(layout.units)}")
-            print(
-                f"    modelspace size: {extents.size.x:.3f} x {extents.size.y:.3f}"
-            )
-            print(
-                f"    min extents: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})"
-            )
-            print(
-                f"    max extents: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})"
-            )
+            print(f"    modelspace size: {extents.size.x:.3f} x {extents.size.y:.3f}")
+            print(f"    min extents: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
+            print(f"    max extents: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
             print(f"\nimage size: {img_x} x {img_y}")
         try:
             out = PillowBackend(
@@ -678,9 +663,7 @@ class Browse(Command):
 
     @staticmethod
     def add_parser(subparsers):
-        parser = subparsers.add_parser(
-            Browse.NAME, help="browse DXF file structure"
-        )
+        parser = subparsers.add_parser(Browse.NAME, help="browse DXF file structure")
         parser.add_argument(
             "file",
             metavar="FILE",
@@ -773,9 +756,7 @@ class Strip(Command):
 
     @staticmethod
     def add_parser(subparsers):
-        parser = subparsers.add_parser(
-            Strip.NAME, help="strip comments from DXF files"
-        )
+        parser = subparsers.add_parser(Strip.NAME, help="strip comments from DXF files")
         parser.add_argument(
             "file",
             metavar="FILE",
@@ -991,9 +972,181 @@ class Info(Command):
                     file_count += 1
 
             if file_count == 0:
-                sys.stderr.write(
-                    f'No matching files for pattern: "{pattern}"\n'
-                )
+                sys.stderr.write(f'No matching files for pattern: "{pattern}"\n')
+
+
+@register
+class Plt2Svg(Command):
+    """Launcher sub-command: plt2svg"""
+
+    NAME = "plt2svg"
+
+    @staticmethod
+    def add_parser(subparsers):
+        parser = subparsers.add_parser(
+            Plt2Svg.NAME, help="convert HPGL/2 plot files to SVG"
+        )
+        parser.add_argument(
+            "files",
+            metavar="FILE",
+            nargs="+",
+            help="convert HPGL/2 plot files to SVG",
+        )
+        parser.add_argument(
+            "-r",
+            "--rotate",
+            type=int,
+            choices=(0, 90, 180, 270),
+            default=0,
+            required=False,
+            help="rotate page about 90, 180 or 270 degrees",
+        )
+        parser.add_argument(
+            "-x",
+            "--flip_horizontal",
+            action="store_true",
+            required=False,
+            help="flip page horizontal (in x-axis direction)",
+        )
+        parser.add_argument(
+            "-y",
+            "--flip_vertical",
+            action="store_true",
+            required=False,
+            help="flip page vertical (in y-axis direction)",
+        )
+
+    @staticmethod
+    def run(args):
+        from ezdxf.addons.hpgl2 import api as hpgl2
+
+        def _convert(filepath: Path) -> None:
+            msg = f"converting HPGL/2 plot file to SVG: {filename}"
+            print(msg)
+            logger.info(msg)
+            try:
+                data = filepath.read_bytes()
+            except IOError as e:
+                print(str(e), file=sys.stderr)
+                return
+
+            svg_string = hpgl2.to_svg(
+                data,
+                rotation=args.rotate,
+                flip_vertical=args.flip_vertical,
+                flip_horizontal=args.flip_horizontal,
+            )
+            svg_filepath = filepath.with_suffix(".svg")
+            try:
+                svg_filepath.write_text(svg_string)
+            except IOError as e:
+                print(str(e), file=sys.stderr)
+
+        for pattern in args.files:
+            names = list(glob.glob(pattern))
+            if len(names) == 0:
+                msg = f"File(s) '{pattern}' not found."
+                print(msg)
+                logger.error(msg)
+                continue
+            for filename in names:
+                _convert(Path(filename))
+
+
+@register
+class Plt2Dxf(Command):
+    """Launcher sub-command: plt2dxf"""
+
+    NAME = "plt2dxf"
+
+    @staticmethod
+    def add_parser(subparsers):
+        parser = subparsers.add_parser(
+            Plt2Dxf.NAME,
+            help="convert HPGL/2 plot files to DXF",
+            epilog="Note that plot files are intended for plotting on white paper.",
+        )
+        parser.add_argument(
+            "files",
+            metavar="FILE",
+            nargs="+",
+            help="convert HPGL/2 plot files to DXF",
+        )
+        parser.add_argument(
+            "--aci",
+            action="store_true",
+            required=False,
+            help="use pen numbers as ACI colors",
+        )
+        parser.add_argument(
+            "--map_black_to_white",
+            action="store_true",
+            required=False,
+            help="map black RGB plot colors (and only real black (0, 0, 0)) to white RGB, "
+            "does not affect ACI colors",
+        )
+        parser.add_argument(
+            "-r",
+            "--rotate",
+            type=int,
+            choices=(0, 90, 180, 270),
+            default=0,
+            required=False,
+            help="rotate page about 90, 180 or 270 degrees",
+        )
+        parser.add_argument(
+            "-x",
+            "--flip_horizontal",
+            action="store_true",
+            required=False,
+            help="flip page horizontal (in x-axis direction)",
+        )
+        parser.add_argument(
+            "-y",
+            "--flip_vertical",
+            action="store_true",
+            required=False,
+            help="flip page vertical (in y-axis direction)",
+        )
+
+    @staticmethod
+    def run(args):
+        from ezdxf.addons.hpgl2 import api as hpgl2
+        from ezdxf.addons.hpgl2.dxf_backend import ColorMode
+
+        def _convert(filepath: Path) -> None:
+            msg = f"converting HPGL/2 plot file to DXF: {filename}"
+            print(msg)
+            try:
+                data = filepath.read_bytes()
+            except IOError as e:
+                print(str(e), file=sys.stderr)
+                return
+
+            color_mode = ColorMode.ACI if args.aci else ColorMode.RGB
+            doc = hpgl2.to_dxf(
+                data,
+                rotation=args.rotate,
+                flip_horizontal=args.flip_horizontal,
+                flip_vertical=args.flip_vertical,
+                color_mode=color_mode,
+                map_black_rgb_to_white_rgb=args.map_black_to_white,
+            )
+            dxf_filepath = filepath.with_suffix(".dxf")
+            try:
+                doc.saveas(dxf_filepath)
+            except IOError as e:
+                print(str(e), file=sys.stderr)
+
+        for pattern in args.files:
+            names = list(glob.glob(pattern))
+            if len(names) == 0:
+                msg = f"File(s) '{pattern}' not found."
+                print(msg, file=sys.stderr)
+                logger.error(msg)
+                continue
+            for filename in names:
+                _convert(Path(filename))
 
 
 def set_app_icon(app):
