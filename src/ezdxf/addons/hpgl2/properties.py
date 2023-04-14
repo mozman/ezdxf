@@ -15,14 +15,19 @@ class FillType(enum.IntEnum):
     CROSS_HATCHING = 3
     SHADING = 4
 
+
 class FillMethod(enum.IntEnum):
     EVEN_ODD = 0
     NON_ZERO_WINDING = 1
+
 
 class RGB(NamedTuple):
     r: int
     g: int
     b: int
+
+    def to_floats(self) -> tuple[float, float, float]:
+        return self.r / 255, self.g / 255, self.b / 255
 
 
 RGB_NONE = RGB(-1, -1, -1)
@@ -31,7 +36,7 @@ RGB_NONE = RGB(-1, -1, -1)
 @dataclasses.dataclass
 class Pen:
     index: int
-    width: float
+    width: float  # in mm
     color: RGB
 
 
@@ -42,7 +47,7 @@ class Properties:
         # hashed content
         self.pen_index: int = 1
         self.pen_color = RGB_NONE
-        self.pen_width: float = 0.35
+        self.pen_width: float = 0.35  # in mm
         self.fill_type = FillType.SOLID
         self.fill_method = FillMethod.EVEN_ODD
         self.fill_hatch_line_angle: float = 0.0  # in degrees

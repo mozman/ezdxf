@@ -13,6 +13,7 @@ from .interpreter import Interpreter
 from .backend import Recorder, placement_matrix
 from .dxf_backend import DXFBackend, ColorMode
 from .svg_backend import SVGBackend
+from .pdf_backend import PDFBackend
 from .compiler import build
 
 DEBUG = False
@@ -125,6 +126,29 @@ def to_svg(
     recorder.replay(svg_backend)
     del recorder
     return svg_backend.get_string()
+
+def to_pdf(
+    b: bytes,
+    *,
+    rotation: int = 0,
+    flip_horizontal=False,
+    flip_vertical=False,
+    merge_control=MergeControl.AUTO,
+) -> bytes:
+    if rotation not in (0, 90, 180, 270):
+        raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
+    # 1st pass records output of the plotting commands and detects the bounding box
+    try:
+        recorder, bbox = record_plotter_output(
+            b, rotation, flip_horizontal, flip_vertical, merge_control
+        )
+    except Hpgl2Error:
+        return b""
+    # 2nd pass replays the plotting commands to plot the SVG
+    pdf_backend = PDFBackend(bbox)
+    recorder.replay(pdf_backend)
+    del recorder
+    return pdf_backend.get_bytes()
 
 
 def print_interpreter_log(interpreter: Interpreter) -> None:

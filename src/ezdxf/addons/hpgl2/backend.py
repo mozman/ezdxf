@@ -18,18 +18,6 @@ from .properties import Properties
 # positive y-axis is vertical from bottom to top
 
 
-class Anchor(enum.Enum):
-    BOTTOM_LEFT = enum.auto()
-    BOTTOM_CENTER = enum.auto()
-    BOTTOM_RIGHT = enum.auto()
-    MIDDLE_LEFT = enum.auto()
-    MIDDLE_CENTER = enum.auto()
-    MIDDLE_RIGHT = enum.auto()
-    TOP_LEFT = enum.auto()
-    TOP_CENTER = enum.auto()
-    TOP_RIGHT = enum.auto()
-
-
 class Backend(abc.ABC):
     @abc.abstractmethod
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
