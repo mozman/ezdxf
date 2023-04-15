@@ -77,21 +77,13 @@ Add-ons
 
   - (>v1.1) Native SVG exporter
 
-  - (>v1.1) Native PDF exporter? Problem: The PDF 1.7 reference has ~1300 pages, 
-    but I assume I only need a fraction of that information for a simple exporter. 
-    I can use Matplotlib for text rendering as Bèzier curves if required.  
-  
-    Existing Python packages for PDF rendering: 
-    - pycairo: binary wheels for Windows on PyPI - could handle SVG & PDF, but I 
-      don't know how much control I get from cairo. The advantage of a native 
-      exporter would be to get full control over all available features of the 
-      output format, by the disadvantage of doing ALL the work by myself.
-    - pypoppler: only source code distribution from 2013 on PyPI
-    - python-poppler-qt5: only source code distribution on PyPI
-    - Reportlab: more report or magazine page layout oriented
-    - PyQt: QPrinter & QPainter - https://wiki.qt.io/Handling_PDF
-  
-    In consideration, if the SVG exporter works well.
+  - (>v1.1) Native PDF exporter
+    PyMuPDF was easy to use for in the HPGL/2 converter backend, it's fast, active 
+    maintained and for all plattforms as binary wheel available, only the documentation 
+    could be better. Really good, apart from the terrible license: AGPL
+    - https://pymupdf.readthedocs.io/en/latest/
+    - https://github.com/pymupdf/PyMuPDF
+    - https://pypi.org/project/PyMuPDF/
   
   - (>v1.1) Support for `Layout.dxf.plot_layout_options` in export mode of 
     class `RenderContext`:

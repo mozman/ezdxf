@@ -14,6 +14,7 @@ Version 1.0.4 - dev
   final release in v1.1
 - PREVIEW: `ezdxf plt2dxf` command to convert HPGL/2 plot files to DXF, final release in v1.1
 - PREVIEW: `ezdxf plt2svg` command to convert HPGL/2 plot files to SVG, final release in v1.1
+- PREVIEW: `ezdxf plt2pdf` command to convert HPGL/2 plot files to PDF, final release in v1.1
 
 Version 1.0.3 - 2023-03-26
 --------------------------

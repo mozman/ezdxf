@@ -35,8 +35,8 @@ To use all features of the drawing add-on, add the [draw] tag::
 ======== ===================================================
 Tag      Additional Installed Packages
 ======== ===================================================
-[draw]   `Matplotlib`_, `PySide6`_, `Pillow`_
-[draw5]  `Matplotlib`_, `PyQt5`_, `Pillow`_ (use only if PySide6 is not available)
+[draw]   `Matplotlib`_, `PySide6`_, `Pillow`_, `PyMuPDF`_
+[draw5]  `Matplotlib`_, `PyQt5`_, `Pillow`_, `PyMuPDF`_ (use only if PySide6 is not available)
 [test]   geomdl, pytest
 [dev]    setuptools, wheel, Cython + [test]
 [all]    [draw] + [test] + [dev]
@@ -413,6 +413,7 @@ Proceed with the `ezdxf` installation from source as shown for the  `Raspberry P
 .. _pyqt5: https://pypi.org/project/PyQt5/
 .. _pyside6: https://pypi.org/project/PySide6/
 .. _pillow: https://pypi.org/project/Pillow/
+.. _PyMuPDF: https://pypi.org/project/PyMuPDF/
 .. _numpy: https://pypi.org/project/numpy/
 .. _pyparsing: https://pypi.org/project/pyparsing/
 .. _typing_extensions: https://pypi.org/project/typing_extensions/

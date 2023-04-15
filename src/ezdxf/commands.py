@@ -975,107 +975,59 @@ class Info(Command):
                 sys.stderr.write(f'No matching files for pattern: "{pattern}"\n')
 
 
-@register
-class Plt2Svg(Command):
-    """Launcher sub-command: plt2svg"""
-
-    NAME = "plt2svg"
-
-    @staticmethod
-    def add_parser(subparsers):
-        parser = subparsers.add_parser(
-            Plt2Svg.NAME, help="convert HPGL/2 plot files to SVG"
-        )
-        parser.add_argument(
-            "files",
-            metavar="FILE",
-            nargs="+",
-            help="convert HPGL/2 plot files to SVG",
-        )
-        parser.add_argument(
-            "-r",
-            "--rotate",
-            type=int,
-            choices=(0, 90, 180, 270),
-            default=0,
-            required=False,
-            help="rotate page about 90, 180 or 270 degrees",
-        )
-        parser.add_argument(
-            "-x",
-            "--scale_x",
-            type=float,
-            metavar="SX",
-            default = 1.0,
-            required=False,
-            help="scale page in x-axis direction, use negative values to mirror page",
-        )
-        parser.add_argument(
-            "-y",
-            "--scale_y",
-            type=float,
-            metavar="SY",
-            default = 1.0,
-            required=False,
-            help="scale page in y-axis direction, use negative values to mirror page",
-        )
-        parser.add_argument(
-            "-m",
-            "--merge_control",
-            type=int,
-            required=False,
-            default=2,
-            choices=(0, 1, 2),
-            help="provides control over the order of filled polygons, 0=off (print order), "
-            "1=luminance (order by luminance), 2=auto (default)",
-        )
-        parser.add_argument(
-            "-f",
-            "--force",
-            action="store_true",
-            required=False,
-            help="injects the mandatory 'enter HPGL/2 mode' escape sequence into the data stream",
-        )
-
-    @staticmethod
-    def run(args):
-        from ezdxf.addons.hpgl2 import api as hpgl2
-
-        def _convert(filepath: Path) -> None:
-            msg = f"converting HPGL/2 plot file to SVG: {filename}"
-            print(msg)
-            logger.info(msg)
-            try:
-                data = filepath.read_bytes()
-            except IOError as e:
-                print(str(e), file=sys.stderr)
-                return
-
-            if args.force:
-                data = b"%1B" + data
-
-            svg_string = hpgl2.to_svg(
-                data,
-                rotation=args.rotate,
-                sx = args.scale_x,
-                sy = args.scale_y,
-                merge_control=args.merge_control,
-            )
-            svg_filepath = filepath.with_suffix(".svg")
-            try:
-                svg_filepath.write_text(svg_string)
-            except IOError as e:
-                print(str(e), file=sys.stderr)
-
-        for pattern in args.files:
-            names = list(glob.glob(pattern))
-            if len(names) == 0:
-                msg = f"File(s) '{pattern}' not found."
-                print(msg)
-                logger.error(msg)
-                continue
-            for filename in names:
-                _convert(Path(filename))
+def make_plt2fmt_parser(subparsers, name, fmt):
+    parser = subparsers.add_parser(name, help=f"convert HPGL/2 plot files to {fmt}")
+    parser.add_argument(
+        "files",
+        metavar="FILE",
+        nargs="+",
+        help=f"convert HPGL/2 plot files to {fmt}",
+    )
+    parser.add_argument(
+        "-r",
+        "--rotate",
+        type=int,
+        choices=(0, 90, 180, 270),
+        default=0,
+        required=False,
+        help="rotate page about 90, 180 or 270 degrees",
+    )
+    parser.add_argument(
+        "-x",
+        "--scale_x",
+        type=float,
+        metavar="SX",
+        default=1.0,
+        required=False,
+        help="scale page in x-axis direction, use negative values to mirror page",
+    )
+    parser.add_argument(
+        "-y",
+        "--scale_y",
+        type=float,
+        metavar="SY",
+        default=1.0,
+        required=False,
+        help="scale page in y-axis direction, use negative values to mirror page",
+    )
+    parser.add_argument(
+        "-m",
+        "--merge_control",
+        type=int,
+        required=False,
+        default=2,
+        choices=(0, 1, 2),
+        help="provides control over the order of filled polygons, 0=off (print order), "
+        "1=luminance (order by luminance), 2=auto (default)",
+    )
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        required=False,
+        help="injects the mandatory 'enter HPGL/2 mode' escape sequence into the data stream",
+    )
+    return parser
 
 
 @register
@@ -1086,17 +1038,8 @@ class Plt2Dxf(Command):
 
     @staticmethod
     def add_parser(subparsers):
-        parser = subparsers.add_parser(
-            Plt2Dxf.NAME,
-            help="convert HPGL/2 plot files to DXF",
-            epilog="Note that plot files are intended for plotting on white paper.",
-        )
-        parser.add_argument(
-            "files",
-            metavar="FILE",
-            nargs="+",
-            help="convert HPGL/2 plot files to DXF",
-        )
+        parser = make_plt2fmt_parser(subparsers, Plt2Dxf.NAME, "DXF")
+        parser.epilog = "Note that plot files are intended for plotting on white paper."
         parser.add_argument(
             "--aci",
             action="store_true",
@@ -1109,50 +1052,6 @@ class Plt2Dxf(Command):
             required=False,
             help="map black RGB plot colors (and only real black (0, 0, 0)) to white RGB, "
             "does not affect ACI colors",
-        )
-        parser.add_argument(
-            "-r",
-            "--rotate",
-            type=int,
-            choices=(0, 90, 180, 270),
-            default=0,
-            required=False,
-            help="rotate page about 90, 180 or 270 degrees",
-        )
-        parser.add_argument(
-            "-x",
-            "--scale_x",
-            type=float,
-            metavar="SX",
-            default = 1.0,
-            required=False,
-            help="scale page in x-axis direction, use negative values to mirror page",
-        )
-        parser.add_argument(
-            "-y",
-            "--scale_y",
-            type=float,
-            metavar="SY",
-            default = 1.0,
-            required=False,
-            help="scale page in y-axis direction, use negative values to mirror page",
-        )
-        parser.add_argument(
-            "-m",
-            "--merge_control",
-            type=int,
-            required=False,
-            default=2,
-            choices=(0, 1, 2),
-            help="provides control over the order of filled polygons, 0=off (print order), "
-            "1=luminance (order by luminance), 2=auto (default)",
-        )
-        parser.add_argument(
-            "-f",
-            "--force",
-            action="store_true",
-            required=False,
-            help="injects the mandatory 'enter HPGL/2 mode' escape sequence into the data stream",
         )
 
     @staticmethod
@@ -1175,8 +1074,8 @@ class Plt2Dxf(Command):
             doc = hpgl2.to_dxf(
                 data,
                 rotation=args.rotate,
-                sx = args.scale_x,
-                sy = args.scale_y,
+                sx=args.scale_x,
+                sy=args.scale_y,
                 color_mode=color_mode,
                 map_black_rgb_to_white_rgb=args.map_black_to_white,
                 merge_control=args.merge_control,
@@ -1192,6 +1091,108 @@ class Plt2Dxf(Command):
             if len(names) == 0:
                 msg = f"File(s) '{pattern}' not found."
                 print(msg, file=sys.stderr)
+                logger.error(msg)
+                continue
+            for filename in names:
+                _convert(Path(filename))
+
+
+@register
+class Plt2Svg(Command):
+    """Launcher sub-command: plt2svg"""
+
+    NAME = "plt2svg"
+
+    @staticmethod
+    def add_parser(subparsers):
+        make_plt2fmt_parser(subparsers, Plt2Svg.NAME, "SVG")
+
+    @staticmethod
+    def run(args):
+        from ezdxf.addons.hpgl2 import api as hpgl2
+
+        def _convert(filepath: Path) -> None:
+            msg = f"converting HPGL/2 plot file to SVG: {filename}"
+            print(msg)
+            logger.info(msg)
+            try:
+                data = filepath.read_bytes()
+            except IOError as e:
+                print(str(e), file=sys.stderr)
+                return
+
+            if args.force:
+                data = b"%1B" + data
+
+            svg_string = hpgl2.to_svg(
+                data,
+                rotation=args.rotate,
+                sx=args.scale_x,
+                sy=args.scale_y,
+                merge_control=args.merge_control,
+            )
+            svg_filepath = filepath.with_suffix(".svg")
+            try:
+                svg_filepath.write_text(svg_string)
+            except IOError as e:
+                print(str(e), file=sys.stderr)
+
+        for pattern in args.files:
+            names = list(glob.glob(pattern))
+            if len(names) == 0:
+                msg = f"File(s) '{pattern}' not found."
+                print(msg)
+                logger.error(msg)
+                continue
+            for filename in names:
+                _convert(Path(filename))
+
+
+@register
+class Plt2Pdf(Command):
+    """Launcher sub-command: plt2pdf"""
+
+    NAME = "plt2pdf"
+
+    @staticmethod
+    def add_parser(subparsers):
+        make_plt2fmt_parser(subparsers, Plt2Pdf.NAME, "PDF")
+
+    @staticmethod
+    def run(args):
+        from ezdxf.addons.hpgl2 import api as hpgl2
+
+        def _convert(filepath: Path) -> None:
+            msg = f"converting HPGL/2 plot file to PDF: {filename}"
+            print(msg)
+            logger.info(msg)
+            try:
+                data = filepath.read_bytes()
+            except IOError as e:
+                print(str(e), file=sys.stderr)
+                return
+
+            if args.force:
+                data = b"%1B" + data
+
+            pdf_bytes = hpgl2.to_pdf(
+                data,
+                rotation=args.rotate,
+                sx=args.scale_x,
+                sy=args.scale_y,
+                merge_control=args.merge_control,
+            )
+            pdf_filepath = filepath.with_suffix(".pdf")
+            try:
+                pdf_filepath.write_bytes(pdf_bytes)
+            except IOError as e:
+                print(str(e), file=sys.stderr)
+
+        for pattern in args.files:
+            names = list(glob.glob(pattern))
+            if len(names) == 0:
+                msg = f"File(s) '{pattern}' not found."
+                print(msg)
                 logger.error(msg)
                 continue
             for filename in names:
