@@ -156,6 +156,17 @@ class Interpreter:
             status = to_int(args[0], status)
             self.plotter.set_merge_control(bool(status))
 
+    def cmd_ps(self, args: list[bytes]):
+        length = 1189  # A0
+        height = 841
+        count = len(args)
+        if count:
+            length = to_int(args[0], length)
+            height = int(length * 1.5)
+        if count > 1:
+            height = to_int(args[1], height)
+        self.plotter.setup_page(length, height)
+
     # pen movement:
     def cmd_pd(self, args: list[bytes]):
         """Lower pen down and plot lines."""
