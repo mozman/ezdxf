@@ -38,11 +38,9 @@ class MyBackend(Backend):
     def draw_polyline(self, properties, points) -> None:
         self.result.append(["Polyline", points])
 
-    def draw_filled_polygon_buffer(self, properties, paths) -> None:
+    def draw_filled_polygon(self, properties, paths) -> None:
         self.result.append(["FilledPolygon", paths])
 
-    def draw_outline_polygon_buffer(self, properties, paths) -> None:
-        self.result.append(["OutlinePolygon", paths])
 
 
 def plot(s: bytes):

@@ -62,7 +62,7 @@ class DXFBackend(Backend):
         else:
             self.layout.add_point(points[0], dxfattribs=attribs)
 
-    def draw_filled_polygon_buffer(
+    def draw_filled_polygon(
         self, properties: Properties, paths: Sequence[Path]
     ) -> None:
         attribs = self.make_dxf_attribs(properties)
@@ -80,16 +80,6 @@ class DXFBackend(Backend):
             if rgb is RGB_NONE:
                 rgb = None
             hatch.set_solid_fill(color=attribs.color, style=0, rgb=rgb)
-
-    def draw_outline_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path]
-    ) -> None:
-        attribs = self.make_dxf_attribs(properties)
-        # max sagitta distance of 10 plu = 0.25 mm
-        for lwpolyline in ezdxf.path.to_lwpolylines(
-            paths, distance=10, dxfattribs=attribs
-        ):
-            self.layout.add_entity(lwpolyline)
 
     def make_dxf_attribs(self, properties: Properties):
         aci = properties.pen_index

@@ -27,12 +27,7 @@ class PolygonBuffer(Backend):
         for p in points[index + 1 :]:
             self.path.line_to(p)
 
-    def draw_filled_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path]
-    ) -> None:
-        raise NotImplementedError()
-
-    def draw_outline_polygon_buffer(
+    def draw_filled_polygon(
         self, properties: Properties, paths: Sequence[Path]
     ) -> None:
         raise NotImplementedError()

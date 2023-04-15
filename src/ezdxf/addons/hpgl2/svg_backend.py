@@ -48,22 +48,7 @@ class SVGBackend(Backend):
         if s:
             path.set("stroke", s)
 
-    def draw_outline_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path]
-    ) -> None:
-        outlines = []
-        for p in paths:
-            points = self.adjust_points(p.flattening(distance=10))
-            s = make_path_str(points, close=True)
-            if s:
-                outlines.append(s)
-        polygon = ET.SubElement(self.polylines, "path", d=" ".join(outlines))
-        polygon.set("stroke-width", str(round(properties.pen_width * 40)))
-        s = make_rgb(properties.pen_color)
-        if s:
-            polygon.set("stroke", s)
-
-    def draw_filled_polygon_buffer(
+    def draw_filled_polygon(
         self, properties: Properties, paths: Sequence[Path]
     ) -> None:
         polygons = []

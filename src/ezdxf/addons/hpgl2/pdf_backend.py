@@ -55,7 +55,7 @@ class PDFBackend(Backend):
         )
         shape.commit()
 
-    def draw_filled_polygon_buffer(
+    def draw_filled_polygon(
         self, properties: Properties, paths: Sequence[Path]
     ) -> None:
         # input coordinates are page coordinates
@@ -72,12 +72,6 @@ class PDFBackend(Backend):
             fill=properties.pen_color.to_floats(),
         )
         shape.commit()
-
-    def draw_outline_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path]
-    ) -> None:
-        # input coordinates are page coordinates
-        ...
 
     def get_bytes(self) -> bytes:
         return self.doc.tobytes()

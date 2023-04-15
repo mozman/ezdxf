@@ -26,14 +26,7 @@ class Backend(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def draw_filled_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path]
-    ) -> None:
-        # input coordinates are page coordinates
-        ...
-
-    @abc.abstractmethod
-    def draw_outline_polygon_buffer(
+    def draw_filled_polygon(
         self, properties: Properties, paths: Sequence[Path]
     ) -> None:
         # input coordinates are page coordinates
@@ -43,7 +36,6 @@ class Backend(abc.ABC):
 class RecordType(enum.Enum):
     POLYLINE = enum.auto()
     FILLED_POLYGON = enum.auto()
-    OUTLINE_POLYGON = enum.auto()
 
 
 class DataRecord(NamedTuple):
@@ -60,15 +52,10 @@ class Recorder(Backend):
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
         self.store(RecordType.POLYLINE, properties, tuple(points))
 
-    def draw_filled_polygon_buffer(
+    def draw_filled_polygon(
         self, properties: Properties, paths: Sequence[Path]
     ) -> None:
         self.store(RecordType.FILLED_POLYGON, properties, tuple(paths))
-
-    def draw_outline_polygon_buffer(
-        self, properties: Properties, paths: Sequence[Path]
-    ) -> None:
-        self.store(RecordType.OUTLINE_POLYGON, properties, tuple(paths))
 
     def store(self, record_type: RecordType, properties: Properties, args) -> None:
         prop_hash = properties.hash()
@@ -81,8 +68,7 @@ class Recorder(Backend):
         props = self.properties
         draw = {
             RecordType.POLYLINE: backend.draw_polyline,
-            RecordType.FILLED_POLYGON: backend.draw_filled_polygon_buffer,
-            RecordType.OUTLINE_POLYGON: backend.draw_outline_polygon_buffer,
+            RecordType.FILLED_POLYGON: backend.draw_filled_polygon,
         }
         for record in self.records:
             current_props = props.get(record.property_hash, current_props)

@@ -258,12 +258,16 @@ class Plotter:
     def plot_filled_polygon_buffer(self, paths: Sequence[Path]):
         self.update_bbox(path_bbox(paths, fast=True))
         # input coordinates are page coordinates!
-        self.backend.draw_filled_polygon_buffer(self.properties, paths)
+        self.backend.draw_filled_polygon(self.properties, paths)
 
     def plot_outline_polygon_buffer(self, paths: Sequence[Path]):
         self.update_bbox(path_bbox(paths, fast=True))
         # input coordinates are page coordinates!
-        self.backend.draw_outline_polygon_buffer(self.properties, paths)
+        for path in paths:
+            path.close_sub_path()
+            self.backend.draw_polyline(
+                self.properties, Vec2.list(path.flattening(distance=10))
+            )
 
 
 def rel_to_abs_points_dynamic(current: Vec2, points: Sequence[Vec2]) -> Iterator[Vec2]:
