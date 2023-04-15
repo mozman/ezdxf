@@ -2,8 +2,8 @@
 News
 ====
 
-Version 1.0.4 - dev
--------------------
+Version 1.0.4b1 - dev
+---------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
 - NEW: added setter to `BlockLayout.base_point` property
