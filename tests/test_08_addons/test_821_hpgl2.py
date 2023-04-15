@@ -9,13 +9,16 @@ from ezdxf.addons.hpgl2.backend import Backend, placement_matrix
 from ezdxf.addons.hpgl2.deps import Vec2
 from ezdxf.addons.hpgl2.page import Page
 
+
 def hpgl2(s: bytes):
     return b"%1B" + s
+
 
 def test_parse_hpgl_commands():
     s = b"%-1BBP;IN;DF;LA1,4,2,6;FT1;PS38812,33987;IP0,0,38812,33987;PU;PA0,0;PUSP0PG;"
     commands = api.hpgl2_commands(s)
     assert len(commands) == 12
+
 
 def test_skip_all_pcl5_commands():
     s = b"%0Axxxxx%1Ayyyy%-1BBPIN%-1Aescape***%1BDF"
@@ -25,11 +28,14 @@ def test_skip_all_pcl5_commands():
     assert commands[1].name == "IN"
     assert commands[2].name == "DF"
 
+
 def debug():
     from pathlib import Path
+
     s = Path(r"C:\Users\mozman\Desktop\Outbox\W2 - 6002.plt").read_bytes()
     commands = api.hpgl2_commands(s)
     assert len(commands) == 0
+
 
 class MyBackend(Backend):
     def __init__(self):
@@ -40,7 +46,6 @@ class MyBackend(Backend):
 
     def draw_filled_polygon(self, properties, paths) -> None:
         self.result.append(["FilledPolygon", paths])
-
 
 
 def plot(s: bytes):
@@ -252,6 +257,38 @@ class TestTokenizer:
         # Ecape sequence to enter HPGL2 mode is missing:  "%1B"
         assert len(self.parse(b"ANYTEXT;IN;BP;")) == 0
 
+    @pytest.mark.parametrize("b", [
+        b"LB MY label PA381,0SI0.125,0.25DI0,1;",
+        b"LBMY label PA381,0SI0.125,0.25DI0,1;"
+    ])
+    def test_label_with_terminator(self, b):
+        commands = self.parse(hpgl2(b))
+        assert len(commands) == 4
+
+    @pytest.mark.parametrize(
+        "b",
+        [
+            b"DT\04LB Tue Dec 18 16:20:05 2001 \04PA381,0SI0.125,0.25DI0,1;",
+            b"DT\04,0LB Tue Dec 18 16:20:05 2001 \04PA381,0SI0.125,0.25DI0,1;",
+            b"DT\04,1;LB Tue Dec 18 16:20:05 2001 \04PA381,0SI0.125,0.25DI0,1;",
+        ],
+    )
+    def test_label_with_custom_terminator(self, b):
+        commands = self.parse(hpgl2(b))
+        assert len(commands) == 4
+
+    @pytest.mark.parametrize(
+        "b",
+        [
+            b"DT\04LB MY label\04DTLB My other label ",
+            b"DT\04LB MY label\04DT;LB My other label ",
+        ],
+    )
+    def test_reset_custom_terminator(self, b):
+        commands = self.parse(hpgl2(b))
+        assert len(commands) == 2
+
+
 class TestPageCoordinates:
     @pytest.fixture(scope="class")
     def page(self):
@@ -266,6 +303,7 @@ class TestPageCoordinates:
     def test_user_vector_to_page_vector(self, page):
         assert page.page_vector(0, 0).isclose((0, 0))
         assert page.page_vector(10, 10).isclose((20, 30))
+
 
 class TestPageAnisotropicScaling:
     def test_isotropic_scaling(self):
@@ -295,6 +333,7 @@ class TestPageAnisotropicScaling:
         assert page.page_point(0, 0).isclose((150, 150))
         assert page.page_point(10, 20).isclose((100, 100))
         assert page.page_point(-10, -20).isclose((200, 200))
+
 
 class TestPageIsotropicScaling:
     def test_isotropic_bottom_window_50(self):
@@ -346,6 +385,7 @@ class TestPageIsotropicScaling:
         assert page.page_point(5, 10).isclose((175, 150))
         assert page.page_point(10, 20).isclose((200, 200))
 
+
 def test_arc_angles():
     from ezdxf.addons.hpgl2.plotter import arc_angles
 
@@ -368,8 +408,8 @@ def test_sweeping_angle():
     assert sweeping_angle(30, 0, 330) == -60
     assert sweeping_angle(30, 180, 330) == 300
 
-class TestPlacementMatrix:
 
+class TestPlacementMatrix:
     def test_shift_to_origin_Q1(self):
         bbox = BoundingBox2d([(10, 10), (20, 20)])
         m = placement_matrix(bbox)
@@ -388,6 +428,7 @@ class TestPlacementMatrix:
         m = placement_matrix(bbox, rotation=90)
         assert m.transform((10, 10)).isclose((30, 0))
         assert m.transform((20, 40)).isclose((0, 10))
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

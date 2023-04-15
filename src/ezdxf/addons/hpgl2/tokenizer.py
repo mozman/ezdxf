@@ -19,6 +19,7 @@ CHAR_B = ord("B")
 CHAR_Z = ord("Z")
 CHAR_P = ord("P")
 CHAR_E = ord("E")
+DEFAULT_TEXT_TERMINATOR = 3
 
 # Enter HPGL/2 mode commands
 # b"%-0B",  # ??? not documented (assumption)
@@ -29,6 +30,7 @@ CHAR_E = ord("E")
 # b"%1B",  # documented
 # b"%2B",  # documented
 # b"%3B",  # documented
+
 
 def get_enter_hpgl2_mode_command_length(s: bytes, i: int) -> int:
     try:
@@ -46,6 +48,7 @@ def get_enter_hpgl2_mode_command_length(s: bytes, i: int) -> int:
     except IndexError:
         pass
     return 0
+
 
 def skip_to_hpgl2(s: bytes, start: int) -> int:
     while True:
@@ -78,7 +81,20 @@ def hpgl2_commands(s: bytes) -> list[Command]:
             i += 1
         return i
 
+    def find_text_terminator(i: int):
+        while i < length:
+            if s[i] == text_terminator:
+                return i + 1
+            i += 1
+
     def append_command(b: bytes):
+        if b[:2] == b"DT":
+            nonlocal text_terminator
+            if len(b) > 2:
+                text_terminator = b[2]
+            else:
+                text_terminator = DEFAULT_TEXT_TERMINATOR
+            return
         commands.append(make_command(b))
 
     def make_command_until(mark: int) -> int:
@@ -89,7 +105,7 @@ def hpgl2_commands(s: bytes) -> list[Command]:
         return i + 1
 
     commands: list[Command] = []
-
+    text_terminator = DEFAULT_TEXT_TERMINATOR
     length = len(s)
     index = skip_to_hpgl2(s, 0)
     while index < length:
@@ -104,14 +120,16 @@ def hpgl2_commands(s: bytes) -> list[Command]:
             index += 1
             continue
 
-        if s[start] == CHAR_P and s[start + 1] == CHAR_E:
-            index = make_command_until(SEMICOLON)
-            continue
-
         index_plus_2 = index + 2
         if index_plus_2 >= length:
             append_command(s[index:])
             break
+
+        command = s[start:index_plus_2]
+
+        if command == b"PE":
+            index = make_command_until(SEMICOLON)
+            continue
 
         third_char = s[index_plus_2]
         if third_char == SEMICOLON:
@@ -119,12 +137,15 @@ def hpgl2_commands(s: bytes) -> list[Command]:
             index += 3
             continue
 
-        if is_letter(third_char):
+        if command == b"LB":
+            index = find_text_terminator(index_plus_2)
+        elif is_letter(third_char):
             append_command(s[index:index_plus_2])
             index = index_plus_2
             continue
+        else:
+            index = find_terminator(index_plus_2)
 
-        index = find_terminator(index_plus_2)
         append_command(s[start:index])
         if index < length and s[index] == SEMICOLON:
             index += 1

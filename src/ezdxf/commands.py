@@ -981,7 +981,7 @@ def make_plt2fmt_parser(subparsers, name, fmt):
         "files",
         metavar="FILE",
         nargs="+",
-        help=f"convert HPGL/2 plot files to {fmt}",
+        help=f"convert HPGL/2 plot files to {fmt}, wildcards (*, ?) supported",
     )
     parser.add_argument(
         "-r",
@@ -1025,7 +1025,9 @@ def make_plt2fmt_parser(subparsers, name, fmt):
         "--force",
         action="store_true",
         required=False,
-        help="injects the mandatory 'enter HPGL/2 mode' escape sequence into the data stream",
+        help="injects the mandatory 'enter HPGL/2 mode' escape sequence into the data "
+             "stream; use this flag when no HPGL/2 data was found and you are sure the "
+             "file is a HPGL/2 plot file",
     )
     return parser
 
