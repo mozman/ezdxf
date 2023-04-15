@@ -14,6 +14,9 @@ The command line script `ezdxf` launches various sub-commands:
 ``strip``       Strip comments and THUMBNAILIMAGE section from DXF files
 ``config``      Manage config files
 ``info``        Show information and optional stats of DXF files as loaded by ezdxf
+``plt2dxf``     Convert HPGL/2 plot files to DXF
+``plt2svg``     Convert HPGL/2 plot files to SVG
+``plt2pdf``     Convert HPGL/2 plot files to PDF
 =============== ====================================================================
 
 The help option ``-h`` is supported by the main script and all sub-commands:
@@ -667,3 +670,88 @@ Show the *ezdxf* version and configuration:
 
     Documentation of the :mod:`ezdxf.options` module and the
     :ref:`environment_variables`.
+
+plt2dxf
+-------
+
+.. code-block:: Text
+
+    C:\> ezdxf plt2dxf -h
+    usage: ezdxf plt2dxf [-h] [-r {0,90,180,270}] [-x SX] [-y SY] [-m {0,1,2}] [-f] [--aci]
+                         [--map_black_to_white]
+                         FILE [FILE ...]
+
+    positional arguments:
+      FILE                  convert HPGL/2 plot files to DXF, wildcards (*, ?) supported
+
+    options:
+      -h, --help            show this help message and exit
+      -r {0,90,180,270}, --rotate {0,90,180,270}
+                            rotate page about 90, 180 or 270 degrees
+      -x SX, --scale_x SX   scale page in x-axis direction, use negative values to mirror page
+      -y SY, --scale_y SY   scale page in y-axis direction, use negative values to mirror page
+      -m {0,1,2}, --merge_control {0,1,2}
+                            provides control over the order of filled polygons, 0=off (print
+                            order), 1=luminance (order by luminance), 2=auto (default)
+      -f, --force           injects the mandatory 'enter HPGL/2 mode' escape sequence into the
+                            data stream; use this flag when no HPGL/2 data was found and you are
+                            sure the file is a HPGL/2 plot file
+      --aci                 use pen numbers as ACI colors
+      --map_black_to_white  map black RGB plot colors (and only real black (0, 0, 0)) to white
+                            RGB, does not affect ACI colors
+
+    Note that plot files are intended for plotting on white paper.
+
+plt2svg
+-------
+
+.. code-block:: Text
+
+    C:\> ezdxf plt2svg -h
+    usage: ezdxf plt2svg [-h] [-r {0,90,180,270}] [-x SX] [-y SY] [-m {0,1,2}] [-f]
+                         FILE [FILE ...]
+
+    positional arguments:
+      FILE                  convert HPGL/2 plot files to SVG, wildcards (*, ?) supported
+
+    options:
+      -h, --help            show this help message and exit
+      -r {0,90,180,270}, --rotate {0,90,180,270}
+                            rotate page about 90, 180 or 270 degrees
+      -x SX, --scale_x SX   scale page in x-axis direction, use negative values to mirror page
+      -y SY, --scale_y SY   scale page in y-axis direction, use negative values to mirror page
+      -m {0,1,2}, --merge_control {0,1,2}
+                            provides control over the order of filled polygons, 0=off (print
+                            order), 1=luminance (order by luminance), 2=auto (default)
+      -f, --force           injects the mandatory 'enter HPGL/2 mode' escape sequence into the
+                            data stream; use this flag when no HPGL/2 data was found and you are
+                            sure the file is a HPGL/2 plot file
+
+plt2pdf
+-------
+
+This command requires the Python package `PyMuPDF`_.
+
+.. code-block:: Text
+
+    C:\> ezdxf plt2pdf -h
+    usage: ezdxf plt2pdf [-h] [-r {0,90,180,270}] [-x SX] [-y SY] [-m {0,1,2}] [-f]
+                         FILE [FILE ...]
+
+    positional arguments:
+      FILE                  convert HPGL/2 plot files to PDF, wildcards (*, ?) supported
+
+    options:
+      -h, --help            show this help message and exit
+      -r {0,90,180,270}, --rotate {0,90,180,270}
+                            rotate page about 90, 180 or 270 degrees
+      -x SX, --scale_x SX   scale page in x-axis direction, use negative values to mirror page
+      -y SY, --scale_y SY   scale page in y-axis direction, use negative values to mirror page
+      -m {0,1,2}, --merge_control {0,1,2}
+                            provides control over the order of filled polygons, 0=off (print
+                            order), 1=luminance (order by luminance), 2=auto (default)
+      -f, --force           injects the mandatory 'enter HPGL/2 mode' escape sequence into the
+                            data stream; use this flag when no HPGL/2 data was found and you are
+                            sure the file is a HPGL/2 plot file
+
+.. _PyMuPDF: https://pypi.org/project/PyMuPDF/

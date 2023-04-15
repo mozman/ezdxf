@@ -2,10 +2,18 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import Sequence
-import fitz
+
+pdf_is_supported = True
+try:
+    import fitz
+except ImportError:
+    print("Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/")
+    fitz = None
+    pdf_is_supported = False
+
 from ezdxf.version import __version__
 from .deps import Vec2, Path, BoundingBox2d
-from .properties import Properties, RGB
+from .properties import Properties
 from .backend import Backend
 
 # Page coordinates are always plot units:
@@ -24,11 +32,16 @@ MM2PU = 72.0 / 25.4  # 1 inch = 25.4 mm
 class PDFBackend(Backend):
     def __init__(self, bbox: BoundingBox2d) -> None:
         assert bbox.has_data is True, "extents of page are required"
+        assert (
+            pdf_is_supported
+        ), "Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/"
         self.doc = fitz.open()
-        self.doc.set_metadata({
-            "producer": f"PyMuPDF {fitz.version[0]}",
-            "creator": f"ezdxf {__version__}",
-        })
+        self.doc.set_metadata(
+            {
+                "producer": f"PyMuPDF {fitz.version[0]}",
+                "creator": f"ezdxf {__version__}",
+            }
+        )
         self.max_y = bbox.extmax.y  # type: ignore
         size = bbox.size
         self.page = self.doc.new_page(-1, int(size.x * PLU2PU), int(size.y * PLU2PU))

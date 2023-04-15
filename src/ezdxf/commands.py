@@ -1026,8 +1026,8 @@ def make_plt2fmt_parser(subparsers, name, fmt):
         action="store_true",
         required=False,
         help="injects the mandatory 'enter HPGL/2 mode' escape sequence into the data "
-             "stream; use this flag when no HPGL/2 data was found and you are sure the "
-             "file is a HPGL/2 plot file",
+        "stream; use this flag when no HPGL/2 data was found and you are sure the "
+        "file is a HPGL/2 plot file",
     )
     return parser
 

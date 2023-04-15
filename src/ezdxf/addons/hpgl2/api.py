@@ -4,8 +4,7 @@ from __future__ import annotations
 import enum
 import ezdxf
 from ezdxf.document import Drawing
-from ezdxf import zoom, transform
-from ezdxf.math import Matrix44, BoundingBox, BoundingBox2d
+from ezdxf import zoom
 
 from .tokenizer import hpgl2_commands
 from .plotter import Plotter
@@ -13,8 +12,8 @@ from .interpreter import Interpreter
 from .backend import Recorder, placement_matrix
 from .dxf_backend import DXFBackend, ColorMode
 from .svg_backend import SVGBackend
-from .pdf_backend import PDFBackend
-from .compiler import build
+from .pdf_backend import PDFBackend, pdf_is_supported
+
 
 DEBUG = False
 
@@ -121,6 +120,10 @@ def to_pdf(
     sy: float = 1.0,
     merge_control=MergeControl.AUTO,
 ) -> bytes:
+    if not pdf_is_supported:
+        print("Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/")
+        return b""
+
     if rotation not in (0, 90, 180, 270):
         raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
     # 1st pass records output of the plotting commands and detects the bounding box
