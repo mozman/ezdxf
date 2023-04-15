@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Sequence, Iterator, Iterable
+from typing import Sequence, Iterator
 import math
 
 from .deps import (
@@ -9,14 +9,12 @@ from .deps import (
     Path,
     NULLVEC2,
     ConstructionCircle,
-    BoundingBox2d,
-    path_bbox,
     Bezier4P,
 )
 from .properties import RGB, Properties
 from .backend import Backend
 from .polygon_buffer import PolygonBuffer
-from .page import Page, get_page_size
+from .page import Page
 
 
 class Plotter:
@@ -32,7 +30,6 @@ class Plotter:
         self.has_merge_control = False
         self._user_location = NULLVEC2
         self._pen_state_stack: list[bool] = []
-        self.bbox = BoundingBox2d()
 
     @property
     def user_location(self) -> Vec2:
@@ -132,9 +129,6 @@ class Plotter:
             spacing = max(self.page.scale_length(spacing))
         self.properties.set_fill_type(fill_type, spacing, angle)
 
-    def update_bbox(self, points: Iterable[Vec2]) -> None:
-        self.bbox.extend(points)
-
     def enter_polygon_mode(self, status: int) -> None:
         self.is_polygon_mode = True
         self.backend = self._polygon_buffer
@@ -172,7 +166,6 @@ class Plotter:
         if self.is_pen_down:
             # convert to page coordinates:
             points = self.page.page_points(points)
-            self.update_bbox(points)
             # insert current page location as starting point:
             points.insert(0, current_page_location)
             # draw polyline in absolute page coordinates:
@@ -241,7 +234,6 @@ class Plotter:
             # convert to page coordinates:
             ctrl1, ctrl2, end = self.page.page_points((ctrl1, ctrl2, end))
             # draw cubic bezier curve in absolute page coordinates:
-            self.update_bbox((ctrl1, ctrl2, end))
             curve = Bezier4P([current_page_location, ctrl1, ctrl2, end])
             # distance of 10 plu is 0.25 mm
             self.backend.draw_polyline(
@@ -256,12 +248,10 @@ class Plotter:
         self.plot_abs_cubic_bezier(ctrl1, ctrl2, end)
 
     def plot_filled_polygon_buffer(self, paths: Sequence[Path]):
-        self.update_bbox(path_bbox(paths, fast=True))
         # input coordinates are page coordinates!
         self.backend.draw_filled_polygon(self.properties, paths)
 
     def plot_outline_polygon_buffer(self, paths: Sequence[Path]):
-        self.update_bbox(path_bbox(paths, fast=True))
         # input coordinates are page coordinates!
         for path in paths:
             path.close_sub_path()

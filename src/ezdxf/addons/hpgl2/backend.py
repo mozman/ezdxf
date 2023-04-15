@@ -6,7 +6,7 @@ import abc
 import enum
 import math
 
-from .deps import Vec2, Path, luminance, Matrix44, transform_paths, BoundingBox2d
+from .deps import Vec2, Path, luminance, Matrix44, transform_paths, BoundingBox2d, path_bbox
 from .properties import Properties
 
 # Page coordinates are always plot units:
@@ -41,13 +41,26 @@ class RecordType(enum.Enum):
 class DataRecord(NamedTuple):
     type: RecordType
     property_hash: int
-    args: Any
+    data: Any
 
 
 class Recorder(Backend):
     def __init__(self) -> None:
         self.records: list[DataRecord] = []
         self.properties: dict[int, Properties] = {}
+        self._bbox = BoundingBox2d()
+
+    def bbox(self) -> BoundingBox2d:
+        if not self._bbox.has_data:
+            self.update_bbox()
+        return self._bbox
+
+    def update_bbox(self):
+        for record in self.records:
+            if record.type == RecordType.FILLED_POLYGON:
+                self._bbox.extend(path_bbox(record.data, fast=True))
+            else:
+                self._bbox.extend(record.data)
 
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
         self.store(RecordType.POLYLINE, properties, tuple(points))
@@ -72,16 +85,16 @@ class Recorder(Backend):
         }
         for record in self.records:
             current_props = props.get(record.property_hash, current_props)
-            draw[record.type](current_props, record.args)  # type: ignore
+            draw[record.type](current_props, record.data)  # type: ignore
 
     def transform(self, m: Matrix44) -> None:
         records: list[DataRecord] = []
         for record in self.records:
             if record.type == RecordType.POLYLINE:
-                vertices = Vec2.list(m.transform_vertices(record.args))
+                vertices = Vec2.list(m.transform_vertices(record.data))
                 records.append(DataRecord(record.type, record.property_hash, vertices))
             else:
-                paths = transform_paths(record.args, m)
+                paths = transform_paths(record.data, m)
                 records.append(DataRecord(record.type, record.property_hash, paths))
         self.records = records
 

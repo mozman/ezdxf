@@ -8,7 +8,7 @@
 from __future__ import annotations
 from typing import Sequence
 import math
-from .deps import Vec2, PAGE_SIZES, NULLVEC2
+from .deps import Vec2, NULLVEC2
 
 INCH_TO_PLU = 1016
 MM_TO_PLU = 40
@@ -132,18 +132,3 @@ class Page:
     def scale_length(self, length: float) -> tuple[float, float]:
         """Scale a length in user units to plotter units, scaling can be non-uniform."""
         return length * self.user_scale_x, length * self.user_scale_y
-
-
-def get_page_size(name: str, landscape=True) -> tuple[int, int]:
-    """Returns the page size in plot units (plu)."""
-    units, size_x, size_y = PAGE_SIZES.get(name, PAGE_SIZES["ISO A0"])
-    if units == "mm":
-        size_x *= MM_TO_PLU
-        size_y *= MM_TO_PLU
-    elif units == "inch":
-        size_x *= INCH_TO_PLU
-        size_y *= INCH_TO_PLU
-    if landscape:
-        return int(size_x), int(size_y)
-    else:
-        return int(size_y), int(size_x)

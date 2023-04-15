@@ -178,14 +178,15 @@ def record_plotter_output(
     interpreter.run(commands)
     if DEBUG:
         print_interpreter_log(interpreter)
-    if not plotter.bbox.has_data:
+    bbox = recorder.bbox()
+    if not bbox.has_data:
         raise EmptyDrawing
 
     sx = -1.0 if flip_horizontal else 1.0
     sy = -1.0 if flip_vertical else 1.0
-    m = placement_matrix(plotter.bbox, sx, sy, rotation)
+    m = placement_matrix(bbox, sx, sy, rotation)
     recorder.transform(m)
-    bbox = BoundingBox2d(m.transform_vertices(plotter.bbox.rect_vertices()))
+    bbox = BoundingBox2d(m.transform_vertices(bbox.rect_vertices()))
 
     if merge_control == MergeControl.AUTO:
         if plotter.has_merge_control:
