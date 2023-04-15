@@ -96,6 +96,8 @@ class Recorder(Backend):
             else:
                 paths = transform_paths(record.data, m)
                 records.append(DataRecord(record.type, record.property_hash, paths))
+        if self._bbox.has_data:
+            self._bbox = BoundingBox2d(m.transform_vertices(self._bbox.rect_vertices()))
         self.records = records
 
     def sort_filled_polygons(self, reverse=True) -> None:
@@ -123,6 +125,10 @@ def placement_matrix(
     """Returns a matrix to place the bbox in the first quadrant of the coordinate
     system (+x, +y).
     """
+    if abs(sx) < 1e-9:
+        sx = 1.0
+    if abs(sy) < 1e-9:
+        sy = 1.0
     m = Matrix44.scale(sx, sy, 1.0)
     if rotation:
         m @= Matrix44.z_rotate(math.radians(rotation))

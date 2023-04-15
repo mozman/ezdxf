@@ -39,11 +39,10 @@ class MergeControl(enum.IntEnum):
 
 def to_dxf(
     b: bytes,
-    scale: float = 1.0,
     *,
     rotation: int = 0,
-    flip_horizontal=False,
-    flip_vertical=False,
+    sx=1.0,
+    sy=1.0,
     color_mode=ColorMode.RGB,
     map_black_rgb_to_white_rgb=False,
     merge_control: MergeControl = MergeControl.AUTO,
@@ -54,9 +53,7 @@ def to_dxf(
     # 1st pass records output of the plotting commands and detects the bounding box
     doc = ezdxf.new()
     try:
-        recorder, bbox = record_plotter_output(
-            b, rotation, flip_horizontal, flip_vertical, merge_control
-        )
+        recorder = record_plotter_output(b, rotation, sx, sy, merge_control)
     except Hpgl2Error:
         return doc
 
@@ -68,29 +65,18 @@ def to_dxf(
     )
     # 2nd pass replays the plotting commands to plot the DXF
     recorder.replay(dxf_backend)
+    bbox = recorder.bbox()
     del recorder
 
     if bbox.has_data:  # non-empty page
-        bbox = _scale_and_zoom(msp, scale, bbox)
-        _reset_doc(doc, bbox)
+        zoom.window(msp, bbox.extmin, bbox.extmax)
+        _update_doc(doc, bbox)
     return doc
 
 
-def _scale_and_zoom(layout, scale, bbox):
-    extmin = bbox.extmin
-    extmax = bbox.extmax
-    if scale != 1.0 and scale > 1e-9:
-        m = Matrix44.scale(scale, scale, scale)
-        transform.inplace(layout, m)
-        extmin = m.transform(extmin)
-        extmax = m.transform(extmax)
-    zoom.window(layout, extmin, extmax)
-    return BoundingBox([extmin, extmax])
-
-
-def _reset_doc(doc, bbox):
-    doc.header["$EXTMIN"] = bbox.extmin
-    doc.header["$EXTMAX"] = bbox.extmax
+def _update_doc(doc, bbox):
+    doc.header["$EXTMIN"] = (bbox.extmin.x, bbox.extmin.y, 0)
+    doc.header["$EXTMAX"] = (bbox.extmax.x, bbox.extmax.y, 0)
 
     psp_size = bbox.size / 40.0  # plu to mm
     psp_center = psp_size * 0.5
@@ -108,44 +94,42 @@ def to_svg(
     b: bytes,
     *,
     rotation: int = 0,
-    flip_horizontal=False,
-    flip_vertical=False,
+    sx: float = 1.0,
+    sy: float = 1.0,
     merge_control=MergeControl.AUTO,
 ) -> str:
     if rotation not in (0, 90, 180, 270):
         raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
     # 1st pass records output of the plotting commands and detects the bounding box
     try:
-        recorder, bbox = record_plotter_output(
-            b, rotation, flip_horizontal, flip_vertical, merge_control
-        )
+        recorder = record_plotter_output(b, rotation, sx, sy, merge_control)
     except Hpgl2Error:
         return ""
+
     # 2nd pass replays the plotting commands to plot the SVG
-    svg_backend = SVGBackend(bbox)
+    svg_backend = SVGBackend(recorder.bbox())
     recorder.replay(svg_backend)
     del recorder
     return svg_backend.get_string()
+
 
 def to_pdf(
     b: bytes,
     *,
     rotation: int = 0,
-    flip_horizontal=False,
-    flip_vertical=False,
+    sx: float = 1.0,
+    sy: float = 1.0,
     merge_control=MergeControl.AUTO,
 ) -> bytes:
     if rotation not in (0, 90, 180, 270):
         raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
     # 1st pass records output of the plotting commands and detects the bounding box
     try:
-        recorder, bbox = record_plotter_output(
-            b, rotation, flip_horizontal, flip_vertical, merge_control
-        )
+        recorder = record_plotter_output(b, rotation, sx, sy, merge_control)
     except Hpgl2Error:
         return b""
     # 2nd pass replays the plotting commands to plot the SVG
-    pdf_backend = PDFBackend(bbox)
+    pdf_backend = PDFBackend(recorder.bbox())
     recorder.replay(pdf_backend)
     del recorder
     return pdf_backend.get_bytes()
@@ -163,10 +147,10 @@ def print_interpreter_log(interpreter: Interpreter) -> None:
 def record_plotter_output(
     b: bytes,
     rotation: int,
-    flip_horizontal: bool,
-    flip_vertical: bool,
+    sx: float,
+    sy: float,
     merge_control: MergeControl,
-) -> tuple[Recorder, BoundingBox2d]:
+) -> Recorder:
     commands = hpgl2_commands(b)
     if len(commands) == 0:
         print("HPGL2 data not found.")
@@ -181,12 +165,8 @@ def record_plotter_output(
     bbox = recorder.bbox()
     if not bbox.has_data:
         raise EmptyDrawing
-
-    sx = -1.0 if flip_horizontal else 1.0
-    sy = -1.0 if flip_vertical else 1.0
     m = placement_matrix(bbox, sx, sy, rotation)
     recorder.transform(m)
-    bbox = BoundingBox2d(m.transform_vertices(bbox.rect_vertices()))
 
     if merge_control == MergeControl.AUTO:
         if plotter.has_merge_control:
@@ -195,4 +175,4 @@ def record_plotter_output(
         if DEBUG:
             print("merge control on: sorting filled polygons by luminance")
         recorder.sort_filled_polygons()
-    return recorder, bbox
+    return recorder

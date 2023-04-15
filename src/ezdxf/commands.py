@@ -1003,17 +1003,21 @@ class Plt2Svg(Command):
         )
         parser.add_argument(
             "-x",
-            "--flip_horizontal",
-            action="store_true",
+            "--scale_x",
+            type=float,
+            metavar="SX",
+            default = 1.0,
             required=False,
-            help="flip page horizontal (in x-axis direction)",
+            help="scale page in x-axis direction, use negative values to mirror page",
         )
         parser.add_argument(
             "-y",
-            "--flip_vertical",
-            action="store_true",
+            "--scale_y",
+            type=float,
+            metavar="SY",
+            default = 1.0,
             required=False,
-            help="flip page vertical (in y-axis direction)",
+            help="scale page in y-axis direction, use negative values to mirror page",
         )
         parser.add_argument(
             "-m",
@@ -1053,8 +1057,8 @@ class Plt2Svg(Command):
             svg_string = hpgl2.to_svg(
                 data,
                 rotation=args.rotate,
-                flip_vertical=args.flip_vertical,
-                flip_horizontal=args.flip_horizontal,
+                sx = args.scale_x,
+                sy = args.scale_y,
                 merge_control=args.merge_control,
             )
             svg_filepath = filepath.with_suffix(".svg")
@@ -1117,17 +1121,21 @@ class Plt2Dxf(Command):
         )
         parser.add_argument(
             "-x",
-            "--flip_horizontal",
-            action="store_true",
+            "--scale_x",
+            type=float,
+            metavar="SX",
+            default = 1.0,
             required=False,
-            help="flip page horizontal (in x-axis direction)",
+            help="scale page in x-axis direction, use negative values to mirror page",
         )
         parser.add_argument(
             "-y",
-            "--flip_vertical",
-            action="store_true",
+            "--scale_y",
+            type=float,
+            metavar="SY",
+            default = 1.0,
             required=False,
-            help="flip page vertical (in y-axis direction)",
+            help="scale page in y-axis direction, use negative values to mirror page",
         )
         parser.add_argument(
             "-m",
@@ -1167,8 +1175,8 @@ class Plt2Dxf(Command):
             doc = hpgl2.to_dxf(
                 data,
                 rotation=args.rotate,
-                flip_horizontal=args.flip_horizontal,
-                flip_vertical=args.flip_vertical,
+                sx = args.scale_x,
+                sy = args.scale_y,
                 color_mode=color_mode,
                 map_black_rgb_to_white_rgb=args.map_black_to_white,
                 merge_control=args.merge_control,
