@@ -17,8 +17,6 @@ QUOTE_CHAR = ord('"')
 CHAR_A = ord("A")
 CHAR_B = ord("B")
 CHAR_Z = ord("Z")
-CHAR_P = ord("P")
-CHAR_E = ord("E")
 DEFAULT_TEXT_TERMINATOR = 3
 
 # Enter HPGL/2 mode commands
@@ -63,60 +61,46 @@ def skip_to_hpgl2(s: bytes, start: int) -> int:
 
 
 def hpgl2_commands(s: bytes) -> list[Command]:
-    def is_letter(c):
-        return CHAR_A <= c <= CHAR_Z
+    text_terminator = DEFAULT_TEXT_TERMINATOR
 
-    def find_closing_quote_char(i: int):
-        while i < length and s[i] != QUOTE_CHAR:
-            i += 1
-        return i
-
-    def find_terminator(i: int):
+    def find_terminator(i: int) -> int:
         while i < length:
             c = s[i]
             if c == QUOTE_CHAR:
-                i = find_closing_quote_char(i + 1)
-            elif is_letter(c) or c == SEMICOLON or c == ESCAPE:
+                i = find_mark(i + 1, QUOTE_CHAR)
+            elif (CHAR_A <= c <= CHAR_Z) or c == SEMICOLON or c == ESCAPE:
                 break
             i += 1
         return i
 
-    def find_text_terminator(i: int):
-        while i < length:
-            if s[i] == text_terminator:
-                return i + 1
+    def find_mark(i: int, mark: int) -> int:
+        while i < length and s[i] != mark:
             i += 1
+        return i + 1
 
-    def append_command(b: bytes):
+    def append_command(b: bytes) -> None:
         if b[:2] == b"DT":
             nonlocal text_terminator
             if len(b) > 2:
                 text_terminator = b[2]
             else:
                 text_terminator = DEFAULT_TEXT_TERMINATOR
-            return
-        commands.append(make_command(b))
+        else:
+            commands.append(make_command(b))
 
-    def make_command_until(mark: int) -> int:
-        i = index
-        while i < length and s[i] != mark:
-            i += 1
-        append_command(s[start:i])
-        return i + 1
 
     commands: list[Command] = []
-    text_terminator = DEFAULT_TEXT_TERMINATOR
     length = len(s)
     index = skip_to_hpgl2(s, 0)
     while index < length:
         char = s[index]
-
         start = index
+
         if char == ESCAPE:
             index = skip_to_hpgl2(s, index)
             continue
 
-        if char <= 32:  # skip all white space and control chars
+        if char <= 32:  # skip all white space and control chars between commands
             index += 1
             continue
 
@@ -128,21 +112,12 @@ def hpgl2_commands(s: bytes) -> list[Command]:
         command = s[start:index_plus_2]
 
         if command == b"PE":
-            index = make_command_until(SEMICOLON)
-            continue
-
-        third_char = s[index_plus_2]
-        if third_char == SEMICOLON:
-            append_command(s[index:index_plus_2])
-            index += 3
-            continue
-
-        if command == b"LB":
-            index = find_text_terminator(index_plus_2)
-        elif is_letter(third_char):
-            append_command(s[index:index_plus_2])
-            index = index_plus_2
-            continue
+            index = find_mark(index_plus_2, SEMICOLON)
+            index -= 1 # exclude terminator ";" from command args
+        elif command == b"LB":
+            index = find_mark(index_plus_2, text_terminator)
+            # include special terminator in command args,
+            # otherwise the parser is confused
         else:
             index = find_terminator(index_plus_2)
 

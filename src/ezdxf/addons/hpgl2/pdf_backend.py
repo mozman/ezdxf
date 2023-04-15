@@ -23,12 +23,13 @@ MM2PU = 72.0 / 25.4  # 1 inch = 25.4 mm
 
 class PDFBackend(Backend):
     def __init__(self, bbox: BoundingBox2d) -> None:
+        assert bbox.has_data is True, "extents of page are required"
         self.doc = fitz.open()
         self.doc.set_metadata({
             "producer": f"PyMuPDF {fitz.version[0]}",
             "creator": f"ezdxf {__version__}",
         })
-        self.max_y = bbox.extmax.y
+        self.max_y = bbox.extmax.y  # type: ignore
         size = bbox.size
         self.page = self.doc.new_page(-1, int(size.x * PLU2PU), int(size.y * PLU2PU))
 
