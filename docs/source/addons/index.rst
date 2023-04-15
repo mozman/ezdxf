@@ -19,6 +19,7 @@ Add-ons
     r12writer
     text2path
     mtxpl
+    hpgl2
     pycsg
     acadctb
     forms

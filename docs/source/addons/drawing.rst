@@ -1,7 +1,7 @@
 .. module:: ezdxf.addons.drawing
 
-Drawing / Export Addon
-======================
+Drawing / Export Add-on
+=======================
 
 This add-on provides the functionality to render a DXF document to produce a
 rasterized or vector-graphic image which can be saved to a file or viewed

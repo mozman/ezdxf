@@ -42,7 +42,7 @@ class MTextSurrogate(SubscriptAttributes):
     The rich-text formatting capabilities for the regular MTEXT entity are not
     supported, if these features are required use the regular MTEXT entity and
     the :class:`~ezdxf.addons.MTextExplode` add-on to explode the MTEXT entity
-    into simpler DXF primitives.
+    into DXF primitives.
 
     .. important::
 

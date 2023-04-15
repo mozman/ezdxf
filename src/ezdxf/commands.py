@@ -1025,7 +1025,7 @@ def make_plt2fmt_parser(subparsers, name, fmt):
         "--force",
         action="store_true",
         required=False,
-        help="injects the mandatory 'enter HPGL/2 mode' escape sequence into the data "
+        help="inserts the mandatory 'enter HPGL/2 mode' escape sequence into the data "
         "stream; use this flag when no HPGL/2 data was found and you are sure the "
         "file is a HPGL/2 plot file",
     )
@@ -1041,7 +1041,7 @@ class Plt2Dxf(Command):
     @staticmethod
     def add_parser(subparsers):
         parser = make_plt2fmt_parser(subparsers, Plt2Dxf.NAME, "DXF")
-        parser.epilog = "Note that plot files are intended for plotting on white paper."
+        parser.epilog = "Note that plot files are intended to be plotted on white paper."
         parser.add_argument(
             "--aci",
             action="store_true",

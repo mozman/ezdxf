@@ -671,8 +671,45 @@ Show the *ezdxf* version and configuration:
     Documentation of the :mod:`ezdxf.options` module and the
     :ref:`environment_variables`.
 
+.. _plt2dxf_command:
+
 plt2dxf
 -------
+
+.. versionadded:: 1.1
+
+The ``plt2dxf`` command converts `HPGL/2`_ plot files to DXF.
+The page content is created at the origin of the modelspace and 1 drawing unit is 1
+plot unit (1 plu = 0.025mm) unless scaling values are provided.
+
+The content of HPGL files is intended to be plotted on white paper, so the appearance on
+a dark background in modelspace is not very clear. To fix this, the ``--map_black_to_white``
+option maps black fillings and lines to white.
+
+All entities are assigned to a layer according to the pen number with the name schema
+``Color<#>``. In order to be able to process the file better, it is also possible to
+assign an ACI color to the DXF entities according to the pen number by the option
+``--aci``, but then the RGB color is lost because the RGB color has always the higher
+priority over the ACI.
+
+All entities are mapped to a layer named  ``Color<#>`` according to the pen number.
+In order to process the content better, it is also possible to assign the DXF elements an
+ACI color value according to the pen number through the ``--aci`` option, but then the
+RGB color is lost because the RGB color always has the higher priority over the
+:term:`ACI` value.
+
+The first paperspace layout "Layout0" is set up to print the entire modelspace on one
+sheet, the size of the page is the size of the original plot file in millimeters.
+
+HPGL/2's merge control works at the pixel level and cannot be replicated by DXF,
+but to prevent fillings from obscuring text, the filled polygons are
+sorted by luminance - this can be forced or disabled by the ``--merge_control`` option.
+
+Some plot files that contain pure HPGL/2 code do not contain the escape sequence
+"Enter HPGL/2 mode", without this sequence the HPGL/2 parser cannot recognize the
+beginning of the HPGL/2 code. The ``--force`` option inserts the "Enter HPGL/2 mode"
+escape sequence into the data stream, regardless of whether the file is an HPGL/2 plot
+file or not, so be careful.
 
 .. code-block:: Text
 
@@ -693,7 +730,7 @@ plt2dxf
       -m {0,1,2}, --merge_control {0,1,2}
                             provides control over the order of filled polygons, 0=off (print
                             order), 1=luminance (order by luminance), 2=auto (default)
-      -f, --force           injects the mandatory 'enter HPGL/2 mode' escape sequence into the
+      -f, --force           inserts the mandatory 'enter HPGL/2 mode' escape sequence into the
                             data stream; use this flag when no HPGL/2 data was found and you are
                             sure the file is a HPGL/2 plot file
       --aci                 use pen numbers as ACI colors
@@ -702,8 +739,17 @@ plt2dxf
 
     Note that plot files are intended for plotting on white paper.
 
+.. _plt2svg_command:
+
 plt2svg
 -------
+
+.. versionadded:: 1.1
+
+The ``plt2svg`` command converts `HPGL/2`_ plot files to `SVG`_.
+The plot units are mapped 1:1 to ``viewBox`` units and the size of image is the size of
+the original plot file in millimeters. For more information about the
+``--merge_control`` and the ``-force`` option see `plt2dxf`_ command.
 
 .. code-block:: Text
 
@@ -723,12 +769,19 @@ plt2svg
       -m {0,1,2}, --merge_control {0,1,2}
                             provides control over the order of filled polygons, 0=off (print
                             order), 1=luminance (order by luminance), 2=auto (default)
-      -f, --force           injects the mandatory 'enter HPGL/2 mode' escape sequence into the
+      -f, --force           inserts the mandatory 'enter HPGL/2 mode' escape sequence into the
                             data stream; use this flag when no HPGL/2 data was found and you are
                             sure the file is a HPGL/2 plot file
 
 plt2pdf
 -------
+
+.. versionadded:: 1.1
+
+The ``plt2pdf`` command converts `HPGL/2`_ plot files to `PDF`_.
+The plot units are converted to PDF units (1/72 inch) so the size of image is the
+size of the original plot file in millimeters. For more information about the
+``--merge_control`` and the ``-force`` option see `plt2dxf`_ command.
 
 This command requires the Python package `PyMuPDF`_.
 
@@ -750,8 +803,11 @@ This command requires the Python package `PyMuPDF`_.
       -m {0,1,2}, --merge_control {0,1,2}
                             provides control over the order of filled polygons, 0=off (print
                             order), 1=luminance (order by luminance), 2=auto (default)
-      -f, --force           injects the mandatory 'enter HPGL/2 mode' escape sequence into the
+      -f, --force           inserts the mandatory 'enter HPGL/2 mode' escape sequence into the
                             data stream; use this flag when no HPGL/2 data was found and you are
                             sure the file is a HPGL/2 plot file
 
 .. _PyMuPDF: https://pypi.org/project/PyMuPDF/
+.. _HPGL/2: https://en.wikipedia.org/wiki/HP-GL
+.. _SVG: https://en.wikipedia.org/wiki/SVG
+.. _PDF: https://en.wikipedia.org/wiki/PDF

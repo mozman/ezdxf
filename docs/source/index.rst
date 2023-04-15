@@ -61,6 +61,8 @@ visit the `documentation <https://ezdxf.mozman.at/docs/setup.html>`_.
 - :mod:`~ezdxf.addons.openscad`  add-on, an interface to `OpenSCAD <https://openscad.org>`_
 - :mod:`~ezdxf.addons.odafc` add-on, an interface to the `ODA File Converter <https://www.opendesign.com/guestfiles/oda_file_converter>`_
   to read and write DWG files
+- :mod:`~ezdxf.addons.hpgl2` add-on for converting `HPGL/2 <https://en.wikipedia.org/wiki/HP-GL>`_
+  plot files to DXF, SVG and PDF
 
 Website
 -------
