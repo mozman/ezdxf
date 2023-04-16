@@ -686,13 +686,7 @@ The content of HPGL files is intended to be plotted on white paper, so the appea
 a dark background in modelspace is not very clear. To fix this, the ``--map_black_to_white``
 option maps black fillings and lines to white.
 
-All entities are assigned to a layer according to the pen number with the name schema
-``Color<#>``. In order to be able to process the file better, it is also possible to
-assign an ACI color to the DXF entities according to the pen number by the option
-``--aci``, but then the RGB color is lost because the RGB color has always the higher
-priority over the ACI.
-
-All entities are mapped to a layer named  ``Color<#>`` according to the pen number.
+All entities are mapped to a layer named  ``COLOR_<#>`` according to the pen number.
 In order to process the content better, it is also possible to assign the DXF elements an
 ACI color value according to the pen number through the ``--aci`` option, but then the
 RGB color is lost because the RGB color always has the higher priority over the

@@ -30,6 +30,16 @@ MM2PU = 72.0 / 25.4  # 1 inch = 25.4 mm
 
 
 class PDFBackend(Backend):
+    """PDF backend.
+
+    The plot units (1 plu = 0.025mm) are converted to PDF units (1/72 inch) so the size
+    of image is the size of the original plot file in millimeters.
+
+    .. important::
+
+        Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/
+
+    """
     def __init__(self, bbox: BoundingBox2d) -> None:
         assert bbox.has_data is True, "extents of page are required"
         assert (

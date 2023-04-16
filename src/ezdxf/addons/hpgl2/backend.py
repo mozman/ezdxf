@@ -19,17 +19,41 @@ from .properties import Properties
 
 
 class Backend(abc.ABC):
+    """Abstract base class for implementing a low level output backends.
+
+    All input coordinates are page coordinates:
+
+        - 1 plot unit (plu) = 0.025mm
+        - 40 plu = 1 mm
+        - 1016 plu = 1 inch
+
+    """
     @abc.abstractmethod
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
-        # input coordinates are page coordinates
-        # argument <points> can be zero, one, two or more points.
+        """Draws a polyline from a sequence `points`. The input coordinates are page
+        coordinates in plot units. The `points` sequence can contain 0 or more
+        points!
+
+        Args:
+            properties: display :class:`Properties` for the polyline
+            points: sequence of :class:`ezdxf.math.Vec2` instances
+
+        """
         ...
 
     @abc.abstractmethod
     def draw_filled_polygon(
         self, properties: Properties, paths: Sequence[Path]
     ) -> None:
-        # input coordinates are page coordinates
+        """Draws a filled polygon from the sequence of `paths`. The input coordinates
+        are page coordinates in plot units. The `paths` sequence can contain 0 or more
+        single :class:`~ezdxf.path.Path` instances.
+
+        Args:
+            properties: display :class:`Properties` for the filled polygon
+            paths: sequence of single :class:`ezdxf.path.Path` instances
+
+        """
         ...
 
 
@@ -45,12 +69,19 @@ class DataRecord(NamedTuple):
 
 
 class Recorder(Backend):
+    """The :class:`Recorder` class records the output of the :class:`Plotter` and
+    can replay this recording on another backend. The class can modify the recorded
+    output.
+    """
     def __init__(self) -> None:
         self.records: list[DataRecord] = []
         self.properties: dict[int, Properties] = {}
         self._bbox = BoundingBox2d()
 
     def bbox(self) -> BoundingBox2d:
+        """Returns the bounding box of all recorded polylines and polygons as
+        :class:`~ezdxf.math.BoundingBox2d`.
+        """
         if not self._bbox.has_data:
             self.update_bbox()
         return self._bbox
@@ -77,6 +108,7 @@ class Recorder(Backend):
         self.records.append(DataRecord(record_type, prop_hash, args))
 
     def replay(self, backend: Backend) -> None:
+        """Replay the recording on another backend."""
         current_props = Properties()
         props = self.properties
         draw = {
@@ -88,6 +120,9 @@ class Recorder(Backend):
             draw[record.type](current_props, record.data)  # type: ignore
 
     def transform(self, m: Matrix44) -> None:
+        """Transforms the recordings by a transformation matrix `m` of type
+        :class:`~ezdxf.math.Matrix44`.
+        """
         records: list[DataRecord] = []
         for record in self.records:
             if record.type == RecordType.POLYLINE:
@@ -100,7 +135,12 @@ class Recorder(Backend):
             self._bbox = BoundingBox2d(m.transform_vertices(self._bbox.rect_vertices()))
         self.records = records
 
-    def sort_filled_polygons(self, reverse=True) -> None:
+    def sort_filled_polygons(self) -> None:
+        """Sort filled polygons by descending luminance (from light to dark).
+
+        This also changes the plot order in the way that all filled polygons are plotted
+        before the polylines.
+        """
         polygons = []
         polylines = []
         current = Properties()
@@ -113,7 +153,7 @@ class Recorder(Backend):
             else:
                 polylines.append(record)
 
-        polygons.sort(key=lambda r: r[0], reverse=reverse)
+        polygons.sort(key=lambda r: r[0], reverse=True)
         records = [sort_rec[1] for sort_rec in polygons]
         records.extend(polylines)
         self.records = records

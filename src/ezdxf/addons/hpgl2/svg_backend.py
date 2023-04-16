@@ -12,6 +12,12 @@ LENGTH_MM = "{0:.0f}mm"
 
 
 class SVGBackend(Backend):
+    """Pure Python SVG backend.
+
+    The plot units are mapped 1:1 to ``viewBox`` units and the size of image is the size
+    of the original plot file in millimeters.
+
+    """
     def __init__(self, bbox: BoundingBox2d) -> None:
         assert bbox.has_data
         size = bbox.size

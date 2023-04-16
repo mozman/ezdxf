@@ -11,6 +11,28 @@ from .tokenizer import Command, pe_decode
 
 
 class Interpreter:
+    """The :class:`Interpreter` is the frontend for the :class:`Plotter` class.
+    The :meth:`run` methods interprets the low level HPGL commands from the
+    :func:`hpgl2_commands` parser and sends the commands to the virtual plotter
+    device, which sends his output to a low level :class:`Backend` class.
+
+    Most CAD application send a very restricted subset of commands to plotters,
+    mostly just polylines and filled polygons. Implementing the whole HPGL/2 command set
+    is not worth the effort - unless reality proofs otherwise.
+
+    Not implemented commands:
+
+        - the whole character group - text is send as filled polygons or polylines
+        - configuration group: IN, DF, RO, IW - the plotter is initialized by creating a
+          new plotter and page rotation is handled by the add-on itself
+        - polygon group: EA, ER, EW, FA, RR, WG, the rectangle and wedge commands
+        - line and fill attributes group: LA, RF, SM, SV, TR, UL, WU, linetypes and
+          hatch patterns are decomposed into simple lines by CAD applications
+
+    Args:
+        plotter: virtual :class:`Plotter` device
+
+    """
     def __init__(self, plotter: Plotter) -> None:
         self.errors: list[str] = []
         self.not_implemented_commands: set[str] = set()
@@ -21,6 +43,9 @@ class Interpreter:
         self.errors.append(error)
 
     def run(self, commands: list[Command]) -> None:
+        """Interprets the low level HPGL commands from the :func:`hpgl2_commands` parser
+        and sends the commands to the virtual plotter device.
+        """
         for name, args in commands:
             if name in self._disabled_commands:
                 continue
@@ -31,6 +56,10 @@ class Interpreter:
                 self.not_implemented_commands.add(name)
 
     def disable_commands(self, commands: Iterable[str]) -> None:
+        """Disable commands manually, like the scaling command ["SC", "IP", "IR"].
+        This is a feature for experts, because disabling commands which changes the pen
+        location may distort or destroy the plotter output.
+        """
         self._disabled_commands.update(commands)
 
     # Configure pens, line types, fill types

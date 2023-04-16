@@ -5,10 +5,10 @@ from typing import NamedTuple
 import dataclasses
 import enum
 import copy
-from .deps import NULLVEC2
 
 
 class FillType(enum.IntEnum):
+    """Fill type enumeration."""
     NONE = 0
     SOLID = 1
     HATCHING = 2
@@ -17,16 +17,19 @@ class FillType(enum.IntEnum):
 
 
 class FillMethod(enum.IntEnum):
+    """Fill method enumeration."""
     EVEN_ODD = 0
     NON_ZERO_WINDING = 1
 
 
 class RGB(NamedTuple):
+    """Named tuple representing an RGB color value."""
     r: int
     g: int
     b: int
 
     def to_floats(self) -> tuple[float, float, float]:
+        """Returns the RGB color value as a tuple of floats in the range from 0 to 1."""
         return self.r / 255, self.g / 255, self.b / 255
 
 
@@ -35,12 +38,14 @@ RGB_NONE = RGB(-1, -1, -1)
 
 @dataclasses.dataclass
 class Pen:
+    """Represents a pen table entry."""
     index: int
     width: float  # in mm
     color: RGB
 
 
 class Properties:
+    """Consolidated display properties."""
     DEFAULT_PEN = Pen(1, 0.35, RGB_NONE)
 
     def __init__(self) -> None:
@@ -53,7 +58,6 @@ class Properties:
         self.fill_hatch_line_angle: float = 0.0  # in degrees
         self.fill_hatch_line_spacing: float = 40.0  # in plotter units
         self.fill_shading_density: float = 100.0
-        self.clipping_window = (NULLVEC2, NULLVEC2)  # in plotter units
         # not hashed content
         self.max_pen_count: int = 2
         self.pen_table: dict[int, Pen] = {}
@@ -70,7 +74,6 @@ class Properties:
                 self.fill_hatch_line_angle,
                 self.fill_hatch_line_spacing,
                 self.fill_shading_density,
-                self.clipping_window,
             )
         )
 
@@ -89,13 +92,6 @@ class Properties:
         self.fill_hatch_line_angle = 0.0
         self.fill_hatch_line_spacing = 40.0
         self.fill_shading_density = 1.0
-        self.reset_clipping_window()
-
-    def has_clipping_window(self) -> bool:
-        return self.clipping_window[0] is not self.clipping_window[1]
-
-    def reset_clipping_window(self) -> None:
-        self.clipping_window = (NULLVEC2, NULLVEC2)
 
     def get_pen(self, index: int) -> Pen:
         return self.pen_table.get(index, self.DEFAULT_PEN)

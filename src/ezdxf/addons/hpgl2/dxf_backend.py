@@ -31,6 +31,23 @@ WHITE_RGB = RGB(255, 255, 255)
 
 
 class DXFBackend(Backend):
+    """DXF backend.
+
+    The page content will be created in any given layout and 1 drawing unit is 1 plot
+    unit (1 plu = 0.025mm).
+
+    All entities are assigned to a layer according to the pen number with the name schema
+    ``COLOR_<#>``. In order to be able to process the file better, it is also possible to
+    assign an :term:`ACI` color to the DXF entities according to the pen number by setting
+    the argument `color_mode` to :attr:`ColorMode.ACI`, but then the RGB color is lost
+    because the RGB color has always the higher priority over the :term:`ACI`.
+
+    Args:
+        layout: any layout, modelspace, paperspace or block
+        color_mode: class:`ColorMode`
+        map_black_rgb_to_white_rgb: maps black fillings and lines to white.
+
+    """
     def __init__(
         self,
         layout: GenericLayoutType,

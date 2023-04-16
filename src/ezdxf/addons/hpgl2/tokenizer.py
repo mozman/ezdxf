@@ -61,6 +61,15 @@ def skip_to_hpgl2(s: bytes, start: int) -> int:
 
 
 def hpgl2_commands(s: bytes) -> list[Command]:
+    """Low level plot file parser, extracts the HPGL/2 from the byte stream `b`.
+
+    .. Important::
+
+        This parser expects the "Enter HPGL/2 mode" escape sequence to recognize
+        HPGL/2 commands. The sequence looks like this: ``[ESC]%1B``, multiple variants
+        of this sequence are supported.
+
+    """
     text_terminator = DEFAULT_TEXT_TERMINATOR
 
     def find_terminator(i: int) -> int:

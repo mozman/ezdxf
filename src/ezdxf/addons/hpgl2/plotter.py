@@ -18,6 +18,22 @@ from .page import Page
 
 
 class Plotter:
+    """
+    The :class:`Plotter` class represents a virtual plotter device.
+
+    The HPGL/2 commands send by the :class:`Interpreter` are processed into simple
+    polylines and filled polygons and send to low level :class:`Backend`.
+
+    HPGL/2 uses a units system called "Plot Units":
+
+    - 1 plot unit (plu) = 0.025mm
+    - 40 plu = 1 mm
+    - 1016 plu = 1 inch
+
+    The Plotter device does not support font rendering and page rotation (RO).
+    The scaling commands IP, RP, SC are supported.
+
+    """
     def __init__(self, backend: Backend) -> None:
         self.backend = backend
         self._output_backend = backend
