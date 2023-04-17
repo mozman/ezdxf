@@ -5,8 +5,8 @@ from typing import Iterable, Iterator, TYPE_CHECKING, Optional
 import math
 
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
-# from ._vector import Vec2
-from ezdxf.math import Vec2
+from ._vector import Vec2
+# from ezdxf.math import Vec2
 
 if TYPE_CHECKING:
     from ezdxf.math import UVec
@@ -42,10 +42,26 @@ class Matrix33:
         else:
             self._matrix = floats(values)
         if len(self._matrix) != 9:
-            raise ValueError(f"expected 9 float, got {len(self._matrix)}")
+            raise ValueError(f"expected 9 floats, got {len(self._matrix)}")
 
     def __iter__(self) -> Iterator[float]:
         return iter(self._matrix)
+
+    def __repr__(self) -> str:
+        """Returns the representation string of the matrix:
+        ``Matrix44((col0, col1, col2, col3), (...), (...), (...))``
+        """
+
+        def format_row(row):
+            return "(%s)" % ", ".join(str(value) for value in row)
+
+        return "Matrix44(%s)" % ", ".join(
+            (
+                format_row(self._matrix[0:3]),
+                format_row(self._matrix[3:6]),
+                format_row(self._matrix[6:9]),
+            )
+        )
 
     def isclose(self, m: Matrix33, abs_tol=1e-12) -> bool:
         return all(
@@ -79,12 +95,6 @@ class Matrix33:
         x, y = Vec2(vector)
         v = Vec2(x * m[0] + y * m[3], x * m[1] + y * m[4])
         return v.normalize() if normalize else v
-
-    def transpose(self) -> Matrix33:
-        m = self._matrix
-        m1 = Matrix33()
-        m1._matrix = (m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8])
-        return m1
 
     @classmethod
     def scale(cls, sx: float, sy: Optional[float] = None) -> Matrix33:
@@ -142,7 +152,7 @@ class Matrix33:
         m2 = other._matrix
         m = self.__class__()
         # fmt: off
-        m._matrix = [
+        m._matrix = (
             m1[0] * m2[0] + m1[1] * m2[3] + m1[2] * m2[6],
             m1[0] * m2[1] + m1[1] * m2[4] + m1[2] * m2[7],
             m1[0] * m2[2] + m1[1] * m2[5] + m1[2] * m2[8],
@@ -154,6 +164,6 @@ class Matrix33:
             m1[6] * m2[0] + m1[7] * m2[3] + m1[8] * m2[6],
             m1[6] * m2[1] + m1[7] * m2[4] + m1[8] * m2[7],
             m1[6] * m2[2] + m1[7] * m2[5] + m1[8] * m2[8],
-        ]
+        )
         # fmt: on
         return m

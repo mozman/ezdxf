@@ -1,25 +1,22 @@
-# Copyright (c) 2010-2020, Manfred Moitzi
+# Copyright (c) 2013, Manfred Moitzi
 # License: MIT License
-import math
 
 import pytest
 import pickle
-from math import radians, sin, cos, pi, isclose
+from math import radians
 
 # Import from 'ezdxf.math._matrix33' to test Python implementation
-from ezdxf.math import close_vectors
 from ezdxf.math._matrix33 import Matrix33
 from ezdxf.acc import USE_C_EXT
 
 m33_classes = [Matrix33]
 
-if False and USE_C_EXT:
-    from ezdxf.acc.matrix44 import Matrix44 as CMatrix44
+if USE_C_EXT:
+    from ezdxf.acc.matrix33 import Matrix33 as CMatrix33
+    m33_classes.append(CMatrix33)
 
-    m33_classes.append(CMatrix44)
 
-
-@pytest.fixture(params=m33_classes)
+@pytest.fixture(params=m33_classes, ids=["PyMatrix33", "CMatrix33"])
 def m33(request):
     return request.param
 
@@ -76,24 +73,20 @@ class TestMatrix33:
         t = m33.translate(10, 20)
 
         c = s @ t
-        v = list(c.transform_vertice([(4, 1), (5, 0)]))
+        v = list(c.transform_vertices([(4, 1), (5, 0)]))
         assert v[0].isclose((50, 40)) is True
         assert v[1].isclose((60, 20)) is True
 
     def test_multiply(self, m33):
         m1 = m33(range(9))
         m2 = m33(range(9))
-        res = m1 * m2
+        res = m1 @ m2
         expected = m33((15.0, 18.0, 21.0, 42.0, 54.0, 66.0, 69.0, 90.0, 111.0))
         assert expected.isclose(res)
         # __matmul__()
         res = m1 @ m2
         assert expected.isclose(res)
 
-    def test_transpose(self, m33):
-        matrix = m33((0, 1, 2, 3, 4, 5, 6, 7, 8))
-        res = matrix.transpose()
-        assert res.isclose(m33((0, 3, 6, 1, 4, 7, 2, 5, 8)))
 
     def test_supports_pickle_protocol(self, m33):
         matrix = m33((0.1, 1, 2, 3, 4, 5, 6, 7, 8))
