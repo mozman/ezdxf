@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2020, Manfred Moitzi
+# Copyright (c) 2010-2023, Manfred Moitzi
 # License: MIT License
 import pytest
 import pickle

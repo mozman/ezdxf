@@ -26,6 +26,14 @@ ext_modules = [
         language="c++",
     ),
     Extension(
+        "ezdxf.acc.matrix33",
+        [
+            "src/ezdxf/acc/matrix33.pyx",
+        ],
+        optional=True,
+        language="c++",
+    ),
+    Extension(
         "ezdxf.acc.bezier4p",
         [
             "src/ezdxf/acc/bezier4p.pyx",

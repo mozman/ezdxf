@@ -3,6 +3,7 @@ bezier4p.cpp
 bspline.cpp
 construct.cpp
 matrix44.cpp
+matrix33.cpp
 vector.cpp
 mapbox_earcut.cpp
 linetypes.cpp
