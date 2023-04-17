@@ -31,7 +31,7 @@ cdef class Matrix33:
     cdef double m[9]
 
     def __cinit__(self, values: Optional[Iterable[float]] = None):
-        if values is None:  # default constructor Matrix44(): fastest setup
+        if values is None:  # default constructor Matrix33(): fastest setup
             self.m = IDENTITY  # memcopy!
         else:
             set_floats(self.m, values)

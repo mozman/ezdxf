@@ -1,4 +1,4 @@
-# Copyright (c) 2013, Manfred Moitzi
+# Copyright (c) 2023, Manfred Moitzi
 # License: MIT License
 
 import pytest
@@ -16,7 +16,7 @@ if USE_C_EXT:
     m33_classes.append(CMatrix33)
 
 
-@pytest.fixture(params=m33_classes, ids=["PyMatrix33", "CMatrix33"])
+@pytest.fixture(params=m33_classes)
 def m33(request):
     return request.param
 
