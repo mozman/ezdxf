@@ -48,7 +48,17 @@ def get_enter_hpgl2_mode_command_length(s: bytes, i: int) -> int:
     return 0
 
 
-def skip_to_hpgl2(s: bytes, start: int) -> int:
+KNOWN_START_SEQUENCES = [b"BPIN", b"BP;IN", b"INPS", b"IN;PS", b"INDF", b"IN;DF"]
+
+
+def has_known_start_sequence(b: bytes) -> bool:
+    for start_sequence in KNOWN_START_SEQUENCES:
+        if b.startswith(start_sequence):
+            return True
+    return False
+
+
+def find_hpgl2_entry_point(s: bytes, start: int) -> int:
     while True:
         try:
             index = s.index(b"%", start)
@@ -97,16 +107,20 @@ def hpgl2_commands(s: bytes) -> list[Command]:
         else:
             commands.append(make_command(b))
 
-
     commands: list[Command] = []
     length = len(s)
-    index = skip_to_hpgl2(s, 0)
+    if has_known_start_sequence(s):
+        index = 0
+    else:
+        index = find_hpgl2_entry_point(s, 0)
     while index < length:
         char = s[index]
         start = index
 
         if char == ESCAPE:
-            index = skip_to_hpgl2(s, index)
+            # HPGL/2 does not use escape sequences, whatever this sequence is,
+            # HPGL/2 mode was left. Find next entry point into HPGL/2 mode:
+            index = find_hpgl2_entry_point(s, index)
             continue
 
         if char <= 32:  # skip all white space and control chars between commands
@@ -122,7 +136,7 @@ def hpgl2_commands(s: bytes) -> list[Command]:
 
         if command == b"PE":
             index = find_mark(index_plus_2, SEMICOLON)
-            index -= 1 # exclude terminator ";" from command args
+            index -= 1  # exclude terminator ";" from command args
         elif command == b"LB":
             index = find_mark(index_plus_2, text_terminator)
             # include special terminator in command args,
@@ -141,7 +155,7 @@ def make_command(cmd: bytes) -> Command:
         return Command("NOOP", tuple())
     name = cmd[:2].decode()
     if name == "PE":
-        args = (bytes([c for c in  cmd[2:] if c > 32]), )
+        args = (bytes([c for c in cmd[2:] if c > 32]),)
     else:
         args = tuple(s for s in cmd[2:].split(b","))  # type: ignore
     return Command(name, args)
