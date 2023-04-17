@@ -139,9 +139,12 @@ def hpgl2_commands(s: bytes) -> list[Command]:
 def make_command(cmd: bytes) -> Command:
     if not cmd:
         return Command("NOOP", tuple())
-    name = cmd[:2]
-    args = tuple(s for s in cmd[2:].split(b","))
-    return Command(name.decode(), args)
+    name = cmd[:2].decode()
+    if name == "PE":
+        args = (bytes([c for c in  cmd[2:] if c > 32]), )
+    else:
+        args = tuple(s for s in cmd[2:].split(b","))  # type: ignore
+    return Command(name, args)
 
 
 def pe_encode(value: float, decimal_places: int = 0, base: int = 64) -> bytes:

@@ -148,7 +148,7 @@ class Recorder(Backend):
         for record in self.records:
             if record.type == RecordType.FILLED_POLYGON:
                 current = props.get(record.property_hash, current)
-                key = luminance(current.pen_color)
+                key = luminance(current.resolve_fill_color())
                 polygons.append((key, record))
             else:
                 polylines.append(record)

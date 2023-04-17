@@ -6,7 +6,7 @@ from xml.etree import ElementTree as ET
 
 from .deps import Vec2, Path, BoundingBox2d, AnyVec
 from .backend import Backend
-from .properties import Properties, RGB, RGB_NONE
+from .properties import Properties, RGB, RGB_NONE, FillMethod
 
 LENGTH_MM = "{0:.0f}mm"
 
@@ -37,6 +37,7 @@ class SVGBackend(Backend):
         self.filled_polygons = ET.SubElement(
             self.root, "g", stroke="none", fill="black"
         )
+        self.filled_polygons.set("fill-rule", "evenodd")
         self.polylines = ET.SubElement(self.root, "g", stroke="black", fill="none")
         self.polylines.set("stroke-linecap", "round")
         self.polylines.set("stroke-linejoin", "round")
@@ -50,7 +51,7 @@ class SVGBackend(Backend):
         points = self.adjust_points(points)
         path = ET.SubElement(self.polylines, "path", d=make_path_str(points))
         path.set("stroke-width", str(round(properties.pen_width * 40)))
-        s = make_rgb(properties.pen_color)
+        s = make_rgb(properties.resolve_pen_color())
         if s:
             path.set("stroke", s)
 
@@ -64,7 +65,9 @@ class SVGBackend(Backend):
             if s:
                 polygons.append(s)
         polygon = ET.SubElement(self.filled_polygons, "path", d=" ".join(polygons))
-        s = make_rgb(properties.pen_color)
+        if properties.fill_method != FillMethod.EVEN_ODD:
+            polygon.set("fill-rule", "nonzero")
+        s = make_rgb(properties.resolve_fill_color())
         if s:
             polygon.set("fill", s)
 

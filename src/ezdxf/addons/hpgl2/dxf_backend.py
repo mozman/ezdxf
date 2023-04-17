@@ -11,7 +11,7 @@ from ezdxf.entities import Hatch
 import ezdxf.path
 
 from .deps import Vec2, Path
-from .properties import Properties, RGB_NONE, RGB
+from .properties import Properties, RGB_NONE, RGB, RGB_BLACK, RGB_WHITE
 from .backend import Backend
 
 if TYPE_CHECKING:
@@ -25,9 +25,6 @@ class ColorMode(enum.Enum):
     # Use always the RGB value
     RGB = enum.auto()
 
-
-BLACK_RGB = RGB(0, 0, 0)
-WHITE_RGB = RGB(255, 255, 255)
 
 
 class DXFBackend(Backend):
@@ -89,11 +86,11 @@ class DXFBackend(Backend):
         )
         for hatch in hatches:
             assert isinstance(hatch, Hatch)
-            rgb: Optional[RGB] = properties.pen_color
+            rgb: Optional[RGB] = properties.resolve_fill_color()
             if self.color_mode == ColorMode.ACI:
                 rgb = RGB_NONE
-            if self.map_black_rgb_to_white_rgb and rgb == BLACK_RGB:
-                rgb = WHITE_RGB
+            if self.map_black_rgb_to_white_rgb and rgb == RGB_BLACK:
+                rgb = RGB_WHITE
             if rgb is RGB_NONE:
                 rgb = None
             hatch.set_solid_fill(color=attribs.color, style=0, rgb=rgb)
@@ -113,11 +110,10 @@ class DXFBackend(Backend):
             layer=layer,
         )
         if self.color_mode == ColorMode.RGB:
-            color = properties.pen_color
-            if color is not RGB_NONE:
-                if self.map_black_rgb_to_white_rgb and color == BLACK_RGB:
-                    color = WHITE_RGB
-                attribs.rgb = color
+            color = properties.resolve_pen_color()
+            if self.map_black_rgb_to_white_rgb and color == RGB_BLACK:
+                color = RGB_WHITE
+            attribs.rgb = color
         return attribs
 
 

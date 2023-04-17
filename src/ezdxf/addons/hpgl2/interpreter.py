@@ -234,7 +234,7 @@ class Interpreter:
         radius = to_float(args[0], 1.0)
         chord_angle = 5.0
         if arg_count > 1:
-            chord_angle = to_float(args[0], chord_angle)
+            chord_angle = to_float(args[1], chord_angle)
         self.plotter.plot_abs_circle(radius, chord_angle)
         self.plotter.pop_pen_state()
 

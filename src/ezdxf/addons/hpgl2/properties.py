@@ -9,6 +9,7 @@ import copy
 
 class FillType(enum.IntEnum):
     """Fill type enumeration."""
+
     NONE = 0
     SOLID = 1
     HATCHING = 2
@@ -18,12 +19,14 @@ class FillType(enum.IntEnum):
 
 class FillMethod(enum.IntEnum):
     """Fill method enumeration."""
+
     EVEN_ODD = 0
     NON_ZERO_WINDING = 1
 
 
 class RGB(NamedTuple):
     """Named tuple representing an RGB color value."""
+
     r: int
     g: int
     b: int
@@ -34,11 +37,14 @@ class RGB(NamedTuple):
 
 
 RGB_NONE = RGB(-1, -1, -1)
-
+RGB_BLACK = RGB(0, 0, 0)
+RGB_WHITE = RGB(255, 255, 255)
+LIGHT_GREY = RGB(200, 200, 200)
 
 @dataclasses.dataclass
 class Pen:
     """Represents a pen table entry."""
+
     index: int
     width: float  # in mm
     color: RGB
@@ -46,6 +52,7 @@ class Pen:
 
 class Properties:
     """Consolidated display properties."""
+
     DEFAULT_PEN = Pen(1, 0.35, RGB_NONE)
 
     def __init__(self) -> None:
@@ -81,6 +88,20 @@ class Properties:
         # the pen table is shared across all copies of Properties
         return copy.copy(self)
 
+    def setup_default_pen_table(self):
+        if len(self.pen_table):
+            return
+        pens = self.pen_table
+        width = self.DEFAULT_PEN.width
+        pens[0] = Pen(0, width, RGB(255, 255, 255))  # white
+        pens[1] = Pen(1, width, RGB(0, 0, 0))  # black
+        pens[2] = Pen(2, width, RGB(255, 0, 0))  # red
+        pens[3] = Pen(3, width, RGB(0, 255, 0))  # green
+        pens[4] = Pen(4, width, RGB(255, 255, 0))  # yellow
+        pens[5] = Pen(5, width, RGB(0, 0, 255))  # blue
+        pens[6] = Pen(6, width, RGB(255, 0, 255))  # magenta
+        pens[7] = Pen(6, width, RGB(0, 255, 255))  # cyan
+
     def reset(self) -> None:
         self.max_pen_count = 2
         self.pen_index = self.DEFAULT_PEN.index
@@ -92,6 +113,7 @@ class Properties:
         self.fill_hatch_line_angle = 0.0
         self.fill_hatch_line_spacing = 40.0
         self.fill_shading_density = 1.0
+        self.setup_default_pen_table()
 
     def get_pen(self, index: int) -> Pen:
         return self.pen_table.get(index, self.DEFAULT_PEN)
@@ -140,3 +162,25 @@ class Properties:
 
     def set_fill_method(self, fill_method: int) -> None:
         self.fill_method = FillMethod(fill_method)
+
+    def resolve_pen_color(self) -> RGB:
+        """Returns the final RGB pen color."""
+        rgb = self.pen_color
+        if rgb is RGB_NONE:
+            pen = self.pen_table.get(self.pen_index, self.DEFAULT_PEN)
+            rgb = pen.color
+        if rgb is RGB_NONE:
+            return RGB_BLACK
+        return rgb
+
+    def resolve_fill_color(self) -> RGB:
+        """Returns the final RGB fill color."""
+        ft = self.fill_type
+        if ft == FillType.SOLID:
+            return self.resolve_pen_color()
+        elif ft == FillType.SHADING:
+            grey = min(int(2.55 * (100.0 - self.fill_shading_density)), 255)
+            return RGB(grey, grey, grey)
+        elif ft == FillType.HATCHING or ft == FillType.CROSS_HATCHING:
+            return LIGHT_GREY
+        return RGB_WHITE

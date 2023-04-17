@@ -253,6 +253,10 @@ class TestTokenizer:
         assert result[1].args[0] == b"0"
         assert result[2].name == "PG"
 
+    def test_filter_non_printable_chars_from_pe_command(self):
+        result = self.parse(hpgl2(b"PExxxxx\r\nxxxxx;"))
+        assert result[0].args[0] == b"xxxxxxxxxx"
+
     def test_no_hpgl2_data(self):
         # Ecape sequence to enter HPGL2 mode is missing:  "%1B"
         assert len(self.parse(b"ANYTEXT;IN;BP;")) == 0

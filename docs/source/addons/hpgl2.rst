@@ -207,6 +207,9 @@ Properties
 
         fill shading density in percent from 0 to 100.
 
+    .. automethod:: resolve_pen_color
+
+    .. automethod:: resolve_fill_color
 
 .. autoclass:: ezdxf.addons.hpgl2.properties.FillType
 

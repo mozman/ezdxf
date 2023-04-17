@@ -13,7 +13,7 @@ except ImportError:
 
 from ezdxf.version import __version__
 from .deps import Vec2, Path, BoundingBox2d
-from .properties import Properties
+from .properties import Properties, FillMethod
 from .backend import Backend
 
 # Page coordinates are always plot units:
@@ -72,10 +72,11 @@ class PDFBackend(Backend):
             shape.drawPolyline(points)
         shape.finish(
             width=properties.pen_width,
-            color=properties.pen_color.to_floats(),
+            color=properties.resolve_pen_color().to_floats(),
             lineJoin=1,
             lineCap=1,
             closePath=False,
+            even_odd = properties.fill_method == FillMethod.EVEN_ODD,
         )
         shape.commit()
 
@@ -93,7 +94,7 @@ class PDFBackend(Backend):
             shape.drawPolyline(points)
         shape.finish(
             width=properties.pen_width,
-            fill=properties.pen_color.to_floats(),
+            fill=properties.resolve_fill_color().to_floats(),
         )
         shape.commit()
 
