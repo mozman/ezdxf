@@ -2,7 +2,7 @@
 # Home-page: http://code.google.com/p/gameobjects/
 # Author: Will McGugan
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
-# Copyright (c) 2011-2022 Manfred Moitzi
+# Copyright (c) 2011-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Iterable, Iterator, TYPE_CHECKING, Optional
@@ -528,11 +528,11 @@ class Matrix44:
         # fmt: on
         return self
 
-    def rows(self) -> Iterable[tuple[float, ...]]:
+    def rows(self) -> Iterator[tuple[float, ...]]:
         """Iterate over rows as 4-tuples."""
         return (self.get_row(index) for index in (0, 1, 2, 3))
 
-    def columns(self) -> Iterable[tuple[float, ...]]:
+    def columns(self) -> Iterator[tuple[float, ...]]:
         """Iterate over columns as 4-tuples."""
         return (self.get_col(index) for index in (0, 1, 2, 3))
 
@@ -584,7 +584,15 @@ class Matrix44:
             # fmt: on
 
     def fast_2d_transform(self, points: Iterable[UVec]) -> Iterator[Vec2]:
-        """Fast transformation of 2d input points."""
+        """Fast transformation of 2d points. For 3d input points the z-axis will be
+        ignored.
+
+        This only works reliable if only 2d transformations have been applied to the
+        4x4 matrix!
+
+        .. versionadded:: 1.0.4
+
+        """
         m = self._matrix
         m0 = m[0]
         m1 = m[1]
