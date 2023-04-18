@@ -11,7 +11,7 @@ from math import sin, cos, tan
 from itertools import chain
 
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
-from ._vector import Vec3, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
+from ._vector import Vec3, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC, Vec2
 
 if TYPE_CHECKING:
     from ezdxf.math import UVec
@@ -89,9 +89,7 @@ class Matrix44:
         def format_row(row):
             return "(%s)" % ", ".join(str(value) for value in row)
 
-        return "Matrix44(%s)" % ", ".join(
-            format_row(row) for row in self.rows()
-        )
+        return "Matrix44(%s)" % ", ".join(format_row(row) for row in self.rows())
 
     def get_2d_transformation(self) -> tuple[float, ...]:
         """Returns a 2D transformation as a row-major matrix in a linear
@@ -326,9 +324,7 @@ class Matrix44:
         # fmt: on
 
     @classmethod
-    def xyz_rotate(
-        cls, angle_x: float, angle_y: float, angle_z: float
-    ) -> Matrix44:
+    def xyz_rotate(cls, angle_x: float, angle_y: float, angle_z: float) -> Matrix44:
         """Returns a rotation matrix for rotation about each axis.
 
         Args:
@@ -567,7 +563,7 @@ class Matrix44:
 
     ocs_to_wcs = transform_direction
 
-    def transform_vertices(self, vectors: Iterable[UVec]) -> Iterable[Vec3]:
+    def transform_vertices(self, vectors: Iterable[UVec]) -> Iterator[Vec3]:
         """Returns an iterable of transformed vertices."""
         # fmt: off
         (
@@ -587,9 +583,24 @@ class Matrix44:
             )
             # fmt: on
 
+    def fast_2d_transform(self, points: Iterable[UVec]) -> Iterator[Vec2]:
+        """Fast transformation of 2d input points."""
+        m = self._matrix
+        m0 = m[0]
+        m1 = m[1]
+        m4 = m[4]
+        m5 = m[5]
+        m12 = m[12]
+        m13 = m[13]
+        for pnt in points:
+            v = Vec2(pnt)
+            x = v.x
+            y = v.y
+            yield Vec2(x * m0 + y * m4 + +m12, x * m1 + y * m5 + +m13)
+
     def transform_directions(
         self, vectors: Iterable[UVec], normalize=False
-    ) -> Iterable[Vec3]:
+    ) -> Iterator[Vec3]:
         """Returns an iterable of transformed direction vectors without
         translation.
 

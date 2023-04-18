@@ -335,3 +335,31 @@ def test_has_matrix_3d_stretching():
     assert has_matrix_3d_stretching(Matrix44.scale(2, 1, 1)) is True
     assert has_matrix_3d_stretching(Matrix44.scale(1, 2, 1)) is True
     assert has_matrix_3d_stretching(Matrix44.scale(1, 1, 2)) is True
+
+class TestFast2dTransform:
+    def test_fast_translate(self, m44):
+        m = m44.translate(10, 20, 0)
+        points = list(m.fast_2d_transform([(0, 0), (1, 1, 1)]))
+        assert points[0].isclose((10, 20))
+        assert points[1].isclose((11, 21))
+
+    def test_fast_z_rotate(self, m44):
+        m = m44.z_rotate(radians(90))
+        points = list(m.fast_2d_transform([(10, 0), (0, 10, 1)]))
+        assert points[0].isclose((0, 10))
+        assert points[1].isclose((-10, 0))
+
+    def test_fast_scale(self, m44):
+        m = m44.scale(2, 3, 4)
+        points = list(m.fast_2d_transform([(10, 10), (-20, -20, 1)]))
+        assert points[0].isclose((20, 30))
+        assert points[1].isclose((-40, -60))
+
+    def test_fast_scale_rotate_translate(self, m44):
+        m = m44.scale(2, 3, 4) @ m44.z_rotate(radians(90)) @ m44.translate(10, 20, 0)
+        points = [(10, 10), (-20, -20, 1)]
+        res_3d = list(m.transform_vertices(points))
+        res_2d = list(m.fast_2d_transform(points))
+
+        assert res_2d[0].isclose(res_3d[0])
+        assert res_2d[1].isclose(res_3d[1])

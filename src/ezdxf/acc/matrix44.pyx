@@ -2,11 +2,11 @@
 # distutils: language = c++
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import Sequence, Iterable, Tuple, TYPE_CHECKING
+from typing import Sequence, Iterable, Tuple, TYPE_CHECKING, Iterator
 from itertools import chain
 import math
 from .vector cimport (
-Vec3, v3_normalize, v3_isclose, v3_cross, v3_dot,
+Vec2, Vec3, v3_normalize, v3_isclose, v3_cross, v3_dot,
 )
 from .vector import X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 
@@ -124,13 +124,13 @@ cdef class Matrix44:
         else:
             raise IndexError(f'invalid col index: {col}')
 
-    def rows(self) -> Iterable[Tuple[float, ...]]:
+    def rows(self) -> Iterator[Tuple[float, ...]]:
         return (self.get_row(index) for index in (0, 1, 2, 3))
 
-    def columns(self) -> Iterable[Tuple[float, ...]]:
+    def columns(self) -> Iterator[Tuple[float, ...]]:
         return (self.get_col(index) for index in (0, 1, 2, 3))
 
-    def copy(self) -> 'Matrix44':
+    def copy(self) -> Matrix44:
         cdef Matrix44 _copy = Matrix44()
         _copy.m = self.m
         return _copy
@@ -138,7 +138,7 @@ cdef class Matrix44:
     __copy__ = copy
 
     @property
-    def origin(self) -> 'Vec3':
+    def origin(self) -> Vec3:
         cdef Vec3 v = Vec3()
         v.x = self.m[12]
         v.y = self.m[13]
@@ -200,7 +200,7 @@ cdef class Matrix44:
                fabs(v3_dot(uy, uz)) < 1e-9
 
     @staticmethod
-    def scale(double sx, sy = None, sz = None) -> 'Matrix44':
+    def scale(double sx, sy = None, sz = None) -> Matrix44:
         cdef Matrix44 mat = Matrix44()
         mat.m[0] = sx
         mat.m[5] = sx if sy is None else sy
@@ -208,7 +208,7 @@ cdef class Matrix44:
         return mat
 
     @staticmethod
-    def translate(double dx, double dy, double dz) -> 'Matrix44':
+    def translate(double dx, double dy, double dz) -> Matrix44:
         cdef Matrix44 mat = Matrix44()
         mat.m[12] = dx
         mat.m[13] = dy
@@ -216,7 +216,7 @@ cdef class Matrix44:
         return mat
 
     @staticmethod
-    def x_rotate(double angle) -> 'Matrix44':
+    def x_rotate(double angle) -> Matrix44:
         cdef Matrix44 mat = Matrix44()
         cdef double cos_a = cos(angle)
         cdef double sin_a = sin(angle)
@@ -227,7 +227,7 @@ cdef class Matrix44:
         return mat
 
     @staticmethod
-    def y_rotate(double angle) -> 'Matrix44':
+    def y_rotate(double angle) -> Matrix44:
         cdef Matrix44 mat = Matrix44()
         cdef double cos_a = cos(angle)
         cdef double sin_a = sin(angle)
@@ -238,7 +238,7 @@ cdef class Matrix44:
         return mat
 
     @staticmethod
-    def z_rotate(double angle) -> 'Matrix44':
+    def z_rotate(double angle) -> Matrix44:
         cdef Matrix44 mat = Matrix44()
         cdef double cos_a = cos(angle)
         cdef double sin_a = sin(angle)
@@ -249,7 +249,7 @@ cdef class Matrix44:
         return mat
 
     @staticmethod
-    def axis_rotate(axis: UVec, double angle) -> 'Matrix44':
+    def axis_rotate(axis: UVec, double angle) -> Matrix44:
         cdef Matrix44 mat = Matrix44()
         cdef double cos_a = cos(angle)
         cdef double sin_a = sin(angle)
@@ -275,7 +275,7 @@ cdef class Matrix44:
 
     @staticmethod
     def xyz_rotate(double angle_x, double angle_y,
-                   double angle_z) -> 'Matrix44':
+                   double angle_z) -> Matrix44:
         cdef Matrix44 mat = Matrix44()
         cdef double cx = cos(angle_x)
         cdef double sx = sin(angle_x)
@@ -298,7 +298,7 @@ cdef class Matrix44:
         return mat
 
     @staticmethod
-    def shear_xy(double angle_x = 0, double angle_y = 0) -> 'Matrix44':
+    def shear_xy(double angle_x = 0, double angle_y = 0) -> Matrix44:
         cdef Matrix44 mat = Matrix44()
         cdef double tx = tan(angle_x)
         cdef double ty = tan(angle_y)
@@ -309,7 +309,7 @@ cdef class Matrix44:
     @staticmethod
     def perspective_projection(double left, double right, double top,
                                double bottom, double near,
-                               double far) -> 'Matrix44':
+                               double far) -> Matrix44:
         cdef Matrix44 mat = Matrix44()
         mat.m[0] = (2. * near) / (right - left)
         mat.m[5] = (2. * near) / (top - bottom)
@@ -322,7 +322,7 @@ cdef class Matrix44:
 
     @staticmethod
     def perspective_projection_fov(fov: float, aspect: float, near: float,
-                                   far: float) -> 'Matrix44':
+                                   far: float) -> Matrix44:
         vrange = near * math.tan(fov / 2.)
         left = -vrange * aspect
         right = vrange * aspect
@@ -332,13 +332,13 @@ cdef class Matrix44:
                                                far)
 
     @staticmethod
-    def chain(*matrices: 'Matrix44') -> 'Matrix44':
+    def chain(*matrices: Matrix44) -> Matrix44:
         cdef Matrix44 transformation = Matrix44()
         for matrix in matrices:
             transformation *= matrix
         return transformation
 
-    def __imul__(self, Matrix44 other) -> 'Matrix44':
+    def __imul__(self, Matrix44 other) -> Matrix44:
         cdef double[16] m1 = self.m
         cdef double *m2 = other.m
 
@@ -379,13 +379,13 @@ cdef class Matrix44:
                      m1[15] * m2[15]
         return self
 
-    def __mul__(self, Matrix44 other) -> 'Matrix44':
+    def __mul__(self, Matrix44 other) -> Matrix44:
         cdef Matrix44 res_matrix = self.copy()
         return res_matrix.__imul__(other)
 
     # __matmul__ = __mul__ does not work!
 
-    def __matmul__(self, Matrix44 other) -> 'Matrix44':
+    def __matmul__(self, Matrix44 other) -> Matrix44:
         cdef Matrix44 res_matrix = self.copy()
         return res_matrix.__imul__(other)
 
@@ -480,7 +480,7 @@ cdef class Matrix44:
                       m[0] * m[5] * m[10]) * f
 
     @staticmethod
-    def ucs(ux=X_AXIS, uy=Y_AXIS, uz=Z_AXIS, origin=NULLVEC) -> 'Matrix44':
+    def ucs(ux=X_AXIS, uy=Y_AXIS, uz=Z_AXIS, origin=NULLVEC) -> Matrix44:
         cdef Matrix44 mat = Matrix44()
         cdef Vec3 _ux = Vec3(ux)
         cdef Vec3 _uy = Vec3(uy)
@@ -534,7 +534,7 @@ cdef class Matrix44:
 
     ocs_to_wcs = transform_direction
 
-    def transform_vertices(self, vectors: Iterable[UVec]) -> Iterable[Vec3]:
+    def transform_vertices(self, vectors: Iterable[UVec]) -> Iterator[Vec3]:
         cdef double *m = self.m
         cdef Vec3 res
         cdef double x, y, z
@@ -550,8 +550,27 @@ cdef class Matrix44:
             res.z = x * m[2] + y * m[6] + z * m[10] + m[14]
             yield res
 
-    def transform_directions(self, vectors: Iterable[UVec],
-                             normalize=False) -> Iterable[Vec3]:
+    def fast_2d_transform(self, points: Iterable[UVec]) -> Iterator[Vec2]:
+        cdef double m0 = self.m[0]
+        cdef double m1 = self.m[1]
+        cdef double m4 = self.m[4]
+        cdef double m5 = self.m[5]
+        cdef double m12 = self.m[12]
+        cdef double m13 = self.m[13]
+        cdef double x, y
+        cdef Vec2 res
+
+        for pnt in points:
+            res = Vec2(pnt)
+            x = res.x
+            y = res.y
+            res.x = x * m0 + y * m4 + m12
+            res.y = x * m1 + y * m5 + m13
+            yield res
+
+    def transform_directions(
+        self, vectors: Iterable[UVec], normalize=False
+    ) -> Iterator[Vec3]:
         cdef double *m = self.m
         cdef Vec3 res
         cdef double x, y, z

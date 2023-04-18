@@ -434,6 +434,8 @@ Matrix44
 
     .. automethod:: transform_vertices
 
+    .. automethod:: fast_2d_transform
+
     .. automethod:: transform_directions
 
     .. automethod:: transpose

@@ -17,7 +17,6 @@ __all__ = [
     "distance",
     "lerp",
     "Matrix44",
-    "Matrix33",
     "Bezier4P",
     "Bezier3P",
     "Basis",
@@ -44,7 +43,6 @@ if USE_C_EXT:
         lerp,
     )
     from ezdxf.acc.matrix44 import Matrix44
-    from ezdxf.acc.matrix33 import Matrix33
     from ezdxf.acc.bezier4p import (
         Bezier4P,
         cubic_bezier_arc_parameters,
@@ -72,7 +70,6 @@ else:
         lerp,
     )
     from ._matrix44 import Matrix44
-    from ._matrix33 import Matrix33
     from ._bezier4p import (
         Bezier4P,
         cubic_bezier_arc_parameters,
