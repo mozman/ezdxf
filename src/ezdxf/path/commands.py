@@ -1,9 +1,10 @@
 # Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 import enum
 from typing import NamedTuple, Union
 
-from ezdxf.math import Vec3
+from ezdxf.math import Vec2, Vec3
 
 __all__ = [
     "Command",
@@ -25,7 +26,7 @@ class Command(enum.IntEnum):
 
 
 class LineTo(NamedTuple):
-    end: Vec3
+    end: Vec2|Vec3
 
     @property
     def type(self):
@@ -33,7 +34,7 @@ class LineTo(NamedTuple):
 
 
 class MoveTo(NamedTuple):
-    end: Vec3
+    end: Vec2|Vec3
 
     @property
     def type(self):
@@ -41,8 +42,8 @@ class MoveTo(NamedTuple):
 
 
 class Curve3To(NamedTuple):
-    end: Vec3
-    ctrl: Vec3
+    end: Vec2|Vec3
+    ctrl: Vec2|Vec3
 
     @property
     def type(self):
@@ -50,9 +51,9 @@ class Curve3To(NamedTuple):
 
 
 class Curve4To(NamedTuple):
-    end: Vec3
-    ctrl1: Vec3
-    ctrl2: Vec3
+    end: Vec2|Vec3
+    ctrl1: Vec2|Vec3
+    ctrl2: Vec2|Vec3
 
     @property
     def type(self):
