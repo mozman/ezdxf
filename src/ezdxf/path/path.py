@@ -392,7 +392,7 @@ class RawPath(Generic[T], abc.ABC):
 
         """
 
-        def approx_curve3(s, c, e) -> Iterator[T]:
+        def flatten_curve3(s, c, e) -> Iterator[T]:
             # Cython implementation of Bezier3P supports only Vec3
             if distance == 0.0:
                 raise ValueError(f"invalid max distance: {distance}")
@@ -400,15 +400,14 @@ class RawPath(Generic[T], abc.ABC):
                 Bezier3P((s, c, e)).flattening(distance, segments)
             )
 
-        def approx_curve4(s, c1, c2, e) -> Iterator[T]:
+        def flatten_curve4(s, c1, c2, e) -> Iterator[T]:
             # Cython implementation of Bezier4P supports only Vec3
             if distance == 0.0:
                 raise ValueError(f"invalid max distance: {distance}")
             return self._pnt_class.generate(
                 Bezier4P((s, c1, c2, e)).flattening(distance, segments)
             )
-
-        yield from self._approximate(approx_curve3, approx_curve4)
+        yield from self._approximate(flatten_curve3, flatten_curve4)
 
     @no_type_check
     def _approximate(self, approx_curve3, approx_curve4) -> Iterator[T]:

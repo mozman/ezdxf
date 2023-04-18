@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Union, Sequence, Type
+from typing import TYPE_CHECKING, Iterable, Iterator, Union, Sequence, Type
 import math
 from functools import lru_cache
 
@@ -117,7 +117,7 @@ class Bezier4P:
             raise ValueError("t not in range [0 to 1]")
         return self._get_curve_point(t)
 
-    def approximate(self, segments: int) -> Iterable[AnyVec]:
+    def approximate(self, segments: int) -> Iterator[AnyVec]:
         """Approximate `Bézier curve`_ by vertices, yields `segments` + 1
         vertices as ``(x, y[, z])`` tuples.
 
@@ -136,7 +136,7 @@ class Bezier4P:
 
     def flattening(
         self, distance: float, segments: int = 4
-    ) -> Iterable[Union[Vec3, Vec2]]:
+    ) -> Iterator[Union[Vec3, Vec2]]:
         """Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments, if the distance from the center
         of the approximation segment to the curve is bigger than `distance` the
@@ -156,7 +156,7 @@ class Bezier4P:
             end_point: AnyVec,
             start_t: float,
             end_t: float,
-        ) -> Iterable[AnyVec]:
+        ) -> Iterator[AnyVec]:
             mid_t: float = (start_t + end_t) * 0.5
             mid_point: AnyVec = self._get_curve_point(mid_t)
             chk_point: AnyVec = start_point.lerp(end_point)
@@ -242,7 +242,7 @@ def cubic_bezier_from_arc(
     start_angle: float = 0,
     end_angle: float = 360,
     segments: int = 1,
-) -> Iterable[Bezier4P]:
+) -> Iterator[Bezier4P]:
     """Returns an approximation for a circular 2D arc by multiple cubic
     Bézier-curves.
 
@@ -279,7 +279,7 @@ PI_2: float = math.pi / 2.0
 
 def cubic_bezier_from_ellipse(
     ellipse: "ConstructionEllipse", segments: int = 1
-) -> Iterable[Bezier4P]:
+) -> Iterator[Bezier4P]:
     """Returns an approximation for an elliptic arc by multiple cubic
     Bézier-curves.
 
@@ -298,7 +298,7 @@ def cubic_bezier_from_ellipse(
     while start_angle > end_angle:
         end_angle += math.tau
 
-    def transform(points: Iterable[Vec3]) -> Iterable[Vec3]:
+    def transform(points: Iterable[Vec3]) -> Iterator[Vec3]:
         center = Vec3(ellipse.center)
         x_axis: Vec3 = ellipse.major_axis
         y_axis: Vec3 = ellipse.minor_axis
@@ -325,7 +325,7 @@ TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
 
 def cubic_bezier_arc_parameters(
     start_angle: float, end_angle: float, segments: int = 1
-) -> Iterable[tuple[Vec3, Vec3, Vec3, Vec3]]:
+) -> Iterator[tuple[Vec3, Vec3, Vec3, Vec3]]:
     """Yields cubic Bézier-curve parameters for a circular 2D arc with center
     at (0, 0) and a radius of 1 in the form of [start point, 1. control point,
     2. control point, end point].
