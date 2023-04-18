@@ -65,9 +65,6 @@ class AbstractPath(Generic[T], abc.ABC):
         self._has_sub_paths = False
         self._user_data: Any = None  # should be immutable data!
 
-    def is_2d_path(self) -> bool:
-        return self._pnt_class is Vec2
-
     @abc.abstractmethod
     def factory_class(self) -> Type[T]:
         ...
