@@ -126,13 +126,13 @@ class Recorder(Backend):
         records: list[DataRecord] = []
         for record in self.records:
             if record.type == RecordType.POLYLINE:
-                vertices = Vec2.list(m.transform_vertices(record.data))
+                vertices = list(m.fast_2d_transform(record.data))
                 records.append(DataRecord(record.type, record.property_hash, vertices))
             else:
                 paths = transform_paths(record.data, m)
                 records.append(DataRecord(record.type, record.property_hash, paths))
         if self._bbox.has_data:
-            self._bbox = BoundingBox2d(m.transform_vertices(self._bbox.rect_vertices()))
+            self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
         self.records = records
 
     def sort_filled_polygons(self) -> None:

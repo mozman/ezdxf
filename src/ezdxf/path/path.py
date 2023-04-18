@@ -35,7 +35,7 @@ from .commands import (
     PathElement,
 )
 
-__all__ = ["Path"]
+__all__ = ["AbstractPath", "Path", "Path2d"]
 
 MAX_DISTANCE = 0.01
 MIN_SEGMENTS = 4
@@ -44,7 +44,7 @@ G1_TOL = 1e-4
 T = TypeVar("T", Vec2, Vec3)
 
 
-class RawPath(Generic[T], abc.ABC):
+class AbstractPath(Generic[T], abc.ABC):
     __slots__ = (
         "_pnt_class",
         "_vertices",
@@ -65,9 +65,12 @@ class RawPath(Generic[T], abc.ABC):
         self._has_sub_paths = False
         self._user_data: Any = None  # should be immutable data!
 
+    def is_2d_path(self) -> bool:
+        return self._pnt_class is Vec2
+
     @abc.abstractmethod
     def factory_class(self) -> Type[T]:
-        pass
+        ...
 
     def __len__(self) -> int:
         """Returns count of path elements."""
@@ -407,6 +410,7 @@ class RawPath(Generic[T], abc.ABC):
             return self._pnt_class.generate(
                 Bezier4P((s, c1, c2, e)).flattening(distance, segments)
             )
+
         yield from self._approximate(flatten_curve3, flatten_curve4)
 
     @no_type_check
@@ -478,7 +482,7 @@ class RawPath(Generic[T], abc.ABC):
                 path.append_path_element(cmd)
         yield path
 
-    def extend_multi_path(self, path: RawPath[T]) -> None:
+    def extend_multi_path(self, path: AbstractPath[T]) -> None:
         """Extend the path by another path. The source path is automatically a
         :term:`Multi-Path` object, even if the previous end point matches the
         start point of the appended path. Ignores paths without any commands
@@ -491,7 +495,7 @@ class RawPath(Generic[T], abc.ABC):
             for cmd in path.commands():
                 self.append_path_element(cmd)
 
-    def append_path(self, path: RawPath[T]) -> None:
+    def append_path(self, path: AbstractPath[T]) -> None:
         """Append another path to this path. Adds a :code:`self.line_to(path.start)`
         if the end of this path != the start of appended path.
 
@@ -508,7 +512,7 @@ class RawPath(Generic[T], abc.ABC):
             self.append_path_element(cmd)
 
 
-class Path(RawPath[Vec3]):
+class Path(AbstractPath[Vec3]):
     def factory_class(self) -> Type[T]:
         return Vec3
 
@@ -525,18 +529,13 @@ class Path(RawPath[Vec3]):
         return path2d
 
 
-
-
-Path3d = Path
-
-
-class Path2d(RawPath[Vec2]):
+class Path2d(AbstractPath[Vec2]):
     def factory_class(self) -> Type[T]:
         return Vec2
 
-    def to_3d_path(self, elevation: float=0.0) -> Path3d:
-        """Conversion is nearly as fast as a copy, z-axis is set ot `elevation`."""
-        path3d = Path3d()
+    def to_3d_path(self, elevation: float = 0.0) -> Path:
+        """Conversion is nearly as fast as a copy, z-axis is set to `elevation`."""
+        path3d = Path()
         elevation = float(elevation)
         cls = path3d._pnt_class
 
