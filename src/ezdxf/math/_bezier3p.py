@@ -1,7 +1,7 @@
 # Copyright (c) 2021-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, Sequence, Type, Optional, TYPE_CHECKING
+from typing import Iterable, Iterator, Sequence, Type, Optional, TYPE_CHECKING
 import math
 
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
@@ -39,19 +39,19 @@ class Bezier3P:
     def __init__(self, defpoints: Sequence[UVec]):
         if len(defpoints) == 3:
             is3d = any(len(p) > 2 for p in defpoints)
-            vector_class: Type["AnyVec"] = Vec3 if is3d else Vec2
+            vector_class: Type[AnyVec] = Vec3 if is3d else Vec2
             # The start point is the curve offset
-            offset: "AnyVec" = vector_class(defpoints[0])
-            self._offset: "AnyVec" = offset
+            offset: AnyVec = vector_class(defpoints[0])
+            self._offset: AnyVec = offset
             # moving the curve to the origin reduces floating point errors:
-            self._control_points: Sequence["AnyVec"] = tuple(
+            self._control_points: Sequence[AnyVec] = tuple(
                 vector_class(p) - offset for p in defpoints
             )
         else:
             raise ValueError("Three control points required.")
 
     @property
-    def control_points(self) -> Sequence["AnyVec"]:
+    def control_points(self) -> Sequence[AnyVec]:
         """Control points as tuple of :class:`~ezdxf.math.Vec3` or
         :class:`~ezdxf.math.Vec2` objects.
         """
@@ -60,7 +60,7 @@ class Bezier3P:
         offset = self._offset
         return offset, p1 + offset, p2 + offset
 
-    def tangent(self, t: float) -> "AnyVec":
+    def tangent(self, t: float) -> AnyVec:
         """Returns direction vector of tangent for location `t` at the
         Bèzier-curve.
 
@@ -71,7 +71,7 @@ class Bezier3P:
         check_if_in_valid_range(t)
         return self._get_curve_tangent(t)
 
-    def point(self, t: float) -> "AnyVec":
+    def point(self, t: float) -> AnyVec:
         """Returns point for location `t`` at the Bèzier-curve.
 
         Args:
@@ -81,7 +81,7 @@ class Bezier3P:
         check_if_in_valid_range(t)
         return self._get_curve_point(t)
 
-    def approximate(self, segments: int) -> Iterable["AnyVec"]:
+    def approximate(self, segments: int) -> Iterator[AnyVec]:
         """Approximate `Bézier curve`_ by vertices, yields `segments` + 1
         vertices as ``(x, y[, z])`` tuples.
 
@@ -103,7 +103,7 @@ class Bezier3P:
         `segments`.
         """
         length: float = 0.0
-        prev_point: Optional["AnyVec"] = None
+        prev_point: Optional[AnyVec] = None
         for point in self.approximate(segments):
             if prev_point is not None:
                 length += prev_point.distance(point)
@@ -112,7 +112,7 @@ class Bezier3P:
 
     def flattening(
         self, distance: float, segments: int = 4
-    ) -> Iterable["AnyVec"]:
+    ) -> Iterator[AnyVec]:
         """Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments, if the distance from the center
         of the approximation segment to the curve is bigger than `distance` the
@@ -127,15 +127,15 @@ class Bezier3P:
 
         """
         def subdiv(
-            start_point: "AnyVec",
-            end_point: "AnyVec",
+            start_point: AnyVec,
+            end_point: AnyVec,
             start_t: float,
             end_t: float,
-        ) -> Iterable["AnyVec"]:
+        ) -> Iterator[AnyVec]:
             mid_t: float = (start_t + end_t) * 0.5
-            mid_point: "AnyVec" = self._get_curve_point(mid_t)
-            chk_point: "AnyVec" = start_point.lerp(end_point)
-            # center point point is faster than projecting mid point onto
+            mid_point: AnyVec = self._get_curve_point(mid_t)
+            chk_point: AnyVec = start_point.lerp(end_point)
+            # center point is faster than projecting mid-point onto
             # vector start -> end:
             d = chk_point.distance(mid_point)
             if d < distance:
@@ -148,8 +148,8 @@ class Bezier3P:
         t0: float = 0.0
         t1: float
         cp = self.control_points
-        start_point: "AnyVec" = cp[0]
-        end_point: "AnyVec"
+        start_point: AnyVec = cp[0]
+        end_point: AnyVec
         yield start_point
         while t0 < 1.0:
             t1 = t0 + dt
@@ -162,7 +162,7 @@ class Bezier3P:
             t0 = t1
             start_point = end_point
 
-    def _get_curve_point(self, t: float) -> "AnyVec":
+    def _get_curve_point(self, t: float) -> AnyVec:
         # 1st control point (p0) is always (0, 0, 0)
         # => p0 * a is always (0, 0, 0)
         p0, p1, p2 = self._control_points
@@ -173,7 +173,7 @@ class Bezier3P:
         # add offset at last - it is maybe very large
         return p1 * b + p2 * c + self._offset
 
-    def _get_curve_tangent(self, t: float) -> "AnyVec":
+    def _get_curve_tangent(self, t: float) -> AnyVec:
         # tangent vector is independent from offset location!
         # 1st control point (p0) is always (0, 0, 0)
         # => p0 * a is always (0, 0, 0)
@@ -183,11 +183,11 @@ class Bezier3P:
         c = 2.0 * t
         return p1 * b + p2 * c
 
-    def reverse(self) -> "Bezier3P":
+    def reverse(self) -> Bezier3P:
         """Returns a new Bèzier-curve with reversed control point order."""
         return Bezier3P(list(reversed(self.control_points)))
 
-    def transform(self, m: Matrix44) -> "Bezier3P":
+    def transform(self, m: Matrix44) -> Bezier3P:
         """General transformation interface, returns a new :class:`Bezier3P`
         curve and it is always a 3D curve.
 
@@ -195,7 +195,7 @@ class Bezier3P:
              m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
 
         """
-        defpoints: Iterable["AnyVec"]
+        defpoints: Iterable[AnyVec]
         if len(self._offset) == 2:
             defpoints = Vec3.generate(self.control_points)
         else:
