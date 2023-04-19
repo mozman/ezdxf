@@ -243,6 +243,9 @@ The Path Class
 
 .. class:: Path
 
+    This class inherits from the abstract base class :class:`AbstractPath` and
+    defines the generic type :class:`T` as :class:`~ezdxf.math.Vec3`.
+
     .. autoproperty:: end
 
     .. autoproperty:: has_curves
@@ -292,6 +295,28 @@ The Path Class
     .. automethod:: sub_paths
 
     .. automethod:: transform
+
+    .. automethod:: to_2d_path
+
+The 2D Path Class
+-----------------
+
+.. class:: Path2d
+
+    .. versionadded:: 1.1
+
+    This class was added mainly for internal use. The processing of this class is no
+    faster than for the 3D :class:`Path` class, in c-extensions an extra
+    floating point operation for the 3rd axis isn't really noticeable, but consumes less
+    memory, which was the primary goal and it can avoid unnecessary type conversions,
+    when working in pure 2D scenarios.
+
+    This class inherits from the abstract base class :class:`AbstractPath` and
+    defines the generic type :class:`T` as :class:`~ezdxf.math.Vec2`.
+
+    The class supports the same interface as the :class:`Path` class.
+
+    .. automethod:: to_3d_path
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html

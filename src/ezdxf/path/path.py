@@ -51,6 +51,7 @@ class _Approx(Generic[T], abc.ABC):
     def curve4(self, p0: T, p1: T, p2: T, p3: T) -> Iterator[T]:
         ...
 
+
 class AbstractPath(Generic[T], abc.ABC):
     __slots__ = (
         "_pnt_class",
@@ -82,6 +83,16 @@ class AbstractPath(Generic[T], abc.ABC):
 
     @abc.abstractmethod
     def _approx_obj(self, segments: int) -> _Approx[T]:
+        ...
+
+    @abc.abstractmethod
+    def transform(self, m: Matrix44) -> Self:
+        """Returns a new transformed path.
+
+        Args:
+             m: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+
+        """
         ...
 
     def __len__(self) -> int:
@@ -119,14 +130,18 @@ class AbstractPath(Generic[T], abc.ABC):
     def __copy__(self) -> Self:
         """Returns a new copy of :class:`Path` with shared immutable data."""
         copy = self.__class__()
-        copy._commands = self._commands.copy()
-        # vertices are immutable - no copying required
+        # vertices itself are immutable - no copying required
         copy._vertices = self._vertices.copy()
-        copy._start_index = self._start_index.copy()
-        copy._has_sub_paths = self._has_sub_paths
-        # copy by reference: user data should be immutable data!
-        copy._user_data = self._user_data
+        self._copy_properties(copy)
         return copy
+
+    def _copy_properties(self, clone: AbstractPath) -> None:
+        assert len(self._vertices) == len(clone._vertices)
+        clone._commands = self._commands.copy()
+        clone._start_index = self._start_index.copy()
+        clone._has_sub_paths = self._has_sub_paths
+        # copy by reference: user data should be immutable data!
+        clone._user_data = self._user_data
 
     clone = __copy__
 
@@ -375,7 +390,7 @@ class AbstractPath(Generic[T], abc.ABC):
         """
         return self._approximate(self._approx_obj(segments))
 
-    def flattening(self, distance: float, segments: int = 16) -> Iterator[Vec3]:
+    def flattening(self, distance: float, segments: int = 16) -> Iterator[T]:
         """Approximate path by vertices and use adaptive recursive flattening
         to approximate Bèzier curves. The argument `segments` is the
         minimum count of approximation segments for each curve, if the distance
@@ -423,17 +438,6 @@ class AbstractPath(Generic[T], abc.ABC):
                 raise ValueError(f"Invalid command: {cmd}")
             start = end_location
 
-    def transform(self, m: Matrix44) -> Self:
-        """Returns a new transformed path.
-
-        Args:
-             m: transformation matrix of type :class:`~ezdxf.math.Matrix44`
-
-        """
-        new_path = self.clone()
-        new_path._vertices = self._pnt_class.list(m.transform_vertices(self._vertices))
-        return new_path
-
     def to_wcs(self, ocs: OCS, elevation: float) -> None:
         """Transform path from given `ocs` to WCS coordinates inplace."""
         # Important: requires a 3D path otherwise would change the type of path
@@ -450,7 +454,6 @@ class AbstractPath(Generic[T], abc.ABC):
         :term:`Single-Path`, :term:`Multi-Path` and :term:`Empty-Path`.
 
         """
-        # todo: refactor PathCommands to store Vec2 or Vec3!
         path = self.__class__(start=self.start)
         path._user_data = self._user_data
         move_to = Command.MOVE_TO
@@ -470,7 +473,6 @@ class AbstractPath(Generic[T], abc.ABC):
         (empty paths).
 
         """
-        # todo: refactor PathCommands to store Vec2 or Vec3!
         if len(path):
             self.move_to(path.start)
             for cmd in path.commands():
@@ -481,7 +483,6 @@ class AbstractPath(Generic[T], abc.ABC):
         if the end of this path != the start of appended path.
 
         """
-        # todo: refactor PathCommands to store Vec2 or Vec3!
         if len(path) == 0:
             return  # do not append an empty path
         if self._commands:
@@ -502,6 +503,7 @@ class _Approx3d(_Approx[Vec3]):
 
     def curve4(self, p0: T, p1: T, p2: T, p3: T) -> Iterator[T]:
         return iter(Bezier4P((p0, p1, p2, p3)).approximate(self.segments))
+
 
 class _Flatten3d(_Approx[Vec3]):
     def __init__(self, distance: float, segments: int):
@@ -530,16 +532,26 @@ class Path(AbstractPath[Vec3]):
         return _Flatten3d(distance, segments)
 
     def to_2d_path(self) -> Path2d:
-        """Conversion is nearly as fast as a copy and looses the z-axis data."""
-        path2d = Path2d()
+        """Conversion is almost as fast as a copy and loses the z-axis data.
 
-        path2d._commands = self._commands.copy()
+        .. versionadded:: 1.1
+
+        """
+        path2d = Path2d()
         path2d._vertices = path2d._pnt_class.list(self._vertices)
-        path2d._start_index = self._start_index.copy()
-        path2d._has_sub_paths = self._has_sub_paths
-        # copy by reference: user data should be immutable data!
-        path2d._user_data = self._user_data
+        self._copy_properties(path2d)
         return path2d
+
+    def transform(self, m: Matrix44) -> Self:
+        """Returns a new transformed 3D path.
+
+        Args:
+             m: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+
+        """
+        new_path = self.clone()
+        new_path._vertices = list(m.transform_vertices(self._vertices))
+        return new_path
 
 
 class _Approx2d(_Approx[Vec2]):
@@ -588,15 +600,22 @@ class Path2d(AbstractPath[Vec2]):
         return _Approx2d(segments)
 
     def to_3d_path(self, elevation: float = 0.0) -> Path:
-        """Conversion is nearly as fast as a copy, z-axis is set to `elevation`."""
+        """Conversion is almost as fast as a copy, z-axis is set to `elevation`.
+        """
         path3d = Path()
         elevation = float(elevation)
         cls = path3d._pnt_class
-
-        path3d._commands = self._commands.copy()
         path3d._vertices = [cls(v.x, v.y, elevation) for v in self._vertices]
-        path3d._start_index = self._start_index.copy()
-        path3d._has_sub_paths = self._has_sub_paths
-        # copy by reference: user data should be immutable data!
-        path3d._user_data = self._user_data
+        self._copy_properties(path3d)
         return path3d
+
+    def transform(self, m: Matrix44) -> Self:
+        """Returns a new transformed 2D path.
+
+        Args:
+             m: transformation matrix of type :class:`~ezdxf.math.Matrix44`
+
+        """
+        new_path = self.clone()
+        new_path._vertices = list(m.fast_2d_transform(self._vertices))
+        return new_path

@@ -86,6 +86,22 @@ cdef class Matrix44:
         cdef double *m = self.m
         return m[0], m[1], 0.0, m[4], m[5], 0.0, m[12], m[13], 1.0
 
+    @staticmethod
+    def from_2d_transformation(components: Sequence[float]) -> Matrix44:
+        if len(components) != 6:
+            raise ValueError(
+                "First 2 columns of a 3x3 matrix required: m11, m12, m21, m22, m31, m32"
+            )
+
+        m44 = Matrix44()
+        m44.m[0] = components[0]
+        m44.m[1] = components[1]
+        m44.m[4] = components[2]
+        m44.m[5] = components[3]
+        m44.m[12] = components[4]
+        m44.m[13] = components[5]
+        return m44
+
     def get_row(self, int row) -> Tuple[float, ...]:
         cdef index = row * 4
         if 0 <= index < 13:

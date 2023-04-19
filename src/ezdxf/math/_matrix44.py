@@ -68,7 +68,7 @@ class Matrix44:
         """
         nargs = len(args)
         if nargs == 0:
-            self._matrix = floats(Matrix44._identity)
+            self._matrix = list(Matrix44._identity)
         elif nargs == 1:
             self._matrix = floats(args[0])
         elif nargs == 4:
@@ -100,6 +100,26 @@ class Matrix44:
         """
         m = self._matrix
         return m[0], m[1], 0.0, m[4], m[5], 0.0, m[12], m[13], 1.0
+
+    @staticmethod
+    def from_2d_transformation(components: Sequence[float]) -> Matrix44:
+        """Returns the :class:`Matrix44` class for an affine 2D (3x3) transformation
+        matrix defined by 6 float values: m11, m12, m21, m22, m31, m32.
+        """
+        if len(components) != 6:
+            raise ValueError(
+                "First 2 columns of a 3x3 matrix required: m11, m12, m21, m22, m31, m32"
+            )
+
+        m44 = Matrix44()
+        m = m44._matrix
+        m[0] = components[0]
+        m[1] = components[1]
+        m[4] = components[2]
+        m[5] = components[3]
+        m[12] = components[4]
+        m[13] = components[5]
+        return m44
 
     def get_row(self, row: int) -> tuple[float, ...]:
         """Get row as list of four float values.
@@ -584,11 +604,18 @@ class Matrix44:
             # fmt: on
 
     def fast_2d_transform(self, points: Iterable[UVec]) -> Iterator[Vec2]:
-        """Fast transformation of 2d points. For 3d input points the z-axis will be
-        ignored.
+        """Fast transformation of 2D points. For 3D input points the z-axis will be
+        ignored.  This only works reliable if only 2D transformations have been applied
+        to the 4x4 matrix!
 
-        This only works reliable if only 2d transformations have been applied to the
-        4x4 matrix!
+        Profiling results - speed gains over :meth:`transform_vertices`:
+
+            - pure Python code: ~1.6x
+            - Python with C-extensions: less than 1.1x
+            - PyPy 3.8: ~4.3x
+
+        But speed isn't everything, returning the processed input points as :class:`Vec2`
+        instances is another advantage.
 
         .. versionadded:: 1.0.4
 
@@ -604,7 +631,7 @@ class Matrix44:
             v = Vec2(pnt)
             x = v.x
             y = v.y
-            yield Vec2(x * m0 + y * m4 + +m12, x * m1 + y * m5 + +m13)
+            yield Vec2(x * m0 + y * m4 + m12, x * m1 + y * m5 + m13)
 
     def transform_directions(
         self, vectors: Iterable[UVec], normalize=False

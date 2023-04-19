@@ -160,8 +160,8 @@ class Bezier4P:
             mid_t: float = (start_t + end_t) * 0.5
             mid_point: AnyVec = self._get_curve_point(mid_t)
             chk_point: AnyVec = start_point.lerp(end_point)
-            # center point point is faster than projecting mid point onto
-            # vector start -> end:
+            # center point is faster than projecting the mid-point on
+            # the vector start -> end:
             d = chk_point.distance(mid_point)
             if d < distance:
                 yield end_point

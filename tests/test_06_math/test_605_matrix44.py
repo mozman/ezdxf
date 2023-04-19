@@ -55,9 +55,7 @@ class TestMatrix44:
         assert matrix.get_row(3) == (12.0, 13.0, 14.0, 15.0)
 
     def test_row_constructor(self, m44):
-        matrix = m44(
-            (0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15)
-        )
+        matrix = m44((0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15))
         assert matrix.get_row(0) == (0.0, 1.0, 2.0, 3.0)
         assert matrix.get_row(1) == (4.0, 5.0, 6.0, 7.0)
         assert matrix.get_row(2) == (8.0, 9.0, 10.0, 11.0)
@@ -65,9 +63,7 @@ class TestMatrix44:
 
     def test_invalid_row_constructor(self, m44):
         with pytest.raises(ValueError):
-            m44(
-                (0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15, 16)
-            )
+            m44((0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15, 16))
         with pytest.raises(ValueError):
             m44(
                 (0, 1, 2, 3),
@@ -269,9 +265,7 @@ class TestMatrix44:
         assert equal_matrix(res, expected)
 
     def test_transpose(self, m44):
-        matrix = m44(
-            (0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15)
-        )
+        matrix = m44((0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15))
         matrix.transpose()
         assert matrix.get_row(0) == (0.0, 4.0, 8.0, 12.0)
         assert matrix.get_row(1) == (1.0, 5.0, 9.0, 13.0)
@@ -301,9 +295,7 @@ class TestMatrix44:
         assert matrix[0, 0] == 12
 
     def test_picklable(self, m44):
-        matrix = m44(
-            (0.1, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15)
-        )
+        matrix = m44((0.1, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15))
         pickled_matrix = pickle.loads(pickle.dumps(matrix))
         assert equal_matrix(matrix, pickled_matrix)
         assert type(matrix) is type(pickled_matrix)
@@ -316,14 +308,29 @@ class TestMatrix44:
         assert matrix[0, 1] == pytest.approx(-1.0)
         assert matrix[1, 0] == pytest.approx(1.0)
 
+    def test_from_2d_transformation(self, m44):
+        components = (2, 0, 0, 2, 10, 20)
+        matrix = m44.from_2d_transformation(components)
+        assert matrix.transform((1, 1)).isclose((12, 22))
+
+    @pytest.mark.parametrize(
+        "components",
+        [
+            [],
+            [0, 1, 2, 3, 4],
+            [0, 1, 2, 3, 4, 5, 6],
+        ],
+    )
+    def test_from_2d_transformation_checks_component_count(self, m44, components):
+        with pytest.raises(ValueError):
+            m44.from_2d_transformation(components)
+
 
 def test_has_matrix_2d_stretching():
     """Note: Uniform scaling is not stretching in this context."""
     assert has_matrix_2d_stretching(Matrix44.scale(1, 1, 1)) is False
     assert has_matrix_2d_stretching(Matrix44.scale(2, 2, 2)) is False
-    assert (
-        has_matrix_2d_stretching(Matrix44.scale(1, 1, 2)) is False
-    ), "ignore z-axis"
+    assert has_matrix_2d_stretching(Matrix44.scale(1, 1, 2)) is False, "ignore z-axis"
     assert has_matrix_2d_stretching(Matrix44.scale(2, 1, 1)) is True
     assert has_matrix_2d_stretching(Matrix44.scale(1, 2, 1)) is True
 
@@ -335,6 +342,7 @@ def test_has_matrix_3d_stretching():
     assert has_matrix_3d_stretching(Matrix44.scale(2, 1, 1)) is True
     assert has_matrix_3d_stretching(Matrix44.scale(1, 2, 1)) is True
     assert has_matrix_3d_stretching(Matrix44.scale(1, 1, 2)) is True
+
 
 class TestFast2dTransform:
     def test_fast_translate(self, m44):
