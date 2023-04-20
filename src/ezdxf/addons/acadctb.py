@@ -1,5 +1,5 @@
 # Purpose: read and write AutoCAD CTB files
-# Copyright (c) 2010-2022, Manfred Moitzi
+# Copyright (c) 2010-2023, Manfred Moitzi
 # License: MIT License
 # IMPORTANT: use only standard 7-Bit ascii code
 from __future__ import annotations
@@ -12,6 +12,7 @@ from typing import (
     Iterator,
     Any,
 )
+import os
 from abc import abstractmethod
 from io import StringIO
 from array import array
@@ -134,9 +135,7 @@ class PlotStyle:
         if self._color != OBJECT_COLOR:
             self._mode_color = int(data.get("mode_color", self._color))
         self._color_policy = int(data.get("color_policy", DITHERING_ON))
-        self.physical_pen_number = int(
-            data.get("physical_pen_number", AUTOMATIC)
-        )
+        self.physical_pen_number = int(data.get("physical_pen_number", AUTOMATIC))
         self.virtual_pen_number = int(data.get("virtual_pen_number", AUTOMATIC))
         self.screen = int(data.get("screen", 100))
         self.linepattern_size = float(data.get("linepattern_size", 0.5))
@@ -273,8 +272,7 @@ class PlotStyle:
         stream.write("  linepattern_size=%s\n" % str(self.linepattern_size))
         stream.write("  linetype=%d\n" % self.linetype)
         stream.write(
-            "  adaptive_linetype=%s\n"
-            % str(bool(self.adaptive_linetype)).upper()
+            "  adaptive_linetype=%s\n" % str(bool(self.adaptive_linetype)).upper()
         )
         stream.write("  lineweight=%s\n" % str(self.lineweight))
         stream.write("  fill_style=%d\n" % self.fill_style)
@@ -296,8 +294,8 @@ class PlotStyleTable:
         self.scale_factor = scale_factor
         self.apply_factor = apply_factor
 
-        # set custom_lineweight_display_units to 1 for showing lineweight in inch in AutoCAD CTB editor window, but
-        # lineweight is always defined in mm
+        # set custom_lineweight_display_units to 1 for showing lineweight in inch in
+        # AutoCAD CTB editor window, but lineweight is always defined in mm
         self.custom_lineweight_display_units = 0
         self.lineweights = array("f", DEFAULT_LINE_WEIGHTS)
 
@@ -338,7 +336,7 @@ class PlotStyleTable:
         """
         return self.lineweights[index]
 
-    def save(self, filename: str) -> None:
+    def save(self, filename: str | os.PathLike) -> None:
         """Save CTB or STB file as `filename` to the file system."""
         with open(filename, "wb") as stream:
             self.write(stream)
@@ -633,7 +631,9 @@ def _read_stb(stream: BinaryIO) -> NamedPlotStyles:
     return styles
 
 
-def load(filename: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]:
+def load(
+    filename: str | os.PathLike,
+) -> Union[ColorDependentPlotStyles, NamedPlotStyles]:
     """Load the CTB or STB file `filename` from file system."""
 
     with open(filename, "rb") as stream:
@@ -757,15 +757,11 @@ def int2color(color: int) -> tuple[int, int, int, int]:
     return red, green, blue, color_type
 
 
-def mode_color2int(
-    red: int, green: int, blue: int, color_type=COLOR_RGB
-) -> int:
+def mode_color2int(red: int, green: int, blue: int, color_type=COLOR_RGB) -> int:
     """Convert mode_color (r, g, b, color_type) tuple to integer."""
     return -color2int(red, green, blue, color_type)
 
 
 def color2int(red: int, green: int, blue: int, color_type: int) -> int:
     """Convert color (r, g, b, color_type) to integer."""
-    return (
-        -((color_type << 24) + (red << 16) + (green << 8) + blue) & 0xFFFFFFFF
-    )
+    return -((color_type << 24) + (red << 16) + (green << 8) + blue) & 0xFFFFFFFF
