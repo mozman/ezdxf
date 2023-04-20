@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, Manfred Moitzi
+# Copyright (c) 2021-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Optional

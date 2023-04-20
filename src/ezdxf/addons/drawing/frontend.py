@@ -520,7 +520,7 @@ class Frontend:
         holes: list[Path]
 
         if loops is not None:  # only MPOLYGON
-            external_paths, holes = winding_deconstruction(
+            external_paths, holes = winding_deconstruction(  # type: ignore
                 fast_bbox_detection(loops)
             )
         else:  # only HATCH
@@ -528,7 +528,7 @@ class Frontend:
             polygons: list = fast_bbox_detection(
                 closed_loops(paths, ocs, elevation)  # type: ignore
             )
-            external_paths, holes = winding_deconstruction(polygons)
+            external_paths, holes = winding_deconstruction(polygons)  # type: ignore
 
         if show_only_outline:
             for p in itertools.chain(ignore_text_boxes(external_paths), holes):

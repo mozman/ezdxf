@@ -774,10 +774,10 @@ def _polygon_converter(
         boundaries = polygon.paths
         external = group[0]
         external.close()
-        add_boundary(boundaries, external, 1)
+        add_boundary(boundaries, external, 1)  # type: ignore
         for hole in group[1:]:
             hole.close()
-            add_boundary(boundaries, hole, 0)
+            add_boundary(boundaries, hole, 0)  # type: ignore
         yield polygon
 
 
