@@ -95,7 +95,7 @@ from __future__ import annotations
 from typing import Tuple, Optional, List, Iterable
 from typing_extensions import TypeAlias
 from collections import namedtuple
-from .path import Path
+from .path import Path, AbstractPath
 from ezdxf.math import BoundingBox2d
 
 __all__ = [
@@ -179,10 +179,10 @@ def winding_deconstruction(
 
     def deconstruct(polygons_, level):
         for polygon in polygons_:
-            if isinstance(polygon, Path):
+            if isinstance(polygon, AbstractPath):
                 # level 0 is the list of polygons
                 # level 1 = ccw, 2 = cw, 3 = ccw, 4 = cw, ...
-                (ccw_paths if (level % 2) else cw_paths).append(polygon)
+                (ccw_paths if (level % 2) else cw_paths).append(polygon) # type:ignore
             else:
                 deconstruct(polygon, level + 1)
 
@@ -195,7 +195,7 @@ def winding_deconstruction(
 def flatten_polygons(polygons: Polygon) -> Iterable[Path]:
     """Yield a flat representation of the given nested polygons."""
     for polygon in polygons:  # type: ignore
-        if isinstance(polygon, Path):
+        if isinstance(polygon, AbstractPath):
             yield polygon
         else:
             yield from flatten_polygons(polygon)  # type: ignore

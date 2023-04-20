@@ -58,7 +58,7 @@ from ezdxf.entities import (
     SplineEdge,
 )
 from ezdxf.entities.polygon import DXFPolygon
-from .path import Path
+from .path import Path, AbstractPath
 from .commands import Command
 from . import tools
 from .nesting import group_paths
@@ -527,7 +527,7 @@ def to_lwpolylines(
         iterable of :class:`~ezdxf.entities.LWPolyline` objects
 
     """
-    if isinstance(paths, Path):
+    if isinstance(paths, AbstractPath):
         paths = [paths]
     else:
         paths = list(paths)
@@ -584,7 +584,7 @@ def to_polylines2d(
         iterable of 2D :class:`~ezdxf.entities.Polyline` objects
 
     """
-    if isinstance(paths, Path):
+    if isinstance(paths, AbstractPath):
         paths = [paths]
     else:
         paths = list(paths)
@@ -746,7 +746,7 @@ def _polygon_converter(
     extrusion: UVec = Z_AXIS,
     dxfattribs=None,
 ) -> Iterator[TPolygon]:
-    if isinstance(paths, Path):
+    if isinstance(paths, AbstractPath):
         paths = [paths]
     else:
         paths = list(paths)
@@ -801,7 +801,7 @@ def to_polylines3d(
         iterable of 3D :class:`~ezdxf.entities.Polyline` objects
 
     """
-    if isinstance(paths, Path):
+    if isinstance(paths, AbstractPath):
         paths = [paths]
 
     dxfattribs = dict(dxfattribs or {})
@@ -833,7 +833,7 @@ def to_lines(
         iterable of :class:`~ezdxf.entities.Line` objects
 
     """
-    if isinstance(paths, Path):
+    if isinstance(paths, AbstractPath):
         paths = [paths]
     dxfattribs = dict(dxfattribs or {})
     prev_vertex = None
@@ -942,7 +942,7 @@ def to_splines_and_polylines(
         iterable of :class:`~ezdxf.entities.Line` objects
 
     """
-    if isinstance(paths, Path):
+    if isinstance(paths, AbstractPath):
         paths = [paths]
     dxfattribs = dict(dxfattribs or {})
 

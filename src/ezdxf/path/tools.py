@@ -7,8 +7,8 @@ from typing import (
     Iterator,
     Optional,
     Sequence,
+    TypeVar,
 )
-
 import math
 from ezdxf.math import (
     Vec2,
@@ -36,7 +36,7 @@ from ezdxf.math import (
 from ezdxf.math.triangulation import mapbox_earcut_2d
 from ezdxf.query import EntityQuery
 
-from .path import Path
+from .path import Path, Path2d
 from .commands import Command
 from . import converter, nesting
 
@@ -81,6 +81,7 @@ MIN_SEGMENTS = 4
 G1_TOL = 1e-4
 IS_CLOSE_TOL = 1e-10
 
+T = TypeVar("T", Path, Path2d)
 
 def to_multi_path(paths: Iterable[Path]) -> Path:
     """Returns a multi-path object from all given paths and their sub-paths.
@@ -92,7 +93,7 @@ def to_multi_path(paths: Iterable[Path]) -> Path:
     return multi_path
 
 
-def single_paths(paths: Iterable[Path]) -> Iterable[Path]:
+def single_paths(paths: Iterable[T]) -> Iterable[T]:
     """Yields all given paths and their sub-paths as single path objects."""
     for p in paths:
         if p.has_sub_paths:
@@ -101,12 +102,12 @@ def single_paths(paths: Iterable[Path]) -> Iterable[Path]:
             yield p
 
 
-def transform_paths(paths: Iterable[Path], m: Matrix44) -> list[Path]:
-    """Transform multiple :class:`Path` objects at once by transformation
-    matrix `m`. Returns a list of the transformed :class:`Path` objects.
+def transform_paths(paths: Iterable[T], m: Matrix44) -> list[T]:
+    """Transform multiple path objects at once by transformation
+    matrix `m`. Returns a list of the transformed path objects.
 
     Args:
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         m: transformation matrix of type :class:`~ezdxf.math.Matrix44`
 
     """
@@ -126,12 +127,11 @@ def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> list[Path]:
     t.transpose()
     return transform_paths(paths, t)
 
-
-def bbox(paths: Iterable[Path], *, fast=False) -> BoundingBox:
+def bbox(paths: Iterable[Path|Path2d], *, fast=False) -> BoundingBox:
     """Returns the :class:`~ezdxf.math.BoundingBox` for the given paths.
 
     Args:
-        paths: iterable of :class:`~ezdxf.path.Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         fast: calculates the precise bounding box of Bèzier curves if
             ``False``, otherwise uses the control points of Bézier curves to
             determine their bounding box.
@@ -147,12 +147,8 @@ def bbox(paths: Iterable[Path], *, fast=False) -> BoundingBox:
                 box.extend((bb.extmin, bb.extmax))
     return box
 
-
-def precise_bbox(path: Path) -> BoundingBox:
-    """Returns the precise :class:`~ezdxf.math.BoundingBox` for the given
-    :class:`~ezdxf.path.Path`.
-
-    """
+def precise_bbox(path: Path|Path2d) -> BoundingBox:
+    """Returns the precise :class:`~ezdxf.math.BoundingBox` for the given paths."""
     if len(path) == 0:  # empty path
         return BoundingBox()
     start = path.start

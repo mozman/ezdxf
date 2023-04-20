@@ -635,7 +635,7 @@ def load(
     filename: str | os.PathLike,
 ) -> Union[ColorDependentPlotStyles, NamedPlotStyles]:
     """Load the CTB or STB file `filename` from file system."""
-
+    filename = str(filename)
     with open(filename, "rb") as stream:
         if filename.lower().endswith(".ctb"):
             return _read_ctb(stream)

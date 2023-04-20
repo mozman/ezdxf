@@ -9,6 +9,7 @@ from typing import (
     TypeVar,
     Type,
     Generic,
+    Callable,
 )
 from typing_extensions import Self
 from ezdxf.math import (
@@ -41,49 +42,21 @@ G1_TOL = 1e-4
 
 T = TypeVar("T", Vec2, Vec3)
 
-
-class _Approx(Generic[T], abc.ABC):
-    @abc.abstractmethod
-    def curve3(self, p0: T, p1: T, p2: T) -> Iterator[T]:
-        ...
-
-    @abc.abstractmethod
-    def curve4(self, p0: T, p1: T, p2: T, p3: T) -> Iterator[T]:
-        ...
+_slots = ("_vertices", "_start_index", "_commands", "_has_sub_paths", "_user_data")
 
 
 class AbstractPath(Generic[T], abc.ABC):
-    __slots__ = (
-        "_pnt_class",
-        "_vertices",
-        "_start_index",
-        "_commands",
-        "_has_sub_paths",
-        "_user_data",
-    )
+    __slots__ = _slots
+    _pnt_class: Type[T]
 
     def __init__(self, start: UVec = NULLVEC):
-        # point class must not change after initialization:
-        self._pnt_class: Type[T] = self.factory_class()
         # stores all command vertices in a contiguous list:
-        self._vertices: list[Vec3] = [self._pnt_class(start)]
+        self._vertices: list[T] = [self._pnt_class(start)]
         # start index of each command
         self._start_index: list[int] = []
         self._commands: list[Command] = []
         self._has_sub_paths = False
         self._user_data: Any = None  # should be immutable data!
-
-    @abc.abstractmethod
-    def factory_class(self) -> Type[T]:
-        ...
-
-    @abc.abstractmethod
-    def _flatten_obj(self, distance: float, segments: int) -> _Approx[T]:
-        ...
-
-    @abc.abstractmethod
-    def _approx_obj(self, segments: int) -> _Approx[T]:
-        ...
 
     @abc.abstractmethod
     def transform(self, m: Matrix44) -> Self:
@@ -377,6 +350,7 @@ class AbstractPath(Generic[T], abc.ABC):
         else:
             return self.clone()
 
+    @abc.abstractmethod
     def approximate(self, segments: int = 20) -> Iterator[T]:
         """Approximate path by vertices, `segments` is the count of
         approximation segments for each Bézier curve.
@@ -388,8 +362,9 @@ class AbstractPath(Generic[T], abc.ABC):
         indistinguishable from line segments.
 
         """
-        return self._approximate(self._approx_obj(segments))
+        ...
 
+    @abc.abstractmethod
     def flattening(self, distance: float, segments: int = 16) -> Iterator[T]:
         """Approximate path by vertices and use adaptive recursive flattening
         to approximate Bèzier curves. The argument `segments` is the
@@ -410,9 +385,9 @@ class AbstractPath(Generic[T], abc.ABC):
             segments: minimum segment count per Bézier curve
 
         """
-        return self._approximate(self._flatten_obj(distance, segments))
+        ...
 
-    def _approximate(self, approx: _Approx[T]) -> Iterator[T]:
+    def _approximate(self, curve3: Callable, curve4: Callable) -> Iterator[T]:
         if not self._commands:
             return
 
@@ -426,12 +401,12 @@ class AbstractPath(Generic[T], abc.ABC):
                 yield end_location
             elif cmd == Command.CURVE3_TO:
                 ctrl, end_location = vertices[si : si + 2]
-                pts = approx.curve3(start, ctrl, end_location)
+                pts = curve3(start, ctrl, end_location)
                 next(pts)  # skip first vertex
                 yield from pts
             elif cmd == Command.CURVE4_TO:
                 ctrl1, ctrl2, end_location = vertices[si : si + 3]
-                pts = approx.curve4(start, ctrl1, ctrl2, end_location)
+                pts = curve4(start, ctrl1, ctrl2, end_location)
                 next(pts)  # skip first vertex
                 yield from pts
             else:
@@ -494,51 +469,40 @@ class AbstractPath(Generic[T], abc.ABC):
             self.append_path_element(cmd)
 
 
-class _Approx3d(_Approx[Vec3]):
-    def __init__(self, segments: int):
-        self.segments = segments
-
-    def curve3(self, p0: T, p1: T, p2: T) -> Iterator[T]:
-        return iter(Bezier3P((p0, p1, p2)).approximate(self.segments))
-
-    def curve4(self, p0: T, p1: T, p2: T, p3: T) -> Iterator[T]:
-        return iter(Bezier4P((p0, p1, p2, p3)).approximate(self.segments))
-
-
-class _Flatten3d(_Approx[Vec3]):
-    def __init__(self, distance: float, segments: int):
-        self.distance = distance
-        self.segments = segments
-
-    def curve3(self, p0: T, p1: T, p2: T) -> Iterator[T]:
-        if self.distance == 0.0:
-            raise ValueError(f"invalid max distance: 0.0")
-        return iter(Bezier3P((p0, p1, p2)).flattening(self.distance, self.segments))
-
-    def curve4(self, p0: T, p1: T, p2: T, p3: T) -> Iterator[T]:
-        if self.distance == 0.0:
-            raise ValueError(f"invalid max distance: 0.0")
-        return iter(Bezier4P((p0, p1, p2, p3)).flattening(self.distance, self.segments))
-
-
 class Path(AbstractPath[Vec3]):
-    def factory_class(self) -> Type[T]:
-        return Vec3
+    __slots__ = _slots
+    _pnt_class = Vec3
 
-    def _approx_obj(self, segments: int) -> _Approx[T]:
-        return _Approx3d(segments)
+    def approximate(self, segments: int = 20) -> Iterator[Vec3]:
+        def curve3(p0: T, p1: T, p2: T) -> Iterator[Vec3]:
+            return iter(Bezier3P((p0, p1, p2)).approximate(segments))
 
-    def _flatten_obj(self, distance: float, segments: int) -> _Approx[T]:
-        return _Flatten3d(distance, segments)
+        def curve4(p0: T, p1: T, p2: T, p3: T) -> Iterator[Vec3]:
+            return iter(Bezier4P((p0, p1, p2, p3)).approximate(segments))
+
+        return self._approximate(curve3, curve4)
+
+    def flattening(self, distance: float, segments: int = 16) -> Iterator[Vec3]:
+        def curve3(p0: T, p1: T, p2: T) -> Iterator[Vec3]:
+            if distance == 0.0:
+                raise ValueError(f"invalid max distance: 0.0")
+            return iter(Bezier3P((p0, p1, p2)).flattening(distance, segments))
+
+        def curve4(p0: T, p1: T, p2: T, p3: T) -> Iterator[Vec3]:
+            if distance == 0.0:
+                raise ValueError(f"invalid max distance: 0.0")
+            return iter(Bezier4P((p0, p1, p2, p3)).flattening(distance, segments))
+
+        return self._approximate(curve3, curve4)
 
     def to_2d_path(self) -> Path2d:
-        """Conversion is almost as fast as a copy and loses the z-axis data.
+        """Returns a new 2D path. The conversion is almost as fast as a copy.
 
         .. versionadded:: 1.1
 
         """
         path2d = Path2d()
-        path2d._vertices = path2d._pnt_class.list(self._vertices)
+        path2d._vertices = Vec2.list(self._vertices)
         self._copy_properties(path2d)
         return path2d
 
@@ -554,58 +518,41 @@ class Path(AbstractPath[Vec3]):
         return new_path
 
 
-class _Approx2d(_Approx[Vec2]):
-    def __init__(self, segments: int):
-        self.segments = segments
-
-    def curve3(self, p0: T, p1: T, p2: T) -> Iterator[T]:
-        # Cython implementation of Bezier3P returns Vec3
-        return Vec2.generate(Bezier3P((p0, p1, p2)).approximate(self.segments))
-
-    def curve4(self, p0: T, p1: T, p2: T, p3: T) -> Iterator[T]:
-        # Cython implementation of Bezier4P returns Vec3
-        return Vec2.generate(Bezier4P((p0, p1, p2, p3)).approximate(self.segments))
-
-
-class _Flatten2d(_Approx[Vec2]):
-    def __init__(self, distance: float = 0.0, segments: int = 16):
-        self.distance = distance
-        self.segments = segments
-
-    def curve3(self, p0: T, p1: T, p2: T) -> Iterator[T]:
-        if self.distance == 0.0:
-            raise ValueError(f"invalid max distance: 0.0")
-        # Cython implementation of Bezier3P returns Vec3
-        return Vec2.generate(
-            Bezier3P((p0, p1, p2)).flattening(self.distance, self.segments)
-        )
-
-    def curve4(self, p0: T, p1: T, p2: T, p3: T) -> Iterator[T]:
-        # Cython implementation of Bezier4P returns Vec3
-        if self.distance == 0.0:
-            raise ValueError(f"invalid max distance: 0.0")
-        return Vec2.generate(
-            Bezier4P((p0, p1, p2, p3)).flattening(self.distance, self.segments)
-        )
-
-
 class Path2d(AbstractPath[Vec2]):
-    def factory_class(self) -> Type[T]:
-        return Vec2
+    __slots__ = _slots
+    _pnt_class = Vec2
 
-    def _flatten_obj(self, distance: float, segments: int) -> _Approx[T]:
-        return _Flatten2d(distance, segments)
+    def approximate(self, segments: int = 20) -> Iterator[Vec2]:
+        def curve3(p0: T, p1: T, p2: T) -> Iterator[Vec2]:
+            return Vec2.generate(Bezier3P((p0, p1, p2)).approximate(segments))
 
-    def _approx_obj(self, segments: int) -> _Approx[T]:
-        return _Approx2d(segments)
+        def curve4(p0: T, p1: T, p2: T, p3: T) -> Iterator[Vec2]:
+            return Vec2.generate(Bezier4P((p0, p1, p2, p3)).approximate(segments))
+
+        return self._approximate(curve3, curve4)
+
+    def flattening(self, distance: float, segments: int = 16) -> Iterator[Vec2]:
+        def curve3(p0: T, p1: T, p2: T) -> Iterator[Vec2]:
+            if distance == 0.0:
+                raise ValueError(f"invalid max distance: 0.0")
+            return Vec2.generate(Bezier3P((p0, p1, p2)).flattening(distance, segments))
+
+        def curve4(p0: T, p1: T, p2: T, p3: T) -> Iterator[Vec2]:
+            if distance == 0.0:
+                raise ValueError(f"invalid max distance: 0.0")
+            return Vec2.generate(
+                Bezier4P((p0, p1, p2, p3)).flattening(distance, segments)
+            )
+
+        return self._approximate(curve3, curve4)
 
     def to_3d_path(self, elevation: float = 0.0) -> Path:
-        """Conversion is almost as fast as a copy, z-axis is set to `elevation`.
+        """Returns a new 3D path, the z-axis of all vertices is set to `elevation`.
+        The conversion is almost as fast as a copy.
         """
         path3d = Path()
         elevation = float(elevation)
-        cls = path3d._pnt_class
-        path3d._vertices = [cls(v.x, v.y, elevation) for v in self._vertices]
+        path3d._vertices = [Vec3(v.x, v.y, elevation) for v in self._vertices]
         self._copy_properties(path3d)
         return path3d
 
