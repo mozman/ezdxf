@@ -7,7 +7,7 @@ import enum
 import math
 
 from .deps import Vec2, Path, luminance, Matrix44, transform_paths, BoundingBox2d, path_bbox
-from .properties import Properties
+from .properties import Properties, Pen
 
 # Page coordinates are always plot units:
 # 1 plot unit (plu) = 0.025mm
@@ -77,6 +77,7 @@ class Recorder(Backend):
         self.records: list[DataRecord] = []
         self.properties: dict[int, Properties] = {}
         self._bbox = BoundingBox2d()
+        self.pens: Sequence[Pen] = []
 
     def bbox(self) -> BoundingBox2d:
         """Returns the bounding box of all recorded polylines and polygons as
@@ -106,6 +107,8 @@ class Recorder(Backend):
         if prop_hash not in self.properties:
             self.properties[prop_hash] = properties.copy()
         self.records.append(DataRecord(record_type, prop_hash, args))
+        if len(self.pens) != len(properties.pen_table):
+            self.pens = list(properties.pen_table.values())
 
     def replay(self, backend: Backend) -> None:
         """Replay the recording on another backend."""

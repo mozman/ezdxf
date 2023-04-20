@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Sequence, Optional
+from typing import TYPE_CHECKING, Sequence, Optional, Iterable
 import enum
 
 from functools import lru_cache
@@ -11,7 +11,7 @@ from ezdxf.entities import Hatch
 import ezdxf.path
 
 from .deps import Vec2, Path
-from .properties import Properties, RGB_NONE, RGB, RGB_BLACK, RGB_WHITE
+from .properties import Properties, RGB_NONE, RGB, RGB_BLACK, RGB_WHITE, Pen
 from .backend import Backend
 
 if TYPE_CHECKING:
@@ -24,7 +24,6 @@ class ColorMode(enum.Enum):
 
     # Use always the RGB value
     RGB = enum.auto()
-
 
 
 class DXFBackend(Backend):
@@ -45,6 +44,7 @@ class DXFBackend(Backend):
         map_black_rgb_to_white_rgb: maps black fillings and lines to white.
 
     """
+
     def __init__(
         self,
         layout: GenericLayoutType,
@@ -124,3 +124,17 @@ def make_lineweight(width: float) -> int:
         if width_int <= lw:
             return lw
     return VALID_DXF_LINEWEIGHTS[-1]
+
+
+def make_ctb(pens: Iterable[Pen]):
+    from ezdxf.addons import acadctb
+
+    ctb = acadctb.new_ctb()
+    for pen in pens:
+        try:
+            style = ctb.new_style(pen.index)
+        except IndexError:
+            continue
+        style.set_lineweight(pen.width)
+        style.color = pen.color
+    return ctb

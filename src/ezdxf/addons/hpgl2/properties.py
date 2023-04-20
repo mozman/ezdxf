@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import NamedTuple
+from typing import NamedTuple, Iterable
 import dataclasses
 import enum
 import copy
@@ -40,6 +40,7 @@ RGB_NONE = RGB(-1, -1, -1)
 RGB_BLACK = RGB(0, 0, 0)
 RGB_WHITE = RGB(255, 255, 255)
 LIGHT_GREY = RGB(200, 200, 200)
+
 
 @dataclasses.dataclass
 class Pen:
