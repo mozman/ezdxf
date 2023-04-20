@@ -58,7 +58,7 @@ from ezdxf.entities import (
     SplineEdge,
 )
 from ezdxf.entities.polygon import DXFPolygon
-from .path import Path, AbstractPath
+from .path import Path, AbstractPath, Path2d
 from .commands import Command
 from . import tools
 from .nesting import group_paths
@@ -502,7 +502,7 @@ def from_vertices(vertices: Iterable[UVec], close=False) -> Path:
 
 
 def to_lwpolylines(
-    paths: Iterable[Path],
+    paths: Iterable[Path|Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -517,7 +517,7 @@ def to_lwpolylines(
     to the start point of the first path.
 
     Args:
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         extrusion: extrusion vector for all paths
@@ -533,19 +533,19 @@ def to_lwpolylines(
         paths = list(paths)
     if len(paths) == 0:
         return []
-
+    paths3d: list[Path] = list(tools.to_3d_paths(paths))
     extrusion = Vec3(extrusion)
-    reference_point = paths[0].start
+    reference_point = Vec3(paths3d[0].start)
     dxfattribs = dict(dxfattribs or {})
     if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
-        paths = tools.transform_paths_to_ocs(paths, ocs)
+        paths3d = tools.transform_paths_to_ocs(paths3d, ocs)
         dxfattribs["elevation"] = elevation
         dxfattribs["extrusion"] = extrusion
     elif reference_point.z != 0:
         dxfattribs["elevation"] = reference_point.z
 
-    for path in tools.single_paths(paths):
+    for path in tools.single_paths(paths3d):
         if len(path) > 0:
             p = LWPolyline.new(dxfattribs=dxfattribs)
             p.append_points(path.flattening(distance, segments), format="xy")  # type: ignore
@@ -559,7 +559,7 @@ def _get_ocs(extrusion: Vec3, reference_point: Vec3) -> tuple[OCS, float]:
 
 
 def to_polylines2d(
-    paths: Iterable[Path],
+    paths: Iterable[Path|Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -574,7 +574,7 @@ def to_polylines2d(
     to the start point of the first path.
 
     Args:
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         extrusion: extrusion vector for all paths
@@ -590,19 +590,19 @@ def to_polylines2d(
         paths = list(paths)
     if len(paths) == 0:
         return []
-
+    paths3d = list(tools.to_3d_paths(paths))
     extrusion = Vec3(extrusion)
-    reference_point = paths[0].start
+    reference_point = Vec3(paths[0].start)
     dxfattribs = dict(dxfattribs or {})
     if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
-        paths = tools.transform_paths_to_ocs(paths, ocs)
+        paths3d = tools.transform_paths_to_ocs(paths3d, ocs)
         dxfattribs["elevation"] = Vec3(0, 0, elevation)
         dxfattribs["extrusion"] = extrusion
     elif reference_point.z != 0:
         dxfattribs["elevation"] = Vec3(0, 0, reference_point.z)
 
-    for path in tools.single_paths(paths):
+    for path in tools.single_paths(paths3d):
         if len(path) > 0:
             p = Polyline.new(dxfattribs=dxfattribs)
             p.append_vertices(path.flattening(distance, segments))

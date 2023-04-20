@@ -64,6 +64,7 @@ __all__ = [
     "add_2d_polyline",
     "add_spline",
     "to_multi_path",
+    "to_3d_paths",
     "single_paths",
     "have_close_control_vertices",
     "lines_to_curve3",
@@ -83,6 +84,7 @@ IS_CLOSE_TOL = 1e-10
 
 T = TypeVar("T", Path, Path2d)
 
+
 def to_multi_path(paths: Iterable[Path]) -> Path:
     """Returns a multi-path object from all given paths and their sub-paths.
     Ignores paths without any commands (empty paths).
@@ -91,6 +93,14 @@ def to_multi_path(paths: Iterable[Path]) -> Path:
     for p in paths:
         multi_path.extend_multi_path(p)
     return multi_path
+
+
+def to_3d_paths(paths: Iterable[Path | Path2d]) -> Iterator[Path]:
+    """Yields all paths as 3D :class:`Path` instances."""
+    for path in paths:
+        if isinstance(path, Path2d):
+            path = path.to_3d_path()
+        yield path
 
 
 def single_paths(paths: Iterable[T]) -> Iterable[T]:
@@ -127,7 +137,8 @@ def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> list[Path]:
     t.transpose()
     return transform_paths(paths, t)
 
-def bbox(paths: Iterable[Path|Path2d], *, fast=False) -> BoundingBox:
+
+def bbox(paths: Iterable[Path | Path2d], *, fast=False) -> BoundingBox:
     """Returns the :class:`~ezdxf.math.BoundingBox` for the given paths.
 
     Args:
@@ -147,7 +158,8 @@ def bbox(paths: Iterable[Path|Path2d], *, fast=False) -> BoundingBox:
                 box.extend((bb.extmin, bb.extmax))
     return box
 
-def precise_bbox(path: Path|Path2d) -> BoundingBox:
+
+def precise_bbox(path: Path | Path2d) -> BoundingBox:
     """Returns the precise :class:`~ezdxf.math.BoundingBox` for the given paths."""
     if len(path) == 0:  # empty path
         return BoundingBox()
