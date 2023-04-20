@@ -502,7 +502,7 @@ def from_vertices(vertices: Iterable[UVec], close=False) -> Path:
 
 
 def to_lwpolylines(
-    paths: Iterable[Path|Path2d],
+    paths: Iterable[Path | Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -533,19 +533,18 @@ def to_lwpolylines(
         paths = list(paths)
     if len(paths) == 0:
         return []
-    paths3d: list[Path] = list(tools.to_3d_paths(paths))
     extrusion = Vec3(extrusion)
-    reference_point = Vec3(paths3d[0].start)
+    reference_point = Vec3(paths[0].start)
     dxfattribs = dict(dxfattribs or {})
     if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
-        paths3d = tools.transform_paths_to_ocs(paths3d, ocs)
+        paths = tools.transform_paths_to_ocs(paths, ocs)
         dxfattribs["elevation"] = elevation
         dxfattribs["extrusion"] = extrusion
     elif reference_point.z != 0:
         dxfattribs["elevation"] = reference_point.z
 
-    for path in tools.single_paths(paths3d):
+    for path in tools.single_paths(paths):  # type: ignore
         if len(path) > 0:
             p = LWPolyline.new(dxfattribs=dxfattribs)
             p.append_points(path.flattening(distance, segments), format="xy")  # type: ignore
@@ -559,7 +558,7 @@ def _get_ocs(extrusion: Vec3, reference_point: Vec3) -> tuple[OCS, float]:
 
 
 def to_polylines2d(
-    paths: Iterable[Path|Path2d],
+    paths: Iterable[Path | Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -590,19 +589,18 @@ def to_polylines2d(
         paths = list(paths)
     if len(paths) == 0:
         return []
-    paths3d = list(tools.to_3d_paths(paths))
     extrusion = Vec3(extrusion)
     reference_point = Vec3(paths[0].start)
     dxfattribs = dict(dxfattribs or {})
     if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
-        paths3d = tools.transform_paths_to_ocs(paths3d, ocs)
+        paths = tools.transform_paths_to_ocs(paths, ocs)
         dxfattribs["elevation"] = Vec3(0, 0, elevation)
         dxfattribs["extrusion"] = extrusion
     elif reference_point.z != 0:
         dxfattribs["elevation"] = Vec3(0, 0, reference_point.z)
 
-    for path in tools.single_paths(paths3d):
+    for path in tools.single_paths(paths):  # type: ignore
         if len(path) > 0:
             p = Polyline.new(dxfattribs=dxfattribs)
             p.append_vertices(path.flattening(distance, segments))
@@ -611,7 +609,7 @@ def to_polylines2d(
 
 
 def to_hatches(
-    paths: Iterable[Path],
+    paths: Iterable[Path | Path2d],
     *,
     edge_path: bool = True,
     distance: float = MAX_DISTANCE,
@@ -629,7 +627,7 @@ def to_hatches(
     to the start point of the first path.
 
     Args:
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         edge_path: ``True`` for edge paths build of LINE and SPLINE edges,
             ``False`` for only LWPOLYLINE paths as boundary paths
         distance:  maximum distance, see :meth:`Path.flattening`
@@ -654,11 +652,13 @@ def to_hatches(
             build_poly_path, distance=distance, segments=segments
         )
 
-    yield from _polygon_converter(Hatch, paths, boundary_factory, extrusion, dxfattribs)
+    yield from _polygon_converter(
+        Hatch, tools.to_3d_paths(paths), boundary_factory, extrusion, dxfattribs
+    )
 
 
 def to_mpolygons(
-    paths: Iterable[Path],
+    paths: Iterable[Path | Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -675,7 +675,7 @@ def to_mpolygons(
     to the start point of the first path.
 
     Args:
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve to flatten LWPOLYLINE paths
         extrusion: extrusion vector to all paths
@@ -693,7 +693,7 @@ def to_mpolygons(
     dxfattribs.setdefault("fill_color", const.BYLAYER)  # type: ignore
 
     yield from _polygon_converter(
-        MPolygon, paths, boundary_factory, extrusion, dxfattribs
+        MPolygon, tools.to_3d_paths(paths), boundary_factory, extrusion, dxfattribs
     )
 
 
@@ -782,7 +782,7 @@ def _polygon_converter(
 
 
 def to_polylines3d(
-    paths: Iterable[Path],
+    paths: Iterable[Path | Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -792,7 +792,7 @@ def to_polylines3d(
     entities.
 
     Args:
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         dxfattribs: additional DXF attribs
@@ -806,7 +806,7 @@ def to_polylines3d(
 
     dxfattribs = dict(dxfattribs or {})
     dxfattribs["flags"] = const.POLYLINE_3D_POLYLINE
-    for path in tools.single_paths(paths):
+    for path in tools.single_paths(paths):  # type: ignore
         if len(path) > 0:
             p = Polyline.new(dxfattribs=dxfattribs)
             p.append_vertices(path.flattening(distance, segments))
@@ -815,7 +815,7 @@ def to_polylines3d(
 
 
 def to_lines(
-    paths: Iterable[Path],
+    paths: Iterable[Path | Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -824,7 +824,7 @@ def to_lines(
     """Convert the given `paths` into :class:`~ezdxf.entities.Line` entities.
 
     Args:
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         dxfattribs: additional DXF attribs
@@ -837,7 +837,7 @@ def to_lines(
         paths = [paths]
     dxfattribs = dict(dxfattribs or {})
     prev_vertex = None
-    for path in tools.single_paths(paths):
+    for path in tools.single_paths(paths):  # type: ignore
         if len(path) == 0:
             continue
         for vertex in path.flattening(distance, segments):
@@ -854,13 +854,15 @@ def to_lines(
 PathParts: TypeAlias = Union[BSpline, List[Vec3]]
 
 
-def to_bsplines_and_vertices(path: Path, g1_tol: float = G1_TOL) -> Iterator[PathParts]:
+def to_bsplines_and_vertices(
+    path: Path | Path2d, g1_tol: float = G1_TOL
+) -> Iterator[PathParts]:
     """Convert a :class:`Path` object into multiple cubic B-splines and
     polylines as lists of vertices. Breaks adjacent Bèzier without G1
     continuity into separated B-splines.
 
     Args:
-        path: :class:`Path` objects
+        path: :class:`Path` or :class:`Path2d` objects
         g1_tol: tolerance for G1 continuity check
 
     Returns:
@@ -890,7 +892,7 @@ def to_bsplines_and_vertices(path: Path, g1_tol: float = G1_TOL) -> Iterator[Pat
             yield bezier_to_bspline(_g1_continuity_curves)
 
     curves = []
-    for path in tools.single_paths([path]):
+    for path in tools.single_paths([path]):  # type: ignore
         prev = path.start
         for cmd in path:
             if cmd.type == Command.CURVE3_TO:
@@ -925,7 +927,7 @@ def to_bsplines_and_vertices(path: Path, g1_tol: float = G1_TOL) -> Iterator[Pat
 
 
 def to_splines_and_polylines(
-    paths: Iterable[Path],
+    paths: Iterable[Path | Path2d],
     *,
     g1_tol: float = G1_TOL,
     dxfattribs=None,
@@ -946,7 +948,7 @@ def to_splines_and_polylines(
         paths = [paths]
     dxfattribs = dict(dxfattribs or {})
 
-    for path in tools.single_paths(paths):
+    for path in tools.single_paths(paths):  # type: ignore
         for data in to_bsplines_and_vertices(path, g1_tol):
             if isinstance(data, BSpline):
                 spline = Spline.new(dxfattribs=dxfattribs)
@@ -974,6 +976,7 @@ class MplCmd(enum.IntEnum):
     STOP = 0
 
 
+# TODO: return Path2d
 def multi_path_from_matplotlib_path(mpath, curves=True) -> Path:
     """Returns a :class:`Path` object from a Matplotlib `Path`_
     (`TextPath`_)  object. (requires Matplotlib). Returns a multi-path object
@@ -1009,6 +1012,7 @@ def multi_path_from_matplotlib_path(mpath, curves=True) -> Path:
     return path
 
 
+# TODO: not used in ezdxf, remove?
 def from_matplotlib_path(mpath, curves=True) -> Iterator[Path]:
     """Yields multiple :class:`Path` objects from a Matplotlib `Path`_
     (`TextPath`_)  object. (requires Matplotlib)
@@ -1024,16 +1028,16 @@ def from_matplotlib_path(mpath, curves=True) -> Iterator[Path]:
         return iter([path])
 
 
-def to_matplotlib_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
-    """Convert the given `paths` into a single :class:`matplotlib.path.Path`
-    object.
+def to_matplotlib_path(paths: Iterable[Path | Path2d], extrusion: UVec = Z_AXIS):
+    """Convert the given `paths` into a single :class:`matplotlib.path.Path` object.
+
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector.The default extrusion vector
     is the WCS z-axis. The Matplotlib :class:`Path` is a 2D object with
     :ref:`OCS` coordinates and the z-elevation is lost. (requires Matplotlib)
 
     Args:
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         extrusion: extrusion vector for all paths
 
     Returns:
@@ -1046,10 +1050,10 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
         paths = tools.transform_paths_to_ocs(paths, OCS(extrusion))
     else:
         paths = list(paths)
-    if len(paths) == 0:
+    if len(paths) == 0:  # type: ignore
         raise ValueError("one or more paths required")
 
-    def add_command(code: MplCmd, point: Vec3):
+    def add_command(code: MplCmd, point: Vec2 | Vec3):
         codes.append(code)
         vertices.append((point.x, point.y))
 
@@ -1078,6 +1082,7 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
 # Interface to QtGui.QPainterPath
 
 
+# TODO: return Path2d
 def multi_path_from_qpainter_path(qpath) -> Path:
     """Returns a :class:`Path` objects from a `QPainterPath`_.
     Returns a multi-path object if necessary. (requires Qt bindings)
@@ -1111,6 +1116,7 @@ def multi_path_from_qpainter_path(qpath) -> Path:
     return path
 
 
+# TODO: not used in ezdxf, remove?
 def from_qpainter_path(qpath) -> Iterator[Path]:
     """Yields multiple :class:`Path` objects from a `QPainterPath`_.
     (requires Qt bindings)
@@ -1126,9 +1132,9 @@ def from_qpainter_path(qpath) -> Iterator[Path]:
         return iter([path])
 
 
-def to_qpainter_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
-    """Convert the given `paths` into a :class:`QtGui.QPainterPath`
-    object.
+def to_qpainter_path(paths: Iterable[Path | Path2d], extrusion: UVec = Z_AXIS):
+    """Convert the given `paths` into a :class:`QtGui.QPainterPath` object.
+
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector. The default extrusion vector
     is the WCS z-axis. The :class:`QPainterPath` is a 2D object with :ref:`OCS`
@@ -1148,10 +1154,10 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
         paths = tools.transform_paths_to_ocs(paths, OCS(extrusion))
     else:
         paths = list(paths)
-    if len(paths) == 0:
+    if len(paths) == 0:  # type: ignore
         raise ValueError("one or more paths required")
 
-    def qpnt(v: Vec3):
+    def qpnt(v: Vec2 | Vec3):
         return QPointF(v.x, v.y)
 
     qpath = QPainterPath()

@@ -36,7 +36,7 @@ from ezdxf.math import (
 from ezdxf.math.triangulation import mapbox_earcut_2d
 from ezdxf.query import EntityQuery
 
-from .path import Path, Path2d
+from .path import Path, Path2d, AbstractPath
 from .commands import Command
 from . import converter, nesting
 
@@ -97,10 +97,13 @@ def to_multi_path(paths: Iterable[Path]) -> Path:
 
 def to_3d_paths(paths: Iterable[Path | Path2d]) -> Iterator[Path]:
     """Yields all paths as 3D :class:`Path` instances."""
+    if isinstance(paths, AbstractPath):
+        paths = [paths]
     for path in paths:
         if isinstance(path, Path2d):
-            path = path.to_3d_path()
-        yield path
+            yield path.to_3d_path()
+        else:
+            yield path
 
 
 def single_paths(paths: Iterable[T]) -> Iterable[T]:
@@ -124,18 +127,18 @@ def transform_paths(paths: Iterable[T], m: Matrix44) -> list[T]:
     return [p.transform(m) for p in paths]
 
 
-def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> list[Path]:
+def transform_paths_to_ocs(paths: Iterable[Path|Path2d], ocs: OCS) -> list[Path]:
     """Transform multiple :class:`Path` objects at once from WCS to OCS.
     Returns a list of the transformed :class:`Path` objects.
 
     Args:
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         ocs: OCS transformation of type :class:`~ezdxf.math.OCS`
 
     """
     t = ocs.matrix.copy()
     t.transpose()
-    return transform_paths(paths, t)
+    return transform_paths(to_3d_paths(paths), t)
 
 
 def bbox(paths: Iterable[Path | Path2d], *, fast=False) -> BoundingBox:
@@ -269,7 +272,7 @@ def _get_non_uniform_scaling(current_size: Vec3, target_size: Vec3):
 
 def render_lwpolylines(
     layout: GenericLayoutType,
-    paths: Iterable[Path],
+    paths: Iterable[Path|Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -285,7 +288,7 @@ def render_lwpolylines(
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         extrusion: extrusion vector for all paths
@@ -311,7 +314,7 @@ def render_lwpolylines(
 
 def render_polylines2d(
     layout: GenericLayoutType,
-    paths: Iterable[Path],
+    paths: Iterable[Path|Path2d],
     *,
     distance: float = 0.01,
     segments: int = 4,
@@ -327,7 +330,7 @@ def render_polylines2d(
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         extrusion: extrusion vector for all paths
@@ -353,7 +356,7 @@ def render_polylines2d(
 
 def render_hatches(
     layout: GenericLayoutType,
-    paths: Iterable[Path],
+    paths: Iterable[Path|Path2d],
     *,
     edge_path: bool = True,
     distance: float = MAX_DISTANCE,
@@ -371,7 +374,7 @@ def render_hatches(
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d`  objects
         edge_path: ``True`` for edge paths build of LINE and SPLINE edges,
             ``False`` for only LWPOLYLINE paths as boundary paths
         distance:  maximum distance, see :meth:`Path.flattening`
@@ -402,7 +405,7 @@ def render_hatches(
 
 def render_mpolygons(
     layout: GenericLayoutType,
-    paths: Iterable[Path],
+    paths: Iterable[Path|Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -420,7 +423,7 @@ def render_mpolygons(
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve to flatten polyline paths
         extrusion: extrusion vector for all paths
@@ -446,7 +449,7 @@ def render_mpolygons(
 
 def render_polylines3d(
     layout: GenericLayoutType,
-    paths: Iterable[Path],
+    paths: Iterable[Path|Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -457,7 +460,7 @@ def render_polylines3d(
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path`or :class:`Path2d` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         dxfattribs: additional DXF attribs
@@ -482,7 +485,7 @@ def render_polylines3d(
 
 def render_lines(
     layout: GenericLayoutType,
-    paths: Iterable[Path],
+    paths: Iterable[Path|Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -493,7 +496,7 @@ def render_lines(
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path`or :class:`Path2d` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         dxfattribs: additional DXF attribs
@@ -517,7 +520,7 @@ def render_lines(
 
 def render_splines_and_polylines(
     layout: GenericLayoutType,
-    paths: Iterable[Path],
+    paths: Iterable[Path|Path2d],
     *,
     g1_tol: float = G1_TOL,
     dxfattribs=None,
@@ -527,7 +530,7 @@ def render_splines_and_polylines(
 
     Args:
         layout: the modelspace, a paperspace layout or a block definition
-        paths: iterable of :class:`Path` objects
+        paths: iterable of :class:`Path`or :class:`Path2d` objects
         g1_tol: tolerance for G1 continuity check
         dxfattribs: additional DXF attribs
 
