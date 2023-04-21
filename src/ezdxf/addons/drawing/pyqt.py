@@ -238,6 +238,8 @@ class PyQtBackend(Backend):
             except ValueError:  # cannot detect path orientation
                 continue
             oriented_paths.append(path)
+        if len(oriented_paths) == 0:
+            return
         item = _CosmeticPath(to_qpainter_path(oriented_paths))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._get_brush(properties))
