@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2011-2021 Manfred Moitzi
+# Copyright (c) 2011-2023 Manfred Moitzi
 # License: MIT License
 import os
 import sys
@@ -157,7 +157,7 @@ setup(
     provides=["ezdxf"],
     cmdclass=commands,
     ext_modules=ext_modules,
-    install_requires=["pyparsing>=2.0.1", "typing_extensions"],
+    install_requires=["pyparsing>=2.0.1", "typing_extensions", "fonttools"],
     setup_requires=["wheel"],
     tests_require=["pytest", "geomdl"],
     extras_require={
