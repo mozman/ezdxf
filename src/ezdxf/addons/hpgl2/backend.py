@@ -5,9 +5,16 @@ from typing import Sequence, NamedTuple, Any
 import abc
 import enum
 import math
-
-from .deps import Vec2, Path, luminance, Matrix44, transform_paths, BoundingBox2d, path_bbox
+import numpy as np
+from .deps import (
+    Vec2,
+    Path,
+    luminance,
+    Matrix44,
+    BoundingBox2d,
+)
 from .properties import Properties, Pen
+from ezdxf.addons.npshapes import NumpyPath, NumpyPolyline
 
 # Page coordinates are always plot units:
 # 1 plot unit (plu) = 0.025mm
@@ -28,6 +35,7 @@ class Backend(abc.ABC):
         - 1016 plu = 1 inch
 
     """
+
     @abc.abstractmethod
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
         """Draws a polyline from a sequence `points`. The input coordinates are page
@@ -73,6 +81,7 @@ class Recorder(Backend):
     can replay this recording on another backend. The class can modify the recorded
     output.
     """
+
     def __init__(self) -> None:
         self.records: list[DataRecord] = []
         self.properties: dict[int, Properties] = {}
@@ -89,18 +98,20 @@ class Recorder(Backend):
 
     def update_bbox(self):
         for record in self.records:
-            if record.type == RecordType.FILLED_POLYGON:
-                self._bbox.extend(path_bbox(record.data, fast=True))
+            if record.type == RecordType.POLYLINE:
+                self._bbox.extend(record.data.bbox())
             else:
-                self._bbox.extend(record.data)
+                for path in record.data:
+                    self._bbox.extend(path.bbox())
 
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
-        self.store(RecordType.POLYLINE, properties, tuple(points))
+        self.store(RecordType.POLYLINE, properties, NumpyPolyline(points))
 
     def draw_filled_polygon(
         self, properties: Properties, paths: Sequence[Path]
     ) -> None:
-        self.store(RecordType.FILLED_POLYGON, properties, tuple(paths))
+        data = tuple(NumpyPath(p) for p in paths)
+        self.store(RecordType.FILLED_POLYGON, properties, data)
 
     def store(self, record_type: RecordType, properties: Properties, args) -> None:
         prop_hash = properties.hash()
@@ -114,29 +125,29 @@ class Recorder(Backend):
         """Replay the recording on another backend."""
         current_props = Properties()
         props = self.properties
-        draw = {
-            RecordType.POLYLINE: backend.draw_polyline,
-            RecordType.FILLED_POLYGON: backend.draw_filled_polygon,
-        }
         for record in self.records:
             current_props = props.get(record.property_hash, current_props)
-            draw[record.type](current_props, record.data)  # type: ignore
+            if record.type == RecordType.POLYLINE:
+                backend.draw_polyline(current_props, record.data.vertices())
+            else:
+                paths = [p.to_path2d() for p in record.data]
+                backend.draw_filled_polygon(current_props, paths)
 
     def transform(self, m: Matrix44) -> None:
         """Transforms the recordings by a transformation matrix `m` of type
         :class:`~ezdxf.math.Matrix44`.
         """
-        records: list[DataRecord] = []
+        np_mat = np.array(m.get_2d_transformation(), dtype=np.double)
+        np_mat.shape = (3, 3)
         for record in self.records:
             if record.type == RecordType.POLYLINE:
-                vertices = list(m.fast_2d_transform(record.data))
-                records.append(DataRecord(record.type, record.property_hash, vertices))
+                record.data.transform_inplace(np_mat)
             else:
-                paths = transform_paths(record.data, m)
-                records.append(DataRecord(record.type, record.property_hash, paths))
+                for path in record.data:
+                    path.transform_inplace(np_mat)
+
         if self._bbox.has_data:
             self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
-        self.records = records
 
     def sort_filled_polygons(self) -> None:
         """Sort filled polygons by descending luminance (from light to dark).
