@@ -14,7 +14,7 @@ from .deps import (
     BoundingBox2d,
 )
 from .properties import Properties, Pen
-from ezdxf.addons.npshapes import NumpyPath, NumpyPolyline
+from ezdxf.npshapes import NumpyPath, NumpyPolyline
 
 # Page coordinates are always plot units:
 # 1 plot unit (plu) = 0.025mm

@@ -6,6 +6,7 @@ Version 1.0.4b1 - dev
 ---------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
+- NEW: `numpy` is a hard dependency
 - NEW: added setter to `BlockLayout.base_point` property
 - NEW: optimized `Matrix44.fast_2d_transform()` method
 - BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1

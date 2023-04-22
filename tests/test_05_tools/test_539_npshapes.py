@@ -3,8 +3,7 @@
 
 import pytest
 
-pytest.importorskip("numpy")  # requires numpy!
-from ezdxf.addons.npshapes import NumpyPolyline, NumpyPath
+from ezdxf.npshapes import NumpyPolyline, NumpyPath
 from ezdxf.math import Matrix44, BoundingBox2d
 from ezdxf.path import Path2d, Command
 
