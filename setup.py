@@ -134,7 +134,7 @@ setup(
     url="https://ezdxf.mozman.at",
     download_url="https://pypi.org/project/ezdxf/",
     author_email="me@mozman.at",
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     package_dir={"": "src"},
     packages=find_packages("src"),
     zip_safe=False,
