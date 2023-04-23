@@ -13,8 +13,8 @@ from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.tools.text import replace_non_printable_characters
-from ezdxf.math import Vec3, Matrix44
-from ezdxf.path import Path
+from ezdxf.math import Vec3, Matrix44, AnyVec
+from ezdxf.path import Path, Path2d
 
 if TYPE_CHECKING:
     from ezdxf.tools.fonts import FontFace, FontMeasurements
@@ -40,35 +40,35 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_point(self, pos: Vec3, properties: Properties) -> None:
+    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_solid_lines(
-        self, lines: Iterable[tuple[Vec3, Vec3]], properties: Properties
+        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_path(self, path: Path, properties: Properties) -> None:
+    def draw_path(self, path: Path|Path2d, properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_filled_paths(
         self,
-        paths: Iterable[Path],
-        holes: Iterable[Path],
+        paths: Iterable[Path|Path2d],
+        holes: Iterable[Path|Path2d],
         properties: Properties,
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_filled_polygon(
-        self, points: Iterable[Vec3], properties: Properties
+        self, points: Iterable[AnyVec], properties: Properties
     ) -> None:
         raise NotImplementedError
 

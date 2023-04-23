@@ -118,9 +118,10 @@ class FontManager:
             return self._loaded_fonts[font_name]
         except KeyError:
             pass
+        fallback_name = self.fallback_font_name()
         try:
             font = TTFont(
-                self._font_cache.get(font_name, self.fallback_font_name()).file_path,
+                self._font_cache.get(font_name, fallback_name).file_path,
                 fontNumber=font_number,
             )
         except IOError as e:
