@@ -12,13 +12,12 @@ from ezdxf.enums import (
     MAP_TEXT_ENUM_TO_ALIGN_FLAGS,
     MTextEntityAlignment,
 )
-from ezdxf.addons.drawing.backend import BackendInterface
-from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
 from ezdxf.tools import fonts
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.tools.text import plain_text, text_wrap
+from .text_renderer import TextRenderer
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 
@@ -42,9 +41,7 @@ class VAlignment(enum.Enum):
     LOWER_CASE_CENTER = 1  # the midpoint between the baseline and the x-height
     BASELINE = 2  # the line which text rests on, characters with descenders (like 'p') are partially below this line
     BOTTOM = 3  # the lowest point on a character with a descender (like 'p')
-    UPPER_CASE_CENTER = (
-        4  # the midpoint between the baseline and the cap-height
-    )
+    UPPER_CASE_CENTER = 4  # the midpoint between the baseline and the cap-height
 
 
 Alignment: TypeAlias = Tuple[HAlignment, VAlignment]
@@ -83,10 +80,7 @@ DXF_TEXT_ALIGNMENT_TO_ALIGNMENT: dict[TextEntityAlignment, Alignment] = {
     TextEntityAlignment.TOP_CENTER: (HAlignment.CENTER, VAlignment.TOP),
     TextEntityAlignment.TOP_RIGHT: (HAlignment.RIGHT, VAlignment.TOP),
 }
-assert (
-    DXF_TEXT_ALIGNMENT_TO_ALIGNMENT.keys()
-    == MAP_TEXT_ENUM_TO_ALIGN_FLAGS.keys()
-)
+assert DXF_TEXT_ALIGNMENT_TO_ALIGNMENT.keys() == MAP_TEXT_ENUM_TO_ALIGN_FLAGS.keys()
 
 DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT: dict[int, Alignment] = {
     DXFConstants.MTEXT_TOP_LEFT: (HAlignment.LEFT, VAlignment.TOP),
@@ -244,8 +238,7 @@ def _apply_alignment(
 
     halign, valign = alignment
     line_ys = [
-        -font_measurements.baseline
-        - (font_measurements.cap_height + i * line_spacing)
+        -font_measurements.baseline - (font_measurements.cap_height + i * line_spacing)
         for i in range(len(line_widths))
     ]
 
@@ -309,10 +302,9 @@ def _get_wcs_insert(text: AnyText) -> Vec3:
 # Simple but fast MTEXT renderer:
 def simplified_text_chunks(
     text: AnyText,
-    out: BackendInterface,
+    render_engine: TextRenderer,
     *,
-    font: Optional[fonts.FontFace] = None,
-    debug_draw_rect: bool = False
+    font_face: fonts.FontFace,
 ) -> Iterable[tuple[str, Matrix44, float]]:
     """Splits a complex text entity into simple chunks of text which can all be
     rendered the same way:
@@ -327,13 +319,13 @@ def simplified_text_chunks(
     lines = _split_into_lines(
         text,
         box_width,
-        lambda s: out.get_text_line_width(s, cap_height, font=font),
+        lambda s: render_engine.get_text_line_width(s, font_face, cap_height),
     )
     line_spacing = _get_line_spacing(text, cap_height)
     line_widths = [
-        out.get_text_line_width(line, cap_height, font=font) for line in lines
+        render_engine.get_text_line_width(line, font_face, cap_height) for line in lines
     ]
-    font_measurements = out.get_font_measurements(cap_height, font=font)
+    font_measurements = render_engine.get_font_measurements(font_face, cap_height)
     anchor, line_xs, line_ys = _apply_alignment(
         alignment, line_widths, line_spacing, box_width, font_measurements
     )
@@ -357,18 +349,3 @@ def simplified_text_chunks(
     for i, (line, line_x, line_y) in enumerate(zip(lines, line_xs, line_ys)):
         transform = Matrix44.translate(line_x, line_y, 0) @ whole_text_transform
         yield line, transform, cap_height
-
-        if debug_draw_rect:
-            width = out.get_text_line_width(line, cap_height, font)
-            ps = list(
-                transform.transform_vertices(
-                    [
-                        Vec3(0, 0, 0),
-                        Vec3(width, 0, 0),
-                        Vec3(width, cap_height, 0),
-                        Vec3(0, cap_height, 0),
-                        Vec3(0, 0, 0),
-                    ]
-                )
-            )
-            draw_rect(ps, "#ff0000", out)

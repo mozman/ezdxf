@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Matthew Broadway
+# Copyright (c) 2020-2023, Matthew Broadway
 # License: MIT License
 # mypy: ignore_errors=True
 from __future__ import annotations
@@ -7,13 +7,10 @@ from typing_extensions import TypeAlias
 import math
 
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
-from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
+from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.config import Configuration
-from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
-from ezdxf.addons.drawing.qt_text_renderer import QtTextRenderer
-from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.path import Path, to_qpainter_path
 
@@ -77,15 +74,12 @@ class PyQtBackend(Backend):
             if ``None`` a new canvas will be created
         extra_lineweight_scaling: compared to other backends,
             PyQt draws lines which appear thinner
-        use_text_cache: use caching for text path rendering
-
     """
 
     def __init__(
         self,
         scene: Optional[qw.QGraphicsScene] = None,
         *,
-        use_text_cache: bool = True,
         debug_draw_rect: bool = False,
         extra_lineweight_scaling: float = 2.0,
     ):
@@ -95,8 +89,6 @@ class PyQtBackend(Backend):
         self._pattern_cache: dict[PatternKey, int] = {}
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
-
-        self._text_renderer = QtTextRenderer(use_cache=use_text_cache)
         self._extra_lineweight_scaling = extra_lineweight_scaling
         self._debug_draw_rect = debug_draw_rect
         self._current_viewport: Optional[ViewportGroup] = None
@@ -108,9 +100,6 @@ class PyQtBackend(Backend):
 
     def set_scene(self, scene: qw.QGraphicsScene):
         self._scene = scene
-
-    def clear_text_cache(self):
-        self._text_renderer.clear_cache()
 
     def set_clipping_path(
         self, path: Optional[Path] = None, scale: float = 1.0
@@ -256,54 +245,6 @@ class PyQtBackend(Backend):
         item.setPen(self._no_line)
         item.setBrush(brush)
         self._add_item(item)
-
-    def draw_text(
-        self,
-        text: str,
-        transform: Matrix44,
-        properties: Properties,
-        cap_height: float,
-    ) -> None:
-        if not text.strip():
-            return  # no point rendering empty strings
-        text = prepare_string_for_rendering(text, self.current_entity.dxftype())  # type: ignore
-        qfont = self.get_qfont(properties.font)
-        scale = self._text_renderer.get_scale(cap_height, qfont)
-        transform = Matrix44.scale(scale, -scale, 0) @ transform
-
-        path = self._text_renderer.get_text_path(text, qfont)
-        path = _matrix_to_qtransform(transform).map(path)
-        item = qw.QGraphicsPathItem(path)
-        brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
-        item.setBrush(brush)
-        item.setPen(self._no_line)
-        self._add_item(item)
-
-    def get_qfont(self, font: Optional[fonts.FontFace]) -> qg.QFont:
-        return self._text_renderer.get_font_properties(font)
-
-    def get_font_measurements(
-        self, cap_height: float, font: Optional[fonts.FontFace] = None
-    ) -> FontMeasurements:
-        qfont = self.get_qfont(font)
-        return self._text_renderer.get_font_measurements(
-            qfont
-        ).scale_from_baseline(desired_cap_height=cap_height)
-
-    def get_text_line_width(
-        self,
-        text: str,
-        cap_height: float,
-        font: Optional[fonts.FontFace] = None,
-    ) -> float:
-        if not text.strip():
-            return 0
-
-        dxftype = (
-            self.current_entity.dxftype() if self.current_entity else "TEXT"
-        )
-        text = prepare_string_for_rendering(text, dxftype)
-        return self._text_renderer.get_text_line_width(text, cap_height, font)
 
     def clear(self) -> None:
         self._scene.clear()

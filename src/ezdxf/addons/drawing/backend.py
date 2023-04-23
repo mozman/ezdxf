@@ -12,7 +12,6 @@ from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
-from ezdxf.tools.text import replace_non_printable_characters
 from ezdxf.math import Vec3, Matrix44, AnyVec
 from ezdxf.path import Path, Path2d
 
@@ -54,14 +53,14 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_path(self, path: Path|Path2d, properties: Properties) -> None:
+    def draw_path(self, path: Path | Path2d, properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_filled_paths(
         self,
-        paths: Iterable[Path|Path2d],
-        holes: Iterable[Path|Path2d],
+        paths: Iterable[Path | Path2d],
+        holes: Iterable[Path | Path2d],
         properties: Properties,
     ) -> None:
         raise NotImplementedError
@@ -70,28 +69,6 @@ class BackendInterface(ABC):
     def draw_filled_polygon(
         self, points: Iterable[AnyVec], properties: Properties
     ) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def draw_text(
-        self,
-        text: str,
-        transform: Matrix44,
-        properties: Properties,
-        cap_height: float,
-    ) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_font_measurements(
-        self, cap_height: float, font: Optional[FontFace] = None
-    ) -> FontMeasurements:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_text_line_width(
-        self, text: str, cap_height: float, font: Optional[FontFace] = None
-    ) -> float:
         raise NotImplementedError
 
     @abstractmethod
@@ -168,7 +145,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
             else:
                 self.draw_line(s, e, properties)
 
-    def draw_path(self, path: Path, properties: Properties) -> None:
+    def draw_path(self, path: Path | Path2d, properties: Properties) -> None:
         """Draw an outline path (connected string of line segments and Bezier
         curves).
 
@@ -189,8 +166,8 @@ class Backend(BackendInterface, metaclass=ABCMeta):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path],
-        holes: Iterable[Path],
+        paths: Iterable[Path | Path2d],
+        holes: Iterable[Path | Path2d],
         properties: Properties,
     ) -> None:
         """Draw multiple filled paths (connected string of line segments and
@@ -236,35 +213,6 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_text(
-        self,
-        text: str,
-        transform: Matrix44,
-        properties: Properties,
-        cap_height: float,
-    ) -> None:
-        """Draw a single line of text with the anchor point at the baseline
-        left point.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_font_measurements(
-        self, cap_height: float, font: Optional[FontFace] = None
-    ) -> "FontMeasurements":
-        """Note: backends might want to cache the results of these calls"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_text_line_width(
-        self, text: str, cap_height: float, font: Optional[FontFace] = None
-    ) -> float:
-        """Get the width of a single line of text."""
-        # https://stackoverflow.com/questions/32555015/how-to-get-the-visual-length-of-a-text-string-in-python
-        # https://stackoverflow.com/questions/4190667/how-to-get-width-of-a-truetype-font-character-in-1200ths-of-an-inch-with-python
-        raise NotImplementedError
-
-    @abstractmethod
     def clear(self) -> None:
         """Clear the canvas. Does not reset the internal state of the backend.
         Make sure that the previous drawing is finished before clearing.
@@ -274,16 +222,3 @@ class Backend(BackendInterface, metaclass=ABCMeta):
 
     def finalize(self) -> None:
         pass
-
-
-def prepare_string_for_rendering(text: str, dxftype: str) -> str:
-    assert "\n" not in text, "not a single line of text"
-    if dxftype in {"TEXT", "ATTRIB", "ATTDEF"}:
-        text = replace_non_printable_characters(text, replacement="?")
-        text = text.replace("\t", "?")
-    elif dxftype == "MTEXT":
-        text = replace_non_printable_characters(text, replacement="▯")
-        text = text.replace("\t", "        ")
-    else:
-        raise TypeError(dxftype)
-    return text

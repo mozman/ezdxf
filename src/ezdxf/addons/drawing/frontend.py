@@ -59,7 +59,7 @@ from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
 from ezdxf.layouts import Layout
-from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44
+from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44, AnyVec
 from ezdxf.path import (
     Path,
     Path2d,
@@ -68,14 +68,20 @@ from ezdxf.path import (
     fast_bbox_detection,
     winding_deconstruction,
     from_vertices,
+    single_paths,
 )
 from ezdxf.render import MeshBuilder, TraceBuilder, linetypes
 from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic, ProxyGraphicError
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
-from ezdxf.tools.text import has_inline_formatting_codes
+from ezdxf.tools.text import (
+    has_inline_formatting_codes,
+    replace_non_printable_characters,
+)
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
+from ezdxf.tools import fonts
+
 
 __all__ = ["Frontend"]
 
@@ -151,6 +157,10 @@ class Frontend:
         # viewports, as the upfront bounding box calculation adds some rendering
         # time.
         self._bbox_cache = bbox_cache
+
+    @property
+    def text_engine(self):
+        return self._designer.text_engine
 
     def _build_dispatch_table(self) -> TDispatchTable:
         dispatch_table: TDispatchTable = {
@@ -323,10 +333,16 @@ class Frontend:
         else:
             self.draw_text_entity_2d(entity, properties)
 
+    def get_font_face(self, properties: Properties) -> fonts.FontFace:
+        font_face = properties.font
+        if font_face is None:
+            return self._designer.default_font_face
+        return font_face
+
     def draw_text_entity_2d(self, entity: DXFGraphic, properties: Properties) -> None:
         if isinstance(entity, Text):
             for line, transform, cap_height in simplified_text_chunks(
-                entity, self.out, font=properties.font
+                entity, self.text_engine, font_face=self.get_font_face(properties)
             ):
                 self._designer.draw_text(
                     line, transform, properties, cap_height, entity.dxftype()
@@ -350,7 +366,7 @@ class Frontend:
     def draw_simple_mtext(self, mtext: MText, properties: Properties) -> None:
         """Draw the content of a MTEXT entity without inline formatting codes."""
         for line, transform, cap_height in simplified_text_chunks(
-            mtext, self.out, font=properties.font
+            mtext, self.text_engine, font_face=self.get_font_face(properties)
         ):
             self._designer.draw_text(
                 line, transform, properties, cap_height, mtext.dxftype()
@@ -749,6 +765,7 @@ class Designer:
         self.clipping_path: Path = Path()
         self.text_engine = UnifiedTextRenderer()
         self.text_engine.load_font_manager()
+        self.default_font_face = self.text_engine.default_font_face
 
     @property
     def vp_ltype_scale(self) -> float:
@@ -800,12 +817,12 @@ class Designer:
         self.clipping_path = Path()
         self.backend.set_clipping_path(None)
 
-    def draw_point(self, pos: Vec3, properties: Properties) -> None:
+    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
         if self.transformation:
             pos = self.transformation.transform(pos)
         self.backend.draw_point(pos, properties)
 
-    def draw_line(self, start: Vec3, end: Vec3, properties: Properties):
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties):
         if (
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
@@ -822,14 +839,14 @@ class Designer:
             )
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[Vec3, Vec3]], properties: Properties
+        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
     ) -> None:
         if self.transformation:
             t = self.transformation.transform
             lines = [(t(p0), t(p1)) for p0, p1 in lines]
         self.backend.draw_solid_lines(lines, properties)
 
-    def draw_path(self, path: Path, properties: Properties):
+    def draw_path(self, path: Path | Path2d, properties: Properties):
         if (
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
@@ -898,7 +915,7 @@ class Designer:
         transform: Matrix44,
         properties: Properties,
         cap_height: float,
-        dxftype: str,
+        dxftype: str = "TEXT",
     ) -> None:
         if self.transformation:
             transform *= self.transformation
@@ -912,22 +929,21 @@ class Designer:
         cap_height: float,
         dxftype: str,
     ):
-        from .backend import prepare_string_for_rendering
-        from ezdxf.path import single_paths
-
         if not text.strip():
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, dxftype)
+        font_face = properties.font
+        if font_face is None:
+            font_face = self.default_font_face
         try:
-            text_path = self.text_engine.get_text_path(text, properties.font)
+            text_path = self.text_engine.get_text_path(text, font_face, cap_height)
         except (RuntimeError, ValueError):
             return
-        transformed_path = text_path.transform(
-            Matrix44.scale(self.text_engine.get_scale(cap_height, properties.font))
-            @ transform
-        )
+        transformed_path = text_path.transform(transform)
         polygons = fast_bbox_detection(single_paths([transformed_path]))  # type: ignore
         external_paths, holes = winding_deconstruction(polygons)  # type: ignore
+        if properties.filling is None:
+            properties.filling = Filling()
         self.draw_filled_paths(external_paths, holes, properties)  # type: ignore
 
 
@@ -1014,3 +1030,16 @@ def _draw_entities(
             frontend.draw_entity(entity, properties)
         else:
             frontend.skip_entity(entity, "invisible")
+
+
+def prepare_string_for_rendering(text: str, dxftype: str) -> str:
+    assert "\n" not in text, "not a single line of text"
+    if dxftype in {"TEXT", "ATTRIB", "ATTDEF"}:
+        text = replace_non_printable_characters(text, replacement="?")
+        text = text.replace("\t", "?")
+    elif dxftype == "MTEXT":
+        text = replace_non_printable_characters(text, replacement="▯")
+        text = text.replace("\t", "        ")
+    else:
+        raise TypeError(dxftype)
+    return text

@@ -68,6 +68,9 @@ FONTS = [
 
 def latin():
     doc = ezdxf.new()
+    doc.layers.add("TEXT")
+    doc.layers.add("HATCH").off()
+
     y = 0
     for font in FONTS:
         print(f"render font: {font}")
@@ -84,6 +87,9 @@ def latin():
 
 def chinese():
     doc = ezdxf.new()
+    doc.layers.add("TEXT")
+    doc.layers.add("HATCH").off()
+
     y = 0
     for font in FONTS:
         print(f"render font: {font}")

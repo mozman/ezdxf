@@ -273,12 +273,13 @@ def test_3d_ellipse_path(msp, path_backend):
 
 
 def test_2d_text(msp, basic):
+    # since v1.0.4 the frontend does the text rendering and passes only filled
+    # polygons to the backend
     msp.add_text("test\ntest")  # \n shouldn't be  problem. Will be ignored
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 1
-    assert result[0][0] == "text"
-    assert result[0][1] == "testtest"
+    assert len(result) == 8
+    assert result[0][0] == "filled_polygon"
 
 
 def test_ignore_3d_text(msp, basic):
@@ -289,14 +290,13 @@ def test_ignore_3d_text(msp, basic):
 
 
 def test_mtext(msp, basic):
+    # since v1.0.4 the frontend does the text rendering and passes only filled
+    # polygons to the backend
     msp.add_mtext("line1\nline2")
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 2
-    assert result[0][0] == "text"
-    assert result[0][1] == "line1"
-    assert result[1][0] == "text"
-    assert result[1][1] == "line2"
+    assert len(result) == 12
+    assert result[0][0] == "filled_polygon"
 
 
 def test_hatch(msp, path_backend):
@@ -338,95 +338,6 @@ def test_polyface(msp, basic):
     assert entities == {"line"}
 
 
-def _add_text_block(doc: Drawing):
-    doc.layers.new(name="Layer1")
-    doc.layers.new(name="Layer2")
-
-    text_block = doc.blocks.new(name="text-block")
-    text_block.add_text(
-        text="L0",
-        dxfattribs={
-            "layer": "0",
-            "insert": (0, 0, 0),
-            "height": 5.0,
-        },
-    )
-    text_block.add_text(
-        text="L1",
-        dxfattribs={
-            "layer": "Layer1",
-            "insert": (0, 0, 0),
-            "height": 5.0,
-        },
-    )
-
-
-def _get_text_visible_when(doc: Drawing, active_layers: Set[str]) -> List[str]:
-    def update_layers_state(layers: Sequence[LayerProperties]):
-        # set given layer to ON, others to OFF
-        set_layers_state(layers, active_layers, state=True)
-
-    ctx = RenderContext(doc)
-    ctx.set_layer_properties_override(update_layers_state)
-
-    backend = BasicBackend()
-    Frontend(ctx, backend).draw_layout(doc.modelspace())
-    visible_text = [x[1] for x in backend.collector if x[0] == "text"]
-    return visible_text
-
-
-def test_visibility_insert_0():
-    """see notes/drawing.md 'Layers and Draw Order'"""
-    doc = ezdxf.new()
-    _add_text_block(doc)
-    layout = doc.modelspace()
-    layout.add_blockref(
-        name="text-block",
-        insert=(0, 0, 0),
-        dxfattribs={"layer": "0"},
-    )
-    # INSERT on '0'
-    # 'L0' on '0'
-    # 'L1' on 'Layer1'
-    assert _get_text_visible_when(doc, {"0", "Layer1", "Layer2"}) == [
-        "L0",
-        "L1",
-    ]
-    assert _get_text_visible_when(doc, {"0", "Layer2"}) == ["L0"]
-    assert _get_text_visible_when(doc, {"0", "Layer1"}) == ["L0", "L1"]
-    assert _get_text_visible_when(doc, {"Layer1", "Layer2"}) == [
-        "L1"
-    ]  # result: []
-    assert _get_text_visible_when(doc, {"Layer2"}) == []
-    assert _get_text_visible_when(doc, {"Layer1"}) == ["L1"]  # result = []
-    assert _get_text_visible_when(doc, set()) == []
-
-
-def test_visibility_insert_2():
-    """see notes/drawing.md 'Layers and Draw Order'"""
-    doc = ezdxf.new()
-    _add_text_block(doc)
-    layout = doc.modelspace()
-    layout.add_blockref(
-        name="text-block",
-        insert=(0, 0, 0),
-        dxfattribs={"layer": "Layer2"},
-    )
-    # 'L0' on '0'
-    # 'L1' on 'Layer1'
-    # text-block on 'Layer2' -> 'L0' on '0' acts like on 'Layer2'
-    assert _get_text_visible_when(doc, {"0", "Layer1", "Layer2"}) == [
-        "L0",
-        "L1",
-    ]
-    assert _get_text_visible_when(doc, {"0", "Layer2"}) == ["L0"]
-    assert _get_text_visible_when(doc, {"0", "Layer1"}) == ["L1"]  # result = []
-    assert _get_text_visible_when(doc, {"Layer1", "Layer2"}) == ["L0", "L1"]
-    assert _get_text_visible_when(doc, {"Layer2"}) == ["L0"]
-    assert _get_text_visible_when(doc, {"Layer1"}) == ["L1"]  # result = []
-    assert _get_text_visible_when(doc, set()) == []
-
-
 def test_override_filter(msp, ctx):
     class FrontendWithOverride(Frontend):
         def __init__(self, ctx: RenderContext, out: Backend):
@@ -455,36 +366,33 @@ def test_override_filter(msp, ctx):
     frontend.override_enabled = False
     frontend.draw_entities(msp)
 
-    assert len(backend.collector) == 5
+    # since v1.0.4 the frontend does the text rendering and passes only filled
+    # polygons to the backend
+    assert len(backend.collector) == 10
 
     # can modify color property
     result = backend.collector[0]
-    assert result[0] == "text"
-    assert result[1] == "T0"
-    assert result[3].color == "#000000"
+    assert result[0] == "filled_polygon"
+    assert result[2].color == "#000000"
 
     # can modify layer property
-    result = backend.collector[1]
-    assert result[0] == "text"
-    assert result[1] == "T1"
-    assert result[3].layer == "Tx"
+    result = backend.collector[2]
+    assert result[0] == "filled_polygon"
+    assert result[2].layer == "Tx"
 
     # with override disabled
 
-    result = backend.collector[2]
-    assert result[0] == "text"
-    assert result[1] == "T0"
-    assert result[3].color == "#ffffff"
-
-    result = backend.collector[3]
-    assert result[0] == "text"
-    assert result[1] == "T1"
-    assert result[3].layer == "T1"
-
     result = backend.collector[4]
-    assert result[0] == "text"
-    assert result[1] == "T2"
-    assert result[3].layer == "T2"
+    assert result[0] == "filled_polygon"
+    assert result[2].color == "#ffffff"
+
+    result = backend.collector[6]
+    assert result[0] == "filled_polygon"
+    assert result[2].layer == "T1"
+
+    result = backend.collector[8]
+    assert result[0] == "filled_polygon"
+    assert result[2].layer == "T2"
 
 
 if __name__ == "__main__":

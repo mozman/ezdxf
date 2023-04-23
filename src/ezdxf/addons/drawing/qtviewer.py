@@ -236,7 +236,7 @@ class CadViewer(qw.QMainWindow):
 
     def _reset_backend(self):
         # clear caches
-        self._backend = PyQtBackend(use_text_cache=True)
+        self._backend = PyQtBackend()
 
     def _select_doc(self):
         path, _ = qw.QFileDialog.getOpenFileName(

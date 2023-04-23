@@ -1,4 +1,4 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Iterable, Optional
@@ -10,18 +10,16 @@ import math
 from ezdxf.math import (
     Vec3,
     Vec2,
-    Matrix44,
     AbstractBoundingBox,
     AnyVec,
 )
 from ezdxf.math.clipping import ClippingRect2d
 import ezdxf.path
+from ezdxf.path import Path, Path2d
 from ezdxf.render import hatching
-from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
+from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
-
-from ezdxf.tools.fonts import FontFace, FontMeasurements, MonospaceFont
 from .config import Configuration
 
 try:
@@ -33,12 +31,6 @@ except ImportError:
         "    pip install Pillow"
     )
     sys.exit(1)
-
-# Replace MplTextRender() by QtTextRenderer():
-# from ezdxf.addons.xqt import QtWidgets as qw
-# app = qw.QApplication(sys.argv)
-# from .qt_text_renderer import QtTextRenderer as TextRenderer
-from .mpl_text_renderer import MplTextRenderer as TextRenderer
 
 INCH_TO_MM = 25.6
 
@@ -77,14 +69,6 @@ class PillowBackend(Backend):
         oversampling: multiplier of the final image size to define the
             render canvas size (e.g. 1, 2, 3, ...), the final image will
             be scaled down by the LANCZOS method
-        text_mode: text rendering mode
-
-            - IGNORE: do not draw text
-            - PLACEHOLDER: draw text as filled rectangles
-            - OUTLINE: draw text as outlines (recommended)
-            - FILLED: simulate text filling by hatching the text outline with
-              dense lines - has some issues
-
     """
 
     def __init__(
@@ -95,7 +79,6 @@ class PillowBackend(Backend):
         margin: int = 10,
         dpi: int = 300,
         oversampling: int = 1,
-        text_mode=TextMode.OUTLINE,
     ):
         super().__init__()
         self.region = Vec2(0, 0)
@@ -108,7 +91,6 @@ class PillowBackend(Backend):
         self.margin_y = float(margin)
         self.dpi = int(dpi)
         self.oversampling = max(int(oversampling), 1)
-        self.text_mode = text_mode
         # The lineweight is stored im mm,
         # line_pixel_factor * lineweight is the width in pixels
         self.line_pixel_factor = self.dpi / INCH_TO_MM  # pixel per mm
@@ -144,7 +126,6 @@ class PillowBackend(Backend):
         self.image_size = Vec2(image_size)
         self.bg_color: Color = "#000000"
         self.image_mode = "RGBA"
-        self.text_renderer = TextRenderer(use_cache=True)
 
         # dummy values for declaration, both are set in clear()
         self.image = Image.new("RGBA", (10, 10))
@@ -179,7 +160,7 @@ class PillowBackend(Backend):
 
     def set_clipping_path(
         self,
-        clipping_path: Optional[ezdxf.path.Path] = None,
+        clipping_path: Optional[Path] = None,
         scale: float = 1.0,
     ) -> bool:
         if clipping_path:
@@ -242,8 +223,8 @@ class PillowBackend(Backend):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[ezdxf.path.Path],
-        holes: Iterable[ezdxf.path.Path],
+        paths: Iterable[Path|Path2d],
+        holes: Iterable[Path|Path2d],
         properties: Properties,
     ) -> None:
         # Uses the hatching module to draw filled paths by hatching paths with
@@ -266,71 +247,6 @@ class PillowBackend(Backend):
                 draw_line(
                     (self.pixel_loc(line.start), self.pixel_loc(line.end))
                 )
-
-    def draw_text(
-        self,
-        text: str,
-        transform: Matrix44,
-        properties: Properties,
-        cap_height: float,
-    ) -> None:
-        if self.text_mode == TextMode.IGNORE:
-            return
-        if self.text_mode == TextMode.PLACEHOLDER:
-            # draws a placeholder rectangle as text
-            width = self.get_text_line_width(text, cap_height, properties.font)
-            height = cap_height
-            points = Vec3.list(
-                [(0, 0), (width, 0), (width, height), (0, height)]
-            )
-            points = list(transform.transform_vertices(points))
-            self.draw_filled_polygon(points, properties)
-            return
-
-        tr = self.text_renderer
-        text = self._prepare_text(text)
-        font_properties = tr.get_font_properties(properties.font)
-        scale = tr.get_scale(cap_height, font_properties)
-        m = Matrix44.scale(scale) @ transform
-        if self.text_mode == TextMode.OUTLINE:
-            ezdxf_path = tr.get_ezdxf_path(text, font_properties)
-            if len(ezdxf_path) == 0:
-                return
-            ezdxf_path = ezdxf_path.transform(m)
-            for path in ezdxf_path.sub_paths():
-                self.draw_path(path, properties)
-        else:  # render Text as filled polygons
-            ezdxf_path = tr.get_ezdxf_path(text, font_properties)
-            if len(ezdxf_path) == 0:
-                return
-            self.draw_filled_paths(
-                (p for p in ezdxf_path.transform(m).sub_paths()), [], properties
-            )
-
-    def get_font_measurements(
-        self, cap_height: float, font: Optional[FontFace] = None
-    ) -> FontMeasurements:
-        if self.text_mode == TextMode.PLACEHOLDER:
-            return MonospaceFont(cap_height).measurements
-        return self.text_renderer.get_font_measurements(
-            self.text_renderer.get_font_properties(font)
-        ).scale_from_baseline(desired_cap_height=cap_height)
-
-    def _prepare_text(self, text: str) -> str:
-        dxftype = (
-            self.current_entity.dxftype() if self.current_entity else "TEXT"
-        )
-        return prepare_string_for_rendering(text, dxftype)
-
-    def get_text_line_width(
-        self, text: str, cap_height: float, font: Optional[FontFace] = None
-    ) -> float:
-        if not text.strip():
-            return 0.0
-        text = self._prepare_text(text)
-        if self.text_mode == TextMode.PLACEHOLDER:
-            return MonospaceFont(cap_height).text_width(text) * 0.8
-        return self.text_renderer.get_text_line_width(text, cap_height, font)
 
     def export(self, filename: str, **kwargs) -> None:
         image = self.resize()

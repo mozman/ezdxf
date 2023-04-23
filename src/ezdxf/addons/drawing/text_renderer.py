@@ -1,43 +1,34 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TypeVar, Generic, Optional
+from typing import TypeVar
 import abc
 from ezdxf.tools.fonts import FontFace, FontMeasurements
-from ezdxf.path import Path
+from ezdxf.path import Path2d
 
 T = TypeVar("T")
 
 
-class TextRenderer(abc.ABC, Generic[T]):
-    """Minimal requirement to be usable as a universal text renderer, for more
-    information see usage in PillowBackend().
-
-    Implementations:
-
-        - MplTextRenderer
-        - QtTextRenderer
-
-    """
-    @abc.abstractmethod
-    def get_font_properties(self, font: FontFace) -> T:
-        ...
+class TextRenderer(abc.ABC):
+    """Minimal requirement to be usable as a universal text renderer"""
 
     @abc.abstractmethod
-    def get_font_measurements(self, font_properties: T) -> FontMeasurements:
-        ...
-
-    @abc.abstractmethod
-    def get_scale(self, cap_height: float, font_properties: T) -> float:
+    def get_font_measurements(
+        self, font_face: FontFace, cap_height: float = 1.0
+    ) -> FontMeasurements:
         ...
 
     @abc.abstractmethod
     def get_text_line_width(
-        self, text: str, cap_height: float, font: Optional[FontFace] = None
+        self,
+        text: str,
+        font_face: FontFace,
+        cap_height: float = 1.0,
     ) -> float:
         ...
 
     @abc.abstractmethod
-    def get_ezdxf_path(self, text: str, font_properties: T) -> Path:
+    def get_text_path(
+        self, text: str, font_face: FontFace, cap_height: float = 1.0
+    ) -> Path2d:
         ...
-

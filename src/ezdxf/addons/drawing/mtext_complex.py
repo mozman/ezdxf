@@ -9,7 +9,7 @@ import math
 from ezdxf import colors
 from ezdxf.entities import MText
 from ezdxf.lldxf import const
-from ezdxf.math import Matrix44, Vec3
+from ezdxf.math import Matrix44, Vec3, AnyVec
 from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
 from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import MTextContext
@@ -40,11 +40,11 @@ def corner_vertices(
 
 
 class DrawInterface(Protocol):
-    def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties) -> None:
         ...
 
     def draw_filled_polygon(
-        self, points: Iterable[Vec3], properties: Properties
+        self, points: Iterable[AnyVec], properties: Properties
     ) -> None:
         ...
 

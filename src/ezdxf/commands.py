@@ -533,14 +533,6 @@ class Pillow(Command):
             help="minimal margin around the image in pixels, default is 10",
         )
         parser.add_argument(
-            "-t",
-            "--text-mode",
-            type=int,
-            choices=[0, 1, 2, 3],
-            default=2,
-            help="text mode: 0=ignore, 1=placeholder, 2=outline, 3=filled, default is 2",
-        )
-        parser.add_argument(
             "--dpi",
             type=int,
             default=300,
@@ -616,7 +608,6 @@ class Pillow(Command):
                 oversampling=args.oversampling,
                 margin=args.margin,
                 dpi=args.dpi,
-                text_mode=args.text_mode,
             )
         except PillowBackendException as e:
             print(str(e))
