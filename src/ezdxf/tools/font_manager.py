@@ -39,8 +39,8 @@ DEFAULT_FONTS = [
     "Arial.ttf",
     "DejaVuSansCondensed.ttf",  # with of glyph similar to Arial
     "DejaVuSans.ttf",
-    "LiberationSans.ttf",
-    "OpenSans.ttf",
+    "LiberationSans-Regular.ttf",
+    "OpenSans-Regular.ttf",
 ]
 
 
@@ -57,6 +57,9 @@ class FontCache:
 
     def __getitem__(self, item: str) -> CacheEntry:
         return self._cache[self.key(item)]
+
+    def __len__(self):
+        return len(self._cache)
 
     @staticmethod
     def key(font_name: str) -> str:
@@ -139,6 +142,10 @@ class FontManager:
     def build(self):
         dirs = FONT_DIRECTORIES.get(self.platform, LINUX_FONT_DIRS)
         self.scan_all(dirs)
+        if len(self._font_cache) == 0:  # System under test
+            path = Path(__file__)
+            fonts = path.parent.parent.parent.parent / "fonts"
+            self.scan_folder(fonts)
 
     def scan_all(self, folders: Iterable[str]) -> None:
         for folder in folders:

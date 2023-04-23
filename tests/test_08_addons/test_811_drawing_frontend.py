@@ -1,14 +1,13 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import List, Set, Sequence
+
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext
-from ezdxf.addons.drawing.properties import Properties, LayerProperties, set_layers_state
+from ezdxf.addons.drawing.properties import Properties
 
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_backend import BasicBackend, PathBackend
-from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
 from ezdxf.path import from_vertices

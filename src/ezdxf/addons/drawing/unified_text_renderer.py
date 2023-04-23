@@ -51,7 +51,8 @@ class UnifiedTextRenderer(TextRenderer):
             f"build FontManager cache in {time.perf_counter() - t0:.4f} seconds"
         )
         s = self.font_manager.dumps()
-        path.parent.mkdir(parents=True)
+        if not path.parent.exists():
+            path.parent.mkdir(parents=True)
         path.write_text(s)
         logger.info(f"FontManger cache written: {path}")
 
