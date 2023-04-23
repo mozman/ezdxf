@@ -1342,6 +1342,8 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> list[str]:
         )
     data.append(f"Codepage: {header.get('$DWGCODEPAGE', 'ANSI_1252')}")
     data.append(f"Encoding: {doc.output_encoding}")
+    data.append("Layouts:")
+    data.extend([f"  '{name}'" for name in doc.layout_names_in_taborder()])
 
     measurement = "Metric" if header.get("$MEASUREMENT", 0) else "Imperial"
     if verbose:
@@ -1378,7 +1380,6 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> list[str]:
         append_container(doc.block_records, "BLOCK_RECORD")
         if doc.dxfversion > DXF12:
             append_container(list(doc.classes), "CLASS", container="section")  # type: ignore
-
         data.append(f"Entities in modelspace: {len(doc.modelspace())}")
         if verbose:
             data.extend(count(doc.modelspace()))
