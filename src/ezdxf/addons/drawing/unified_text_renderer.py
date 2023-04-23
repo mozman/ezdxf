@@ -1,7 +1,6 @@
 # Copyright (c) 2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Optional
 import time
 import logging
 import pathlib
@@ -33,7 +32,7 @@ class UnifiedTextRenderer(TextRenderer):
         self._text_renderer_cache: dict[int, TTFontRenderer] = dict()
 
     def load_font_manager(self) -> None:
-        cache_path = options.xdg_path(CACHE_DIRECTORY, CACHE_DIRECTORY)
+        cache_path = options.xdg_path("XDG_CACHE_HOME", CACHE_DIRECTORY)
         fm_path = fonts.get_cache_file_path(cache_path, FONT_MANAGER_CACHE_FILE)
         if fm_path.exists():
             t0 = time.perf_counter()

@@ -18,19 +18,22 @@ from .pdf_backend import PDFBackend, pdf_is_supported
 DEBUG = False
 ENTER_HPGL2_MODE = b"%1B"
 
+
 class Hpgl2Error(Exception):
     """Base exception for the :mod:`hpgl2` add-on."""
+
     pass
 
 
 class Hpgl2DataNotFound(Hpgl2Error):
-    """No HPGL/2 data was found, maybe the "Enter HPGL/2 mode" escape sequence is missing.
-    """
+    """No HPGL/2 data was found, maybe the "Enter HPGL/2 mode" escape sequence is missing."""
+
     pass
 
 
 class EmptyDrawing(Hpgl2Error):
     """The HPGL/2 commands do not produce any content."""
+
     pass
 
 
