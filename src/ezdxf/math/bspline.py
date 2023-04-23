@@ -1199,22 +1199,6 @@ class BSpline:
         cpoints = m.transform_vertices(self.control_points)
         return BSpline(cpoints, self.order, self.knots(), self.weights())
 
-    def to_nurbs_python_curve(self):
-        """Returns a :class:`geomdl.BSpline.Curve` object, if the
-        `NURBS-Python <https://pypi.org/project/geomdl/>`_ package is installed.
-
-        """
-        if self._basis.is_rational:
-            from geomdl.NURBS import Curve
-        else:
-            from geomdl.BSpline import Curve
-        curve = Curve()
-        curve.degree = self.degree
-        curve.ctrlpts = [v.xyz for v in self.control_points]
-        curve.knotvector = self.knots()
-        curve.weights = self.weights()
-        return curve
-
     def bezier_decomposition(self) -> Iterable[list[Vec3]]:
         """Decompose a non-rational B-spline into multiple Bézier curves.
 

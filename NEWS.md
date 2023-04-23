@@ -14,6 +14,7 @@ Version 1.0.4b1 - dev
   `fontTools` package
 - CHANGED: moved text rendering from backend classes to the `Frontend` class
 - REMOVED: `PillowBackend` and the `pillow` command
+- REMOVED: `geomdl` dependency
 - BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1
 - BUGFIX: [#855](https://github.com/mozman/ezdxf/issues/855)
   scale `MTEXT/MLEADER` inline commands "absolute text height" at transformation

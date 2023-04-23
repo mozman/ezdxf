@@ -81,31 +81,6 @@ def test_rational_spline_from_circular_arc_has_same_end_points():
     assert arc.end_point.isclose(spline.control_points[-1])
 
 
-def test_rational_spline_curve_points_by_nurbs_python():
-    arc = ConstructionArc(end_angle=90)
-    spline = rational_bspline_from_arc(end_angle=arc.end_angle)
-    curve = spline.to_nurbs_python_curve()
-
-    t = list(linspace(0, 1, 10))
-    points = list(spline.points(t))
-    expected = list(curve.evaluate_list(t))
-    for p, e in zip(points, expected):
-        assert p.isclose(e)
-
-
-def test_rational_spline_derivatives_by_nurbs_python():
-    arc = ConstructionArc(end_angle=90)
-    spline = rational_bspline_from_arc(end_angle=arc.end_angle)
-    curve = spline.to_nurbs_python_curve()
-
-    t = list(linspace(0, 1, 10))
-    derivatives = list(spline.derivatives(t, n=1))
-    expected = [curve.derivatives(u, 1) for u in t]
-    for (p, d1), (e, ed1) in zip(derivatives, expected):
-        assert p.isclose(e)
-        assert d1.isclose(ed1)
-
-
 def test_rational_spline_from_elliptic_arc_has_expected_parameters():
     ellipse = ConstructionEllipse(
         center=(1, 1),

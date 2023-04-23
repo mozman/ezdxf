@@ -159,7 +159,7 @@ setup(
     ext_modules=ext_modules,
     install_requires=["pyparsing>=2.0.1", "typing_extensions", "numpy", "fonttools"],
     setup_requires=["wheel"],
-    tests_require=["pytest", "geomdl"],
+    tests_require=["pytest"],
     extras_require={
         "draw": DRAW,
         "draw5": DRAW5,

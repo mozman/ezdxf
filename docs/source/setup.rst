@@ -36,7 +36,7 @@ Tag      Additional Installed Packages
 ======== ===================================================
 [draw]   `Matplotlib`_, `PySide6`_, `Pillow`_, `PyMuPDF`_
 [draw5]  `Matplotlib`_, `PyQt5`_, `Pillow`_, `PyMuPDF`_ (use only if PySide6 is not available)
-[test]   geomdl, pytest
+[test]   pytest
 [dev]    setuptools, wheel, Cython + [test]
 [all]    [draw] + [test] + [dev]
 [all5]   [draw5] + [test] + [dev]  (use only if PySide6 is not available)
@@ -321,7 +321,7 @@ the build directory `build/ezdxf` and `ezdxf` is now installed in the venv.
 
 Install the test dependencies and run the tests::
 
-    pip3 install pytest geomdl
+    pip3 install pytest
     python3 -m pytest tests integration_tests
 
 Build Documentation

@@ -512,31 +512,6 @@ POINTS_ORDER_2 = [
 ]
 
 
-class TestNurbsPythonCorrectness:
-    # Test if package "geomdl" (a.k.a. NURBS Python) is still correct.
-    @pytest.mark.parametrize(
-        "order,results",
-        [
-            [2, POINTS_ORDER_2],
-            [3, POINTS_ORDER_3],
-            [4, POINTS_ORDER_4],
-        ],
-        ids=["degree=1", "degree=2", "degree=3"],
-    )
-    def test_point_calculation_is_correct(self, order, results):
-        curve = BSpline(DEFPOINTS, order=order).to_nurbs_python_curve()
-        points = curve.evaluate_list(PARAMS)
-        for expect, point in zip(results, points):
-            assert expect.isclose(point)
-
-    def test_derivative_calculation_is_correct(self):
-        spline = BSpline(DEFPOINTS, order=4).to_nurbs_python_curve()
-        for t, expected in zip(PARAMS, DERIVATIVES_ORDER_4):
-            results = spline.derivatives(t, order=2)
-            for e, p in zip(expected, results):
-                assert e.isclose(p)
-
-
 @pytest.mark.parametrize(
     "order,results",
     [
