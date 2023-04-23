@@ -25,6 +25,7 @@ from ezdxf.addons.drawing.config import (
     HatchPolicy,
 )
 from ezdxf.addons.drawing.backend import BackendInterface
+from ezdxf.addons.drawing.clipper import ClippingRect
 from ezdxf.addons.drawing.properties import (
     RenderContext,
     VIEWPORT_COLOR,
@@ -60,7 +61,6 @@ from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44, AnyVec
-from ezdxf.math.clipping import ClippingRect2d
 from ezdxf.path import (
     Path,
     Path2d,
@@ -70,7 +70,6 @@ from ezdxf.path import (
     winding_deconstruction,
     from_vertices,
     single_paths,
-    bbox as path_bbox,
 )
 from ezdxf.render import MeshBuilder, TraceBuilder, linetypes
 from ezdxf import reorder
@@ -747,75 +746,6 @@ def ignore_text_boxes(paths: Iterable[Path]) -> Iterable[Path]:
         yield path
 
 
-class Clipper:
-    def __init__(self) -> None:
-        self._stack: list[tuple[ClippingRect2d, float, Matrix44]] = []
-        self.view: Optional[ClippingRect2d] = None
-        self.scale_factor: float = 1.0
-        self.m = Matrix44()
-
-    @property
-    def is_active(self) -> bool:
-        return self.view is not None
-
-    def push(self, path: Path | Path2d, scale_factor: float, m: Matrix44) -> None:
-        assert len(path) > 0
-        if self.view is not None:
-            self._stack.append((self.view, self.scale_factor, self.m))
-        bbox = ezdxf.path.bbox((path,), fast=True)
-        self.view = ClippingRect2d(bbox.extmin, bbox.extmax)
-        self.scale_factor = float(scale_factor)
-        self.m = m
-
-    def pop(self) -> None:
-        if self._stack:
-            self.view, self.scale_factor, self.m = self._stack.pop()
-        else:
-            self.view = None
-            self.scale_factor = 1.0
-
-    def clip_filled_paths(
-        self, paths: Iterable[Path | Path2d], max_sagitta: float
-    ) -> Iterator[Path | Path2d]:
-        for path in paths:
-            bbox = path_bbox([path])
-            view = self.view
-            assert view is not None
-            if view.is_inside(Vec2(bbox.extmin)) and view.is_inside(Vec2(bbox.extmax)):
-                yield path
-            else:
-                clipped_path = from_vertices(
-                    view.clip_polygon(
-                        Vec2.list(path.flattening(max_sagitta, segments=16))
-                    )
-                )
-                if clipped_path.has_sub_paths:
-                    yield from single_paths([clipped_path])
-                else:
-                    yield clipped_path
-
-    def clip_paths(
-        self, paths: Iterable[Path | Path2d], max_sagitta: float
-    ) -> Iterator[Path | Path2d]:
-        view = self.view
-        assert view is not None
-        m = self.m
-
-        for path in paths:
-            path = path.transform(m)
-            bbox = path_bbox([path])
-            if view.is_inside(Vec2(bbox.extmin)) and view.is_inside(Vec2(bbox.extmax)):
-                yield path
-            for sub_path in single_paths([path]):  # type: ignore
-                polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=16))
-                for part in view.clip_polyline(polyline):
-                    yield from_vertices(part)
-
-    def clip_polygon(self, points: Iterable[Vec2 | Vec3]) -> Sequence[Vec2]:
-        points = self.m.fast_2d_transform(points)
-        return self.view.clip_polygon(points)  # type: ignore
-
-
 class Designer:
     """The designer is placed between the frontend and the backend
     and adds this features:
@@ -833,14 +763,15 @@ class Designer:
         self.text_engine = UnifiedTextRenderer()
         self.text_engine.load_font_manager()
         self.default_font_face = self.text_engine.default_font_face
-        self.clipper = Clipper()
+        self.clipper = ClippingRect()
+        self.current_vp_scale = 1.0
 
     @property
     def vp_ltype_scale(self) -> float:
         """The linetype pattern should look the same in all viewports
         independent of the viewport scaling.
         """
-        return 1.0 / max(self.clipper.scale_factor, 0.0001)  # max out at 1:10000
+        return 1.0 / max(self.current_vp_scale, 0.0001)  # max out at 1:10000
 
     def draw_viewport(
         self,
@@ -871,23 +802,24 @@ class Designer:
         """Set current viewport. Returns ``False`` if the backend doesn't
         support viewports.
         """
-        scale = vp.get_scale()
+        self.current_vp_scale = vp.get_scale()
         m = vp.get_transformation_matrix()
         clipping_path = make_path(vp)
         if len(clipping_path):
-            self.clipper.push(clipping_path, scale, m)
+            self.clipper.push(clipping_path, m)
             return True
         return False
 
     def exit_viewport(self):
         self.clipper.pop()
+        self.current_vp_scale = 1.0
 
     def draw_point(self, pos: AnyVec, properties: Properties) -> None:
-        clipper = self.clipper
-        if clipper.is_active:
-            pos = clipper.m.transform(pos)
-            if not clipper.view.is_inside(Vec2(pos)):  # type: ignore
+        if self.clipper.is_active:
+            point = self.clipper.clip_point(pos)
+            if point is None:
                 return
+            pos = point
         self.backend.draw_point(pos, properties)
 
     def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties):
@@ -896,14 +828,11 @@ class Designer:
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
             if self.clipper.is_active:
-                m = self.clipper.m
-                start, end = m.fast_2d_transform((start, end))
-                result = self.clipper.view.clip_line(start, end)  # type: ignore
-                if len(result) == 2:
-                    start, end = result
-                else:
-                    return
-            self.backend.draw_line(start, end, properties)
+                points = self.clipper.clip_line(start, end)
+                if points:
+                    self.backend.draw_line(start, end, properties)
+            else:
+                self.backend.draw_line(start, end, properties)
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
             self.draw_solid_lines(  # including transformation
@@ -915,18 +844,12 @@ class Designer:
         self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
     ) -> None:
         if self.clipper.is_active:
-            view = self.clipper.view
-            assert view is not None
-            m = self.clipper.m
-            lines = []
-            for line in lines:
-                start, end = m.fast_2d_transform(line)
-                result = view.clip_line(start, end)
-                if len(result) == 2:
-                    start, end = result
-                else:
-                    return
-                lines.append((start, end))
+            clipped_lines: list[Sequence[AnyVec]] = []
+            for start, end in lines:
+                points = self.clipper.clip_line(start, end)
+                if points:
+                    clipped_lines.append(points)
+            lines = clipped_lines  # type: ignore
         self.backend.draw_solid_lines(lines, properties)
 
     def draw_path(self, path: Path | Path2d, properties: Properties):
