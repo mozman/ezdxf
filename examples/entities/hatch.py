@@ -241,10 +241,10 @@ def using_hatch_with_spline_edge():
 
 
 if __name__ == "__main__":
-    #create_solid_polyline_hatch()
-    #create_pattern_fill_polyline_hatch()
-    #create_pattern_fill_hatch_with_bgcolor()
+    create_solid_polyline_hatch()
+    create_pattern_fill_polyline_hatch()
+    create_pattern_fill_hatch_with_bgcolor()
     create_user_pattern_fill()
-    #using_hatch_style()
-    #using_hatch_style_with_edge_path()
-    #using_hatch_with_spline_edge()
+    using_hatch_style()
+    using_hatch_style_with_edge_path()
+    using_hatch_with_spline_edge()

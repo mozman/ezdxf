@@ -83,19 +83,6 @@ class MatplotlibBackend(Backend):
     def set_background(self, color: Color):
         self.ax.set_facecolor(color)
 
-    def set_clipping_path(
-        self, path: Optional[ezdxf.path.Path] = None, scale: float = 1.0
-    ) -> bool:
-        from matplotlib.transforms import Transform
-
-        if path:
-            # This does not work!!!
-            mpl_path = ezdxf.path.to_matplotlib_path([path])
-            self.ax.set_clip_path(mpl_path, Transform())
-        else:
-            self.ax.set_clip_path(None)
-        return True  # confirm clipping support
-
     def draw_point(self, pos: AnyVec, properties: Properties):
         """Draw a real dimensionless point."""
         color = properties.color

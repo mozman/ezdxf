@@ -91,7 +91,6 @@ class PyQtBackend(Backend):
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
         self._extra_lineweight_scaling = extra_lineweight_scaling
         self._debug_draw_rect = debug_draw_rect
-        self._current_viewport: Optional[ViewportGroup] = None
 
     def configure(self, config: Configuration) -> None:
         if config.min_lineweight is None:
@@ -101,22 +100,9 @@ class PyQtBackend(Backend):
     def set_scene(self, scene: qw.QGraphicsScene):
         self._scene = scene
 
-    def set_clipping_path(
-        self, path: Optional[Path] = None, scale: float = 1.0
-    ) -> bool:
-        if path:
-            self._current_viewport = ViewportGroup(path)
-            self._scene.addItem(self._current_viewport)
-        else:
-            self._current_viewport = None
-        return True  # confirm clipping support
-
     def _add_item(self, item):
         self._set_item_data(item)
-        if self._current_viewport:
-            self._current_viewport.addToGroup(item)
-        else:
-            self._scene.addItem(item)
+        self._scene.addItem(item)
 
     def _get_color(self, color: Color) -> qg.QColor:
         qt_color = self._color_cache.get(color, None)
