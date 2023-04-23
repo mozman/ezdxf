@@ -1,22 +1,15 @@
-# Copyright (c) 2020-2022, Matthew Broadway
+# Copyright (c) 2020-2023, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
 from abc import ABC, abstractmethod, ABCMeta
-from typing import (
-    Optional,
-    TYPE_CHECKING,
-    Iterable,
-)
+from typing import Optional, Iterable
 
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
-from ezdxf.math import Vec3, Matrix44, AnyVec
+from ezdxf.math import AnyVec
 from ezdxf.path import Path, Path2d
-
-if TYPE_CHECKING:
-    from ezdxf.tools.fonts import FontFace, FontMeasurements
 
 
 class BackendInterface(ABC):
@@ -122,18 +115,18 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         return False
 
     @abstractmethod
-    def draw_point(self, pos: Vec3, properties: Properties) -> None:
+    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
         """Draw a real dimensionless point, because not all backends support
         zero-length lines!
         """
         raise NotImplementedError
 
     @abstractmethod
-    def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties) -> None:
         raise NotImplementedError
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[Vec3, Vec3]], properties: Properties
+        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
     ) -> None:
         """Fast method to draw a bunch of solid lines with the same properties."""
         # Must be overridden by the backend to gain a performance benefit.
@@ -204,7 +197,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
 
     @abstractmethod
     def draw_filled_polygon(
-        self, points: Iterable[Vec3], properties: Properties
+        self, points: Iterable[AnyVec], properties: Properties
     ) -> None:
         """Fill a polygon whose outline is defined by the given points.
         Used to draw entities with simple outlines where :meth:`draw_path` may
