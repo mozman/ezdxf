@@ -19,7 +19,7 @@ jobs:
           CIBW_BEFORE_BUILD: "pip install wheel cython"
           CIBW_ARCHS_LINUX: "aarch64"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-          CIBW_BUILD: cp37-* cp38-* cp39-* cp310-* cp311-*
+          CIBW_BUILD: cp38-* cp39-* cp310-* cp311-*
       - name: Upload manylinux2014_aarch64 wheels to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}

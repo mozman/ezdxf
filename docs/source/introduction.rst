@@ -42,8 +42,8 @@ Supported Python Versions
 CPython version and the latest stable release of pypy3 during development.
 
 `Ezdxf` is written in pure Python with optional Cython implementations of some
-low level math classes and requires only `pyparser` and `typing_extensions` as
-additional library beside the Python Standard Library.
+low level math classes and requires only `pyparsing`, `numpy` and `typing_extensions`
+as additional library beside the Python Standard Library.
 `Pytest` is required to run the unit and integration tests. Data to run the
 stress and audit test can not be provided, because I don't have the rights for
 publishing these DXF files.
@@ -52,7 +52,7 @@ Supported Operating Systems
 ---------------------------
 
 `Ezdxf` is OS independent and runs on all platforms which provide an appropriate
-Python interpreter (>=3.7).
+Python interpreter (>=3.8).
 
 Supported DXF Versions
 ----------------------

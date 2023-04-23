@@ -19,7 +19,7 @@ jobs:
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
           # cp310 is deployed for manylinux2014
-          CIBW_BUILD: cp37-* cp38-* cp39-*
+          CIBW_BUILD: cp38-* cp39-*
       - name: Upload manylinux2010_x86_64 wheels to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}

@@ -9,13 +9,12 @@ easy way to install them on `Windows`, `Linux` and `macOS`, preferably as::
 
     pip3 install ezdxf
 
-The `pyparsing`_ package and the `typing_extensions`_ are the only hard dependency
-and will be installed automatically by `pip3`!
+The `pyparsing`_ package, `numpy`_ and the `typing_extensions`_ are the only hard
+dependency and will be installed automatically by `pip3`!
 
 The minimal required Python version is determined by the latest stable version
 of `pypy3`_ and the Python version deployed by the `Raspberry Pi`_ OS, which
-would be Python 3.9 in 2022, but Python 3.7 will be kept as the minimal version
-for the 1.0 release.
+would be Python 3.9 in 2022.
 
 Basic Installation
 ------------------

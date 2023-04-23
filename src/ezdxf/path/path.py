@@ -10,6 +10,7 @@ from typing import (
     Type,
     Generic,
     Callable,
+    Sequence,
 )
 from typing_extensions import Self
 from ezdxf.math import (
@@ -154,6 +155,10 @@ class AbstractPath(Generic[T], abc.ABC):
         if self._commands:
             return list(self._vertices)
         return []
+
+    def command_codes(self) -> list[int]:
+        """Internal API."""
+        return list(self._commands)
 
     @property
     def is_closed(self) -> bool:
