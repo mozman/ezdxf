@@ -59,6 +59,10 @@ FONTS = [
     "LiberationMono-Regular.ttf",
     "OpenSans-Regular.ttf",
     "OpenSansCondensed-Light.ttf",
+    "DejavuSerif.ttf",
+    "DejavuSerifCondensed.ttf",
+    "DejavuSans.ttf",
+    "DejavuSansCondensed.ttf",
 ]
 
 

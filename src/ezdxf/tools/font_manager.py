@@ -29,20 +29,19 @@ LINUX_FONT_DIRS = [
     "~/.local/share/texmf/fonts",
 ]
 MACOS_FONT_DIRS = ["/Library/Fonts/"]
-
-WIN_FALLBACK_FONT = "Arial.ttf"
-LINUX_FALLBACK_FONT = "DejaVuSans.ttf"
-MACOS_FALLBACK_FONT = "Arial.ttf"
-DEFAULT_FONTS = {
-    WINDOWS: WIN_FALLBACK_FONT,
-    LINUX: LINUX_FALLBACK_FONT,
-    MACOS: MACOS_FALLBACK_FONT,
-}
 FONT_DIRECTORIES = {
     WINDOWS: WIN_FONT_DIRS,
     LINUX: LINUX_FONT_DIRS,
     MACOS: MACOS_FONT_DIRS,
 }
+
+DEFAULT_FONTS = [
+    "Arial.ttf",
+    "DejaVuSansCondensed.ttf",  # with of glyph similar to Arial
+    "DejaVuSans.ttf",
+    "LiberationSans.ttf",
+    "OpenSans.ttf",
+]
 
 
 class CacheEntry(NamedTuple):
@@ -52,6 +51,8 @@ class CacheEntry(NamedTuple):
 
 class FontCache:
     def __init__(self) -> None:
+        # cache key is the lowercase ttf font name without parent directories
+        # e.g. "arial.ttf" for "C:\Windows\Fonts\Arial.ttf"
         self._cache: dict[str, CacheEntry] = dict()
 
     def __getitem__(self, item: str) -> CacheEntry:
@@ -95,7 +96,22 @@ class FontManager:
         self.platform = platform.system()
         self._font_cache: FontCache = FontCache()
         self._loaded_fonts: dict[str, TTFont] = dict()
-        self.fallback_font = DEFAULT_FONTS.get(self.platform, WIN_FALLBACK_FONT)
+        self._fallback_font_name = ""
+
+    def fallback_font_name(self) -> str:
+        fallback_name = self._fallback_font_name
+        if fallback_name:
+            return fallback_name
+        fallback_name = DEFAULT_FONTS[0]
+        for name in DEFAULT_FONTS:
+            try:
+                cache_entry = self._font_cache.get(name, fallback_name)
+                fallback_name = cache_entry.file_path.name
+                break
+            except KeyError:
+                pass
+        self._fallback_font_name = fallback_name
+        return fallback_name
 
     def get_ttf_font(self, font_name: str, font_number: int = 0) -> TTFont:
         try:
@@ -104,13 +120,20 @@ class FontManager:
             pass
         try:
             font = TTFont(
-                self._font_cache.get(font_name, self.fallback_font).file_path,
+                self._font_cache.get(font_name, self.fallback_font_name()).file_path,
                 fontNumber=font_number,
             )
         except IOError as e:
             raise FontNotFoundError(str(e))
         self._loaded_fonts[font_name] = font
         return font
+
+    def ttf_font_from_font_face(self, font_face: FontFace) -> TTFont:
+        return self.get_ttf_font(Path(font_face.ttf).name)
+
+    def get_font_face(self, font_name: str) -> FontFace:
+        cache_entry = self._font_cache.get(font_name, self.fallback_font_name())
+        return cache_entry.font_face
 
     def build(self):
         dirs = FONT_DIRECTORIES.get(self.platform, LINUX_FONT_DIRS)
