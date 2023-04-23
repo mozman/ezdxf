@@ -157,7 +157,7 @@ setup(
     provides=["ezdxf"],
     cmdclass=commands,
     ext_modules=ext_modules,
-    install_requires=["pyparsing>=2.0.1", "typing_extensions", "numpy", "fontools"],
+    install_requires=["pyparsing>=2.0.1", "typing_extensions", "numpy", "fonttools"],
     setup_requires=["wheel"],
     tests_require=["pytest", "geomdl"],
     extras_require={
