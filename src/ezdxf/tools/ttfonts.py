@@ -5,7 +5,6 @@ from typing import Any, no_type_check
 from fontTools.pens.basePen import BasePen
 from fontTools.ttLib import TTFont
 
-import ezdxf
 import ezdxf.path
 from ezdxf.math import Matrix44, UVec, BoundingBox2d
 from ezdxf.tools.font_manager import FontManager

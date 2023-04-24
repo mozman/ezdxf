@@ -1,20 +1,13 @@
 # Copyright (c) 2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-import time
-import logging
 import pathlib
 
 import ezdxf.path
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.tools import fonts
 from .text_renderer import TextRenderer
-from ezdxf.tools.ttfonts import TTFontRenderer, FontManager
-from ezdxf import options
-
-logger = logging.getLogger("ezdxf")
-FONT_MANAGER_CACHE_FILE = "font_manager_cache.json"
-CACHE_DIRECTORY = ".cache"
+from ezdxf.tools.ttfonts import TTFontRenderer
 
 
 class UnifiedTextRenderer(TextRenderer):
@@ -25,35 +18,11 @@ class UnifiedTextRenderer(TextRenderer):
     """
 
     def __init__(self, font=fonts.FontFace()) -> None:
-        self.font_manager: FontManager = FontManager()
+        self.font_manager = fonts.font_manager
         self._default_font = font
         # Each font has its own text path cache
         # key is hash(FontProperties)
         self._text_renderer_cache: dict[int, TTFontRenderer] = dict()
-
-    def load_font_manager(self) -> None:
-        cache_path = options.xdg_path("XDG_CACHE_HOME", CACHE_DIRECTORY)
-        fm_path = fonts.get_cache_file_path(cache_path, FONT_MANAGER_CACHE_FILE)
-        if fm_path.exists():
-            t0 = time.perf_counter()
-            self.font_manager.loads(fm_path.read_text())
-            logger.info(
-                f"loaded FileManager cache in {time.perf_counter()-t0:.4f} seconds"
-            )
-        else:
-            self.build_font_manager_cache(fm_path)
-
-    def build_font_manager_cache(self, path: pathlib.Path) -> None:
-        t0 = time.perf_counter()
-        self.font_manager.build()
-        logger.info(
-            f"build FontManager cache in {time.perf_counter() - t0:.4f} seconds"
-        )
-        s = self.font_manager.dumps()
-        if not path.parent.exists():
-            path.parent.mkdir(parents=True)
-        path.write_text(s)
-        logger.info(f"FontManger cache written: {path}")
 
     def get_text_renderer(self, font_face: fonts.FontFace) -> TTFontRenderer:
         font_name = pathlib.Path(font_face.ttf).name

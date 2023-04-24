@@ -761,7 +761,6 @@ class Designer:
         self.config = frontend.config
         self.pattern_cache: dict[PatternKey, Sequence[float]] = dict()
         self.text_engine = UnifiedTextRenderer()
-        self.text_engine.load_font_manager()
         self.default_font_face = self.text_engine.default_font_face
         self.clipper = ClippingRect()
         self.current_vp_scale = 1.0

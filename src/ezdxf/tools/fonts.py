@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 """
 This module manages a backend agnostic font database.
@@ -51,63 +51,26 @@ from pathlib import Path
 import json
 from ezdxf import options
 from ezdxf.lldxf import const
+from .font_face import FontFace
+from .font_manager import FontManager
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFEntity, Textstyle
+    from .ttfonts import TTFontRenderer
+
+logger = logging.getLogger("ezdxf")
 
 FONT_FACE_CACHE_FILE = "font_face_cache.json"
 FONT_MEASUREMENT_CACHE_FILE = "font_measurement_cache.json"
-logger = logging.getLogger("ezdxf")
-
-
-class FontFace(NamedTuple):
-    # This would be the matplotlib FontProperties class, if matplotlib would
-    # be a core dependency!
-    ttf: str = ""
-    family: str = "sans-serif"
-    style: str = "normal"
-    stretch: str = "normal"
-    weight: str = "normal"
-
-    @property
-    def is_italic(self) -> bool:
-        return self.style.find("italic") > -1
-
-    @property
-    def is_oblique(self) -> bool:
-        return self.style.find("oblique") > -1
-
-    @property
-    def is_bold(self) -> bool:
-        weight = self.weight
-        if isinstance(weight, str):
-            weight = weight_name_to_value(weight)  # type: ignore
-        return weight > 400  # type: ignore
+FONT_MANAGER_CACHE_FILE = "font_manager_cache.json"
+CACHE_DIRECTORY = ".cache"
 
 
 # Key is TTF font file name without path in lowercase like "arial.ttf":
 font_face_cache: dict[str, FontFace] = dict()
 font_measurement_cache: dict[str, FontMeasurements] = dict()
-
-WEIGHT_TO_VALUE = {
-    "thin": 100,
-    "hairline": 100,
-    "extralight": 200,
-    "UltraLight": 200,
-    "light": 300,
-    "normal": 400,
-    "medium": 500,
-    "demibold": 600,
-    "semibold": 600,
-    "bold": 700,
-    "extrabold": 800,
-    "ultrabold": 800,
-    "black": 900,
-    "heavy": 900,
-    "extrablack": 950,
-    "ultrablack": 950,
-}
+font_manager = FontManager()
 
 SHX_FONTS = {
     # See examples in: CADKitSamples/Shapefont.dxf
@@ -166,11 +129,6 @@ def map_shx_to_ttf(font_name: str) -> str:
 def map_ttf_to_shx(ttf: str) -> Optional[str]:
     """Map TTF file names to SHX font names. e.g. "txt_____.ttf" -> "TXT" """
     return TTF_TO_SHX.get(ttf.lower())
-
-
-def weight_name_to_value(name: str) -> int:
-    """Map weight names to values. e.g. 'normal' -> 400"""
-    return WEIGHT_TO_VALUE.get(name.lower(), 400)
 
 
 def cache_key(name: str) -> str:
@@ -355,6 +313,24 @@ def load(path=None, reload=False):
     p = get_cache_file_path(path, FONT_MEASUREMENT_CACHE_FILE)
     if p.exists():
         font_measurement_cache = _load_measurement_cache(p)
+    _load_font_manager()
+
+
+def _load_font_manager() -> None:
+    cache_path = options.xdg_path("XDG_CACHE_HOME", CACHE_DIRECTORY)
+    fm_path = get_cache_file_path(cache_path, FONT_MANAGER_CACHE_FILE)
+    if fm_path.exists():
+        font_manager.loads(fm_path.read_text())
+    else:
+        build_font_manager_cache(fm_path)
+
+
+def build_font_manager_cache(path: Path) -> None:
+    font_manager.build()
+    s = font_manager.dumps()
+    if not path.parent.exists():
+        path.parent.mkdir(parents=True)
+    path.write_text(s)
 
 
 def _load_font_faces(path) -> dict:
@@ -423,9 +399,7 @@ class FontMeasurements(NamedTuple):
             self.descender_height,
         )
 
-    def scale_from_baseline(
-        self, desired_cap_height: float
-    ) -> FontMeasurements:
+    def scale_from_baseline(self, desired_cap_height: float) -> FontMeasurements:
         factor = desired_cap_height / self.cap_height
         return FontMeasurements(
             self.baseline,
@@ -509,6 +483,45 @@ class MatplotlibFont(AbstractFont):
         return self._space_width
 
 
+class TrueTypeFont(AbstractFont):
+    _ttf_render_engines: dict[str, TTFontRenderer] = dict()
+
+    def __init__(self, ttf: str, cap_height: float, width_factor: float = 1.0):
+        self.engine = self._create_engine(ttf)
+        self.cap_height = float(cap_height)
+        self.width_factor = float(width_factor)
+        measurements = self.engine.font_measurements
+        scale_factor = self.engine.get_scaling_factor(self.cap_height)
+        super().__init__(measurements.scale(scale_factor))
+        self._space_width = (
+            self.engine.get_text_length(" ", self.cap_height) * self.width_factor
+        )
+
+    def _create_engine(self, ttf: str) -> TTFontRenderer:
+        from .ttfonts import TTFontRenderer
+
+        key = Path(ttf).name.lower()
+        try:
+            return self._ttf_render_engines[key]
+        except KeyError:
+            pass
+        engine = TTFontRenderer(font_manager.get_ttf_font(ttf))
+        self._ttf_render_engines[key] = engine
+        return engine
+
+    def text_width(self, text: str) -> float:
+        """Returns the text width in drawing units for the given `text` string.
+        Text rendering and width calculation is based on fontTools.
+        """
+        if not text.strip():
+            return 0
+        return self.engine.get_text_length(text, self.cap_height) * self.width_factor
+
+    def space_width(self) -> float:
+        """Returns the width of a "space" char."""
+        return self._space_width
+
+
 class MonospaceFont(AbstractFont):
     """Defines a monospaced font without knowing the real font properties.
     Each letter has the same cap- and descender height and the same width.
@@ -570,9 +583,7 @@ def make_font(
         return MonospaceFont(cap_height, width_factor)
 
 
-def get_entity_font_face(
-    entity: DXFEntity, doc: Optional[Drawing] = None
-) -> FontFace:
+def get_entity_font_face(entity: DXFEntity, doc: Optional[Drawing] = None) -> FontFace:
     """Returns the :class:`FontFace` defined by the associated text style.
     Returns the default font face if the `entity` does not have or support
     the DXF attribute "style". Supports the extended font information stored in
@@ -601,9 +612,7 @@ def get_entity_font_face(
         if family:
             text_style = "italic" if italic else "normal"
             text_weight = "bold" if bold else "normal"
-            font_face = FontFace(
-                family=family, style=text_style, weight=text_weight
-            )
+            font_face = FontFace(family=family, style=text_style, weight=text_weight)
         else:
             ttf = style.dxf.font
             if ttf:

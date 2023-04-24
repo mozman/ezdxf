@@ -8,7 +8,7 @@ import json
 
 from pathlib import Path
 from fontTools.ttLib import TTFont
-from ezdxf.tools.fonts import FontFace
+from .font_face import FontFace
 
 WINDOWS = "Windows"
 LINUX = "Linux"

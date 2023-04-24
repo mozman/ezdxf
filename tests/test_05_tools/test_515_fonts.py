@@ -183,5 +183,10 @@ def test_find_font_file_by_family():
     assert fonts.find_font_face_by_family("mozman") is None
 
 
+def test_font_manger_was_loaded_at_startup():
+    font_face = fonts.font_manager.get_font_face("LiberationSans-Regular.ttf")
+    assert font_face.family == "Liberation Sans"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
