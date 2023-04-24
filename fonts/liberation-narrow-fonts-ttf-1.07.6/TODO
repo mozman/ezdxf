@@ -1,0 +1,13 @@
+Here are todo for next release
+
+1) Resolving bug related with hinting
+	- https://bugzilla.redhat.com/show_bug.cgi?id=606217
+	- https://bugzilla.redhat.com/show_bug.cgi?id=591556
+	- https://bugzilla.redhat.com/show_bug.cgi?id=591554
+	- https://bugzilla.redhat.com/show_bug.cgi?id=768067
+	- https://bugzilla.redhat.com/show_bug.cgi?id=715309
+	- https://bugzilla.redhat.com/show_bug.cgi?id=714191
+2) RFE: Add Greek Polytonic support to Liberation fonts
+	- need some volunteer to add these shapes
+	- https://bugzilla.redhat.com/show_bug.cgi?id=473842
+3) Use CV01-09 for Serbian SHA

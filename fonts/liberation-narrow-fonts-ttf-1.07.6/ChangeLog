@@ -1,0 +1,274 @@
+* Wed Nov 14 2018 Vishal Vijayraghavan<vishalvijayraghavan> 1.07.6
+- Fixed Too wide macron for Liberation Sans Narrow fonts, 
+  Patch fix by Zirneklitis<eko@lanet.lv> #1195216
+
+* Wed Apr 11 2018 Pravin Satpute <psatpute@redhat.com> 1.07.5
+- Separated Liberation Sans Narrow project from Liberation fonts for changes 
+  planned to rename Liberation 1.07.4 to LiberationOne and Liberation 2.00.1 
+  Will be installed default. Users will have option to install both versions 
+  simultaneously.
+
+
+- Resolved #1009650, Resolved issue with Liberation Sans Italic
+- Resolved #1094779,  No Cyrillic Italic Glyphs for Sans, Sans Narrow and Mono
+
+* Fri 18 2014 Pravin Satpute <psatpute@redhat.com> 1.07.4
+- Restored Liberation Sans Bold 'u' instructions
+- Resolved #1009650, renames serbian shapes as per AGL
+- Added new glyph for "imacron" and "g"
+- Added Correct shape for uni266B in all Liberation variants #1014357
+- Resolved Problematic shapes for macedonian alphabet #1013949
+
+* Fri Aug 23 2013 Pravin Satpute <psatpute@redhat.com> 1.07.3
+- Corrected U+2588 shape to match with Dejavu fonts in Mono
+- Resolved Serbian bug #984428
+- applied patch to remove kerning for number 1
+- corrected shape of U+040D #799384
+- Makefile restructure patch from Jan Pokorny <jpokorny@redhat.com>
+
+* Thu Feb 09 2012 Pravin Satpute <psatpute@redhat.com> 1.07.2
+- removed hint instruction from LiberationMono-Italic cent sing, rhbz #753572
+- adeed U+0472, U+0473 in Sans and SansNarrow, rhbz #751566
+- added cyrillic italics for U+043F, rhbz #708330
+
+* Wed Sep 21 2011 Pravin Satpute <psatpute@redhat.com>
+- resolved bug 738264, corrected height of U+040D in Mono
+- resolved bug 729989, corrected macron position on ā, ē, ī, ō, ū in Narrow fonts
+- enabled embedding of font
+- Added License link https://fedoraproject.org/wiki/Licensing/LiberationFontLicense
+- New Release 1.07.1
+
+* Mon May 30 2011 Pravin Satpute <psatpute@redhat.com>
+- added U+045D and U+0450 in all fonts, bug 659214
+- corrected characters U+0438 and U+0439, bug 708330
+- resolved bug 708330, 707973
+- New Release 1.07.0
+
+* Wed Feb 23 2011 Pravin Satpute <psatpute@redhat.com>
+- added U+0400 and U+040d in all fonts, bug 659214
+- fixed for bug 620273, patch from Cody Boisclair <cody@zone38.net>
+
+* Wed Jul 21 2010 Pravin Satpute <psatpute@redhat.com>
+- Update for New Release 1.06
+- Added New Family Narrow (Contribution from Herbert Duerr <herbert.duerr@oracle.com>)
+- updated version of fonts
+
+* Mon 10 May 2010 Caius 'kaio' Chance <me at kaio.net>
+- Fixed Romanian glyphs, U+021A, 021B, 0218, 0219, 0162, 0163, 015E, 015F,
+  2010, 2011. (rhbz#440992)
+- Fixed height of arrows U+2190, 2192, 2194. (Issue #2)
+
+* Thu 06 May 2010 Caius 'kaio' Chance <me at kaio.net>
+- Cleaned up points and auto-instructed hinting of 'u', 'v', 'w', 'y'.
+(rhbz#463036)
+- Created the first project icon. (Issue #5)
+
+* Wed May 05 2010 Caius 'kaio' Chance <k at kaio.net>
+- Incorrect cent sign glyph (U+00A2) in Sans and Mono
+style in Liberation fonts. (rhbz#474522)
+
+* Wed 28 Apr 2010 Caius 'kaio' Chance <me at kaio.net>
+- rhbz#510174: Corrected version number of all SFD files.
+- Corrected license exceptions to GPLv2.
+- Updated README file.
+
+* Tue 27 Apr 2010 Caius 'kaio' Chance <me at kaio.net>
+- Renamed Narrow Fonts.
+- Updated list of contributors.
+- Released version 1.05.3.
+
+* Thu 22 Apr 2010 Herbert Duerr <duerr at sun.com>
+- Contributed Liberation Sans Narrow Fonts.
+
+* Fri 12 Mar 2010 Caius 'kaio' Chance <me at kaio.me>
+- Migrated to Google Code.
+- Updated AUTHORS.
+- Upgraded license to GPLv3+exceptions.
+
+* Sun 27 Jul 2009 Caius 'kaio' Chance <me at kaio.me>
+- Fixed ttf pack preparation error.
+
+* Tue 21 Jul 2009 Caius 'kaio' Chance <me at kaio.me>
+- Fixed 'wrongly encoded glyphs after U+10000' (rhbz#525498),
+  provided by Denis Jacquerye <moyogo at gmail.com>.
+
+* Tue 21 Jul 2009 Caius 'kaio' Chance <me at kaio.me>
+- Fixed fontforge script sfd2ttf.pe.
+- Include traditional kern table for Sans and Serif.
+
+* Tue 14 Jul 2009 Caius 'kaio' Chance <me at kaio.me>
+- Generated TTFs with tradition kern table, with fontforge ver 20090408.
+- Added make target alias dist-src as dist-sfd.
+
+* Mon 13 Jul 2009 Caius 'kaio' Chance <me at kaio.me>
+- Updated for generation of traditional kern table via scripts.
+
+* Mon 06 Jul 2009 Caius 'kaio' Chance <me at kaio.me>
+- Reconverted SFDs from original TTFs with traditional kern table.
+- Updated "clean" target in Makefile.
+
+* Tue 30 Jun 2009 Caius 'kaio' Chance <me at kaio.me>
+- Reconverted SFDs from original TTFs with traditional kern table.
+- Updated "clean" target in Makefile.
+
+* Tue 30 Jun 2009 Caius 'kaio' Chance <me at kaio.me>
+- Generated cleaner SFD from original TTFs.
+- Include Makefile in sources tarball.
+
+* Wed 24 Jun 2009 Caius 'kaio' Chance <me at kaio.me>
+- Makefile: pack SFD files as source tarball.
+- Makefile: pack TTF files as ttf packs.
+- Tidy up repository.
+- Updated documents.
+
+* Mon 12 Jan 2009 Caius Chance <cchance at redhat.com>
+- Fixed copyright holder name typo for Sans Regular font (rhbz#479521).
+
+* Tue 09 Dec 2008 Caius Chance <cchance at redhat.com>
+- Changed cent sign glyph (U+00A2) to be coressed in Sans and Mono
+  (rhbz#474522).
+
+* Wed 03 Dec 2008 Caius Chance <cchance at redhat.com>
+- Started 1.04.93.devel.
+- Fixed blurriness of U+03BC for Sans Regular font (rhbz#473481).
+- Fixed src tarball mis-inclusion of dist files in Makefile.
+
+* Fri 28 Nov 2008 Caius Chance <cchance at redhat.com>
+- Corrected version number in Makefile.
+- Fixed make target of source tarball.
+- Uploaded 1.04.92 source tarball to release area.
+
+* Wed 15 Oct 2008 Caius Chance <cchance at redhat.com>
+- Fixed blurred 'u' and 'W' for Sans Bold font (rhbz#463036).
+- Released as version 1.04.92
+
+* Wed 17 Sep 2008 Caius Chance <cchance at redhat.com>
+- Fixed missing hinting instructions for all Mono fonts (rhbz#460090).
+- Fixed missing hinting instructions for all Sans fonts (rhbz#460090).
+- Fixed missing hinting instructions for all Serif fonts (rhbz#460090).
+- Released as version 1.04.91
+
+* Tue 09 Sep 2008 Caius Chance <cchance at redhat.com>
+- Backed up all released files in ./dist directory.
+
+* Fri 05 Sep 2008 Caius Chance <cchance at redhat.com>
+- Fixed incorrect glyph points and missing hinting instructions for:
+  Mono Bold Italic (up to U+2012) (rhbz#460090).
+
+* Mon 25 Aug 2008 Caius Chance <cchance at redhat.com>
+- Fixed incorrect glyph points and missing hinting instructions for:
+  U+0079, U+03BC, U+0431, U+2010..2012, U+1114117 (rhbz#458592).
+- Released as version 1.04.90.
+
+* Thu 13 Jul 2008 Caius Chance <cchance at redhat.com>
+- Released as version 1.04.
+
+* Thu 12 Jun 2008 Caius Chance <cchance at redhat.com>
+- Released as version 1.04.beta2 (1.03.99).
+- Added ZIP package building for non-tar users.
+- rhbz#440992:
+  - Created Romanian "T/t/S/s with comma below" (U+0218..021B) on all fonts.
+  - Fixed "T/s with cedilla below" (U+0162/0163) on all fonts.
+  - Created "Hyphen" and "Non-Breaking Hyphen" (U+2010..2011) on all fonts.
+
+* Wed 11 Jun 2008 Caius Chance <cchance at redhat.com>
+- Added last Version 1.03 from original manufacturer.
+- Renamed directory 'archive' to 'sandbox'.
+- Added directory description in hosting home directory.
+- Created ZIP packages for Version 1.03 and 1.04.beta.
+
+* Tue 04 Jun 2008 Caius Chance <cchance at redhat.com>
+- rhbz#440992:
+  - Created "Hyphen" and "Non-Breaking Hyphen" (U+2010..2011) on Sans Regular.
+
+* Mon 03 Jun 2008 Caius Chance <cchance at redhat.com>
+- rhbz#440992:
+  - Created Romanian "T/t/S/s with comma below" (U+0218..021B) on Sans Regular. 
+  - Fixed "T/s with cedilla below" (U+0162/0163) on Sans Regular.
+
+* Fri 30 May 2008 Caius Chance <cchance at redhat.com>
+- Release Version 1.04.beta (liberation-fonts-1_04_beta).
+
+* Thu 29 May 2008 Caius Chance <cchance at redhat.com>
+- Correct SFD version numbers in "TTF Info" categor for correct version 
+  number during export to TTFs.
+
+* Wed 28 May 2008 Caius Chance <cchance at redhat.com>
+- Reencoded with "Glyph Order" by FontForge.
+- Corrected font name for all Regular fonts.
+- Generated TTFs (experimantal, in "archive") with old stle kern and dummy 
+  DSIG table.
+- Updated README in 1.04b TTFs (experimental, in "archive").
+
+* Tue 27 May 2008 Caius Chance <cchance at redhat.com>
+- Fixed Unicode name mis-mapping of Sans and Serif TTF files.
+- Regenerate SFD files from Unicode name mis-mapping fixed Sans and Serif TTF 
+  files.
+
+* Mon 26 May 2008 Caius Chance <cchance at redhat.com>
+- Fixed Unicode name mis-mapping of Mono TTF files.
+- Regenerate SFD files from Unicode name mis-mapping fixed Mono TTF files.
+==========
+- Applied following patches submitted by Nicolas Spalinger
+  <nicolas_spalinger sil org>:
+  - We-need-versioned-tarballs.
+  - Add-ignore-file-so-the-VCS-does-not-track-the-folder.
+  - Adjust-path-for-various-Makefile-targets-subfolders.
+  - Fix-versionning-mismatch-in-the-binary-font-metadata.
+  - Add-some-description-and-extra-lines-to-the-build-ta.
+  - Reword-and-restructure-maintainers-recommendations.
+  - Some-rewording-of-the-readme-file.
+==========
+	
+* Thu May 22 2008 Caius Chance <cchance at redhat.com>
+- Added latest (1.03) TTF files from Ascender. (in 'archive')
+
+* Fri May 16 2008 Caius Chance <cchance at redhat.com>
+- Change source tree as 'trunk', 'tags', 'branches'.
+==========
+- Applied following patches submitted by Nicolas Spalinger
+  <nicolas_spalinger sil org>:
+  - Add-more-information-about-the-upstream-designer.
+  - Minor-typo-and-layout-fixes.
+  - Adjust-fontforge-path-with-env-as-a-source-build.
+==========
+
+* Wed May 14 2008 Caius Chance <cchance at redhat.com>
+- Renamed target 'ttf' to 'build'.
+- Removed 'Re-Package' chapter from README and refine contents.
+- Changed AUTHORS contents.
+- Created maintainer documentation MAINTAINER.
+
+* Tue May 06 2008 Caius Chance <cchance at redhat.com>
+- Refined clean target.
+- Removed TTFs from git.
+
+* Fri May 02 2008 Caius Chance <cchance at redhat.com>
+- Imported into fedorahosted.org repository and be hosted.
+    https://fedorahosted.org/liberation-fonts/
+- Modified source root directory name definition in Makefile.
+- Created 'dist' target for binary TTF tarball and 'src' for source tarball.
+- Corrected Regular fonts filenames.
+- Added TTF -> SFD make target.
+
+* Thu May 01 2008 Caius Chance <cchance at redhat.com>
+- Converted previous TTF files into SFD files to be open source.
+- Created fontforge SFD -> TTF scripts.
+- Created Makefile.
+- Added documentations: AUTHORS, ChangeLog, README.
+
+* Thu Apr 10 2008 Caius Chance <cchance at redhat.com>
+- Fixed exchanged and incomplete glyphs (from Ascender).
+- Repacked source tarball.
+- Released version 1.03.
+
+* Tue Mar 25 2008 Caius Chance <cchance at redhat.com>
+- Fixed alignment mismatch of dot accents (from Ascender).
+- Released version 1.02.
+
+* Mon Jan 14 2008 Caius Chance <cchance at redhat.com>
+- Updated new source tarball from Ascender.
+- Released version 1.0.
+
+* Thu Jun 14 2007 Caius Chance <cchance at redhat.com>
+- Updated new source tarball from Ascender.
