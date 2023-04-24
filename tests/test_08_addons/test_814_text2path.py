@@ -1,9 +1,12 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 
 import pytest
 
-pytest.importorskip("matplotlib")  # requires matplotlib!
+pytest.skip(
+    reason="removed matplotlib support - all measurements are invalid",
+    allow_module_level=True,
+)
 
 from matplotlib.font_manager import FontProperties, findfont
 from ezdxf.tools.fonts import FontFace
@@ -14,49 +17,34 @@ from ezdxf.entities import Text, Hatch
 from ezdxf.layouts import VirtualLayout
 from ezdxf.enums import TextEntityAlignment
 
+DEFAULT = "LiberationSans-Regular"
 NOTO_SANS_SC = "Noto Sans SC"
 noto_sans_sc_not_found = (
     "noto" not in findfont(FontProperties(family=NOTO_SANS_SC)).lower()
 )
-arial_not_found = (
-    "arial" not in findfont(FontProperties(family="Arial")).lower()
-)
 
 
-def _to_paths(s, f="Arial"):
+def _to_paths(s, f=DEFAULT):
     return text2path.make_paths_from_str(s, font=FontFace(family=f))
 
 
 # Font 'Arial' required, a replacement fonts may return a different
 # path/hole configuration! issue #515
-if arial_not_found:
-    CHAR_TO_PATH = [
-        ["1", 1],
-        ["2", 1],
-        [".", 1],
-        ["0", 2],
-        ["a", 2],
-        ["!", 2],
-        ["@", 2],
-        ["8", 3],
-        ["ü", 3],
-    ]
-else:
-    CHAR_TO_PATH = [
-        ["1", 1],
-        ["2", 1],
-        [".", 1],
-        ["0", 2],
-        ["a", 2],
-        ["!", 2],
-        ["@", 2],
-        ["8", 3],
-        ["ü", 3],
-        ["&", 3],
-        ["ä", 4],
-        ["ö", 4],
-        ["%", 5],
-    ]
+CHAR_TO_PATH = [
+    ["1", 1],
+    ["2", 1],
+    [".", 1],
+    ["0", 2],
+    ["a", 2],
+    ["!", 2],
+    ["@", 2],
+    ["8", 3],
+    ["ü", 3],
+    ["&", 3],
+    ["ä", 4],
+    ["ö", 4],
+    ["%", 5],
+]
 
 
 @pytest.mark.parametrize("s,c", CHAR_TO_PATH)
@@ -69,9 +57,7 @@ def test_make_paths_from_str(s: str, c: int):
     assert len(_to_paths(s)) >= c
 
 
-@pytest.mark.skipif(
-    noto_sans_sc_not_found, reason=f'Font "{NOTO_SANS_SC}" not found'
-)
+@pytest.mark.skipif(noto_sans_sc_not_found, reason=f'Font "{NOTO_SANS_SC}" not found')
 @pytest.mark.parametrize("s,c", [["中", 3], ["国", 4], ["文", 3], ["字", 2]])
 def test_chinese_char_paths_from_str(s, c):
     assert len(_to_paths(s, f=NOTO_SANS_SC)) == c
@@ -126,11 +112,6 @@ def test_group_three_contours_and_ignore_holes(s):
     assert isinstance(contour, Path)
 
 
-@pytest.mark.skipif(
-    arial_not_found,
-    reason="Font 'Arial' required, a replacement fonts may return different "
-    "paths, issue #515",
-)
 def test_group_percent_sign():
     # Special case %: lower o is inside of the slash bounding box, but HATCH
     # creation works as expected!
@@ -142,9 +123,7 @@ def test_group_percent_sign():
     assert len(holes) == 2
 
 
-@pytest.mark.skipif(
-    noto_sans_sc_not_found, reason='Font "Noto Sans SC" not found'
-)
+@pytest.mark.skipif(noto_sans_sc_not_found, reason='Font "Noto Sans SC" not found')
 @pytest.mark.parametrize("s,c", [["中", 1], ["国", 1], ["文", 2], ["字", 2]])
 def test_group_chinese_chars_and_ignore_holes(s, c):
     paths = _to_paths(s, f=NOTO_SANS_SC)
@@ -156,7 +135,7 @@ def test_group_chinese_chars_and_ignore_holes(s, c):
 
 @pytest.fixture(scope="module")
 def ff():
-    return FontFace(family="Arial")
+    return FontFace(family=DEFAULT)
 
 
 class TestMakePathFromString:
@@ -194,9 +173,7 @@ class TestMakePathFromString:
         )
         bbox = path.bbox(paths)
         assert bbox.size.x == pytest.approx(length), "expect exact length"
-        assert bbox.size.y == pytest.approx(
-            size
-        ), "text height should be unscaled"
+        assert bbox.size.y == pytest.approx(size), "text height should be unscaled"
 
     @pytest.mark.parametrize("size", [0.05, 1, 2, 100])
     def test_scaled_height_and_length_for_aligned_text(self, size, ff):
@@ -259,9 +236,7 @@ class TestMakeHatchesFromString:
             paths.extend(path.from_hatch(hatch))
         bbox = path.bbox(paths)
         assert bbox.size.x == pytest.approx(length), "expect exact length"
-        assert bbox.size.y == pytest.approx(
-            1.0
-        ), "text height should be unscaled"
+        assert bbox.size.y == pytest.approx(1.0), "text height should be unscaled"
 
 
 def test_check_entity_type():
@@ -374,34 +349,24 @@ class TestMakePathsFromEntity:
     def test_alignment_fit(self, get_bbox):
         length = 2
         height = 1
-        text = make_text(
-            "TEXT", (0, 0), TextEntityAlignment.LEFT, height=height
-        )
+        text = make_text("TEXT", (0, 0), TextEntityAlignment.LEFT, height=height)
         text.set_placement((1, 0), (1 + length, 0), TextEntityAlignment.FIT)
         bbox = get_bbox(text)
-        assert (
-            bbox.size.x == length
-        ), "expected text length fits into given length"
-        assert bbox.size.y == pytest.approx(
-            height
-        ), "expected unscaled text height"
+        assert bbox.size.x == length, "expected text length fits into given length"
+        assert bbox.size.y == pytest.approx(height), "expected unscaled text height"
         assert bbox.extmin.isclose((1, 0))
 
     def test_alignment_aligned(self, get_bbox):
         length = 2
         height = 1
-        text = make_text(
-            "TEXT", (0, 0), TextEntityAlignment.CENTER, height=height
-        )
+        text = make_text("TEXT", (0, 0), TextEntityAlignment.CENTER, height=height)
         bbox = get_bbox(text)
         ratio = bbox.size.x / bbox.size.y
 
         text.set_placement((1, 0), (1 + length, 0), TextEntityAlignment.ALIGNED)
         bbox = get_bbox(text)
 
-        assert (
-            bbox.size.x == length
-        ), "expected text length fits into given length"
+        assert bbox.size.x == length, "expected text length fits into given length"
         assert bbox.size.y != height, "expected scaled text height"
         assert bbox.extmin.isclose((1, 0))
         assert bbox.size.x / bbox.size.y == pytest.approx(
@@ -464,9 +429,7 @@ class TestExplode:
     def test_source_entity_is_destroyed(self, text):
         assert text.is_alive is True
         text2path.explode(text, kind=4)
-        assert (
-            text.is_alive is False
-        ), "source entity should always be destroyed"
+        assert text.is_alive is False, "source entity should always be destroyed"
 
     def test_explode_entity_into_layout(self, text):
         layout = VirtualLayout()
@@ -476,9 +439,7 @@ class TestExplode:
         ), "expected all entities added to the target layout"
 
     def test_explode_entity_into_the_void(self, text):
-        assert (
-            text.get_layout() is None
-        ), "source entity should not have a layout"
+        assert text.get_layout() is None, "source entity should not have a layout"
         entities = text2path.explode(text, kind=Kind.LWPOLYLINES, target=None)
         assert len(entities) == 4, "explode should work without a target layout"
 

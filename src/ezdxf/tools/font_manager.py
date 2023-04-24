@@ -74,16 +74,38 @@ class FontCache:
         except KeyError:
             return self._cache[self.key(fallback)]
 
+    def find_best_match(self, font_face: FontFace) -> Optional[FontFace]:
+        entry = self._cache.get(self.key(font_face.ttf), None)
+        if entry:
+            return entry.font_face
+        return self.find_font_face_by_family(
+            font_face.family, font_face.is_italic, font_face.is_bold
+        )
+
+    def find_font_face_by_family(
+        self, family: str, italic=False, bold=False
+    ) -> Optional[FontFace]:
+        # TODO: find best match
+        #  additional attributes "italic" and "bold" are ignored yet
+        key = family.lower()
+        for entry in self._cache.values():
+            if entry.font_face.family.lower() == key:
+                return entry.font_face
+        return None
+
     def loads(self, s: str) -> None:
         cache: dict[str, CacheEntry] = dict()
         for entry in json.loads(s):
-            font_face = FontFace(*entry)
-            path = Path(font_face.ttf)
+            path = Path(entry[0])
+            font_face = FontFace(*entry[1])
             cache[FontCache.key(path.name)] = CacheEntry(path, font_face)
         self._cache = cache
 
     def dumps(self) -> str:
-        return json.dumps([entry.font_face for entry in self._cache.values()], indent=2)
+        data = [
+            (str(entry.file_path), entry.font_face) for entry in self._cache.values()
+        ]
+        return json.dumps(data, indent=2)
 
 
 SUPPORTED_FONT_TYPES = {".ttf", ".ttc"}
@@ -139,6 +161,19 @@ class FontManager:
         cache_entry = self._font_cache.get(font_name, self.fallback_font_name())
         return cache_entry.font_face
 
+    def find_font_face_by_family(
+        self, family: str, italic=False, bold=False
+    ) -> Optional[FontFace]:
+        return self._font_cache.find_font_face_by_family(family, italic, bold)
+
+    def find_ttf_path(self, font_face: FontFace) -> str:
+        font_face = self._font_cache.find_best_match(font_face)  # type: ignore
+        if font_face is None:
+            font_face = self.get_font_face(self.fallback_font_name())
+            return font_face.ttf
+        else:
+            return font_face.ttf
+
     def build(self, folders: Optional[Sequence[str]] = None) -> None:
         """Adds all supported font types located in the given `folders` to the font
         manager. If no directories are specified, the known font folders for Windows,
@@ -182,7 +217,7 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
     try:
         ttf = TTFont(font_path, fontNumber=0)
     except IOError:
-        return FontFace(ttf=str(font_path))
+        return FontFace(ttf=font_path.name)
 
     names = ttf["name"].names
     family = ""
@@ -198,7 +233,7 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
     weight = get_weight_str(os2_table.usWeightClass)
     stretch = get_stretch_str(os2_table.usWidthClass)
     return FontFace(
-        ttf=str(font_path),
+        ttf=font_path.name,
         family=family,
         style=style,
         stretch=stretch,

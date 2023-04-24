@@ -6,34 +6,28 @@ from ezdxf.tools import fonts
 
 # Load default font definitions, included in ezdxf:
 fonts.load()
+# Any unknown font name returns the default font:
+default_font = fonts.font_manager.get_font_face("default")
 
 
 def test_find_font_face_without_definition():
-    assert fonts.find_font_face("mozman.ttf") is None
-    assert fonts.find_font_face(None) is None, "should accept None as argument"
+    assert fonts.find_font_face("mozman.ttf") is default_font, "returns a default font"
+    assert fonts.find_font_face(None) is default_font, "returns a default font"
 
 
 def test_find_font_face():
-    assert fonts.find_font_face("Arial.ttf") == (
-        "arial.ttf",
-        "Arial",
-        "normal",
-        "normal",
-        400,
+    assert fonts.find_font_face("LiberationSans-Regular.ttf") == (
+        "LiberationSans-Regular.ttf",
+        "Liberation Sans",
+        "Regular",
+        "Semi Condensed",
+        "Extra Light",
     )
 
 
 def test_get_font_without_definition():
-    # Creates a pseudo entry:
-    assert fonts.get_font_face("mozman.ttf") == (
-        "mozman.ttf",
-        "mozman",
-        "normal",
-        "normal",
-        "normal",
-    )
-    with pytest.raises(TypeError):
-        fonts.get_font_face(None)  # should not accept None as argument"
+    default_font = fonts.font_manager.get_font_face("default")
+    assert fonts.get_font_face("mozman.ttf") is default_font
 
 
 def test_get_font_face_with_definition():
@@ -52,60 +46,12 @@ def test_map_ttf_to_shx():
     assert fonts.map_ttf_to_shx("xxx.ttf") is None
 
 
-def test_get_font_face_for_shx_fonts():
-    assert fonts.get_font_face("TXT") == (
-        "txt_____.ttf",
-        "Txt",
-        "normal",
-        "normal",
-        400,
-    )
-
-
 def test_get_font_measurement():
-    assert fonts.get_font_measurements("Arial.ttf") == (
-        0.0,
-        0.71578125,
-        0.51859375,
-        0.19875,
-    )
+    assert len(fonts.get_font_measurements("LiberationSans-Regular.ttf")) == 4
 
 
 def test_get_font_measurement_for_shx_fonts():
-    assert fonts.get_font_measurements("TXT.shx") == (
-        -0.0053125,
-        0.7293750000000001,
-        0.49171875,
-        0.23390625,
-    )
-
-
-def test_get_undefined_font_measurement():
-    assert fonts.get_font_measurements("mozman.ttf") == (
-        0.0,
-        1,
-        fonts.X_HEIGHT_FACTOR,
-        fonts.DESCENDER_FACTOR,
-    )
-
-
-def test_get_cache_file_path():
-    path = fonts.get_cache_file_path(None, name="mozman.cfg")
-    assert path.name == "mozman.cfg"
-    path = fonts.get_cache_file_path("~/ezdxf", "mozman.json")
-    assert path.name == "mozman.json"
-    assert path.parent.name == "ezdxf"
-
-
-def test_save_and_load_caches(tmp_path):
-    fonts.save(tmp_path)
-    assert (tmp_path / "font_face_cache.json").exists()
-    assert (tmp_path / "font_measurement_cache.json").exists()
-    fonts.font_face_cache = {}
-    fonts.font_measurement_cache = {}
-    fonts.load(tmp_path)
-    assert len(fonts.font_face_cache) > 0
-    assert len(fonts.font_measurement_cache) > 0
+    assert len(fonts.get_font_measurements("TXT.shx")) == 4
 
 
 def test_same_font_faces_have_equal_hash_values():

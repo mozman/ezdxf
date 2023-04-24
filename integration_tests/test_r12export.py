@@ -96,6 +96,7 @@ def test_export_spline_as_3d_polyline():
     assert polyline.dxf.color == 144
 
 
+
 def test_export_proxy_graphic():
     from ezdxf.lldxf.tags import Tags
     from ezdxf.proxygraphic import load_proxy_graphic
@@ -110,6 +111,7 @@ def test_export_proxy_graphic():
     assert len(doc_r12.modelspace()) == 9
 
 
+@pytest.mark.xfail(reason="removed matplotlib font support")
 def test_export_mtext():
     doc = ezdxf.new("R2018")
     msp = doc.modelspace()

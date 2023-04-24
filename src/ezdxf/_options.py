@@ -299,9 +299,9 @@ class Options:
         """Disable C-extensions if ``True``."""
         return self.get_bool(CORE, "DISABLE_C_EXT", default=False)
 
-    @property
+    @property  # todo: rename property - only used for testing
     def use_matplotlib(self) -> bool:
-        """Activate/deactivate Matplotlib support e.g. for testing"""
+        """Activate/deactivate TrueType font support e.g. for testing"""
         return self._use_matplotlib
 
     @use_matplotlib.setter

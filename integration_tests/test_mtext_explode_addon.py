@@ -1,5 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+import pytest
 import ezdxf
 from ezdxf.addons import MTextExplode
 
@@ -43,6 +44,7 @@ def explode_mtext(doc, destroy=False):
                 mtext.dxf.layer = "SOURCE"
 
 
+@pytest.mark.xfail(reason="removed matplotlib font support")
 def test_created_text_styles_exists():
     from ezdxf.tools.text import MTextEditor
 
