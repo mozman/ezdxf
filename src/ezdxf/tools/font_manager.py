@@ -108,7 +108,7 @@ class FontCache:
         return json.dumps(data, indent=2)
 
 
-SUPPORTED_FONT_TYPES = {".ttf", ".ttc"}
+SUPPORTED_FONT_TYPES = {".ttf", ".ttc", ".otf"}
 NO_FONT_FACE = FontFace()
 
 
@@ -166,7 +166,10 @@ class FontManager:
     ) -> Optional[FontFace]:
         return self._font_cache.find_font_face_by_family(family, italic, bold)
 
-    def find_ttf_path(self, font_face: FontFace) -> str:
+    def find_font_name(self, font_face: FontFace) -> str:
+        """Returns the file name of the font without parent directories
+        e.g. "LiberationSans-Regular.ttf".
+        """
         font_face = self._font_cache.find_best_match(font_face)  # type: ignore
         if font_face is None:
             font_face = self.get_font_face(self.fallback_font_name())

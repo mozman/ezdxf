@@ -206,7 +206,7 @@ def find_font_face_by_family(
 
 def find_ttf_path(font_face: FontFace) -> str:
     """Returns the true type font path."""
-    return font_manager.find_ttf_path(font_face)
+    return font_manager.find_font_name(font_face)
 
 
 def load():

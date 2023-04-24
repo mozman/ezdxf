@@ -3,8 +3,6 @@
 from __future__ import annotations
 from typing import Union
 import enum
-from matplotlib.textpath import TextPath
-from matplotlib.font_manager import FontProperties, findfont
 
 from ezdxf.entities import Text, Attrib, Hatch, DXFGraphic
 from ezdxf.lldxf import const
@@ -13,6 +11,7 @@ from ezdxf.math import Matrix44, BoundingBox
 from ezdxf import path
 from ezdxf.path import Path
 from ezdxf.tools import fonts
+from ezdxf.tools.ttfonts import TTFontRenderer
 from ezdxf.query import EntityQuery
 
 __all__ = [
@@ -56,15 +55,14 @@ def make_path_from_str(
     """
     if len(s) == 0:
         return Path()
-    font_properties, font_measurements = _get_font_data(font)
+    render_engine = get_render_engine(font)
     # scale font rendering units to drawing units:
-    render_size = size / font_measurements.cap_height
-    p = _str_to_path(s, font_properties, render_size)
+    p = _str_to_path(s, render_engine, size)
     bbox = path.bbox([p], fast=True)
 
     # Text is rendered in drawing units,
     # therefore do alignment in drawing units:
-    draw_units_fm = font_measurements.scale_from_baseline(size)
+    draw_units_fm = render_engine.font_measurements.scale_from_baseline(size)
     matrix = alignment_transformation(draw_units_fm, bbox, align, length)
     if m is not None:
         matrix *= m
@@ -102,25 +100,16 @@ def make_paths_from_str(
     return list(p.sub_paths())
 
 
-def _get_font_data(
+def get_render_engine(
     font: fonts.FontFace,
-) -> tuple[FontProperties, fonts.FontMeasurements]:
-    fp = FontProperties(
-        family=font.family,
-        style=font.style,
-        stretch=font.stretch,
-        weight=font.weight,
-    )
-    ttf_path = findfont(fp)
-    fonts.load()  # not expensive if already loaded
-    # The ttf file path is the cache key for font measurements:
-    fm = fonts.get_font_measurements(ttf_path)
-    return fp, fm
+) -> TTFontRenderer:
+    font_name = fonts.font_manager.find_font_name(font)
+    ttfont = fonts.font_manager.get_ttf_font(font_name)
+    return TTFontRenderer(ttfont)
 
 
-def _str_to_path(s: str, fp: FontProperties, size: float = 1.0) -> Path:
-    text_path = TextPath((0, 0), s, size=size, prop=fp, usetex=False)
-    return path.multi_path_from_matplotlib_path(text_path)
+def _str_to_path(s: str, render_engine: TTFontRenderer, size: float = 1.0) -> Path:
+    return render_engine.get_text_path(s, cap_height=size).to_3d_path()
 
 
 def alignment_transformation(
