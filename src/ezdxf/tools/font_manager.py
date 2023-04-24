@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, NamedTuple
+from typing import Iterable, NamedTuple, Optional, Sequence
 import os
 import platform
 import json
@@ -139,8 +139,16 @@ class FontManager:
         cache_entry = self._font_cache.get(font_name, self.fallback_font_name())
         return cache_entry.font_face
 
-    def build(self):
-        dirs = FONT_DIRECTORIES.get(self.platform, LINUX_FONT_DIRS)
+    def build(self, folders: Optional[Sequence[str]] = None) -> None:
+        """Adds all supported font types located in the given `folders` to the font
+        manager. If no directories are specified, the known font folders for Windows,
+        Linux and macOS are searched by default. Searches recursively all
+        subdirectories.
+        """
+        if folders:
+            dirs = list(folders)
+        else:
+            dirs = FONT_DIRECTORIES.get(self.platform, LINUX_FONT_DIRS)
         self.scan_all(dirs)
         if len(self._font_cache) == 0:  # System under test
             path = Path(__file__)
