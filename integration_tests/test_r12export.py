@@ -111,13 +111,12 @@ def test_export_proxy_graphic():
     assert len(doc_r12.modelspace()) == 9
 
 
-@pytest.mark.xfail(reason="removed matplotlib font support")
 def test_export_mtext():
     doc = ezdxf.new("R2018")
     msp = doc.modelspace()
     editor = MTextEditor()
     editor.append("LINE0\n")
-    editor.font("Arial")
+    editor.font("Open Sans")
     editor.append("LINE1")
     msp.add_mtext(editor.text, dxfattribs=DXFATTRIBS)
 
@@ -126,8 +125,8 @@ def test_export_mtext():
 
     assert text0.dxf.text == "LINE0"
     assert text1.dxf.text == "LINE1"
-    assert doc_r12.styles.has_entry("MTXPL_ARIAL")
-    assert doc_r12.styles.has_entry("MTXPL_TXT")
+    assert doc_r12.styles.has_entry("MTXPL_OPEN_SANS")
+    assert doc_r12.styles.has_entry("MTXPL_DEJAVU_SANS_CONDENSED")  # default font for TXT
 
 
 def test_export_virtual_entities():

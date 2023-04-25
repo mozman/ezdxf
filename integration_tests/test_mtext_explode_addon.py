@@ -44,7 +44,6 @@ def explode_mtext(doc, destroy=False):
                 mtext.dxf.layer = "SOURCE"
 
 
-@pytest.mark.xfail(reason="removed matplotlib font support")
 def test_created_text_styles_exists():
     from ezdxf.tools.text import MTextEditor
 
@@ -52,13 +51,13 @@ def test_created_text_styles_exists():
     msp = doc.modelspace()
     editor = MTextEditor()
     editor.append("LINE0\n")
-    editor.font("Arial")
+    editor.font("Open Sans")
     editor.append("LINE1")
     mtext = msp.add_mtext(editor.text)
     with MTextExplode(msp) as xpl:
         xpl.explode(mtext)
-    assert doc.styles.has_entry("MtXpl_Arial")
-    assert doc.styles.has_entry("MtXpl_Txt")
+    assert doc.styles.has_entry("MtXpl_DejaVu Sans Condensed")  # default font
+    assert doc.styles.has_entry("MtXpl_Open Sans")  # MTEXT inline set font
 
 
 def test_addon_is_still_working():
