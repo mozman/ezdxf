@@ -203,7 +203,7 @@ class AbstractMTextRenderer(abc.ABC):
         return ctx
 
     def get_font(self, ctx: MTextContext) -> fonts.AbstractFont:
-        ttf = fonts.find_ttf_path(ctx.font_face)  # 1st call is very slow
+        ttf = fonts.find_font_file_name(ctx.font_face)  # 1st call is very slow
         key = (ttf, ctx.cap_height, ctx.width_factor)
         font = self._font_cache.get(key)
         if font is None:

@@ -37,16 +37,24 @@ FONT_DIRECTORIES = {
 
 DEFAULT_FONTS = [
     "Arial.ttf",
-    "DejaVuSansCondensed.ttf",  # with of glyph similar to Arial
+    "DejaVuSansCondensed.ttf",  # widths of glyphs is similar to Arial
     "DejaVuSans.ttf",
     "LiberationSans-Regular.ttf",
     "OpenSans-Regular.ttf",
 ]
+CURRENT_CACHE_VERSION = 1
 
 
 class CacheEntry(NamedTuple):
     file_path: Path
     font_face: FontFace
+
+
+GENERIC_FONT_FAMILY = {
+    "serif": "DejaVu Serif",
+    "sans-serif": "DejaVu Sans",
+    "monospace": "DejaVu Sans Mono",
+}
 
 
 class FontCache:
@@ -78,34 +86,97 @@ class FontCache:
         entry = self._cache.get(self.key(font_face.ttf), None)
         if entry:
             return entry.font_face
-        return self.find_font_face_by_family(
-            font_face.family, font_face.is_italic, font_face.is_bold
+        return self.find_best_match_ex(
+            family=font_face.family,
+            style=font_face.style,
+            weight=font_face.weight,
+            width=font_face.width,
+            italic=font_face.is_italic,
         )
 
-    def find_font_face_by_family(
-        self, family: str, italic=False, bold=False
+    def find_best_match_ex(
+        self,
+        family: str = "sans-serif",
+        style: str = "Regular",
+        weight: int = 400,
+        width: int = 5,
+        italic: Optional[bool] = False,
     ) -> Optional[FontFace]:
-        # TODO: find best match
-        #  additional attributes "italic" and "bold" are ignored yet
-        key = family.lower()
-        for entry in self._cache.values():
-            if entry.font_face.family.lower() == key:
-                return entry.font_face
-        return None
+        # italic == None ... ignore italic flag
+        family = GENERIC_FONT_FAMILY.get(family, family)
+        entries = filter_family(family, self._cache.values())
+        if len(entries) == 0:
+            return None
+        elif len(entries) == 1:
+            return entries[0].font_face
+        entries_ = filter_style(style, entries)
+        if len(entries_) == 1:
+            return entries_[0].font_face
+        elif len(entries_):
+            entries = entries_
+        # best match by weight, italic, width
+        return sorted(
+            entries,
+            key=lambda e: (
+                abs(e.font_face.weight - weight),
+                e.font_face.is_italic is not italic,
+                abs(e.font_face.width - width),
+            ),
+        )[0].font_face
 
     def loads(self, s: str) -> None:
         cache: dict[str, CacheEntry] = dict()
-        for entry in json.loads(s):
-            path = Path(entry[0])
-            font_face = FontFace(*entry[1])
-            cache[FontCache.key(path.name)] = CacheEntry(path, font_face)
+        try:
+            content = json.loads(s)
+        except json.JSONDecodeError:
+            raise IOError("invalid JSON file format")
+        try:
+            version = content["version"]
+            content = content["font-faces"]
+        except KeyError:
+            raise IOError("invalid cache file format")
+        if version == CURRENT_CACHE_VERSION:
+            for entry in content:
+                try:
+                    file_path, family, style, weight, width = entry
+                except ValueError:
+                    raise IOError("invalid cache file format")
+                path = Path(file_path)  # full path, e.g. "C:\Windows\Fonts\Arial.ttf"
+                font_face = FontFace(
+                    ttf=path.name,  # file name without parent dirs, e.g. "Arial.ttf"
+                    family=family,  # Arial
+                    style=style,  # Regular
+                    weight=weight,  # 400 (Normal)
+                    width=width,  # 5 (Normal)
+                )
+                cache[self.key(path.name)] = CacheEntry(path, font_face)
+        else:
+            raise IOError("invalid cache file version")
         self._cache = cache
 
     def dumps(self) -> str:
-        data = [
-            (str(entry.file_path), entry.font_face) for entry in self._cache.values()
+        faces = [
+            (
+                str(entry.file_path),
+                entry.font_face.family,
+                entry.font_face.style,
+                entry.font_face.weight,
+                entry.font_face.width,
+            )
+            for entry in self._cache.values()
         ]
+        data = {"version": CURRENT_CACHE_VERSION, "font-faces": faces}
         return json.dumps(data, indent=2)
+
+
+def filter_family(family: str, entries: Iterable[CacheEntry]) -> list[CacheEntry]:
+    key = str(family).lower()
+    return [e for e in entries if e.font_face.family.lower().startswith(key)]
+
+
+def filter_style(style: str, entries: Iterable[CacheEntry]) -> list[CacheEntry]:
+    key = str(style).lower()
+    return [e for e in entries if key in e.font_face.style.lower()]
 
 
 SUPPORTED_FONT_TYPES = {".ttf", ".ttc", ".otf"}
@@ -161,12 +232,17 @@ class FontManager:
         cache_entry = self._font_cache.get(font_name, self.fallback_font_name())
         return cache_entry.font_face
 
-    def find_font_face_by_family(
-        self, family: str, italic=False, bold=False
+    def find_best_match(
+        self,
+        family: str = "sans-serif",
+        style: str = "Regular",
+        weight=400,
+        width=5,
+        italic: Optional[bool] = False,
     ) -> Optional[FontFace]:
-        return self._font_cache.find_font_face_by_family(family, italic, bold)
+        return self._font_cache.find_best_match_ex(family, style, weight, width, italic)
 
-    def find_font_name(self, font_face: FontFace) -> str:
+    def find_font_file_name(self, font_face: FontFace) -> str:
         """Returns the file name of the font without parent directories
         e.g. "LiberationSans-Regular.ttf".
         """
@@ -188,7 +264,7 @@ class FontManager:
         else:
             dirs = FONT_DIRECTORIES.get(self.platform, LINUX_FONT_DIRS)
         self.scan_all(dirs)
-        if len(self._font_cache) == 0:  # System under test
+        if len(self._font_cache) == 0:  # system under test - github action
             path = Path(__file__)
             fonts = path.parent.parent.parent.parent / "fonts"
             self.scan_folder(fonts)
@@ -203,7 +279,7 @@ class FontManager:
         for file in folder.iterdir():
             if file.is_dir():
                 self.scan_folder(file)
-                return
+                continue
             ext = file.suffix.lower()
             if ext in SUPPORTED_FONT_TYPES:
                 font_face = get_ttf_font_face(file)
@@ -233,54 +309,14 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
         if family and style:
             break
     os2_table = ttf["OS/2"]
-    weight = get_weight_str(os2_table.usWeightClass)
-    stretch = get_stretch_str(os2_table.usWidthClass)
+    weight = os2_table.usWeightClass
+    width = os2_table.usWidthClass
+    if style == "Book":
+        style = "Regular"
     return FontFace(
         ttf=font_path.name,
         family=family,
         style=style,
-        stretch=stretch,
+        width=width,
         weight=weight,
     )
-
-
-def get_weight_str(weight: int) -> str:
-    # Determine the stretch value based on the usWidthClass field
-    if weight < 350:
-        return "Thin"
-    elif weight < 450:
-        return "Extra Light"
-    elif weight < 550:
-        return "Light"
-    elif weight < 650:
-        return "Regular"
-    elif weight < 750:
-        return "Medium"
-    elif weight < 850:
-        return "Semi Bold"
-    elif weight < 950:
-        return "Bold"
-    elif weight < 1050:
-        return "Extra Bold"
-    return "Black"
-
-
-def get_stretch_str(stretch: int) -> str:
-    # Determine the stretch value based on the usWidthClass field
-    if stretch < 3:
-        return "Ultra Condensed"
-    elif stretch < 4:
-        return "Extra Condensed"
-    elif stretch < 5:
-        return "Condensed"
-    elif stretch < 6:
-        return "Semi Condensed"
-    elif stretch < 9:
-        return "Normal"
-    elif stretch < 10:
-        return "Semi Expanded"
-    elif stretch < 11:
-        return "Expanded"
-    elif stretch < 12:
-        return "Extra Expanded"
-    return "Ultra Expanded"

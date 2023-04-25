@@ -152,8 +152,8 @@ def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:
         style = cast(Textstyle, doc.styles.get(style_name))
         family, italic, bold = style.get_extended_font_data()
         if family:
-            text_style = "italic" if italic else "normal"
-            text_weight = "bold" if bold else "normal"
+            text_style = "Italic" if italic else "Regular"
+            text_weight = 700 if bold else 400
             font_face = fonts.FontFace(
                 family=family, style=text_style, weight=text_weight
             )
@@ -306,7 +306,7 @@ class MTextExplode(AbstractMTextRenderer):
         return text_style
 
     def get_font(self, ctx: MTextContext) -> fonts.AbstractFont:
-        ttf = fonts.find_ttf_path(ctx.font_face)
+        ttf = fonts.find_font_file_name(ctx.font_face)
         key = (ttf, ctx.cap_height, ctx.width_factor)
         font = self._font_cache.get(key)
         if font is None:
@@ -361,7 +361,7 @@ class MTextExplode(AbstractMTextRenderer):
         def ttf_path(font_face: fonts.FontFace) -> str:
             ttf = font_face.ttf
             if not ttf:
-                ttf = fonts.find_ttf_path(font_face)
+                ttf = fonts.find_font_file_name(font_face)
             else:
                 # remapping SHX replacement fonts to SHX fonts,
                 # like "txt_____.ttf" to "TXT.SHX":

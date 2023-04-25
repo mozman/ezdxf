@@ -10,6 +10,7 @@ Version 1.0.4b1 - dev
 - NEW: `fontTools` is a hard dependency
 - NEW: added setter to `BlockLayout.base_point` property
 - NEW: optimized `Matrix44.fast_2d_transform()` method
+- CHANGED: refactoring of `ezdxf.tools.fonts`
 - CHANGED: text rendering for the `drawing` add-on and text measurement is done by the
   `fontTools` package
 - CHANGED: moved text rendering from backend classes to the `Frontend` class

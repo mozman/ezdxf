@@ -1634,15 +1634,15 @@ class MTextParser:
         # an empty font family name does not change the font properties
         if parts and parts[0]:
             name = parts[0]
-            style = "normal"
-            weight = "normal"
+            style = "Regular"
+            weight = 400
             # ignore codepage and pitch - it seems not to be used in newer
             # CAD applications.
             for part in parts[1:]:
                 if part.startswith("b1"):
-                    weight = "bold"
+                    weight = 700
                 elif part.startswith("i1"):
-                    style = "italic"
+                    style = "Italic"
             ctx.font_face = FontFace(family=name, style=style, weight=weight)
 
     def consume_optional_terminator(self):

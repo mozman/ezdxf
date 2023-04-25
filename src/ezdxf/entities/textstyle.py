@@ -230,12 +230,12 @@ class Textstyle(DXFEntity):
         if options.use_matplotlib and self.has_extended_font_data:
             family, italic, bold = self.get_extended_font_data()
             if family:
-                text_style = "italic" if italic else "normal"
-                text_weight = "bold" if bold else "normal"
+                text_style = "Italic" if italic else "Regular"
+                text_weight = 700 if bold else 400
                 font_face = fonts.FontFace(
                     family=family, style=text_style, weight=text_weight
                 )
-                ttf = fonts.find_ttf_path(font_face)
+                ttf = fonts.find_font_file_name(font_face)
         else:
             ttf = self.dxf.get("font", const.DEFAULT_TTF)
         if ttf == "":

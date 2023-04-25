@@ -132,34 +132,28 @@ def map_ttf_to_shx(ttf: str) -> Optional[str]:
     return TTF_TO_SHX.get(ttf.lower())
 
 
-def cache_key(name: str) -> str:
-    """Returns the normalized TTF file name in lower case without preceding
-    folders. e.g. "C:\\Windows\\Fonts\\Arial.TTF" -> "arial.ttf"
-    """
-    return Path(name).name.lower()
-
-
 def build_system_font_cache(**kwargs) -> None:
-    """The font manager cache has a fixed location in the cache directory of the users
-    home directory.
+    """Builds or rebuilds the font manager cache. The font manager cache has a fixed
+    location in the cache directory of the users home directory "~/.cache/ezdxf" or the
+    directory specified by the environment variable "XDG_CACHE_HOME".
     """
     build_font_manager_cache(_get_font_manger_path())
 
 
 def find_font_face(font_name: str) -> FontFace:
-    """Get cached font face definition by TTF file name e.g. "Arial.ttf",
-    returns ``None`` if not found.
+    """Get the font face definition by the font file name e.g. "Arial.ttf",
+    returns the default font if `font_name` was not found.
 
     """
     return font_manager.get_font_face(font_name)
 
 
 def get_font_face(font_name: str, map_shx=True) -> FontFace:
-    """Get cached font face definition by TTF file name e.g. "Arial.ttf".
+    """Get the font face definition by the font file name e.g. "Arial.ttf".
 
-    This function translates a DXF font definition by
-    the raw TTF font file name into a :class:`FontFace` object. Fonts which are
-    not available on the current system gets a default font face.
+    This function translates a DXF font definition by the TTF font file name into a
+    :class:`FontFace` object. Fonts which are not available on the current system gets
+    a default font face.
 
     Args:
         font_name: raw font file name as stored in the
@@ -198,15 +192,31 @@ def get_font_measurements(font_name: str, map_shx=True) -> FontMeasurements:
     return font.measurements
 
 
-def find_font_face_by_family(
-    family: str, italic=False, bold=False
+def find_best_match(
+    *,
+    family: str = "sans-serif",
+    style: str = "Regular",
+    weight: int = 400,
+    width: int = 5,
+    italic: Optional[bool] = False,
 ) -> Optional[FontFace]:
-    return font_manager.find_font_face_by_family(family, italic, bold)
+    """Returns the :class:`FontFace` that matches the given properties best.
+
+    Args:
+        family: font family name e.g. "sans-serif", "Liberation Sans"
+        style: font style e.g. "Regular", "Italic", "Bold"
+        weight: weight in the range from 1-1000 (usWeightClass)
+        width: width in the range from 1-9 (usWidthClass)
+        italic: ``True``, ``False`` or ``None`` to ignore this flag
+
+    """
+    return font_manager.find_best_match(family, style, weight, width, italic)
 
 
-def find_ttf_path(font_face: FontFace) -> str:
-    """Returns the true type font path."""
-    return font_manager.find_font_name(font_face)
+def find_font_file_name(font_face: FontFace) -> str:
+    """Returns the true type font file name without parent directories e.g. "Arial.ttf".
+    """
+    return font_manager.find_font_file_name(font_face)
 
 
 def load():
@@ -225,7 +235,7 @@ def _load_font_manager() -> None:
         try:
             font_manager.loads(fm_path.read_text())
             return
-        except Exception as e:
+        except IOError as e:
             logger.info("Can't load font-manager cache file, rebuilding cache file.")
             logger.info(f"Loading error: {str(e)}")
     build_font_manager_cache(fm_path)
@@ -462,8 +472,8 @@ def get_entity_font_face(entity: DXFEntity, doc: Optional[Drawing] = None) -> Fo
         style = cast("Textstyle", doc.styles.get(style_name))
         family, italic, bold = style.get_extended_font_data()
         if family:
-            text_style = "italic" if italic else "normal"
-            text_weight = "bold" if bold else "normal"
+            text_style = "Italic" if italic else "Regular"
+            text_weight = 700 if bold else 400
             font_face = FontFace(family=family, style=text_style, weight=text_weight)
         else:
             ttf = style.dxf.font

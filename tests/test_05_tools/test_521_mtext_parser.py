@@ -351,21 +351,21 @@ class TestMTextContextParsing:
         t0 = list(MTextParser(r"\fArial Narrow;word"))[0]
         font_face = t0.ctx.font_face
         assert font_face.family == "Arial Narrow"
-        assert font_face.style == "normal"
-        assert font_face.weight == "normal"
+        assert font_face.style == "Regular"
+        assert font_face.weight == 400
 
     def test_font_b1_i0(self):
         t0 = list(MTextParser(r"\fArial Narrow|b1;word"))[0]
-        assert t0.ctx.font_face.weight == "bold"
+        assert t0.ctx.font_face.weight == 700
 
     def test_font_b0_i1(self):
         t0 = list(MTextParser(r"\fArial Narrow|i1;word"))[0]
-        assert t0.ctx.font_face.style == "italic"
+        assert t0.ctx.font_face.style == "Italic"
 
     def test_font_b1_i1(self):
         t0 = list(MTextParser(r"\fArial Narrow|i1|b1;word"))[0]
-        assert t0.ctx.font_face.style == "italic"
-        assert t0.ctx.font_face.weight == "bold"
+        assert t0.ctx.font_face.style == "Italic"
+        assert t0.ctx.font_face.weight == 700
 
     def test_font_uppercase_command(self):
         t0 = list(MTextParser(r"\FArial Narrow;word"))[0]

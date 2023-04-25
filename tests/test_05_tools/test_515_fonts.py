@@ -16,12 +16,13 @@ def test_find_font_face_without_definition():
 
 
 def test_find_font_face():
+    r = fonts.find_font_face("LiberationSans-Regular.ttf")
     assert fonts.find_font_face("LiberationSans-Regular.ttf") == (
         "LiberationSans-Regular.ttf",
         "Liberation Sans",
         "Regular",
-        "Semi Condensed",
-        "Extra Light",
+        400,
+        5,
     )
 
 
@@ -77,9 +78,9 @@ def test_font_face_is_oblique():
 def test_font_face_is_bold():
     assert fonts.FontFace().is_bold is False
     assert fonts.FontFace(weight=300).is_bold is False
-    assert fonts.FontFace(weight="bold").is_bold is True
-    assert fonts.FontFace(weight="black").is_bold is True
     assert fonts.FontFace(weight=500).is_bold is True
+    assert fonts.FontFace(weight=700).is_bold is True
+    assert fonts.FontFace(weight=900).is_bold is True
 
 
 class TestFontMeasurements:
@@ -124,9 +125,23 @@ class TestFontMeasurements:
         assert font.text_width("1234") == 7.5
 
 
-def test_find_font_file_by_family():
-    assert fonts.find_font_face_by_family("simsun").ttf == "simsun.ttc"
-    assert fonts.find_font_face_by_family("mozman") is None
+def test_find_font_file_by_best_match():
+    assert fonts.find_best_match(family="simsun").ttf == "simsun.ttc"
+    assert fonts.find_best_match(family="mozman") is None
+    assert (
+        fonts.find_best_match(family="Liberation Sans").ttf
+        == "LiberationSans-Regular.ttf"
+    )
+    assert (
+        fonts.find_best_match(family="Dejavu Sans").ttf
+        == "DejaVuSans.ttf"
+    )
+
+
+def test_find_generic_font_family():
+    assert fonts.find_best_match(family="serif").ttf == "DejaVuSerif.ttf"
+    assert fonts.find_best_match(family="sans-serif").ttf == "DejaVuSans.ttf"
+    assert fonts.find_best_match(family="monospace").ttf == "DejaVuSansMono.ttf"
 
 
 def test_font_manger_was_loaded_at_startup():

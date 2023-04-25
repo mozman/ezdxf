@@ -8,47 +8,70 @@ class FontFace(NamedTuple):
     # ttf is the font file name without parent directories e.g. "OpenSans-Regular.ttf"
     ttf: str = ""
     family: str = "sans-serif"
-    style: str = "normal"
-    stretch: str = "normal"
-    weight: str = "normal"
+    style: str = "Regular"
+    weight: int = 400  # Normal - usWeightClass
+    width: int = 5  # Medium(Normal) - usWidthClass
 
     @property
     def is_italic(self) -> bool:
-        return self.style.find("italic") > -1
+        """Returns ``True`` if font face is italic."""
+        return self.style.lower().find("italic") > -1
 
     @property
     def is_oblique(self) -> bool:
-        return self.style.find("oblique") > -1
+        """Returns ``True`` if font face is oblique."""
+        return self.style.lower().find("oblique") > -1
 
     @property
     def is_bold(self) -> bool:
-        weight = self.weight
-        if isinstance(weight, int):
-            return weight > 400
-        else:
-            return weight_name_to_value(weight) > 400
+        """Returns ``True`` if font face weight > 400."""
+        return self.weight > 400
+
+    @property
+    def weight_str(self) -> str:
+        """Returns the :attr:`weight` as string e.g. "Thin", "Normal", "Bold", ..."""
+        return get_weight_str(self.weight)
+
+    @property
+    def width_str(self) -> str:
+        """Returns the :attr:`width` as string e.g. "Condensed", "Expanded", ..."""
+        return get_width_str(self.weight)
+
+    def distance(self, font_face: FontFace) -> tuple[int, int]:
+        return self.weight - font_face.weight, self.width - font_face.width
 
 
-def weight_name_to_value(name: str) -> int:
-    """Map weight names to values. e.g. 'normal' -> 400"""
-    return WEIGHT_TO_VALUE.get(name.lower(), 400)
-
-
-WEIGHT_TO_VALUE = {
-    "thin": 100,
-    "hairline": 100,
-    "extralight": 200,
-    "UltraLight": 200,
-    "light": 300,
-    "normal": 400,
-    "medium": 500,
-    "demibold": 600,
-    "semibold": 600,
-    "bold": 700,
-    "extrabold": 800,
-    "ultrabold": 800,
-    "black": 900,
-    "heavy": 900,
-    "extrablack": 950,
-    "ultrablack": 950,
+WEIGHT_STR = {
+    100: "Thin",
+    200: "ExtraLight",
+    300: "Light",
+    400: "Normal",
+    500: "Medium",
+    600: "SemiBold",
+    700: "Bold",
+    800: "ExtraBold",
+    900: "Black",
 }
+
+WIDTH_STR = {
+    1: "UltraCondensed",
+    2: "ExtraCondensed",
+    3: "Condensed",
+    4: "SemiCondensed",
+    5: "Medium",  # Normal
+    6: "SemiExpanded",
+    7: "Expanded",
+    8: "ExtraExpanded",
+    9: "UltraExpanded",
+}
+
+
+def get_weight_str(weight: int) -> str:
+    """Returns the :attr:`weight` as string e.g. "Thin", "Normal", "Bold", ..."""
+    index = max(min(round(weight + 1 / 100), 1), 9)
+    return WEIGHT_STR[index]
+
+
+def get_width_str(width: int) -> str:
+    """Returns the :attr:`width` as string e.g. "Condensed", "Expanded", ..."""
+    return WEIGHT_STR[max(min(width, 1), 9)]
