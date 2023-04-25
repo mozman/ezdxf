@@ -78,7 +78,7 @@ def latin():
             doc,
             font,
             y,
-            text="AXxpEHIäüöÄÜÖß VA LW T. TA Ts ... and much more text  !!!!!!",
+            text="AXxpEHIäüöÄÜÖß%& VA LW T. TA Ts ... and much more text  !!!!!!",
             kerning=False,
         )
         y += 150

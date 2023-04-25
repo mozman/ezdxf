@@ -12,12 +12,9 @@ from ezdxf.entities import Text, Hatch
 from ezdxf.layouts import VirtualLayout
 from ezdxf.enums import TextEntityAlignment
 
+# always available in common test scenarios:
 DEFAULT = "LiberationSans-Regular.ttf"
 NOTO_SANS_SC = "NotoSansSC-Regular.otf"
-noto_sans_sc_not_found = (
-    "noto" not in fonts.font_manager.get_font_face(NOTO_SANS_SC).family.lower()
-)
-
 
 def _to_paths(s, f=DEFAULT):
     return text2path.make_paths_from_str(s, font=FontFace(ttf=f))
@@ -52,7 +49,6 @@ def test_make_paths_from_str(s: str, c: int):
     assert len(_to_paths(s)) >= c
 
 
-@pytest.mark.skipif(noto_sans_sc_not_found, reason=f'Font "{NOTO_SANS_SC}" not found')
 @pytest.mark.parametrize("s,c", [["中", 3], ["国", 4], ["文", 3], ["字", 2]])
 def test_chinese_char_paths_from_str(s, c):
     assert len(_to_paths(s, f=NOTO_SANS_SC)) == c
@@ -107,19 +103,6 @@ def test_group_three_contours_and_ignore_holes(s):
     assert isinstance(contour, Path)
 
 
-@pytest.mark.xfail(reason="new font renderer - needs investigation")
-def test_group_percent_sign():
-    # Special case %: lower o is inside of the slash bounding box, but HATCH
-    # creation works as expected!
-    paths = _to_paths("%")
-    result = list(path.group_paths(paths))
-    assert len(result) == 2
-    contour, holes = contour_and_holes(result[0])
-    assert isinstance(contour, Path)
-    assert len(holes) == 2
-
-
-@pytest.mark.skipif(noto_sans_sc_not_found, reason='Font "Noto Sans SC" not found')
 @pytest.mark.parametrize("s,c", [["中", 1], ["国", 1], ["文", 2], ["字", 2]])
 def test_group_chinese_chars_and_ignore_holes(s, c):
     paths = _to_paths(s, f=NOTO_SANS_SC)
