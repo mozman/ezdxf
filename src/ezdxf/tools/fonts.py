@@ -223,17 +223,6 @@ def load():
     _load_font_manager()
 
 
-def load_test_fonts():
-    """Load the fonts included in the ezdxf repository."""
-    path = Path(__file__)
-    font_folder = path.parent.parent.parent.parent / "fonts"
-    if font_folder.exists():
-        font_manager.clear()
-        font_manager.build([str(font_folder)])
-    else:
-        raise SystemError(f"included test fonts not found: {str(font_folder)}")
-
-
 def _get_font_manger_path():
     cache_path = options.xdg_path("XDG_CACHE_HOME", CACHE_DIRECTORY)
     return cache_path / FONT_MANAGER_CACHE_FILE
