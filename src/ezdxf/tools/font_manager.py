@@ -69,6 +69,9 @@ class FontCache:
     def __len__(self):
         return len(self._cache)
 
+    def clear(self) -> None:
+        self._cache.clear()
+
     @staticmethod
     def key(font_name: str) -> str:
         return str(font_name).lower()
@@ -192,6 +195,11 @@ class FontManager:
         self.platform = platform.system()
         self._font_cache: FontCache = FontCache()
         self._loaded_fonts: dict[str, TTFont] = dict()
+        self._fallback_font_name = ""
+
+    def clear(self) -> None:
+        self._font_cache = FontCache()
+        self._loaded_fonts.clear()
         self._fallback_font_name = ""
 
     def fallback_font_name(self) -> str:

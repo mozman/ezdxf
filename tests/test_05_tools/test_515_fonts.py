@@ -1,18 +1,39 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
 
 import pytest
 from ezdxf.tools import fonts
 
-# Load default font definitions, included in ezdxf:
-fonts.load()
-# Any unknown font name returns the default font:
-default_font = fonts.font_manager.get_font_face("default")
+
+@pytest.mark.parametrize(
+    "ttf,family",
+    [
+        ("LiberationSans-Regular.ttf", "Liberation Sans"),
+        ("LiberationSerif-Regular.ttf", "Liberation Serif"),
+        ("LiberationMono-Regular.ttf", "Liberation Mono"),
+        ("LiberationSansNarrow-Regular.ttf", "Liberation Sans Narrow"),
+        ("DejaVuSans.ttf", "DejaVu Sans"),
+        ("DejaVuSerif.ttf", "DejaVu Serif"),
+        ("DejaVuSansMono.ttf", "DejaVu Sans Mono"),
+        ("OpenSans-Regular.ttf", "Open Sans"),
+        ("OpenSansCondensed-Light.ttf", "Open Sans Condensed"),
+        ("NotoSansSC-Regular.otf", "Noto Sans SC"),
+    ],
+)
+def test_if_all_test_fonts_are_available(ttf, family):
+    font_face = fonts.font_manager.get_font_face(ttf)
+    assert font_face.family == family, "required test-font not found"
+
+
+def default_font():
+    return fonts.font_manager.get_font_face("default")
 
 
 def test_find_font_face_without_definition():
-    assert fonts.find_font_face("mozman.ttf") is default_font, "returns a default font"
-    assert fonts.find_font_face(None) is default_font, "returns a default font"
+    assert (
+        fonts.find_font_face("mozman.ttf") is default_font()
+    ), "returns a default font"
+    assert fonts.find_font_face(None) is default_font(), "returns a default font"
 
 
 def test_find_font_face():
@@ -126,27 +147,19 @@ class TestFontMeasurements:
 
 
 def test_find_font_file_by_best_match():
-    assert fonts.find_best_match(family="simsun").ttf == "simsun.ttc"
+    assert fonts.find_best_match(family="Noto Sans SC").ttf == "NotoSansSC-Regular.otf"
     assert fonts.find_best_match(family="mozman") is None
     assert (
         fonts.find_best_match(family="Liberation Sans").ttf
         == "LiberationSans-Regular.ttf"
     )
-    assert (
-        fonts.find_best_match(family="Dejavu Sans").ttf
-        == "DejaVuSans.ttf"
-    )
+    assert fonts.find_best_match(family="Dejavu Sans").ttf == "DejaVuSans.ttf"
 
 
 def test_find_generic_font_family():
     assert fonts.find_best_match(family="serif").ttf == "DejaVuSerif.ttf"
     assert fonts.find_best_match(family="sans-serif").ttf == "DejaVuSans.ttf"
     assert fonts.find_best_match(family="monospace").ttf == "DejaVuSansMono.ttf"
-
-
-def test_font_manger_was_loaded_at_startup():
-    font_face = fonts.font_manager.get_font_face("LiberationSans-Regular.ttf")
-    assert font_face.family == "Liberation Sans"
 
 
 if __name__ == "__main__":
