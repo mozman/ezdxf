@@ -134,24 +134,11 @@ def extents(
 
     If argument `fast` is ``True`` the calculation of Bézier curves is based on
     their control points, this may return a slightly larger bounding box.
-    The `fast` mode also uses a simpler and mostly inaccurate text size
-    calculation instead of the more precise but very slow calculation by
-    `matplotlib`.
-
-    .. hint::
-
-        The fast mode is not much faster for non-text based entities, so using
-        the slower default mode is not a big disadvantage if a more precise text
-        size calculation is important.
 
     """
-    use_matplotlib = ezdxf.options.use_matplotlib  # save current state
-    if fast:
-        ezdxf.options.use_matplotlib = False
     _extends = BoundingBox()
     for box in multi_flat(entities, fast=fast, cache=cache):
         _extends.extend(box)
-    ezdxf.options.use_matplotlib = use_matplotlib  # restore state
     return _extends
 
 

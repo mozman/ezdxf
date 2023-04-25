@@ -15,13 +15,6 @@ from configparser import ConfigParser
 # from ezdxf._options import options
 
 # The MATPLOTLIB global shows that Matplotlib is installed:
-try:
-    import matplotlib
-
-    MATPLOTLIB = True
-except ImportError:
-    MATPLOTLIB = False
-
 TRUE_STATE = {"True", "true", "On", "on", "1"}
 CORE = "core"
 BROWSE_COMMAND = "browse-command"
@@ -152,7 +145,6 @@ class Options:
         # needs fast access:
         self.log_unprocessed_tags = True
         # Activate/deactivate Matplotlib support (e.g. for testing)
-        self._use_matplotlib = MATPLOTLIB
         self._use_c_ext = False  # set ezdxf.acc.__init__!
         self.debug = False
         self.update_cached_options()
@@ -298,18 +290,6 @@ class Options:
     def disable_c_ext(self) -> bool:
         """Disable C-extensions if ``True``."""
         return self.get_bool(CORE, "DISABLE_C_EXT", default=False)
-
-    @property  # todo: rename property - only used for testing
-    def use_matplotlib(self) -> bool:
-        """Activate/deactivate TrueType font support e.g. for testing"""
-        return self._use_matplotlib
-
-    @use_matplotlib.setter
-    def use_matplotlib(self, state: bool) -> None:
-        if MATPLOTLIB:
-            self._use_matplotlib = state
-        else:  # Matplotlib is not installed
-            self._use_matplotlib = False
 
     @property
     def use_c_ext(self) -> bool:

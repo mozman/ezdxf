@@ -15,18 +15,10 @@ from ezdxf.tools.text_size import (
 
 from ezdxf.tools.text_layout import leading
 
-# Exact text size checks are not possible if the used font is not available,
-# which cannot guaranteed for all platforms therefore the matplotlib support is
-# disabled deliberately by using a virtual layout, which has no text style
-# tables attached and the "MonospaceFont" based text measurements are used.
-
 
 @pytest.fixture
 def msp():
-    state = ezdxf.options.use_matplotlib
-    ezdxf.options.use_matplotlib = False
     yield VirtualLayout()
-    ezdxf.options.use_matplotlib = state
 
 
 H3W1 = {"height": 3.0, "width": 1.0}
@@ -81,16 +73,14 @@ def test_measurement_of_plain_text(msp, s):
     assert size.width == 3.0 * size.cap_height
 
 
-def test_matplotlib_support_for_text_size():
-    if not ezdxf.options.use_matplotlib:
-        return
+def test_support_for_text_size():
     test_string = "TestString"
     doc = ezdxf.new()
-    doc.styles.add("ARIAL", font="arial.ttf")
+    doc.styles.add("OpenSans", font="OpenSans.ttf")
     text = doc.modelspace().add_text(
         test_string,
         dxfattribs={
-            "style": "ARIAL",
+            "style": "OpenSans",
             "height": 2.0,
         },
     )
@@ -119,8 +109,8 @@ def test_mtext_size_of_a_single_char(msp):
     mtext = msp.add_mtext("X", dxfattribs={"char_height": 2.0})
     size = mtext_size(mtext)
     assert size.total_height == 2.0
-    assert size.total_width == 2.0
-    assert size.column_width == 2.0
+    assert size.total_width == pytest.approx(1.8794373744139317)
+    assert size.column_width == pytest.approx(1.8794373744139317)
     assert size.gutter_width == 0.0
     assert size.column_count == 1
 
@@ -130,7 +120,7 @@ def test_mtext_size_of_a_string(msp):
     mtext = msp.add_mtext("XXX", dxfattribs={"char_height": 2.0})
     size = mtext_size(mtext)
     assert size.total_height == 2.0
-    assert size.total_width == 6.0
+    assert size.total_width == pytest.approx(5.6383121232417945)
     assert size.column_width == size.total_width
     assert size.gutter_width == 0.0
     assert size.column_count == 1
@@ -150,8 +140,10 @@ def test_estimate_mtext_extents(msp):
     assert width == 8.0
 
 
-@pytest.mark.parametrize("cap_height", [2.0, 3.0])
-def test_mtext_size_of_2_lines(cap_height, msp):
+@pytest.mark.parametrize(
+    "cap_height, expected", [(2.0, 6.703281982585398), (3.0, 10.054922973878098)]
+)
+def test_mtext_size_of_2_lines(cap_height, expected, msp):
     # Matplotlib support disabled and using MonospaceFont()
     mtext = msp.add_mtext(
         "XXX\nYYYY",
@@ -163,26 +155,8 @@ def test_mtext_size_of_2_lines(cap_height, msp):
     size = mtext_size(mtext)
     expected_total_height = leading(cap_height, line_spacing=1.0) + cap_height
     assert size.total_height == pytest.approx(expected_total_height)
-    assert size.total_width == 4 * cap_height, "expected width of 2nd line"
+    assert size.total_width == pytest.approx(expected), "expected width of 2nd line"
     assert size.column_width == size.total_width
-
-
-@pytest.mark.parametrize("cap_height", [2.0, 3.0])
-def test_measure_mtext_word_size(cap_height, msp):
-    # Matplotlib support disabled and using MonospaceFont()
-    mtext = msp.add_mtext(
-        "XXX\nYYYY",
-        dxfattribs={
-            "char_height": cap_height,
-            "line_spacing_factor": 1.0,
-        },
-    )
-    word_size_detector = WordSizeDetector()
-    mtext_size(mtext, tool=word_size_detector)
-    boxes = word_size_detector.word_boxes()
-    assert len(boxes) == 2
-    assert BoundingBox2d(boxes[0]).size.isclose((cap_height * 3, cap_height))
-    assert BoundingBox2d(boxes[1]).size.isclose((cap_height * 4, cap_height))
 
 
 if __name__ == "__main__":

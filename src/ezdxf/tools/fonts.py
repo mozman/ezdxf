@@ -438,10 +438,7 @@ def make_font(
         width_factor: horizontal text stretch factor
 
     """
-    if options.use_matplotlib:
-        return TrueTypeFont(ttf_path, cap_height, width_factor)
-    else:
-        return MonospaceFont(cap_height, width_factor)
+    return TrueTypeFont(ttf_path, cap_height, width_factor)
 
 
 def get_entity_font_face(entity: DXFEntity, doc: Optional[Drawing] = None) -> FontFace:

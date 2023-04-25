@@ -66,7 +66,7 @@ def text_size(text: Text) -> TextSize:
     text_width: float = 0.0
     cap_height: float = text.dxf.get_default("height")
     font: fonts.AbstractFont = fonts.MonospaceFont(cap_height, width_factor)
-    if ezdxf.options.use_matplotlib and text.doc is not None:
+    if text.doc is not None:
         style = text.doc.styles.get(text.dxf.get_default("style"))
         font_name = get_font_name(style)
         font = fonts.make_font(font_name, cap_height, width_factor)

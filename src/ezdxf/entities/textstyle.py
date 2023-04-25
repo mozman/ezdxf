@@ -223,11 +223,10 @@ class Textstyle(DXFEntity):
         is ``None`` or 0, the default value is 1.
         The attribute :attr:`Textstyle.dxf.big_font` is ignored.
         """
-        from ezdxf import options
         from ezdxf.tools import fonts
 
         ttf = ""
-        if options.use_matplotlib and self.has_extended_font_data:
+        if self.has_extended_font_data:
             family, italic, bold = self.get_extended_font_data()
             if family:
                 text_style = "Italic" if italic else "Regular"

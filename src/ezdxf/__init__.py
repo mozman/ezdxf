@@ -84,7 +84,6 @@ def print_config(
             f"ezdxf {__version__} from {Path(__file__).parent}\n",
             f"Python version: {sys.version}\n",
             f"using C-extensions: {YES_NO[options.use_c_ext]}\n",
-            f"using Matplotlib: {YES_NO[options.use_matplotlib]}\n",
         ]
     )
     if verbose:

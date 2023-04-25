@@ -9,6 +9,7 @@ from ezdxf import zoom, print_config
 from ezdxf.math import Matrix44
 from ezdxf.tools import fonts
 from ezdxf.tools import text_layout as tl
+from ezdxf.enums import TextEntityAlignment
 
 """ 
 This example shows the usage of the internal text_layout module to render 
@@ -49,10 +50,6 @@ Used for:
 - explode MTEXT into DXF primitives (TEXT, LINE)
 
 """
-if not ezdxf.options.use_matplotlib:
-    print("The Matplotlib package is required.")
-    sys.exit(1)
-
 # Type alias:
 Content = Iterable[tl.Cell]
 
@@ -151,7 +148,7 @@ class TextRenderer(tl.ContentRenderer):
     ):
         """Create/render the text content"""
         text = msp.add_text(self.text, dxfattribs=self.attribs)
-        text.set_pos((left, bottom), align="LEFT")
+        text.set_placement((left, bottom), align=TextEntityAlignment.LEFT)
         if m:
             text.transform(m)
 
