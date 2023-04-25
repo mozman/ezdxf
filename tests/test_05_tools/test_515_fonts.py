@@ -146,7 +146,7 @@ class TestFontMeasurements:
         assert font.text_width("1234") == 7.5
 
 
-@pytest.skip(reason="does not work on github/linux?")
+@pytest.mark.skip(reason="does not work on github/linux?")
 def test_find_font_file_by_best_match():
     assert fonts.find_best_match(family="Noto Sans SC").ttf == "NotoSansSC-Regular.otf"
     assert fonts.find_best_match(family="mozman") is None
@@ -157,7 +157,7 @@ def test_find_font_file_by_best_match():
     assert fonts.find_best_match(family="Dejavu Sans").ttf == "DejaVuSans.ttf"
 
 
-@pytest.skip(reason="does not work on github/linux?")
+@pytest.mark.skip(reason="does not work on github/linux?")
 def test_find_generic_font_family():
     assert fonts.find_best_match(family="serif").ttf == "DejaVuSerif.ttf"
     assert fonts.find_best_match(family="sans-serif").ttf == "DejaVuSans.ttf"
