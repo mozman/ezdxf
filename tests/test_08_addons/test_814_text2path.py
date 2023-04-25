@@ -2,8 +2,13 @@
 #  License: MIT License
 
 import pytest
-
 import platform
+
+if platform.system() != "Windows":
+    pytest.skip(
+        reason="works for some reasons only on Windows", allow_module_level=True
+    )
+
 from ezdxf.tools.font_face import FontFace
 from ezdxf.addons import text2path
 from ezdxf.path import Path
@@ -118,9 +123,6 @@ def ff():
     return FontFace(family=DEFAULT)
 
 
-@pytest.mark.skipif(
-    platform.system() != "Windows", reason="works for some reasons only on Windows"
-)
 class TestMakePathFromString:
     # Surprise - even 0 and negative values work without any exceptions!
     @pytest.mark.parametrize("size", [0, 0.05, 1, 2, 100, -1, -2, -100])
@@ -194,9 +196,6 @@ class TestMakePathFromString:
         assert len(p) == 0
 
 
-@pytest.mark.skipif(
-    platform.system() != "Windows", reason="works for some reasons only on Windows"
-)
 class TestMakeHatchesFromString:
     def test_hatches_from_empty_string(self, ff):
         hatches = text2path.make_hatches_from_str("", font=ff)
@@ -264,9 +263,6 @@ def get_bbox(request):
     return request.param
 
 
-@pytest.mark.skipif(
-    platform.system() != "Windows", reason="works for some reasons only on Windows"
-)
 class TestMakePathsFromEntity:
     """Test Paths (and Hatches) from TEXT entities.
 
