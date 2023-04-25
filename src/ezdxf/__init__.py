@@ -67,7 +67,6 @@ from ezdxf.lldxf.encoding import (
 # setup DXF unicode encoder -> '\U+nnnn'
 codecs.register_error("dxfreplace", dxf_backslash_replace)
 
-fonts.load()
 EZDXF_TEST_FILES = options.test_files
 
 YES_NO = {True: "yes", False: "no"}

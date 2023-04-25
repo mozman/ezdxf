@@ -214,8 +214,7 @@ def find_best_match(
 
 
 def find_font_file_name(font_face: FontFace) -> str:
-    """Returns the true type font file name without parent directories e.g. "Arial.ttf".
-    """
+    """Returns the true type font file name without parent directories e.g. "Arial.ttf"."""
     return font_manager.find_font_file_name(font_face)
 
 
@@ -491,3 +490,6 @@ def get_entity_font_face(entity: DXFEntity, doc: Optional[Drawing] = None) -> Fo
             if ttf:
                 font_face = get_font_face(ttf)
     return font_face
+
+
+_load_font_manager()
