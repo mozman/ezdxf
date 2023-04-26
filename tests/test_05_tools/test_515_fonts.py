@@ -15,7 +15,8 @@ TEST_FONTS = [
     ("DejaVuSansMono.ttf", "DejaVu Sans Mono"),
 ]
 if platform.system() == "Windows":
-    # These fonts do not work on github - but only in this test - why? I don't care!
+    # These fonts do work on Linux when testing only this test script in PyCharm or with
+    # pytest, but does not work when launching the whole test suite.
     TEST_FONTS.extend(
         [
             ("OpenSans-Regular.ttf", "Open Sans"),
@@ -152,6 +153,8 @@ class TestFontMeasurements:
         assert font.text_width("1234") == 7.5
 
 
+# This test works when testing only this test script in PyCharm or with pytest, but does
+# not work when launching the whole test suite.
 @pytest.mark.skip(reason="does not work on github/linux?")
 def test_find_font_file_by_best_match():
     assert fonts.find_best_match(family="Noto Sans SC").ttf == "NotoSansSC-Regular.otf"
@@ -163,7 +166,6 @@ def test_find_font_file_by_best_match():
     assert fonts.find_best_match(family="Dejavu Sans").ttf == "DejaVuSans.ttf"
 
 
-@pytest.mark.skip(reason="does not work on github/linux?")
 def test_find_generic_font_family():
     assert fonts.find_best_match(family="serif").ttf == "DejaVuSerif.ttf"
     assert fonts.find_best_match(family="sans-serif").ttf == "DejaVuSans.ttf"
