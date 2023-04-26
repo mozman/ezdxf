@@ -330,7 +330,7 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
         self.addToolBar(toolbar)
 
     def create_find_dialog(self) -> "FindDialog":
-        dialog = FindDialog(self)
+        dialog = FindDialog()
         dialog.setModal(True)
         dialog.find_forward_button.clicked.connect(self.find_forward)
         dialog.find_backwards_button.clicked.connect(self.find_backwards)
@@ -755,8 +755,8 @@ def copy_dxf_to_clipboard(tags: Tags):
 
 
 class FindDialog(QtWidgets.QDialog, Ui_FindDialog):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        super().__init__()
         self.setupUi(self)
         self.close_button.clicked.connect(lambda: self.close())
         self.settings = QSettings("ezdxf", "DXFBrowser")
