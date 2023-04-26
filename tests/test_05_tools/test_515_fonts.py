@@ -155,7 +155,9 @@ class TestFontMeasurements:
 
 # This test works when testing only this test script in PyCharm or with pytest, but does
 # not work when launching the whole test suite.
-@pytest.mark.skip(reason="does not work on github/linux?")
+@pytest.mark.skipif(
+    platform.system() != "Windows", reason="does not work on github/linux?"
+)
 def test_find_font_file_by_best_match():
     assert fonts.find_best_match(family="Noto Sans SC").ttf == "NotoSansSC-Regular.otf"
     assert fonts.find_best_match(family="mozman") is None
@@ -166,6 +168,8 @@ def test_find_font_file_by_best_match():
     assert fonts.find_best_match(family="Dejavu Sans").ttf == "DejaVuSans.ttf"
 
 
+# Works on Windows and Linux Mint, but not on github/Ubuntu
+@pytest.mark.skipif(platform.system() != "Windows", reason="does not work on github")
 def test_find_generic_font_family():
     assert fonts.find_best_match(family="serif").ttf == "DejaVuSerif.ttf"
     assert fonts.find_best_match(family="sans-serif").ttf == "DejaVuSans.ttf"
