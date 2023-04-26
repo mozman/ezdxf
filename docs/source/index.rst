@@ -23,7 +23,8 @@ Quick-Info
 - additional required packages for the core package without add-ons:
   `typing_extensions <https://pypi.org/project/typing-extensions/>`_,
   `pyparsing <https://pypi.org/project/pyparsing/>`_,
-  `numpy <https://pypi.org/project/numpy/>`_
+  `numpy <https://pypi.org/project/numpy/>`_,
+  `fontTools <https://pypi.org/project/fonttools>`_
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
 - additional read-only support for DXF versions R13/R14 (upgraded to R2000)
 - additional read-only support for older DXF versions than R12 (upgraded to R12)

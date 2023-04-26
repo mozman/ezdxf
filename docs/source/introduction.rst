@@ -38,12 +38,12 @@ What ezdxf can't do
 Supported Python Versions
 -------------------------
 
-`Ezdxf` requires at least Python 3.7 and will be tested with the latest stable
-CPython version and the latest stable release of pypy3 during development.
+`Ezdxf` requires at least Python 3.8 (determined by `numpy`) and will be tested with the
+latest stable CPython version and the latest stable release of pypy3 during development.
 
 `Ezdxf` is written in pure Python with optional Cython implementations of some
-low level math classes and requires only `pyparsing`, `numpy` and `typing_extensions`
-as additional library beside the Python Standard Library.
+low level math classes and requires `pyparsing`, `numpy`, `fontTools` and
+`typing_extensions` as additional library beside the Python Standard Library.
 `Pytest` is required to run the unit and integration tests. Data to run the
 stress and audit test can not be provided, because I don't have the rights for
 publishing these DXF files.

@@ -3,9 +3,7 @@ typing_extensions
 numpy
 fonttools
 pytest
-geomdl
 cython
-pillow
 matplotlib
 pyside6
 sphinx

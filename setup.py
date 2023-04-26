@@ -121,9 +121,9 @@ def read(fname, until=""):
         return "File '%s' not found.\n" % fname
 
 
-DRAW = ["matplotlib", "PySide6", "Pillow", "PyMuPDF"]
-DRAW5 = ["matplotlib", "PyQt5", "Pillow", "PyMuPDF"]
-TEST = ["pytest", "geomdl"]
+DRAW = ["matplotlib", "PySide6", "PyMuPDF"]
+DRAW5 = ["matplotlib", "PyQt5", "PyMuPDF"]
+TEST = ["pytest"]
 DEV = ["setuptools", "wheel", "Cython"]
 
 setup(
@@ -143,8 +143,6 @@ setup(
             "pp/*.html",
             "pp/*.js",
             "pp/*.css",
-            "tools/font_face_cache.json",
-            "tools/font_measurement_cache.json",
             "resources/*.png",
             "py.typed",
         ]

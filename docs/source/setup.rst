@@ -9,12 +9,11 @@ easy way to install them on `Windows`, `Linux` and `macOS`, preferably as::
 
     pip3 install ezdxf
 
-The `pyparsing`_ package, `numpy`_ and the `typing_extensions`_ are the only hard
+The packages `pyparsing`_, `numpy`_, `fontTools`_ and `typing_extensions`_ are the hard
 dependency and will be installed automatically by `pip3`!
 
-The minimal required Python version is determined by the latest stable version
-of `pypy3`_ and the Python version deployed by the `Raspberry Pi`_ OS, which
-would be Python 3.9 in 2022.
+The minimal required Python version is determined by the latest release version
+of `numpy`_.
 
 Basic Installation
 ------------------
@@ -34,8 +33,8 @@ To use all features of the drawing add-on, add the [draw] tag::
 ======== ===================================================
 Tag      Additional Installed Packages
 ======== ===================================================
-[draw]   `Matplotlib`_, `PySide6`_, `Pillow`_, `PyMuPDF`_
-[draw5]  `Matplotlib`_, `PyQt5`_, `Pillow`_, `PyMuPDF`_ (use only if PySide6 is not available)
+[draw]   `Matplotlib`_, `PySide6`_, `PyMuPDF`_
+[draw5]  `Matplotlib`_, `PyQt5`_, `PyMuPDF`_ (use only if PySide6 is not available)
 [test]   pytest
 [dev]    setuptools, wheel, Cython + [test]
 [all]    [draw] + [test] + [dev]
@@ -414,6 +413,7 @@ Proceed with the `ezdxf` installation from source as shown for the  `Raspberry P
 .. _pillow: https://pypi.org/project/Pillow/
 .. _PyMuPDF: https://pypi.org/project/PyMuPDF/
 .. _numpy: https://pypi.org/project/numpy/
+.. _fontTools: https://pypi.org/project/fonttools/
 .. _pyparsing: https://pypi.org/project/pyparsing/
 .. _typing_extensions: https://pypi.org/project/typing_extensions/
 .. _pypi: https://pypi.org/project/ezdxf
