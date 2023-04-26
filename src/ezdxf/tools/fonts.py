@@ -49,6 +49,7 @@ import abc
 import logging
 from pathlib import Path
 import json
+import os
 
 from ezdxf import options
 from .font_face import FontFace
@@ -229,15 +230,42 @@ def _get_font_manger_path():
 
 
 def _load_font_manager() -> None:
+    repo_fonts_path = os.environ.get("EZDXF_REPO_FONTS")
+    if repo_fonts_path:
+        _build_sut_font_manager(Path(repo_fonts_path))
+        return
+
     fm_path = _get_font_manger_path()
     if fm_path.exists():
         try:
             font_manager.loads(fm_path.read_text())
             return
         except IOError as e:
-            logger.info("Can't load font-manager cache file, rebuilding cache file.")
-            logger.info(f"Loading error: {str(e)}")
+            logger.info(f"Error loading cache file: {str(e)}")
     build_font_manager_cache(fm_path)
+
+
+def _build_sut_font_manager(repo_fonts_path: Path) -> None:
+    """Load font manger for system under test (sut).
+
+    Load the fonts included in the repository folder "./fonts" to guarantee the tests
+    have the same fonts available on all systems. The environment variable
+    "EZDXF_REPO_FONTS" is set in "conftest.py" at session start.
+    """
+    font_manager.clear()
+    cache_file = repo_fonts_path / "font_manager_cache.json"
+    if cache_file.exists():
+        try:
+            font_manager.loads(cache_file.read_text())
+            return
+        except IOError as e:
+            print(f"Error loading cache file: {str(e)}")
+    font_manager.build([str(repo_fonts_path)])
+    s = font_manager.dumps()
+    try:
+        cache_file.write_text(s)
+    except IOError as e:
+        print(f"Error writing cache file: {str(e)}")
 
 
 def build_font_manager_cache(path: Path) -> None:
@@ -245,31 +273,10 @@ def build_font_manager_cache(path: Path) -> None:
     s = font_manager.dumps()
     if not path.parent.exists():
         path.parent.mkdir(parents=True)
-    path.write_text(s)
-
-
-def _load_font_faces(path) -> dict:
-    """Load font face cache."""
-    with open(path, "rt") as fp:
-        data = json.load(fp)
-    cache = dict()
-    if data:
-        for entry in data:
-            key = entry[0]
-            cache[key] = FontFace(*entry)
-    return cache
-
-
-def _load_measurement_cache(path) -> dict:
-    """Load font measurement cache."""
-    with open(path, "rt") as fp:
-        data = json.load(fp)
-    cache = dict()
-    if data:
-        for entry in data:
-            key = entry[0]
-            cache[key] = FontMeasurements(*entry[1])
-    return cache
+    try:
+        path.write_text(s)
+    except IOError as e:
+        logger.info(f"Error writing cache file: {str(e)}")
 
 
 # A Visual Guide to the Anatomy of Typography: https://visme.co/blog/type-anatomy/

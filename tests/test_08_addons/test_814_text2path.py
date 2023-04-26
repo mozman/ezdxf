@@ -8,6 +8,15 @@ if platform.system() != "Windows":
     pytest.skip(
         reason="works for some reasons only on Windows", allow_module_level=True
     )
+# These test do not work on my Linux Mint system.
+# The test file fails when started as a whole session, but passes if I start
+# failing test classes individually by the PyCharm debugger.
+# The problem is the font_manager:
+# When started as single test class or in debugger mode the repo fonts are loaded as it
+# should be. Started as normal session the system fonts are loaded, which shouldn't be
+# possible - I guess there is some pytest magic happening in the background which messes
+# things up.
+# On Windows everything works fine, so the module works as expected.
 
 from ezdxf.tools.font_face import FontFace
 from ezdxf.addons import text2path
