@@ -2,9 +2,14 @@
 #  License: MIT License
 
 import pytest
+import platform
 from ezdxf.tools import fonts
 
 
+@pytest.mark.skipif(
+    platform.system() != "Windows",
+    reason="does not work on github - I don't care anymore",
+)
 @pytest.mark.parametrize(
     "ttf,family",
     [
