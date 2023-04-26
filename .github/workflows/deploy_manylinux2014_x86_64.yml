@@ -11,7 +11,7 @@ jobs:
   Linux-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build manylinux2014_x86_64 wheels
         uses: pypa/cibuildwheel@v2.11.3
         env:
