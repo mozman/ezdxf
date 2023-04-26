@@ -5,26 +5,27 @@ import pytest
 import platform
 from ezdxf.tools import fonts
 
+TEST_FONTS = [
+    ("LiberationSans-Regular.ttf", "Liberation Sans"),
+    ("LiberationSerif-Regular.ttf", "Liberation Serif"),
+    ("LiberationMono-Regular.ttf", "Liberation Mono"),
+    ("LiberationSansNarrow-Regular.ttf", "Liberation Sans Narrow"),
+    ("DejaVuSans.ttf", "DejaVu Sans"),
+    ("DejaVuSerif.ttf", "DejaVu Serif"),
+    ("DejaVuSansMono.ttf", "DejaVu Sans Mono"),
+]
+if platform.system() == "Windows":
+    # These fonts do not work on github - but only in this test - why? I don't care!
+    TEST_FONTS.extend(
+        [
+            ("OpenSans-Regular.ttf", "Open Sans"),
+            ("OpenSansCondensed-Light.ttf", "Open Sans Condensed"),
+            ("NotoSansSC-Regular.otf", "Noto Sans SC"),
+        ]
+    )
 
-@pytest.mark.skipif(
-    platform.system() != "Windows",
-    reason="does not work on github - I don't care anymore",
-)
-@pytest.mark.parametrize(
-    "ttf,family",
-    [
-        ("LiberationSans-Regular.ttf", "Liberation Sans"),
-        ("LiberationSerif-Regular.ttf", "Liberation Serif"),
-        ("LiberationMono-Regular.ttf", "Liberation Mono"),
-        ("LiberationSansNarrow-Regular.ttf", "Liberation Sans Narrow"),
-        ("DejaVuSans.ttf", "DejaVu Sans"),
-        ("DejaVuSerif.ttf", "DejaVu Serif"),
-        ("DejaVuSansMono.ttf", "DejaVu Sans Mono"),
-        ("OpenSans-Regular.ttf", "Open Sans"),
-        ("OpenSansCondensed-Light.ttf", "Open Sans Condensed"),
-        ("NotoSansSC-Regular.otf", "Noto Sans SC"),
-    ],
-)
+
+@pytest.mark.parametrize("ttf,family", TEST_FONTS)
 def test_if_all_test_fonts_are_available(ttf, family):
     font_face = fonts.font_manager.get_font_face(ttf)
     assert font_face.family == family, "required test-font not found"
