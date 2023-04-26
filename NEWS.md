@@ -2,21 +2,28 @@
 News
 ====
 
-Version 1.0.4b1 - dev
+Version 1.0.4b2 - dev
 ---------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-0.html
+- WARNING: The font support changed drastically in this release, if you are using the 
+  `ezdxf.tools.fonts` module, your code will break, sorry! Pin the `ezdxf` version to 
+  v1.0.3 to use the previous version!
 - NEW: `numpy` is a hard dependency, requires Python version >= 3.8
 - NEW: `fontTools` is a hard dependency
 - NEW: added setter to `BlockLayout.base_point` property
 - NEW: optimized `Matrix44.fast_2d_transform()` method
 - CHANGED: refactoring of `ezdxf.tools.fonts`
+- CHANGED: `FontFace` class - `weight` attribute is an int value (0-1000), `stretch` is 
+  renamed to `width` and is also an int value (1-9) now
+- REMOVED: replaced `matplotlib` font support module by `fontTools`
+- REMOVED: configuration option `use_matplotlib`
 - CHANGED: text rendering for the `drawing` add-on and text measurement is done by the
   `fontTools` package
 - CHANGED: moved text rendering from backend classes to the `Frontend` class
 - CHANGED: moved clipping support from backend classes to the `Frontend` class
 - REMOVED: `PillowBackend` and the `pillow` command
-- REMOVED: `geomdl` dependency
+- REMOVED: `geomdl` test dependency
 - BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1
 - BUGFIX: [#855](https://github.com/mozman/ezdxf/issues/855)
   scale `MTEXT/MLEADER` inline commands "absolute text height" at transformation
