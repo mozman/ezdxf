@@ -14,6 +14,7 @@ Version 1.1.0b0 - dev
 - NEW: `Matrix44.Path2d()` class, `Path` class with `Vec2` vertices
 - NEW: optimized `Matrix44.fast_2d_transform()` method
 - NEW: added setter to `BlockLayout.base_point` property
+- NEW: `ezdxf.xref` new core module to manage XREFs and load resources from DXF files
 - NEW: `ezdxf.addons.hpgl2` add-on to convert HPGL/2 plot files to DXF or SVG
 - NEW: `ezdxf plt2dxf` command to convert HPGL/2 plot files to DXF
 - NEW: `ezdxf plt2svg` command to convert HPGL/2 plot files to SVG
