@@ -8,44 +8,16 @@ ACIS copy() method support: ACIS data does not reference any DXF resources and c
 is not expensive, all copies share the same immutable ACIS data. 
 This feature allows loading ACIS entities from external references by the `xref` module.
 
-Adding a `transform_matrix` attribute to entities which do not have transformation 
-support (yet) like ACIS entities which enables to add support for the `transform()` 
-method.  A new method `apply_transform_martix()` has to be called to apply the 
-`transform_matrix` to the entity itself before export or it should raise a 
-`NotImplementedError` exception.
-
-This could be implemented for:
-- ACIS Entities (BODY)
-- ACAD_PROXY_ENTITY
-- ACAD_TABLE
-- OLE2FRAME
-- DXFTagStorage, all unknown entities
-
-
-Increase Minimal Required Python Version to Python 3.8
-------------------------------------------------------
-
-- https://docs.python.org/3/whatsnew/3.8.html
-- import `Protocol` from `typing` instead from `typing_extensions`
-- `typing.Literal`
-- walrus operator `:=`
-
-Apply minimal Python version update to:
-
-- README.md
-- setup.py
-- toplevel index.rst
-- introduction.rst
-- setup.rst
-
 Other
 -----
 
-- `BaseLayout.transform(m)` method to transform the content of any layout inplace by
-  a transformation matrix `Matrix44`
-- `BaseLayout.add_pdf_overlay(filename, insert, scale=1, rotation=0, dxfattribs=None)`
+- `xref.attach_pdf(layout, filename, insert, scale=1, rotation=0, dxfattribs=None)`
   a simple interface to add PDF overlays, the management of underlay definitions is 
   done automatically 
+
+- (???)`xref.attach_image(layout, filename, insert, scale=1, rotation=0, dxfattribs=None)`
+  a simple interface to add images (JPG/PNG/BMP) overlays, the management of image 
+  definitions is done automatically 
 
 Ideas for Future Releases
 =========================
@@ -130,6 +102,19 @@ DXF Entities
   doc.enable_acis_transfromation() 
 - (>v1.1) clipping path support for block references, see XCLIP command and 
   discussion #760
+
+(>1.1) Adding a `transform_matrix` attribute to entities which do not have transformation 
+support (yet) like ACIS entities which enables to add support for the `transform()` 
+method.  A new method `apply_transform_martix()` has to be called to apply the 
+`transform_matrix` to the entity itself before export or it should raise a 
+`NotImplementedError` exception.
+
+This could be implemented for:
+- ACIS Entities (BODY)
+- ACAD_PROXY_ENTITY
+- ACAD_TABLE
+- OLE2FRAME
+- DXFTagStorage, all unknown entities
 
 Selection Module
 ----------------
