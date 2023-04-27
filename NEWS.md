@@ -2,17 +2,22 @@
 News
 ====
 
-Version 1.0.4b2 - dev
+Version 1.1.0b0 - dev
 ---------------------
 
-- Release notes: https://ezdxf.mozman.at/release-v1-0.html
-- WARNING: The font support changed drastically in this release, if you are using the 
-  `ezdxf.tools.fonts` module, your code will break, sorry! Pin the `ezdxf` version to 
-  v1.0.3 to use the previous version!
+- Release notes: https://ezdxf.mozman.at/release-v1-1.html
+- WARNING: The font support changed drastically in this version, if you use the 
+  `ezdxf.tools.fonts` module your code will break, sorry! Pin the `ezdxf` version to 
+  v1.0.3 in your `requirements.txt` file to use the previous version!
 - NEW: `numpy` is a hard dependency, requires Python version >= 3.8
 - NEW: `fontTools` is a hard dependency
-- NEW: added setter to `BlockLayout.base_point` property
+- NEW: `Matrix44.Path2d()` class, `Path` class with `Vec2` vertices
 - NEW: optimized `Matrix44.fast_2d_transform()` method
+- NEW: added setter to `BlockLayout.base_point` property
+- NEW: `ezdxf.addons.hpgl2` add-on to convert HPGL/2 plot files to DXF or SVG
+- NEW: `ezdxf plt2dxf` command to convert HPGL/2 plot files to DXF
+- NEW: `ezdxf plt2svg` command to convert HPGL/2 plot files to SVG
+- NEW: `ezdxf plt2pdf` command to convert HPGL/2 plot files to PDF
 - CHANGED: refactoring of `ezdxf.tools.fonts`
 - CHANGED: `FontFace` class - `weight` attribute is an int value (0-1000), `stretch` is 
   renamed to `width` and is also an int value (1-9) now
@@ -27,11 +32,6 @@ Version 1.0.4b2 - dev
 - BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1
 - BUGFIX: [#855](https://github.com/mozman/ezdxf/issues/855)
   scale `MTEXT/MLEADER` inline commands "absolute text height" at transformation
-- PREVIEW: `ezdxf.addons.hpgl2` add-on to convert HPGL/2 plot files to DXF or SVG,  
-  final release in v1.1
-- PREVIEW: `ezdxf plt2dxf` command to convert HPGL/2 plot files to DXF, final release in v1.1
-- PREVIEW: `ezdxf plt2svg` command to convert HPGL/2 plot files to SVG, final release in v1.1
-- PREVIEW: `ezdxf plt2pdf` command to convert HPGL/2 plot files to PDF, final release in v1.1
 
 Version 1.0.3 - 2023-03-26
 --------------------------
