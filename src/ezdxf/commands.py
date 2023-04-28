@@ -649,20 +649,24 @@ class Config(Command):
     def run(args):
         from ezdxf import options
 
+        action = False
         if args.reset:
             options.reset()
             options.delete_default_config_files()
+            action = True
         if args.home:
             options.write_home_config()
-        if args.print:
-            options.print()
+            action = True
         if args.write:
+            action = True
             filepath = Path(args.write).expanduser()
             try:
                 options.write_file(str(filepath))
                 print(f"configuration written to: {filepath}")
             except IOError as e:
                 print(str(e))
+        if args.print or action is False:
+            options.print()
 
 
 def load_every_document(filename: str):
