@@ -24,7 +24,8 @@ Version 1.1.0b0 - dev
 - CHANGED: `FontFace` class - `weight` attribute is an int value (0-1000), `stretch` is 
   renamed to `width` and is also an int value (1-9) now
 - REMOVED: replaced `matplotlib` font support module by `fontTools`
-- REMOVED: configuration option `use_matplotlib`
+- REMOVED: configuration option `use_matplotlib` - is not needed anymore
+- REMOVED: configuration option `font_cache_directory` - is not needed anymore
 - CHANGED: text rendering for the `drawing` add-on and text measurement is done by the
   `fontTools` package
 - CHANGED: moved text rendering from backend classes to the `Frontend` class

@@ -58,7 +58,6 @@ def default_config() -> ConfigParser:
     config[CORE] = {
         "DEFAULT_DIMENSION_TEXT_STYLE": "OpenSansCondensed-Light",
         "TEST_FILES": "",
-        "FONT_CACHE_DIRECTORY": "",
         "SUPPORT_DIRS": "",
         "LOAD_PROXY_GRAPHICS": "true",
         "STORE_PROXY_GRAPHICS": "true",
@@ -227,22 +226,6 @@ class Options:
             "DEFAULT_DIMENSION_TEXT_STYLE",
             style,
         )
-
-    @property
-    def font_cache_directory(self) -> str:
-        return os.path.expanduser(self.get(CORE, "FONT_CACHE_DIRECTORY"))
-
-    @font_cache_directory.setter
-    def font_cache_directory(self, dirname: Union[str, Path]) -> None:
-        p = Path(dirname).expanduser()
-        if p.exists():
-            absolute = p.absolute()
-            if p.is_dir():
-                self.set(CORE, "FONT_CACHE_DIRECTORY", str(absolute))
-            else:
-                raise ValueError(f'"{absolute}" is not a directory')
-        else:
-            raise ValueError(f'directory "{dirname}" does not exist')
 
     @property
     def support_dirs(self) -> Sequence[str]:
