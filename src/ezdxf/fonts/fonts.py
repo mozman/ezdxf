@@ -8,6 +8,7 @@ import logging
 import os
 import pathlib
 
+from ezdxf.math import Matrix44
 from ezdxf import options
 from .font_face import FontFace
 from .font_manager import FontManager
@@ -16,6 +17,7 @@ from .font_measurements import FontMeasurements
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFEntity, Textstyle
+    from ezdxf.path import Path2d
     from .ttfonts import TTFontRenderer
 
 logger = logging.getLogger("ezdxf")
@@ -246,7 +248,7 @@ class FontRenderType(enum.Enum):
 
 
 class AbstractFont:
-    """The `ezdxf` font abstraction."""
+    """The `ezdxf` font abstraction for text measurement and text path rendering."""
 
     font_render_type = FontRenderType.STROKE
 
@@ -258,11 +260,34 @@ class AbstractFont:
         pass
 
     @abc.abstractmethod
+    def text_width_ex(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> float:
+        pass
+
+    @abc.abstractmethod
     def space_width(self) -> float:
         pass
 
+    @abc.abstractmethod
+    def text_path(self, text: str) -> Path2d:
+        ...
+
+    @abc.abstractmethod
+    def text_path_ex(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> Path2d:
+        ...
+
 
 class TrueTypeFont(AbstractFont):
+    """Represents a True type Font. Font measurement and glyph rendering is done by the
+    `fontTools`package. The given cap height and width factor are the default values for
+    measurements and glyph rendering. The extended methods can override these default
+    values.
+
+    """
+
     font_render_type = FontRenderType.OUTLINE
     _ttf_render_engines: dict[str, TTFontRenderer] = dict()
 
@@ -276,6 +301,7 @@ class TrueTypeFont(AbstractFont):
         self._space_width = (
             self.engine.get_text_length(" ", self.cap_height) * self.width_factor
         )
+        self._matrix = Matrix44.scale(self.width_factor, 1.0, 1.0)
 
     def _create_engine(self, ttf: str) -> TTFontRenderer:
         from .ttfonts import TTFontRenderer
@@ -293,26 +319,46 @@ class TrueTypeFont(AbstractFont):
         """Returns the text width in drawing units for the given `text` string.
         Text rendering and width calculation is based on fontTools.
         """
+        return self.text_width_ex(text, self.cap_height, self.width_factor)
+
+    def text_width_ex(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> float:
+        """Returns the text width in drawing units, bypasses the stored `cap_height` and
+        `width_factor`.
+        """
         if not text.strip():
             return 0
-        return self.engine.get_text_length(text, self.cap_height) * self.width_factor
+        return self.engine.get_text_length(text, cap_height) * width_factor
+
+    def text_path(self, text: str) -> Path2d:
+        """Returns the 2D text path for the given text."""
+        p = self.engine.get_text_path(text, self.cap_height)
+        return p if self.width_factor == 1.0 else p.transform(self._matrix)
+
+    def text_path_ex(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> Path2d:
+        """Returns the 2D text path for the given text, bypasses the stored `cap_height`
+        and `width_factor`."""
+        p = self.engine.get_text_path(text, cap_height)
+        if width_factor == 1.0:
+            return p
+        return p.transform(Matrix44.scale(width_factor, 1.0, 1.0))
 
     def space_width(self) -> float:
         """Returns the width of a "space" char."""
         return self._space_width
 
 
-# Matplotlib provided the TrueType font renderer til v1.0.4,
-# was replaced by fontTools
-MatplotlibFont = TrueTypeFont
-
-
 class MonospaceFont(AbstractFont):
-    """Defines a monospaced font without knowing the real font properties.
-    Each letter has the same cap- and descender height and the same width.
-    This font abstraction is used if no Matplotlib font support is available.
+    """Represents a monospaced font where each letter has the same cap- and descender
+    height and the same width. The given cap height and width factor are the default
+    values for measurements and rendering. The extended methods can override these
+    default values.
 
-    Use the :func:`make_font` factory function to create a font abstraction.
+    This font exists only for generic text measurement in tests and does not render any
+    glyphs!
 
     """
 
@@ -338,11 +384,38 @@ class MonospaceFont(AbstractFont):
         self._space_width = self.measurements.cap_height * self._width_factor
 
     def text_width(self, text: str) -> float:
-        """Returns the text width in drawing units for the given `text` based
-        on a simple monospaced font calculation.
+        """Returns the text width in drawing units for the given `text`."""
+        return self.text_width_ex(
+            text, self.measurements.cap_height, self._width_factor
+        )
 
+    def text_width_ex(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> float:
+        """Returns the text width in drawing units, bypasses the stored `cap_height` and
+        `width_factor`.
         """
-        return len(text) * self.measurements.cap_height * self._width_factor
+        return len(text) * cap_height * width_factor
+
+    def text_path(self, text: str) -> Path2d:
+        """Returns the rectangle text width x cap height as :class:`~ezdxf.path.Path2d` instance."""
+        return self.text_path_ex(text, self.measurements.cap_height, self._width_factor)
+
+    def text_path_ex(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> Path2d:
+        """Returns the rectangle text width x cap height as  :class:`~ezdxf.path.Path2d`
+        instance, bypasses the stored `cap_height` and `width_factor`.
+        """
+        from ezdxf.path import Path2d
+
+        text_width = self.text_width_ex(text, cap_height, width_factor)
+        p = Path2d((0, 0))
+        p.line_to((text_width, 0))
+        p.line_to((text_width, cap_height))
+        p.line_to((0, cap_height))
+        p.close()
+        return p
 
     def space_width(self) -> float:
         """Returns the width of a "space" char."""
@@ -350,21 +423,21 @@ class MonospaceFont(AbstractFont):
 
 
 def make_font(
-    ttf_path: str, cap_height: float, width_factor: float = 1.0
+    font_name: str, cap_height: float, width_factor: float = 1.0
 ) -> AbstractFont:
     """Factory function to create a font abstraction.
 
-    Creates a :class:`TrueTypeFont` if the Matplotlib font support is
-    available and enabled or else a :class:`MonospaceFont`.
+    Returns a :class:`TrueTypeFont` instance, SHX font support will be added in the
+    future. The current implementation maps SHX fonts to equivalent TTF fonts.
 
     Args:
-        ttf_path: raw font file name as stored in the
-            :class:`~ezdxf.entities.Textstyle` entity
+        font_name: font file name as stored in the :class:`~ezdxf.entities.Textstyle`
+            entity e.g. "OpenSans-Regular.ttf"
         cap_height: desired cap height in drawing units.
         width_factor: horizontal text stretch factor
 
     """
-    return TrueTypeFont(ttf_path, cap_height, width_factor)
+    return TrueTypeFont(font_name, cap_height, width_factor)
 
 
 def get_entity_font_face(entity: DXFEntity, doc: Optional[Drawing] = None) -> FontFace:
