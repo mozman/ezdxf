@@ -1,10 +1,10 @@
-# Copyright (c) 2022, Manfred Moitzi
+# Copyright (c) 2022-2023, Manfred Moitzi
 # License: MIT License
 import pathlib
 import ezdxf
 from ezdxf.addons import text2path
 from ezdxf.gfxattribs import GfxAttribs
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
 from ezdxf.math import Matrix44
 from ezdxf import zoom, path
 from ezdxf.render import hatching

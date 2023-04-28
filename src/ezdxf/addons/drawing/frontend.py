@@ -81,7 +81,7 @@ from ezdxf.tools.text import (
 )
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
 
 
 __all__ = ["Frontend"]

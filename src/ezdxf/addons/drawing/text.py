@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Matthew Broadway
+# Copyright (c) 2020-2023, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
 from typing import Union, Tuple, Iterable, Optional, Callable
@@ -14,8 +14,8 @@ from ezdxf.enums import (
 )
 from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
-from ezdxf.tools import fonts
-from ezdxf.tools.fonts import FontMeasurements
+from ezdxf.fonts import fonts
+from ezdxf.fonts.font_measurements import FontMeasurements
 from ezdxf.tools.text import plain_text, text_wrap
 from .text_renderer import TextRenderer
 

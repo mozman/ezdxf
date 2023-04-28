@@ -1,10 +1,10 @@
-# Copyright (c) 2021-2022, Manfred Moitzi
+# Copyright (c) 2021-2023, Manfred Moitzi
 # License: MIT License
 
 import pathlib
 import ezdxf
 from ezdxf import disassemble, zoom
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():

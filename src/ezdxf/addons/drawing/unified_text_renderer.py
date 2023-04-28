@@ -4,10 +4,11 @@ from __future__ import annotations
 import pathlib
 
 import ezdxf.path
-from ezdxf.tools.fonts import FontMeasurements
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
+from ezdxf.fonts.font_measurements import FontMeasurements
+from ezdxf.fonts.ttfonts import TTFontRenderer
+
 from .text_renderer import TextRenderer
-from ezdxf.tools.ttfonts import TTFontRenderer
 
 
 class UnifiedTextRenderer(TextRenderer):

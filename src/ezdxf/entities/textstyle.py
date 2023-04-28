@@ -19,7 +19,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
-    from ezdxf.tools.fonts import AbstractFont
+    from ezdxf.fonts import fonts
 
 __all__ = ["Textstyle"]
 logger = logging.getLogger("ezdxf")
@@ -214,7 +214,7 @@ class Textstyle(DXFEntity):
         self,
         cap_height: Optional[float] = None,
         width_factor: Optional[float] = None,
-    ) -> AbstractFont:
+    ) -> fonts.AbstractFont:
         """Returns a font abstraction :class:`~ezdxf.tools.fonts.AbstractFont`
         for this text style. Returns a font for a cap height of 1, if the
         text style has auto height (:attr:`Textstyle.dxf.height` is 0) and
@@ -223,7 +223,7 @@ class Textstyle(DXFEntity):
         is ``None`` or 0, the default value is 1.
         The attribute :attr:`Textstyle.dxf.big_font` is ignored.
         """
-        from ezdxf.tools import fonts
+        from ezdxf.fonts import fonts
 
         ttf = ""
         if self.has_extended_font_data:

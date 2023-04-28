@@ -10,8 +10,8 @@ from ezdxf.enums import TextEntityAlignment, MAP_TEXT_ENUM_TO_ALIGN_FLAGS
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf import path
 from ezdxf.path import Path
-from ezdxf.tools import fonts
-from ezdxf.tools.ttfonts import TTFontRenderer
+from ezdxf.fonts import fonts
+from ezdxf.fonts.ttfonts import TTFontRenderer
 from ezdxf.query import EntityQuery
 
 __all__ = [

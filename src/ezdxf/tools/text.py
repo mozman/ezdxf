@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, Manfred Moitzi
+# Copyright (c) 2021-2023, Manfred Moitzi
 # License: MIT License
 """
 Tools in this module should be as independent of DXF entities as possible!
@@ -38,7 +38,7 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.math import Vec3, Vec2, UVec
 from ezdxf.colors import rgb2int, RGB, int2rgb
-from .fonts import FontMeasurements, AbstractFont, FontFace, make_font
+from ezdxf.fonts import fonts
 
 if TYPE_CHECKING:
     from ezdxf.entities import Text, MText, DXFEntity
@@ -58,7 +58,7 @@ class TextLine:
 
     """
 
-    def __init__(self, text: str, font: "AbstractFont"):
+    def __init__(self, text: str, font: fonts.AbstractFont):
         self._font = font
         self._text_width: float = font.text_width(text)
         self._stretch_x: float = 1.0
@@ -92,7 +92,7 @@ class TextLine:
         """Returns the final (stretched) text height."""
         return self._font.measurements.total_height * self._stretch_y
 
-    def font_measurements(self) -> FontMeasurements:
+    def font_measurements(self) -> fonts.FontMeasurements:
         """Returns the scaled font measurements."""
         return self._font.measurements.scale(self._stretch_y)
 
@@ -156,7 +156,7 @@ class TextLine:
         return TextLine.transform_2d(vertices, insert, shift, angle, scale, oblique)
 
     def _shift_vector(
-        self, halign: int, valign: int, fm: FontMeasurements
+        self, halign: int, valign: int, fm: fonts.FontMeasurements
     ) -> tuple[float, float]:
         return _shift_x(self.width, halign), _shift_y(fm, valign)
 
@@ -228,7 +228,7 @@ def _shift_x(total_width: float, halign: int) -> float:
     return 0.0  # LEFT
 
 
-def _shift_y(fm: FontMeasurements, valign: int) -> float:
+def _shift_y(fm: fonts.FontMeasurements, valign: int) -> float:
     if valign == BASELINE:
         return fm.baseline
     elif valign == MIDDLE:
@@ -1009,7 +1009,7 @@ class MTextContext:
         self._aci = 7  # used if rgb is None
         self.rgb: Optional[RGB] = None  # overrules aci
         self.align = MTextLineAlignment.BOTTOM
-        self.font_face: FontFace = FontFace()  # is immutable
+        self.font_face = fonts.FontFace()  # is immutable
         self.cap_height: float = 1.0
         self.width_factor: float = 1.0
         self.char_tracking_factor: float = 1.0
@@ -1643,7 +1643,7 @@ class MTextParser:
                     weight = 700
                 elif part.startswith("i1"):
                     style = "Italic"
-            ctx.font_face = FontFace(family=name, style=style, weight=weight)
+            ctx.font_face = fonts.FontFace(family=name, style=style, weight=weight)
 
     def consume_optional_terminator(self):
         if self.scanner.peek() == ";":
@@ -1733,14 +1733,14 @@ def estimate_mtext_extents(mtext: MText) -> tuple[float, float]:
 
     """
 
-    def _make_font() -> AbstractFont:
+    def _make_font() -> fonts.AbstractFont:
         cap_height: float = mtext.dxf.get_default("char_height")
         doc = mtext.doc
         if doc:
             style = doc.styles.get(mtext.dxf.get_default("style"))
             if style is not None:
                 return style.make_font(cap_height)  # type: ignore
-        return make_font(const.DEFAULT_TTF, cap_height=cap_height)
+        return fonts.make_font(const.DEFAULT_TTF, cap_height=cap_height)
 
     return estimate_mtext_content_extents(
         content=mtext.text,
@@ -1752,7 +1752,7 @@ def estimate_mtext_extents(mtext: MText) -> tuple[float, float]:
 
 def estimate_mtext_content_extents(
     content: str,
-    font: AbstractFont,
+    font: fonts.AbstractFont,
     column_width: float = 0.0,
     line_spacing_factor: float = 1.0,
 ) -> tuple[float, float]:

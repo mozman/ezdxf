@@ -18,7 +18,7 @@ if platform.system() != "Windows":
 # things up.
 # On Windows everything works fine, so the module works as expected.
 
-from ezdxf.tools.font_face import FontFace
+from ezdxf.fonts.font_face import FontFace
 from ezdxf.addons import text2path
 from ezdxf.path import Path
 from ezdxf import path, bbox

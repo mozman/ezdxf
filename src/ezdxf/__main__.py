@@ -1,11 +1,11 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 import sys
 import argparse
 from pathlib import Path
 from ezdxf import options, print_config
 from ezdxf import commands
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
 
 YES_NO = {True: "yes", False: "no"}
 options.set(options.CORE, "LOAD_PROXY_GRAPHICS", "true")

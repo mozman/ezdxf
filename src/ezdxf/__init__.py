@@ -30,7 +30,7 @@ from ezdxf.tools.standards import (
     setup_dimstyles,
     setup_dimstyle,
 )
-from ezdxf.tools import pattern, fonts
+from ezdxf.tools import pattern
 from ezdxf.render.arrows import ARROWS
 from ezdxf.lldxf.const import (
     DXFError,
@@ -68,13 +68,10 @@ from ezdxf.lldxf.encoding import (
 codecs.register_error("dxfreplace", dxf_backslash_replace)
 
 EZDXF_TEST_FILES = options.test_files
-
 YES_NO = {True: "yes", False: "no"}
 
 
-def print_config(
-    verbose: bool = False, stream: Optional[TextIO] = None
-) -> None:
+def print_config(verbose: bool = False, stream: Optional[TextIO] = None) -> None:
     from pathlib import Path
 
     if stream is None:

@@ -1,5 +1,5 @@
 # Copyright (c) 2020-2021, Matthew Broadway
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -36,7 +36,7 @@ from ezdxf.enums import InsertUnits, Measurement
 from ezdxf.filemanagement import find_support_file
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import make_table_key as layer_key
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
 from ezdxf.tools.pattern import scale_pattern, HatchPatternType
 
 if TYPE_CHECKING:

@@ -10,7 +10,8 @@ from ezdxf.enums import TextEntityAlignment
 # from ezdxf.layouts import BaseLayout
 from ezdxf.document import Drawing
 from ezdxf.math import Matrix44
-from ezdxf.tools import text_layout as tl, fonts
+from ezdxf.fonts import fonts
+from ezdxf.tools import text_layout as tl
 from ezdxf.tools.text import MTextContext
 from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
 

@@ -21,7 +21,7 @@ from ezdxf.tools.text import (
     upright_text_angle,
     estimate_mtext_content_extents,
 )
-from ezdxf.tools.fonts import MonospaceFont
+from ezdxf.fonts.fonts import MonospaceFont
 from ezdxf.enums import TextEntityAlignment
 from ezdxf.math import Vec3
 from ezdxf.lldxf import const

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, Manfred Moitzi
+# Copyright (c) 2021-2023, Manfred Moitzi
 # License: MIT License
 
 # This is the abstract link between the text layout engine implemented in
@@ -12,13 +12,13 @@ from ezdxf.entities.mtext import MText, MTextColumns
 from ezdxf.enums import (
     MTextParagraphAlignment,
 )
-from ezdxf.tools import text_layout as tl, fonts
+from ezdxf.fonts import fonts
+from ezdxf.tools import text_layout as tl
 from ezdxf.tools.text import (
     MTextParser,
     MTextContext,
     TokenType,
     ParagraphProperties,
-    AbstractFont,
     estimate_mtext_extents,
 )
 
@@ -126,9 +126,7 @@ def new_paragraph(
         _default_stops: Sequence[tl.TabStop] = default_stops or []
         tab_stops = _default_stops
         if p.tab_stops:
-            tab_stops = make_tab_stops(
-                cap_height, width, p.tab_stops, _default_stops
-            )
+            tab_stops = make_tab_stops(cap_height, width, p.tab_stops, _default_stops)
         paragraph = tl.Paragraph(
             align=align,
             indent=(first, left, right),
@@ -167,16 +165,14 @@ def column_heights(columns: MTextColumns) -> list[Optional[float]]:
 
 class AbstractMTextRenderer(abc.ABC):
     def __init__(self) -> None:
-        self._font_cache: dict[tuple[str, float, float], AbstractFont] = {}
+        self._font_cache: dict[tuple[str, float, float], fonts.AbstractFont] = {}
 
     @abc.abstractmethod
     def word(self, test: str, ctx: MTextContext) -> tl.ContentCell:
         ...
 
     @abc.abstractmethod
-    def fraction(
-        self, data: tuple[str, str, str], ctx: MTextContext
-    ) -> tl.ContentCell:
+    def fraction(self, data: tuple[str, str, str], ctx: MTextContext) -> tl.ContentCell:
         ...
 
     @abc.abstractmethod

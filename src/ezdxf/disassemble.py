@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Iterable, Optional, cast, TYPE_CHECKING
@@ -20,7 +20,7 @@ from ezdxf.tools.text import (
     text_wrap,
     estimate_mtext_content_extents,
 )
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
 
 if TYPE_CHECKING:
     from ezdxf.entities import LWPolyline, Polyline, MText, Text

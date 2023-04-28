@@ -11,7 +11,8 @@ from ezdxf.entities import MText
 from ezdxf.lldxf import const
 from ezdxf.math import Matrix44, Vec3, AnyVec
 from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
-from ezdxf.tools import text_layout as tl, fonts
+from ezdxf.fonts import fonts
+from ezdxf.tools import text_layout as tl
 from ezdxf.tools.text import MTextContext
 from .properties import Properties, RenderContext, rgb_to_hex
 from .type_hints import Color

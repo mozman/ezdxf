@@ -12,8 +12,8 @@ if not CWD.exists():
 import ezdxf
 import ezdxf.path
 from ezdxf.math import Matrix44
-from ezdxf.tools.font_manager import FontManager, FontNotFoundError
-from ezdxf.tools.ttfonts import TTFontRenderer
+from ezdxf.fonts.font_manager import FontManager, FontNotFoundError
+from ezdxf.fonts.ttfonts import TTFontRenderer
 
 font_manager = FontManager()
 

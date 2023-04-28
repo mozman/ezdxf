@@ -1,9 +1,9 @@
-# Copyright (c) 2021-2022, Manfred Moitzi
+# Copyright (c) 2021-2023, Manfred Moitzi
 # License: MIT License
 import pathlib
 import ezdxf
 from ezdxf import path, zoom
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
 from ezdxf.addons import text2path
 from ezdxf.enums import TextEntityAlignment
 
@@ -34,9 +34,7 @@ def main():
 
     attr["layer"] = "FILLING"
     attr["color"] = 2
-    for hatch in text2path.make_hatches_from_str(
-        s, ff, align=align, dxfattribs=attr
-    ):
+    for hatch in text2path.make_hatches_from_str(s, ff, align=align, dxfattribs=attr):
         msp.add_entity(hatch)
 
     zoom.extents(msp)

@@ -1,9 +1,9 @@
 Fonts
 =====
 
-.. module:: ezdxf.tools.fonts
+.. module:: ezdxf.fonts.fonts
 
-The module :mod:`ezdxf.tools.fonts` manages the internal usage of fonts and
+The module :mod:`ezdxf.fonts.fonts` manages the internal usage of fonts and
 has no relation how the DXF formats manages text styles.
 
 .. seealso::

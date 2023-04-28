@@ -3,7 +3,7 @@
 
 import pytest
 import platform
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
 
 TEST_FONTS = [
     ("LiberationSans-Regular.ttf", "Liberation Sans"),

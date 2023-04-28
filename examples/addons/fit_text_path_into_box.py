@@ -1,10 +1,10 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 import pathlib
 import ezdxf
 from ezdxf import path, zoom
 from ezdxf.math import Matrix44
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
 from ezdxf.addons import text2path
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
@@ -50,13 +50,9 @@ def main():
     # Move bottom/left corner to (0, 0) if required:
     bbox = path.bbox(final_paths)
     dx, dy, dz = -bbox.extmin
-    final_paths = path.transform_paths(
-        final_paths, Matrix44.translate(dx, dy, dz)
-    )
+    final_paths = path.transform_paths(final_paths, Matrix44.translate(dx, dy, dz))
 
-    path.render_lwpolylines(
-        msp, final_paths, distance=0.01, dxfattribs={"color": 2}
-    )
+    path.render_lwpolylines(msp, final_paths, distance=0.01, dxfattribs={"color": 2})
 
     zoom.extents(msp)
     doc.saveas(CWD / "SqueezeMe.dxf")

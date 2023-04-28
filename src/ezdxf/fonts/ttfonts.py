@@ -7,8 +7,8 @@ from fontTools.ttLib import TTFont
 
 import ezdxf.path
 from ezdxf.math import Matrix44, UVec, BoundingBox2d
-from ezdxf.tools.font_manager import FontManager
-from ezdxf.tools.fonts import FontMeasurements
+from .font_manager import FontManager
+from .font_measurements import FontMeasurements
 
 UNICODE_WHITE_SQUARE = 9633  # U+25A1
 UNICODE_REPLACEMENT_CHAR = 65533  # U+FFFD

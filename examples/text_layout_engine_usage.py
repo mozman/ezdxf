@@ -1,13 +1,12 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
-import sys
 from typing import Iterable
 import pathlib
 import random
 import ezdxf
 from ezdxf import zoom, print_config
 from ezdxf.math import Matrix44
-from ezdxf.tools import fonts
+from ezdxf.fonts import fonts
 from ezdxf.tools import text_layout as tl
 from ezdxf.enums import TextEntityAlignment
 
@@ -123,9 +122,7 @@ class FrameRenderer(tl.ContentRenderer):
         and fraction dividers.
 
         """
-        line = msp.add_line(
-            (x1, y1), (x2, y2), dxfattribs={"color": self.color}
-        )
+        line = msp.add_line((x1, y1), (x2, y2), dxfattribs={"color": self.color})
         if m:
             line.transform(m)
 
@@ -256,9 +253,7 @@ class Fraction(tl.Fraction):
 
     """
 
-    def __init__(
-        self, t1: str, t2: str, stacking: tl.Stacking, font: SizedFont
-    ):
+    def __init__(self, t1: str, t2: str, stacking: tl.Stacking, font: SizedFont):
         top = Word(t1, font)
         bottom = Word(t2, font)
         super().__init__(
