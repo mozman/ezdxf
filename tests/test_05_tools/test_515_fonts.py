@@ -181,6 +181,37 @@ class TestMonospaceFont:
         assert box.size.y == pytest.approx(3)
 
 
+class TestTrueTypeFont:
+    """Just test if the methods are implemented and return plausible values, don't test
+    exact values, this is not a test of the rendering engine itself and results may
+    change by the next revision of the font DejaVuSans.ttf or the fontTools.
+    """
+    @pytest.fixture(scope="class")
+    def ttf(self):
+        return fonts.make_font("DejaVuSans.ttf", 2.5)
+
+    def test_space_width(self, ttf):
+        assert ttf.space_width() > 1
+
+    def test_text_width(self, ttf):
+        assert ttf.text_width("1234") > 7.5
+
+    def test_text_width_ex(self, ttf):
+        assert ttf.text_width_ex("1234", cap_height=3, width_factor=2) > 19
+
+    def test_text_path(self, ttf):
+        box = BoundingBox2d(ttf.text_path("1234").control_vertices())
+        assert box.size.x > 7.5
+        assert box.size.y > 2.5
+
+    def test_text_path_ex(self, ttf):
+        box = BoundingBox2d(
+            ttf.text_path_ex("1234", cap_height=3, width_factor=2).control_vertices()
+        )
+        assert box.size.x > 19
+        assert box.size.y > 3
+
+
 # This test works when testing only this test script in PyCharm or with pytest, but does
 # not work when launching the whole test suite.
 @pytest.mark.skipif(

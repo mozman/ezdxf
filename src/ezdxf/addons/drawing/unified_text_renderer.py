@@ -21,8 +21,6 @@ class UnifiedTextRenderer(TextRenderer):
     def __init__(self, font=fonts.FontFace()) -> None:
         self.font_manager = fonts.font_manager
         self._default_font = font
-        # Each font has its own text path cache
-        # key is hash(FontProperties)
         self._text_renderer_cache: dict[int, TTFontRenderer] = dict()
 
     def get_text_renderer(self, font_face: fonts.FontFace) -> TTFontRenderer:
