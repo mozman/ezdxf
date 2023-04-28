@@ -38,11 +38,12 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.math import Vec3, Vec2, UVec
 from ezdxf.colors import rgb2int, RGB, int2rgb
-from ezdxf.fonts import fonts
+
 
 if TYPE_CHECKING:
     from ezdxf.entities import Text, MText, DXFEntity
     from ezdxf.lldxf.tags import Tags
+    from ezdxf.fonts import fonts
 
 X_MIDDLE = 4  # special case for overall alignment "MIDDLE"
 
@@ -1004,6 +1005,8 @@ class MTextContext:
     """Internal class to store the MTEXT context state."""
 
     def __init__(self) -> None:
+        from ezdxf.fonts import fonts
+
         self._stroke: int = 0
         self.continue_stroke: bool = False
         self._aci = 7  # used if rgb is None
@@ -1630,6 +1633,8 @@ class MTextParser:
         )
 
     def parse_font_properties(self, ctx: MTextContext):
+        from ezdxf.fonts import fonts
+
         parts = self.extract_expression().split("|")
         # an empty font family name does not change the font properties
         if parts and parts[0]:
@@ -1734,6 +1739,8 @@ def estimate_mtext_extents(mtext: MText) -> tuple[float, float]:
     """
 
     def _make_font() -> fonts.AbstractFont:
+        from ezdxf.fonts import fonts
+
         cap_height: float = mtext.dxf.get_default("char_height")
         doc = mtext.doc
         if doc:
