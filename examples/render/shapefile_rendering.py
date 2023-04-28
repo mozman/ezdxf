@@ -1,10 +1,11 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2023, Manfred Moitzi
 #  License: MIT License
 from typing import Set, List
 import pathlib
 import string
 import ezdxf
-from ezdxf import shapefile, path, zoom
+from ezdxf import path, zoom
+from ezdxf.fonts import shapefile
 from ezdxf.math import Matrix44
 from ezdxf.filemanagement import find_support_file
 
@@ -28,7 +29,6 @@ if not CWD.exists():
 # [core]
 # default_dimension_text_style = OpenSansCondensed-Light
 # test_files = ~/src/dxftest
-# font_cache_directory =
 # support_dirs = ~/src/shx-fonts
 # 	~/src/ctb
 # ...

@@ -2,7 +2,8 @@
 #  License: MIT License
 
 import pytest
-from ezdxf import shapefile, path
+from ezdxf.fonts import shapefile
+from ezdxf import path
 
 
 def test_filter_noise():

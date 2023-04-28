@@ -1,8 +1,9 @@
-# Copyright (c) 2018-2022 Manfred Moitzi
+# Copyright (c) 2018-2023 Manfred Moitzi
 # License: MIT License
 import pathlib
 import ezdxf
-from ezdxf import zoom, shapefile
+from ezdxf import zoom
+from ezdxf.fonts import shapefile
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():

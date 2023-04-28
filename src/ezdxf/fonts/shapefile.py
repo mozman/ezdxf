@@ -1,4 +1,4 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2023, Manfred Moitzi
 #  License: MIT License
 
 """
@@ -8,7 +8,7 @@ This module provides support for fonts stored as SHX and SHP files.
 The documentation about the SHP file format can be found at Autodesk:
 https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-DE941DB5-7044-433C-AA68-2A9AE98A5713
 
-Using bytes for strings because no encoding is defined in of shape-files.
+Using bytes for strings because no encoding is defined in shape-files.
 
 """
 from __future__ import annotations

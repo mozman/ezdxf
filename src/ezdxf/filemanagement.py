@@ -269,6 +269,7 @@ def find_support_file(
     if support_dirs is None:
         support_dirs = []
     for directory in support_dirs:
+        directory = directory.strip("\"'")
         filepath = pathlib.Path(directory).expanduser() / filename
         if filepath.exists():
             return str(filepath)
