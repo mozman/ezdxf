@@ -3,6 +3,8 @@
 
 import pytest
 import platform
+
+from ezdxf.math import BoundingBox2d
 from ezdxf.fonts import fonts
 
 TEST_FONTS = [
@@ -148,9 +150,35 @@ class TestFontMeasurements:
     def test_bottom(self, default):
         assert default.bottom == 1.05
 
-    def test_monospace_font(self):
-        font = fonts.MonospaceFont(2.5, 0.75)
-        assert font.text_width("1234") == 7.5
+
+class TestMonospaceFont:
+    @pytest.fixture(scope="class")
+    def mono(self):
+        # special name tio create the MonospaceFont for testing
+        return fonts.make_font("*monospace", 2.5, 0.75)
+
+    def test_space_width(self, mono):
+        assert mono.space_width() == pytest.approx(1.875)
+
+    def test_text_width(self, mono):
+        assert mono.text_width("1234") == pytest.approx(7.5)
+
+    def test_text_width_ex(self, mono):
+        assert mono.text_width_ex(
+            "1234", cap_height=3, width_factor=1
+        ) == pytest.approx(12)
+
+    def test_text_path(self, mono):
+        box = BoundingBox2d(mono.text_path("1234").control_vertices())
+        assert box.size.x == pytest.approx(7.5)
+        assert box.size.y == pytest.approx(2.5)
+
+    def test_text_path_ex(self, mono):
+        box = BoundingBox2d(
+            mono.text_path_ex("1234", cap_height=3, width_factor=1).control_vertices()
+        )
+        assert box.size.x == pytest.approx(12)
+        assert box.size.y == pytest.approx(3)
 
 
 # This test works when testing only this test script in PyCharm or with pytest, but does
