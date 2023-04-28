@@ -44,16 +44,16 @@ ultra-expanded  200%
 
 """
 from __future__ import annotations
-from typing import Optional, NamedTuple, TYPE_CHECKING, cast
+from typing import Optional, TYPE_CHECKING, cast
 import abc
 import logging
 from pathlib import Path
-import json
 import os
 
 from ezdxf import options
 from .font_face import FontFace
 from .font_manager import FontManager
+from .font_measurements import FontMeasurements
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -164,9 +164,9 @@ def get_font_face(font_name: str, map_shx=True) -> FontFace:
 
     """
     if not isinstance(font_name, str):
-        raise TypeError("ttf_path has invalid type")
+        raise TypeError("font_name has invalid type")
     if map_shx:
-        ttf_path = map_shx_to_ttf(font_name)
+        font_name = map_shx_to_ttf(font_name)
     return find_font_face(font_name)
 
 
@@ -277,58 +277,6 @@ def build_font_manager_cache(path: Path) -> None:
         path.write_text(s)
     except IOError as e:
         logger.info(f"Error writing cache file: {str(e)}")
-
-
-# A Visual Guide to the Anatomy of Typography: https://visme.co/blog/type-anatomy/
-# Anatomy of a Character: https://www.fonts.com/content/learning/fontology/level-1/type-anatomy/anatomy
-
-
-class FontMeasurements(NamedTuple):
-    baseline: float
-    cap_height: float
-    x_height: float
-    descender_height: float
-
-    def scale(self, factor: float = 1.0) -> FontMeasurements:
-        return FontMeasurements(
-            self.baseline * factor,
-            self.cap_height * factor,
-            self.x_height * factor,
-            self.descender_height * factor,
-        )
-
-    def shift(self, distance: float = 0.0) -> FontMeasurements:
-        return FontMeasurements(
-            self.baseline + distance,
-            self.cap_height,
-            self.x_height,
-            self.descender_height,
-        )
-
-    def scale_from_baseline(self, desired_cap_height: float) -> FontMeasurements:
-        factor = desired_cap_height / self.cap_height
-        return FontMeasurements(
-            self.baseline,
-            desired_cap_height,
-            self.x_height * factor,
-            self.descender_height * factor,
-        )
-
-    @property
-    def cap_top(self) -> float:
-        return self.baseline + self.cap_height
-
-    @property
-    def x_top(self) -> float:
-        return self.baseline + self.x_height
-
-    @property
-    def bottom(self) -> float:
-        return self.baseline - self.descender_height
-
-    @property
-    def total_height(self) -> float:
-        return self.cap_height + self.descender_height
 
 
 class AbstractFont:
