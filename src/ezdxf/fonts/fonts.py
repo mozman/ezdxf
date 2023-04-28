@@ -1,54 +1,12 @@
 #  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
-"""
-This module manages a backend agnostic font database.
-
-Weight Values: https://developer.mozilla.org/de/docs/Web/CSS/font-weight
-
-Supported by matplotlib, pyqt, SVG
-
-=========== =====
-Thin        100
-Hairline    100
-ExtraLight  200
-UltraLight  200
-Light       300
-Normal      400
-Medium      500
-DemiBold    600
-SemiBold    600
-Bold        700
-ExtraBold   800
-UltraBold   800
-Black       900
-Heavy       900
-ExtraBlack  950
-UltraBlack  950
-=========== =====
-
-Stretch Values: https://developer.mozilla.org/en-US/docs/Web/CSS/font-stretch
-
-Supported by matplotlib, SVG
-
-=============== ======
-ultra-condensed 50%
-extra-condensed 62.5%
-condensed       75%
-semi-condensed  87.5%
-normal          100%
-semi-expanded   112.5%
-expanded        125%
-extra-expanded  150%
-ultra-expanded  200%
-=============== ======
-
-"""
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING, cast
 import abc
+import enum
 import logging
-from pathlib import Path
 import os
+import pathlib
 
 from ezdxf import options
 from .font_face import FontFace
@@ -232,7 +190,7 @@ def _get_font_manger_path():
 def _load_font_manager() -> None:
     repo_fonts_path = os.environ.get("EZDXF_REPO_FONTS")
     if repo_fonts_path:
-        _build_sut_font_manager(Path(repo_fonts_path))
+        _build_sut_font_manager(pathlib.Path(repo_fonts_path))
         return
 
     fm_path = _get_font_manger_path()
@@ -245,7 +203,7 @@ def _load_font_manager() -> None:
     build_font_manager_cache(fm_path)
 
 
-def _build_sut_font_manager(repo_fonts_path: Path) -> None:
+def _build_sut_font_manager(repo_fonts_path: pathlib.Path) -> None:
     """Load font manger for system under test (sut).
 
     Load the fonts included in the repository folder "./fonts" to guarantee the tests
@@ -268,7 +226,7 @@ def _build_sut_font_manager(repo_fonts_path: Path) -> None:
         print(f"Error writing cache file: {str(e)}")
 
 
-def build_font_manager_cache(path: Path) -> None:
+def build_font_manager_cache(path: pathlib.Path) -> None:
     font_manager.build()
     s = font_manager.dumps()
     if not path.parent.exists():
@@ -279,8 +237,18 @@ def build_font_manager_cache(path: Path) -> None:
         logger.info(f"Error writing cache file: {str(e)}")
 
 
+class FontRenderType(enum.Enum):
+    # render glyphs as filled paths: TTF, OTF
+    OUTLINE = enum.auto()
+
+    # render glyphs as line strokes: SHX, SHP
+    STROKE = enum.auto
+
+
 class AbstractFont:
     """The `ezdxf` font abstraction."""
+
+    font_render_type = FontRenderType.STROKE
 
     def __init__(self, measurements: FontMeasurements):
         self.measurements = measurements
@@ -295,6 +263,7 @@ class AbstractFont:
 
 
 class TrueTypeFont(AbstractFont):
+    font_render_type = FontRenderType.OUTLINE
     _ttf_render_engines: dict[str, TTFontRenderer] = dict()
 
     def __init__(self, ttf: str, cap_height: float, width_factor: float = 1.0):
@@ -311,7 +280,7 @@ class TrueTypeFont(AbstractFont):
     def _create_engine(self, ttf: str) -> TTFontRenderer:
         from .ttfonts import TTFontRenderer
 
-        key = Path(ttf).name.lower()
+        key = pathlib.Path(ttf).name.lower()
         try:
             return self._ttf_render_engines[key]
         except KeyError:
@@ -346,6 +315,8 @@ class MonospaceFont(AbstractFont):
     Use the :func:`make_font` factory function to create a font abstraction.
 
     """
+
+    font_render_type = FontRenderType.STROKE
 
     def __init__(
         self,
