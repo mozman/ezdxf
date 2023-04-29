@@ -85,32 +85,49 @@ def test_get_font_measurement_for_shx_fonts():
     assert len(fonts.get_font_measurements("TXT.shx")) == 4
 
 
-def test_same_font_faces_have_equal_hash_values():
-    f1 = fonts.FontFace("arial.ttf", "Arial")
-    f2 = fonts.FontFace("arial.ttf", "Arial")
-    assert hash(f1) == hash(f2)
+class TestFontFace:
+    def test_same_font_faces_have_equal_hash_values(self):
+        f1 = fonts.FontFace("arial.ttf", "Arial")
+        f2 = fonts.FontFace("arial.ttf", "Arial")
+        assert hash(f1) == hash(f2)
 
+    def test_font_face_is_italic(self):
+        assert fonts.FontFace(style="italic").is_italic is True
+        assert fonts.FontFace(style="oblique-italic").is_italic is True
+        assert fonts.FontFace(style="").is_italic is False
+        assert fonts.FontFace().is_italic is False
 
-def test_font_face_is_italic():
-    assert fonts.FontFace(style="italic").is_italic is True
-    assert fonts.FontFace(style="oblique-italic").is_italic is True
-    assert fonts.FontFace(style="").is_italic is False
-    assert fonts.FontFace().is_italic is False
+    def test_font_face_is_oblique(self):
+        assert fonts.FontFace(style="oblique").is_oblique is True
+        assert fonts.FontFace(style="oblique-italic").is_oblique is True
+        assert fonts.FontFace(style="").is_oblique is False
+        assert fonts.FontFace().is_oblique is False
 
+    def test_font_face_is_bold(self):
+        assert fonts.FontFace().is_bold is False
+        assert fonts.FontFace(weight=300).is_bold is False
+        assert fonts.FontFace(weight=500).is_bold is True
+        assert fonts.FontFace(weight=700).is_bold is True
+        assert fonts.FontFace(weight=900).is_bold is True
 
-def test_font_face_is_oblique():
-    assert fonts.FontFace(style="oblique").is_oblique is True
-    assert fonts.FontFace(style="oblique-italic").is_oblique is True
-    assert fonts.FontFace(style="").is_oblique is False
-    assert fonts.FontFace().is_oblique is False
+    def test_weight_str(self):
+        assert fonts.FontFace(weight=-1000).weight_str == "Thin"
+        assert fonts.FontFace(weight=0).weight_str == "Thin"
+        assert fonts.FontFace(weight=90).weight_str == "Thin"
+        assert fonts.FontFace(weight=110).weight_str == "Thin"
+        assert fonts.FontFace(weight=390).weight_str == "Normal"
+        assert fonts.FontFace(weight=410).weight_str == "Normal"
+        assert fonts.FontFace(weight=890).weight_str == "Black"
+        assert fonts.FontFace(weight=950).weight_str == "Black"
+        assert fonts.FontFace(weight=3000).weight_str == "Black"
 
-
-def test_font_face_is_bold():
-    assert fonts.FontFace().is_bold is False
-    assert fonts.FontFace(weight=300).is_bold is False
-    assert fonts.FontFace(weight=500).is_bold is True
-    assert fonts.FontFace(weight=700).is_bold is True
-    assert fonts.FontFace(weight=900).is_bold is True
+    def test_width_str(self):
+        assert fonts.FontFace(width=-1000).width_str == "UltraCondensed"
+        assert fonts.FontFace(width=0).width_str == "UltraCondensed"
+        assert fonts.FontFace(width=1).width_str == "UltraCondensed"
+        assert fonts.FontFace(width=5).width_str == "Medium"
+        assert fonts.FontFace(width=9).width_str == "UltraExpanded"
+        assert fonts.FontFace(width=1000).width_str == "UltraExpanded"
 
 
 class TestFontMeasurements:
@@ -186,6 +203,7 @@ class TestTrueTypeFont:
     exact values, this is not a test of the rendering engine itself and results may
     change by the next revision of the font DejaVuSans.ttf or the fontTools.
     """
+
     @pytest.fixture(scope="class")
     def ttf(self):
         return fonts.make_font("DejaVuSans.ttf", 2.5)
@@ -218,7 +236,10 @@ class TestTrueTypeFont:
     platform.system() != "Windows", reason="does not work on github/linux?"
 )
 def test_find_font_file_by_best_match():
-    assert fonts.find_best_match(family="Noto Sans SC").filename == "NotoSansSC-Regular.otf"
+    assert (
+        fonts.find_best_match(family="Noto Sans SC").filename
+        == "NotoSansSC-Regular.otf"
+    )
     assert fonts.find_best_match(family="mozman") is None
     assert (
         fonts.find_best_match(family="Liberation Sans").filename

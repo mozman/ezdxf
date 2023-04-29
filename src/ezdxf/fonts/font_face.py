@@ -35,7 +35,7 @@ class FontFace(NamedTuple):
     @property
     def width_str(self) -> str:
         """Returns the :attr:`width` as string e.g. "Condensed", "Expanded", ..."""
-        return get_width_str(self.weight)
+        return get_width_str(self.width)
 
     def distance(self, font_face: FontFace) -> tuple[int, int]:
         return self.weight - font_face.weight, self.width - font_face.width
@@ -68,10 +68,11 @@ WIDTH_STR = {
 
 def get_weight_str(weight: int) -> str:
     """Returns the :attr:`weight` as string e.g. "Thin", "Normal", "Bold", ..."""
-    index = max(min(round(weight + 1 / 100), 1), 9)
-    return WEIGHT_STR[index]
+    key = max(min(round((weight + 1) / 100) * 100, 900), 100)
+    return WEIGHT_STR[key]
 
 
 def get_width_str(width: int) -> str:
     """Returns the :attr:`width` as string e.g. "Condensed", "Expanded", ..."""
-    return WEIGHT_STR[max(min(width, 1), 9)]
+    key = max(min(width, 9), 1)
+    return WIDTH_STR[key]
