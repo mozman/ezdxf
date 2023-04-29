@@ -30,4 +30,5 @@ tox-all.ini
 /examples_dxf/mtext_simple_all_alignments.dxf
 /src/mypy-reports/
 /examples_hpgl2
-/shapefiles
+/fonts/shapefiles
+/fonts/*.json

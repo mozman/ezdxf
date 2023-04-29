@@ -63,6 +63,9 @@ class FontCache:
         # e.g. "arial.ttf" for "C:\Windows\Fonts\Arial.ttf"
         self._cache: dict[str, CacheEntry] = dict()
 
+    def __contains__(self, font_name: str) -> bool:
+        return self.key(font_name) in self._cache
+
     def __getitem__(self, item: str) -> CacheEntry:
         return self._cache[self.key(item)]
 
@@ -182,7 +185,10 @@ def filter_style(style: str, entries: Iterable[CacheEntry]) -> list[CacheEntry]:
     return [e for e in entries if key in e.font_face.style.lower()]
 
 
-SUPPORTED_FONT_TYPES = {".ttf", ".ttc", ".otf"}
+# TrueType and OpenType fonts:
+# Note: CAD applications like AutoCAD/BricsCAD do not support OpenType fonts!
+SUPPORTED_TTF_TYPES = {".ttf", ".ttc", ".otf"}
+# Basic stroke-fonts included in CAD applications:
 SUPPORTED_SHAPE_FILES = {".shx", ".shp", ".lff"}
 NO_FONT_FACE = FontFace()
 
@@ -195,12 +201,15 @@ class FontManager:
     def __init__(self) -> None:
         self.platform = platform.system()
         self._font_cache: FontCache = FontCache()
-        self._loaded_fonts: dict[str, TTFont] = dict()
+        self._loaded_ttf_fonts: dict[str, TTFont] = dict()
         self._fallback_font_name = ""
+
+    def has_font(self, font_name: str) -> bool:
+        return font_name in self._font_cache
 
     def clear(self) -> None:
         self._font_cache = FontCache()
-        self._loaded_fonts.clear()
+        self._loaded_ttf_fonts.clear()
         self._fallback_font_name = ""
 
     def fallback_font_name(self) -> str:
@@ -220,7 +229,7 @@ class FontManager:
 
     def get_ttf_font(self, font_name: str, font_number: int = 0) -> TTFont:
         try:
-            return self._loaded_fonts[font_name]
+            return self._loaded_ttf_fonts[font_name]
         except KeyError:
             pass
         fallback_name = self.fallback_font_name()
@@ -231,7 +240,7 @@ class FontManager:
             )
         except IOError as e:
             raise FontNotFoundError(str(e))
-        self._loaded_fonts[font_name] = font
+        self._loaded_ttf_fonts[font_name] = font
         return font
 
     def ttf_font_from_font_face(self, font_face: FontFace) -> TTFont:
@@ -267,19 +276,26 @@ class FontManager:
         manager. If no directories are specified, the known font folders for Windows,
         Linux and macOS are searched by default. Searches recursively all
         subdirectories.
+
+        The folders stored in the config SUPPORT_DIRS option are scanned recursively for
+        .shx, .shp and .lff fonts, the basic stroke fonts included in CAD applications.
+
         """
+        from ezdxf._options import options
+
         if folders:
             dirs = list(folders)
         else:
             dirs = FONT_DIRECTORIES.get(self.platform, LINUX_FONT_DIRS)
-        self.scan_all(dirs)
-        if len(self._font_cache) == 0:  # system under test - github action
+        self.scan_all(dirs + list(options.support_dirs))
+        if len(self._font_cache) == 0:  # last resort - the repo ./fonts directory
             path = Path(__file__)
             fonts = path.parent.parent.parent.parent / "fonts"
             self.scan_folder(fonts)
 
     def scan_all(self, folders: Iterable[str]) -> None:
         for folder in folders:
+            folder = folder.strip("'\"")  # strip quotes
             self.scan_folder(Path(folder).expanduser())
 
     def scan_folder(self, folder: Path):
@@ -290,7 +306,7 @@ class FontManager:
                 self.scan_folder(file)
                 continue
             ext = file.suffix.lower()
-            if ext in SUPPORTED_FONT_TYPES:
+            if ext in SUPPORTED_TTF_TYPES:
                 font_face = get_ttf_font_face(file)
                 self._font_cache.add_entry(file, font_face)
             elif ext in SUPPORTED_SHAPE_FILES:
@@ -340,9 +356,9 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
 
 def get_shape_file_font_face(font_path: Path) -> FontFace:
     return FontFace(
-        filename=font_path.name,  # txt.shx, simplex.shx, ...
-        family=font_path.stem.lower(),  # txt, simplex, ...
-        style=font_path.suffix.lower(),  # shx, shp or lff
+        filename=font_path.name,  # "txt.shx", "simplex.shx", ...
+        family=font_path.stem.lower(),  # "txt", "simplex", ...
+        style=font_path.suffix.lower(),  # ".shx", ".shp" or ".lff"
         width=5,
         weight=400,
     )
