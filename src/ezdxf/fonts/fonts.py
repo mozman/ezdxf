@@ -5,7 +5,7 @@ from typing import Optional, TYPE_CHECKING, cast
 import abc
 import enum
 import logging
-import os
+import sys
 import pathlib
 
 from ezdxf.math import Matrix44
@@ -190,10 +190,8 @@ def _get_font_manger_path():
 
 
 def _load_font_manager() -> None:
-    repo_fonts_path = os.environ.get("EZDXF_REPO_FONTS")
-    if repo_fonts_path:
-        _build_sut_font_manager(pathlib.Path(repo_fonts_path))
-        return
+    if "pytest" in sys.modules:
+        return  # do nothing: system under test (sut)
 
     fm_path = _get_font_manger_path()
     if fm_path.exists():
@@ -205,22 +203,23 @@ def _load_font_manager() -> None:
     build_font_manager_cache(fm_path)
 
 
-def _build_sut_font_manager(repo_fonts_path: pathlib.Path) -> None:
-    """Load font manger for system under test (sut).
+def build_sut_font_manager_cache(repo_font_path: pathlib.Path) -> None:
+    """Load font manger cache for system under test (sut).
 
     Load the fonts included in the repository folder "./fonts" to guarantee the tests
-    have the same fonts available on all systems. The environment variable
-    "EZDXF_REPO_FONTS" is set in "conftest.py" at session start.
+    have the same fonts available on all systems.
     """
+    if font_manager.has_font("txt.shx"):
+        return
     font_manager.clear()
-    cache_file = repo_fonts_path / "font_manager_cache.json"
+    cache_file = repo_font_path / "font_manager_cache.json"
     if cache_file.exists():
         try:
             font_manager.loads(cache_file.read_text())
             return
         except IOError as e:
             print(f"Error loading cache file: {str(e)}")
-    font_manager.build([str(repo_fonts_path)])
+    font_manager.build([str(repo_font_path)])
     s = font_manager.dumps()
     try:
         cache_file.write_text(s)

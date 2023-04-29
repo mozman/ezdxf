@@ -1,12 +1,16 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
-import os
+import pytest
+
+from ezdxf.fonts import fonts
 from pathlib import Path
 
 
-# https://docs.pytest.org/en/latest/reference/reference.html#pytest.hookspec.pytest_sessionstart
-def pytest_sessionstart(session):
+@pytest.fixture(scope="session", autouse=True)
+def load_sut_font_cache():
     path = Path(__file__)
     font_folder = path.parent.parent / "fonts"
     if font_folder.exists():
-        os.environ["EZDXF_REPO_FONTS"] = str(font_folder)
+        fonts.build_sut_font_manager_cache(font_folder)
+    else:
+        exit(666)

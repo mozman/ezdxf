@@ -121,14 +121,17 @@ class FontCache:
         elif len(entries_):
             entries = entries_
         # best match by weight, italic, width
-        return sorted(
+        # Note: the width property is used to prioritize shapefile types:
+        # 1st .shx; 2nd: .shp; 3rd: .lff
+        result = sorted(
             entries,
             key=lambda e: (
                 abs(e.font_face.weight - weight),
                 e.font_face.is_italic is not italic,
                 abs(e.font_face.width - width),
             ),
-        )[0].font_face
+        )
+        return result[0].font_face
 
     def loads(self, s: str) -> None:
         cache: dict[str, CacheEntry] = dict()
@@ -288,10 +291,6 @@ class FontManager:
         else:
             dirs = FONT_DIRECTORIES.get(self.platform, LINUX_FONT_DIRS)
         self.scan_all(dirs + list(options.support_dirs))
-        if len(self._font_cache) == 0:  # last resort - the repo ./fonts directory
-            path = Path(__file__)
-            fonts = path.parent.parent.parent.parent / "fonts"
-            self.scan_folder(fonts)
 
     def scan_all(self, folders: Iterable[str]) -> None:
         for folder in folders:
@@ -355,10 +354,21 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
 
 
 def get_shape_file_font_face(font_path: Path) -> FontFace:
+    ext = font_path.suffix.lower()
+    # Note: the width property is not defined in shapefiles and is used to
+    # prioritize the shapefile types for find_best_match():
+    # 1st .shx; 2nd: .shp; 3rd: .lff
+
+    width = 5
+    if ext == ".shp":
+        width = 6
+    if ext == ".lff":
+        width = 7
+
     return FontFace(
         filename=font_path.name,  # "txt.shx", "simplex.shx", ...
         family=font_path.stem.lower(),  # "txt", "simplex", ...
         style=font_path.suffix.lower(),  # ".shx", ".shp" or ".lff"
-        width=5,
+        width=width,
         weight=400,
     )
