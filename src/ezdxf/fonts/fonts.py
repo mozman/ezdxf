@@ -209,7 +209,7 @@ def build_sut_font_manager_cache(repo_font_path: pathlib.Path) -> None:
     Load the fonts included in the repository folder "./fonts" to guarantee the tests
     have the same fonts available on all systems.
     """
-    if font_manager.has_font("txt.shx"):
+    if font_manager.has_font("DejaVuSans.ttf"):
         return
     font_manager.clear()
     cache_file = repo_font_path / "font_manager_cache.json"
