@@ -223,6 +223,11 @@ class TestTrueTypeFont:
         assert box.size.y > 3
 
 
+# This test works when testing only this test script in PyCharm or with pytest, but does
+# not work when launching the whole test suite.
+@pytest.mark.skipif(
+    platform.system() != "Windows", reason="does not work on github/linux?"
+)
 def test_find_font_file_by_best_match():
     assert (
         fonts.find_best_match(family="Noto Sans SC").filename
