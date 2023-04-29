@@ -15,17 +15,10 @@ TEST_FONTS = [
     ("DejaVuSans.ttf", "DejaVu Sans"),
     ("DejaVuSerif.ttf", "DejaVu Serif"),
     ("DejaVuSansMono.ttf", "DejaVu Sans Mono"),
+    ("OpenSans-Regular.ttf", "Open Sans"),
+    ("OpenSansCondensed-Light.ttf", "Open Sans Condensed"),
+    ("NotoSansSC-Regular.otf", "Noto Sans SC"),
 ]
-if platform.system() == "Windows":
-    # These fonts do work on Linux when testing only this test script in PyCharm or with
-    # pytest, but does not work when launching the whole test suite.
-    TEST_FONTS.extend(
-        [
-            ("OpenSans-Regular.ttf", "Open Sans"),
-            ("OpenSansCondensed-Light.ttf", "Open Sans Condensed"),
-            ("NotoSansSC-Regular.otf", "Noto Sans SC"),
-        ]
-    )
 
 
 @pytest.mark.parametrize("ttf,family", TEST_FONTS)
@@ -230,11 +223,6 @@ class TestTrueTypeFont:
         assert box.size.y > 3
 
 
-# This test works when testing only this test script in PyCharm or with pytest, but does
-# not work when launching the whole test suite.
-@pytest.mark.skipif(
-    platform.system() != "Windows", reason="does not work on github/linux?"
-)
 def test_find_font_file_by_best_match():
     assert (
         fonts.find_best_match(family="Noto Sans SC").filename
@@ -248,8 +236,6 @@ def test_find_font_file_by_best_match():
     assert fonts.find_best_match(family="Dejavu Sans").filename == "DejaVuSans.ttf"
 
 
-# Works on Windows and Linux Mint, but not on github/Ubuntu
-@pytest.mark.skipif(platform.system() != "Windows", reason="does not work on github")
 def test_find_generic_font_family():
     assert fonts.find_best_match(family="serif").filename == "DejaVuSerif.ttf"
     assert fonts.find_best_match(family="sans-serif").filename == "DejaVuSans.ttf"
