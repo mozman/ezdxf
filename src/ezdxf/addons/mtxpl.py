@@ -360,7 +360,7 @@ class MTextExplode(AbstractMTextRenderer):
 
     def make_required_style_table_entries(self) -> list[Textstyle]:
         def ttf_path(font_face: fonts.FontFace) -> str:
-            ttf = font_face.ttf
+            ttf = font_face.filename
             if not ttf:
                 ttf = fonts.find_font_file_name(font_face)
             else:

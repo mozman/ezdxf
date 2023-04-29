@@ -5,8 +5,8 @@ from typing import NamedTuple
 
 
 class FontFace(NamedTuple):
-    # ttf is the font file name without parent directories e.g. "OpenSans-Regular.ttf"
-    ttf: str = ""
+    # filename without parent directories e.g. "OpenSans-Regular.ttf"
+    filename: str = ""
     family: str = "sans-serif"
     style: str = "Regular"
     weight: int = 400  # Normal - usWeightClass

@@ -24,7 +24,7 @@ class UnifiedTextRenderer(TextRenderer):
         self._text_renderer_cache: dict[int, TTFontRenderer] = dict()
 
     def get_text_renderer(self, font_face: fonts.FontFace) -> TTFontRenderer:
-        font_name = pathlib.Path(font_face.ttf).name
+        font_name = pathlib.Path(font_face.filename).name
         key = hash(font_name)
         try:
             return self._text_renderer_cache[key]

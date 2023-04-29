@@ -46,7 +46,7 @@ CURRENT_CACHE_VERSION = 1
 
 
 class CacheEntry(NamedTuple):
-    file_path: Path
+    file_path: Path  # full file path e.g. "C:\Windows\Fonts\DejaVuSans.ttf"
     font_face: FontFace
 
 
@@ -86,7 +86,7 @@ class FontCache:
             return self._cache[self.key(fallback)]
 
     def find_best_match(self, font_face: FontFace) -> Optional[FontFace]:
-        entry = self._cache.get(self.key(font_face.ttf), None)
+        entry = self._cache.get(self.key(font_face.filename), None)
         if entry:
             return entry.font_face
         return self.find_best_match_ex(
@@ -146,7 +146,7 @@ class FontCache:
                     raise IOError("invalid cache file format")
                 path = Path(file_path)  # full path, e.g. "C:\Windows\Fonts\Arial.ttf"
                 font_face = FontFace(
-                    ttf=path.name,  # file name without parent dirs, e.g. "Arial.ttf"
+                    filename=path.name,  # file name without parent dirs, e.g. "Arial.ttf"
                     family=family,  # Arial
                     style=style,  # Regular
                     weight=weight,  # 400 (Normal)
@@ -183,6 +183,7 @@ def filter_style(style: str, entries: Iterable[CacheEntry]) -> list[CacheEntry]:
 
 
 SUPPORTED_FONT_TYPES = {".ttf", ".ttc", ".otf"}
+SUPPORTED_SHAPE_FILES = {".shx", ".shp", ".lff"}
 NO_FONT_FACE = FontFace()
 
 
@@ -234,7 +235,7 @@ class FontManager:
         return font
 
     def ttf_font_from_font_face(self, font_face: FontFace) -> TTFont:
-        return self.get_ttf_font(Path(font_face.ttf).name)
+        return self.get_ttf_font(Path(font_face.filename).name)
 
     def get_font_face(self, font_name: str) -> FontFace:
         cache_entry = self._font_cache.get(font_name, self.fallback_font_name())
@@ -250,16 +251,16 @@ class FontManager:
     ) -> Optional[FontFace]:
         return self._font_cache.find_best_match_ex(family, style, weight, width, italic)
 
-    def find_font_file_name(self, font_face: FontFace) -> str:
-        """Returns the file name of the font without parent directories
+    def find_font_name(self, font_face: FontFace) -> str:
+        """Returns the font file name of the font without parent directories
         e.g. "LiberationSans-Regular.ttf".
         """
         font_face = self._font_cache.find_best_match(font_face)  # type: ignore
         if font_face is None:
             font_face = self.get_font_face(self.fallback_font_name())
-            return font_face.ttf
+            return font_face.filename
         else:
-            return font_face.ttf
+            return font_face.filename
 
     def build(self, folders: Optional[Sequence[str]] = None) -> None:
         """Adds all supported font types located in the given `folders` to the font
@@ -292,6 +293,9 @@ class FontManager:
             if ext in SUPPORTED_FONT_TYPES:
                 font_face = get_ttf_font_face(file)
                 self._font_cache.add_entry(file, font_face)
+            elif ext in SUPPORTED_SHAPE_FILES:
+                font_face = get_shape_file_font_face(file)
+                self._font_cache.add_entry(file, font_face)
 
     def dumps(self) -> str:
         return self._font_cache.dumps()
@@ -300,11 +304,17 @@ class FontManager:
         self._font_cache.loads(s)
 
 
+def normalize_style(style: str) -> str:
+    if style in {"Book"}:
+        style = "Regular"
+    return style
+
+
 def get_ttf_font_face(font_path: Path) -> FontFace:
     try:
         ttf = TTFont(font_path, fontNumber=0)
     except IOError:
-        return FontFace(ttf=font_path.name)
+        return FontFace(filename=font_path.name)
 
     names = ttf["name"].names
     family = ""
@@ -319,12 +329,20 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
     os2_table = ttf["OS/2"]
     weight = os2_table.usWeightClass
     width = os2_table.usWidthClass
-    if style == "Book":
-        style = "Regular"
     return FontFace(
-        ttf=font_path.name,
+        filename=font_path.name,
         family=family,
-        style=style,
+        style=normalize_style(style),
         width=width,
         weight=weight,
+    )
+
+
+def get_shape_file_font_face(font_path: Path) -> FontFace:
+    return FontFace(
+        filename=font_path.name,  # txt.shx, simplex.shx, ...
+        family=font_path.stem.lower(),  # txt, simplex, ...
+        style=font_path.suffix.lower(),  # shx, shp or lff
+        width=5,
+        weight=400,
     )

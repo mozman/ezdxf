@@ -102,9 +102,9 @@ weight
 
 .. autoclass:: FontFace
 
-    .. attribute:: ttf
+    .. attribute:: filename
 
-        Raw font file name as string, e.g. "arial.ttf"
+        font file name without parent directories as string, e.g. "arial.ttf"
 
     .. attribute:: family
 

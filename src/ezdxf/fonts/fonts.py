@@ -176,7 +176,7 @@ def find_best_match(
 
 def find_font_file_name(font_face: FontFace) -> str:
     """Returns the true type font file name without parent directories e.g. "Arial.ttf"."""
-    return font_manager.find_font_file_name(font_face)
+    return font_manager.find_font_name(font_face)
 
 
 def load():

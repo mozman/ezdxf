@@ -103,7 +103,7 @@ def make_paths_from_str(
 def get_render_engine(
     font: fonts.FontFace,
 ) -> TTFontRenderer:
-    font_name = fonts.font_manager.find_font_file_name(font)
+    font_name = fonts.font_manager.find_font_name(font)
     ttfont = fonts.font_manager.get_ttf_font(font_name)
     return TTFontRenderer(ttfont)
 

@@ -32,7 +32,7 @@ NOTO_SANS_SC = "NotoSansSC-Regular.otf"
 
 
 def _to_paths(s, f=DEFAULT):
-    return text2path.make_paths_from_str(s, font=FontFace(ttf=f))
+    return text2path.make_paths_from_str(s, font=FontFace(filename=f))
 
 
 # Font 'Arial' required, a replacement fonts may return a different
