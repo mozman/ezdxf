@@ -86,7 +86,7 @@ A smaller text size is required:
 Adding vertical placed MULTILEADER entities:
 
 .. literalinclude:: src/mleader/mtext_quick_leader.py
-    :lines: 53-60
+    :lines: 54-61
 
 This example already shows the limitation caused by different text renderings in
 various CAD applications. The `ezdxf` text measurement by `matplotlib` is
@@ -134,31 +134,31 @@ leaders. The render UCS for this example is the WCS to keep things simple.
 Create a new MULTILEADER entity.
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 23
+    :lines: 24
 
 Set MTEXT content, text style and alignment.
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 24-28
+    :lines: 25-29
 
 Add the first leader on the left side.
 The leader points always to the first given vertex and all vertices are given
 in render UCS coordinates (= WCS in this example).
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 29
+    :lines: 30
 
 
 More than one vertex per leader can be used:
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 30-33
+    :lines: 31-34
 
 The insert point of the :meth:`build` method is the alignment point for the
 MTEXT content.
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 34
+    :lines: 35
 
 The "dogleg" settings are defined by the MLEADERSTYLE "Standard".
 
@@ -168,7 +168,7 @@ This example shows a leader attached to the right side and the MTEXT aligned
 to the right side.
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 43-50
+    :lines: 44-51
 
 .. image:: gfx/mleader_mtext_right.png
 
@@ -179,14 +179,14 @@ different text size calculations from AutoCAD/BricsCAD and Matplotlib.
 The longer the text, the greater the error.
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 59-67
+    :lines: 60-68
 
 .. image:: gfx/mleader_mtext_left_right_1.png
 
 A centered MTEXT alignment gives a more even result.
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 76-84
+    :lines: 77-85
 
 .. image:: gfx/mleader_mtext_left_right_2.png
 
@@ -240,7 +240,7 @@ The connection type for each side can be set by the method
 sides is `by_style`:
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 101-104
+    :lines: 102-105
 
 .. image:: gfx/mleader_mtext_horiz_connection_types.png
 
@@ -282,17 +282,17 @@ Create the BLOCK content, the full :func:`create_square_block` function
 can be found in the `block_content.py`_ script.
 
 .. literalinclude:: src/mleader/block_content.py
-    :lines: 71-73
+    :lines: 72-74
 
 Create the MULTILEADER and set the content:
 
 .. literalinclude:: src/mleader/block_content.py
-    :lines: 74-77
+    :lines: 75-78
 
 Set the BLOCK attribute content as text:
 
 .. literalinclude:: src/mleader/block_content.py
-    :lines: 78-79
+    :lines: 79-80
 
 Add some leader lines to the left and right side of the BLOCK:
 
@@ -302,14 +302,14 @@ means relative to the UCS origin and this example shows the simple case
 where the UCS is the WCS which is also the default setting.
 
 .. literalinclude:: src/mleader/block_content.py
-    :lines: 81-84
+    :lines: 82-85
 
 Last step is to build the final MULTILEADER entity.
 This example uses the alignment type `insertion_point` where the insert point of
 the :meth:`build` method is the base point of the BLOCK:
 
 .. literalinclude:: src/mleader/block_content.py
-    :lines: 86
+    :lines: 87
 
 .. image:: gfx/mleader_block_horiz_1.png
 
