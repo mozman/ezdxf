@@ -120,6 +120,17 @@ class TestGlyphCache:
         assert fm.x_height == 4
         assert fm.descender_height == 2
 
+    def test_path_for_unsupported_glyphs(self, cache):
+        box = cache.get_shape(1234)
+        assert len(box) == 5
+
+    def test_spaces_are_measured(self, cache):
+        assert cache.get_text_length("   ", cache.font_measurements.cap_height) == 18
+
+    def test_spaces_are_rendered(self, cache):
+        p = cache.get_text_path("   ", cache.font_measurements.cap_height)
+        assert p.end.isclose((18, 0))
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

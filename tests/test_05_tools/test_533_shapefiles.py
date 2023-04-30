@@ -6,6 +6,7 @@ from ezdxf.fonts import shapefile
 from ezdxf import path
 from ezdxf.math import BoundingBox2d
 
+
 def test_filter_noise():
     lines = list(
         shapefile.filter_noise(
@@ -291,6 +292,21 @@ class TestShapeRenderer:
         assert p2.end.isclose(
             p.end
         ), "should be perfect rendering - no placing-hack required"
+
+    def test_unsupported_non_printable_shape_number_returns_empty_path(self, shp):
+        cache = shapefile.GlyphCache(shp)
+        p = cache.get_shape(10)
+        assert len(p) == 0
+
+    def test_unsupported_printable_shape_number_returns_empty_box(self, shp):
+        cache = shapefile.GlyphCache(shp)
+        box = cache.get_shape(1234)
+        assert box is cache.empty_box
+        assert box.end.x == cache.space_width
+
+    def test_empty_box_has_advance_width_like_glyph_A(self, shp):
+        cache = shapefile.GlyphCache(shp)
+        assert cache.get_advance_width(1234) == cache.get_advance_width(65)
 
 
 FILE_1 = b"""

@@ -47,6 +47,10 @@ class UnsupportedShapeFile(ShapeFileException):
     pass
 
 
+class UnsupportedShapeNumber(ShapeFileException):
+    pass
+
+
 class InvalidFontDefinition(ShapeFileException):
     pass
 
@@ -234,7 +238,7 @@ class ShapeFile:
     def get_codes(self, number: int) -> Sequence[int]:
         symbol = self.shapes.get(number)
         if symbol is None:
-            return tuple()  # return codes for non-printable chars
+            raise UnsupportedShapeNumber(number)
         return symbol.data
 
     def render_shape(self, number: int, stacked=False) -> path.Path2d:
@@ -614,6 +618,8 @@ def render_shapes(
     for shape_number in shape_numbers:
         try:
             ctx.render(shape_number, reset_to_baseline=reset_to_baseline)
+        except UnsupportedShapeNumber:
+            pass
         except StackUnderflow:
             raise StackUnderflow(
                 f"stack underflow while rendering shape number {shape_number}"
@@ -912,7 +918,8 @@ class GlyphCache:
         self._glyph_cache: dict[int, path.Path2d] = dict()
         self._advance_width_cache: dict[int, float] = dict()
         self.space_width: float = self.detect_space_width()
-        self.font_measurements = self._get_font_measurements()
+        self.empty_box: path.Path2d = self.get_empty_box()
+        self.font_measurements: FontMeasurements = self._get_font_measurements()
 
     def get_scaling_factor(self, cap_height: float) -> float:
         try:
@@ -921,18 +928,50 @@ class GlyphCache:
             return 1.0
 
     def detect_space_width(self) -> float:
+        if 32 not in self.font.shapes:
+            return self.get_shape(65).end.x  # width of "A"
         space = self.get_shape(32)
-        space_width = space.end.x
-        if space_width > 0.0:
-            return space_width
-        return self.get_shape(65).end.x  # width of "A"
+        return space.end.x
+
+    def get_empty_box(self) -> path.Path2d:
+        glyph_A = self.get_shape(65)
+        box = BoundingBox2d(glyph_A.control_vertices())
+        height = box.size.y
+        width = box.size.x
+        start = glyph_A.start
+        p = path.Path2d(start)
+        p.line_to(start + Vec2(width, 0))
+        p.line_to(start + Vec2(width, height))
+        p.line_to(start + Vec2(0, height))
+        p.close()
+        p.move_to(glyph_A.end)
+        return p
+
+    def _render_shape(self, shape_number):
+        ctx = ShapeRenderer(
+            path.Path2d(),
+            pen_down=True,
+            stacked=False,
+            get_codes=self.font.get_codes,
+        )
+        try:
+            ctx.render(shape_number, reset_to_baseline=False)
+        except StackUnderflow:
+            pass
+        return ctx.p
 
     def get_shape(self, shape_number: int) -> path.Path2d:
         try:
             return self._glyph_cache[shape_number]
         except KeyError:
             pass
-        glyph = self.font.render_shape(shape_number)
+        try:
+            glyph = self._render_shape(shape_number)
+        except UnsupportedShapeNumber:
+            if shape_number < 32:
+                glyph = path.Path2d()
+            else:
+                glyph = self.empty_box
         self._glyph_cache[shape_number] = glyph
         self._advance_width_cache[shape_number] = glyph.end.x
         return glyph
@@ -983,4 +1022,6 @@ class GlyphCache:
                 m[3, 0] = current_location
                 p.extend_multi_path(glyph.transform(m))
             current_location += self.get_advance_width(shape_number) * sx
+        if not p.end.isclose((current_location, 0)):
+            p.move_to((current_location, 0))
         return p
