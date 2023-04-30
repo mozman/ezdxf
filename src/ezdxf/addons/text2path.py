@@ -55,14 +55,14 @@ def make_path_from_str(
     """
     if len(s) == 0:
         return Path()
-    font = get_font(font)
+    abstract_font = get_font(font)
     # scale font rendering units to drawing units:
-    p = _str_to_path(s, font, size)
+    p = _str_to_path(s, abstract_font, size)
     bbox = path.bbox([p], fast=True)
 
     # Text is rendered in drawing units,
     # therefore do alignment in drawing units:
-    draw_units_fm = font.measurements.scale_from_baseline(size)
+    draw_units_fm = abstract_font.measurements.scale_from_baseline(size)
     matrix = alignment_transformation(draw_units_fm, bbox, align, length)
     if m is not None:
         matrix *= m
