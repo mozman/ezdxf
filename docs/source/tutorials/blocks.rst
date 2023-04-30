@@ -76,7 +76,7 @@ attributes
 Using attribute definitions (:class:`~ezdxf.entities.AttDef` templates):
 
 .. literalinclude:: src/blocks.py
-    :lines: 42-69
+    :lines: 42-68
 
 Get/Set Attributes of Existing Block References
 -----------------------------------------------
