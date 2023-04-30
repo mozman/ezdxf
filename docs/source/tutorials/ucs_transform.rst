@@ -35,7 +35,7 @@ Placing LWPolyline in 3D Space
 Simplified LWPOLYLINE example:
 
 .. literalinclude:: src/ucs/lwpolyline.py
-    :lines: 13-25
+    :lines: 14-26
 
 The 2D pentagon in 3D space in BricsCAD `Left` and `Front` view.
 
