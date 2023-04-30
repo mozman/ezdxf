@@ -80,7 +80,6 @@ Render Tools
   content of the anonymous block `*T...`
 - (>v1.1) factory methods to create ACAD_TABLE entities
 - (>v1.1) tool to create proxy graphic 
-- (>v1.1) add `ShxFont` and `ShpFont` classes to `ezdxf.tools.fonts`
 - (>v1.1) LibreCAD Font File (`.lff`) support, https://github.com/Rallaz/LibreCAD/wiki/lff-definition
 
 DXF Entities

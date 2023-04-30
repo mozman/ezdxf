@@ -19,6 +19,8 @@ Version 1.1.0b0 - dev
 - NEW: `ezdxf plt2dxf` command to convert HPGL/2 plot files to DXF
 - NEW: `ezdxf plt2svg` command to convert HPGL/2 plot files to SVG
 - NEW: `ezdxf plt2pdf` command to convert HPGL/2 plot files to PDF
+- NEW: support for measurement and rendering of .shx, .shp and .lff fonts, the basic 
+  stroke fonts included in CAD applications
 - CHANGED: moved font related modules into a new subpackage `ezdxf.fonts` 
   including a big refactoring
 - CHANGED: `FontFace` class - `weight` attribute is an int value (0-1000), `stretch` is 

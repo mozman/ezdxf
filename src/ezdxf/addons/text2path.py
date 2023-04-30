@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Union
@@ -11,7 +11,6 @@ from ezdxf.math import Matrix44, BoundingBox
 from ezdxf import path
 from ezdxf.path import Path
 from ezdxf.fonts import fonts
-from ezdxf.fonts.ttfonts import TTFontRenderer
 from ezdxf.query import EntityQuery
 
 __all__ = [
@@ -186,7 +185,7 @@ def make_hatches_from_str(
 
     .. important::
 
-        Returns an empty list for stroke fonts (.shx, .shp and .lff fonts)
+        Returns an empty list for .shx, .shp and .lff fonts a.k.a. stroke fonts.
 
     Args:
          s: text to convert

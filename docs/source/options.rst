@@ -55,7 +55,10 @@ File Structure:
     [core]
     default_dimension_text_style = OpenSansCondensed-Light
     test_files = D:\Source\dxftest
-    font_cache_directory =
+    support_dirs =
+        "C:\Program Files\Bricsys\BricsCAD V23 en_US\Fonts",
+        "~/dir2",
+        "~/dir3",
     load_proxy_graphics = true
     store_proxy_graphics = true
     log_unprocessed_tags = false
@@ -217,7 +220,6 @@ Core Options
 For all core options the section name is ``core``.
 
 
-
 Default Dimension Text Style
 ++++++++++++++++++++++++++++
 
@@ -281,8 +283,8 @@ Support Directories
 
 Search directories for support files:
 
-- plot style tables, the CTB or STB pen assignment files
-- shape font files of type SHX or SHP
+- plot style tables, the .ctb or .stb pen assignment files
+- shape font files of type .shx or .shp or .lff
 
 Config file key: ``support_dirs``
 
@@ -291,6 +293,16 @@ Shortcut attribute:
 .. attribute:: support_dirs
 
     (Read/Write) Search directories as list of strings.
+
+Use quotes for paths including spaces:
+
+.. code-block:: ini
+
+    [core]
+    support_dirs =
+        ~/dir1,
+        ~/dir2,
+        "~/dir 3",
 
 Debugging Options
 -----------------

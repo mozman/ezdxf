@@ -492,7 +492,7 @@ def make_font(
     Returns a :class:`TrueTypeFont` instance, SHX font support will be added in the
     future. The current implementation maps SHX fonts to equivalent TTF fonts.
 
-    The special name "*monospace" returns the test font :class:`MonospaceFont`.
+    The special name "\*monospace" returns the test font :class:`MonospaceFont`.
 
     Args:
         font_name: font file name as stored in the :class:`~ezdxf.entities.Textstyle`
