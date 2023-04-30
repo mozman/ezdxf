@@ -20,6 +20,7 @@ from typing import (
     Optional,
     Any,
     Set,
+    no_type_check,
 )
 import dataclasses
 import enum
@@ -27,7 +28,15 @@ import math
 import pathlib
 
 from ezdxf import path
-from ezdxf.math import UVec, Vec2, Vec3, ConstructionEllipse, bulge_to_arc
+from ezdxf.math import (
+    UVec,
+    Vec2,
+    ConstructionEllipse,
+    bulge_to_arc,
+    BoundingBox2d,
+    Matrix44,
+)
+from .font_measurements import FontMeasurements
 
 
 class ShapeFileException(Exception):
@@ -220,9 +229,7 @@ class ShapeFile:
                 self.shapes[int_num] = symbol
             else:
                 s = record[0].decode(errors="ignore")
-                raise FileStructureError(
-                    f"file structure error at symbol <{s}>"
-                )
+                raise FileStructureError(f"file structure error at symbol <{s}>")
 
     def get_codes(self, number: int) -> Sequence[int]:
         symbol = self.shapes.get(number)
@@ -230,13 +237,13 @@ class ShapeFile:
             return tuple()  # return codes for non-printable chars
         return symbol.data
 
-    def render_shape(self, number: int, stacked=False) -> path.Path:
+    def render_shape(self, number: int, stacked=False) -> path.Path2d:
         return render_shapes([number], self.get_codes, stacked=stacked)
 
-    def render_shapes(self, numbers: Sequence[int], stacked=False) -> path.Path:
+    def render_shapes(self, numbers: Sequence[int], stacked=False) -> path.Path2d:
         return render_shapes(numbers, self.get_codes, stacked=stacked)
 
-    def render_text(self, text: str, stacked=False) -> path.Path:
+    def render_text(self, text: str, stacked=False) -> path.Path2d:
         numbers = [ord(char) for char in text]
         return render_shapes(
             numbers, self.get_codes, stacked=stacked, reset_to_baseline=True
@@ -416,9 +423,7 @@ def parse_shx_shapes(data: bytes) -> dict[int, Symbol]:
                 f"SHX parsing error shape *{shape_number:05X}: {str(record)}"
             )
         byte_count = length - len(name) - 1
-        shapes[shape_number] = Symbol(
-            shape_number, byte_count, name, shape_data
-        )
+        shapes[shape_number] = Symbol(shape_number, byte_count, name, shape_data)
     if reader.read_bytes(3) != b"EOF":
         raise FileStructureError("EOF marker not found")
     return shapes
@@ -437,9 +442,7 @@ SHX_UNIFONT_START_INDEX = 0x18
 
 def load_shx_unifont_file_1_0(data: bytes) -> ShapeFile:
     reader = DataReader(data, SHX_UNIFONT_START_INDEX)
-    name, above, below, mode, encoding, embed = parse_shx_unifont_definition(
-        reader
-    )
+    name, above, below, mode, encoding, embed = parse_shx_unifont_definition(reader)
     shape_file = ShapeFile(
         name,
         above=above,
@@ -456,7 +459,6 @@ def load_shx_unifont_file_1_0(data: bytes) -> ShapeFile:
 
 
 def parse_shx_unifont_definition(reader: DataReader) -> Sequence[Any]:
-
     if reader.u8() != 0x1A:
         raise FileStructureError("signature byte 0x1A not found")
     reader.skip(6)
@@ -582,9 +584,7 @@ def parse_string_records(
     record = []
     for line in lines:
         if line.startswith(b"*BIGFONT"):
-            raise UnsupportedShapeFile(
-                "BIGFONT shape files are not supported yet"
-            )
+            raise UnsupportedShapeFile("BIGFONT shape files are not supported yet")
         if line.startswith(b"*"):
             if name is not None:
                 records[name] = tuple(record)
@@ -604,9 +604,9 @@ def render_shapes(
     stacked: bool,
     start: UVec = (0, 0),
     reset_to_baseline=False,
-) -> path.Path:
+) -> path.Path2d:
     ctx = ShapeRenderer(
-        path.Path(start),
+        path.Path2d(start),
         pen_down=True,
         stacked=stacked,
         get_codes=get_codes,
@@ -631,7 +631,7 @@ VEC_Y = [0, 0.5, 1, 1, 1, 1, 1, 0.5, 0, -0.5, -1, -1, -1, -1, -1, -0.5]
 class ShapeRenderer:
     def __init__(
         self,
-        p: path.Path,
+        p: path.Path2d,
         get_codes: Callable[[int], Sequence[int]],
         *,
         vector_length: float = 1.0,
@@ -642,12 +642,12 @@ class ShapeRenderer:
         self.vector_length = float(vector_length)  # initial vector length
         self.pen_down = pen_down
         self.stacked = stacked  # vertical stacked text
-        self._location_stack: list[Vec3] = []
+        self._location_stack: list[Vec2] = []
         self._get_codes = get_codes
         self._baseline_y = self.p.start.y
 
     @property
-    def current_location(self) -> Vec3:
+    def current_location(self) -> Vec2:
         return self.p.end
 
     def push(self) -> None:
@@ -718,9 +718,7 @@ class ShapeRenderer:
                         self.draw_displacement(x, y)
             elif code == 10:  # 10 octant arc
                 radius = codes[index]
-                start_octant, octant_span, ccw = decode_octant_specs(
-                    codes[index + 1]
-                )
+                start_octant, octant_span, ccw = decode_octant_specs(codes[index + 1])
                 if octant_span == 0:  # full circle
                     octant_span = 8
                 index += 2
@@ -741,9 +739,7 @@ class ShapeRenderer:
                 start_offset = codes[index]
                 end_offset = codes[index + 1]
                 radius = (codes[index + 2] << 8) + codes[index + 3]
-                start_octant, octant_span, ccw = decode_octant_specs(
-                    codes[index + 4]
-                )
+                start_octant, octant_span, ccw = decode_octant_specs(codes[index + 4])
                 index += 5
                 if end_offset == 0:
                     end_offset = 256
@@ -802,7 +798,7 @@ class ShapeRenderer:
 
     def draw_displacement(self, x: float, y: float):
         scale = self.vector_length
-        target = self.current_location + (x * scale, y * scale)
+        target = self.current_location + Vec2(x * scale, y * scale)
         if self.pen_down:
             self.p.line_to(target)
         else:
@@ -828,11 +824,11 @@ class ShapeRenderer:
         )
         # arc goes start -> end if ccw otherwise end -> start
         # move arc start-point to the end-point of current path
-        arc.center += self.current_location - (
+        arc.center += self.current_location - Vec2(
             arc.start_point if ccw else arc.end_point
         )
         if self.pen_down:
-            path.add_ellipse(self.p, arc, reset=False)
+            path.add_ellipse(self.p, arc, reset=False)  # type: ignore
         else:
             self.p.move_to(arc.end_point if ccw else arc.start_point)
 
@@ -853,7 +849,7 @@ class ShapeRenderer:
             ccw=ccw,
         )
         if self.pen_down:
-            path.add_ellipse(self.p, arc, reset=False)
+            path.add_ellipse(self.p, arc, reset=False)  # type: ignore
         else:
             self.p.move_to(arc.end_point if ccw else arc.start_point)
 
@@ -862,7 +858,7 @@ class ShapeRenderer:
             start_point = self.current_location
             scale = self.vector_length
             ccw = bulge > 0
-            end_point = start_point + (x * scale, y * scale)
+            end_point = start_point + Vec2(x * scale, y * scale)
             bulge = abs(bulge) / 127.0
             if ccw:  # counter-clockwise
                 center, start_angle, end_angle, radius = bulge_to_arc(
@@ -908,3 +904,83 @@ def find_shape_number(filename: str, name: bytes) -> int:
     if shx_symbol is not None:
         return shx_symbol.number
     return index
+
+
+class GlyphCache:
+    def __init__(self, font: ShapeFile) -> None:
+        self.font: ShapeFile = font
+        self._glyph_cache: dict[int, path.Path2d] = dict()
+        self._advance_width_cache: dict[int, float] = dict()
+        self.space_width: float = self.detect_space_width()
+        self.font_measurements = self._get_font_measurements()
+
+    def get_scaling_factor(self, cap_height: float) -> float:
+        try:
+            return cap_height / self.font_measurements.cap_height
+        except ZeroDivisionError:
+            return 1.0
+
+    def detect_space_width(self) -> float:
+        space = self.get_shape(32)
+        space_width = space.end.x
+        if space_width > 0.0:
+            return space_width
+        return self.get_shape(65).end.x  # width of "A"
+
+    def get_shape(self, shape_number: int) -> path.Path2d:
+        try:
+            return self._glyph_cache[shape_number]
+        except KeyError:
+            pass
+        glyph = self.font.render_shape(shape_number)
+        self._glyph_cache[shape_number] = glyph
+        self._advance_width_cache[shape_number] = glyph.end.x
+        return glyph
+
+    def get_advance_width(self, shape_number: int) -> float:
+        if shape_number == 32:
+            return self.space_width
+        try:
+            return self._advance_width_cache[shape_number]
+        except KeyError:
+            pass
+        return self.get_shape(shape_number).end.x
+
+    @no_type_check
+    def _get_font_measurements(self) -> FontMeasurements:
+        bbox = BoundingBox2d(self.get_shape(ord("x")).control_vertices())
+        baseline = bbox.extmin.y
+        x_height = bbox.extmax.y - baseline
+        bbox = BoundingBox2d(self.get_shape(ord("A")).control_vertices())
+        cap_height = bbox.extmax.y - baseline
+        bbox = BoundingBox2d(self.get_shape(ord("p")).control_vertices())
+        descender_height = baseline - bbox.extmin.y
+        return FontMeasurements(
+            baseline=baseline,
+            cap_height=cap_height,
+            x_height=x_height,
+            descender_height=descender_height,
+        )
+
+    def get_text_length(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> float:
+        scaling_factor = self.get_scaling_factor(cap_height) * width_factor
+        return sum(self.get_advance_width(ord(c)) for c in text) * scaling_factor
+
+    def get_text_path(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> path.Path2d:
+        p = path.Path2d()
+        sy = self.get_scaling_factor(cap_height)
+        sx = sy * width_factor
+        m = Matrix44.scale(sx, sy, 1)
+        current_location = 0.0
+        for c in text:
+            shape_number = ord(c)
+            if shape_number > 32:
+                glyph = self.get_shape(ord(c))
+                m[3, 0] = current_location
+                p.extend_multi_path(glyph.transform(m))
+            current_location += self.get_advance_width(shape_number) * sx
+        return p

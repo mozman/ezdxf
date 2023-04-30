@@ -11,7 +11,7 @@ import pathlib
 from ezdxf.math import Matrix44
 from ezdxf import options
 from .font_face import FontFace
-from .font_manager import FontManager
+from .font_manager import FontManager, SUPPORTED_TTF_TYPES, FontNotFoundError
 from .font_measurements import FontMeasurements
 
 if TYPE_CHECKING:
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity, Textstyle
     from ezdxf.path import Path2d
     from .ttfonts import TTFontRenderer
+    from . import shapefile
 
 logger = logging.getLogger("ezdxf")
 FONT_MANAGER_CACHE_FILE = "font_manager_cache.json"
@@ -280,11 +281,10 @@ class AbstractFont:
 
 
 class TrueTypeFont(AbstractFont):
-    """Represents a True type Font. Font measurement and glyph rendering is done by the
-    `fontTools`package. The given cap height and width factor are the default values for
-    measurements and glyph rendering. The extended methods can override these default
-    values.
-
+    """Represents a TrueType font. Font measurement and glyph rendering is done by the
+    `fontTools` package. The given cap height and width factor are the default values
+    for measurements and glyph rendering. The extended methods can override these
+    default values.
     """
 
     font_render_type = FontRenderType.OUTLINE
@@ -421,6 +421,69 @@ class MonospaceFont(AbstractFont):
         return self._space_width
 
 
+class ShapeFileFont(AbstractFont):
+    """Represents a shapefile font (.shx, .shp). Font measurement and glyph rendering is
+    done by the ezdxf.shapefile module. The given cap height and width factor are the
+    default values for measurements and glyph rendering. The extended methods can
+    override these default values.
+
+    """
+
+    font_render_type = FontRenderType.OUTLINE
+    _glyph_caches: dict[str, shapefile.GlyphCache] = dict()
+
+    def __init__(self, font_name: str, cap_height: float, width_factor: float = 1.0):
+        cache = self._create_cache(font_name)
+        self.glyph_cache = cache
+        self.cap_height = float(cap_height)
+        self.width_factor = float(width_factor)
+        scale_factor = cache.get_scaling_factor(self.cap_height)
+        super().__init__(cache.font_measurements.scale(scale_factor))
+        self._space_width = self.glyph_cache.space_width * scale_factor * width_factor
+
+    def _create_cache(self, font_name: str) -> shapefile.GlyphCache:
+        key = font_name.lower()
+        try:
+            return self._glyph_caches[key]
+        except KeyError:
+            pass
+        glyph_cache = font_manager.get_shapefile_glyph_cache(font_name)
+        self._glyph_caches[key] = glyph_cache
+        return glyph_cache
+
+    def text_width(self, text: str) -> float:
+        """Returns the text width in drawing units for the given `text` string.
+        Text rendering and width calculation is based on fontTools.
+        """
+        return self.text_width_ex(text, self.cap_height, self.width_factor)
+
+    def text_width_ex(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> float:
+        """Returns the text width in drawing units, bypasses the stored `cap_height` and
+        `width_factor`.
+        """
+        if not text.strip():
+            return 0
+        return self.glyph_cache.get_text_length(text, cap_height, width_factor)
+
+    def text_path(self, text: str) -> Path2d:
+        """Returns the 2D text path for the given text."""
+
+        return self.text_path_ex(text, self.cap_height, self.width_factor)
+
+    def text_path_ex(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> Path2d:
+        """Returns the 2D text path for the given text, bypasses the stored `cap_height`
+        and `width_factor`."""
+        return self.glyph_cache.get_text_path(text, cap_height, width_factor)
+
+    def space_width(self) -> float:
+        """Returns the width of a "space" char."""
+        return self._space_width
+
+
 def make_font(
     font_name: str, cap_height: float, width_factor: float = 1.0
 ) -> AbstractFont:
@@ -440,7 +503,31 @@ def make_font(
     """
     if font_name == "*monospace":
         return MonospaceFont(cap_height, width_factor)
-    return TrueTypeFont(font_name, cap_height, width_factor)
+    ext = pathlib.Path(font_name).suffix
+    last_resort = MonospaceFont(cap_height, width_factor)
+    if ext in SUPPORTED_TTF_TYPES:
+        try:
+            return TrueTypeFont(font_name, cap_height, width_factor)
+        except FontNotFoundError:
+            return last_resort
+    elif ext == ".shx" or ext == ".shp":
+        try:
+            return ShapeFileFont(font_name, cap_height, width_factor)
+        except FontNotFoundError:
+            pass  # no shape file fonts available
+    elif ext == ".lff":
+        return last_resort
+    elif ext == "":  # e.g. "TXT"
+        font_face = font_manager.find_best_match(
+            family=font_name, style=".shx", italic=None
+        )
+        if font_face is not None:
+            return make_font(font_face.filename, cap_height, width_factor)
+    # return default TrueType font
+    try:
+        return TrueTypeFont(font_name, cap_height, width_factor)
+    except FontNotFoundError:
+        return last_resort
 
 
 def get_entity_font_face(entity: DXFEntity, doc: Optional[Drawing] = None) -> FontFace:

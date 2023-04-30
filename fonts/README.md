@@ -11,7 +11,7 @@ package on every system the tests can run (Windows, Linux <on github>, macOS).
 Shapefiles
 ----------
 
-The font-manager also scans the `shapefiles` folder recursively for .shx, .shp and 
+The font-manager also scans the folders recursively for .shx, .shp and 
 .lff fonts - the basic stroke fonts included in CAD applications.
 The .shx and .shp fonts are copyright protected and cannot be included in a public 
 github repository. 

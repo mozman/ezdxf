@@ -4,7 +4,7 @@
 import pytest
 from ezdxf.fonts import shapefile
 from ezdxf import path
-
+from ezdxf.math import BoundingBox2d
 
 def test_filter_noise():
     lines = list(

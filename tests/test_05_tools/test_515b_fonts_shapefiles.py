@@ -2,12 +2,16 @@
 #  License: MIT License
 
 import pytest
+from ezdxf.math import BoundingBox2d
 from ezdxf.fonts import fonts
 
-if not fonts.font_manager.has_font("txt.shx"):
-    pytest.skip(
-        reason="required shapefile fonts are not available", allow_module_level=True
-    )
+
+@pytest.fixture(scope="module", autouse=True)
+def check_shape_files_available():
+    if not fonts.font_manager.has_font("txt.shx"):
+        pytest.skip(
+            reason="required shapefile fonts are not available", allow_module_level=True
+        )
 
 
 def test_get_font_family_for_shx_files():
@@ -49,7 +53,6 @@ def test_best_match_for_shape_files():
 def test_width_value_influences_the_best_match_for_shape_files():
     # Note: the width property is used to prioritize font types:
     # 1st .shx; 2nd: .shp; 3rd: .lff
-    fm = fonts.font_manager
     font_face = fonts.find_best_match(family="iso", width=5)
     assert font_face.filename == "ISO.shx"
     assert font_face.style == ".shx"
@@ -59,6 +62,63 @@ def test_width_value_influences_the_best_match_for_shape_files():
 
     font_face = fonts.find_best_match(family="iso", width=7)
     assert font_face.style == ".lff"
+
+
+class TestShapeFileFont:
+    @pytest.fixture(scope="class")
+    def shx(self):
+        return fonts.make_font("txt.shx", 2.5)
+
+    def test_space_width(self, shx):
+        assert shx.space_width() == pytest.approx(2.5)
+
+    def test_text_width(self, shx):
+        assert shx.text_width("1234") == pytest.approx(9.1666666666)
+
+    def test_text_width_ex(self, shx):
+        assert shx.text_width_ex("1234", cap_height=3, width_factor=2) == pytest.approx(
+            22
+        )
+
+    def test_text_path(self, shx):
+        box = BoundingBox2d(shx.text_path("1234").control_vertices())
+        assert box.size.x == pytest.approx(9.166666666)
+        assert box.size.y == pytest.approx(2.5)
+
+    def test_text_path_ex(self, shx):
+        box = BoundingBox2d(
+            shx.text_path_ex("1234", cap_height=3, width_factor=2).control_vertices()
+        )
+        assert box.size.x == pytest.approx(22)
+        assert box.size.y == pytest.approx(3)
+
+
+class TestGlyphCache:
+    @pytest.fixture(scope="class")
+    def cache(self):
+        return fonts.font_manager.get_shapefile_glyph_cache("txt.shx")
+
+    def test_get_glyphs(self, cache):
+        glyph = cache.get_shape(ord("A"))
+        box = BoundingBox2d(glyph.control_vertices())
+        assert box.size.x == 6
+        assert box.size.y == 6
+        assert glyph is cache.get_shape(ord("A"))
+
+    def test_get_advance_width(self, cache):
+        glyph = cache.get_shape(ord("A"))
+        assert glyph.end.x == 6  # last move_to defines the advance width
+        assert cache.get_advance_width(ord("A")) == 6
+
+    def test_get_space_width(self, cache):
+        assert cache.space_width == 6
+
+    def test_get_font_measurements(self, cache):
+        fm = cache.font_measurements
+        assert fm.cap_height == 6
+        assert fm.baseline == 0
+        assert fm.x_height == 4
+        assert fm.descender_height == 2
 
 
 if __name__ == "__main__":
