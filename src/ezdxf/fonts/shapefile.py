@@ -987,13 +987,20 @@ class GlyphCache:
 
     @no_type_check
     def _get_font_measurements(self) -> FontMeasurements:
-        bbox = BoundingBox2d(self.get_shape(ord("x")).control_vertices())
+        # ignore last move_to command, which places the pen at the start of the
+        # following glyph
+        bbox = BoundingBox2d(self.get_shape(ord("x")).control_vertices()[:-1])
         baseline = bbox.extmin.y
         x_height = bbox.extmax.y - baseline
-        bbox = BoundingBox2d(self.get_shape(ord("A")).control_vertices())
-        cap_height = bbox.extmax.y - baseline
-        bbox = BoundingBox2d(self.get_shape(ord("p")).control_vertices())
-        descender_height = baseline - bbox.extmin.y
+
+        cap_height = self.font.above
+        if cap_height == 0:
+            bbox = BoundingBox2d(self.get_shape(ord("A")).control_vertices()[:-1])
+            cap_height = bbox.extmax.y - baseline
+        descender_height = self.font.below
+        if descender_height == 0:
+            bbox = BoundingBox2d(self.get_shape(ord("p")).control_vertices()[:-1])
+            descender_height = baseline - bbox.extmin.y
         return FontMeasurements(
             baseline=baseline,
             cap_height=cap_height,

@@ -20,7 +20,7 @@ if not CWD.exists():
 
 def main():
     doc = ezdxf.new(setup=["styles"])
-    arial_narrow = doc.styles.add("NARROW", font="Arial Narrow.ttf")
+    arial_narrow = doc.styles.add("NARROW", font="ArialN.ttf")
     # Extended font data is required for "Arial Narrow", why? - ask Autodesk!
     arial_narrow.set_extended_font_data("Arial Narrow")
     msp = doc.modelspace()

@@ -55,14 +55,14 @@ def make_path_from_str(
     """
     if len(s) == 0:
         return Path()
-    render_engine = get_render_engine(font)
+    font = get_font(font)
     # scale font rendering units to drawing units:
-    p = _str_to_path(s, render_engine, size)
+    p = _str_to_path(s, font, size)
     bbox = path.bbox([p], fast=True)
 
     # Text is rendered in drawing units,
     # therefore do alignment in drawing units:
-    draw_units_fm = render_engine.font_measurements.scale_from_baseline(size)
+    draw_units_fm = font.measurements.scale_from_baseline(size)
     matrix = alignment_transformation(draw_units_fm, bbox, align, length)
     if m is not None:
         matrix *= m
@@ -100,16 +100,13 @@ def make_paths_from_str(
     return list(p.sub_paths())
 
 
-def get_render_engine(
-    font: fonts.FontFace,
-) -> TTFontRenderer:
+def get_font(font: fonts.FontFace) -> fonts.AbstractFont:
     font_name = fonts.font_manager.find_font_name(font)
-    ttfont = fonts.font_manager.get_ttf_font(font_name)
-    return TTFontRenderer(ttfont)
+    return fonts.make_font(font_name, cap_height=1.0)
 
 
-def _str_to_path(s: str, render_engine: TTFontRenderer, size: float = 1.0) -> Path:
-    return render_engine.get_text_path(s, cap_height=size).to_3d_path()
+def _str_to_path(s: str, render_engine: fonts.AbstractFont, size: float = 1.0) -> Path:
+    return render_engine.text_path_ex(s, cap_height=size).to_3d_path()
 
 
 def alignment_transformation(
@@ -187,6 +184,10 @@ def make_hatches_from_str(
     The HATCH entities are aligned to this insertion point. BASELINE means the
     bottom of the letter "X".
 
+    .. important::
+
+        Returns an empty list for stroke fonts (.shx, .shp and .lff fonts)
+
     Args:
          s: text to convert
          font: font face definition as :class:`~ezdxf.tools.fonts.FontFace` object
@@ -198,6 +199,10 @@ def make_hatches_from_str(
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     """
+    font_ = get_font(font)
+    if font_.font_render_type is fonts.FontRenderType.STROKE:
+        return []
+
     # HATCH is an OCS entity, transforming just the polyline paths
     # is not correct! The Hatch has to be created in the xy-plane!
     paths = make_paths_from_str(s, font, size, align, length)
@@ -316,22 +321,16 @@ def virtual_entities(entity: AnyText, kind: int = Kind.HATCHES) -> EntityQuery:
     if kind & (Kind.SPLINES + Kind.LWPOLYLINES):
         paths = make_paths_from_entity(entity)
         if kind & Kind.SPLINES:
-            entities.extend(
-                path.to_splines_and_polylines(paths, dxfattribs=attribs)
-            )
+            entities.extend(path.to_splines_and_polylines(paths, dxfattribs=attribs))
         if kind & Kind.LWPOLYLINES:
             entities.extend(
-                path.to_lwpolylines(
-                    paths, extrusion=extrusion, dxfattribs=attribs
-                )
+                path.to_lwpolylines(paths, extrusion=extrusion, dxfattribs=attribs)
             )
 
     return EntityQuery(entities)
 
 
-def explode(
-    entity: AnyText, kind: int = Kind.HATCHES, target=None
-) -> EntityQuery:
+def explode(entity: AnyText, kind: int = Kind.HATCHES, target=None) -> EntityQuery:
     """Explode the text `entity` into virtual entities,
     see :func:`virtual_entities`. The source entity will be destroyed.
 
