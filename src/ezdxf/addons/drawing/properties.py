@@ -102,7 +102,7 @@ class Properties:
 
     def __init__(self) -> None:
         self.color: str = "#ffffff"  # format #RRGGBB or #RRGGBBAA
-        # Color names should be resolved into a actual color value
+        # Color names should be resolved into an actual color value
 
         # Store linetype name for backends which don't have the ability to use
         # user-defined linetypes, but have some predefined linetypes, maybe
