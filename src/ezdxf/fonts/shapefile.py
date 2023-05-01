@@ -1025,7 +1025,7 @@ class GlyphCache:
         for c in text:
             shape_number = ord(c)
             if shape_number > 32:
-                glyph = self.get_shape(ord(c))
+                glyph = self.get_shape(shape_number)
                 m[3, 0] = current_location
                 p.extend_multi_path(glyph.transform(m))
             current_location += self.get_advance_width(shape_number) * sx

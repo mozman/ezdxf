@@ -1,12 +1,17 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Sequence, Iterator, Iterable, Optional
+from typing import Sequence, Iterator, Iterable, Optional, no_type_check
 from typing_extensions import TypeAlias
-
+from ezdxf.math import (
+    Vec2,
+    BoundingBox2d,
+    Matrix44,
+)
+from .font_measurements import FontMeasurements
 from ezdxf import path
 
-__all__ = ["loads", "LCFont", "Glyph"]
+__all__ = ["loads", "LCFont", "Glyph", "GlyphCache"]
 
 
 def loads(s: str) -> LCFont:
@@ -64,13 +69,15 @@ class Glyph:
     def to_path(self) -> path.Path2d:
         from ezdxf.math import OCS
 
-        p = path.Path()
+        final_path = path.Path()
         ocs = OCS()
         for polyline in self.polylines:
+            p = path.Path()  # empty path is required
             path.add_2d_polyline(
                 p, convert_bulge_values(polyline), close=False, elevation=0, ocs=ocs
             )
-        return p.to_2d_path()
+            final_path.extend_multi_path(p)
+        return final_path.to_2d_path()
 
 
 def convert_bulge_values(polyline: Polyline) -> Iterator[Sequence[float]]:
@@ -137,10 +144,10 @@ def strip_clutter(lines: list[str]) -> Iterator[str]:
 
 
 def parse_glyphs(lines: list[str]) -> Iterator[tuple[Glyph, int]]:
-    parent_code: int = 0
     code: int
     polylines: list[Polyline] = []
     for glyph in scan_glyphs(strip_clutter(lines)):
+        parent_code: int = 0
         polylines.clear()
         line = glyph.pop(0)
         try:
@@ -179,3 +186,115 @@ def to_floats(values: Iterable[str]) -> Sequence[float]:
             return 0.0
 
     return tuple(strip(value) for value in values)
+
+
+class GlyphCache:
+    def __init__(self, font: LCFont) -> None:
+        self.font: LCFont = font
+        self._glyph_cache: dict[int, path.Path2d] = dict()
+        self._advance_width_cache: dict[int, float] = dict()
+        self.space_width: float = self.font.word_spacing
+        self.empty_box: path.Path2d = self.get_empty_box()
+        self.font_measurements: FontMeasurements = self._get_font_measurements()
+
+    def get_scaling_factor(self, cap_height: float) -> float:
+        try:
+            return cap_height / self.font_measurements.cap_height
+        except ZeroDivisionError:
+            return 1.0
+
+    def get_empty_box(self) -> path.Path2d:
+        glyph_A = self.get_shape(65)
+        box = BoundingBox2d(glyph_A.control_vertices())
+        height = box.size.y
+        width = box.size.x
+        start = glyph_A.start
+        p = path.Path2d(start)
+        p.line_to(start + Vec2(width, 0))
+        p.line_to(start + Vec2(width, height))
+        p.line_to(start + Vec2(0, height))
+        p.close()
+        p.move_to(glyph_A.end)
+        return p
+
+    def _render_shape(self, shape_number) -> path.Path2d:
+        try:
+            glyph = self.font[shape_number]
+        except KeyError:
+            if shape_number > 32:
+                return self.empty_box
+            raise ValueError("space and non-printable characters are not glyphs")
+        return glyph.to_path()
+
+    def get_shape(self, shape_number: int) -> path.Path2d:
+        if shape_number <= 32:
+            raise ValueError("space and non-printable characters are not glyphs")
+        try:
+            return self._glyph_cache[shape_number]
+        except KeyError:
+            pass
+        glyph = self._render_shape(shape_number)
+        self._glyph_cache[shape_number] = glyph
+        advance_width = 0.0
+        if len(glyph):
+            box = BoundingBox2d(glyph.control_vertices())
+            assert box.extmax is not None
+            advance_width = box.extmax.x + self.font.letter_spacing
+        self._advance_width_cache[shape_number] = advance_width
+        return glyph
+
+    def get_advance_width(self, shape_number: int) -> float:
+        if shape_number < 32:
+            return 0.0
+        if shape_number == 32:
+            return self.space_width
+        try:
+            return self._advance_width_cache[shape_number]
+        except KeyError:
+            pass
+        _ = self.get_shape(shape_number)
+        return self._advance_width_cache[shape_number]
+
+    @no_type_check
+    def _get_font_measurements(self) -> FontMeasurements:
+        # ignore last move_to command, which places the pen at the start of the
+        # following glyph
+        bbox = BoundingBox2d(self.get_shape(ord("x")).control_vertices())
+        baseline = bbox.extmin.y
+        x_height = bbox.extmax.y - baseline
+
+        bbox = BoundingBox2d(self.get_shape(ord("A")).control_vertices())
+        cap_height = bbox.extmax.y - baseline
+        bbox = BoundingBox2d(self.get_shape(ord("p")).control_vertices())
+        descender_height = baseline - bbox.extmin.y
+        return FontMeasurements(
+            baseline=baseline,
+            cap_height=cap_height,
+            x_height=x_height,
+            descender_height=descender_height,
+        )
+
+    def get_text_length(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> float:
+        scaling_factor = self.get_scaling_factor(cap_height) * width_factor
+        return sum(self.get_advance_width(ord(c)) for c in text) * scaling_factor
+
+    def get_text_path(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> path.Path2d:
+        p = path.Path2d()
+        sy = self.get_scaling_factor(cap_height)
+        sx = sy * width_factor
+        m = Matrix44.scale(sx, sy, 1)
+        current_location = 0.0
+        for c in text:
+            shape_number = ord(c)
+            if shape_number > 32:
+                glyph = self.get_shape(shape_number)
+                m[3, 0] = current_location
+                p.extend_multi_path(glyph.transform(m))
+            current_location += self.get_advance_width(shape_number) * sx
+        if not p.end.isclose((current_location, 0)):
+            p.move_to((current_location, 0))
+        return p

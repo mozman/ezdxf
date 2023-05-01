@@ -1,6 +1,8 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
+import pathlib
 from typing import Iterable, NamedTuple, Optional, Sequence
 import os
 import platform
@@ -9,7 +11,7 @@ import json
 from pathlib import Path
 from fontTools.ttLib import TTFont
 from .font_face import FontFace
-from . import shapefile
+from . import shapefile, lff
 
 WINDOWS = "Windows"
 LINUX = "Linux"
@@ -196,6 +198,7 @@ SUPPORTED_TTF_TYPES = {".ttf", ".ttc", ".otf"}
 SUPPORTED_SHAPE_FILES = {".shx", ".shp", ".lff"}
 NO_FONT_FACE = FontFace()
 FALLBACK_SHAPE_FILES = ["txt.shx", "txt.shp", "iso.shx", "iso.shp"]
+FALLBACK_LFF = ["standard.lff", "iso.lff", "simplex.lff"]
 
 
 class FontNotFoundError(Exception):
@@ -208,8 +211,10 @@ class FontManager:
         self._font_cache: FontCache = FontCache()
         self._loaded_ttf_fonts: dict[str, TTFont] = dict()
         self._loaded_shape_file_glyph_caches: dict[str, shapefile.GlyphCache] = dict()
+        self._loaded_lff_glyph_caches: dict[str, lff.GlyphCache] = dict()
         self._fallback_font_name = ""
         self._fallback_shape_file = ""
+        self._fallback_lff = ""
 
     def has_font(self, font_name: str) -> bool:
         return font_name in self._font_cache
@@ -238,6 +243,17 @@ class FontManager:
         fallback_shape_file = self._fallback_shape_file
         if fallback_shape_file:
             return fallback_shape_file
+
+        for name in FALLBACK_SHAPE_FILES:
+            if name in self._font_cache:
+                self._fallback_shape_file = name
+                return name
+        return ""
+
+    def fallback_lff(self) -> str:
+        fallback_lff = self._fallback_lff
+        if fallback_lff:
+            return fallback_lff
 
         for name in FALLBACK_SHAPE_FILES:
             if name in self._font_cache:
@@ -280,6 +296,25 @@ class FontManager:
             raise FontNotFoundError(f"shape file '{file_path}' not found")
         glyph_cache = shapefile.GlyphCache(file)
         self._loaded_shape_file_glyph_caches[font_name] = glyph_cache
+        return glyph_cache
+
+    def get_lff_glyph_cache(self, font_name: str) -> lff.GlyphCache:
+        try:
+            return self._loaded_lff_glyph_caches[font_name]
+        except KeyError:
+            pass
+        fallback_name = self.fallback_lff()
+        try:
+            file_path = self._font_cache.get(font_name, fallback_name).file_path
+        except KeyError:
+            raise FontNotFoundError(f"LibreCAD font '{font_name}' not found")
+        try:
+            s = pathlib.Path(file_path).read_text(encoding="utf8")
+            font = lff.loads(s)
+        except IOError:
+            raise FontNotFoundError(f"LibreCAD font file '{file_path}' not found")
+        glyph_cache = lff.GlyphCache(font)
+        self._loaded_lff_glyph_caches[font_name] = glyph_cache
         return glyph_cache
 
     def get_font_face(self, font_name: str) -> FontFace:
