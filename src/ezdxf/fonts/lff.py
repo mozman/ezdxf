@@ -1,5 +1,8 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
+#
+# Basic tools for the LibreCAD Font Format:
+# https://github.com/Rallaz/LibreCAD/wiki/lff-definition
 from __future__ import annotations
 from typing import Sequence, Iterator, Iterable, Optional, no_type_check
 from typing_extensions import TypeAlias

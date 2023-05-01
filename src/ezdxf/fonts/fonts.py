@@ -1,7 +1,7 @@
 #  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING, cast
+from typing import Optional, TYPE_CHECKING, cast, Generic, TypeVar
 import abc
 import enum
 import logging
@@ -13,14 +13,14 @@ from ezdxf import options
 from .font_face import FontFace
 from .font_manager import FontManager, SUPPORTED_TTF_TYPES, FontNotFoundError
 from .font_measurements import FontMeasurements
+from . import shapefile
+from . import lff
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFEntity, Textstyle
     from ezdxf.path import Path2d
     from .ttfonts import TTFontRenderer
-    from . import shapefile
-    from . import lff
 
 logger = logging.getLogger("ezdxf")
 FONT_MANAGER_CACHE_FILE = "font_manager_cache.json"
@@ -426,7 +426,65 @@ class MonospaceFont(AbstractFont):
         return self._space_width
 
 
-class ShapeFileFont(AbstractFont):
+F = TypeVar("F", lff.GlyphCache, shapefile.GlyphCache)
+
+
+class StrokeFont(AbstractFont, Generic[F], abc.ABC):
+    """Abstract stroke font."""
+
+    font_render_type = FontRenderType.STROKE
+    _glyph_caches: dict[str, F] = dict()
+
+    def __init__(self, font_name: str, cap_height: float, width_factor: float = 1.0):
+        self.name = font_name
+        cache = self.create_cache(font_name)
+        self.glyph_cache: F = cache
+        self.cap_height = float(cap_height)
+        self.width_factor = float(width_factor)
+        scale_factor: float = cache.get_scaling_factor(self.cap_height)
+        super().__init__(cache.font_measurements.scale(scale_factor))
+        self._space_width: float = (
+            self.glyph_cache.space_width * scale_factor * width_factor
+        )
+
+    @abc.abstractmethod
+    def create_cache(self, font_name: str) -> F:
+        ...
+
+    def text_width(self, text: str) -> float:
+        """Returns the text width in drawing units for the given `text` string.
+        Text rendering and width calculation is based on fontTools.
+        """
+        return self.text_width_ex(text, self.cap_height, self.width_factor)
+
+    def text_width_ex(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> float:
+        """Returns the text width in drawing units, bypasses the stored `cap_height` and
+        `width_factor`.
+        """
+        if not text.strip():
+            return 0
+        return self.glyph_cache.get_text_length(text, cap_height, width_factor)
+
+    def text_path(self, text: str) -> Path2d:
+        """Returns the 2D text path for the given text."""
+
+        return self.text_path_ex(text, self.cap_height, self.width_factor)
+
+    def text_path_ex(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> Path2d:
+        """Returns the 2D text path for the given text, bypasses the stored `cap_height`
+        and `width_factor`."""
+        return self.glyph_cache.get_text_path(text, cap_height, width_factor)
+
+    def space_width(self) -> float:
+        """Returns the width of a "space" char."""
+        return self._space_width
+
+
+class ShapeFileFont(StrokeFont[shapefile.GlyphCache]):
     """Represents a shapefile font (.shx, .shp). Font measurement and glyph rendering is
     done by the ezdxf.fonts.shapefile module. The given cap height and width factor are
     the default values for measurements and glyph rendering. The extended methods can
@@ -434,20 +492,7 @@ class ShapeFileFont(AbstractFont):
 
     """
 
-    font_render_type = FontRenderType.STROKE
-    _glyph_caches: dict[str, shapefile.GlyphCache] = dict()
-
-    def __init__(self, font_name: str, cap_height: float, width_factor: float = 1.0):
-        self.name = font_name
-        cache = self._create_cache(font_name)
-        self.glyph_cache = cache
-        self.cap_height = float(cap_height)
-        self.width_factor = float(width_factor)
-        scale_factor = cache.get_scaling_factor(self.cap_height)
-        super().__init__(cache.font_measurements.scale(scale_factor))
-        self._space_width = self.glyph_cache.space_width * scale_factor * width_factor
-
-    def _create_cache(self, font_name: str) -> shapefile.GlyphCache:
+    def create_cache(self, font_name: str) -> shapefile.GlyphCache:
         key = font_name.lower()
         try:
             return self._glyph_caches[key]
@@ -457,40 +502,8 @@ class ShapeFileFont(AbstractFont):
         self._glyph_caches[key] = glyph_cache
         return glyph_cache
 
-    def text_width(self, text: str) -> float:
-        """Returns the text width in drawing units for the given `text` string.
-        Text rendering and width calculation is based on fontTools.
-        """
-        return self.text_width_ex(text, self.cap_height, self.width_factor)
 
-    def text_width_ex(
-        self, text: str, cap_height: float, width_factor: float = 1.0
-    ) -> float:
-        """Returns the text width in drawing units, bypasses the stored `cap_height` and
-        `width_factor`.
-        """
-        if not text.strip():
-            return 0
-        return self.glyph_cache.get_text_length(text, cap_height, width_factor)
-
-    def text_path(self, text: str) -> Path2d:
-        """Returns the 2D text path for the given text."""
-
-        return self.text_path_ex(text, self.cap_height, self.width_factor)
-
-    def text_path_ex(
-        self, text: str, cap_height: float, width_factor: float = 1.0
-    ) -> Path2d:
-        """Returns the 2D text path for the given text, bypasses the stored `cap_height`
-        and `width_factor`."""
-        return self.glyph_cache.get_text_path(text, cap_height, width_factor)
-
-    def space_width(self) -> float:
-        """Returns the width of a "space" char."""
-        return self._space_width
-
-
-class LibreCadFont(AbstractFont):
+class LibreCadFont(StrokeFont[lff.GlyphCache]):
     """Represents a LibreCAD font (.shx, .shp). Font measurement and glyph rendering is
     done by the ezdxf.fonts.lff module. The given cap height and width factor are the
     default values for measurements and glyph rendering. The extended methods can
@@ -498,20 +511,7 @@ class LibreCadFont(AbstractFont):
 
     """
 
-    font_render_type = FontRenderType.STROKE
-    _glyph_caches: dict[str, lff.GlyphCache] = dict()
-
-    def __init__(self, font_name: str, cap_height: float, width_factor: float = 1.0):
-        self.name = font_name
-        cache = self._create_cache(font_name)
-        self.glyph_cache = cache
-        self.cap_height = float(cap_height)
-        self.width_factor = float(width_factor)
-        scale_factor = cache.get_scaling_factor(self.cap_height)
-        super().__init__(cache.font_measurements.scale(scale_factor))
-        self._space_width = self.glyph_cache.space_width * scale_factor * width_factor
-
-    def _create_cache(self, font_name: str) -> lff.GlyphCache:
+    def create_cache(self, font_name: str) -> lff.GlyphCache:
         key = font_name.lower()
         try:
             return self._glyph_caches[key]
@@ -520,38 +520,6 @@ class LibreCadFont(AbstractFont):
         glyph_cache = font_manager.get_lff_glyph_cache(font_name)
         self._glyph_caches[key] = glyph_cache
         return glyph_cache
-
-    def text_width(self, text: str) -> float:
-        """Returns the text width in drawing units for the given `text` string.
-        Text rendering and width calculation is based on fontTools.
-        """
-        return self.text_width_ex(text, self.cap_height, self.width_factor)
-
-    def text_width_ex(
-        self, text: str, cap_height: float, width_factor: float = 1.0
-    ) -> float:
-        """Returns the text width in drawing units, bypasses the stored `cap_height` and
-        `width_factor`.
-        """
-        if not text.strip():
-            return 0
-        return self.glyph_cache.get_text_length(text, cap_height, width_factor)
-
-    def text_path(self, text: str) -> Path2d:
-        """Returns the 2D text path for the given text."""
-
-        return self.text_path_ex(text, self.cap_height, self.width_factor)
-
-    def text_path_ex(
-        self, text: str, cap_height: float, width_factor: float = 1.0
-    ) -> Path2d:
-        """Returns the 2D text path for the given text, bypasses the stored `cap_height`
-        and `width_factor`."""
-        return self.glyph_cache.get_text_path(text, cap_height, width_factor)
-
-    def space_width(self) -> float:
-        """Returns the width of a "space" char."""
-        return self._space_width
 
 
 def make_font(
