@@ -11,13 +11,13 @@ from ezdxf.addons.drawing.debug_backend import BasicBackend, PathBackend
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
 from ezdxf.path import from_vertices
-from ezdxf.fonts import fonts
 
 
 @pytest.fixture
 def doc():
     d = ezdxf.new()
     d.layers.new("Test1")
+    d.styles.add("DEJAVU", font="DejaVuSans.ttf")
     return d
 
 
@@ -270,18 +270,16 @@ def test_3d_ellipse_path(msp, path_backend):
     assert unique_types(result) == {"path"}
 
 
-@pytest.mark.skipif(
-    not fonts.font_manager.has_font("txt.shx"), reason="missing required .shx font"
-)
 def test_2d_text(msp, basic):
     # since v1.0.4 the frontend does the text rendering and passes only filled
-    # polygons and paths to the backend
-    # default font is txt.shx - a stroke font - renders paths (lines)
-    msp.add_text("test\ntest")  # \n shouldn't be  problem. Will be ignored
+    # polygons to the backend
+    msp.add_text(
+        "test\ntest", dxfattribs={"style": "DEJAVU"}
+    )  # \n shouldn't be  problem. Will be ignored
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 58
-    assert result[0][0] == "line"
+    assert len(result) == 8
+    assert result[0][0] == "filled_polygon"
 
 
 def test_ignore_3d_text(msp, basic):
@@ -291,18 +289,14 @@ def test_ignore_3d_text(msp, basic):
     assert len(result) == 0
 
 
-@pytest.mark.skipif(
-    not fonts.font_manager.has_font("txt.shx"), reason="missing required .shx font"
-)
 def test_mtext(msp, basic):
     # since v1.0.4 the frontend does the text rendering and passes only filled
     # polygons to the backend
-    # default font is txt.shx - a stroke font - renders paths (lines)
-    msp.add_mtext("line1\nline2")
+    msp.add_mtext("line1\nline2", dxfattribs={"style": "DEJAVU"})
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 61
-    assert result[0][0] == "line"
+    assert len(result) == 12
+    assert result[0][0] == "filled_polygon"
 
 
 def test_hatch(msp, path_backend):
@@ -344,9 +338,6 @@ def test_polyface(msp, basic):
     assert entities == {"line"}
 
 
-@pytest.mark.skipif(
-    not fonts.font_manager.has_font("txt.shx"), reason="missing required .shx font"
-)
 def test_override_filter(msp, ctx):
     class FrontendWithOverride(Frontend):
         def __init__(self, ctx: RenderContext, out: Backend):
@@ -368,40 +359,40 @@ def test_override_filter(msp, ctx):
     frontend = FrontendWithOverride(ctx, backend)
 
     msp.delete_all_entities()
-    msp.add_text("T0", dxfattribs={"layer": "T0", "color": 7})
-    msp.add_text("T1", dxfattribs={"layer": "T1", "color": 6})
-    msp.add_text("T2", dxfattribs={"layer": "T2", "color": 5})
+    msp.add_text("T0", dxfattribs={"layer": "T0", "color": 7, "style": "DEJAVU"})
+    msp.add_text("T1", dxfattribs={"layer": "T1", "color": 6, "style": "DEJAVU"})
+    msp.add_text("T2", dxfattribs={"layer": "T2", "color": 5, "style": "DEJAVU"})
     frontend.draw_entities(msp)
     frontend.override_enabled = False
     frontend.draw_entities(msp)
 
     # since v1.0.4 the frontend does the text rendering and passes only filled
     # polygons to the backend
-    # default font is txt.shx - a stroke font - renders paths (lines)
-    assert len(backend.collector) == 58
+    assert len(backend.collector) == 10
 
     # can modify color property
     result = backend.collector[0]
-    assert result[0] == "line"
+    assert result[0] == "filled_polygon"
+    assert result[2].color == "#000000"
 
     # can modify layer property
-    result = backend.collector[13]
-    assert result[0] == "line"
-    assert result[3].layer == "Tx"
+    result = backend.collector[2]
+    assert result[0] == "filled_polygon"
+    assert result[2].layer == "Tx"
 
     # with override disabled
 
-    result = backend.collector[22]
-    assert result[0] == "line"
-    assert result[3].color == "#ffffff"
+    result = backend.collector[4]
+    assert result[0] == "filled_polygon"
+    assert result[2].color == "#ffffff"
 
-    result = backend.collector[35]
-    assert result[0] == "line"
-    assert result[3].layer == "T1"
+    result = backend.collector[6]
+    assert result[0] == "filled_polygon"
+    assert result[2].layer == "T1"
 
-    result = backend.collector[44]
-    assert result[0] == "line"
-    assert result[3].layer == "T2"
+    result = backend.collector[8]
+    assert result[0] == "filled_polygon"
+    assert result[2].layer == "T2"
 
 
 if __name__ == "__main__":
