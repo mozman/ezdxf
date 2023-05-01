@@ -124,5 +124,14 @@ class TestGlyphCache:
         assert p.end.isclose((18, 0))
 
 
+def test_resolve_shx_font_name():
+    assert fonts.resolve_shx_font_name("txt", order="s") == "txt.shx"
+    assert fonts.resolve_shx_font_name("txt.shx", order="s") == "txt.shx"
+    # txt_____.ttf is not available under test
+    # prefer LibreCAD fonts:
+    assert fonts.resolve_shx_font_name("txt", order="tls") == "standard.lff"
+    assert fonts.resolve_shx_font_name("txt.shx", order="tls") == "standard.lff"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -67,6 +67,10 @@ SHX_FONTS = {
     "TXT": "txt_____.ttf",  # Default AutoCAD font
     "TXT.SHX": "txt_____.ttf",
 }
+LFF_FONTS = {
+    "TXT": "standard.lff",
+    "TXT.SHX": "standard.lff",
+}
 TTF_TO_SHX = {v: k for k, v in SHX_FONTS.items() if k.endswith("SHX")}
 DESCENDER_FACTOR = 0.333  # from TXT SHX font - just guessing
 X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
@@ -79,6 +83,21 @@ def map_shx_to_ttf(font_name: str) -> str:
     font_upper = font_name.upper()
     if font_upper in SHX_FONTS:
         font_name = SHX_FONTS[font_upper]
+    return font_name
+
+
+def map_shx_to_lff(font_name: str) -> str:
+    """Map .shx font names to .lff file names. e.g. "TXT" -> "standard.lff" """
+    font_upper = font_name.upper()
+    name = LFF_FONTS.get(font_upper, "")
+    if font_manager.has_font(name):
+        return name
+    if not font_upper.endswith(".SHX"):
+        lff_name = font_name + ".lff"
+    else:
+        lff_name = font_name[:-4] + ".lff"
+    if font_manager.has_font(lff_name):
+        return lff_name
     return font_name
 
 
@@ -131,6 +150,61 @@ def get_font_face(font_name: str, map_shx=True) -> FontFace:
         raise TypeError("font_name has invalid type")
     if map_shx:
         font_name = map_shx_to_ttf(font_name)
+    return find_font_face(font_name)
+
+
+def resolve_shx_font_name(font_name: str, order: str) -> str:
+    """Resolves a .shx font name, the argument `order` defines the resolve order:
+
+    - "t" = map .shx fonts to TrueType fonts (.ttf, .ttc, .otf)
+    - "s" = use shapefile fonts (.shx, .shp)
+    - "l" = map .shx fonts to LibreCAD fonts (.lff)
+
+    """
+    if len(order) == 0:
+        return font_name
+    order = order.lower()
+    for type_str in order:
+        if type_str == "t":
+            name = map_shx_to_ttf(font_name)
+            if font_manager.has_font(name):
+                return name
+        elif type_str == "s":
+            if not font_name.lower().endswith(".shx"):
+                font_name += ".shx"
+            if font_manager.has_font(font_name):
+                return font_name
+        elif type_str == "l":
+            name = map_shx_to_lff(font_name)
+            if font_manager.has_font(name):
+                return name
+    return font_name
+
+
+def resolve_font_face(font_name: str, order="tsl") -> FontFace:
+    """Returns the :class:`FontFace` definition for the given font filename
+    e.g. "LiberationSans-Regular.ttf".
+
+    This function translates a DXF font definition by the TTF font file name into a
+    :class:`FontFace` object. Returns the :class:`FontFace` of the default font when a
+    font is not available on the current system.
+
+    The order argument defines the resolve order for .shx fonts:
+
+    - "t" = map .shx fonts to TrueType fonts (.ttf, .ttc, .otf)
+    - "s" = use shapefile fonts (.shx, .shp)
+    - "l" = map .shx fonts to LibreCAD fonts (.lff)
+
+    Args:
+        font_name: raw font file name as stored in the
+            :class:`~ezdxf.entities.Textstyle` entity
+        order: resolving order
+
+    """
+    if not isinstance(font_name, str):
+        raise TypeError("font_name has invalid type")
+    if is_shx_font_name(font_name):
+        font_name = resolve_shx_font_name(font_name, order)
     return find_font_face(font_name)
 
 

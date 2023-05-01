@@ -82,6 +82,8 @@ def default_config() -> ConfigParser:
         # These options are just for testing scenarios!
         "TRY_PYSIDE6": "true",
         "TRY_PYQT5": "true",
+        # Order for resolving SHX fonts: 1. "t"=TrueType; 2. "s"=SHX; 3. "l"=LFF
+        "SHX_RESOLVE_ORDER": "tsl",
     }
     return config
 

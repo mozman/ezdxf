@@ -32,3 +32,7 @@ class TextRenderer(abc.ABC):
         self, text: str, font_face: fonts.FontFace, cap_height: float = 1.0
     ) -> Path2d:
         ...
+
+    @abc.abstractmethod
+    def is_stroke_font(self, font_face: fonts.FontFace) -> bool:
+        ...

@@ -323,7 +323,10 @@ class RenderContext:
         self._hatch_pattern_cache: dict[str, HatchPatternType] = dict()
         self.current_layout_properties = LayoutProperties.modelspace()
         self.plot_styles = self._load_plot_style_table(self.override_ctb)
-
+        # Order for resolving SHX fonts: 1. "t"=TrueType; 2. "s"=SHX; 3. "l"=LFF
+        self.shx_resolve_order = options.get(
+            "drawing-addon", "shx_resolve_order", "tsl"
+        )
         # callable to override layer properties:
         self._layer_properties_override: Optional[LayerPropsOverride] = None
 
@@ -492,7 +495,7 @@ class RenderContext:
                     family=family, weight=700 if bold else 400, italic=italic
                 )
         else:
-            font_face = fonts.get_font_face(font_file, map_shx=True)
+            font_face = fonts.resolve_font_face(font_file, order=self.shx_resolve_order)
 
         if font_face is None:  # fall back to default font
             font_face = fonts.FontFace()

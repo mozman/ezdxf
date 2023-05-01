@@ -761,7 +761,7 @@ class Designer:
         self.config = frontend.config
         self.pattern_cache: dict[PatternKey, Sequence[float]] = dict()
         self.text_engine = UnifiedTextRenderer()
-        self.default_font_face = self.text_engine.default_font_face
+        self.default_font_face = fonts.FontFace()
         self.clipper = ClippingRect()
         self.current_vp_scale = 1.0
 
@@ -941,7 +941,11 @@ class Designer:
             text_path = self.text_engine.get_text_path(text, font_face, cap_height)
         except (RuntimeError, ValueError):
             return
+        
         transformed_path = text_path.transform(transform)
+        if self.text_engine.is_stroke_font(font_face):
+            self.draw_path(transformed_path, properties)
+            return
         polygons = fast_bbox_detection(single_paths([transformed_path]))  # type: ignore
         external_paths, holes = winding_deconstruction(polygons)  # type: ignore
         if properties.filling is None:

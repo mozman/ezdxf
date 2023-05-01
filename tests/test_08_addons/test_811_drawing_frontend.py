@@ -273,12 +273,13 @@ def test_3d_ellipse_path(msp, path_backend):
 
 def test_2d_text(msp, basic):
     # since v1.0.4 the frontend does the text rendering and passes only filled
-    # polygons to the backend
+    # polygons and paths to the backend
+    # default font is txt.shx - a stroke font - renders paths (lines)
     msp.add_text("test\ntest")  # \n shouldn't be  problem. Will be ignored
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 8
-    assert result[0][0] == "filled_polygon"
+    assert len(result) == 58
+    assert result[0][0] == "line"
 
 
 def test_ignore_3d_text(msp, basic):
@@ -291,11 +292,12 @@ def test_ignore_3d_text(msp, basic):
 def test_mtext(msp, basic):
     # since v1.0.4 the frontend does the text rendering and passes only filled
     # polygons to the backend
+    # default font is txt.shx - a stroke font - renders paths (lines)
     msp.add_mtext("line1\nline2")
     basic.draw_entities(msp)
     result = basic.out.collector
-    assert len(result) == 12
-    assert result[0][0] == "filled_polygon"
+    assert len(result) == 61
+    assert result[0][0] == "line"
 
 
 def test_hatch(msp, path_backend):
@@ -367,31 +369,31 @@ def test_override_filter(msp, ctx):
 
     # since v1.0.4 the frontend does the text rendering and passes only filled
     # polygons to the backend
-    assert len(backend.collector) == 10
+    # default font is txt.shx - a stroke font - renders paths (lines)
+    assert len(backend.collector) == 58
 
     # can modify color property
     result = backend.collector[0]
-    assert result[0] == "filled_polygon"
-    assert result[2].color == "#000000"
+    assert result[0] == "line"
 
     # can modify layer property
-    result = backend.collector[2]
-    assert result[0] == "filled_polygon"
-    assert result[2].layer == "Tx"
+    result = backend.collector[13]
+    assert result[0] == "line"
+    assert result[3].layer == "Tx"
 
     # with override disabled
 
-    result = backend.collector[4]
-    assert result[0] == "filled_polygon"
-    assert result[2].color == "#ffffff"
+    result = backend.collector[22]
+    assert result[0] == "line"
+    assert result[3].color == "#ffffff"
 
-    result = backend.collector[6]
-    assert result[0] == "filled_polygon"
-    assert result[2].layer == "T1"
+    result = backend.collector[35]
+    assert result[0] == "line"
+    assert result[3].layer == "T1"
 
-    result = backend.collector[8]
-    assert result[0] == "filled_polygon"
-    assert result[2].layer == "T2"
+    result = backend.collector[44]
+    assert result[0] == "line"
+    assert result[3].layer == "T2"
 
 
 if __name__ == "__main__":

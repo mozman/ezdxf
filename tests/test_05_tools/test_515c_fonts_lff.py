@@ -56,5 +56,13 @@ class TestLibreCadFont:
         assert box.size.y == pytest.approx(3, abs=TOL)
 
 
+def test_map_shx_to_lff():
+    assert fonts.map_shx_to_lff("txt") == "standard.lff"
+    assert fonts.map_shx_to_lff("txt.shx") == "standard.lff"
+    assert fonts.map_shx_to_lff("iso") == "iso.lff"
+    assert fonts.map_shx_to_lff("iso.shx") == "iso.lff"
+    assert fonts.map_shx_to_lff("unknown.shx") == "unknown.shx"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
