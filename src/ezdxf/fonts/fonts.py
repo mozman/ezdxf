@@ -74,7 +74,7 @@ MONOSPACE = "*monospace"  # last resort fallback font only for measurement
 
 
 def map_shx_to_ttf(font_name: str) -> str:
-    """Map SHX font names to TTF file names. e.g. "TXT" -> "txt_____.ttf" """
+    """Map .shx font names to .ttf file names. e.g. "TXT" -> "txt_____.ttf" """
     # Map SHX fonts to True Type Fonts:
     font_upper = font_name.upper()
     if font_upper in SHX_FONTS:
@@ -83,8 +83,8 @@ def map_shx_to_ttf(font_name: str) -> str:
 
 
 def is_shx_font_name(font_name: str) -> bool:
-    name = font_name.upper()
-    if name.endswith(".SHX"):
+    name = font_name.lower()
+    if name.endswith(".shx"):
         return True
     if "." not in name:
         return True
@@ -92,11 +92,11 @@ def is_shx_font_name(font_name: str) -> bool:
 
 
 def map_ttf_to_shx(ttf: str) -> Optional[str]:
-    """Map TTF file names to SHX font names. e.g. "txt_____.ttf" -> "TXT" """
+    """Maps .ttf filenames to .shx font names. e.g. "txt_____.ttf" -> "TXT" """
     return TTF_TO_SHX.get(ttf.lower())
 
 
-def build_system_font_cache(**kwargs) -> None:
+def build_system_font_cache() -> None:
     """Builds or rebuilds the font manager cache. The font manager cache has a fixed
     location in the cache directory of the users home directory "~/.cache/ezdxf" or the
     directory specified by the environment variable "XDG_CACHE_HOME".
@@ -105,19 +105,20 @@ def build_system_font_cache(**kwargs) -> None:
 
 
 def find_font_face(font_name: str) -> FontFace:
-    """Get the font face definition by the font file name e.g. "Arial.ttf",
-    returns the default font if `font_name` was not found.
+    """Returns the :class:`FontFace` definition for the given font filename
+    e.g. "LiberationSans-Regular.ttf".
 
     """
     return font_manager.get_font_face(font_name)
 
 
 def get_font_face(font_name: str, map_shx=True) -> FontFace:
-    """Get the font face definition by the font file name e.g. "Arial.ttf".
+    """Returns  the :class:`FontFace` definition for the given font filename
+    e.g. "LiberationSans-Regular.ttf".
 
     This function translates a DXF font definition by the TTF font file name into a
-    :class:`FontFace` object. Fonts which are not available on the current system gets
-    a default font face.
+    :class:`FontFace` object. Returns the :class:`FontFace` of the default font when a
+    font is not available on the current system.
 
     Args:
         font_name: raw font file name as stored in the
@@ -134,7 +135,8 @@ def get_font_face(font_name: str, map_shx=True) -> FontFace:
 
 
 def get_font_measurements(font_name: str, map_shx=True) -> FontMeasurements:
-    """Get cached font measurements by TTF file name e.g. "Arial.ttf".
+    """Get :class:`FontMeasurements` for the given font filename
+    e.g. "LiberationSans-Regular.ttf".
 
     Args:
         font_name: raw font file name as stored in the
@@ -164,7 +166,8 @@ def find_best_match(
     width: int = 5,
     italic: Optional[bool] = False,
 ) -> Optional[FontFace]:
-    """Returns the :class:`FontFace` that matches the given properties best.
+    """Returns a :class:`FontFace` that matches the given properties best. The search
+    is based the descriptive properties and not on comparing glyph shapes.
 
     Args:
         family: font family name e.g. "sans-serif", "Liberation Sans"
@@ -183,7 +186,9 @@ def find_font_file_name(font_face: FontFace) -> str:
 
 
 def load():
-    """Load all cache files."""
+    """Reload all cache files. The cache files are loaded automatically at the import
+    of `ezdxf`.
+    """
     _load_font_manager()
 
 
@@ -260,26 +265,34 @@ class AbstractFont:
 
     @abc.abstractmethod
     def text_width(self, text: str) -> float:
+        """Returns the text width in drawing units for the given `text` string."""
         pass
 
     @abc.abstractmethod
     def text_width_ex(
         self, text: str, cap_height: float, width_factor: float = 1.0
     ) -> float:
+        """Returns the text width in drawing units, bypasses the stored `cap_height` and
+        `width_factor`.
+        """
         pass
 
     @abc.abstractmethod
     def space_width(self) -> float:
+        """Returns the width of a "space" character a.k.a. word spacing."""
         pass
 
     @abc.abstractmethod
     def text_path(self, text: str) -> Path2d:
+        """Returns the 2D text path for the given text."""
         ...
 
     @abc.abstractmethod
     def text_path_ex(
         self, text: str, cap_height: float, width_factor: float = 1.0
     ) -> Path2d:
+        """Returns the 2D text path for the given text, bypasses the stored `cap_height`
+        and `width_factor`."""
         ...
 
 
@@ -453,7 +466,6 @@ class StrokeFont(AbstractFont, Generic[F], abc.ABC):
 
     def text_width(self, text: str) -> float:
         """Returns the text width in drawing units for the given `text` string.
-        Text rendering and width calculation is based on fontTools.
         """
         return self.text_width_ex(text, self.cap_height, self.width_factor)
 
@@ -525,13 +537,18 @@ class LibreCadFont(StrokeFont[lff.GlyphCache]):
 def make_font(
     font_name: str, cap_height: float, width_factor: float = 1.0
 ) -> AbstractFont:
-    r"""Factory function to create a font abstraction.
+    r"""Returns a font abstraction based on class :class:`AbstractFont`.
 
-    Returns a :class:`TrueTypeFont` instance, SHX font support will be added in the
-    future. The current implementation maps SHX fonts to equivalent TTF fonts.
+    Supported font types:
 
-    The special name "\*monospace" returns the last resort fallback font
-    :class:`MonospaceFont` for testing and measurements.
+    - .ttf, .ttc and .otf - TrueType fonts
+    - .shx, .shp - Autodesk® shapefile fonts
+    - .lff - LibreCAD font format
+
+    The special name "\*monospace" returns the fallback font :class:`MonospaceFont` for
+    testing and basic measurements.
+
+    .. note:: The font definition files are not included in `ezdxf`.
 
     Args:
         font_name: font file name as stored in the :class:`~ezdxf.entities.Textstyle`

@@ -117,6 +117,14 @@ Custom Data
     user_xdata
     user_record
 
+Fonts
+-----
+
+.. toctree::
+    :maxdepth: 2
+
+    tools/fonts
+
 Tools
 -----
 
@@ -127,7 +135,6 @@ Tools
     tools/gfxattribs
     tools/text
     tools/text_size
-    tools/fonts
     tools/acis
 
 

@@ -11,8 +11,8 @@ ATTRIB entity can be converted into paths and hatches.
 
     Text rendering is done by the `fontTools`_ package, which is a hard dependency of
     `ezdxf`. Support for stroke fonts, these are the basic vector fonts included in CAD
-    applications, like .shx, .shp or .lff fonts. These fonts cannot be rendered
-    as HATCH entities.
+    applications, like .shx, .shp or .lff fonts was added but these fonts cannot be
+    rendered as HATCH entities.
 
     The required font files are not included with `ezdxf` as they are copyrighted or,
     in the case of the LibreCAD font format, licensed under the "GPL v2 and later".
