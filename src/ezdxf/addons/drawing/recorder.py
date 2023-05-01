@@ -22,12 +22,10 @@ if TYPE_CHECKING:
 
 
 class RecordType(enum.Enum):
-    POINT = enum.auto()
-    LINE = enum.auto()
     SOLID_LINES = enum.auto()
     PATH = enum.auto()
     FILLED_PATHS = enum.auto()
-    FILLED_POLYGON = enum.auto()
+    POINTS = enum.auto()
 
 
 @dataclasses.dataclass
@@ -39,11 +37,11 @@ class DataRecord:
 
 # Linetype, linetype_pattern and linetype_scale is not relevant, the frontend passes
 # only solid lines to the backend.
-# is_visible is handled by the frontend
-# Fonts are rendered by the frontend into paths or filled polylines.
+# Visibility is handled by the frontend.
+# Fonts are rendered by the frontend into paths or filled paths.
 # Units are handled by the frontend.
 # Filling has no meaning to the backend - fill-color is "color", patterns are rendered
-# by the frontend as lines
+# by the frontend as lines.
 
 
 class RecordProperties(NamedTuple):
@@ -74,17 +72,16 @@ class Recorder(BackendInterface):
         )
         prop_hash = hash(rec_props)
         self.records.append(DataRecord(type=type_, property_hash=prop_hash, data=data))
-        if prop_hash not in self.properties:
-            self.properties[prop_hash] = rec_props
+        self.properties[prop_hash] = rec_props
 
     def draw_point(self, pos: AnyVec, properties: Properties) -> None:
         self.bbox.extend((pos,))
-        self.store(RecordType.POINT, properties, npshapes.NumpyPolyline((pos,)))
+        self.store(RecordType.POINTS, properties, npshapes.NumpyPolyline((pos,)))
 
     def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties) -> None:
         line = npshapes.NumpyPolyline((start, end))
         self.bbox.extend(line.bbox())
-        self.store(RecordType.LINE, properties, line)
+        self.store(RecordType.POINTS, properties, line)
 
     def draw_solid_lines(
         self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
@@ -118,7 +115,7 @@ class Recorder(BackendInterface):
     ) -> None:
         polygon = npshapes.NumpyPolyline(points)
         self.bbox.extend(polygon.bbox())
-        self.store(RecordType.FILLED_POLYGON, properties, polygon)
+        self.store(RecordType.POINTS, properties, polygon)
 
     def transform(self, m: Matrix44) -> None:
         """Transforms the recordings by a transformation matrix `m` of type
@@ -150,18 +147,18 @@ class Recorder(BackendInterface):
                 record.property_hash
             ]
             t = record.type
-            if t == RecordType.POINT:
-                point = record.data.vertices()[0]
-                backend.draw_point(point, properties)
-            elif t == RecordType.LINE:
-                s, e = record.data.vertices()
-                backend.draw_line(s, e, properties)
+            if t == RecordType.POINTS:
+                vertices = record.data.vertices()
+                if len(vertices) == 1:
+                    backend.draw_point(vertices[0], properties)
+                elif len(vertices) == 2:
+                    backend.draw_line(vertices[0], vertices[1], properties)
+                else:
+                    backend.draw_filled_polygon(vertices, properties)
             elif t == RecordType.SOLID_LINES:
                 backend.draw_solid_lines(take2(record.data.vertices()), properties)
             elif t == RecordType.PATH:
                 backend.draw_path(record.data.to_path2d(), properties)
-            elif t == RecordType.FILLED_POLYGON:
-                backend.draw_filled_polygon(record.data.vertices(), properties)
             elif t == RecordType.FILLED_PATHS:
                 paths = [p.to_path2d() for p in record.data[0]]
                 holes = [p.to_path2d() for p in record.data[1]]
