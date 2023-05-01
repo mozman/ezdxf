@@ -11,6 +11,7 @@ from ezdxf.addons.drawing.debug_backend import BasicBackend, PathBackend
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
 from ezdxf.path import from_vertices
+from ezdxf.fonts import fonts
 
 
 @pytest.fixture
@@ -130,9 +131,7 @@ def test_lwpolyline_path(msp, path_backend):
 
 
 def test_banded_lwpolyline(msp, basic):
-    msp.add_lwpolyline(
-        [(0, 0), (1, 0), (2, 0)], dxfattribs={"const_width": 0.1}
-    )
+    msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)], dxfattribs={"const_width": 0.1})
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 1
@@ -271,6 +270,9 @@ def test_3d_ellipse_path(msp, path_backend):
     assert unique_types(result) == {"path"}
 
 
+@pytest.mark.skipif(
+    not fonts.font_manager.has_font("txt.shx"), reason="missing required .shx font"
+)
 def test_2d_text(msp, basic):
     # since v1.0.4 the frontend does the text rendering and passes only filled
     # polygons and paths to the backend
@@ -289,6 +291,9 @@ def test_ignore_3d_text(msp, basic):
     assert len(result) == 0
 
 
+@pytest.mark.skipif(
+    not fonts.font_manager.has_font("txt.shx"), reason="missing required .shx font"
+)
 def test_mtext(msp, basic):
     # since v1.0.4 the frontend does the text rendering and passes only filled
     # polygons to the backend
@@ -339,6 +344,9 @@ def test_polyface(msp, basic):
     assert entities == {"line"}
 
 
+@pytest.mark.skipif(
+    not fonts.font_manager.has_font("txt.shx"), reason="missing required .shx font"
+)
 def test_override_filter(msp, ctx):
     class FrontendWithOverride(Frontend):
         def __init__(self, ctx: RenderContext, out: Backend):
