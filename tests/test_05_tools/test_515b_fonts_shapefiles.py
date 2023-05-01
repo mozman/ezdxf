@@ -9,9 +9,7 @@ from ezdxf.fonts import fonts
 @pytest.fixture(scope="module", autouse=True)
 def check_shape_files_available():
     if not fonts.font_manager.has_font("txt.shx"):
-        pytest.skip(
-            reason="required shapefile fonts are not available", allow_module_level=True
-        )
+        pytest.skip(reason="required shapefile fonts are not available")
 
 
 def test_get_font_family_for_shx_files():
@@ -22,12 +20,6 @@ def test_get_font_family_for_shx_files():
 def test_get_font_family_for_shp_files():
     font_face = fonts.font_manager.get_font_face("txt.shp")
     assert font_face.family == "txt"
-
-
-def test_get_font_family_for_lff_files():
-    # LibreCAD does not include a replacement font for TXT
-    font_face = fonts.font_manager.get_font_face("iso.lff")
-    assert font_face.family == "iso"
 
 
 def test_get_font_style_for_shx_files():

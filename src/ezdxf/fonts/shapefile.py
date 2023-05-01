@@ -947,7 +947,7 @@ class GlyphCache:
         p.move_to(glyph_A.end)
         return p
 
-    def _render_shape(self, shape_number):
+    def _render_shape(self, shape_number) -> path.Path2d:
         ctx = ShapeRenderer(
             path.Path2d(),
             pen_down=True,
