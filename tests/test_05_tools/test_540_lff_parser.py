@@ -61,6 +61,23 @@ def test_render_glyphs(font: lff.LCFont):
     assert p.end.isclose((0, 0))
 
 
+def test_scan_int_ex():
+    assert lff.scan_int_ex("") == 0
+    assert lff.scan_int_ex("[") == 0
+    assert lff.scan_int_ex("[]") == 0
+    assert lff.scan_int_ex("[a]") == 10
+    assert lff.scan_int_ex("[a") == 10
+    assert lff.scan_int_ex("[0000]") == 0
+    assert lff.scan_int_ex("[000a]") == 10
+    assert lff.scan_int_ex("[000A]") == 10
+    assert lff.scan_int_ex("[000A") == 10
+    assert lff.scan_int_ex("[#000A]") == 10
+    assert lff.scan_int_ex("[#000A X") == 10
+    assert lff.scan_int_ex("[# 0 0 0 A] X") == 10
+    assert lff.scan_int_ex("[# 0. 0 0 A X") == 10
+    assert lff.scan_int_ex("[# 0. 0 0 A a") != 10
+
+
 EXAMPLE = """# Just a comment
 # Name:              FontName
 # LetterSpacing:     3

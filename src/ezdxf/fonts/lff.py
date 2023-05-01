@@ -6,11 +6,7 @@
 from __future__ import annotations
 from typing import Sequence, Iterator, Iterable, Optional, no_type_check
 from typing_extensions import TypeAlias
-from ezdxf.math import (
-    Vec2,
-    BoundingBox2d,
-    Matrix44,
-)
+from ezdxf.math import Vec2, BoundingBox2d, Matrix44
 from .font_measurements import FontMeasurements
 from ezdxf import path
 
@@ -146,6 +142,23 @@ def strip_clutter(lines: list[str]) -> Iterator[str]:
             yield line
 
 
+def scan_int_ex(s: str) -> int:
+    from string import hexdigits
+
+    if len(s) == 0:
+        return 0
+    try:
+        end = s.index("]")
+    except ValueError:
+        end = len(s)
+    s = s[1:end].lower()
+    s = "".join(c for c in s if c in hexdigits)
+    try:
+        return int(s, 16)
+    except ValueError:
+        return 0
+
+
 def parse_glyphs(lines: list[str]) -> Iterator[tuple[Glyph, int]]:
     code: int
     polylines: list[Polyline] = []
@@ -153,9 +166,13 @@ def parse_glyphs(lines: list[str]) -> Iterator[tuple[Glyph, int]]:
         parent_code: int = 0
         polylines.clear()
         line = glyph.pop(0)
+        if line[0] != "[":
+            continue
         try:
             code = int(line[1 : line.index("]")], 16)
         except ValueError:
+            code = scan_int_ex(line)
+        if code == 0:
             continue
         line = glyph[0]
         if line.startswith("C"):
