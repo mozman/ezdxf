@@ -18,7 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install mypy pyparsing geomdl
+        python -m pip install wheel mypy pyparsing numpy fonttools
     - name: Install without C-extensions
       run: |
         python setup.py install
