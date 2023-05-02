@@ -18,14 +18,18 @@ class _NumpyShape2d:
 
     def bbox(self) -> BoundingBox2d:
         """Returns the 2d bounding box of the shape vertices."""
+        if len(self._vertices) == 0:
+            return BoundingBox2d()
         return BoundingBox2d((self._vertices.min(0), self._vertices.max(0)))
 
     def transform_inplace(self, m: Matrix44 | np.ndarray) -> None:
         """Transforms the vertices of the shape inplace."""
+        v = self._vertices
+        if len(v) == 0:
+            return
         if isinstance(m, Matrix44):
             m = np.array(m.get_2d_transformation(), dtype=np.double)
             m.shape = (3, 3)
-        v = self._vertices
         v = np.matmul(np.concatenate((v, np.ones((v.shape[0], 1))), axis=1), m)
         self._vertices = v[:, :-1]
 
