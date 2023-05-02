@@ -56,10 +56,10 @@ class Recorder(BackendInterface):
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
         self.bbox.extend((pos,))
-        self.store(RecordType.POINTS, properties, npshapes.NumpyPolyline((pos,)))
+        self.store(RecordType.POINTS, properties, npshapes.NumpyPolyline2d((pos,)))
 
     def draw_line(self, start: AnyVec, end: AnyVec, properties: BackendProperties) -> None:
-        line = npshapes.NumpyPolyline((start, end))
+        line = npshapes.NumpyPolyline2d((start, end))
         self.bbox.extend(line.bbox())
         self.store(RecordType.POINTS, properties, line)
 
@@ -69,12 +69,12 @@ class Recorder(BackendInterface):
         points: list[AnyVec] = []
         for line in lines:
             points.extend(line)
-        pline = npshapes.NumpyPolyline(points)
+        pline = npshapes.NumpyPolyline2d(points)
         self.bbox.extend(pline.bbox())
         self.store(RecordType.SOLID_LINES, properties, pline)
 
     def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
-        npath = npshapes.NumpyPath(path)
+        npath = npshapes.NumpyPath2d(path)
         self.bbox.extend(npath.bbox())
         self.store(RecordType.PATH, properties, npath)
 
@@ -84,16 +84,16 @@ class Recorder(BackendInterface):
         holes: Iterable[Path | Path2d],
         properties: BackendProperties,
     ) -> None:
-        _paths = tuple(npshapes.NumpyPath(p) for p in paths)
+        _paths = tuple(npshapes.NumpyPath2d(p) for p in paths)
         for p in _paths:
             self.bbox.extend(p.bbox())
-        _holes = tuple(npshapes.NumpyPath(p) for p in holes)
+        _holes = tuple(npshapes.NumpyPath2d(p) for p in holes)
         self.store(RecordType.FILLED_PATHS, properties, (_paths, _holes))
 
     def draw_filled_polygon(
         self, points: Iterable[AnyVec], properties: BackendProperties
     ) -> None:
-        polygon = npshapes.NumpyPolyline(points)
+        polygon = npshapes.NumpyPolyline2d(points)
         self.bbox.extend(polygon.bbox())
         self.store(RecordType.POINTS, properties, polygon)
 

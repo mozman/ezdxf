@@ -3,7 +3,7 @@
 
 import pytest
 
-from ezdxf.npshapes import NumpyPolyline, NumpyPath
+from ezdxf.npshapes import NumpyPolyline2d, NumpyPath2d
 from ezdxf.math import Matrix44, BoundingBox2d
 from ezdxf.path import Path2d, Command
 
@@ -14,12 +14,12 @@ class TestNumpyPolyline:
         return [(1, 2), (7, 4), (4, 7), (0, 1)]
 
     def test_conversion(self, points):
-        pl = NumpyPolyline(points)
+        pl = NumpyPolyline2d(points)
         assert len(pl) == len(points)
         assert all(v0.isclose(v1) for v0, v1 in zip(pl.vertices(), points))
 
     def test_bounding_box(self, points):
-        pl = NumpyPolyline(points)
+        pl = NumpyPolyline2d(points)
         bbox = pl.bbox()
         assert bbox.extmin.isclose((0, 1))
         assert bbox.extmax.isclose((7, 7))
@@ -27,7 +27,7 @@ class TestNumpyPolyline:
     def test_transform_inplace(self, points):
         m = Matrix44.translate(7, 8, 0)
         t_pts = m.fast_2d_transform(points)
-        pl = NumpyPolyline(points)
+        pl = NumpyPolyline2d(points)
         pl.transform_inplace(m)
         assert all(v0.isclose(v1) for v0, v1 in zip(pl.vertices(), t_pts))
 
@@ -43,7 +43,7 @@ class TestNumpyPath:
         return p
 
     def test_to_path_2d(self, path):
-        np_path = NumpyPath(path)
+        np_path = NumpyPath2d(path)
         assert len(np_path) == len(path)
 
         path2d = np_path.to_path2d()
@@ -68,7 +68,7 @@ class TestNumpyPath:
         assert cmds[3].ctrl2.isclose((14, 5))
 
     def test_bounding_box(self, path):
-        np_path = NumpyPath(path)
+        np_path = NumpyPath2d(path)
         np_bbox = np_path.bbox()
         box = BoundingBox2d(path.control_vertices())
 
@@ -77,7 +77,7 @@ class TestNumpyPath:
 
     def test_transform(self, path):
         m = Matrix44.scale(2, 3, 1) @ Matrix44.translate(-2, 10, 0)
-        np_path = NumpyPath(path)
+        np_path = NumpyPath2d(path)
         np_path.transform_inplace(m)
         assert all(
             v0.isclose(v1)

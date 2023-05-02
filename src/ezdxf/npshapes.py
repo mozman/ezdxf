@@ -6,10 +6,10 @@ import numpy as np
 from ezdxf.math import BoundingBox2d, Matrix44, Vec2, Vec3
 from ezdxf.path import AbstractPath, Path2d, Command
 
-__all__ = ["NumpyPath", "NumpyPolyline"]
+__all__ = ["NumpyPath2d", "NumpyPolyline2d"]
 
 
-class _NumpyShape:
+class _NumpyShape2d:
     """This is an optimization to store many 2D paths and polylines in a compact way
     without sacrificing basic functions like transformation and bounding box calculation.
     """
@@ -34,7 +34,7 @@ class _NumpyShape:
         return Vec2.list(self._vertices)
 
 
-class NumpyPolyline(_NumpyShape):
+class NumpyPolyline2d(_NumpyShape2d):
     """Represents a 2D Polyline, the polyline vertices are stored as a numpy array.
     Optimized for compactness not for speed.
     """
@@ -46,7 +46,7 @@ class NumpyPolyline(_NumpyShape):
         return len(self._vertices)
 
 
-class NumpyPath(_NumpyShape):
+class NumpyPath2d(_NumpyShape2d):
     """Represents a 2D path, the path control vertices  and commands are stored as
     numpy arrays. Optimized for compactness not for speed.
     """
