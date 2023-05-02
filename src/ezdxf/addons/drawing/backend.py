@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod, ABCMeta
 from typing import Optional, Iterable
 
 from ezdxf.addons.drawing.config import Configuration
-from ezdxf.addons.drawing.properties import Properties
+from ezdxf.addons.drawing.properties import Properties, BackendProperties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import AnyVec
@@ -21,6 +21,7 @@ class BackendInterface(ABC):
 
     @abstractmethod
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        # gets the full properties information
         raise NotImplementedError
 
     @abstractmethod
@@ -32,21 +33,21 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
+    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties) -> None:
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
+        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_path(self, path: Path | Path2d, properties: Properties) -> None:
+    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -54,13 +55,13 @@ class BackendInterface(ABC):
         self,
         paths: Iterable[Path | Path2d],
         holes: Iterable[Path | Path2d],
-        properties: Properties,
+        properties: BackendProperties,
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: Properties
+        self, points: Iterable[AnyVec], properties: BackendProperties
     ) -> None:
         raise NotImplementedError
 
@@ -82,6 +83,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         self.config = config
 
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        # gets the full properties information
         self.entity_stack.append((entity, properties))
 
     def exit_entity(self, entity: DXFGraphic) -> None:
@@ -98,18 +100,18 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
+    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
         """Draw a real dimensionless point, because not all backends support
         zero-length lines!
         """
         raise NotImplementedError
 
     @abstractmethod
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties) -> None:
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
+        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
     ) -> None:
         """Fast method to draw a bunch of solid lines with the same properties."""
         # Must be overridden by the backend to gain a performance benefit.
@@ -121,7 +123,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
             else:
                 self.draw_line(s, e, properties)
 
-    def draw_path(self, path: Path | Path2d, properties: Properties) -> None:
+    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
         """Draw an outline path (connected string of line segments and Bezier
         curves).
 
@@ -144,7 +146,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         self,
         paths: Iterable[Path | Path2d],
         holes: Iterable[Path | Path2d],
-        properties: Properties,
+        properties: BackendProperties,
     ) -> None:
         """Draw multiple filled paths (connected string of line segments and
         Bezier curves) with holes.
@@ -180,7 +182,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
 
     @abstractmethod
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: Properties
+        self, points: Iterable[AnyVec], properties: BackendProperties
     ) -> None:
         """Fill a polygon whose outline is defined by the given points.
         Used to draw entities with simple outlines where :meth:`draw_path` may

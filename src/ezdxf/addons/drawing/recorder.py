@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, NamedTuple, Any
+from typing import TYPE_CHECKING, Iterable, Any
 import enum
 import dataclasses
 
@@ -13,7 +13,7 @@ from ezdxf.tools import take2
 
 from .backend import BackendInterface
 from .config import Configuration
-from .properties import Properties
+from .properties import BackendProperties, Properties
 from .type_hints import Color
 
 
@@ -35,27 +35,12 @@ class DataRecord:
     data: Any
 
 
-# Linetype, linetype_pattern and linetype_scale is not relevant, the frontend passes
-# only solid lines to the backend.
-# Visibility is handled by the frontend.
-# Fonts are rendered by the frontend into paths or filled paths.
-# Units are handled by the frontend.
-# Filling has no meaning to the backend - fill-color is "color", patterns are rendered
-# by the frontend as lines.
-
-
-class RecordProperties(NamedTuple):
-    color: Color
-    lineweight: float
-    layer: str
-
-
 class Recorder(BackendInterface):
     def __init__(self) -> None:
         self.config = Configuration.defaults()
         self.background: Color = "#000000"
         self.records: list[DataRecord] = []
-        self.properties: dict[int, RecordProperties] = dict()
+        self.properties: dict[int, BackendProperties] = dict()
         self.bbox = BoundingBox2d()
 
     def configure(self, config: Configuration) -> None:
@@ -64,27 +49,22 @@ class Recorder(BackendInterface):
     def set_background(self, color: Color) -> None:
         self.background = color
 
-    def store(self, type_: RecordType, properties: Properties, data: Any) -> None:
-        rec_props = RecordProperties(
-            color=properties.color,
-            lineweight=properties.lineweight,
-            layer=properties.layer,
-        )
-        prop_hash = hash(rec_props)
+    def store(self, type_: RecordType, properties: BackendProperties, data: Any) -> None:
+        prop_hash = hash(properties)
         self.records.append(DataRecord(type=type_, property_hash=prop_hash, data=data))
-        self.properties[prop_hash] = rec_props
+        self.properties[prop_hash] = properties
 
-    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
+    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
         self.bbox.extend((pos,))
         self.store(RecordType.POINTS, properties, npshapes.NumpyPolyline((pos,)))
 
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties) -> None:
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: BackendProperties) -> None:
         line = npshapes.NumpyPolyline((start, end))
         self.bbox.extend(line.bbox())
         self.store(RecordType.POINTS, properties, line)
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
+        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
     ) -> None:
         points: list[AnyVec] = []
         for line in lines:
@@ -93,7 +73,7 @@ class Recorder(BackendInterface):
         self.bbox.extend(pline.bbox())
         self.store(RecordType.SOLID_LINES, properties, pline)
 
-    def draw_path(self, path: Path | Path2d, properties: Properties) -> None:
+    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
         npath = npshapes.NumpyPath(path)
         self.bbox.extend(npath.bbox())
         self.store(RecordType.PATH, properties, npath)
@@ -102,7 +82,7 @@ class Recorder(BackendInterface):
         self,
         paths: Iterable[Path | Path2d],
         holes: Iterable[Path | Path2d],
-        properties: Properties,
+        properties: BackendProperties,
     ) -> None:
         _paths = tuple(npshapes.NumpyPath(p) for p in paths)
         for p in _paths:
@@ -111,7 +91,7 @@ class Recorder(BackendInterface):
         self.store(RecordType.FILLED_PATHS, properties, (_paths, _holes))
 
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: Properties
+        self, points: Iterable[AnyVec], properties: BackendProperties
     ) -> None:
         polygon = npshapes.NumpyPolyline(points)
         self.bbox.extend(polygon.bbox())
@@ -139,13 +119,9 @@ class Recorder(BackendInterface):
         """Replay the recording on another backend."""
         backend.configure(self.config)
         backend.set_background(self.background)
-
-        properties = Properties()
         props = self.properties
         for record in self.records:
-            properties.color, properties.lineweight, properties.layer = props[
-                record.property_hash
-            ]
+            properties = props[record.property_hash]
             t = record.type
             if t == RecordType.POINTS:
                 vertices = record.data.vertices()

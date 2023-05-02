@@ -819,7 +819,7 @@ class Designer:
             if point is None:
                 return
             pos = point
-        self.backend.draw_point(pos, properties)
+        self.backend.draw_point(pos, properties.backend_properties)
 
     def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties):
         if (
@@ -829,9 +829,9 @@ class Designer:
             if self.clipper.is_active:
                 points = self.clipper.clip_line(start, end)
                 if points:
-                    self.backend.draw_line(start, end, properties)
+                    self.backend.draw_line(start, end, properties.backend_properties)
             else:
-                self.backend.draw_line(start, end, properties)
+                self.backend.draw_line(start, end, properties.backend_properties)
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
             self.draw_solid_lines(  # including transformation
@@ -849,7 +849,7 @@ class Designer:
                 if points:
                     clipped_lines.append(points)
             lines = clipped_lines  # type: ignore
-        self.backend.draw_solid_lines(lines, properties)
+        self.backend.draw_solid_lines(lines, properties.backend_properties)
 
     def draw_path(self, path: Path | Path2d, properties: Properties):
         if (
@@ -860,9 +860,9 @@ class Designer:
                 for clipped_path in self.clipper.clip_paths(
                     [path], self.config.max_flattening_distance
                 ):
-                    self.backend.draw_path(clipped_path, properties)
+                    self.backend.draw_path(clipped_path, properties.backend_properties)
                 return
-            self.backend.draw_path(path, properties)
+            self.backend.draw_path(path, properties.backend_properties)
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
             vertices = path.flattening(self.config.max_flattening_distance, segments=16)
@@ -886,14 +886,14 @@ class Designer:
             holes = self.clipper.clip_filled_paths(
                 (h.transform(m) for h in holes), max_sagitta
             )
-        self.backend.draw_filled_paths(paths, holes, properties)
+        self.backend.draw_filled_paths(paths, holes, properties.backend_properties)
 
     def draw_filled_polygon(
         self, points: Iterable[AnyVec], properties: Properties
     ) -> None:
         if self.clipper.is_active:
             points = self.clipper.clip_polygon(points)
-        self.backend.draw_filled_polygon(points, properties)
+        self.backend.draw_filled_polygon(points, properties.backend_properties)
 
     def pattern(self, properties: Properties) -> Sequence[float]:
         """Get pattern - implements pattern caching."""

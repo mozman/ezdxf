@@ -14,7 +14,7 @@ from matplotlib.path import Path
 
 import ezdxf.path
 from ezdxf.addons.drawing.backend import Backend
-from ezdxf.addons.drawing.properties import Properties, LayoutProperties
+from ezdxf.addons.drawing.properties import BackendProperties, LayoutProperties
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.math import Vec3, Matrix44, AnyVec
@@ -83,7 +83,7 @@ class MatplotlibBackend(Backend):
     def set_background(self, color: Color):
         self.ax.set_facecolor(color)
 
-    def draw_point(self, pos: AnyVec, properties: Properties):
+    def draw_point(self, pos: AnyVec, properties: BackendProperties):
         """Draw a real dimensionless point."""
         color = properties.color
         self.ax.scatter(
@@ -94,7 +94,7 @@ class MatplotlibBackend(Backend):
             zorder=self._get_z(),
         )
 
-    def get_lineweight(self, properties: Properties) -> float:
+    def get_lineweight(self, properties: BackendProperties) -> float:
         """Set lineweight_scaling=0 to use a constant minimal lineweight."""
         assert self.config.min_lineweight is not None
         return max(
@@ -102,7 +102,7 @@ class MatplotlibBackend(Backend):
             self.config.min_lineweight,
         )
 
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties):
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: BackendProperties):
         """Draws a single solid line, line type rendering is done by the
         frontend since v0.18.1
         """
@@ -123,7 +123,7 @@ class MatplotlibBackend(Backend):
     def draw_solid_lines(
         self,
         lines: Iterable[tuple[AnyVec, AnyVec]],
-        properties: Properties,
+        properties: BackendProperties,
     ):
         """Fast method to draw a bunch of solid lines with the same properties."""
         color = properties.color
@@ -151,7 +151,7 @@ class MatplotlibBackend(Backend):
         )
 
     def draw_path(
-        self, path: ezdxf.path.Path | ezdxf.path.Path2d, properties: Properties
+        self, path: ezdxf.path.Path | ezdxf.path.Path2d, properties: BackendProperties
     ):
         """Draw a solid line path, line type rendering is done by the
         frontend since v0.18.1
@@ -174,7 +174,7 @@ class MatplotlibBackend(Backend):
         self,
         paths: Iterable[ezdxf.path.Path | ezdxf.path.Path2d],
         holes: Iterable[ezdxf.path.Path | ezdxf.path.Path2d],
-        properties: Properties,
+        properties: BackendProperties,
     ):
         # Hatch patterns are handled by the frontend since v0.18.1
         if self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
@@ -208,7 +208,7 @@ class MatplotlibBackend(Backend):
         else:
             self.ax.add_patch(patch)
 
-    def draw_filled_polygon(self, points: Iterable[AnyVec], properties: Properties):
+    def draw_filled_polygon(self, points: Iterable[AnyVec], properties: BackendProperties):
         self.ax.fill(
             *zip(*((p.x, p.y) for p in points)),
             color=properties.color,

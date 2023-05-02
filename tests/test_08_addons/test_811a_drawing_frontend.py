@@ -4,7 +4,7 @@
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext
-from ezdxf.addons.drawing.properties import Properties
+from ezdxf.addons.drawing.properties import BackendProperties
 
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_backend import BasicBackend, PathBackend
@@ -45,6 +45,10 @@ def unique_types(result):
     return {e[0] for e in result}
 
 
+def get_result(frontend):
+    return frontend.out.collector
+
+
 def test_basic_frontend_init(basic):
     assert isinstance(basic.out, BasicBackend)
 
@@ -52,7 +56,7 @@ def test_basic_frontend_init(basic):
 def test_backend_default_draw_path():
     backend = BasicBackend()
     path = from_vertices([(0, 0), (1, 0), (2, 0)])
-    backend.draw_path(path, Properties())
+    backend.draw_path(path, BackendProperties())
     result = backend.collector
     assert len(result) == 2
     assert result[0][0] == "line"
@@ -62,7 +66,7 @@ def test_draw_layout(msp, basic):
     msp.add_point((0, 0))
     msp.add_point((0, 0))
     basic.draw_layout(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 3
     assert result[0][0] == "bgcolor"
     assert result[1][0] == "point"
@@ -74,7 +78,7 @@ def test_draw_entities(msp, basic):
     msp.add_point((0, 0))
 
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 2
     assert result[0][0] == "point"
     assert result[1][0] == "point"
@@ -88,7 +92,7 @@ def test_filter_draw_entities(msp, basic):
     msp.add_point((0, 0), dxfattribs={"layer": "L2"})
 
     basic.draw_entities(msp, filter_func=filter_layer_l1)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 1
     assert result[0][2].layer == "L1"
 
@@ -98,7 +102,7 @@ def test_point_and_layers(msp, basic):
     # a non-existing layer shouldn't be a problem
     msp.add_point((0, 0), dxfattribs={"layer": "fail"})
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 2
     assert result[0][0] == "point"
     assert result[0][-1].layer == "Test1"
@@ -109,7 +113,7 @@ def test_point_and_layers(msp, basic):
 def test_line(msp, basic):
     msp.add_line((0, 0), (1, 0))
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 1
     assert result[0][0] == "line"
 
@@ -117,7 +121,7 @@ def test_line(msp, basic):
 def test_lwpolyline_basic(msp, basic):
     msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)])
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 2
     assert unique_types(result) == {"line"}
 
@@ -125,7 +129,7 @@ def test_lwpolyline_basic(msp, basic):
 def test_lwpolyline_path(msp, path_backend):
     msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)])
     path_backend.draw_entities(msp)
-    result = path_backend.out.collector
+    result = get_result(path_backend)
     assert len(result) == 1
     assert unique_types(result) == {"path"}
 
@@ -133,7 +137,7 @@ def test_lwpolyline_path(msp, path_backend):
 def test_banded_lwpolyline(msp, basic):
     msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)], dxfattribs={"const_width": 0.1})
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 1
     assert unique_types(result) == {"filled_polygon"}
 
@@ -141,7 +145,7 @@ def test_banded_lwpolyline(msp, basic):
 def test_polyline_2d(msp, basic):
     msp.add_polyline2d([(0, 0), (1, 0), (2, 0)])
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 2
     assert result[0][0] == "line"
     assert result[1][0] == "line"
@@ -152,7 +156,7 @@ def test_banded_polyline_2d(msp, basic):
         [(0, 0, 0.1, 0.2), (1, 0, 0.2, 0.1), (2, 0, 0.1, 0.5)], format="xyse"
     )
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 1
     assert result[0][0] == "filled_polygon"
 
@@ -160,7 +164,7 @@ def test_banded_polyline_2d(msp, basic):
 def test_polyline_3d_basic(msp, basic):
     msp.add_polyline3d([(0, 0, 0), (1, 0, 1), (2, 0, 5)])
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 2
     assert unique_types(result) == {"line"}
 
@@ -168,7 +172,7 @@ def test_polyline_3d_basic(msp, basic):
 def test_polyline_3d_path(msp, path_backend):
     msp.add_polyline3d([(0, 0, 0), (1, 0, 1), (2, 0, 5)])
     path_backend.draw_entities(msp)
-    result = path_backend.out.collector
+    result = get_result(path_backend)
     assert len(result) == 1
     assert unique_types(result) == {"path"}
 
@@ -191,7 +195,7 @@ def test_2d_arc_basic(msp, basic):
         dxfattribs={"layer": "Test1"},
     )
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) > 3
     assert unique_types(result) == {"line"}
 
@@ -199,7 +203,7 @@ def test_2d_arc_basic(msp, basic):
 def test_3d_circle_basic(msp, basic):
     msp.add_circle((0, 0), radius=2, dxfattribs={"extrusion": (0, 1, 1)})
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) > 30
     assert unique_types(result) == {"line"}
 
@@ -207,7 +211,7 @@ def test_3d_circle_basic(msp, basic):
 def test_3d_circle_path(msp, path_backend):
     msp.add_circle((0, 0), radius=2, dxfattribs={"extrusion": (0, 1, 1)})
     path_backend.draw_entities(msp)
-    result = path_backend.out.collector
+    result = get_result(path_backend)
     assert len(result) == 1
     assert unique_types(result) == {"path"}
 
@@ -221,7 +225,7 @@ def test_3d_arc_basic(msp, basic):
         dxfattribs={"extrusion": (0, 1, 1)},
     )
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) > 10
     assert unique_types(result) == {"line"}
 
@@ -235,7 +239,7 @@ def test_3d_arc_path(msp, path_backend):
         dxfattribs={"extrusion": (0, 1, 1)},
     )
     path_backend.draw_entities(msp)
-    result = path_backend.out.collector
+    result = get_result(path_backend)
     assert len(result) == 1
     assert unique_types(result) == {"path"}
 
@@ -250,7 +254,7 @@ def test_3d_ellipse_basic(msp, basic):
         dxfattribs={"extrusion": (0, 1, 1)},
     )
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) > 10
     assert unique_types(result) == {"line"}
 
@@ -265,7 +269,7 @@ def test_3d_ellipse_path(msp, path_backend):
         dxfattribs={"extrusion": (0, 1, 1)},
     )
     path_backend.draw_entities(msp)
-    result = path_backend.out.collector
+    result = get_result(path_backend)
     assert len(result) == 1
     assert unique_types(result) == {"path"}
 
@@ -277,7 +281,7 @@ def test_2d_text(msp, basic):
         "test\ntest", dxfattribs={"style": "DEJAVU"}
     )  # \n shouldn't be  problem. Will be ignored
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 8
     assert result[0][0] == "filled_polygon"
 
@@ -285,7 +289,7 @@ def test_2d_text(msp, basic):
 def test_ignore_3d_text(msp, basic):
     msp.add_text("test", dxfattribs={"extrusion": (0, 1, 1)})
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 0
 
 
@@ -294,7 +298,7 @@ def test_mtext(msp, basic):
     # polygons to the backend
     msp.add_mtext("line1\nline2", dxfattribs={"style": "DEJAVU"})
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 12
     assert result[0][0] == "filled_polygon"
 
@@ -303,7 +307,7 @@ def test_hatch(msp, path_backend):
     hatch = msp.add_hatch()
     hatch.paths.add_polyline_path([(0, 0), (1, 0), (1, 1), (0, 1)])
     path_backend.draw_entities(msp)
-    result = path_backend.out.collector
+    result = get_result(path_backend)
     assert len(result) == 1
     assert result[0][0] == "filled_polygon"  # default implementation
 
@@ -311,7 +315,7 @@ def test_hatch(msp, path_backend):
 def test_basic_spline(msp, basic):
     msp.add_spline(fit_points=[(0, 0), (3, 2), (4, 5), (6, 4), (12, 0)])
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) > 1
     entities = {e[0] for e in result}
     assert entities == {"line"}
@@ -322,7 +326,7 @@ def test_mesh(msp, basic):
     c = cube()
     c.render_mesh(msp)
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 24
     assert unique_types(result) == {"line"}
 
@@ -332,7 +336,7 @@ def test_polyface(msp, basic):
     c = cube()
     c.render_polyface(msp)
     basic.draw_entities(msp)
-    result = basic.out.collector
+    result = get_result(basic)
     assert len(result) == 24
     entities = {e[0] for e in result}
     assert entities == {"line"}
@@ -345,7 +349,7 @@ def test_override_filter(msp, ctx):
             self.override_enabled = True
 
         def override_properties(
-            self, entity: DXFGraphic, properties: Properties
+            self, entity: DXFGraphic, properties: BackendProperties
         ) -> None:
             if not self.override_enabled:
                 return

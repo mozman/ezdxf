@@ -10,7 +10,7 @@ from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color
-from ezdxf.addons.drawing.properties import Properties
+from ezdxf.addons.drawing.properties import BackendProperties
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.path import Path, to_qpainter_path
 
@@ -119,7 +119,7 @@ class PyQtBackend(Backend):
             self._color_cache[color] = qt_color
         return qt_color
 
-    def _get_pen(self, properties: Properties) -> qg.QPen:
+    def _get_pen(self, properties: BackendProperties) -> qg.QPen:
         """Returns a cosmetic pen with applied lineweight but without line type
         support.
         """
@@ -135,12 +135,8 @@ class PyQtBackend(Backend):
         pen.setJoinStyle(qc.Qt.RoundJoin)
         return pen
 
-    def _get_brush(self, properties: Properties) -> qg.QBrush:
-        # Hatch patterns are handled by the frontend since v0.18.1
-        filling = properties.filling
-        if filling:
-            return qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)  # type: ignore
-        return self._no_fill
+    def _get_fill_brush(self, color: Color) -> qg.QBrush:
+        return qg.QBrush(self._get_color(color), qc.Qt.SolidPattern)  # type: ignore
 
     def _set_item_data(self, item: qw.QGraphicsItem) -> None:
         parent_stack = tuple(e for e, props in self.entity_stack[:-1])
@@ -156,14 +152,14 @@ class PyQtBackend(Backend):
     def set_background(self, color: Color):
         self._scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
-    def draw_point(self, pos: Vec3, properties: Properties) -> None:
+    def draw_point(self, pos: Vec3, properties: BackendProperties) -> None:
         """Draw a real dimensionless point."""
-        brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
+        brush = self._get_fill_brush(properties.color)
         item = _Point(pos.x, pos.y, brush)
         self._set_item_data(item)
         self._add_item(item)
 
-    def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
+    def draw_line(self, start: Vec3, end: Vec3, properties: BackendProperties) -> None:
         # PyQt draws a long line for a zero-length line:
         if start.isclose(end):
             self.draw_point(start, properties)
@@ -175,7 +171,7 @@ class PyQtBackend(Backend):
     def draw_solid_lines(
         self,
         lines: Iterable[tuple[Vec3, Vec3]],
-        properties: Properties,
+        properties: BackendProperties,
     ):
         """Fast method to draw a bunch of solid lines with the same properties."""
         pen = self._get_pen(properties)
@@ -188,7 +184,7 @@ class PyQtBackend(Backend):
                 item.setPen(pen)
                 add_line(item)
 
-    def draw_path(self, path: Path, properties: Properties) -> None:
+    def draw_path(self, path: Path, properties: BackendProperties) -> None:
         item = qw.QGraphicsPathItem(to_qpainter_path([path]))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._no_fill)
@@ -198,7 +194,7 @@ class PyQtBackend(Backend):
         self,
         paths: Iterable[Path],
         holes: Iterable[Path],
-        properties: Properties,
+        properties: BackendProperties,
     ) -> None:
         oriented_paths: list[Path] = []
         for path in paths:
@@ -217,13 +213,13 @@ class PyQtBackend(Backend):
             return
         item = _CosmeticPath(to_qpainter_path(oriented_paths))
         item.setPen(self._get_pen(properties))
-        item.setBrush(self._get_brush(properties))
+        item.setBrush(self._get_fill_brush(properties.color))
         self._add_item(item)
 
     def draw_filled_polygon(
-        self, points: Iterable[Vec3], properties: Properties
+        self, points: Iterable[Vec3], properties: BackendProperties
     ) -> None:
-        brush = self._get_brush(properties)
+        brush = self._get_fill_brush(properties.color)
         polygon = qg.QPolygonF()
         for p in points:
             polygon.append(qc.QPointF(p.x, p.y))
@@ -239,7 +235,7 @@ class PyQtBackend(Backend):
         super().finalize()
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
         if self._debug_draw_rect:
-            properties = Properties()
+            properties = BackendProperties()
             properties.color = "#000000"
             self._scene.addRect(
                 self._scene.sceneRect(),

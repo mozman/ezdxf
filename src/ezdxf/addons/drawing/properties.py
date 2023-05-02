@@ -10,6 +10,7 @@ from typing import (
     Sequence,
     Callable,
     Iterable,
+    NamedTuple,
 )
 import re
 import copy
@@ -46,6 +47,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "Properties",
+    "BackendProperties",
     "LayerProperties",
     "LayoutProperties",
     "RenderContext",
@@ -102,6 +104,7 @@ class Properties:
 
     def __init__(self) -> None:
         self.color: str = "#ffffff"  # format #RRGGBB or #RRGGBBAA
+        self.pen = 1  # equals the ACI(1-255), for pen based backends like plotters
         # Color names should be resolved into an actual color value
 
         # Store linetype name for backends which don't have the ability to use
@@ -161,6 +164,28 @@ class Properties:
             f"({self.color}, {self.linetype_name}, {self.lineweight}, "
             f'"{self.layer}")'
         )
+
+    @property
+    def rgb(self) -> RGB:
+        """Returns color as RGB tuple."""
+        return hex_to_rgb(self.color[:7])  # ignore alpha if present
+
+    @property
+    def luminance(self) -> float:
+        """Returns perceived color luminance in range [0, 1] from dark to light."""
+        return luminance(self.rgb)
+
+    @property
+    def backend_properties(self) -> BackendProperties:
+        return BackendProperties(self.color, self.lineweight, self.layer, self.pen)
+
+
+class BackendProperties(NamedTuple):
+    """The backend needs way less information."""
+    color: Color = "#000000"
+    lineweight: float = 0.25
+    layer: str = "0"
+    pen: int = 1
 
     @property
     def rgb(self) -> RGB:

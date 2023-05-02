@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Iterable
 from ezdxf.math import AnyVec
 from ezdxf.path import Path, Path2d
-from .properties import Properties
+from .properties import BackendProperties
 from .backend import Backend
 from .config import Configuration
 
@@ -19,14 +19,14 @@ class BasicBackend(Backend):
         self.collector = []
         self.configure(Configuration.defaults())
 
-    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
+    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
         self.collector.append(("point", pos, properties))
 
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties) -> None:
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: BackendProperties) -> None:
         self.collector.append(("line", start, end, properties))
 
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: Properties
+        self, points: Iterable[AnyVec], properties: BackendProperties
     ) -> None:
         self.collector.append(("filled_polygon", list(points), properties))
 
@@ -38,5 +38,5 @@ class BasicBackend(Backend):
 
 
 class PathBackend(BasicBackend):
-    def draw_path(self, path: Path | Path2d, properties: Properties) -> None:
+    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
         self.collector.append(("path", path, properties))
