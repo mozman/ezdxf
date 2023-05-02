@@ -21,7 +21,7 @@ class BackendInterface(ABC):
 
     @abstractmethod
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
-        # gets the full properties information
+        # gets the full DXF properties information
         raise NotImplementedError
 
     @abstractmethod
@@ -83,7 +83,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         self.config = config
 
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
-        # gets the full properties information
+        # gets the full DXF properties information
         self.entity_stack.append((entity, properties))
 
     def exit_entity(self, entity: DXFGraphic) -> None:

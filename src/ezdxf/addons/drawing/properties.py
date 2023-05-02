@@ -104,7 +104,7 @@ class Properties:
 
     def __init__(self) -> None:
         self.color: str = "#ffffff"  # format #RRGGBB or #RRGGBBAA
-        self.pen = 1  # equals the ACI(1-255), for pen based backends like plotters
+        self.pen = 7  # equals the ACI (1-255), for pen based backends like plotters
         # Color names should be resolved into an actual color value
 
         # Store linetype name for backends which don't have the ability to use
@@ -184,7 +184,7 @@ class BackendProperties(NamedTuple):
     """The backend needs way less information."""
     color: Color = "#000000"
     lineweight: float = 0.25
-    layer: str = "0"
+    layer: str = "0"  # layers can group entities
     pen: int = 1
 
     @property
@@ -484,6 +484,7 @@ class RenderContext:
         properties = LayerProperties()
         # Store real layer name (mixed case):
         properties.layer = layer.dxf.name
+        properties.pen = layer.dxf.color
         properties.color = self._true_layer_color(layer)
 
         # set layer transparency
@@ -585,6 +586,7 @@ class RenderContext:
         resolved_layer = layer_key(p.layer)
         p.units = self.resolve_units()
         p.color = self.resolve_color(entity, resolved_layer=resolved_layer)
+        p.pen = self.resolve_pen(entity, resolved_layer=resolved_layer)
         p.linetype_name, p.linetype_pattern = self.resolve_linetype(
             entity, resolved_layer=resolved_layer
         )
@@ -669,6 +671,26 @@ class RenderContext:
             entity.dxf.get("transparency"), layer_properties.color
         )
         return color[:7] + alpha
+
+    def resolve_pen(
+        self, entity: DXFGraphic, *, resolved_layer: Optional[str] = None
+    ) -> int:
+        """Resolve the aci-color of `entity` as pen number in the range of [1..255].
+        """
+        pen = entity.dxf.color  # defaults to BYLAYER
+        entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
+        layer_properties = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES)
+
+        if pen == const.BYLAYER:
+            pen = layer_properties.pen
+        elif pen == const.BYBLOCK:
+            if not self.inside_block_reference:
+                pen = 7
+            else:
+                pen = self.current_block_reference_properties.pen  # type: ignore
+        elif pen == const.BYOBJECT:
+            pen = 7  # ???
+        return pen
 
     def _entity_alpha_str(
         self, raw_transparency: Optional[int], layer_color: Color
