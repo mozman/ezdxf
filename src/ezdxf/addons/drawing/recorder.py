@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Any
+from typing import Iterable, Any
 import enum
 import dataclasses
 
@@ -13,12 +13,8 @@ from ezdxf.tools import take2
 
 from .backend import BackendInterface
 from .config import Configuration
-from .properties import BackendProperties, Properties
+from .properties import BackendProperties
 from .type_hints import Color
-
-
-if TYPE_CHECKING:
-    from ezdxf.entities import DXFGraphic
 
 
 class RecordType(enum.Enum):
@@ -49,7 +45,9 @@ class Recorder(BackendInterface):
     def set_background(self, color: Color) -> None:
         self.background = color
 
-    def store(self, type_: RecordType, properties: BackendProperties, data: Any) -> None:
+    def store(
+        self, type_: RecordType, properties: BackendProperties, data: Any
+    ) -> None:
         prop_hash = hash(properties)
         self.records.append(DataRecord(type=type_, property_hash=prop_hash, data=data))
         self.properties[prop_hash] = properties
@@ -58,7 +56,9 @@ class Recorder(BackendInterface):
         self.bbox.extend((pos,))
         self.store(RecordType.POINTS, properties, npshapes.NumpyPolyline2d((pos,)))
 
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: BackendProperties) -> None:
+    def draw_line(
+        self, start: AnyVec, end: AnyVec, properties: BackendProperties
+    ) -> None:
         line = npshapes.NumpyPolyline2d((start, end))
         self.bbox.extend(line.bbox())
         self.store(RecordType.POINTS, properties, line)
@@ -141,10 +141,10 @@ class Recorder(BackendInterface):
                 backend.draw_filled_paths(paths, holes, properties)
         backend.finalize()
 
-    def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+    def enter_entity(self, entity, properties) -> None:
         pass
 
-    def exit_entity(self, entity: DXFGraphic) -> None:
+    def exit_entity(self, entity) -> None:
         pass
 
     def clear(self) -> None:
