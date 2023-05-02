@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Any
+from typing import Iterable, Any, Iterator
 import enum
 import dataclasses
 
@@ -18,10 +18,10 @@ from .type_hints import Color
 
 
 class RecordType(enum.Enum):
+    POINTS = enum.auto()
     SOLID_LINES = enum.auto()
     PATH = enum.auto()
     FILLED_PATHS = enum.auto()
-    POINTS = enum.auto()
 
 
 @dataclasses.dataclass
@@ -37,7 +37,25 @@ class Recorder(BackendInterface):
         self.background: Color = "#000000"
         self.records: list[DataRecord] = []
         self.properties: dict[int, BackendProperties] = dict()
-        self.bbox = BoundingBox2d()
+        self._bbox = BoundingBox2d()
+
+    def bbox(self) -> BoundingBox2d:
+        """Returns the bounding box of all recorded shapes as
+        :class:`~ezdxf.math.BoundingBox2d`.
+        """
+        if not self._bbox.has_data:
+            self.update_bbox()
+        return self._bbox
+
+    def update_bbox(self):
+        bbox = BoundingBox2d()
+        for record in self.records:
+            if record.type == RecordType.FILLED_PATHS:
+                for path in record.data[0]:  # only add paths, ignore holes
+                    bbox.extend(path.bbox())
+            else:
+                bbox.extend(record.data.bbox())
+        self._bbox = bbox
 
     def configure(self, config: Configuration) -> None:
         self.config = config
@@ -53,30 +71,34 @@ class Recorder(BackendInterface):
         self.properties[prop_hash] = properties
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
-        self.bbox.extend((pos,))
         self.store(RecordType.POINTS, properties, npshapes.NumpyPolyline2d((pos,)))
 
     def draw_line(
         self, start: AnyVec, end: AnyVec, properties: BackendProperties
     ) -> None:
-        line = npshapes.NumpyPolyline2d((start, end))
-        self.bbox.extend(line.bbox())
-        self.store(RecordType.POINTS, properties, line)
+        self.store(
+            RecordType.POINTS, properties, npshapes.NumpyPolyline2d((start, end))
+        )
 
     def draw_solid_lines(
         self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
     ) -> None:
-        points: list[AnyVec] = []
-        for line in lines:
-            points.extend(line)
-        pline = npshapes.NumpyPolyline2d(points)
-        self.bbox.extend(pline.bbox())
-        self.store(RecordType.SOLID_LINES, properties, pline)
+        def flatten() -> Iterator[AnyVec]:
+            for s, e in lines:
+                yield s
+                yield e
+
+        self.store(
+            RecordType.SOLID_LINES, properties, npshapes.NumpyPolyline2d(flatten())
+        )
 
     def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
-        npath = npshapes.NumpyPath2d(path)
-        self.bbox.extend(npath.bbox())
-        self.store(RecordType.PATH, properties, npath)
+        self.store(RecordType.PATH, properties, npshapes.NumpyPath2d(path))
+
+    def draw_filled_polygon(
+        self, points: Iterable[AnyVec], properties: BackendProperties
+    ) -> None:
+        self.store(RecordType.POINTS, properties, npshapes.NumpyPolyline2d(points))
 
     def draw_filled_paths(
         self,
@@ -85,17 +107,8 @@ class Recorder(BackendInterface):
         properties: BackendProperties,
     ) -> None:
         _paths = tuple(npshapes.NumpyPath2d(p) for p in paths)
-        for p in _paths:
-            self.bbox.extend(p.bbox())
         _holes = tuple(npshapes.NumpyPath2d(p) for p in holes)
         self.store(RecordType.FILLED_PATHS, properties, (_paths, _holes))
-
-    def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: BackendProperties
-    ) -> None:
-        polygon = npshapes.NumpyPolyline2d(points)
-        self.bbox.extend(polygon.bbox())
-        self.store(RecordType.POINTS, properties, polygon)
 
     def transform(self, m: Matrix44) -> None:
         """Transforms the recordings by a transformation matrix `m` of type
@@ -112,8 +125,9 @@ class Recorder(BackendInterface):
             else:
                 record.data.transform_inplace(np_mat)
 
-        if self.bbox.has_data:
-            self.bbox = BoundingBox2d(m.fast_2d_transform(self.bbox.rect_vertices()))
+        if self._bbox.has_data:
+            # fast, but maybe inaccurate update
+            self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
 
     def replay(self, backend: BackendInterface) -> None:
         """Replay the recording on another backend."""

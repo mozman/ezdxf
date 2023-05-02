@@ -97,12 +97,14 @@ class Recorder(Backend):
         return self._bbox
 
     def update_bbox(self):
+        bbox = BoundingBox2d()
         for record in self.records:
             if record.type == RecordType.POLYLINE:
-                self._bbox.extend(record.data.bbox())
+                bbox.extend(record.data.bbox())
             else:
                 for path in record.data:
-                    self._bbox.extend(path.bbox())
+                    bbox.extend(path.bbox())
+        self._bbox = bbox
 
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
         self.store(RecordType.POLYLINE, properties, NumpyPolyline2d(points))
@@ -147,6 +149,7 @@ class Recorder(Backend):
                     path.transform_inplace(np_mat)
 
         if self._bbox.has_data:
+            # fast, but maybe inaccurate update
             self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
 
     def sort_filled_polygons(self) -> None:
