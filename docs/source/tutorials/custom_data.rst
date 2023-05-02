@@ -212,7 +212,7 @@ Group codes are not unique in the XDATA section and can be repeated, therefore
 tag order matters.
 
 .. literalinclude:: src/customdata/xdata.py
-    :lines: 10-40
+    :lines: 10-39
 
 AutoLISP script for getting XDATA for AppID ``YOUR_UNIQUE_ID``:
 
@@ -394,7 +394,7 @@ This example shows how to attach a :class:`~ezdxf.entities.XRecord` object to a
 LINE entity by :ref:`extension_dictionary`:
 
 .. literalinclude:: src/customdata/xrecord.py
-    :lines: 10-29
+    :lines: 11-28
 
 Script output:
 
@@ -502,7 +502,7 @@ because :ref:`extended_data` and the :ref:`extension_dictionary` are well
 documented and safe ways to attach custom data to entities.
 
 .. literalinclude:: src/customdata/appdata.py
-    :lines: 10-26
+    :lines: 10-25
 
 Printed output:
 
