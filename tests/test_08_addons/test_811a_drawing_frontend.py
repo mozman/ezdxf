@@ -309,7 +309,7 @@ def test_hatch(msp, path_backend):
     path_backend.draw_entities(msp)
     result = get_result(path_backend)
     assert len(result) == 1
-    assert result[0][0] == "filled_polygon"  # default implementation
+    assert result[0][0] == "filled_path"
 
 
 def test_basic_spline(msp, basic):
