@@ -90,8 +90,6 @@ class Filling:
         self.gradient_color1: Optional[Color] = None
         self.gradient_color2: Optional[Color] = None
         self.gradient_centered: float = 0.0  # todo: what's the meaning?
-        # TODO: remove HATCH pattern definition, backends do not
-        #   render hatch patterns since v0.18.1:
         self.pattern_scale: float = 1.0
         self.pattern: HatchPatternType = []
 
@@ -105,21 +103,11 @@ class Properties:
     def __init__(self) -> None:
         self.color: str = "#ffffff"  # format #RRGGBB or #RRGGBBAA
         self.pen = 7  # equals the ACI (1-255), for pen based backends like plotters
-        # Color names should be resolved into an actual color value
 
-        # Store linetype name for backends which don't have the ability to use
-        # user-defined linetypes, but have some predefined linetypes, maybe
-        # matching most common AutoCAD linetypes is possible.
-        # Store linetype names in UPPERCASE.
+        # Linetype rendering is done by the frontend, the backend receives only solid
+        # lines.
         self.linetype_name: str = "CONTINUOUS"
 
-        # Linetypes: Complex DXF linetypes are not supported:
-        # 1. Don't know if there are any backends which can use linetypes
-        #    including text or shapes
-        # 2. No decoder for SHX files available, which are the source for
-        #    shapes in linetypes
-        # 3. SHX files are copyrighted - including in ezdxf not possible
-        #
         # Simplified DXF linetype definition:
         # all line elements >= 0.0, 0.0 = point
         # all gap elements > 0.0
@@ -133,10 +121,6 @@ class Properties:
         # DXF: ("DASHDOTX2", "Dash dot (2x) ____  .  ____  .  ____  .  ____",
         #      [2.4, 2.0, -0.2, 0.0, -0.2])
         # linetype_pattern: [2.0, 0.2, 0.0, 0.2] = line-gap-point-gap
-        # Stored as tuple, so pattern could be used as key for caching.
-        # SVG dash-pattern does not support points, so a minimal line length
-        # (maybe inferred from linewidth?) has to be used, which may alter the
-        # overall line appearance - but linetype mapping will never be perfect.
         # The continuous pattern is an empty tuple ()
         self.linetype_pattern: Sequence[float] = CONTINUOUS_PATTERN
         self.linetype_scale: float = 1.0
@@ -151,10 +135,14 @@ class Properties:
         self.layer: str = "0"
 
         # Font definition object for text entities:
-        # `None` is for the default font
-        self.font: Optional[fonts.FontFace] = None
+        # Font rendering is done by the frontend, backends receive paths for
+        # stroke-fonts (.shx) and filled paths for outline fonts (.ttf).
+        self.font: Optional[fonts.FontFace] = None  # use default font
 
         # Filling properties: Solid, Pattern, Gradient
+        # Pattern rendering is done by the frontend, backends receive only solid lines,
+        # and the fill color for filled polygons and filled paths is passed as the
+        # color attribute in the BackendProperties, gradients are not supported.
         self.filling: Optional[Filling] = None
 
         self.units = InsertUnits.Unitless
@@ -181,11 +169,11 @@ class Properties:
 
 
 class BackendProperties(NamedTuple):
-    """The backend needs way less information."""
+    """The backend receives a condensed version of the entity properties."""
     color: Color = "#000000"
-    lineweight: float = 0.25
-    layer: str = "0"  # layers can group entities
-    pen: int = 1
+    lineweight: float = 0.25  # in mm
+    layer: str = "0"  # maybe useful to group entities (SVG, PDF)
+    pen: int = 1  # equals the ACI (1-255), for pen based backends like plotters
 
     @property
     def rgb(self) -> RGB:
