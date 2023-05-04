@@ -6,7 +6,7 @@ import numpy as np
 from ezdxf.math import BoundingBox2d, Matrix44, Vec2, Vec3
 from ezdxf.path import AbstractPath, Path2d, Command
 
-__all__ = ["NumpyPath2d", "NumpyPolyline2d"]
+__all__ = ["NumpyPath2d", "NumpyPoints2d"]
 
 
 class _NumpyShape2d:
@@ -38,8 +38,8 @@ class _NumpyShape2d:
         return Vec2.list(self._vertices)
 
 
-class NumpyPolyline2d(_NumpyShape2d):
-    """Represents a 2D Polyline, the polyline vertices are stored as a numpy array.
+class NumpyPoints2d(_NumpyShape2d):
+    """Represents an array of 2D points stored as a ndarray.
     Optimized for compactness not for speed.
     """
 
@@ -51,8 +51,7 @@ class NumpyPolyline2d(_NumpyShape2d):
 
 
 class NumpyPath2d(_NumpyShape2d):
-    """Represents a 2D path, the path control vertices  and commands are stored as
-    numpy arrays. Optimized for compactness not for speed.
+    """Represents a 2D path, the path control vertices and commands are stored as ndarray.
     """
 
     def __init__(self, path: AbstractPath):

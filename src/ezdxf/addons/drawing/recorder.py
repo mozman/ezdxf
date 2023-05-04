@@ -71,13 +71,13 @@ class Recorder(BackendInterface):
         self.properties[prop_hash] = properties
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
-        self.store(RecordType.POINTS, properties, npshapes.NumpyPolyline2d((pos,)))
+        self.store(RecordType.POINTS, properties, npshapes.NumpyPoints2d((pos,)))
 
     def draw_line(
         self, start: AnyVec, end: AnyVec, properties: BackendProperties
     ) -> None:
         self.store(
-            RecordType.POINTS, properties, npshapes.NumpyPolyline2d((start, end))
+            RecordType.POINTS, properties, npshapes.NumpyPoints2d((start, end))
         )
 
     def draw_solid_lines(
@@ -89,7 +89,7 @@ class Recorder(BackendInterface):
                 yield e
 
         self.store(
-            RecordType.SOLID_LINES, properties, npshapes.NumpyPolyline2d(flatten())
+            RecordType.SOLID_LINES, properties, npshapes.NumpyPoints2d(flatten())
         )
 
     def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
@@ -98,7 +98,7 @@ class Recorder(BackendInterface):
     def draw_filled_polygon(
         self, points: Iterable[AnyVec], properties: BackendProperties
     ) -> None:
-        self.store(RecordType.POINTS, properties, npshapes.NumpyPolyline2d(points))
+        self.store(RecordType.POINTS, properties, npshapes.NumpyPoints2d(points))
 
     def draw_filled_paths(
         self,

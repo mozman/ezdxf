@@ -14,7 +14,7 @@ from .deps import (
     BoundingBox2d,
 )
 from .properties import Properties, Pen
-from ezdxf.npshapes import NumpyPath2d, NumpyPolyline2d
+from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
 
 # Page coordinates are always plot units:
 # 1 plot unit (plu) = 0.025mm
@@ -107,7 +107,7 @@ class Recorder(Backend):
         self._bbox = bbox
 
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
-        self.store(RecordType.POLYLINE, properties, NumpyPolyline2d(points))
+        self.store(RecordType.POLYLINE, properties, NumpyPoints2d(points))
 
     def draw_filled_polygon(
         self, properties: Properties, paths: Sequence[Path]
