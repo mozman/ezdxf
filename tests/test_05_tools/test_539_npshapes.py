@@ -8,7 +8,7 @@ from ezdxf.math import Matrix44, BoundingBox2d
 from ezdxf.path import Path2d, Command
 
 
-class TestNumpyPolyline:
+class TestNumpyPoints:
     @pytest.fixture
     def points(self):
         return [(1, 2), (7, 4), (4, 7), (0, 1)]

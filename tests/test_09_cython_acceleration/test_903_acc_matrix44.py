@@ -1,13 +1,13 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
 # Test only basic features of Cython implementation,
 # Full testing and compatibility check with Python implementation
 # is located in test suite 605.
-
 import pytest
+import numpy as np
 
 matrix44 = pytest.importorskip("ezdxf.acc.matrix44")
-Matrix44 = matrix44.Matrix44
+Matrix44: matrix44.Matrix44 = matrix44.Matrix44
 
 
 def test_default_constructor():
@@ -72,6 +72,18 @@ def test_get_origin():
     m = Matrix44()
     m.set_row(3, (7, 8, 9))
     assert m.origin == (7, 8, 9)
+
+
+def test_array_inplace_transformation():
+    from ezdxf.math import Vec2
+
+    m = matrix44.Matrix44.translate(1, 2, 0)
+    points = [(0, 0), (1, 1), (2, 2)]
+    control = m.fast_2d_transform(points)
+
+    array = np.array(points, dtype=np.float64)
+    m.transform_array_inplace(array, 2)
+    assert all(Vec2(c).isclose(r) for c, r in zip(control, array))
 
 
 if __name__ == "__main__":

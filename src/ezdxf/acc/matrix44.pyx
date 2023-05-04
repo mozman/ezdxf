@@ -1,10 +1,13 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from typing import Sequence, Iterable, Tuple, TYPE_CHECKING, Iterator
 from itertools import chain
 import math
+import numpy as np
+import cython
+
 from .vector cimport (
 Vec2, Vec3, v3_normalize, v3_isclose, v3_cross, v3_dot,
 )
@@ -584,6 +587,24 @@ cdef class Matrix44:
             res.y = x * m1 + y * m5 + m13
             yield res
 
+    def transform_array_inplace(self, array: np.ndarray, ndim: int) -> None:
+        """Transforms a numpy array inplace, the argument `ndim` defines the dimensions
+        to transform, this allows 2D/3D transformation on arrays with more columns
+        e.g. a polyline array which stores points as (x, y, start_width, end_width,
+        bulge) values.
+
+        """
+        cdef int _ndim = ndim
+        if _ndim == 2:
+            assert array.shape[1] > 1
+            transform_2d_array_inplace(self.m, array, array.shape[0])
+        elif _ndim == 3:
+            assert array.shape[1] > 2
+            transform_3d_array_inplace(self.m, array, array.shape[0])
+        else:
+            raise ValueError("ndim has to be 2 or 3")
+
+
     def transform_directions(
         self, vectors: Iterable[UVec], normalize=False
     ) -> Iterator[Vec3]:
@@ -619,3 +640,37 @@ cdef class Matrix44:
         return res
 
     ocs_from_wcs = ucs_direction_from_wcs
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void transform_2d_array_inplace(double *m, double [:, ::1] array, Py_ssize_t size):
+    cdef double m0 = m[0]
+    cdef double m1 = m[1]
+    cdef double m4 = m[4]
+    cdef double m5 = m[5]
+    cdef double m12 = m[12]
+    cdef double m13 = m[13]
+    cdef double x, y
+    cdef Py_ssize_t i
+
+    for i in range(size):
+        x = array[i, 0]
+        y = array[i, 1]
+        array[i, 0] = x * m0 + y * m4 + m12
+        array[i, 1] = x * m1 + y * m5 + m13
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void transform_3d_array_inplace(double *m, double [:, ::1] array, Py_ssize_t size):
+    cdef double x, y, z
+    cdef Py_ssize_t i
+
+    for i in range(size):
+        x = array[i, 0]
+        y = array[i, 1]
+        z = array[i, 2]
+
+        array[i, 0] = x * m[0] + y * m[4] + z * m[8] + m[12]
+        array[i, 1] = x * m[1] + y * m[5] + z * m[9] + m[13]
+        array[i, 2] = x * m[2] + y * m[6] + z * m[10] + m[14]
