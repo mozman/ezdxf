@@ -5,7 +5,6 @@ from typing import Sequence, NamedTuple, Any
 import abc
 import enum
 import math
-import numpy as np
 from .deps import (
     Vec2,
     Path,
@@ -96,15 +95,15 @@ class Recorder(Backend):
             self.update_bbox()
         return self._bbox
 
-    def update_bbox(self):
-        bbox = BoundingBox2d()
+    def update_bbox(self) -> None:
+        points: list[Vec2] = []
         for record in self.records:
             if record.type == RecordType.POLYLINE:
-                bbox.extend(record.data.bbox())
+                points.extend(record.data.extents())
             else:
                 for path in record.data:
-                    bbox.extend(path.bbox())
-        self._bbox = bbox
+                    points.extend(path.extents())
+        self._bbox = BoundingBox2d(points)
 
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
         self.store(RecordType.POLYLINE, properties, NumpyPoints2d(points))
@@ -139,14 +138,12 @@ class Recorder(Backend):
         """Transforms the recordings by a transformation matrix `m` of type
         :class:`~ezdxf.math.Matrix44`.
         """
-        np_mat = np.array(m.get_2d_transformation(), dtype=np.double)
-        np_mat.shape = (3, 3)
         for record in self.records:
             if record.type == RecordType.POLYLINE:
-                record.data.transform_inplace(np_mat)
+                record.data.transform_inplace(m)
             else:
                 for path in record.data:
-                    path.transform_inplace(np_mat)
+                    path.transform_inplace(m)
 
         if self._bbox.has_data:
             # fast, but maybe inaccurate update

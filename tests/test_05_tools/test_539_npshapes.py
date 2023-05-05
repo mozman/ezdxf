@@ -18,11 +18,11 @@ class TestNumpyPoints:
         assert len(pl) == len(points)
         assert all(v0.isclose(v1) for v0, v1 in zip(pl.vertices(), points))
 
-    def test_bounding_box(self, points):
+    def test_extents(self, points):
         pl = NumpyPoints2d(points)
-        bbox = pl.bbox()
-        assert bbox.extmin.isclose((0, 1))
-        assert bbox.extmax.isclose((7, 7))
+        extmin, extmax = pl.extents()
+        assert extmin.isclose((0, 1))
+        assert extmax.isclose((7, 7))
 
     def test_transform_inplace(self, points):
         m = Matrix44.translate(7, 8, 0)
@@ -67,13 +67,13 @@ class TestNumpyPath:
         assert cmds[3].ctrl1.isclose((13, 3))
         assert cmds[3].ctrl2.isclose((14, 5))
 
-    def test_bounding_box(self, path):
+    def test_extents(self, path):
         np_path = NumpyPath2d(path)
-        np_bbox = np_path.bbox()
+        extmin, extmax = np_path.extents()
         box = BoundingBox2d(path.control_vertices())
 
-        assert np_bbox.extmin.isclose(box.extmin)
-        assert np_bbox.extmax.isclose(box.extmax)
+        assert extmin.isclose(box.extmin)
+        assert extmax.isclose(box.extmax)
 
     def test_transform(self, path):
         m = Matrix44.scale(2, 3, 1) @ Matrix44.translate(-2, 10, 0)
@@ -83,6 +83,18 @@ class TestNumpyPath:
             v0.isclose(v1)
             for v0, v1 in zip(np_path.vertices(), path.transform(m).control_vertices())
         )
+
+    def test_start_point_only_path(self):
+        p = NumpyPath2d(Path2d((10, 20)))
+        assert p.vertices()[0].isclose((10, 20))
+        # and back
+        assert p.to_path2d().start.isclose((10, 20))
+
+    def test_real_empty_path(self):
+        p = NumpyPath2d(Path2d())
+        assert len(p) == 0
+        # and back
+        assert p.to_path2d().start == (0, 0)  # default start point
 
 
 if __name__ == "__main__":

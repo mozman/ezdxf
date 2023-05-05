@@ -5,7 +5,6 @@ from typing import Iterable, Any, Iterator
 import enum
 import dataclasses
 
-import numpy as np
 from ezdxf.math import AnyVec, BoundingBox2d, Matrix44
 from ezdxf.path import Path, Path2d
 from ezdxf import npshapes
@@ -47,15 +46,15 @@ class Recorder(BackendInterface):
             self.update_bbox()
         return self._bbox
 
-    def update_bbox(self):
-        bbox = BoundingBox2d()
+    def update_bbox(self) -> None:
+        points: list[AnyVec] = []
         for record in self.records:
             if record.type == RecordType.FILLED_PATHS:
                 for path in record.data[0]:  # only add paths, ignore holes
-                    bbox.extend(path.bbox())
+                    points.extend(path.extends())
             else:
-                bbox.extend(record.data.bbox())
-        self._bbox = bbox
+                points.extend(record.data.extends())
+        self._bbox = BoundingBox2d(points)
 
     def configure(self, config: Configuration) -> None:
         self.config = config
@@ -114,16 +113,14 @@ class Recorder(BackendInterface):
         """Transforms the recordings by a transformation matrix `m` of type
         :class:`~ezdxf.math.Matrix44`.
         """
-        np_mat = np.array(m.get_2d_transformation(), dtype=np.double)
-        np_mat.shape = (3, 3)
         for record in self.records:
             if record.type == RecordType.FILLED_PATHS:
                 for p in record.data[0]:
-                    p.transform_inplace(np_mat)
+                    p.transform_inplace(m)
                 for p in record.data[1]:
-                    p.transform_inplace(np_mat)
+                    p.transform_inplace(m)
             else:
-                record.data.transform_inplace(np_mat)
+                record.data.transform_inplace(m)
 
         if self._bbox.has_data:
             # fast, but maybe inaccurate update
