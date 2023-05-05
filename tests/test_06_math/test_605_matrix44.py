@@ -3,6 +3,7 @@
 import pytest
 import pickle
 from math import radians, sin, cos, pi, isclose
+import numpy as np
 
 # Import from 'ezdxf.math._matrix44' to test Python implementation
 from ezdxf.math import (
@@ -371,3 +372,29 @@ class TestFast2dTransform:
 
         assert res_2d[0].isclose(res_3d[0])
         assert res_2d[1].isclose(res_3d[1])
+
+
+class TestTransformArrayInplace:
+    def test_ndim_2(self, m44):
+        points = (23.0, 97.0), (2.0, 7.0)
+        s = m44.scale(10, 20, 1)
+        t = m44.translate(10, 20, 0)
+        r = m44.z_rotate(angle=pi / 2)
+        m = m44.chain(s, r, t)
+        array = np.array(points, dtype=np.float64)
+
+        control = list(m.fast_2d_transform(points))
+        m.transform_array_inplace(array, ndim=2)
+        assert close_vectors(control, array) is True
+
+    def test_ndim_3(self, m44):
+        points = (23.0, 97.0, 0.5), (2.0, 7.0, 13.0)
+        s = m44.scale(10, 20, 30)
+        t = m44.translate(10, 20, 30)
+        r = m44.z_rotate(angle=pi / 2)
+        m = m44.chain(s, r, t)
+        array = np.array(points, dtype=np.float64)
+
+        control = list(m.transform_vertices(points))
+        m.transform_array_inplace(array, ndim=3)
+        assert close_vectors(control, array) is True

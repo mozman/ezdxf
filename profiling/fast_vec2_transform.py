@@ -7,7 +7,7 @@ import math
 import numpy as np
 from ezdxf.acc import USE_C_EXT
 from ezdxf.math import Matrix44, Vec2
-
+from ezdxf.math._matrix44 import Matrix44 as PyMatrix44
 
 RUNS = 10_000
 POINT_COUNT = 1000
@@ -20,11 +20,19 @@ def points(count):
     ]
 
 
-def make_m44(sx, sy, angle, tx, ty):
+def make_cy_m44(sx, sy, angle, tx, ty):
     return (
         Matrix44.scale(sx, sy, 1)
         @ Matrix44.z_rotate(angle)
         @ Matrix44.translate(tx, ty, 0)
+    )
+
+
+def make_py_m44(sx, sy, angle, tx, ty):
+    return (
+        PyMatrix44.scale(sx, sy, 1)
+        @ PyMatrix44.z_rotate(angle)
+        @ PyMatrix44.translate(tx, ty, 0)
     )
 
 
@@ -34,7 +42,7 @@ def python_manual_transform(a, b, c, d, e, f, points: list[Vec2]):
 
 
 def transform_vertices(points, count):
-    m44 = make_m44(2, 2, math.pi / 2, 100, 200)
+    m44 = make_cy_m44(2, 2, math.pi / 2, 100, 200)
     for _ in range(count):
         result = list(m44.transform_vertices(points))
 
@@ -42,15 +50,23 @@ def transform_vertices(points, count):
 def fast_2d_transform(points, count):
     # CPython (c-extension): ~1.1x faster than a transform_vertices()
     # PyPy: ~4x faster than a transform_vertices()
-    m44 = make_m44(2, 2, math.pi / 2, 100, 200)
+    m44 = make_cy_m44(2, 2, math.pi / 2, 100, 200)
     for _ in range(count):
         result = list(m44.fast_2d_transform(points))
 
 
-def array_2d_inplace_transform(points, count):
+def array_2d_inplace_transform_cython(points, count):
     # CPython (cython): 34.9x faster than fast_2d_transform()
     array = np.array(points, dtype=np.float64)
-    m44 = make_m44(2, 2, math.pi / 2, 100, 200)
+    m44 = make_cy_m44(2, 2, math.pi / 2, 100, 200)
+    for _ in range(count):
+        copy = array.copy()
+        m44.transform_array_inplace(copy, 2)
+
+
+def array_2d_inplace_transform_python(points, count):
+    array = np.array(points, dtype=np.float64)
+    m44 = make_py_m44(2, 2, math.pi / 2, 100, 200)
     for _ in range(count):
         copy = array.copy()
         m44.transform_array_inplace(copy, 2)
@@ -107,9 +123,23 @@ def profile(text, func0, func1, points):
 print(f"C-extension is {USE_C_EXT}")
 print(f"Profiling 2d transformation:")
 profile(
-    f"inplace transformation of {POINT_COUNT} random points, {RUNS} times: ",
+    f"inplace transformation (fast/cy) of {POINT_COUNT} random points, {RUNS} times: ",
     translate_points_by_fast_2d_transform,
-    array_2d_inplace_transform,
+    array_2d_inplace_transform_cython,
+    points(POINT_COUNT),
+)
+
+profile(
+    f"inplace transformation (fast/py) of {POINT_COUNT} random points, {RUNS} times: ",
+    translate_points_by_fast_2d_transform,
+    array_2d_inplace_transform_python,
+    points(POINT_COUNT),
+)
+
+profile(
+    f"inplace transformation (py/cy) of {POINT_COUNT} random points, {RUNS} times: ",
+    array_2d_inplace_transform_python,
+    array_2d_inplace_transform_cython,
     points(POINT_COUNT),
 )
 

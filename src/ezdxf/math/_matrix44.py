@@ -7,6 +7,8 @@
 from __future__ import annotations
 from typing import Sequence, Iterable, Iterator, TYPE_CHECKING, Optional
 import math
+import numpy as np
+
 from math import sin, cos, tan
 from itertools import chain
 
@@ -617,7 +619,7 @@ class Matrix44:
         But speed isn't everything, returning the processed input points as :class:`Vec2`
         instances is another advantage.
 
-        .. versionadded:: 1.0.4
+        .. versionadded:: 1.1
 
         """
         m = self._matrix
@@ -632,6 +634,32 @@ class Matrix44:
             x = v.x
             y = v.y
             yield Vec2(x * m0 + y * m4 + m12, x * m1 + y * m5 + m13)
+
+    def transform_array_inplace(self, array: np.ndarray, ndim: int) -> None:
+        """Transforms a numpy array inplace, the argument `ndim` defines the dimensions
+        to transform, this allows 2D/3D transformation on arrays with more columns
+        e.g. a polyline array which stores points as (x, y, start_width, end_width,
+        bulge) values.
+
+        .. versionadded:: 1.1
+
+        """
+        # This implementation exist only for compatibility to the Cython implementation!
+        # This version is 3.4x faster than the Cython version of Matrix44.fast_2d_transform()
+        # for larger point arrays but 10.5x slower than the Cython version of this method.
+        if ndim == 2:
+            m = np.array(self.get_2d_transformation(), dtype=np.float64)
+            m.shape = (3, 3)
+        elif ndim == 3:
+            m = np.array(self._matrix, dtype=np.float64)
+            m.shape = (4, 4)
+        else:
+            raise ValueError("ndim has to be 2 or 3")
+
+        v = np.matmul(
+            np.concatenate((array[:, :ndim], np.ones((array.shape[0], 1))), axis=1), m
+        )
+        array[:, :ndim] = v[:, :ndim].copy()
 
     def transform_directions(
         self, vectors: Iterable[UVec], normalize=False
