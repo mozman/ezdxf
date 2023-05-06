@@ -5,10 +5,10 @@ from typing import Any, no_type_check
 from fontTools.pens.basePen import BasePen
 from fontTools.ttLib import TTFont
 
-import ezdxf.path
 from ezdxf.math import Matrix44, UVec, BoundingBox2d
 from .font_manager import FontManager
 from .font_measurements import FontMeasurements
+from .glyphs import GlyphPath, Glyphs
 
 UNICODE_WHITE_SQUARE = 9633  # U+25A1
 UNICODE_REPLACEMENT_CHAR = 65533  # U+FFFD
@@ -19,10 +19,10 @@ font_manager = FontManager()
 class PathPen(BasePen):
     def __init__(self, glyph_set) -> None:
         super().__init__(glyph_set)
-        self._path = ezdxf.path.Path2d()
+        self._path = GlyphPath()
 
     @property
-    def path(self) -> ezdxf.path.Path2d:
+    def path(self) -> GlyphPath:
         return self._path
 
     def _moveTo(self, pt: UVec) -> None:
@@ -68,9 +68,9 @@ def get_fontname(font: TTFont) -> str:
     return "unknown"
 
 
-class TTFontRenderer:
+class TTFontRenderer(Glyphs):
     def __init__(self, font: TTFont, kerning=False):
-        self._glyph_path_cache: dict[str, ezdxf.path.Path2d] = dict()
+        self._glyph_path_cache: dict[str, GlyphPath] = dict()
         self._generic_glyph_cache: dict[str, Any] = dict()
         self._glyph_width_cache: dict[str, float] = dict()
         self.font = font
@@ -84,6 +84,7 @@ class TTFontRenderer:
                 pass
         self.undefined_generic_glyph = self.glyph_set[".notdef"]
         self.font_measurements = self._get_font_measurements()
+        self.space_width = self.detect_space_width()
 
     @property
     def font_name(self) -> str:
@@ -105,6 +106,9 @@ class TTFontRenderer:
             descender_height=descender_height,
         )
 
+    def get_scaling_factor(self, cap_height: float) -> float:
+        return 1.0 / self.font_measurements.cap_height * cap_height
+
     def get_generic_glyph(self, char: str):
         try:
             return self._generic_glyph_cache[char]
@@ -117,7 +121,7 @@ class TTFontRenderer:
         self._generic_glyph_cache[char] = generic_glyph
         return generic_glyph
 
-    def get_glyph_path(self, char: str) -> ezdxf.path.Path2d:
+    def get_glyph_path(self, char: str) -> GlyphPath:
         """Returns the raw glyph path, without any scaling applied."""
         try:
             return self._glyph_path_cache[char]
@@ -143,14 +147,16 @@ class TTFontRenderer:
         self._glyph_width_cache[char] = width
         return width
 
-    def get_text_path(self, s: str, cap_height: float = 1.0) -> ezdxf.path.Path2d:
+    def get_text_path(
+        self, s: str, cap_height: float = 1.0, width_factor: float = 1.0
+    ) -> GlyphPath:
         """Returns the concatenated glyph paths of string s, scaled to cap height."""
-        text_path = ezdxf.path.Path2d()
+        text_path = GlyphPath()
         x_offset: float = 0
         requires_kerning = isinstance(self.kerning, KerningTable)
         resize_factor = self.get_scaling_factor(cap_height)
         # set scaling factor:
-        m = Matrix44.scale(resize_factor, resize_factor, 1.0)
+        m = Matrix44.scale(resize_factor * width_factor, resize_factor, 1.0)
         # set vertical offset:
         m[3, 1] = -self.font_measurements.baseline * resize_factor
         prev_char = ""
@@ -168,8 +174,8 @@ class TTFontRenderer:
             prev_char = char
         return text_path
 
-    def get_scaling_factor(self, cap_height: float) -> float:
-        return 1.0 / self.font_measurements.cap_height * cap_height
+    def detect_space_width(self) -> float:
+        return self.get_text_length(" ")
 
     def _get_text_length_with_kerning(self, s: str, cap_height: float = 1.0) -> float:
         length = 0.0
@@ -181,8 +187,14 @@ class TTFontRenderer:
             c0 = c1
         return length * self.get_scaling_factor(cap_height)
 
-    def get_text_length(self, s: str, cap_height: float = 1.0) -> float:
+    def get_text_length(
+        self, s: str, cap_height: float = 1.0, width_factor: float = 1.0
+    ) -> float:
         if isinstance(self.kerning, KerningTable):
-            return self._get_text_length_with_kerning(s, cap_height)
+            return self._get_text_length_with_kerning(s, cap_height) * width_factor
         width = self.get_glyph_width
-        return sum(width(c) for c in s) * self.get_scaling_factor(cap_height)
+        return (
+            sum(width(c) for c in s)
+            * self.get_scaling_factor(cap_height)
+            * width_factor
+        )

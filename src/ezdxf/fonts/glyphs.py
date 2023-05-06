@@ -11,8 +11,8 @@ GlyphPath: TypeAlias = Path2d
 
 
 class Glyphs(abc.ABC):
-    font_measurements: FontMeasurements
-    space_width: float
+    font_measurements: FontMeasurements  # of the raw font
+    space_width: float  # word spacing of the raw font
 
     @abc.abstractmethod
     def get_scaling_factor(self, cap_height: float) -> float:
