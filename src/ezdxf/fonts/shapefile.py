@@ -27,7 +27,6 @@ import enum
 import math
 import pathlib
 
-from ezdxf import path
 from ezdxf.math import (
     UVec,
     Vec2,
@@ -36,7 +35,9 @@ from ezdxf.math import (
     BoundingBox2d,
     Matrix44,
 )
+from ezdxf import path
 from .font_measurements import FontMeasurements
+from .glyphs import GlyphPath, Glyphs
 
 
 class ShapeFileException(Exception):
@@ -127,6 +128,7 @@ def format_shape_data_string(data: Sequence[int]) -> list[bytes]:
 
 
 class ShapeFile:
+    """Low level representation of a SHX/SHP file."""
     def __init__(
         self,
         name: bytes,
@@ -241,13 +243,13 @@ class ShapeFile:
             raise UnsupportedShapeNumber(number)
         return symbol.data
 
-    def render_shape(self, number: int, stacked=False) -> path.Path2d:
+    def render_shape(self, number: int, stacked=False) -> GlyphPath:
         return render_shapes([number], self.get_codes, stacked=stacked)
 
-    def render_shapes(self, numbers: Sequence[int], stacked=False) -> path.Path2d:
+    def render_shapes(self, numbers: Sequence[int], stacked=False) -> GlyphPath:
         return render_shapes(numbers, self.get_codes, stacked=stacked)
 
-    def render_text(self, text: str, stacked=False) -> path.Path2d:
+    def render_text(self, text: str, stacked=False) -> GlyphPath:
         numbers = [ord(char) for char in text]
         return render_shapes(
             numbers, self.get_codes, stacked=stacked, reset_to_baseline=True
@@ -402,6 +404,7 @@ SHX_SHAPES_START_INDEX = 0x17
 
 
 def parse_shx_shapes(data: bytes) -> dict[int, Symbol]:
+    """SHX/SHP shape parser."""
     shapes: dict[int, Symbol] = dict()
     reader = DataReader(data, SHX_SHAPES_START_INDEX)
     if reader.u8() != 0x1A:
@@ -434,6 +437,7 @@ def parse_shx_shapes(data: bytes) -> dict[int, Symbol]:
 
 
 def parse_shx_data_record(data: bytes) -> tuple[bytes, Sequence[int]]:
+    """Low level SHX/SHP shape record parser."""
     reader = DataReader(data)
     name = reader.read_str()
     codes = parse_shape_codes(reader)
@@ -608,9 +612,10 @@ def render_shapes(
     stacked: bool,
     start: UVec = (0, 0),
     reset_to_baseline=False,
-) -> path.Path2d:
+) -> GlyphPath:
+    """Renders multiple shapes into a single glyph path."""
     ctx = ShapeRenderer(
-        path.Path2d(start),
+        GlyphPath(start),
         pen_down=True,
         stacked=stacked,
         get_codes=get_codes,
@@ -635,9 +640,10 @@ VEC_Y = [0, 0.5, 1, 1, 1, 1, 1, 0.5, 0, -0.5, -1, -1, -1, -1, -1, -0.5]
 
 
 class ShapeRenderer:
+    """Low level glyph renderer for SHX/SHP fonts."""
     def __init__(
         self,
-        p: path.Path2d,
+        p: GlyphPath,
         get_codes: Callable[[int], Sequence[int]],
         *,
         vector_length: float = 1.0,
@@ -912,13 +918,14 @@ def find_shape_number(filename: str, name: bytes) -> int:
     return index
 
 
-class GlyphCache:
+class GlyphCache(Glyphs):
     def __init__(self, font: ShapeFile) -> None:
+        """Text render engine for SHX/SHP fonts with integrated glyph caching."""
         self.font: ShapeFile = font
-        self._glyph_cache: dict[int, path.Path2d] = dict()
+        self._glyph_cache: dict[int, GlyphPath] = dict()
         self._advance_width_cache: dict[int, float] = dict()
         self.space_width: float = self.detect_space_width()
-        self.empty_box: path.Path2d = self.get_empty_box()
+        self.empty_box: GlyphPath = self.get_empty_box()
         self.font_measurements: FontMeasurements = self._get_font_measurements()
 
     def get_scaling_factor(self, cap_height: float) -> float:
@@ -933,13 +940,13 @@ class GlyphCache:
         space = self.get_shape(32)
         return space.end.x
 
-    def get_empty_box(self) -> path.Path2d:
+    def get_empty_box(self) -> GlyphPath:
         glyph_A = self.get_shape(65)
         box = BoundingBox2d(glyph_A.control_vertices())
         height = box.size.y
         width = box.size.x
         start = glyph_A.start
-        p = path.Path2d(start)
+        p = GlyphPath(start)
         p.line_to(start + Vec2(width, 0))
         p.line_to(start + Vec2(width, height))
         p.line_to(start + Vec2(0, height))
@@ -947,9 +954,9 @@ class GlyphCache:
         p.move_to(glyph_A.end)
         return p
 
-    def _render_shape(self, shape_number) -> path.Path2d:
+    def _render_shape(self, shape_number) -> GlyphPath:
         ctx = ShapeRenderer(
-            path.Path2d(),
+            GlyphPath(),
             pen_down=True,
             stacked=False,
             get_codes=self.font.get_codes,
@@ -960,7 +967,7 @@ class GlyphCache:
             pass
         return ctx.p
 
-    def get_shape(self, shape_number: int) -> path.Path2d:
+    def get_shape(self, shape_number: int) -> GlyphPath:
         try:
             return self._glyph_cache[shape_number]
         except KeyError:
@@ -969,7 +976,7 @@ class GlyphCache:
             glyph = self._render_shape(shape_number)
         except UnsupportedShapeNumber:
             if shape_number < 32:
-                glyph = path.Path2d()
+                glyph = GlyphPath()
             else:
                 glyph = self.empty_box
         self._glyph_cache[shape_number] = glyph
@@ -1016,8 +1023,8 @@ class GlyphCache:
 
     def get_text_path(
         self, text: str, cap_height: float, width_factor: float = 1.0
-    ) -> path.Path2d:
-        p = path.Path2d()
+    ) -> GlyphPath:
+        p = GlyphPath()
         sy = self.get_scaling_factor(cap_height)
         sx = sy * width_factor
         m = Matrix44.scale(sx, sy, 1)

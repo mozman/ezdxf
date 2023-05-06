@@ -7,8 +7,9 @@ from __future__ import annotations
 from typing import Sequence, Iterator, Iterable, Optional, no_type_check
 from typing_extensions import TypeAlias
 from ezdxf.math import Vec2, BoundingBox2d, Matrix44
-from .font_measurements import FontMeasurements
 from ezdxf import path
+from .font_measurements import FontMeasurements
+from .glyphs import GlyphPath, Glyphs
 
 __all__ = ["loads", "LCFont", "Glyph", "GlyphCache"]
 
@@ -23,6 +24,7 @@ def loads(s: str) -> LCFont:
 
 
 class LCFont:
+    """Low level representation of LibreCAD fonts."""
     def __init__(
         self, name: str = "", letter_spacing: float = 0.0, word_spacing: float = 0.0
     ) -> None:
@@ -54,6 +56,7 @@ Polyline: TypeAlias = Sequence[Sequence[float]]
 
 
 class Glyph:
+    """Low level representation of a LibreCAD glyph."""
     __slots__ = ("code", "polylines")
 
     def __init__(self, code: int, polylines: Sequence[Polyline]):
@@ -65,7 +68,7 @@ class Glyph:
         polylines.extend(glyph.polylines)
         return Glyph(glyph.code, polylines)
 
-    def to_path(self) -> path.Path2d:
+    def to_path(self) -> GlyphPath:
         from ezdxf.math import OCS
 
         final_path = path.Path()
@@ -208,13 +211,15 @@ def to_floats(values: Iterable[str]) -> Sequence[float]:
     return tuple(strip(value) for value in values)
 
 
-class GlyphCache:
+class GlyphCache(Glyphs):
+    """Text render engine for LibreCAD fonts with integrated glyph caching."""
+
     def __init__(self, font: LCFont) -> None:
         self.font: LCFont = font
-        self._glyph_cache: dict[int, path.Path2d] = dict()
+        self._glyph_cache: dict[int, GlyphPath] = dict()
         self._advance_width_cache: dict[int, float] = dict()
         self.space_width: float = self.font.word_spacing
-        self.empty_box: path.Path2d = self.get_empty_box()
+        self.empty_box: GlyphPath = self.get_empty_box()
         self.font_measurements: FontMeasurements = self._get_font_measurements()
 
     def get_scaling_factor(self, cap_height: float) -> float:
@@ -223,13 +228,13 @@ class GlyphCache:
         except ZeroDivisionError:
             return 1.0
 
-    def get_empty_box(self) -> path.Path2d:
+    def get_empty_box(self) -> GlyphPath:
         glyph_A = self.get_shape(65)
         box = BoundingBox2d(glyph_A.control_vertices())
         height = box.size.y
         width = box.size.x
         start = glyph_A.start
-        p = path.Path2d(start)
+        p = GlyphPath(start)
         p.line_to(start + Vec2(width, 0))
         p.line_to(start + Vec2(width, height))
         p.line_to(start + Vec2(0, height))
@@ -237,7 +242,7 @@ class GlyphCache:
         p.move_to(glyph_A.end)
         return p
 
-    def _render_shape(self, shape_number) -> path.Path2d:
+    def _render_shape(self, shape_number) -> GlyphPath:
         try:
             glyph = self.font[shape_number]
         except KeyError:
@@ -246,7 +251,7 @@ class GlyphCache:
             raise ValueError("space and non-printable characters are not glyphs")
         return glyph.to_path()
 
-    def get_shape(self, shape_number: int) -> path.Path2d:
+    def get_shape(self, shape_number: int) -> GlyphPath:
         if shape_number <= 32:
             raise ValueError("space and non-printable characters are not glyphs")
         try:
@@ -302,8 +307,8 @@ class GlyphCache:
 
     def get_text_path(
         self, text: str, cap_height: float, width_factor: float = 1.0
-    ) -> path.Path2d:
-        p = path.Path2d()
+    ) -> GlyphPath:
+        p = GlyphPath()
         sy = self.get_scaling_factor(cap_height)
         sx = sy * width_factor
         m = Matrix44.scale(sx, sy, 1)
