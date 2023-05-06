@@ -11,9 +11,7 @@ Version 1.1.0b0 - dev
   v1.0.3 in your `requirements.txt` file to use the previous version!
 - NEW: `numpy` is a hard dependency, requires Python version >= 3.8
 - NEW: `fontTools` is a hard dependency
-- NEW: `Matrix44.Path2d()` class, `Path` class with `Vec2` vertices
-- NEW: optimized `Matrix44.fast_2d_transform()` method
-- NEW: added setter to `BlockLayout.base_point` property
+- NEW: `ezdxf.path.Path2d()` class, `Path` class with `Vec2` vertices
 - NEW: `ezdxf.xref` new core module to manage XREFs and load resources from DXF files
 - NEW: `ezdxf.addons.hpgl2` add-on to convert HPGL/2 plot files to DXF or SVG
 - NEW: `ezdxf plt2dxf` command to convert HPGL/2 plot files to DXF
@@ -21,6 +19,7 @@ Version 1.1.0b0 - dev
 - NEW: `ezdxf plt2pdf` command to convert HPGL/2 plot files to PDF
 - NEW: support for measuring and rendering of .shx, .shp and .lff fonts, the basic 
   stroke fonts included in CAD applications
+- NEW: added setter to `BlockLayout.base_point` property
 - CHANGED: moved font related modules into a new subpackage `ezdxf.fonts` 
   including a big refactoring
 - CHANGED: `FontFace` class - `weight` attribute is an int value (0-1000), `stretch` is 
