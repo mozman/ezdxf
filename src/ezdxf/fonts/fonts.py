@@ -439,10 +439,9 @@ class MonospaceFont(AbstractFont):
         return self._space_width
 
 
-class StrokeFont(AbstractFont, abc.ABC):
-    """Abstract stroke font."""
+class _CachedFont(AbstractFont, abc.ABC):
+    """Abstract font with caching support."""
 
-    font_render_type = FontRenderType.STROKE
     _glyph_caches: dict[str, Glyphs] = dict()
 
     def __init__(self, font_name: str, cap_height: float, width_factor: float = 1.0):
@@ -492,7 +491,7 @@ class StrokeFont(AbstractFont, abc.ABC):
         return self._space_width
 
 
-class TrueTypeFont(AbstractFont):
+class TrueTypeFont(_CachedFont):
     """Represents a TrueType font. Font measurement and glyph rendering is done by the
     `fontTools` package. The given cap height and width factor are the default values
     for measurements and glyph rendering. The extended methods can override these
@@ -500,19 +499,6 @@ class TrueTypeFont(AbstractFont):
     """
 
     font_render_type = FontRenderType.OUTLINE
-    _glyph_caches: dict[str, Glyphs] = dict()
-
-    def __init__(self, font_name: str, cap_height: float, width_factor: float = 1.0):
-        self.name = font_name
-        self.glyph_cache = self.create_cache(font_name)
-        self.cap_height = float(cap_height)
-        self.width_factor = float(width_factor)
-        measurements = self.glyph_cache.font_measurements
-        scale_factor = self.glyph_cache.get_scaling_factor(self.cap_height)
-        super().__init__(measurements.scale(scale_factor))
-        self._space_width = (
-            self.glyph_cache.space_width * self.cap_height * self.width_factor
-        )
 
     def create_cache(self, ttf: str) -> Glyphs:
         from .ttfonts import TTFontRenderer
@@ -522,49 +508,19 @@ class TrueTypeFont(AbstractFont):
             return self._glyph_caches[key]
         except KeyError:
             pass
-        engine = TTFontRenderer(font_manager.get_ttf_font(ttf))
-        self._glyph_caches[key] = engine
-        return engine
-
-    def text_width(self, text: str) -> float:
-        """Returns the text width in drawing units for the given `text` string.
-        Text rendering and width calculation is based on fontTools.
-        """
-        return self.text_width_ex(text, self.cap_height, self.width_factor)
-
-    def text_width_ex(
-        self, text: str, cap_height: float, width_factor: float = 1.0
-    ) -> float:
-        """Returns the text width in drawing units, bypasses the stored `cap_height` and
-        `width_factor`.
-        """
-        if not text.strip():
-            return 0
-        return self.glyph_cache.get_text_length(text, cap_height, width_factor)
-
-    def text_path(self, text: str) -> GlyphPath:
-        """Returns the 2D text path for the given text."""
-        return self.glyph_cache.get_text_path(text, self.cap_height, self.width_factor)
-
-    def text_path_ex(
-        self, text: str, cap_height: float, width_factor: float = 1.0
-    ) -> GlyphPath:
-        """Returns the 2D text path for the given text, bypasses the stored `cap_height`
-        and `width_factor`."""
-        return self.glyph_cache.get_text_path(text, cap_height, width_factor)
-
-    def space_width(self) -> float:
-        """Returns the width of a "space" char."""
-        return self._space_width
+        cache = TTFontRenderer(font_manager.get_ttf_font(ttf))
+        self._glyph_caches[key] = cache
+        return cache
 
 
-class ShapeFileFont(StrokeFont):
+class ShapeFileFont(_CachedFont):
     """Represents a shapefile font (.shx, .shp). Font measurement and glyph rendering is
     done by the ezdxf.fonts.shapefile module. The given cap height and width factor are
     the default values for measurements and glyph rendering. The extended methods can
     override these default values.
 
     """
+
     font_render_type = FontRenderType.STROKE
 
     def create_cache(self, font_name: str) -> Glyphs:
@@ -578,13 +534,14 @@ class ShapeFileFont(StrokeFont):
         return glyph_cache
 
 
-class LibreCadFont(StrokeFont):
+class LibreCadFont(_CachedFont):
     """Represents a LibreCAD font (.shx, .shp). Font measurement and glyph rendering is
     done by the ezdxf.fonts.lff module. The given cap height and width factor are the
     default values for measurements and glyph rendering. The extended methods can
     override these default values.
 
     """
+
     font_render_type = FontRenderType.STROKE
 
     def create_cache(self, font_name: str) -> Glyphs:

@@ -155,14 +155,17 @@ class TTFontRenderer(Glyphs):
         x_offset: float = 0
         requires_kerning = isinstance(self.kerning, KerningTable)
         resize_factor = self.get_scaling_factor(cap_height)
+        y_factor = resize_factor
+        x_factor = resize_factor * width_factor
         # set scaling factor:
-        m = Matrix44.scale(resize_factor * width_factor, resize_factor, 1.0)
+        m = Matrix44.scale(x_factor, y_factor, 1.0)
         # set vertical offset:
-        m[3, 1] = -self.font_measurements.baseline * resize_factor
+        m[3, 1] = -self.font_measurements.baseline * y_factor
         prev_char = ""
+
         for char in s:
             if requires_kerning:
-                x_offset += self.kerning.get(prev_char, char) * resize_factor
+                x_offset += self.kerning.get(prev_char, char) * x_factor
             # set horizontal offset:
             m[3, 0] = x_offset
             glyph_path = self.get_glyph_path(char).transform(m)
@@ -170,12 +173,13 @@ class TTFontRenderer(Glyphs):
                 text_path = glyph_path
             elif len(glyph_path):
                 text_path.extend_multi_path(glyph_path)
-            x_offset += self.get_glyph_width(char) * resize_factor
+            x_offset += self.get_glyph_width(char) * x_factor
             prev_char = char
         return text_path
 
     def detect_space_width(self) -> float:
-        return self.get_text_length(" ")
+        """Returns the space width for the raw (unscaled) font."""
+        return self.get_glyph_width(" ")
 
     def _get_text_length_with_kerning(self, s: str, cap_height: float = 1.0) -> float:
         length = 0.0
