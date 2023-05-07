@@ -56,7 +56,7 @@ PAGE_SIZES = {
     "Letter": (11, 8.5, "in"),
     "Legal": (14, 8.5, "in"),
 }
-MAX_VIEW_BOX_COORDS = 100_000
+MAX_VIEW_BOX_COORDS = 1_000_000
 
 
 class Margins(NamedTuple):
@@ -141,6 +141,10 @@ class Settings:
     # The value is used to determine missing page sizes (width or height).
     scale: float = 1.0
 
+    # limit automatically detected page size
+    max_page_height: tuple[float, str] = 0, "mm"
+    max_page_width: tuple[float, str] = 0, "mm"
+
     def __post_init__(self) -> None:
         if self.content_rotation not in (0, 90, 180, 270):
             raise ValueError(
@@ -150,6 +154,14 @@ class Settings:
     @property
     def swap_width_height(self) -> bool:
         return self.content_rotation in (90, 270)
+
+    @property
+    def max_page_width_in_mm(self) -> float:
+        return self.max_page_width[0] * CSS_UNITS_TO_MM[self.max_page_width[1]]
+
+    @property
+    def max_page_height_in_mm(self) -> float:
+        return self.max_page_height[0] * CSS_UNITS_TO_MM[self.max_page_height[1]]
 
 
 class SVGBackend(Recorder):
@@ -176,19 +188,18 @@ class SVGBackend(Recorder):
         page = final_page_size(bbox, page, settings)
         # the output coordinates are integer values in the range [0, MAX_VIEW_BOX_COORDS]
         scale = scale_view_box(bbox, page, settings.swap_width_height)
+        vb_scale_mm = MAX_VIEW_BOX_COORDS / max(page.width_in_mm, page.height_in_mm)
         m = placement_matrix(
             bbox,
             sx=scale,
             sy=scale * flip_y,
             rotation=rotation,
-            margin_left=page.margins.left / page.width,  # as percentage of page width
-            margin_bottom=page.margins.bottom
-            / page.height,  # as percentage of page height
+            offset_x=page.margins.left * vb_scale_mm,
+            offset_y=page.margins.top * vb_scale_mm,
         )
         self.transform(m)
         self._init_y_axis_flip = False
-        view_box_width, view_box_height = make_view_box(page)
-        backend = SVGRenderBackend(view_box_width, view_box_height, page)
+        backend = SVGRenderBackend(page)
         self.replay(backend)
         return backend.get_string()
 
@@ -205,7 +216,22 @@ def final_page_size(content_box: BoundingBox2d, page: Page, settings: Settings) 
         width = scale * content_width + margins.left + margins.right
     if height == 0:
         height = scale * content_height + margins.top + margins.bottom
+
+    width, height = limit_page_size(
+        width, height, settings.max_page_width_in_mm, settings.max_page_height_in_mm
+    )
     return Page(round(width, 2), round(height, 2), "mm", margins)
+
+
+def limit_page_size(width, height, max_width, max_height) -> tuple[int, int]:
+    ar = width / height
+    if max_height:
+        height = min(max_height, height)
+        width = height * ar
+    if max_width and width > max_width:
+        width = min(max_width, width)
+        height = width / ar
+    return round(width), round(height)
 
 
 def make_view_box(page: Page) -> tuple[int, int]:
@@ -218,30 +244,26 @@ def make_view_box(page: Page) -> tuple[int, int]:
 
 def scale_view_box(bbox: BoundingBox2d, page: Page, swap_wh: bool) -> int:
     # The viewBox coordinates are integer values in the range of [0, MAX_VIEW_BOX_COORDS]
-    horiz_margin_factor = (page.margins.left + page.margins.right) / page.width
-    vert_margin_factor = (page.margins.top + page.margins.bottom) / page.height
-    scale_content_x = 1.0 + horiz_margin_factor
-    scale_content_y = 1.0 + vert_margin_factor
+    scale_x = (page.width + page.margins.left + page.margins.right) / page.width
+    scale_y = (page.height + page.margins.top + page.margins.bottom) / page.height
     content_width = bbox.size.x
     content_height = bbox.size.y
     if swap_wh:
         content_width, content_height = content_height, content_width
 
-    return round(
-        min(
-            MAX_VIEW_BOX_COORDS / (content_width * scale_content_x),
-            MAX_VIEW_BOX_COORDS / (content_height * scale_content_y),
-        )
+    return min(
+        MAX_VIEW_BOX_COORDS / (content_width * scale_x),
+        MAX_VIEW_BOX_COORDS / (content_height * scale_y),
     )
 
 
 def placement_matrix(
     bbox: BoundingBox2d,
-    sx: float = 1.0,
-    sy: float = 1.0,
-    rotation: float = 0.0,
-    margin_left: float = 0.0,
-    margin_bottom: float = 0.0,
+    sx: float,
+    sy: float,
+    rotation: float,
+    offset_x: float,
+    offset_y: float,
 ) -> Matrix44:
     """Returns a matrix to place the bbox in the first quadrant of the coordinate
     system (+x, +y).
@@ -257,10 +279,8 @@ def placement_matrix(
     # final output canvas
     canvas = BoundingBox2d(corners)
     # calculate margin offset
-    mx = canvas.size.x * margin_left
-    my = canvas.size.y * margin_bottom
     tx, ty = canvas.extmin  # type: ignore
-    return m @ Matrix44.translate(-tx + mx, my - ty, 0)
+    return m @ Matrix44.translate(-tx + offset_x, -ty + offset_y, 0)
 
 
 class SVGRenderBackend(BackendInterface):
@@ -278,7 +298,8 @@ class SVGRenderBackend(BackendInterface):
 
     """
 
-    def __init__(self, view_box_width: int, view_box_height: int, page: Page) -> None:
+    def __init__(self, page: Page) -> None:
+        view_box_width, view_box_height = make_view_box(page)
         self.stroke_width_scale: float = view_box_width / page.width_in_mm
         self.min_stroke_width: float = 0.05  # mm
         self.root = ET.Element(
@@ -316,10 +337,7 @@ class SVGRenderBackend(BackendInterface):
             return
         element = ET.SubElement(self.strokes, "path", d=d)
         element.set("stroke", properties.color)
-        lw = (
-            max(properties.lineweight, self.min_stroke_width)
-            * self.stroke_width_scale
-        )
+        lw = max(properties.lineweight, self.min_stroke_width) * self.stroke_width_scale
         element.set("stroke-width", f"{lw:.0f}")
 
     def add_filling(self, d: str, properties: BackendProperties):

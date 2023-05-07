@@ -109,7 +109,7 @@ class TestSVGBackend:
         assert xml.tag.endswith("svg") is True
         assert xml.attrib["width"] == "400mm"
         assert xml.attrib["height"] == "300mm"
-        assert xml.attrib["viewBox"] == "0 0 100000 75000"
+        assert xml.attrib["viewBox"] == "0 0 1000000 750000"
 
 
 if __name__ == "__main__":

@@ -70,7 +70,7 @@ def export(filepath: pathlib.Path):
     Frontend(RenderContext(doc), backend).draw_layout(msp)
     svg_string = backend.get_string(
         svg.Page(0, 0, "mm", svg.Margins.all(10)),
-        svg.Settings(scale=1.0),
+        svg.Settings(scale=1.0, max_page_height=(890, "mm")),
     )
     t2 = time.perf_counter()
     outname = filepath.stem + ".svg"
