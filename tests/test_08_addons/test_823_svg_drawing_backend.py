@@ -32,6 +32,60 @@ class TestPage:
         assert page.height_in_mm == 159
 
 
+class TestDetectFinalPage:
+    """The page size detected automatically if Page.width or Page.height is 0."""
+
+    def test_page_size_scale_1(self):
+        """1 DXF drawing unit are represented by 1mm in the output drawing"""
+        bbox = BoundingBox2d([(0, 0), (100, 200)])
+        page = svg.final_page_size(bbox, svg.Page(0, 0, "mm"), svg.Settings(scale=1))
+        assert page.width == 100
+        assert page.height == 200
+
+    def test_page_size_scale_50(self):
+        """50 DXF drawing unit are represented by 1mm in the output drawing"""
+        bbox = BoundingBox2d([(0, 0), (1000, 2000)])
+        page = svg.final_page_size(
+            bbox, svg.Page(0, 0, "mm"), svg.Settings(scale=1 / 50)
+        )
+        assert page.width == 20
+        assert page.height == 40
+
+    def test_page_size_for_rotated_content_sc1(self):
+        bbox = BoundingBox2d([(0, 0), (100, 200)])
+        page = svg.final_page_size(
+            bbox, svg.Page(0, 0, "mm"), svg.Settings(content_rotation=90)
+        )
+        assert page.width == 200
+        assert page.height == 100
+
+    def test_page_size_for_rotated_content_sc50(self):
+        bbox = BoundingBox2d([(0, 0), (1000, 2000)])
+        page = svg.final_page_size(
+            bbox, svg.Page(0, 0, "mm"), svg.Settings(scale=1 / 50, content_rotation=90)
+        )
+        assert page.width == 40
+        assert page.height == 20
+
+    def test_page_size_includes_margins_sc1(self):
+        bbox = BoundingBox2d([(0, 0), (100, 200)])
+        page = svg.final_page_size(
+            bbox, svg.Page(0, 0, "mm", svg.Margins.all2(20, 50)), svg.Settings()
+        )
+        assert page.width == 100 + 50 + 50
+        assert page.height == 200 + 20 + 20
+
+    def test_page_size_includes_margins_sc50(self):
+        bbox = BoundingBox2d([(0, 0), (1000, 2000)])
+        page = svg.final_page_size(
+            bbox,
+            svg.Page(0, 0, "mm", svg.Margins.all2(20, 50)),
+            svg.Settings(scale=1 / 50),
+        )
+        assert page.width == 20 + 50 + 50
+        assert page.height == 40 + 20 + 20
+
+
 class TestSettings:
     def test_rotate_content(self):
         settings = svg.Settings(content_rotation=90)

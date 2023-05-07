@@ -68,12 +68,12 @@ class Margins(NamedTuple):
     left: float
 
     @classmethod
-    def uniform4(cls, margin: float) -> Self:
+    def all(cls, margin: float) -> Self:
         """Returns a page margins definition class with four equal margins."""
         return cls(margin, margin, margin, margin)
 
     @classmethod
-    def uniform2(cls, top_bottom: float, left_right: float) -> Self:
+    def all2(cls, top_bottom: float, left_right: float) -> Self:
         """Returns a page margins definition class with equal top-bottom and
         left-right margins.
         """
@@ -95,7 +95,7 @@ class Page:
     width: float
     height: float
     units: str = "mm"
-    margins: Margins = Margins.uniform4(0)
+    margins: Margins = Margins.all(0)
 
     def __post_init__(self):
         if self.units not in CSS_UNITS_TO_MM:
@@ -132,20 +132,24 @@ class Settings:
     # Scale content to fit the page,
     fit_page: bool = True
 
-    # If the content shouldn't be scaled to fit the page, how much input units, which
-    # are the DXF drawing units in model- or paper space, represent 1 mm in the rendered
-    # SVG drawing.
-    # e.g. scale 1:100 for input unit is 1m, so 0.01 input units is 1mm in the SVG drawing
+    # How to scale the input units, which are the DXF drawing units in model- or paper
+    # space, to represent 1 mm in the rendered SVG drawing.
+    # e.g. scale 1:100 and input units are m, so 0.01 input units is 1mm in the SVG drawing
     # or 1000mm in input units corresponds to 10mm in the SVG drawing = 10 / 1000 = 0.01;
     # e.g. scale 1:1; input unit is 1mm = 1 / 1 = 1.0 the default value
-    # This value is ignored if fit_page is True!
-    input_units_in_mm: float = 1.0
+    # The value is ignored if the page size is defined and the content fits the page.
+    # The value is used to determine missing page sizes (width or height).
+    scale: float = 1.0
 
     def __post_init__(self) -> None:
         if self.content_rotation not in (0, 90, 180, 270):
             raise ValueError(
                 f"invalid content rotation {self.content_rotation}, valid: 0, 90, 180, 270"
             )
+
+    @property
+    def swap_width_height(self) -> bool:
+        return self.content_rotation in (90, 270)
 
 
 class SVGBackend(Recorder):
@@ -154,16 +158,24 @@ class SVGBackend(Recorder):
         self._init_y_axis_flip = True
 
     def get_string(self, page: Page, settings=Settings()) -> str:
+        if settings.content_rotation not in (0, 90, 180, 270):
+            raise ValueError("content rotation must be 0, 90, 180 or 270 degrees")
+
         # The SVG coordinate system has an inverted y-axis in comparison to the DXF
         # coordinate system, flip y-axis at the first transformation:
-        flip_y = -1.0 if self._init_y_axis_flip else 1.0
         rotation = settings.content_rotation
-        if rotation not in (0, 90, 180, 270):
-            raise ValueError("content rotation must be 0, 90, 180 or 270 degrees")
-        bbox = self.bbox()
+        flip_y = 1.0
+        if self._init_y_axis_flip:
+            flip_y = -1.0
+            if rotation == 90:
+                rotation = 270
+            elif rotation == 270:
+                rotation = 90
 
+        bbox = self.bbox()
+        page = final_page_size(bbox, page, settings)
         # the output coordinates are integer values in the range [0, MAX_VIEW_BOX_COORDS]
-        scale = scale_view_box(bbox, page)
+        scale = scale_view_box(bbox, page, settings.swap_width_height)
         m = placement_matrix(
             bbox,
             sx=scale,
@@ -175,13 +187,25 @@ class SVGBackend(Recorder):
         )
         self.transform(m)
         self._init_y_axis_flip = False
-
-        # bounding box after transformation!
-        box = self.bbox()
         view_box_width, view_box_height = make_view_box(page)
         backend = SVGRenderBackend(view_box_width, view_box_height, page)
         self.replay(backend)
         return backend.get_string()
+
+
+def final_page_size(content_box: BoundingBox2d, page: Page, settings: Settings) -> Page:
+    scale = settings.scale
+    content_width, content_height = content_box.size
+    if settings.swap_width_height:
+        content_width, content_height = content_height, content_width
+    width = page.width_in_mm
+    height = page.height_in_mm
+    margins = page.margins_in_mm
+    if width == 0:
+        width = scale * content_width + margins.left + margins.right
+    if height == 0:
+        height = scale * content_height + margins.top + margins.bottom
+    return Page(round(width, 2), round(height, 2), "mm", margins)
 
 
 def make_view_box(page: Page) -> tuple[int, int]:
@@ -192,16 +216,21 @@ def make_view_box(page: Page) -> tuple[int, int]:
     return round(MAX_VIEW_BOX_COORDS * (page.width / page.height)), MAX_VIEW_BOX_COORDS
 
 
-def scale_view_box(bbox: BoundingBox2d, page: Page) -> int:
+def scale_view_box(bbox: BoundingBox2d, page: Page, swap_wh: bool) -> int:
     # The viewBox coordinates are integer values in the range of [0, MAX_VIEW_BOX_COORDS]
     horiz_margin_factor = (page.margins.left + page.margins.right) / page.width
-    vert_margin_factor = (page.margins.top + page.margins.bottom) / page.width
+    vert_margin_factor = (page.margins.top + page.margins.bottom) / page.height
     scale_content_x = 1.0 + horiz_margin_factor
     scale_content_y = 1.0 + vert_margin_factor
+    content_width = bbox.size.x
+    content_height = bbox.size.y
+    if swap_wh:
+        content_width, content_height = content_height, content_width
+
     return round(
         min(
-            MAX_VIEW_BOX_COORDS / (bbox.size.x * scale_content_x),
-            MAX_VIEW_BOX_COORDS / (bbox.size.y * scale_content_y),
+            MAX_VIEW_BOX_COORDS / (content_width * scale_content_x),
+            MAX_VIEW_BOX_COORDS / (content_height * scale_content_y),
         )
     )
 
@@ -231,7 +260,7 @@ def placement_matrix(
     mx = canvas.size.x * margin_left
     my = canvas.size.y * margin_bottom
     tx, ty = canvas.extmin  # type: ignore
-    return m @ Matrix44.translate(mx - tx, my - ty, 0)
+    return m @ Matrix44.translate(-tx + mx, my - ty, 0)
 
 
 class SVGRenderBackend(BackendInterface):
@@ -250,7 +279,8 @@ class SVGRenderBackend(BackendInterface):
     """
 
     def __init__(self, view_box_width: int, view_box_height: int, page: Page) -> None:
-        self.stroke_width: float = view_box_width / page.width_in_mm
+        self.stroke_width_scale: float = view_box_width / page.width_in_mm
+        self.min_stroke_width: float = 0.05  # mm
         self.root = ET.Element(
             "svg",
             xmlns="http://www.w3.org/2000/svg",
@@ -273,36 +303,38 @@ class SVGRenderBackend(BackendInterface):
         self.strokes.set("stroke-linecap", "round")
         self.strokes.set("stroke-linejoin", "round")
 
-    def get_string(self) -> str:
-        return ET.tostring(self.root, encoding="unicode", xml_declaration=True)
+    def get_string(self, xml_declaration=True) -> str:
+        return ET.tostring(
+            self.root, encoding="unicode", xml_declaration=xml_declaration
+        )
 
     def set_background(self, color: Color) -> None:
         self.background.set("fill", color)
 
-    def set_line_properties(
-        self, element: ET.Element, properties: BackendProperties
-    ) -> None:
+    def add_strokes(self, d: str, properties: BackendProperties):
+        if not d:
+            return
+        element = ET.SubElement(self.strokes, "path", d=d)
         element.set("stroke", properties.color)
-        element.set("stroke-width", f"{properties.lineweight*self.stroke_width:.0f}")
+        lw = (
+            max(properties.lineweight, self.min_stroke_width)
+            * self.stroke_width_scale
+        )
+        element.set("stroke-width", f"{lw:.0f}")
 
-    def set_fill_properties(
-        self, element: ET.Element, properties: BackendProperties
-    ) -> None:
+    def add_filling(self, d: str, properties: BackendProperties):
+        if not d:
+            return
+        element = ET.SubElement(self.fillings, "path", d=d)
         element.set("fill", properties.color)
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
-        d = self.make_polyline_str([pos, pos])
-        if d:
-            element = ET.SubElement(self.strokes, "path", d=d)
-            self.set_line_properties(element, properties)
+        self.add_strokes(self.make_polyline_str([pos, pos]), properties)
 
     def draw_line(
         self, start: AnyVec, end: AnyVec, properties: BackendProperties
     ) -> None:
-        d = self.make_polyline_str([start, end])
-        if d:
-            element = ET.SubElement(self.strokes, "path", d=d)
-            self.set_line_properties(element, properties)
+        self.add_strokes(self.make_polyline_str([start, end]), properties)
 
     def draw_solid_lines(
         self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
@@ -310,14 +342,10 @@ class SVGRenderBackend(BackendInterface):
         lines = list(lines)
         if len(lines) == 0:
             return
-        element = ET.SubElement(self.strokes, "path", d=self.make_multi_line_str(lines))
-        self.set_line_properties(element, properties)
+        self.add_strokes(self.make_multi_line_str(lines), properties)
 
     def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
-        d = self.make_path_str(path)
-        if d:
-            element = ET.SubElement(self.strokes, "path", d=d)
-            self.set_line_properties(element, properties)
+        self.add_strokes(self.make_path_str(path), properties)
 
     def draw_filled_paths(
         self,
@@ -329,17 +357,12 @@ class SVGRenderBackend(BackendInterface):
         for path in itertools.chain(paths, holes):
             if len(path):
                 d.append(self.make_path_str(path, close=True))
-        element = ET.SubElement(self.fillings, "path", d=" ".join(d))
-        self.set_fill_properties(element, properties)
+        self.add_filling(" ".join(d), properties)
 
     def draw_filled_polygon(
         self, points: Iterable[AnyVec], properties: BackendProperties
     ) -> None:
-        s = self.make_polyline_str(list(points), close=True)
-        if not s:
-            return
-        element = ET.SubElement(self.fillings, "path", d=s)
-        self.set_fill_properties(element, properties)
+        self.add_filling(self.make_polyline_str(list(points), close=True), properties)
 
     def make_polyline_str(self, points: Sequence[Vec2], close=False) -> str:
         if len(points) < 2:

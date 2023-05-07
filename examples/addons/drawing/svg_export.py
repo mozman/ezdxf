@@ -68,7 +68,10 @@ def export(filepath: pathlib.Path):
     print()
     backend = svg.SVGBackend()
     Frontend(RenderContext(doc), backend).draw_layout(msp)
-    svg_string = backend.get_string(svg.Page(500, 500, "mm"))
+    svg_string = backend.get_string(
+        svg.Page(0, 0, "mm", svg.Margins.all(10)),
+        svg.Settings(scale=1.0),
+    )
     t2 = time.perf_counter()
     outname = filepath.stem + ".svg"
     print(f"render time: {t2 - t1: .3f} seconds")
@@ -76,7 +79,7 @@ def export(filepath: pathlib.Path):
 
 
 def export_cadkit_samples():
-    for name in CADKIT_FILES[7:]:
+    for name in CADKIT_FILES[:]:
         filename = ezdxf.options.test_files_path / CADKIT / name
         export(filename)
 
