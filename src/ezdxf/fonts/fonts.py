@@ -10,7 +10,7 @@ import pathlib
 
 from ezdxf import options
 from .font_face import FontFace
-from .font_manager import FontManager, SUPPORTED_TTF_TYPES, FontNotFoundError
+from .font_manager import FontManager, SUPPORTED_TTF_TYPES, FontNotFoundError, UnsupportedFont
 from .font_measurements import FontMeasurements
 from .glyphs import GlyphPath, Glyphs
 
@@ -591,12 +591,15 @@ def make_font(
         try:
             return ShapeFileFont(font_name, cap_height, width_factor)
         except FontNotFoundError:
-            pass  # no shape file fonts available
+            pass
+        except UnsupportedFont:
+            # change name - the font exists but is not supported
+            font_name = font_manager.fallback_font_name()
     elif ext == ".lff":
         try:
             return LibreCadFont(font_name, cap_height, width_factor)
         except FontNotFoundError:
-            pass  # no libreCAD fonts available
+            pass
     elif ext == "":  # e.g. "TXT"
         font_face = font_manager.find_best_match(
             family=font_name, style=".shx", italic=None

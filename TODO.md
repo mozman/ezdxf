@@ -25,18 +25,12 @@ Ideas for Future Releases
 Add-ons
 -------
 
-- drawing add-on improvements:
-  - (>v1.1) render SHX fonts and SHAPE entities as paths by the frontend 
-    from `.shx` or `.shp` files, maybe use `.lff` LiberCAD font files as replacement
-    if `.shx` are not available
-  
+- drawing add-on improvements: 
   - (>v1.1) proper rendering pipeline: Frontend -> Stage0 -> ... -> Backend 
     Introducing the Designer() class was the first step, but the implementation 
     is not as flexible as required. Possible rendering stages:
     - linetype rendering
     - 3D text rendering as path-patches
-    - optional stage to render ALL text as path-patches, this could be used for 
-      backends without good text support like the Pillow backend.
     - ortho-view projection (TOP, LEFT, FRONT, ...)
     
     The pipeline should be passed to the Frontend() class as component or 
@@ -46,8 +40,6 @@ Add-ons
     REMINDER FOR MYSELF: Decoupling of the rendering stages and the pipeline 
     is very important, the first proof of concept was too tightly 
     coupled (viewport rendering)!!!!
-
-  - (>v1.1) Native SVG exporter
 
   - (>v1.1) Native PDF exporter
     PyMuPDF was easy to use for in the HPGL/2 converter backend, it's fast, active 
@@ -71,7 +63,6 @@ Add-ons
     
 - (>v1.1) DWG loader, planned for the future. Cython will be required for the 
   low level stuff, no pure Python implementation.
-- (>v1.1) text2path: add support for SHX fonts
 
 Render Tools
 ------------
@@ -80,7 +71,6 @@ Render Tools
   content of the anonymous block `*T...`
 - (>v1.1) factory methods to create ACAD_TABLE entities
 - (>v1.1) tool to create proxy graphic 
-- (>v1.1) LibreCAD Font File (`.lff`) support, https://github.com/Rallaz/LibreCAD/wiki/lff-definition
 
 DXF Entities
 ------------
@@ -205,6 +195,8 @@ DXF Document
 
 Increase Minimal Required Python Version
 ----------------------------------------
+
+In general `numpy` defines the minimal required Python version.
 
 Python 3.9 in late 2023, after release of Python 3.12
 

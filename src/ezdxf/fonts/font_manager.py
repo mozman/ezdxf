@@ -9,7 +9,7 @@ import platform
 import json
 
 from pathlib import Path
-from fontTools.ttLib import TTFont
+from fontTools.ttLib import TTFont, TTLibError
 from .font_face import FontFace
 from . import shapefile, lff
 
@@ -205,6 +205,10 @@ class FontNotFoundError(Exception):
     pass
 
 
+class UnsupportedFont(Exception):
+    pass
+
+
 class FontManager:
     def __init__(self) -> None:
         self.platform = platform.system()
@@ -274,6 +278,8 @@ class FontManager:
             )
         except IOError as e:
             raise FontNotFoundError(str(e))
+        except TTLibError as e:
+            raise FontNotFoundError(str(e))
         self._loaded_ttf_fonts[font_name] = font
         return font
 
@@ -294,6 +300,8 @@ class FontManager:
             file = shapefile.readfile(str(file_path))
         except IOError:
             raise FontNotFoundError(f"shape file '{file_path}' not found")
+        except shapefile.UnsupportedShapeFile as e:
+            raise UnsupportedFont(f"unsupported font'{file_path}': {str(e)}")
         glyph_cache = shapefile.GlyphCache(file)
         self._loaded_shape_file_glyph_caches[font_name] = glyph_cache
         return glyph_cache

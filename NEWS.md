@@ -17,6 +17,7 @@ Version 1.1.0b1 - dev
 - NEW: `ezdxf plt2dxf` command to convert HPGL/2 plot files to DXF
 - NEW: `ezdxf plt2svg` command to convert HPGL/2 plot files to SVG
 - NEW: `ezdxf plt2pdf` command to convert HPGL/2 plot files to PDF
+- NEW: native `SVG` backend for the `drawing` add-on
 - NEW: support for measuring and rendering of .shx, .shp and .lff fonts, the basic 
   stroke fonts included in CAD applications
 - NEW: added setter to `BlockLayout.base_point` property

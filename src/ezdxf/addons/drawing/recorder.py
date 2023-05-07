@@ -49,11 +49,14 @@ class Recorder(BackendInterface):
     def update_bbox(self) -> None:
         points: list[AnyVec] = []
         for record in self.records:
-            if record.type == RecordType.FILLED_PATHS:
-                for path in record.data[0]:  # only add paths, ignore holes
-                    points.extend(path.extents())
-            else:
-                points.extend(record.data.extents())
+            try:
+                if record.type == RecordType.FILLED_PATHS:
+                    for path in record.data[0]:  # only add paths, ignore holes
+                        points.extend(path.extents())
+                else:
+                    points.extend(record.data.extents())
+            except npshapes.EmptyShapeError:
+                pass
         self._bbox = BoundingBox2d(points)
 
     def configure(self, config: Configuration) -> None:
