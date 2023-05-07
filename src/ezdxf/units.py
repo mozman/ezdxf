@@ -6,6 +6,8 @@ from ezdxf.enums import InsertUnits
 # Documentation: https://ezdxf.mozman.at/docs/concepts/units.html#insunits
 
 MSP_METRIC_UNITS_FACTORS = {
+    # length in units * factor = length in meters
+    # length in meters / factor = length in units
     "km": 0.001,
     "m": 1.0,
     "dm": 10.0,
