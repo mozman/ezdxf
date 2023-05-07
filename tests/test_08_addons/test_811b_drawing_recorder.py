@@ -5,8 +5,7 @@ import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.recorder import Recorder
-from ezdxf.addons.drawing.debug_backend import PathBackend, BasicBackend
-from ezdxf.render.forms import cube
+from ezdxf.addons.drawing.debug_backend import PathBackend
 
 
 @pytest.fixture
@@ -91,3 +90,15 @@ def test_2d_text_as_filled_paths(msp, frontend):
     _, *filled_paths = replay(frontend, PathBackend())
     assert filled_paths[0][0] == "filled_path"
     assert len(filled_paths[0][1]) == 2
+
+
+def test_bounding_box(msp, frontend):
+    recorder = frontend.out
+    assert isinstance(recorder, Recorder)
+
+    msp.add_lwpolyline([(0, 0), (200, 0), (200, 100), (0, 100)])
+    frontend.draw_layout(msp)
+    recorder.replay(PathBackend())
+    bbox = recorder.bbox()
+    assert bbox.extmin.isclose((0, 0))
+    assert bbox.extmax.isclose((200, 100))

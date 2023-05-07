@@ -51,9 +51,9 @@ class Recorder(BackendInterface):
         for record in self.records:
             if record.type == RecordType.FILLED_PATHS:
                 for path in record.data[0]:  # only add paths, ignore holes
-                    points.extend(path.extends())
+                    points.extend(path.extents())
             else:
-                points.extend(record.data.extends())
+                points.extend(record.data.extents())
         self._bbox = BoundingBox2d(points)
 
     def configure(self, config: Configuration) -> None:
