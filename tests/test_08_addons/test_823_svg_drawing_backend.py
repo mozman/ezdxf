@@ -85,6 +85,50 @@ class TestDetectFinalPage:
         assert page.width == 20 + 50 + 50
         assert page.height == 40 + 20 + 20
 
+    def test_page_size_limited_page_height(self):
+        bbox = BoundingBox2d([(0, 0), (1000, 2000)])
+        page = svg.final_page_size(
+            bbox,
+            svg.Page(0, 0, "mm", svg.Margins.all(0)),
+            svg.Settings(scale=1, max_page_height=(841, "mm")),
+        )
+        assert page.height == 841
+        assert page.width == 420
+
+    def test_page_size_limited_page_width(self):
+        bbox = BoundingBox2d([(0, 0), (2000, 1000)])
+        page = svg.final_page_size(
+            bbox,
+            svg.Page(0, 0, "mm", svg.Margins.all(0)),
+            svg.Settings(scale=1, max_page_width=(841, "mm")),
+        )
+        assert page.height == 420
+        assert page.width == 841
+
+
+class TestStyles:
+    @pytest.fixture(scope="class")
+    def xml(self):
+        return ET.Element("defs")
+
+    def test_create_stroke_style(self, xml):
+        styles = svg.Styles(xml)
+        cls = styles.get_class(stroke="black", stroke_width= 10)
+        assert cls == "C1"
+        assert len(xml) == 1
+
+        # repeat
+        cls = styles.get_class(stroke="black", stroke_width=10)
+        assert cls == "C1"
+        assert len(xml) == 1
+
+    def test_style_string(self, xml):
+        styles = svg.Styles(xml)
+        styles.get_class(stroke="black", stroke_width=10)
+
+        string = ET.tostring(xml[0], encoding="unicode")
+        assert string == "<style>.C1 {stroke: black; stroke-width: 10; fill: none;}</style>"
+
 
 class TestSettings:
     def test_rotate_content(self):

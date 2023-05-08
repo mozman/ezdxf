@@ -56,6 +56,10 @@ PAGE_SIZES = {
     "Letter": (11, 8.5, "in"),
     "Legal": (14, 8.5, "in"),
 }
+
+# The DXF coordinates are mapped to integer viewBox coordinates in the first
+# quadrant, producing compact SVG files. The larger the coordinate range, the
+# more precise and the lager the files.
 MAX_VIEW_BOX_COORDS = 1_000_000
 
 
@@ -283,6 +287,37 @@ def placement_matrix(
     return m @ Matrix44.translate(-tx + offset_x, -ty + offset_y, 0)
 
 
+class Styles:
+    def __init__(self, xml: ET.Element) -> None:
+        self._xml = xml
+        self._class_names: dict[int, str] = dict()
+        self._counter = 1
+
+    def get_class(
+        self,
+        *,
+        stroke: Color = "none",
+        stroke_width: int | str = "none",
+        fill: Color = "none",
+    ) -> str:
+        style = f"{{stroke: {stroke}; stroke-width: {stroke_width}; fill: {fill};}}"
+        key = hash(style)
+        try:
+            return self._class_names[key]
+        except KeyError:
+            pass
+        name = f"C{self._counter:X}"
+        self._counter += 1
+        self._add_class(name, style)
+        self._class_names[key] = name
+        return name
+
+    def _add_class(self, name, style_str: str) -> None:
+        style = ET.Element("style")
+        style.text = f".{name} {style_str}"
+        self._xml.append(style)
+
+
 class SVGRenderBackend(BackendInterface):
     """Creates the SVG output.
 
@@ -309,6 +344,7 @@ class SVGRenderBackend(BackendInterface):
             height=f"{page.height}{page.units}",
             viewBox=f"0 0 {view_box_width} {view_box_height}",
         )
+        self.styles = Styles(ET.SubElement(self.root, "def"))
         self.background = ET.SubElement(
             self.root,
             "rect",
@@ -318,11 +354,10 @@ class SVGRenderBackend(BackendInterface):
             width=str(view_box_width),
             height=str(view_box_height),
         )
-        self.fillings = ET.SubElement(self.root, "g", stroke="none", fill="black")
-        self.fillings.set("fill-rule", "evenodd")
-        self.strokes = ET.SubElement(self.root, "g", stroke="black", fill="none")
-        self.strokes.set("stroke-linecap", "round")
-        self.strokes.set("stroke-linejoin", "round")
+        self.entities = ET.SubElement(self.root, "g")
+        self.entities.set("stroke-linecap", "round")
+        self.entities.set("stroke-linejoin", "round")
+        self.entities.set("fill-rule", "evenodd")
 
     def get_string(self, xml_declaration=True) -> str:
         return ET.tostring(
@@ -335,16 +370,17 @@ class SVGRenderBackend(BackendInterface):
     def add_strokes(self, d: str, properties: BackendProperties):
         if not d:
             return
-        element = ET.SubElement(self.strokes, "path", d=d)
-        element.set("stroke", properties.color)
+        element = ET.SubElement(self.entities, "path", d=d)
         lw = max(properties.lineweight, self.min_stroke_width) * self.stroke_width_scale
-        element.set("stroke-width", f"{lw:.0f}")
+        cls = self.styles.get_class(stroke=properties.color, stroke_width=round(lw))
+        element.set("class", cls)
 
     def add_filling(self, d: str, properties: BackendProperties):
         if not d:
             return
-        element = ET.SubElement(self.fillings, "path", d=d)
-        element.set("fill", properties.color)
+        element = ET.SubElement(self.entities, "path", d=d)
+        cls = self.styles.get_class(fill=properties.color)
+        element.set("class", cls)
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
         self.add_strokes(self.make_polyline_str([pos, pos]), properties)
