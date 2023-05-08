@@ -397,9 +397,18 @@ class ProxyGraphic:
     def circle(self, data: bytes):
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
-        attribs["center"] = Vec3(bs.read_vertex())
+        center = Vec3(bs.read_vertex())
         attribs["radius"] = bs.read_float()
-        attribs["extrusion"] = bs.read_vertex()
+        normal = Vec3(bs.read_vertex())
+        attribs["extrusion"] = normal
+        if not normal.isclose(Z_AXIS):
+            # TODO: (issue 873) circle has a normal vector but center is in WCS
+            #  It's not clear if all coordinates in proxy graphics are WCS coordinates
+            #  even for OCS entities - the ODA DWG documentation contains no information
+            #  about that.
+            ocs = OCS(normal)
+            center = ocs.from_wcs(center)
+        attribs["center"] = center
         return self._factory("CIRCLE", dxfattribs=attribs)
 
     def circle_3p(self, data: bytes):
