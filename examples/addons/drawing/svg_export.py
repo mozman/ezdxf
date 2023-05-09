@@ -4,6 +4,7 @@ import pathlib
 import time
 
 import ezdxf
+from ezdxf import units
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing import svg
 from ezdxf.math import global_bspline_interpolation
@@ -63,13 +64,12 @@ def export(filepath: pathlib.Path):
     t0 = time.perf_counter()
     doc = ezdxf.readfile(filepath)
     t1 = time.perf_counter()
-    print(f"loading time: {t1 - t0: .3f} seconds", end="")
+    print(f"loading time: {t1 - t0: .3f} seconds")
     msp = doc.modelspace()
-    print()
     backend = svg.SVGBackend()
     Frontend(RenderContext(doc), backend).draw_layout(msp)
     svg_string = backend.get_string(
-        svg.Page(0, 0, svg.Units.mm, svg.Margins.all(10)),  # auto detect page size
+        svg.Page(0, 0, svg.Units.mm, svg.Margins.all(0)),  # auto detect page size
         svg.Settings(scale=1.0, max_page_height=svg.Length(890, svg.Units.mm)),
     )
     t2 = time.perf_counter()

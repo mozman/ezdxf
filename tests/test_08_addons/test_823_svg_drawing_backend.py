@@ -94,6 +94,48 @@ class TestDetectFinalPage:
         assert page.width == 841
 
 
+class TestFitToPage:
+    @pytest.fixture(scope="class")
+    def page(self):
+        return svg.Page(200, 100)
+
+    @pytest.fixture(scope="class")
+    def page_with_margins(self):
+        return svg.Page(220, 120, margins=svg.Margins.all(10))
+
+    def test_stretch_width(self, page):
+        factor = svg.fit_to_page(Vec2(100, 10), page)
+        assert factor == pytest.approx(2)
+
+    def test_stretch_height(self, page):
+        factor = svg.fit_to_page(Vec2(10, 20), page)
+        assert factor == pytest.approx(5)
+
+    def test_shrink_width(self, page):
+        factor = svg.fit_to_page(Vec2(400, 10), page)
+        assert factor == pytest.approx(0.5)
+
+    def test_shrink_height(self, page):
+        factor = svg.fit_to_page(Vec2(50, 200), page)
+        assert factor == pytest.approx(0.5)
+
+    def test_stretch_width_margins(self, page_with_margins):
+        factor = svg.fit_to_page(Vec2(100, 10), page_with_margins)
+        assert factor == pytest.approx(2)
+
+    def test_stretch_height_margins(self, page_with_margins):
+        factor = svg.fit_to_page(Vec2(10, 20), page_with_margins)
+        assert factor == pytest.approx(5)
+
+    def test_shrink_width_margins(self, page_with_margins):
+        factor = svg.fit_to_page(Vec2(400, 10), page_with_margins)
+        assert factor == pytest.approx(0.5)
+
+    def test_shrink_height_margins(self, page_with_margins):
+        factor = svg.fit_to_page(Vec2(50, 200), page_with_margins)
+        assert factor == pytest.approx(0.5)
+
+
 class TestStyles:
     @pytest.fixture(scope="class")
     def xml(self):
