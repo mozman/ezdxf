@@ -37,48 +37,36 @@ class TestDetectFinalPage:
 
     def test_page_size_scale_1(self):
         """1 DXF drawing unit are represented by 1mm in the output drawing"""
-        bbox = BoundingBox2d([(0, 0), (100, 200)])
-        page = svg.final_page_size(bbox, svg.Page(0, 0, svg.Units.mm), svg.Settings(scale=1))
+        content_size = Vec2(100, 200)
+        page = svg.final_page_size(
+            content_size, svg.Page(0, 0, svg.Units.mm), svg.Settings(scale=1)
+        )
         assert page.width == 100
         assert page.height == 200
 
     def test_page_size_scale_50(self):
         """50 DXF drawing unit are represented by 1mm in the output drawing"""
-        bbox = BoundingBox2d([(0, 0), (1000, 2000)])
+        content_size = Vec2(1000, 2000)
         page = svg.final_page_size(
-            bbox, svg.Page(0, 0, svg.Units.mm), svg.Settings(scale=1 / 50)
+            content_size, svg.Page(0, 0, svg.Units.mm), svg.Settings(scale=1 / 50)
         )
         assert page.width == 20
         assert page.height == 40
 
-    def test_page_size_for_rotated_content_sc1(self):
-        bbox = BoundingBox2d([(0, 0), (100, 200)])
-        page = svg.final_page_size(
-            bbox, svg.Page(0, 0, svg.Units.mm), svg.Settings(content_rotation=90)
-        )
-        assert page.width == 200
-        assert page.height == 100
-
-    def test_page_size_for_rotated_content_sc50(self):
-        bbox = BoundingBox2d([(0, 0), (1000, 2000)])
-        page = svg.final_page_size(
-            bbox, svg.Page(0, 0, svg.Units.mm), svg.Settings(scale=1 / 50, content_rotation=90)
-        )
-        assert page.width == 40
-        assert page.height == 20
-
     def test_page_size_includes_margins_sc1(self):
-        bbox = BoundingBox2d([(0, 0), (100, 200)])
+        content_size = Vec2(100, 200)
         page = svg.final_page_size(
-            bbox, svg.Page(0, 0, svg.Units.mm, svg.Margins.all2(20, 50)), svg.Settings()
+            content_size,
+            svg.Page(0, 0, svg.Units.mm, svg.Margins.all2(20, 50)),
+            svg.Settings(),
         )
         assert page.width == 100 + 50 + 50
         assert page.height == 200 + 20 + 20
 
     def test_page_size_includes_margins_sc50(self):
-        bbox = BoundingBox2d([(0, 0), (1000, 2000)])
+        content_size = Vec2(1000, 2000)
         page = svg.final_page_size(
-            bbox,
+            content_size,
             svg.Page(0, 0, svg.Units.mm, svg.Margins.all2(20, 50)),
             svg.Settings(scale=1 / 50),
         )
@@ -86,9 +74,9 @@ class TestDetectFinalPage:
         assert page.height == 40 + 20 + 20
 
     def test_page_size_limited_page_height(self):
-        bbox = BoundingBox2d([(0, 0), (1000, 2000)])
+        content_size = Vec2(1000, 2000)
         page = svg.final_page_size(
-            bbox,
+            content_size,
             svg.Page(0, 0, svg.Units.mm, svg.Margins.all(0)),
             svg.Settings(scale=1, max_page_height=svg.Length(841, svg.Units.mm)),
         )
@@ -96,9 +84,9 @@ class TestDetectFinalPage:
         assert page.width == 420
 
     def test_page_size_limited_page_width(self):
-        bbox = BoundingBox2d([(0, 0), (2000, 1000)])
+        content_size = Vec2(2000, 1000)
         page = svg.final_page_size(
-            bbox,
+            content_size,
             svg.Page(0, 0, svg.Units.mm, svg.Margins.all(0)),
             svg.Settings(scale=1, max_page_width=svg.Length(841, svg.Units.mm)),
         )
@@ -113,7 +101,7 @@ class TestStyles:
 
     def test_create_stroke_style(self, xml):
         styles = svg.Styles(xml)
-        cls = styles.get_class(stroke="black", stroke_width= 10)
+        cls = styles.get_class(stroke="black", stroke_width=10)
         assert cls == "C1"
         assert len(xml) == 1
 
@@ -127,7 +115,10 @@ class TestStyles:
         styles.get_class(stroke="black", stroke_width=10)
 
         string = ET.tostring(xml[0], encoding="unicode")
-        assert string == "<style>.C1 {stroke: black; stroke-width: 10; fill: none;}</style>"
+        assert (
+            string
+            == "<style>.C1 {stroke: black; stroke-width: 10; fill: none;}</style>"
+        )
 
 
 class TestSettings:

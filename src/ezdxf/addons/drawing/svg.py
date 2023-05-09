@@ -174,10 +174,6 @@ class Settings:
             self.max_page_width, Length
         ), "max_page_width require type <Length>"
 
-    @property
-    def swap_width_height(self) -> bool:
-        return self.content_rotation in (90, 270)
-
 
 class SVGBackend(Recorder):
     def __init__(self) -> None:
@@ -200,17 +196,24 @@ class SVGBackend(Recorder):
                 rotation = 90
 
         bbox = self.bbox()
-        page = final_page_size(bbox, page, settings)
-        # the output coordinates are integer values in the range [0, MAX_VIEW_BOX_COORDS]
-        scale = scale_view_box(bbox, page, settings.swap_width_height)
-        vb_scale_mm = MAX_VIEW_BOX_COORDS / max(page.width_in_mm, page.height_in_mm)
+        content_size = bbox.size
+        if rotation in (90, 270):
+            # swap x, y to apply rotation to content_size
+            content_size = Vec2(content_size.y, content_size.x)
+
+        page = final_page_size(content_size, page, settings)
+        # viewBox coordinates are integer values in the range [0, MAX_VIEW_BOX_COORDS]
+        scale = scale_to_view_box(content_size, page)
+        mm_to_view_box_units = MAX_VIEW_BOX_COORDS / max(
+            page.width_in_mm, page.height_in_mm
+        )
         m = placement_matrix(
             bbox,
             sx=scale,
             sy=scale * flip_y,
             rotation=rotation,
-            offset_x=page.margins.left * vb_scale_mm,
-            offset_y=page.margins.top * vb_scale_mm,
+            offset_x=page.margins.left * mm_to_view_box_units,
+            offset_y=page.margins.top * mm_to_view_box_units,
         )
         self.transform(m)
         self._init_y_axis_flip = False
@@ -219,18 +222,15 @@ class SVGBackend(Recorder):
         return backend.get_string()
 
 
-def final_page_size(content_box: BoundingBox2d, page: Page, settings: Settings) -> Page:
+def final_page_size(content_size: Vec2, page: Page, settings: Settings) -> Page:
     scale = settings.scale
-    content_width, content_height = content_box.size
-    if settings.swap_width_height:
-        content_width, content_height = content_height, content_width
     width = page.width_in_mm
     height = page.height_in_mm
     margins = page.margins_in_mm
     if width == 0:
-        width = scale * content_width + margins.left + margins.right
+        width = scale * content_size.x + margins.left + margins.right
     if height == 0:
-        height = scale * content_height + margins.top + margins.bottom
+        height = scale * content_size.y + margins.top + margins.bottom
 
     width, height = limit_page_size(
         width, height, settings.max_page_width.in_mm, settings.max_page_height.in_mm
@@ -257,18 +257,13 @@ def make_view_box(page: Page) -> tuple[int, int]:
     return round(MAX_VIEW_BOX_COORDS * (page.width / page.height)), MAX_VIEW_BOX_COORDS
 
 
-def scale_view_box(bbox: BoundingBox2d, page: Page, swap_wh: bool) -> int:
+def scale_to_view_box(content_size: Vec2, page: Page) -> int:
     # The viewBox coordinates are integer values in the range of [0, MAX_VIEW_BOX_COORDS]
     scale_x = (page.width + page.margins.left + page.margins.right) / page.width
     scale_y = (page.height + page.margins.top + page.margins.bottom) / page.height
-    content_width = bbox.size.x
-    content_height = bbox.size.y
-    if swap_wh:
-        content_width, content_height = content_height, content_width
-
     return min(
-        MAX_VIEW_BOX_COORDS / (content_width * scale_x),
-        MAX_VIEW_BOX_COORDS / (content_height * scale_y),
+        MAX_VIEW_BOX_COORDS / (content_size.x * scale_x),
+        MAX_VIEW_BOX_COORDS / (content_size.y * scale_y),
     )
 
 
@@ -351,7 +346,7 @@ class SVGRenderBackend(BackendInterface):
     - The viewBox is defined by the lower left corner in the origin (0, 0) and
       the upper right corner at (view_box_width, view_box_height)
     - The output coordinates are integer values, scale the content appropriately.
-    - Replay the recorded output at this backend.
+    - Replay the recorded output on this backend.
 
     """
 
