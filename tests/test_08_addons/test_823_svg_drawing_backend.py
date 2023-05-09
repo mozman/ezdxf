@@ -14,7 +14,7 @@ class TestPage:
         page = svg.Page(*svg.PAGE_SIZES["ISO A0"])
         assert page.width == 1189
         assert page.height == 841
-        assert page.units == "mm"
+        assert page.units == svg.Units.mm
         assert page.width_in_mm == 1189
         assert page.height_in_mm == 841
 
@@ -22,12 +22,12 @@ class TestPage:
         page = svg.Page(*svg.PAGE_SIZES["ANSI A"])
         assert page.width == 11
         assert page.height == 8.5
-        assert page.units == "in"
+        assert page.units == svg.Units.inch
         assert page.width_in_mm == 279
         assert page.height_in_mm == 216
 
     def test_screen_size_in_pixels(self):
-        page = svg.Page(800, 600, "px")
+        page = svg.Page(800, 600, svg.Units.px)
         assert page.width_in_mm == 212
         assert page.height_in_mm == 159
 
@@ -38,7 +38,7 @@ class TestDetectFinalPage:
     def test_page_size_scale_1(self):
         """1 DXF drawing unit are represented by 1mm in the output drawing"""
         bbox = BoundingBox2d([(0, 0), (100, 200)])
-        page = svg.final_page_size(bbox, svg.Page(0, 0, "mm"), svg.Settings(scale=1))
+        page = svg.final_page_size(bbox, svg.Page(0, 0, svg.Units.mm), svg.Settings(scale=1))
         assert page.width == 100
         assert page.height == 200
 
@@ -46,7 +46,7 @@ class TestDetectFinalPage:
         """50 DXF drawing unit are represented by 1mm in the output drawing"""
         bbox = BoundingBox2d([(0, 0), (1000, 2000)])
         page = svg.final_page_size(
-            bbox, svg.Page(0, 0, "mm"), svg.Settings(scale=1 / 50)
+            bbox, svg.Page(0, 0, svg.Units.mm), svg.Settings(scale=1 / 50)
         )
         assert page.width == 20
         assert page.height == 40
@@ -54,7 +54,7 @@ class TestDetectFinalPage:
     def test_page_size_for_rotated_content_sc1(self):
         bbox = BoundingBox2d([(0, 0), (100, 200)])
         page = svg.final_page_size(
-            bbox, svg.Page(0, 0, "mm"), svg.Settings(content_rotation=90)
+            bbox, svg.Page(0, 0, svg.Units.mm), svg.Settings(content_rotation=90)
         )
         assert page.width == 200
         assert page.height == 100
@@ -62,7 +62,7 @@ class TestDetectFinalPage:
     def test_page_size_for_rotated_content_sc50(self):
         bbox = BoundingBox2d([(0, 0), (1000, 2000)])
         page = svg.final_page_size(
-            bbox, svg.Page(0, 0, "mm"), svg.Settings(scale=1 / 50, content_rotation=90)
+            bbox, svg.Page(0, 0, svg.Units.mm), svg.Settings(scale=1 / 50, content_rotation=90)
         )
         assert page.width == 40
         assert page.height == 20
@@ -70,7 +70,7 @@ class TestDetectFinalPage:
     def test_page_size_includes_margins_sc1(self):
         bbox = BoundingBox2d([(0, 0), (100, 200)])
         page = svg.final_page_size(
-            bbox, svg.Page(0, 0, "mm", svg.Margins.all2(20, 50)), svg.Settings()
+            bbox, svg.Page(0, 0, svg.Units.mm, svg.Margins.all2(20, 50)), svg.Settings()
         )
         assert page.width == 100 + 50 + 50
         assert page.height == 200 + 20 + 20
@@ -79,7 +79,7 @@ class TestDetectFinalPage:
         bbox = BoundingBox2d([(0, 0), (1000, 2000)])
         page = svg.final_page_size(
             bbox,
-            svg.Page(0, 0, "mm", svg.Margins.all2(20, 50)),
+            svg.Page(0, 0, svg.Units.mm, svg.Margins.all2(20, 50)),
             svg.Settings(scale=1 / 50),
         )
         assert page.width == 20 + 50 + 50
@@ -89,8 +89,8 @@ class TestDetectFinalPage:
         bbox = BoundingBox2d([(0, 0), (1000, 2000)])
         page = svg.final_page_size(
             bbox,
-            svg.Page(0, 0, "mm", svg.Margins.all(0)),
-            svg.Settings(scale=1, max_page_height=(841, "mm")),
+            svg.Page(0, 0, svg.Units.mm, svg.Margins.all(0)),
+            svg.Settings(scale=1, max_page_height=svg.Length(841, svg.Units.mm)),
         )
         assert page.height == 841
         assert page.width == 420
@@ -99,8 +99,8 @@ class TestDetectFinalPage:
         bbox = BoundingBox2d([(0, 0), (2000, 1000)])
         page = svg.final_page_size(
             bbox,
-            svg.Page(0, 0, "mm", svg.Margins.all(0)),
-            svg.Settings(scale=1, max_page_width=(841, "mm")),
+            svg.Page(0, 0, svg.Units.mm, svg.Margins.all(0)),
+            svg.Settings(scale=1, max_page_width=svg.Length(841, svg.Units.mm)),
         )
         assert page.height == 420
         assert page.width == 841

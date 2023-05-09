@@ -3,6 +3,8 @@
 from __future__ import annotations
 from typing import Iterable, Sequence, no_type_check, NamedTuple
 from typing_extensions import Self
+
+import enum
 import math
 import itertools
 import dataclasses
@@ -17,44 +19,53 @@ from .config import Configuration
 from .properties import BackendProperties
 from .recorder import Recorder
 
-CMD_M_ABS = "M {0.x:.0f} {0.y:.0f}"
-CMD_M_REL = "m {0.x:.0f} {0.y:.0f}"
-CMD_L_ABS = "L {0.x:.0f} {0.y:.0f}"
-CMD_L_REL = "l {0.x:.0f} {0.y:.0f}"
-CMD_C3_ABS = "Q {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f}"
-CMD_C3_REL = "q {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f}"
-CMD_C4_ABS = "C {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f} {2.x:.0f} {2.y:.0f}"
-CMD_C4_REL = "c {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f} {2.x:.0f} {2.y:.0f}"
-CMD_CONT = "{0.x:.0f} {0.y:.0f}"
+__all__ = ["SVGBackend", "Settings", "Page", "Length", "Units"]
 
-__all__ = ["SVGBackend", "Settings"]
+
+class Units(enum.IntEnum):
+    # equivalent to ezdxf.units if possible
+    inch = 1
+    px = 2  # no equivalent DXF unit
+    pt = 3  # no equivalent DXF unit
+    mm = 4
+    cm = 5
+
+
+class Length(NamedTuple):
+    length: float
+    units: Units = Units.mm
+
+    @property
+    def in_mm(self) -> float:
+        return self.length * CSS_UNITS_TO_MM[self.units]
+
 
 CSS_UNITS_TO_MM = {
-    "cm": 10.0,
-    "mm": 1.0,
-    "in": 25.4,
-    "px": 25.4 / 96.0,
-    "pt": 25.4 / 72.0,
+    Units.mm: 1.0,
+    Units.cm: 10.0,
+    Units.inch: 25.4,
+    Units.px: 25.4 / 96.0,
+    Units.pt: 25.4 / 72.0,
 }
 
 # all page sizes in landscape orientation
 PAGE_SIZES = {
-    "ISO A0": (1189, 841, "mm"),
-    "ISO A1": (841, 594, "mm"),
-    "ISO A2": (594, 420, "mm"),
-    "ISO A3": (420, 297, "mm"),
-    "ISO A4": (297, 210, "mm"),
-    "ANSI A": (11, 8.5, "in"),
-    "ANSI B": (17, 11, "in"),
-    "ANSI C": (22, 17, "in"),
-    "ANSI D": (34, 22, "in"),
-    "ANSI E": (44, 34, "in"),
-    "ARCH C": (24, 18, "in"),
-    "ARCH D": (36, 24, "in"),
-    "ARCH E": (48, 36, "in"),
-    "ARCH E1": (42, 30, "in"),
-    "Letter": (11, 8.5, "in"),
-    "Legal": (14, 8.5, "in"),
+    "ISO A0": (1189, 841, Units.mm),
+    "ISO A1": (841, 594, Units.mm),
+    "ISO A2": (594, 420, Units.mm),
+    "ISO A3": (420, 297, Units.mm),
+    "ISO A4": (297, 210, Units.mm),
+    "ANSI A": (11, 8.5, Units.inch),
+    "ANSI B": (17, 11, Units.inch),
+    "ANSI C": (22, 17, Units.inch),
+    "ANSI D": (34, 22, Units.inch),
+    "ANSI E": (44, 34, Units.inch),
+    "ARCH C": (24, 18, Units.inch),
+    "ARCH D": (36, 24, Units.inch),
+    "ARCH E": (48, 36, Units.inch),
+    "ARCH E1": (42, 30, Units.inch),
+    "Letter": (11, 8.5, Units.inch),
+    "Legal": (14, 8.5, Units.inch),
 }
 
 # The DXF coordinates are mapped to integer viewBox coordinates in the first
@@ -83,6 +94,7 @@ class Margins(NamedTuple):
         """
         return cls(top_bottom, left_right, top_bottom, left_right)
 
+    # noinspection PyArgumentList
     def scale(self, factor: float) -> Self:
         return self.__class__(
             self.top * factor,
@@ -98,20 +110,20 @@ class Page:
 
     width: float
     height: float
-    units: str = "mm"
+    units: Units = Units.mm
     margins: Margins = Margins.all(0)
 
     def __post_init__(self):
-        if self.units not in CSS_UNITS_TO_MM:
-            raise ValueError(f"unsupported or invalid units: {self.units}")
+        assert isinstance(self.units, Units), "units require type <Units>"
+        assert isinstance(self.margins, Margins), "margins require type <Margins>"
 
     @property
     def width_in_mm(self) -> int:
-        return round(self.width * CSS_UNITS_TO_MM[self.units])
+        return round(Length(self.width, self.units).in_mm)
 
     @property
     def height_in_mm(self) -> int:
-        return round(self.height * CSS_UNITS_TO_MM[self.units])
+        return round(Length(self.height, self.units).in_mm)
 
     @property
     def margins_in_mm(self) -> Margins:
@@ -130,10 +142,10 @@ class Page:
 class Settings:
     # Preserves the aspect-ratio at all scaling operations, these are CAD drawings!
     #
-    # rotate content about 0, 90,  180 or 270 degrees
+    # Rotate content about 0, 90,  180 or 270 degrees
     content_rotation: int = 0
 
-    # Scale content to fit the page,
+    # Scale content to fit the page
     fit_page: bool = True
 
     # How to scale the input units, which are the DXF drawing units in model- or paper
@@ -145,27 +157,26 @@ class Settings:
     # The value is used to determine missing page sizes (width or height).
     scale: float = 1.0
 
-    # limit automatically detected page size
-    max_page_height: tuple[float, str] = 0, "mm"
-    max_page_width: tuple[float, str] = 0, "mm"
+    # Limit auto-detected page size, 0 is for not limited
+    max_page_height: Length = Length(0, Units.mm)
+    max_page_width: Length = Length(0, Units.mm)
 
     def __post_init__(self) -> None:
         if self.content_rotation not in (0, 90, 180, 270):
             raise ValueError(
-                f"invalid content rotation {self.content_rotation}, valid: 0, 90, 180, 270"
+                f"invalid content rotation {self.content_rotation}, "
+                f"expected: 0, 90, 180, 270"
             )
+        assert isinstance(
+            self.max_page_height, Length
+        ), "max_page_height require type <Length>"
+        assert isinstance(
+            self.max_page_width, Length
+        ), "max_page_width require type <Length>"
 
     @property
     def swap_width_height(self) -> bool:
         return self.content_rotation in (90, 270)
-
-    @property
-    def max_page_width_in_mm(self) -> float:
-        return self.max_page_width[0] * CSS_UNITS_TO_MM[self.max_page_width[1]]
-
-    @property
-    def max_page_height_in_mm(self) -> float:
-        return self.max_page_height[0] * CSS_UNITS_TO_MM[self.max_page_height[1]]
 
 
 class SVGBackend(Recorder):
@@ -222,9 +233,9 @@ def final_page_size(content_box: BoundingBox2d, page: Page, settings: Settings) 
         height = scale * content_height + margins.top + margins.bottom
 
     width, height = limit_page_size(
-        width, height, settings.max_page_width_in_mm, settings.max_page_height_in_mm
+        width, height, settings.max_page_width.in_mm, settings.max_page_height.in_mm
     )
-    return Page(round(width, 2), round(height, 2), "mm", margins)
+    return Page(round(width, 2), round(height, 2), Units.mm, margins)
 
 
 def limit_page_size(width, height, max_width, max_height) -> tuple[int, int]:
@@ -318,6 +329,17 @@ class Styles:
         self._xml.append(style)
 
 
+CMD_M_ABS = "M {0.x:.0f} {0.y:.0f}"
+CMD_M_REL = "m {0.x:.0f} {0.y:.0f}"
+CMD_L_ABS = "L {0.x:.0f} {0.y:.0f}"
+CMD_L_REL = "l {0.x:.0f} {0.y:.0f}"
+CMD_C3_ABS = "Q {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f}"
+CMD_C3_REL = "q {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f}"
+CMD_C4_ABS = "C {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f} {2.x:.0f} {2.y:.0f}"
+CMD_C4_REL = "c {0.x:.0f} {0.y:.0f} {1.x:.0f} {1.y:.0f} {2.x:.0f} {2.y:.0f}"
+CMD_CONT = "{0.x:.0f} {0.y:.0f}"
+
+
 class SVGRenderBackend(BackendInterface):
     """Creates the SVG output.
 
@@ -340,8 +362,8 @@ class SVGRenderBackend(BackendInterface):
         self.root = ET.Element(
             "svg",
             xmlns="http://www.w3.org/2000/svg",
-            width=f"{page.width}{page.units}",
-            height=f"{page.height}{page.units}",
+            width=f"{page.width}{page.units.name[:2]}",
+            height=f"{page.height}{page.units.name[:2]}",
             viewBox=f"0 0 {view_box_width} {view_box_height}",
         )
         self.styles = Styles(ET.SubElement(self.root, "def"))
@@ -418,7 +440,8 @@ class SVGRenderBackend(BackendInterface):
     ) -> None:
         self.add_filling(self.make_polyline_str(list(points), close=True), properties)
 
-    def make_polyline_str(self, points: Sequence[Vec2], close=False) -> str:
+    @staticmethod
+    def make_polyline_str(points: Sequence[Vec2], close=False) -> str:
         if len(points) < 2:
             return ""
         current = points[0]
@@ -432,7 +455,8 @@ class SVGRenderBackend(BackendInterface):
             d.append("Z")
         return " ".join(d)
 
-    def make_multi_line_str(self, lines: Sequence[tuple[Vec2, Vec2]]) -> str:
+    @staticmethod
+    def make_multi_line_str(lines: Sequence[tuple[Vec2, Vec2]]) -> str:
         assert len(lines) > 0
         start, end = lines[0]
         d: list[str] = [CMD_M_ABS.format(start), CMD_L_REL.format(end - start)]
@@ -444,8 +468,9 @@ class SVGRenderBackend(BackendInterface):
             current = end
         return " ".join(d)
 
+    @staticmethod
     @no_type_check
-    def make_path_str(self, path: Path | Path2d, close=False) -> str:
+    def make_path_str(path: Path | Path2d, close=False) -> str:
         d: list[str] = [CMD_M_ABS.format(path.start)]
         if len(path) == 0:
             return ""

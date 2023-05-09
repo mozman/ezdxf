@@ -69,8 +69,8 @@ def export(filepath: pathlib.Path):
     backend = svg.SVGBackend()
     Frontend(RenderContext(doc), backend).draw_layout(msp)
     svg_string = backend.get_string(
-        svg.Page(0, 0, "mm", svg.Margins.all(10)),
-        svg.Settings(scale=1.0, max_page_height=(890, "mm")),
+        svg.Page(0, 0, svg.Units.mm, svg.Margins.all(10)),  # auto detect page size
+        svg.Settings(scale=1.0, max_page_height=svg.Length(890, svg.Units.mm)),
     )
     t2 = time.perf_counter()
     outname = filepath.stem + ".svg"
@@ -93,7 +93,7 @@ def main():
 
     backend = svg.SVGBackend()
     Frontend(RenderContext(doc), backend).draw_layout(msp)
-    svg_string = backend.get_string(svg.Page(100, 40, "mm"))
+    svg_string = backend.get_string(svg.Page(100, 40, svg.Units.mm))
     (CWD / "wave.svg").write_text(svg_string)
 
 
