@@ -81,7 +81,7 @@ class TestDetectFinalPage:
             svg.Settings(scale=1, max_page_height=svg.Length(841, svg.Units.mm)),
         )
         assert page.height == 841
-        assert page.width == 420
+        assert page.width == pytest.approx(420.5)
 
     def test_page_size_limited_page_width(self):
         content_size = Vec2(2000, 1000)
@@ -90,7 +90,7 @@ class TestDetectFinalPage:
             svg.Page(0, 0, svg.Units.mm, svg.Margins.all(0)),
             svg.Settings(scale=1, max_page_width=svg.Length(841, svg.Units.mm)),
         )
-        assert page.height == 420
+        assert page.height == pytest.approx(420.5)
         assert page.width == 841
 
 

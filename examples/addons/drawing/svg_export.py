@@ -69,8 +69,8 @@ def export(filepath: pathlib.Path):
     backend = svg.SVGBackend()
     Frontend(RenderContext(doc), backend).draw_layout(msp)
     svg_string = backend.get_string(
-        svg.Page(0, 0, svg.Units.mm, svg.Margins.all(0)),  # auto detect page size
-        svg.Settings(scale=1.0, max_page_height=svg.Length(890, svg.Units.mm)),
+        svg.Page(0, 0, svg.Units.mm, svg.Margins.all(10)),
+        svg.Settings(scale=1.0, fit_page=True),
     )
     t2 = time.perf_counter()
     outname = filepath.stem + ".svg"

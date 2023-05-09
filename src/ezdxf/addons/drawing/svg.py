@@ -161,6 +161,11 @@ class Settings:
     max_page_height: Length = Length(0, Units.mm)
     max_page_width: Length = Length(0, Units.mm)
 
+    # max stroke width is defined as a percentage of the max(width, height)
+    max_stroke_width: float = 0.001  # 1% of max(width, height)
+    # min stroke width is defined as percentage of max stroke width
+    min_stroke_width: float = 0.05  # 5 % of max_stroke_width
+
     def __post_init__(self) -> None:
         if self.content_rotation not in (0, 90, 180, 270):
             raise ValueError(
@@ -219,7 +224,7 @@ class SVGBackend(Recorder):
         )
         self.transform(m)
         self._init_y_axis_flip = False
-        backend = SVGRenderBackend(page)
+        backend = SVGRenderBackend(page, settings)
         self.replay(backend)
         return backend.get_string()
 
@@ -359,15 +364,16 @@ class SVGRenderBackend(BackendInterface):
 
     """
 
-    def __init__(self, page: Page) -> None:
+    def __init__(self, page: Page, settings: Settings) -> None:
         view_box_width, view_box_height = make_view_box(page)
         self.stroke_width_scale: float = view_box_width / page.width_in_mm
-        self.min_stroke_width: float = 0.05  # mm
+        self.max_stroke_width: int = int(MAX_VIEW_BOX_COORDS * settings.max_stroke_width)
+        self.min_stroke_width: int = int(self.max_stroke_width * settings.min_stroke_width)
         self.root = ET.Element(
             "svg",
             xmlns="http://www.w3.org/2000/svg",
-            width=f"{page.width}{page.units.name[:2]}",
-            height=f"{page.height}{page.units.name[:2]}",
+            width=f"{page.width:g}{page.units.name[:2]}",
+            height=f"{page.height:g}{page.units.name[:2]}",
             viewBox=f"0 0 {view_box_width} {view_box_height}",
         )
         self.styles = Styles(ET.SubElement(self.root, "def"))
@@ -390,23 +396,34 @@ class SVGRenderBackend(BackendInterface):
             self.root, encoding="unicode", xml_declaration=xml_declaration
         )
 
-    def set_background(self, color: Color) -> None:
-        self.background.set("fill", color)
-
     def add_strokes(self, d: str, properties: BackendProperties):
         if not d:
             return
         element = ET.SubElement(self.entities, "path", d=d)
-        lw = max(properties.lineweight, self.min_stroke_width) * self.stroke_width_scale
-        cls = self.styles.get_class(stroke=properties.color, stroke_width=round(lw))
+        stroke_width = self.resolve_stroke_width(properties.lineweight)
+        stroke_color = self.resolve_stroke_color(properties.color)
+        cls = self.styles.get_class(stroke=stroke_color, stroke_width=stroke_width)
         element.set("class", cls)
 
     def add_filling(self, d: str, properties: BackendProperties):
         if not d:
             return
         element = ET.SubElement(self.entities, "path", d=d)
-        cls = self.styles.get_class(fill=properties.color)
+        cls = self.styles.get_class(fill=self.resolve_fill_color(properties.color))
         element.set("class", cls)
+
+    def resolve_stroke_color(self, color: Color) -> Color:
+        return color
+
+    def resolve_stroke_width(self, width: float) -> int:
+        stroke_width = round(width * self.stroke_width_scale)
+        return max(min(stroke_width, self.max_stroke_width), self.min_stroke_width)
+
+    def resolve_fill_color(self, color: Color) -> Color:
+        return color
+
+    def set_background(self, color: Color) -> None:
+        self.background.set("fill", color)
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
         self.add_strokes(self.make_polyline_str([pos, pos]), properties)
