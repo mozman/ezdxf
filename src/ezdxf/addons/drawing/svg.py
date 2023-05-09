@@ -219,8 +219,7 @@ class SVGBackend(Recorder):
             sx=scale,
             sy=scale * flip_y,
             rotation=rotation,
-            offset_x=page.margins.left * scale_mm_to_vb,
-            offset_y=page.margins.top * scale_mm_to_vb,
+            page=page,
         )
         self.transform(m)
         self._init_y_axis_flip = False
@@ -286,12 +285,15 @@ def placement_matrix(
     sx: float,
     sy: float,
     rotation: float,
-    offset_x: float,
-    offset_y: float,
+    page: Page,
 ) -> Matrix44:
     """Returns a matrix to place the bbox in the first quadrant of the coordinate
     system (+x, +y).
     """
+    scale_mm_to_vb = MAX_VIEW_BOX_COORDS / max(page.width_in_mm, page.height_in_mm)
+    margins = page.margins_in_mm
+
+    # create scaling and rotation matrix:
     if abs(sx) < 1e-9:
         sx = 1.0
     if abs(sy) < 1e-9:
@@ -299,11 +301,25 @@ def placement_matrix(
     m = Matrix44.scale(sx, sy, 1.0)
     if rotation:
         m @= Matrix44.z_rotate(math.radians(rotation))
+
+    # calc bounding box of the final output canvas:
     corners = m.transform_vertices(bbox.rect_vertices())
-    # final output canvas
     canvas = BoundingBox2d(corners)
-    # calculate margin offset
+
+    # shift content to first quadrant +x/+y
     tx, ty = canvas.extmin  # type: ignore
+
+    # center content within margins
+    view_box_content_x = (
+        page.width_in_mm - margins.left - margins.right
+    ) * scale_mm_to_vb
+    view_box_content_y = (
+        page.height_in_mm - margins.top - margins.bottom
+    ) * scale_mm_to_vb
+    dx = view_box_content_x - canvas.size.x
+    dy = view_box_content_y - canvas.size.y
+    offset_x = margins.left * scale_mm_to_vb + dx / 2
+    offset_y = margins.top * scale_mm_to_vb + dy / 2  # SVG origin is top/left
     return m @ Matrix44.translate(-tx + offset_x, -ty + offset_y, 0)
 
 
@@ -367,8 +383,12 @@ class SVGRenderBackend(BackendInterface):
     def __init__(self, page: Page, settings: Settings) -> None:
         view_box_width, view_box_height = make_view_box(page)
         self.stroke_width_scale: float = view_box_width / page.width_in_mm
-        self.max_stroke_width: int = int(MAX_VIEW_BOX_COORDS * settings.max_stroke_width)
-        self.min_stroke_width: int = int(self.max_stroke_width * settings.min_stroke_width)
+        self.max_stroke_width: int = int(
+            MAX_VIEW_BOX_COORDS * settings.max_stroke_width
+        )
+        self.min_stroke_width: int = int(
+            self.max_stroke_width * settings.min_stroke_width
+        )
         self.root = ET.Element(
             "svg",
             xmlns="http://www.w3.org/2000/svg",

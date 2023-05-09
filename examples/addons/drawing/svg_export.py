@@ -68,9 +68,14 @@ def export(filepath: pathlib.Path):
     msp = doc.modelspace()
     backend = svg.SVGBackend()
     Frontend(RenderContext(doc), backend).draw_layout(msp)
+
+    # You can query the content bounding box in DXF drawing units, before you create the
+    # SVG output to calculate page size, margins, scaling factor and so on ...
+    _ = backend.bbox()
+
     svg_string = backend.get_string(
         svg.Page(0, 0, svg.Units.mm, svg.Margins.all(10)),
-        svg.Settings(scale=1.0, fit_page=True),
+        svg.Settings(scale=1, fit_page=False),
     )
     t2 = time.perf_counter()
     outname = filepath.stem + ".svg"
