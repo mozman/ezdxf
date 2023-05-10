@@ -20,6 +20,14 @@ class UnifiedTextRenderer(TextRenderer):
         self._font_cache: dict[str, fonts.AbstractFont] = dict()
 
     def get_font(self, font_face: fonts.FontFace) -> fonts.AbstractFont:
+        if not font_face.filename and font_face.family:
+            found = fonts.find_best_match(
+                family=font_face.family,
+                weight=700 if font_face.is_bold else 400,
+                italic=font_face.is_italic,
+            )
+            if found is not None:
+                font_face = found
         key = font_face.filename.lower()
         try:
             return self._font_cache[key]
