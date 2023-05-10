@@ -19,7 +19,16 @@ from .config import Configuration
 from .properties import BackendProperties
 from .recorder import Recorder
 
-__all__ = ["SVGBackend", "Settings", "Page", "Length", "Units"]
+__all__ = [
+    "SVGBackend",
+    "Settings",
+    "Page",
+    "Length",
+    "Units",
+    "ColorPolicy",
+    "StrokeWidthPolicy",
+    "BackgroundPolicy",
+]
 
 
 class Units(enum.IntEnum):
@@ -29,6 +38,34 @@ class Units(enum.IntEnum):
     pt = 3  # no equivalent DXF unit
     mm = 4
     cm = 5
+
+
+class ColorPolicy(enum.IntEnum):
+    # The first three options do not change the background at
+    # BackgroundPolicy.color_policy_override
+    color = 1  # as resolved by the frontend
+    color_swap_bw = 2  # as resolved by the frontend but swap black and white
+    color_negative = 3  # invert colors
+
+    # The following options do change the background at
+    # BackgroundPolicy.color_policy_override:
+    monochrome_white_bg = 4  # all colors to gray scale on white background
+    monochrome_black_bg = 5  # all colors to gray scale on black background
+    black_on_white = 6  # all colors to black on white background
+    white_on_black = 7  # all colors to white on black background
+
+
+class BackgroundPolicy(enum.IntEnum):
+    default = 1  # as set by the frontend
+    off = 2  # fully transparent background
+    override = 3  # override by Settings.bg_color_override as #rgba value
+    color_policy_override = 4  # replace background according to the ColorPolicy 4-7
+
+
+class StrokeWidthPolicy(enum.IntEnum):
+    absolute = 1  # in mm as resolved by the frontend
+    relative = 2  # in viewBox units relative to MAX_VIEW_BOX_COORDS
+    fixed_1 = 3  # all strokes have the same stroke-width relative to MAX_VIEW_...
 
 
 class Length(NamedTuple):
@@ -161,10 +198,23 @@ class Settings:
     max_page_height: Length = Length(0, Units.mm)
     max_page_width: Length = Length(0, Units.mm)
 
-    # max stroke width is defined as a percentage of the max(width, height)
-    max_stroke_width: float = 0.001  # 1% of max(width, height)
-    # min stroke width is defined as percentage of max stroke width
-    min_stroke_width: float = 0.05  # 5 % of max_stroke_width
+    stroke_width_policy: StrokeWidthPolicy = StrokeWidthPolicy.absolute
+    # StrokeWidthPolicy.absolut: minimal lineweight in mm
+    min_lineweight: float = 0.05
+    # StrokeWidthPolicy.relative
+    # max_stroke_width is defined as percentage of the content extents
+    max_stroke_width: float = 0.001  # 0.1% of max(width, height) in viewBox coords
+    # min_stroke_width is defined as percentage of max_stroke_width
+    min_stroke_width: float = 0.05  # 5% of max_stroke_width
+    # StrokeWidthPolicy.fixed_1
+    # fixed_stroke_width is defined as percentage of max_stroke_width
+    fixed_stroke_width: float = 0.15  # 15% of max_stroke_width
+
+    color_policy: ColorPolicy = ColorPolicy.color
+    background_policy: BackgroundPolicy = BackgroundPolicy.default
+
+    # applied if background_policy is BackgroundPolicy.override
+    bg_color_override: Color = "#ffffff"
 
     def __post_init__(self) -> None:
         if self.content_rotation not in (0, 90, 180, 270):
@@ -185,7 +235,7 @@ class SVGBackend(Recorder):
         super().__init__()
         self._init_y_axis_flip = True
 
-    def get_string(self, page: Page, settings=Settings()) -> str:
+    def get_xml_root_element(self, page: Page, settings=Settings()) -> ET.Element:
         if settings.content_rotation not in (0, 90, 180, 270):
             raise ValueError("content rotation must be 0, 90, 180 or 270 degrees")
 
@@ -225,7 +275,11 @@ class SVGBackend(Recorder):
         self._init_y_axis_flip = False
         backend = SVGRenderBackend(page, settings)
         self.replay(backend)
-        return backend.get_string()
+        return backend.get_xml_root_element()
+
+    def get_string(self, page: Page, settings=Settings(), xml_declaration=True) -> str:
+        xml = self.get_xml_root_element(page, settings)
+        return ET.tostring(xml, encoding="unicode", xml_declaration=xml_declaration)
 
 
 def final_page_size(content_size: Vec2, page: Page, settings: Settings) -> Page:
@@ -381,6 +435,7 @@ class SVGRenderBackend(BackendInterface):
     """
 
     def __init__(self, page: Page, settings: Settings) -> None:
+        self.settings = settings
         view_box_width, view_box_height = make_view_box(page)
         self.stroke_width_scale: float = view_box_width / page.width_in_mm
         self.max_stroke_width: int = int(
@@ -411,10 +466,12 @@ class SVGRenderBackend(BackendInterface):
         self.entities.set("stroke-linejoin", "round")
         self.entities.set("fill-rule", "evenodd")
 
-    def get_string(self, xml_declaration=True) -> str:
-        return ET.tostring(
-            self.root, encoding="unicode", xml_declaration=xml_declaration
-        )
+    def get_xml_root_element(self) -> ET.Element:
+        self.override_background()
+        return self.root
+
+    def override_background(self) -> None:
+        pass
 
     def add_strokes(self, d: str, properties: BackendProperties):
         if not d:
@@ -443,6 +500,7 @@ class SVGRenderBackend(BackendInterface):
         return color
 
     def set_background(self, color: Color) -> None:
+        color = self.resolve_fill_color(color)
         self.background.set("fill", color)
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:

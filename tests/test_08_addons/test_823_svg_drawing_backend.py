@@ -174,14 +174,24 @@ class TestSettings:
 
 
 class TestSVGBackend:
-    def test_draw_polygon(self):
-        backend = svg.SVGBackend()
+    @pytest.fixture(scope="class")
+    def backend(self):
+        backend_ = svg.SVGBackend()
         properties = BackendProperties(color="#ff0000", lineweight=0.25)
         points = Vec2.list([(0, 0), (100, 0), (100, 100), (0, 100)])
-        backend.draw_filled_polygon(points, properties)
+        backend_.draw_filled_polygon(points, properties)
+        return backend_
+
+    def test_get_xml_root_element(self, backend):
+        xml = backend.get_xml_root_element(svg.Page(400, 300))
+        assert xml.tag.endswith("svg") is True
+        assert xml.attrib["width"] == "400mm"
+        assert xml.attrib["height"] == "300mm"
+        assert xml.attrib["viewBox"] == "0 0 1000000 750000"
+
+    def test_get_string(self, backend):
         result = backend.get_string(svg.Page(400, 300))
         assert isinstance(result, str) is True
-        assert len(result) > 1
         xml = ET.fromstring(result)
         assert xml.tag.endswith("svg") is True
         assert xml.attrib["width"] == "400mm"
