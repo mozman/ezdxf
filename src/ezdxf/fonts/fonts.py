@@ -238,7 +238,8 @@ def find_best_match(
     italic: Optional[bool] = False,
 ) -> Optional[FontFace]:
     """Returns a :class:`FontFace` that matches the given properties best. The search
-    is based the descriptive properties and not on comparing glyph shapes.
+    is based the descriptive properties and not on comparing glyph shapes. Returns
+    ``None`` if no font was found.
 
     Args:
         family: font family name e.g. "sans-serif", "Liberation Sans"

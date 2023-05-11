@@ -213,6 +213,7 @@ class FontManager:
     def __init__(self) -> None:
         self.platform = platform.system()
         self._font_cache: FontCache = FontCache()
+        self._match_cache: dict[int, Optional[FontFace]] = dict()
         self._loaded_ttf_fonts: dict[str, TTFont] = dict()
         self._loaded_shape_file_glyph_caches: dict[str, shapefile.GlyphCache] = dict()
         self._loaded_lff_glyph_caches: dict[str, lff.GlyphCache] = dict()
@@ -337,7 +338,16 @@ class FontManager:
         width=5,
         italic: Optional[bool] = False,
     ) -> Optional[FontFace]:
-        return self._font_cache.find_best_match_ex(family, style, weight, width, italic)
+        key = hash((family, style, weight, width, italic))
+        try:
+            return self._match_cache[key]
+        except KeyError:
+            pass
+        font_face = self._font_cache.find_best_match_ex(
+            family, style, weight, width, italic
+        )
+        self._match_cache[key] = font_face
+        return font_face
 
     def find_font_name(self, font_face: FontFace) -> str:
         """Returns the font file name of the font without parent directories
