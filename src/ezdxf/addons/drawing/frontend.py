@@ -771,6 +771,7 @@ class Designer:
 
         - automatically linetype rendering
         - VIEWPORT rendering
+        - foreground color mapping according Frontend.config.color_policy
 
     """
 
