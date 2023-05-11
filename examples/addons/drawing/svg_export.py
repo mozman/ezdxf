@@ -71,7 +71,7 @@ def export(filepath: pathlib.Path):
     config = Configuration(
         background_policy=BackgroundPolicy.WHITE,
         color_policy=ColorPolicy.CUSTOM,
-        custom_fg_color="#990000",
+        custom_fg_color="#330088",
     )
     Frontend(RenderContext(doc), backend, config=config).draw_layout(msp)
 

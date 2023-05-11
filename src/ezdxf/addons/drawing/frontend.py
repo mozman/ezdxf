@@ -783,6 +783,7 @@ class Designer:
         self.default_font_face = fonts.FontFace()
         self.clipper = ClippingRect()
         self.current_vp_scale = 1.0
+        self._color_mapping: dict[str, str] = dict()
 
     @property
     def vp_ltype_scale(self) -> float:
@@ -792,27 +793,15 @@ class Designer:
         return 1.0 / max(self.current_vp_scale, 0.0001)  # max out at 1:10000
 
     def get_backend_properties(self, properties: Properties) -> BackendProperties:
-        color = properties.color[:7]
-        alpha = properties.color[7:9]
-        policy = self.config.color_policy
-        if policy == ColorPolicy.COLOR_SWAP_BW:
-            color = swap_bw(color)
-        elif policy == ColorPolicy.COLOR_NEGATIVE:
-            color = invert_color(color)
-        elif policy == ColorPolicy.MONOCHROME_WHITE_BG:
-            color = color_to_monochrome(color, invert=True)
-        elif policy == ColorPolicy.MONOCHROME_BLACK_BG:
-            color = color_to_monochrome(color, invert=False)
-        elif policy == ColorPolicy.BLACK:
-            color = "#000000"
-        elif policy == ColorPolicy.WHITE:
-            color = "#ffffff"
-        elif policy == ColorPolicy.CUSTOM:
-            fg = self.config.custom_fg_color
-            color = fg[:7]
-            alpha = fg[7:9]
+        try:
+            color = self._color_mapping[properties.color]
+        except KeyError:
+            color = apply_color_policy(
+                properties.color, self.config.color_policy, self.config.custom_fg_color
+            )
+            self._color_mapping[properties.color] = color
         return BackendProperties(
-            color + alpha, properties.lineweight, properties.layer, properties.pen
+            color, properties.lineweight, properties.layer, properties.pen
         )
 
     def draw_viewport(
@@ -1125,3 +1114,25 @@ def color_to_monochrome(color: Color, invert=False) -> Color:
     else:
         gray = round(lum * 255)
     return rgb_to_hex((gray, gray, gray))
+
+
+def apply_color_policy(color: Color, policy: ColorPolicy, custom_color: Color) -> Color:
+    alpha = color[7:9]
+    color = color[:7]
+    if policy == ColorPolicy.COLOR_SWAP_BW:
+        color = swap_bw(color)
+    elif policy == ColorPolicy.COLOR_NEGATIVE:
+        color = invert_color(color)
+    elif policy == ColorPolicy.MONOCHROME_WHITE_BG:
+        color = color_to_monochrome(color, invert=True)
+    elif policy == ColorPolicy.MONOCHROME_BLACK_BG:
+        color = color_to_monochrome(color, invert=False)
+    elif policy == ColorPolicy.BLACK:
+        color = "#000000"
+    elif policy == ColorPolicy.WHITE:
+        color = "#ffffff"
+    elif policy == ColorPolicy.CUSTOM:
+        fg = custom_color
+        color = fg[:7]
+        alpha = fg[7:9]
+    return color + alpha
