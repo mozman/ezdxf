@@ -75,7 +75,9 @@ def export(filepath: pathlib.Path):
 
     svg_string = backend.get_string(
         svg.Page(0, 0, svg.Units.mm, svg.Margins.all(10)),
-        svg.Settings(scale=1, fit_page=False),
+        svg.Settings(
+            scale=1, fit_page=False, stroke_width_policy=svg.StrokeWidthPolicy.fixed_1
+        ),
     )
     t2 = time.perf_counter()
     outname = filepath.stem + ".svg"
@@ -114,6 +116,6 @@ def transparency():
 
 
 if __name__ == "__main__":
-    # export_cadkit_samples()
+    export_cadkit_samples()
     # simple()
-    transparency()
+    # transparency()

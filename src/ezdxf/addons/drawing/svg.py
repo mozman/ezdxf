@@ -445,13 +445,25 @@ class SVGRenderBackend(BackendInterface):
     def __init__(self, page: Page, settings: Settings) -> None:
         self.settings = settings
         self._color_cache: dict[str, tuple[str, float]] = dict()
+        self._stroke_width_cache: dict[float, int] = dict()
         view_box_width, view_box_height = make_view_box(page)
+        # StrokeWidthPolicy.absolute:
+        # stroke-width in mm as resolved by the frontend
         self.stroke_width_scale: float = view_box_width / page.width_in_mm
+
+        # StrokeWidthPolicy.relative:
+        # max_stroke_width is determined as a certain percentage of MAX_VIEW_BOX_COORDS
         self.max_stroke_width: int = int(
             MAX_VIEW_BOX_COORDS * settings.max_stroke_width
         )
+        # min_stroke_width is determined as a certain percentage of max_stroke_width
         self.min_stroke_width: int = int(
             self.max_stroke_width * settings.min_stroke_width
+        )
+        # StrokeWidthPolicy.fixed_1:
+        # all strokes have a fixed stroke-width as a certain percentage of max_stroke_width
+        self.fixed_stroke_width: int = int(
+            self.max_stroke_width * settings.fixed_stroke_width
         )
         self.root = ET.Element(
             "svg",
@@ -487,7 +499,7 @@ class SVGRenderBackend(BackendInterface):
             return
         element = ET.SubElement(self.entities, "path", d=d)
         stroke_width = self.resolve_stroke_width(properties.lineweight)
-        stroke_color, stroke_opacity = self.resolve_stroke_color(properties.color)
+        stroke_color, stroke_opacity = self.resolve_color(properties.color)
         cls = self.styles.get_class(
             stroke=stroke_color,
             stroke_width=stroke_width,
@@ -499,7 +511,7 @@ class SVGRenderBackend(BackendInterface):
         if not d:
             return
         element = ET.SubElement(self.entities, "path", d=d)
-        fill_color, fill_opacity = self.resolve_fill_color(properties.color)
+        fill_color, fill_opacity = self.resolve_color(properties.color)
         cls = self.styles.get_class(fill=fill_color, fill_opacity=fill_opacity)
         element.set("class", cls)
 
@@ -515,15 +527,22 @@ class SVGRenderBackend(BackendInterface):
         self._color_cache[color] = color_tuple
         return color_tuple
 
-    def resolve_stroke_color(self, color: Color) -> tuple[Color, float]:
-        return self.resolve_color(color)
-
     def resolve_stroke_width(self, width: float) -> int:
-        stroke_width = round(width * self.stroke_width_scale)
-        return max(min(stroke_width, self.max_stroke_width), self.min_stroke_width)
+        try:
+            return self._stroke_width_cache[width]
+        except KeyError:
+            pass
+        stroke_width = self.fixed_stroke_width
+        policy = self.settings.stroke_width_policy
+        if policy == StrokeWidthPolicy.absolute:
+            stroke_width = round(width * self.stroke_width_scale)
+        elif policy == StrokeWidthPolicy.relative:
+            stroke_width = map_lineweight_to_stroke_width(
+                width, self.min_stroke_width, self.max_stroke_width
+            )
 
-    def resolve_fill_color(self, color: Color) -> tuple[Color, float]:
-        return self.resolve_color(color)
+        self._stroke_width_cache[width] = stroke_width
+        return stroke_width
 
     def set_background(self, color: Color) -> None:
         # Do not alter the background color here!
@@ -649,3 +668,16 @@ def alpha_to_opacity(alpha: str) -> float:
         except ValueError:
             pass
     return 1.0
+
+
+def map_lineweight_to_stroke_width(
+    lineweight: float,
+    min_stroke_width: int,
+    max_stroke_width: int,
+    min_lineweight=0.05,  # defined by DXF
+    max_lineweight=2.11,  # defined by DXF
+) -> int:
+    """Map the DXF lineweight in mm to stroke-width in viewBox coordinates."""
+    lineweight = max(min(lineweight, max_lineweight), min_lineweight) - min_lineweight
+    factor = (max_stroke_width - min_stroke_width) / (max_lineweight - min_lineweight)
+    return min_stroke_width + round(lineweight * factor)

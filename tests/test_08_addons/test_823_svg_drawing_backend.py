@@ -174,6 +174,23 @@ class TestSettings:
             _ = svg.Settings(content_rotation=45)
 
 
+class TestStrokeWidthMapping:
+    def test_min_stroke_width(self):
+        assert svg.map_lineweight_to_stroke_width(0.0, 10, 100) == 10
+
+    def test_max_stroke_width(self):
+        assert svg.map_lineweight_to_stroke_width(3.0, 10, 100) == 100
+
+    def test_interpolation(self):
+        # min_lineweight = 0.05 defined by DXF
+        # max_lineweight = 2.11 defined by DXF
+        assert svg.map_lineweight_to_stroke_width(0.25, 5, 211) == 25
+        assert svg.map_lineweight_to_stroke_width(0.5, 5, 211) == 50
+        assert svg.map_lineweight_to_stroke_width(1.0, 5, 211) == 100
+        assert svg.map_lineweight_to_stroke_width(0.05, 5, 211) == 5
+        assert svg.map_lineweight_to_stroke_width(2.11, 5, 211) == 211
+
+
 class TestSVGBackend:
     @pytest.fixture(scope="class")
     def backend(self):
