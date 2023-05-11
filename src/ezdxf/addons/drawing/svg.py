@@ -12,11 +12,12 @@ from xml.etree import ElementTree as ET
 
 from ezdxf.math import AnyVec, Vec2, BoundingBox2d, Matrix44
 from ezdxf.path import Path, Path2d, Command
+from ezdxf.colors import luminance
 
 from .type_hints import Color
 from .backend import BackendInterface
 from .config import Configuration
-from .properties import BackendProperties, hex_to_rgb
+from .properties import BackendProperties, hex_to_rgb, rgb_to_hex
 from .recorder import Recorder
 
 __all__ = [
@@ -41,25 +42,23 @@ class Units(enum.IntEnum):
 
 
 class ColorPolicy(enum.IntEnum):
-    # The first three options do not change the background at
-    # BackgroundPolicy.color_policy_override
+    # The color policy determines only the foreground colors
     color = 1  # as resolved by the frontend
     color_swap_bw = 2  # as resolved by the frontend but swap black and white
     color_negative = 3  # invert colors
-
-    # The following options do change the background at
-    # BackgroundPolicy.color_policy_override:
-    monochrome_white_bg = 4  # all colors to gray scale on white background
-    monochrome_black_bg = 5  # all colors to gray scale on black background
-    black_on_white = 6  # all colors to black on white background
-    white_on_black = 7  # all colors to white on black background
+    monochrome_black_bg = 4  # all colors to gray scale for black background
+    monochrome_white_bg = 5  # all colors to gray scale for white background
+    black = 6  # all colors to black
+    white = 7  # all colors to white
+    custom = 8  # all colors to custom color by Settings.custom_fg_color as #rgba value
 
 
 class BackgroundPolicy(enum.IntEnum):
     default = 1  # as set by the frontend
-    off = 2  # fully transparent background
-    override = 3  # override by Settings.bg_color_override as #rgba value
-    color_policy_override = 4  # replace background according to the ColorPolicy 4-7
+    white = 2  # white background
+    black = 3  # black background
+    off = 4  # fully transparent background
+    custom = 5  # custom background color by Settings.custom_bg_color as #rgba value
 
 
 class StrokeWidthPolicy(enum.IntEnum):
@@ -211,10 +210,12 @@ class Settings:
     fixed_stroke_width: float = 0.15  # 15% of max_stroke_width
 
     color_policy: ColorPolicy = ColorPolicy.color
-    background_policy: BackgroundPolicy = BackgroundPolicy.default
+    # applied if color_policy is ColorPolicy.custom
+    custom_fg_color: Color = "#000000"
 
-    # applied if background_policy is BackgroundPolicy.override
-    bg_color_override: Color = "#ffffff"
+    background_policy: BackgroundPolicy = BackgroundPolicy.default
+    # applied if background_policy is BackgroundPolicy.custom
+    custom_bg_color: Color = "#ffffff"
 
     def __post_init__(self) -> None:
         if self.content_rotation not in (0, 90, 180, 270):
@@ -228,6 +229,14 @@ class Settings:
         assert isinstance(
             self.max_page_width, Length
         ), "max_page_width require type <Length>"
+        assert isinstance(self.custom_fg_color, str) and len(self.custom_fg_color) in (
+            7,
+            9,
+        ), "invalid custom_fg_color"
+        assert isinstance(self.custom_bg_color, str) and len(self.custom_bg_color) in (
+            7,
+            9,
+        ), "invalid custom_bg_color"
 
 
 class SVGBackend(Recorder):
@@ -273,9 +282,13 @@ class SVGBackend(Recorder):
         )
         self.transform(m)
         self._init_y_axis_flip = False
-        backend = SVGRenderBackend(page, settings)
+        backend = self.make_backend(page, settings)
         self.replay(backend)
         return backend.get_xml_root_element()
+
+    @staticmethod
+    def make_backend(page: Page, settings: Settings) -> SVGRenderBackend:
+        return SVGRenderBackend(page, settings)
 
     def get_string(self, page: Page, settings=Settings(), xml_declaration=True) -> str:
         xml = self.get_xml_root_element(page, settings)
@@ -497,20 +510,12 @@ class SVGRenderBackend(BackendInterface):
             return
         if policy == BackgroundPolicy.off:
             self.set_background("#ffffff00")  # white, fully transparent
-        elif policy == BackgroundPolicy.override:
-            self.set_background(self.settings.bg_color_override)
-        elif policy == BackgroundPolicy.color_policy_override:
-            color_policy = self.settings.color_policy
-            if color_policy in (
-                ColorPolicy.monochrome_black_bg,
-                ColorPolicy.white_on_black,
-            ):
-                self.set_background("#000000")  # black background
-            if color_policy in (
-                ColorPolicy.monochrome_white_bg,
-                ColorPolicy.black_on_white,
-            ):
-                self.set_background("#ffffff")  # white background
+        elif policy == BackgroundPolicy.black:
+            self.set_background("#000000")
+        elif policy == BackgroundPolicy.white:
+            self.set_background("#ffffff")
+        elif policy == BackgroundPolicy.custom:
+            self.set_background(self.settings.custom_bg_color)
 
     def add_strokes(self, d: str, properties: BackendProperties):
         if not d:
@@ -541,6 +546,24 @@ class SVGRenderBackend(BackendInterface):
         color_str = color[:7]
         # rgb = hex_to_rgb(color)
         opacity = alpha_to_opacity(color[7:9])
+        policy = self.settings.color_policy
+        if policy == ColorPolicy.color_swap_bw:
+            color_str = swap_bw(color_str)
+        elif policy == ColorPolicy.color_negative:
+            color_str = invert_color(color_str)
+        elif policy == ColorPolicy.monochrome_white_bg:
+            color_str = color_to_monochrome(color_str, invert=True)
+        elif policy == ColorPolicy.monochrome_black_bg:
+            color_str = color_to_monochrome(color_str, invert=False)
+        elif policy == ColorPolicy.black:
+            color_str = "#000000"
+        elif policy == ColorPolicy.white:
+            color_str = "#ffffff"
+        elif policy == ColorPolicy.custom:
+            fg = self.settings.custom_fg_color
+            color_str = fg[:7]
+            opacity = alpha_to_opacity(fg[7:9])
+
         color_tuple = color_str, opacity
         self._color_cache[color] = color_tuple
         return color_tuple
@@ -698,3 +721,26 @@ def map_lineweight_to_stroke_width(
     lineweight = max(min(lineweight, max_lineweight), min_lineweight) - min_lineweight
     factor = (max_stroke_width - min_stroke_width) / (max_lineweight - min_lineweight)
     return min_stroke_width + round(lineweight * factor)
+
+
+def invert_color(color: Color) -> Color:
+    r, g, b = hex_to_rgb(color)
+    return rgb_to_hex((255 - r, 255 - g, 255 - b))
+
+
+def swap_bw(color: str) -> Color:
+    color = color.lower()
+    if color == "#000000":
+        return "#ffffff"
+    if color == "#ffffff":
+        return "#000000"
+    return color
+
+
+def color_to_monochrome(color: Color, invert=False) -> Color:
+    lum = luminance(hex_to_rgb(color))
+    if invert:
+        gray = round((1.0 - lum) * 255)
+    else:
+        gray = round(lum * 255)
+    return rgb_to_hex((gray, gray, gray))
