@@ -166,7 +166,7 @@ class Properties:
         return luminance(self.rgb)
 
     @property
-    def backend_properties(self) -> BackendProperties:
+    def _backend_properties(self) -> BackendProperties:
         return BackendProperties(self.color, self.lineweight, self.layer, self.pen)
 
 

@@ -5,6 +5,7 @@ import time
 
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext
+from ezdxf.addons.drawing.config import Configuration, BackgroundPolicy, ColorPolicy
 from ezdxf.addons.drawing import svg
 from ezdxf.math import global_bspline_interpolation
 
@@ -67,7 +68,12 @@ def export(filepath: pathlib.Path):
     print(f"loading time: {t1 - t0: .3f} seconds")
     msp = doc.modelspace()
     backend = svg.SVGBackend()
-    Frontend(RenderContext(doc), backend).draw_layout(msp)
+    config = Configuration(
+        background_policy=BackgroundPolicy.WHITE,
+        color_policy=ColorPolicy.CUSTOM,
+        custom_fg_color="#990000",
+    )
+    Frontend(RenderContext(doc), backend, config=config).draw_layout(msp)
 
     # You can get the content bounding box in DXF drawing units, before you create the
     # SVG output to calculate page size, margins, scaling factor and so on ...
@@ -76,9 +82,7 @@ def export(filepath: pathlib.Path):
     svg_string = backend.get_string(
         svg.Page(0, 0, svg.Units.mm, svg.Margins.all(10)),
         svg.Settings(
-            stroke_width_policy=svg.StrokeWidthPolicy.relative,
-            background_policy=svg.BackgroundPolicy.white,
-            color_policy=svg.ColorPolicy.black,
+            stroke_width_policy=svg.StrokeWidthPolicy.RELATIVE,
         ),
     )
     t2 = time.perf_counter()

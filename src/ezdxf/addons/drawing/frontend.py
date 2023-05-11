@@ -33,8 +33,11 @@ from ezdxf.addons.drawing.properties import (
     Properties,
     Filling,
     LayoutProperties,
+    BackendProperties,
+    hex_to_rgb,
+    rgb_to_hex,
 )
-from ezdxf.addons.drawing.config import LinePolicy
+from ezdxf.addons.drawing.config import LinePolicy, BackgroundPolicy, ColorPolicy
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.gfxproxy import DXFGraphicProxy
@@ -82,6 +85,8 @@ from ezdxf.tools.text import (
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
 from ezdxf.fonts import fonts
+from ezdxf.colors import luminance
+from .type_hints import Color
 
 
 __all__ = ["Frontend"]
@@ -239,7 +244,7 @@ class Frontend:
         else:
             self.ctx.set_current_layout(layout)
         # set background before drawing entities
-        self.out.set_background(self.ctx.current_layout_properties.background_color)
+        self.set_background(self.ctx.current_layout_properties.background_color)
         self.parent_stack = []
         handle_mapping = list(layout.get_redraw_order())
         if handle_mapping:
@@ -254,6 +259,20 @@ class Frontend:
             )
         if finalize:
             self.out.finalize()
+
+    def set_background(self, color: Color) -> None:
+        policy = self.config.background_policy
+        if policy == BackgroundPolicy.DEFAULT:
+            pass
+        elif policy == BackgroundPolicy.OFF:
+            color = "#ffffff00"  # white, fully transparent
+        elif policy == BackgroundPolicy.BLACK:
+            color = "#000000"
+        elif policy == BackgroundPolicy.WHITE:
+            color = "#ffffff"
+        elif policy == BackgroundPolicy.CUSTOM:
+            color = self.config.custom_bg_color
+        self.out.set_background(color)
 
     def draw_entities(
         self,
@@ -772,6 +791,30 @@ class Designer:
         """
         return 1.0 / max(self.current_vp_scale, 0.0001)  # max out at 1:10000
 
+    def get_backend_properties(self, properties: Properties) -> BackendProperties:
+        color = properties.color[:7]
+        alpha = properties.color[7:9]
+        policy = self.config.color_policy
+        if policy == ColorPolicy.COLOR_SWAP_BW:
+            color = swap_bw(color)
+        elif policy == ColorPolicy.COLOR_NEGATIVE:
+            color = invert_color(color)
+        elif policy == ColorPolicy.MONOCHROME_WHITE_BG:
+            color = color_to_monochrome(color, invert=True)
+        elif policy == ColorPolicy.MONOCHROME_BLACK_BG:
+            color = color_to_monochrome(color, invert=False)
+        elif policy == ColorPolicy.BLACK:
+            color = "#000000"
+        elif policy == ColorPolicy.WHITE:
+            color = "#ffffff"
+        elif policy == ColorPolicy.CUSTOM:
+            fg = self.config.custom_fg_color
+            color = fg[:7]
+            alpha = fg[7:9]
+        return BackendProperties(
+            color + alpha, properties.lineweight, properties.layer, properties.pen
+        )
+
     def draw_viewport(
         self,
         vp: Viewport,
@@ -819,7 +862,7 @@ class Designer:
             if point is None:
                 return
             pos = point
-        self.backend.draw_point(pos, properties.backend_properties)
+        self.backend.draw_point(pos, self.get_backend_properties(properties))
 
     def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties):
         if (
@@ -829,9 +872,13 @@ class Designer:
             if self.clipper.is_active:
                 points = self.clipper.clip_line(start, end)
                 if points:
-                    self.backend.draw_line(start, end, properties.backend_properties)
+                    self.backend.draw_line(
+                        start, end, self.get_backend_properties(properties)
+                    )
             else:
-                self.backend.draw_line(start, end, properties.backend_properties)
+                self.backend.draw_line(
+                    start, end, self.get_backend_properties(properties)
+                )
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
             self.draw_solid_lines(  # including transformation
@@ -849,7 +896,7 @@ class Designer:
                 if points:
                     clipped_lines.append(points)
             lines = clipped_lines  # type: ignore
-        self.backend.draw_solid_lines(lines, properties.backend_properties)
+        self.backend.draw_solid_lines(lines, self.get_backend_properties(properties))
 
     def draw_path(self, path: Path | Path2d, properties: Properties):
         if (
@@ -860,9 +907,11 @@ class Designer:
                 for clipped_path in self.clipper.clip_paths(
                     [path], self.config.max_flattening_distance
                 ):
-                    self.backend.draw_path(clipped_path, properties.backend_properties)
+                    self.backend.draw_path(
+                        clipped_path, self.get_backend_properties(properties)
+                    )
                 return
-            self.backend.draw_path(path, properties.backend_properties)
+            self.backend.draw_path(path, self.get_backend_properties(properties))
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
             vertices = path.flattening(self.config.max_flattening_distance, segments=16)
@@ -886,14 +935,18 @@ class Designer:
             holes = self.clipper.clip_filled_paths(
                 (h.transform(m) for h in holes), max_sagitta
             )
-        self.backend.draw_filled_paths(paths, holes, properties.backend_properties)
+        self.backend.draw_filled_paths(
+            paths, holes, self.get_backend_properties(properties)
+        )
 
     def draw_filled_polygon(
         self, points: Iterable[AnyVec], properties: Properties
     ) -> None:
         if self.clipper.is_active:
             points = self.clipper.clip_polygon(points)
-        self.backend.draw_filled_polygon(points, properties.backend_properties)
+        self.backend.draw_filled_polygon(
+            points, self.get_backend_properties(properties)
+        )
 
     def pattern(self, properties: Properties) -> Sequence[float]:
         """Get pattern - implements pattern caching."""
@@ -941,7 +994,7 @@ class Designer:
             text_path = self.text_engine.get_text_path(text, font_face, cap_height)
         except (RuntimeError, ValueError):
             return
-        
+
         transformed_path = text_path.transform(transform)
         if self.text_engine.is_stroke_font(font_face):
             self.draw_path(transformed_path, properties)
@@ -1049,3 +1102,26 @@ def prepare_string_for_rendering(text: str, dxftype: str) -> str:
     else:
         raise TypeError(dxftype)
     return text
+
+
+def invert_color(color: Color) -> Color:
+    r, g, b = hex_to_rgb(color)
+    return rgb_to_hex((255 - r, 255 - g, 255 - b))
+
+
+def swap_bw(color: str) -> Color:
+    color = color.lower()
+    if color == "#000000":
+        return "#ffffff"
+    if color == "#ffffff":
+        return "#000000"
+    return color
+
+
+def color_to_monochrome(color: Color, invert=False) -> Color:
+    lum = luminance(hex_to_rgb(color))
+    if invert:
+        gray = round((1.0 - lum) * 255)
+    else:
+        gray = round(lum * 255)
+    return rgb_to_hex((gray, gray, gray))

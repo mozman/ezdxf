@@ -8,7 +8,7 @@ from enum import Enum, auto
 
 from ezdxf import disassemble
 from ezdxf.enums import Measurement
-
+from .type_hints import Color
 
 class LinePolicy(Enum):
     """
@@ -67,6 +67,48 @@ class HatchPolicy(Enum):
     SHOW_APPROXIMATE_PATTERN = auto()  # ignored since v0.18.1
 
 
+class ColorPolicy(Enum):
+    """This enum is used to define how to determine the line/fill color.
+
+    Attributes:
+        COLOR: as resolved by the :class:`Frontend` class
+        COLOR_SWAP_BW: as resolved by the :class:`Frontend` class but swaps black and white
+        COLOR_NEGATIVE: invert colors
+        MONOCHROME_BLACK_BG: all colors to gray scale for black background
+        MONOCHROME_WHITE_BG:  all colors to gray scale for white background
+        BLACK: all colors to black
+        WHITE: all colors to white
+        CUSTOM: all colors to custom color by :attr:`Configuration.custom_fg_color`
+
+    """
+    COLOR = auto()
+    COLOR_SWAP_BW = auto()
+    COLOR_NEGATIVE = auto()
+    MONOCHROME_BLACK_BG = auto()
+    MONOCHROME_WHITE_BG = auto()
+    BLACK = auto()
+    WHITE = auto()
+    CUSTOM = auto()
+
+
+class BackgroundPolicy(Enum):
+    """This enum is used to define the background color.
+
+    Attributes:
+        DEFAULT: as resolved by the :class:`Frontend` class
+        WHITE: white background
+        BLACK: black background
+        OFF: fully transparent background
+        CUSTOM: custom background color by :attr:`Configuration.custom_bg_color`
+
+    """
+    DEFAULT = auto()
+    WHITE = auto()
+    BLACK = auto()
+    OFF = auto()
+    CUSTOM = auto()
+
+
 @dataclass(frozen=True)
 class Configuration:
     """Configuration options for the :mod:`drawing` add-on.
@@ -121,44 +163,39 @@ class Configuration:
         hatching_timeout: hatching timeout for a single entity, very dense
             hatching patterns can cause a very long execution time, the default
             timeout for a single entity is 30 seconds.
+        color_policy:
+        custom_fg_color: Used for :class:`ColorPolicy.custom` policy, custom foreground
+            color as "#RRGGBBAA" color string (RGB+alpha)
+        background_policy:
+        custom_bg_color: Used for :class:`BackgroundPolicy.custom` policy, custom
+            background color as "#RRGGBBAA" color string (RGB+alpha)
 
     """
 
-    pdsize: Optional[int]
-    pdmode: Optional[int]
-    measurement: Optional[Measurement]
-    show_defpoints: bool
-    proxy_graphic_policy: ProxyGraphicPolicy
-    line_policy: LinePolicy
-    hatch_policy: HatchPolicy
-    infinite_line_length: float
-    lineweight_scaling: float
-    min_lineweight: Optional[float]
-    min_dash_length: float
-    max_flattening_distance: float
-    circle_approximation_count: int
-    hatching_timeout: float
+    pdsize: Optional[int] = None  # use $PDSIZE from HEADER section
+    pdmode: Optional[int] = None  # use $PDMODE from HEADER section
+    measurement: Optional[Measurement] = None
+    show_defpoints: bool = False
+    proxy_graphic_policy: ProxyGraphicPolicy = ProxyGraphicPolicy.SHOW
+    line_policy: LinePolicy = LinePolicy.APPROXIMATE
+    hatch_policy: HatchPolicy = HatchPolicy.SHOW_APPROXIMATE_PATTERN
+    infinite_line_length: float = 20
+    lineweight_scaling: float = 1.0
+    min_lineweight: Optional[float] = None
+    min_dash_length: float = 0.1
+    max_flattening_distance: float = disassemble.Primitive.max_flattening_distance
+    circle_approximation_count: int = 128
+    hatching_timeout: float = 30.0
+    color_policy: ColorPolicy = ColorPolicy.COLOR
+    custom_fg_color: Color = "#000000"
+    background_policy: BackgroundPolicy = BackgroundPolicy.DEFAULT
+    custom_bg_color: Color = "#ffffff"
 
     @staticmethod
-    def defaults() -> "Configuration":
-        return Configuration(
-            pdsize=None,  # use $PDSIZE from HEADER section
-            pdmode=None,  # use $PDMODE from HEADER section
-            measurement=None,  # use $MEASUREMENT from HEADER section
-            show_defpoints=False,
-            proxy_graphic_policy=ProxyGraphicPolicy.SHOW,
-            line_policy=LinePolicy.APPROXIMATE,
-            hatch_policy=HatchPolicy.SHOW_APPROXIMATE_PATTERN,
-            infinite_line_length=20,
-            lineweight_scaling=1.0,
-            min_lineweight=None,
-            min_dash_length=0.1,
-            max_flattening_distance=disassemble.Primitive.max_flattening_distance,
-            circle_approximation_count=128,
-            hatching_timeout=30.0,
-        )
+    def defaults() -> Configuration:
+        return Configuration()
 
-    def with_changes(self, **kwargs) -> "Configuration":
+    def with_changes(self, **kwargs) -> Configuration:
         params = dataclasses.asdict(self)
         for k, v in kwargs.items():
             params[k] = v

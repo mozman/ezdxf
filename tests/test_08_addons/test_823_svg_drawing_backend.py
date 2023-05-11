@@ -4,7 +4,7 @@
 import pytest
 from xml.etree import ElementTree as ET
 
-from ezdxf.math import Vec2, BoundingBox2d
+from ezdxf.math import Vec2
 from ezdxf.addons.drawing import svg
 from ezdxf.addons.drawing.properties import BackendProperties
 
@@ -220,69 +220,6 @@ class TestSVGBackend:
         assert xml.attrib["width"] == "400mm"
         assert xml.attrib["height"] == "300mm"
         assert xml.attrib["viewBox"] == "0 0 1000000 750000"
-
-    def test_color_policy_swap_black_and_white(self, backend):
-        backend.draw_point(Vec2(0, 0), BackendProperties(color="#ffffff"))
-        backend.draw_point(Vec2(0, 0), BackendProperties(color="#000000"))
-        xml = backend.get_xml_root_element(
-            svg.Page(400, 300), svg.Settings(color_policy=svg.ColorPolicy.color_swap_bw)
-        )
-        styles = xml.findall("./def/style", namespaces=NS)
-        assert len(styles) == 3
-        assert "#ff0000" in styles[0].text, "should not change"
-        assert "#000000" in styles[1].text, "white to black"
-        assert "#ffffff" in styles[2].text, "black to white"
-
-    def test_color_policy_color_negative(self, backend):
-        backend.draw_point(Vec2(0, 0), BackendProperties(color="#eeeeee"))
-        backend.draw_point(Vec2(0, 0), BackendProperties(color="#112233"))
-        xml = backend.get_xml_root_element(
-            svg.Page(400, 300),
-            svg.Settings(color_policy=svg.ColorPolicy.color_negative),
-        )
-        styles = xml.findall("./def/style", namespaces=NS)
-        assert len(styles) == 3
-        assert "#00ffff" in styles[0].text
-        assert "#111111" in styles[1].text
-        assert "#eeddcc" in styles[2].text
-
-    def test_color_policy_monochrome_black_bg(self, backend):
-        backend.draw_point(Vec2(0, 0), BackendProperties(color="#a0b0c0"))
-        backend.draw_point(Vec2(0, 0), BackendProperties(color="#112233"))
-        xml = backend.get_xml_root_element(
-            svg.Page(400, 300),
-            svg.Settings(color_policy=svg.ColorPolicy.monochrome_black_bg),
-        )
-        styles = xml.findall("./def/style", namespaces=NS)
-        assert len(styles) == 3
-        assert "#8b8b8b" in styles[0].text
-        assert "#adadad" in styles[1].text
-        assert "#212121" in styles[2].text
-
-    def test_color_policy_black_on_white(self, backend):
-        backend.draw_point(Vec2(0, 0), BackendProperties(color="#a0b0c0"))
-        backend.draw_point(Vec2(0, 0), BackendProperties(color="#112233"))
-        xml = backend.get_xml_root_element(
-            svg.Page(400, 300),
-            svg.Settings(color_policy=svg.ColorPolicy.black),
-        )
-        styles = xml.findall("./def/style", namespaces=NS)
-        assert len(styles) == 2
-        assert "#000000" in styles[0].text
-        assert "#000000" in styles[1].text  # merged into a single class
-
-    def test_color_policy_white_on_black(self, backend):
-        backend.draw_point(Vec2(0, 0), BackendProperties(color="#a0b0c0"))
-        backend.draw_point(Vec2(0, 0), BackendProperties(color="#112233"))
-        xml = backend.get_xml_root_element(
-            svg.Page(400, 300),
-            svg.Settings(color_policy=svg.ColorPolicy.white),
-        )
-        styles = xml.findall("./def/style", namespaces=NS)
-        assert len(styles) == 2
-        assert "#ffffff" in styles[0].text
-        assert "#ffffff" in styles[1].text  # merged into a single class
-
 
 if __name__ == "__main__":
     pytest.main([__file__])

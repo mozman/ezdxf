@@ -209,8 +209,6 @@ The :class:`SVGBackend` uses additional classes and enums for configuration:
 - :class:`~ezdxf.addons.drawing.svg.Length`  - length with units
 - :class:`~ezdxf.addons.drawing.svg.Settings`  - configuration settings
 - :class:`~ezdxf.addons.drawing.svg.Units`  - enum for SVG units
-- :class:`~ezdxf.addons.drawing.svg.ColorPolicy` - enum for foreground color policy
-- :class:`~ezdxf.addons.drawing.svg.BackgroundPolicy` - enum for background color policy
 - :class:`~ezdxf.addons.drawing.svg.StrokeWidthPolicy` - enum for stroke width policy
 
 .. autoclass:: ezdxf.addons.drawing.svg.Page
@@ -239,10 +237,6 @@ The :class:`SVGBackend` uses additional classes and enums for configuration:
 .. autoclass:: ezdxf.addons.drawing.svg.Settings
 
 .. autoclass:: ezdxf.addons.drawing.svg.Units
-
-.. autoclass:: ezdxf.addons.drawing.svg.ColorPolicy
-
-.. autoclass:: ezdxf.addons.drawing.svg.BackgroundPolicy
 
 .. autoclass:: ezdxf.addons.drawing.svg.StrokeWidthPolicy
 
@@ -282,6 +276,16 @@ ProxyGraphicPolicy
 ------------------
 
 .. autoclass:: ezdxf.addons.drawing.config.ProxyGraphicPolicy
+
+ColorPolicy
+-----------
+
+.. autoclass:: ezdxf.addons.drawing.config.ColorPolicy
+
+BackgroundPolicy
+----------------
+
+.. autoclass:: ezdxf.addons.drawing.config.BackgroundPolicy
 
 Properties
 ----------

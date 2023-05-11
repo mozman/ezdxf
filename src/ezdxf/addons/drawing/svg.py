@@ -12,7 +12,7 @@ from xml.etree import ElementTree as ET
 
 from ezdxf.math import AnyVec, Vec2, BoundingBox2d, Matrix44
 from ezdxf.path import Path, Path2d, Command
-from ezdxf.colors import luminance
+
 
 from .type_hints import Color
 from .backend import BackendInterface
@@ -26,9 +26,7 @@ __all__ = [
     "Page",
     "Length",
     "Units",
-    "ColorPolicy",
     "StrokeWidthPolicy",
-    "BackgroundPolicy",
 ]
 
 
@@ -43,6 +41,7 @@ class Units(enum.IntEnum):
         cm:
 
     """
+
     # equivalent to ezdxf.units if possible
     inch = 1
     px = 2  # no equivalent DXF unit
@@ -51,59 +50,18 @@ class Units(enum.IntEnum):
     cm = 5
 
 
-class ColorPolicy(enum.IntEnum):
-    """This enum is used to define how to determine the stroke/fill color.
-
-    Attributes:
-        color: as resolved by the :class:`Frontend` class
-        color_swap_bw: as resolved by the :class:`Frontend` class but swaps black and white
-        color_negative: invert colors
-        monochrome_black_bg: all colors to gray scale for black background
-        monochrome_white_bg:  all colors to gray scale for white background
-        black: all colors to black
-        white: all colors to white
-        custom: all colors to custom color by :attr:`Settings.custom_fg_color`
-
-    """
-    color = 1
-    color_swap_bw = 2
-    color_negative = 3
-    monochrome_black_bg = 4
-    monochrome_white_bg = 5
-    black = 6
-    white = 7
-    custom = 8
-
-
-class BackgroundPolicy(enum.IntEnum):
-    """This enum is used to define the background color.
-
-    Attributes:
-        default: as set by the :class:`Frontend` class
-        white: white background
-        black: black background
-        off: fully transparent background
-        custom: custom background color by :attr:`Settings.custom_bg_color`
-
-    """
-    default = 1
-    white = 2
-    black = 3
-    off = 4
-    custom = 5
-
-
 class StrokeWidthPolicy(enum.IntEnum):
     """This enum is used to define how to determine the stroke-width.
 
     Attributes:
-        absolute: in mm as resolved by the :class:`Frontend` class
-        relative: in viewBox units relative to MAX_VIEW_BOX_COORDS
-        fixed_1: all strokes have the same stroke-width relative to MAX_VIEW_BOX_COORDS
+        ABSOLUTE: in mm as resolved by the :class:`Frontend` class
+        RELATIVE: in viewBox units relative to MAX_VIEW_BOX_COORDS
+        FIXED_1: all strokes have the same stroke-width relative to MAX_VIEW_BOX_COORDS
     """
-    absolute = 1
-    relative = 2
-    fixed_1 = 3
+
+    ABSOLUTE = 1
+    RELATIVE = 2
+    FIXED_1 = 3
 
 
 class Length(NamedTuple):
@@ -114,6 +72,7 @@ class Length(NamedTuple):
         units:
 
     """
+
     length: float
     units: Units = Units.mm
 
@@ -262,7 +221,6 @@ class Settings:
         max_page_width: Limit auto-detected page width, 0 is for not limited
         max_page_height: Limit auto-detected page height, 0 is for not limited
         stroke_width_policy:
-        min_lineweight: Used for :class:`StrokeWidthPolicy.absolute` policy, minimum lineweight in mm
         max_stroke_width: Used for :class:`StrokeWidthPolicy.relative` policy,
             :attr:`max_stroke_width` is defined as percentage of the content extents,
             e.g. 0.001 is 0.1% of max(page-width, page-height)
@@ -272,21 +230,14 @@ class Settings:
         fixed_stroke_width: Used for :class:`StrokeWidthPolicy.fixed_1` policy,
             :attr:`fixed_stroke_width` is defined as percentage of :attr:`max_stroke_width`,
             e.g. 0.15 is 15% of :attr:`max_stroke_width`
-        color_policy:
-        custom_fg_color: Used for :class:`ColorPolicy.custom` policy, custom foreground
-            color as "#RRGGBBAA" color string (RGB+alpha)
-        background_policy:
-        custom_bg_color: Used for :class:`BackgroundPolicy.custom` policy, custom
-            background color as "#RRGGBBAA" color string (RGB+alpha)
     """
+
     content_rotation: int = 0
     fit_page: bool = True
     scale: float = 1.0
     max_page_height: Length = Length(0, Units.mm)
     max_page_width: Length = Length(0, Units.mm)
-    stroke_width_policy: StrokeWidthPolicy = StrokeWidthPolicy.absolute
-    # StrokeWidthPolicy.absolut: minimal lineweight in mm
-    min_lineweight: float = 0.05
+    stroke_width_policy: StrokeWidthPolicy = StrokeWidthPolicy.ABSOLUTE
     # StrokeWidthPolicy.relative
     # max_stroke_width is defined as percentage of the content extents
     max_stroke_width: float = 0.001  # 0.1% of max(width, height) in viewBox coords
@@ -295,12 +246,6 @@ class Settings:
     # StrokeWidthPolicy.fixed_1
     # fixed_stroke_width is defined as percentage of max_stroke_width
     fixed_stroke_width: float = 0.15  # 15% of max_stroke_width
-    color_policy: ColorPolicy = ColorPolicy.color
-    # applied if color_policy is ColorPolicy.custom
-    custom_fg_color: Color = "#000000"
-    background_policy: BackgroundPolicy = BackgroundPolicy.default
-    # applied if background_policy is BackgroundPolicy.custom
-    custom_bg_color: Color = "#ffffff"
 
     def __post_init__(self) -> None:
         if self.content_rotation not in (0, 90, 180, 270):
@@ -314,14 +259,6 @@ class Settings:
         assert isinstance(
             self.max_page_width, Length
         ), "max_page_width require type <Length>"
-        assert isinstance(self.custom_fg_color, str) and len(self.custom_fg_color) in (
-            7,
-            9,
-        ), "invalid custom_fg_color"
-        assert isinstance(self.custom_bg_color, str) and len(self.custom_bg_color) in (
-            7,
-            9,
-        ), "invalid custom_bg_color"
 
 
 class SVGBackend(Recorder):
@@ -552,12 +489,12 @@ class SVGRenderBackend(BackendInterface):
 
     def __init__(self, page: Page, settings: Settings) -> None:
         self.settings = settings
-        self._color_cache: dict[str, tuple[str, float]] = dict()
         self._stroke_width_cache: dict[float, int] = dict()
         view_box_width, view_box_height = make_view_box(page)
         # StrokeWidthPolicy.absolute:
         # stroke-width in mm as resolved by the frontend
         self.stroke_width_scale: float = view_box_width / page.width_in_mm
+        self.min_lineweight = 0.05  # in mm, set by configure()
 
         # StrokeWidthPolicy.relative:
         # max_stroke_width is determined as a certain percentage of MAX_VIEW_BOX_COORDS
@@ -596,21 +533,7 @@ class SVGRenderBackend(BackendInterface):
         self.entities.set("fill-rule", "evenodd")
 
     def get_xml_root_element(self) -> ET.Element:
-        self.override_background()
         return self.root
-
-    def override_background(self) -> None:
-        policy = self.settings.background_policy
-        if policy == BackgroundPolicy.default:
-            return
-        if policy == BackgroundPolicy.off:
-            self.set_background("#ffffff00")  # white, fully transparent
-        elif policy == BackgroundPolicy.black:
-            self.set_background("#000000")
-        elif policy == BackgroundPolicy.white:
-            self.set_background("#ffffff")
-        elif policy == BackgroundPolicy.custom:
-            self.set_background(self.settings.custom_bg_color)
 
     def add_strokes(self, d: str, properties: BackendProperties):
         if not d:
@@ -634,34 +557,7 @@ class SVGRenderBackend(BackendInterface):
         element.set("class", cls)
 
     def resolve_color(self, color: Color) -> tuple[Color, float]:
-        try:
-            return self._color_cache[color]
-        except KeyError:
-            pass
-        color_str = color[:7]
-        # rgb = hex_to_rgb(color)
-        opacity = alpha_to_opacity(color[7:9])
-        policy = self.settings.color_policy
-        if policy == ColorPolicy.color_swap_bw:
-            color_str = swap_bw(color_str)
-        elif policy == ColorPolicy.color_negative:
-            color_str = invert_color(color_str)
-        elif policy == ColorPolicy.monochrome_white_bg:
-            color_str = color_to_monochrome(color_str, invert=True)
-        elif policy == ColorPolicy.monochrome_black_bg:
-            color_str = color_to_monochrome(color_str, invert=False)
-        elif policy == ColorPolicy.black:
-            color_str = "#000000"
-        elif policy == ColorPolicy.white:
-            color_str = "#ffffff"
-        elif policy == ColorPolicy.custom:
-            fg = self.settings.custom_fg_color
-            color_str = fg[:7]
-            opacity = alpha_to_opacity(fg[7:9])
-
-        color_tuple = color_str, opacity
-        self._color_cache[color] = color_tuple
-        return color_tuple
+        return color[:7], alpha_to_opacity(color[7:9])
 
     def resolve_stroke_width(self, width: float) -> int:
         try:
@@ -670,9 +566,10 @@ class SVGRenderBackend(BackendInterface):
             pass
         stroke_width = self.fixed_stroke_width
         policy = self.settings.stroke_width_policy
-        if policy == StrokeWidthPolicy.absolute:
+        if policy == StrokeWidthPolicy.ABSOLUTE:
+            width = max(self.min_lineweight, width)
             stroke_width = round(width * self.stroke_width_scale)
-        elif policy == StrokeWidthPolicy.relative:
+        elif policy == StrokeWidthPolicy.RELATIVE:
             stroke_width = map_lineweight_to_stroke_width(
                 width, self.min_stroke_width, self.max_stroke_width
             )
@@ -779,7 +676,10 @@ class SVGRenderBackend(BackendInterface):
         return " ".join(d)
 
     def configure(self, config: Configuration) -> None:
-        pass
+        if config.min_lineweight:
+            # config.min_lineweight in 1/300 inch!
+            min_lineweight_mm = config.min_lineweight * 25.4 / 300
+            self.min_lineweight = max(0.05, min_lineweight_mm)
 
     def clear(self) -> None:
         pass
@@ -816,26 +716,3 @@ def map_lineweight_to_stroke_width(
     lineweight = max(min(lineweight, max_lineweight), min_lineweight) - min_lineweight
     factor = (max_stroke_width - min_stroke_width) / (max_lineweight - min_lineweight)
     return min_stroke_width + round(lineweight * factor)
-
-
-def invert_color(color: Color) -> Color:
-    r, g, b = hex_to_rgb(color)
-    return rgb_to_hex((255 - r, 255 - g, 255 - b))
-
-
-def swap_bw(color: str) -> Color:
-    color = color.lower()
-    if color == "#000000":
-        return "#ffffff"
-    if color == "#ffffff":
-        return "#000000"
-    return color
-
-
-def color_to_monochrome(color: Color, invert=False) -> Color:
-    lum = luminance(hex_to_rgb(color))
-    if invert:
-        gray = round((1.0 - lum) * 255)
-    else:
-        gray = round(lum * 255)
-    return rgb_to_hex((gray, gray, gray))
