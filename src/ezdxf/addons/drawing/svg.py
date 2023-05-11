@@ -16,7 +16,7 @@ from ezdxf.path import Path, Path2d, Command
 from .type_hints import Color
 from .backend import BackendInterface
 from .config import Configuration
-from .properties import BackendProperties
+from .properties import BackendProperties, hex_to_rgb
 from .recorder import Recorder
 
 __all__ = [
@@ -388,9 +388,17 @@ class Styles:
         *,
         stroke: Color = "none",
         stroke_width: int | str = "none",
+        stroke_opacity: float = 1.0,
         fill: Color = "none",
+        fill_opacity: float = 1.0,
     ) -> str:
-        style = f"{{stroke: {stroke}; stroke-width: {stroke_width}; fill: {fill};}}"
+        style = (
+            f"{{stroke: {stroke}; "
+            f"stroke-width: {stroke_width}; "
+            f"stroke-opacity: {stroke_opacity:.3f}; "
+            f"fill: {fill}; "
+            f"fill-opacity: {fill_opacity:.3f};}}"
+        )
         key = hash(style)
         try:
             return self._class_names[key]
@@ -436,6 +444,7 @@ class SVGRenderBackend(BackendInterface):
 
     def __init__(self, page: Page, settings: Settings) -> None:
         self.settings = settings
+        self._color_cache: dict[str, tuple[str, float]] = dict()
         view_box_width, view_box_height = make_view_box(page)
         self.stroke_width_scale: float = view_box_width / page.width_in_mm
         self.max_stroke_width: int = int(
@@ -478,30 +487,50 @@ class SVGRenderBackend(BackendInterface):
             return
         element = ET.SubElement(self.entities, "path", d=d)
         stroke_width = self.resolve_stroke_width(properties.lineweight)
-        stroke_color = self.resolve_stroke_color(properties.color)
-        cls = self.styles.get_class(stroke=stroke_color, stroke_width=stroke_width)
+        stroke_color, stroke_opacity = self.resolve_stroke_color(properties.color)
+        cls = self.styles.get_class(
+            stroke=stroke_color,
+            stroke_width=stroke_width,
+            stroke_opacity=stroke_opacity,
+        )
         element.set("class", cls)
 
     def add_filling(self, d: str, properties: BackendProperties):
         if not d:
             return
         element = ET.SubElement(self.entities, "path", d=d)
-        cls = self.styles.get_class(fill=self.resolve_fill_color(properties.color))
+        fill_color, fill_opacity = self.resolve_fill_color(properties.color)
+        cls = self.styles.get_class(fill=fill_color, fill_opacity=fill_opacity)
         element.set("class", cls)
 
-    def resolve_stroke_color(self, color: Color) -> Color:
-        return color
+    def resolve_color(self, color: Color) -> tuple[Color, float]:
+        try:
+            return self._color_cache[color]
+        except KeyError:
+            pass
+        color_str = color[:7]
+        # rgb = hex_to_rgb(color)
+        opacity = alpha_to_opacity(color[7:9])
+        color_tuple = color_str, opacity
+        self._color_cache[color] = color_tuple
+        return color_tuple
+
+    def resolve_stroke_color(self, color: Color) -> tuple[Color, float]:
+        return self.resolve_color(color)
 
     def resolve_stroke_width(self, width: float) -> int:
         stroke_width = round(width * self.stroke_width_scale)
         return max(min(stroke_width, self.max_stroke_width), self.min_stroke_width)
 
-    def resolve_fill_color(self, color: Color) -> Color:
-        return color
+    def resolve_fill_color(self, color: Color) -> tuple[Color, float]:
+        return self.resolve_color(color)
 
     def set_background(self, color: Color) -> None:
-        color = self.resolve_fill_color(color)
-        self.background.set("fill", color)
+        # Do not alter the background color here!
+        color_str = color[:7]
+        opacity = alpha_to_opacity(color[7:9])
+        self.background.set("fill", color_str)
+        self.background.set("fill-opacity", str(opacity))
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
         self.add_strokes(self.make_polyline_str([pos, pos]), properties)
@@ -609,3 +638,14 @@ class SVGRenderBackend(BackendInterface):
 
     def exit_entity(self, entity) -> None:
         pass
+
+
+def alpha_to_opacity(alpha: str) -> float:
+    # stroke-opacity: 0.0 = transparent; 1.0 = opaque
+    # alpha: "00" = transparent; "ff" = opaque
+    if len(alpha):
+        try:
+            return int(alpha, 16) / 255
+        except ValueError:
+            pass
+    return 1.0

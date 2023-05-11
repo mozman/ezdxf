@@ -4,7 +4,6 @@ import pathlib
 import time
 
 import ezdxf
-from ezdxf import units
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing import svg
 from ezdxf.math import global_bspline_interpolation
@@ -12,6 +11,7 @@ from ezdxf.math import global_bspline_interpolation
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = pathlib.Path(".")
+EXAMPLE_DXF = pathlib.Path(__file__).parent.parent.parent.parent / "examples_dxf"
 
 # ------------------------------------------------------------------------------
 # This example shows how to export the modelspace by the drawing add-on and the
@@ -89,7 +89,7 @@ def export_cadkit_samples():
         export(filename)
 
 
-def main():
+def simple():
     doc = ezdxf.new()
     msp = doc.modelspace()
     s = global_bspline_interpolation(wave)
@@ -102,6 +102,18 @@ def main():
     (CWD / "wave.svg").write_text(svg_string)
 
 
+def transparency():
+    doc = ezdxf.readfile(EXAMPLE_DXF / "transparency_checker.dxf")
+    msp = doc.modelspace()
+    backend = svg.SVGBackend()
+    Frontend(RenderContext(doc), backend).draw_layout(msp)
+    svg_string = backend.get_string(
+        svg.Page(0, 0, svg.Units.mm), settings=svg.Settings(scale=10)
+    )
+    (CWD / "transparency.svg").write_text(svg_string)
+
+
 if __name__ == "__main__":
-    export_cadkit_samples()
-    main()
+    # export_cadkit_samples()
+    # simple()
+    transparency()

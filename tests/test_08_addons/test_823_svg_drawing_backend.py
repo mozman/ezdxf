@@ -137,7 +137,7 @@ class TestFitToPage:
 
 
 class TestStyles:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def xml(self):
         return ET.Element("defs")
 
@@ -154,12 +154,13 @@ class TestStyles:
 
     def test_style_string(self, xml):
         styles = svg.Styles(xml)
-        styles.get_class(stroke="black", stroke_width=10)
+        styles.get_class(stroke="black", stroke_width=10, stroke_opacity=0.5)
 
         string = ET.tostring(xml[0], encoding="unicode")
         assert (
             string
-            == "<style>.C1 {stroke: black; stroke-width: 10; fill: none;}</style>"
+            == "<style>.C1 {stroke: black; stroke-width: 10; stroke-opacity: 0.500; "
+            "fill: none; fill-opacity: 1.000;}</style>"
         )
 
 

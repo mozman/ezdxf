@@ -101,7 +101,9 @@ class Properties:
     """
 
     def __init__(self) -> None:
-        self.color: str = "#ffffff"  # format #RRGGBB or #RRGGBBAA
+        # color string format "#RRGGBB" or "#RRGGBBAA"
+        # alpha channel AA: 0x00 = transparent; 0xff = opaque
+        self.color: str = "#ffffff"
         self.pen = 7  # equals the ACI (1-255), for pen based backends like plotters
 
         # Linetype rendering is done by the frontend, the backend receives only solid
