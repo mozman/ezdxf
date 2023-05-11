@@ -33,6 +33,16 @@ __all__ = [
 
 
 class Units(enum.IntEnum):
+    """SVG units as enum.
+
+    Attributes:
+        inch: 25.4 mm
+        px: 1/72 inch
+        pt: 1/96 inch
+        mm:
+        cm:
+
+    """
     # equivalent to ezdxf.units if possible
     inch = 1
     px = 2  # no equivalent DXF unit
@@ -42,32 +52,68 @@ class Units(enum.IntEnum):
 
 
 class ColorPolicy(enum.IntEnum):
-    # The color policy determines only the foreground colors
-    color = 1  # as resolved by the frontend
-    color_swap_bw = 2  # as resolved by the frontend but swap black and white
-    color_negative = 3  # invert colors
-    monochrome_black_bg = 4  # all colors to gray scale for black background
-    monochrome_white_bg = 5  # all colors to gray scale for white background
-    black = 6  # all colors to black
-    white = 7  # all colors to white
-    custom = 8  # all colors to custom color by Settings.custom_fg_color as #rgba value
+    """This enum is used to define how to determine the stroke/fill color.
+
+    Attributes:
+        color: as resolved by the :class:`Frontend` class
+        color_swap_bw: as resolved by the :class:`Frontend` class but swaps black and white
+        color_negative: invert colors
+        monochrome_black_bg: all colors to gray scale for black background
+        monochrome_white_bg:  all colors to gray scale for white background
+        black: all colors to black
+        white: all colors to white
+        custom: all colors to custom color by :attr:`Settings.custom_fg_color`
+
+    """
+    color = 1
+    color_swap_bw = 2
+    color_negative = 3
+    monochrome_black_bg = 4
+    monochrome_white_bg = 5
+    black = 6
+    white = 7
+    custom = 8
 
 
 class BackgroundPolicy(enum.IntEnum):
-    default = 1  # as set by the frontend
-    white = 2  # white background
-    black = 3  # black background
-    off = 4  # fully transparent background
-    custom = 5  # custom background color by Settings.custom_bg_color as #rgba value
+    """This enum is used to define the background color.
+
+    Attributes:
+        default: as set by the :class:`Frontend` class
+        white: white background
+        black: black background
+        off: fully transparent background
+        custom: custom background color by :attr:`Settings.custom_bg_color`
+
+    """
+    default = 1
+    white = 2
+    black = 3
+    off = 4
+    custom = 5
 
 
 class StrokeWidthPolicy(enum.IntEnum):
-    absolute = 1  # in mm as resolved by the frontend
-    relative = 2  # in viewBox units relative to MAX_VIEW_BOX_COORDS
-    fixed_1 = 3  # all strokes have the same stroke-width relative to MAX_VIEW_...
+    """This enum is used to define how to determine the stroke-width.
+
+    Attributes:
+        absolute: in mm as resolved by the :class:`Frontend` class
+        relative: in viewBox units relative to MAX_VIEW_BOX_COORDS
+        fixed_1: all strokes have the same stroke-width relative to MAX_VIEW_BOX_COORDS
+    """
+    absolute = 1
+    relative = 2
+    fixed_1 = 3
 
 
 class Length(NamedTuple):
+    """Length with units.
+
+    Attributes:
+        length:
+        units:
+
+    """
     length: float
     units: Units = Units.mm
 
@@ -111,7 +157,15 @@ MAX_VIEW_BOX_COORDS = 1_000_000
 
 
 class Margins(NamedTuple):
-    """Page margins definition class"""
+    """Page margins definition class
+
+    Attributes:
+        top:
+        left:
+        bottom:
+        right:
+
+    """
 
     top: float
     right: float
@@ -142,7 +196,16 @@ class Margins(NamedTuple):
 
 @dataclasses.dataclass
 class Page:
-    """Page definition class"""
+    """Page definition class
+
+    Attributes:
+
+        width: page width, 0 for auto-detect
+        height: page height, 0 for auto-detect
+        units: page units as enum :class:`Units`
+        margins: page margins in page units
+
+    """
 
     width: float
     height: float
@@ -155,48 +218,72 @@ class Page:
 
     @property
     def width_in_mm(self) -> int:
+        """Returns the page width in mm."""
         return round(Length(self.width, self.units).in_mm)
 
     @property
     def height_in_mm(self) -> int:
+        """Returns the page height in mm."""
         return round(Length(self.height, self.units).in_mm)
 
     @property
     def margins_in_mm(self) -> Margins:
+        """Returns the page margins in mm."""
         return self.margins.scale(CSS_UNITS_TO_MM[self.units])
 
     def to_landscape(self) -> None:
+        """Converts the page to landscape orientation."""
         if self.width < self.height:
             self.width, self.height = self.height, self.width
 
     def to_portrait(self) -> None:
+        """Converts the page to portrait orientation."""
         if self.height < self.width:
             self.width, self.height = self.height, self.width
 
 
 @dataclasses.dataclass
 class Settings:
-    # Preserves the aspect-ratio at all scaling operations, these are CAD drawings!
-    #
-    # Rotate content about 0, 90,  180 or 270 degrees
+    """The SVGBackend settings.
+
+    Attributes:
+        content_rotation: Rotate content about 0, 90,  180 or 270 degrees
+        fit_page: Scale content to fit the page.
+        scale: Factor to scale the DXF units of model- or paperspace, to represent 1mm
+            in the rendered SVG drawing.
+
+            e.g. scale 1:100 and DXF units are m, so 0.01 DXF units are 1mm in the SVG
+            drawing or 1m = 1000mm corresponds to 10mm in the SVG drawing = 10 / 1000 = 0.01;
+
+            e.g. scale 1:1; DXF units are mm = 1 / 1 = 1.0 the default value
+
+            The value is ignored if the page size is defined and the content fits the page and
+            the value is also used to determine missing page sizes (width or height).
+        max_page_width: Limit auto-detected page width, 0 is for not limited
+        max_page_height: Limit auto-detected page height, 0 is for not limited
+        stroke_width_policy:
+        min_lineweight: Used for :class:`StrokeWidthPolicy.absolute` policy, minimum lineweight in mm
+        max_stroke_width: Used for :class:`StrokeWidthPolicy.relative` policy,
+            :attr:`max_stroke_width` is defined as percentage of the content extents,
+            e.g. 0.001 is 0.1% of max(page-width, page-height)
+        min_stroke_width: Used for :class:`StrokeWidthPolicy.relative` policy,
+            :attr:`min_stroke_width` is defined as percentage of :attr:`max_stroke_width`,
+            e.g. 0.05 is 5% of :attr:`max_stroke_width`
+        fixed_stroke_width: Used for :class:`StrokeWidthPolicy.fixed_1` policy,
+            :attr:`fixed_stroke_width` is defined as percentage of :attr:`max_stroke_width`,
+            e.g. 0.15 is 15% of :attr:`max_stroke_width`
+        color_policy:
+        custom_fg_color: Used for :class:`ColorPolicy.custom` policy, custom foreground
+            color as "#RRGGBBAA" color string (RGB+alpha)
+        background_policy:
+        custom_bg_color: Used for :class:`BackgroundPolicy.custom` policy, custom
+            background color as "#RRGGBBAA" color string (RGB+alpha)
+    """
     content_rotation: int = 0
-
-    # Scale content to fit the page
     fit_page: bool = True
-
-    # How to scale the input units, which are the DXF drawing units in model- or paper
-    # space, to represent 1 mm in the rendered SVG drawing.
-    # e.g. scale 1:100 and input units are m, so 0.01 input units is 1mm in the SVG drawing
-    # or 1000mm in input units corresponds to 10mm in the SVG drawing = 10 / 1000 = 0.01;
-    # e.g. scale 1:1; input unit is 1mm = 1 / 1 = 1.0 the default value
-    # The value is ignored if the page size is defined and the content fits the page.
-    # The value is used to determine missing page sizes (width or height).
     scale: float = 1.0
-
-    # Limit auto-detected page size, 0 is for not limited
     max_page_height: Length = Length(0, Units.mm)
     max_page_width: Length = Length(0, Units.mm)
-
     stroke_width_policy: StrokeWidthPolicy = StrokeWidthPolicy.absolute
     # StrokeWidthPolicy.absolut: minimal lineweight in mm
     min_lineweight: float = 0.05
@@ -208,11 +295,9 @@ class Settings:
     # StrokeWidthPolicy.fixed_1
     # fixed_stroke_width is defined as percentage of max_stroke_width
     fixed_stroke_width: float = 0.15  # 15% of max_stroke_width
-
     color_policy: ColorPolicy = ColorPolicy.color
     # applied if color_policy is ColorPolicy.custom
     custom_fg_color: Color = "#000000"
-
     background_policy: BackgroundPolicy = BackgroundPolicy.default
     # applied if background_policy is BackgroundPolicy.custom
     custom_bg_color: Color = "#ffffff"
@@ -288,9 +373,19 @@ class SVGBackend(Recorder):
 
     @staticmethod
     def make_backend(page: Page, settings: Settings) -> SVGRenderBackend:
+        """Override this method to use a customized render backend."""
         return SVGRenderBackend(page, settings)
 
     def get_string(self, page: Page, settings=Settings(), xml_declaration=True) -> str:
+        """Returns the XML data as unicode string.
+
+        Args:
+            page: page definition
+            settings: render settings
+            xml_declaration: inserts the "<?xml version='1.0' encoding='utf-8'?>" string
+                in front of the <svg> element
+
+        """
         xml = self.get_xml_root_element(page, settings)
         return ET.tostring(xml, encoding="unicode", xml_declaration=xml_declaration)
 

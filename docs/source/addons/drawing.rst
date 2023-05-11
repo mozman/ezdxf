@@ -127,17 +127,124 @@ PyQtBackend
 The :class:`PyQtBackend` is used by the :ref:`view_command` command of the
 `ezdxf` launcher.
 
-Limitations
-+++++++++++
-
-- the text path rendering is different to AutoCAD, therefore
-  text placement and wrapping may appear slightly different
-
 .. seealso::
 
     The `qtviewer.py`_ module implements the core of a simple DXF viewer and the
     `cad_viewer.py`_ example is a skeleton to show how to launch the
     :class:`CADViewer` class.
+
+Recorder
+--------
+
+.. versionadded:: 1.1
+
+This is a special backend which records the output of the :class:`~ezdxf.addons.drawing.frontend.Frontend`
+class in compact numpy arrays and can replay these recordings on a different backend.
+The recorded numpy arrays support measurement of bounding boxes and transformations
+which is for some backends a requirement to place the DXF content on size limited pages.
+
+.. autoclass:: ezdxf.addons.drawing.recorder.Recorder
+
+    The class implements the :class:`BackendInterface` but does not record :meth:`enter_entity`,
+    :meth:`exit_entity` and :meth:`clear` events.
+
+    .. automethod:: bbox
+
+    .. automethod:: transform
+
+    .. automethod:: replay
+
+
+SVGBackend
+----------
+
+.. versionadded:: 1.1
+
+This is a native SVG render backend and uses the :class:`xml.etree.ElementTree` class
+from the standard Python library to build the XML output and needs no additional packages
+for rendering SVG images.
+
+The implementations is divided into two stages, the first stage is a subclass of the
+:class:`~ezdxf.addons.drawing.recorder.Recorder` backend which records the output of
+the :class:`~ezdxf.addons.drawing.frontend.Frontend` class. The methods :meth:`get_xml_root_element`
+and :meth:`get_string` replay the recordings of the first stage on the actual render
+backend :class:`SVGRenderBackend`. It's possible to override the :meth:`make_backend`
+method to use a customized render backend.
+
+.. class:: ezdxf.addons.drawing.svg.SVGBackend
+
+    .. automethod:: get_xml_root_element
+
+    .. automethod:: get_string
+
+    .. automethod:: make_backend
+
+SVGRenderBackend
+++++++++++++++++
+
+This is the second stage of the :class:`~ezdxf.addons.drawing.svg.SVGBackend` and builds
+the actual XML tree. The implementation is designed to create smaller files than `Matplotlib`:
+
+- Using integer coordinates - the current implementation uses 1.000.000 units
+  for the larger side of the image.
+- Using <style> elements and the class attribute to minimize repetition for element
+  properties.
+- The <path> element places the path with an absolute ``move_to`` command, all
+  following commands are relative commands that keeps the coordinate values small.
+
+SVG <text> element is not supported, because all text rendering is done by the
+:class:`Frontend` class since `ezdxf` v1.1 - the backend never gets text entities only
+lines, filled polygons and paths.
+
+The output preserves the aspect-ratio at all scaling operations!
+
+.. class:: ezdxf.addons.drawing.svg.SVGRenderBackend
+
+    Study the source code if you wanna customize this class.
+
+The :class:`SVGBackend` uses additional classes and enums for configuration:
+
+- :class:`~ezdxf.addons.drawing.svg.Page` - page definition
+- :class:`~ezdxf.addons.drawing.svg.Margins` - page margins definition
+- :class:`~ezdxf.addons.drawing.svg.Length`  - length with units
+- :class:`~ezdxf.addons.drawing.svg.Settings`  - configuration settings
+- :class:`~ezdxf.addons.drawing.svg.Units`  - enum for SVG units
+- :class:`~ezdxf.addons.drawing.svg.ColorPolicy` - enum for foreground color policy
+- :class:`~ezdxf.addons.drawing.svg.BackgroundPolicy` - enum for background color policy
+- :class:`~ezdxf.addons.drawing.svg.StrokeWidthPolicy` - enum for stroke width policy
+
+.. autoclass:: ezdxf.addons.drawing.svg.Page
+
+    .. autoproperty:: width_in_mm
+
+    .. autoproperty:: height_in_mm
+
+    .. autoproperty:: margins_in_mm
+
+    .. automethod:: to_landscape
+
+    .. automethod:: to_portrait
+
+.. autoclass:: ezdxf.addons.drawing.svg.Margins
+
+    .. automethod:: all
+
+    .. automethod:: all2
+
+    .. automethod:: scale
+
+
+.. autoclass:: ezdxf.addons.drawing.svg.Length
+
+.. autoclass:: ezdxf.addons.drawing.svg.Settings
+
+.. autoclass:: ezdxf.addons.drawing.svg.Units
+
+.. autoclass:: ezdxf.addons.drawing.svg.ColorPolicy
+
+.. autoclass:: ezdxf.addons.drawing.svg.BackgroundPolicy
+
+.. autoclass:: ezdxf.addons.drawing.svg.StrokeWidthPolicy
 
 Configuration
 -------------

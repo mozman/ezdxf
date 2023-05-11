@@ -113,7 +113,7 @@ class Recorder(BackendInterface):
         self.store(RecordType.FILLED_PATHS, properties, (_paths, _holes))
 
     def transform(self, m: Matrix44) -> None:
-        """Transforms the recordings by a transformation matrix `m` of type
+        """Transforms the recordings inplace by a transformation matrix `m` of type
         :class:`~ezdxf.math.Matrix44`.
         """
         for record in self.records:
@@ -130,7 +130,9 @@ class Recorder(BackendInterface):
             self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
 
     def replay(self, backend: BackendInterface) -> None:
-        """Replay the recording on another backend."""
+        """Replay the recording on another backend that implements the
+        :class:`BackendInterface`.
+        """
         backend.configure(self.config)
         backend.set_background(self.background)
         props = self.properties
