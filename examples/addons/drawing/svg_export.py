@@ -76,7 +76,10 @@ def export(filepath: pathlib.Path):
     svg_string = backend.get_string(
         svg.Page(0, 0, svg.Units.mm, svg.Margins.all(10)),
         svg.Settings(
-            scale=1, fit_page=False, stroke_width_policy=svg.StrokeWidthPolicy.fixed_1
+            scale=1,
+            fit_page=False,
+            stroke_width_policy=svg.StrokeWidthPolicy.fixed_1,
+            background_policy=svg.BackgroundPolicy.off,
         ),
     )
     t2 = time.perf_counter()

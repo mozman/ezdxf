@@ -492,7 +492,25 @@ class SVGRenderBackend(BackendInterface):
         return self.root
 
     def override_background(self) -> None:
-        pass
+        policy = self.settings.background_policy
+        if policy == BackgroundPolicy.default:
+            return
+        if policy == BackgroundPolicy.off:
+            self.set_background("#ffffff00")  # white, fully transparent
+        elif policy == BackgroundPolicy.override:
+            self.set_background(self.settings.bg_color_override)
+        elif policy == BackgroundPolicy.color_policy_override:
+            color_policy = self.settings.color_policy
+            if color_policy in (
+                ColorPolicy.monochrome_black_bg,
+                ColorPolicy.white_on_black,
+            ):
+                self.set_background("#000000")  # black background
+            if color_policy in (
+                ColorPolicy.monochrome_white_bg,
+                ColorPolicy.black_on_white,
+            ):
+                self.set_background("#ffffff")  # white background
 
     def add_strokes(self, d: str, properties: BackendProperties):
         if not d:
@@ -540,7 +558,6 @@ class SVGRenderBackend(BackendInterface):
             stroke_width = map_lineweight_to_stroke_width(
                 width, self.min_stroke_width, self.max_stroke_width
             )
-
         self._stroke_width_cache[width] = stroke_width
         return stroke_width
 
