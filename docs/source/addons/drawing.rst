@@ -65,15 +65,6 @@ MatplotlibBackend
 The :class:`MatplotlibBackend` is used by the :ref:`draw_command` command of the
 `ezdxf` launcher.
 
-Limitations
-+++++++++++
-
-- the text path rendering is different to AutoCAD, therefore
-  text placement and wrapping may appear slightly different
-- the SVG export of dimensionless POINT entities is rendered as circles
-- has no VIEWPORT clipping support (yet?) and is therefore not very suitable
-  for exporting paperspace layouts
-
 Example for the usage of the :mod:`Matplotlib` backend:
 
 .. code-block:: Python
@@ -232,12 +223,12 @@ the actual XML tree. The implementation is designed to create smaller files than
 
 - Using integer coordinates - the current implementation uses 1.000.000 units
   for the larger side of the image.
-- Using <style> elements and the class attribute to minimize repetition for element
+- Using <style> elements and the `class` attribute to minimize repetition for element
   properties.
 - The <path> element places the path with an absolute ``move_to`` command, all
   following commands are relative commands that keeps the coordinate values small.
 
-SVG <text> element is not supported, because all text rendering is done by the
+The <text> element is not supported, because all text rendering is done by the
 :class:`Frontend` class since `ezdxf` v1.1 - the backend never gets text entities only
 lines, filled polygons and paths.
 

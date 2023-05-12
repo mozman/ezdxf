@@ -301,15 +301,15 @@ class Viewport(DXFGraphic):
 
     @property
     def is_visible(self) -> bool:
-        # Special VIEWPORT id == 1, this viewport defines the "active viewport"
+        # VIEWPORT id == 1 or status == 1, this viewport defines the "active viewport"
         # which is the area currently shown in the layout tab by the CAD
         # application.
         # BricsCAD set id to -1 if the viewport is off and 'status' (group
         # code 68) is not present.
-        # status: -1 is off-screen, 0 is off
-        if self.dxf.id < 2 or self.dxf.status < 1:
-            return False
-        return True
+        # status: -1= off-screen, 0= off, 1= "active viewport"
+        if self.dxf.hasattr("status"):
+            return self.dxf.status > 0
+        return self.dxf.id > 1
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
@@ -598,14 +598,10 @@ class Viewport(DXFGraphic):
 
     def clipping_rect(self) -> tuple[Vec2, Vec2]:
         """Returns the lower left and the upper right corner of the clipping
-        rectangle.
+        rectangle in paperspace coordinates.
         """
-        center = self.dxf.center
-        cx = center.x
-        cy = center.y
-        width2 = self.dxf.width / 2
-        height2 = self.dxf.height / 2
-        return Vec2(cx - width2, cy - height2), Vec2(cx + width2, cy + height2)
+        corners = self.clipping_rect_corners()
+        return corners[0], corners[2]
 
     @property
     def has_extended_clipping_path(self) -> bool:
@@ -630,12 +626,21 @@ class Viewport(DXFGraphic):
         view_direction: Vec3 = self.dxf.view_direction_vector
         return view_direction.is_null or view_direction.isclose(Z_AXIS)
 
+    def get_view_center_point(self) -> Vec3:
+        # TODO: Is there a flag or attribute that determines which of these points is
+        #  the center point?
+        center_point = Vec3(self.dxf.view_center_point)
+        if center_point.is_null:
+            center_point = Vec3(self.dxf.view_target_point)
+        return center_point
+
     def get_transformation_matrix(self) -> Matrix44:
-        """Returns the transformation matrix from modelspace to viewport."""
-        # supports only top-view viewports yet!
+        """Returns the transformation matrix from modelspace to paperspace coordinates.
+        """
+        # supports only top-view viewports!
         scale = self.get_scale()
         rotation_angle: float = self.dxf.view_twist_angle
-        msp_center_point: Vec3 = self.dxf.view_center_point
+        msp_center_point: Vec3 = self.get_view_center_point()
         offset: Vec3 = self.dxf.center - (msp_center_point * scale)
         m = Matrix44.scale(scale)
         if rotation_angle:
@@ -655,7 +660,7 @@ class Viewport(DXFGraphic):
         """Returns the limits of the modelspace to view in drawing units
         as tuple (min_x, min_y, max_x, max_y).
         """
-        msp_center_point: Vec3 = self.dxf.view_center_point
+        msp_center_point: Vec3 = self.get_view_center_point()
         msp_height: float = self.dxf.view_height
         rotation_angle: float = self.dxf.view_twist_angle
         ratio = self.get_aspect_ratio()

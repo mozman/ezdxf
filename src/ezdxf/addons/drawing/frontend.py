@@ -604,19 +604,13 @@ class Frontend:
     def draw_viewport_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         assert isinstance(entity, Viewport)
         vp = entity
-        # Special VIEWPORT id == 1, this viewport defines the "active viewport"
-        # which is the area currently shown in the layout tab by the CAD
-        # application.
-        # BricsCAD set id to -1 if the viewport is off and 'status' (group
-        # code 68) is not present.
-        if vp.dxf.id < 2 or vp.dxf.status < 1:
+        if vp.dxf.get("status", 0) < 2:  # 0= off; 1= "active viewport"
             return
+
         if not vp.is_top_view:
             self.log_message("Cannot render non top-view viewports")
             return
-        if not self._designer.draw_viewport(vp, self.ctx, self._bbox_cache):
-            # viewports are not supported by the backend
-            self._draw_filled_rect(vp.clipping_rect_corners(), VIEWPORT_COLOR)
+        self._designer.draw_viewport(vp, self.ctx, self._bbox_cache)
 
     def draw_ole2frame_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         ole2frame = cast(OLE2Frame, entity)
@@ -810,16 +804,16 @@ class Designer:
         vp: Viewport,
         layout_ctx: RenderContext,
         bbox_cache: Optional[ezdxf.bbox.Cache] = None,
-    ) -> bool:
+    ) -> None:
         """Draw the content of the given viewport current viewport.
         Returns ``False`` if the backend doesn't support viewports.
         """
         if vp.doc is None:
-            return False
+            return
         try:
             msp_limits = vp.get_modelspace_limits()
         except ValueError:  # modelspace limits not detectable
-            return False
+            return
         if self.enter_viewport(vp):
             _draw_entities(
                 self.frontend,
@@ -827,13 +821,9 @@ class Designer:
                 filter_vp_entities(vp.doc.modelspace(), msp_limits, bbox_cache),
             )
             self.exit_viewport()
-            return True
-        return False
 
     def enter_viewport(self, vp: Viewport) -> bool:
-        """Set current viewport. Returns ``False`` if the backend doesn't
-        support viewports.
-        """
+        """Set current viewport, returns ``True`` for valid viewports."""
         self.current_vp_scale = vp.get_scale()
         m = vp.get_transformation_matrix()
         clipping_path = make_path(vp)
@@ -861,17 +851,15 @@ class Designer:
         ):
             if self.clipper.is_active:
                 points = self.clipper.clip_line(start, end)
-                if points:
-                    self.backend.draw_line(
-                        start, end, self.get_backend_properties(properties)
-                    )
-            else:
-                self.backend.draw_line(
-                    start, end, self.get_backend_properties(properties)
-                )
+                if len(points) != 2:
+                    return
+                start, end = points
+            self.backend.draw_line(
+                start, end, self.get_backend_properties(properties)
+            )
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
-            self.draw_solid_lines(  # including transformation
+            self.draw_solid_lines(  # includes transformation
                 ((s, e) for s, e in renderer.line_segment(start, end)),
                 properties,
             )
@@ -917,14 +905,9 @@ class Designer:
         properties: Properties,
     ) -> None:
         if self.clipper.is_active:
-            m = self.clipper.m
             max_sagitta = self.config.max_flattening_distance
-            paths = self.clipper.clip_filled_paths(
-                (p.transform(m) for p in paths), max_sagitta
-            )
-            holes = self.clipper.clip_filled_paths(
-                (h.transform(m) for h in holes), max_sagitta
-            )
+            paths = self.clipper.clip_filled_paths(paths, max_sagitta)
+            holes = self.clipper.clip_filled_paths(holes, max_sagitta)
         self.backend.draw_filled_paths(
             paths, holes, self.get_backend_properties(properties)
         )
