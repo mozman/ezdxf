@@ -6,7 +6,7 @@ import time
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.config import Configuration, BackgroundPolicy, ColorPolicy
-from ezdxf.addons.drawing import svg
+from ezdxf.addons.drawing import svg, layout
 from ezdxf.math import global_bspline_interpolation
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
@@ -70,8 +70,7 @@ def export(filepath: pathlib.Path):
     backend = svg.SVGBackend()
     config = Configuration(
         background_policy=BackgroundPolicy.WHITE,
-        color_policy=ColorPolicy.CUSTOM,
-        custom_fg_color="#330088",
+        color_policy=ColorPolicy.BLACK,
     )
     Frontend(RenderContext(doc), backend, config=config).draw_layout(msp)
 
@@ -80,9 +79,9 @@ def export(filepath: pathlib.Path):
     _ = backend.bbox()
 
     svg_string = backend.get_string(
-        svg.Page(0, 0, svg.Units.mm, svg.Margins.all(10)),
-        svg.Settings(
-            stroke_width_policy=svg.StrokeWidthPolicy.RELATIVE,
+        layout.Page(0, 0, layout.Units.mm, layout.Margins.all(10)),
+        layout.Settings(
+            stroke_width_policy=layout.StrokeWidthPolicy.RELATIVE,
         ),
     )
     t2 = time.perf_counter()
@@ -106,7 +105,7 @@ def simple():
 
     backend = svg.SVGBackend()
     Frontend(RenderContext(doc), backend).draw_layout(msp)
-    svg_string = backend.get_string(svg.Page(100, 40, svg.Units.mm))
+    svg_string = backend.get_string(layout.Page(100, 40, layout.Units.mm))
     (CWD / "wave.svg").write_text(svg_string)
 
 
@@ -116,12 +115,12 @@ def transparency():
     backend = svg.SVGBackend()
     Frontend(RenderContext(doc), backend).draw_layout(msp)
     svg_string = backend.get_string(
-        svg.Page(0, 0, svg.Units.mm), settings=svg.Settings(scale=10)
+        layout.Page(0, 0, layout.Units.mm), settings=layout.Settings(scale=10)
     )
     (CWD / "transparency.svg").write_text(svg_string)
 
 
 if __name__ == "__main__":
     export_cadkit_samples()
-    # simple()
+    simple()
     # transparency()

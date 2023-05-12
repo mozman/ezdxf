@@ -154,22 +154,67 @@ which is for some backends a requirement to place the DXF content on size limite
 
     .. automethod:: replay
 
+Layout
+------
+
+.. versionadded:: 1.1
+
+The :class:`Layout` class builds the page layout and the matrix to transform the DXF
+content to page coordinates according to the layout :class:`Settings`.
+The DXF coordinate transformation is required for PDF and HPGL/2 which expects the
+output coordinates in the first quadrant and SVG which has an inverted y-axis.
+
+The :class:`Layout` class uses following classes and enums for configuration:
+
+- :class:`~ezdxf.addons.drawing.layout.Page` - page definition
+- :class:`~ezdxf.addons.drawing.layout.Margins` - page margins definition
+- :class:`~ezdxf.addons.drawing.layout.Length`  - length with units
+- :class:`~ezdxf.addons.drawing.layout.Settings`  - configuration settings
+- :class:`~ezdxf.addons.drawing.layout.Units`  - enum for page units
+- :class:`~ezdxf.addons.drawing.layout.StrokeWidthPolicy` - enum for stroke width policy
+
+.. autoclass:: ezdxf.addons.drawing.layout.Page
+
+    .. autoproperty:: width_in_mm
+
+    .. autoproperty:: height_in_mm
+
+    .. autoproperty:: margins_in_mm
+
+    .. automethod:: to_landscape
+
+    .. automethod:: to_portrait
+
+.. autoclass:: ezdxf.addons.drawing.layout.Margins
+
+    .. automethod:: all
+
+    .. automethod:: all2
+
+    .. automethod:: scale
+
+
+.. autoclass:: ezdxf.addons.drawing.layout.Length
+
+.. autoclass:: ezdxf.addons.drawing.layout.Settings
+
+.. autoclass:: ezdxf.addons.drawing.layout.Units
+
+.. autoclass:: ezdxf.addons.drawing.layout.StrokeWidthPolicy
 
 SVGBackend
 ----------
 
 .. versionadded:: 1.1
 
-This is a native SVG render backend and uses the :class:`xml.etree.ElementTree` class
-from the standard Python library to build the XML output and needs no additional packages
-for rendering SVG images.
+This is a native SVG rendering backend and does not require any external packages to
+render SVG images other than the core dependencies.
 
 The implementations is divided into two stages, the first stage is a subclass of the
 :class:`~ezdxf.addons.drawing.recorder.Recorder` backend which records the output of
-the :class:`~ezdxf.addons.drawing.frontend.Frontend` class. The methods :meth:`get_xml_root_element`
-and :meth:`get_string` replay the recordings of the first stage on the actual render
-backend :class:`SVGRenderBackend`. It's possible to override the :meth:`make_backend`
-method to use a customized render backend.
+the :class:`~ezdxf.addons.drawing.frontend.Frontend` class and creates the page layout.
+The methods :meth:`get_xml_root_element` and :meth:`get_string` replay the recordings of
+the first stage on the actual rendering backend :class:`SVGRenderBackend`.
 
 .. class:: ezdxf.addons.drawing.svg.SVGBackend
 
@@ -202,43 +247,6 @@ The output preserves the aspect-ratio at all scaling operations!
 
     Study the source code if you wanna customize this class.
 
-The :class:`SVGBackend` uses additional classes and enums for configuration:
-
-- :class:`~ezdxf.addons.drawing.svg.Page` - page definition
-- :class:`~ezdxf.addons.drawing.svg.Margins` - page margins definition
-- :class:`~ezdxf.addons.drawing.svg.Length`  - length with units
-- :class:`~ezdxf.addons.drawing.svg.Settings`  - configuration settings
-- :class:`~ezdxf.addons.drawing.svg.Units`  - enum for SVG units
-- :class:`~ezdxf.addons.drawing.svg.StrokeWidthPolicy` - enum for stroke width policy
-
-.. autoclass:: ezdxf.addons.drawing.svg.Page
-
-    .. autoproperty:: width_in_mm
-
-    .. autoproperty:: height_in_mm
-
-    .. autoproperty:: margins_in_mm
-
-    .. automethod:: to_landscape
-
-    .. automethod:: to_portrait
-
-.. autoclass:: ezdxf.addons.drawing.svg.Margins
-
-    .. automethod:: all
-
-    .. automethod:: all2
-
-    .. automethod:: scale
-
-
-.. autoclass:: ezdxf.addons.drawing.svg.Length
-
-.. autoclass:: ezdxf.addons.drawing.svg.Settings
-
-.. autoclass:: ezdxf.addons.drawing.svg.Units
-
-.. autoclass:: ezdxf.addons.drawing.svg.StrokeWidthPolicy
 
 Configuration
 -------------
