@@ -100,9 +100,7 @@ class CADGraphicsView(qw.QGraphicsView):
         # See QWheelEvent documentation
         delta_notches = event.angleDelta().y() / 120
         direction = math.copysign(1, delta_notches)
-        factor = (1.0 + self._zoom_per_scroll_notch * direction) ** abs(
-            delta_notches
-        )
+        factor = (1.0 + self._zoom_per_scroll_notch * direction) ** abs(delta_notches)
         resulting_zoom = self._zoom * factor
         if resulting_zoom < self._zoom_limits[0]:
             factor = self._zoom_limits[0] / self._zoom
@@ -124,7 +122,6 @@ class CADGraphicsView(qw.QGraphicsView):
 
 
 class CADGraphicsViewWithOverlay(CADGraphicsView):
-
     mouse_moved = Signal(qc.QPointF)
     element_selected = Signal(object, int)
 
@@ -132,6 +129,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
         super().__init__(**kwargs)
         self._selected_items: list[qw.QGraphicsItem] = []
         self._selected_index = None
+        self._mark_selection = True
 
     def clear(self):
         super().clear()
@@ -144,7 +142,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
 
     def drawForeground(self, painter: qg.QPainter, rect: qc.QRectF) -> None:
         super().drawForeground(painter, rect)
-        if self._selected_items:
+        if self._selected_items and self._mark_selection:
             item = self._selected_items[self._selected_index]
             r = item.sceneTransform().mapRect(item.boundingRect())
             painter.fillRect(r, qg.QColor(0, 255, 0, 100))
@@ -169,9 +167,10 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
 
     def _emit_selected(self):
         self.element_selected.emit(self._selected_items, self._selected_index)
-        self.scene().invalidate(
-            self.sceneRect(), qw.QGraphicsScene.ForegroundLayer
-        )
+        self.scene().invalidate(self.sceneRect(), qw.QGraphicsScene.ForegroundLayer)
+
+    def toggle_selection_marker(self):
+        self._mark_selection = not self._mark_selection
 
 
 class CadViewer(qw.QMainWindow):
@@ -202,6 +201,10 @@ class CadViewer(qw.QMainWindow):
         toggle_sidebar_action = QAction("Toggle Sidebar", self)
         toggle_sidebar_action.triggered.connect(self._toggle_sidebar)
         menu.addAction(toggle_sidebar_action)
+
+        toggle_selection_marker_action = QAction("Toggle Selection Marker", self)
+        toggle_selection_marker_action.triggered.connect(self._toggle_selection_marker)
+        menu.addAction(toggle_selection_marker_action)
 
         self.sidebar = qw.QSplitter(qc.Qt.Vertical)
         self.layers = qw.QListWidget()
@@ -318,9 +321,7 @@ class CadViewer(qw.QMainWindow):
                 qc.Qt.Checked if layer.is_visible else qc.Qt.Unchecked
             )
             checkbox.stateChanged.connect(self._layers_updated)
-            text_color = (
-                "#FFFFFF" if is_dark_color(layer.color, 0.4) else "#000000"
-            )
+            text_color = "#FFFFFF" if is_dark_color(layer.color, 0.4) else "#000000"
             checkbox.setStyleSheet(
                 f"color: {text_color}; background-color: {layer.color}"
             )
@@ -375,7 +376,7 @@ class CadViewer(qw.QMainWindow):
             ctx=self._render_context,
             out=self._backend,
             config=self._config,
-            bbox_cache=self._bbox_cache
+            bbox_cache=self._bbox_cache,
         )
 
     def _update_render_context(self, layout):
@@ -409,6 +410,10 @@ class CadViewer(qw.QMainWindow):
     def _toggle_sidebar(self):
         self.sidebar.setHidden(not self.sidebar.isHidden())
 
+    @Slot()
+    def _toggle_selection_marker(self):
+        self.view.toggle_selection_marker()
+
     @Slot(qc.QPointF)
     def _on_mouse_moved(self, mouse_pos: qc.QPointF):
         self.mouse_pos.setText(
@@ -416,15 +421,11 @@ class CadViewer(qw.QMainWindow):
         )
 
     @Slot(object, int)
-    def _on_element_selected(
-        self, elements: list[qw.QGraphicsItem], index: int
-    ):
+    def _on_element_selected(self, elements: list[qw.QGraphicsItem], index: int):
         if not elements:
             text = "No element selected"
         else:
-            text = (
-                f"Selected: {index + 1} / {len(elements)}    (click to cycle)\n"
-            )
+            text = f"Selected: {index + 1} / {len(elements)}    (click to cycle)\n"
             element = elements[index]
             dxf_entity = element.data(CorrespondingDXFEntity)
             if dxf_entity is None:
