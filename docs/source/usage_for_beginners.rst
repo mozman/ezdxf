@@ -262,7 +262,7 @@ attribute :code:`doc.layers`.
 
 You can create your own layers::
 
-    my_layer = doc.layer.add("MyLayer")
+    my_layer = doc.layers.add("MyLayer")
 
 The layer object also controls the visibility of entities which references this
 layer, the on/off state of the layer is unfortunately stored as positive or
