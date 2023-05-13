@@ -740,11 +740,8 @@ class RenderContext:
         """Returns the `aci` value (AutoCAD Color Index) as rgb value in
         hex format: "#RRGGBB".
         """
-        if aci == 7:  # black/white; todo: this bypasses the plot style table
-            if self.current_layout_properties.has_dark_background:
-                return "#ffffff"
-            else:
-                return "#000000"
+        if aci == 7:  # black/white
+            return self.current_layout_properties.default_color
         else:
             return rgb_to_hex(self.plot_styles[aci].color)
 
