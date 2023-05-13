@@ -1,13 +1,16 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import NamedTuple
+from typing import NamedTuple, TYPE_CHECKING
 from typing_extensions import Self
 
 import math
 import enum
 import dataclasses
 from ezdxf.math import Vec2, BoundingBox2d, Matrix44
+
+if TYPE_CHECKING:
+    from ezdxf.layouts.layout import Layout as DXFLayout
 
 
 class Units(enum.IntEnum):
@@ -175,6 +178,22 @@ class Page:
         """Converts the page to portrait orientation."""
         if self.height < self.width:
             self.width, self.height = self.height, self.width
+
+    @classmethod
+    def from_dxf_layout(cls, layout: DXFLayout) -> Self:
+        # all layout measurements in mm
+
+        width = round(layout.dxf.paper_width, 1)
+        height = round(layout.dxf.paper_height, 1)
+        margins = Margins(
+            top=layout.dxf.top_margin,
+            right=layout.dxf.right_margin,
+            bottom=layout.dxf.bottom_margin,
+            left=layout.dxf.left_margin,
+        )
+        if layout.dxf.plot_rotation in (1, 3):
+            width, height = height, width
+        return cls(width, height, Units.mm, margins)
 
 
 @dataclasses.dataclass

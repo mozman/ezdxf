@@ -60,34 +60,48 @@ wave = [
 ]
 
 
-def export(filepath: pathlib.Path):
+def export(filepath: pathlib.Path, layout_names=("Model",)):
     print(f"\nprocessing: {filepath.name}")
     t0 = time.perf_counter()
     doc = ezdxf.readfile(filepath)
     t1 = time.perf_counter()
     print(f"loading time: {t1 - t0: .3f} seconds")
-    msp = doc.modelspace()
-    backend = svg.SVGBackend()
-    config = Configuration(
-        background_policy=BackgroundPolicy.WHITE,
-        color_policy=ColorPolicy.BLACK,
-    )
-    Frontend(RenderContext(doc), backend, config=config).draw_layout(msp)
+    for layout_name in layout_names:
+        outname = filepath.stem + f"-[{layout_name}]" + ".svg"
+        print(outname)
+        t1 = time.perf_counter()
+        if layout_name == "Model":
+            dxf_layout = doc.modelspace()
+            page = layout.Page(0, 0, layout.Units.mm, layout.Margins.all(10))
+            settings = layout.Settings(
+                stroke_width_policy=layout.StrokeWidthPolicy.RELATIVE,
+            )
+        else:
+            try:
+                dxf_layout = doc.paperspace(layout_name)
+            except KeyError:
+                print(f"Layout '{layout_name}' not found")
+                continue
+            page = layout.Page.from_dxf_layout(dxf_layout)
+            settings = layout.Settings(
+                fit_page=False,
+                stroke_width_policy=layout.StrokeWidthPolicy.RELATIVE,
+                scale=dxf_layout.get_plot_unit_scale_factor(),
+            )
 
-    # You can get the content bounding box in DXF drawing units, before you create the
-    # SVG output to calculate page size, margins, scaling factor and so on ...
-    _ = backend.bbox()
+        backend = svg.SVGBackend()
+        # You can get the content bounding box in DXF drawing units, before you create the
+        # SVG output to calculate page size, margins, scaling factor and so on ...
+        # content_extents = backend.bbox()
 
-    svg_string = backend.get_string(
-        layout.Page(0, 0, layout.Units.mm, layout.Margins.all(10)),
-        layout.Settings(
-            stroke_width_policy=layout.StrokeWidthPolicy.RELATIVE,
-        ),
-    )
-    t2 = time.perf_counter()
-    outname = filepath.stem + ".svg"
-    print(f"render time: {t2 - t1: .3f} seconds")
-    (CWD / outname).write_text(svg_string)
+        Frontend(RenderContext(doc), backend, config=Configuration()).draw_layout(
+            dxf_layout
+        )
+
+        svg_string = backend.get_string(page, settings)
+        t2 = time.perf_counter()
+        print(f"render time: {t2 - t1: .3f} seconds")
+        (CWD / outname).write_text(svg_string)
 
 
 def export_cadkit_samples():
@@ -121,6 +135,10 @@ def transparency():
 
 
 if __name__ == "__main__":
-    export_cadkit_samples()
-    simple()
+    export(
+        pathlib.Path(r"C:\Source\dxftest\CADKitSamples\AEC Plan Elev Sample.dxf"),
+        ["Model", "PLAN", "SECTION"],
+    )
+    # export_cadkit_samples()
+    # simple()
     # transparency()

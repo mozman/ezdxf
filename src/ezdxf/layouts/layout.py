@@ -269,6 +269,17 @@ class Layout(BaseLayout):
         dxf.plot_window_y2 = y2
         self.set_plot_type(4)
 
+    def get_plot_unit_scale_factor(self) -> float:
+        denom = self.dxf.scale_denominator
+        numerator = self.dxf.scale_numerator
+        scale = 1.0
+        if denom:
+            scale = numerator / denom
+        if self.dxf.plot_paper_units == 1:
+            return scale  # mm
+        else:
+            return scale * 25.4  # inch
+
     # plot layout flags setter
     def plot_viewport_borders(self, state: bool = True) -> None:
         self.set_plot_flags(self.PLOT_VIEWPORT_BORDERS, state)
