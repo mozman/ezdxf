@@ -354,10 +354,23 @@ class CADViewer(qw.QMainWindow):
         toggle_selection_marker_action.triggered.connect(self._toggle_selection_marker)
         menu.addAction(toggle_selection_marker_action)
 
+        self.reload_menu = menu.addMenu("Reload")
         reload_action = QAction("Reload", self)
         reload_action.setShortcut(qg.QKeySequence("F5"))
         reload_action.triggered.connect(self._reload)
-        menu.addAction(reload_action)
+        self.reload_menu.addAction(reload_action)
+        self.keep_view_action = QAction("Keep View", self)
+        self.keep_view_action.setCheckable(True)
+        self.keep_view_action.setChecked(True)
+        self.reload_menu.addAction(self.keep_view_action)
+        watch_action = QAction("Watch", self)
+        watch_action.setCheckable(True)
+        watch_action.toggled.connect(self._toggle_watch)
+        self.reload_menu.addAction(watch_action)
+        self._watch_timer = qc.QTimer()
+        self._watch_timer.setInterval(50)
+        self._watch_timer.timeout.connect(self._check_watch)
+        self._watch_mtime = None
 
         self.sidebar = qw.QSplitter(qc.Qt.Vertical)
         self.layers = qw.QListWidget()
@@ -448,6 +461,13 @@ class CADViewer(qw.QMainWindow):
                 auditor.print_error_report(auditor.errors)
                 return
 
+        if document.filename:
+            try:
+                self._watch_mtime = os.stat(document.filename).st_mtime
+            except OSError:
+                self._watch_mtime = None
+        else:
+            self._watch_mtime = None
         self._cad.set_document(document, layout=layout)
         self._populate_layouts()
         self._populate_layer_list()
@@ -536,11 +556,32 @@ class CADViewer(qw.QMainWindow):
 
     @Slot()
     def _reload(self):
-        print("reload")
-        if self._cad.doc.filename:
-            view = self._view.save_view()
+        if self._cad.doc is not None and self._cad.doc.filename:
+            keep_view = self.keep_view_action.isChecked()
+            view = self._view.save_view() if keep_view else None
             self.load_file(self._cad.doc.filename, layout=self._cad.current_layout)
-            self._view.restore_view(view)
+            if keep_view:
+                self._view.restore_view(view)
+
+    @Slot()
+    def _toggle_watch(self):
+        if self._watch_timer.isActive():
+            self._watch_timer.stop()
+        else:
+            self._watch_timer.start()
+
+    @Slot()
+    def _check_watch(self):
+        if self._watch_mtime is None or self._cad.doc is None:
+            return
+        filename = self._cad.doc.filename
+        if filename:
+            try:
+                mtime = os.stat(filename).st_mtime
+            except OSError:
+                return
+            if mtime != self._watch_mtime:
+                self._reload()
 
     @Slot(qc.QPointF)
     def _on_mouse_moved(self, mouse_pos: qc.QPointF):
