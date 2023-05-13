@@ -444,7 +444,7 @@ class View(Command):
         except ImportError as e:
             print(str(e))
             sys.exit(1)
-        from ezdxf.addons.drawing.qtviewer import CadViewer
+        from ezdxf.addons.drawing.qtviewer import CADViewer
         from ezdxf.addons.drawing.config import Configuration
 
         config = Configuration.defaults()
@@ -455,7 +455,7 @@ class View(Command):
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QtWidgets.QApplication(sys.argv)
         set_app_icon(app)
-        viewer = CadViewer(config=config)
+        viewer = CADViewer.from_config(config)
         filename = args.file
         if filename:
             doc, auditor = load_document(filename)
