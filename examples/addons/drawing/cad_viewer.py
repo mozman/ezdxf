@@ -9,7 +9,7 @@ from ezdxf.addons.xqt import QtWidgets as qw
 
 import ezdxf
 from ezdxf import recover
-from ezdxf.addons.drawing.qtviewer import CadViewer
+from ezdxf.addons.drawing.qtviewer import CADViewer
 from ezdxf.addons.drawing.config import Configuration
 
 # ------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ def _main():
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
     app = qw.QApplication(sys.argv)
-    v = CadViewer(config=config)
+    v = CADViewer.from_config(config)
     if args.cad_file is not None:
         try:
             doc, auditor = recover.readfile(args.cad_file)
