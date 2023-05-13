@@ -94,7 +94,13 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
         # SVG output to calculate page size, margins, scaling factor and so on ...
         # content_extents = backend.bbox()
 
-        Frontend(RenderContext(doc), backend, config=Configuration()).draw_layout(
+        Frontend(RenderContext(doc), backend, config=Configuration(
+            # blueprint schema:
+            background_policy=BackgroundPolicy.CUSTOM,
+            custom_bg_color="#002082",
+            color_policy=ColorPolicy.CUSTOM,
+            custom_fg_color="#ced8f7",
+        )).draw_layout(
             dxf_layout
         )
 

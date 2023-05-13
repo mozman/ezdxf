@@ -317,7 +317,7 @@ class CADViewer(qw.QMainWindow):
         toggle_sidebar_action.triggered.connect(self._toggle_sidebar)
         menu.addAction(toggle_sidebar_action)
 
-        toggle_selection_marker_action = QAction("Toggle Selection Marker", self)
+        toggle_selection_marker_action = QAction("Toggle Entity Marker", self)
         toggle_selection_marker_action.triggered.connect(self._toggle_selection_marker)
         menu.addAction(toggle_selection_marker_action)
 
@@ -491,7 +491,7 @@ class CADViewer(qw.QMainWindow):
 
     @Slot()
     def _toggle_selection_marker(self):
-        self.view.toggle_selection_marker()
+        self._view.toggle_selection_marker()
 
     @Slot(qc.QPointF)
     def _on_mouse_moved(self, mouse_pos: qc.QPointF):
