@@ -110,9 +110,7 @@ class CADGraphicsView(qw.QGraphicsView):
         # See QWheelEvent documentation
         delta_notches = event.angleDelta().y() / 120
         direction = math.copysign(1, delta_notches)
-        factor = (1.0 + self._zoom_per_scroll_notch * direction) ** abs(
-            delta_notches
-        )
+        factor = (1.0 + self._zoom_per_scroll_notch * direction) ** abs(delta_notches)
         resulting_zoom = self._zoom * factor
         if resulting_zoom < self._zoom_limits[0]:
             factor = self._zoom_limits[0] / self._zoom
@@ -134,7 +132,6 @@ class CADGraphicsView(qw.QGraphicsView):
 
 
 class CADGraphicsViewWithOverlay(CADGraphicsView):
-
     mouse_moved = Signal(qc.QPointF)
     element_hovered = Signal(object, int)
 
@@ -142,6 +139,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
         super().__init__(**kwargs)
         self._selected_items: list[qw.QGraphicsItem] = []
         self._selected_index = None
+        self._mark_selection = True
 
     @property
     def current_hovered_element(self) -> Optional[DXFEntity]:
@@ -163,7 +161,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
 
     def drawForeground(self, painter: qg.QPainter, rect: qc.QRectF) -> None:
         super().drawForeground(painter, rect)
-        if self._selected_items:
+        if self._selected_items and self._mark_selection:
             item = self._selected_items[self._selected_index]
             r = item.sceneTransform().mapRect(item.boundingRect())
             painter.fillRect(r, qg.QColor(0, 255, 0, 100))
@@ -191,6 +189,10 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
         self.scene().invalidate(
             self.sceneRect(), qw.QGraphicsScene.ForegroundLayer
         )
+
+    def toggle_selection_marker(self):
+        self._mark_selection = not self._mark_selection
+
 
 
 class CADWidget(qw.QWidget):
@@ -315,6 +317,10 @@ class CADViewer(qw.QMainWindow):
         toggle_sidebar_action.triggered.connect(self._toggle_sidebar)
         menu.addAction(toggle_sidebar_action)
 
+        toggle_selection_marker_action = QAction("Toggle Selection Marker", self)
+        toggle_selection_marker_action.triggered.connect(self._toggle_selection_marker)
+        menu.addAction(toggle_selection_marker_action)
+
         self.sidebar = qw.QSplitter(qc.Qt.Vertical)
         self.layers = qw.QListWidget()
         self.layers.setStyleSheet(
@@ -418,9 +424,7 @@ class CADViewer(qw.QMainWindow):
                 qc.Qt.Checked if layer.is_visible else qc.Qt.Unchecked
             )
             checkbox.stateChanged.connect(self._layers_updated)
-            text_color = (
-                "#FFFFFF" if is_dark_color(layer.color, 0.4) else "#000000"
-            )
+            text_color = "#FFFFFF" if is_dark_color(layer.color, 0.4) else "#000000"
             checkbox.setStyleSheet(
                 f"color: {text_color}; background-color: {layer.color}"
             )
@@ -485,6 +489,10 @@ class CADViewer(qw.QMainWindow):
     def _toggle_sidebar(self):
         self.sidebar.setHidden(not self.sidebar.isHidden())
 
+    @Slot()
+    def _toggle_selection_marker(self):
+        self.view.toggle_selection_marker()
+
     @Slot(qc.QPointF)
     def _on_mouse_moved(self, mouse_pos: qc.QPointF):
         self.mouse_pos.setText(
@@ -498,9 +506,7 @@ class CADViewer(qw.QMainWindow):
         if not elements:
             text = "No element selected"
         else:
-            text = (
-                f"Selected: {index + 1} / {len(elements)}    (click to cycle)\n"
-            )
+            text = f"Selected: {index + 1} / {len(elements)}    (click to cycle)\n"
             element = elements[index]
             dxf_entity = element.data(CorrespondingDXFEntity)
             if dxf_entity is None:
