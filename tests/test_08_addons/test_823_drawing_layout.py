@@ -21,13 +21,13 @@ class TestPage:
         assert page.width == 11
         assert page.height == 8.5
         assert page.units == layout.Units.inch
-        assert page.width_in_mm == 279
-        assert page.height_in_mm == 216
+        assert page.width_in_mm == 279.4
+        assert page.height_in_mm == 215.9
 
     def test_screen_size_in_pixels(self):
         page = layout.Page(800, 600, layout.Units.px)
-        assert page.width_in_mm == 212
-        assert page.height_in_mm == 159
+        assert page.width_in_mm == 211.7
+        assert page.height_in_mm == 158.8
 
 
 class TestDetectFinalPage:
@@ -77,10 +77,8 @@ class TestDetectFinalPage:
         content_size = Vec2(1000, 2000)
         page = layout.final_page_size(
             content_size,
-            layout.Page(0, 0, layout.Units.mm, layout.Margins.all(0)),
-            layout.Settings(
-                scale=1, max_page_height=layout.Length(841, layout.Units.mm)
-            ),
+            layout.Page(0, 0, layout.Units.mm, layout.Margins.all(0), max_height=841),
+            layout.Settings(scale=1),
         )
         assert page.height == 841
         assert page.width == pytest.approx(420.5)
@@ -89,10 +87,8 @@ class TestDetectFinalPage:
         content_size = Vec2(2000, 1000)
         page = layout.final_page_size(
             content_size,
-            layout.Page(0, 0, layout.Units.mm, layout.Margins.all(0)),
-            layout.Settings(
-                scale=1, max_page_width=layout.Length(841, layout.Units.mm)
-            ),
+            layout.Page(0, 0, layout.Units.mm, layout.Margins.all(0), max_width=841),
+            layout.Settings(scale=1),
         )
         assert page.height == pytest.approx(420.5)
         assert page.width == 841

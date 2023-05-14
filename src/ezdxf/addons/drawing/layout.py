@@ -142,6 +142,8 @@ class Page:
         height: page height, 0 for auto-detect
         units: page units as enum :class:`Units`
         margins: page margins in page units
+        max_width: max width if auto-detected, 0 for unlimited
+        max_height: max height if auto-detected, 0 for unlimited
 
     """
 
@@ -149,34 +151,56 @@ class Page:
     height: float
     units: Units = Units.mm
     margins: Margins = Margins.all(0)
+    max_width: float = 0
+    max_height: float = 0
 
     def __post_init__(self):
         assert isinstance(self.units, Units), "units require type <Units>"
         assert isinstance(self.margins, Margins), "margins require type <Margins>"
 
     @property
-    def width_in_mm(self) -> int:
+    def width_in_mm(self) -> float:
         """Returns the page width in mm."""
-        return round(Length(self.width, self.units).in_mm)
+        return round(Length(self.width, self.units).in_mm, 1)
 
     @property
-    def height_in_mm(self) -> int:
+    def max_width_in_mm(self) -> float:
+        """Returns the page width in mm."""
+        return round(Length(self.max_width, self.units).in_mm, 1)
+
+    @property
+    def height_in_mm(self) -> float:
         """Returns the page height in mm."""
-        return round(Length(self.height, self.units).in_mm)
+        return round(Length(self.height, self.units).in_mm, 1)
+
+    @property
+    def max_height_in_mm(self) -> float:
+        """Returns the page height in mm."""
+        return round(Length(self.max_height, self.units).in_mm, 1)
 
     @property
     def margins_in_mm(self) -> Margins:
         """Returns the page margins in mm."""
         return self.margins.scale(UNITS_TO_MM[self.units])
 
+    @property
+    def is_landscape(self) -> bool:
+        """Returns ``True`` if the page has landscape orientation."""
+        return self.width > self.height
+
+    @property
+    def is_portrait(self) -> bool:
+        """Returns ``True`` if the page has portrait orientation. (square is portrait)"""
+        return self.width <= self.height
+
     def to_landscape(self) -> None:
         """Converts the page to landscape orientation."""
-        if self.width < self.height:
+        if self.is_portrait:
             self.width, self.height = self.height, self.width
 
     def to_portrait(self) -> None:
         """Converts the page to portrait orientation."""
-        if self.height < self.width:
+        if self.is_landscape:
             self.width, self.height = self.height, self.width
 
     @classmethod
@@ -213,8 +237,6 @@ class Settings:
 
             The value is ignored if the page size is defined and the content fits the page and
             the value is also used to determine missing page sizes (width or height).
-        max_page_width: Limit auto-detected page width, 0 is for not limited
-        max_page_height: Limit auto-detected page height, 0 is for not limited
         stroke_width_policy:
         max_stroke_width: Used for :class:`StrokeWidthPolicy.relative` policy,
             :attr:`max_stroke_width` is defined as percentage of the content extents,
@@ -233,8 +255,6 @@ class Settings:
     content_rotation: int = 0
     fit_page: bool = True
     scale: float = 1.0
-    max_page_height: Length = Length(0, Units.mm)
-    max_page_width: Length = Length(0, Units.mm)
     stroke_width_policy: StrokeWidthPolicy = StrokeWidthPolicy.ABSOLUTE
     # StrokeWidthPolicy.relative
     # max_stroke_width is defined as percentage of the content extents
@@ -259,12 +279,6 @@ class Settings:
                 f"invalid content rotation {self.content_rotation}, "
                 f"expected: 0, 90, 180, 270"
             )
-        assert isinstance(
-            self.max_page_height, Length
-        ), "max_page_height require type <Length>"
-        assert isinstance(
-            self.max_page_width, Length
-        ), "max_page_width require type <Length>"
 
 
 class Layout:
@@ -325,8 +339,8 @@ class Layout:
 
 def final_page_size(content_size: Vec2, page: Page, settings: Settings) -> Page:
     scale = settings.scale
-    width = float(page.width_in_mm)
-    height = float(page.height_in_mm)
+    width = page.width_in_mm
+    height = page.height_in_mm
     margins = page.margins_in_mm
     if width == 0.0:
         width = scale * content_size.x + margins.left + margins.right
@@ -334,9 +348,9 @@ def final_page_size(content_size: Vec2, page: Page, settings: Settings) -> Page:
         height = scale * content_size.y + margins.top + margins.bottom
 
     width, height = limit_page_size(
-        width, height, settings.max_page_width.in_mm, settings.max_page_height.in_mm
+        width, height, page.max_width_in_mm, page.max_height_in_mm
     )
-    return Page(round(width, 2), round(height, 2), Units.mm, margins)
+    return Page(round(width, 1), round(height, 1), Units.mm, margins)
 
 
 def limit_page_size(
