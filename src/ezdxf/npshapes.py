@@ -19,7 +19,7 @@ class EmptyShapeError(NumpyShapesException):
     pass
 
 
-class _NumpyShape2d(abc.ABC):
+class NumpyShape2d(abc.ABC):
     """This is an optimization to store many 2D paths and polylines in a compact way
     without sacrificing basic functions like transformation and bounding box calculation.
     """
@@ -46,7 +46,7 @@ class _NumpyShape2d(abc.ABC):
         return Vec2.list(self._vertices)
 
 
-class NumpyPoints2d(_NumpyShape2d):
+class NumpyPoints2d(NumpyShape2d):
     """Represents an array of 2D points stored as a ndarray."""
 
     def __init__(self, points: Iterable[UVec]) -> None:
@@ -56,7 +56,7 @@ class NumpyPoints2d(_NumpyShape2d):
         return len(self._vertices)
 
 
-class NumpyPath2d(_NumpyShape2d):
+class NumpyPath2d(NumpyShape2d):
     """Represents a 2D path, the path control vertices and commands are stored as ndarray."""
 
     def __init__(self, path: AbstractPath) -> None:

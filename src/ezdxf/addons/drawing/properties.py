@@ -165,10 +165,6 @@ class Properties:
         """Returns perceived color luminance in range [0, 1] from dark to light."""
         return luminance(self.rgb)
 
-    @property
-    def _backend_properties(self) -> BackendProperties:
-        return BackendProperties(self.color, self.lineweight, self.layer, self.pen)
-
 
 class BackendProperties(NamedTuple):
     """The backend receives a condensed version of the entity properties."""
