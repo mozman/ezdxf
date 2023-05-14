@@ -159,18 +159,15 @@ The :class:`Layout` class uses following classes and enums for configuration:
 
 - :class:`~ezdxf.addons.drawing.layout.Page` - page definition
 - :class:`~ezdxf.addons.drawing.layout.Margins` - page margins definition
-- :class:`~ezdxf.addons.drawing.layout.Length`  - length with units
 - :class:`~ezdxf.addons.drawing.layout.Settings`  - configuration settings
 - :class:`~ezdxf.addons.drawing.layout.Units`  - enum for page units
 - :class:`~ezdxf.addons.drawing.layout.StrokeWidthPolicy` - enum for stroke width policy
 
 .. autoclass:: ezdxf.addons.drawing.layout.Page
 
-    .. autoproperty:: width_in_mm
+    .. autoproperty:: is_landscape
 
-    .. autoproperty:: height_in_mm
-
-    .. autoproperty:: margins_in_mm
+    .. autoproperty:: is_portrait
 
     .. automethod:: to_landscape
 
@@ -184,8 +181,6 @@ The :class:`Layout` class uses following classes and enums for configuration:
 
     .. automethod:: scale
 
-
-.. autoclass:: ezdxf.addons.drawing.layout.Length
 
 .. autoclass:: ezdxf.addons.drawing.layout.Settings
 

@@ -68,23 +68,6 @@ PAGE_SIZES = {
 }
 
 
-class Length(NamedTuple):
-    """Length with units.
-
-    Attributes:
-        length:
-        units:
-
-    """
-
-    length: float
-    units: Units = Units.mm
-
-    @property
-    def in_mm(self) -> float:
-        return self.length * UNITS_TO_MM[self.units]
-
-
 UNITS_TO_MM = {
     Units.mm: 1.0,
     Units.cm: 10.0,
@@ -142,8 +125,8 @@ class Page:
         height: page height, 0 for auto-detect
         units: page units as enum :class:`Units`
         margins: page margins in page units
-        max_width: max width if auto-detected, 0 for unlimited
-        max_height: max height if auto-detected, 0 for unlimited
+        max_width: limit width for auto-detection, 0 for unlimited
+        max_height: limit height for auto-detection, 0 for unlimited
 
     """
 
@@ -151,32 +134,36 @@ class Page:
     height: float
     units: Units = Units.mm
     margins: Margins = Margins.all(0)
-    max_width: float = 0
-    max_height: float = 0
+    max_width: float = 0.0
+    max_height: float = 0.0
 
     def __post_init__(self):
         assert isinstance(self.units, Units), "units require type <Units>"
         assert isinstance(self.margins, Margins), "margins require type <Margins>"
 
     @property
+    def to_mm_factor(self) -> float:
+        return UNITS_TO_MM[self.units]
+
+    @property
     def width_in_mm(self) -> float:
         """Returns the page width in mm."""
-        return round(Length(self.width, self.units).in_mm, 1)
+        return round(self.width * self.to_mm_factor, 1)
 
     @property
     def max_width_in_mm(self) -> float:
-        """Returns the page width in mm."""
-        return round(Length(self.max_width, self.units).in_mm, 1)
+        """Returns max page width in mm."""
+        return round(self.max_width * self.to_mm_factor, 1)
 
     @property
     def height_in_mm(self) -> float:
         """Returns the page height in mm."""
-        return round(Length(self.height, self.units).in_mm, 1)
+        return round(self.height * self.to_mm_factor, 1)
 
     @property
     def max_height_in_mm(self) -> float:
-        """Returns the page height in mm."""
-        return round(Length(self.max_height, self.units).in_mm, 1)
+        """Returns max page height in mm."""
+        return round(self.max_height * self.to_mm_factor, 1)
 
     @property
     def margins_in_mm(self) -> Margins:
