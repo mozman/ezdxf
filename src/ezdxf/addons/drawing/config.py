@@ -10,15 +10,13 @@ from ezdxf import disassemble
 from ezdxf.enums import Measurement
 from .type_hints import Color
 
+
 class LinePolicy(Enum):
     """
     Attributes:
         SOLID: draw all lines as solid regardless of the linetype style
-        APPROXIMATE: use the closest approximation available to the
-            backend for rendering styled lines
-        ACCURATE: analyse and render styled lines as accurately as
-            possible. This approach is slower and is not well suited
-            to interactive applications.
+        ACCURATE: render styled lines as accurately as possible
+
     """
 
     SOLID = auto()
@@ -36,7 +34,7 @@ class ProxyGraphicPolicy(Enum):
         ``True``, which is the default value.
 
         This can not prevent drawing proxy graphic inside of blocks,
-        because this is outside of the domain of the drawing add-on!
+        because this is beyond the domain of the drawing add-on!
 
     Attributes:
         IGNORE: do not display proxy graphics (skip_entity will be called instead)
@@ -67,6 +65,25 @@ class HatchPolicy(Enum):
     SHOW_APPROXIMATE_PATTERN = auto()  # ignored since v0.18.1
 
 
+class LineweightPolicy(Enum):
+    """This enum is used to define how to determine the lineweight.
+
+    Attributes:
+        ABSOLUTE: in mm as resolved by the :class:`Frontend` class
+        RELATIVE: lineweight is relative to page size
+        RELATIVE_FIXED: fixed lineweight relative to page size for all strokes
+
+    """
+    ABSOLUTE = auto()
+    # set fixed lineweight for all strokes in absolute mode:
+    # set Configuration.min_lineweight to the desired lineweight in 1/300 inch!
+    # set Configuration.lineweight_scaling to 0
+
+    # The RELATIVE policy is a backend feature and is not supported by all backends!
+    RELATIVE = auto()
+    RELATIVE_FIXED = auto()
+
+
 class ColorPolicy(Enum):
     """This enum is used to define how to determine the line/fill color.
 
@@ -81,6 +98,7 @@ class ColorPolicy(Enum):
         CUSTOM: all colors to custom color by :attr:`Configuration.custom_fg_color`
 
     """
+
     COLOR = auto()
     COLOR_SWAP_BW = auto()
     COLOR_NEGATIVE = auto()
@@ -102,6 +120,7 @@ class BackgroundPolicy(Enum):
         CUSTOM: custom background color by :attr:`Configuration.custom_bg_color`
 
     """
+
     DEFAULT = auto()
     WHITE = auto()
     BLACK = auto()
@@ -169,6 +188,7 @@ class Configuration:
         background_policy:
         custom_bg_color: Used for :class:`BackgroundPolicy.custom` policy, custom
             background color as "#RRGGBBAA" color string (RGB+alpha)
+        lineweight_policy:
 
     """
 
@@ -190,6 +210,7 @@ class Configuration:
     custom_fg_color: Color = "#000000"
     background_policy: BackgroundPolicy = BackgroundPolicy.DEFAULT
     custom_bg_color: Color = "#ffffff"
+    lineweight_policy: LineweightPolicy = LineweightPolicy.ABSOLUTE
 
     @staticmethod
     def defaults() -> Configuration:

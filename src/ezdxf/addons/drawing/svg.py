@@ -13,7 +13,7 @@ from ezdxf.path import Path, Path2d, Command
 
 from .type_hints import Color
 from .backend import BackendInterface
-from .config import Configuration
+from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
 
@@ -53,7 +53,7 @@ class SVGBackend(recorder.Recorder):
 
         Args:
             page: page definition
-            settings: render settings
+            settings: layout settings
             xml_declaration: inserts the "<?xml version='1.0' encoding='utf-8'?>" string
                 in front of the <svg> element
 
@@ -158,8 +158,12 @@ class SVGRenderBackend(BackendInterface):
         self.stroke_width_scale: float = view_box_width / page.width_in_mm
         self.min_lineweight = 0.05  # in mm, set by configure()
         self.lineweight_scaling = 1.0  # set by configure()
+        self.lineweight_policy = LineweightPolicy.ABSOLUTE  # set by configure()
+        # fixed lineweight for all strokes in ABSOLUTE mode:
+        # set Configuration.min_lineweight to the desired lineweight in 1/300 inch!
+        # set Configuration.lineweight_scaling to 0
 
-        # StrokeWidthPolicy.relative:
+        # LineweightPolicy.RELATIVE:
         # max_stroke_width is determined as a certain percentage of settings.output_coordinate_space
         self.max_stroke_width: int = int(
             settings.output_coordinate_space * settings.max_stroke_width
@@ -168,7 +172,7 @@ class SVGRenderBackend(BackendInterface):
         self.min_stroke_width: int = int(
             self.max_stroke_width * settings.min_stroke_width
         )
-        # StrokeWidthPolicy.fixed_1:
+        # LineweightPolicy.RELATIVE_FIXED:
         # all strokes have a fixed stroke-width as a certain percentage of max_stroke_width
         self.fixed_stroke_width: int = int(
             self.max_stroke_width * settings.fixed_stroke_width
@@ -228,14 +232,14 @@ class SVGRenderBackend(BackendInterface):
         except KeyError:
             pass
         stroke_width = self.fixed_stroke_width
-        policy = self.settings.stroke_width_policy
-        if policy == layout.StrokeWidthPolicy.ABSOLUTE:
+        policy = self.lineweight_policy
+        if policy == LineweightPolicy.ABSOLUTE:
             if self.lineweight_scaling:
                 width = max(self.min_lineweight, width) * self.lineweight_scaling
             else:
                 width = self.min_lineweight
             stroke_width = round(width * self.stroke_width_scale)
-        elif policy == layout.StrokeWidthPolicy.RELATIVE:
+        elif policy == LineweightPolicy.RELATIVE:
             stroke_width = map_lineweight_to_stroke_width(
                 width, self.min_stroke_width, self.max_stroke_width
             )
@@ -342,6 +346,7 @@ class SVGRenderBackend(BackendInterface):
         return " ".join(d)
 
     def configure(self, config: Configuration) -> None:
+        self.lineweight_policy = config.lineweight_policy
         if config.min_lineweight:
             # config.min_lineweight in 1/300 inch!
             min_lineweight_mm = config.min_lineweight * 25.4 / 300

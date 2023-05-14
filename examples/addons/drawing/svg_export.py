@@ -5,7 +5,12 @@ import time
 
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext
-from ezdxf.addons.drawing.config import Configuration, BackgroundPolicy, ColorPolicy
+from ezdxf.addons.drawing.config import (
+    Configuration,
+    BackgroundPolicy,
+    ColorPolicy,
+    LineweightPolicy,
+)
 from ezdxf.addons.drawing import svg, layout
 from ezdxf.math import global_bspline_interpolation
 
@@ -73,9 +78,7 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
         if layout_name == "Model":
             dxf_layout = doc.modelspace()
             page = layout.Page(0, 0, layout.Units.mm, layout.Margins.all(10))
-            settings = layout.Settings(
-                stroke_width_policy=layout.StrokeWidthPolicy.RELATIVE,
-            )
+            settings = layout.Settings()
         else:
             try:
                 dxf_layout = doc.paperspace(layout_name)
@@ -85,7 +88,6 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
             page = layout.Page.from_dxf_layout(dxf_layout)
             settings = layout.Settings(
                 fit_page=False,
-                stroke_width_policy=layout.StrokeWidthPolicy.ABSOLUTE,
                 scale=dxf_layout.get_plot_unit_scale_factor(),
             )
 
@@ -103,7 +105,8 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
                 custom_bg_color="#002082",
                 color_policy=ColorPolicy.CUSTOM,
                 custom_fg_color="#ced8f7",
-                lineweight_scaling=.5,
+                lineweight_policy=LineweightPolicy.ABSOLUTE,
+                lineweight_scaling=0.5,
             ),
         ).draw_layout(dxf_layout)
 

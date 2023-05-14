@@ -33,20 +33,6 @@ class Units(enum.IntEnum):
     cm = 5
 
 
-class StrokeWidthPolicy(enum.IntEnum):
-    """This enum is used to define how to determine the stroke-width.
-
-    Attributes:
-        ABSOLUTE: in mm as resolved by the :class:`Frontend` class
-        RELATIVE: stroke-width is relative to page size
-        FIXED_1: all strokes have the same stroke-width relative to page size
-    """
-
-    ABSOLUTE = 1
-    RELATIVE = 2
-    FIXED_1 = 3
-
-
 # all page sizes in landscape orientation
 PAGE_SIZES = {
     "ISO A0": (1189, 841, Units.mm),
@@ -247,14 +233,13 @@ class Settings:
 
             The value is ignored if the page size is defined and the content fits the page and
             the value is also used to determine missing page sizes (width or height).
-        stroke_width_policy:
-        max_stroke_width: Used for :class:`StrokeWidthPolicy.relative` policy,
+        max_stroke_width: Used for :class:`LineweightPolicy.RELATIVE` policy,
             :attr:`max_stroke_width` is defined as percentage of the content extents,
             e.g. 0.001 is 0.1% of max(page-width, page-height)
-        min_stroke_width: Used for :class:`StrokeWidthPolicy.relative` policy,
+        min_stroke_width: Used for :class:`LineweightPolicy.RELATIVE` policy,
             :attr:`min_stroke_width` is defined as percentage of :attr:`max_stroke_width`,
             e.g. 0.05 is 5% of :attr:`max_stroke_width`
-        fixed_stroke_width: Used for :class:`StrokeWidthPolicy.fixed_1` policy,
+        fixed_stroke_width: Used for :class:`LineweightPolicy.RELATIVE_FIXED` policy,
             :attr:`fixed_stroke_width` is defined as percentage of :attr:`max_stroke_width`,
             e.g. 0.15 is 15% of :attr:`max_stroke_width`
         output_coordinate_space: expert feature to map the DXF coordinates to the
@@ -265,8 +250,7 @@ class Settings:
     content_rotation: int = 0
     fit_page: bool = True
     scale: float = 1.0
-    stroke_width_policy: StrokeWidthPolicy = StrokeWidthPolicy.ABSOLUTE
-    # StrokeWidthPolicy.relative
+    # for LineweightPolicy.RELATIVE
     # max_stroke_width is defined as percentage of the content extents
     max_stroke_width: float = 0.001  # 0.1% of max(width, height) in viewBox coords
     # min_stroke_width is defined as percentage of max_stroke_width

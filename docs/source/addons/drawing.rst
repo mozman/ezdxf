@@ -161,7 +161,6 @@ The :class:`Layout` class uses following classes and enums for configuration:
 - :class:`~ezdxf.addons.drawing.layout.Margins` - page margins definition
 - :class:`~ezdxf.addons.drawing.layout.Settings`  - configuration settings
 - :class:`~ezdxf.addons.drawing.layout.Units`  - enum for page units
-- :class:`~ezdxf.addons.drawing.layout.StrokeWidthPolicy` - enum for stroke width policy
 
 .. autoclass:: ezdxf.addons.drawing.layout.Page
 
@@ -185,8 +184,6 @@ The :class:`Layout` class uses following classes and enums for configuration:
 .. autoclass:: ezdxf.addons.drawing.layout.Settings
 
 .. autoclass:: ezdxf.addons.drawing.layout.Units
-
-.. autoclass:: ezdxf.addons.drawing.layout.StrokeWidthPolicy
 
 SVGBackend
 ----------
@@ -261,15 +258,10 @@ LinePolicy
 
 .. autoclass:: ezdxf.addons.drawing.config.LinePolicy
 
-HatchPolicy
------------
+LineweightPolicy
+----------------
 
-.. autoclass:: ezdxf.addons.drawing.config.HatchPolicy
-
-ProxyGraphicPolicy
-------------------
-
-.. autoclass:: ezdxf.addons.drawing.config.ProxyGraphicPolicy
+.. autoclass:: ezdxf.addons.drawing.config.LineweightPolicy
 
 ColorPolicy
 -----------
@@ -280,6 +272,16 @@ BackgroundPolicy
 ----------------
 
 .. autoclass:: ezdxf.addons.drawing.config.BackgroundPolicy
+
+HatchPolicy
+-----------
+
+.. autoclass:: ezdxf.addons.drawing.config.HatchPolicy
+
+ProxyGraphicPolicy
+------------------
+
+.. autoclass:: ezdxf.addons.drawing.config.ProxyGraphicPolicy
 
 Properties
 ----------
