@@ -85,7 +85,7 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
             page = layout.Page.from_dxf_layout(dxf_layout)
             settings = layout.Settings(
                 fit_page=False,
-                stroke_width_policy=layout.StrokeWidthPolicy.RELATIVE,
+                stroke_width_policy=layout.StrokeWidthPolicy.ABSOLUTE,
                 scale=dxf_layout.get_plot_unit_scale_factor(),
             )
 
@@ -94,15 +94,18 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
         # SVG output to calculate page size, margins, scaling factor and so on ...
         # content_extents = backend.bbox()
 
-        Frontend(RenderContext(doc), backend, config=Configuration(
-            # blueprint schema:
-            background_policy=BackgroundPolicy.CUSTOM,
-            custom_bg_color="#002082",
-            color_policy=ColorPolicy.CUSTOM,
-            custom_fg_color="#ced8f7",
-        )).draw_layout(
-            dxf_layout
-        )
+        Frontend(
+            RenderContext(doc),
+            backend,
+            config=Configuration(
+                # blueprint schema:
+                background_policy=BackgroundPolicy.CUSTOM,
+                custom_bg_color="#002082",
+                color_policy=ColorPolicy.CUSTOM,
+                custom_fg_color="#ced8f7",
+                lineweight_scaling=.5,
+            ),
+        ).draw_layout(dxf_layout)
 
         svg_string = backend.get_string(page, settings)
         t2 = time.perf_counter()

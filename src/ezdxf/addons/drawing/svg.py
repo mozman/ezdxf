@@ -157,6 +157,7 @@ class SVGRenderBackend(BackendInterface):
         # stroke-width in mm as resolved by the frontend
         self.stroke_width_scale: float = view_box_width / page.width_in_mm
         self.min_lineweight = 0.05  # in mm, set by configure()
+        self.lineweight_scaling = 1.0  # set by configure()
 
         # StrokeWidthPolicy.relative:
         # max_stroke_width is determined as a certain percentage of settings.output_coordinate_space
@@ -229,7 +230,10 @@ class SVGRenderBackend(BackendInterface):
         stroke_width = self.fixed_stroke_width
         policy = self.settings.stroke_width_policy
         if policy == layout.StrokeWidthPolicy.ABSOLUTE:
-            width = max(self.min_lineweight, width)
+            if self.lineweight_scaling:
+                width = max(self.min_lineweight, width) * self.lineweight_scaling
+            else:
+                width = self.min_lineweight
             stroke_width = round(width * self.stroke_width_scale)
         elif policy == layout.StrokeWidthPolicy.RELATIVE:
             stroke_width = map_lineweight_to_stroke_width(
@@ -342,6 +346,7 @@ class SVGRenderBackend(BackendInterface):
             # config.min_lineweight in 1/300 inch!
             min_lineweight_mm = config.min_lineweight * 25.4 / 300
             self.min_lineweight = max(0.05, min_lineweight_mm)
+        self.lineweight_scaling = config.lineweight_scaling
 
     def clear(self) -> None:
         pass
