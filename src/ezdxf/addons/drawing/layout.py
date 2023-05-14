@@ -168,7 +168,7 @@ class Page:
     @property
     def margins_in_mm(self) -> Margins:
         """Returns the page margins in mm."""
-        return self.margins.scale(UNITS_TO_MM[self.units])
+        return self.margins.scale(self.to_mm_factor)
 
     @property
     def is_landscape(self) -> bool:
@@ -193,18 +193,41 @@ class Page:
     @classmethod
     def from_dxf_layout(cls, layout: DXFLayout) -> Self:
         # all layout measurements in mm
-
         width = round(layout.dxf.paper_width, 1)
         height = round(layout.dxf.paper_height, 1)
-        margins = Margins(
-            top=layout.dxf.top_margin,
-            right=layout.dxf.right_margin,
-            bottom=layout.dxf.bottom_margin,
-            left=layout.dxf.left_margin,
+        top = round(layout.dxf.top_margin, 1)
+        right = round(layout.dxf.right_margin, 1)
+        bottom = round(layout.dxf.bottom_margin, 1)
+        left = round(layout.dxf.left_margin, 1)
+
+        rotation = layout.dxf.plot_rotation
+        if rotation == 1:  # 90 degrees
+            return cls(
+                height,
+                width,
+                Units.mm,
+                margins=Margins(top=right, right=bottom, bottom=left, left=top),
+            )
+        elif rotation == 2:  # 180 degrees
+            return cls(
+                width,
+                height,
+                Units.mm,
+                margins=Margins(top=bottom, right=left, bottom=top, left=right),
+            )
+        elif rotation == 3:  # 270 degrees
+            return cls(
+                height,
+                width,
+                Units.mm,
+                margins=Margins(top=left, right=top, bottom=right, left=bottom),
+            )
+        return cls(  # 0 degrees
+            width,
+            height,
+            Units.mm,
+            margins=Margins(top=top, right=right, bottom=bottom, left=left),
         )
-        if layout.dxf.plot_rotation in (1, 3):
-            width, height = height, width
-        return cls(width, height, Units.mm, margins)
 
 
 @dataclasses.dataclass
