@@ -586,7 +586,8 @@ def make_font(
     if ext in SUPPORTED_TTF_TYPES:
         try:
             return TrueTypeFont(font_name, cap_height, width_factor)
-        except FontNotFoundError:
+        except FontNotFoundError as e:
+            logger.warning(f"no default font found: {str(e)}")
             return last_resort
     elif ext == ".shx" or ext == ".shp":
         try:
@@ -610,7 +611,8 @@ def make_font(
     # return default TrueType font
     try:
         return TrueTypeFont(font_name, cap_height, width_factor)
-    except FontNotFoundError:
+    except FontNotFoundError as e:
+        logger.warning(f"no default font found: {str(e)}")
         return last_resort
 
 
