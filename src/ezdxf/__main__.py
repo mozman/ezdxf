@@ -19,6 +19,12 @@ def add_common_arguments(parser):
         help="show version and exit",
     )
     parser.add_argument(
+        "-f",
+        "--fonts",
+        action="store_true",
+        help="print available fonts",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -39,6 +45,12 @@ def add_common_arguments(parser):
 
 def print_version(verbose=False):
     print_config(verbose=verbose, stream=sys.stdout)
+
+
+def print_available_fonts(verbose=False):
+    from ezdxf.fonts import fonts
+
+    fonts.font_manager.print_available_fonts(verbose)
 
 
 def setup_log(args):
@@ -89,6 +101,9 @@ def main():
         setup_log(args)
     if args.version:
         print_version(verbose=args.verbose)
+        help_ = False
+    if args.fonts:
+        print_available_fonts(args.verbose)
         help_ = False
 
     run = commands.get(args.command)

@@ -180,6 +180,24 @@ class FontCache:
         data = {"version": CURRENT_CACHE_VERSION, "font-faces": faces}
         return json.dumps(data, indent=2)
 
+    def print_available_fonts(self, verbose=False) -> None:
+        for entry in self._cache.values():
+            print(f"{entry.file_path}")
+            if not verbose:
+                continue
+            font_type = entry.file_path.suffix.lower()
+            ff = entry.font_face
+            if font_type in (".shx", ".shp"):
+                print(f"  Shape font file: '{ff.filename}'")
+            elif font_type == ".lff":
+                print(f"  LibreCAD font file: '{ff.filename}'")
+            else:
+                print(f"  TrueType/OpenType font file: '{ff.filename}'")
+                print(f"  family: {ff.family}")
+                print(f"  style: {ff.style}")
+                print(f"  weight: {ff.weight}, {ff.weight_str}")
+                print(f"  width: {ff.width}, {ff.width_str}")
+
 
 def filter_family(family: str, entries: Iterable[CacheEntry]) -> list[CacheEntry]:
     key = str(family).lower()
@@ -220,6 +238,9 @@ class FontManager:
         self._fallback_font_name = ""
         self._fallback_shape_file = ""
         self._fallback_lff = ""
+
+    def print_available_fonts(self, verbose=False) -> None:
+        self._font_cache.print_available_fonts(verbose=verbose)
 
     def has_font(self, font_name: str) -> bool:
         return font_name in self._font_cache
