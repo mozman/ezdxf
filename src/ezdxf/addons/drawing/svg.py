@@ -34,13 +34,16 @@ class SVGBackend(recorder.Recorder):
         # more precise and the lager the files.
         settings.output_coordinate_space = 1_000_000
 
-        output_layout = layout.Layout(self.bbox(), flip_y=self._init_flip_y)
+        # This player changes the original recordings!
+        player = self.shared_player()
+
+        output_layout = layout.Layout(player.bbox(), flip_y=self._init_flip_y)
         page = output_layout.get_final_page(page, settings)
         m = output_layout.get_placement_matrix(page, settings)
-        self.transform(m)
+        player.transform(m)
         self._init_flip_y = False
         backend = self.make_backend(page, settings)
-        self.replay(backend)
+        player.replay(backend)
         return backend.get_xml_root_element()
 
     def get_string(

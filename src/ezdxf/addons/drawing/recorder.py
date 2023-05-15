@@ -2,6 +2,8 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import Iterable, Any, Iterator
+from typing_extensions import Self
+import copy
 import enum
 import dataclasses
 
@@ -32,33 +34,38 @@ class DataRecord:
 
 
 class Recorder(BackendInterface):
+    """Records the output of the Frontend class."""
+
     def __init__(self) -> None:
         self.config = Configuration.defaults()
         self.background: Color = "#000000"
         self.records: list[DataRecord] = []
         self.properties: dict[int, BackendProperties] = dict()
-        self._bbox = BoundingBox2d()
 
-    def bbox(self) -> BoundingBox2d:
-        """Returns the bounding box of all recorded shapes as
-        :class:`~ezdxf.math.BoundingBox2d`.
+    def __copy__(self) -> Self:
+        recorder = self.__class__()
+        # config is a frozen dataclass:
+        recorder.config = self.config
+        recorder.background = self.background
+        # mutable - recordings are transformed inplace:
+        recorder.records = copy.deepcopy(self.records)
+        # hashes and BackendProperties are immutable, the properties dict may grow, but
+        # entries will never be removed:
+        recorder.properties = self.properties
+        return recorder
+
+    def copy_player(self) -> Player:
+        """Returns a Player class with a copy of the recordings, this player needs more
+        memory, but does not modify the original recordings.
         """
-        if not self._bbox.has_data:
-            self.update_bbox()
-        return self._bbox
+        return Player(self.__copy__(), shared_recordings=False)
 
-    def update_bbox(self) -> None:
-        points: list[AnyVec] = []
-        for record in self.records:
-            try:
-                if record.type == RecordType.FILLED_PATHS:
-                    for path in record.data[0]:  # only add paths, ignore holes
-                        points.extend(path.extents())
-                else:
-                    points.extend(record.data.extents())
-            except npshapes.EmptyShapeError:
-                pass
-        self._bbox = BoundingBox2d(points)
+    def shared_player(self) -> Player:
+        """Returns a Player with the original recordings! This player is
+        faster to create and needs less memory but is dangerous because it may modify
+        the original recordings.
+        """
+        return Player(self, shared_recordings=True)
 
     def configure(self, config: Configuration) -> None:
         self.config = config
@@ -117,27 +124,35 @@ class Recorder(BackendInterface):
         _holes = tuple(npshapes.NumpyPath2d(p) for p in holes)
         self.store(RecordType.FILLED_PATHS, properties, (_paths, _holes))
 
-    def transform(self, m: Matrix44) -> None:
-        """Transforms the recordings inplace by a transformation matrix `m` of type
-        :class:`~ezdxf.math.Matrix44`.
-        """
-        for record in self.records:
-            if record.type == RecordType.FILLED_PATHS:
-                for p in record.data[0]:
-                    p.transform_inplace(m)
-                for p in record.data[1]:
-                    p.transform_inplace(m)
-            else:
-                record.data.transform_inplace(m)
+    def enter_entity(self, entity, properties) -> None:
+        pass
 
-        if self._bbox.has_data:
-            # fast, but maybe inaccurate update
-            self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
+    def exit_entity(self, entity) -> None:
+        pass
+
+    def clear(self) -> None:
+        raise NotImplementedError()
+
+    def finalize(self) -> None:
+        pass
+
+
+class Player:
+    """Plays the recordings of the Recorder backend on another backend."""
+
+    def __init__(self, recorder: Recorder, shared_recordings: bool) -> None:
+        self.config = recorder.config
+        self.background: Color = recorder.background
+        self.records: list[DataRecord] = recorder.records
+        self.properties: dict[int, BackendProperties] = recorder.properties
+        self._bbox = BoundingBox2d()
+        self.shard_recordings = shared_recordings
 
     def replay(self, backend: BackendInterface) -> None:
         """Replay the recording on another backend that implements the
         :class:`BackendInterface`.
         """
+
         def make_properties() -> BackendProperties:
             color, lw, layer, pen, _ = props[record.property_hash]
             return BackendProperties(color, lw, layer, pen, record.handle)
@@ -166,14 +181,40 @@ class Recorder(BackendInterface):
                 backend.draw_filled_paths(paths, holes, properties)
         backend.finalize()
 
-    def enter_entity(self, entity, properties) -> None:
-        pass
+    def transform(self, m: Matrix44) -> None:
+        """Transforms the recordings inplace by a transformation matrix `m` of type
+        :class:`~ezdxf.math.Matrix44`.
+        """
+        for record in self.records:
+            if record.type == RecordType.FILLED_PATHS:
+                for p in record.data[0]:
+                    p.transform_inplace(m)
+                for p in record.data[1]:
+                    p.transform_inplace(m)
+            else:
+                record.data.transform_inplace(m)
 
-    def exit_entity(self, entity) -> None:
-        pass
+        if self._bbox.has_data:
+            # fast, but maybe inaccurate update
+            self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
 
-    def clear(self) -> None:
-        raise NotImplementedError()
+    def bbox(self) -> BoundingBox2d:
+        """Returns the bounding box of all recorded shapes as
+        :class:`~ezdxf.math.BoundingBox2d`.
+        """
+        if not self._bbox.has_data:
+            self.update_bbox()
+        return self._bbox
 
-    def finalize(self) -> None:
-        pass
+    def update_bbox(self) -> None:
+        points: list[AnyVec] = []
+        for record in self.records:
+            try:
+                if record.type == RecordType.FILLED_PATHS:
+                    for path in record.data[0]:  # only add paths, ignore holes
+                        points.extend(path.extents())
+                else:
+                    points.extend(record.data.extents())
+            except npshapes.EmptyShapeError:
+                pass
+        self._bbox = BoundingBox2d(points)

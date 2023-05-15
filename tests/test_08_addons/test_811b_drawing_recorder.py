@@ -32,8 +32,8 @@ def frontend(doc, ctx):
 
 
 def replay(frontend, backend):
-    recorder = frontend.out
-    recorder.replay(backend)
+    player = frontend.out.copy_player()
+    player.replay(backend)
     return backend.collector
 
 
@@ -98,7 +98,8 @@ def test_bounding_box(msp, frontend):
 
     msp.add_lwpolyline([(0, 0), (200, 0), (200, 100), (0, 100)])
     frontend.draw_layout(msp)
-    recorder.replay(PathBackend())
-    bbox = recorder.bbox()
+    player = recorder.copy_player()
+    player.replay(PathBackend())
+    bbox = player.bbox()
     assert bbox.extmin.isclose((0, 0))
     assert bbox.extmax.isclose((200, 100))
