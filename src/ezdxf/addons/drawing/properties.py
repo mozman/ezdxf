@@ -172,6 +172,7 @@ class BackendProperties(NamedTuple):
     lineweight: float = 0.25  # in mm
     layer: str = "0"  # maybe useful to group entities (SVG, PDF)
     pen: int = 1  # equals the ACI (1-255), for pen based backends like plotters
+    handle: str = ""  # top level entity handle
 
     @property
     def rgb(self) -> RGB:

@@ -27,6 +27,7 @@ class RecordType(enum.Enum):
 class DataRecord:
     type: RecordType
     property_hash: int
+    handle: str  # top-level entity handle
     data: Any
 
 
@@ -68,8 +69,14 @@ class Recorder(BackendInterface):
     def store(
         self, type_: RecordType, properties: BackendProperties, data: Any
     ) -> None:
-        prop_hash = hash(properties)
-        self.records.append(DataRecord(type=type_, property_hash=prop_hash, data=data))
+        # exclude top-level entity handle to reduce the variance:
+        # color, lineweight, layer, pen
+        prop_hash = hash(properties[:4])
+        self.records.append(
+            DataRecord(
+                type=type_, property_hash=prop_hash, handle=properties.handle, data=data
+            )
+        )
         self.properties[prop_hash] = properties
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
@@ -78,9 +85,7 @@ class Recorder(BackendInterface):
     def draw_line(
         self, start: AnyVec, end: AnyVec, properties: BackendProperties
     ) -> None:
-        self.store(
-            RecordType.POINTS, properties, npshapes.NumpyPoints2d((start, end))
-        )
+        self.store(RecordType.POINTS, properties, npshapes.NumpyPoints2d((start, end)))
 
     def draw_solid_lines(
         self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
@@ -133,11 +138,15 @@ class Recorder(BackendInterface):
         """Replay the recording on another backend that implements the
         :class:`BackendInterface`.
         """
+        def make_properties() -> BackendProperties:
+            color, lw, layer, pen, _ = props[record.property_hash]
+            return BackendProperties(color, lw, layer, pen, record.handle)
+
         backend.configure(self.config)
         backend.set_background(self.background)
         props = self.properties
         for record in self.records:
-            properties = props[record.property_hash]
+            properties = make_properties()
             t = record.type
             if t == RecordType.POINTS:
                 vertices = record.data.vertices()

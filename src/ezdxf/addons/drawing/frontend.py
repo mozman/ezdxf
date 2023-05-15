@@ -295,6 +295,9 @@ class Frontend:
 
         """
         self.out.enter_entity(entity, properties)
+        if not entity.is_virtual:
+            # top level entity
+            self._designer.set_current_entity_handle(entity.dxf.handle)
         if (
             entity.proxy_graphic
             and self.config.proxy_graphic_policy == ProxyGraphicPolicy.PREFER
@@ -778,12 +781,13 @@ class Designer:
         self.default_font_face = fonts.FontFace()
         self.clipper = ClippingRect()
         self.current_vp_scale = 1.0
+        self._current_entity_handle: str = ""
         self._color_mapping: dict[str, str] = dict()
 
     @property
     def vp_ltype_scale(self) -> float:
         """The linetype pattern should look the same in all viewports
-        independent of the viewport scaling.
+        regardless of the viewport scale.
         """
         return 1.0 / max(self.current_vp_scale, 0.0001)  # max out at 1:10000
 
@@ -796,8 +800,16 @@ class Designer:
             )
             self._color_mapping[properties.color] = color
         return BackendProperties(
-            color, properties.lineweight, properties.layer, properties.pen
+            color,
+            properties.lineweight,
+            properties.layer,
+            properties.pen,
+            self._current_entity_handle,
         )
+
+    def set_current_entity_handle(self, handle: str) -> None:
+        assert handle is not None
+        self._current_entity_handle = handle
 
     def draw_viewport(
         self,
@@ -854,9 +866,7 @@ class Designer:
                 if len(points) != 2:
                     return
                 start, end = points
-            self.backend.draw_line(
-                start, end, self.get_backend_properties(properties)
-            )
+            self.backend.draw_line(start, end, self.get_backend_properties(properties))
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
             self.draw_solid_lines(  # includes transformation
