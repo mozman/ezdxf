@@ -197,6 +197,7 @@ class FontCache:
                 print(f"  style: {ff.style}")
                 print(f"  weight: {ff.weight}, {ff.weight_str}")
                 print(f"  width: {ff.width}, {ff.width_str}")
+        print(f"\nfound {len(self._cache)} fonts")
 
 
 def filter_family(family: str, entries: Iterable[CacheEntry]) -> list[CacheEntry]:
@@ -402,7 +403,13 @@ class FontManager:
     def scan_all(self, folders: Iterable[str]) -> None:
         for folder in folders:
             folder = folder.strip("'\"")  # strip quotes
-            self.scan_folder(Path(folder).expanduser())
+            if not folder:
+                continue
+            try:
+                self.scan_folder(Path(folder).expanduser())
+            except PermissionError as e:
+                print(str(e))
+                continue
 
     def scan_folder(self, folder: Path):
         if not folder.exists():

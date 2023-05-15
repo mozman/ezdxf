@@ -22,7 +22,7 @@ def add_common_arguments(parser):
         "-f",
         "--fonts",
         action="store_true",
-        help="print available fonts",
+        help="rebuild system font cache and print all fonts found",
     )
     parser.add_argument(
         "-v",
@@ -49,7 +49,8 @@ def print_version(verbose=False):
 
 def print_available_fonts(verbose=False):
     from ezdxf.fonts import fonts
-
+    print("Rebuilding system font cache.")
+    fonts.build_system_font_cache()
     fonts.font_manager.print_available_fonts(verbose)
 
 
