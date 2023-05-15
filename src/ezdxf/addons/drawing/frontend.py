@@ -555,7 +555,7 @@ class Frontend:
                 ignore_text_boxes(external_paths), holes, properties
             )
         elif holes:
-            # The first path is considered the exterior path, everything else is
+            # The first path is considered the exterior path, everything else are
             # holes.
             self._designer.draw_filled_paths([holes[0]], holes[1:], properties)
 
