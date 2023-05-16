@@ -205,7 +205,7 @@ class Player:
                 record.data.transform_inplace(m)
 
         if self._bbox.has_data:
-            # fast, but maybe inaccurate update
+            # works for 90-, 180- and 270-degree rotation
             self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
 
     def bbox(self) -> BoundingBox2d:

@@ -87,7 +87,7 @@ def test_replay_properties(msp, frontend):
     assert properties.handle == pline.dxf.handle
 
 
-def test_override_properties_at_replay(msp, frontend, ctx):
+def test_override_properties_at_replay(msp, ctx):
     def override(_: BackendProperties) -> BackendProperties:
         return BackendProperties("#00ff00", 0.5, "1", 2, "FEFE")
 
@@ -95,12 +95,11 @@ def test_override_properties_at_replay(msp, frontend, ctx):
         [(0, 0), (1, 0), (2, 0)], dxfattribs={"color": 1, "lineweight": 70}
     )
     # recording:
-    recorder_backend = Recorder()
-    Frontend(ctx, recorder_backend)
-    frontend.draw_entities(msp)
+    backend_recorder = Recorder()
+    Frontend(ctx, backend_recorder).draw_entities(msp)
 
     # replay:
-    player = recorder_backend.copy_player()
+    player = backend_recorder.copy_player()
     replay_backend = PathBackend()
     player.replay(replay_backend, override)
 
