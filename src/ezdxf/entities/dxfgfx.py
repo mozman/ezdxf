@@ -340,6 +340,7 @@ class DXFGraphic(DXFEntity):
                 "plotstyle_handle",
                 "shadow_mode",
                 "visualstyle_handle",
+                "invisible"
             ],
         )
 
