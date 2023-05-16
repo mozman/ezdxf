@@ -45,6 +45,8 @@ font files.
 - macOS:
     - /Library/Fonts
 
+The `fc-list` command on Linux shows all available fonts and their location.
+
 The default font is selected in the following order, if none of them is available on
 your system - install one of them, the open source fonts can be found in the github
 repository in the folder `ezdxf/fonts`_.
