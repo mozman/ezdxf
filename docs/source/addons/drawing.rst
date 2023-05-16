@@ -130,7 +130,8 @@ Recorder
 .. versionadded:: 1.1
 
 This is a special backend which records the output of the :class:`~ezdxf.addons.drawing.frontend.Frontend`
-class in compact numpy arrays and can replay these recordings on a different backend.
+class in compact numpy arrays and these recordings and can be played by a :class:`Player`
+instance on one or more backends.
 The recorded numpy arrays support measurement of bounding boxes and transformations
 which is for some backends a requirement to place the DXF content on size limited pages.
 
@@ -139,11 +140,18 @@ which is for some backends a requirement to place the DXF content on size limite
     The class implements the :class:`BackendInterface` but does not record :meth:`enter_entity`,
     :meth:`exit_entity` and :meth:`clear` events.
 
+    .. automethod:: copy_player
+
+    .. automethod:: shared_player
+
+.. autoclass:: ezdxf.addons.drawing.recorder.Player
+
     .. automethod:: bbox
 
     .. automethod:: transform
 
     .. automethod:: replay
+
 
 Layout
 ------

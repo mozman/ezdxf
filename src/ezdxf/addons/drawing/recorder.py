@@ -55,14 +55,14 @@ class Recorder(BackendInterface):
         return recorder
 
     def copy_player(self) -> Player:
-        """Returns a Player class with a copy of the recordings, this player needs more
-        memory, but does not modify the original recordings.
+        """Returns a :class:`Player` instance with a copy of the recordings, this player
+        needs more memory, but does not modify the original recordings.
         """
         return Player(self.__copy__(), shared_recordings=False)
 
     def shared_player(self) -> Player:
-        """Returns a Player with the original recordings! This player is
-        faster to create and needs less memory but is dangerous because it may modify
+        """Returns a :class:`Player` instance with the original recordings! This player
+        is faster to create and needs less memory but is dangerous because it may modify
         the original recordings.
         """
         return Player(self, shared_recordings=True)
@@ -141,7 +141,7 @@ OverrideFunc: TypeAlias = Callable[[BackendProperties], BackendProperties]
 
 
 class Player:
-    """Plays the recordings of the Recorder backend on another backend."""
+    """Plays the recordings of the :class:`Recorder` backend on another backend."""
 
     def __init__(self, recorder: Recorder, shared_recordings: bool) -> None:
         self.config = recorder.config
@@ -209,8 +209,7 @@ class Player:
             self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
 
     def bbox(self) -> BoundingBox2d:
-        """Returns the bounding box of all recorded shapes as
-        :class:`~ezdxf.math.BoundingBox2d`.
+        """Returns the bounding box of all records as :class:`~ezdxf.math.BoundingBox2d`.
         """
         if not self._bbox.has_data:
             self.update_bbox()

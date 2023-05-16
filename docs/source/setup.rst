@@ -41,6 +41,23 @@ Tag      Additional Installed Packages
 [all5]   [draw5] + [test] + [dev]  (use only if PySide6 is not available)
 ======== ===================================================
 
+PySide6 Issue
+-------------
+
+Maybe `PySide6`_ won't launch on debian based distributions and shows this error message:
+
+.. code-block:: Text
+
+    qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
+    ...
+
+This may fix the issue:
+
+.. code-block:: Text
+
+    sudo apt-get install libxcb-cursor0
+
+
 Binary Wheels
 -------------
 
