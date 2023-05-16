@@ -4,7 +4,7 @@
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext
-from ezdxf.addons.drawing.recorder import Recorder
+from ezdxf.addons.drawing.recorder import Recorder, BackendProperties
 from ezdxf.addons.drawing.debug_backend import PathBackend
 
 
@@ -71,6 +71,45 @@ def test_lwpolyline_as_path(msp, frontend):
     frontend.draw_entities(msp)
     _, path = replay(frontend, PathBackend())
     assert path[0] == "path"
+
+
+def test_replay_properties(msp, frontend):
+    pline = msp.add_lwpolyline(
+        [(0, 0), (1, 0), (2, 0)], dxfattribs={"color": 1, "lineweight": 70}
+    )
+    frontend.draw_entities(msp)
+    _, path = replay(frontend, PathBackend())
+    properties = path[2]
+    assert properties.color == "#ff0000"
+    assert properties.lineweight == pytest.approx(0.7)
+    assert properties.layer == "0"
+    assert properties.pen == 1
+    assert properties.handle == pline.dxf.handle
+
+
+def test_override_properties_at_replay(msp, frontend, ctx):
+    def override(_: BackendProperties) -> BackendProperties:
+        return BackendProperties("#00ff00", 0.5, "1", 2, "FEFE")
+
+    msp.add_lwpolyline(
+        [(0, 0), (1, 0), (2, 0)], dxfattribs={"color": 1, "lineweight": 70}
+    )
+    # recording:
+    recorder_backend = Recorder()
+    Frontend(ctx, recorder_backend)
+    frontend.draw_entities(msp)
+
+    # replay:
+    player = recorder_backend.copy_player()
+    replay_backend = PathBackend()
+    player.replay(replay_backend, override)
+
+    properties = replay_backend.collector[1][2]
+    assert properties.color == "#00ff00"
+    assert properties.lineweight == pytest.approx(0.5)
+    assert properties.layer == "1"
+    assert properties.pen == 2
+    assert properties.handle == "FEFE"
 
 
 def test_banded_lwpolyline_as_filled_polygon(msp, frontend):

@@ -1,8 +1,8 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Any, Iterator
-from typing_extensions import Self
+from typing import Iterable, Any, Iterator, Callable, Optional
+from typing_extensions import Self, TypeAlias
 import copy
 import enum
 import dataclasses
@@ -137,6 +137,9 @@ class Recorder(BackendInterface):
         pass
 
 
+OverrideFunc: TypeAlias = Callable[[BackendProperties], BackendProperties]
+
+
 class Player:
     """Plays the recordings of the Recorder backend on another backend."""
 
@@ -146,16 +149,23 @@ class Player:
         self.records: list[DataRecord] = recorder.records
         self.properties: dict[int, BackendProperties] = recorder.properties
         self._bbox = BoundingBox2d()
-        self.shard_recordings = shared_recordings
+        self.has_shared_recordings: bool = shared_recordings
 
-    def replay(self, backend: BackendInterface) -> None:
+    def replay(
+        self, backend: BackendInterface, override: Optional[OverrideFunc] = None
+    ) -> None:
         """Replay the recording on another backend that implements the
-        :class:`BackendInterface`.
+        :class:`BackendInterface`. The optional `override` function can be used to
+        override the :class:`BackendProperties` of data records.
         """
 
         def make_properties() -> BackendProperties:
-            color, lw, layer, pen, _ = props[record.property_hash]
-            return BackendProperties(color, lw, layer, pen, record.handle)
+            properties_ = BackendProperties(  # type: ignore
+                *props[record.property_hash][:4], record.handle
+            )
+            if override is None:
+                return properties_
+            return override(properties_)
 
         backend.configure(self.config)
         backend.set_background(self.background)
