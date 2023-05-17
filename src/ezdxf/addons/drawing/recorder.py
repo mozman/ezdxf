@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Any, Iterator, Callable, Optional
+from typing import Iterable, Any, Iterator, Callable, Optional, NamedTuple
 from typing_extensions import Self, TypeAlias
 import copy
 import enum
@@ -137,7 +137,19 @@ class Recorder(BackendInterface):
         pass
 
 
-OverrideFunc: TypeAlias = Callable[[BackendProperties], BackendProperties]
+class Override(NamedTuple):
+    """Represents the override state for a data record.
+
+    Attributes:
+        properties: original or modifies :class:`BackendProperties`
+        is_visible: override visibility e.g. switch layers on/off
+
+    """
+    properties: BackendProperties
+    is_visible: bool = True
+
+
+OverrideFunc: TypeAlias = Callable[[BackendProperties], Override]
 
 
 class Player:
@@ -156,22 +168,22 @@ class Player:
     ) -> None:
         """Replay the recording on another backend that implements the
         :class:`BackendInterface`. The optional `override` function can be used to
-        override the :class:`BackendProperties` of data records.
+        override the properties and state of data records, it gets the :class:`BackendProperties`
+        as input and must return an :class:`Override` instance.
         """
-
-        def make_properties() -> BackendProperties:
-            properties_ = BackendProperties(  # type: ignore
-                *props[record.property_hash][:4], record.handle
-            )
-            if override is None:
-                return properties_
-            return override(properties_)
 
         backend.configure(self.config)
         backend.set_background(self.background)
         props = self.properties
         for record in self.records:
-            properties = make_properties()
+            properties = BackendProperties(
+                *props[record.property_hash][:4], record.handle
+            )
+            if override:
+                state = override(properties)
+                if not state.is_visible:
+                    continue
+                properties = state.properties
             t = record.type
             if t == RecordType.POINTS:
                 vertices = record.data.vertices()
@@ -209,8 +221,7 @@ class Player:
             self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
 
     def bbox(self) -> BoundingBox2d:
-        """Returns the bounding box of all records as :class:`~ezdxf.math.BoundingBox2d`.
-        """
+        """Returns the bounding box of all records as :class:`~ezdxf.math.BoundingBox2d`."""
         if not self._bbox.has_data:
             self.update_bbox()
         return self._bbox

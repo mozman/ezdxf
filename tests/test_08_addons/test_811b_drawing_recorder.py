@@ -4,7 +4,7 @@
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext
-from ezdxf.addons.drawing.recorder import Recorder, BackendProperties
+from ezdxf.addons.drawing.recorder import Recorder, BackendProperties, Override
 from ezdxf.addons.drawing.debug_backend import PathBackend
 
 
@@ -88,8 +88,8 @@ def test_replay_properties(msp, frontend):
 
 
 def test_override_properties_at_replay(msp, ctx):
-    def override(_: BackendProperties) -> BackendProperties:
-        return BackendProperties("#00ff00", 0.5, "1", 2, "FEFE")
+    def override(_: BackendProperties) -> Override:
+        return Override(properties=BackendProperties("#00ff00", 0.5, "1", 2, "FEFE"))
 
     msp.add_lwpolyline(
         [(0, 0), (1, 0), (2, 0)], dxfattribs={"color": 1, "lineweight": 70}
