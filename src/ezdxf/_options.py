@@ -1,7 +1,7 @@
-# Copyright (c) 2011-2022, Manfred Moitzi
+# Copyright (c) 2011-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TextIO, Union, Sequence
+from typing import TextIO, Sequence
 import os
 import sys
 from pathlib import Path
@@ -230,8 +230,8 @@ class Options:
         )
 
     @property
-    def support_dirs(self) -> Sequence[str]:
-        return self.get(CORE, "SUPPORT_DIRS", "").split(DIR_SEPARATOR)
+    def support_dirs(self) -> list[str]:
+        return [d for d in self.get(CORE, "SUPPORT_DIRS", "").split(DIR_SEPARATOR) if d]
 
     @support_dirs.setter
     def support_dirs(self, support_dirs: Sequence[str]) -> None:

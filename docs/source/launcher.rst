@@ -46,6 +46,7 @@ The help option ``-h`` is supported by the main script and all sub-commands:
     optional arguments:
       -h, --help            show this help message and exit
       -V, --version         show version and exit
+      -f, --fonts           rebuild system font cache and print all fonts found
       -v, --verbose         give more output
       --config CONFIG       path to a config file
       --log LOG             path to a verbose appending log
@@ -54,6 +55,20 @@ The help option ``-h`` is supported by the main script and all sub-commands:
 
     The ``ezdxf`` script  is the only executable script installed on the
     user system.
+
+System
+------
+
+:code:`ezdxf -V` shows the `ezdxf` and `Python` version your are running and if the
+C-extensions are used.
+
+.. code-block:: Text
+
+    ezdxf 1.1.0b1 from c:\source\ezdxf.git\src\ezdxf
+    Python version: 3.11.2 (tags/v3.11.2:878ead1, Feb  7 2023, 16:38:35) [MSC v.1934 64 bit (AMD64)]
+    using C-extensions: yes
+
+:code:`ezdxf -f` rebuilds the system font cache and shows all fonts found.
 
 Pretty Printer
 --------------
