@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2022, Matthew Broadway
+# Copyright (c) 2020-2023, Matthew Broadway
 # License: MIT License
 import argparse
 import signal
@@ -22,6 +22,7 @@ from ezdxf.addons.drawing.config import Configuration
 # # docs: https://ezdxf.mozman.at/docs/addons/drawing.html
 # ------------------------------------------------------------------------------
 
+
 def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cad_file")
@@ -31,8 +32,7 @@ def _main():
     args = parser.parse_args()
 
     # setup drawing add-on configuration
-    config = Configuration.defaults()
-    config = config.with_changes(
+    config = Configuration(
         lineweight_scaling=args.lineweight_scaling,
     )
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, Matthew Broadway
+# Copyright (c) 2021-2023, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
 from typing import Optional
@@ -197,7 +197,7 @@ class Configuration:
     measurement: Optional[Measurement] = None
     show_defpoints: bool = False
     proxy_graphic_policy: ProxyGraphicPolicy = ProxyGraphicPolicy.SHOW
-    line_policy: LinePolicy = LinePolicy.APPROXIMATE
+    line_policy: LinePolicy = LinePolicy.ACCURATE
     hatch_policy: HatchPolicy = HatchPolicy.SHOW_APPROXIMATE_PATTERN
     infinite_line_length: float = 20
     lineweight_scaling: float = 1.0
@@ -213,10 +213,11 @@ class Configuration:
     lineweight_policy: LineweightPolicy = LineweightPolicy.ABSOLUTE
 
     @staticmethod
-    def defaults() -> Configuration:
+    def defaults() -> Configuration:  # deprecated
         return Configuration()
 
     def with_changes(self, **kwargs) -> Configuration:
+        """Returns a new frozen :class:`Configuration` object with modified values."""
         params = dataclasses.asdict(self)
         for k, v in kwargs.items():
             params[k] = v

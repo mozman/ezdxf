@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Callable, Optional, TYPE_CHECKING, Type
@@ -16,7 +16,6 @@ from ezdxf import recover
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
 from ezdxf.dwginfo import dwg_file_info
-from ezdxf import units
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFGraphic
@@ -371,12 +370,12 @@ class Draw(Command):
             for layer_properties in ctx.layers.values():
                 layer_properties.is_visible = True
 
-        config = Configuration.defaults()
+        config = Configuration()
         if args.all_entities_visible:
 
             class AllVisibleFrontend(Frontend):
                 def override_properties(
-                    self, entity: "DXFGraphic", properties: "Properties"
+                    self, entity: DXFGraphic, properties: Properties
                 ) -> None:
                     properties.is_visible = True
 
@@ -447,8 +446,7 @@ class View(Command):
         from ezdxf.addons.drawing.qtviewer import CADViewer
         from ezdxf.addons.drawing.config import Configuration
 
-        config = Configuration.defaults()
-        config = config.with_changes(
+        config = Configuration(
             lineweight_scaling=args.lwscale,
         )
 

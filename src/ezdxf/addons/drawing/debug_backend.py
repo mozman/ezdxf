@@ -17,7 +17,7 @@ class BasicBackend(Backend):
     def __init__(self):
         super().__init__()
         self.collector = []
-        self.configure(Configuration.defaults())
+        self.configure(Configuration())
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
         self.collector.append(("point", pos, properties))

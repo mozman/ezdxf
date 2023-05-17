@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Matthew Broadway
+# Copyright (c) 2020-2023, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
 import math
@@ -124,7 +124,7 @@ class Frontend:
         self,
         ctx: RenderContext,
         out: BackendInterface,
-        config: Configuration = Configuration.defaults(),
+        config: Configuration = Configuration(),
         bbox_cache: Optional[ezdxf.bbox.Cache] = None,
     ):
         # RenderContext contains all information to resolve resources for a

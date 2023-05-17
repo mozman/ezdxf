@@ -213,17 +213,14 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
 
     def _emit_selected(self):
         self.element_hovered.emit(self._selected_items, self._selected_index)
-        self.scene().invalidate(
-            self.sceneRect(), qw.QGraphicsScene.ForegroundLayer
-        )
+        self.scene().invalidate(self.sceneRect(), qw.QGraphicsScene.ForegroundLayer)
 
     def toggle_selection_marker(self):
         self._mark_selection = not self._mark_selection
 
 
-
 class CADWidget(qw.QWidget):
-    def __init__(self, view: CADGraphicsView, config: Configuration = Configuration.defaults()):
+    def __init__(self, view: CADGraphicsView, config: Configuration = Configuration()):
         super().__init__()
         layout = qw.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -329,9 +326,7 @@ class CADViewer(qw.QMainWindow):
     def __init__(self, cad: Optional[CADWidget] = None):
         super().__init__()
         if cad is None:
-            self._cad = CADWidget(
-                CADGraphicsViewWithOverlay(), config=Configuration.defaults()
-            )
+            self._cad = CADWidget(CADGraphicsViewWithOverlay(), config=Configuration())
         else:
             self._cad = cad
         self._view = self._cad.view
@@ -590,9 +585,7 @@ class CADViewer(qw.QMainWindow):
         )
 
     @Slot(object, int)
-    def _on_element_hovered(
-        self, elements: list[qw.QGraphicsItem], index: int
-    ):
+    def _on_element_hovered(self, elements: list[qw.QGraphicsItem], index: int):
         if not elements:
             text = "No element selected"
         else:

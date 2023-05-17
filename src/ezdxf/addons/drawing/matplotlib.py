@@ -308,7 +308,7 @@ def qsave(
     old_backend = matplotlib.get_backend()
     matplotlib.use(backend)
     if config is None:
-        config = Configuration.defaults()
+        config = Configuration()
 
     try:
         fig: plt.Figure = plt.figure(dpi=dpi)

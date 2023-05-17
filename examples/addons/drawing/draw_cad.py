@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2022, Matthew Broadway
+# Copyright (c) 2020-2023, Matthew Broadway
 # License: MIT License
 import argparse
 import sys
@@ -78,7 +78,7 @@ def _main():
         sys.exit(4)
 
     # setup drawing add-on configuration
-    config = Configuration.defaults()
+    config = Configuration()
     fig: plt.Figure = plt.figure(dpi=args.dpi)
     ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
     ctx = RenderContext(doc)

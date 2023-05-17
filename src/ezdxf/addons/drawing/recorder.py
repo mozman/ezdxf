@@ -37,7 +37,7 @@ class Recorder(BackendInterface):
     """Records the output of the Frontend class."""
 
     def __init__(self) -> None:
-        self.config = Configuration.defaults()
+        self.config = Configuration()
         self.background: Color = "#000000"
         self.records: list[DataRecord] = []
         self.properties: dict[int, BackendProperties] = dict()

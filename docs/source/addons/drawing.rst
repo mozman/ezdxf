@@ -113,7 +113,7 @@ Simplified render workflow but with less control:
 PyQtBackend
 -----------
 
-.. autoclass:: ezdxf.addons.drawing.pyqt.PyQtBackend(scene=None, *,extra_lineweight_scaling=2.0, use_text_cache=True)
+.. autoclass:: ezdxf.addons.drawing.pyqt.PyQtBackend(scene=None)
 
 The :class:`PyQtBackend` is used by the :ref:`view_command` command of the
 `ezdxf` launcher.
@@ -246,20 +246,13 @@ Additional options for the drawing add-on can be passed by the `config`
 argument of the :class:`Frontend` constructor :meth:`__init__()`. Not every
 option will be supported by all backends.
 
+Usage::
+
+    my_config = Configuration(lineweight_scaling=2)
+
 .. autoclass:: ezdxf.addons.drawing.config.Configuration
 
-    .. method:: defaults()
-
-        Returns a frozen :class:`Configuration` object with default values.
-
-    .. method:: with_changes()
-
-        Returns a new frozen :class:`Configuration` object with modified values.
-
-        Usage::
-
-            my_config = Configuration.defaults()
-            my_config = my_config.with_changes(lineweight_scaling=2)
+    .. automethod:: with_changes()
 
 LinePolicy
 ----------
