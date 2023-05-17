@@ -141,7 +141,7 @@ class Override(NamedTuple):
     """Represents the override state for a data record.
 
     Attributes:
-        properties: original or modifies :class:`BackendProperties`
+        properties: original or modified :class:`BackendProperties`
         is_visible: override visibility e.g. switch layers on/off
 
     """
