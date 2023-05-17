@@ -2,8 +2,7 @@
 # License: MIT License
 # mypy: ignore_errors=True
 from __future__ import annotations
-from typing import Optional, Iterable, Tuple
-from typing_extensions import TypeAlias
+from typing import Optional, Iterable
 import math
 
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
@@ -13,8 +12,6 @@ from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import BackendProperties
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.path import Path, to_qpainter_path
-
-PatternKey: TypeAlias = Tuple[str, float]
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):
@@ -45,19 +42,6 @@ class _Point(qw.QAbstractGraphicsShapeItem):
         return qc.QRectF(self.location, qc.QSizeF(1, 1))
 
 
-class ViewportGroup(qw.QGraphicsItemGroup):
-    def __init__(self, clipping_path: Path):
-        super().__init__()
-        self.setFlag(
-            qw.QGraphicsItemGroup.GraphicsItemFlag.ItemClipsChildrenToShape,
-            True,
-        )
-        self._clipping_path = to_qpainter_path([clipping_path])
-
-    def shape(self):
-        return self._clipping_path
-
-
 # The key used to store the dxf entity corresponding to each graphics element
 CorrespondingDXFEntity = qc.Qt.UserRole + 0  # type: ignore
 CorrespondingDXFParentStack = qc.Qt.UserRole + 1  # type: ignore
@@ -86,7 +70,6 @@ class PyQtBackend(Backend):
         super().__init__()
         self._scene = scene or qw.QGraphicsScene()  # avoids many type errors
         self._color_cache: dict[Color, qg.QColor] = {}
-        self._pattern_cache: dict[PatternKey, int] = {}
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
         self._extra_lineweight_scaling = extra_lineweight_scaling
