@@ -81,18 +81,20 @@ class PyQtBackend(Backend):
         self._scene.addItem(item)
 
     def _get_color(self, color: Color) -> qg.QColor:
-        qt_color = self._color_cache.get(color, None)
-        if qt_color is None:
-            if len(color) == 7:
-                qt_color = qg.QColor(color)  # '#RRGGBB'
-            elif len(color) == 9:
-                rgb = color[1:7]
-                alpha = color[7:9]
-                qt_color = qg.QColor(f"#{alpha}{rgb}")  # '#AARRGGBB'
-            else:
-                raise TypeError(color)
+        try:
+            return self._color_cache[color]
+        except KeyError:
+            pass
+        if len(color) == 7:
+            qt_color = qg.QColor(color)  # '#RRGGBB'
+        elif len(color) == 9:
+            rgb = color[1:7]
+            alpha = color[7:9]
+            qt_color = qg.QColor(f"#{alpha}{rgb}")  # '#AARRGGBB'
+        else:
+            raise TypeError(color)
 
-            self._color_cache[color] = qt_color
+        self._color_cache[color] = qt_color
         return qt_color
 
     def _get_pen(self, properties: BackendProperties) -> qg.QPen:
