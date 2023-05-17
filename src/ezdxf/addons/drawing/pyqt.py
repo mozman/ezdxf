@@ -56,8 +56,6 @@ class PyQtBackend(Backend):
     Args:
         scene: drawing canvas of type :class:`QtWidgets.QGraphicsScene`,
             if ``None`` a new canvas will be created
-        extra_lineweight_scaling: compared to other backends,
-            PyQt draws lines which appear thinner
     """
 
     def __init__(
@@ -65,14 +63,12 @@ class PyQtBackend(Backend):
         scene: Optional[qw.QGraphicsScene] = None,
         *,
         debug_draw_rect: bool = False,
-        extra_lineweight_scaling: float = 2.0,
     ):
         super().__init__()
         self._scene = scene or qw.QGraphicsScene()  # avoids many type errors
         self._color_cache: dict[Color, qg.QColor] = {}
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
-        self._extra_lineweight_scaling = extra_lineweight_scaling
         self._debug_draw_rect = debug_draw_rect
 
     def configure(self, config: Configuration) -> None:
@@ -106,12 +102,7 @@ class PyQtBackend(Backend):
         """Returns a cosmetic pen with applied lineweight but without line type
         support.
         """
-        px = (
-            properties.lineweight
-            / 0.3527
-            * self.config.lineweight_scaling
-            * self._extra_lineweight_scaling
-        )
+        px = properties.lineweight / 0.3527 * self.config.lineweight_scaling
         pen = qg.QPen(self._get_color(properties.color), px)
         # Use constant width in pixel:
         pen.setCosmetic(True)
