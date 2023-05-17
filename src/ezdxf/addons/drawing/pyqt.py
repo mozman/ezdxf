@@ -61,15 +61,12 @@ class PyQtBackend(Backend):
     def __init__(
         self,
         scene: Optional[qw.QGraphicsScene] = None,
-        *,
-        debug_draw_rect: bool = False,
     ):
         super().__init__()
         self._scene = scene or qw.QGraphicsScene()  # avoids many type errors
         self._color_cache: dict[Color, qg.QColor] = {}
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
-        self._debug_draw_rect = debug_draw_rect
 
     def configure(self, config: Configuration) -> None:
         if config.min_lineweight is None:
@@ -208,14 +205,6 @@ class PyQtBackend(Backend):
     def finalize(self) -> None:
         super().finalize()
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
-        if self._debug_draw_rect:
-            properties = BackendProperties()
-            properties.color = "#000000"
-            self._scene.addRect(
-                self._scene.sceneRect(),
-                self._get_pen(properties),
-                self._no_fill,
-            )
 
 
 class _CosmeticPath(qw.QGraphicsPathItem):
