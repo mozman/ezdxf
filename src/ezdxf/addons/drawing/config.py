@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Optional
+import warnings
 import dataclasses
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -74,6 +75,7 @@ class LineweightPolicy(Enum):
         RELATIVE_FIXED: fixed lineweight relative to page size for all strokes
 
     """
+
     ABSOLUTE = auto()
     # set fixed lineweight for all strokes in absolute mode:
     # set Configuration.min_lineweight to the desired lineweight in 1/300 inch!
@@ -213,7 +215,11 @@ class Configuration:
     lineweight_policy: LineweightPolicy = LineweightPolicy.ABSOLUTE
 
     @staticmethod
-    def defaults() -> Configuration:  # deprecated
+    def defaults() -> Configuration:
+        warnings.warn(
+            "use Configuration() instead of Configuration.defaults()",
+            DeprecationWarning,
+        )
         return Configuration()
 
     def with_changes(self, **kwargs) -> Configuration:
