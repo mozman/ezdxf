@@ -16,13 +16,10 @@ from ezdxf.addons.hpgl2.backend import (
 def hpgl2_to_drawing(recorder: hpgl2.Recorder, backend: BackendInterface) -> None:
     """Replays the recordings of the HPGL2 Recorder on a backend of the drawing add-on."""
     backend.set_background("#ffffff")  # plotting on white paper
-    props = recorder.properties
-    for record in recorder.records:
-        backend_properties = _make_drawing_backend_properties(
-            props[record.property_hash]
-        )
-        if record.type == HPGL2RecordType.POLYLINE:
-            points: list[Vec2] = record.data.vertices()
+    for record_type, properties, record_data in recorder.recordings():
+        backend_properties = _make_drawing_backend_properties(properties)
+        if record_type == HPGL2RecordType.POLYLINE:
+            points: list[Vec2] = record_data.vertices()
             size = len(points)
             if size == 1:
                 backend.draw_point(points[0], backend_properties)
@@ -30,10 +27,10 @@ def hpgl2_to_drawing(recorder: hpgl2.Recorder, backend: BackendInterface) -> Non
                 backend.draw_line(points[0], points[1], backend_properties)
             else:
                 backend.draw_path(_from_2d_points(points), backend_properties)
-        elif record.type == HPGL2RecordType.FILLED_POLYGON:
+        elif record_type == HPGL2RecordType.FILLED_POLYGON:
             # filled polygons are stored as single paths! see: PolygonBuffer.get_paths()
             external_paths, holes = path.winding_deconstruction(
-                path.fast_bbox_detection(p.to_path2d() for p in record.data)
+                path.fast_bbox_detection(p.to_path2d() for p in record_data)
             )
             backend.draw_filled_paths(external_paths, holes, backend_properties)  # type: ignore
     backend.finalize()

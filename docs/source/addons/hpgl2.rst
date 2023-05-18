@@ -156,6 +156,8 @@ Backends
 
 .. autoclass:: Recorder
 
+    .. automethod:: recordings
+
     .. automethod:: replay
 
     .. automethod:: bbox

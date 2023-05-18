@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Sequence, NamedTuple, Any
+from typing import Sequence, NamedTuple, Any, Iterator
 import abc
 import enum
 import math
@@ -82,10 +82,23 @@ class Recorder(Backend):
     """
 
     def __init__(self) -> None:
-        self.records: list[DataRecord] = []
-        self.properties: dict[int, Properties] = {}
+        self._records: list[DataRecord] = []
+        self._properties: dict[int, Properties] = {}
         self._bbox = BoundingBox2d()
-        self.pens: Sequence[Pen] = []
+        self._pens: Sequence[Pen] = []
+
+    def recordings(self) -> Iterator[tuple[RecordType, Properties, Any]]:
+        """Yields all recordings as [RecordType, Properties, Any] tuples.
+
+        The last field is the data field and depends on :class:`RecordType`:
+
+        - :attr:`RecordType.POLYLINE` returns a :class:`NumpyPoints2d` instance
+        - :attr:`RecordType.FILLED_POLYGON` returns a tuple of :class:`NumpyPath2d` instances
+
+        """
+        props = self._properties
+        for record in self._records:
+            yield record.type, props[record.property_hash], record.data
 
     def bbox(self) -> BoundingBox2d:
         """Returns the bounding box of all recorded polylines and polygons as
@@ -97,7 +110,7 @@ class Recorder(Backend):
 
     def update_bbox(self) -> None:
         points: list[Vec2] = []
-        for record in self.records:
+        for record in self._records:
             if record.type == RecordType.POLYLINE:
                 points.extend(record.data.extents())
             else:
@@ -116,17 +129,17 @@ class Recorder(Backend):
 
     def store(self, record_type: RecordType, properties: Properties, args) -> None:
         prop_hash = properties.hash()
-        if prop_hash not in self.properties:
-            self.properties[prop_hash] = properties.copy()
-        self.records.append(DataRecord(record_type, prop_hash, args))
-        if len(self.pens) != len(properties.pen_table):
-            self.pens = list(properties.pen_table.values())
+        if prop_hash not in self._properties:
+            self._properties[prop_hash] = properties.copy()
+        self._records.append(DataRecord(record_type, prop_hash, args))
+        if len(self._pens) != len(properties.pen_table):
+            self._pens = list(properties.pen_table.values())
 
     def replay(self, backend: Backend) -> None:
         """Replay the recording on another backend."""
         current_props = Properties()
-        props = self.properties
-        for record in self.records:
+        props = self._properties
+        for record in self._records:
             current_props = props.get(record.property_hash, current_props)
             if record.type == RecordType.POLYLINE:
                 backend.draw_polyline(current_props, record.data.vertices())
@@ -138,7 +151,7 @@ class Recorder(Backend):
         """Transforms the recordings by a transformation matrix `m` of type
         :class:`~ezdxf.math.Matrix44`.
         """
-        for record in self.records:
+        for record in self._records:
             if record.type == RecordType.POLYLINE:
                 record.data.transform_inplace(m)
             else:
@@ -158,8 +171,8 @@ class Recorder(Backend):
         polygons = []
         polylines = []
         current = Properties()
-        props = self.properties
-        for record in self.records:
+        props = self._properties
+        for record in self._records:
             if record.type == RecordType.FILLED_POLYGON:
                 current = props.get(record.property_hash, current)
                 key = luminance(current.resolve_fill_color())
@@ -170,7 +183,7 @@ class Recorder(Backend):
         polygons.sort(key=lambda r: r[0], reverse=True)
         records = [sort_rec[1] for sort_rec in polygons]
         records.extend(polylines)
-        self.records = records
+        self._records = records
 
 
 def placement_matrix(
