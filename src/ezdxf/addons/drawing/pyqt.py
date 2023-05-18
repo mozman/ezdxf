@@ -3,6 +3,7 @@
 # mypy: ignore_errors=True
 from __future__ import annotations
 from typing import Optional, Iterable
+import abc
 import math
 
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
@@ -47,23 +48,16 @@ CorrespondingDXFEntity = qc.Qt.UserRole + 0  # type: ignore
 CorrespondingDXFParentStack = qc.Qt.UserRole + 1  # type: ignore
 
 
-class PyQtBackend(Backend):
+class _PyQtBackend(Backend):
     """
-    Backend which uses the :mod:`PySide6` package to implement an interactive
-    viewer. The :mod:`PyQt5` package can be used as fallback if the :mod:`PySide6`
-    package is not available.
-
-    Args:
-        scene: drawing canvas of type :class:`QtWidgets.QGraphicsScene`,
-            if ``None`` a new canvas will be created
+    Abstract PyQt backend which uses the :mod:`PySide6` package to implement an
+    interactive viewer. The :mod:`PyQt5` package can be used as fallback if the
+    :mod:`PySide6` package is not available.
     """
 
-    def __init__(
-        self,
-        scene: Optional[qw.QGraphicsScene] = None,
-    ):
+    def __init__(self, scene: qw.QGraphicsScene):
         super().__init__()
-        self._scene = scene or qw.QGraphicsScene()  # avoids many type errors
+        self._scene = scene
         self._color_cache: dict[Color, qg.QColor] = {}
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
@@ -73,12 +67,16 @@ class PyQtBackend(Backend):
             config = config.with_changes(min_lineweight=0.24)
         super().configure(config)
 
-    def set_scene(self, scene: qw.QGraphicsScene):
+    def set_scene(self, scene: qw.QGraphicsScene) -> None:
         self._scene = scene
 
-    def _add_item(self, item):
-        self._set_item_data(item)
+    def _add_item(self, item: qw.QGraphicsItem, entity_handle: str) -> None:
+        self.set_item_data(item, entity_handle)
         self._scene.addItem(item)
+
+    @abc.abstractmethod
+    def set_item_data(self, item: qw.QGraphicsItem, entity_handle: str) -> None:
+        ...
 
     def _get_color(self, color: Color) -> qg.QColor:
         try:
@@ -111,17 +109,6 @@ class PyQtBackend(Backend):
     def _get_fill_brush(self, color: Color) -> qg.QBrush:
         return qg.QBrush(self._get_color(color), qc.Qt.SolidPattern)  # type: ignore
 
-    def _set_item_data(self, item: qw.QGraphicsItem) -> None:
-        parent_stack = tuple(e for e, props in self.entity_stack[:-1])
-        current_entity = self.current_entity
-        if isinstance(item, list):
-            for item_ in item:
-                item_.setData(CorrespondingDXFEntity, current_entity)
-                item_.setData(CorrespondingDXFParentStack, parent_stack)
-        else:
-            item.setData(CorrespondingDXFEntity, current_entity)
-            item.setData(CorrespondingDXFParentStack, parent_stack)
-
     def set_background(self, color: Color):
         self._scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
@@ -129,8 +116,7 @@ class PyQtBackend(Backend):
         """Draw a real dimensionless point."""
         brush = self._get_fill_brush(properties.color)
         item = _Point(pos.x, pos.y, brush)
-        self._set_item_data(item)
-        self._add_item(item)
+        self._add_item(item, properties.handle)
 
     def draw_line(self, start: Vec3, end: Vec3, properties: BackendProperties) -> None:
         # PyQt draws a long line for a zero-length line:
@@ -139,7 +125,7 @@ class PyQtBackend(Backend):
         else:
             item = qw.QGraphicsLineItem(start.x, start.y, end.x, end.y)
             item.setPen(self._get_pen(properties))
-            self._add_item(item)
+            self._add_item(item, properties.handle)
 
     def draw_solid_lines(
         self,
@@ -155,13 +141,13 @@ class PyQtBackend(Backend):
             else:
                 item = qw.QGraphicsLineItem(s.x, s.y, e.x, e.y)
                 item.setPen(pen)
-                add_line(item)
+                add_line(item, properties.handle)
 
     def draw_path(self, path: Path, properties: BackendProperties) -> None:
         item = qw.QGraphicsPathItem(to_qpainter_path([path]))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._no_fill)
-        self._add_item(item)
+        self._add_item(item, properties.handle)
 
     def draw_filled_paths(
         self,
@@ -187,7 +173,7 @@ class PyQtBackend(Backend):
         item = _CosmeticPath(to_qpainter_path(oriented_paths))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._get_fill_brush(properties.color))
-        self._add_item(item)
+        self._add_item(item, properties.handle)
 
     def draw_filled_polygon(
         self, points: Iterable[Vec3], properties: BackendProperties
@@ -199,7 +185,7 @@ class PyQtBackend(Backend):
         item = _CosmeticPolygon(polygon)
         item.setPen(self._no_line)
         item.setBrush(brush)
-        self._add_item(item)
+        self._add_item(item, properties.handle)
 
     def clear(self) -> None:
         self._scene.clear()
@@ -207,6 +193,61 @@ class PyQtBackend(Backend):
     def finalize(self) -> None:
         super().finalize()
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
+
+
+class PyQtBackend(_PyQtBackend):
+    """
+    Backend which uses the :mod:`PySide6` package to implement an interactive
+    viewer. The :mod:`PyQt5` package can be used as fallback if the :mod:`PySide6`
+    package is not available.
+
+    Args:
+        scene: drawing canvas of type :class:`QtWidgets.QGraphicsScene`,
+            if ``None`` a new canvas will be created
+    """
+
+    def __init__(
+        self,
+        scene: Optional[qw.QGraphicsScene] = None,
+    ):
+        super().__init__(scene or qw.QGraphicsScene())
+    # This implementation keeps all virtual entities alive by attaching references
+    # to entities to the graphic scene items.
+
+    def set_item_data(self, item: qw.QGraphicsItem, entity_handle: str) -> None:
+        parent_stack = tuple(e for e, props in self.entity_stack[:-1])
+        current_entity = self.current_entity
+        item.setData(CorrespondingDXFEntity, current_entity)
+        item.setData(CorrespondingDXFParentStack, parent_stack)
+
+
+class PyQtPlaybackBackend(_PyQtBackend):
+    """
+    Backend which uses the :mod:`PySide6` package to implement an interactive
+    viewer. The :mod:`PyQt5` package can be used as fallback if the :mod:`PySide6`
+    package is not available.
+
+    This backend can be used a playback backend for the :meth:`replay` method of the
+    :class:`Player` class
+
+    Args:
+        scene: drawing canvas of type :class:`QtWidgets.QGraphicsScene`,
+            if ``None`` a new canvas will be created
+    """
+
+    def __init__(
+        self,
+        scene: Optional[qw.QGraphicsScene] = None,
+    ):
+        super().__init__(scene or qw.QGraphicsScene())
+
+    # The backend recorder does not record enter_entity() and exit_entity() events.
+    # This implementation attaches only entity handles (str) to the graphic scene items.
+    # Each item references the top level entity e.g. all items of a block reference
+    # references the handle of the INSERT entity.
+
+    def set_item_data(self, item: qw.QGraphicsItem, entity_handle: str) -> None:
+        item.setData(CorrespondingDXFEntity, entity_handle)
 
 
 class _CosmeticPath(qw.QGraphicsPathItem):
