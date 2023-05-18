@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2022, Matthew Broadway
+# Copyright (c) 2020-2023, Matthew Broadway
 # License: MIT License
 # mypy: ignore_errors=True
 from __future__ import annotations
@@ -325,6 +325,7 @@ class CADWidget(qw.QWidget):
 class CADViewer(qw.QMainWindow):
     def __init__(self, cad: Optional[CADWidget] = None):
         super().__init__()
+        self._doc: Optional[Drawing] = None
         if cad is None:
             self._cad = CADWidget(CADGraphicsViewWithOverlay(), config=Configuration())
         else:
@@ -464,6 +465,7 @@ class CADViewer(qw.QMainWindow):
         else:
             self._watch_mtime = None
         self._cad.set_document(document, layout=layout)
+        self._doc = document
         self._populate_layouts()
         self._populate_layer_list()
         self.setWindowTitle("CAD Viewer - " + str(document.filename))
@@ -591,7 +593,9 @@ class CADViewer(qw.QMainWindow):
         else:
             text = f"Selected: {index + 1} / {len(elements)}    (click to cycle)\n"
             element = elements[index]
-            dxf_entity = element.data(CorrespondingDXFEntity)
+            dxf_entity: DXFGraphic | str | None = element.data(CorrespondingDXFEntity)
+            if isinstance(dxf_entity, str):
+                dxf_entity = self.load_dxf_entity(dxf_entity)
             if dxf_entity is None:
                 text += "No data"
             else:
@@ -607,8 +611,12 @@ class CADViewer(qw.QMainWindow):
                     for entity in reversed(dxf_parent_stack):
                         text += f"- {entity}\n"
                         text += _entity_attribs_string(entity, indent="    ")
-
         self.selected_info.setPlainText(text)
+
+    def load_dxf_entity(self, entity_handle: str) -> DXFGraphic | None:
+        if self._doc is not None:
+            return self._doc.entitydb.get(entity_handle)
+        return None
 
 
 def _entity_attribs_string(dxf_entity: DXFGraphic, indent: str = "") -> str:
