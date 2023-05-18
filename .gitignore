@@ -29,6 +29,6 @@ tox-all.ini
 /examples_dxf/insert_nesting_level_1.dxf
 /examples_dxf/mtext_simple_all_alignments.dxf
 /src/mypy-reports/
-/examples_hpgl2
+/examples_hpgl2_private
 /fonts/shapefiles
 /fonts/*.json
