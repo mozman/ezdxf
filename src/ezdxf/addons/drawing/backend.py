@@ -77,7 +77,7 @@ class BackendInterface(ABC):
 class Backend(BackendInterface, metaclass=ABCMeta):
     def __init__(self) -> None:
         self.entity_stack: list[tuple[DXFGraphic, Properties]] = []
-        self.config: Configuration
+        self.config: Configuration = Configuration()
 
     def configure(self, config: Configuration) -> None:
         self.config = config
