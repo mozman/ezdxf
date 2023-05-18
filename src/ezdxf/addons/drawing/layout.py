@@ -326,7 +326,7 @@ class Layout:
             sy=scale * self.flip_y,
             rotation=rotation,
             page=page,
-            output_coordionate_space=settings.output_coordinate_space,
+            output_coordinate_space=settings.output_coordinate_space,
         )
         return m
 
@@ -373,12 +373,12 @@ def placement_matrix(
     sy: float,
     rotation: float,
     page: Page,
-    output_coordionate_space: float,
+    output_coordinate_space: float,
 ) -> Matrix44:
     """Returns a matrix to place the bbox in the first quadrant of the coordinate
     system (+x, +y).
     """
-    scale_mm_to_vb = output_coordionate_space / max(page.width_in_mm, page.height_in_mm)
+    scale_mm_to_vb = output_coordinate_space / max(page.width_in_mm, page.height_in_mm)
     margins = page.margins_in_mm
 
     # create scaling and rotation matrix:
