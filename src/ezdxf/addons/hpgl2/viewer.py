@@ -3,8 +3,9 @@
 # mypy: ignore_errors=True
 from __future__ import annotations
 import os
+import time
 
-from ezdxf.math import BoundingBox2d
+from ezdxf.math import BoundingBox2d, Matrix44
 from ezdxf.addons.xqt import QtWidgets, QtGui
 from ezdxf.addons.drawing.qtviewer import CADGraphicsView
 from ezdxf.addons.drawing.pyqt import PyQtPlaybackBackend
@@ -67,7 +68,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self.page_size_label = QtWidgets.QLabel("Page Size: 0x0mm")
         self.scaling_factor_line_edit = QtWidgets.QLineEdit("1")
         self.dpi_line_edit = QtWidgets.QLineEdit("72")
-        self.png_size_label = QtWidgets.QLabel("PNG Size: 0x0 pixel")
+        self.png_size_label = QtWidgets.QLabel("PNG Size: 0x0px")
 
         self.scaling_factor_line_edit.editingFinished.connect(self.update_sidebar)
         self.dpi_line_edit.editingFinished.connect(self.update_sidebar)
@@ -115,6 +116,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
         export_png_button = QtWidgets.QPushButton("Export PNG")
         export_png_button.clicked.connect(self.export_png)
+        export_png_button.setDisabled(True)
         v_layout.addWidget(export_png_button)
 
         export_svg_button = QtWidgets.QPushButton("Export SVG")
@@ -123,10 +125,12 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
         export_pdf_button = QtWidgets.QPushButton("Export PDF")
         export_pdf_button.clicked.connect(self.export_pdf)
+        export_pdf_button.setDisabled(True)
         v_layout.addWidget(export_pdf_button)
 
         export_dxf_button = QtWidgets.QPushButton("Export DXF")
         export_dxf_button.clicked.connect(self.export_dxf)
+        export_dxf_button.setDisabled(True)
         v_layout.addWidget(export_dxf_button)
 
         v_layout.addSpacing(SPACING)
@@ -154,7 +158,13 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             self.load_plot_file(path)
 
     def set_plot_data(self, data: bytes, filename: str) -> None:
-        self._cad.plot(data)
+        try:
+            self._cad.plot(data)
+        except api.Hpgl2Error:
+            # TODO: show MessageBox
+            msg = f"cannot load HPGL/2 file: {filename}"
+            print(msg)
+            return
         self._player = self._cad.player
         self._bbox = self._player.bbox()
         self.update_sidebar()
@@ -163,11 +173,14 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         self._view.fit_to_scene()
 
-    def get_page_size(self) -> tuple[int, int]:
+    def get_scale(self) -> float:
         try:
-            factor = float(self.scaling_factor_line_edit.text())
+            return float(self.scaling_factor_line_edit.text())
         except ValueError:
-            factor = 1.0
+            return 1.0
+
+    def get_page_size(self) -> tuple[int, int]:
+        factor = self.get_scale()
         x = 0
         y = 0
         if self._bbox.has_data:
@@ -189,7 +202,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         x, y = self.get_page_size()
         self.page_size_label.setText(f"Page Size: {x}x{y}mm")
         px, py = self.get_pixel_size()
-        self.png_size_label.setText(f"PNG Size: {px}x{py} pixel")
+        self.png_size_label.setText(f"PNG Size: {px}x{py}px")
 
     def reset_values(self):
         self.scaling_factor_line_edit.setText("1")
@@ -197,7 +210,31 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self.update_sidebar()
 
     def export_svg(self) -> None:
-        print("export HPGL/2 plot file as SVG")
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            caption="Save SVG File",
+            filter="SVG Files (*.svg)",
+        )
+        if not path:
+            return
+        try:
+            t0 = time.perf_counter()
+            with open(path, "wt") as fp:
+                fp.write(self.make_svg_string())
+            print(f"successful SVG export in {time.perf_counter()-t0:.2f} seconds")
+        except IOError as e:
+            # TODO: show MessageBox
+            print(str(e))
+
+    def make_svg_string(self) -> str:
+        player = self._player.copy()
+        scale = self.get_scale()
+        m = Matrix44.scale(scale, scale, 1)
+        player.transform(m)
+        svg_backend = api.SVGBackend(player.bbox())
+        player.replay(svg_backend)
+        del player
+        return svg_backend.get_string()
 
     def export_pdf(self) -> None:
         print("export HPGL/2 plot file as PDF")
