@@ -2,11 +2,12 @@
 # License: MIT License
 # mypy: ignore_errors=True
 from __future__ import annotations
+import math
 import os
 import time
 
 from ezdxf.math import BoundingBox2d, Matrix44
-from ezdxf.addons.xqt import QtWidgets, QtGui
+from ezdxf.addons.xqt import QtWidgets, QtGui, QtCore
 from ezdxf.addons.drawing.qtviewer import CADGraphicsView
 from ezdxf.addons.drawing.pyqt import PyQtPlaybackBackend
 from ezdxf.addons import xplayer
@@ -55,6 +56,7 @@ class HPGL2Widget(QtWidgets.QWidget):
 
 
 SPACING = 20
+DEFAULT_DPI = 72
 
 
 class HPGL2Viewer(QtWidgets.QMainWindow):
@@ -64,11 +66,25 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self._view = self._cad.view
         self._player: api.Player | None = None
         self._bbox: BoundingBox2d = BoundingBox2d()
+        self._page_rotation = 0
 
-        self.page_size_label = QtWidgets.QLabel("Page Size: 0x0mm")
+        self.page_size_label = QtWidgets.QLabel()
+        self.png_size_label = QtWidgets.QLabel()
+        self.message_label = QtWidgets.QLabel()
         self.scaling_factor_line_edit = QtWidgets.QLineEdit("1")
-        self.dpi_line_edit = QtWidgets.QLineEdit("72")
-        self.png_size_label = QtWidgets.QLabel("PNG Size: 0x0px")
+        self.dpi_line_edit = QtWidgets.QLineEdit(str(DEFAULT_DPI))
+
+        self.flip_x_check_box = QtWidgets.QCheckBox("Horizontal")
+        self.flip_x_check_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
+        self.flip_x_check_box.stateChanged.connect(self.update_view)
+
+        self.flip_y_check_box = QtWidgets.QCheckBox("Vertical")
+        self.flip_y_check_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
+        self.flip_y_check_box.stateChanged.connect(self.update_view)
+
+        self.rotation_combo_box = QtWidgets.QComboBox()
+        self.rotation_combo_box.addItems(["0", "90", "180", "270"])
+        self.rotation_combo_box.currentIndexChanged.connect(self.update_rotation)
 
         self.scaling_factor_line_edit.editingFinished.connect(self.update_sidebar)
         self.dpi_line_edit.editingFinished.connect(self.update_sidebar)
@@ -106,6 +122,18 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         h_layout.addWidget(self.scaling_factor_line_edit)
         v_layout.addLayout(h_layout)
 
+        h_layout = QtWidgets.QHBoxLayout()
+        h_layout.addWidget(QtWidgets.QLabel("Page Rotation:"))
+        h_layout.addWidget(self.rotation_combo_box)
+        v_layout.addLayout(h_layout)
+
+        group = QtWidgets.QGroupBox("Mirror Page")
+        h_layout = QtWidgets.QHBoxLayout()
+        h_layout.addWidget(self.flip_x_check_box)
+        h_layout.addWidget(self.flip_y_check_box)
+        group.setLayout(h_layout)
+        v_layout.addWidget(group)
+
         v_layout.addSpacing(SPACING)
 
         h_layout = QtWidgets.QHBoxLayout()
@@ -138,6 +166,10 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         reset_button = QtWidgets.QPushButton("Reset")
         reset_button.clicked.connect(self.reset_values)
         v_layout.addWidget(reset_button)
+
+        v_layout.addSpacing(SPACING)
+
+        v_layout.addWidget(self.message_label)
         return sidebar
 
     def load_plot_file(self, path: str | os.PathLike) -> None:
@@ -173,14 +205,20 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         self._view.fit_to_scene()
 
-    def get_scale(self) -> float:
+    def get_scale_factor(self) -> float:
         try:
             return float(self.scaling_factor_line_edit.text())
         except ValueError:
             return 1.0
 
+    def get_dpi(self) -> int:
+        try:
+            return int(self.dpi_line_edit.text())
+        except ValueError:
+            return DEFAULT_DPI
+
     def get_page_size(self) -> tuple[int, int]:
-        factor = self.get_scale()
+        factor = self.get_scale_factor()
         x = 0
         y = 0
         if self._bbox.has_data:
@@ -188,26 +226,64 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             # 40 plot units = 1mm
             x = round(size.x / 40 * factor)
             y = round(size.y / 40 * factor)
+        if self._page_rotation in (90, 270):
+            x, y = y, x
         return x, y
 
     def get_pixel_size(self) -> tuple[int, int]:
-        try:
-            dpi = int(self.dpi_line_edit.text())
-        except ValueError:
-            dpi = 72
+        dpi = self.get_dpi()
         x, y = self.get_page_size()
         return round(x / 25.4 * dpi), round(y / 25.4 * dpi)
+
+    def get_flip_x(self) -> bool:
+        return self.flip_x_check_box.checkState() == QtCore.Qt.CheckState.Checked
+
+    def get_flip_y(self) -> bool:
+        return self.flip_y_check_box.checkState() == QtCore.Qt.CheckState.Checked
 
     def update_sidebar(self):
         x, y = self.get_page_size()
         self.page_size_label.setText(f"Page Size: {x}x{y}mm")
         px, py = self.get_pixel_size()
         self.png_size_label.setText(f"PNG Size: {px}x{py}px")
+        self.clear_message()
+
+    def update_view(self):
+        self._view.setTransform(self.make_transform())
+        self._view.fit_to_scene()
+        self.update_sidebar()
+
+    def update_rotation(self, index: int):
+        rotation = index * 90
+        if rotation != self._page_rotation:
+            self._page_rotation = rotation
+            self.update_view()
+
+    def make_transform(self):
+        if self._page_rotation == 0:
+            m = Matrix44()
+        else:
+            m = Matrix44.z_rotate(math.radians(self._page_rotation))
+        sx = -1 if self.get_flip_x() else 1
+        # inverted y-axis
+        sy = 1 if self.get_flip_y() else -1
+        m @= Matrix44.scale(sx, sy, 1)
+        return QtGui.QTransform(*m.get_2d_transformation())
 
     def reset_values(self):
         self.scaling_factor_line_edit.setText("1")
-        self.dpi_line_edit.setText("72")
-        self.update_sidebar()
+        self.dpi_line_edit.setText(str(DEFAULT_DPI))
+        self.flip_x_check_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
+        self.flip_y_check_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
+        self.rotation_combo_box.setCurrentIndex(0)
+        self._page_rotation = 0
+        self.update_view()
+
+    def show_message(self, msg: str) -> None:
+        self.message_label.setText(msg)
+
+    def clear_message(self) -> None:
+        self.message_label.setText("")
 
     def export_svg(self) -> None:
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
@@ -221,16 +297,28 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             t0 = time.perf_counter()
             with open(path, "wt") as fp:
                 fp.write(self.make_svg_string())
-            print(f"successful SVG export in {time.perf_counter()-t0:.2f} seconds")
+            self.show_message(
+                f"SVG successfully in {time.perf_counter()-t0:.2f}s exported"
+            )
         except IOError as e:
             # TODO: show MessageBox
             print(str(e))
 
+    def get_export_matrix(self) -> Matrix44:
+        scale = self.get_scale_factor()
+        rotation = self._page_rotation
+        sx = -scale if self.get_flip_x() else scale
+        sy = -scale if self.get_flip_y() else scale
+        if rotation in (90, 270):  # ???
+            sx, sy = sy, sx
+        m = Matrix44.scale(sx, sy, 1)
+        if rotation:
+            m @= Matrix44.z_rotate(math.radians(rotation))
+        return m
+
     def make_svg_string(self) -> str:
         player = self._player.copy()
-        scale = self.get_scale()
-        m = Matrix44.scale(scale, scale, 1)
-        player.transform(m)
+        player.transform(self.get_export_matrix())
         svg_backend = api.SVGBackend(player.bbox())
         player.replay(svg_backend)
         del player
