@@ -13,10 +13,10 @@ from ezdxf.addons.hpgl2.backend import (
 )
 
 
-def hpgl2_to_drawing(recorder: hpgl2.Recorder, backend: BackendInterface) -> None:
+def hpgl2_to_drawing(player: hpgl2.Player, backend: BackendInterface) -> None:
     """Replays the recordings of the HPGL2 Recorder on a backend of the drawing add-on."""
     backend.set_background("#ffffff")  # plotting on white paper
-    for record_type, properties, record_data in recorder.recordings():
+    for record_type, properties, record_data in player.recordings():
         backend_properties = _make_drawing_backend_properties(properties)
         if record_type == HPGL2RecordType.POLYLINE:
             points: list[Vec2] = record_data.vertices()

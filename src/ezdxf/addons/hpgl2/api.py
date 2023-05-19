@@ -9,7 +9,7 @@ from ezdxf import zoom
 from .tokenizer import hpgl2_commands
 from .plotter import Plotter
 from .interpreter import Interpreter
-from .backend import Recorder, placement_matrix
+from .backend import Recorder, placement_matrix, Player
 from .dxf_backend import DXFBackend, ColorMode
 from .svg_backend import SVGBackend
 from .pdf_backend import PDFBackend, pdf_is_supported
@@ -97,7 +97,7 @@ def to_dxf(
     # 1st pass records output of the plotting commands and detects the bounding box
     doc = ezdxf.new()
     try:
-        recorder = record_plotter_output(b, rotation, sx, sy, merge_control)
+        player = record_plotter_output(b, rotation, sx, sy, merge_control)
     except Hpgl2Error:
         return doc
 
@@ -108,9 +108,9 @@ def to_dxf(
         map_black_rgb_to_white_rgb=map_black_rgb_to_white_rgb,
     )
     # 2nd pass replays the plotting commands to plot the DXF
-    recorder.replay(dxf_backend)
-    bbox = recorder.bbox()
-    del recorder
+    player.replay(dxf_backend)
+    bbox = player.bbox()
+    del player
 
     if bbox.has_data:  # non-empty page
         zoom.window(msp, bbox.extmin, bbox.extmax)
@@ -167,14 +167,14 @@ def to_svg(
         raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
     # 1st pass records output of the plotting commands and detects the bounding box
     try:
-        recorder = record_plotter_output(b, rotation, sx, sy, merge_control)
+        player = record_plotter_output(b, rotation, sx, sy, merge_control)
     except Hpgl2Error:
         return ""
 
     # 2nd pass replays the plotting commands to plot the SVG
-    svg_backend = SVGBackend(recorder.bbox())
-    recorder.replay(svg_backend)
-    del recorder
+    svg_backend = SVGBackend(player.bbox())
+    player.replay(svg_backend)
+    del player
     return svg_backend.get_string()
 
 
@@ -217,13 +217,13 @@ def to_pdf(
         raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
     # 1st pass records output of the plotting commands and detects the bounding box
     try:
-        recorder = record_plotter_output(b, rotation, sx, sy, merge_control)
+        player = record_plotter_output(b, rotation, sx, sy, merge_control)
     except Hpgl2Error:
         return b""
     # 2nd pass replays the plotting commands to plot the SVG
-    pdf_backend = PDFBackend(recorder.bbox())
-    recorder.replay(pdf_backend)
-    del recorder
+    pdf_backend = PDFBackend(player.bbox())
+    player.replay(pdf_backend)
+    del player
     return pdf_backend.get_bytes()
 
 
@@ -242,7 +242,7 @@ def record_plotter_output(
     sx: float,
     sy: float,
     merge_control: MergeControl,
-) -> Recorder:
+) -> Player:
     commands = hpgl2_commands(b)
     if len(commands) == 0:
         print("HPGL2 data not found.")
@@ -254,11 +254,12 @@ def record_plotter_output(
     interpreter.run(commands)
     if DEBUG:
         print_interpreter_log(interpreter)
-    bbox = recorder.bbox()
+    player = recorder.player()
+    bbox = player.bbox()
     if not bbox.has_data:
         raise EmptyDrawing
     m = placement_matrix(bbox, sx, sy, rotation)
-    recorder.transform(m)
+    player.transform(m)
 
     if merge_control == MergeControl.AUTO:
         if plotter.has_merge_control:
@@ -266,5 +267,5 @@ def record_plotter_output(
     if merge_control == MergeControl.LUMINANCE:
         if DEBUG:
             print("merge control on: sorting filled polygons by luminance")
-        recorder.sort_filled_polygons()
-    return recorder
+        player.sort_filled_polygons()
+    return player

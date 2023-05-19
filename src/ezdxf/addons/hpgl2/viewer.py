@@ -23,7 +23,7 @@ class HPGL2Widget(QtWidgets.QWidget):
         self.setLayout(layout)
         self._view = view
         self._view.closing.connect(self.close)
-        self._recorder: api.Recorder | None = None
+        self._player: api.Player | None = None
         self._reset_backend()
 
     def _reset_backend(self) -> None:
@@ -34,18 +34,18 @@ class HPGL2Widget(QtWidgets.QWidget):
         return self._view
 
     @property
-    def recorder(self) -> api.Recorder:
-        return self._recorder
+    def player(self) -> api.Player:
+        return self._player.copy()
 
     def plot(self, data: bytes, reset_view: bool = True) -> None:
         self._reset_backend()
-        self._recorder: api.Recorder = api.record_plotter_output(
+        self._player: api.Player = api.record_plotter_output(
             data, 0, 1.0, 1.0, api.MergeControl.AUTO
         )
         self._view.begin_loading()
         new_scene = QtWidgets.QGraphicsScene()
         self._backend.set_scene(new_scene)
-        xplayer.hpgl2_to_drawing(self._recorder, self._backend)
+        xplayer.hpgl2_to_drawing(self._player, self._backend)
         self._backend.finalize()
         self._view.end_loading(new_scene)
         self._view.buffer_scene_rect()
@@ -61,7 +61,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         super().__init__()
         self._cad = HPGL2Widget(CADGraphicsView())
         self._view = self._cad.view
-        self._recorder: api.Recorder | None = None
+        self._player: api.Player | None = None
         self._bbox: BoundingBox2d = BoundingBox2d()
 
         self.page_size_label = QtWidgets.QLabel("Page Size: 0x0mm")
@@ -155,8 +155,8 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
     def set_plot_data(self, data: bytes, filename: str) -> None:
         self._cad.plot(data)
-        self._recorder = self._cad.recorder
-        self._bbox = self._recorder.bbox()
+        self._player = self._cad.player
+        self._bbox = self._player.bbox()
         self.update_sidebar()
         self.setWindowTitle(f"{VIEWER_NAME} - " + str(filename))
 

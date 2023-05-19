@@ -2,7 +2,9 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import Sequence, NamedTuple, Any, Iterator
+from typing_extensions import Self
 import abc
+import copy
 import enum
 import math
 from .deps import (
@@ -84,8 +86,42 @@ class Recorder(Backend):
     def __init__(self) -> None:
         self._records: list[DataRecord] = []
         self._properties: dict[int, Properties] = {}
-        self._bbox = BoundingBox2d()
         self._pens: Sequence[Pen] = []
+
+    def player(self) -> Player:
+        return Player(self._records, self._properties)
+
+    def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
+        self.store(RecordType.POLYLINE, properties, NumpyPoints2d(points))
+
+    def draw_filled_polygon(
+        self, properties: Properties, paths: Sequence[Path]
+    ) -> None:
+        data = tuple(NumpyPath2d(p) for p in paths)
+        self.store(RecordType.FILLED_POLYGON, properties, data)
+
+    def store(self, record_type: RecordType, properties: Properties, args) -> None:
+        prop_hash = properties.hash()
+        if prop_hash not in self._properties:
+            self._properties[prop_hash] = properties.copy()
+        self._records.append(DataRecord(record_type, prop_hash, args))
+        if len(self._pens) != len(properties.pen_table):
+            self._pens = list(properties.pen_table.values())
+
+
+class Player:
+    def __init__(self, records: list[DataRecord], properties: dict[int, Properties]):
+        self._records: list[DataRecord] = records
+        self._properties: dict[int, Properties] = properties
+        self._bbox = BoundingBox2d()
+
+    def __copy__(self) -> Self:
+        records = copy.deepcopy(self._records)
+        player = self.__class__(records, self._properties)
+        player._bbox = self._bbox.copy()
+        return player
+
+    copy = __copy__
 
     def recordings(self) -> Iterator[tuple[RecordType, Properties, Any]]:
         """Yields all recordings as [RecordType, Properties, Any] tuples.
@@ -117,23 +153,6 @@ class Recorder(Backend):
                 for path in record.data:
                     points.extend(path.extents())
         self._bbox = BoundingBox2d(points)
-
-    def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
-        self.store(RecordType.POLYLINE, properties, NumpyPoints2d(points))
-
-    def draw_filled_polygon(
-        self, properties: Properties, paths: Sequence[Path]
-    ) -> None:
-        data = tuple(NumpyPath2d(p) for p in paths)
-        self.store(RecordType.FILLED_POLYGON, properties, data)
-
-    def store(self, record_type: RecordType, properties: Properties, args) -> None:
-        prop_hash = properties.hash()
-        if prop_hash not in self._properties:
-            self._properties[prop_hash] = properties.copy()
-        self._records.append(DataRecord(record_type, prop_hash, args))
-        if len(self._pens) != len(properties.pen_table):
-            self._pens = list(properties.pen_table.values())
 
     def replay(self, backend: Backend) -> None:
         """Replay the recording on another backend."""
