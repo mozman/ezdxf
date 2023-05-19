@@ -1,11 +1,13 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 """xplayer = cross backend player."""
+from __future__ import annotations
+from typing import Callable
 from ezdxf import path
 from ezdxf.math import Vec2
 
 from ezdxf.addons.drawing.backend import BackendInterface
-from ezdxf.addons.drawing.properties import BackendProperties, rgb_to_hex
+from ezdxf.addons.drawing.properties import BackendProperties, rgb_to_hex, hex_to_rgb, luminance
 from ezdxf.addons.hpgl2 import api as hpgl2
 from ezdxf.addons.hpgl2.backend import (
     Properties as HPGL2Properties,
@@ -13,11 +15,18 @@ from ezdxf.addons.hpgl2.backend import (
 )
 
 
-def hpgl2_to_drawing(player: hpgl2.Player, backend: BackendInterface) -> None:
+def hpgl2_to_drawing(
+    player: hpgl2.Player,
+    backend: BackendInterface,
+    bg_color: str = "#ffffff",
+    override: Callable[[BackendProperties], BackendProperties] | None = None,
+) -> None:
     """Replays the recordings of the HPGL2 Recorder on a backend of the drawing add-on."""
-    backend.set_background("#ffffff")  # plotting on white paper
+    backend.set_background(bg_color)  # plotting on white paper
     for record_type, properties, record_data in player.recordings():
         backend_properties = _make_drawing_backend_properties(properties)
+        if override:
+            backend_properties = override(backend_properties)
         if record_type == HPGL2RecordType.POLYLINE:
             points: list[Vec2] = record_data.vertices()
             size = len(points)
@@ -53,3 +62,35 @@ def _from_2d_points(points: list[Vec2]) -> path.Path2d:
     for point in points[1:]:
         path2d.line_to(point)
     return path2d
+
+
+def map_color(color: str) -> Callable[[BackendProperties], BackendProperties]:
+    def _map_color(properties: BackendProperties) -> BackendProperties:
+        return BackendProperties(
+            color=color,
+            lineweight=properties.lineweight,
+            layer=properties.layer,
+            pen=properties.pen,
+            handle=properties.handle,
+        )
+
+    return _map_color
+
+
+def map_monochrome(dark_mode=True) -> Callable[[BackendProperties], BackendProperties]:
+    def to_grey(c: str) -> str:
+        grey = round(luminance(hex_to_rgb(c)) * 255)
+        if dark_mode:
+            grey = 255 - grey
+        return rgb_to_hex((grey, grey, grey))
+
+    def _map_color(properties: BackendProperties) -> BackendProperties:
+        return BackendProperties(
+            color=to_grey(properties.color),
+            lineweight=properties.lineweight,
+            layer=properties.layer,
+            pen=properties.pen,
+            handle=properties.handle,
+        )
+
+    return _map_color

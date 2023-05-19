@@ -44,10 +44,18 @@ class HPGL2Widget(QtWidgets.QWidget):
         self._player: api.Player = api.record_plotter_output(
             data, 0, 1.0, 1.0, api.MergeControl.AUTO
         )
+        self.replay(reset_view=reset_view)
+
+    def replay(
+        self, bg_color="#ffffff", override=None, reset_view: bool = True
+    ) -> None:
+        self._reset_backend()
         self._view.begin_loading()
         new_scene = QtWidgets.QGraphicsScene()
         self._backend.set_scene(new_scene)
-        xplayer.hpgl2_to_drawing(self._player, self._backend)
+        xplayer.hpgl2_to_drawing(
+            self._player, self._backend, bg_color=bg_color, override=override
+        )
         self._backend.finalize()
         self._view.end_loading(new_scene)
         self._view.buffer_scene_rect()
@@ -57,6 +65,15 @@ class HPGL2Widget(QtWidgets.QWidget):
 
 SPACING = 20
 DEFAULT_DPI = 72
+COLOR_SCHEMA = [
+    "Default",
+    "Black on White",
+    "White on Black",
+    "Monochrome Light",
+    "Monochrome Dark",
+    "Blueprint High Contrast",
+    "Blueprint Low Contrast",
+]
 
 
 class HPGL2Viewer(QtWidgets.QMainWindow):
@@ -67,6 +84,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self._player: api.Player | None = None
         self._bbox: BoundingBox2d = BoundingBox2d()
         self._page_rotation = 0
+        self._color_schema = 0
 
         self.page_size_label = QtWidgets.QLabel()
         self.png_size_label = QtWidgets.QLabel()
@@ -86,6 +104,10 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self.rotation_combo_box.addItems(["0", "90", "180", "270"])
         self.rotation_combo_box.currentIndexChanged.connect(self.update_rotation)
 
+        self.color_combo_box = QtWidgets.QComboBox()
+        self.color_combo_box.addItems(COLOR_SCHEMA)
+        self.color_combo_box.currentIndexChanged.connect(self.update_colors)
+
         self.scaling_factor_line_edit.editingFinished.connect(self.update_sidebar)
         self.dpi_line_edit.editingFinished.connect(self.update_sidebar)
 
@@ -102,6 +124,19 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self.setWindowTitle(VIEWER_NAME)
         self.resize(1600, 900)
         self.show()
+
+    def reset_values(self):
+        self.scaling_factor_line_edit.setText("1")
+        self.dpi_line_edit.setText(str(DEFAULT_DPI))
+        self.flip_x_check_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
+        self.flip_y_check_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
+        self.rotation_combo_box.setCurrentIndex(0)
+        self.reset_color_schema()
+        self._page_rotation = 0
+        self.update_view()
+
+    def reset_color_schema(self):
+        self.color_combo_box.setCurrentIndex(0)
 
     def make_sidebar(self) -> QtWidgets.QWidget:
         sidebar = QtWidgets.QWidget()
@@ -133,6 +168,11 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         h_layout.addWidget(self.flip_y_check_box)
         group.setLayout(h_layout)
         v_layout.addWidget(group)
+
+        h_layout = QtWidgets.QHBoxLayout()
+        h_layout.addWidget(QtWidgets.QLabel("Colors:"))
+        h_layout.addWidget(self.color_combo_box)
+        v_layout.addLayout(h_layout)
 
         v_layout.addSpacing(SPACING)
 
@@ -199,6 +239,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             return
         self._player = self._cad.player
         self._bbox = self._player.bbox()
+        self.reset_color_schema()
         self.update_sidebar()
         self.setWindowTitle(f"{VIEWER_NAME} - " + str(filename))
 
@@ -259,6 +300,31 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             self._page_rotation = rotation
             self.update_view()
 
+    def update_colors(self, index: int):
+        if index == self._color_schema:
+            return
+        self._color_schema = index
+        if index == 0:
+            self._cad.replay()
+        elif index == 1:
+            self._cad.replay(bg_color="#ffffff", override=xplayer.map_color("#000000"))
+        elif index == 2:
+            self._cad.replay(bg_color="#000000", override=xplayer.map_color("#ffffff"))
+        elif index == 3:  # monochrome light
+            self._cad.replay(
+                bg_color="#ffffff", override=xplayer.map_monochrome(dark_mode=False)
+            )
+        elif index == 4:  # monochrome dark
+            self._cad.replay(
+                bg_color="#000000", override=xplayer.map_monochrome(dark_mode=True)
+            )
+        elif index == 5:  # blueprint high contrast
+            self._cad.replay(bg_color="#192c64", override=xplayer.map_color("#e9ebf3"))
+        elif index == 6:  # blueprint low contrast
+            self._cad.replay(bg_color="#243f8f", override=xplayer.map_color("#bdc5dd"))
+
+        self.update_view()
+
     def make_transform(self):
         if self._page_rotation == 0:
             m = Matrix44()
@@ -269,15 +335,6 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         sy = 1 if self.get_flip_y() else -1
         m @= Matrix44.scale(sx, sy, 1)
         return QtGui.QTransform(*m.get_2d_transformation())
-
-    def reset_values(self):
-        self.scaling_factor_line_edit.setText("1")
-        self.dpi_line_edit.setText(str(DEFAULT_DPI))
-        self.flip_x_check_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
-        self.flip_y_check_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
-        self.rotation_combo_box.setCurrentIndex(0)
-        self._page_rotation = 0
-        self.update_view()
 
     def show_message(self, msg: str) -> None:
         self.message_label.setText(msg)
