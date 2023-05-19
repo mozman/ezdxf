@@ -39,12 +39,11 @@ class HPGL2Widget(QtWidgets.QWidget):
     def player(self) -> api.Player:
         return self._player.copy()
 
-    def plot(self, data: bytes, reset_view: bool = True) -> None:
+    def plot(self, data: bytes) -> None:
         self._reset_backend()
         self._player: api.Player = api.record_plotter_output(
             data, 0, 1.0, 1.0, api.MergeControl.AUTO
         )
-        self.replay(reset_view=reset_view)
 
     def replay(
         self, bg_color="#ffffff", override=None, reset_view: bool = True
@@ -131,12 +130,8 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self.flip_x_check_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
         self.flip_y_check_box.setCheckState(QtCore.Qt.CheckState.Unchecked)
         self.rotation_combo_box.setCurrentIndex(0)
-        self.reset_color_schema()
         self._page_rotation = 0
         self.update_view()
-
-    def reset_color_schema(self):
-        self.color_combo_box.setCurrentIndex(0)
 
     def make_sidebar(self) -> QtWidgets.QWidget:
         sidebar = QtWidgets.QWidget()
@@ -239,7 +234,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             return
         self._player = self._cad.player
         self._bbox = self._player.bbox()
-        self.reset_color_schema()
+        self.update_colors(self._color_schema)
         self.update_sidebar()
         self.setWindowTitle(f"{VIEWER_NAME} - " + str(filename))
 
@@ -301,8 +296,6 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             self.update_view()
 
     def update_colors(self, index: int):
-        if index == self._color_schema:
-            return
         self._color_schema = index
         if index == 0:
             self._cad.replay()
