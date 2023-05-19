@@ -226,15 +226,10 @@ class CADWidget(qw.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(view)
         self.setLayout(layout)
-
         self._view = view
         self._view.closing.connect(self.close)
-
         self._config = config
         self._bbox_cache = ezdxf.bbox.Cache()
-
-        # Avoid using Optional[...], otherwise mypy requires None checks
-        # everywhere!
         self._doc: Drawing = None  # type: ignore
         self._render_context: RenderContext = None  # type: ignore
         self._visible_layers: set[str] = set()
@@ -394,7 +389,6 @@ class CADViewer(qw.QMainWindow):
         container.setCollapsible(1, True)
         w = container.width()
         container.setSizes([int(3 * w / 4), int(w / 4)])
-
         self.setWindowTitle("CAD Viewer")
         self.resize(1600, 900)
         self.show()

@@ -4,8 +4,7 @@
 from __future__ import annotations
 import os
 
-from ezdxf.addons.xqt import QtWidgets as qw, QtGui as qg
-from ezdxf.addons.xqt import QAction
+from ezdxf.addons.xqt import QtWidgets, QtGui
 from ezdxf.addons.drawing.qtviewer import CADGraphicsView
 from ezdxf.addons.drawing.pyqt import PyQtPlaybackBackend
 from ezdxf.addons import xplayer
@@ -14,10 +13,10 @@ from . import api
 VIEWER_NAME = "HPGL/2 Viewer"
 
 
-class HPGL2Widget(qw.QWidget):
+class HPGL2Widget(QtWidgets.QWidget):
     def __init__(self, view: CADGraphicsView) -> None:
         super().__init__()
-        layout = qw.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(view)
         self.setLayout(layout)
@@ -39,7 +38,7 @@ class HPGL2Widget(qw.QWidget):
             data, 0, 1.0, 1.0, api.MergeControl.AUTO
         )
         self._view.begin_loading()
-        new_scene = qw.QGraphicsScene()
+        new_scene = QtWidgets.QGraphicsScene()
         self._backend.set_scene(new_scene)
         xplayer.hpgl2_to_drawing(self._recorder, self._backend)
         self._backend.finalize()
@@ -49,20 +48,39 @@ class HPGL2Widget(qw.QWidget):
             self._view.fit_to_scene()
 
 
-class HPGL2Viewer(qw.QMainWindow):
+class HPGL2Viewer(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self._cad = HPGL2Widget(CADGraphicsView())
         self._view = self._cad.view
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
 
-        menu = self.menuBar()
-        select_doc_action = QAction("Select Plot File", self)
-        select_doc_action.triggered.connect(self._select_plot_file)
-        menu.addAction(select_doc_action)
-        self.setCentralWidget(self._cad)
+        container = QtWidgets.QWidget()
+        container.setLayout(layout)
+        self.setCentralWidget(container)
+
+        layout.addWidget(self._cad)
+        sidebar = self.make_sidebar()
+        layout.addWidget(sidebar)
         self.setWindowTitle(VIEWER_NAME)
         self.resize(1600, 900)
         self.show()
+
+    def make_sidebar(self):
+        sidebar = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(10, 0, 10, 0)
+        sidebar.setLayout(layout)
+
+        policy = QtWidgets.QSizePolicy()
+        policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Fixed)
+        sidebar.setSizePolicy(policy)
+
+        open_button = QtWidgets.QPushButton("Open HPGL/2 File")
+        open_button.clicked.connect(self._select_plot_file)
+        layout.addWidget(open_button)
+        return sidebar
 
     def load_plot_file(self, path: str | os.PathLike) -> None:
         try:
@@ -70,10 +88,10 @@ class HPGL2Viewer(qw.QMainWindow):
                 data = fp.read()
             self.set_plot_data(data, path)
         except IOError as e:
-            qw.QMessageBox.critical(self, "Loading Error", str(e))
+            QtWidgets.QMessageBox.critical(self, "Loading Error", str(e))
 
     def _select_plot_file(self) -> None:
-        path, _ = qw.QFileDialog.getOpenFileName(
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self,
             caption="Select HPGL/2 Plot File",
             filter="Plot Files (*.plt)",
@@ -85,5 +103,5 @@ class HPGL2Viewer(qw.QMainWindow):
         self._cad.plot(data)
         self.setWindowTitle(f"{VIEWER_NAME} - " + str(filename))
 
-    def resizeEvent(self, event: qg.QResizeEvent) -> None:
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         self._view.fit_to_scene()

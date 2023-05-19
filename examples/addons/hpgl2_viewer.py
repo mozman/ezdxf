@@ -18,6 +18,7 @@ def main():
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
     app = QtWidgets.QApplication(sys.argv)
     viewer = HPGL2Viewer()
+    #viewer.show()
     viewer.load_plot_file(HPGL2_EXAMPLES / "BF_ISO.plt")
     sys.exit(app.exec())
 
