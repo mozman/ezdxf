@@ -10,7 +10,12 @@ import pathlib
 
 from ezdxf import options
 from .font_face import FontFace
-from .font_manager import FontManager, SUPPORTED_TTF_TYPES, FontNotFoundError, UnsupportedFont
+from .font_manager import (
+    FontManager,
+    SUPPORTED_TTF_TYPES,
+    FontNotFoundError,
+    UnsupportedFont,
+)
 from .font_measurements import FontMeasurements
 from .glyphs import GlyphPath, Glyphs
 
@@ -509,7 +514,12 @@ class TrueTypeFont(_CachedFont):
             return self._glyph_caches[key]
         except KeyError:
             pass
-        cache = TTFontRenderer(font_manager.get_ttf_font(ttf))
+        try:
+            cache = TTFontRenderer(font_manager.get_ttf_font(ttf))
+        except UnsupportedFont:
+            fallback_font_name = font_manager.fallback_font_name()
+            logger.info(f"replacing unsupported font '{ttf}' by '{fallback_font_name}'")
+            cache = TTFontRenderer(font_manager.get_ttf_font(fallback_font_name))
         self._glyph_caches[key] = cache
         return cache
 

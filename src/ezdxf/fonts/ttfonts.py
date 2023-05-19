@@ -6,7 +6,7 @@ from fontTools.pens.basePen import BasePen
 from fontTools.ttLib import TTFont
 
 from ezdxf.math import Matrix44, UVec, BoundingBox2d
-from .font_manager import FontManager
+from .font_manager import FontManager, UnsupportedFont
 from .font_measurements import FontMeasurements
 from .glyphs import GlyphPath, Glyphs
 
@@ -75,6 +75,8 @@ class TTFontRenderer(Glyphs):
         self._glyph_width_cache: dict[str, float] = dict()
         self.font = font
         self.cmap = self.font.getBestCmap()
+        if self.cmap is None:
+            raise UnsupportedFont(f"font '{self.font_name}' has no character map.")
         self.glyph_set = self.font.getGlyphSet()
         self.kerning = NoKerning()
         if kerning:
