@@ -13,9 +13,7 @@ The command line script `ezdxf` launches various sub-commands:
 ``strip``       Strip comments and THUMBNAILIMAGE section from DXF files
 ``config``      Manage config files
 ``info``        Show information and optional stats of DXF files as loaded by ezdxf
-``plt2dxf``     Convert HPGL/2 plot files to DXF
-``plt2svg``     Convert HPGL/2 plot files to SVG
-``plt2pdf``     Convert HPGL/2 plot files to PDF
+``hpgl``        View and/or convert HPGL/2 plot files to DXF, SVG or PDF
 =============== ====================================================================
 
 The help option ``-h`` is supported by the main script and all sub-commands:
@@ -626,14 +624,18 @@ Show the *ezdxf* version and configuration:
     Documentation of the :mod:`ezdxf.options` module and the
     :ref:`environment_variables`.
 
-.. _plt2dxf_command:
+.. _hpgl_command:
 
-plt2dxf
--------
+HPGL/2 Viewer/Converter
+-----------------------
 
 .. versionadded:: 1.1
 
-The ``plt2dxf`` command converts `HPGL/2`_ plot files to DXF.
+The ``hpgl`` command shows and/or converts `HPGL/2`_ plot files to DXF, SVG or PDF.
+
+DXF
+~~~
+
 The page content is created at the origin of the modelspace and 1 drawing unit is 1
 plot unit (1 plu = 0.025mm) unless scaling values are provided.
 
@@ -650,6 +652,21 @@ RGB color is lost because the RGB color always has the higher priority over the
 The first paperspace layout "Layout0" is set up to print the entire modelspace on one
 sheet, the size of the page is the size of the original plot file in millimeters.
 
+SVG
+~~~
+
+The plot units are mapped 1:1 to ``viewBox`` units and the size of image is the size of
+the original plot file in millimeters.
+
+PDF
+~~~
+
+The plot units are converted to PDF units (1/72 inch) so the size of image is the
+size of the original plot file in millimeters.
+
+All Formats
+~~~~~~~~~~~
+
 HPGL/2's merge control works at the pixel level and cannot be replicated by DXF,
 but to prevent fillings from obscuring text, the filled polygons are
 sorted by luminance - this can be forced or disabled by the ``--merge_control`` option.
@@ -662,99 +679,38 @@ file or not, so be careful.
 
 .. code-block:: Text
 
-    C:\> ezdxf plt2dxf -h
-    usage: ezdxf plt2dxf [-h] [-r {0,90,180,270}] [-x SX] [-y SY] [-m {0,1,2}] [-f] [--aci]
-                         [--map_black_to_white]
-                         FILE [FILE ...]
+    C:\> ezdxf hpgl -h
+    usage: ezdxf hpgl [-h] [-e FORMAT] [-r {0,90,180,270}] [-x SX] [-y SY] [-m {0,1,2}]
+                      [-f] [--aci] [--map_black_to_white]
+                      [FILE]
 
     positional arguments:
-      FILE                  convert HPGL/2 plot files to DXF, wildcards (*, ?) supported
+      FILE                  view and/or convert HPGL/2 plot files, wildcards (*, ?)
+                            supported in command line mode
 
     options:
       -h, --help            show this help message and exit
+      -e FORMAT, --export FORMAT
+                            convert HPGL/2 plot file to SVG, PDF or DXF from the
+                            command line (no gui)
       -r {0,90,180,270}, --rotate {0,90,180,270}
-                            rotate page about 90, 180 or 270 degrees
-      -x SX, --scale_x SX   scale page in x-axis direction, use negative values to mirror page
-      -y SY, --scale_y SY   scale page in y-axis direction, use negative values to mirror page
+                            rotate page about 90, 180 or 270 degrees (no gui)
+      -x SX, --scale_x SX   scale page in x-axis direction, use negative values to
+                            mirror page, (no gui)
+      -y SY, --scale_y SY   scale page in y-axis direction, use negative values to
+                            mirror page (no gui)
       -m {0,1,2}, --merge_control {0,1,2}
-                            provides control over the order of filled polygons, 0=off (print
-                            order), 1=luminance (order by luminance), 2=auto (default)
-      -f, --force           inserts the mandatory 'enter HPGL/2 mode' escape sequence into the
-                            data stream; use this flag when no HPGL/2 data was found and you are
-                            sure the file is a HPGL/2 plot file
-      --aci                 use pen numbers as ACI colors
-      --map_black_to_white  map black RGB plot colors (and only real black (0, 0, 0)) to white
-                            RGB, does not affect ACI colors
+                            provides control over the order of filled polygons, 0=off
+                            (print order), 1=luminance (order by luminance), 2=auto
+                            (default)
+      -f, --force           inserts the mandatory 'enter HPGL/2 mode' escape sequence
+                            into the data stream; use this flag when no HPGL/2 data was
+                            found and you are sure the file is a HPGL/2 plot file
+      --aci                 use pen numbers as ACI colors (DXF only)
+      --map_black_to_white  map black RGB plot colors to white RGB, does not affect ACI
+                            colors (DXF only)
 
-    Note that plot files are intended for plotting on white paper.
-
-.. _plt2svg_command:
-
-plt2svg
--------
-
-.. versionadded:: 1.1
-
-The ``plt2svg`` command converts `HPGL/2`_ plot files to `SVG`_.
-The plot units are mapped 1:1 to ``viewBox`` units and the size of image is the size of
-the original plot file in millimeters. For more information about the
-``--merge_control`` and the ``-force`` option see `plt2dxf`_ command.
-
-.. code-block:: Text
-
-    C:\> ezdxf plt2svg -h
-    usage: ezdxf plt2svg [-h] [-r {0,90,180,270}] [-x SX] [-y SY] [-m {0,1,2}] [-f]
-                         FILE [FILE ...]
-
-    positional arguments:
-      FILE                  convert HPGL/2 plot files to SVG, wildcards (*, ?) supported
-
-    options:
-      -h, --help            show this help message and exit
-      -r {0,90,180,270}, --rotate {0,90,180,270}
-                            rotate page about 90, 180 or 270 degrees
-      -x SX, --scale_x SX   scale page in x-axis direction, use negative values to mirror page
-      -y SY, --scale_y SY   scale page in y-axis direction, use negative values to mirror page
-      -m {0,1,2}, --merge_control {0,1,2}
-                            provides control over the order of filled polygons, 0=off (print
-                            order), 1=luminance (order by luminance), 2=auto (default)
-      -f, --force           inserts the mandatory 'enter HPGL/2 mode' escape sequence into the
-                            data stream; use this flag when no HPGL/2 data was found and you are
-                            sure the file is a HPGL/2 plot file
-
-plt2pdf
--------
-
-.. versionadded:: 1.1
-
-The ``plt2pdf`` command converts `HPGL/2`_ plot files to `PDF`_.
-The plot units are converted to PDF units (1/72 inch) so the size of image is the
-size of the original plot file in millimeters. For more information about the
-``--merge_control`` and the ``-force`` option see `plt2dxf`_ command.
-
-This command requires the Python package `PyMuPDF`_.
-
-.. code-block:: Text
-
-    C:\> ezdxf plt2pdf -h
-    usage: ezdxf plt2pdf [-h] [-r {0,90,180,270}] [-x SX] [-y SY] [-m {0,1,2}] [-f]
-                         FILE [FILE ...]
-
-    positional arguments:
-      FILE                  convert HPGL/2 plot files to PDF, wildcards (*, ?) supported
-
-    options:
-      -h, --help            show this help message and exit
-      -r {0,90,180,270}, --rotate {0,90,180,270}
-                            rotate page about 90, 180 or 270 degrees
-      -x SX, --scale_x SX   scale page in x-axis direction, use negative values to mirror page
-      -y SY, --scale_y SY   scale page in y-axis direction, use negative values to mirror page
-      -m {0,1,2}, --merge_control {0,1,2}
-                            provides control over the order of filled polygons, 0=off (print
-                            order), 1=luminance (order by luminance), 2=auto (default)
-      -f, --force           inserts the mandatory 'enter HPGL/2 mode' escape sequence into the
-                            data stream; use this flag when no HPGL/2 data was found and you are
-                            sure the file is a HPGL/2 plot file
+    Note that plot files are intended to be plotted on white paper.
 
 .. _PyMuPDF: https://pypi.org/project/PyMuPDF/
 .. _HPGL/2: https://en.wikipedia.org/wiki/HP-GL

@@ -13,10 +13,8 @@ Version 1.1.0b1 - dev
 - NEW: `fontTools` is a hard dependency
 - NEW: `ezdxf.path.Path2d()` class, `Path` class with `Vec2` vertices
 - NEW: `ezdxf.xref` new core module to manage XREFs and load resources from DXF files
-- NEW: `ezdxf.addons.hpgl2` add-on to convert HPGL/2 plot files to DXF or SVG
-- NEW: `ezdxf plt2dxf` command to convert HPGL/2 plot files to DXF
-- NEW: `ezdxf plt2svg` command to convert HPGL/2 plot files to SVG
-- NEW: `ezdxf plt2pdf` command to convert HPGL/2 plot files to PDF
+- NEW: `ezdxf.addons.hpgl2` add-on to convert HPGL/2 plot files to DXF, SVG, PDF, PNG
+- NEW: `ezdxf hpgl` command to view and/or convert HPGL/2 plot files to various formats: DXF, SVG, PDF
 - NEW: native `SVG` backend for the `drawing` add-on
 - NEW: `ColorPolicy` and `BackgroundPolicy` configuration settings for the `drawing` 
   add-on to change/override foreground- and background color by the frontend 

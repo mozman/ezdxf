@@ -78,10 +78,7 @@ class DataRecord(NamedTuple):
 
 
 class Recorder(Backend):
-    """The :class:`Recorder` class records the output of the :class:`Plotter` and
-    can replay this recording on another backend. The class can modify the recorded
-    output.
-    """
+    """The :class:`Recorder` class records the output of the :class:`Plotter` class."""
 
     def __init__(self) -> None:
         self._records: list[DataRecord] = []
@@ -89,6 +86,12 @@ class Recorder(Backend):
         self._pens: Sequence[Pen] = []
 
     def player(self) -> Player:
+        """Returns a :class:`Player` instance with the original recordings. Make a copy
+        of this player to protect the original recordings from being modified::
+
+            safe_player = recorder.player().copy()
+
+        """
         return Player(self._records, self._properties)
 
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
@@ -110,12 +113,16 @@ class Recorder(Backend):
 
 
 class Player:
+    """This class replays the recordings of the :class:`Recorder` class on another
+    backend. The class can modify the recorded output.
+    """
     def __init__(self, records: list[DataRecord], properties: dict[int, Properties]):
         self._records: list[DataRecord] = records
         self._properties: dict[int, Properties] = properties
         self._bbox = BoundingBox2d()
 
     def __copy__(self) -> Self:
+        """Returns a new :class:`Player` instance with a copy of recordings."""
         records = copy.deepcopy(self._records)
         player = self.__class__(records, self._properties)
         player._bbox = self._bbox.copy()

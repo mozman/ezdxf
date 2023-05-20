@@ -208,10 +208,12 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         v_layout.addWidget(self.message_label)
         return sidebar
 
-    def load_plot_file(self, path: str | os.PathLike) -> None:
+    def load_plot_file(self, path: str | os.PathLike, force=False) -> None:
         try:
             with open(path, "rb") as fp:
                 data = fp.read()
+            if force:
+                data = b"%1B" + data
             self.set_plot_data(data, path)
         except IOError as e:
             QtWidgets.QMessageBox.critical(self, "Loading Error", str(e))

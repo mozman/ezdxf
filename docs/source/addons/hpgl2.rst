@@ -156,6 +156,13 @@ Backends
 
 .. autoclass:: Recorder
 
+    .. automethod:: player
+
+
+.. autoclass:: Player
+
+    .. automethod:: copy
+
     .. automethod:: recordings
 
     .. automethod:: replay

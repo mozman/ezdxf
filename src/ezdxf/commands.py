@@ -1,6 +1,8 @@
 #  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
+import pathlib
 from typing import Callable, Optional, TYPE_CHECKING, Type
 import abc
 import sys
@@ -847,174 +849,185 @@ def make_plt2fmt_parser(subparsers, name, fmt):
 
 
 @register
-class Plt2Dxf(Command):
-    """Launcher sub-command: plt2dxf"""
+class HPGL(Command):
+    """Launcher sub-command: hpgl"""
 
-    NAME = "plt2dxf"
+    NAME = "hpgl"
 
     @staticmethod
     def add_parser(subparsers):
-        parser = make_plt2fmt_parser(subparsers, Plt2Dxf.NAME, "DXF")
-        parser.epilog = (
-            "Note that plot files are intended to be plotted on white paper."
+        parser = subparsers.add_parser(
+            HPGL.NAME, help=f"view and/or convert HPGL/2 plot files to various formats"
+        )
+        parser.add_argument(
+            "file",
+            metavar="FILE",
+            nargs="?",
+            default="",
+            help=f"view and/or convert HPGL/2 plot files, wildcards (*, ?) supported in command line mode",
+        )
+        parser.add_argument(
+            "-e",
+            "--export",
+            metavar="FORMAT",
+            required=False,
+            help=f"convert HPGL/2 plot file to SVG, PDF or DXF from the command line (no gui)",
+        )
+        parser.add_argument(
+            "-r",
+            "--rotate",
+            type=int,
+            choices=(0, 90, 180, 270),
+            default=0,
+            required=False,
+            help="rotate page about 90, 180 or 270 degrees (no gui)",
+        )
+        parser.add_argument(
+            "-x",
+            "--scale_x",
+            type=float,
+            metavar="SX",
+            default=1.0,
+            required=False,
+            help="scale page in x-axis direction, use negative values to mirror page, (no gui)",
+        )
+        parser.add_argument(
+            "-y",
+            "--scale_y",
+            type=float,
+            metavar="SY",
+            default=1.0,
+            required=False,
+            help="scale page in y-axis direction, use negative values to mirror page (no gui)",
+        )
+        parser.add_argument(
+            "-m",
+            "--merge_control",
+            type=int,
+            required=False,
+            default=2,
+            choices=(0, 1, 2),
+            help="provides control over the order of filled polygons, 0=off (print order), "
+            "1=luminance (order by luminance), 2=auto (default)",
+        )
+        parser.add_argument(
+            "-f",
+            "--force",
+            action="store_true",
+            required=False,
+            help="inserts the mandatory 'enter HPGL/2 mode' escape sequence into the data "
+            "stream; use this flag when no HPGL/2 data was found and you are sure the "
+            "file is a HPGL/2 plot file",
         )
         parser.add_argument(
             "--aci",
             action="store_true",
             required=False,
-            help="use pen numbers as ACI colors",
+            help="use pen numbers as ACI colors (DXF only)",
         )
         parser.add_argument(
             "--map_black_to_white",
             action="store_true",
             required=False,
-            help="map black RGB plot colors (and only real black (0, 0, 0)) to white RGB, "
-            "does not affect ACI colors",
+            help="map black RGB plot colors to white RGB, does not affect ACI colors (DXF only)",
+        )
+        parser.epilog = (
+            "Note that plot files are intended to be plotted on white paper."
         )
 
     @staticmethod
     def run(args):
-        from ezdxf.addons.hpgl2 import api as hpgl2
-        from ezdxf.addons.hpgl2.dxf_backend import ColorMode
-
-        def _convert(filepath: Path) -> None:
-            msg = f"converting HPGL/2 plot file to DXF: {filename}"
-            print(msg)
-            try:
-                data = filepath.read_bytes()
-            except IOError as e:
-                print(str(e), file=sys.stderr)
-                return
-            if args.force:
-                data = b"%1B" + data
-
-            color_mode = ColorMode.ACI if args.aci else ColorMode.RGB
-            doc = hpgl2.to_dxf(
-                data,
-                rotation=args.rotate,
-                sx=args.scale_x,
-                sy=args.scale_y,
-                color_mode=color_mode,
-                map_black_rgb_to_white_rgb=args.map_black_to_white,
-                merge_control=args.merge_control,
-            )
-            dxf_filepath = filepath.with_suffix(".dxf")
-            try:
-                doc.saveas(dxf_filepath)
-            except IOError as e:
-                print(str(e), file=sys.stderr)
-
-        for pattern in args.files:
-            names = list(glob.glob(pattern))
-            if len(names) == 0:
-                msg = f"File(s) '{pattern}' not found."
-                print(msg, file=sys.stderr)
-                logger.error(msg)
-                continue
-            for filename in names:
-                _convert(Path(filename))
+        if args.export:
+            for filename in glob.glob(args.file):
+                export_hpgl2(Path(filename), args)
+        else:
+            filename = ""
+            if args.file:
+                names = list(glob.glob(args.file))
+                if len(names):
+                    filename = names[0]
+            launch_hpgl2_viewer(filename, args.force)
 
 
-@register
-class Plt2Svg(Command):
-    """Launcher sub-command: plt2svg"""
+def export_hpgl2(filepath: Path, args) -> None:
+    from ezdxf.addons.hpgl2 import api as hpgl2
+    from ezdxf.addons.hpgl2.dxf_backend import ColorMode
 
-    NAME = "plt2svg"
+    fmt = args.export.upper()
+    start_msg = f"converting HPGL/2 plot file '{filepath.name}' to {fmt}"
+    try:
+        data = filepath.read_bytes()
+    except IOError as e:
+        print(str(e), file=sys.stderr)
+        return
+    if args.force:
+        data = b"%1B" + data
+    export_path = filepath.with_suffix(f".{fmt.lower()}")
+    if fmt == "DXF":
+        print(start_msg)
+        color_mode = ColorMode.ACI if args.aci else ColorMode.RGB
+        doc = hpgl2.to_dxf(
+            data,
+            rotation=args.rotate,
+            sx=args.scale_x,
+            sy=args.scale_y,
+            color_mode=color_mode,
+            map_black_rgb_to_white_rgb=args.map_black_to_white,
+            merge_control=args.merge_control,
+        )
+        try:
+            doc.saveas(export_path)
+        except IOError as e:
+            print(str(e), file=sys.stderr)
 
-    @staticmethod
-    def add_parser(subparsers):
-        make_plt2fmt_parser(subparsers, Plt2Svg.NAME, "SVG")
-
-    @staticmethod
-    def run(args):
-        from ezdxf.addons.hpgl2 import api as hpgl2
-
-        def _convert(filepath: Path) -> None:
-            msg = f"converting HPGL/2 plot file to SVG: {filename}"
-            print(msg)
-            logger.info(msg)
-            try:
-                data = filepath.read_bytes()
-            except IOError as e:
-                print(str(e), file=sys.stderr)
-                return
-
-            if args.force:
-                data = b"%1B" + data
-
-            svg_string = hpgl2.to_svg(
-                data,
-                rotation=args.rotate,
-                sx=args.scale_x,
-                sy=args.scale_y,
-                merge_control=args.merge_control,
-            )
-            svg_filepath = filepath.with_suffix(".svg")
-            try:
-                svg_filepath.write_text(svg_string)
-            except IOError as e:
-                print(str(e), file=sys.stderr)
-
-        for pattern in args.files:
-            names = list(glob.glob(pattern))
-            if len(names) == 0:
-                msg = f"File(s) '{pattern}' not found."
-                print(msg)
-                logger.error(msg)
-                continue
-            for filename in names:
-                _convert(Path(filename))
+    elif fmt == "SVG":
+        print(start_msg)
+        svg_string = hpgl2.to_svg(
+            data,
+            rotation=args.rotate,
+            sx=args.scale_x,
+            sy=args.scale_y,
+            merge_control=args.merge_control,
+        )
+        try:
+            export_path.write_text(svg_string)
+        except IOError as e:
+            print(str(e), file=sys.stderr)
+    elif fmt == "PDF":
+        print(start_msg)
+        pdf_bytes = hpgl2.to_pdf(
+            data,
+            rotation=args.rotate,
+            sx=args.scale_x,
+            sy=args.scale_y,
+            merge_control=args.merge_control,
+        )
+        try:
+            export_path.write_bytes(pdf_bytes)
+        except IOError as e:
+            print(str(e), file=sys.stderr)
+    else:
+        print(f"invalid export format: {fmt}")
+        exit(1)
+    print(f"file '{export_path.name}' successfully written")
 
 
-@register
-class Plt2Pdf(Command):
-    """Launcher sub-command: plt2pdf"""
+def launch_hpgl2_viewer(filename: str, force: bool) -> None:
+    try:
+        from ezdxf.addons.xqt import QtWidgets
+    except ImportError as e:
+        print(str(e))
+        exit(1)
+    from ezdxf.addons.hpgl2.viewer import HPGL2Viewer
 
-    NAME = "plt2pdf"
-
-    @staticmethod
-    def add_parser(subparsers):
-        make_plt2fmt_parser(subparsers, Plt2Pdf.NAME, "PDF")
-
-    @staticmethod
-    def run(args):
-        from ezdxf.addons.hpgl2 import api as hpgl2
-
-        def _convert(filepath: Path) -> None:
-            msg = f"converting HPGL/2 plot file to PDF: {filename}"
-            print(msg)
-            logger.info(msg)
-            try:
-                data = filepath.read_bytes()
-            except IOError as e:
-                print(str(e), file=sys.stderr)
-                return
-
-            if args.force:
-                data = b"%1B" + data
-
-            pdf_bytes = hpgl2.to_pdf(
-                data,
-                rotation=args.rotate,
-                sx=args.scale_x,
-                sy=args.scale_y,
-                merge_control=args.merge_control,
-            )
-            pdf_filepath = filepath.with_suffix(".pdf")
-            try:
-                pdf_filepath.write_bytes(pdf_bytes)
-            except IOError as e:
-                print(str(e), file=sys.stderr)
-
-        for pattern in args.files:
-            names = list(glob.glob(pattern))
-            if len(names) == 0:
-                msg = f"File(s) '{pattern}' not found."
-                print(msg)
-                logger.error(msg)
-                continue
-            for filename in names:
-                _convert(Path(filename))
+    signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
+    app = QtWidgets.QApplication(sys.argv)
+    set_app_icon(app)
+    viewer = HPGL2Viewer()
+    viewer.show()
+    if filename and os.path.exists(filename):
+        viewer.load_plot_file(filename, force=force)
+    sys.exit(app.exec())
 
 
 def set_app_icon(app):
