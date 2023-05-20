@@ -1,16 +1,18 @@
 # Copyright (c) 2023, Manfred Moitzi
 # License: MIT License
-# mypy: ignore_errors=True
 from __future__ import annotations
+from typing import Any
 import math
 import os
 import time
 
 from ezdxf.math import BoundingBox2d, Matrix44
+from ezdxf.addons import xplayer
 from ezdxf.addons.xqt import QtWidgets, QtGui, QtCore
+from ezdxf.addons.drawing import svg, layout
 from ezdxf.addons.drawing.qtviewer import CADGraphicsView
 from ezdxf.addons.drawing.pyqt import PyQtPlaybackBackend
-from ezdxf.addons import xplayer
+
 from . import api
 
 VIEWER_NAME = "HPGL/2 Viewer"
@@ -25,7 +27,7 @@ class HPGL2Widget(QtWidgets.QWidget):
         self.setLayout(layout)
         self._view = view
         self._view.closing.connect(self.close)
-        self._player: api.Player | None = None
+        self._player: api.Player = api.Player([], {})
         self._reset_backend()
 
     def _reset_backend(self) -> None:
@@ -41,7 +43,7 @@ class HPGL2Widget(QtWidgets.QWidget):
 
     def plot(self, data: bytes) -> None:
         self._reset_backend()
-        self._player: api.Player = api.record_plotter_output(
+        self._player = api.record_plotter_output(
             data, 0, 1.0, 1.0, api.MergeControl.AUTO
         )
 
@@ -55,7 +57,6 @@ class HPGL2Widget(QtWidgets.QWidget):
         xplayer.hpgl2_to_drawing(
             self._player, self._backend, bg_color=bg_color, override=override
         )
-        self._backend.finalize()
         self._view.end_loading(new_scene)
         self._view.buffer_scene_rect()
         if reset_view:
@@ -76,11 +77,11 @@ COLOR_SCHEMA = [
 
 
 class HPGL2Viewer(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._cad = HPGL2Widget(CADGraphicsView())
         self._view = self._cad.view
-        self._player: api.Player | None = None
+        self._player: api.Player = api.Player([], {})
         self._bbox: BoundingBox2d = BoundingBox2d()
         self._page_rotation = 0
         self._color_schema = 0
@@ -224,7 +225,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         if path:
             self.load_plot_file(path)
 
-    def set_plot_data(self, data: bytes, filename: str) -> None:
+    def set_plot_data(self, data: bytes, filename: str | os.PathLike) -> None:
         try:
             self._cad.plot(data)
         except api.Hpgl2Error:
@@ -297,25 +298,8 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
     def update_colors(self, index: int):
         self._color_schema = index
-        if index == 0:
-            self._cad.replay()
-        elif index == 1:
-            self._cad.replay(bg_color="#ffffff", override=xplayer.map_color("#000000"))
-        elif index == 2:
-            self._cad.replay(bg_color="#000000", override=xplayer.map_color("#ffffff"))
-        elif index == 3:  # monochrome light
-            self._cad.replay(
-                bg_color="#ffffff", override=xplayer.map_monochrome(dark_mode=False)
-            )
-        elif index == 4:  # monochrome dark
-            self._cad.replay(
-                bg_color="#000000", override=xplayer.map_monochrome(dark_mode=True)
-            )
-        elif index == 5:  # blueprint high contrast
-            self._cad.replay(bg_color="#192c64", override=xplayer.map_color("#e9ebf3"))
-        elif index == 6:  # blueprint low contrast
-            self._cad.replay(bg_color="#243f8f", override=xplayer.map_color("#bdc5dd"))
-
+        bg_color, override = replay_properties(index)
+        self._cad.replay(bg_color=bg_color, override=override)
         self.update_view()
 
     def make_transform(self):
@@ -359,7 +343,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         rotation = self._page_rotation
         sx = -scale if self.get_flip_x() else scale
         sy = -scale if self.get_flip_y() else scale
-        if rotation in (90, 270):  # ???
+        if rotation in (90, 270):
             sx, sy = sy, sx
         m = Matrix44.scale(sx, sy, 1)
         if rotation:
@@ -367,12 +351,19 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         return m
 
     def make_svg_string(self) -> str:
+        """Replays the HPGL/2 recordings on the SVGBackend of the drawing add-on."""
         player = self._player.copy()
         player.transform(self.get_export_matrix())
-        svg_backend = api.SVGBackend(player.bbox())
-        player.replay(svg_backend)
-        del player
-        return svg_backend.get_string()
+        size = player.bbox().size
+        svg_backend = svg.SVGBackend()
+        bg_color, override = replay_properties(self._color_schema)
+        xplayer.hpgl2_to_drawing(
+            player, svg_backend, bg_color=bg_color, override=override
+        )
+        del player  # free memory as soon as possible
+        # 40 plot units == 1mm
+        page = layout.Page(width=size.x / 40, height=size.y / 40)
+        return svg_backend.get_string(page)
 
     def export_pdf(self) -> None:
         print("export HPGL/2 plot file as PDF")
@@ -382,3 +373,20 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
     def export_dxf(self) -> None:
         print("export HPGL/2 plot file as DXF")
+
+
+def replay_properties(index: int) -> tuple[str, Any]:
+    bg_color, override = "#ffffff", None  # default
+    if index == 1:  # black on white
+        bg_color, override = "#ffffff", xplayer.map_color("#000000")
+    elif index == 2:  # white on black
+        bg_color, override = "#000000", xplayer.map_color("#ffffff")
+    elif index == 3:  # monochrome light
+        bg_color, override = "#ffffff", xplayer.map_monochrome(dark_mode=False)
+    elif index == 4:  # monochrome dark
+        bg_color, override = "#000000", xplayer.map_monochrome(dark_mode=True)
+    elif index == 5:  # blueprint high contrast
+        bg_color, override = "#192c64", xplayer.map_color("#e9ebf3")
+    elif index == 6:  # blueprint low contrast
+        bg_color, override = "#243f8f", xplayer.map_color("#bdc5dd")
+    return bg_color, override
