@@ -286,7 +286,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self.clear_message()
 
     def update_view(self):
-        self._view.setTransform(self.make_transform())
+        self._view.setTransform(self.view_transformation())
         self._view.fit_to_scene()
         self.update_sidebar()
 
@@ -298,11 +298,10 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
     def update_colors(self, index: int):
         self._color_schema = index
-        bg_color, override = replay_properties(index)
-        self._cad.replay(bg_color=bg_color, override=override)
+        self._cad.replay(*replay_properties(index))
         self.update_view()
 
-    def make_transform(self):
+    def view_transformation(self):
         if self._page_rotation == 0:
             m = Matrix44()
         else:
