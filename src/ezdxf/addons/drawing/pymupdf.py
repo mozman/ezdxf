@@ -189,13 +189,14 @@ class PyMuPdfRenderBackend(BackendInterface):
 
     def set_background(self, color: Color) -> None:
         rgb = self.resolve_color(color)
-        if color == (1.0, 1.0, 1.0):
+        opacity = alpha_to_opacity(color[7:9])
+        if color == (1.0, 1.0, 1.0) or opacity == 0.0:
             return
         shape = self.new_shape()
         shape.drawRect(
             [0, 0, self.page_width_in_pdf_units, self.page_height_in_pdf_units]
         )
-        shape.finish(width=None, color=None, fill=rgb)
+        shape.finish(width=None, color=None, fill=rgb, fill_opacity=opacity)
         shape.commit()
 
     def new_shape(self):
@@ -210,6 +211,7 @@ class PyMuPdfRenderBackend(BackendInterface):
             fill=None,
             lineJoin=1,
             lineCap=1,
+            stroke_opacity=alpha_to_opacity(properties.color[7:9]),
             closePath=close,
         )
 
@@ -218,6 +220,7 @@ class PyMuPdfRenderBackend(BackendInterface):
             width=None,
             color=None,
             fill=self.resolve_color(properties.color),
+            fill_opacity=alpha_to_opacity(properties.color[7:9]),
             lineJoin=1,
             lineCap=1,
             closePath=True,
@@ -233,7 +236,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         except KeyError:
             pass
         if self.lineweight_policy == LineweightPolicy.ABSOLUTE:
-            stroke_width = (
+            stroke_width = (  # in points (pt) = 1/72 inch
                 max(self.min_lineweight, width)
                 * MM_TO_PDF_UNITS
                 * self.lineweight_scaling
@@ -358,3 +361,14 @@ def map_lineweight_to_stroke_width(
     lineweight = max(min(lineweight, max_lineweight), min_lineweight) - min_lineweight
     factor = (max_stroke_width - min_stroke_width) / (max_lineweight - min_lineweight)
     return min_stroke_width + round(lineweight * factor, 1)
+
+
+def alpha_to_opacity(alpha: str) -> float:
+    # stroke-opacity: 0.0 = transparent; 1.0 = opaque
+    # alpha: "00" = transparent; "ff" = opaque
+    if len(alpha):
+        try:
+            return int(alpha, 16) / 255
+        except ValueError:
+            pass
+    return 1.0

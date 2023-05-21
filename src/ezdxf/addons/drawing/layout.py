@@ -18,8 +18,8 @@ class Units(enum.IntEnum):
 
     Attributes:
         inch: 25.4 mm
-        px: 1/72 inch
-        pt: 1/96 inch
+        px: 1/96 inch
+        pt: 1/72 inch
         mm:
         cm:
 

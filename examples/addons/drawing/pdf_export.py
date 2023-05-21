@@ -104,12 +104,12 @@ def export(filepath: pathlib.Path, layout_names=("Model",), scale=1):
         # content_extents = backend.bbox()
         config = Configuration(
             # blueprint schema:
-            # background_policy=BackgroundPolicy.CUSTOM,
-            # custom_bg_color="#002082",
-            # color_policy=ColorPolicy.CUSTOM,
-            # custom_fg_color="#ced8f7",
-            # lineweight_policy=LineweightPolicy.RELATIVE,
-            # lineweight_scaling=0.5,
+            background_policy=BackgroundPolicy.WHITE,
+            custom_bg_color="#002082",
+            color_policy=ColorPolicy.MONOCHROME_WHITE_BG,
+            custom_fg_color="#ced8f7",
+            lineweight_policy=LineweightPolicy.RELATIVE,
+            lineweight_scaling=0.5,
         )
 
         Frontend(RenderContext(doc), backend, config=config).draw_layout(dxf_layout)
@@ -151,8 +151,9 @@ def transparency():
 
 if __name__ == "__main__":
     # export(
-    #     pathlib.Path(r"C:\Users\mozman\Desktop\Outbox\valid_lineweights.dxf"), scale=100
+    #     pathlib.Path(r"C:\Source\dxftest\CADKitSamples\AEC Plan Elev Sample.dxf"),
+    #     ["Model", "PLAN", "SECTION"],
     # )
     export_cadkit_samples()
     # simple()
-    # transparency()
+    transparency()

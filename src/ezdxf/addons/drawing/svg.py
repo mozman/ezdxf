@@ -250,7 +250,6 @@ class SVGRenderBackend(BackendInterface):
         return stroke_width
 
     def set_background(self, color: Color) -> None:
-        # Do not alter the background color here!
         color_str = color[:7]
         opacity = alpha_to_opacity(color[7:9])
         self.background.set("fill", color_str)
