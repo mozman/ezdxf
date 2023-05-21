@@ -160,7 +160,7 @@ def luminance(color: RGB) -> float:
     r = float(color[0]) / 255
     g = float(color[1]) / 255
     b = float(color[2]) / 255
-    return round(math.sqrt(0.299 * r ** 2 + 0.587 * g ** 2 + 0.114 * b ** 2), 3)
+    return round(math.sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b), 3)
 
 
 # color codes are 1-indexed so an additional entry was put in the 0th position
