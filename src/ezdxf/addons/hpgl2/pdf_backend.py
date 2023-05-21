@@ -76,7 +76,7 @@ class PDFBackend(Backend):
             lineJoin=1,
             lineCap=1,
             closePath=False,
-            even_odd = properties.fill_method == FillMethod.EVEN_ODD,
+            even_odd=properties.fill_method == FillMethod.EVEN_ODD,
         )
         shape.commit()
 
