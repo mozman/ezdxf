@@ -234,7 +234,7 @@ class SVGRenderBackend(BackendInterface):
             return self._stroke_width_cache[width]
         except KeyError:
             pass
-        stroke_width = self.fixed_stroke_width
+            stroke_width = self.fixed_stroke_width
         policy = self.lineweight_policy
         if policy == LineweightPolicy.ABSOLUTE:
             if self.lineweight_scaling:

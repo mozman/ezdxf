@@ -1,4 +1,4 @@
-#  Copyright (c) 2020-2021, Manfred Moitzi
+#  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Union, NamedTuple
@@ -14,15 +14,15 @@ class RGB(NamedTuple):
     b: int
 
     def to_floats(self) -> tuple[float, float, float]:
-        """Returns the RGB color value as a tuple of floats in the range from 0 to 1."""
+        """Returns the RGB color value as a tuple of floats in the range [0, 1]."""
         return self.r / 255, self.g / 255, self.b / 255
 
     @classmethod
     def from_floats(cls, rgb: tuple[float, float, float]) -> Self:
-        """Returns the RGB integer tuple from floats int range from 0 to 1."""
-        r = max(min(255, round(rgb[0]*255)), 0)
-        g = max(min(255, round(rgb[1]*255)), 0)
-        b = max(min(255, round(rgb[2]*255)), 0)
+        """Returns the RGB integer tuple from floats in range [0, 1]."""
+        r = max(min(255, round(rgb[0] * 255)), 0)
+        g = max(min(255, round(rgb[1] * 255)), 0)
+        b = max(min(255, round(rgb[2] * 255)), 0)
         return cls(r, g, b)
 
     def to_hex(self) -> str:
@@ -165,14 +165,14 @@ def transparency2float(value: int) -> float:
 
 def int2rgb(value: int) -> RGB:
     """Split RGB integer `value` into (r, g, b) tuple."""
-    return (
+    return RGB(
         (value >> 16) & 0xFF,  # red
         (value >> 8) & 0xFF,  # green
         value & 0xFF,  # blue
     )
 
 
-def rgb2int(rgb: RGB) -> int:
+def rgb2int(rgb: RGB | tuple[int, int, int]) -> int:
     """Combined integer value from (r, g, b) tuple."""
     r, g, b = rgb
     return ((int(r) & 0xFF) << 16) | ((int(g) & 0xFF) << 8) | (int(b) & 0xFF)

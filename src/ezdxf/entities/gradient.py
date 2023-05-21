@@ -48,9 +48,9 @@ class Gradient:
         # 1 for gradient by default, 0 for Solid
         self.kind: int = kind
         self.number_of_colors: int = num
-        self.color1: RGB = (0, 0, 0)
+        self.color1: RGB = RGB(0, 0, 0)
         self.aci1: Optional[int] = None
-        self.color2: RGB = (255, 255, 255)
+        self.color2: RGB = RGB(255, 255, 255)
         self.aci2: Optional[int] = None
 
         # 1 = use a smooth transition between color1 and a specified tint

@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable
+from typing import Iterable, no_type_check
 import copy
 
 pdf_is_supported = True
@@ -104,13 +104,28 @@ class PyMuPdfRenderBackend(BackendInterface):
             }
         )
         self.settings = settings
-        self._stroke_width_cache: dict[float, int] = dict()
+        self._stroke_width_cache: dict[float, float] = dict()
         self.page_width_in_pdf_units = int(page.width_in_mm * MM_TO_PDF_UNITS)
         self.page_height_in_pdf_units = int(page.height_in_mm * MM_TO_PDF_UNITS)
-        # StrokeWidthPolicy.ABSOLUTE:
+        # LineweightPolicy.ABSOLUTE:
         self.min_lineweight = 0.05  # in mm, set by configure()
         self.lineweight_scaling = 1.0  # set by configure()
         self.lineweight_policy = LineweightPolicy.ABSOLUTE  # set by configure()
+
+        # LineweightPolicy.RELATIVE:
+        # max_stroke_width is determined as a certain percentage of settings.output_coordinate_space
+        self.max_stroke_width: float = max(
+            0.1, int(settings.output_coordinate_space * settings.max_stroke_width)
+        )
+        # min_stroke_width is determined as a certain percentage of max_stroke_width
+        self.min_stroke_width: float = max(
+            0.1, int(self.max_stroke_width * settings.min_stroke_width)
+        )
+        # LineweightPolicy.RELATIVE_FIXED:
+        # all strokes have a fixed stroke-width as a certain percentage of max_stroke_width
+        self.fixed_stroke_width: float = max(
+            0.1, int(self.max_stroke_width * settings.fixed_stroke_width)
+        )
         self.page = self.doc.new_page(
             -1, self.page_width_in_pdf_units, self.page_height_in_pdf_units
         )
@@ -133,9 +148,11 @@ class PyMuPdfRenderBackend(BackendInterface):
         return self.page.new_shape()
 
     def finish_line(self, shape, properties: BackendProperties, close: bool) -> None:
+        color = self.resolve_color(properties.color)
+        width = self.resolve_stroke_width(properties.lineweight)
         shape.finish(
-            width=self.resolve_stroke_width(properties.lineweight),
-            color=self.resolve_color(properties.color),
+            width=width,
+            color=color,
             fill=None,
             lineJoin=1,
             lineCap=1,
@@ -161,9 +178,17 @@ class PyMuPdfRenderBackend(BackendInterface):
             return self._stroke_width_cache[width]
         except KeyError:
             pass
-        stroke_width = max(self.min_lineweight, width) * MM_TO_PDF_UNITS
-        if self.lineweight_scaling:
-            stroke_width = stroke_width * self.lineweight_scaling
+        if self.lineweight_policy == LineweightPolicy.ABSOLUTE:
+            stroke_width = (
+                max(self.min_lineweight, width)
+                * MM_TO_PDF_UNITS
+                * self.lineweight_scaling
+            )
+        else:
+            stroke_width = map_lineweight_to_stroke_width(
+                width, self.min_stroke_width, self.max_stroke_width
+            )
+        self._stroke_width_cache[width] = stroke_width
         return stroke_width
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
@@ -215,12 +240,12 @@ class PyMuPdfRenderBackend(BackendInterface):
     def draw_filled_polygon(
         self, points: Iterable[AnyVec], properties: BackendProperties
     ) -> None:
-        points = Vec2.list(points)
-        if len(points) < 3:
+        vertices = Vec2.list(points)
+        if len(vertices) < 3:
             return
         # input coordinates are page coordinates in pdf units
         shape = self.new_shape()
-        shape.drawPolyline(points)
+        shape.drawPolyline(vertices)
         self.finish_filling(shape, properties)
         shape.commit()
 
@@ -245,6 +270,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         pass
 
 
+@no_type_check
 def add_path_to_shape(shape, path: Path2d, close: bool) -> None:
     start = path.start
     sub_path_start = start
@@ -265,3 +291,16 @@ def add_path_to_shape(shape, path: Path2d, close: bool) -> None:
         last_point = end
     if close and not sub_path_start.isclose(last_point):
         shape.drawLine(last_point, sub_path_start)
+
+
+def map_lineweight_to_stroke_width(
+    lineweight: float,
+    min_stroke_width: float,
+    max_stroke_width: float,
+    min_lineweight=0.05,  # defined by DXF
+    max_lineweight=2.11,  # defined by DXF
+) -> float:
+    """Map the DXF lineweight in mm to stroke-width in viewBox coordinates."""
+    lineweight = max(min(lineweight, max_lineweight), min_lineweight) - min_lineweight
+    factor = (max_stroke_width - min_stroke_width) / (max_lineweight - min_lineweight)
+    return min_stroke_width + round(lineweight * factor, 1)

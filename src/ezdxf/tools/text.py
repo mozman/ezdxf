@@ -1535,7 +1535,7 @@ class MTextParser:
         if rgb_expr:
             # in reversed order!
             b, g, r = int2rgb(int(rgb_expr) & 0xFFFFFF)
-            ctx.rgb = r, g, b
+            ctx.rgb = RGB(r, g, b)
         self.consume_optional_terminator()
 
     def extract_float_expression(self, relative=False) -> str:

@@ -3,7 +3,6 @@
 from typing import Callable
 from typing_extensions import TypeAlias
 from ezdxf.entities import DXFGraphic
-from ezdxf.colors import RGB
 
 LayerName: TypeAlias = str
 Color: TypeAlias = str

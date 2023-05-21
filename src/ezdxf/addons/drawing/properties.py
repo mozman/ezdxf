@@ -16,9 +16,10 @@ import re
 import copy
 
 from ezdxf import options
+from ezdxf.colors import RGB
 from ezdxf.addons import acadctb
 from ezdxf.addons.drawing.config import Configuration
-from ezdxf.addons.drawing.type_hints import Color, RGB
+from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
 from ezdxf.entities import (
     Attrib,
@@ -929,7 +930,7 @@ def hex_to_rgb(hex_string: Color) -> RGB:
     r = int(hex_string[0:2], 16)
     g = int(hex_string[2:4], 16)
     b = int(hex_string[4:6], 16)
-    return r, g, b
+    return RGB(r, g, b)
 
 
 def set_color_alpha(color: Color, alpha: int) -> Color:

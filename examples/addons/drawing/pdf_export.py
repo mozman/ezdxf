@@ -65,7 +65,7 @@ wave = [
 ]
 
 
-def export(filepath: pathlib.Path, layout_names=("Model",)):
+def export(filepath: pathlib.Path, layout_names=("Model",), scale=1):
     print(f"\nprocessing: {filepath.name}")
     t0 = time.perf_counter()
     doc = ezdxf.readfile(filepath)
@@ -78,7 +78,7 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
         if layout_name == "Model":
             dxf_layout = doc.modelspace()
             page = layout.Page(0, 0, layout.Units.mm, layout.Margins.all(0))
-            settings = layout.Settings()
+            settings = layout.Settings(scale=scale)
         else:
             try:
                 dxf_layout = doc.paperspace(layout_name)
@@ -88,7 +88,7 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
             page = layout.Page.from_dxf_layout(dxf_layout)
             settings = layout.Settings(
                 fit_page=False,
-                scale=dxf_layout.get_plot_unit_scale_factor(),
+                scale=dxf_layout.get_plot_unit_scale_factor() * scale,
             )
 
         backend = pymupdf.PyMuPdfBackend()
@@ -97,22 +97,19 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
         # content_extents = backend.bbox()
         config = Configuration(
             # blueprint schema:
-            background_policy=BackgroundPolicy.CUSTOM,
-            custom_bg_color="#002082",
-            color_policy=ColorPolicy.CUSTOM,
-            custom_fg_color="#ced8f7",
-            lineweight_policy=LineweightPolicy.ABSOLUTE,
-            lineweight_scaling=0.5,
+            # background_policy=BackgroundPolicy.CUSTOM,
+            # custom_bg_color="#002082",
+            # color_policy=ColorPolicy.CUSTOM,
+            # custom_fg_color="#ced8f7",
+            # lineweight_policy=LineweightPolicy.RELATIVE,
+            # lineweight_scaling=0.5,
         )
 
-        Frontend(RenderContext(doc), backend, config=Configuration()).draw_layout(
-            dxf_layout
-        )
-
-        svg_string = backend.get_pdf_bytes(page, settings)
+        Frontend(RenderContext(doc), backend, config=config).draw_layout(dxf_layout)
+        pdf_bytes = backend.get_pdf_bytes(page, settings)
         t2 = time.perf_counter()
         print(f"render time: {t2 - t1: .3f} seconds")
-        (CWD / outname).write_bytes(svg_string)
+        (CWD / outname).write_bytes(pdf_bytes)
 
 
 def export_cadkit_samples():
@@ -146,6 +143,9 @@ def transparency():
 
 
 if __name__ == "__main__":
-    export_cadkit_samples()
+    export(
+        pathlib.Path(r"C:\Users\mozman\Desktop\Outbox\valid_lineweights.dxf"), scale=100
+    )
+    # export_cadkit_samples()
     # simple()
     # transparency()

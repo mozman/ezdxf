@@ -191,7 +191,7 @@ class DXFPolygon(DXFGraphic):
         try:
             return colors.int2rgb(int(color))  # type: ignore
         except ValueError:  # invalid data type
-            return 0, 0, 0
+            return RGB(0, 0, 0)
 
     @bgcolor.setter
     def bgcolor(self, rgb: RGB) -> None:
@@ -208,8 +208,8 @@ class DXFPolygon(DXFGraphic):
 
     def set_gradient(
         self,
-        color1: RGB = (0, 0, 0),
-        color2: RGB = (255, 255, 255),
+        color1: RGB = RGB(0, 0, 0),
+        color2: RGB = RGB(255, 255, 255),
         rotation: float = 0.0,
         centered: float = 0.0,
         one_color: int = 0,

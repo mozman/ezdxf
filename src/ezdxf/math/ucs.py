@@ -1,12 +1,12 @@
-# Copyright (c) 2018-2022 Manfred Moitzi
+# Copyright (c) 2018-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence, Iterable, Optional
 from ezdxf.math import Vec3, UVec, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
+from ezdxf.colors import RGB
 
 if TYPE_CHECKING:
     from ezdxf.layouts import BaseLayout
-    from ezdxf.colors import RGB
 
 __all__ = ["OCS", "UCS", "PassTroughUCS"]
 
@@ -15,7 +15,7 @@ def render_axis(
     layout: BaseLayout,
     start: UVec,
     points: Sequence[UVec],
-    colors: RGB = (1, 3, 5),
+    colors: RGB = RGB(1, 3, 5),
 ) -> None:
     for point, color in zip(points, colors):
         layout.add_line(start, point, dxfattribs={"color": color})
@@ -95,7 +95,7 @@ class OCS:
         self,
         layout: BaseLayout,
         length: float = 1,
-        colors: RGB = (1, 3, 5),
+        colors: RGB = RGB(1, 3, 5),
     ) -> None:
         """Render axis as 3D lines into a `layout`."""
         render_axis(
@@ -468,7 +468,7 @@ class UCS:
         self,
         layout: BaseLayout,
         length: float = 1,
-        colors: RGB = (1, 3, 5),
+        colors: RGB = RGB(1, 3, 5),
     ):
         """Render axis as 3D lines into a `layout`."""
         render_axis(

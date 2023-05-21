@@ -1,10 +1,10 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import NamedTuple, Iterable
 import dataclasses
 import enum
 import copy
+from ezdxf.colors import RGB
 
 
 class FillType(enum.IntEnum):
@@ -22,18 +22,6 @@ class FillMethod(enum.IntEnum):
 
     EVEN_ODD = 0
     NON_ZERO_WINDING = 1
-
-
-class RGB(NamedTuple):
-    """Named tuple representing an RGB color value."""
-
-    r: int
-    g: int
-    b: int
-
-    def to_floats(self) -> tuple[float, float, float]:
-        """Returns the RGB color value as a tuple of floats in the range from 0 to 1."""
-        return self.r / 255, self.g / 255, self.b / 255
 
 
 RGB_NONE = RGB(-1, -1, -1)
