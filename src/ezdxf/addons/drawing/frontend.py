@@ -19,6 +19,7 @@ import itertools
 import time
 
 import ezdxf.bbox
+from ezdxf.colors import RGB
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
@@ -1088,8 +1089,8 @@ def prepare_string_for_rendering(text: str, dxftype: str) -> str:
 
 
 def invert_color(color: Color) -> Color:
-    r, g, b = hex_to_rgb(color)
-    return rgb_to_hex((255 - r, 255 - g, 255 - b))
+    r, g, b = RGB.from_hex(color)
+    return RGB(255 - r, 255 - g, 255 - b).to_hex()
 
 
 def swap_bw(color: str) -> Color:
@@ -1102,12 +1103,11 @@ def swap_bw(color: str) -> Color:
 
 
 def color_to_monochrome(color: Color, invert=False) -> Color:
-    lum = luminance(hex_to_rgb(color))
+    lum = RGB.from_hex(color).luminance
+    gray = round(lum * 255)
     if invert:
-        gray = round((1.0 - lum) * 255)
-    else:
-        gray = round(lum * 255)
-    return rgb_to_hex((gray, gray, gray))
+        gray = 255 - gray
+    return RGB(gray, gray, gray).to_hex()
 
 
 def apply_color_policy(color: Color, policy: ColorPolicy, custom_color: Color) -> Color:

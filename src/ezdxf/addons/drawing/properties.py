@@ -20,7 +20,7 @@ from ezdxf.colors import RGB
 from ezdxf.addons import acadctb
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color
-from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
+from ezdxf.colors import DXF_DEFAULT_COLORS, int2rgb
 from ezdxf.entities import (
     Attrib,
     Insert,
@@ -72,8 +72,7 @@ OLE2FRAME_COLOR = "#89adba"  # arbitrary choice
 
 
 def is_dark_color(color: Color, dark: float = 0.2) -> bool:
-    luma = luminance(hex_to_rgb(color[:7]))
-    return luma <= dark
+    return RGB.from_hex(color).luminance <= dark
 
 
 class Filling:
@@ -159,12 +158,12 @@ class Properties:
     @property
     def rgb(self) -> RGB:
         """Returns color as RGB tuple."""
-        return hex_to_rgb(self.color[:7])  # ignore alpha if present
+        return RGB.from_hex(self.color)
 
     @property
     def luminance(self) -> float:
         """Returns perceived color luminance in range [0, 1] from dark to light."""
-        return luminance(self.rgb)
+        return self.rgb.luminance
 
 
 class BackendProperties(NamedTuple):
@@ -178,12 +177,12 @@ class BackendProperties(NamedTuple):
     @property
     def rgb(self) -> RGB:
         """Returns color as RGB tuple."""
-        return hex_to_rgb(self.color[:7])  # ignore alpha if present
+        return RGB.from_hex(self.color)
 
     @property
     def luminance(self) -> float:
         """Returns perceived color luminance in range [0, 1] from dark to light."""
-        return luminance(self.rgb)
+        return self.rgb.luminance
 
 
 class LayerProperties(Properties):

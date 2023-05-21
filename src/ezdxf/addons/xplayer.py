@@ -5,14 +5,10 @@ from __future__ import annotations
 from typing import Callable
 from ezdxf import path
 from ezdxf.math import Vec2
+from ezdxf.colors import RGB
 
 from ezdxf.addons.drawing.backend import BackendInterface
-from ezdxf.addons.drawing.properties import (
-    BackendProperties,
-    rgb_to_hex,
-    hex_to_rgb,
-    luminance,
-)
+from ezdxf.addons.drawing.properties import BackendProperties
 from ezdxf.addons.hpgl2 import api as hpgl2
 from ezdxf.addons.hpgl2.backend import (
     Properties as HPGL2Properties,
@@ -53,7 +49,7 @@ def hpgl2_to_drawing(
 def _make_drawing_backend_properties(properties: HPGL2Properties) -> BackendProperties:
     """Make BackendProperties() for the drawing add-on."""
     return BackendProperties(
-        color=rgb_to_hex(properties.pen_color),
+        color=properties.pen_color.to_hex(),
         lineweight=properties.pen_width,
         layer="0",
         pen=properties.pen_index,
@@ -84,10 +80,10 @@ def map_color(color: str) -> Callable[[BackendProperties], BackendProperties]:
 
 def map_monochrome(dark_mode=True) -> Callable[[BackendProperties], BackendProperties]:
     def to_gray(color: str) -> str:
-        gray = round(luminance(hex_to_rgb(color)) * 255)
+        gray = round(RGB.from_hex(color).luminance * 255)
         if dark_mode:
             gray = 255 - gray
-        return rgb_to_hex((gray, gray, gray))
+        return RGB(gray, gray, gray).to_hex()
 
     def _map_color(properties: BackendProperties) -> BackendProperties:
         color = properties.color

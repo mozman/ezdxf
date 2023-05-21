@@ -232,24 +232,6 @@ Properties
 
     .. attribute:: NONE_ZERO_WINDING
 
-
-.. autoclass:: ezdxf.addons.hpgl2.properties.RGB
-
-    .. attribute:: r
-
-        red color channel in the range form 0 to 255
-
-    .. attribute:: g
-
-        green color channel in the range form 0 to 255
-
-    .. attribute:: b
-
-        blue color channel in the range form 0 to 255
-
-    .. automethod:: to_floats
-
-
 Exceptions
 -----------
 
