@@ -35,9 +35,9 @@ class PyMuPdfBackend(recorder.Recorder):
         super().__init__()
         self._init_flip_y = True
 
-    def get_pdf_bytes(
+    def _get_replay(
         self, page: layout.Page, settings: layout.Settings = layout.Settings()
-    ) -> bytes:
+    ) -> PyMuPdfRenderBackend:
         """Returns the PDF document as bytes.
 
         Args:
@@ -58,7 +58,55 @@ class PyMuPdfBackend(recorder.Recorder):
         self._init_flip_y = False
         backend = self.make_backend(page, settings)
         player.replay(backend)
+        return backend
+
+    def get_pdf_bytes(
+        self, page: layout.Page, *, settings: layout.Settings = layout.Settings()
+    ) -> bytes:
+        """Returns the PDF document as bytes.
+
+        Args:
+            page: page definition
+            settings: layout settings
+        """
+        backend = self._get_replay(page, settings)
         return backend.get_pdf_bytes()
+
+    def get_pixmap_bytes(
+        self,
+        page: layout.Page,
+        *,
+        fmt="png",
+        settings: layout.Settings = layout.Settings(),
+        dpi: int = 72,
+        alpha=False,
+    ) -> bytes:
+        """Returns a pixel image as bytes, supported image formats:
+
+        === =========================
+        png Portable Network Graphics
+        ppm Portable Pixmap (no alpha channel)
+        pbm Portable Bitmap (no alpha channel)
+        === =========================
+
+        Args:
+            page: page definition
+            fmt: image format
+            settings: layout settings
+            dpi: output resolution in dots per inch
+            alpha: add alpha channel (transparency)
+
+        """
+        # psd does not work in PyMuPDF v1.22.3
+        if fmt not in ("png", "ppm", "pbm"):
+            raise ValueError(f"unsupported image format: '{fmt}'")
+        backend = self._get_replay(page, settings)
+        try:
+            pixmap = backend.get_pixmap(dpi=dpi, alpha=alpha)
+            return pixmap.tobytes(output=fmt)
+        except RuntimeError as e:
+            print(f"PyMuPDF Runtime Error: {str(e)}")
+            return b""
 
     @staticmethod
     def make_backend(
@@ -132,6 +180,12 @@ class PyMuPdfRenderBackend(BackendInterface):
 
     def get_pdf_bytes(self) -> bytes:
         return self.doc.tobytes()
+
+    def get_pixmap(self, dpi: int, alpha=False):
+        return self.page.get_pixmap(dpi=dpi, alpha=alpha)
+
+    def get_svg_image(self) -> bytes:
+        return self.page.get_svg_image()
 
     def set_background(self, color: Color) -> None:
         rgb = self.resolve_color(color)

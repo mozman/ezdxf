@@ -26,29 +26,6 @@ Add-ons
 -------
 
 - drawing add-on improvements: 
-  - (>v1.1) proper rendering pipeline: Frontend -> Stage0 -> ... -> Backend 
-    Introducing the Designer() class was the first step, but the implementation 
-    is not as flexible as required. Possible rendering stages:
-    - linetype rendering
-    - 3D text rendering as path-patches
-    - ortho-view projection (TOP, LEFT, FRONT, ...)
-    
-    The pipeline should be passed to the Frontend() class as component or 
-    set on the fly. The composition of the pipeline from various stages is a 
-    very important feature.
-  
-    REMINDER FOR MYSELF: Decoupling of the rendering stages and the pipeline 
-    is very important, the first proof of concept was too tightly 
-    coupled (viewport rendering)!!!!
-
-  - (>v1.1) Native PDF exporter
-    PyMuPDF was easy to use for in the HPGL/2 converter backend, it's fast, active 
-    maintained and for all plattforms as binary wheel available, only the documentation 
-    could be better. Really good, apart from the terrible license: AGPL
-    - https://pymupdf.readthedocs.io/en/latest/
-    - https://github.com/pymupdf/PyMuPDF
-    - https://pypi.org/project/PyMuPDF/
-  
   - (>v1.1) Support for `Layout.dxf.plot_layout_options` in export mode of 
     class `RenderContext`:
     - plot with plot-styles; disable loading of the ctb-table in set_currrent_layout()

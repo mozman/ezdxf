@@ -16,7 +16,7 @@ Version 1.1.0b2 - dev
 - NEW: `ezdxf.addons.hpgl2` add-on to convert HPGL/2 plot files to DXF, SVG, PDF, PNG
 - NEW: `ezdxf hpgl` command to view and/or convert HPGL/2 plot files to various formats: DXF, SVG, PDF
 - NEW: native `SVG` backend for the `drawing` add-on
-- NEW: `PyMuPdfBackend` for the `drawing` add-on, support for PDF, PNG, PSD format
+- NEW: `PyMuPdfBackend` for the `drawing` add-on, support for PDF, PNG, PPM and PBM export
 - NEW: `ColorPolicy` and `BackgroundPolicy` configuration settings for the `drawing` 
   add-on to change/override foreground- and background color by the frontend 
 - NEW: support for measuring and rendering of .shx, .shp and .lff fonts, the basic 

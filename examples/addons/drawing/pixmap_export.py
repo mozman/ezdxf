@@ -65,14 +65,14 @@ wave = [
 ]
 
 
-def export(filepath: pathlib.Path, layout_names=("Model",), scale=1):
+def export(filepath: pathlib.Path, layout_names=("Model",), scale=1, fmt="png", dpi=72):
     print(f"\nprocessing: {filepath.name}")
     t0 = time.perf_counter()
     doc = ezdxf.readfile(filepath)
     t1 = time.perf_counter()
     print(f"loading time: {t1 - t0: .3f} seconds")
     for layout_name in layout_names:
-        outname = filepath.stem + f"-[{layout_name}]" + ".pdf"
+        outname = filepath.stem + f"-[{layout_name}]" + f".{fmt}"
         print(outname)
         t1 = time.perf_counter()
         if layout_name == "Model":
@@ -85,7 +85,7 @@ def export(filepath: pathlib.Path, layout_names=("Model",), scale=1):
                 max_width=1189,  # limit page width to 1189mm
                 max_height=841,  # limit page height to 841mm
             )
-            settings = layout.Settings(scale=scale)
+            settings = layout.Settings(scale=scale, fit_page=True)
         else:
             try:
                 dxf_layout = doc.paperspace(layout_name)
@@ -100,7 +100,7 @@ def export(filepath: pathlib.Path, layout_names=("Model",), scale=1):
 
         backend = pymupdf.PyMuPdfBackend()
         # You can get the content bounding box in DXF drawing units, before you create the
-        # PDF output to calculate page size, margins, scaling factor and so on ...
+        # PNG output to calculate page size, margins, scaling factor and so on ...
         # content_extents = backend.bbox()
         config = Configuration(
             # blueprint schema:
@@ -113,29 +113,19 @@ def export(filepath: pathlib.Path, layout_names=("Model",), scale=1):
         )
 
         Frontend(RenderContext(doc), backend, config=config).draw_layout(dxf_layout)
-        pdf_bytes = backend.get_pdf_bytes(page, settings=settings)
+        pixmap_bytes = backend.get_pixmap_bytes(
+            page, fmt=fmt, settings=settings, dpi=dpi
+        )
         t2 = time.perf_counter()
         print(f"render time: {t2 - t1: .3f} seconds")
-        (CWD / outname).write_bytes(pdf_bytes)
+        (CWD / outname).write_bytes(pixmap_bytes)
 
 
-def export_cadkit_samples():
+def export_cadkit_samples(fmt="png", dpi=72):
+    # supported formats: png, ppm
     for name in CADKIT_FILES[:]:
         filename = ezdxf.options.test_files_path / CADKIT / name
-        export(filename)
-
-
-def simple():
-    doc = ezdxf.new()
-    msp = doc.modelspace()
-    s = global_bspline_interpolation(wave)
-    msp.add_spline(dxfattribs={"color": 2}).apply_construction_tool(s)
-    msp.add_lwpolyline(wave, dxfattribs={"color": 3})
-
-    backend = pymupdf.PyMuPdfBackend()
-    Frontend(RenderContext(doc), backend).draw_layout(msp)
-    pdf_bytes = backend.get_pdf_bytes(layout.Page(100, 40, layout.Units.mm))
-    (CWD / "wave.pdf").write_bytes(pdf_bytes)
+        export(filename, fmt=fmt, dpi=dpi)
 
 
 def transparency():
@@ -143,16 +133,18 @@ def transparency():
     msp = doc.modelspace()
     backend = pymupdf.PyMuPdfBackend()
     Frontend(RenderContext(doc), backend).draw_layout(msp)
-    pdf_bytes = backend.get_pdf_bytes(
-        layout.Page(0, 0, layout.Units.mm), settings=layout.Settings(scale=10)
+    pdf_bytes = backend.get_pixmap_bytes(
+        layout.Page(0, 0, layout.Units.mm),
+        fmt="png",
+        settings=layout.Settings(scale=10),
+        dpi=72,
+        alpha=True,
     )
     (CWD / "transparency.pdf").write_bytes(pdf_bytes)
 
 
 if __name__ == "__main__":
-    # export(
-    #     pathlib.Path(r"C:\Users\mozman\Desktop\Outbox\valid_lineweights.dxf"), scale=100
-    # )
-    export_cadkit_samples()
+    # export(pathlib.Path(r"C:\Source\dxftest\CADKitSamples\A_000217.dxf"), dpi=72)
+    export_cadkit_samples(fmt="png")
     # simple()
     # transparency()

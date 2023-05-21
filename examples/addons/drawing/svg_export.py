@@ -77,7 +77,14 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
         t1 = time.perf_counter()
         if layout_name == "Model":
             dxf_layout = doc.modelspace()
-            page = layout.Page(0, 0, layout.Units.mm, layout.Margins.all(10))
+            page = layout.Page(
+                0,  # auto-detect
+                0,  # auto-detect
+                layout.Units.mm,  # 1 drawing unit = 1mm
+                layout.Margins.all(10),  # 10mm margin on all sides of the page
+                max_width=1189,  # limit page width to 1189mm
+                max_height=841,  # limit page height to 841mm
+            )
             settings = layout.Settings()
         else:
             try:
