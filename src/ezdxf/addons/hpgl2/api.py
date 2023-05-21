@@ -2,16 +2,19 @@
 #  License: MIT License
 from __future__ import annotations
 import enum
+from xml.etree import ElementTree as ET
+
 import ezdxf
 from ezdxf.document import Drawing
 from ezdxf import zoom
+from ezdxf.addons import xplayer
+from ezdxf.addons.drawing import svg, layout
 
 from .tokenizer import hpgl2_commands
 from .plotter import Plotter
 from .interpreter import Interpreter
 from .backend import Recorder, placement_matrix, Player
 from .dxf_backend import DXFBackend, ColorMode
-from .svg_backend import SVGBackend
 from .pdf_backend import PDFBackend, pdf_is_supported
 
 
@@ -97,9 +100,13 @@ def to_dxf(
     # 1st pass records output of the plotting commands and detects the bounding box
     doc = ezdxf.new()
     try:
-        player = record_plotter_output(b, rotation, sx, sy, merge_control)
+        player = record_plotter_output(b, merge_control)
     except Hpgl2Error:
         return doc
+
+    bbox = player.bbox()
+    m = placement_matrix(bbox, sx, sy, rotation)
+    player.transform(m)
 
     msp = doc.modelspace()
     dxf_backend = DXFBackend(
@@ -109,7 +116,6 @@ def to_dxf(
     )
     # 2nd pass replays the plotting commands to plot the DXF
     player.replay(dxf_backend)
-    bbox = player.bbox()
     del player
 
     if bbox.has_data:  # non-empty page
@@ -167,15 +173,44 @@ def to_svg(
         raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
     # 1st pass records output of the plotting commands and detects the bounding box
     try:
-        player = record_plotter_output(b, rotation, sx, sy, merge_control)
+        player = record_plotter_output(b, merge_control)
     except Hpgl2Error:
         return ""
 
-    # 2nd pass replays the plotting commands to plot the SVG
-    svg_backend = SVGBackend(player.bbox())
-    player.replay(svg_backend)
+    # transform content for the SVGBackend of the drawing add-on
+    bbox = player.bbox()
+    size = bbox.size
+
+    # HPGL/2 uses (integer) plot units, 1 plu = 0.025mm or 1mm = 40 plu
+    width_in_mm = size.x / 40
+    height_in_mm = size.y / 40
+
+    if rotation in (0, 180):
+        page = layout.Page(width_in_mm, height_in_mm)
+    else:
+        page = layout.Page(height_in_mm, width_in_mm)
+        # adjust rotation for y-axis mirroring
+        rotation += 180
+
+    # The SVGBackend expects coordinates in the range [0, output_coordinate_space]
+    max_plot_units = round(max(size.x, size.y))
+    settings = layout.Settings(output_coordinate_space=max_plot_units)
+    m = layout.placement_matrix(
+        bbox,
+        sx=sx,
+        sy=-sy,
+        rotation=rotation,
+        page=page,
+        output_coordinate_space=settings.output_coordinate_space,
+    )
+    player.transform(m)
+
+    # 2nd pass replays the plotting commands on the SVGBackend of the drawing add-on
+    svg_backend = svg.SVGRenderBackend(page, settings)
+    xplayer.hpgl2_to_drawing(player, svg_backend, bg_color="#ffffff")
     del player
-    return svg_backend.get_string()
+    xml = svg_backend.get_xml_root_element()
+    return ET.tostring(xml, encoding="unicode", xml_declaration=True)
 
 
 def to_pdf(
@@ -217,9 +252,14 @@ def to_pdf(
         raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
     # 1st pass records output of the plotting commands and detects the bounding box
     try:
-        player = record_plotter_output(b, rotation, sx, sy, merge_control)
+        player = record_plotter_output(b, merge_control)
     except Hpgl2Error:
         return b""
+
+    bbox = player.bbox()
+    m = placement_matrix(bbox, sx, sy, rotation)
+    player.transform(m)
+
     # 2nd pass replays the plotting commands to plot the SVG
     pdf_backend = PDFBackend(player.bbox())
     player.replay(pdf_backend)
@@ -238,9 +278,6 @@ def print_interpreter_log(interpreter: Interpreter) -> None:
 
 def record_plotter_output(
     b: bytes,
-    rotation: int,
-    sx: float,
-    sy: float,
     merge_control: MergeControl,
 ) -> Player:
     commands = hpgl2_commands(b)
@@ -258,8 +295,6 @@ def record_plotter_output(
     bbox = player.bbox()
     if not bbox.has_data:
         raise EmptyDrawing
-    m = placement_matrix(bbox, sx, sy, rotation)
-    player.transform(m)
 
     if merge_control == MergeControl.AUTO:
         if plotter.has_merge_control:

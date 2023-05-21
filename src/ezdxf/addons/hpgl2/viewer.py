@@ -43,9 +43,7 @@ class HPGL2Widget(QtWidgets.QWidget):
 
     def plot(self, data: bytes) -> None:
         self._reset_backend()
-        self._player = api.record_plotter_output(
-            data, 0, 1.0, 1.0, api.MergeControl.AUTO
-        )
+        self._player = api.record_plotter_output(data, api.MergeControl.AUTO)
 
     def replay(
         self, bg_color="#ffffff", override=None, reset_view: bool = True
