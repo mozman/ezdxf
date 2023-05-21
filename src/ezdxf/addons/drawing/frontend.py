@@ -29,14 +29,11 @@ from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.clipper import ClippingRect
 from ezdxf.addons.drawing.properties import (
     RenderContext,
-    VIEWPORT_COLOR,
     OLE2FRAME_COLOR,
     Properties,
     Filling,
     LayoutProperties,
     BackendProperties,
-    hex_to_rgb,
-    rgb_to_hex,
 )
 from ezdxf.addons.drawing.config import LinePolicy, BackgroundPolicy, ColorPolicy
 from ezdxf.addons.drawing.text import simplified_text_chunks
@@ -86,7 +83,6 @@ from ezdxf.tools.text import (
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
 from ezdxf.fonts import fonts
-from ezdxf.colors import luminance
 from .type_hints import Color
 
 
