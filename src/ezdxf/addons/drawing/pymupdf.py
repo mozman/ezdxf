@@ -4,15 +4,6 @@ from __future__ import annotations
 from typing import Iterable, no_type_check
 import copy
 
-pdf_is_supported = True
-try:
-    import fitz
-except ImportError:
-    print("Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/")
-    fitz = None
-    pdf_is_supported = False
-# PyMuPDF docs: https://pymupdf.readthedocs.io/en/latest/
-
 from ezdxf.math import AnyVec, Vec2
 from ezdxf.colors import RGB
 from ezdxf.path import Path, Path2d, Command
@@ -24,10 +15,19 @@ from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
 
+pdf_is_supported = True
+try:
+    import fitz
+except ImportError:
+    print("Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/")
+    fitz = None
+    pdf_is_supported = False
+# PyMuPDF docs: https://pymupdf.readthedocs.io/en/latest/
+
 __all__ = ["PyMuPdfBackend"]
 
-# 1 PDF unit is 1/72 of an inch:
-MM_TO_PDF_UNITS = 72.0 / 25.4  # 25.4 mm = 1 inch / 72
+# PDF units are points (pt), 1 pt is 1/72 of an inch:
+MM_TO_POINTS = 72.0 / 25.4  # 25.4 mm = 1 inch / 72
 
 
 class PyMuPdfBackend(recorder.Recorder):
@@ -117,9 +117,9 @@ class PyMuPdfBackend(recorder.Recorder):
 
 
 def get_coordinate_output_space(page: layout.Page) -> int:
-    page_width_in_pdf_units = int(page.width_in_mm * MM_TO_PDF_UNITS)
-    page_height_in_pdf_units = int(page.height_in_mm * MM_TO_PDF_UNITS)
-    return max(page_width_in_pdf_units, page_height_in_pdf_units)
+    page_width_in_pt = int(page.width_in_mm * MM_TO_POINTS)
+    page_height_in_pt = int(page.height_in_mm * MM_TO_POINTS)
+    return max(page_width_in_pt, page_height_in_pt)
 
 
 class PyMuPdfRenderBackend(BackendInterface):
@@ -153,30 +153,34 @@ class PyMuPdfRenderBackend(BackendInterface):
         )
         self.settings = settings
         self._stroke_width_cache: dict[float, float] = dict()
-        self.page_width_in_pdf_units = int(page.width_in_mm * MM_TO_PDF_UNITS)
-        self.page_height_in_pdf_units = int(page.height_in_mm * MM_TO_PDF_UNITS)
+        self.page_width_in_pt = int(page.width_in_mm * MM_TO_POINTS)
+        self.page_height_in_pt = int(page.height_in_mm * MM_TO_POINTS)
         # LineweightPolicy.ABSOLUTE:
         self.min_lineweight = 0.05  # in mm, set by configure()
         self.lineweight_scaling = 1.0  # set by configure()
         self.lineweight_policy = LineweightPolicy.ABSOLUTE  # set by configure()
 
+        # when the stroke width is too thin PDF viewers may get confused;
+        self.abs_min_stroke_width = 0.1  # pt == 0.03528mm (arbitrary choice)
+
         # LineweightPolicy.RELATIVE:
         # max_stroke_width is determined as a certain percentage of settings.output_coordinate_space
         self.max_stroke_width: float = max(
-            0.1, int(settings.output_coordinate_space * settings.max_stroke_width)
+            self.abs_min_stroke_width,
+            int(settings.output_coordinate_space * settings.max_stroke_width),
         )
         # min_stroke_width is determined as a certain percentage of max_stroke_width
         self.min_stroke_width: float = max(
-            0.1, int(self.max_stroke_width * settings.min_stroke_width)
+            self.abs_min_stroke_width,
+            int(self.max_stroke_width * settings.min_stroke_width),
         )
         # LineweightPolicy.RELATIVE_FIXED:
         # all strokes have a fixed stroke-width as a certain percentage of max_stroke_width
         self.fixed_stroke_width: float = max(
-            0.1, int(self.max_stroke_width * settings.fixed_stroke_width)
+            self.abs_min_stroke_width,
+            int(self.max_stroke_width * settings.fixed_stroke_width),
         )
-        self.page = self.doc.new_page(
-            -1, self.page_width_in_pdf_units, self.page_height_in_pdf_units
-        )
+        self.page = self.doc.new_page(-1, self.page_width_in_pt, self.page_height_in_pt)
 
     def get_pdf_bytes(self) -> bytes:
         return self.doc.tobytes()
@@ -193,9 +197,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         if color == (1.0, 1.0, 1.0) or opacity == 0.0:
             return
         shape = self.new_shape()
-        shape.drawRect(
-            [0, 0, self.page_width_in_pdf_units, self.page_height_in_pdf_units]
-        )
+        shape.drawRect([0, 0, self.page_width_in_pt, self.page_height_in_pt])
         shape.finish(width=None, color=None, fill=rgb, fill_opacity=opacity)
         shape.commit()
 
@@ -235,16 +237,16 @@ class PyMuPdfRenderBackend(BackendInterface):
             return self._stroke_width_cache[width]
         except KeyError:
             pass
+        stroke_width = self.min_stroke_width
         if self.lineweight_policy == LineweightPolicy.ABSOLUTE:
             stroke_width = (  # in points (pt) = 1/72 inch
-                max(self.min_lineweight, width)
-                * MM_TO_PDF_UNITS
-                * self.lineweight_scaling
+                max(self.min_lineweight, width) * MM_TO_POINTS * self.lineweight_scaling
             )
-        else:
+        elif self.lineweight_policy == LineweightPolicy.RELATIVE:
             stroke_width = map_lineweight_to_stroke_width(
                 width, self.min_stroke_width, self.max_stroke_width
             )
+        stroke_width = max(self.abs_min_stroke_width, stroke_width)
         self._stroke_width_cache[width] = stroke_width
         return stroke_width
 
