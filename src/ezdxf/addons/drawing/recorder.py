@@ -19,6 +19,14 @@ from .type_hints import Color
 
 
 class RecordType(enum.Enum):
+    """Enum, determines the data record type.
+
+    Attributes:
+        POINTS:
+        SOLID_LINES:
+        PATH:
+        FILLED_PATHS:
+    """
     POINTS = enum.auto()
     SOLID_LINES = enum.auto()
     PATH = enum.auto()
@@ -169,6 +177,28 @@ class Player:
 
     copy = __copy__
 
+    def recordings(self) -> Iterator[tuple[RecordType, BackendProperties, Any]]:
+        """Yields all recordings as `(RecordType, BackendProperties, Data)` tuples.
+
+        The content of the `Data` field is determined by the enum :class:`RecordType`:
+
+        - :attr:`RecordType.POINTS` returns a :class:`NumpyPoints2d` instance,
+          len() == 1 is a point, len() == 2 is a line, len() > 2 is a filled polygon
+        - :attr:`RecordType.SOLID_LINES` returns a :class:`NumpyPoints2d` instance
+          where each pair (n, n+1) represents the start- and end point of a line
+        - :attr:`RecordType.PATH`: returns a :class:`NumpyPath2d` instance that
+          represents a linear 2D path
+        - :attr:`RecordType.FILLED_PATHS` returns a tuple (exterior_paths, holes),
+          where exterior_paths and holes are tuples of :class:`NumpyPath2d`.
+
+        """
+        props = self.properties
+        for record in self.records:
+            properties = BackendProperties(
+                *props[record.property_hash][:4], record.handle
+            )
+            yield record.type, properties, record.data
+
     def replay(
         self, backend: BackendInterface, override: Optional[OverrideFunc] = None
     ) -> None:
@@ -180,32 +210,27 @@ class Player:
 
         backend.configure(self.config)
         backend.set_background(self.background)
-        props = self.properties
-        for record in self.records:
-            properties = BackendProperties(
-                *props[record.property_hash][:4], record.handle
-            )
+        for record_type, properties, data in self.recordings():
             if override:
                 state = override(properties)
                 if not state.is_visible:
                     continue
                 properties = state.properties
-            t = record.type
-            if t == RecordType.POINTS:
-                vertices = record.data.vertices()
+            if record_type == RecordType.POINTS:
+                vertices = data.vertices()
                 if len(vertices) == 1:
                     backend.draw_point(vertices[0], properties)
                 elif len(vertices) == 2:
                     backend.draw_line(vertices[0], vertices[1], properties)
                 else:
                     backend.draw_filled_polygon(vertices, properties)
-            elif t == RecordType.SOLID_LINES:
-                backend.draw_solid_lines(take2(record.data.vertices()), properties)
-            elif t == RecordType.PATH:
-                backend.draw_path(record.data.to_path2d(), properties)
-            elif t == RecordType.FILLED_PATHS:
-                paths = [p.to_path2d() for p in record.data[0]]
-                holes = [p.to_path2d() for p in record.data[1]]
+            elif record_type == RecordType.SOLID_LINES:
+                backend.draw_solid_lines(take2(data.vertices()), properties)
+            elif record_type == RecordType.PATH:
+                backend.draw_path(data.to_path2d(), properties)
+            elif record_type == RecordType.FILLED_PATHS:
+                paths = [p.to_path2d() for p in data[0]]
+                holes = [p.to_path2d() for p in data[1]]
                 backend.draw_filled_paths(paths, holes, properties)
         backend.finalize()
 

@@ -153,7 +153,11 @@ which is for some backends a requirement to place the DXF content on size limite
 
     .. automethod:: replay
 
+    .. automethod:: recordings
+
 .. autoclass:: ezdxf.addons.drawing.recorder.Override
+
+.. autoclass:: ezdxf.addons.drawing.recorder.RecordType
 
 Layout
 ------

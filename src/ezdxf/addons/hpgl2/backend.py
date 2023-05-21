@@ -131,9 +131,9 @@ class Player:
     copy = __copy__
 
     def recordings(self) -> Iterator[tuple[RecordType, Properties, Any]]:
-        """Yields all recordings as [RecordType, Properties, Any] tuples.
+        """Yields all recordings as `(RecordType, Properties, Data)` tuples.
 
-        The last field is the data field and depends on :class:`RecordType`:
+        The content of the `Data` field is determined by the enum :class:`RecordType`:
 
         - :attr:`RecordType.POLYLINE` returns a :class:`NumpyPoints2d` instance
         - :attr:`RecordType.FILLED_POLYGON` returns a tuple of :class:`NumpyPath2d` instances
