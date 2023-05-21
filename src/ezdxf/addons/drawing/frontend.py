@@ -259,8 +259,9 @@ class Frontend:
 
     def set_background(self, color: Color) -> None:
         policy = self.config.background_policy
+        override = True
         if policy == BackgroundPolicy.DEFAULT:
-            pass
+            override = False
         elif policy == BackgroundPolicy.OFF:
             color = "#ffffff00"  # white, fully transparent
         elif policy == BackgroundPolicy.BLACK:
@@ -269,6 +270,8 @@ class Frontend:
             color = "#ffffff"
         elif policy == BackgroundPolicy.CUSTOM:
             color = self.config.custom_bg_color
+        if override:
+            self.ctx.current_layout_properties.set_colors(color)
         self.out.set_background(color)
 
     def draw_entities(
@@ -1098,11 +1101,9 @@ def swap_bw(color: str) -> Color:
     return color
 
 
-def color_to_monochrome(color: Color, invert=False) -> Color:
+def color_to_monochrome(color: Color, scale: float = 1.0) -> Color:
     lum = RGB.from_hex(color).luminance
-    gray = round(lum * 255)
-    if invert:
-        gray = 255 - gray
+    gray = round(lum * 255 * scale)
     return RGB(gray, gray, gray).to_hex()
 
 
@@ -1114,9 +1115,9 @@ def apply_color_policy(color: Color, policy: ColorPolicy, custom_color: Color) -
     elif policy == ColorPolicy.COLOR_NEGATIVE:
         color = invert_color(color)
     elif policy == ColorPolicy.MONOCHROME_WHITE_BG:
-        color = color_to_monochrome(color, invert=True)
+        color = color_to_monochrome(color, scale=0.7)
     elif policy == ColorPolicy.MONOCHROME_BLACK_BG:
-        color = color_to_monochrome(color, invert=False)
+        color = color_to_monochrome(color)
     elif policy == ColorPolicy.BLACK:
         color = "#000000"
     elif policy == ColorPolicy.WHITE:

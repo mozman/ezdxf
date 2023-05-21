@@ -94,7 +94,7 @@ class ColorPolicy(Enum):
         COLOR_SWAP_BW: as resolved by the :class:`Frontend` class but swaps black and white
         COLOR_NEGATIVE: invert colors
         MONOCHROME_BLACK_BG: all colors to gray scale for black background
-        MONOCHROME_WHITE_BG:  all colors to gray scale for white background
+        MONOCHROME_WHITE_BG:  all colors to gray scale for white background - darkens colors
         BLACK: all colors to black
         WHITE: all colors to white
         CUSTOM: all colors to custom color by :attr:`Configuration.custom_fg_color`
