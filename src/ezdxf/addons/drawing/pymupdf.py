@@ -153,6 +153,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         )
         self.settings = settings
         self._stroke_width_cache: dict[float, float] = dict()
+        self._color_cache: dict[str, tuple[float, float, float]] = dict()
         self.page_width_in_pt = int(page.width_in_mm * MM_TO_POINTS)
         self.page_height_in_pt = int(page.height_in_mm * MM_TO_POINTS)
         # LineweightPolicy.ABSOLUTE:
@@ -230,7 +231,14 @@ class PyMuPdfRenderBackend(BackendInterface):
         )
 
     def resolve_color(self, color: Color) -> tuple[float, float, float]:
-        return RGB.from_hex(color).to_floats()
+        key = color[:7]
+        try:
+            return self._color_cache[key]
+        except KeyError:
+            pass
+        color_floats = RGB.from_hex(color).to_floats()
+        self._color_cache[key] = color_floats
+        return color_floats
 
     def resolve_stroke_width(self, width: float) -> float:
         try:

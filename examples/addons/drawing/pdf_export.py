@@ -150,10 +150,10 @@ def transparency():
 
 
 if __name__ == "__main__":
-    # export(
-    #     pathlib.Path(r"C:\Source\dxftest\CADKitSamples\AEC Plan Elev Sample.dxf"),
-    #     ["Model", "PLAN", "SECTION"],
-    # )
-    export_cadkit_samples()
+    export(
+        pathlib.Path(r"C:\Source\dxftest\CADKitSamples\AEC Plan Elev Sample.dxf"),
+        ["Model", "PLAN", "SECTION"],
+    )
+    # export_cadkit_samples()
     # simple()
-    transparency()
+    # transparency()
