@@ -1,11 +1,45 @@
 #  Copyright (c) 2020-2021, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Tuple, Union
-from typing_extensions import TypeAlias
+from typing import Union, NamedTuple
+from typing_extensions import Self
 import math
 
-RGB: TypeAlias = Tuple[int, int, int]
+
+class RGB(NamedTuple):
+    """Named tuple representing an RGB color value."""
+
+    r: int
+    g: int
+    b: int
+
+    def to_floats(self) -> tuple[float, float, float]:
+        """Returns the RGB color value as a tuple of floats in the range from 0 to 1."""
+        return self.r / 255, self.g / 255, self.b / 255
+
+    @classmethod
+    def from_floats(cls, rgb: tuple[float, float, float]) -> Self:
+        """Returns the RGB integer tuple from floats int range from 0 to 1."""
+        r = max(min(255, round(rgb[0]*255)), 0)
+        g = max(min(255, round(rgb[1]*255)), 0)
+        b = max(min(255, round(rgb[2]*255)), 0)
+        return cls(r, g, b)
+
+    def to_hex(self) -> str:
+        return f"#{self.r:02x}{self.g:02x}{self.b:02x}"
+
+    @classmethod
+    def from_hex(cls, color: str) -> Self:
+        """Returns hex color string as (r, g, b) tuple, the `color` string is
+        hex string "RRGGBB" with an optional leading "#", an appended alpha channel is
+        ignore.
+        """
+        hex_string = color.lstrip("#")
+        r = int(hex_string[0:2], 16)
+        g = int(hex_string[2:4], 16)
+        b = int(hex_string[4:6], 16)
+        return cls(r, g, b)
+
 
 BYBLOCK = 0
 BYLAYER = 256
