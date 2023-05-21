@@ -7,7 +7,12 @@ from ezdxf import path
 from ezdxf.math import Vec2
 
 from ezdxf.addons.drawing.backend import BackendInterface
-from ezdxf.addons.drawing.properties import BackendProperties, rgb_to_hex, hex_to_rgb, luminance
+from ezdxf.addons.drawing.properties import (
+    BackendProperties,
+    rgb_to_hex,
+    hex_to_rgb,
+    luminance,
+)
 from ezdxf.addons.hpgl2 import api as hpgl2
 from ezdxf.addons.hpgl2.backend import (
     Properties as HPGL2Properties,
@@ -78,15 +83,17 @@ def map_color(color: str) -> Callable[[BackendProperties], BackendProperties]:
 
 
 def map_monochrome(dark_mode=True) -> Callable[[BackendProperties], BackendProperties]:
-    def to_grey(c: str) -> str:
-        grey = round(luminance(hex_to_rgb(c)) * 255)
+    def to_gray(color: str) -> str:
+        gray = round(luminance(hex_to_rgb(color)) * 255)
         if dark_mode:
-            grey = 255 - grey
-        return rgb_to_hex((grey, grey, grey))
+            gray = 255 - gray
+        return rgb_to_hex((gray, gray, gray))
 
     def _map_color(properties: BackendProperties) -> BackendProperties:
+        color = properties.color
+        alpha = color[7:9]
         return BackendProperties(
-            color=to_grey(properties.color),
+            color=to_gray(color[:7]) + alpha,
             lineweight=properties.lineweight,
             layer=properties.layer,
             pen=properties.pen,
