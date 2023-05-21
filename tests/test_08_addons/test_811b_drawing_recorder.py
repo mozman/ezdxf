@@ -32,7 +32,7 @@ def frontend(doc, ctx):
 
 
 def replay(frontend, backend):
-    player = frontend.out.copy_player()
+    player = frontend.out.player().copy()
     player.replay(backend)
     return backend.collector
 
@@ -99,7 +99,7 @@ def test_override_properties_at_replay(msp, ctx):
     Frontend(ctx, backend_recorder).draw_entities(msp)
 
     # replay:
-    player = backend_recorder.copy_player()
+    player = backend_recorder.player().copy()
     replay_backend = PathBackend()
     player.replay(replay_backend, override)
 
@@ -136,7 +136,7 @@ def test_bounding_box(msp, frontend):
 
     msp.add_lwpolyline([(0, 0), (200, 0), (200, 100), (0, 100)])
     frontend.draw_layout(msp)
-    player = recorder.copy_player()
+    player = recorder.player().copy()
     player.replay(PathBackend())
     bbox = player.bbox()
     assert bbox.extmin.isclose((0, 0))

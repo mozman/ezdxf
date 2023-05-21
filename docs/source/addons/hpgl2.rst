@@ -145,19 +145,19 @@ HPGL/2 plot file or not, so be careful:
 
 .. autoclass:: Plotter
 
-Backends
+Recorder
 --------
-
-.. autoclass:: ezdxf.addons.hpgl2.backend.Backend
-
-    .. automethod:: draw_polyline
-
-    .. automethod:: draw_filled_polygon
 
 .. autoclass:: Recorder
 
     .. automethod:: player
 
+    .. automethod:: draw_polyline
+
+    .. automethod:: draw_filled_polygon
+
+Player
+------
 
 .. autoclass:: Player
 
@@ -172,12 +172,6 @@ Backends
     .. automethod:: transform
 
     .. automethod:: sort_filled_polygons
-
-.. autoclass:: DXFBackend
-
-.. autoclass:: SVGBackend
-
-.. autoclass:: PDFBackend
 
 Properties
 ----------

@@ -140,11 +140,12 @@ which is for some backends a requirement to place the DXF content on size limite
     The class implements the :class:`BackendInterface` but does not record :meth:`enter_entity`,
     :meth:`exit_entity` and :meth:`clear` events.
 
-    .. automethod:: copy_player
+    .. automethod:: player
 
-    .. automethod:: shared_player
 
 .. autoclass:: ezdxf.addons.drawing.recorder.Player
+
+    .. automethod:: copy
 
     .. automethod:: bbox
 

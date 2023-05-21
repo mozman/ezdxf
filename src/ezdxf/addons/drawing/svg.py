@@ -35,7 +35,7 @@ class SVGBackend(recorder.Recorder):
         settings.output_coordinate_space = 1_000_000
 
         # This player changes the original recordings!
-        player = self.shared_player()
+        player = self.player()
 
         output_layout = layout.Layout(player.bbox(), flip_y=self._init_flip_y)
         page = output_layout.get_final_page(page, settings)

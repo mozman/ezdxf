@@ -42,30 +42,20 @@ class Recorder(BackendInterface):
         self.records: list[DataRecord] = []
         self.properties: dict[int, BackendProperties] = dict()
 
-    def __copy__(self) -> Self:
-        recorder = self.__class__()
-        # config is a frozen dataclass:
-        recorder.config = self.config
-        recorder.background = self.background
-        # mutable - recordings are transformed inplace:
-        recorder.records = copy.deepcopy(self.records)
-        # hashes and BackendProperties are immutable, the properties dict may grow, but
-        # entries will never be removed:
-        recorder.properties = self.properties
-        return recorder
+    def player(self) -> Player:
+        """Returns a :class:`Player` instance with the original recordings! Make a copy
+        of this player to protect the original recordings from being modified::
 
-    def copy_player(self) -> Player:
-        """Returns a :class:`Player` instance with a copy of the recordings, this player
-        needs more memory, but does not modify the original recordings.
-        """
-        return Player(self.__copy__(), shared_recordings=False)
+            safe_player = recorder.player().copy()
 
-    def shared_player(self) -> Player:
-        """Returns a :class:`Player` instance with the original recordings! This player
-        is faster to create and needs less memory but is dangerous because it may modify
-        the original recordings.
         """
-        return Player(self, shared_recordings=True)
+        player = Player()
+        player.config = self.config
+        player.background = self.background
+        player.records = self.records
+        player.properties = self.properties
+        player.has_shared_recordings = True
+        return player
 
     def configure(self, config: Configuration) -> None:
         self.config = config
@@ -145,6 +135,7 @@ class Override(NamedTuple):
         is_visible: override visibility e.g. switch layers on/off
 
     """
+
     properties: BackendProperties
     is_visible: bool = True
 
@@ -155,13 +146,28 @@ OverrideFunc: TypeAlias = Callable[[BackendProperties], Override]
 class Player:
     """Plays the recordings of the :class:`Recorder` backend on another backend."""
 
-    def __init__(self, recorder: Recorder, shared_recordings: bool) -> None:
-        self.config = recorder.config
-        self.background: Color = recorder.background
-        self.records: list[DataRecord] = recorder.records
-        self.properties: dict[int, BackendProperties] = recorder.properties
+    def __init__(self) -> None:
+        self.config = Configuration()
+        self.background: Color = "#000000"
+        self.records: list[DataRecord] = []
+        self.properties: dict[int, BackendProperties] = dict()
         self._bbox = BoundingBox2d()
-        self.has_shared_recordings: bool = shared_recordings
+        self.has_shared_recordings: bool = False
+
+    def __copy__(self) -> Self:
+        """Returns a copy of the player with non-shared recordings."""
+        player = self.__class__()
+        # config is a frozen dataclass:
+        player.config = self.config
+        player.background = self.background
+        # recordings are mutable - transformed inplace:
+        player.records = copy.deepcopy(self.records)
+        # the properties dict may grow, but entries will never be removed:
+        player.properties = self.properties
+        player.has_shared_recordings = False
+        return player
+
+    copy = __copy__
 
     def replay(
         self, backend: BackendInterface, override: Optional[OverrideFunc] = None

@@ -27,15 +27,7 @@ from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
 
 
 class Backend(abc.ABC):
-    """Abstract base class for implementing a low level output backends.
-
-    All input coordinates are page coordinates:
-
-        - 1 plot unit (plu) = 0.025mm
-        - 40 plu = 1 mm
-        - 1016 plu = 1 inch
-
-    """
+    """Abstract base class for implementing a low level output backends."""
 
     @abc.abstractmethod
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
@@ -78,7 +70,15 @@ class DataRecord(NamedTuple):
 
 
 class Recorder(Backend):
-    """The :class:`Recorder` class records the output of the :class:`Plotter` class."""
+    """The :class:`Recorder` class records the output of the :class:`Plotter` class.
+
+    All input coordinates are page coordinates:
+
+    - 1 plot unit (plu) = 0.025mm
+    - 40 plu = 1 mm
+    - 1016 plu = 1 inch
+
+    """
 
     def __init__(self) -> None:
         self._records: list[DataRecord] = []
