@@ -92,20 +92,24 @@ class ColorPolicy(Enum):
     Attributes:
         COLOR: as resolved by the :class:`Frontend` class
         COLOR_SWAP_BW: as resolved by the :class:`Frontend` class but swaps black and white
-        COLOR_NEGATIVE: invert colors
-        MONOCHROME_BLACK_BG: all colors to gray scale for black background
-        MONOCHROME_WHITE_BG:  all colors to gray scale for white background - darkens colors
-        BLACK: all colors to black
-        WHITE: all colors to white
-        CUSTOM: all colors to custom color by :attr:`Configuration.custom_fg_color`
+        COLOR_NEGATIVE: invert all colors
+        MONOCHROME: maps all colors to gray scale in range [0%, 100%]
+        MONOCHROME_DARK_BG: maps all colors to gray scale in range [30%, 100%], brightens
+            colors for dark backgrounds
+        MONOCHROME_LIGHT_BG:  maps all colors to gray scale in range [0%, 70%], darkens
+            colors for light backgrounds
+        BLACK: maps all colors to black
+        WHITE: maps all colors to white
+        CUSTOM: maps all colors to custom color :attr:`Configuration.custom_fg_color`
 
     """
 
     COLOR = auto()
     COLOR_SWAP_BW = auto()
     COLOR_NEGATIVE = auto()
-    MONOCHROME_BLACK_BG = auto()
-    MONOCHROME_WHITE_BG = auto()
+    MONOCHROME = auto()
+    MONOCHROME_DARK_BG = auto()
+    MONOCHROME_LIGHT_BG = auto()
     BLACK = auto()
     WHITE = auto()
     CUSTOM = auto()

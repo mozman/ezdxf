@@ -1101,9 +1101,13 @@ def swap_bw(color: str) -> Color:
     return color
 
 
-def color_to_monochrome(color: Color, scale: float = 1.0) -> Color:
-    lum = RGB.from_hex(color).luminance
-    gray = round(lum * 255 * scale)
+def color_to_monochrome(color: Color, scale: float = 1.0, offset: float = 0.0) -> Color:
+    lum = RGB.from_hex(color).luminance * scale + offset
+    if lum < 0.0:
+        lum = 0.0
+    elif lum > 1.0:
+        lum = 1.0
+    gray = round(lum * 255)
     return RGB(gray, gray, gray).to_hex()
 
 
@@ -1114,9 +1118,11 @@ def apply_color_policy(color: Color, policy: ColorPolicy, custom_color: Color) -
         color = swap_bw(color)
     elif policy == ColorPolicy.COLOR_NEGATIVE:
         color = invert_color(color)
-    elif policy == ColorPolicy.MONOCHROME_WHITE_BG:
-        color = color_to_monochrome(color, scale=0.7)
-    elif policy == ColorPolicy.MONOCHROME_BLACK_BG:
+    elif policy == ColorPolicy.MONOCHROME_DARK_BG:  # [0.3, 1.0]
+        color = color_to_monochrome(color, scale=0.7, offset=0.3)
+    elif policy == ColorPolicy.MONOCHROME_LIGHT_BG:  # [0.0, 0.7]
+        color = color_to_monochrome(color, scale=0.7, offset=0.0)
+    elif policy == ColorPolicy.MONOCHROME:  # [0.0, 1.0]
         color = color_to_monochrome(color)
     elif policy == ColorPolicy.BLACK:
         color = "#000000"

@@ -103,9 +103,9 @@ def export(filepath: pathlib.Path, layout_names=("Model",), scale=1):
         # PDF output to calculate page size, margins, scaling factor and so on ...
         # content_extents = backend.bbox()
         config = Configuration(
-            # background_policy=BackgroundPolicy.BLACK,
+            background_policy=BackgroundPolicy.WHITE,
             custom_bg_color="#002082",
-            # color_policy=ColorPolicy.WHITE,
+            color_policy=ColorPolicy.MONOCHROME_DARK_BG,
             custom_fg_color="#ced8f7",
             lineweight_policy=LineweightPolicy.RELATIVE,
             lineweight_scaling=0.5,
@@ -150,13 +150,13 @@ def transparency():
 
 if __name__ == "__main__":
     export(
-        pathlib.Path(r"C:\Users\mozman\Desktop\Outbox\BW.dxf"),
-        ["Model", "Layout1"],
+        pathlib.Path(r"C:\Source\ezdxf.git\examples_dxf\aci_color_table.dxf"),
+        ["Layout1"],
     )
-    export(
-        pathlib.Path(r"C:\Source\dxftest\CADKitSamples\AEC Plan Elev Sample.dxf"),
-        ["Model", "PLAN", "SECTION"],
-    )
+    # export(
+    #     pathlib.Path(r"C:\Source\dxftest\CADKitSamples\AEC Plan Elev Sample.dxf"),
+    #     ["Model", "PLAN", "SECTION"],
+    # )
     # export_cadkit_samples()
     # simple()
     # transparency()
