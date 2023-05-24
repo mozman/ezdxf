@@ -56,21 +56,25 @@ def render_glyph_table(font: fonts.TrueTypeFont, layout: Layout):
             path.render_hatches(layout, [glyph], dxfattribs=glyph_attribs)
 
 
-def render_font(font_name: str):
+def render_font(font_name: str, unmanaged: bool):
     doc = ezdxf.new()
     doc.layers.add("TEXT")
     doc.layers.add("GLYPH")
     doc.layers.add("DOTS", color=1)
     doc.styles.add("TEXT", font="Arial.ttf")
     msp = doc.modelspace()
-    font = fonts.make_font(font_name, CAP_HEIGHT)
+    if unmanaged:
+        font = fonts.load_unmanaged_ttf(font_name, CAP_HEIGHT)
+    else:
+        font = fonts.make_font(font_name, CAP_HEIGHT)
     if font.name != font_name:
         print(f"font '{font_name}' not found.")
         exit(1)
     render_glyph_table(font, msp)  # type: ignore
     size = 260 * SQUARE_SIZE
     doc.set_modelspace_vport(size, center=(size / 2, size / 2))
-    file_path = CWD / f"glyph_table_{font_name.replace('.', '_')}.dxf"
+    out_name = pathlib.Path(font_name).name.replace('.', '_')
+    file_path = CWD / f"glyph_table_{out_name}.dxf"
     print(f"writing: {file_path}")
     doc.saveas(file_path)
     print("done")
@@ -86,9 +90,17 @@ def main():
         nargs="+",
         help="font file name to render",
     )
+    parser.add_argument(
+        "-u",
+        "--unmanaged",
+        action="store_true",
+        default=False,
+        help="bypass the font manager and load a font straight from disk, requires an absolute file path",
+    )
     args = parser.parse_args(sys.argv[1:])
+
     for font_name in args.files:
-        render_font(font_name)
+        render_font(font_name, args.unmanaged)
 
 
 if __name__ == "__main__":
