@@ -108,6 +108,8 @@ Functions
 
 .. autofunction:: load
 
+.. autofunction:: load_unmanaged_ttf
+
 Classes
 -------
 

@@ -5,6 +5,7 @@ from typing import Optional, TYPE_CHECKING, cast
 import abc
 import enum
 import logging
+import os
 import sys
 import pathlib
 
@@ -522,6 +523,36 @@ class TrueTypeFont(_CachedFont):
             cache = TTFontRenderer(font_manager.get_ttf_font(fallback_font_name))
         self._glyph_caches[key] = cache
         return cache
+
+
+class _UnmanagedTrueTypeFont(_CachedFont):
+    font_render_type = FontRenderType.OUTLINE
+
+    def create_cache(self, ttf: str) -> Glyphs:
+        from .ttfonts import TTFontRenderer
+        from fontTools.ttLib import TTFont
+
+        key = ttf.lower()
+        try:
+            return self._glyph_caches[key]
+        except KeyError:
+            pass
+        cache = TTFontRenderer(TTFont(ttf, fontNumber=0))
+        self._glyph_caches[key] = cache
+        return cache
+
+
+def load_unmanaged_ttf(font_path: str | os.PathLike, cap_height) -> AbstractFont:
+    """This function bypasses the FontManager and loads the TrueType font straight from
+    the file system, requires the absolute font file path e.g. "C:/Windows/Fonts/Arial.ttf".
+
+    .. warning::
+
+        Expert feature, use with care: no fallback font and no error handling.
+
+    """
+
+    return _UnmanagedTrueTypeFont(str(font_path), cap_height)
 
 
 class ShapeFileFont(_CachedFont):
