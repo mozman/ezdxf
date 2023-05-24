@@ -150,7 +150,7 @@ def transparency():
 
 if __name__ == "__main__":
     export(
-        pathlib.Path(r"C:\Source\ezdxf.git\examples_dxf\aci_color_table.dxf"),
+        pathlib.Path(r"C:\Source\dxftest\TZBM\aci_color_table.dxf"),
         ["Layout1"],
     )
     # export(

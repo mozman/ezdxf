@@ -1,0 +1,14 @@
+Noto
+====
+
+https://www.google.com/get/noto/
+
+Beautiful and free fonts for all languages
+When text is rendered by a computer, sometimes characters are displayed as "tofu". 
+They are little boxes to indicate your device doesn’t have a font to display the text.
+
+Google has been developing a font family called Noto, which aims to support all languages 
+with a harmonious look and feel. Noto is Google’s answer to tofu. The name noto is to 
+convey the idea that Google’s goal is to see "no more tofu". Noto has multiple styles 
+and weights, and is freely available to all. The comprehensive set of fonts and tools 
+used in our development is available in our GitHub repositories.
