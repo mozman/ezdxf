@@ -8,14 +8,13 @@ import ezdxf
 from ezdxf.document import Drawing
 from ezdxf import zoom
 from ezdxf.addons import xplayer
-from ezdxf.addons.drawing import svg, layout
+from ezdxf.addons.drawing import svg, layout, pymupdf
 
 from .tokenizer import hpgl2_commands
 from .plotter import Plotter
 from .interpreter import Interpreter
 from .backend import Recorder, placement_matrix, Player
 from .dxf_backend import DXFBackend, ColorMode
-from .pdf_backend import PDFBackend, pdf_is_supported
 
 
 DEBUG = False
@@ -50,8 +49,8 @@ def to_dxf(
     b: bytes,
     *,
     rotation: int = 0,
-    sx=1.0,
-    sy=1.0,
+    mirror_x: bool = False,
+    mirror_y: bool = False,
     color_mode=ColorMode.RGB,
     map_black_rgb_to_white_rgb=False,
     merge_control: MergeControl = MergeControl.AUTO,
@@ -84,8 +83,8 @@ def to_dxf(
     Args:
         b: plot file content as bytes
         rotation: rotation angle of 0, 90, 180 or 270 degrees
-        sx: scaling factor in x-axis direction, negative values to mirror the image
-        sy: scaling factor in y-axis direction, negative values to mirror the image
+        mirror_x: mirror in x-axis direction
+        mirror_y:  mirror in y-axis direction
         color_mode: the color mode controls how color values are assigned to DXF entities,
             see :class:`ColorMode`
         map_black_rgb_to_white_rgb: map black fillings to white
@@ -105,7 +104,7 @@ def to_dxf(
         return doc
 
     bbox = player.bbox()
-    m = placement_matrix(bbox, sx, sy, rotation)
+    m = placement_matrix(bbox, -1 if mirror_x else 1, -1 if mirror_y else 1, rotation)
     player.transform(m)
 
     msp = doc.modelspace()
@@ -144,8 +143,8 @@ def to_svg(
     b: bytes,
     *,
     rotation: int = 0,
-    sx: float = 1.0,
-    sy: float = 1.0,
+    mirror_x: bool = False,
+    mirror_y: bool = False,
     merge_control=MergeControl.AUTO,
 ) -> str:
     """
@@ -154,16 +153,16 @@ def to_svg(
     The plot units are mapped 1:1 to ``viewBox`` units and the size of image is the size
     of the original plot file in millimeters.
 
-    HPGL/2's merge control works at the pixel level and cannot be replicated by SVG,
-    but to prevent fillings from obscuring text, the filled polygons are
+    HPGL/2's merge control works at the pixel level and cannot be replicated by the
+    backend, but to prevent fillings from obscuring text, the filled polygons are
     sorted by luminance - this can be forced or disabled by the argument `merge_control`,
     see also :class:`MergeControl` enum.
 
     Args:
         b: plot file content as bytes
         rotation: rotation angle of 0, 90, 180 or 270 degrees
-        sx: scaling factor in x-axis direction, negative values to mirror the image
-        sy: scaling factor in y-axis direction, negative values to mirror the image
+        mirror_x: mirror in x-axis direction
+        mirror_y:  mirror in y-axis direction
         merge_control: how to order filled polygons, see :class:`MergeControl`
 
     Returns: SVG content as ``str``
@@ -197,8 +196,8 @@ def to_svg(
     settings = layout.Settings(output_coordinate_space=max_plot_units)
     m = layout.placement_matrix(
         bbox,
-        sx=sx,
-        sy=-sy,
+        sx=-1 if mirror_x else 1,
+        sy=1 if mirror_y else -1,  # inverted y-axis
         rotation=rotation,
         page=page,
         output_coordinate_space=settings.output_coordinate_space,
@@ -217,18 +216,18 @@ def to_pdf(
     b: bytes,
     *,
     rotation: int = 0,
-    sx: float = 1.0,
-    sy: float = 1.0,
+    mirror_x: bool = False,
+    mirror_y: bool = False,
     merge_control=MergeControl.AUTO,
 ) -> bytes:
     """
     Exports the HPGL/2 commands of the byte stream `b` as PDF data.
 
-    The plot units (1 plu = 0.025mm) are converted to PDF units (1/72 inch) so the size
-    of image is the size of the original plot file in millimeters.
+    The plot units (1 plu = 0.025mm) are converted to PDF units (1/72 inch) so the image
+    has the size of the original plot file.
 
-    HPGL/2's merge control works at the pixel level and cannot be replicated by PDF,
-    but to prevent fillings from obscuring text, the filled polygons are
+    HPGL/2's merge control works at the pixel level and cannot be replicated by the
+    backend, but to prevent fillings from obscuring text, the filled polygons are
     sorted by luminance - this can be forced or disabled by the argument `merge_control`,
     see also :class:`MergeControl` enum.
 
@@ -237,14 +236,90 @@ def to_pdf(
     Args:
         b: plot file content as bytes
         rotation: rotation angle of 0, 90, 180 or 270 degrees
-        sx: scaling factor in x-axis direction, negative values to mirror the image
-        sy: scaling factor in y-axis direction, negative values to mirror the image
+        mirror_x: mirror in x-axis direction
+        mirror_y:  mirror in y-axis direction
         merge_control: how to order filled polygons, see :class:`MergeControl`
 
-    Returns: PDF content as ``bytzs``
+    Returns: PDF content as ``bytes``
 
     """
-    if not pdf_is_supported:
+    return _pymupdf(
+        b,
+        rotation=rotation,
+        mirror_x=mirror_x,
+        mirror_y=mirror_y,
+        merge_control=merge_control,
+        fmt="pdf",
+    )
+
+
+def to_pixmap(
+    b: bytes,
+    *,
+    rotation: int = 0,
+    mirror_x: bool = False,
+    mirror_y: bool = False,
+    merge_control=MergeControl.AUTO,
+    fmt: str = "png",
+    dpi: int = 96,
+) -> bytes:
+    """
+    Exports the HPGL/2 commands of the byte stream `b` as pixel image as bytes,
+    supported image formats:
+
+        === =========================
+        png Portable Network Graphics
+        ppm Portable Pixmap
+        pbm Portable Bitmap
+        === =========================
+
+    The plot units (1 plu = 0.025mm) are converted to dot per inch (dpi) so the image
+    has the size of the original plot file.
+
+    HPGL/2's merge control works at the pixel level and cannot be replicated by the
+    backend, but to prevent fillings from obscuring text, the filled polygons are
+    sorted by luminance - this can be forced or disabled by the argument `merge_control`,
+    see also :class:`MergeControl` enum.
+
+    Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/
+
+    Args:
+        b: plot file content as bytes
+        rotation: rotation angle of 0, 90, 180 or 270 degrees
+        mirror_x: mirror in x-axis direction
+        mirror_y:  mirror in y-axis direction
+        merge_control: how to order filled polygons, see :class:`MergeControl`
+        fmt: image format
+        dpi: output resolution in dots per inch
+
+    Returns: image content as ``bytes``
+
+    """
+    fmt = fmt.lower()
+    if fmt not in pymupdf.SUPPORTED_IMAGE_FORMATS:
+        raise ValueError(f"image format '{fmt}' not supported")
+    return _pymupdf(
+        b,
+        rotation=rotation,
+        mirror_x=mirror_x,
+        mirror_y=mirror_y,
+        merge_control=merge_control,
+        fmt=fmt,
+        dpi=dpi,
+    )
+
+
+def _pymupdf(
+    b: bytes,
+    *,
+    rotation: int = 0,
+    mirror_x: bool = False,
+    mirror_y: bool = False,
+    merge_control=MergeControl.AUTO,
+    fmt: str = "pdf",
+    dpi=96,
+) -> bytes:
+    if not pymupdf.pdf_is_supported:
         print("Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/")
         return b""
 
@@ -256,15 +331,44 @@ def to_pdf(
     except Hpgl2Error:
         return b""
 
+    # transform content for the SVGBackend of the drawing add-on
     bbox = player.bbox()
-    m = placement_matrix(bbox, sx, sy, rotation)
+    size = bbox.size
+
+    # HPGL/2 uses (integer) plot units, 1 plu = 0.025mm or 1mm = 40 plu
+    width_in_mm = size.x / 40
+    height_in_mm = size.y / 40
+
+    if rotation in (0, 180):
+        page = layout.Page(width_in_mm, height_in_mm)
+    else:
+        page = layout.Page(height_in_mm, width_in_mm)
+        # adjust rotation for y-axis mirroring
+        rotation += 180
+
+    # The PDFBackend expects coordinates as pt = 1/72 inch; 1016 plu = 1 inch
+    max_plot_units = max(size.x, size.y) / 1016 * 72
+    settings = layout.Settings(output_coordinate_space=max_plot_units)
+    m = layout.placement_matrix(
+        bbox,
+        sx=-1 if mirror_x else 1,
+        sy=-1 if mirror_y else 1,
+        rotation=rotation,
+        page=page,
+        output_coordinate_space=settings.output_coordinate_space,
+    )
     player.transform(m)
 
-    # 2nd pass replays the plotting commands to plot the SVG
-    pdf_backend = PDFBackend(player.bbox())
-    player.replay(pdf_backend)
+    # 2nd pass replays the plotting commands on the PyMuPdfBackend of the drawing add-on
+    pymupdf_backend = pymupdf.PyMuPdfBackend()
+    xplayer.hpgl2_to_drawing(player, pymupdf_backend, bg_color="#ffffff")
     del player
-    return pdf_backend.get_bytes()
+    if fmt == "pdf":
+        return pymupdf_backend.get_pdf_bytes(page, settings=settings)
+    else:
+        return pymupdf_backend.get_pixmap_bytes(
+            page, fmt=fmt, settings=settings, dpi=dpi
+        )
 
 
 def print_interpreter_log(interpreter: Interpreter) -> None:

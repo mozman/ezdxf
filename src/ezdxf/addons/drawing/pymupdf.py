@@ -28,6 +28,8 @@ __all__ = ["PyMuPdfBackend"]
 
 # PDF units are points (pt), 1 pt is 1/72 of an inch:
 MM_TO_POINTS = 72.0 / 25.4  # 25.4 mm = 1 inch / 72
+# psd does not work in PyMuPDF v1.22.3
+SUPPORTED_IMAGE_FORMATS = ("png", "ppm", "pbm")
 
 
 class PyMuPdfBackend(recorder.Recorder):
@@ -78,7 +80,7 @@ class PyMuPdfBackend(recorder.Recorder):
         *,
         fmt="png",
         settings: layout.Settings = layout.Settings(),
-        dpi: int = 72,
+        dpi: int = 96,
         alpha=False,
     ) -> bytes:
         """Returns a pixel image as bytes, supported image formats:
@@ -97,8 +99,7 @@ class PyMuPdfBackend(recorder.Recorder):
             alpha: add alpha channel (transparency)
 
         """
-        # psd does not work in PyMuPDF v1.22.3
-        if fmt not in ("png", "ppm", "pbm"):
+        if fmt not in SUPPORTED_IMAGE_FORMATS:
             raise ValueError(f"unsupported image format: '{fmt}'")
         backend = self._get_replay(page, settings)
         try:

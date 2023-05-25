@@ -884,21 +884,17 @@ class HPGL(Command):
         )
         parser.add_argument(
             "-x",
-            "--scale_x",
-            type=float,
-            metavar="SX",
-            default=1.0,
+            "--mirror_x",
+            action="store_true",
             required=False,
-            help="scale page in x-axis direction, use negative values to mirror page, (no gui)",
+            help="mirror page in x-axis direction, (no gui)",
         )
         parser.add_argument(
             "-y",
-            "--scale_y",
-            type=float,
-            metavar="SY",
-            default=1.0,
+            "--mirror_y",
+            action="store_true",
             required=False,
-            help="scale page in y-axis direction, use negative values to mirror page (no gui)",
+            help="mirror page in y-axis direction, (no gui)",
         )
         parser.add_argument(
             "-m",
@@ -969,8 +965,8 @@ def export_hpgl2(filepath: Path, args) -> None:
         doc = hpgl2.to_dxf(
             data,
             rotation=args.rotate,
-            sx=args.scale_x,
-            sy=args.scale_y,
+            mirror_x=args.mirror_x,
+            mirror_y=args.mirror_y,
             color_mode=color_mode,
             map_black_rgb_to_white_rgb=args.map_black_to_white,
             merge_control=args.merge_control,
@@ -985,8 +981,8 @@ def export_hpgl2(filepath: Path, args) -> None:
         svg_string = hpgl2.to_svg(
             data,
             rotation=args.rotate,
-            sx=args.scale_x,
-            sy=args.scale_y,
+            mirror_x=args.mirror_x,
+            mirror_y=args.mirror_y,
             merge_control=args.merge_control,
         )
         try:
@@ -998,8 +994,8 @@ def export_hpgl2(filepath: Path, args) -> None:
         pdf_bytes = hpgl2.to_pdf(
             data,
             rotation=args.rotate,
-            sx=args.scale_x,
-            sy=args.scale_y,
+            mirror_x=args.mirror_x,
+            mirror_y=args.mirror_y,
             merge_control=args.merge_control,
         )
         try:
