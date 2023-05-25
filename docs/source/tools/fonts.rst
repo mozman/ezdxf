@@ -108,7 +108,7 @@ Functions
 
 .. autofunction:: load
 
-.. autofunction:: load_unmanaged_ttf
+.. autofunction:: sideload_ttf
 
 Classes
 -------

@@ -542,7 +542,7 @@ class _UnmanagedTrueTypeFont(_CachedFont):
         return cache
 
 
-def load_unmanaged_ttf(font_path: str | os.PathLike, cap_height) -> AbstractFont:
+def sideload_ttf(font_path: str | os.PathLike, cap_height) -> AbstractFont:
     """This function bypasses the FontManager and loads the TrueType font straight from
     the file system, requires the absolute font file path e.g. "C:/Windows/Fonts/Arial.ttf".
 

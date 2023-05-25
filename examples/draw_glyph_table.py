@@ -56,15 +56,15 @@ def render_glyph_table(font: fonts.TrueTypeFont, layout: Layout):
             path.render_hatches(layout, [glyph], dxfattribs=glyph_attribs)
 
 
-def render_font(font_name: str, unmanaged: bool):
+def render_font(font_name: str, sideload: bool):
     doc = ezdxf.new()
     doc.layers.add("TEXT")
     doc.layers.add("GLYPH")
     doc.layers.add("DOTS", color=1)
     doc.styles.add("TEXT", font="Arial.ttf")
     msp = doc.modelspace()
-    if unmanaged:
-        font = fonts.load_unmanaged_ttf(font_name, CAP_HEIGHT)
+    if sideload:
+        font = fonts.sideload_ttf(font_name, CAP_HEIGHT)
     else:
         font = fonts.make_font(font_name, CAP_HEIGHT)
     if font.name != font_name:
@@ -91,8 +91,8 @@ def main():
         help="font file name to render",
     )
     parser.add_argument(
-        "-u",
-        "--unmanaged",
+        "-s",
+        "--sideload",
         action="store_true",
         default=False,
         help="bypass the font manager and load a font straight from disk, requires an absolute file path",
@@ -100,7 +100,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     for font_name in args.files:
-        render_font(font_name, args.unmanaged)
+        render_font(font_name, args.sideload)
 
 
 if __name__ == "__main__":
