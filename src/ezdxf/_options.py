@@ -11,10 +11,9 @@ from configparser import ConfigParser
 # import ezdxf
 # value = ezdxf.options.<attribute>
 #
-# If the import of "ezdxf" is not wanted:
+# alternative:
 # from ezdxf._options import options
 
-# The MATPLOTLIB global shows that Matplotlib is installed:
 TRUE_STATE = {"True", "true", "On", "on", "1"}
 CORE = "core"
 BROWSE_COMMAND = "browse-command"
