@@ -5,7 +5,6 @@ from typing import Any
 import math
 import os
 import pathlib
-import time
 
 from ezdxf.math import BoundingBox2d, Matrix44
 from ezdxf.addons import xplayer
@@ -53,13 +52,23 @@ class HPGL2Widget(QtWidgets.QWidget):
         self._view.begin_loading()
         new_scene = QtWidgets.QGraphicsScene()
         self._backend.set_scene(new_scene)
+        new_scene.addItem(self._bg_paper(bg_color))
+
         xplayer.hpgl2_to_drawing(
-            self._player, self._backend, bg_color=bg_color, override=override
+            self._player, self._backend, bg_color="", override=override
         )
         self._view.end_loading(new_scene)
         self._view.buffer_scene_rect()
         if reset_view:
             self._view.fit_to_scene()
+
+    def _bg_paper(self, color):
+        bbox = self._player.bbox()
+        insert = bbox.extmin
+        size = bbox.size
+        rect = QtWidgets.QGraphicsRectItem(insert.x, insert.y, size.x, size.y)
+        rect.setBrush(QtGui.QBrush(QtGui.QColor(color)))
+        return rect
 
 
 SPACING = 20
@@ -83,7 +92,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self._player: api.Player = api.Player([], {})
         self._bbox: BoundingBox2d = BoundingBox2d()
         self._page_rotation = 0
-        self._color_schema = 0
+        self._color_scheme = 0
         self._current_file = pathlib.Path()
 
         self.page_size_label = QtWidgets.QLabel()
@@ -223,6 +232,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
     def select_plot_file(self) -> None:
         path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self,
+            dir=str(self._current_file.parent),
             caption="Select HPGL/2 Plot File",
             filter="Plot Files (*.plt)",
         )
@@ -232,15 +242,14 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
     def set_plot_data(self, data: bytes, filename: str | os.PathLike) -> None:
         try:
             self._cad.plot(data)
-        except api.Hpgl2Error:
-            # TODO: show MessageBox
-            msg = f"cannot load HPGL/2 file: {filename}"
-            print(msg)
+        except api.Hpgl2Error as e:
+            msg = f"Cannot plot HPGL/2 file '{filename}', {str(e)}"
+            QtWidgets.QMessageBox.critical(self, "Plot Error", msg)
             return
         self._player = self._cad.player
         self._bbox = self._player.bbox()
         self._current_file = pathlib.Path(filename)
-        self.update_colors(self._color_schema)
+        self.update_colors(self._color_scheme)
         self.update_sidebar()
         self.setWindowTitle(f"{VIEWER_NAME} - " + str(filename))
         self.disable_export_buttons(False)
@@ -303,7 +312,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             self.update_view()
 
     def update_colors(self, index: int):
-        self._color_schema = index
+        self._color_scheme = index
         self._cad.replay(*replay_properties(index))
         self.update_view()
 
@@ -337,12 +346,9 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         if not path:
             return
         try:
-            t0 = time.perf_counter()
             with open(path, "wt") as fp:
                 fp.write(self.make_svg_string())
-            self.show_message(
-                f"SVG successfully exported in {time.perf_counter()-t0:.2f}s"
-            )
+            self.show_message("SVG successfully exported")
         except IOError as e:
             QMessageBox.critical(self, "Export Error", str(e))
 
@@ -364,7 +370,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         player.transform(self.get_export_matrix())
         size = player.bbox().size
         svg_backend = svg.SVGBackend()
-        bg_color, override = replay_properties(self._color_schema)
+        bg_color, override = replay_properties(self._color_scheme)
         xplayer.hpgl2_to_drawing(
             player, svg_backend, bg_color=bg_color, override=override
         )
@@ -383,12 +389,9 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         if not path:
             return
         try:
-            t0 = time.perf_counter()
             with open(path, "wb") as fp:
                 fp.write(self._pymupdf_export(fmt="pdf"))
-            self.show_message(
-                f"PDF successfully exported in {time.perf_counter()-t0:.2f}s exported"
-            )
+            self.show_message("PDF successfully exported")
         except IOError as e:
             QMessageBox.critical(self, "Export Error", str(e))
 
@@ -402,12 +405,9 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         if not path:
             return
         try:
-            t0 = time.perf_counter()
             with open(path, "wb") as fp:
                 fp.write(self._pymupdf_export(fmt="png"))
-            self.show_message(
-                f"PNG successfully exported in {time.perf_counter()-t0:.2f}s"
-            )
+            self.show_message("PNG successfully exported")
         except IOError as e:
             QMessageBox.critical(self, "Export Error", str(e))
 
@@ -417,7 +417,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         player.transform(self.get_export_matrix())
         size = player.bbox().size
         pdf_backend = pymupdf.PyMuPdfBackend()
-        bg_color, override = replay_properties(self._color_schema)
+        bg_color, override = replay_properties(self._color_scheme)
         xplayer.hpgl2_to_drawing(
             player, pdf_backend, bg_color=bg_color, override=override
         )

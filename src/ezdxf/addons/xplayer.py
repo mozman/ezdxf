@@ -23,7 +23,8 @@ def hpgl2_to_drawing(
     override: Callable[[BackendProperties], BackendProperties] | None = None,
 ) -> None:
     """Replays the recordings of the HPGL2 Recorder on a backend of the drawing add-on."""
-    backend.set_background(bg_color)  # plotting on white paper
+    if bg_color:
+        backend.set_background(bg_color)
     for record_type, properties, record_data in player.recordings():
         backend_properties = _make_drawing_backend_properties(properties)
         if override:
