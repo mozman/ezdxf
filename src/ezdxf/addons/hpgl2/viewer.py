@@ -215,8 +215,13 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
     def disable_export_buttons(self, disabled: bool):
         self.export_svg_button.setDisabled(disabled)
-        self.export_png_button.setDisabled(disabled)
-        self.export_pdf_button.setDisabled(disabled)
+        if pymupdf.pdf_is_supported:
+            self.export_png_button.setDisabled(disabled)
+            self.export_pdf_button.setDisabled(disabled)
+        else:
+            print("PDF/PNG export requires the PyMuPdf package!")
+            self.export_png_button.setDisabled(True)
+            self.export_pdf_button.setDisabled(True)
         self.export_dxf_button.setDisabled(True)
 
     def load_plot_file(self, path: str | os.PathLike, force=False) -> None:
