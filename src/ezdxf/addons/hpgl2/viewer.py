@@ -215,7 +215,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
     def disable_export_buttons(self, disabled: bool):
         self.export_svg_button.setDisabled(disabled)
-        if pymupdf.pdf_is_supported:
+        if pymupdf.is_pymupdf_installed:
             self.export_png_button.setDisabled(disabled)
             self.export_pdf_button.setDisabled(disabled)
         else:

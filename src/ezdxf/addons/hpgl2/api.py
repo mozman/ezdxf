@@ -94,7 +94,7 @@ def to_dxf(
 
     """
     if rotation not in (0, 90, 180, 270):
-        raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
+        raise ValueError("rotation angle must be 0, 90, 180, or 270")
 
     # 1st pass records output of the plotting commands and detects the bounding box
     doc = ezdxf.new()
@@ -169,7 +169,7 @@ def to_svg(
 
     """
     if rotation not in (0, 90, 180, 270):
-        raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
+        raise ValueError("rotation angle must be 0, 90, 180, or 270")
     # 1st pass records output of the plotting commands and detects the bounding box
     try:
         player = record_plotter_output(b, merge_control)
@@ -319,12 +319,12 @@ def _pymupdf(
     fmt: str = "pdf",
     dpi=96,
 ) -> bytes:
-    if not pymupdf.pdf_is_supported:
+    if not pymupdf.is_pymupdf_installed:
         print("Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/")
         return b""
 
     if rotation not in (0, 90, 180, 270):
-        raise ValueError("invalid rotation angle: should be 0, 90, 180, or 270")
+        raise ValueError("rotation angle must be 0, 90, 180, or 270")
     # 1st pass records output of the plotting commands and detects the bounding box
     try:
         player = record_plotter_output(b, merge_control)

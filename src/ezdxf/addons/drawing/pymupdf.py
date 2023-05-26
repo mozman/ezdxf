@@ -15,16 +15,16 @@ from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
 
-pdf_is_supported = True
+is_pymupdf_installed = True
 try:
     import fitz
 except ImportError:
     print("Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/")
     fitz = None
-    pdf_is_supported = False
+    is_pymupdf_installed = False
 # PyMuPDF docs: https://pymupdf.readthedocs.io/en/latest/
 
-__all__ = ["PyMuPdfBackend"]
+__all__ = ["PyMuPdfBackend", "is_pymupdf_installed"]
 
 # PDF units are points (pt), 1 pt is 1/72 of an inch:
 MM_TO_POINTS = 72.0 / 25.4  # 25.4 mm = 1 inch / 72
@@ -143,7 +143,7 @@ class PyMuPdfRenderBackend(BackendInterface):
 
     def __init__(self, page: layout.Page, settings: layout.Settings) -> None:
         assert (
-            pdf_is_supported
+            is_pymupdf_installed
         ), "Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/"
         self.doc = fitz.open()
         self.doc.set_metadata(
