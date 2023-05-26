@@ -10,7 +10,7 @@ from ezdxf.lldxf.types import (
     GROUP_MARKERS,
     POINTER_CODES,
 )
-from ezdxf.addons.xqt import QModelIndex, QAbstractTableModel, Qt
+from ezdxf.addons.xqt import QModelIndex, QAbstractTableModel, Qt, QtWidgets
 from ezdxf.addons.xqt import QStandardItemModel, QStandardItem, QColor
 from .tags import compile_tags, Tags
 
@@ -55,6 +55,8 @@ class DXFTagsModel(QAbstractTableModel):
         self._tags = compile_tags(tags)
         self._line_numbers = calc_line_numbers(start_line_number, self._tags)
         self._valid_handles = valid_handles or set()
+        palette = QtWidgets.QApplication.palette()
+        self._group_marker_color = palette.highlight().color()
 
     def data(self, index: QModelIndex, role: int = ...) -> Any:  # type: ignore
         def is_invalid_handle(tag):
@@ -71,7 +73,7 @@ class DXFTagsModel(QAbstractTableModel):
         elif role == Qt.ForegroundRole:
             tag = self._tags[index.row()]
             if tag.code in GROUP_MARKERS:
-                return QColor("blue")
+                return self._group_marker_color
             elif is_invalid_handle(tag):
                 return QColor("red")
         elif role == DXFTagsRole:

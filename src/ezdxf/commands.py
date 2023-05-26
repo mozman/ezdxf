@@ -454,6 +454,7 @@ class View(Command):
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QtWidgets.QApplication(sys.argv)
+        app.setStyle("Fusion")
         set_app_icon(app)
         viewer = CADViewer.from_config(config)
         filename = args.file
@@ -504,6 +505,7 @@ class Browse(Command):
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QtWidgets.QApplication(sys.argv)
+        app.setStyle("Fusion")
         set_app_icon(app)
         main_window = browser.DXFStructureBrowser(
             args.file,
@@ -551,6 +553,7 @@ class BrowseAcisData(Command):
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QtWidgets.QApplication(sys.argv)
+        app.setStyle("Fusion")
         set_app_icon(app)
         main_window = AcisStructureBrowser(
             args.file,
@@ -1018,6 +1021,7 @@ def launch_hpgl2_viewer(filename: str, force: bool) -> None:
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyle("Fusion")
     set_app_icon(app)
     viewer = HPGL2Viewer()
     viewer.show()
