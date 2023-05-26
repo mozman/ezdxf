@@ -4,12 +4,13 @@ from __future__ import annotations
 from typing import Any
 import math
 import os
+import pathlib
 import time
 
 from ezdxf.math import BoundingBox2d, Matrix44
 from ezdxf.addons import xplayer
-from ezdxf.addons.xqt import QtWidgets, QtGui, QtCore
-from ezdxf.addons.drawing import svg, layout
+from ezdxf.addons.xqt import QtWidgets, QtGui, QtCore, QMessageBox
+from ezdxf.addons.drawing import svg, layout, pymupdf
 from ezdxf.addons.drawing.qtviewer import CADGraphicsView
 from ezdxf.addons.drawing.pyqt import PyQtPlaybackBackend
 
@@ -62,7 +63,7 @@ class HPGL2Widget(QtWidgets.QWidget):
 
 
 SPACING = 20
-DEFAULT_DPI = 72
+DEFAULT_DPI = 96
 COLOR_SCHEMA = [
     "Default",
     "Black on White",
@@ -83,6 +84,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self._bbox: BoundingBox2d = BoundingBox2d()
         self._page_rotation = 0
         self._color_schema = 0
+        self._current_file = pathlib.Path()
 
         self.page_size_label = QtWidgets.QLabel()
         self.png_size_label = QtWidgets.QLabel()
@@ -105,6 +107,16 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self.color_combo_box = QtWidgets.QComboBox()
         self.color_combo_box.addItems(COLOR_SCHEMA)
         self.color_combo_box.currentIndexChanged.connect(self.update_colors)
+
+        self.export_svg_button = QtWidgets.QPushButton("Export SVG")
+        self.export_svg_button.clicked.connect(self.export_svg)
+        self.export_png_button = QtWidgets.QPushButton("Export PNG")
+        self.export_png_button.clicked.connect(self.export_png)
+        self.export_pdf_button = QtWidgets.QPushButton("Export PDF")
+        self.export_pdf_button.clicked.connect(self.export_pdf)
+        self.export_dxf_button = QtWidgets.QPushButton("Export DXF")
+        self.export_dxf_button.clicked.connect(self.export_dxf)
+        self.disable_export_buttons(True)
 
         self.scaling_factor_line_edit.editingFinished.connect(self.update_sidebar)
         self.dpi_line_edit.editingFinished.connect(self.update_sidebar)
@@ -176,24 +188,10 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         v_layout.addLayout(h_layout)
         v_layout.addWidget(self.png_size_label)
 
-        export_png_button = QtWidgets.QPushButton("Export PNG")
-        export_png_button.clicked.connect(self.export_png)
-        export_png_button.setDisabled(True)
-        v_layout.addWidget(export_png_button)
-
-        export_svg_button = QtWidgets.QPushButton("Export SVG")
-        export_svg_button.clicked.connect(self.export_svg)
-        v_layout.addWidget(export_svg_button)
-
-        export_pdf_button = QtWidgets.QPushButton("Export PDF")
-        export_pdf_button.clicked.connect(self.export_pdf)
-        export_pdf_button.setDisabled(True)
-        v_layout.addWidget(export_pdf_button)
-
-        export_dxf_button = QtWidgets.QPushButton("Export DXF")
-        export_dxf_button.clicked.connect(self.export_dxf)
-        export_dxf_button.setDisabled(True)
-        v_layout.addWidget(export_dxf_button)
+        v_layout.addWidget(self.export_png_button)
+        v_layout.addWidget(self.export_svg_button)
+        v_layout.addWidget(self.export_pdf_button)
+        v_layout.addWidget(self.export_dxf_button)
 
         v_layout.addSpacing(SPACING)
 
@@ -205,6 +203,12 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
         v_layout.addWidget(self.message_label)
         return sidebar
+
+    def disable_export_buttons(self, disabled: bool):
+        self.export_svg_button.setDisabled(disabled)
+        self.export_png_button.setDisabled(disabled)
+        self.export_pdf_button.setDisabled(disabled)
+        self.export_dxf_button.setDisabled(True)
 
     def load_plot_file(self, path: str | os.PathLike, force=False) -> None:
         try:
@@ -235,9 +239,11 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             return
         self._player = self._cad.player
         self._bbox = self._player.bbox()
+        self._current_file = pathlib.Path(filename)
         self.update_colors(self._color_schema)
         self.update_sidebar()
         self.setWindowTitle(f"{VIEWER_NAME} - " + str(filename))
+        self.disable_export_buttons(False)
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         self._view.fit_to_scene()
@@ -318,9 +324,13 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
     def clear_message(self) -> None:
         self.message_label.setText("")
 
+    def get_export_name(self, suffix: str) -> str:
+        return str(self._current_file.with_suffix(suffix))
+
     def export_svg(self) -> None:
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
             self,
+            dir=self.get_export_name(".svg"),
             caption="Save SVG File",
             filter="SVG Files (*.svg)",
         )
@@ -331,11 +341,10 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             with open(path, "wt") as fp:
                 fp.write(self.make_svg_string())
             self.show_message(
-                f"SVG successfully in {time.perf_counter()-t0:.2f}s exported"
+                f"SVG successfully exported in {time.perf_counter()-t0:.2f}s"
             )
         except IOError as e:
-            # TODO: show MessageBox
-            print(str(e))
+            QMessageBox.critical(self, "Export Error", str(e))
 
     def get_export_matrix(self) -> Matrix44:
         scale = self.get_scale_factor()
@@ -365,10 +374,60 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         return svg_backend.get_string(page)
 
     def export_pdf(self) -> None:
-        print("export HPGL/2 plot file as PDF")
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            dir=self.get_export_name(".pdf"),
+            caption="Save PDF File",
+            filter="PDF Files (*.pdf)",
+        )
+        if not path:
+            return
+        try:
+            t0 = time.perf_counter()
+            with open(path, "wb") as fp:
+                fp.write(self._pymupdf_export(fmt="pdf"))
+            self.show_message(
+                f"PDF successfully exported in {time.perf_counter()-t0:.2f}s exported"
+            )
+        except IOError as e:
+            QMessageBox.critical(self, "Export Error", str(e))
 
     def export_png(self) -> None:
-        print("export HPGL/2 plot file as PNG")
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            dir=self.get_export_name(".png"),
+            caption="Save PNG File",
+            filter="PNG Files (*.png)",
+        )
+        if not path:
+            return
+        try:
+            t0 = time.perf_counter()
+            with open(path, "wb") as fp:
+                fp.write(self._pymupdf_export(fmt="png"))
+            self.show_message(
+                f"PNG successfully exported in {time.perf_counter()-t0:.2f}s"
+            )
+        except IOError as e:
+            QMessageBox.critical(self, "Export Error", str(e))
+
+    def _pymupdf_export(self, fmt: str) -> bytes:
+        """Replays the HPGL/2 recordings on the PyMuPdfBackend of the drawing add-on."""
+        player = self._player.copy()
+        player.transform(self.get_export_matrix())
+        size = player.bbox().size
+        pdf_backend = pymupdf.PyMuPdfBackend()
+        bg_color, override = replay_properties(self._color_schema)
+        xplayer.hpgl2_to_drawing(
+            player, pdf_backend, bg_color=bg_color, override=override
+        )
+        del player  # free memory as soon as possible
+        # 40 plot units == 1mm
+        page = layout.Page(width=size.x / 40, height=size.y / 40)
+        if fmt == "pdf":
+            return pdf_backend.get_pdf_bytes(page)
+        else:
+            return pdf_backend.get_pixmap_bytes(page, fmt=fmt, dpi=self.get_dpi())
 
     def export_dxf(self) -> None:
         print("export HPGL/2 plot file as DXF")
