@@ -127,7 +127,7 @@ def transform_paths(paths: Iterable[T], m: Matrix44) -> list[T]:
     return [p.transform(m) for p in paths]
 
 
-def transform_paths_to_ocs(paths: Iterable[Path|Path2d], ocs: OCS) -> list[Path]:
+def transform_paths_to_ocs(paths: Iterable[Path | Path2d], ocs: OCS) -> list[Path]:
     """Transform multiple :class:`Path` objects at once from WCS to OCS.
     Returns a list of the transformed :class:`Path` objects.
 
@@ -272,7 +272,7 @@ def _get_non_uniform_scaling(current_size: Vec3, target_size: Vec3):
 
 def render_lwpolylines(
     layout: GenericLayoutType,
-    paths: Iterable[Path|Path2d],
+    paths: Iterable[Path | Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -314,7 +314,7 @@ def render_lwpolylines(
 
 def render_polylines2d(
     layout: GenericLayoutType,
-    paths: Iterable[Path|Path2d],
+    paths: Iterable[Path | Path2d],
     *,
     distance: float = 0.01,
     segments: int = 4,
@@ -356,7 +356,7 @@ def render_polylines2d(
 
 def render_hatches(
     layout: GenericLayoutType,
-    paths: Iterable[Path|Path2d],
+    paths: Iterable[Path | Path2d],
     *,
     edge_path: bool = True,
     distance: float = MAX_DISTANCE,
@@ -405,7 +405,7 @@ def render_hatches(
 
 def render_mpolygons(
     layout: GenericLayoutType,
-    paths: Iterable[Path|Path2d],
+    paths: Iterable[Path | Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -449,7 +449,7 @@ def render_mpolygons(
 
 def render_polylines3d(
     layout: GenericLayoutType,
-    paths: Iterable[Path|Path2d],
+    paths: Iterable[Path | Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -485,7 +485,7 @@ def render_polylines3d(
 
 def render_lines(
     layout: GenericLayoutType,
-    paths: Iterable[Path|Path2d],
+    paths: Iterable[Path | Path2d],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -520,7 +520,7 @@ def render_lines(
 
 def render_splines_and_polylines(
     layout: GenericLayoutType,
-    paths: Iterable[Path|Path2d],
+    paths: Iterable[Path | Path2d],
     *,
     g1_tol: float = G1_TOL,
     dxfattribs=None,
