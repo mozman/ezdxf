@@ -1,19 +1,24 @@
 # Copyright (c) 2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
 import math
 import os
 import pathlib
 
+from ezdxf import colors
 from ezdxf.math import BoundingBox2d, Matrix44
 from ezdxf.addons import xplayer
 from ezdxf.addons.xqt import QtWidgets, QtGui, QtCore, QMessageBox
-from ezdxf.addons.drawing import svg, layout, pymupdf
+from ezdxf.addons.drawing import svg, layout, pymupdf, dxf
 from ezdxf.addons.drawing.qtviewer import CADGraphicsView
 from ezdxf.addons.drawing.pyqt import PyQtPlaybackBackend
 
 from . import api
+
+if TYPE_CHECKING:
+    from ezdxf.document import Drawing
 
 VIEWER_NAME = "HPGL/2 Viewer"
 
@@ -215,6 +220,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
     def disable_export_buttons(self, disabled: bool):
         self.export_svg_button.setDisabled(disabled)
+        self.export_dxf_button.setDisabled(disabled)
         if pymupdf.is_pymupdf_installed:
             self.export_png_button.setDisabled(disabled)
             self.export_pdf_button.setDisabled(disabled)
@@ -222,7 +228,6 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             print("PDF/PNG export requires the PyMuPdf package!")
             self.export_png_button.setDisabled(True)
             self.export_pdf_button.setDisabled(True)
-        self.export_dxf_button.setDisabled(True)
 
     def load_plot_file(self, path: str | os.PathLike, force=False) -> None:
         try:
@@ -435,7 +440,56 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
             return pdf_backend.get_pixmap_bytes(page, fmt=fmt, dpi=self.get_dpi())
 
     def export_dxf(self) -> None:
-        print("export HPGL/2 plot file as DXF")
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            dir=self.get_export_name(".dxf"),
+            caption="Save DXF File",
+            filter="DXF Files (*.dxf)",
+        )
+        if not path:
+            return
+        doc = self._get_dxf_document()
+        try:
+            doc.saveas(path)
+            self.show_message("DXF successfully exported")
+        except IOError as e:
+            QMessageBox.critical(self, "Export Error", str(e))
+
+    def _get_dxf_document(self) -> Drawing:
+        import ezdxf
+        from ezdxf import zoom
+
+        doc = ezdxf.new()
+        doc.layers.add("BACKGROUND")
+        msp = doc.modelspace()
+        player = self._player.copy()
+        bbox = player.bbox()
+
+        m = self.get_export_matrix()
+        corners = m.fast_2d_transform(bbox.rect_vertices())
+        # move content to origin:
+        tx, ty = BoundingBox2d(corners).extmin  # type: ignore
+        m @= Matrix44.translate(-tx, -ty, 0)
+
+        player.transform(m)
+        bbox = player.bbox()
+
+        dxf_backend = dxf.DXFBackend(msp)
+        bg_color, override = replay_properties(self._color_scheme)
+        bg = dxf.add_background(msp, bbox, colors.RGB.from_hex(bg_color))
+        bg.dxf.layer = "BACKGROUND"
+        # exports the HPGL/2 content in plot units (plu) as modelspace:
+        # 1 plu = 0.025mm or 40 plu == 1mm
+        xplayer.hpgl2_to_drawing(
+            player, dxf_backend, bg_color=bg_color, override=override
+        )
+        del player
+        if bbox.has_data:  # non-empty page
+            zoom.window(msp, bbox.extmin, bbox.extmax)
+            dxf.update_extents(doc, bbox)
+            # paperspace is set up in mm:
+            dxf.setup_paperspace(doc, bbox)
+        return doc
 
 
 def replay_properties(index: int) -> tuple[str, Any]:

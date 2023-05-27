@@ -6,15 +6,14 @@ from xml.etree import ElementTree as ET
 
 import ezdxf
 from ezdxf.document import Drawing
-from ezdxf import zoom
+from ezdxf import zoom, colors
 from ezdxf.addons import xplayer
-from ezdxf.addons.drawing import svg, layout, pymupdf
+from ezdxf.addons.drawing import svg, layout, pymupdf, dxf
 
 from .tokenizer import hpgl2_commands
 from .plotter import Plotter
 from .interpreter import Interpreter
 from .backend import Recorder, placement_matrix, Player
-from .dxf_backend import DXFBackend, ColorMode
 
 
 DEBUG = False
@@ -51,8 +50,7 @@ def to_dxf(
     rotation: int = 0,
     mirror_x: bool = False,
     mirror_y: bool = False,
-    color_mode=ColorMode.RGB,
-    map_black_rgb_to_white_rgb=False,
+    color_mode=dxf.ColorMode.RGB,
     merge_control: MergeControl = MergeControl.AUTO,
 ) -> Drawing:
     """
@@ -87,7 +85,6 @@ def to_dxf(
         mirror_y:  mirror in y-axis direction
         color_mode: the color mode controls how color values are assigned to DXF entities,
             see :class:`ColorMode`
-        map_black_rgb_to_white_rgb: map black fillings to white
         merge_control: how to order filled polygons, see :class:`MergeControl`
 
     Returns: DXF document as instance of class :class:`~ezdxf.document.Drawing`
@@ -98,6 +95,7 @@ def to_dxf(
 
     # 1st pass records output of the plotting commands and detects the bounding box
     doc = ezdxf.new()
+    doc.layers.add("BACKGROUND")
     try:
         player = record_plotter_output(b, merge_control)
     except Hpgl2Error:
@@ -106,37 +104,22 @@ def to_dxf(
     bbox = player.bbox()
     m = placement_matrix(bbox, -1 if mirror_x else 1, -1 if mirror_y else 1, rotation)
     player.transform(m)
-
+    bbox = player.bbox()
     msp = doc.modelspace()
-    dxf_backend = DXFBackend(
-        msp,
-        color_mode=color_mode,
-        map_black_rgb_to_white_rgb=map_black_rgb_to_white_rgb,
-    )
+    dxf_backend = dxf.DXFBackend(msp, color_mode=color_mode)
+    bg_color = colors.RGB(255, 255, 255)
+    bg = dxf.add_background(msp, bbox, color=bg_color)
+    bg.dxf.layer = "BACKGROUND"
+
     # 2nd pass replays the plotting commands to plot the DXF
-    player.replay(dxf_backend)
+    xplayer.hpgl2_to_drawing(player, dxf_backend, bg_color=bg_color.to_hex())
     del player
 
     if bbox.has_data:  # non-empty page
         zoom.window(msp, bbox.extmin, bbox.extmax)
-        _update_doc(doc, bbox)
+        dxf.update_extents(doc, bbox)
+        dxf.setup_paperspace(doc, bbox)
     return doc
-
-
-def _update_doc(doc, bbox):
-    doc.header["$EXTMIN"] = (bbox.extmin.x, bbox.extmin.y, 0)
-    doc.header["$EXTMAX"] = (bbox.extmax.x, bbox.extmax.y, 0)
-
-    psp_size = bbox.size / 40.0  # plu to mm
-    psp_center = psp_size * 0.5
-    psp = doc.paperspace()
-    psp.page_setup(size=(psp_size.x, psp_size.y), margins=(0, 0, 0, 0), units="mm")
-    psp.add_viewport(
-        center=psp_center,
-        size=(psp_size.x, psp_size.y),
-        view_center_point=bbox.center,
-        view_height=bbox.size.y,
-    )
 
 
 def to_svg(

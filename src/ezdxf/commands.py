@@ -924,12 +924,6 @@ class HPGL(Command):
             required=False,
             help="use pen numbers as ACI colors (DXF only)",
         )
-        parser.add_argument(
-            "--map_black_to_white",
-            action="store_true",
-            required=False,
-            help="map black RGB plot colors to white RGB, does not affect ACI colors (DXF only)",
-        )
         parser.epilog = (
             "Note that plot files are intended to be plotted on white paper."
         )
@@ -971,7 +965,6 @@ def export_hpgl2(filepath: Path, args) -> None:
             mirror_x=args.mirror_x,
             mirror_y=args.mirror_y,
             color_mode=color_mode,
-            map_black_rgb_to_white_rgb=args.map_black_to_white,
             merge_control=args.merge_control,
         )
         try:
