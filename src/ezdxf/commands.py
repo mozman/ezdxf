@@ -944,7 +944,7 @@ class HPGL(Command):
 
 def export_hpgl2(filepath: Path, args) -> None:
     from ezdxf.addons.hpgl2 import api as hpgl2
-    from ezdxf.addons.hpgl2.dxf_backend import ColorMode
+    from ezdxf.addons.drawing.dxf import ColorMode
 
     fmt = args.export.upper()
     start_msg = f"converting HPGL/2 plot file '{filepath.name}' to {fmt}"

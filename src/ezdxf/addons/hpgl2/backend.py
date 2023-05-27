@@ -10,7 +10,7 @@ import math
 from .deps import (
     Vec2,
     Path,
-    luminance,
+    colors,
     Matrix44,
     BoundingBox2d,
 )
@@ -201,7 +201,7 @@ class Player:
         for record in self._records:
             if record.type == RecordType.FILLED_POLYGON:
                 current = props.get(record.property_hash, current)
-                key = luminance(current.resolve_fill_color())
+                key = colors.luminance(current.resolve_fill_color())
                 polygons.append((key, record))
             else:
                 polylines.append(record)

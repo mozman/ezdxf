@@ -7,8 +7,6 @@ import math
 import os
 import pathlib
 
-from ezdxf import colors
-from ezdxf.math import BoundingBox2d, Matrix44
 from ezdxf.addons import xplayer
 from ezdxf.addons.xqt import QtWidgets, QtGui, QtCore, QMessageBox
 from ezdxf.addons.drawing import svg, layout, pymupdf, dxf
@@ -16,6 +14,7 @@ from ezdxf.addons.drawing.qtviewer import CADGraphicsView
 from ezdxf.addons.drawing.pyqt import PyQtPlaybackBackend
 
 from . import api
+from .deps import BoundingBox2d, Matrix44, colors
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -122,6 +121,9 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         self.color_combo_box.addItems(COLOR_SCHEMA)
         self.color_combo_box.currentIndexChanged.connect(self.update_colors)
 
+        self.aci_export_mode = QtWidgets.QCheckBox("ACI Export Mode")
+        self.aci_export_mode.setCheckState(QtCore.Qt.CheckState.Unchecked)
+
         self.export_svg_button = QtWidgets.QPushButton("Export SVG")
         self.export_svg_button.clicked.connect(self.export_svg)
         self.export_png_button = QtWidgets.QPushButton("Export PNG")
@@ -205,6 +207,10 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         v_layout.addWidget(self.export_png_button)
         v_layout.addWidget(self.export_svg_button)
         v_layout.addWidget(self.export_pdf_button)
+
+        v_layout.addSpacing(SPACING)
+
+        v_layout.addWidget(self.aci_export_mode)
         v_layout.addWidget(self.export_dxf_button)
 
         v_layout.addSpacing(SPACING)
@@ -302,6 +308,9 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
 
     def get_flip_y(self) -> bool:
         return self.flip_y_check_box.checkState() == QtCore.Qt.CheckState.Checked
+
+    def get_aci_export_mode(self) -> bool:
+        return self.aci_export_mode.checkState() == QtCore.Qt.CheckState.Checked
 
     def update_sidebar(self):
         x, y = self.get_page_size()
@@ -459,8 +468,11 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         import ezdxf
         from ezdxf import zoom
 
+        color_mode = (
+            dxf.ColorMode.ACI if self.get_aci_export_mode() else dxf.ColorMode.RGB
+        )
+
         doc = ezdxf.new()
-        doc.layers.add("BACKGROUND")
         msp = doc.modelspace()
         player = self._player.copy()
         bbox = player.bbox()
@@ -470,14 +482,15 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         # move content to origin:
         tx, ty = BoundingBox2d(corners).extmin  # type: ignore
         m @= Matrix44.translate(-tx, -ty, 0)
-
         player.transform(m)
         bbox = player.bbox()
 
-        dxf_backend = dxf.DXFBackend(msp)
+        dxf_backend = dxf.DXFBackend(msp, color_mode=color_mode)
         bg_color, override = replay_properties(self._color_scheme)
-        bg = dxf.add_background(msp, bbox, colors.RGB.from_hex(bg_color))
-        bg.dxf.layer = "BACKGROUND"
+        if color_mode == dxf.ColorMode.RGB:
+            doc.layers.add("BACKGROUND")
+            bg = dxf.add_background(msp, bbox, colors.RGB.from_hex(bg_color))
+            bg.dxf.layer = "BACKGROUND"
         # exports the HPGL/2 content in plot units (plu) as modelspace:
         # 1 plu = 0.025mm or 40 plu == 1mm
         xplayer.hpgl2_to_drawing(

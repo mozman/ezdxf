@@ -9,6 +9,7 @@ from ezdxf.document import Drawing
 from ezdxf import zoom, colors
 from ezdxf.addons import xplayer
 from ezdxf.addons.drawing import svg, layout, pymupdf, dxf
+from ezdxf.addons.drawing.dxf import ColorMode
 
 from .tokenizer import hpgl2_commands
 from .plotter import Plotter
@@ -50,7 +51,7 @@ def to_dxf(
     rotation: int = 0,
     mirror_x: bool = False,
     mirror_y: bool = False,
-    color_mode=dxf.ColorMode.RGB,
+    color_mode=ColorMode.RGB,
     merge_control: MergeControl = MergeControl.AUTO,
 ) -> Drawing:
     """
@@ -59,17 +60,16 @@ def to_dxf(
     The page content is created at the origin of the modelspace and 1 drawing unit is 1
     plot unit (1 plu = 0.025mm) unless scaling values are provided.
 
-    The content of HPGL files is intended to be plotted on white paper, so the appearance on
-    a dark background in modelspace is not very clear. To fix this, set the argument
-    `map_black_to_white` to ``True``, which maps black fillings and lines to white.
+    The content of HPGL files is intended to be plotted on white paper, therefore a white
+    filling will be added as background in color mode :attr:`RGB`.
 
-    All entities are assigned to a layer according to the pen number with the name schema
-    ``COLOR_<#>``. In order to be able to process the file better, it is also possible to
-    assign an :term:`ACI` color to the DXF entities according to the pen number by setting
-    the argument `color_mode` to :attr:`ColorMode.ACI`, but then the RGB color is lost
-    because the RGB color has always the higher priority over the :term:`ACI`.
+    All entities are assigned to a layer according to the pen number with the name scheme
+    ``PEN_<###>``. In order to be able to process the file better, it is also possible to
+    assign the :term:`ACI` color by layer by setting the argument `color_mode` to
+    :attr:`ColorMode.ACI`, but then the RGB color is lost because the RGB color has
+    always the higher priority over the :term:`ACI`.
 
-    The first paperspace layout "Layout0" of the DXF document is set up to print the entire
+    The first paperspace layout "Layout1" of the DXF document is set up to print the entire
     modelspace on one sheet, the size of the page is the size of the original plot file in
     millimeters.
 
@@ -95,7 +95,6 @@ def to_dxf(
 
     # 1st pass records output of the plotting commands and detects the bounding box
     doc = ezdxf.new()
-    doc.layers.add("BACKGROUND")
     try:
         player = record_plotter_output(b, merge_control)
     except Hpgl2Error:
@@ -108,16 +107,21 @@ def to_dxf(
     msp = doc.modelspace()
     dxf_backend = dxf.DXFBackend(msp, color_mode=color_mode)
     bg_color = colors.RGB(255, 255, 255)
-    bg = dxf.add_background(msp, bbox, color=bg_color)
-    bg.dxf.layer = "BACKGROUND"
+    if color_mode == ColorMode.RGB:
+        doc.layers.add("BACKGROUND")
+        bg = dxf.add_background(msp, bbox, color=bg_color)
+        bg.dxf.layer = "BACKGROUND"
 
     # 2nd pass replays the plotting commands to plot the DXF
+    # exports the HPGL/2 content in plot units (plu) as modelspace:
+    # 1 plu = 0.025mm or 40 plu == 1mm
     xplayer.hpgl2_to_drawing(player, dxf_backend, bg_color=bg_color.to_hex())
     del player
 
     if bbox.has_data:  # non-empty page
         zoom.window(msp, bbox.extmin, bbox.extmax)
         dxf.update_extents(doc, bbox)
+        # paperspace is set up in mm:
         dxf.setup_paperspace(doc, bbox)
     return doc
 
@@ -247,8 +251,9 @@ def to_pixmap(
     dpi: int = 96,
 ) -> bytes:
     """
-    Exports the HPGL/2 commands of the byte stream `b` as pixel image as bytes,
-    supported image formats:
+    Exports the HPGL/2 commands of the byte stream `b` as pixel image.
+
+    Supported image formats:
 
         === =========================
         png Portable Network Graphics

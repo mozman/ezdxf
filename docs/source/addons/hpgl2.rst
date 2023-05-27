@@ -73,12 +73,15 @@ High Level Functions
     to_dxf
     to_svg
     to_pdf
+    to_pixmap
 
 .. autofunction:: to_dxf
 
 .. autofunction:: to_svg
 
 .. autofunction:: to_pdf
+
+.. autofunction:: to_pixmap
 
 .. class:: ColorMode
 

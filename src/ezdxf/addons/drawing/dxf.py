@@ -33,6 +33,7 @@ class ColorMode(enum.Enum):
 
 DARK_COLOR_THRESHOLD = 0.2
 RGB_BLACK = colors.RGB(0, 0, 0)
+BYLAYER = 256
 
 
 class DXFBackend(BackendInterface):
@@ -74,16 +75,21 @@ class DXFBackend(BackendInterface):
         except KeyError:
             pass
 
+        rgb = properties.rgb
         pen = properties.pen
         if pen < 1 or pen > 255:
             pen = 7
+        aci = pen
+        if self.color_mode == ColorMode.ACI:
+            aci = BYLAYER
         attribs = {
-            "color": pen,
+            "color": aci,
             "layer": self.get_layer_name(pen),
             "lineweight": make_lineweight(properties.lineweight),
         }
         if self.color_mode == ColorMode.RGB:
-            attribs["true_color"] = colors.rgb2int(properties.rgb)
+            attribs["true_color"] = colors.rgb2int(rgb)
+
         alpha = properties.color[7:9]
         if alpha:
             try:
@@ -96,7 +102,12 @@ class DXFBackend(BackendInterface):
         return attribs
 
     def set_solid_fill(self, hatch, properties: BackendProperties) -> None:
-        hatch.set_solid_fill(color=properties.pen, style=0, rgb=properties.rgb)
+        rgb: colors.RGB | None = None
+        aci = BYLAYER
+        if self.color_mode == ColorMode.RGB:
+            rgb = properties.rgb
+            aci = properties.pen
+        hatch.set_solid_fill(color=aci, style=0, rgb=rgb)
 
     def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
         self.layout.add_point(pos, dxfattribs=self.resolve_properties(properties))
