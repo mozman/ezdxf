@@ -794,63 +794,6 @@ class Info(Command):
                 sys.stderr.write(f'No matching files for pattern: "{pattern}"\n')
 
 
-def make_plt2fmt_parser(subparsers, name, fmt):
-    parser = subparsers.add_parser(name, help=f"convert HPGL/2 plot files to {fmt}")
-    parser.add_argument(
-        "files",
-        metavar="FILE",
-        nargs="+",
-        help=f"convert HPGL/2 plot files to {fmt}, wildcards (*, ?) supported",
-    )
-    parser.add_argument(
-        "-r",
-        "--rotate",
-        type=int,
-        choices=(0, 90, 180, 270),
-        default=0,
-        required=False,
-        help="rotate page about 90, 180 or 270 degrees",
-    )
-    parser.add_argument(
-        "-x",
-        "--scale_x",
-        type=float,
-        metavar="SX",
-        default=1.0,
-        required=False,
-        help="scale page in x-axis direction, use negative values to mirror page",
-    )
-    parser.add_argument(
-        "-y",
-        "--scale_y",
-        type=float,
-        metavar="SY",
-        default=1.0,
-        required=False,
-        help="scale page in y-axis direction, use negative values to mirror page",
-    )
-    parser.add_argument(
-        "-m",
-        "--merge_control",
-        type=int,
-        required=False,
-        default=2,
-        choices=(0, 1, 2),
-        help="provides control over the order of filled polygons, 0=off (print order), "
-        "1=luminance (order by luminance), 2=auto (default)",
-    )
-    parser.add_argument(
-        "-f",
-        "--force",
-        action="store_true",
-        required=False,
-        help="inserts the mandatory 'enter HPGL/2 mode' escape sequence into the data "
-        "stream; use this flag when no HPGL/2 data was found and you are sure the "
-        "file is a HPGL/2 plot file",
-    )
-    return parser
-
-
 @register
 class HPGL(Command):
     """Launcher sub-command: hpgl"""
@@ -922,7 +865,7 @@ class HPGL(Command):
             "--aci",
             action="store_true",
             required=False,
-            help="use pen numbers as ACI colors (DXF only)",
+            help="use pen numbers as ACI colors and assign colors by layer (DXF only)",
         )
         parser.epilog = (
             "Note that plot files are intended to be plotted on white paper."
