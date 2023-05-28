@@ -171,7 +171,6 @@ class Frontend:
             "HATCH": self.draw_hatch_entity,
             "MPOLYGON": self.draw_mpolygon_entity,
             "MESH": self.draw_mesh_entity,
-            "VIEWPORT": self.draw_viewport_entity,
             "WIPEOUT": self.draw_wipeout_entity,
             "MTEXT": self.draw_mtext_entity,
             "OLE2FRAME": self.draw_ole2frame_entity,
@@ -604,10 +603,10 @@ class Frontend:
         path = wipeout.boundary_path_wcs()
         self._designer.draw_filled_polygon(path, properties)
 
-    def draw_viewport_entity(self, entity: DXFGraphic, properties: Properties) -> None:
-        assert isinstance(entity, Viewport)
-        vp = entity
-        if vp.dxf.get("status", 0) < 2:  # 0= off; 1= "active viewport"
+    def draw_viewport(self, vp: Viewport) -> None:
+        # the "active" viewport and invisible viewports should be filtered at this
+        # stage, see function _draw_viewports()
+        if vp.dxf.status < 1:
             return
 
         if not vp.is_top_view:
@@ -817,9 +816,7 @@ class Designer:
         layout_ctx: RenderContext,
         bbox_cache: Optional[ezdxf.bbox.Cache] = None,
     ) -> None:
-        """Draw the content of the given viewport current viewport.
-        Returns ``False`` if the backend doesn't support viewports.
-        """
+        """Draw the content of the given viewport current viewport."""
         if vp.doc is None:
             return
         try:
@@ -1059,7 +1056,11 @@ def _draw_entities(
 ) -> None:
     if filter_func is not None:
         entities = filter(filter_func, entities)
+    viewports: list[Viewport] = []
     for entity in entities:
+        if isinstance(entity, Viewport):
+            viewports.append(entity)
+            continue
         if not isinstance(entity, DXFGraphic):
             if frontend.config.proxy_graphic_policy != ProxyGraphicPolicy.IGNORE:
                 entity = DXFGraphicProxy(entity)
@@ -1072,6 +1073,35 @@ def _draw_entities(
             frontend.draw_entity(entity, properties)
         else:
             frontend.skip_entity(entity, "invisible")
+    _draw_viewports(frontend, viewports)
+
+
+def _draw_viewports(frontend: Frontend, viewports: list[Viewport]) -> None:
+    # The VIEWPORT attributes "id" and "status" are very unreliable, maybe because of
+    # the "great" documentation by Autodesk.
+    # Viewport status field: (according to the DXF Reference)
+    # -1 = On, but is fully off-screen, or is one of the viewports that is not
+    #      active because the $MAXACTVP count is currently being exceeded.
+    #  0 = Off
+    # <positive value> = On and active. The value indicates the order of
+    # stacking for the viewports, where 1 is the "active" viewport, 2 is the
+    # next, and so on.
+    viewports.sort(key=lambda e: e.dxf.status)
+    # Remove all invisible viewports:
+    viewports = [vp for vp in viewports if vp.dxf.status > 0]
+    if not viewports:
+        return
+    # The "active" viewport determines how the paperspace layout is presented as a
+    # whole (location & zoom state).
+    # Maybe there are more than one "active" viewports, just remove the first one,
+    # or there is no "active" viewport at all - in this case the "status" attribute
+    # is not reliable at all - but what else is there to do?  The "active" layout should
+    # have the id "1", but this information is also not reliable.
+    if viewports[0].dxf.get("status", 1) == 1:
+        viewports.pop(0)
+    # Draw viewports in order of "status"
+    for viewport in viewports:
+        frontend.draw_viewport(viewport)
 
 
 def prepare_string_for_rendering(text: str, dxftype: str) -> str:
