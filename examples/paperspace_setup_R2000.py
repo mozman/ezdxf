@@ -138,6 +138,7 @@ def setup_layout2(doc: Drawing):
         view_center_point=(60, 40),
         # how much modelspace area to show in viewport in drawing units
         view_height=20,
+        status=2,
     )
     lower_left, upper_right = layout2.get_paper_limits()
     x1, y1 = lower_left
@@ -166,6 +167,7 @@ def setup_layout3(doc: Drawing):
         view_center_point=(60, 40),
         # how much model space area to show in viewport in drawing units
         view_height=20,
+        status=2,
     )
     layout3.add_circle((0, 0), radius=250)  # plot origin
 

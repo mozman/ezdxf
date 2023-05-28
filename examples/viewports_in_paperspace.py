@@ -74,6 +74,7 @@ def create_viewports(paperspace: Paperspace):
         size=(5, 5),
         view_center_point=(7.5, 7.5),
         view_height=10,
+        status=2,
     )
     # scale is calculated by:
     # height of model space (view_height=10) / height of viewport (height=5)
@@ -86,6 +87,7 @@ def create_viewports(paperspace: Paperspace):
         size=(5, 5),
         view_center_point=(10, 5),
         view_height=25,
+        status=3,
     )
     paperspace.add_text(
         "View of Circle Scale=1:5", height=0.18, dxfattribs=txt_attribs
@@ -96,6 +98,7 @@ def create_viewports(paperspace: Paperspace):
         size=(5, 5),
         view_center_point=(12.5, 7.5),
         view_height=5,
+        status=4,
     )
     paperspace.add_text(
         "View of Triangle Scale=1:1", height=0.18, dxfattribs=txt_attribs
@@ -106,6 +109,7 @@ def create_viewports(paperspace: Paperspace):
         size=(15, 7.5),
         view_center_point=(10, 6.25),
         view_height=7.5,
+        status=5,
     )
     paperspace.add_text(
         "Overall View Scale=1:1", height=0.18, dxfattribs=txt_attribs
@@ -116,6 +120,7 @@ def create_viewports(paperspace: Paperspace):
         size=(0.3, 0.15),
         view_center_point=(10, 6.25),
         view_height=7.5,
+        status=6,
     )
     # scale = 7.5/0.15 = 50
     paperspace.add_text(
@@ -123,7 +128,7 @@ def create_viewports(paperspace: Paperspace):
     ).set_placement((16, 14), align=TextEntityAlignment.CENTER)
 
     vp = paperspace.add_viewport(
-        center=(16, 10), size=(4, 4), view_center_point=(0, 0), view_height=30
+        center=(16, 10), size=(4, 4), view_center_point=(0, 0), view_height=30, status=7
     )
     vp.dxf.view_target_point = (40, 40, 0)
     vp.dxf.view_direction_vector = (-1, -1, 1)
@@ -161,13 +166,9 @@ def make_dxf(dxfversion: str):
     width, height = 24, 18
     m = 1
     if dxfversion == "R12":
-        layout.page_setup_r12(
-            size=(width, height), margins=(m, m, m, m), units="inch"
-        )
+        layout.page_setup_r12(size=(width, height), margins=(m, m, m, m), units="inch")
     else:
-        layout.page_setup(
-            size=(width, height), margins=(m, m, m, m), units="inch"
-        )
+        layout.page_setup(size=(width, height), margins=(m, m, m, m), units="inch")
     # The canvas is defined by the page size minus the margins:
     canvas_width = width - 2 * m
     canvas_height = height - 2 * m

@@ -41,6 +41,7 @@ def create_viewports(paperspace: Paperspace):
         size=(5, 5),
         view_center_point=(10.0, 7.5),
         view_height=10,
+        status=2,
     )
     # scale is calculated by:
     # height of model space (view_height=10) / height of viewport (height=5)
@@ -53,6 +54,7 @@ def create_viewports(paperspace: Paperspace):
         size=(5, 5),
         view_center_point=(10, 5),
         view_height=25,
+        status=3,
     )
     psp.dxf.view_twist_angle = 45
     paperspace.add_text(
@@ -64,6 +66,7 @@ def create_viewports(paperspace: Paperspace):
         size=(15, 7.5),
         view_center_point=(10, 6.25),
         view_height=7.5,
+        status=4,
     )
     paperspace.add_text(
         "View Scale=1:1", height=0.18, dxfattribs=txt_attribs

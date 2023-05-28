@@ -148,6 +148,7 @@ class TestCommitChanges:
             size=(5, 5),
             view_center_point=(7.5, 7.5),
             view_height=10,
+            status=2,
         )
 
     @pytest.fixture(scope="class")
@@ -158,6 +159,7 @@ class TestCommitChanges:
             size=(5, 5),
             view_center_point=(7.5, 7.5),
             view_height=10,
+            status=3,
         )
 
     @staticmethod

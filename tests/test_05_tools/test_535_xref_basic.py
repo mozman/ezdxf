@@ -1212,7 +1212,11 @@ class TestLoadPaperspaceViewport:
         visualstyle = doc.rootdict["ACAD_VISUALSTYLE"]["2dWireframe"]
         circle = psp.add_circle((100, 100), radius=50)
         vp = psp.add_viewport(
-            center=(100, 100), size=(100, 100), view_center_point=(0, 0), view_height=10
+            center=(100, 100),
+            size=(100, 100),
+            view_center_point=(0, 0),
+            view_height=10,
+            status=2,
         )
         vp.dxf.clipping_boundary_handle = circle.dxf.handle
         vp.dxf.ucs_handle = ucs.dxf.handle

@@ -41,8 +41,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
         -1  On, but is fully off screen, or is one of the viewports that is not active because the $MAXACTVP count is
             currently being exceeded.
         0   Off
-        >0  On and active. The value indicates the order of stacking for the viewports, where 1 is the
-            active viewport, 2 is the next, and so forth
+        >0  On and active. The value indicates the order of stacking for the viewports,
+            where 1 is the active viewport, 2 is the next, and so forth.
         === =====================================
 
     .. attribute:: dxf.id

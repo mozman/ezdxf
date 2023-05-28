@@ -62,8 +62,9 @@ acdb_viewport = DefSubclass(
         #      active because the $MAXACTVP count is currently being exceeded.
         #  0 = Off
         # <positive value> = On and active. The value indicates the order of
-        # stacking for the viewports, where 1 is the "active viewport", 2 is the
-        # next, and so on:
+        # stacking for the viewports, where 1 is the "active" viewport, 2 is the
+        # next, and so on. The "active" viewport determines how the paperspace layout
+        # is presented as a whole (location & zoom state)
         "status": DXFAttr(68, default=0),
         # Viewport id: (according to the DXF Reference)
         # Special VIEWPORT id == 1, this viewport defines the area of the layout
@@ -71,7 +72,7 @@ acdb_viewport = DefSubclass(
         # I guess this is meant by "active viewport" and therefore it is most likely
         # that this id is always 1.
         # This "active viewport" is mandatory for a valid DXF file.
-        # BricsCAD set id to -1 if the viewport is off and 'status' (group code 68)
+        # BricsCAD set this id to -1 if the viewport is off and 'status' (group code 68)
         # is not present.
         "id": DXFAttr(69, default=2),
         # DXF reference: View center point (in WCS):

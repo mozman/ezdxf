@@ -198,12 +198,13 @@ def setup_paperspace(doc: Drawing, bbox: BoundingBox2d):
         size=(psp_size.x, psp_size.y),
         view_center_point=bbox.center,
         view_height=bbox.size.y,
+        status=2,
     )
 
 
 def add_background(msp: BaseLayout, bbox: BoundingBox2d, color: colors.RGB) -> Solid:
     v = bbox.rect_vertices()
-    bg = msp.add_solid([v[0], v[1], v[3], v[2]], dxfattribs={
-        "true_color": colors.rgb2int(color)
-    })
+    bg = msp.add_solid(
+        [v[0], v[1], v[3], v[2]], dxfattribs={"true_color": colors.rgb2int(color)}
+    )
     return bg

@@ -110,6 +110,7 @@ def create_viewports(paperspace: Paperspace):
     vp_width = 3
     cx = vp_width / 2
     cy = (PAPER_HEIGHT - 2 * MARGIN) / 2
+    status = 2
     for func in (
         original,
         override_aci,
@@ -122,9 +123,11 @@ def create_viewports(paperspace: Paperspace):
             size=(vp_width, vp_height),
             view_center_point=(50, 30),
             view_height=70,
+            status=status,
         )
         func(vp.dxf.handle, doc)
         cx += vp_width + MARGIN
+        status += 1
 
 
 def main():

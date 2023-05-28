@@ -59,6 +59,7 @@ def create_viewports(paperspace: Paperspace):
             size=(vp_width, vp_height),
             view_center_point=(50, 30),
             view_height=70,
+            status=2,
         )
         vp.frozen_layers = frozen_layers
         cx += vp_width + MARGIN

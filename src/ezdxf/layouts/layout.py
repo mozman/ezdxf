@@ -414,8 +414,7 @@ class Paperspace(Layout):
         self.dxf_layout.dxf.name = name
 
     def viewports(self) -> list[Viewport]:
-        """Get all VIEWPORT entities defined in this paperspace layout.
-        """
+        """Get all VIEWPORT entities defined in this paperspace layout."""
         return [e for e in self if e.is_alive and e.dxftype() == "VIEWPORT"]  # type: ignore
 
     def main_viewport(self) -> Optional[Viewport]:
@@ -434,16 +433,28 @@ class Paperspace(Layout):
         size: tuple[float, float],
         view_center_point: UVec,
         view_height: float,
+        status: int = 2,
         dxfattribs=None,
     ) -> Viewport:
-        """Add a new :class:`~ezdxf.entities.Viewport` entity."""
+        """Add a new :class:`~ezdxf.entities.Viewport` entity.
+
+        Viewport :attr:`status`:
+
+            - -1 is on, but is fully off-screen, or is one of the viewports that is not
+              active because the $MAXACTVP count is currently being exceeded.
+            - 0 is off
+            - any value>0 is on and active. The value indicates the order of
+              stacking for the viewports, where 1 is the "active viewport", 2 is the
+              next, ...
+
+        """
         dxfattribs = dxfattribs or {}
         width, height = size
         attribs = {
             "center": center,  # center in paperspace
             "width": width,  # width in paperspace
             "height": height,  # height in paperspace
-            "status": 1,  # has by default the highest priority (stack order)
+            "status": status,
             "layer": "VIEWPORTS",
             # use separated layer to turn off for plotting
             "view_center_point": view_center_point,  # in modelspace
@@ -546,6 +557,7 @@ class Paperspace(Layout):
             size=size,  # I don't get it, just use paper size!
             view_center_point=center,  # same as center
             view_height=vp_height,  # view height in paper space units
+            status=1,  # main viewport
         )
         if len(self.entity_space) > 1:
             # move main viewport to index 0 of entity space
@@ -770,9 +782,9 @@ class Paperspace(Layout):
             size=(vp_width, vp_height),  # I don't get it, just use paper size!
             view_center_point=center,  # same as center
             view_height=vp_height,  # view height in paper space units
+            status=1,  # main viewport
         )
         main_viewport.dxf.id = 1  # set as main viewport
-        main_viewport.dxf.status = 2  # AutoCAD default value
         main_viewport.dxf.render_mode = 1000  # AutoDesk default (view mode?)
 
     def get_paper_limits_r12(self) -> tuple[Vec2, Vec2]:
