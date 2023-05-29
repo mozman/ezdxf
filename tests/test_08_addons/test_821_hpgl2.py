@@ -44,8 +44,11 @@ class MyBackend(Backend):
     def draw_polyline(self, properties, points) -> None:
         self.result.append(["Polyline", points])
 
-    def draw_paths(self, properties, paths) -> None:
-        self.result.append(["FilledPolygon", paths])
+    def draw_paths(self, properties, paths, filled: bool) -> None:
+        if filled:
+            self.result.append(["FilledPath", paths])
+        else:
+            self.result.append(["OutlinePath", paths])
 
 
 def plot(s: bytes):
@@ -128,10 +131,12 @@ class TestRenderEngine:
     def test_cubic_bezier_curve_pen_down(self):
         ip = plot(b"PD;BZ2000,8000,4000,2000,5000,5000;")
         command = get_result(ip.plotter)[0]
-        points = command[1]
-        assert command[0] == "Polyline"
-        assert points[0] == Vec2(0, 0)
-        assert points[-1] == Vec2(5000, 5000)
+        assert command[0] == "OutlinePath"
+
+        paths = command[1]
+        path0 = paths[0]
+        assert path0.start == Vec2(0, 0)
+        assert path0.end == Vec2(5000, 5000)
         assert ip.plotter.user_location == Vec2(5000, 5000)
 
     def test_cubic_bezier_curve_pen_up(self):

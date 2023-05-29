@@ -30,7 +30,15 @@ class PolygonBuffer(Backend):
     def draw_paths(
         self, properties: Properties, paths: Sequence[Path2d], filled: bool
     ) -> None:
-        raise NotImplementedError()
+        if filled:
+            raise NotImplementedError()
+        for p in paths:
+            if len(p) == 0:
+                continue
+            if self.start_new_sub_polygon:
+                self.start_new_sub_polygon = False
+                self.path.move_to(p.start)
+            self.path.append_path(p)
 
     def get_paths(self) -> Sequence[Path2d]:
         return list(self.path.sub_paths())

@@ -250,11 +250,9 @@ class Plotter:
             # convert to page coordinates:
             ctrl1, ctrl2, end = self.page.page_points((ctrl1, ctrl2, end))
             # draw cubic bezier curve in absolute page coordinates:
-            curve = Bezier4P([current_page_location, ctrl1, ctrl2, end])
-            # distance of 10 plu is 0.25 mm
-            self.backend.draw_polyline(
-                self.properties, list(curve.flattening(distance=10))
-            )
+            p = Path2d(current_page_location)
+            p.curve4_to(end, ctrl1, ctrl2)
+            self.backend.draw_paths(self.properties, [p], filled=False)
 
     def plot_rel_cubic_bezier(self, ctrl1: Vec2, ctrl2: Vec2, end: Vec2):
         # input coordinates are user coordinates
@@ -269,11 +267,7 @@ class Plotter:
 
     def plot_outline_polygon_buffer(self, paths: Sequence[Path2d]):
         # input coordinates are page coordinates!
-        for path in paths:
-            path.close_sub_path()
-            self.backend.draw_polyline(
-                self.properties, Vec2.list(path.flattening(distance=10))
-            )
+        self.backend.draw_paths(self.properties, paths, filled=False)
 
 
 def rel_to_abs_points_dynamic(current: Vec2, points: Sequence[Vec2]) -> Iterator[Vec2]:
