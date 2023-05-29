@@ -314,6 +314,7 @@ def build_sut_font_manager_cache(repo_font_path: pathlib.Path) -> None:
 
 
 def build_font_manager_cache(path: pathlib.Path) -> None:
+    font_manager.clear()
     font_manager.build()
     s = font_manager.dumps()
     if not path.parent.exists():
