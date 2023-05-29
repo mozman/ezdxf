@@ -38,12 +38,15 @@ def hpgl2_to_drawing(
                 backend.draw_line(points[0], points[1], backend_properties)
             else:
                 backend.draw_path(_from_2d_points(points), backend_properties)
-        elif record_type == HPGL2RecordType.FILLED_POLYGON:
-            # filled polygons are stored as single paths! see: PolygonBuffer.get_paths()
+        elif record_type == HPGL2RecordType.FILLED_PATHS:
+            # filled paths are stored as single paths! see: PolygonBuffer.get_paths()
             external_paths, holes = path.winding_deconstruction(
                 path.fast_bbox_detection(p.to_path2d() for p in record_data)
             )
             backend.draw_filled_paths(external_paths, holes, backend_properties)  # type: ignore
+        elif record_type == HPGL2RecordType.OUTLINE_PATHS:
+            for p in record_data:
+                backend.draw_path(p.to_path2d(), backend_properties)
     backend.finalize()
 
 

@@ -9,7 +9,7 @@ import enum
 import math
 from .deps import (
     Vec2,
-    Path,
+    Path2d,
     colors,
     Matrix44,
     BoundingBox2d,
@@ -43,16 +43,18 @@ class Backend(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def draw_filled_polygon(
-        self, properties: Properties, paths: Sequence[Path]
+    def draw_paths(
+        self, properties: Properties, paths: Sequence[Path2d], filled: bool
     ) -> None:
-        """Draws a filled polygon from the sequence of `paths`. The input coordinates
+        """Draws filled or outline paths from the sequence of `paths`. The input coordinates
         are page coordinates in plot units. The `paths` sequence can contain 0 or more
-        single :class:`~ezdxf.path.Path` instances.
+        single :class:`~ezdxf.path.Path` instances. Draws outline paths if
+        Properties.FillType is NONE and filled paths otherwise.
 
         Args:
             properties: display :class:`Properties` for the filled polygon
-            paths: sequence of single :class:`ezdxf.path.Path` instances
+            paths: sequence of single :class:`ezdxf.path.Path2d` instances
+            filled: draw filled paths if ``True`` otherwise outline paths
 
         """
         ...
@@ -60,7 +62,8 @@ class Backend(abc.ABC):
 
 class RecordType(enum.Enum):
     POLYLINE = enum.auto()
-    FILLED_POLYGON = enum.auto()
+    FILLED_PATHS = enum.auto()
+    OUTLINE_PATHS = enum.auto()
 
 
 class DataRecord(NamedTuple):
@@ -97,11 +100,12 @@ class Recorder(Backend):
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
         self.store(RecordType.POLYLINE, properties, NumpyPoints2d(points))
 
-    def draw_filled_polygon(
-        self, properties: Properties, paths: Sequence[Path]
+    def draw_paths(
+        self, properties: Properties, paths: Sequence[Path2d], filled: bool
     ) -> None:
         data = tuple(NumpyPath2d(p) for p in paths)
-        self.store(RecordType.FILLED_POLYGON, properties, data)
+        record_type = RecordType.FILLED_PATHS if filled else RecordType.OUTLINE_PATHS
+        self.store(record_type, properties, data)
 
     def store(self, record_type: RecordType, properties: Properties, args) -> None:
         prop_hash = properties.hash()
@@ -116,6 +120,7 @@ class Player:
     """This class replays the recordings of the :class:`Recorder` class on another
     backend. The class can modify the recorded output.
     """
+
     def __init__(self, records: list[DataRecord], properties: dict[int, Properties]):
         self._records: list[DataRecord] = records
         self._properties: dict[int, Properties] = properties
@@ -171,7 +176,9 @@ class Player:
                 backend.draw_polyline(current_props, record.data.vertices())
             else:
                 paths = [p.to_path2d() for p in record.data]
-                backend.draw_filled_polygon(current_props, paths)
+                backend.draw_paths(
+                    current_props, paths, filled=record.type == RecordType.FILLED_PATHS
+                )
 
     def transform(self, m: Matrix44) -> None:
         """Transforms the recordings by a transformation matrix `m` of type
@@ -188,27 +195,27 @@ class Player:
             # fast, but maybe inaccurate update
             self._bbox = BoundingBox2d(m.fast_2d_transform(self._bbox.rect_vertices()))
 
-    def sort_filled_polygons(self) -> None:
-        """Sort filled polygons by descending luminance (from light to dark).
+    def sort_filled_paths(self) -> None:
+        """Sort filled paths by descending luminance (from light to dark).
 
-        This also changes the plot order in the way that all filled polygons are plotted
-        before the polylines.
+        This also changes the plot order in the way that all filled paths are plotted
+        before polylines and outline paths.
         """
-        polygons = []
-        polylines = []
+        fillings = []
+        outlines = []
         current = Properties()
         props = self._properties
         for record in self._records:
-            if record.type == RecordType.FILLED_POLYGON:
+            if record.type == RecordType.FILLED_PATHS:
                 current = props.get(record.property_hash, current)
                 key = colors.luminance(current.resolve_fill_color())
-                polygons.append((key, record))
+                fillings.append((key, record))
             else:
-                polylines.append(record)
+                outlines.append(record)
 
-        polygons.sort(key=lambda r: r[0], reverse=True)
-        records = [sort_rec[1] for sort_rec in polygons]
-        records.extend(polylines)
+        fillings.sort(key=lambda r: r[0], reverse=True)
+        records = [sort_rec[1] for sort_rec in fillings]
+        records.extend(outlines)
         self._records = records
 
 

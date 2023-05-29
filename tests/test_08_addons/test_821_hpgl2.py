@@ -44,7 +44,7 @@ class MyBackend(Backend):
     def draw_polyline(self, properties, points) -> None:
         self.result.append(["Polyline", points])
 
-    def draw_filled_polygon(self, properties, paths) -> None:
+    def draw_paths(self, properties, paths) -> None:
         self.result.append(["FilledPolygon", paths])
 
 

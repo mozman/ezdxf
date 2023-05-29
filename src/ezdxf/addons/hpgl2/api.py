@@ -394,5 +394,5 @@ def record_plotter_output(
     if merge_control == MergeControl.LUMINANCE:
         if DEBUG:
             print("merge control on: sorting filled polygons by luminance")
-        player.sort_filled_polygons()
+        player.sort_filled_paths()
     return player

@@ -6,12 +6,12 @@ import math
 
 from .deps import (
     Vec2,
-    Path,
+    Path2d,
     NULLVEC2,
     ConstructionCircle,
     Bezier4P,
 )
-from .properties import RGB, Properties
+from .properties import RGB, Properties, FillType
 from .backend import Backend
 from .polygon_buffer import PolygonBuffer
 from .page import Page
@@ -263,11 +263,11 @@ class Plotter:
         )
         self.plot_abs_cubic_bezier(ctrl1, ctrl2, end)
 
-    def plot_filled_polygon_buffer(self, paths: Sequence[Path]):
+    def plot_filled_polygon_buffer(self, paths: Sequence[Path2d]):
         # input coordinates are page coordinates!
-        self.backend.draw_filled_polygon(self.properties, paths)
+        self.backend.draw_paths(self.properties, paths, filled=True)
 
-    def plot_outline_polygon_buffer(self, paths: Sequence[Path]):
+    def plot_outline_polygon_buffer(self, paths: Sequence[Path2d]):
         # input coordinates are page coordinates!
         for path in paths:
             path.close_sub_path()
