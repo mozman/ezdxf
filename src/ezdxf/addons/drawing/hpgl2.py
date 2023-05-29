@@ -7,7 +7,7 @@ import copy
 import itertools
 
 from ezdxf import colors
-from ezdxf.math import AnyVec, Vec2
+from ezdxf.math import AnyVec
 from ezdxf.path import Path, Path2d, Command
 
 from .type_hints import Color
@@ -37,12 +37,17 @@ class PlotterBackend(recorder.Recorder):
         self,
         page: layout.Page,
         settings: layout.Settings = layout.Settings(),
+        *,
+        decimal_places: int = 2,
     ) -> bytes:
         """Returns the HPGL/2 data as bytes.
 
         Args:
             page: page definition
             settings: layout settings
+            decimal_places: HPGL/2 output precision, less decimal places creates smaller
+                files but for the price of imprecise curves (text)
+
         """
         settings = copy.copy(settings)
         # This player changes the original recordings!
@@ -57,7 +62,7 @@ class PlotterBackend(recorder.Recorder):
         )
         m = output_layout.get_placement_matrix(page, settings)
         player.transform(m)
-        backend = _RenderBackend(page, settings)
+        backend = _RenderBackend(page, settings, decimal_places)
         player.replay(backend)
         return backend.get_bytes()
 
@@ -367,31 +372,46 @@ def encode_number(value: float, decimal_places: int = 0, base: int = 64) -> byte
     return bytes(chars)
 
 
+def fast_int_enc_b32(x: int) -> bytes:
+    if x >= 0:
+        x *= 2
+    else:
+        x = x * -2 + 1
+
+    chars = bytearray()
+    while x >= 32:
+        x, r = divmod(x, 32)
+        chars.append(63 + r)
+    chars.append(95 + x)
+    return bytes(chars)
+
+
 def polyline_encode(vertices: Iterable[AnyVec]) -> bytes:
     data = [b"PE7<="]
     vertices = list(vertices)
     # first point as absolute coordinates
     current = vertices[0]
-    data.append(encode_number(current.x, base=32))
-    data.append(encode_number(current.y, base=32))
+    data.append(fast_int_enc_b32(round(current.x)))
+    data.append(fast_int_enc_b32(round(current.y)))
     for vertex in vertices[1:]:
         # remaining points as relative coordinates
         delta = vertex - current
-        data.append(encode_number(delta.x, base=32))
-        data.append(encode_number(delta.y, base=32))
+        data.append(fast_int_enc_b32(round(delta.x)))
+        data.append(fast_int_enc_b32(round(delta.y)))
         current = vertex
     data.append(b";")
     return b"".join(data)
 
 
 @no_type_check
-def path_ascii(path: Path2d, decimal_places=2) -> bytes:
-    data = [b"PU;"]
+def path_ascii(path: Path2d, decimal_places: int = 2) -> bytes:
+    if decimal_places == 0:
+        decimal_places = None  # round to int
     # first point as absolute coordinates
     current = path.start
     x = round(current.x, decimal_places)
     y = round(current.y, decimal_places)
-    data.append(f"PA{x:g},{y:g};PD;".encode())
+    data = [f"PU;PA{x:g},{y:g};PD;".encode()]
     prev_command = Command.MOVE_TO
     if len(path):
         commands: list[bytes] = []
@@ -405,7 +425,7 @@ def path_ascii(path: Path2d, decimal_places=2) -> bytes:
                     # extend previous PR command
                     commands[-1] = commands[-1][:-1] + b"," + coords
                 else:
-                    commands.append(b"PR"+coords)
+                    commands.append(b"PR" + coords)
                 prev_command = Command.LINE_TO
             else:
                 if cmd.type == Command.CURVE3_TO:
@@ -427,7 +447,7 @@ def path_ascii(path: Path2d, decimal_places=2) -> bytes:
                     # extend previous BR command
                     commands[-1] = commands[-1][:-1] + b"," + coords
                 else:
-                    commands.append(b"BR"+coords)
+                    commands.append(b"BR" + coords)
                 prev_command = Command.CURVE4_TO
             current = cmd.end
         data.append(b"".join(commands))
