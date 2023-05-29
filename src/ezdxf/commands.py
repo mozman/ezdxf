@@ -870,19 +870,28 @@ class HPGL(Command):
         parser.epilog = (
             "Note that plot files are intended to be plotted on white paper."
         )
+        parser.add_argument(
+            "--dpi",
+            type=int,
+            required=False,
+            default=96,
+            help="pixel density in dots per inch (PNG only)",
+        )
+        parser.epilog = (
+            "Note that plot files are intended to be plotted on white paper."
+        )
 
     @staticmethod
     def run(args):
         if args.export:
-            for filename in glob.glob(args.file):
+            if os.path.exists(args.file):
+                filenames = [args.file]
+            else:
+                filenames = glob.glob(args.file)
+            for filename in filenames:
                 export_hpgl2(Path(filename), args)
         else:
-            filename = ""
-            if args.file:
-                names = list(glob.glob(args.file))
-                if len(names):
-                    filename = names[0]
-            launch_hpgl2_viewer(filename, args.force)
+            launch_hpgl2_viewer(args.file, args.force)
 
 
 def export_hpgl2(filepath: Path, args) -> None:
@@ -939,6 +948,21 @@ def export_hpgl2(filepath: Path, args) -> None:
         )
         try:
             export_path.write_bytes(pdf_bytes)
+        except IOError as e:
+            print(str(e), file=sys.stderr)
+    elif fmt == "PNG":
+        print(start_msg)
+        png_bytes = hpgl2.to_pixmap(
+            data,
+            rotation=args.rotate,
+            mirror_x=args.mirror_x,
+            mirror_y=args.mirror_y,
+            merge_control=args.merge_control,
+            fmt="png",
+            dpi=args.dpi,
+        )
+        try:
+            export_path.write_bytes(png_bytes)
         except IOError as e:
             print(str(e), file=sys.stderr)
     else:

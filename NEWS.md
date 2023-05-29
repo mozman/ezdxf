@@ -14,9 +14,10 @@ Version 1.1.0b2 - dev
 - NEW: `ezdxf.path.Path2d()` class, `Path` class with `Vec2` vertices
 - NEW: `ezdxf.xref` new core module to manage XREFs and load resources from DXF files
 - NEW: `ezdxf.addons.hpgl2` add-on to convert HPGL/2 plot files to DXF, SVG, PDF, PNG
-- NEW: `ezdxf hpgl` command to view and/or convert HPGL/2 plot files to various formats: DXF, SVG, PDF
-- NEW: native `SVG` backend for the `drawing` add-on
-- NEW: `PyMuPdfBackend` for the `drawing` add-on, support for PDF, PNG, PPM and PBM export
+- NEW: `ezdxf hpgl` command to view and/or convert HPGL/2 plot files to various formats: DXF, SVG, PDF, PNG
+- NEW: native `SVG`, `HPGL/2`  and `DXF` backends for the `drawing` add-on, these backends 
+  do not need additional libraries to work
+- NEW: `PyMuPdf` backend for the `drawing` add-on, support for PDF, PNG, PPM and PBM export
 - NEW: `ColorPolicy` and `BackgroundPolicy` configuration settings for the `drawing` 
   add-on to change/override foreground- and background color by the frontend 
 - NEW: support for measuring and rendering of .shx, .shp and .lff fonts, the basic 
@@ -33,7 +34,7 @@ Version 1.1.0b2 - dev
   `fontTools` package
 - CHANGED: moved text rendering from backend classes to the `Frontend` class
 - CHANGED: moved clipping support from backend classes to the `Frontend` class
-- REMOVED: `PillowBackend` and the `pillow` command
+- REMOVED: `Pillow` backend and the `pillow` command
 - REMOVED: `geomdl` test dependency
 - BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1
 - BUGFIX: [#855](https://github.com/mozman/ezdxf/issues/855)
