@@ -406,6 +406,7 @@ def path_ascii(path: Path2d, decimal_places=2) -> bytes:
                     commands[-1] = commands[-1][:-1] + b"," + coords
                 else:
                     commands.append(b"PR"+coords)
+                prev_command = Command.LINE_TO
             else:
                 if cmd.type == Command.CURVE3_TO:
                     control = cmd.ctrl - current
@@ -421,10 +422,13 @@ def path_ascii(path: Path2d, decimal_places=2) -> bytes:
                 y1 = round(control_1.y, decimal_places)
                 x2 = round(control_2.x, decimal_places)
                 y2 = round(control_2.y, decimal_places)
-                commands.append(
-                    f"BR{x1:g},{y1:g},{x2:g},{y2:g},{xe:g},{ye:g};".encode()
-                )
-            prev_command = cmd.type
+                coords = f"{x1:g},{y1:g},{x2:g},{y2:g},{xe:g},{ye:g};".encode()
+                if prev_command == Command.CURVE4_TO:
+                    # extend previous BR command
+                    commands[-1] = commands[-1][:-1] + b"," + coords
+                else:
+                    commands.append(b"BR"+coords)
+                prev_command = Command.CURVE4_TO
             current = cmd.end
         data.append(b"".join(commands))
     data.append(b"PU;")
