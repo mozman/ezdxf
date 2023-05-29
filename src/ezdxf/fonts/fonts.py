@@ -497,6 +497,13 @@ class _CachedFont(AbstractFont, abc.ABC):
         """Returns the width of a "space" char."""
         return self._space_width
 
+# --------------------------------------------------------------------------------------
+# NOTES:
+# "romantic.ttf" uses the Private Use Area (PUA) codepoints (f000-e000) for its glyphs
+# and has no glyphs for the usual code points.
+# see example: "CADKitSamples\Proposed Townhouse.dxf"
+# I deleted this font from my system!
+
 
 class TrueTypeFont(_CachedFont):
     """Represents a TrueType font. Font measurement and glyph rendering is done by the
