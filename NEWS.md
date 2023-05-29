@@ -20,6 +20,8 @@ Version 1.1.0b2 - dev
 - NEW: `PyMuPdf` backend for the `drawing` add-on, support for PDF, PNG, PPM and PBM export
 - NEW: `ColorPolicy` and `BackgroundPolicy` configuration settings for the `drawing` 
   add-on to change/override foreground- and background color by the frontend 
+- NEW: `TextPolicy` configuration settings for the `drawing` add-on, render text as 
+  solid filling, outline path, replace text by (filled) rectangles or ignore text at all 
 - NEW: support for measuring and rendering of .shx, .shp and .lff fonts, the basic 
   stroke fonts included in CAD applications
 - NEW: added setter to `BlockLayout.base_point` property

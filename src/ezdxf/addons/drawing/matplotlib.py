@@ -176,9 +176,6 @@ class MatplotlibBackend(Backend):
         holes: Iterable[ezdxf.path.Path | ezdxf.path.Path2d],
         properties: BackendProperties,
     ):
-        # Hatch patterns are handled by the frontend since v0.18.1
-        if self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
-            return
         linewidth = 0
         oriented_paths: list[ezdxf.path.Path | ezdxf.path.Path2d] = []
         for path in paths:

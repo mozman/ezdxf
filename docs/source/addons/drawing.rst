@@ -260,6 +260,21 @@ Usage::
 
     .. automethod:: with_changes()
 
+BackgroundPolicy
+----------------
+
+.. autoclass:: ezdxf.addons.drawing.config.BackgroundPolicy
+
+ColorPolicy
+-----------
+
+.. autoclass:: ezdxf.addons.drawing.config.ColorPolicy
+
+HatchPolicy
+-----------
+
+.. autoclass:: ezdxf.addons.drawing.config.HatchPolicy
+
 LinePolicy
 ----------
 
@@ -270,25 +285,15 @@ LineweightPolicy
 
 .. autoclass:: ezdxf.addons.drawing.config.LineweightPolicy
 
-ColorPolicy
------------
-
-.. autoclass:: ezdxf.addons.drawing.config.ColorPolicy
-
-BackgroundPolicy
-----------------
-
-.. autoclass:: ezdxf.addons.drawing.config.BackgroundPolicy
-
-HatchPolicy
------------
-
-.. autoclass:: ezdxf.addons.drawing.config.HatchPolicy
-
 ProxyGraphicPolicy
 ------------------
 
 .. autoclass:: ezdxf.addons.drawing.config.ProxyGraphicPolicy
+
+TextPolicy
+----------
+
+.. autoclass:: ezdxf.addons.drawing.config.TextPolicy
 
 Properties
 ----------

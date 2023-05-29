@@ -35,7 +35,12 @@ from ezdxf.addons.drawing.properties import (
     LayoutProperties,
     BackendProperties,
 )
-from ezdxf.addons.drawing.config import LinePolicy, BackgroundPolicy, ColorPolicy
+from ezdxf.addons.drawing.config import (
+    LinePolicy,
+    BackgroundPolicy,
+    ColorPolicy,
+    TextPolicy,
+)
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.gfxproxy import DXFGraphicProxy
@@ -61,7 +66,7 @@ from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
 from ezdxf.layouts import Layout
-from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44, AnyVec
+from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44, AnyVec, BoundingBox2d
 from ezdxf.path import (
     Path,
     Path2d,
@@ -347,6 +352,8 @@ class Frontend:
             raise TypeError(dxftype)
 
     def draw_text_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        if self.config.text_policy == TextPolicy.IGNORE:
+            return
         # Draw embedded MTEXT entity as virtual MTEXT entity:
         if isinstance(entity, BaseAttrib) and entity.has_embedded_mtext_entity:
             self.draw_mtext_entity(entity.virtual_mtext_entity(), properties)
@@ -376,6 +383,8 @@ class Frontend:
         self.skip_entity(entity, "3D text not supported")
 
     def draw_mtext_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        if self.config.text_policy == TextPolicy.IGNORE:
+            return
         mtext = cast(MText, entity)
         if is_spatial_text(Vec3(mtext.dxf.extrusion)):
             self.skip_entity(mtext, "3D MTEXT not supported")
@@ -512,11 +521,14 @@ class Frontend:
             return
         filling = properties.filling
         show_only_outline = False
-        if self.config.hatch_policy == HatchPolicy.IGNORE:
+        hatch_policy = self.config.hatch_policy
+        if hatch_policy == HatchPolicy.NORMAL:
+            pass
+        elif hatch_policy == HatchPolicy.IGNORE:
             return
-        elif self.config.hatch_policy == HatchPolicy.SHOW_SOLID:
+        elif hatch_policy == HatchPolicy.SHOW_SOLID:
             filling = Filling()  # solid filling
-        elif self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
+        elif hatch_policy == HatchPolicy.SHOW_OUTLINE:
             filling = Filling()  # solid filling
             show_only_outline = True
 
@@ -964,7 +976,8 @@ class Designer:
         cap_height: float,
         dxftype: str = "TEXT",
     ) -> None:
-        if not text.strip():
+        text_policy = self.config.text_policy
+        if not text.strip() or text_policy == TextPolicy.IGNORE:
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, dxftype)
         font_face = properties.font
@@ -976,9 +989,23 @@ class Designer:
             return
 
         transformed_path = text_path.transform(transform)
-        if self.text_engine.is_stroke_font(font_face):
+        if text_policy == TextPolicy.REPLACE_RECT:
+            bbox = BoundingBox2d(transformed_path.control_vertices())
+            self.draw_path(from_vertices(bbox.rect_vertices(), close=True), properties)
+            return
+        if text_policy == TextPolicy.REPLACE_FILL:
+            bbox = BoundingBox2d(transformed_path.control_vertices())
+            if properties.filling is None:
+                properties.filling = Filling()
+            self.draw_filled_polygon(bbox.rect_vertices(), properties)
+            return
+        if (
+            self.text_engine.is_stroke_font(font_face)
+            or text_policy == TextPolicy.OUTLINE
+        ):
             self.draw_path(transformed_path, properties)
             return
+
         polygons = fast_bbox_detection(single_paths([transformed_path]))  # type: ignore
         external_paths, holes = winding_deconstruction(polygons)  # type: ignore
         if properties.filling is None:

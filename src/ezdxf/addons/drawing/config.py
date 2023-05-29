@@ -39,7 +39,7 @@ class ProxyGraphicPolicy(Enum):
 
     Attributes:
         IGNORE: do not display proxy graphics (skip_entity will be called instead)
-        SHOW: if the entity cannot be rendered directly (eg if not implemented)
+        SHOW: if the entity cannot be rendered directly (e.g. if not implemented)
             but a proxy is present: display the proxy
         PREFER: display proxy graphics even for entities where direct rendering
             is available
@@ -54,16 +54,17 @@ class HatchPolicy(Enum):
     """The action to take when a HATCH entity is encountered
 
     Attributes:
+        NORMAL: render pattern and solid fillings
         IGNORE: do not show HATCH entities at all
         SHOW_OUTLINE: show only the outline of HATCH entities
-        SHOW_SOLID: show HATCH entities but draw with solid fill
-            regardless of the pattern
-    """
+        SHOW_SOLID: show HATCH entities as solid filling regardless of the pattern
 
+    """
+    NORMAL = auto()
     IGNORE = auto()
     SHOW_OUTLINE = auto()
     SHOW_SOLID = auto()
-    SHOW_APPROXIMATE_PATTERN = auto()  # ignored since v0.18.1
+    SHOW_APPROXIMATE_PATTERN = auto()  # ignored since v0.18.1 == NORMAL
 
 
 class LineweightPolicy(Enum):
@@ -134,6 +135,25 @@ class BackgroundPolicy(Enum):
     CUSTOM = auto()
 
 
+class TextPolicy(Enum):
+    """This enum is used to define the text rendering.
+
+    Attributes:
+        FILLING: text is rendered as solid filling (default)
+        OUTLINE: text is rendered as outline paths
+        REPLACE_RECT: replace text by a rectangle
+        REPLACE_FILL: replace text by a filled rectangle
+        IGNORE: ignore text at all
+
+    """
+
+    FILLING = auto()
+    OUTLINE = auto()
+    REPLACE_RECT = auto()
+    REPLACE_FILL = auto()
+    IGNORE = auto()
+
+
 @dataclass(frozen=True)
 class Configuration:
     """Configuration options for the :mod:`drawing` add-on.
@@ -195,6 +215,7 @@ class Configuration:
         custom_bg_color: Used for :class:`BackgroundPolicy.custom` policy, custom
             background color as "#RRGGBBAA" color string (RGB+alpha)
         lineweight_policy:
+        text_policy:
 
     """
 
@@ -204,7 +225,7 @@ class Configuration:
     show_defpoints: bool = False
     proxy_graphic_policy: ProxyGraphicPolicy = ProxyGraphicPolicy.SHOW
     line_policy: LinePolicy = LinePolicy.ACCURATE
-    hatch_policy: HatchPolicy = HatchPolicy.SHOW_APPROXIMATE_PATTERN
+    hatch_policy: HatchPolicy = HatchPolicy.NORMAL
     infinite_line_length: float = 20
     lineweight_scaling: float = 1.0
     min_lineweight: Optional[float] = None
@@ -217,6 +238,7 @@ class Configuration:
     background_policy: BackgroundPolicy = BackgroundPolicy.DEFAULT
     custom_bg_color: Color = "#ffffff"
     lineweight_policy: LineweightPolicy = LineweightPolicy.ABSOLUTE
+    text_policy: TextPolicy = TextPolicy.FILLING
 
     @staticmethod
     def defaults() -> Configuration:
