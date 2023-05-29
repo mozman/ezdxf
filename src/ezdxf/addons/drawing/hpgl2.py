@@ -7,7 +7,7 @@ import copy
 import itertools
 
 from ezdxf import colors
-from ezdxf.math import AnyVec
+from ezdxf.math import AnyVec, Vec2
 from ezdxf.path import Path, Path2d, Command
 
 from .type_hints import Color
@@ -392,6 +392,7 @@ def path_ascii(path: Path2d, decimal_places=2) -> bytes:
     x = round(current.x, decimal_places)
     y = round(current.y, decimal_places)
     data.append(f"PA{x:g},{y:g};PD;".encode())
+    prev_command = Command.MOVE_TO
     if len(path):
         commands: list[bytes] = []
         for cmd in path.commands():
@@ -399,7 +400,12 @@ def path_ascii(path: Path2d, decimal_places=2) -> bytes:
             xe = round(delta.x, decimal_places)
             ye = round(delta.y, decimal_places)
             if cmd.type == Command.LINE_TO:
-                commands.append(f"PR{xe:g},{ye:g};".encode())
+                coords = f"{xe:g},{ye:g};".encode()
+                if prev_command == Command.LINE_TO:
+                    # extend previous PR command
+                    commands[-1] = commands[-1][:-1] + b"," + coords
+                else:
+                    commands.append(b"PR"+coords)
             else:
                 if cmd.type == Command.CURVE3_TO:
                     control = cmd.ctrl - current
@@ -418,6 +424,7 @@ def path_ascii(path: Path2d, decimal_places=2) -> bytes:
                 commands.append(
                     f"BR{x1:g},{y1:g},{x2:g},{y2:g},{xe:g},{ye:g};".encode()
                 )
+            prev_command = cmd.type
             current = cmd.end
         data.append(b"".join(commands))
     data.append(b"PU;")
