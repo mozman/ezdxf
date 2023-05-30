@@ -306,18 +306,23 @@ class Layout:
 
     def get_placement_matrix(self, page: Page, settings=Settings()) -> Matrix44:
         # Argument `page` has to be the resolved final page size!
-
         rotation = self.get_rotation(settings)
 
         content_size = self.get_content_size(rotation)
         content_size_mm = content_size * settings.scale
         if settings.fit_page:
             content_size_mm *= fit_to_page(content_size_mm, page)
-        scale_dxf_to_mm = content_size_mm.x / content_size.x
+        try:
+            scale_dxf_to_mm = content_size_mm.x / content_size.x
+        except ZeroDivisionError:
+            scale_dxf_to_mm = 1.0
         # map output coordinates to range [0, output_coordinate_space]
-        scale_mm_to_output_space = settings.output_coordinate_space / max(
-            page.width_in_mm, page.height_in_mm
-        )
+        try:
+            scale_mm_to_output_space = settings.output_coordinate_space / max(
+                page.width_in_mm, page.height_in_mm
+            )
+        except ZeroDivisionError:
+            scale_mm_to_output_space = 1.0
 
         scale = scale_dxf_to_mm * scale_mm_to_output_space
         m = placement_matrix(
@@ -350,7 +355,10 @@ def final_page_size(content_size: Vec2, page: Page, settings: Settings) -> Page:
 def limit_page_size(
     width: float, height: float, max_width: float, max_height: float
 ) -> tuple[float, float]:
-    ar = width / height
+    try:
+        ar = width / height
+    except ZeroDivisionError:
+        return width, height
     if max_height:
         height = min(max_height, height)
         width = height * ar
@@ -362,8 +370,11 @@ def limit_page_size(
 
 def fit_to_page(content_size_mm: Vec2, page: Page) -> float:
     margins = page.margins_in_mm
-    sx = (page.width_in_mm - margins.left - margins.right) / content_size_mm.x
-    sy = (page.height_in_mm - margins.top - margins.bottom) / content_size_mm.y
+    try:
+        sx = (page.width_in_mm - margins.left - margins.right) / content_size_mm.x
+        sy = (page.height_in_mm - margins.top - margins.bottom) / content_size_mm.y
+    except ZeroDivisionError:
+        return 1.0
     return min(sx, sy)
 
 
@@ -378,7 +389,12 @@ def placement_matrix(
     """Returns a matrix to place the bbox in the first quadrant of the coordinate
     system (+x, +y).
     """
-    scale_mm_to_vb = output_coordinate_space / max(page.width_in_mm, page.height_in_mm)
+    try:
+        scale_mm_to_vb = output_coordinate_space / max(
+            page.width_in_mm, page.height_in_mm
+        )
+    except ZeroDivisionError:
+        scale_mm_to_vb = 1.0
     margins = page.margins_in_mm
 
     # create scaling and rotation matrix:

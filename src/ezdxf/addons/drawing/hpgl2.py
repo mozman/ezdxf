@@ -55,6 +55,8 @@ class PlotterBackend(recorder.Recorder):
 
         output_layout = layout.Layout(player.bbox(), flip_y=False)
         page = output_layout.get_final_page(page, settings)
+        if page.width == 0 or page.height == 0:
+            return b""  # empty page
         # The DXF coordinates are mapped to integer coordinates (plu) in the first
         # quadrant: 40 plu = 1mm
         settings.output_coordinate_space = (
@@ -349,10 +351,10 @@ def compile_hpgl2(header: Sequence[bytes], commands: Sequence[bytes]) -> bytes:
     return bytes(output)
 
 
-def encode_number(value: float, decimal_places: int = 0, base: int = 64) -> bytes:
-    if decimal_places:
-        n = round(decimal_places * 3.33)
-        value *= 2 << n
+def enc_num_b32(value: float, frac_bin_bits: int = 0) -> bytes:
+    # full encoder: ezdxf.addons.hpgl2.tokenizer.pe_encode/pe_decode
+    if frac_bin_bits:
+        value *= 2 << frac_bin_bits
         x = round(value)
     else:
         x = round(value)
@@ -362,17 +364,15 @@ def encode_number(value: float, decimal_places: int = 0, base: int = 64) -> byte
         x = abs(x) * 2 + 1
 
     chars = bytearray()
-    while x >= base:
-        x, r = divmod(x, base)
+    while x >= 32:
+        x, r = divmod(x, 32)
         chars.append(63 + r)
-    if base == 64:
-        chars.append(191 + x)
-    else:
-        chars.append(95 + x)
+    chars.append(95 + x)
     return bytes(chars)
 
 
 def fast_int_enc_b32(x: int) -> bytes:
+    # full encoder: ezdxf.addons.hpgl2.tokenizer.pe_encode/pe_decode
     if x >= 0:
         x *= 2
     else:
