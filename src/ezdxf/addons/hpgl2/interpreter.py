@@ -333,7 +333,7 @@ class Interpreter:
         pen_down = True
         # Ignores and preserves the current absolute/relative mode of the plotter.
         absolute = False
-        decimal_places = 0
+        frac_bin_bits = 0
         base = 64
         index = 0
         length = len(data)
@@ -352,7 +352,7 @@ class Interpreter:
                     pen_down = False
                 elif char == 62:  # ">" - fractional data
                     values, index = pe_decode(data, base=base, start=index)
-                    decimal_places = int(values[0])
+                    frac_bin_bits = int(values[0])
                     if len(values) > 1:
                         point_queue.extend(to_points(values[1:]))
                 elif char == 61:  # "=" - next coordinates are absolute
@@ -361,7 +361,7 @@ class Interpreter:
                     base = 32
             else:
                 values, index = pe_decode(
-                    data, decimal_places=decimal_places, base=base, start=index
+                    data, frac_bin_bits=frac_bin_bits, base=base, start=index
                 )
                 point_queue.extend(to_points(values))
 
