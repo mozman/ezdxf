@@ -24,7 +24,7 @@ class TestPlotterBackend:
     def result1(self, properties):
         backend = hpgl2.PlotterBackend()
         backend.draw_line(Vec2(0, 0), Vec2(100, 100), properties)
-        return backend.get_bytes(layout.Page(0, 0))
+        return backend.compatible(layout.Page(0, 0))
 
     def test_enter_hpgl2_mode_prefix(self,result1):
         assert result1.startswith(b"%0B;")
@@ -51,7 +51,7 @@ class TestPlotterBackend:
         path.curve4_to((100, 100), (25, 0), (75, 100))
         backend = hpgl2.PlotterBackend()
         backend.draw_path(path, properties)
-        result = backend.get_bytes(layout.Page(0, 0))
+        result = backend.high_quality(layout.Page(0, 0))
         assert b"PU;PA0,0;PD;BR1000,0,3000,4000,4000,4000;PU;" in result
 
 

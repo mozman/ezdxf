@@ -27,6 +27,7 @@ MM_TO_PLU = 40  # 40 plu = 1mm
 DEFAULT_PEN = 0
 WHITE = colors.RGB(255, 255, 255)
 BLACK = colors.RGB(0, 0, 0)
+MAX_FLATTEN = 10
 
 
 class PlotterBackend(recorder.Recorder):
@@ -38,15 +39,19 @@ class PlotterBackend(recorder.Recorder):
         page: layout.Page,
         settings: layout.Settings = layout.Settings(),
         *,
-        decimal_places: int = 2,
+        curves=True,
+        decimal_places: int = 1,
+        base=64,
     ) -> bytes:
         """Returns the HPGL/2 data as bytes.
 
         Args:
             page: page definition
             settings: layout settings
+            curves: use Bèzier curves for HPGL/2 output
             decimal_places: HPGL/2 output precision, less decimal places creates smaller
                 files but for the price of imprecise curves (text)
+            base: base for polyline encoding, 32 for 7 bit encoding or 64 for 8 bit encoding
 
         """
         settings = copy.copy(settings)
@@ -64,9 +69,55 @@ class PlotterBackend(recorder.Recorder):
         )
         m = output_layout.get_placement_matrix(page, settings)
         player.transform(m)
-        backend = _RenderBackend(page, settings, decimal_places)
+        backend = _RenderBackend(
+            page,
+            settings=settings,
+            curves=curves,
+            decimal_places=decimal_places,
+            base=base,
+        )
         player.replay(backend)
         return backend.get_bytes()
+
+    def compatible(
+        self, page: layout.Page, settings: layout.Settings = layout.Settings()
+    ) -> bytes:
+        """Returns the HPGL/2 data as 7-bit encoded bytes curves as approximated
+        polylines and coordinates are rounded to integer values.
+        Has often the smallest file size and should be compatible to all output devices
+        but has a low quality text rendering.
+        """
+        return self.get_bytes(page, settings, curves=False, decimal_places=0, base=32)
+
+    def low_quality(
+        self, page: layout.Page, settings: layout.Settings = layout.Settings()
+    ) -> bytes:
+        """Returns the HPGL/2 data as 8-bit encoded bytes, curves as Bézier
+        curves and coordinates are rounded to integer values.
+        Has a smaller file size than normal quality and the output device must support
+        8-bit encoding and Bèzier curves.
+        """
+        return self.get_bytes(page, settings, curves=True, decimal_places=0, base=64)
+
+    def normal_quality(
+        self, page: layout.Page, settings: layout.Settings = layout.Settings()
+    ) -> bytes:
+        """Returns the HPGL/2 data as 8-bit encoded bytes, curves as Bézier
+        curves and coordinates are floats rounded to one decimal place.
+        Has a smaller file size than high quality and the output device must support
+        8-bit encoding, Bèzier curves and fractional coordinates.
+        """
+        return self.get_bytes(page, settings, curves=True, decimal_places=1, base=64)
+
+    def high_quality(
+        self, page: layout.Page, settings: layout.Settings = layout.Settings()
+    ) -> bytes:
+        """Returns the HPGL/2 data as 8-bit encoded bytes and all curves as Bézier
+        curves and coordinates are floats rounded to two decimal places.
+        Has the largest file size and the output device must support 8-bit encoding,
+        Bèzier curves and fractional coordinates.
+        """
+        return self.get_bytes(page, settings, curves=True, decimal_places=2, base=64)
 
 
 class PenTable:
@@ -116,10 +167,21 @@ class _RenderBackend(BackendInterface):
     """
 
     def __init__(
-        self, page: layout.Page, settings: layout.Settings, decimal_places: int = 2
+        self,
+        page: layout.Page,
+        *,
+        settings: layout.Settings,
+        curves=True,
+        decimal_places: int = 2,
+        base: int = 64,
     ) -> None:
         self.settings = settings
-        self.decimal_places = decimal_places
+        self.curves = curves
+        self.factional_bits = round(decimal_places * 3.33)
+        self.decimal_places: int | None = (
+            int(decimal_places) if decimal_places else None
+        )
+        self.base = base
         self.header: list[bytes] = []
         self.data: list[bytes] = []
         self.pen_table = PenTable(max_pens=256)
@@ -184,7 +246,9 @@ class _RenderBackend(BackendInterface):
         self.current_pen_width = width
 
     def enter_polygon_mode(self, start_point: AnyVec) -> None:
-        self.data.append(f"PA;PU{start_point.x},{start_point.y};PM;".encode())
+        x = round(start_point.x, self.decimal_places)
+        y = round(start_point.y, self.decimal_places)
+        self.data.append(f"PA;PU{x},{y};PM;".encode())
 
     def close_current_polygon(self) -> None:
         self.data.append(b"PM1;")
@@ -204,11 +268,15 @@ class _RenderBackend(BackendInterface):
         self, vertices: Iterable[AnyVec], properties: BackendProperties
     ):
         self.set_properties(properties)
-        self.data.append(polyline_encode(vertices))
+        self.data.append(polyline_encoder(vertices, self.factional_bits, self.base))
 
     def add_path(self, path: Path | Path2d, properties: BackendProperties):
-        self.set_properties(properties)
-        self.data.append(path_ascii(path, decimal_places=self.decimal_places))
+        if self.curves and path.has_curves:
+            self.set_properties(properties)
+            self.data.append(path_encoder(path, self.decimal_places))
+        else:
+            points = list(path.flattening(MAX_FLATTEN, segments=4))
+            self.add_polyline_encoded(points, properties)
 
     @staticmethod
     def resolve_pen_color(color: Color) -> tuple[colors.RGB, float]:
@@ -351,62 +419,50 @@ def compile_hpgl2(header: Sequence[bytes], commands: Sequence[bytes]) -> bytes:
     return bytes(output)
 
 
-def enc_num_b32(value: float, frac_bin_bits: int = 0) -> bytes:
-    # full encoder: ezdxf.addons.hpgl2.tokenizer.pe_encode/pe_decode
-    if frac_bin_bits:
-        value *= 2 << frac_bin_bits
-        x = round(value)
-    else:
-        x = round(value)
+def pe_encode(value: float, frac_bits: int = 0, base: int = 64) -> bytes:
+    if frac_bits:
+        value *= 1 << frac_bits
+    x = round(value)
     if x >= 0:
         x *= 2
     else:
         x = abs(x) * 2 + 1
 
     chars = bytearray()
-    while x >= 32:
-        x, r = divmod(x, 32)
+    while x >= base:
+        x, r = divmod(x, base)
         chars.append(63 + r)
-    chars.append(95 + x)
-    return bytes(chars)
-
-
-def fast_int_enc_b32(x: int) -> bytes:
-    # full encoder: ezdxf.addons.hpgl2.tokenizer.pe_encode/pe_decode
-    if x >= 0:
-        x *= 2
+    if base == 64:
+        chars.append(191 + x)
     else:
-        x = x * -2 + 1
-
-    chars = bytearray()
-    while x >= 32:
-        x, r = divmod(x, 32)
-        chars.append(63 + r)
-    chars.append(95 + x)
+        chars.append(95 + x)
     return bytes(chars)
 
 
-def polyline_encode(vertices: Iterable[AnyVec]) -> bytes:
-    data = [b"PE7<="]
+def polyline_encoder(vertices: Iterable[AnyVec], frac_bits: int, base: int) -> bytes:
+    cmd = b"PE"
+    if base == 32:
+        cmd = b"PE7"
+    if frac_bits:
+        cmd += b">" + pe_encode(frac_bits, 0, base)
+    data = [cmd + b"<="]
     vertices = list(vertices)
     # first point as absolute coordinates
     current = vertices[0]
-    data.append(fast_int_enc_b32(round(current.x)))
-    data.append(fast_int_enc_b32(round(current.y)))
+    data.append(pe_encode(current.x, frac_bits, base))
+    data.append(pe_encode(current.y, frac_bits, base))
     for vertex in vertices[1:]:
         # remaining points as relative coordinates
         delta = vertex - current
-        data.append(fast_int_enc_b32(round(delta.x)))
-        data.append(fast_int_enc_b32(round(delta.y)))
+        data.append(pe_encode(delta.x, frac_bits, base))
+        data.append(pe_encode(delta.y, frac_bits, base))
         current = vertex
     data.append(b";")
     return b"".join(data)
 
 
 @no_type_check
-def path_ascii(path: Path2d, decimal_places: int = 2) -> bytes:
-    if decimal_places == 0:
-        decimal_places = None  # round to int
+def path_encoder(path: Path2d, decimal_places: int | None) -> bytes:
     # first point as absolute coordinates
     current = path.start
     x = round(current.x, decimal_places)
