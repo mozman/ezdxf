@@ -60,7 +60,7 @@ NS = {
 
 
 class TestSVGBackend:
-    @pytest.fixture()
+    @pytest.fixture
     def backend(self):
         backend_ = svg.SVGBackend()
         properties = BackendProperties(color="#ff0000", lineweight=0.25)
@@ -83,6 +83,13 @@ class TestSVGBackend:
         assert xml.attrib["width"] == "400mm"
         assert xml.attrib["height"] == "300mm"
         assert xml.attrib["viewBox"] == "0 0 1000000 750000"
+
+
+def test_empty_page():
+    backend_ = svg.SVGBackend()
+    backend_.draw_point(Vec2(0, 0), BackendProperties())
+    result = backend_.get_string(layout.Page(0, 0), xml_declaration=False)
+    assert result == "<svg />"
 
 
 if __name__ == "__main__":

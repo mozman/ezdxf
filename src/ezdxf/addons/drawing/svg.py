@@ -39,6 +39,9 @@ class SVGBackend(recorder.Recorder):
 
         output_layout = layout.Layout(player.bbox(), flip_y=self._init_flip_y)
         page = output_layout.get_final_page(page, settings)
+        if page.width == 0 or page.height == 0:
+            return ET.Element("svg")  # empty page
+
         m = output_layout.get_placement_matrix(page, settings)
         player.transform(m)
         self._init_flip_y = False
