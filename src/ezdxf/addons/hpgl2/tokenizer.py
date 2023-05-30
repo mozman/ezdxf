@@ -167,7 +167,7 @@ def fractional_bits(decimal_places: int) -> int:
 
 def pe_encode(value: float, frac_bits: int = 0, base: int = 64) -> bytes:
     if frac_bits:
-        value *= 2 << frac_bits
+        value *= 1 << frac_bits
         x = round(value)
     else:
         x = round(value)
@@ -201,7 +201,7 @@ def pe_decode(
         x = x >> 1
         return x
 
-    n = 2 << frac_bits
+    n = 1 << frac_bits
     if base == 64:
         terminator = 191
     else:
