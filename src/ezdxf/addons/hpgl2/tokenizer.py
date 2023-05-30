@@ -161,10 +161,13 @@ def make_command(cmd: bytes) -> Command:
     return Command(name, args)
 
 
-def pe_encode(value: float, decimal_places: int = 0, base: int = 64) -> bytes:
-    if decimal_places:
-        n = round(decimal_places * 3.33)
-        value *= 2 << n
+def fractional_binary_bits(decimal_places: int) -> int:
+    return round(decimal_places * 3.33)
+
+
+def pe_encode(value: float, frac_bin_bits: int = 0, base: int = 64) -> bytes:
+    if frac_bin_bits:
+        value *= 2 << frac_bin_bits
         x = round(value)
     else:
         x = round(value)
@@ -185,7 +188,7 @@ def pe_encode(value: float, decimal_places: int = 0, base: int = 64) -> bytes:
 
 
 def pe_decode(
-    s: bytes, decimal_places: int = 0, base=64, start: int = 0
+    s: bytes, frac_bin_bits: int = 0, base=64, start: int = 0
 ) -> tuple[list[float], int]:
     def _decode():
         factors.reverse()
@@ -198,6 +201,7 @@ def pe_decode(
         x = x >> 1
         return x
 
+    n = 2 << frac_bin_bits
     if base == 64:
         terminator = 191
     else:
@@ -211,11 +215,10 @@ def pe_decode(
         if value >= terminator:
             factors.append(value - terminator)
             x = _decode()
-            if decimal_places:
-                n = 2 << round(decimal_places * 3.33)
-                values.append(round(x / n, decimal_places))
+            if frac_bin_bits:
+                values.append(x / n)
             else:
-                values.append(round(float(x), decimal_places))
+                values.append(float(x))
         else:
             factors.append(value - 63)
     return values, len(s)
