@@ -361,7 +361,7 @@ class Interpreter:
                     base = 32
             else:
                 values, index = pe_decode(
-                    data, frac_bin_bits=frac_bin_bits, base=base, start=index
+                    data, frac_bits=frac_bin_bits, base=base, start=index
                 )
                 point_queue.extend(to_points(values))
 

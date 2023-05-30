@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.addons.hpgl2.tokenizer import pe_encode, pe_decode, fractional_binary_bits
+from ezdxf.addons.hpgl2.tokenizer import pe_encode, pe_decode, fractional_bits
 
 
 class TestPolylineEncoding:
@@ -35,9 +35,9 @@ class TestPolylineDecoding:
         assert index == len(s)
 
     def test_8_bit_float(self):
-        n = fractional_binary_bits(3)
-        s = pe_encode(10.525, frac_bin_bits=n) + pe_encode(-10.525, frac_bin_bits=n)
-        values, index = list(pe_decode(s, frac_bin_bits=n))
+        n = fractional_bits(3)
+        s = pe_encode(10.525, frac_bits=n) + pe_encode(-10.525, frac_bits=n)
+        values, index = list(pe_decode(s, frac_bits=n))
         assert round(values[0], 3) == 10.525
         assert round(values[1], 3) == -10.525
         assert index == len(s)
