@@ -1,14 +1,22 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Any, Iterator, Callable, Optional, NamedTuple
+from typing import (
+    Iterable,
+    Any,
+    Iterator,
+    Callable,
+    Optional,
+    NamedTuple,
+    no_type_check,
+)
 from typing_extensions import Self, TypeAlias
 import copy
 import enum
 import dataclasses
 
-from ezdxf.math import AnyVec, BoundingBox2d, Matrix44
-from ezdxf.path import Path, Path2d
+from ezdxf.math import AnyVec, BoundingBox2d, Matrix44, Vec2, UVec
+from ezdxf.path import Path, Path2d, from_vertices
 from ezdxf import npshapes
 from ezdxf.tools import take2
 
@@ -27,7 +35,8 @@ class RecordType(enum.Enum):
         PATH:
         FILLED_PATHS:
     """
-    POINTS = enum.auto()
+
+    POINTS = enum.auto()  # n=1 point; n=2 line; n>2 filled polygon
     SOLID_LINES = enum.auto()
     PATH = enum.auto()
     FILLED_PATHS = enum.auto()
@@ -39,6 +48,18 @@ class DataRecord:
     property_hash: int
     handle: str  # top-level entity handle
     data: Any
+
+    def bbox(self) -> BoundingBox2d:
+        bbox = BoundingBox2d()
+        try:
+            if self.type == RecordType.FILLED_PATHS:
+                for path in self.data[0]:  # only add paths, ignore holes
+                    bbox.extend(path.extents())
+            else:
+                bbox.extend(self.data.extents())
+        except npshapes.EmptyShapeError:
+            pass
+        return bbox
 
 
 class Recorder(BackendInterface):
@@ -258,14 +279,111 @@ class Player:
         return self._bbox
 
     def update_bbox(self) -> None:
-        points: list[AnyVec] = []
+        bbox = BoundingBox2d()
         for record in self.records:
-            try:
-                if record.type == RecordType.FILLED_PATHS:
-                    for path in record.data[0]:  # only add paths, ignore holes
-                        points.extend(path.extents())
-                else:
-                    points.extend(record.data.extents())
-            except npshapes.EmptyShapeError:
+            bbox.extend(record.bbox())
+        self._bbox = bbox
+
+    def crop_rect(self, extmin: UVec, extmax: UVec, distance: float) -> None:
+        """Crop recorded shapes inplace by a rectangle defined by the lower
+        left corner `extmin` and the upper right corner `extmax`.
+
+        The argument `distance` defines the approximation precision for paths which have
+        to be approximated as polylines for cropping but only paths which are really get
+        cropped are approximated, paths that are fully inside the crop box will not be
+        approximated.
+
+        Args:
+            extmin: lower left corner of the clipping rectangle
+            extmax: upper right corner of the clipping rectangle
+            distance: maximum distance from the center of the curve to the
+                center of the line segment between two approximation points to
+                determine if a segment should be subdivided.
+
+        """
+        crop_rect = BoundingBox2d([Vec2(extmin), Vec2(extmax)])
+        self.records = crop_records_rect(self.records, crop_rect, distance)
+        self._bbox = BoundingBox2d()  # determine new bounding box on demand
+
+
+def crop_records_rect(
+    records: list[DataRecord], crop_rect: BoundingBox2d, distance: float
+) -> list[DataRecord]:
+    """Crop recorded shapes inplace by a rectangle."""
+    from .clipper import ClippingRect
+
+    @no_type_check
+    def is_visible(record_bbox: BoundingBox2d) -> bool:
+        if not record_bbox.has_data:
+            return False
+        # Check for separating axis:
+        if min_x >= record_bbox.extmax.x:
+            return False
+        if max_x <= record_bbox.extmin.x:
+            return False
+        if min_y >= record_bbox.extmax.y:
+            return False
+        if max_y <= record_bbox.extmin.y:
+            return False
+        return True
+
+    min_x = crop_rect.extmin.x  # type: ignore
+    min_y = crop_rect.extmin.y  # type: ignore
+    max_x = crop_rect.extmax.x  # type: ignore
+    max_y = crop_rect.extmax.y  # type: ignore
+
+    clipper = ClippingRect()
+    clipper.push(from_vertices(crop_rect.rect_vertices()), None)
+    cropped_records: list[DataRecord] = []
+    for record in records:
+        record_box = record.bbox()
+        if not is_visible(record_box):
+            # record is complete outside the cropping rectangle
+            continue
+        if crop_rect.inside(record_box.extmin) and crop_rect.inside(record_box.extmax):
+            # record is complete inside the cropping rectangle
+            cropped_records.append(record)
+            continue
+
+        if record.type == RecordType.FILLED_PATHS:
+            exterior: Any = (p.to_path2d() for p in record.data[0])
+            exterior = list(clipper.clip_filled_paths(exterior, distance))
+            if exterior:
+                holes: Any = (p.to_path2d() for p in record.data[1])
+                holes = list(clipper.clip_filled_paths(holes, distance))
+                record.data = (
+                    tuple(npshapes.NumpyPath2d(p) for p in exterior),
+                    tuple(npshapes.NumpyPath2d(p) for p in holes),
+                )
+                cropped_records.append(record)
+        elif record.type == RecordType.PATH:
+            # could be split into multiple parts
+            for p in clipper.clip_paths([record.data.to_path2d()], distance):  # type: ignore
+                cropped_records.append(
+                    DataRecord(
+                        record.type,
+                        record.property_hash,
+                        record.handle,
+                        npshapes.NumpyPath2d(p),
+                    )
+                )
+        elif record.type == RecordType.POINTS:
+            count = len(record.data)
+            if count == 1:
                 pass
-        self._bbox = BoundingBox2d(points)
+            elif count == 2:
+                s, e = record.data.vertices()
+                record.data = npshapes.NumpyPoints2d(clipper.clip_line(s, e))
+            else:  # filled polygon
+                points = record.data.vertices()
+                record.data = npshapes.NumpyPoints2d(clipper.clip_polygon(points))
+            cropped_records.append(record)
+        elif record.type == RecordType.SOLID_LINES:
+            points: list[Vec2] = []  # type: ignore
+            for s, e in take2(record.data.vertices()):
+                points.append(clipper.clip_line(s, e))  # type: ignore
+            record.data = npshapes.NumpyPoints2d(points)
+            cropped_records.append(record)
+        else:
+            raise ValueError("invalid record type")
+    return cropped_records

@@ -151,6 +151,8 @@ which is for some backends a requirement to place the DXF content on size limite
 
     .. automethod:: transform
 
+    .. automethod:: crop_rect
+
     .. automethod:: replay
 
     .. automethod:: recordings
