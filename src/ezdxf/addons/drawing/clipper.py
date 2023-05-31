@@ -5,7 +5,7 @@ from typing import Optional, Iterable, Iterator, Sequence
 
 from ezdxf.math import AnyVec, Matrix44, Vec2, BoundingBox2d
 from ezdxf.math.clipping import ClippingRect2d
-from ezdxf.path import Path, Path2d, bbox, from_vertices, single_paths
+from ezdxf.path import Path, Path2d, from_vertices, single_paths
 
 __all__ = ["ClippingRect"]
 
@@ -67,7 +67,7 @@ class ClippingRect:
             else:  # clipping is required, but only clipping of polygons is supported
                 yield from_vertices(
                     view.clip_polygon(
-                        Vec2.list(path.flattening(max_sagitta, segments=16))
+                        Vec2.list(path.flattening(max_sagitta, segments=4))
                     ),
                     close=True,
                 )
@@ -87,7 +87,7 @@ class ClippingRect:
             if view.is_inside(box.extmin) and view.is_inside(box.extmax):
                 yield path
             for sub_path in single_paths([path]):  # type: ignore
-                polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=16))
+                polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=4))
                 for part in view.clip_polyline(polyline):
                     yield from_vertices(part, close=False)
 
