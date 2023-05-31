@@ -58,8 +58,8 @@ class SVGBackend(recorder.Recorder):
         """Returns the XML data as unicode string.
 
         Args:
-            page: page definition
-            settings: layout settings
+            page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
+            settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
             xml_declaration: inserts the "<?xml version='1.0' encoding='utf-8'?>" string
                 in front of the <svg> element
 

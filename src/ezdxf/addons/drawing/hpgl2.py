@@ -31,6 +31,15 @@ MAX_FLATTEN = 10
 
 
 class PlotterBackend(recorder.Recorder):
+    """The :class:`PlotterBackend` creates HPGL/2 plot files for output on raster
+    plotters. This backend does not need any additional packages.
+    The plot files are tested by the plot file viewer `ViewCompanion Standard`_
+    but not on real hardware - please use with care and give feedback.
+
+    .. _ViewCompanion Standard: http://www.softwarecompanions.com/
+
+    """
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -46,8 +55,8 @@ class PlotterBackend(recorder.Recorder):
         """Returns the HPGL/2 data as bytes.
 
         Args:
-            page: page definition
-            settings: layout settings
+            page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
+            settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
             curves: use Bèzier curves for HPGL/2 output
             decimal_places: HPGL/2 output precision, less decimal places creates smaller
                 files but for the price of imprecise curves (text)

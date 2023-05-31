@@ -157,7 +157,7 @@ Recorder
 
     .. automethod:: draw_polyline
 
-    .. automethod:: draw_filled_polygon
+    .. automethod:: draw_paths
 
 Player
 ------
@@ -174,7 +174,7 @@ Player
 
     .. automethod:: transform
 
-    .. automethod:: sort_filled_polygons
+    .. automethod:: sort_filled_paths
 
 Properties
 ----------

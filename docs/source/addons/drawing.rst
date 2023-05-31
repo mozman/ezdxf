@@ -207,43 +207,133 @@ SVGBackend
 This is a native SVG rendering backend and does not require any external packages to
 render SVG images other than the core dependencies.
 
-The implementations is divided into two stages, the first stage is a subclass of the
-:class:`~ezdxf.addons.drawing.recorder.Recorder` backend which records the output of
-the :class:`~ezdxf.addons.drawing.frontend.Frontend` class and creates the page layout.
-The methods :meth:`get_xml_root_element` and :meth:`get_string` replay the recordings of
-the first stage on the actual rendering backend :class:`SVGRenderBackend`.
-
 .. class:: ezdxf.addons.drawing.svg.SVGBackend
 
     .. automethod:: get_xml_root_element
 
     .. automethod:: get_string
 
-    .. automethod:: make_backend
+Usage:
 
-SVGRenderBackend
-++++++++++++++++
+.. code-block:: Python
 
-This is the second stage of the :class:`~ezdxf.addons.drawing.svg.SVGBackend` and builds
-the actual XML tree. The implementation is designed to create smaller files than `Matplotlib`:
+    from ezdxf.addons.drawing import Frontend, RenderContext
+    from ezdxf.addons.drawing import layout, svg
 
-- Using integer coordinates - the current implementation uses 1.000.000 units
-  for the larger side of the image.
-- Using <style> elements and the `class` attribute to minimize repetition for element
-  properties.
-- The <path> element places the path with an absolute ``move_to`` command, all
-  following commands are relative commands that keeps the coordinate values small.
+    doc = ezdxf.readfile("your.dxf")
+    msp = doc.modelspace()
+    backend = svg.SVGBackend()
+    Frontend(RenderContext(doc), backend).draw_layout(msp)
 
-The <text> element is not supported, because all text rendering is done by the
-:class:`Frontend` class since `ezdxf` v1.1 - the backend never gets text entities only
-lines, filled polygons and paths.
+    with open("your.svg", "wt") as fp:
+        fp.write(backend.get_string(layout.Page(0, 0))
 
-The output preserves the aspect-ratio at all scaling operations!
+PyMuPdfBackend
+--------------
 
-.. class:: ezdxf.addons.drawing.svg.SVGRenderBackend
+.. versionadded:: 1.1
 
-    Study the source code if you wanna customize this class.
+.. autoclass:: ezdxf.addons.drawing.pymupdf.PyMuPdfBackend
 
+    .. automethod:: get_pdf_bytes
+
+    .. automethod:: get_pixmap_bytes
+
+Usage:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.addons.drawing import Frontend, RenderContext
+    from ezdxf.addons.drawing import layout, pymupdf
+
+    doc = ezdxf.readfile("your.dxf")
+    msp = doc.modelspace()
+    backend = pymupdf.PyMuPdfBackend()
+    Frontend(RenderContext(doc), backend).draw_layout(msp)
+
+    with open("your.pdf", "wb") as fp:
+        fp.write(backend.get_pdf_bytes(layout.Page(0, 0))
+
+
+Load the output of the :class:`PyMuPdfBackend` into the :class:`Image` class of the `Pillow`_
+package for further processing or to output additional image formats:
+
+.. code-block:: Python
+
+    import io
+    from PIL import Image
+
+    ...  # see above
+
+    # the ppm format is faster to process than png
+    fp = io.BytesIO(backend.get_pixmap_bytes(layout.Page(0, 0), fmt="ppm", dpi=300))
+    image = Image.open(fp, formats=["ppm"])
+
+PlotterBackend
+--------------
+
+.. versionadded:: 1.1
+
+.. autoclass:: ezdxf.addons.drawing.hpgl2.PlotterBackend
+
+    .. automethod:: get_bytes
+
+    .. automethod:: compatible
+
+    .. automethod:: low_quality
+
+    .. automethod:: normal_quality
+
+    .. automethod:: high_quality
+
+Usage:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.addons.drawing import Frontend, RenderContext
+    from ezdxf.addons.drawing import layout, hpgl2
+
+    doc = ezdxf.readfile("your.dxf")
+    psp = doc.paperspace("Layout1")
+    backend = hpgl2.PlotterBackend()
+    Frontend(RenderContext(doc), backend).draw_layout(psp)
+    page = layout.Page.from_dxf_layout(psp)
+
+    with open("your.plt", "wb") as fp:
+        fp.write(backend.normal_quality(page)
+
+You can check the output by the HPGL/2 viewer::
+
+    ezdxf hpgl your.plt
+
+DXFBackend
+----------
+
+.. versionadded:: 1.1
+
+.. autoclass:: ezdxf.addons.drawing.dxf.DXFBackend
+
+.. autoclass:: ezdxf.addons.drawing.dxf.ColorMode
+
+Render a paperspace layout into modelspace:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.addons.drawing import Frontend, RenderContext
+    from ezdxf.addons.drawing import layout, dxf
+
+    doc = ezdxf.readfile("your.dxf")
+    layout1 = doc.paperspace("Layout1")
+    output_doc = ezdxf.new()
+    output_msp = output_doc.modelspace()
+
+    backend = dxf.DXFBackend(output_msp)
+    Frontend(RenderContext(doc), backend).draw_layout(layout1)
+
+    output_doc.saveas("layout1_in_modelspace.dxf")
 
 Configuration
 -------------
@@ -500,3 +590,4 @@ to achieve similar behavior in some areas:
 .. _draw_cad.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/drawing/draw_cad.py
 .. _qtviewer.py: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/qtviewer.py
 .. _backend.py: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/backend.py
+.. _Pillow: https://pypi.org/project/Pillow/

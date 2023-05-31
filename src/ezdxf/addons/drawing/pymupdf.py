@@ -33,6 +33,15 @@ SUPPORTED_IMAGE_FORMATS = ("png", "ppm", "pbm")
 
 
 class PyMuPdfBackend(recorder.Recorder):
+    """This backend uses the `PyMuPdf`_ package to create PDF, PNG, PPM and PBM output.
+
+    Install package::
+
+        pip install pymupdf
+
+    .. _PyMuPdf: https://pypi.org/project/PyMuPDF/
+
+    """
     def __init__(self) -> None:
         super().__init__()
         self._init_flip_y = True
@@ -43,8 +52,8 @@ class PyMuPdfBackend(recorder.Recorder):
         """Returns the PDF document as bytes.
 
         Args:
-            page: page definition
-            settings: layout settings
+            page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
+            settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
         """
         # This player changes the original recordings!
         player = self.player()
@@ -68,8 +77,8 @@ class PyMuPdfBackend(recorder.Recorder):
         """Returns the PDF document as bytes.
 
         Args:
-            page: page definition
-            settings: layout settings
+            page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
+            settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
         """
         backend = self._get_replay(page, settings)
         return backend.get_pdf_bytes()
@@ -92,9 +101,9 @@ class PyMuPdfBackend(recorder.Recorder):
         === =========================
 
         Args:
-            page: page definition
+            page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
             fmt: image format
-            settings: layout settings
+            settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
             dpi: output resolution in dots per inch
             alpha: add alpha channel (transparency)
 

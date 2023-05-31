@@ -24,6 +24,13 @@ if TYPE_CHECKING:
 
 
 class ColorMode(enum.Enum):
+    """This enum is used to define the color output mode of the :class:`DXFBackend`.
+
+    Attributes:
+        ACI: the color is set as :ref:`ACI` and assigned by layer
+        RGB: the color is set as RGB true color value
+
+    """
     # Use color index as primary color
     ACI = enum.auto()
 
@@ -37,7 +44,14 @@ BYLAYER = 256
 
 
 class DXFBackend(BackendInterface):
-    """DXF render backend for the drawing add-on."""
+    """The :class:`DXFBackend` creates simple DXF files of POINT, LINE, LWPOLYLINE and
+    HATCH entities. This backend does ot need any additional packages.
+
+    Args:
+        layout: a DXF :class:`~ezdxf.layouts.BaseLayout`
+        color_mode: see :class:`ColorMode`
+
+    """
 
     def __init__(
         self, layout: BaseLayout, color_mode: ColorMode = ColorMode.RGB
