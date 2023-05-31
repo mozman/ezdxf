@@ -2,8 +2,8 @@
 News
 ====
 
-Version 1.1.0b2 - dev
----------------------
+Version 1.1.0 Beta
+------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-1.html
 - WARNING: The font support changed drastically in this version, if you use the 
