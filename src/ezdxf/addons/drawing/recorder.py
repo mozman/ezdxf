@@ -284,9 +284,8 @@ class Player:
             bbox.extend(record.bbox())
         self._bbox = bbox
 
-    def crop_rect(self, extmin: UVec, extmax: UVec, distance: float) -> None:
-        """Crop recorded shapes inplace by a rectangle defined by the lower
-        left corner `extmin` and the upper right corner `extmax`.
+    def crop_rect(self, p1: UVec, p2: UVec, distance: float) -> None:
+        """Crop recorded shapes inplace by a rectangle defined by two points.
 
         The argument `distance` defines the approximation precision for paths which have
         to be approximated as polylines for cropping but only paths which are really get
@@ -294,14 +293,14 @@ class Player:
         approximated.
 
         Args:
-            extmin: lower left corner of the clipping rectangle
-            extmax: upper right corner of the clipping rectangle
+            p1: first corner of the clipping rectangle
+            p2: second corner of the clipping rectangle
             distance: maximum distance from the center of the curve to the
                 center of the line segment between two approximation points to
                 determine if a segment should be subdivided.
 
         """
-        crop_rect = BoundingBox2d([Vec2(extmin), Vec2(extmax)])
+        crop_rect = BoundingBox2d([Vec2(p1), Vec2(p2)])
         self.records = crop_records_rect(self.records, crop_rect, distance)
         self._bbox = BoundingBox2d()  # determine new bounding box on demand
 
@@ -327,6 +326,15 @@ def crop_records_rect(
             return False
         return True
 
+    # an undefined crop box crops nothing:
+    if not crop_rect.has_data:
+        return records
+    cropped_records: list[DataRecord] = []
+    size = crop_rect.size
+    # a crop box size of zero in any dimension crops everything:
+    if size.x < 1e-12 or size.y < 1e-12:
+        return cropped_records
+
     min_x = crop_rect.extmin.x  # type: ignore
     min_y = crop_rect.extmin.y  # type: ignore
     max_x = crop_rect.extmax.x  # type: ignore
@@ -334,7 +342,6 @@ def crop_records_rect(
 
     clipper = ClippingRect()
     clipper.push(from_vertices(crop_rect.rect_vertices()), None)
-    cropped_records: list[DataRecord] = []
     for record in records:
         record_box = record.bbox()
         if not is_visible(record_box):

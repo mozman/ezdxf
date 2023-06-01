@@ -3,6 +3,8 @@
 
 import pytest
 import ezdxf
+import ezdxf.path
+from ezdxf.math import Vec2
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.recorder import Recorder, BackendProperties, Override
 from ezdxf.addons.drawing.debug_backend import PathBackend
@@ -141,3 +143,63 @@ def test_bounding_box(msp, frontend):
     bbox = player.bbox()
     assert bbox.extmin.isclose((0, 0))
     assert bbox.extmax.isclose((200, 100))
+
+
+class TestCroppingRecords:
+    """Clipping is tested in 822 and 618!"""
+    def test_null_sized_crop_box_removes_everything(self):
+        """A cropping box of size zero in any dimension should remove all records."""
+        props = BackendProperties()
+        recorder = Recorder()
+        recorder.draw_point(Vec2(0, 0), props)
+
+        # 0 x 0
+        player = recorder.player().copy()
+        assert len(player.records) == 1
+        player.crop_rect((0, 0), (0, 0), 1)
+        assert len(player.records) == 0
+
+        # 0 x 1
+        player = recorder.player().copy()
+        player.crop_rect((0, 0), (0, 1), 1)
+        assert len(player.records) == 0
+
+        # 1 x 0
+        player = recorder.player().copy()
+        player.crop_rect((0, 0), (1, 0), 1)
+        assert len(player.records) == 0
+
+    def test_remove_entities_outside(self):
+        """Records complete outside the crop box should be removed."""
+        props = BackendProperties()
+        recorder = Recorder()
+
+        # point outside:
+        recorder.draw_point(Vec2(1000, 1000), props)
+
+        # line coincident with crop box side is outside!
+        recorder.draw_line(Vec2(100, 0), Vec2(100, 100), props)
+
+        # path coincident with crop box side is outside!
+        path = ezdxf.path.from_vertices([(0, 100), (50, 100), (100, 100)])
+        recorder.draw_path(path, props)
+
+        player = recorder.player()
+        assert len(player.records) == 3
+
+        # crop recordings:
+        player.crop_rect((0, 0), (100, 100), 1)
+
+        assert len(player.records) == 0
+
+    def test_entities_inside_crop_box_do_not_change(self):
+        """Records complete inside the crop box should not be processed in any kind."""
+        props = BackendProperties()
+        recorder = Recorder()
+        recorder.draw_point(Vec2(50, 50), props)
+
+        player = recorder.player()
+        rec0 = player.records[0]
+        player.crop_rect((0, 0), (100, 100), 1)
+
+        assert player.records[0] is rec0, "should be identical to original record"

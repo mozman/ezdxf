@@ -145,17 +145,17 @@ which is for some backends a requirement to place the DXF content on size limite
 
 .. autoclass:: ezdxf.addons.drawing.recorder.Player
 
-    .. automethod:: copy
-
     .. automethod:: bbox
 
-    .. automethod:: transform
+    .. automethod:: copy
 
     .. automethod:: crop_rect
 
+    .. automethod:: recordings
+
     .. automethod:: replay
 
-    .. automethod:: recordings
+    .. automethod:: transform
 
 .. autoclass:: ezdxf.addons.drawing.recorder.Override
 
