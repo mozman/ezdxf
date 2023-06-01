@@ -24,10 +24,15 @@ class TestBoundingBox:
         bbox = BoundingBox()
         assert bbox.is_empty is True
         assert bbox.has_data is False
+
         bbox.extend([(0, 0, 0), (10, 10, 10)])
         assert bbox.size == (10, 10, 10)
         assert bbox.is_empty is False
         assert bbox.has_data is True
+
+    def test_init_empty_list(self):
+        bbox = BoundingBox([])
+        assert bbox.has_data is False
 
     @pytest.mark.parametrize("v", [
         [],

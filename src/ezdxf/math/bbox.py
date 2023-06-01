@@ -489,5 +489,5 @@ def extends2d(vertices: Iterable[UVec]) -> tuple[Vec2, Vec2]:
             elif y > maxy:
                 maxy = y
     if minx is None:
-        raise ValueError("No vertices give.")
+        raise ValueError("no vertices given")
     return Vec2(minx, miny), Vec2(maxx, maxy)
