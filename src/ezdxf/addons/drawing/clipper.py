@@ -53,16 +53,19 @@ class ClippingRect:
     def clip_filled_paths(
         self, paths: Iterable[Path | Path2d], max_sagitta: float
     ) -> Iterator[Path | Path2d]:
+        view = self.view
+        assert view is not None
         m = self.m
         for path in paths:
             if m is not None:
                 path = path.transform(m)
             # path in paperspace units!
             box = BoundingBox2d(path.control_vertices())
-            view = self.view
-            assert view is not None
+            if not view.has_intersection(box):
+                # path is complete outside the view
+                continue
             if view.is_inside(box.extmin) and view.is_inside(box.extmax):
-                # no clipping needed
+                # path is complete inside the view, no clipping required
                 yield path
             else:  # clipping is required, but only clipping of polygons is supported
                 yield from_vertices(

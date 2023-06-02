@@ -210,6 +210,11 @@ class ClippingRect2d:
         """Returns ``True`` if `point` is inside the clipping rectangle."""
         return self._bbox.inside(point)
 
+    def has_intersection(self, other: BoundingBox2d) -> bool:
+        """Returns ``True`` if `other` bounding box intersects the clipping rectangle.
+        """
+        return self._bbox.has_intersection(other)
+
 
 def clip_polygon_2d(
     clip: Iterable[UVec],
