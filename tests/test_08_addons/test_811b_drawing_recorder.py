@@ -4,7 +4,7 @@
 import pytest
 import ezdxf
 import ezdxf.path
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, BoundingBox2d
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.recorder import Recorder, BackendProperties, Override
 from ezdxf.addons.drawing.debug_backend import PathBackend
@@ -147,6 +147,7 @@ def test_bounding_box(msp, frontend):
 
 class TestCroppingRecords:
     """Clipping is tested in 822 and 618!"""
+
     def test_null_sized_crop_box_removes_everything(self):
         """A cropping box of size zero in any dimension should remove all records."""
         props = BackendProperties()
@@ -203,3 +204,53 @@ class TestCroppingRecords:
         player.crop_rect((0, 0), (100, 100), 1)
 
         assert player.records[0] is rec0, "should be identical to original record"
+
+    def test_crop_filled_paths(self):
+        props = BackendProperties()
+        recorder = Recorder()
+        square = ezdxf.path.rect(100, 100)  # center = (0, 0)
+        hole = ezdxf.path.rect(50, 50)  # center = (0, 0)
+        recorder.draw_filled_paths([square], [hole], props)
+
+        player = recorder.player()
+        data0 = player.records[0].data
+        player.crop_rect((0, 0), (100, 100), 1)
+
+        assert player.records[0].data is not data0, "should be new record data"
+
+        exterior, holes = player.records[0].data
+        assert exterior[0].extents() == ((0, 0), (50, 50)), "should be cropped"
+        assert holes[0].extents() == ((0, 0), (25, 25)), "should be cropped"
+
+    def test_does_not_crop_holes_inside_crop_box(self):
+        props = BackendProperties()
+        recorder = Recorder()
+        square = ezdxf.path.rect(100, 100)  # center = (0, 0)
+        hole = ezdxf.path.from_vertices(
+            [(10, 10), (20, 10), (20, 20), (10, 20)], close=True
+        )
+        recorder.draw_filled_paths([square], [hole], props)
+
+        player = recorder.player()
+        _, holes = player.records[0].data
+        hole0 = holes[0]
+        player.crop_rect((0, 0), (100, 100), 1)
+
+        _, holes = player.records[0].data
+        assert holes[0] is hole0, "should be identical to original hole"
+
+    def test_does_remove_holes_outside_crop_box(self):
+        props = BackendProperties()
+        recorder = Recorder()
+
+        square = ezdxf.path.rect(100, 100)  # center = (0, 0)
+        hole = ezdxf.path.from_vertices(
+            [(-10, -10), (-20, -10), (-20, -20), (-10, -20)], close=True
+        )
+        recorder.draw_filled_paths([square], [hole], props)
+
+        player = recorder.player()
+        player.crop_rect((0, 0), (100, 100), 1)
+
+        _, holes = player.records[0].data
+        assert len(holes) == 0, "hole should be removed"

@@ -5,6 +5,7 @@ from typing import (
     Iterable,
     Any,
     Iterator,
+    Sequence,
     Callable,
     Optional,
     NamedTuple,
@@ -311,20 +312,32 @@ def crop_records_rect(
     """Crop recorded shapes inplace by a rectangle."""
     from .clipper import ClippingRect
 
-    @no_type_check
-    def is_visible(record_bbox: BoundingBox2d) -> bool:
-        if not record_bbox.has_data:
-            return False
-        # Check for separating axis:
-        if min_x >= record_bbox.extmax.x:
-            return False
-        if max_x <= record_bbox.extmin.x:
-            return False
-        if min_y >= record_bbox.extmax.y:
-            return False
-        if max_y <= record_bbox.extmin.y:
-            return False
-        return True
+    def sort_paths(np_paths: Sequence[npshapes.NumpyPath2d]):
+        _inside: list[npshapes.NumpyPath2d] = []
+        _crop: list[npshapes.NumpyPath2d] = []
+
+        for np_path in np_paths:
+            bbox = BoundingBox2d(np_path.extents())
+            if not crop_rect.has_intersection(bbox):
+                # path is complete outside the cropping rectangle
+                pass
+            elif crop_rect.inside(bbox.extmin) and crop_rect.inside(bbox.extmax):
+                # path is complete inside the cropping rectangle
+                _inside.append(np_path)
+            else:
+                _crop.append(np_path)
+
+        return _crop, _inside
+
+    def crop_paths(
+        np_paths: Sequence[npshapes.NumpyPath2d],
+    ) -> list[npshapes.NumpyPath2d]:
+        return [
+            npshapes.NumpyPath2d(path)
+            for path in clipper.clip_filled_paths(
+                (np_path.to_path2d() for np_path in np_paths), distance
+            )
+        ]
 
     # an undefined crop box crops nothing:
     if not crop_rect.has_data:
@@ -335,16 +348,11 @@ def crop_records_rect(
     if size.x < 1e-12 or size.y < 1e-12:
         return cropped_records
 
-    min_x = crop_rect.extmin.x  # type: ignore
-    min_y = crop_rect.extmin.y  # type: ignore
-    max_x = crop_rect.extmax.x  # type: ignore
-    max_y = crop_rect.extmax.y  # type: ignore
-
     clipper = ClippingRect()
     clipper.push(from_vertices(crop_rect.rect_vertices()), None)
     for record in records:
         record_box = record.bbox()
-        if not is_visible(record_box):
+        if not crop_rect.has_intersection(record_box):
             # record is complete outside the cropping rectangle
             continue
         if crop_rect.inside(record_box.extmin) and crop_rect.inside(record_box.extmax):
@@ -353,15 +361,12 @@ def crop_records_rect(
             continue
 
         if record.type == RecordType.FILLED_PATHS:
-            exterior: Any = (p.to_path2d() for p in record.data[0])
-            exterior = list(clipper.clip_filled_paths(exterior, distance))
+            paths_to_crop, inside = sort_paths(record.data[0])
+            exterior = crop_paths(paths_to_crop) + inside
             if exterior:
-                holes: Any = (p.to_path2d() for p in record.data[1])
-                holes = list(clipper.clip_filled_paths(holes, distance))
-                record.data = (
-                    tuple(npshapes.NumpyPath2d(p) for p in exterior),
-                    tuple(npshapes.NumpyPath2d(p) for p in holes),
-                )
+                paths_to_crop, inside = sort_paths(record.data[1])
+                holes = crop_paths(paths_to_crop) + inside
+                record.data = tuple(exterior), tuple(holes)
                 cropped_records.append(record)
         elif record.type == RecordType.PATH:
             # could be split into multiple parts
