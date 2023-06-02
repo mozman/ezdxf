@@ -35,6 +35,7 @@ class ClippingRect:
             self.m = None
 
     def clip_point(self, point: AnyVec) -> Optional[AnyVec]:
+        # Expected points outside the view to be removed!
         if self.m is not None:
             point = self.m.transform(point)
         if self.view is not None and not self.view.is_inside(Vec2(point)):
@@ -42,6 +43,7 @@ class ClippingRect:
         return point
 
     def clip_line(self, start: AnyVec, end: AnyVec) -> Sequence[AnyVec]:
+        # Expected lines outside the view to be removed!
         # An arbitrary clipping polygon could return more than 1 line segment
         m = self.m
         if m is not None:
@@ -53,6 +55,7 @@ class ClippingRect:
     def clip_filled_paths(
         self, paths: Iterable[Path | Path2d], max_sagitta: float
     ) -> Iterator[Path | Path2d]:
+        # Expected overall paths outside the view to be removed!
         view = self.view
         assert view is not None
         m = self.m
@@ -78,6 +81,7 @@ class ClippingRect:
     def clip_paths(
         self, paths: Iterable[Path | Path2d], max_sagitta: float
     ) -> Iterator[Path | Path2d]:
+        # Expected paths outside the view to be removed!
         view = self.view
         assert view is not None
         m = self.m
@@ -95,6 +99,7 @@ class ClippingRect:
                     yield from_vertices(part, close=False)
 
     def clip_polygon(self, points: Iterable[AnyVec]) -> Sequence[Vec2]:
+        # Expected polygons outside the view to be removed!
         if self.m is not None:
             points = self.m.fast_2d_transform(points)
             # points in paperspace units!
