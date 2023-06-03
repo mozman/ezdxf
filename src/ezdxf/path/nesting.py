@@ -99,7 +99,7 @@ from .path import AbstractPath
 from ezdxf.math import BoundingBox2d
 
 __all__ = [
-    "fast_bbox_detection",
+    "make_polygon_structure",
     "winding_deconstruction",
     "group_paths",
     "flatten_polygons",
@@ -110,8 +110,8 @@ Polygon: TypeAlias = Tuple[Exterior, Optional[List["Polygon"]]]
 BoxStruct = namedtuple("BoxStruct", "bbox, path")
 
 
-def fast_bbox_detection(paths: Iterable[AbstractPath]) -> list[Polygon]:
-    """Create a nested polygon structure from iterable `paths`, using 2D
+def make_polygon_structure(paths: Iterable[AbstractPath]) -> list[Polygon]:
+    """Returns a recursive polygon structure from iterable `paths`, uses 2D
     bounding boxes as fast detection objects.
 
     """
@@ -201,5 +201,5 @@ def flatten_polygons(polygons: Polygon) -> Iterable[AbstractPath]:
 
 def group_paths(paths: Iterable[AbstractPath]) -> list[list[AbstractPath]]:
     """Group separated paths and their inner holes as flat lists."""
-    polygons = fast_bbox_detection(paths)  # type: ignore
+    polygons = make_polygon_structure(paths)  # type: ignore
     return [list(flatten_polygons(polygon)) for polygon in polygons]

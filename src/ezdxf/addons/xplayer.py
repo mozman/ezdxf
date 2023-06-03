@@ -41,7 +41,7 @@ def hpgl2_to_drawing(
         elif record_type == HPGL2RecordType.FILLED_PATHS:
             # filled paths are stored as single paths! see: PolygonBuffer.get_paths()
             external_paths, holes = path.winding_deconstruction(
-                path.fast_bbox_detection(p.to_path2d() for p in record_data)
+                path.make_polygon_structure(p.to_path2d() for p in record_data)
             )
             backend.draw_filled_paths(external_paths, holes, backend_properties)  # type: ignore
         elif record_type == HPGL2RecordType.OUTLINE_PATHS:

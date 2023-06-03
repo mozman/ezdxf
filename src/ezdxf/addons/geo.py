@@ -22,7 +22,7 @@ import numbers
 import copy
 import math
 from ezdxf.math import Vec3, has_clockwise_orientation, Matrix44
-from ezdxf.path import make_path, from_hatch_boundary_path, fast_bbox_detection
+from ezdxf.path import make_path, from_hatch_boundary_path, make_polygon_structure
 from ezdxf.entities import DXFGraphic, LWPolyline, Point, Polyline, Line, Solid
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.lldxf import const
@@ -753,7 +753,7 @@ def _boundaries_to_polygons(boundaries, ocs, elevation):
         from_hatch_boundary_path(boundary, ocs, elevation)
         for boundary in boundaries
     )
-    for polygon in fast_bbox_detection(paths):
+    for polygon in make_polygon_structure(paths):
         exterior = polygon[0]
         # only take exterior path of level 1 holes, nested holes are ignored
         yield exterior, [hole[0] for hole in polygon[1:]]

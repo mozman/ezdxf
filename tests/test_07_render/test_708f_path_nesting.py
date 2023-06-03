@@ -52,7 +52,7 @@ DETECTION_DATA = [
 
 @pytest.mark.parametrize("paths,polygons", DETECTION_DATA)
 def test_fast_bbox_detection(paths, polygons):
-    assert nesting.fast_bbox_detection(paths) == polygons
+    assert nesting.make_polygon_structure(paths) == polygons
 
 
 @pytest.mark.parametrize(

@@ -54,7 +54,7 @@ def build_bundles(paths: Iterable[Path]) -> Iterable[Bundle]:
                 append_holes(hole)
 
     # the fast bbox detection algorithm is not very accurate!
-    for polygon in nesting.fast_bbox_detection(paths):
+    for polygon in nesting.make_polygon_structure(paths):
         contour = polygon[0]
         box = BoundingBox(contour.control_vertices())
         # optional: add some spacing between items if required:

@@ -72,7 +72,7 @@ from ezdxf.path import (
     Path2d,
     make_path,
     from_hatch_boundary_path,
-    fast_bbox_detection,
+    make_polygon_structure,
     winding_deconstruction,
     from_vertices,
     single_paths,
@@ -550,11 +550,11 @@ class Frontend:
 
         if loops is not None:  # only MPOLYGON
             external_paths, holes = winding_deconstruction(  # type: ignore
-                fast_bbox_detection(loops)
+                make_polygon_structure(loops)
             )
         else:  # only HATCH
             paths = polygon.paths.rendering_paths(polygon.dxf.hatch_style)
-            polygons: list = fast_bbox_detection(
+            polygons: list = make_polygon_structure(
                 closed_loops(paths, ocs, elevation)  # type: ignore
             )
             external_paths, holes = winding_deconstruction(polygons)  # type: ignore
@@ -1006,7 +1006,7 @@ class Designer:
             self.draw_path(transformed_path, properties)
             return
 
-        polygons = fast_bbox_detection(single_paths([transformed_path]))  # type: ignore
+        polygons = make_polygon_structure(single_paths([transformed_path]))  # type: ignore
         external_paths, holes = winding_deconstruction(polygons)  # type: ignore
         if properties.filling is None:
             properties.filling = Filling()
