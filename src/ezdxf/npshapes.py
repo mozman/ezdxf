@@ -60,7 +60,10 @@ class NumpyPath2d(NumpyShape2d):
     """Represents a 2D path, the path control vertices and commands are stored as ndarray."""
 
     def __init__(self, path: AbstractPath) -> None:
-        vertices = Vec2.list(path.control_vertices())
+        if isinstance(path, Path2d):
+            vertices = path.control_vertices()
+        else:
+            vertices = Vec2.list(path.control_vertices())
         if len(vertices) == 0:
             try:  # control_vertices() does not return start point of empty paths
                 vertices = [path.start]
@@ -73,24 +76,7 @@ class NumpyPath2d(NumpyShape2d):
         return len(self._commands)
 
     def to_path2d(self) -> Path2d:
-        v = self._vertices
-        if len(v) == 0:
-            return Path2d()
-        path = Path2d(v[0])
-        index = 1
-        for command in self._commands:
-            if command == Command.MOVE_TO:
-                path.move_to(v[index])
-                index += 1
-            elif command == Command.LINE_TO:
-                path.line_to(v[index])
-                index += 1
-            elif command == Command.CURVE3_TO:
-                path.curve3_to(v[index + 1], v[index])
-                index += 2
-            elif command == Command.CURVE4_TO:
-                path.curve4_to(v[index + 2], v[index], v[index + 1])
-                index += 3
-            else:
-                raise ValueError(f"invalid command: {command}")
-        return path
+        """Returns a new :class:`Path2d` instance."""
+        vertices = [Vec2(v) for v in self._vertices]
+        commands = [Command(c) for c in self._commands]
+        return Path2d.from_vertices_and_commands(vertices, commands)

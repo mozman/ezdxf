@@ -59,6 +59,25 @@ class AbstractPath(Generic[T], abc.ABC):
         self._has_sub_paths = False
         self._user_data: Any = None  # should be immutable data!
 
+    @classmethod
+    def from_vertices_and_commands(
+        cls, vertices: list[T], commands: list[Command], user_data: Any = None
+    ) -> Self:
+        """Create path instances from a list of vertices and a list of commands."""
+        # Used for fast conversion from NumpyPath2d to Path2d.
+        # This is "hacky" but also 8x faster than the correct way using only public
+        # methods and properties.
+        new_path = cls()
+        if len(vertices) == 0:
+            return new_path
+        new_path._vertices = vertices
+        new_path._commands = commands
+        new_path._start_index = [0] * len(commands)
+        new_path._reindex()
+        new_path._has_sub_paths = any(cmd == Command.MOVE_TO for cmd in commands)
+        new_path._user_data = user_data
+        return new_path
+
     @abc.abstractmethod
     def transform(self, m: Matrix44) -> Self:
         """Returns a new transformed path.

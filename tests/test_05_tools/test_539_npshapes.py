@@ -6,6 +6,7 @@ import pytest
 from ezdxf.npshapes import NumpyPoints2d, NumpyPath2d
 from ezdxf.math import Matrix44, BoundingBox2d
 from ezdxf.path import Path2d, Command
+from ezdxf.fonts import fonts
 
 
 class TestNumpyPoints:
@@ -95,6 +96,30 @@ class TestNumpyPath:
         assert len(p) == 0
         # and back
         assert p.to_path2d().start == (0, 0)  # default start point
+
+
+def test_path2d_conversion_methods():
+    f = fonts.make_font("DejaVuSans.ttf", 1.0)
+    source_path = f.text_path("ABCDEFabcdef")
+    assert source_path.has_sub_paths is True
+    assert source_path.has_curves is True
+    assert source_path.has_lines is True
+
+    converted_path = NumpyPath2d(source_path).to_path2d()
+    assert converted_path.has_sub_paths is True
+    assert converted_path.has_curves is True
+    assert converted_path.has_lines is True
+
+    assert source_path.start.isclose(converted_path.start)
+    assert source_path.end.isclose(converted_path.end)
+
+    assert source_path.command_codes() == converted_path.command_codes()
+    cv0 = source_path.control_vertices()
+    cv1 = converted_path.control_vertices()
+    assert len(cv0) == len(cv1)
+    for v0, v1 in zip(cv0, cv1):
+        assert v0.isclose(v1)
+    assert source_path._start_index == converted_path._start_index
 
 
 if __name__ == "__main__":
