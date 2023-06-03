@@ -5,6 +5,7 @@ import abc
 from typing import (
     Optional,
     Iterator,
+    Iterable,
     Any,
     TypeVar,
     Type,
@@ -61,7 +62,7 @@ class AbstractPath(Generic[T], abc.ABC):
 
     @classmethod
     def from_vertices_and_commands(
-        cls, vertices: list[T], commands: list[Command], user_data: Any = None
+        cls, vertices: list[T], command_codes: list[Command], user_data: Any = None
     ) -> Self:
         """Create path instances from a list of vertices and a list of commands."""
         # Used for fast conversion from NumpyPath2d to Path2d.
@@ -71,10 +72,9 @@ class AbstractPath(Generic[T], abc.ABC):
         if len(vertices) == 0:
             return new_path
         new_path._vertices = vertices
-        new_path._commands = commands
-        new_path._start_index = [0] * len(commands)
-        new_path._reindex()
-        new_path._has_sub_paths = any(cmd == Command.MOVE_TO for cmd in commands)
+        new_path._commands = command_codes
+        new_path._start_index = make_vertex_index(command_codes)
+        new_path._has_sub_paths = any(cmd == Command.MOVE_TO for cmd in command_codes)
         new_path._user_data = user_data
         return new_path
 
@@ -331,23 +331,8 @@ class AbstractPath(Generic[T], abc.ABC):
             )
         path._commands.reverse()
         path._vertices.reverse()
-        path._reindex()
+        path._start_index = make_vertex_index(path._commands)
         return path
-
-    def _reindex(self) -> None:
-        start = 1
-        start_index = self._start_index
-        for index, cmd in enumerate(self._commands):
-            start_index[index] = start
-            # ordered by common usage:
-            if cmd == Command.LINE_TO:
-                start += 1
-            elif cmd == Command.CURVE4_TO:
-                start += 3
-            elif cmd == Command.CURVE3_TO:
-                start += 2
-            elif cmd == Command.MOVE_TO:
-                start += 1
 
     def clockwise(self) -> Self:
         """Returns new :class:`Path` in clockwise orientation.
@@ -540,6 +525,24 @@ class Path(AbstractPath[Vec3]):
         new_path = self.clone()
         new_path._vertices = list(m.transform_vertices(self._vertices))
         return new_path
+
+
+CMD_SIZE = {
+    Command.MOVE_TO: 1,
+    Command.LINE_TO: 1,
+    Command.CURVE3_TO: 2,
+    Command.CURVE4_TO: 3,
+}
+
+
+def make_vertex_index(command_codes: Iterable[Command]) -> list[int]:
+    cmd_size = CMD_SIZE
+    start: int = 1
+    start_index: list[int] = []
+    for code in command_codes:
+        start_index.append(start)
+        start += cmd_size[code]
+    return start_index
 
 
 class Path2d(AbstractPath[Vec2]):
