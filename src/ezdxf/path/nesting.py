@@ -92,11 +92,19 @@ It is not possible for a path to contain another path with a larger area.
 
 """
 from __future__ import annotations
-from typing import Tuple, Optional, List, Iterable
+from typing import (
+    Tuple,
+    Optional,
+    List,
+    Iterable,
+    Sequence,
+    Iterator,
+    TypeVar,
+    Protocol,
+)
 from typing_extensions import TypeAlias
 from collections import namedtuple
-from .path import AbstractPath
-from ezdxf.math import BoundingBox2d
+from ezdxf.math import BoundingBox2d, AnyVec
 
 __all__ = [
     "make_polygon_structure",
@@ -105,12 +113,27 @@ __all__ = [
     "flatten_polygons",
 ]
 
-Exterior: TypeAlias = AbstractPath
-Polygon: TypeAlias = Tuple[Exterior, Optional[List["Polygon"]]]
+
+class SupportsControlVertices(Protocol):
+    """Any path-like structure that supports control vertices and reports the count of
+    commands.
+    """
+    def control_vertices(self) -> list[AnyVec]:
+        """Returns all control vertices as a list."""
+        ...
+
+    def __len__(self) -> int:
+        """Returns the count of commands (move_to, line_to, curve3_to, curve4_to)."""
+        ...
+
+
+T = TypeVar("T", bound=SupportsControlVertices)
+
+Polygon: TypeAlias = Tuple[T, Optional[List["Polygon"]]]
 BoxStruct = namedtuple("BoxStruct", "bbox, path")
 
 
-def make_polygon_structure(paths: Iterable[AbstractPath]) -> list[Polygon]:
+def make_polygon_structure(paths: Iterable[T]) -> list[Polygon]:
     """Returns a recursive polygon structure from iterable `paths`, uses 2D
     bounding boxes as fast detection objects.
 
@@ -136,7 +159,7 @@ def make_polygon_structure(paths: Iterable[AbstractPath]) -> list[Polygon]:
     def polygon_structure(outside: list[BoxStruct]) -> list[list]:
         polygons = []
         while outside:
-            exterior = outside.pop()  # path with largest area
+            exterior = outside.pop()  # path with the largest area
             # Get holes inside of exterior and returns the remaining paths
             # outside of exterior:
             holes, outside = separate(exterior.bbox, outside)
@@ -150,7 +173,9 @@ def make_polygon_structure(paths: Iterable[AbstractPath]) -> list[Polygon]:
 
     def as_nested_paths(polygons) -> list:
         return [
-            polygon.path if isinstance(polygon, BoxStruct) else as_nested_paths(polygon)
+            polygon.path
+            if isinstance(polygon, BoxStruct)
+            else as_nested_paths(polygon)
             for polygon in polygons
         ]
 
@@ -166,7 +191,7 @@ def make_polygon_structure(paths: Iterable[AbstractPath]) -> list[Polygon]:
 
 def winding_deconstruction(
     polygons: list[Polygon],
-) -> tuple[list[AbstractPath], list[AbstractPath]]:
+) -> tuple[list[T], list[T]]:
     """Flatten the nested polygon structure in a tuple of two lists,
     the first list contains the paths which should be counter-clockwise oriented
     and the second list contains the paths which should be clockwise oriented.
@@ -177,29 +202,29 @@ def winding_deconstruction(
 
     def deconstruct(polygons_, level):
         for polygon in polygons_:
-            if isinstance(polygon, AbstractPath):
+            if isinstance(polygon, Sequence):
+                deconstruct(polygon, level + 1)
+            else:
                 # level 0 is the list of polygons
                 # level 1 = ccw, 2 = cw, 3 = ccw, 4 = cw, ...
-                (ccw_paths if (level % 2) else cw_paths).append(polygon)  # type:ignore
-            else:
-                deconstruct(polygon, level + 1)
+                (ccw_paths if (level % 2) else cw_paths).append(polygon)
 
-    cw_paths: list[AbstractPath] = []
-    ccw_paths: list[AbstractPath] = []
+    cw_paths: list[T] = []
+    ccw_paths: list[T] = []
     deconstruct(polygons, 0)
     return ccw_paths, cw_paths
 
 
-def flatten_polygons(polygons: Polygon) -> Iterable[AbstractPath]:
+def flatten_polygons(polygons: Polygon) -> Iterator[T]:
     """Yield a flat representation of the given nested polygons."""
-    for polygon in polygons:  # type: ignore
-        if isinstance(polygon, AbstractPath):
-            yield polygon
-        else:
+    for polygon in polygons:
+        if isinstance(polygon, Sequence):
             yield from flatten_polygons(polygon)  # type: ignore
+        else:
+            yield polygon  # T
 
 
-def group_paths(paths: Iterable[AbstractPath]) -> list[list[AbstractPath]]:
+def group_paths(paths: Iterable[T]) -> list[list[T]]:
     """Group separated paths and their inner holes as flat lists."""
-    polygons = make_polygon_structure(paths)  # type: ignore
+    polygons = make_polygon_structure(paths)
     return [list(flatten_polygons(polygon)) for polygon in polygons]

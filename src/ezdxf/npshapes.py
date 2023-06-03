@@ -72,8 +72,13 @@ class NumpyPath2d(NumpyShape2d):
         self._vertices = np.array(vertices, dtype=np.float64)
         self._commands = np.array(path.command_codes(), dtype=np.int8)
 
+    # SupportsControlVertices protocol for ezdxf.path.nesting
     def __len__(self) -> int:
         return len(self._commands)
+
+    # SupportsControlVertices protocol for ezdxf.path.nesting
+    def control_vertices(self) -> list[Vec2]:
+        return self.vertices()
 
     def to_path2d(self) -> Path2d:
         """Returns a new :class:`Path2d` instance."""

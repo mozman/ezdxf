@@ -11,7 +11,6 @@ from typing import (
     Type,
     Generic,
     Callable,
-    Sequence,
 )
 from typing_extensions import Self
 from ezdxf.math import (
