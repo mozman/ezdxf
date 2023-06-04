@@ -375,7 +375,7 @@ class AbstractPath(Generic[T], abc.ABC):
         ...
 
     @abc.abstractmethod
-    def flattening(self, distance: float, segments: int = 16) -> Iterator[T]:
+    def flattening(self, distance: float, segments: int = 4) -> Iterator[T]:
         """Approximate path by vertices and use adaptive recursive flattening
         to approximate Bèzier curves. The argument `segments` is the
         minimum count of approximation segments for each curve, if the distance
@@ -492,7 +492,7 @@ class Path(AbstractPath[Vec3]):
 
         return self._approximate(curve3, curve4)
 
-    def flattening(self, distance: float, segments: int = 16) -> Iterator[Vec3]:
+    def flattening(self, distance: float, segments: int = 4) -> Iterator[Vec3]:
         def curve3(p0: T, p1: T, p2: T) -> Iterator[Vec3]:
             if distance == 0.0:
                 raise ValueError(f"invalid max distance: 0.0")
@@ -559,7 +559,7 @@ class Path2d(AbstractPath[Vec2]):
 
         return self._approximate(curve3, curve4)
 
-    def flattening(self, distance: float, segments: int = 16) -> Iterator[Vec2]:
+    def flattening(self, distance: float, segments: int = 4) -> Iterator[Vec2]:
         def curve3(p0: T, p1: T, p2: T) -> Iterator[Vec2]:
             if distance == 0.0:
                 raise ValueError(f"invalid max distance: 0.0")

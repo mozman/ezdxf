@@ -249,7 +249,7 @@ class TestApproximationAccuracy:
         from ezdxf import path
 
         p = path.unit_circle()
-        cp = ConstructionPolyline(p.flattening(0.01))
+        cp = ConstructionPolyline(p.flattening(0.01, segments=16))
         assert cp.is_closed is True
         assert len(cp) > 60
         assert abs(cp.length - math.tau) < 0.002

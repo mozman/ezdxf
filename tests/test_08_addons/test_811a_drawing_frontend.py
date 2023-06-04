@@ -226,7 +226,7 @@ def test_3d_arc_basic(msp, basic):
     )
     basic.draw_entities(msp)
     result = get_result(basic)
-    assert len(result) > 10
+    assert len(result) >= 4
     assert unique_types(result) == {"line"}
 
 
@@ -255,7 +255,7 @@ def test_3d_ellipse_basic(msp, basic):
     )
     basic.draw_entities(msp)
     result = get_result(basic)
-    assert len(result) > 10
+    assert len(result) >= 4
     assert unique_types(result) == {"line"}
 
 

@@ -154,7 +154,7 @@ class TestFillet:
         # result is visually checked in CAD application
         assert (
             close_vectors(
-                p.flattening(1),
+                p.flattening(1, segments=16),
                 [
                     Vec3(-5.0, 0.0, 0.0),
                     Vec3(-2.414213562373095, 0.0, 0.0),
@@ -201,7 +201,7 @@ class TestFillet:
         # result is visually checked in CAD application
         assert (
             close_vectors(
-                p.flattening(1),
+                p.flattening(1, segments=16),
                 [
                     Vec3(-5.0, 0.0, 0.0),
                     Vec3(-2.414213562373095, 0.0, 0.0),

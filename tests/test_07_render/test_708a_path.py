@@ -502,7 +502,7 @@ def test_make_path_from_full_circle_lwpolyline():
     assert path.end.isclose((0, 0))
     assert len(path) == 4
     assert any(cmd.type == Command.CURVE4_TO for cmd in path)
-    vertices = list(path.flattening(0.1))
+    vertices = list(path.flattening(0.1, segments=16))
     assert len(vertices) == 65
 
 
