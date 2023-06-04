@@ -4,7 +4,7 @@
 import pytest
 
 from ezdxf.npshapes import NumpyPoints2d, NumpyPath2d
-from ezdxf.math import Matrix44, BoundingBox2d
+from ezdxf.math import Matrix44, BoundingBox2d, close_vectors
 from ezdxf.path import Path2d, Command
 from ezdxf.fonts import fonts
 
@@ -33,7 +33,7 @@ class TestNumpyPoints:
         assert all(v0.isclose(v1) for v0, v1 in zip(pl.vertices(), t_pts))
 
 
-class TestNumpyPath:
+class TestNumpyPath2d:
     @pytest.fixture
     def path(self):
         p = Path2d((1, 2))
@@ -42,6 +42,26 @@ class TestNumpyPath:
         p.move_to((10, 0))
         p.curve4_to((15, 7), (13, 3), (14, 5))
         return p
+
+    def test_clone(self, path):
+        np_path = NumpyPath2d(path)
+        clone_ = np_path.clone().to_path2d()
+        assert clone_.control_vertices() == path.control_vertices()
+        assert clone_.command_codes() == path.command_codes()
+
+    def test_start_point(self, path):
+        assert path.start.isclose((1, 2))
+
+    def test_end_point(self, path):
+        assert path.end.isclose((15, 7))
+
+    def test_has_subpaths(self, path):
+        np_path = NumpyPath2d(path)
+        assert np_path.has_sub_paths is True
+
+    def test_has_no_subpaths(self):
+        np_path = NumpyPath2d(Path2d((1, 2)))
+        assert np_path.has_sub_paths is False
 
     def test_to_path_2d(self, path):
         np_path = NumpyPath2d(path)
@@ -87,13 +107,25 @@ class TestNumpyPath:
 
     def test_start_point_only_path(self):
         p = NumpyPath2d(Path2d((10, 20)))
-        assert p.vertices()[0].isclose((10, 20))
+        assert p.start.isclose((10, 20))
         # and back
         assert p.to_path2d().start.isclose((10, 20))
 
-    def test_real_empty_path(self):
+    def test_from_empty_path(self):
         p = NumpyPath2d(Path2d())
         assert len(p) == 0
+        assert p.start == (0, 0)
+        assert p.end == (0, 0)
+        # and back
+        assert p.to_path2d().start == (0, 0)  # default start point
+
+    def test_create_empty_path_from_none(self):
+        p = NumpyPath2d(None)
+        assert len(p) == 0
+        with pytest.raises(IndexError):
+            assert p.start
+        with pytest.raises(IndexError):
+            assert p.end
         # and back
         assert p.to_path2d().start == (0, 0)  # default start point
 
@@ -120,6 +152,103 @@ def test_path2d_conversion_methods():
     for v0, v1 in zip(cv0, cv1):
         assert v0.isclose(v1)
     assert source_path._start_index == converted_path._start_index
+
+
+@pytest.fixture(scope="module")
+def p1():
+    path = Path2d()
+    path.line_to((2, 0))
+    path.curve4_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
+    path.curve3_to((6, 0), (5, -1))  # end, ctrl
+    return path
+
+
+def test_flatten_path(p1):
+    p2 = NumpyPath2d(p1)
+    v1 = list(p1.flattening(0.01))
+    v2 = list(p2.flattening(0.01))
+    assert close_vectors(v1, v2)
+
+
+class TestReversePath:
+    def test_reversing_empty_path(self):
+        p = NumpyPath2d(None)
+        p.reverse()
+        assert len(p) == 0
+
+    def test_reversing_one_line(self):
+        p = Path2d()
+        p.line_to((1, 0))
+        p2 = NumpyPath2d(p).reverse()
+        vertices = p2.control_vertices()
+        assert close_vectors(vertices, [(1, 0), (0, 0)])
+
+    def test_reversing_one_curve3(self):
+        p = Path2d()
+        p.curve3_to((3, 0), (1.5, 1))
+        p2 = NumpyPath2d(p).reverse()
+        assert close_vectors(p2.control_vertices(), [(3, 0), (1.5, 1), (0, 0)])
+
+    def test_reversing_one_curve4(self):
+        p = Path2d()
+        p.curve4_to((3, 0), (1, 1), (2, 1))
+        p2 = NumpyPath2d(p).reverse()
+        assert close_vectors(p2.control_vertices(), [(3, 0), (2, 1), (1, 1), (0, 0)])
+
+    def test_reversing_path_ctrl_vertices(self, p1):
+        p2 = NumpyPath2d(p1).reverse()
+        assert close_vectors(
+            p2.control_vertices(), reversed(list(p1.control_vertices()))
+        )
+
+    def test_reversing_flattened_path(self, p1):
+        p2 = NumpyPath2d(p1)
+        p2.reverse()
+        v1 = list(p1.flattening(0.01))
+        v2 = list(p2.flattening(0.01))
+        assert close_vectors(v1, reversed(v2))
+
+    def test_reversing_multi_path(self):
+        p = Path2d()
+        p.line_to((1, 0, 0))
+        p.move_to((2, 0, 0))
+        p.line_to((3, 0, 0))
+
+        r = NumpyPath2d(p).reverse()
+        assert r.has_sub_paths is True
+        assert len(r) == 3
+        assert r.start == (3, 0, 0)
+        assert r.end == (0, 0, 0)
+
+    def test_reversing_multi_path_with_a_move_to_cmd_at_the_end(self):
+        p = Path2d()
+        p.line_to((1, 0, 0))
+        p.move_to((2, 0, 0))
+        # The last move_to will become the first move_to.
+        # A move_to as first command just moves the start point.
+        r = NumpyPath2d(p).reverse()
+        assert len(r) == 1
+        assert r.start == (1, 0, 0)
+        assert r.end == (0, 0, 0)
+        assert r.has_sub_paths is False
+
+    def test_has_clockwise_orientation(self, p1):
+        p2 = NumpyPath2d(p1)
+        assert p2.has_clockwise_orientation() is True
+
+    def test_has_counter_clockwise_orientation(self, p1):
+        p2 = NumpyPath2d(p1)
+        assert p2.reverse().has_clockwise_orientation() is False
+
+    def test_cw_and_ccw_orientation(self, p1):
+        from ezdxf.math import has_clockwise_orientation
+
+        p2 = NumpyPath2d(p1)
+        assert has_clockwise_orientation(p2.clockwise().control_vertices()) is True
+        assert (
+            has_clockwise_orientation(p2.counter_clockwise().control_vertices())
+            is False
+        )
 
 
 if __name__ == "__main__":

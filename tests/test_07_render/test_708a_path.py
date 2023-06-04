@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 import pytest
 import math
@@ -627,9 +627,7 @@ def test_approximate_curves():
 
 def test_path_from_hatch_polyline_path_without_bulge():
     polyline_path = PolylinePath()
-    polyline_path.set_vertices(
-        [(0, 0), (0, 1), (1, 1), (1, 0)], is_closed=False
-    )
+    polyline_path.set_vertices([(0, 0), (0, 1), (1, 1), (1, 0)], is_closed=False)
     path = converter.from_hatch_polyline_path(polyline_path)
     assert len(path) == 3
     assert path.start == (0, 0)
@@ -644,9 +642,7 @@ def test_path_from_hatch_polyline_path_without_bulge():
 
 def test_path_from_hatch_polyline_path_with_bulge():
     polyline_path = PolylinePath()
-    polyline_path.set_vertices(
-        [(0, 0), (1, 0, 0.5), (2, 0), (3, 0)], is_closed=False
-    )
+    polyline_path.set_vertices([(0, 0), (1, 0, 0.5), (2, 0), (3, 0)], is_closed=False)
     path = converter.from_hatch_polyline_path(polyline_path)
     assert len(path) == 4
     assert path.start == (0, 0)
@@ -718,78 +714,72 @@ def test_has_clockwise_orientation():
     assert path.has_clockwise_orientation() is True
 
 
-def test_reversing_empty_path():
-    p = Path()
-    assert len(p.reversed()) == 0
+class TestReversePath:
+    def test_reversing_empty_path(self):
+        p = Path()
+        assert len(p.reversed()) == 0
+
+    def test_reversing_one_line(self):
+        p = Path()
+        p.line_to((1, 0))
+        p2 = list(p.reversed().control_vertices())
+        assert close_vectors(p2, [(1, 0), (0, 0)])
+
+    def test_reversing_one_curve3(self):
+        p = Path()
+        p.curve3_to((3, 0), (1.5, 1))
+        p2 = list(p.reversed().control_vertices())
+        assert close_vectors(p2, [(3, 0), (1.5, 1), (0, 0)])
+
+    def test_reversing_one_curve4(self):
+        p = Path()
+        p.curve4_to((3, 0), (1, 1), (2, 1))
+        p2 = list(p.reversed().control_vertices())
+        assert close_vectors(p2, [(3, 0), (2, 1), (1, 1), (0, 0)])
+
+    def test_reversing_path_ctrl_vertices(self, p1):
+        p2 = p1.reversed()
+        assert close_vectors(
+            p2.control_vertices(), reversed(list(p1.control_vertices()))
+        )
+
+    def test_reversing_path_approx(self, p1):
+        p2 = p1.reversed()
+        v1 = list(p1.approximate())
+        v2 = list(p2.approximate())
+        assert close_vectors(v1, reversed(v2))
+
+    def test_reversing_multi_path(self):
+        p = Path()
+        p.line_to((1, 0, 0))
+        p.move_to((2, 0, 0))
+        p.line_to((3, 0, 0))
+        r = p.reversed()
+        assert r.has_sub_paths is True
+        assert len(r) == 3
+        assert r.start == (3, 0, 0)
+        assert r.end == (0, 0, 0)
+
+        r0, r1 = r.sub_paths()
+        assert r0.start == (3, 0, 0)
+        assert r0.end == (2, 0, 0)
+        assert r1.start == (1, 0, 0)
+        assert r1.end == (0, 0, 0)
+
+    def test_reversing_multi_path_with_a_move_to_cmd_at_the_end(self):
+        p = Path()
+        p.line_to((1, 0, 0))
+        p.move_to((2, 0, 0))
+        # The last move_to will become the first move_to.
+        # A move_to as first command just moves the start point.
+        r = p.reversed()
+        assert len(r) == 1
+        assert r.start == (1, 0, 0)
+        assert r.end == (0, 0, 0)
+        assert r.has_sub_paths is False
 
 
-def test_reversing_one_line():
-    p = Path()
-    p.line_to((1, 0))
-    p2 = list(p.reversed().control_vertices())
-    assert close_vectors(p2, [(1, 0), (0, 0)])
-
-
-def test_reversing_one_curve3():
-    p = Path()
-    p.curve3_to((3, 0), (1.5, 1))
-    p2 = list(p.reversed().control_vertices())
-    assert close_vectors(p2, [(3, 0), (1.5, 1), (0, 0)])
-
-
-def test_reversing_one_curve4():
-    p = Path()
-    p.curve4_to((3, 0), (1, 1), (2, 1))
-    p2 = list(p.reversed().control_vertices())
-    assert close_vectors(p2, [(3, 0), (2, 1), (1, 1), (0, 0)])
-
-
-def test_reversing_path_ctrl_vertices(p1):
-    p2 = p1.reversed()
-    assert close_vectors(
-        p2.control_vertices(), reversed(list(p1.control_vertices()))
-    )
-
-
-def test_reversing_path_approx(p1):
-    p2 = p1.reversed()
-    v1 = list(p1.approximate())
-    v2 = list(p2.approximate())
-    assert close_vectors(v1, reversed(v2))
-
-
-def test_reversing_multi_path():
-    p = Path()
-    p.line_to((1, 0, 0))
-    p.move_to((2, 0, 0))
-    p.line_to((3, 0, 0))
-    r = p.reversed()
-    assert r.has_sub_paths is True
-    assert len(r) == 3
-    assert r.start == (3, 0, 0)
-    assert r.end == (0, 0, 0)
-
-    r0, r1 = r.sub_paths()
-    assert r0.start == (3, 0, 0)
-    assert r0.end == (2, 0, 0)
-    assert r1.start == (1, 0, 0)
-    assert r1.end == (0, 0, 0)
-
-
-def test_reversing_multi_path_with_a_move_to_cmd_at_the_end():
-    p = Path()
-    p.line_to((1, 0, 0))
-    p.move_to((2, 0, 0))
-    # The last move_to will become the first move_to.
-    # A move_to as first command just moves the start point.
-    r = p.reversed()
-    assert len(r) == 1
-    assert r.start == (1, 0, 0)
-    assert r.end == (0, 0, 0)
-    assert r.has_sub_paths is False
-
-
-def test_clockwise(p1):
+def test_cw_and_ccw_orientation(p1):
     from ezdxf.math import has_clockwise_orientation
 
     cw_path = p1.clockwise()
@@ -971,9 +961,7 @@ class TestPathFromEdgePathWithElevationAndFlippedExtrusion:
         ep.add_line(B, C)
         ep.add_line(C, D)
         ep.add_line(D, A)
-        path = converter.from_hatch_edge_path(
-            ep, ocs=OCS((0, 0, -1)), elevation=4
-        )
+        path = converter.from_hatch_edge_path(ep, ocs=OCS((0, 0, -1)), elevation=4)
         assert len(list(path.sub_paths())) == 1, "expected one closed loop"
         assert len(list(path.control_vertices())) == 5
         assert all(math.isclose(v.z, -4) for v in path.control_vertices())
@@ -989,9 +977,7 @@ class TestPathFromEdgePathWithElevationAndFlippedExtrusion:
             ccw=True,
         )
         ep.add_line((5, 10), (10, 5))
-        path = converter.from_hatch_edge_path(
-            ep, ocs=OCS((0, 0, -1)), elevation=4
-        )
+        path = converter.from_hatch_edge_path(ep, ocs=OCS((0, 0, -1)), elevation=4)
         assert len(path) == 2
         assert all(math.isclose(v.z, -4) for v in path.control_vertices())
 
@@ -1006,9 +992,7 @@ class TestPathFromEdgePathWithElevationAndFlippedExtrusion:
             ccw=True,
         )
         ep.add_line((5, 10), (10, 5))
-        path = converter.from_hatch_edge_path(
-            ep, ocs=OCS((0, 0, -1)), elevation=4
-        )
+        path = converter.from_hatch_edge_path(ep, ocs=OCS((0, 0, -1)), elevation=4)
         assert len(path) == 2
         assert all(math.isclose(v.z, -4) for v in path.control_vertices())
 
@@ -1016,9 +1000,7 @@ class TestPathFromEdgePathWithElevationAndFlippedExtrusion:
         ep = EdgePath()
         ep.add_spline(fit_points=[(10, 5), (8, 5), (6, 8), (5, 10)])
         ep.add_line((5, 10), (10, 5))
-        path = converter.from_hatch_edge_path(
-            ep, ocs=OCS((0, 0, -1)), elevation=4
-        )
+        path = converter.from_hatch_edge_path(ep, ocs=OCS((0, 0, -1)), elevation=4)
         assert len(path) > 2
         assert all(math.isclose(v.z, -4) for v in path.control_vertices())
 
