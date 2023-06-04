@@ -4,10 +4,16 @@
 import pytest
 import ezdxf
 import ezdxf.path
-from ezdxf.math import Vec2, BoundingBox2d
-from ezdxf.addons.drawing import Frontend, RenderContext
+from ezdxf.math import Vec2
+from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.recorder import Recorder, BackendProperties, Override
 from ezdxf.addons.drawing.debug_backend import PathBackend
+
+
+class MyTestFrontend(Frontend):
+    def __init__(self, ctx, backend):
+        super().__init__(ctx, backend)
+        self.out = backend
 
 
 @pytest.fixture
@@ -30,7 +36,7 @@ def ctx(doc):
 
 @pytest.fixture
 def frontend(doc, ctx):
-    return Frontend(ctx, Recorder())
+    return MyTestFrontend(ctx, Recorder())
 
 
 def replay(frontend, backend):
@@ -98,7 +104,7 @@ def test_override_properties_at_replay(msp, ctx):
     )
     # recording:
     backend_recorder = Recorder()
-    Frontend(ctx, backend_recorder).draw_entities(msp)
+    MyTestFrontend(ctx, backend_recorder).draw_entities(msp)
 
     # replay:
     player = backend_recorder.player().copy()
@@ -182,7 +188,7 @@ class TestCroppingRecords:
         recorder.draw_line(Vec2(100, 0), Vec2(100, 100), props)
 
         # path coincident with crop box side is outside!
-        path = ezdxf.path.from_vertices([(0, 100), (50, 100), (100, 100)])
+        path = ezdxf.path.from_2d_vertices([(0, 100), (50, 100), (100, 100)])
         recorder.draw_path(path, props)
 
         player = recorder.player()
@@ -208,8 +214,8 @@ class TestCroppingRecords:
     def test_crop_filled_paths(self):
         props = BackendProperties()
         recorder = Recorder()
-        square = ezdxf.path.rect(100, 100)  # center = (0, 0)
-        hole = ezdxf.path.rect(50, 50)  # center = (0, 0)
+        square = ezdxf.path.rect(100, 100).to_2d_path()  # center = (0, 0)
+        hole = ezdxf.path.rect(50, 50).to_2d_path()  # center = (0, 0)
         recorder.draw_filled_paths([square], [hole], props)
 
         player = recorder.player()
@@ -225,8 +231,8 @@ class TestCroppingRecords:
     def test_does_not_crop_holes_inside_crop_box(self):
         props = BackendProperties()
         recorder = Recorder()
-        square = ezdxf.path.rect(100, 100)  # center = (0, 0)
-        hole = ezdxf.path.from_vertices(
+        square = ezdxf.path.rect(100, 100).to_2d_path()  # center = (0, 0)
+        hole = ezdxf.path.from_2d_vertices(
             [(10, 10), (20, 10), (20, 20), (10, 20)], close=True
         )
         recorder.draw_filled_paths([square], [hole], props)
@@ -243,8 +249,8 @@ class TestCroppingRecords:
         props = BackendProperties()
         recorder = Recorder()
 
-        square = ezdxf.path.rect(100, 100)  # center = (0, 0)
-        hole = ezdxf.path.from_vertices(
+        square = ezdxf.path.rect(100, 100).to_2d_path()  # center = (0, 0)
+        hole = ezdxf.path.from_2d_vertices(
             [(-10, -10), (-20, -10), (-20, -20), (-10, -20)], close=True
         )
         recorder.draw_filled_paths([square], [hole], props)

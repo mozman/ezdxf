@@ -4,10 +4,8 @@ from __future__ import annotations
 import math
 from typing import (
     Iterable,
-    Iterator,
     cast,
     Union,
-    Sequence,
     Dict,
     Callable,
     Optional,
@@ -79,7 +77,7 @@ from .type_hints import Color
 if TYPE_CHECKING:
     from .designer import Designer
 
-__all__ = ["Frontend"]
+__all__ = ["Frontend", "UniversalFrontend"]
 
 
 TDispatchTable: TypeAlias = Dict[str, Callable[[DXFGraphic, Properties], None]]
@@ -89,9 +87,9 @@ POST_ISSUE_MSG = (
 logger = logging.getLogger("ezdxf")
 
 
-class Frontend:
+class UniversalFrontend:
     """Drawing frontend, responsible for decomposing entities into graphic
-    primitives and resolving entity properties.
+    primitives and resolving entity properties. Supports 2D and 3D backends.
 
     By passing the bounding box cache of the modelspace entities can speed up
     paperspace rendering, because the frontend can filter entities which are not
@@ -100,7 +98,7 @@ class Frontend:
 
     Args:
         ctx: the properties relevant to rendering derived from a DXF document
-        out: the backend to draw to
+        designer: connection between frontend and backend
         config: settings to configure the drawing frontend and backend
         bbox_cache: bounding box cache of the modelspace entities or an empty
             cache which will be filled dynamically when rendering multiple
@@ -111,21 +109,22 @@ class Frontend:
     def __init__(
         self,
         ctx: RenderContext,
-        out: BackendInterface,
+        designer: Designer,
         config: Configuration = Configuration(),
         bbox_cache: Optional[ezdxf.bbox.Cache] = None,
     ):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
         self.ctx = ctx
-        self.out = out
+        # the designer is the connection between frontend and backend
+        self.designer = designer
+        designer.set_draw_entities_callback(self.draw_entities_ex)
         self.config = ctx.update_configuration(config)
+        designer.set_config(self.config)
 
         if self.config.pdsize is None or self.config.pdsize <= 0:
             self.log_message("relative point size is not supported")
             self.config = self.config.with_changes(pdsize=1)
-
-        self.out.configure(self.config)
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: list[DXFGraphic] = []
@@ -138,9 +137,6 @@ class Frontend:
             "MULTILEADER",
             "ACAD_PROXY_ENTITY",
         }
-        # connection link between frontend and backend, the frontend should not
-        # call the draw_...() methods of the backend directly:
-        self._designer = self.make_designer()
 
         # Optional bounding box cache, which maybe was created by detecting the
         # modelspace extends. This cache is used when rendering VIEWPORT
@@ -152,14 +148,9 @@ class Frontend:
         # time.
         self._bbox_cache = bbox_cache
 
-    def make_designer(self) -> Designer:
-        from .designer import Designer2d
-
-        return Designer2d(self.config, self.out, self.draw_entities_ex)
-
     @property
     def text_engine(self):
-        return self._designer.text_engine
+        return self.designer.text_engine
 
     def _build_dispatch_table(self) -> TDispatchTable:
         dispatch_table: TDispatchTable = {
@@ -250,7 +241,7 @@ class Frontend:
                 filter_func=filter_func,
             )
         if finalize:
-            self.out.finalize()
+            self.designer.finalize()
 
     def set_background(self, color: Color) -> None:
         policy = self.config.background_policy
@@ -267,7 +258,7 @@ class Frontend:
             color = self.config.custom_bg_color
         if override:
             self.ctx.current_layout_properties.set_colors(color)
-        self.out.set_background(color)
+        self.designer.set_background(color)
 
     def draw_entities(
         self,
@@ -293,10 +284,10 @@ class Frontend:
             properties: resolved entity properties
 
         """
-        self.out.enter_entity(entity, properties)
+        self.designer.enter_entity(entity, properties)
         if not entity.is_virtual:
             # top level entity
-            self._designer.set_current_entity_handle(entity.dxf.handle)
+            self.designer.set_current_entity_handle(entity.dxf.handle)
         if (
             entity.proxy_graphic
             and self.config.proxy_graphic_policy == ProxyGraphicPolicy.PREFER
@@ -327,22 +318,22 @@ class Frontend:
             else:
                 self.skip_entity(entity, "unsupported")
 
-        self.out.exit_entity(entity)
+        self.designer.exit_entity(entity)
 
     def draw_line_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
         if dxftype == "LINE":
-            self._designer.draw_line(d.start, d.end, properties)
+            self.designer.draw_line(d.start, d.end, properties)
 
         elif dxftype in ("XLINE", "RAY"):
             start = d.start
             delta = d.unit_vector * self.config.infinite_line_length
             if dxftype == "XLINE":
-                self._designer.draw_line(
+                self.designer.draw_line(
                     start - delta / 2, start + delta / 2, properties
                 )
             elif dxftype == "RAY":
-                self._designer.draw_line(start, start + delta, properties)
+                self.designer.draw_line(start, start + delta, properties)
         else:
             raise TypeError(dxftype)
 
@@ -360,7 +351,7 @@ class Frontend:
     def get_font_face(self, properties: Properties) -> fonts.FontFace:
         font_face = properties.font
         if font_face is None:
-            return self._designer.default_font_face
+            return self.designer.default_font_face
         return font_face
 
     def draw_text_entity_2d(self, entity: DXFGraphic, properties: Properties) -> None:
@@ -368,7 +359,7 @@ class Frontend:
             for line, transform, cap_height in simplified_text_chunks(
                 entity, self.text_engine, font_face=self.get_font_face(properties)
             ):
-                self._designer.draw_text(
+                self.designer.draw_text(
                     line, transform, properties, cap_height, entity.dxftype()
                 )
         else:
@@ -394,20 +385,20 @@ class Frontend:
         for line, transform, cap_height in simplified_text_chunks(
             mtext, self.text_engine, font_face=self.get_font_face(properties)
         ):
-            self._designer.draw_text(
+            self.designer.draw_text(
                 line, transform, properties, cap_height, mtext.dxftype()
             )
 
     def draw_complex_mtext(self, mtext: MText, properties: Properties) -> None:
         """Draw the content of a MTEXT entity including inline formatting codes."""
-        complex_mtext_renderer(self.ctx, self._designer, mtext, properties)
+        complex_mtext_renderer(self.ctx, self.designer, mtext, properties)
 
     def draw_curve_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         try:
             path = make_path(entity)
         except AttributeError:  # API usage error
             raise TypeError(f"Unsupported DXF type {entity.dxftype()}")
-        self._designer.draw_path(path, properties)
+        self.designer.draw_path(path, properties)
 
     def draw_point_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         point = cast(Point, entity)
@@ -424,7 +415,7 @@ class Frontend:
                 pdmode = 0
 
         if pdmode == 0:
-            self._designer.draw_point(entity.dxf.location, properties)
+            self.designer.draw_point(entity.dxf.location, properties)
         else:
             for entity in point.virtual_entities(pdsize, pdmode):
                 dxftype = entity.dxftype()
@@ -432,9 +423,9 @@ class Frontend:
                     start = entity.dxf.start
                     end = entity.dxf.end
                     if start.isclose(end):
-                        self._designer.draw_point(start, properties)
+                        self.designer.draw_point(start, properties)
                     else:  # direct draw by backend is OK!
-                        self._designer.draw_line(start, end, properties)
+                        self.designer.draw_line(start, end, properties)
                     pass
                 elif dxftype == "CIRCLE":
                     self.draw_curve_entity(entity, properties)
@@ -457,16 +448,16 @@ class Frontend:
                 return
             edge_visibility = entity.get_edges_visibility()
             if all(edge_visibility):
-                self._designer.draw_path(from_2d_vertices(points), properties)
+                self.designer.draw_path(from_2d_vertices(points), properties)
             else:
                 for a, b, visible in zip(points, points[1:], edge_visibility):
                     if visible:
-                        self._designer.draw_line(a, b, properties)
+                        self.designer.draw_line(a, b, properties)
 
         elif isinstance(entity, Solid):
             # set solid fill type for SOLID and TRACE
             properties.filling = Filling()
-            self._designer.draw_filled_polygon(
+            self.designer.draw_filled_polygon(
                 entity.wcs_vertices(close=False), properties
             )
         else:
@@ -502,7 +493,7 @@ class Frontend:
                             (e.x, e.y, elevation)
                         )
                     lines.append((s, e))
-        self._designer.draw_solid_lines(lines, properties)
+        self.designer.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(
         self,
@@ -555,17 +546,17 @@ class Frontend:
 
         if show_only_outline:
             for p in itertools.chain(ignore_text_boxes(external_paths), holes):
-                self._designer.draw_path(p, properties)
+                self.designer.draw_path(p, properties)
             return
 
         if external_paths:
-            self._designer.draw_filled_paths(
+            self.designer.draw_filled_paths(
                 ignore_text_boxes(external_paths), holes, properties
             )
         elif holes:
             # The first path is considered the exterior path, everything else are
             # holes.
-            self._designer.draw_filled_paths([holes[0]], holes[1:], properties)
+            self.designer.draw_filled_paths([holes[0]], holes[1:], properties)
 
     def draw_mpolygon_entity(self, entity: DXFGraphic, properties: Properties):
         def resolve_fill_color() -> str:
@@ -600,14 +591,14 @@ class Frontend:
         properties.color = line_color
         # draw boundary paths as lines
         for loop in loops:
-            self._designer.draw_path(loop, properties)
+            self.designer.draw_path(loop, properties)
 
     def draw_wipeout_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         wipeout = cast(Wipeout, entity)
         properties.filling = Filling()
         properties.color = self.ctx.current_layout_properties.background_color
         clipping_polygon = wipeout.boundary_path_wcs()
-        self._designer.draw_filled_polygon(clipping_polygon, properties)
+        self.designer.draw_filled_polygon(clipping_polygon, properties)
 
     def draw_viewport(self, vp: Viewport) -> None:
         # the "active" viewport and invisible viewports should be filtered at this
@@ -618,7 +609,7 @@ class Frontend:
         if not vp.is_top_view:
             self.log_message("Cannot render non top-view viewports")
             return
-        self._designer.draw_viewport(vp, self.ctx, self._bbox_cache)
+        self.designer.draw_viewport(vp, self.ctx, self._bbox_cache)
 
     def draw_ole2frame_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         ole2frame = cast(OLE2Frame, entity)
@@ -635,7 +626,7 @@ class Frontend:
         props.color = color
         # default SOLID filling
         props.filling = Filling()
-        self._designer.draw_filled_polygon(points, props)
+        self.designer.draw_filled_polygon(points, props)
 
     def draw_mesh_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         builder = MeshBuilder.from_mesh(entity)  # type: ignore
@@ -645,7 +636,7 @@ class Frontend:
         self, builder: MeshBuilder, properties: Properties
     ) -> None:
         for face in builder.faces_as_vertices():
-            self._designer.draw_path(
+            self.designer.draw_path(
                 from_2d_vertices(face, close=True), properties=properties
             )
 
@@ -686,11 +677,11 @@ class Frontend:
                     points = polygon
                 # Set default SOLID filling for LWPOLYLINE
                 properties.filling = Filling()
-                self._designer.draw_filled_polygon(points, properties)
+                self.designer.draw_filled_polygon(points, properties)
             return
 
         path = make_path(entity).to_2d_path()
-        self._designer.draw_path(path, properties)
+        self.designer.draw_path(path, properties)
 
     def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         def draw_insert(insert: Insert):
@@ -730,6 +721,38 @@ class Frontend:
                 print(POST_ISSUE_MSG)
 
 
+class Frontend(UniversalFrontend):
+    """Drawing frontend for 2D backends, responsible for decomposing entities into
+    graphic primitives and resolving entity properties.
+
+    By passing the bounding box cache of the modelspace entities can speed up
+    paperspace rendering, because the frontend can filter entities which are not
+    visible in the VIEWPORT. Even passing in an empty cache can speed up
+    rendering time when multiple viewports need to be processed.
+
+    Args:
+        ctx: the properties relevant to rendering derived from a DXF document
+        out: the 2D backend to draw to
+        config: settings to configure the drawing frontend and backend
+        bbox_cache: bounding box cache of the modelspace entities or an empty
+            cache which will be filled dynamically when rendering multiple
+            viewports or ``None`` to disable bounding box caching at all
+
+    """
+
+    # legacy class
+    def __init__(
+        self,
+        ctx: RenderContext,
+        out: BackendInterface,
+        config: Configuration = Configuration(),
+        bbox_cache: Optional[ezdxf.bbox.Cache] = None,
+    ):
+        from .designer import Designer2d
+
+        super().__init__(ctx, Designer2d(out), config, bbox_cache)
+
+
 def is_spatial_text(extrusion: Vec3) -> bool:
     # note: the magnitude of the extrusion vector has no effect on text scale
     return not math.isclose(extrusion.x, 0) or not math.isclose(extrusion.y, 0)
@@ -767,69 +790,8 @@ def ignore_text_boxes(paths: Iterable[Path]) -> Iterable[Path]:
         yield path
 
 
-def filter_vp_entities(
-    msp: Layout,
-    limits: Sequence[float],
-    bbox_cache: Optional[ezdxf.bbox.Cache] = None,
-) -> Iterator[DXFGraphic]:
-    """Yields all DXF entities that need to be processed by the given viewport
-    `limits`. The entities may be partially of even complete outside the viewport.
-    By passing the bounding box cache of the modelspace entities,
-    the function can filter entities outside the viewport to speed up rendering
-    time.
-
-    There are two processing modes for the `bbox_cache`:
-
-        1. The `bbox_cache` is``None``: all entities must be processed,
-           pass through mode
-        2. If the `bbox_cache` is given but does not contain an entity,
-           the bounding box is computed and added to the cache.
-           Even passing in an empty cache can speed up rendering time when
-           multiple viewports need to be processed.
-
-    Args:
-        msp: modelspace layout
-        limits: modelspace limits of the viewport, as tuple (min_x, min_y, max_x, max_y)
-        bbox_cache: the bounding box cache of the modelspace entities
-
-    """
-
-    # WARNING: this works only with top-view viewports
-    # The current state of the drawing add-on supports only top-view viewports!
-    def is_visible(e):
-        entity_bbox = bbox_cache.get(e)
-        if entity_bbox is None:
-            # compute and add bounding box
-            entity_bbox = ezdxf.bbox.extents((e,), fast=True, cache=bbox_cache)
-        if not entity_bbox.has_data:
-            return True
-        # Check for separating axis:
-        if min_x >= entity_bbox.extmax.x:
-            return False
-        if max_x <= entity_bbox.extmin.x:
-            return False
-        if min_y >= entity_bbox.extmax.y:
-            return False
-        if max_y <= entity_bbox.extmin.y:
-            return False
-        return True
-
-    if bbox_cache is None:  # pass through all entities
-        yield from msp
-        return
-
-    min_x, min_y, max_x, max_y = limits
-    if not bbox_cache.has_data:
-        # fill cache at once
-        ezdxf.bbox.extents(msp, fast=True, cache=bbox_cache)
-
-    for entity in msp:
-        if is_visible(entity):
-            yield entity
-
-
 def _draw_entities(
-    frontend: Frontend,
+    frontend: UniversalFrontend,
     ctx: RenderContext,
     entities: Iterable[DXFGraphic],
     *,
@@ -857,7 +819,7 @@ def _draw_entities(
     _draw_viewports(frontend, viewports)
 
 
-def _draw_viewports(frontend: Frontend, viewports: list[Viewport]) -> None:
+def _draw_viewports(frontend: UniversalFrontend, viewports: list[Viewport]) -> None:
     # The VIEWPORT attributes "id" and "status" are very unreliable, maybe because of
     # the "great" documentation by Autodesk.
     # Viewport status field: (according to the DXF Reference)

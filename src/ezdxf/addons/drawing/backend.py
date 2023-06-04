@@ -13,7 +13,7 @@ from ezdxf.path import Path2d
 
 
 class BackendInterface(ABC):
-    """the public interface for the rendering backend."""
+    """Public interface for 2D rendering backends."""
 
     @abstractmethod
     def configure(self, config: Configuration) -> None:

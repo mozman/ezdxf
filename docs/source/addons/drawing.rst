@@ -538,7 +538,7 @@ BackendInterface
 
 .. class:: ezdxf.addons.drawing.backend.BackendInterface
 
-    The public interface definition for the rendering backend.
+    Public interface definition for 2D rendering backends.
 
     For more information read the source code: `backend.py`_
 

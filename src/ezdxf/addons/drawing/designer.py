@@ -47,8 +47,7 @@ DrawEntitiesCallback: TypeAlias = Callable[[RenderContext, Iterable[DXFGraphic]]
 
 
 class Designer(abc.ABC):
-    """The designer is placed between the frontend and the backend
-    and adds this features:
+    """The designer separates the frontend from the backend and adds this features:
 
         - automatically linetype rendering
         - VIEWPORT rendering
@@ -58,6 +57,15 @@ class Designer(abc.ABC):
 
     text_engine = UnifiedTextRenderer()
     default_font_face = fonts.FontFace()
+    draw_entities: DrawEntitiesCallback
+
+    @abc.abstractmethod
+    def set_draw_entities_callback(self, callback: DrawEntitiesCallback) -> None:
+        ...
+
+    @abc.abstractmethod
+    def set_config(self, config: Configuration) -> None:
+        ...
 
     @abc.abstractmethod
     def set_current_entity_handle(self, handle: str) -> None:
@@ -117,26 +125,30 @@ class Designer(abc.ABC):
     ) -> None:
         ...
 
+    @abc.abstractmethod
+    def finalize(self) -> None:
+        ...
+
+    @abc.abstractmethod
+    def set_background(self, color: Color) -> None:
+        ...
+
+    @abc.abstractmethod
+    def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        # gets the full DXF properties information
+        ...
+
+    @abc.abstractmethod
+    def exit_entity(self, entity: DXFGraphic) -> None:
+        ...
+
 
 class Designer2d(Designer):
-    """The designer is placed between the frontend and the backend
-    and adds this features:
+    """Designer class for 2D backends."""
 
-        - automatically linetype rendering
-        - VIEWPORT rendering
-        - foreground color mapping according Frontend.config.color_policy
-
-    """
-
-    def __init__(
-        self,
-        config: Configuration,
-        backend: BackendInterface,
-        draw_entities: DrawEntitiesCallback,
-    ):
+    def __init__(self, backend: BackendInterface):
         self.backend = backend
-        self.config = config
-        self.draw_entities = draw_entities
+        self.config = Configuration()
         self.pattern_cache: dict[PatternKey, Sequence[float]] = dict()
         self.clipper = ClippingRect()
         self.current_vp_scale = 1.0
@@ -165,6 +177,13 @@ class Designer2d(Designer):
             properties.pen,
             self._current_entity_handle,
         )
+
+    def set_draw_entities_callback(self, callback: DrawEntitiesCallback) -> None:
+        self.draw_entities = callback
+
+    def set_config(self, config: Configuration) -> None:
+        self.config = config
+        self.backend.configure(self.config)
 
     def set_current_entity_handle(self, handle: str) -> None:
         assert handle is not None
@@ -370,6 +389,18 @@ class Designer2d(Designer):
         if properties.filling is None:
             properties.filling = Filling()
         self.draw_filled_paths(external_paths, holes, properties)  # type: ignore
+
+    def finalize(self) -> None:
+        self.backend.finalize()
+
+    def set_background(self, color: Color) -> None:
+        self.backend.set_background(color)
+
+    def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        self.backend.enter_entity(entity, properties)
+
+    def exit_entity(self, entity: DXFGraphic) -> None:
+        self.backend.exit_entity(entity)
 
 
 def invert_color(color: Color) -> Color:
