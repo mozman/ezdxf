@@ -155,7 +155,7 @@ class Frontend:
     def make_designer(self) -> Designer:
         from .designer import Designer2d
 
-        return Designer2d(self, self.out)
+        return Designer2d(self.config, self.out, self.draw_entities_ex)
 
     @property
     def text_engine(self):

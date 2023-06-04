@@ -1,7 +1,15 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Sequence, Optional, Iterable, Tuple, TYPE_CHECKING, Iterator
+from typing import (
+    Sequence,
+    Optional,
+    Iterable,
+    Tuple,
+    TYPE_CHECKING,
+    Iterator,
+    Callable,
+)
 from typing_extensions import TypeAlias
 import abc
 
@@ -21,21 +29,21 @@ from ezdxf.path import (
 )
 from ezdxf.tools.text import replace_non_printable_characters
 from ezdxf.render import linetypes
+from ezdxf.entities import DXFGraphic, Viewport
 
 from .backend import BackendInterface
 from .clipper import ClippingRect
-from .config import LinePolicy, TextPolicy, ColorPolicy
+from .config import LinePolicy, TextPolicy, ColorPolicy, Configuration
 from .properties import BackendProperties, Filling
 from .properties import Properties, RenderContext
 from .type_hints import Color
 from .unified_text_renderer import UnifiedTextRenderer
 
 if TYPE_CHECKING:
-    from .frontend import Frontend
     from ezdxf.layouts import Layout
-    from ezdxf.entities import DXFGraphic, Viewport
 
 PatternKey: TypeAlias = Tuple[str, float]
+DrawEntitiesCallback: TypeAlias = Callable[[RenderContext, Iterable[DXFGraphic]], None]
 
 
 class Designer(abc.ABC):
@@ -120,10 +128,15 @@ class Designer2d(Designer):
 
     """
 
-    def __init__(self, frontend: Frontend, backend: BackendInterface):
-        self.frontend = frontend
+    def __init__(
+        self,
+        config: Configuration,
+        backend: BackendInterface,
+        draw_entities: DrawEntitiesCallback,
+    ):
         self.backend = backend
-        self.config = frontend.config
+        self.config = config
+        self.draw_entities = draw_entities
         self.pattern_cache: dict[PatternKey, Sequence[float]] = dict()
         self.clipper = ClippingRect()
         self.current_vp_scale = 1.0
@@ -171,7 +184,7 @@ class Designer2d(Designer):
         except ValueError:  # modelspace limits not detectable
             return
         if self.enter_viewport(vp):
-            self.frontend.draw_entities_ex(
+            self.draw_entities(
                 layout_ctx.from_viewport(vp),
                 filter_vp_entities(vp.doc.modelspace(), msp_limits, bbox_cache),
             )
