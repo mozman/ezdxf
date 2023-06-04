@@ -7,8 +7,8 @@ import copy
 import itertools
 
 from ezdxf import colors
-from ezdxf.math import AnyVec
-from ezdxf.path import Path, Path2d, Command
+from ezdxf.math import Vec2
+from ezdxf.path import Path2d, Command
 
 from .type_hints import Color
 from .backend import BackendInterface
@@ -254,7 +254,7 @@ class _RenderBackend(BackendInterface):
         self.data.append(f"PW{width:g};".encode())  # pen width in mm
         self.current_pen_width = width
 
-    def enter_polygon_mode(self, start_point: AnyVec) -> None:
+    def enter_polygon_mode(self, start_point: Vec2) -> None:
         x = round(start_point.x, self.decimal_places)
         y = round(start_point.y, self.decimal_places)
         self.data.append(f"PA;PU{x},{y};PM;".encode())
@@ -274,12 +274,12 @@ class _RenderBackend(BackendInterface):
         self.set_pen_width(pen_width)
 
     def add_polyline_encoded(
-        self, vertices: Iterable[AnyVec], properties: BackendProperties
+        self, vertices: Iterable[Vec2], properties: BackendProperties
     ):
         self.set_properties(properties)
         self.data.append(polyline_encoder(vertices, self.factional_bits, self.base))
 
-    def add_path(self, path: Path | Path2d, properties: BackendProperties):
+    def add_path(self, path: Path2d, properties: BackendProperties):
         if self.curves and path.has_curves:
             self.set_properties(properties)
             self.data.append(path_encoder(path, self.decimal_places))
@@ -321,16 +321,16 @@ class _RenderBackend(BackendInterface):
         # background is always a white paper
         pass
 
-    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
+    def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         self.add_polyline_encoded([pos], properties)
 
     def draw_line(
-        self, start: AnyVec, end: AnyVec, properties: BackendProperties
+        self, start: Vec2, end: Vec2, properties: BackendProperties
     ) -> None:
         self.add_polyline_encoded([start, end], properties)
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
+        self, lines: Iterable[tuple[Vec2, Vec2]], properties: BackendProperties
     ) -> None:
         lines = list(lines)
         if len(lines) == 0:
@@ -338,7 +338,7 @@ class _RenderBackend(BackendInterface):
         for line in lines:
             self.add_polyline_encoded(line, properties)
 
-    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
         for sub_path in path.sub_paths():
             if len(sub_path) == 0:
                 continue
@@ -346,8 +346,8 @@ class _RenderBackend(BackendInterface):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path | Path2d],
-        holes: Iterable[Path | Path2d],
+        paths: Iterable[Path2d],
+        holes: Iterable[Path2d],
         properties: BackendProperties,
     ) -> None:
         all_paths = list(itertools.chain(paths, holes))
@@ -363,7 +363,7 @@ class _RenderBackend(BackendInterface):
         self.fill_polygon()
 
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: BackendProperties
+        self, points: Iterable[Vec2], properties: BackendProperties
     ) -> None:
         points = list(points)
         if points:
@@ -415,7 +415,7 @@ def map_lineweight_to_stroke_width(
     return round(min_stroke_width + round(lineweight * factor), 2)
 
 
-def flatten_path(path: Path | Path2d) -> Sequence[AnyVec]:
+def flatten_path(path: Path2d) -> Sequence[Vec2]:
     points = list(path.flattening(distance=FLATTEN_MAX))
     return points
 
@@ -448,7 +448,7 @@ def pe_encode(value: float, frac_bits: int = 0, base: int = 64) -> bytes:
     return bytes(chars)
 
 
-def polyline_encoder(vertices: Iterable[AnyVec], frac_bits: int, base: int) -> bytes:
+def polyline_encoder(vertices: Iterable[Vec2], frac_bits: int, base: int) -> bytes:
     cmd = b"PE"
     if base == 32:
         cmd = b"PE7"

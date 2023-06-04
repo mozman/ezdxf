@@ -7,8 +7,8 @@ import copy
 import itertools
 from xml.etree import ElementTree as ET
 
-from ezdxf.math import AnyVec, Vec2
-from ezdxf.path import Path, Path2d, Command
+from ezdxf.math import Vec2
+from ezdxf.path import Path2d, Command
 
 
 from .type_hints import Color
@@ -258,29 +258,27 @@ class SVGRenderBackend(BackendInterface):
         self.background.set("fill", color_str)
         self.background.set("fill-opacity", str(opacity))
 
-    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
+    def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         self.add_strokes(self.make_polyline_str([pos, pos]), properties)
 
-    def draw_line(
-        self, start: AnyVec, end: AnyVec, properties: BackendProperties
-    ) -> None:
+    def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         self.add_strokes(self.make_polyline_str([start, end]), properties)
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
+        self, lines: Iterable[tuple[Vec2, Vec2]], properties: BackendProperties
     ) -> None:
         lines = list(lines)
         if len(lines) == 0:
             return
         self.add_strokes(self.make_multi_line_str(lines), properties)
 
-    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
         self.add_strokes(self.make_path_str(path), properties)
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path | Path2d],
-        holes: Iterable[Path | Path2d],
+        paths: Iterable[Path2d],
+        holes: Iterable[Path2d],
         properties: BackendProperties,
     ) -> None:
         d = []
@@ -290,7 +288,7 @@ class SVGRenderBackend(BackendInterface):
         self.add_filling(" ".join(d), properties)
 
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: BackendProperties
+        self, points: Iterable[Vec2], properties: BackendProperties
     ) -> None:
         self.add_filling(self.make_polyline_str(list(points), close=True), properties)
 
@@ -324,7 +322,7 @@ class SVGRenderBackend(BackendInterface):
 
     @staticmethod
     @no_type_check
-    def make_path_str(path: Path | Path2d, close=False) -> str:
+    def make_path_str(path: Path2d, close=False) -> str:
         d: list[str] = [CMD_M_ABS.format(path.start)]
         if len(path) == 0:
             return ""

@@ -4,9 +4,9 @@ from __future__ import annotations
 from typing import Iterable, no_type_check
 import copy
 
-from ezdxf.math import AnyVec, Vec2
+from ezdxf.math import Vec2
 from ezdxf.colors import RGB
-from ezdxf.path import Path, Path2d, Command
+from ezdxf.path import Path2d, Command
 from ezdxf.version import __version__
 
 from .type_hints import Color
@@ -268,7 +268,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         self._stroke_width_cache[width] = stroke_width
         return stroke_width
 
-    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
+    def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         shape = self.new_shape()
         pos = Vec2(pos)
         shape.drawLine(pos, pos)
@@ -276,7 +276,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         shape.commit()
 
     def draw_line(
-        self, start: AnyVec, end: AnyVec, properties: BackendProperties
+        self, start: Vec2, end: Vec2, properties: BackendProperties
     ) -> None:
         shape = self.new_shape()
         shape.drawLine(Vec2(start), Vec2(end))
@@ -284,7 +284,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         shape.commit()
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
+        self, lines: Iterable[tuple[Vec2, Vec2]], properties: BackendProperties
     ) -> None:
         shape = self.new_shape()
         for start, end in lines:
@@ -292,7 +292,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         self.finish_line(shape, properties, close=False)
         shape.commit()
 
-    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
         if len(path) == 0:
             return
         shape = self.new_shape()
@@ -302,8 +302,8 @@ class PyMuPdfRenderBackend(BackendInterface):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path | Path2d],
-        holes: Iterable[Path | Path2d],
+        paths: Iterable[Path2d],
+        holes: Iterable[Path2d],
         properties: BackendProperties,
     ) -> None:
         shape = self.new_shape()
@@ -315,7 +315,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         shape.commit()
 
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: BackendProperties
+        self, points: Iterable[Vec2], properties: BackendProperties
     ) -> None:
         vertices = Vec2.list(points)
         if len(vertices) < 3:

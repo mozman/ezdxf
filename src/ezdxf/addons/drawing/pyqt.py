@@ -11,8 +11,8 @@ from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import BackendProperties
-from ezdxf.math import Vec3, Matrix44
-from ezdxf.path import Path, to_qpainter_path
+from ezdxf.math import Vec2, Matrix44
+from ezdxf.path import Path2d, to_qpainter_path
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):
@@ -112,13 +112,13 @@ class _PyQtBackend(Backend):
     def set_background(self, color: Color):
         self._scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
-    def draw_point(self, pos: Vec3, properties: BackendProperties) -> None:
+    def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         """Draw a real dimensionless point."""
         brush = self._get_fill_brush(properties.color)
         item = _Point(pos.x, pos.y, brush)
         self._add_item(item, properties.handle)
 
-    def draw_line(self, start: Vec3, end: Vec3, properties: BackendProperties) -> None:
+    def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         # PyQt draws a long line for a zero-length line:
         if start.isclose(end):
             self.draw_point(start, properties)
@@ -129,7 +129,7 @@ class _PyQtBackend(Backend):
 
     def draw_solid_lines(
         self,
-        lines: Iterable[tuple[Vec3, Vec3]],
+        lines: Iterable[tuple[Vec2, Vec2]],
         properties: BackendProperties,
     ):
         """Fast method to draw a bunch of solid lines with the same properties."""
@@ -143,7 +143,7 @@ class _PyQtBackend(Backend):
                 item.setPen(pen)
                 add_line(item, properties.handle)
 
-    def draw_path(self, path: Path, properties: BackendProperties) -> None:
+    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
         item = qw.QGraphicsPathItem(to_qpainter_path([path]))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._no_fill)
@@ -151,11 +151,11 @@ class _PyQtBackend(Backend):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path],
-        holes: Iterable[Path],
+        paths: Iterable[Path2d],
+        holes: Iterable[Path2d],
         properties: BackendProperties,
     ) -> None:
-        oriented_paths: list[Path] = []
+        oriented_paths: list[Path2d] = []
         for path in paths:
             try:
                 path = path.counter_clockwise()
@@ -176,7 +176,7 @@ class _PyQtBackend(Backend):
         self._add_item(item, properties.handle)
 
     def draw_filled_polygon(
-        self, points: Iterable[Vec3], properties: BackendProperties
+        self, points: Iterable[Vec2], properties: BackendProperties
     ) -> None:
         brush = self._get_fill_brush(properties.color)
         polygon = qg.QPolygonF()

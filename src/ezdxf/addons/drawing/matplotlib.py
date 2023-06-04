@@ -12,14 +12,14 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 
-import ezdxf.path
+from ezdxf.path import Path2d, to_matplotlib_path
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import BackendProperties, LayoutProperties
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.type_hints import Color
-from ezdxf.math import Vec3, Matrix44, AnyVec
+from ezdxf.math import Vec2
 from ezdxf.layouts import Layout
-from .config import Configuration, HatchPolicy
+from .config import Configuration
 
 logger = logging.getLogger("ezdxf")
 # matplotlib docs: https://matplotlib.org/index.html
@@ -83,7 +83,7 @@ class MatplotlibBackend(Backend):
     def set_background(self, color: Color):
         self.ax.set_facecolor(color)
 
-    def draw_point(self, pos: AnyVec, properties: BackendProperties):
+    def draw_point(self, pos: Vec2, properties: BackendProperties):
         """Draw a real dimensionless point."""
         color = properties.color
         self.ax.scatter(
@@ -102,7 +102,7 @@ class MatplotlibBackend(Backend):
             self.config.min_lineweight,
         )
 
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: BackendProperties):
+    def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties):
         """Draws a single solid line, line type rendering is done by the
         frontend since v0.18.1
         """
@@ -122,7 +122,7 @@ class MatplotlibBackend(Backend):
 
     def draw_solid_lines(
         self,
-        lines: Iterable[tuple[AnyVec, AnyVec]],
+        lines: Iterable[tuple[Vec2, Vec2]],
         properties: BackendProperties,
     ):
         """Fast method to draw a bunch of solid lines with the same properties."""
@@ -150,13 +150,11 @@ class MatplotlibBackend(Backend):
             )
         )
 
-    def draw_path(
-        self, path: ezdxf.path.Path | ezdxf.path.Path2d, properties: BackendProperties
-    ):
+    def draw_path(self, path: Path2d, properties: BackendProperties):
         """Draw a solid line path, line type rendering is done by the
         frontend since v0.18.1
         """
-        mpl_path = ezdxf.path.to_matplotlib_path([path])
+        mpl_path = to_matplotlib_path([path])
         try:
             patch = PathPatch(
                 mpl_path,
@@ -172,12 +170,12 @@ class MatplotlibBackend(Backend):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[ezdxf.path.Path | ezdxf.path.Path2d],
-        holes: Iterable[ezdxf.path.Path | ezdxf.path.Path2d],
+        paths: Iterable[Path2d],
+        holes: Iterable[Path2d],
         properties: BackendProperties,
     ):
         linewidth = 0
-        oriented_paths: list[ezdxf.path.Path | ezdxf.path.Path2d] = []
+        oriented_paths: list[Path2d] = []
         for path in paths:
             try:
                 path = path.counter_clockwise()
@@ -194,7 +192,7 @@ class MatplotlibBackend(Backend):
 
         try:
             patch = PathPatch(
-                ezdxf.path.to_matplotlib_path(oriented_paths),
+                to_matplotlib_path(oriented_paths),
                 color=properties.color,
                 linewidth=linewidth,
                 fill=True,
@@ -205,7 +203,9 @@ class MatplotlibBackend(Backend):
         else:
             self.ax.add_patch(patch)
 
-    def draw_filled_polygon(self, points: Iterable[AnyVec], properties: BackendProperties):
+    def draw_filled_polygon(
+        self, points: Iterable[Vec2], properties: BackendProperties
+    ):
         self.ax.fill(
             *zip(*((p.x, p.y) for p in points)),
             color=properties.color,
@@ -226,12 +226,6 @@ class MatplotlibBackend(Backend):
             if not math.isclose(data_width, 0):
                 width, height = plt.figaspect(data_height / data_width)
                 self.ax.get_figure().set_size_inches(width, height, forward=True)
-
-
-def _transform_path(path: Path, transform: Matrix44) -> Path:
-    # raises ValueError for invalid TextPath objects
-    vertices = transform.transform_vertices([Vec3(x, y) for x, y in path.vertices])
-    return Path([(v.x, v.y) for v in vertices], path.codes)  # type: ignore
 
 
 def _get_aspect_ratio(ax: plt.Axes) -> float:

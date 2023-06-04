@@ -9,15 +9,14 @@ from typing import (
     Callable,
     Optional,
     NamedTuple,
-    no_type_check,
 )
 from typing_extensions import Self, TypeAlias
 import copy
 import enum
 import dataclasses
 
-from ezdxf.math import AnyVec, BoundingBox2d, Matrix44, Vec2, UVec
-from ezdxf.path import Path, Path2d, from_vertices
+from ezdxf.math import BoundingBox2d, Matrix44, Vec2, UVec
+from ezdxf.path import Path2d, from_2d_vertices
 from ezdxf import npshapes
 from ezdxf.tools import take2
 
@@ -106,18 +105,18 @@ class Recorder(BackendInterface):
         )
         self.properties[prop_hash] = properties
 
-    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
+    def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         self.store(RecordType.POINTS, properties, npshapes.NumpyPoints2d((pos,)))
 
     def draw_line(
-        self, start: AnyVec, end: AnyVec, properties: BackendProperties
+        self, start: Vec2, end: Vec2, properties: BackendProperties
     ) -> None:
         self.store(RecordType.POINTS, properties, npshapes.NumpyPoints2d((start, end)))
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
+        self, lines: Iterable[tuple[Vec2, Vec2]], properties: BackendProperties
     ) -> None:
-        def flatten() -> Iterator[AnyVec]:
+        def flatten() -> Iterator[Vec2]:
             for s, e in lines:
                 yield s
                 yield e
@@ -126,18 +125,18 @@ class Recorder(BackendInterface):
             RecordType.SOLID_LINES, properties, npshapes.NumpyPoints2d(flatten())
         )
 
-    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
         self.store(RecordType.PATH, properties, npshapes.NumpyPath2d(path))
 
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: BackendProperties
+        self, points: Iterable[Vec2], properties: BackendProperties
     ) -> None:
         self.store(RecordType.POINTS, properties, npshapes.NumpyPoints2d(points))
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path | Path2d],
-        holes: Iterable[Path | Path2d],
+        paths: Iterable[Path2d],
+        holes: Iterable[Path2d],
         properties: BackendProperties,
     ) -> None:
         _paths = tuple(npshapes.NumpyPath2d(p) for p in paths)
@@ -349,7 +348,7 @@ def crop_records_rect(
         return cropped_records
 
     clipper = ClippingRect()
-    clipper.push(from_vertices(crop_rect.rect_vertices()), None)
+    clipper.push(from_2d_vertices(crop_rect.rect_vertices()), None)
     for record in records:
         record_box = record.bbox()
         if not crop_rect.has_intersection(record_box):

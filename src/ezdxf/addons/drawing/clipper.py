@@ -3,9 +3,9 @@
 from __future__ import annotations
 from typing import Optional, Iterable, Iterator, Sequence
 
-from ezdxf.math import AnyVec, Matrix44, Vec2, BoundingBox2d
+from ezdxf.math import Matrix44, Vec2, BoundingBox2d
 from ezdxf.math.clipping import ClippingRect2d
-from ezdxf.path import Path, Path2d, from_vertices, single_paths
+from ezdxf.path import Path2d, from_2d_vertices, single_paths
 
 __all__ = ["ClippingRect"]
 
@@ -20,7 +20,7 @@ class ClippingRect:
     def is_active(self) -> bool:
         return self.view is not None
 
-    def push(self, path: Path | Path2d, m: Optional[Matrix44]) -> None:
+    def push(self, path: Path2d, m: Optional[Matrix44]) -> None:
         if self.view is not None:
             self._stack.append((self.view, self.m))
         box = BoundingBox2d(path.control_vertices())
@@ -34,7 +34,7 @@ class ClippingRect:
             self.view = None
             self.m = None
 
-    def clip_point(self, point: AnyVec) -> Optional[AnyVec]:
+    def clip_point(self, point: Vec2) -> Optional[Vec2]:
         # Expected points outside the view to be removed!
         if self.m is not None:
             point = self.m.transform(point)
@@ -42,7 +42,7 @@ class ClippingRect:
             return None
         return point
 
-    def clip_line(self, start: AnyVec, end: AnyVec) -> Sequence[AnyVec]:
+    def clip_line(self, start: Vec2, end: Vec2) -> Sequence[Vec2]:
         # Expected lines outside the view to be removed!
         # An arbitrary clipping polygon could return more than 1 line segment
         m = self.m
@@ -53,8 +53,8 @@ class ClippingRect:
         return start, end
 
     def clip_filled_paths(
-        self, paths: Iterable[Path | Path2d], max_sagitta: float
-    ) -> Iterator[Path | Path2d]:
+        self, paths: Iterable[Path2d], max_sagitta: float
+    ) -> Iterator[Path2d]:
         # Expected overall paths outside the view to be removed!
         view = self.view
         assert view is not None
@@ -71,7 +71,7 @@ class ClippingRect:
                 # path is complete inside the view, no clipping required
                 yield path
             else:  # clipping is required, but only clipping of polygons is supported
-                yield from_vertices(
+                yield from_2d_vertices(
                     view.clip_polygon(
                         Vec2.list(path.flattening(max_sagitta, segments=4))
                     ),
@@ -79,8 +79,8 @@ class ClippingRect:
                 )
 
     def clip_paths(
-        self, paths: Iterable[Path | Path2d], max_sagitta: float
-    ) -> Iterator[Path | Path2d]:
+        self, paths: Iterable[Path2d], max_sagitta: float
+    ) -> Iterator[Path2d]:
         # Expected paths outside the view to be removed!
         view = self.view
         assert view is not None
@@ -96,9 +96,9 @@ class ClippingRect:
             for sub_path in single_paths([path]):  # type: ignore
                 polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=4))
                 for part in view.clip_polyline(polyline):
-                    yield from_vertices(part, close=False)
+                    yield from_2d_vertices(part, close=False)
 
-    def clip_polygon(self, points: Iterable[AnyVec]) -> Sequence[Vec2]:
+    def clip_polygon(self, points: Iterable[Vec2]) -> Sequence[Vec2]:
         # Expected polygons outside the view to be removed!
         if self.m is not None:
             points = self.m.fast_2d_transform(points)

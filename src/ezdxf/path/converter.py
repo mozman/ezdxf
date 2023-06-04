@@ -79,6 +79,7 @@ __all__ = [
     "from_hatch_edge_path",
     "from_hatch_polyline_path",
     "from_vertices",
+    "from_2d_vertices",
     "from_matplotlib_path",
     "from_qpainter_path",
     "to_matplotlib_path",
@@ -493,6 +494,20 @@ def from_vertices(vertices: Iterable[UVec], close=False) -> Path:
     if len(_vertices) < 2:
         return Path()
     path = Path(start=_vertices[0])
+    for vertex in _vertices[1:]:
+        if not path.end.isclose(vertex):
+            path.line_to(vertex)
+    if close:
+        path.close()
+    return path
+
+
+def from_2d_vertices(vertices: Iterable[UVec], close=False) -> Path2d:
+    """Returns a :class:`Path` object from the given `vertices`."""
+    _vertices = Vec2.list(vertices)
+    if len(_vertices) < 2:
+        return Path2d()
+    path = Path2d(start=_vertices[0])
     for vertex in _vertices[1:]:
         if not path.end.isclose(vertex):
             path.line_to(vertex)

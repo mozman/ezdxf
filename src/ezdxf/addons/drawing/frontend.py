@@ -66,15 +66,14 @@ from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
 from ezdxf.layouts import Layout
-from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44, AnyVec, BoundingBox2d
+from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44, BoundingBox2d
 from ezdxf.path import (
-    Path,
     Path2d,
     make_path,
     from_hatch_boundary_path,
     make_polygon_structure,
     winding_deconstruction,
-    from_vertices,
+    from_2d_vertices,
     single_paths,
 )
 from ezdxf.render import MeshBuilder, TraceBuilder, linetypes
@@ -412,7 +411,7 @@ class Frontend:
             path = make_path(entity)
         except AttributeError:  # API usage error
             raise TypeError(f"Unsupported DXF type {entity.dxftype()}")
-        self._designer.draw_path(path, properties)
+        self._designer.draw_path(path.to_2d_path(), properties)
 
     def draw_point_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         point = cast(Point, entity)
@@ -434,7 +433,7 @@ class Frontend:
             for entity in point.virtual_entities(pdsize, pdmode):
                 dxftype = entity.dxftype()
                 if dxftype == "LINE":
-                    start = Vec3(entity.dxf.start)
+                    start = Vec2(entity.dxf.start)
                     end = entity.dxf.end
                     if start.isclose(end):
                         self._designer.draw_point(start, properties)
@@ -462,7 +461,7 @@ class Frontend:
                 return
             edge_visibility = entity.get_edges_visibility()
             if all(edge_visibility):
-                self._designer.draw_path(from_vertices(points), properties)
+                self._designer.draw_path(from_2d_vertices(points), properties)
             else:
                 for a, b, visible in zip(points, points[1:], edge_visibility):
                     if visible:
@@ -472,21 +471,21 @@ class Frontend:
             # set solid fill type for SOLID and TRACE
             properties.filling = Filling()
             self._designer.draw_filled_polygon(
-                entity.wcs_vertices(close=False), properties
+                Vec2.generate(entity.wcs_vertices(close=False)), properties
             )
 
         else:
             raise TypeError("API error, requires a SOLID, TRACE or 3DFACE entity")
 
     def draw_hatch_pattern(
-        self, polygon: DXFPolygon, paths: list[Path], properties: Properties
+        self, polygon: DXFPolygon, paths: list[Path2d], properties: Properties
     ):
         if polygon.pattern is None or len(polygon.pattern.lines) == 0:
             return
         ocs = polygon.ocs()
         elevation = polygon.dxf.elevation.z
         properties.linetype_pattern = tuple()
-        lines: list[tuple[Vec3, Vec3]] = []
+        lines: list[tuple[Vec2, Vec2]] = []
 
         t0 = time.perf_counter()
         max_time = self.config.hatching_timeout
@@ -507,7 +506,7 @@ class Frontend:
                         s, e = ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
                             (e.x, e.y, elevation)
                         )
-                    lines.append((s, e))
+                    lines.append((Vec2(s), Vec2(e)))
         self._designer.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(
@@ -515,7 +514,7 @@ class Frontend:
         entity: DXFGraphic,
         properties: Properties,
         *,
-        loops: Optional[list[Path]] = None,
+        loops: Optional[list[Path2d]] = None,
     ) -> None:
         if properties.filling is None:
             return
@@ -535,7 +534,12 @@ class Frontend:
         polygon = cast(DXFPolygon, entity)
         if filling.type == Filling.PATTERN:
             if loops is None:
-                loops = hatching.hatch_boundary_paths(polygon, filter_text_boxes=True)
+                loops = [
+                    p.to_2d_path()
+                    for p in hatching.hatch_boundary_paths(
+                        polygon, filter_text_boxes=True
+                    )
+                ]
             self.draw_hatch_pattern(polygon, loops, properties)
             return
 
@@ -545,8 +549,8 @@ class Frontend:
         # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
 
-        external_paths: list[Path]
-        holes: list[Path]
+        external_paths: list[Path2d]
+        holes: list[Path2d]
 
         if loops is not None:  # only MPOLYGON
             external_paths, holes = winding_deconstruction(  # type: ignore
@@ -612,8 +616,8 @@ class Frontend:
         wipeout = cast(Wipeout, entity)
         properties.filling = Filling()
         properties.color = self.ctx.current_layout_properties.background_color
-        path = wipeout.boundary_path_wcs()
-        self._designer.draw_filled_polygon(path, properties)
+        clipping_polygon = Vec2.list(wipeout.boundary_path_wcs())
+        self._designer.draw_filled_polygon(clipping_polygon, properties)
 
     def draw_viewport(self, vp: Viewport) -> None:
         # the "active" viewport and invisible viewports should be filtered at this
@@ -652,7 +656,7 @@ class Frontend:
     ) -> None:
         for face in builder.faces_as_vertices():
             self._designer.draw_path(
-                from_vertices(face, close=True), properties=properties
+                from_2d_vertices(face, close=True), properties=properties
             )
 
     def draw_polyline_entity(self, entity: DXFGraphic, properties: Properties) -> None:
@@ -695,7 +699,7 @@ class Frontend:
                 self._designer.draw_filled_polygon(points, properties)
             return
 
-        path = make_path(entity)
+        path = make_path(entity).to_2d_path()
         self._designer.draw_path(path, properties)
 
     def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
@@ -746,10 +750,10 @@ def closed_loops(
     ocs: OCS,
     elevation: float,
     offset: Vec3 = NULLVEC,
-) -> list[Path]:
-    loops = []
+) -> list[Path2d]:
+    loops: list[Path2d] = []
     for boundary in paths:
-        path = from_hatch_boundary_path(boundary, ocs, elevation, offset)
+        path = from_hatch_boundary_path(boundary, ocs, elevation, offset).to_2d_path()
         assert isinstance(
             path.user_data, const.BoundaryPathState
         ), "missing attached boundary path state"
@@ -760,7 +764,7 @@ def closed_loops(
     return loops
 
 
-def ignore_text_boxes(paths: Iterable[Path]) -> Iterable[Path]:
+def ignore_text_boxes(paths: Iterable[Path2d]) -> Iterable[Path2d]:
     """Filters text boxes from paths if BoundaryPathState() information is
     attached.
     """
@@ -849,7 +853,7 @@ class Designer:
         m = vp.get_transformation_matrix()
         clipping_path = make_path(vp)
         if len(clipping_path):
-            self.clipper.push(clipping_path, m)
+            self.clipper.push(clipping_path.to_2d_path(), m)
             return True
         return False
 
@@ -857,7 +861,7 @@ class Designer:
         self.clipper.pop()
         self.current_vp_scale = 1.0
 
-    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
+    def draw_point(self, pos: Vec2, properties: Properties) -> None:
         if self.clipper.is_active:
             point = self.clipper.clip_point(pos)
             if point is None:
@@ -865,7 +869,7 @@ class Designer:
             pos = point
         self.backend.draw_point(pos, self.get_backend_properties(properties))
 
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties):
+    def draw_line(self, start: Vec2, end: Vec2, properties: Properties):
         if (
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
@@ -884,10 +888,10 @@ class Designer:
             )
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
+        self, lines: Iterable[tuple[Vec2, Vec2]], properties: Properties
     ) -> None:
         if self.clipper.is_active:
-            clipped_lines: list[Sequence[AnyVec]] = []
+            clipped_lines: list[Sequence[Vec2]] = []
             for start, end in lines:
                 points = self.clipper.clip_line(start, end)
                 if points:
@@ -895,7 +899,7 @@ class Designer:
             lines = clipped_lines  # type: ignore
         self.backend.draw_solid_lines(lines, self.get_backend_properties(properties))
 
-    def draw_path(self, path: Path | Path2d, properties: Properties):
+    def draw_path(self, path: Path2d, properties: Properties):
         if (
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
@@ -912,15 +916,16 @@ class Designer:
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
             vertices = path.flattening(self.config.max_flattening_distance, segments=16)
+
             self.draw_solid_lines(
-                ((s, e) for s, e in renderer.line_segments(vertices)),
+                ((Vec2(s), Vec2(e)) for s, e in renderer.line_segments(vertices)),
                 properties,
             )
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path | Path2d],
-        holes: Iterable[Path | Path2d],
+        paths: Iterable[Path2d],
+        holes: Iterable[Path2d],
         properties: Properties,
     ) -> None:
         if self.clipper.is_active:
@@ -932,7 +937,7 @@ class Designer:
         )
 
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: Properties
+        self, points: Iterable[Vec2], properties: Properties
     ) -> None:
         if self.clipper.is_active:
             points = self.clipper.clip_polygon(points)
@@ -991,7 +996,9 @@ class Designer:
         transformed_path = text_path.transform(transform)
         if text_policy == TextPolicy.REPLACE_RECT:
             bbox = BoundingBox2d(transformed_path.control_vertices())
-            self.draw_path(from_vertices(bbox.rect_vertices(), close=True), properties)
+            self.draw_path(
+                from_2d_vertices(bbox.rect_vertices(), close=True), properties
+            )
             return
         if text_policy == TextPolicy.REPLACE_FILL:
             bbox = BoundingBox2d(transformed_path.control_vertices())

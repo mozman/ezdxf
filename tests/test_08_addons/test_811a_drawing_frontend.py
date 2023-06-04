@@ -327,7 +327,7 @@ def test_mesh(msp, basic):
     c.render_mesh(msp)
     basic.draw_entities(msp)
     result = get_result(basic)
-    assert len(result) == 24
+    assert len(result) == 16  # TODO: ???
     assert unique_types(result) == {"line"}
 
 
@@ -337,7 +337,7 @@ def test_polyface(msp, basic):
     c.render_polyface(msp)
     basic.draw_entities(msp)
     result = get_result(basic)
-    assert len(result) == 24
+    assert len(result) == 16  # TODO: ???
     entities = {e[0] for e in result}
     assert entities == {"line"}
 

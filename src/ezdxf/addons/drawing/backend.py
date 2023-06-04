@@ -8,8 +8,8 @@ from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.properties import Properties, BackendProperties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
-from ezdxf.math import AnyVec
-from ezdxf.path import Path, Path2d
+from ezdxf.math import Vec2
+from ezdxf.path import Path2d
 
 
 class BackendInterface(ABC):
@@ -33,35 +33,35 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
+    def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: BackendProperties) -> None:
+    def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
+        self, lines: Iterable[tuple[Vec2, Vec2]], properties: BackendProperties
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_filled_paths(
         self,
-        paths: Iterable[Path | Path2d],
-        holes: Iterable[Path | Path2d],
+        paths: Iterable[Path2d],
+        holes: Iterable[Path2d],
         properties: BackendProperties,
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: BackendProperties
+        self, points: Iterable[Vec2], properties: BackendProperties
     ) -> None:
         raise NotImplementedError
 
@@ -100,18 +100,18 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
+    def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         """Draw a real dimensionless point, because not all backends support
         zero-length lines!
         """
         raise NotImplementedError
 
     @abstractmethod
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: BackendProperties) -> None:
+    def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
+        self, lines: Iterable[tuple[Vec2, Vec2]], properties: BackendProperties
     ) -> None:
         """Fast method to draw a bunch of solid lines with the same properties."""
         # Must be overridden by the backend to gain a performance benefit.
@@ -123,7 +123,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
             else:
                 self.draw_line(s, e, properties)
 
-    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
         """Draw an outline path (connected string of line segments and Bezier
         curves).
 
@@ -144,8 +144,8 @@ class Backend(BackendInterface, metaclass=ABCMeta):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path | Path2d],
-        holes: Iterable[Path | Path2d],
+        paths: Iterable[Path2d],
+        holes: Iterable[Path2d],
         properties: BackendProperties,
     ) -> None:
         """Draw multiple filled paths (connected string of line segments and
@@ -182,7 +182,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
 
     @abstractmethod
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: BackendProperties
+        self, points: Iterable[Vec2], properties: BackendProperties
     ) -> None:
         """Fill a polygon whose outline is defined by the given points.
         Used to draw entities with simple outlines where :meth:`draw_path` may

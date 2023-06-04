@@ -9,8 +9,8 @@ import enum
 
 from ezdxf import colors
 from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS
-from ezdxf.math import AnyVec, BoundingBox2d
-from ezdxf.path import Path, Path2d, to_splines_and_polylines, to_hatches
+from ezdxf.math import Vec2, BoundingBox2d
+from ezdxf.path import Path2d, to_splines_and_polylines, to_hatches
 from ezdxf.layouts import BaseLayout
 
 from .type_hints import Color
@@ -31,6 +31,7 @@ class ColorMode(enum.Enum):
         RGB: the color is set as RGB true color value
 
     """
+
     # Use color index as primary color
     ACI = enum.auto()
 
@@ -123,16 +124,14 @@ class DXFBackend(BackendInterface):
             aci = properties.pen
         hatch.set_solid_fill(color=aci, style=0, rgb=rgb)
 
-    def draw_point(self, pos: AnyVec, properties: BackendProperties) -> None:
+    def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         self.layout.add_point(pos, dxfattribs=self.resolve_properties(properties))
 
-    def draw_line(
-        self, start: AnyVec, end: AnyVec, properties: BackendProperties
-    ) -> None:
+    def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         self.layout.add_line(start, end, dxfattribs=self.resolve_properties(properties))
 
     def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: BackendProperties
+        self, lines: Iterable[tuple[Vec2, Vec2]], properties: BackendProperties
     ) -> None:
         lines = list(lines)
         if len(lines) == 0:
@@ -141,7 +140,7 @@ class DXFBackend(BackendInterface):
         for start, end in lines:
             self.layout.add_line(start, end, dxfattribs=attribs)
 
-    def draw_path(self, path: Path | Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
         attribs = self.resolve_properties(properties)
         if path.has_curves:
             for entity in to_splines_and_polylines(path, dxfattribs=attribs):  # type: ignore
@@ -151,8 +150,8 @@ class DXFBackend(BackendInterface):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path | Path2d],
-        holes: Iterable[Path | Path2d],
+        paths: Iterable[Path2d],
+        holes: Iterable[Path2d],
         properties: BackendProperties,
     ) -> None:
         attribs = self.resolve_properties(properties)
@@ -161,7 +160,7 @@ class DXFBackend(BackendInterface):
             self.set_solid_fill(hatch, properties)
 
     def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: BackendProperties
+        self, points: Iterable[Vec2], properties: BackendProperties
     ) -> None:
         hatch = self.layout.add_hatch(dxfattribs=self.resolve_properties(properties))
         hatch.paths.add_polyline_path(points, is_closed=True)
