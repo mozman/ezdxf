@@ -37,6 +37,8 @@ clean:
 	rm -f $(ACC)/bspline.cpp
 	rm -f $(ACC)/construct.cpp
 	rm -f $(ACC)/mapbox_earcut.cpp
+	rm -f $(ACC)/linetypes.cpp
+	rm -f $(ACC)/np_support.cpp
 
 sdist: clean
 	$(PYTHON3) setup.py sdist --formats=zip

@@ -16,6 +16,11 @@ from ezdxf.math import (
 )
 from ezdxf.path import AbstractPath, Path2d, Command
 
+try:
+    from ezdxf.acc import np_support  # type: ignore  # mypy ???
+except ImportError:
+    np_support = None
+
 __all__ = ["NumpyPath2d", "NumpyPoints2d", "NumpyShapesException", "EmptyShapeError"]
 
 
@@ -137,7 +142,10 @@ class NumpyPath2d(NumpyShape2d):
         """
         if self.has_sub_paths:
             raise TypeError("can't detect orientation of a multi-path object")
-        return has_clockwise_orientation(self.vertices())
+        if np_support is None:
+            return has_clockwise_orientation(self.vertices())
+        else:
+            return np_support.has_clockwise_orientation(self._vertices)
 
     def reverse(self) -> Self:
         """Reverse path orientation inplace."""
@@ -149,11 +157,11 @@ class NumpyPath2d(NumpyShape2d):
             # A move_to as first command just moves the start point and can be
             # removed!
             # There are never two consecutive MOVE_TO commands in a Path!
-            self._commands = np.flip(commands[:-1])
-            self._vertices = np.flip(self._vertices[:-1, ...], axis=0)
+            self._commands = np.flip(commands[:-1]).copy()
+            self._vertices = np.flip(self._vertices[:-1, ...], axis=0).copy()
         else:
-            self._commands = np.flip(commands)
-            self._vertices = np.flip(self._vertices, axis=0)
+            self._commands = np.flip(commands).copy()
+            self._vertices = np.flip(self._vertices, axis=0).copy()
         return self
 
     def clockwise(self) -> Self:

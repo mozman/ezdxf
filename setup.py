@@ -75,6 +75,14 @@ ext_modules = [
         optional=True,
         language="c++",
     ),
+    Extension(
+        "ezdxf.acc.np_support",
+        [
+            "src/ezdxf/acc/np_support.pyx",
+        ],
+        optional=True,
+        language="c++",
+    ),
 
 ]
 try:

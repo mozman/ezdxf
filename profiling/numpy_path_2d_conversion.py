@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2023, Manfred Moitzi
 # License: MIT License
 import string
 import time

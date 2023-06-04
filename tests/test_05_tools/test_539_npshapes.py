@@ -5,7 +5,7 @@ import pytest
 
 from ezdxf.npshapes import NumpyPoints2d, NumpyPath2d
 from ezdxf.math import Matrix44, BoundingBox2d, close_vectors
-from ezdxf.path import Path2d, Command
+from ezdxf.path import Path2d, Command, from_vertices
 from ezdxf.fonts import fonts
 
 
@@ -249,6 +249,26 @@ class TestReversePath:
             has_clockwise_orientation(p2.counter_clockwise().control_vertices())
             is False
         )
+
+
+def test_clockwise_orientation_of_implicit_closed_path():
+    p2 = NumpyPath2d(from_vertices([(0, 0), (10, 0), (10, 10), (0, 10)]))
+    assert p2.has_clockwise_orientation() is False
+
+
+def test_clockwise_orientation_of_explicit_closed_path():
+    p2 = NumpyPath2d(from_vertices([(0, 0), (10, 0), (10, 10), (0, 10)], close=True))
+    assert p2.has_clockwise_orientation() is False
+
+
+def test_counter_clockwise_orientation_of_implicit_closed_path():
+    p2 = NumpyPath2d(from_vertices([(0, 10), (10, 10), (10, 0), (0, 0)]))
+    assert p2.has_clockwise_orientation() is True
+
+
+def test_counter_clockwise_orientation_of_explicit_closed_path():
+    p2 = NumpyPath2d(from_vertices([(0, 10), (10, 10), (10, 0), (0, 0)], close=True))
+    assert p2.has_clockwise_orientation() is True
 
 
 if __name__ == "__main__":

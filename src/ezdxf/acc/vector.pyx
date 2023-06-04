@@ -198,7 +198,7 @@ cdef class Vec2:
     def __bool__(self) -> bool:
         return self.x != 0 or self.y != 0
 
-    def isclose(self, other: "AnyVec", *, double rel_tol=REL_TOL,
+    def isclose(self, other: UVec, *, double rel_tol=REL_TOL,
                 double abs_tol = ABS_TOL) -> bool:
         cdef Vec2 o = Vec2(other)
         return isclose(self.x, o.x, rel_tol, abs_tol) and \
