@@ -118,7 +118,7 @@ class UniversalFrontend:
         self.ctx = ctx
         # the designer is the connection between frontend and backend
         self.designer = designer
-        designer.set_draw_entities_callback(self.draw_entities_ex)
+        designer.set_draw_entities_callback(self.draw_entities_callback)
         self.config = ctx.update_configuration(config)
         designer.set_config(self.config)
 
@@ -272,8 +272,9 @@ class UniversalFrontend:
         """
         _draw_entities(self, self.ctx, entities, filter_func=filter_func)
 
-    def draw_entities_ex(self, ctx, entities):
-        # interface for the Designer class
+    def draw_entities_callback(
+        self, ctx: RenderContext, entities: Iterable[DXFGraphic]
+    ) -> None:
         _draw_entities(self, ctx, entities)
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
@@ -740,7 +741,6 @@ class Frontend(UniversalFrontend):
 
     """
 
-    # legacy class
     def __init__(
         self,
         ctx: RenderContext,
