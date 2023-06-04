@@ -10,8 +10,8 @@ from typing import (
     Sequence,
     Dict,
     Callable,
-    Tuple,
     Optional,
+    TYPE_CHECKING,
 )
 from typing_extensions import TypeAlias
 import logging
@@ -19,33 +19,24 @@ import itertools
 import time
 
 import ezdxf.bbox
-from ezdxf.colors import RGB
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
     HatchPolicy,
 )
 from ezdxf.addons.drawing.backend import BackendInterface
-from ezdxf.addons.drawing.clipper import ClippingRect
 from ezdxf.addons.drawing.properties import (
     RenderContext,
     OLE2FRAME_COLOR,
     Properties,
     Filling,
     LayoutProperties,
-    BackendProperties,
 )
-from ezdxf.addons.drawing.config import (
-    LinePolicy,
-    BackgroundPolicy,
-    ColorPolicy,
-    TextPolicy,
-)
+from ezdxf.addons.drawing.config import BackgroundPolicy, TextPolicy
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.gfxproxy import DXFGraphicProxy
 from ezdxf.addons.drawing.mtext_complex import complex_mtext_renderer
-from ezdxf.addons.drawing.unified_text_renderer import UnifiedTextRenderer
 from ezdxf.entities import (
     DXFEntity,
     DXFGraphic,
@@ -66,36 +57,32 @@ from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
 from ezdxf.layouts import Layout
-from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44, BoundingBox2d
+from ezdxf.math import Vec2, Vec3, OCS, NULLVEC
 from ezdxf.path import (
-    Path2d,
+    Path,
     make_path,
     from_hatch_boundary_path,
     make_polygon_structure,
     winding_deconstruction,
     from_2d_vertices,
-    single_paths,
 )
-from ezdxf.render import MeshBuilder, TraceBuilder, linetypes
+from ezdxf.render import MeshBuilder, TraceBuilder
 from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic, ProxyGraphicError
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
-from ezdxf.tools.text import (
-    has_inline_formatting_codes,
-    replace_non_printable_characters,
-)
+from ezdxf.tools.text import has_inline_formatting_codes
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
 from ezdxf.fonts import fonts
 from .type_hints import Color
 
+if TYPE_CHECKING:
+    from .designer import Designer
 
 __all__ = ["Frontend"]
 
 
 TDispatchTable: TypeAlias = Dict[str, Callable[[DXFGraphic, Properties], None]]
-PatternKey: TypeAlias = Tuple[str, float]
-
 POST_ISSUE_MSG = (
     "Please post sample DXF file at https://github.com/mozman/ezdxf/issues."
 )
@@ -153,7 +140,7 @@ class Frontend:
         }
         # connection link between frontend and backend, the frontend should not
         # call the draw_...() methods of the backend directly:
-        self._designer = Designer(self, out)
+        self._designer = self.make_designer()
 
         # Optional bounding box cache, which maybe was created by detecting the
         # modelspace extends. This cache is used when rendering VIEWPORT
@@ -164,6 +151,11 @@ class Frontend:
         # viewports, as the upfront bounding box calculation adds some rendering
         # time.
         self._bbox_cache = bbox_cache
+
+    def make_designer(self) -> Designer:
+        from .designer import Designer2d
+
+        return Designer2d(self, self.out)
 
     @property
     def text_engine(self):
@@ -289,6 +281,10 @@ class Frontend:
         """
         _draw_entities(self, self.ctx, entities, filter_func=filter_func)
 
+    def draw_entities_ex(self, ctx, entities):
+        # interface for the Designer class
+        _draw_entities(self, ctx, entities)
+
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         """Draw a single DXF entity.
 
@@ -411,7 +407,7 @@ class Frontend:
             path = make_path(entity)
         except AttributeError:  # API usage error
             raise TypeError(f"Unsupported DXF type {entity.dxftype()}")
-        self._designer.draw_path(path.to_2d_path(), properties)
+        self._designer.draw_path(path, properties)
 
     def draw_point_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         point = cast(Point, entity)
@@ -433,7 +429,7 @@ class Frontend:
             for entity in point.virtual_entities(pdsize, pdmode):
                 dxftype = entity.dxftype()
                 if dxftype == "LINE":
-                    start = Vec2(entity.dxf.start)
+                    start = entity.dxf.start
                     end = entity.dxf.end
                     if start.isclose(end):
                         self._designer.draw_point(start, properties)
@@ -471,21 +467,20 @@ class Frontend:
             # set solid fill type for SOLID and TRACE
             properties.filling = Filling()
             self._designer.draw_filled_polygon(
-                Vec2.generate(entity.wcs_vertices(close=False)), properties
+                entity.wcs_vertices(close=False), properties
             )
-
         else:
             raise TypeError("API error, requires a SOLID, TRACE or 3DFACE entity")
 
     def draw_hatch_pattern(
-        self, polygon: DXFPolygon, paths: list[Path2d], properties: Properties
+        self, polygon: DXFPolygon, paths: list[Path], properties: Properties
     ):
         if polygon.pattern is None or len(polygon.pattern.lines) == 0:
             return
         ocs = polygon.ocs()
         elevation = polygon.dxf.elevation.z
         properties.linetype_pattern = tuple()
-        lines: list[tuple[Vec2, Vec2]] = []
+        lines: list[tuple[Vec3, Vec3]] = []
 
         t0 = time.perf_counter()
         max_time = self.config.hatching_timeout
@@ -506,7 +501,7 @@ class Frontend:
                         s, e = ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
                             (e.x, e.y, elevation)
                         )
-                    lines.append((Vec2(s), Vec2(e)))
+                    lines.append((s, e))
         self._designer.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(
@@ -514,7 +509,7 @@ class Frontend:
         entity: DXFGraphic,
         properties: Properties,
         *,
-        loops: Optional[list[Path2d]] = None,
+        loops: Optional[list[Path]] = None,
     ) -> None:
         if properties.filling is None:
             return
@@ -534,12 +529,7 @@ class Frontend:
         polygon = cast(DXFPolygon, entity)
         if filling.type == Filling.PATTERN:
             if loops is None:
-                loops = [
-                    p.to_2d_path()
-                    for p in hatching.hatch_boundary_paths(
-                        polygon, filter_text_boxes=True
-                    )
-                ]
+                loops = hatching.hatch_boundary_paths(polygon, filter_text_boxes=True)
             self.draw_hatch_pattern(polygon, loops, properties)
             return
 
@@ -549,8 +539,8 @@ class Frontend:
         # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
 
-        external_paths: list[Path2d]
-        holes: list[Path2d]
+        external_paths: list[Path]
+        holes: list[Path]
 
         if loops is not None:  # only MPOLYGON
             external_paths, holes = winding_deconstruction(  # type: ignore
@@ -616,7 +606,7 @@ class Frontend:
         wipeout = cast(Wipeout, entity)
         properties.filling = Filling()
         properties.color = self.ctx.current_layout_properties.background_color
-        clipping_polygon = Vec2.list(wipeout.boundary_path_wcs())
+        clipping_polygon = wipeout.boundary_path_wcs()
         self._designer.draw_filled_polygon(clipping_polygon, properties)
 
     def draw_viewport(self, vp: Viewport) -> None:
@@ -645,7 +635,7 @@ class Frontend:
         props.color = color
         # default SOLID filling
         props.filling = Filling()
-        self._designer.draw_filled_polygon(Vec3.list(points), props)
+        self._designer.draw_filled_polygon(points, props)
 
     def draw_mesh_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         builder = MeshBuilder.from_mesh(entity)  # type: ignore
@@ -693,7 +683,7 @@ class Frontend:
                         Vec3(v.x, v.y, elevation) for v in polygon
                     )
                 else:
-                    points = Vec3.generate(polygon)
+                    points = polygon
                 # Set default SOLID filling for LWPOLYLINE
                 properties.filling = Filling()
                 self._designer.draw_filled_polygon(points, properties)
@@ -750,10 +740,10 @@ def closed_loops(
     ocs: OCS,
     elevation: float,
     offset: Vec3 = NULLVEC,
-) -> list[Path2d]:
-    loops: list[Path2d] = []
+) -> list[Path]:
+    loops = []
     for boundary in paths:
-        path = from_hatch_boundary_path(boundary, ocs, elevation, offset).to_2d_path()
+        path = from_hatch_boundary_path(boundary, ocs, elevation, offset)
         assert isinstance(
             path.user_data, const.BoundaryPathState
         ), "missing attached boundary path state"
@@ -764,7 +754,7 @@ def closed_loops(
     return loops
 
 
-def ignore_text_boxes(paths: Iterable[Path2d]) -> Iterable[Path2d]:
+def ignore_text_boxes(paths: Iterable[Path]) -> Iterable[Path]:
     """Filters text boxes from paths if BoundaryPathState() information is
     attached.
     """
@@ -775,249 +765,6 @@ def ignore_text_boxes(paths: Iterable[Path2d]) -> Iterable[Path2d]:
         ):
             continue  # skip text box paths
         yield path
-
-
-class Designer:
-    """The designer is placed between the frontend and the backend
-    and adds this features:
-
-        - automatically linetype rendering
-        - VIEWPORT rendering
-        - foreground color mapping according Frontend.config.color_policy
-
-    """
-
-    def __init__(self, frontend: Frontend, backend: BackendInterface):
-        self.frontend = frontend
-        self.backend = backend
-        self.config = frontend.config
-        self.pattern_cache: dict[PatternKey, Sequence[float]] = dict()
-        self.text_engine = UnifiedTextRenderer()
-        self.default_font_face = fonts.FontFace()
-        self.clipper = ClippingRect()
-        self.current_vp_scale = 1.0
-        self._current_entity_handle: str = ""
-        self._color_mapping: dict[str, str] = dict()
-
-    @property
-    def vp_ltype_scale(self) -> float:
-        """The linetype pattern should look the same in all viewports
-        regardless of the viewport scale.
-        """
-        return 1.0 / max(self.current_vp_scale, 0.0001)  # max out at 1:10000
-
-    def get_backend_properties(self, properties: Properties) -> BackendProperties:
-        try:
-            color = self._color_mapping[properties.color]
-        except KeyError:
-            color = apply_color_policy(
-                properties.color, self.config.color_policy, self.config.custom_fg_color
-            )
-            self._color_mapping[properties.color] = color
-        return BackendProperties(
-            color,
-            properties.lineweight,
-            properties.layer,
-            properties.pen,
-            self._current_entity_handle,
-        )
-
-    def set_current_entity_handle(self, handle: str) -> None:
-        assert handle is not None
-        self._current_entity_handle = handle
-
-    def draw_viewport(
-        self,
-        vp: Viewport,
-        layout_ctx: RenderContext,
-        bbox_cache: Optional[ezdxf.bbox.Cache] = None,
-    ) -> None:
-        """Draw the content of the given viewport current viewport."""
-        if vp.doc is None:
-            return
-        try:
-            msp_limits = vp.get_modelspace_limits()
-        except ValueError:  # modelspace limits not detectable
-            return
-        if self.enter_viewport(vp):
-            _draw_entities(
-                self.frontend,
-                layout_ctx.from_viewport(vp),
-                filter_vp_entities(vp.doc.modelspace(), msp_limits, bbox_cache),
-            )
-            self.exit_viewport()
-
-    def enter_viewport(self, vp: Viewport) -> bool:
-        """Set current viewport, returns ``True`` for valid viewports."""
-        self.current_vp_scale = vp.get_scale()
-        m = vp.get_transformation_matrix()
-        clipping_path = make_path(vp)
-        if len(clipping_path):
-            self.clipper.push(clipping_path.to_2d_path(), m)
-            return True
-        return False
-
-    def exit_viewport(self):
-        self.clipper.pop()
-        self.current_vp_scale = 1.0
-
-    def draw_point(self, pos: Vec2, properties: Properties) -> None:
-        if self.clipper.is_active:
-            point = self.clipper.clip_point(pos)
-            if point is None:
-                return
-            pos = point
-        self.backend.draw_point(pos, self.get_backend_properties(properties))
-
-    def draw_line(self, start: Vec2, end: Vec2, properties: Properties):
-        if (
-            self.config.line_policy == LinePolicy.SOLID
-            or len(properties.linetype_pattern) < 2  # CONTINUOUS
-        ):
-            if self.clipper.is_active:
-                points = self.clipper.clip_line(start, end)
-                if len(points) != 2:
-                    return
-                start, end = points
-            self.backend.draw_line(start, end, self.get_backend_properties(properties))
-        else:
-            renderer = linetypes.LineTypeRenderer(self.pattern(properties))
-            self.draw_solid_lines(  # includes transformation
-                ((s, e) for s, e in renderer.line_segment(start, end)),
-                properties,
-            )
-
-    def draw_solid_lines(
-        self, lines: Iterable[tuple[Vec2, Vec2]], properties: Properties
-    ) -> None:
-        if self.clipper.is_active:
-            clipped_lines: list[Sequence[Vec2]] = []
-            for start, end in lines:
-                points = self.clipper.clip_line(start, end)
-                if points:
-                    clipped_lines.append(points)
-            lines = clipped_lines  # type: ignore
-        self.backend.draw_solid_lines(lines, self.get_backend_properties(properties))
-
-    def draw_path(self, path: Path2d, properties: Properties):
-        if (
-            self.config.line_policy == LinePolicy.SOLID
-            or len(properties.linetype_pattern) < 2  # CONTINUOUS
-        ):
-            if self.clipper.is_active:
-                for clipped_path in self.clipper.clip_paths(
-                    [path], self.config.max_flattening_distance
-                ):
-                    self.backend.draw_path(
-                        clipped_path, self.get_backend_properties(properties)
-                    )
-                return
-            self.backend.draw_path(path, self.get_backend_properties(properties))
-        else:
-            renderer = linetypes.LineTypeRenderer(self.pattern(properties))
-            vertices = path.flattening(self.config.max_flattening_distance, segments=16)
-
-            self.draw_solid_lines(
-                ((Vec2(s), Vec2(e)) for s, e in renderer.line_segments(vertices)),
-                properties,
-            )
-
-    def draw_filled_paths(
-        self,
-        paths: Iterable[Path2d],
-        holes: Iterable[Path2d],
-        properties: Properties,
-    ) -> None:
-        if self.clipper.is_active:
-            max_sagitta = self.config.max_flattening_distance
-            paths = self.clipper.clip_filled_paths(paths, max_sagitta)
-            holes = self.clipper.clip_filled_paths(holes, max_sagitta)
-        self.backend.draw_filled_paths(
-            paths, holes, self.get_backend_properties(properties)
-        )
-
-    def draw_filled_polygon(
-        self, points: Iterable[Vec2], properties: Properties
-    ) -> None:
-        if self.clipper.is_active:
-            points = self.clipper.clip_polygon(points)
-        self.backend.draw_filled_polygon(
-            points, self.get_backend_properties(properties)
-        )
-
-    def pattern(self, properties: Properties) -> Sequence[float]:
-        """Get pattern - implements pattern caching."""
-        if self.config.line_policy == LinePolicy.SOLID:
-            scale = 0.0
-        else:
-            scale = properties.linetype_scale * self.vp_ltype_scale
-
-        key: PatternKey = (properties.linetype_name, scale)
-        pattern_ = self.pattern_cache.get(key)
-        if pattern_ is None:
-            pattern_ = self.create_pattern(properties, scale)
-            self.pattern_cache[key] = pattern_
-        return pattern_
-
-    def create_pattern(self, properties: Properties, scale: float) -> Sequence[float]:
-        """Returns simplified linetype tuple: on-off sequence"""
-        if len(properties.linetype_pattern) < 2:
-            # Do not return None -> None indicates: "not cached"
-            return tuple()
-        else:
-            min_dash_length = self.config.min_dash_length * self.vp_ltype_scale
-            pattern = [
-                max(e * scale, min_dash_length) for e in properties.linetype_pattern
-            ]
-            if len(pattern) % 2:
-                pattern.pop()
-            return pattern
-
-    def draw_text(
-        self,
-        text: str,
-        transform: Matrix44,
-        properties: Properties,
-        cap_height: float,
-        dxftype: str = "TEXT",
-    ) -> None:
-        text_policy = self.config.text_policy
-        if not text.strip() or text_policy == TextPolicy.IGNORE:
-            return  # no point rendering empty strings
-        text = prepare_string_for_rendering(text, dxftype)
-        font_face = properties.font
-        if font_face is None:
-            font_face = self.default_font_face
-        try:
-            text_path = self.text_engine.get_text_path(text, font_face, cap_height)
-        except (RuntimeError, ValueError):
-            return
-
-        transformed_path = text_path.transform(transform)
-        if text_policy == TextPolicy.REPLACE_RECT:
-            bbox = BoundingBox2d(transformed_path.control_vertices())
-            self.draw_path(
-                from_2d_vertices(bbox.rect_vertices(), close=True), properties
-            )
-            return
-        if text_policy == TextPolicy.REPLACE_FILL:
-            bbox = BoundingBox2d(transformed_path.control_vertices())
-            if properties.filling is None:
-                properties.filling = Filling()
-            self.draw_filled_polygon(bbox.rect_vertices(), properties)
-            return
-        if (
-            self.text_engine.is_stroke_font(font_face)
-            or text_policy == TextPolicy.OUTLINE
-        ):
-            self.draw_path(transformed_path, properties)
-            return
-
-        polygons = make_polygon_structure(single_paths([transformed_path]))  # type: ignore
-        external_paths, holes = winding_deconstruction(polygons)  # type: ignore
-        if properties.filling is None:
-            properties.filling = Filling()
-        self.draw_filled_paths(external_paths, holes, properties)  # type: ignore
 
 
 def filter_vp_entities(
@@ -1136,64 +883,3 @@ def _draw_viewports(frontend: Frontend, viewports: list[Viewport]) -> None:
     # Draw viewports in order of "status"
     for viewport in viewports:
         frontend.draw_viewport(viewport)
-
-
-def prepare_string_for_rendering(text: str, dxftype: str) -> str:
-    assert "\n" not in text, "not a single line of text"
-    if dxftype in {"TEXT", "ATTRIB", "ATTDEF"}:
-        text = replace_non_printable_characters(text, replacement="?")
-        text = text.replace("\t", "?")
-    elif dxftype == "MTEXT":
-        text = replace_non_printable_characters(text, replacement="▯")
-        text = text.replace("\t", "        ")
-    else:
-        raise TypeError(dxftype)
-    return text
-
-
-def invert_color(color: Color) -> Color:
-    r, g, b = RGB.from_hex(color)
-    return RGB(255 - r, 255 - g, 255 - b).to_hex()
-
-
-def swap_bw(color: str) -> Color:
-    color = color.lower()
-    if color == "#000000":
-        return "#ffffff"
-    if color == "#ffffff":
-        return "#000000"
-    return color
-
-
-def color_to_monochrome(color: Color, scale: float = 1.0, offset: float = 0.0) -> Color:
-    lum = RGB.from_hex(color).luminance * scale + offset
-    if lum < 0.0:
-        lum = 0.0
-    elif lum > 1.0:
-        lum = 1.0
-    gray = round(lum * 255)
-    return RGB(gray, gray, gray).to_hex()
-
-
-def apply_color_policy(color: Color, policy: ColorPolicy, custom_color: Color) -> Color:
-    alpha = color[7:9]
-    color = color[:7]
-    if policy == ColorPolicy.COLOR_SWAP_BW:
-        color = swap_bw(color)
-    elif policy == ColorPolicy.COLOR_NEGATIVE:
-        color = invert_color(color)
-    elif policy == ColorPolicy.MONOCHROME_DARK_BG:  # [0.3, 1.0]
-        color = color_to_monochrome(color, scale=0.7, offset=0.3)
-    elif policy == ColorPolicy.MONOCHROME_LIGHT_BG:  # [0.0, 0.7]
-        color = color_to_monochrome(color, scale=0.7, offset=0.0)
-    elif policy == ColorPolicy.MONOCHROME:  # [0.0, 1.0]
-        color = color_to_monochrome(color)
-    elif policy == ColorPolicy.BLACK:
-        color = "#000000"
-    elif policy == ColorPolicy.WHITE:
-        color = "#ffffff"
-    elif policy == ColorPolicy.CUSTOM:
-        fg = custom_color
-        color = fg[:7]
-        alpha = fg[7:9]
-    return color + alpha
