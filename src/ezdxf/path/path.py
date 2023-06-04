@@ -189,16 +189,18 @@ class AbstractPath(Generic[T], abc.ABC):
     @property
     def has_lines(self) -> bool:
         """Returns ``True`` if the path has any line segments."""
-        return any(cmd == Command.LINE_TO for cmd in self._commands)
+        return Command.LINE_TO in self._commands
 
     @property
     def has_curves(self) -> bool:
         """Returns ``True`` if the path has any curve segments."""
-        return any(cmd in AnyCurve for cmd in self._commands)
+        return (
+            Command.CURVE4_TO in self._commands or Command.CURVE3_TO in self._commands
+        )
 
     @property
     def has_sub_paths(self) -> bool:
-        """Returns ``True`` if the path is a :term:`Multi-Path` object which
+        """Returns ``True`` if the path is a :term:`Multi-Path` object that
         contains multiple sub-paths.
 
         """
@@ -310,7 +312,7 @@ class AbstractPath(Generic[T], abc.ABC):
         return None
 
     def reversed(self) -> Self:
-        """Returns a new :class:`Path` with reversed segments and control
+        """Returns a new :class:`Path` with reversed commands and control
         vertices.
 
         """
