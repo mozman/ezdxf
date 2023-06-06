@@ -1,4 +1,4 @@
-#  Copyright (c) 2020-2022, Manfred Moitzi
+#  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
 """
 Implementation of the `__geo_interface__`: https://gist.github.com/sgillies/2217756
@@ -12,24 +12,29 @@ and examples : https://tools.ietf.org/html/rfc7946#appendix-A
 from __future__ import annotations
 from typing import (
     Iterable,
+    Iterator,
     Union,
     cast,
     Callable,
     Sequence,
     Optional,
+    Any,
+    MutableMapping,
 )
+from typing_extensions import TypeAlias, Self
 import numbers
 import copy
 import math
+import enum
 from ezdxf.math import Vec3, has_clockwise_orientation, Matrix44
 from ezdxf.path import make_path, from_hatch_boundary_path, make_polygon_structure
-from ezdxf.entities import DXFGraphic, LWPolyline, Point, Polyline, Line, Solid
+from ezdxf.entities import DXFGraphic, LWPolyline, Point, Polyline, Line
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.lldxf import const
 from ezdxf.entities import factory
 
 
-__all__ = ["proxy", "dxf_entities", "gfilter", "GeoProxy"]
+__all__ = ["proxy", "dxf_entities", "gfilter", "GeoProxy", "PolygonConversion"]
 
 TYPE = "type"
 COORDINATES = "coordinates"
@@ -62,12 +67,32 @@ SUPPORTED_DXF_TYPES = {
     "SPLINE",
 }
 
+GeoMapping: TypeAlias = MutableMapping[str, Any]
+PostProcessFunc: TypeAlias = Callable[[DXFGraphic, GeoMapping], None]
+
+
+class PolygonConversion(enum.IntEnum):
+    """Polygon conversion types as :class:`IntEnum`.
+
+    Attributes:
+        HATCH:
+        POLYLINE:
+        HATCH_AND_POLYLINE:
+        MPOLYGON:
+
+    """
+
+    HATCH = 1
+    POLYLINE = 2
+    HATCH_AND_POLYLINE = 3
+    MPOLYGON = 4
+
 
 def proxy(
     entity: Union[DXFGraphic, Iterable[DXFGraphic]],
     distance: float = MAX_FLATTENING_DISTANCE,
     force_line_string: bool = False,
-) -> "GeoProxy":
+) -> GeoProxy:
     """Returns a :class:`GeoProxy` object.
 
     Args:
@@ -83,24 +108,25 @@ def proxy(
 
 
 def dxf_entities(
-    geo_mapping, polygon: int = 1, dxfattribs = None
-) -> Iterable[DXFGraphic]:
+    geo_mapping: GeoMapping, polygon=PolygonConversion.HATCH, dxfattribs=None
+) -> Iterator[DXFGraphic]:
     """Returns ``__geo_interface__`` mappings as DXF entities.
 
-    The `polygon` argument determines the method to convert polygons,
-    use 1 for :class:`~ezdxf.entities.Hatch` entity, 2 for
-    :class:`~ezdxf.entities.LWPolyline` or 3 for both.
-    Option 2 returns for the exterior path and each hole a separated
-    :class:`LWPolyline` entity. The :class:`Hatch` entity supports holes,
-    but has no explicit border line.
+    The enum `polygon` determines the method to convert polygons,
+    use :attr:`PolygonConversion.HATCH` for :class:`~ezdxf.entities.Hatch` entity,
+    :attr:`PolygonConversion.POLYLINE` for :class:`~ezdxf.entities.LWPolyline` or
+    :attr:`PolygonConversion.HATCH_AND_POLYLINE` for both.
+    Option :attr:`PolygonConversion.POLYLINE` returns for the exterior path and each hole
+    a separated :class:`LWPolyline` entity. The :class:`Hatch` entity supports holes,
+    but has no explicit borderline.
 
     Yields :class:`Hatch` always before :class:`LWPolyline` entities.
 
-    :class:`~ezdxf.entities.MPolygon` support was added in v0.16.6, which is
-    like a :class:`~ezdxf.entities.Hatch` entity  with additional border
-    lines, but the MPOLYGON entity is not a core DXF entity and DXF viewers,
+    :attr:`PolygonConversion.MPOLYGON` support was added in v0.16.6, which is
+    like a :class:`~ezdxf.entities.Hatch` entity  with additional borderlines,
+    but the MPOLYGON entity is not a core DXF entity and DXF viewers,
     applications and libraries my not support this entity. The DXF attribute
-    `color` defines the border line color and `fill_color` the color of the
+    `color` defines the borderline color and `fill_color` the color of the
     solid filling.
 
     The returned DXF entities can be added to a layout by the
@@ -109,14 +135,14 @@ def dxf_entities(
     Args:
         geo_mapping: ``__geo__interface__`` mapping as :class:`dict` or a Python
             object with a :attr:`__geo__interface__` property
-        polygon: method to convert polygons (1-2-3-4)
+        polygon: see :class:`PolygonConversion`
         dxfattribs: dict with additional DXF attributes
 
     """
     return GeoProxy.parse(geo_mapping).to_dxf_entities(polygon, dxfattribs)
 
 
-def gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]:
+def gfilter(entities: Iterable[DXFGraphic]) -> Iterator[DXFGraphic]:
     """Filter DXF entities from iterable `entities`, which are incompatible to
     the ``__geo_reference__`` interface.
     """
@@ -128,7 +154,7 @@ def gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]:
             yield e
 
 
-TFunc = Callable[[Vec3], Vec3]
+TFunc: TypeAlias = Callable[[Vec3], Vec3]
 
 
 class GeoProxy:
@@ -148,12 +174,12 @@ class GeoProxy:
 
     """
 
-    def __init__(self, geo_mapping: dict, places: int = 6):
+    def __init__(self, geo_mapping: GeoMapping, places: int = 6):
         self._root = geo_mapping
         self.places = places
 
     @classmethod
-    def parse(cls, geo_mapping) -> "GeoProxy":
+    def parse(cls, geo_mapping: GeoMapping) -> Self:
         """Parse and compile a ``__geo_interface__`` mapping as :class:`dict`
         or a Python object with a ``__geo_interface__`` property, does some
         basic syntax checks, converts all coordinates into :class:`Vec3`
@@ -166,7 +192,7 @@ class GeoProxy:
         return cls(parse(geo_mapping))
 
     @property
-    def root(self) -> dict:
+    def root(self) -> GeoMapping:
         return self._root
 
     @property
@@ -174,20 +200,20 @@ class GeoProxy:
         """Property returns the top level entity type or ``None``."""
         return self._root.get("type")
 
-    def __copy__(self) -> "GeoProxy":
+    def __copy__(self) -> GeoProxy:
         """Returns a deep copy."""
         return copy.deepcopy(self)
 
     copy = __copy__
 
     @property
-    def __geo_interface__(self) -> dict:
+    def __geo_interface__(self) -> GeoMapping:
         """Returns the ``__geo_interface__`` compatible mapping as
         :class:`dict`.
         """
         return _rebuild(self._root, self.places)
 
-    def __iter__(self) -> Iterable[dict]:
+    def __iter__(self) -> Iterator[GeoMapping]:
         """Iterate over all geo content objects.
 
         Yields only "Point", "LineString", "Polygon", "MultiPoint",
@@ -212,7 +238,7 @@ class GeoProxy:
 
         yield from _iter(self._root)
 
-    def filter(self, func: Callable[["GeoProxy"], bool]) -> None:
+    def filter(self, func: Callable[[GeoProxy], bool]) -> None:
         """Removes all mappings for which `func()` returns ``False``.
         The function only has to handle Point, LineString and Polygon entities,
         other entities like MultiPolygon are divided into separate entities
@@ -348,7 +374,7 @@ class GeoProxy:
 
         """
 
-        def process(entity: dict):
+        def process(entity: GeoMapping):
             def transform(coords):
                 if isinstance(coords, Vec3):
                     return func(coords)
@@ -366,7 +392,7 @@ class GeoProxy:
         entity: Union[DXFGraphic, Iterable[DXFGraphic]],
         distance: float = MAX_FLATTENING_DISTANCE,
         force_line_string: bool = False,
-    ) -> "GeoProxy":
+    ) -> GeoProxy:
         """Constructor from a single DXF entity or an iterable of DXF entities.
 
         Args:
@@ -385,8 +411,8 @@ class GeoProxy:
         return cls(m)
 
     def to_dxf_entities(
-        self, polygon: int = 1, dxfattribs = None
-    ) -> Iterable[DXFGraphic]:
+        self, polygon=PolygonConversion.HATCH, dxfattribs=None
+    ) -> Iterator[DXFGraphic]:
         """Returns stored ``__geo_interface__`` mappings as DXF entities.
 
         The `polygon` argument determines the method to convert polygons,
@@ -394,22 +420,22 @@ class GeoProxy:
         :class:`~ezdxf.entities.LWPolyline` or 3 for both.
         Option 2 returns for the exterior path and each hole a separated
         :class:`LWPolyline` entity. The :class:`Hatch` entity supports holes,
-        but has no explicit border line.
+        but has no explicit borderline.
 
         Yields :class:`Hatch` always before :class:`LWPolyline` entities.
 
         :class:`~ezdxf.entities.MPolygon` support was added in v0.16.6, which is
-        like a :class:`~ezdxf.entities.Hatch` entity  with additional border
-        lines, but the MPOLYGON entity is not a core DXF entity and DXF viewers,
+        like a :class:`~ezdxf.entities.Hatch` entity  with additional borderlines,
+        but the MPOLYGON entity is not a core DXF entity and DXF viewers,
         applications and libraries my not support this entity. The DXF attribute
-        `color` defines the border line color and `fill_color` the color of the
+        `color` defines the borderline color and `fill_color` the color of the
         solid filling.
 
         The returned DXF entities can be added to a layout by the
         :meth:`Layout.add_entity` method.
 
         Args:
-            polygon: method to convert polygons (1-2-3-4)
+            polygon: see :class:`PolygonConversion`
             dxfattribs: dict with additional DXF attributes
 
         """
@@ -426,24 +452,22 @@ class GeoProxy:
             polyline.append_points(vertices, format="xy")
             return polyline
 
-        def polygon_(exterior: list, holes: list) -> Iterable[DXFGraphic]:
-            if polygon & 4:  # MPOLYGON
+        def polygon_(exterior: list, holes: list) -> Iterator[DXFGraphic]:
+            if polygon == PolygonConversion.MPOLYGON:
                 yield mpolygon_(exterior, holes)
                 # the following DXF entities do not support the
                 # "fill_color" attribute
                 return
-            if polygon & 1:  # HATCH
+            if polygon & PolygonConversion.HATCH:
                 yield hatch_(exterior, holes)
-            if polygon & 2:  # LWPOLYLINE
+            if polygon & PolygonConversion.POLYLINE:
                 for path in [exterior] + holes:
                     yield lwpolyline(path)
 
         def dxf_polygon_(
             dxftype: str, exterior: Sequence, holes: Sequence
         ) -> DXFPolygon:
-            dxf_polygon = cast(
-                DXFPolygon, factory.new(dxftype, dxfattribs=dxfattribs)
-            )
+            dxf_polygon = cast(DXFPolygon, factory.new(dxftype, dxfattribs=dxfattribs))
             dxf_polygon.dxf.hatch_style = const.HATCH_STYLE_OUTERMOST
             dxf_polygon.paths.add_polyline_path(
                 exterior, flags=const.BOUNDARY_PATH_EXTERNAL
@@ -460,7 +484,7 @@ class GeoProxy:
         def mpolygon_(exterior: Sequence, holes: Sequence) -> DXFPolygon:
             return dxf_polygon_("MPOLYGON", exterior, holes)
 
-        def entity(type_, coordinates) -> Iterable[DXFGraphic]:
+        def entity(type_, coordinates) -> Iterator[DXFGraphic]:
             if type_ == POINT:
                 yield point(coordinates)
             elif type_ == LINE_STRING:
@@ -487,7 +511,7 @@ class GeoProxy:
             yield from entity(_mapping.get(TYPE), _mapping.get(COORDINATES))
 
 
-def parse(geo_mapping: dict) -> dict:
+def parse(geo_mapping: GeoMapping) -> GeoMapping:
     """Parse ``__geo_interface__`` convert all coordinates into
     :class:`Vec3` objects, Polygon['coordinates'] is always a
     tuple (exterior, holes), holes maybe an empty list.
@@ -511,9 +535,7 @@ def parse(geo_mapping: dict) -> dict:
         if geometries:
             geo_mapping[GEOMETRIES] = [parse(g) for g in geometries]
         else:
-            raise ValueError(
-                f'Missing key "{GEOMETRIES}" in GeometryCollection.'
-            )
+            raise ValueError(f'Missing key "{GEOMETRIES}" in GeometryCollection.')
     elif type_ == FEATURE:
         # The value of the geometry member SHALL be either a Geometry object
         # or, in the case that the Feature is unlocated, a JSON null value.
@@ -575,7 +597,7 @@ def _parse_polygon(coordinates: Sequence) -> Sequence:
     return Vec3.list(exterior), [Vec3.list(h) for h in holes]
 
 
-def _rebuild(geo_mapping: dict, places: int = 6) -> dict:
+def _rebuild(geo_mapping: GeoMapping, places: int = 6) -> GeoMapping:
     """Returns ``__geo_interface__`` compatible mapping as :class:`dict` from
     compiled internal representation.
 
@@ -594,9 +616,7 @@ def _rebuild(geo_mapping: dict, places: int = 6) -> dict:
     if type_ == FEATURE_COLLECTION:
         geo_interface[FEATURES] = [_rebuild(f) for f in geo_interface[FEATURES]]
     elif type_ == GEOMETRY_COLLECTION:
-        geo_interface[GEOMETRIES] = [
-            _rebuild(g) for g in geo_interface[GEOMETRIES]
-        ]
+        geo_interface[GEOMETRIES] = [_rebuild(g) for g in geo_interface[GEOMETRIES]]
     elif type_ == FEATURE:
         geo_interface[GEOMETRY] = _rebuild(geo_interface[GEOMETRY])
     elif type_ == POINT:
@@ -613,8 +633,7 @@ def _rebuild(geo_mapping: dict, places: int = 6) -> dict:
         geo_interface[COORDINATES] = _polygon(*geo_interface[COORDINATES])
     elif type_ == MULTI_POLYGON:
         geo_interface[COORDINATES] = [
-            _polygon(exterior, holes)
-            for exterior, holes in geo_interface[COORDINATES]
+            _polygon(exterior, holes) for exterior, holes in geo_interface[COORDINATES]
         ]
     return geo_interface
 
@@ -623,7 +642,7 @@ def mapping(
     entity: DXFGraphic,
     distance: float = MAX_FLATTENING_DISTANCE,
     force_line_string: bool = False,
-) -> dict:
+) -> GeoMapping:
     """Create the compiled ``__geo_interface__`` mapping as :class:`dict`
     for the given DXF `entity`, all coordinates are :class:`Vec3` objects and
     represents "Polygon" always as tuple (exterior, holes) even without holes.
@@ -673,9 +692,7 @@ def mapping(
         raise TypeError(dxftype)
 
 
-def _line_string_or_polygon_mapping(
-    points: list[Vec3], force_line_string: bool
-):
+def _line_string_or_polygon_mapping(points: list[Vec3], force_line_string: bool):
     len_ = len(points)
     if len_ < 2:
         raise ValueError("Invalid vertex count.")
@@ -690,7 +707,7 @@ def _line_string_or_polygon_mapping(
 
 def _hatch_as_polygon(
     hatch: DXFPolygon, distance: float, force_line_string: bool
-) -> dict:
+) -> GeoMapping:
     def boundary_to_vertices(boundary) -> list[Vec3]:
         path = from_hatch_boundary_path(boundary, ocs, elevation)
         return path_to_vertices(path)
@@ -721,9 +738,7 @@ def _hatch_as_polygon(
         if force_line_string:
             # Build a MultiString collection:
             points = boundary_to_vertices(exterior)
-            geometries = [
-                _line_string_or_polygon_mapping(points, force_line_string)
-            ]
+            geometries = [_line_string_or_polygon_mapping(points, force_line_string)]
             # All other boundary paths are treated as holes
             for hole in boundaries[1:]:
                 points = boundary_to_vertices(hole)
@@ -734,14 +749,10 @@ def _hatch_as_polygon(
         else:
             # Multiple separated polygons are possible in one HATCH entity:
             polygons = []
-            for exterior, holes in _boundaries_to_polygons(
-                boundaries, ocs, elevation
-            ):
+            for exterior, holes in _boundaries_to_polygons(boundaries, ocs, elevation):
                 points = path_to_vertices(exterior)
                 polygons.append(
-                    polygon_mapping(
-                        points, [path_to_vertices(hole) for hole in holes]
-                    )
+                    polygon_mapping(points, [path_to_vertices(hole) for hole in holes])
                 )
             if len(polygons) > 1:
                 return join_multi_single_type_mappings(polygons)
@@ -750,8 +761,7 @@ def _hatch_as_polygon(
 
 def _boundaries_to_polygons(boundaries, ocs, elevation):
     paths = (
-        from_hatch_boundary_path(boundary, ocs, elevation)
-        for boundary in boundaries
+        from_hatch_boundary_path(boundary, ocs, elevation) for boundary in boundaries
     )
     for polygon in make_polygon_structure(paths):
         exterior = polygon[0]
@@ -763,7 +773,7 @@ def collection(
     entities: Iterable[DXFGraphic],
     distance: float = MAX_FLATTENING_DISTANCE,
     force_line_string: bool = False,
-) -> dict:
+) -> GeoMapping:
     """Create the ``__geo_interface__`` mapping as :class:`dict` for the
     given DXF `entities`, see https://gist.github.com/sgillies/2217756
 
@@ -789,7 +799,7 @@ def collection(
         return join_multi_single_type_mappings(m)
 
 
-def line_string_mapping(points: list[Vec3]) -> dict:
+def line_string_mapping(points: list[Vec3]) -> GeoMapping:
     """Returns a "LineString" mapping.
 
     .. code::
@@ -834,7 +844,7 @@ def linear_ring(points: list[Vec3], ccw=True) -> list[Vec3]:
     return points
 
 
-def polygon_mapping(points: list[Vec3], holes: list[list[Vec3]]) -> dict:
+def polygon_mapping(points: list[Vec3], holes: list[list[Vec3]]) -> GeoMapping:
     """Returns a "Polygon" mapping.
 
     .. code::
@@ -872,7 +882,7 @@ def polygon_mapping(points: list[Vec3], holes: list[list[Vec3]]) -> dict:
     }
 
 
-def join_multi_single_type_mappings(geometries: Iterable[dict]) -> dict:
+def join_multi_single_type_mappings(geometries: Iterable[GeoMapping]) -> GeoMapping:
     """Returns multiple geometries as a "MultiPoint", "MultiLineString" or
     "MultiPolygon" mapping.
     """
@@ -890,7 +900,7 @@ def join_multi_single_type_mappings(geometries: Iterable[dict]) -> dict:
         return {TYPE: "Multi" + tuple(types)[0], COORDINATES: data}
 
 
-def geometry_collection_mapping(geometries: Iterable[dict]) -> dict:
+def geometry_collection_mapping(geometries: Iterable[GeoMapping]) -> GeoMapping:
     """Returns multiple geometries as a "GeometryCollection" mapping."""
     return {TYPE: GEOMETRY_COLLECTION, GEOMETRIES: list(geometries)}
 
@@ -903,7 +913,7 @@ def geometry_collection_mapping(geometries: Iterable[dict]) -> dict:
 WGS84_SEMI_MAJOR_AXIS = 6378137
 WGS84_SEMI_MINOR_AXIS = 6356752.3142
 WGS84_ELLIPSOID_ECCENTRIC = math.sqrt(
-    1.0 - WGS84_SEMI_MINOR_AXIS ** 2 / WGS84_SEMI_MAJOR_AXIS ** 2
+    1.0 - WGS84_SEMI_MINOR_AXIS**2 / WGS84_SEMI_MAJOR_AXIS**2
 )
 CONST_E2 = math.e / 2.0
 CONST_PI_2 = math.pi / 2.0

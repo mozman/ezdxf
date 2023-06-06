@@ -98,7 +98,7 @@ GeoProxy Class
 
     .. autoattribute:: geotype
 
-    .. automethod:: parse(geo_mapping: Dict) -> GeoProxy
+    .. automethod:: parse
 
     .. automethod:: from_dxf_entities
 
@@ -120,6 +120,7 @@ GeoProxy Class
 
     .. automethod:: filter
 
+
 Helper Functions
 ----------------
 
@@ -130,6 +131,15 @@ Helper Functions
 .. autofunction:: dms2dd
 
 .. autofunction:: dd2dms
+
+Types
+-----
+
+.. autoclass:: PolygonConversion
+
+.. autoclass:: GeoMapping
+
+.. autoclass:: PostProcessFunc
 
 
 .. _Appendix-A: https://tools.ietf.org/html/rfc7946#appendix-A
