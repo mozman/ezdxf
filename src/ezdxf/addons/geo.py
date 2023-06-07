@@ -49,6 +49,7 @@ GEOMETRIES = "geometries"
 GEOMETRY = "geometry"
 FEATURES = "features"
 FEATURE = "Feature"
+PROPERTIES = "properties"
 FEATURE_COLLECTION = "FeatureCollection"
 MAX_FLATTENING_DISTANCE = 0.1
 SUPPORTED_DXF_TYPES = {
@@ -108,7 +109,11 @@ def proxy(
 
 
 def dxf_entities(
-    geo_mapping: GeoMapping, polygon=PolygonConversion.HATCH, dxfattribs=None
+    geo_mapping: GeoMapping,
+    polygon=PolygonConversion.HATCH,
+    dxfattribs=None,
+    *,
+    post_process: Optional[PostProcessFunc] = None,
 ) -> Iterator[DXFGraphic]:
     """Returns ``__geo_interface__`` mappings as DXF entities.
 
@@ -137,9 +142,13 @@ def dxf_entities(
             object with a :attr:`__geo__interface__` property
         polygon: see :class:`PolygonConversion`
         dxfattribs: dict with additional DXF attributes
+        post_process: post process function of type :class:`PostProcesFunc`that get the
+            created DXF entity and the geo mapping as input.
 
     """
-    return GeoProxy.parse(geo_mapping).to_dxf_entities(polygon, dxfattribs)
+    return GeoProxy.parse(geo_mapping).to_dxf_entities(
+        polygon, dxfattribs, post_process=post_process
+    )
 
 
 def gfilter(entities: Iterable[DXFGraphic]) -> Iterator[DXFGraphic]:
@@ -411,7 +420,11 @@ class GeoProxy:
         return cls(m)
 
     def to_dxf_entities(
-        self, polygon=PolygonConversion.HATCH, dxfattribs=None
+        self,
+        polygon=PolygonConversion.HATCH,
+        dxfattribs=None,
+        *,
+        post_process: Optional[PostProcessFunc] = None,
     ) -> Iterator[DXFGraphic]:
         """Returns stored ``__geo_interface__`` mappings as DXF entities.
 
@@ -437,6 +450,8 @@ class GeoProxy:
         Args:
             polygon: see :class:`PolygonConversion`
             dxfattribs: dict with additional DXF attributes
+            post_process: post process function of type :class:`PostProcesFunc`that get the
+                created DXF entity and the geo mapping as input.
 
         """
 
@@ -507,8 +522,25 @@ class GeoProxy:
             raise ValueError(f"invalid value for polygon: {polygon}")
 
         dxfattribs = dict(dxfattribs or {})
-        for _mapping in self.__iter__():
-            yield from entity(_mapping.get(TYPE), _mapping.get(COORDINATES))
+        for _mapping in iter_features(self._root):
+            for e in entity(_mapping.get(TYPE), _mapping.get(COORDINATES)):
+                if post_process:
+                    post_process(e, _mapping)
+                yield e
+
+
+def iter_features(root: GeoMapping) -> Iterator[GeoMapping]:
+    type_ = root[TYPE]
+    if type_ == FEATURE_COLLECTION:
+        for feature in root[FEATURES]:
+            yield from iter_features(feature)
+    elif type_ == GEOMETRY_COLLECTION:
+        for geometry in root[GEOMETRIES]:
+            yield from iter_features(geometry)
+    elif type_ == FEATURE:
+        yield root[GEOMETRY]
+    else:
+        yield root
 
 
 def parse(geo_mapping: GeoMapping) -> GeoMapping:
@@ -994,3 +1026,12 @@ def dd2dms(dd: float) -> tuple[float, float, float]:
     m, s = divmod(dd * 3600, 60)
     d, m = divmod(m, 60)
     return d, m, s
+
+
+def assign_layers(entity: DXFGraphic, mapping: GeoMapping) -> None:
+    properties = mapping.get(PROPERTIES)
+    if properties is None:
+        return
+    layer = properties.get("layer")
+    if layer:
+        entity.dxf.layer = layer
