@@ -8,6 +8,8 @@ Which is also supported by Shapely: https://pypi.org/project/Shapely/
 Type definitions see GeoJson Standard: https://tools.ietf.org/html/rfc7946
 and examples : https://tools.ietf.org/html/rfc7946#appendix-A
 
+GeoJSON Linter: https://geojsonlint.com/
+
 """
 from __future__ import annotations
 from typing import (
@@ -224,7 +226,7 @@ class GeoProxy:
         return _rebuild(self._root, self.places)
 
     def __iter__(self) -> Iterator[GeoMapping]:
-        """Iterate over all geo content objects.
+        """Iterate over all geometry entities.
 
         Yields only "Point", "LineString", "Polygon", "MultiPoint",
         "MultiLineString" and "MultiPolygon" objects, returns the content of
@@ -233,18 +235,22 @@ class GeoProxy:
 
         """
 
-        def _iter(root):
-            type_ = root[TYPE]
+        def _iter(node: GeoMapping) -> Iterator[GeoMapping]:
+            type_ = node[TYPE]
             if type_ == FEATURE_COLLECTION:
-                for feature in root[FEATURES]:
+                for feature in node[FEATURES]:
                     yield from _iter(feature)
             elif type_ == GEOMETRY_COLLECTION:
-                for geometry in root[GEOMETRIES]:
+                for geometry in node[GEOMETRIES]:
                     yield from _iter(geometry)
             elif type_ == FEATURE:
-                yield root[GEOMETRY]
+                geometry = node[GEOMETRY]
+                if geometry[TYPE] == GEOMETRY_COLLECTION:
+                    yield from _iter(geometry)
+                else:
+                    yield geometry
             else:
-                yield root
+                yield node
 
         yield from _iter(self._root)
 
@@ -558,7 +564,7 @@ def iter_features(geo_mapping: GeoMapping) -> Iterator[tuple[GeoMapping, GeoMapp
             if geometry[TYPE] == GEOMETRY_COLLECTION:
                 yield from features(geometry)
             else:
-                yield current_feature, node[GEOMETRY]
+                yield current_feature, geometry
         else:
             yield current_feature, node
 

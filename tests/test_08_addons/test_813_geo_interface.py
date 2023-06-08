@@ -256,9 +256,23 @@ def test_parse_feature():
     assert feature["geometry"] == LINE_STRING
 
 
+def test_feature_with_geometry_collection():
+    feature = geo.parse(FEATURE_PROPERTIES_GC)
+    geometry_collection = feature["geometry"]
+    assert geometry_collection["type"] == "GeometryCollection"
+    geometries = geometry_collection["geometries"]
+    assert isinstance(geometries, list)
+
+
 def test_parse_feature_collection():
     feature_collection = geo.parse(FEATURE_COLLECTION)
     assert len(feature_collection["features"]) == 2
+
+
+def test_iter_feature_with_geometry_collection():
+    gp = geo.GeoProxy(FEATURE_PROPERTIES_GC)
+    entities = list(gp)
+    assert len(entities) == 3
 
 
 @pytest.mark.parametrize(
