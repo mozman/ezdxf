@@ -24,5 +24,9 @@ cache file of `ezdxf` you have to rebuild the cache file:
 
     fonts.build_system_font_cache()
 
+or call the `ezdxf` launcher to do that::
+
+    ezdxf --fonts
+
 
 .. _ezdxf/tools/fonts.py: https://github.com/mozman/ezdxf/blob/6670af2ac9931fc5b429c80299d2d5f72dfaf7d2/src/ezdxf/tools/fonts.py
