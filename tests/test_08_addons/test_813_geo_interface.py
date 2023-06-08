@@ -67,8 +67,14 @@ FEATURE_COLLECTION = {
 
 FEATURE_PROPERTIES = {
     "type": "Feature",
-    "properties": {"layer", "GeoJSON"},
+    "properties": {"layer": "GeoJSON"},
     "geometry": LINE_STRING,
+}
+
+FEATURE_PROPERTIES_GC = {
+    "type": "Feature",
+    "properties": {"layer": "GeoJSON"},
+    "geometry": GEOMETRY_COLLECTION,
 }
 
 
@@ -337,13 +343,21 @@ def test_feature_collection_to_dxf_entities():
     assert collection[0].dxftype() == "LWPOLYLINE"
 
 
-@pytest.mark.xfail(reason="property mapping not implemented")
 def test_dxf_entities_post_process_properties():
     entities = list(
         geo.dxf_entities(FEATURE_PROPERTIES, post_process=geo.assign_layers)
     )
     polyline = entities[0]
     assert polyline.dxf.layer == "GeoJSON"
+
+
+def test_dxf_entities_from_geometry_collection_post_process_properties():
+    entities = list(
+        geo.dxf_entities(FEATURE_PROPERTIES_GC, post_process=geo.assign_layers)
+    )
+    assert len(entities) == 3
+    for e in entities:
+        assert e.dxf.layer == "GeoJSON"
 
 
 @pytest.mark.parametrize(

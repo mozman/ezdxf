@@ -132,6 +132,18 @@ Helper Functions
 
 .. autofunction:: dd2dms
 
+.. autofunction:: assign_layers
+
+.. code-block:: Python
+
+    def assign_layers(entity: DXFGraphic, mapping: GeoMapping) -> None:
+        properties = mapping.get("properties)
+        if properties is None:
+            return
+        layer = properties.get("layer")
+        if layer:
+            entity.dxf.layer = layer
+
 Types
 -----
 

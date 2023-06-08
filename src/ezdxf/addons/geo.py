@@ -143,7 +143,8 @@ def dxf_entities(
         polygon: see :class:`PolygonConversion`
         dxfattribs: dict with additional DXF attributes
         post_process: post process function of type :class:`PostProcesFunc` that get the
-            created DXF entity and the geo mapping as input.
+            created DXF entity and the geo mapping as input, see reference implementation
+            :func:`assign_layers`
 
     """
     return GeoProxy.parse(geo_mapping).to_dxf_entities(
@@ -451,7 +452,8 @@ class GeoProxy:
             polygon: see :class:`PolygonConversion`
             dxfattribs: dict with additional DXF attributes
             post_process: post process function of type :class:`PostProcesFunc` that get the
-                created DXF entity and the geo mapping as input.
+                created DXF entity and the geo mapping as input, see reference implementation
+                :func:`assign_layers`
 
         """
 
@@ -522,25 +524,45 @@ class GeoProxy:
             raise ValueError(f"invalid value for polygon: {polygon}")
 
         dxfattribs = dict(dxfattribs or {})
-        for _mapping in iter_features(self._root):
-            for e in entity(_mapping.get(TYPE), _mapping.get(COORDINATES)):
+        for feature, geometry in iter_features(self._root):
+            type_ = geometry.get(TYPE)
+            for e in entity(type_, geometry.get(COORDINATES)):
                 if post_process:
-                    post_process(e, _mapping)
+                    post_process(e, feature)
                 yield e
 
 
-def iter_features(root: GeoMapping) -> Iterator[GeoMapping]:
-    type_ = root[TYPE]
-    if type_ == FEATURE_COLLECTION:
-        for feature in root[FEATURES]:
-            yield from iter_features(feature)
-    elif type_ == GEOMETRY_COLLECTION:
-        for geometry in root[GEOMETRIES]:
-            yield from iter_features(geometry)
-    elif type_ == FEATURE:
-        yield root[GEOMETRY]
-    else:
-        yield root
+def iter_features(geo_mapping: GeoMapping) -> Iterator[tuple[GeoMapping, GeoMapping]]:
+    """Yields all geometries of a ``__geo_mapping__`` as (`feature`, `geometry`) tuples.
+
+    If no feature is defined the `feature` value is an empty ``dict``. When a `feature`
+    contains `GeometryCollections`, the function yields for each sub-geometry a separate
+    (`feature`, `geometry`) tuple.
+
+    """
+    current_feature: GeoMapping = {}
+
+    def features(node: GeoMapping) -> Iterator[tuple[GeoMapping, GeoMapping]]:
+        nonlocal current_feature
+
+        type_ = node[TYPE]
+        if type_ == FEATURE_COLLECTION:
+            for feature in node[FEATURES]:
+                yield from features(feature)
+        elif type_ == GEOMETRY_COLLECTION:
+            for geometry in node[GEOMETRIES]:
+                yield from features(geometry)
+        elif type_ == FEATURE:
+            current_feature = node
+            geometry = node[GEOMETRY]
+            if geometry[TYPE] == GEOMETRY_COLLECTION:
+                yield from features(geometry)
+            else:
+                yield current_feature, node[GEOMETRY]
+        else:
+            yield current_feature, node
+
+    yield from features(geo_mapping)
 
 
 def parse(geo_mapping: GeoMapping) -> GeoMapping:
@@ -1029,6 +1051,13 @@ def dd2dms(dd: float) -> tuple[float, float, float]:
 
 
 def assign_layers(entity: DXFGraphic, mapping: GeoMapping) -> None:
+    """Reference implementation for a :func:`post_process` function.
+
+    .. seealso::
+
+        :func:`dxf_entities`
+
+    """
     properties = mapping.get(PROPERTIES)
     if properties is None:
         return
