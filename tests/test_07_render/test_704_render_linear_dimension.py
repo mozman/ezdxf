@@ -32,7 +32,9 @@ def test_linear_dimension_with_one_tolerance(dwg):
     assert renderer.tol.decimal_places == 2  # default value
     assert renderer.tol.text == "±0.01"
     assert renderer.tol.valign == 0
-    assert compile_mtext(renderer.measurement, renderer.tol) == r"\A0;100{\H0.50x;±0.01}"
+    assert (
+        compile_mtext(renderer.measurement, renderer.tol) == r"\A0;100{\H0.50x;±0.01}"
+    )
 
 
 def test_linear_dimension_with_two_tolerances(dwg):
@@ -54,7 +56,10 @@ def test_linear_dimension_with_two_tolerances(dwg):
     assert renderer.tol.text_upper == "+0.02"
     assert renderer.tol.text_lower == "-0.03"
     assert renderer.tol.valign == 1
-    assert compile_mtext(renderer.measurement, renderer.tol) == r"\A1;101{\H0.50x;\S+0.02^ -0.03;}"
+    assert (
+        compile_mtext(renderer.measurement, renderer.tol)
+        == r"\A1;101{\H0.50x;\S+0.02^ -0.03;}"
+    )
 
 
 def test_linear_dimension_with_limits(dwg):
@@ -74,7 +79,10 @@ def test_linear_dimension_with_limits(dwg):
     assert renderer.tol.decimal_places == 2  # default value
     assert renderer.tol.text_upper == "101.02"
     assert renderer.tol.text_lower == "100.97"
-    assert compile_mtext(renderer.measurement, renderer.tol) == r"{\H0.50x;\S101.02^ 100.97;}"
+    assert (
+        compile_mtext(renderer.measurement, renderer.tol)
+        == r"{\H0.50x;\S101.02^ 100.97;}"
+    )
 
 
 def test_dimension_insert_attribute_translates_the_block_content():
@@ -86,9 +94,7 @@ def test_dimension_insert_attribute_translates_the_block_content():
     blk = dim.get_geometry_block()
 
     blk_points = blk.query("POINT")
-    virtual_points = [
-        e for e in dim.virtual_entities() if e.dxftype() == "POINT"
-    ]
+    virtual_points = [e for e in dim.virtual_entities() if e.dxftype() == "POINT"]
 
     # without the insert attribute, the virtual points should be located at the
     # original location:
@@ -98,9 +104,7 @@ def test_dimension_insert_attribute_translates_the_block_content():
     # set an insertion point for this dimension ...
     INSERT = Vec3(10, 10, 0)
     dim.dxf.insert = Vec3(INSERT)
-    virtual_points = [
-        e for e in dim.virtual_entities() if e.dxftype() == "POINT"
-    ]
+    virtual_points = [e for e in dim.virtual_entities() if e.dxftype() == "POINT"]
 
     # ... and the virtual points should be translated by the insert vector
     for vpoint, blk_point in zip(virtual_points, blk_points):
@@ -111,11 +115,7 @@ def test_dimension_insert_attribute_translates_the_block_content():
 def test_override_all_colors(color):
     new_doc = ezdxf.new()
     new_msp = new_doc.modelspace()
-    style_override = {
-        "dimclrt": color,
-        "dimclrd": color,
-        "dimclre": color,
-    }
+    style_override = {"dimclrt": color, "dimclrd": color, "dimclre": color}
     dim_renderer = new_msp.add_linear_dim(
         base=(0, 10), p1=(0, 0), p2=(100, 0), override=style_override
     ).render()
@@ -125,5 +125,3 @@ def test_override_all_colors(color):
         if entity.dxftype() == "POINT":
             continue
         assert entity.dxf.color == color
-
-
