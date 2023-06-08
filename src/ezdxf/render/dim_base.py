@@ -373,7 +373,7 @@ class DimensionLine:
 class Arrows:
     def __init__(self, dim_style: DimStyleOverride, color: int, scale: float):
         get = dim_style.get
-        self.color: int = color
+        self.color: int = get("dimclrd", color)
         self.tick_size: float = get("dimtsz", 0.0) * scale
         self.arrow1_name: str = ""  # empty string is a closed filled arrow
         self.arrow2_name: str = ""  # empty string is a closed filled arrow

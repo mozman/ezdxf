@@ -42,6 +42,8 @@ Version 1.1.0 Beta
 - BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1
 - BUGFIX: [#855](https://github.com/mozman/ezdxf/issues/855)
   scale `MTEXT/MLEADER` inline commands "absolute text height" at transformation
+- BUGFIX: [#898](https://github.com/mozman/ezdxf/issues/898)
+  use `dimclrd` color for dimension arrow blocks 
 
 Version 1.0.3 - 2023-03-26
 --------------------------

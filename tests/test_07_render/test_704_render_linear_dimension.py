@@ -105,3 +105,25 @@ def test_dimension_insert_attribute_translates_the_block_content():
     # ... and the virtual points should be translated by the insert vector
     for vpoint, blk_point in zip(virtual_points, blk_points):
         assert (vpoint.dxf.location - blk_point.dxf.location).isclose(INSERT)
+
+
+@pytest.mark.parametrize("color", [1, 7])
+def test_override_all_colors(color):
+    new_doc = ezdxf.new()
+    new_msp = new_doc.modelspace()
+    style_override = {
+        "dimclrt": color,
+        "dimclrd": color,
+        "dimclre": color,
+    }
+    dim_renderer = new_msp.add_linear_dim(
+        base=(0, 10), p1=(0, 0), p2=(100, 0), override=style_override
+    ).render()
+    dimension = dim_renderer.dimension
+    blk = dimension.get_geometry_block()
+    for entity in blk:
+        if entity.dxftype() == "POINT":
+            continue
+        assert entity.dxf.color == color
+
+
