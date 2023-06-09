@@ -4,7 +4,7 @@
 import pytest
 
 from ezdxf.npshapes import NumpyPoints2d, NumpyPath2d
-from ezdxf.math import Matrix44, BoundingBox2d, close_vectors
+from ezdxf.math import Matrix44, BoundingBox2d, close_vectors, Vec2
 from ezdxf.path import Path2d, Command, from_vertices
 from ezdxf.fonts import fonts
 
@@ -130,6 +130,112 @@ class TestNumpyPath2d:
         assert p.to_path2d().start == (0, 0)  # default start point
 
 
+class TestNumpyPath2dExtend:
+    @pytest.fixture
+    def first(self):
+        p = Path2d()
+        p.line_to((10, 0))
+        return NumpyPath2d(p)
+
+    @pytest.fixture
+    def second(self):
+        p = Path2d((10, 0))
+        p.line_to((20, 0))
+        return NumpyPath2d(p)
+
+    @pytest.fixture
+    def third(self):
+        p = Path2d((20, 0))
+        p.line_to((30, 0))
+        return NumpyPath2d(p)
+
+    @pytest.fixture
+    def curve3(self):
+        p = Path2d((0, 0))
+        p.curve3_to((10, 0), (5, 3))
+        return NumpyPath2d(p)
+
+    @pytest.fixture
+    def curve4(self):
+        p = Path2d((10, 0))
+        p.curve4_to((20, 0), (13, -3), (17, 3))
+        return NumpyPath2d(p)
+
+    def test_extend_empty_path(self, second):
+        empty = NumpyPath2d(None)
+        empty.extend([second])
+        assert len(empty) == 1
+        assert empty.start.isclose((10, 0))
+        assert empty.end.isclose((20, 0))
+
+    def test_extend_by_empty_path(self, first):
+        first.extend([NumpyPath2d(None)])
+        assert len(first) == 1
+        assert first.start.isclose((0, 0))
+        assert first.end.isclose((10, 0))
+
+    def test_extend_by_empty_2d_path(self, first):
+        empty = Path2d(Vec2(7, 7))  # has no drawing commands
+        first.extend([NumpyPath2d(empty)])
+        assert len(first) == 1
+        assert first.start.isclose((0, 0))
+        assert first.end.isclose((10, 0))
+
+    def test_extend_by_empty_list(self, first):
+        first.extend([])
+        assert len(first) == 1
+        assert first.start.isclose((0, 0))
+        assert first.end.isclose((10, 0))
+
+    def test_concatenate_adjacent_paths(self, first, second):
+        base = NumpyPath2d.concatenate([first, second])
+        assert base.command_codes() == [1, 1]
+        assert base.start.isclose((0, 0))
+        assert base.end.isclose((20, 0))
+
+    def test_concatenate_separated_paths(self, first, third):
+        base = NumpyPath2d.concatenate([first, third])
+        assert base.has_sub_paths is True, "expected a MOVE_TO command"
+        assert base.command_codes() == [1, 4, 1]
+        vertices = base.vertices()
+        assert len(vertices) == 4
+        assert vertices[0].isclose((0, 0))  # start
+        assert vertices[1].isclose((10, 0))  # line_to
+        assert vertices[2].isclose((20, 0))  # move_to
+        assert vertices[3].isclose((30, 0))  # line_to
+
+    def test_concatenate_all_paths(self, first, second, third):
+        base = NumpyPath2d.concatenate([first, second, third])
+        assert base.command_codes() == [1, 1, 1]
+        vertices = base.vertices()
+        assert len(vertices) == 4
+        assert vertices[0].isclose((0, 0))  # start
+        assert vertices[1].isclose((10, 0))  # line_to
+        assert vertices[2].isclose((20, 0))  # line_to
+        assert vertices[3].isclose((30, 0))  # line_to
+
+    def test_concatenate_curves(self, curve3, curve4):
+        base = NumpyPath2d.concatenate([curve3, curve4])
+        assert base.command_codes() == [2, 3]
+        vertices = base.vertices()
+        assert len(vertices) == 6
+        assert vertices[0].isclose((0, 0))  # start
+        assert vertices[1].isclose((5, 3))  # curve_3_to - ctrl
+        assert vertices[2].isclose((10, 0))  # curve_3_to - end
+        assert vertices[3].isclose((13, -3))  # curve_4_to - ctrl1
+        assert vertices[4].isclose((17, 3))  # curve_4_to - ctrl2
+        assert vertices[5].isclose((20, 0))  # curve_4_to - end
+
+    def test_concatenate_empty_list_returns_empty_path(self):
+        base = NumpyPath2d.concatenate([])
+        assert base.command_codes() == []
+        assert base.vertices() == []
+        with pytest.raises(IndexError):
+            base.start.isclose((0, 0))
+        with pytest.raises(IndexError):
+            base.end.isclose((0, 0))
+
+
 def test_path2d_conversion_methods():
     f = fonts.make_font("DejaVuSans.ttf", 1.0)
     source_path = f.text_path("ABCDEFabcdef")
@@ -217,6 +323,7 @@ class TestReversePath:
         r = NumpyPath2d(p).reverse()
         assert r.has_sub_paths is True
         assert len(r) == 3
+        assert r.command_codes() == [1, 4, 1]
         assert r.start == (3, 0, 0)
         assert r.end == (0, 0, 0)
 
@@ -228,6 +335,7 @@ class TestReversePath:
         # A move_to as first command just moves the start point.
         r = NumpyPath2d(p).reverse()
         assert len(r) == 1
+        assert r.command_codes() == [1]
         assert r.start == (1, 0, 0)
         assert r.end == (0, 0, 0)
         assert r.has_sub_paths is False

@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Optional, Iterator
+from typing import Iterable, Optional, Iterator, Sequence
 from typing_extensions import Self
 import abc
 
@@ -117,6 +117,10 @@ class NumpyPath2d(NumpyShape2d):
         clone._vertices = self._vertices.copy()
         return clone
 
+    def command_codes(self) -> list[int]:
+        """Internal API."""
+        return list(self._commands)
+
     clone = __copy__
 
     def to_path2d(self) -> Path2d:
@@ -202,7 +206,7 @@ class NumpyPath2d(NumpyShape2d):
                 index += 1
                 yield end_location
             elif cmd == Command.CURVE3_TO:
-                ctrl, end_location = vertices[index: index+2]
+                ctrl, end_location = vertices[index : index + 2]
                 index += 2
                 pts = Vec2.generate(
                     Bezier3P((start, ctrl, end_location)).flattening(distance, segments)
@@ -210,7 +214,7 @@ class NumpyPath2d(NumpyShape2d):
                 next(pts)  # skip first vertex
                 yield from pts
             elif cmd == Command.CURVE4_TO:
-                ctrl1, ctrl2, end_location = vertices[index:index+3]
+                ctrl1, ctrl2, end_location = vertices[index : index + 3]
                 index += 3
                 pts = Vec2.generate(
                     Bezier4P((start, ctrl1, ctrl2, end_location)).flattening(
@@ -222,3 +226,53 @@ class NumpyPath2d(NumpyShape2d):
             else:
                 raise ValueError(f"Invalid command: {cmd}")
             start = end_location
+
+    # Appending single commands (line_to, move_to, curve3_to, curve4_to) is not
+    # efficient, because numpy arrays do not grow dynamically, they are reallocated for
+    # every single command! Build basic path by the Python Path2d class and
+    # convert the finalized path to a NumpyPath2d instances.
+    # Concatenation of NumpyPath2d objects is faster than extending Path2d objects,
+    # see profiling/numpy_concatenate.py
+
+    def extend(self, paths: Sequence[NumpyPath2d]) -> None:
+        """Extend an existing path by appending additional paths. The paths are
+        connected by MOVE_TO commands if the end- and start point of sequential paths
+        are not coincident (multi-path).
+        """
+        if not len(paths):
+            return
+        if not len(self._commands):
+            first = paths[0]
+            paths = paths[1:]
+        else:
+            first = self
+
+        vertices: list[np.ndarray] = [first._vertices]
+        commands: list[np.ndarray] = [first._commands]
+        end: Vec2 = first.end
+
+        for next_path in paths:
+            if len(next_path._commands) == 0:
+                continue
+            if not end.isclose(next_path.start):
+                commands.append(np.array((Command.MOVE_TO,), dtype=np.int8))
+                vertices.append(next_path._vertices)
+            else:
+                vertices.append(next_path._vertices[1:])
+            end = next_path.end
+            commands.append(next_path._commands)
+        self._vertices = np.concatenate(vertices, axis=0)
+        self._commands = np.concatenate(commands)
+
+    @staticmethod
+    def concatenate(paths: Sequence[NumpyPath2d]) -> NumpyPath2d:
+        """Returns a new path of concatenated paths. The paths are connected by
+        MOVE_TO commands if the end- and start point of sequential paths are not
+        coincident (multi-path).
+        """
+
+        if not paths:
+            return NumpyPath2d(None)
+        first = paths[0].clone()
+        first.extend(paths[1:])
+        return first
