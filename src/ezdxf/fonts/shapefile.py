@@ -1021,10 +1021,11 @@ class GlyphCache(Glyphs):
         scaling_factor = self.get_scaling_factor(cap_height) * width_factor
         return sum(self.get_advance_width(ord(c)) for c in text) * scaling_factor
 
-    def get_text_path(
-        self, text: str, cap_height: float, width_factor: float = 1.0
-    ) -> GlyphPath:
-        p = GlyphPath()
+    def get_text_glyph_paths(
+        self, text: str, cap_height: float = 1.0, width_factor: float = 1.0
+    ) -> list[GlyphPath]:
+        """Returns the glyph paths of string `s` as a list, scaled to cap height."""
+        glyph_paths: list[GlyphPath] = []
         sy = self.get_scaling_factor(cap_height)
         sx = sy * width_factor
         m = Matrix44.scale(sx, sy, 1)
@@ -1034,8 +1035,12 @@ class GlyphCache(Glyphs):
             if shape_number > 32:
                 glyph = self.get_shape(shape_number)
                 m[3, 0] = current_location
-                p.extend_multi_path(glyph.transform(m))
+                glyph_paths.append(glyph.transform(m))
             current_location += self.get_advance_width(shape_number) * sx
-        if not p.end.isclose((current_location, 0)):
-            p.move_to((current_location, 0))
-        return p
+        if len(glyph_paths):
+            last_glyph = glyph_paths[-1]
+            if not last_glyph.end.isclose((current_location, 0)):
+                last_glyph.move_to((current_location, 0))
+        else:  # only white space characters
+            glyph_paths.append(GlyphPath((current_location, 0)))
+        return glyph_paths

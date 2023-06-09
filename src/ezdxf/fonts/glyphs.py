@@ -24,8 +24,19 @@ class Glyphs(abc.ABC):
     ) -> float:
         ...
 
-    @abc.abstractmethod
     def get_text_path(
         self, text: str, cap_height: float, width_factor: float = 1.0
     ) -> GlyphPath:
+        glyph_paths = self.get_text_glyph_paths(text, cap_height, width_factor)
+        if len(glyph_paths) == 0:
+            return GlyphPath()
+        text_path = glyph_paths[0]
+        for gpath in glyph_paths[1:]:
+            text_path.extend_multi_path(gpath)
+        return text_path
+
+    @abc.abstractmethod
+    def get_text_glyph_paths(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> list[GlyphPath]:
         ...

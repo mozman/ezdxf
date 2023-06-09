@@ -149,11 +149,11 @@ class TTFontRenderer(Glyphs):
         self._glyph_width_cache[char] = width
         return width
 
-    def get_text_path(
+    def get_text_glyph_paths(
         self, s: str, cap_height: float = 1.0, width_factor: float = 1.0
-    ) -> GlyphPath:
-        """Returns the concatenated glyph paths of string s, scaled to cap height."""
-        text_path = GlyphPath()
+    ) -> list[GlyphPath]:
+        """Returns the glyph paths of string `s` as a list, scaled to cap height."""
+        glyph_paths: list[GlyphPath] = []
         x_offset: float = 0
         requires_kerning = isinstance(self.kerning, KerningTable)
         resize_factor = self.get_scaling_factor(cap_height)
@@ -171,13 +171,11 @@ class TTFontRenderer(Glyphs):
             # set horizontal offset:
             m[3, 0] = x_offset
             glyph_path = self.get_glyph_path(char).transform(m)
-            if x_offset == 0:
-                text_path = glyph_path
-            elif len(glyph_path):
-                text_path.extend_multi_path(glyph_path)
+            if len(glyph_path):
+                glyph_paths.append(glyph_path)
             x_offset += self.get_glyph_width(char) * x_factor
             prev_char = char
-        return text_path
+        return glyph_paths
 
     def detect_space_width(self) -> float:
         """Returns the space width for the raw (unscaled) font."""

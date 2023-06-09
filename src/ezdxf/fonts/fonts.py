@@ -32,7 +32,7 @@ font_manager = FontManager()
 
 SHX_FONTS = {
     # See examples in: CADKitSamples/Shapefont.dxf
-    # Shape file structure is not documented, therefore replace this fonts by
+    # Shape file structure is not documented, therefore, replace these fonts by
     # true type fonts.
     # `None` is for: use the default font.
     #
@@ -374,6 +374,14 @@ class AbstractFont:
         and `width_factor`."""
         ...
 
+    @abc.abstractmethod
+    def text_glyph_paths(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> list[GlyphPath]:
+        """Returns a list of 2D glyph paths for the given text, bypasses the stored
+        `cap_height` and `width_factor`."""
+        ...
+
 
 class MonospaceFont(AbstractFont):
     """Represents a monospaced font where each letter has the same cap- and descender
@@ -442,6 +450,13 @@ class MonospaceFont(AbstractFont):
         p.close()
         return p
 
+    def text_glyph_paths(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> list[GlyphPath]:
+        """Returns the same rectangle as the method :meth:`text_path_ex` in a list.
+        """
+        return [self.text_path_ex(text, cap_height, width_factor)]
+
     def space_width(self) -> float:
         """Returns the width of a "space" char."""
         return self._space_width
@@ -493,6 +508,13 @@ class _CachedFont(AbstractFont, abc.ABC):
         """Returns the 2D text path for the given text, bypasses the stored `cap_height`
         and `width_factor`."""
         return self.glyph_cache.get_text_path(text, cap_height, width_factor)
+
+    def text_glyph_paths(
+        self, text: str, cap_height: float, width_factor: float = 1.0
+    ) -> list[GlyphPath]:
+        """Returns a list of 2D glyph paths for the given text, bypasses the stored
+        `cap_height` and `width_factor`."""
+        return self.glyph_cache.get_text_glyph_paths(text, cap_height, width_factor)
 
     def space_width(self) -> float:
         """Returns the width of a "space" char."""
