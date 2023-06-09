@@ -8,10 +8,10 @@ import itertools
 
 from ezdxf import colors
 from ezdxf.math import Vec2
-from ezdxf.path import Path2d, Command
+from ezdxf.path import Command
 
 from .type_hints import Color
-from .backend import BackendInterface
+from .backend import BackendInterface, BkPath2d
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -279,7 +279,7 @@ class _RenderBackend(BackendInterface):
         self.set_properties(properties)
         self.data.append(polyline_encoder(vertices, self.factional_bits, self.base))
 
-    def add_path(self, path: Path2d, properties: BackendProperties):
+    def add_path(self, path: BkPath2d, properties: BackendProperties):
         if self.curves and path.has_curves:
             self.set_properties(properties)
             self.data.append(path_encoder(path, self.decimal_places))
@@ -338,7 +338,7 @@ class _RenderBackend(BackendInterface):
         for line in lines:
             self.add_polyline_encoded(line, properties)
 
-    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         for sub_path in path.sub_paths():
             if len(sub_path) == 0:
                 continue
@@ -346,8 +346,8 @@ class _RenderBackend(BackendInterface):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path2d],
-        holes: Iterable[Path2d],
+        paths: Iterable[BkPath2d],
+        holes: Iterable[BkPath2d],
         properties: BackendProperties,
     ) -> None:
         all_paths = list(itertools.chain(paths, holes))
@@ -415,7 +415,7 @@ def map_lineweight_to_stroke_width(
     return round(min_stroke_width + round(lineweight * factor), 2)
 
 
-def flatten_path(path: Path2d) -> Sequence[Vec2]:
+def flatten_path(path: BkPath2d) -> Sequence[Vec2]:
     points = list(path.flattening(distance=FLATTEN_MAX))
     return points
 
@@ -471,7 +471,7 @@ def polyline_encoder(vertices: Iterable[Vec2], frac_bits: int, base: int) -> byt
 
 
 @no_type_check
-def path_encoder(path: Path2d, decimal_places: int | None) -> bytes:
+def path_encoder(path: BkPath2d, decimal_places: int | None) -> bytes:
     # first point as absolute coordinates
     current = path.start
     x = round(current.x, decimal_places)

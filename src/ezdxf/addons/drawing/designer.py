@@ -31,7 +31,7 @@ from ezdxf.tools.text import replace_non_printable_characters
 from ezdxf.render import linetypes
 from ezdxf.entities import DXFGraphic, Viewport
 
-from .backend import BackendInterface
+from .backend import BackendInterface, BkPath2d
 from .clipper import ClippingRect
 from .config import LinePolicy, TextPolicy, ColorPolicy, Configuration
 from .properties import BackendProperties, Filling

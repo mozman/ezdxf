@@ -8,11 +8,11 @@ import itertools
 from xml.etree import ElementTree as ET
 
 from ezdxf.math import Vec2
-from ezdxf.path import Path2d, Command
+from ezdxf.path import Command
 
 
 from .type_hints import Color
-from .backend import BackendInterface
+from .backend import BackendInterface, BkPath2d
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -272,13 +272,13 @@ class SVGRenderBackend(BackendInterface):
             return
         self.add_strokes(self.make_multi_line_str(lines), properties)
 
-    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         self.add_strokes(self.make_path_str(path), properties)
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path2d],
-        holes: Iterable[Path2d],
+        paths: Iterable[BkPath2d],
+        holes: Iterable[BkPath2d],
         properties: BackendProperties,
     ) -> None:
         d = []
@@ -322,7 +322,7 @@ class SVGRenderBackend(BackendInterface):
 
     @staticmethod
     @no_type_check
-    def make_path_str(path: Path2d, close=False) -> str:
+    def make_path_str(path: BkPath2d, close=False) -> str:
         d: list[str] = [CMD_M_ABS.format(path.start)]
         if len(path) == 0:
             return ""

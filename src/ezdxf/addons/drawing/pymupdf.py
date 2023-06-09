@@ -6,11 +6,11 @@ import copy
 
 from ezdxf.math import Vec2
 from ezdxf.colors import RGB
-from ezdxf.path import Path2d, Command
+from ezdxf.path import Command
 from ezdxf.version import __version__
 
 from .type_hints import Color
-from .backend import BackendInterface
+from .backend import BackendInterface, BkPath2d
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -292,7 +292,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         self.finish_line(shape, properties, close=False)
         shape.commit()
 
-    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         if len(path) == 0:
             return
         shape = self.new_shape()
@@ -302,8 +302,8 @@ class PyMuPdfRenderBackend(BackendInterface):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path2d],
-        holes: Iterable[Path2d],
+        paths: Iterable[BkPath2d],
+        holes: Iterable[BkPath2d],
         properties: BackendProperties,
     ) -> None:
         shape = self.new_shape()
@@ -348,7 +348,7 @@ class PyMuPdfRenderBackend(BackendInterface):
 
 
 @no_type_check
-def add_path_to_shape(shape, path: Path2d, close: bool) -> None:
+def add_path_to_shape(shape, path: BkPath2d, close: bool) -> None:
     start = path.start
     sub_path_start = start
     last_point = start

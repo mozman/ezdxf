@@ -7,12 +7,12 @@ import abc
 import math
 
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
-from ezdxf.addons.drawing.backend import Backend
+from ezdxf.addons.drawing.backend import Backend, BkPath2d
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import BackendProperties
 from ezdxf.math import Vec2, Matrix44
-from ezdxf.path import Path2d, to_qpainter_path
+from ezdxf.path import to_qpainter_path
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):
@@ -143,7 +143,7 @@ class _PyQtBackend(Backend):
                 item.setPen(pen)
                 add_line(item, properties.handle)
 
-    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         item = qw.QGraphicsPathItem(to_qpainter_path([path]))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._no_fill)
@@ -151,11 +151,11 @@ class _PyQtBackend(Backend):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path2d],
-        holes: Iterable[Path2d],
+        paths: Iterable[BkPath2d],
+        holes: Iterable[BkPath2d],
         properties: BackendProperties,
     ) -> None:
-        oriented_paths: list[Path2d] = []
+        oriented_paths: list[BkPath2d] = []
         for path in paths:
             try:
                 path = path.counter_clockwise()

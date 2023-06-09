@@ -3,6 +3,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod, ABCMeta
 from typing import Optional, Iterable
+from typing_extensions import TypeAlias
 
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.properties import Properties, BackendProperties
@@ -10,6 +11,8 @@ from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Vec2
 from ezdxf.path import Path2d
+
+BkPath2d: TypeAlias = Path2d
 
 
 class BackendInterface(ABC):
@@ -47,14 +50,14 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_filled_paths(
         self,
-        paths: Iterable[Path2d],
-        holes: Iterable[Path2d],
+        paths: Iterable[BkPath2d],
+        holes: Iterable[BkPath2d],
         properties: BackendProperties,
     ) -> None:
         raise NotImplementedError
@@ -123,7 +126,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
             else:
                 self.draw_line(s, e, properties)
 
-    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         """Draw an outline path (connected string of line segments and Bezier
         curves).
 
@@ -144,8 +147,8 @@ class Backend(BackendInterface, metaclass=ABCMeta):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path2d],
-        holes: Iterable[Path2d],
+        paths: Iterable[BkPath2d],
+        holes: Iterable[BkPath2d],
         properties: BackendProperties,
     ) -> None:
         """Draw multiple filled paths (connected string of line segments and

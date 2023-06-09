@@ -12,8 +12,8 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 
-from ezdxf.path import Path2d, to_matplotlib_path
-from ezdxf.addons.drawing.backend import Backend
+from ezdxf.path import to_matplotlib_path
+from ezdxf.addons.drawing.backend import Backend, BkPath2d
 from ezdxf.addons.drawing.properties import BackendProperties, LayoutProperties
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.type_hints import Color
@@ -150,7 +150,7 @@ class MatplotlibBackend(Backend):
             )
         )
 
-    def draw_path(self, path: Path2d, properties: BackendProperties):
+    def draw_path(self, path: BkPath2d, properties: BackendProperties):
         """Draw a solid line path, line type rendering is done by the
         frontend since v0.18.1
         """
@@ -170,12 +170,12 @@ class MatplotlibBackend(Backend):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path2d],
-        holes: Iterable[Path2d],
+        paths: Iterable[BkPath2d],
+        holes: Iterable[BkPath2d],
         properties: BackendProperties,
     ):
         linewidth = 0
-        oriented_paths: list[Path2d] = []
+        oriented_paths: list[BkPath2d] = []
         for path in paths:
             try:
                 path = path.counter_clockwise()

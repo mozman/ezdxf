@@ -10,11 +10,11 @@ import enum
 from ezdxf import colors
 from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS
 from ezdxf.math import Vec2, BoundingBox2d
-from ezdxf.path import Path2d, to_splines_and_polylines, to_hatches
+from ezdxf.path import to_splines_and_polylines, to_hatches
 from ezdxf.layouts import BaseLayout
 
 from .type_hints import Color
-from .backend import BackendInterface
+from .backend import BackendInterface, BkPath2d
 from .config import Configuration
 from .properties import BackendProperties
 
@@ -140,7 +140,7 @@ class DXFBackend(BackendInterface):
         for start, end in lines:
             self.layout.add_line(start, end, dxfattribs=attribs)
 
-    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         attribs = self.resolve_properties(properties)
         if path.has_curves:
             for entity in to_splines_and_polylines(path, dxfattribs=attribs):  # type: ignore
@@ -150,8 +150,8 @@ class DXFBackend(BackendInterface):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path2d],
-        holes: Iterable[Path2d],
+        paths: Iterable[BkPath2d],
+        holes: Iterable[BkPath2d],
         properties: BackendProperties,
     ) -> None:
         attribs = self.resolve_properties(properties)
