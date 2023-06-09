@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Optional, Iterator, Sequence, Type
+from typing import Iterable, Optional, Iterator, Sequence
 from typing_extensions import Self
 import abc
 
@@ -15,16 +15,7 @@ from ezdxf.math import (
     Bezier4P,
     BoundingBox2d,
 )
-from ezdxf.path import (
-    AbstractPath,
-    Path2d,
-    Command,
-    PathElement,
-    LineTo,
-    MoveTo,
-    Curve3To,
-    Curve4To,
-)
+from ezdxf.path import AbstractPath, Path2d, Command
 
 try:
     from ezdxf.acc import np_support  # type: ignore  # mypy ???
@@ -140,6 +131,21 @@ class NumpyPath2d(NumpyShape2d):
         vertices = [Vec2(v) for v in self._vertices]
         commands = [Command(c) for c in self._commands]
         return Path2d.from_vertices_and_commands(vertices, commands)
+
+    @classmethod
+    def from_vertices(cls, vertices: Iterable[Vec2], close: bool=False) -> Self:
+        new_path = cls(None)
+        points = list(vertices)
+        if len(points) == 0:
+            return new_path
+
+        if close and not points[0].isclose(points[-1]):
+            points.append(points[0])
+        new_path._vertices = np.array(points, dtype=np.float64)
+        new_path._commands = np.full(
+            len(points) - 1, fill_value=Command.LINE_TO, dtype=np.int8
+        )
+        return new_path
 
     @property
     def has_sub_paths(self) -> bool:
