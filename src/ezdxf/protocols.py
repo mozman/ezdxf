@@ -7,7 +7,7 @@ from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFGraphic, DXFEntity
-    from ezdxf.math import Matrix44
+    from ezdxf.math import Matrix44, AbstractBoundingBox
 
 
 # Protocol implemented for:
@@ -81,3 +81,10 @@ def referenced_blocks(entity: DXFEntity) -> Iterable[str]:
         return entity.__referenced_blocks__()
     else:
         return _EMPTY_TUPLE
+
+
+class SupportsBoundingBox(Protocol):
+    def bbox(self) -> AbstractBoundingBox:
+        """Returns the bounding box of an object."""
+        ...
+

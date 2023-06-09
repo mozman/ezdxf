@@ -13,6 +13,7 @@ from ezdxf.math import (
     has_clockwise_orientation,
     Bezier3P,
     Bezier4P,
+    BoundingBox2d,
 )
 from ezdxf.path import AbstractPath, Path2d, Command
 
@@ -58,6 +59,10 @@ class NumpyShape2d(abc.ABC):
         """Returns the shape vertices as list of :class:`Vec2`."""
         return Vec2.list(self._vertices)
 
+    def bbox(self) -> BoundingBox2d:
+        """Returns the bounding box of all vertices."""
+        return BoundingBox2d(self.extents())
+
 
 class NumpyPoints2d(NumpyShape2d):
     """Represents an array of 2D points stored as a ndarray."""
@@ -93,7 +98,6 @@ class NumpyPath2d(NumpyShape2d):
         self._vertices = np.array(vertices, dtype=np.float64)
         self._commands = np.array(path.command_codes(), dtype=np.int8)
 
-    # SupportsControlVertices protocol for ezdxf.path.nesting
     def __len__(self) -> int:
         return len(self._commands)
 
@@ -107,7 +111,6 @@ class NumpyPath2d(NumpyShape2d):
         """Returns the end point as :class:`~ezdxf.math.Vec2` instance."""
         return Vec2(self._vertices[-1])
 
-    # SupportsControlVertices protocol for ezdxf.path.nesting
     def control_vertices(self) -> list[Vec2]:
         return self.vertices()
 

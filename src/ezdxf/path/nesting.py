@@ -100,11 +100,12 @@ from typing import (
     Sequence,
     Iterator,
     TypeVar,
-    Protocol,
 )
 from typing_extensions import TypeAlias
 from collections import namedtuple
-from ezdxf.math import BoundingBox2d, AnyVec
+from ezdxf.math import AbstractBoundingBox
+from ezdxf.protocols import SupportsBoundingBox
+
 
 __all__ = [
     "make_polygon_structure",
@@ -114,20 +115,7 @@ __all__ = [
 ]
 
 
-class SupportsControlVertices(Protocol):
-    """Any path-like structure that supports control vertices and reports the count of
-    commands.
-    """
-    def control_vertices(self) -> list[AnyVec]:
-        """Returns all control vertices as a list."""
-        ...
-
-    def __len__(self) -> int:
-        """Returns the count of commands (move_to, line_to, curve3_to, curve4_to)."""
-        ...
-
-
-T = TypeVar("T", bound=SupportsControlVertices)
+T = TypeVar("T", bound=SupportsBoundingBox)
 
 Polygon: TypeAlias = Tuple[T, Optional[List["Polygon"]]]
 BoxStruct = namedtuple("BoxStruct", "bbox, path")
@@ -141,11 +129,11 @@ def make_polygon_structure(paths: Iterable[T]) -> list[Polygon]:
 
     # Implements fast bounding box construction and fast inside check.
     def area(item: BoxStruct) -> float:
-        width, height = item.bbox.size
-        return width * height
+        size = item.bbox.size
+        return size.x * size.y
 
     def separate(
-        exterior: BoundingBox2d, candidates: list[BoxStruct]
+        exterior: AbstractBoundingBox, candidates: list[BoxStruct]
     ) -> tuple[list[BoxStruct], list[BoxStruct]]:
         holes: list[BoxStruct] = []
         outside: list[BoxStruct] = []
@@ -173,18 +161,15 @@ def make_polygon_structure(paths: Iterable[T]) -> list[Polygon]:
 
     def as_nested_paths(polygons) -> list:
         return [
-            polygon.path
-            if isinstance(polygon, BoxStruct)
-            else as_nested_paths(polygon)
+            polygon.path if isinstance(polygon, BoxStruct) else as_nested_paths(polygon)
             for polygon in polygons
         ]
 
-    boxed_paths = [
-        # Fast bounding box construction:
-        BoxStruct(BoundingBox2d(path.control_vertices()), path)
-        for path in paths
-        if len(path)
-    ]
+    boxed_paths = []
+    for path in paths:
+        bbox = path.bbox()
+        if bbox.has_data:
+            boxed_paths.append(BoxStruct(bbox, path))
     boxed_paths.sort(key=area)
     return as_nested_paths(polygon_structure(boxed_paths))
 

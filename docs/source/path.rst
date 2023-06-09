@@ -264,6 +264,8 @@ The Path Class
 
     .. automethod:: approximate
 
+    .. automethod:: bbox
+
     .. automethod:: clockwise
 
     .. automethod:: clone
@@ -317,6 +319,8 @@ The 2D Path Class
     The class supports the same interface as the :class:`Path` class.
 
     .. automethod:: to_3d_path
+
+    .. automethod:: bbox
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html

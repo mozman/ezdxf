@@ -23,6 +23,9 @@ from ezdxf.math import (
     Matrix44,
     has_clockwise_orientation,
     UVec,
+    AbstractBoundingBox,
+    BoundingBox2d,
+    BoundingBox,
 )
 
 from .commands import (
@@ -31,7 +34,6 @@ from .commands import (
     MoveTo,
     Curve3To,
     Curve4To,
-    AnyCurve,
     PathElement,
 )
 
@@ -85,6 +87,11 @@ class AbstractPath(Generic[T], abc.ABC):
              m: transformation matrix of type :class:`~ezdxf.math.Matrix44`
 
         """
+        ...
+
+    @abc.abstractmethod
+    def bbox(self) -> AbstractBoundingBox:
+        """Returns the bounding box of the path control vertices."""
         ...
 
     def __len__(self) -> int:
@@ -527,6 +534,12 @@ class Path(AbstractPath[Vec3]):
         new_path._vertices = list(m.transform_vertices(self._vertices))
         return new_path
 
+    def bbox(self) -> BoundingBox:
+        """Returns the bounding box of all control vertices as
+        :class:`~ezdxf.math.BoundingBox` instance.
+        """
+        return BoundingBox(self.control_vertices())
+
 
 CMD_SIZE = {
     Command.MOVE_TO: 1,
@@ -594,3 +607,8 @@ class Path2d(AbstractPath[Vec2]):
         new_path = self.clone()
         new_path._vertices = list(m.fast_2d_transform(self._vertices))
         return new_path
+
+    def bbox(self) -> BoundingBox2d:
+        """Returns the bounding box of all control vertices as :class:`~ezdxf.math.BoundingBox2d` instance.
+        """
+        return BoundingBox2d(self.control_vertices())
