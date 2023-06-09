@@ -130,37 +130,42 @@ class TestNumpyPath2d:
         assert p.to_path2d().start == (0, 0)  # default start point
 
 
+@pytest.fixture
+def first():
+    p = Path2d()
+    p.line_to((10, 0))
+    return NumpyPath2d(p)
+
+
+@pytest.fixture
+def second():
+    p = Path2d((10, 0))
+    p.line_to((20, 0))
+    return NumpyPath2d(p)
+
+
+@pytest.fixture
+def third():
+    p = Path2d((20, 0))
+    p.line_to((30, 0))
+    return NumpyPath2d(p)
+
+
+@pytest.fixture
+def curve3():
+    p = Path2d((0, 0))
+    p.curve3_to((10, 0), (5, 3))
+    return NumpyPath2d(p)
+
+
+@pytest.fixture
+def curve4():
+    p = Path2d((10, 0))
+    p.curve4_to((20, 0), (13, -3), (17, 3))
+    return NumpyPath2d(p)
+
+
 class TestNumpyPath2dExtend:
-    @pytest.fixture
-    def first(self):
-        p = Path2d()
-        p.line_to((10, 0))
-        return NumpyPath2d(p)
-
-    @pytest.fixture
-    def second(self):
-        p = Path2d((10, 0))
-        p.line_to((20, 0))
-        return NumpyPath2d(p)
-
-    @pytest.fixture
-    def third(self):
-        p = Path2d((20, 0))
-        p.line_to((30, 0))
-        return NumpyPath2d(p)
-
-    @pytest.fixture
-    def curve3(self):
-        p = Path2d((0, 0))
-        p.curve3_to((10, 0), (5, 3))
-        return NumpyPath2d(p)
-
-    @pytest.fixture
-    def curve4(self):
-        p = Path2d((10, 0))
-        p.curve4_to((20, 0), (13, -3), (17, 3))
-        return NumpyPath2d(p)
-
     def test_extend_empty_path(self, second):
         empty = NumpyPath2d(None)
         empty.extend([second])
@@ -234,6 +239,109 @@ class TestNumpyPath2dExtend:
             base.start.isclose((0, 0))
         with pytest.raises(IndexError):
             base.end.isclose((0, 0))
+
+
+class TestSubPaths:
+    def test_empty_path(self):
+        paths = NumpyPath2d(None).sub_paths()
+        assert len(paths) == 0
+
+    def test_single_path(self, first):
+        paths = first.sub_paths()
+        assert len(paths) == 1
+        assert paths[0] is first
+
+    def test_multipath_of_two(self, first, third):
+        multi_path = NumpyPath2d.concatenate([first, third])
+        paths = multi_path.sub_paths()
+        assert len(paths) == 2
+        for p in paths:
+            assert p.command_codes() == [1]
+
+        first, second = paths
+        vertices = first.vertices()
+        assert len(vertices) == 2
+        assert vertices[0].isclose((0, 0))
+        assert vertices[1].isclose((10, 0))
+
+        vertices = second.vertices()
+        assert len(vertices) == 2
+        assert vertices[0].isclose((20, 0))
+        assert vertices[1].isclose((30, 0))
+
+    def test_multipath_with_curve3(self, first, curve3, third):
+        multi_path = NumpyPath2d.concatenate([first, curve3, third])
+        paths = multi_path.sub_paths()
+        assert len(paths) == 3
+        first, second, third = paths
+        assert first.command_codes() == [1]
+        assert second.command_codes() == [2]
+        assert third.command_codes() == [1]
+
+        vertices = first.vertices()
+        assert len(vertices) == 2
+        assert vertices[0].isclose((0, 0))
+        assert vertices[1].isclose((10, 0))
+
+        vertices = second.vertices()
+        assert len(vertices) == 3
+        assert vertices[0].isclose((0, 0))  # curve3_to, start
+        assert vertices[1].isclose((5, 3))  # curve3_to, ctrl
+        assert vertices[2].isclose((10, 0))  # curve3_to, end
+
+        vertices = third.vertices()
+        assert len(vertices) == 2
+        assert vertices[0].isclose((20, 0))
+        assert vertices[1].isclose((30, 0))
+
+    def test_multipath_with_curve4(self, curve4, third, first):
+        # curve4 and third are connected as a single path
+        multi_path = NumpyPath2d.concatenate([curve4, third, first])
+        paths = multi_path.sub_paths()
+        assert len(paths) == 2
+        first, second = paths
+        assert first.command_codes() == [3, 1]
+        assert second.command_codes() == [1]
+
+        vertices = first.vertices()  # curve3 + third
+        assert len(vertices) == 5
+        assert vertices[0].isclose((10, 0))  # curve4_to, start
+        assert vertices[1].isclose((13, -3))  # curve4_to, ctrl1
+        assert vertices[2].isclose((17, 3))  # curve4_to, ctrl2
+        assert vertices[3].isclose((20, 0))  # curve4_to, end
+        assert vertices[4].isclose((30, 0))  # line_to
+
+        vertices = second.vertices()
+        assert len(vertices) == 2
+        assert vertices[0].isclose((0, 0))
+        assert vertices[1].isclose((10, 0))
+
+    def test_complex_paths(self):
+        f = fonts.make_font("DejaVuSans.ttf", 1.0)
+        source_path = f.text_path("ABCDEFabcdef")
+        # TODO: update tests if text_path() returns NumpyPath2d:
+        np_path = NumpyPath2d(source_path)
+
+        paths0 = list(source_path.sub_paths())
+        paths1 = np_path.sub_paths()
+        for p0, p1 in zip(paths0, paths1):
+            assert (
+                all(
+                    v0.isclose(v1)
+                    for v0, v1 in zip(p0.control_vertices(), p1.control_vertices())
+                )
+                is True
+            )
+            assert p0.command_codes() == p1.command_codes()
+
+    def test_sub_paths_are_reversible(self, first, third):
+        multi_path = NumpyPath2d.concatenate([first, third])
+        paths = multi_path.sub_paths()
+        first, second = paths
+        first.reverse()
+        vertices = first.vertices()
+        assert vertices[0].isclose((10, 0))
+        assert vertices[1].isclose((0, 0))
 
 
 def test_path2d_conversion_methods():

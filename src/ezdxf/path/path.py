@@ -440,9 +440,9 @@ class AbstractPath(Generic[T], abc.ABC):
         )
 
     def sub_paths(self) -> Iterator[Self]:
-        """Yield sub-path as :term:`Single-Path` objects.
+        """Yield all sub-paths as :term:`Single-Path` objects.
 
-        It is safe to call :meth:`sub_paths` on any path-type:
+        It's safe to call :meth:`sub_paths` on any path-type:
         :term:`Single-Path`, :term:`Multi-Path` and :term:`Empty-Path`.
 
         """

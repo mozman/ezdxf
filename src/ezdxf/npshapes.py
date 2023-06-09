@@ -1,7 +1,7 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Optional, Iterator, Sequence
+from typing import Iterable, Optional, Iterator, Sequence, Type
 from typing_extensions import Self
 import abc
 
@@ -139,6 +139,50 @@ class NumpyPath2d(NumpyShape2d):
 
         """
         return Command.MOVE_TO in self._commands
+
+    def sub_paths(self) -> list[Self]:
+        """Yield all sub-paths as :term:`Single-Path` objects.
+
+        It's safe to call :meth:`sub_paths` on any path-type:
+        :term:`Single-Path`, :term:`Multi-Path` and :term:`Empty-Path`.
+
+        """
+        def append_sub_path() -> None:
+            s: Self = self.__class__(None)
+            s._vertices = vertices[vtx_start_index: vtx_index + 1]  # .copy() ?
+            s._commands = commands[cmd_start_index: cmd_index]  # .copy() ?
+            sub_paths.append(s)
+
+        commands = self._commands
+        if len(commands) == 0:
+            return []
+        if Command.MOVE_TO not in commands:
+            return [self]
+
+        sub_paths: list[Self] = []
+        vertices = self._vertices
+        vtx_start_index = 0
+        vtx_index = 0
+        cmd_start_index = 0
+        cmd_index = 0
+        for cmd in commands:
+            if cmd == Command.LINE_TO:
+                vtx_index += 1
+            elif cmd == Command.CURVE3_TO:
+                vtx_index += 2
+            elif cmd == Command.CURVE4_TO:
+                vtx_index += 3
+            elif cmd == Command.MOVE_TO:
+                append_sub_path()
+                # MOVE_TO target vertex is the start vertex of the following path.
+                vtx_index += 1
+                vtx_start_index = vtx_index
+                cmd_start_index = cmd_index + 1
+            cmd_index += 1
+
+        if commands[-1] != Command.MOVE_TO:
+            append_sub_path()
+        return sub_paths
 
     def has_clockwise_orientation(self) -> bool:
         """Returns ``True`` if 2D path has clockwise orientation.
