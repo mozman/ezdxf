@@ -15,7 +15,16 @@ from ezdxf.math import (
     Bezier4P,
     BoundingBox2d,
 )
-from ezdxf.path import AbstractPath, Path2d, Command
+from ezdxf.path import (
+    AbstractPath,
+    Path2d,
+    Command,
+    PathElement,
+    LineTo,
+    MoveTo,
+    Curve3To,
+    Curve4To,
+)
 
 try:
     from ezdxf.acc import np_support  # type: ignore  # mypy ???
@@ -147,10 +156,11 @@ class NumpyPath2d(NumpyShape2d):
         :term:`Single-Path`, :term:`Multi-Path` and :term:`Empty-Path`.
 
         """
+
         def append_sub_path() -> None:
             s: Self = self.__class__(None)
-            s._vertices = vertices[vtx_start_index: vtx_index + 1]  # .copy() ?
-            s._commands = commands[cmd_start_index: cmd_index]  # .copy() ?
+            s._vertices = vertices[vtx_start_index : vtx_index + 1]  # .copy() ?
+            s._commands = commands[cmd_start_index:cmd_index]  # .copy() ?
             sub_paths.append(s)
 
         commands = self._commands
@@ -323,3 +333,32 @@ class NumpyPath2d(NumpyShape2d):
         first = paths[0].clone()
         first.extend(paths[1:])
         return first
+
+
+def to_qpainter_path(paths: Iterable[NumpyPath2d]):
+    from ezdxf.addons.xqt import QPainterPath, QPointF
+
+    paths = list(paths)
+    if len(paths) == 0:
+        raise ValueError("one or more paths required")
+
+    qpath = QPainterPath()
+    for path in paths:
+        v = path.start
+        qpath.moveTo(QPointF(v.x, v.y))
+        vertices = [QPointF(v.x, v.y) for v in path.vertices()]
+        index = 0
+        for cmd in path.command_codes():
+            if cmd == Command.LINE_TO:
+                qpath.lineTo(vertices[index])
+                index += 1
+            elif cmd == Command.MOVE_TO:
+                qpath.moveTo(vertices[index])
+                index += 1
+            elif cmd == Command.CURVE3_TO:
+                qpath.quadTo(vertices[index], vertices[index + 1])
+                index += 2
+            elif cmd == Command.CURVE4_TO:
+                qpath.cubicTo(vertices[index], vertices[index + 1], vertices[index + 2])
+                index += 3
+    return qpath
