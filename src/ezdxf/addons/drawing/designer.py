@@ -49,9 +49,9 @@ DrawEntitiesCallback: TypeAlias = Callable[[RenderContext, Iterable[DXFGraphic]]
 class Designer(abc.ABC):
     """The designer separates the frontend from the backend and adds this features:
 
-        - automatically linetype rendering
-        - VIEWPORT rendering
-        - foreground color mapping according Frontend.config.color_policy
+    - automatically linetype rendering
+    - VIEWPORT rendering
+    - foreground color mapping according Frontend.config.color_policy
 
     """
 
@@ -359,32 +359,41 @@ class Designer2d(Designer):
         font_face = properties.font
         if font_face is None:
             font_face = self.default_font_face
+
         try:
-            text_path = self.text_engine.get_text_path(text, font_face, cap_height)
+            glyph_paths = self.text_engine.get_text_glyph_paths(
+                text, font_face, cap_height
+            )
         except (RuntimeError, ValueError):
             return
 
-        transformed_path = text_path.transform(transform)
+        transformed_paths: list[Path2d] = [p.transform(transform) for p in glyph_paths]
         if text_policy == TextPolicy.REPLACE_RECT:
-            bbox = BoundingBox2d(transformed_path.control_vertices())
+            bbox = BoundingBox2d()
+            for p in transformed_paths:
+                bbox.extend(p.control_vertices())
             self.draw_path(
                 from_2d_vertices(bbox.rect_vertices(), close=True), properties
             )
             return
         if text_policy == TextPolicy.REPLACE_FILL:
-            bbox = BoundingBox2d(transformed_path.control_vertices())
+            bbox = BoundingBox2d()
+            for p in transformed_paths:
+                bbox.extend(p.control_vertices())
             if properties.filling is None:
                 properties.filling = Filling()
             self.draw_filled_polygon(bbox.rect_vertices(), properties)
             return
+
         if (
             self.text_engine.is_stroke_font(font_face)
             or text_policy == TextPolicy.OUTLINE
         ):
-            self.draw_path(transformed_path, properties)
+            for text_path in transformed_paths:
+                self.draw_path(text_path, properties)
             return
 
-        polygons = make_polygon_structure(single_paths([transformed_path]))  # type: ignore
+        polygons = make_polygon_structure(single_paths(transformed_paths))  # type: ignore
         external_paths, holes = winding_deconstruction(polygons)  # type: ignore
         if properties.filling is None:
             properties.filling = Filling()
