@@ -70,6 +70,9 @@ class NumpyShape2d(abc.ABC):
         else:
             raise EmptyShapeError("empty shape has no extends")
 
+    def np_vertices(self) -> np.ndarray:
+        return self._vertices
+
     def transform_inplace(self, m: Matrix44) -> None:
         """Transforms the vertices of the shape inplace."""
         v = self._vertices
@@ -352,8 +355,8 @@ class NumpyPath2d(NumpyShape2d):
 
     # Appending single commands (line_to, move_to, curve3_to, curve4_to) is not
     # efficient, because numpy arrays do not grow dynamically, they are reallocated for
-    # every single command! Build basic path by the Python Path2d class and
-    # convert the finalized path to a NumpyPath2d instances.
+    # every single command!
+    # Construct paths as ezdxf.path.Path2d and convert them to NumpyPath2d.
     # Concatenation of NumpyPath2d objects is faster than extending Path2d objects,
     # see profiling/numpy_concatenate.py
 
@@ -402,6 +405,7 @@ class NumpyPath2d(NumpyShape2d):
 
 
 def to_qpainter_path(paths: Iterable[NumpyPath2d]):
+    """Convert the given `paths` into a single :class:`QPainterPath`."""
     from ezdxf.addons.xqt import QPainterPath, QPointF
 
     paths = list(paths)
@@ -445,26 +449,18 @@ MPL_CODES = [
 
 
 def to_matplotlib_path(paths: Iterable[NumpyPath2d]):
-    """Convert the given `paths` into a single :class:`matplotlib.path.Path` object.
-
-    Args:
-        paths: iterable of :class:`Path` or :class:`Path2d` objects
-
-    """
-    from matplotlib.path import Path as MatplotlibPath
+    """Convert the given `paths` into a single :class:`matplotlib.path.Path`."""
+    from matplotlib.path import Path
 
     paths = list(paths)
-    if len(paths) == 0:  # type: ignore
+    if len(paths) == 0:
         raise ValueError("one or more paths required")
 
-    vertices: list[tuple[float, float]] = []
+    vertices: list[np.ndarray] = []
     codes: list[int] = []
     for path in paths:
-        vertices.extend((v.x, v.y) for v in path.vertices())
+        vertices.append(path.np_vertices())
         codes.append(MPL_MOVETO)
         for cmd in path.command_codes():
             codes.extend(MPL_CODES[cmd])
-
-    # STOP command is currently not required
-    assert len(vertices) == len(codes)
-    return MatplotlibPath(vertices, codes)
+    return Path(np.concatenate(vertices), codes)
