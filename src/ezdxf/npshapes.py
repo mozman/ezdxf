@@ -430,13 +430,18 @@ def to_qpainter_path(paths: Iterable[NumpyPath2d]):
     return qpath
 
 
+MPL_MOVETO = 1
+MPL_LINETO = 2
 MPL_CURVE3 = 3
 MPL_CURVE4 = 4
-MPL_LINETO = 2
-MPL_MOVETO = 1
 
-MPL_CURVE3_CODES = (MPL_CURVE3, MPL_CURVE3)
-MPL_CURVE4_CODES = (MPL_CURVE4, MPL_CURVE4, MPL_CURVE4)
+MPL_CODES = [
+    (0, ),  # dummy
+    (MPL_LINETO,),
+    (MPL_CURVE3, MPL_CURVE3),
+    (MPL_CURVE4, MPL_CURVE4, MPL_CURVE4),
+    (MPL_MOVETO,),
+]
 
 
 def to_matplotlib_path(paths: Iterable[NumpyPath2d]):
@@ -458,14 +463,7 @@ def to_matplotlib_path(paths: Iterable[NumpyPath2d]):
         vertices.extend((v.x, v.y) for v in path.vertices())
         codes.append(MPL_MOVETO)
         for cmd in path.command_codes():
-            if cmd == CMD_LINE_TO:
-                codes.append(MPL_LINETO)
-            elif cmd == CMD_MOVE_TO:
-                codes.append(MPL_MOVETO)
-            elif cmd == CMD_CURVE3_TO:
-                codes.extend(MPL_CURVE3_CODES)
-            elif cmd == CMD_CURVE4_TO:
-                codes.extend(MPL_CURVE4_CODES)
+            codes.extend(MPL_CODES[cmd])
 
     # STOP command is currently not required
     assert len(vertices) == len(codes)

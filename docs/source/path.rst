@@ -117,14 +117,6 @@ Functions to create :class:`Path` objects from other objects.
 
 .. autofunction:: from_vertices
 
-.. autofunction:: from_matplotlib_path
-
-.. autofunction:: multi_path_from_matplotlib_path
-
-.. autofunction:: from_qpainter_path
-
-.. autofunction:: multi_path_from_qpainter_path
-
 Render Functions
 ----------------
 
@@ -170,10 +162,6 @@ Tool Maker
 Functions to create construction tools.
 
 .. autofunction:: to_bsplines_and_vertices
-
-.. autofunction:: to_matplotlib_path
-
-.. autofunction:: to_qpainter_path
 
 
 Utility Functions

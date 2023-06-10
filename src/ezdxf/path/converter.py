@@ -1043,6 +1043,7 @@ def from_matplotlib_path(mpath, curves=True) -> Iterator[Path]:
         return iter([path])
 
 
+# TODO: not used by ezdxf, remove?
 def to_matplotlib_path(paths: Iterable[Path | Path2d], extrusion: UVec = Z_AXIS):
     """Convert the given `paths` into a single :class:`matplotlib.path.Path` object.
 
@@ -1097,7 +1098,7 @@ def to_matplotlib_path(paths: Iterable[Path | Path2d], extrusion: UVec = Z_AXIS)
 # Interface to QtGui.QPainterPath
 
 
-# TODO: return Path2d
+# TODO: not used by ezdxf, remove?
 def multi_path_from_qpainter_path(qpath) -> Path:
     """Returns a :class:`Path` objects from a `QPainterPath`_.
     Returns a multi-path object if necessary. (requires Qt bindings)
@@ -1147,6 +1148,7 @@ def from_qpainter_path(qpath) -> Iterator[Path]:
         return iter([path])
 
 
+# TODO: not used by ezdxf, remove?
 def to_qpainter_path(paths: Iterable[Path | Path2d], extrusion: UVec = Z_AXIS):
     """Convert the given `paths` into a :class:`QtGui.QPainterPath` object.
 
