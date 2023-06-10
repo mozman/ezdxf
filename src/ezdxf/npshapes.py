@@ -410,22 +410,22 @@ def to_qpainter_path(paths: Iterable[NumpyPath2d]):
 
     qpath = QPainterPath()
     for path in paths:
-        vertices = [QPointF(v.x, v.y) for v in path.vertices()]
-        qpath.moveTo(vertices[0])
+        points = [QPointF(v.x, v.y) for v in path.vertices()]
+        qpath.moveTo(points[0])
         index = 1
         for cmd in path.command_codes():
-            # using Command.<attr> slows down this function by factor of 4!!!
+            # using Command.<attr> slows down this function by a factor of 4!!!
             if cmd == CMD_LINE_TO:
-                qpath.lineTo(vertices[index])
+                qpath.lineTo(points[index])
                 index += 1
             elif cmd == CMD_CURVE3_TO:
-                qpath.quadTo(vertices[index], vertices[index + 1])
+                qpath.quadTo(points[index], points[index + 1])
                 index += 2
             elif cmd == CMD_CURVE4_TO:
-                qpath.cubicTo(vertices[index], vertices[index + 1], vertices[index + 2])
+                qpath.cubicTo(points[index], points[index + 1], points[index + 2])
                 index += 3
             elif cmd == CMD_MOVE_TO:
-                qpath.moveTo(vertices[index])
+                qpath.moveTo(points[index])
                 index += 1
     return qpath
 
@@ -436,7 +436,7 @@ MPL_CURVE3 = 3
 MPL_CURVE4 = 4
 
 MPL_CODES = [
-    (0, ),  # dummy
+    (0,),  # dummy
     (MPL_LINETO,),
     (MPL_CURVE3, MPL_CURVE3),
     (MPL_CURVE4, MPL_CURVE4, MPL_CURVE4),
