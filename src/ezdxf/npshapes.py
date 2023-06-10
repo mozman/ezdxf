@@ -22,7 +22,13 @@ try:
 except ImportError:
     np_support = None
 
-__all__ = ["NumpyPath2d", "NumpyPoints2d", "NumpyShapesException", "EmptyShapeError"]
+__all__ = [
+    "NumpyPath2d",
+    "NumpyPoints2d",
+    "NumpyShapesException",
+    "EmptyShapeError",
+    "to_qpainter_path",
+]
 
 
 class NumpyShapesException(Exception):
@@ -133,7 +139,7 @@ class NumpyPath2d(NumpyShape2d):
         return Path2d.from_vertices_and_commands(vertices, commands)
 
     @classmethod
-    def from_vertices(cls, vertices: Iterable[Vec2], close: bool=False) -> Self:
+    def from_vertices(cls, vertices: Iterable[Vec2], close: bool = False) -> Self:
         new_path = cls(None)
         points = list(vertices)
         if len(points) == 0:
@@ -350,10 +356,9 @@ def to_qpainter_path(paths: Iterable[NumpyPath2d]):
 
     qpath = QPainterPath()
     for path in paths:
-        v = path.start
-        qpath.moveTo(QPointF(v.x, v.y))
         vertices = [QPointF(v.x, v.y) for v in path.vertices()]
-        index = 0
+        qpath.moveTo(vertices[0])
+        index = 1
         for cmd in path.command_codes():
             if cmd == Command.LINE_TO:
                 qpath.lineTo(vertices[index])
