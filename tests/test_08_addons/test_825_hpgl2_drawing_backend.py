@@ -5,6 +5,7 @@ import pytest
 
 from ezdxf.math import Vec2
 from ezdxf.path import Path2d
+from ezdxf.npshapes import NumpyPath2d
 from ezdxf.addons.drawing import hpgl2, layout
 from ezdxf.addons.drawing.properties import BackendProperties
 
@@ -50,7 +51,7 @@ class TestPlotterBackend:
         path = Path2d((0, 0))
         path.curve4_to((100, 100), (25, 0), (75, 100))
         backend = hpgl2.PlotterBackend()
-        backend.draw_path(path, properties)
+        backend.draw_path(NumpyPath2d(path), properties)
         result = backend.high_quality(layout.Page(0, 0))
         assert b"PU;PA0,0;PD;BR1000,0,3000,4000,4000,4000;PU;" in result
 

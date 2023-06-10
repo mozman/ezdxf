@@ -4,6 +4,7 @@
 import pytest
 import ezdxf
 import ezdxf.path
+from ezdxf.npshapes import NumpyPath2d
 from ezdxf.math import Vec2
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.recorder import Recorder, BackendProperties, Override
@@ -188,7 +189,7 @@ class TestCroppingRecords:
         recorder.draw_line(Vec2(100, 0), Vec2(100, 100), props)
 
         # path coincident with crop box side is outside!
-        path = ezdxf.path.from_2d_vertices([(0, 100), (50, 100), (100, 100)])
+        path = NumpyPath2d.from_vertices(Vec2.list([(0, 100), (50, 100), (100, 100)]))
         recorder.draw_path(path, props)
 
         player = recorder.player()
@@ -214,8 +215,8 @@ class TestCroppingRecords:
     def test_crop_filled_paths(self):
         props = BackendProperties()
         recorder = Recorder()
-        square = ezdxf.path.rect(100, 100).to_2d_path()  # center = (0, 0)
-        hole = ezdxf.path.rect(50, 50).to_2d_path()  # center = (0, 0)
+        square = NumpyPath2d(ezdxf.path.rect(100, 100))  # center = (0, 0)
+        hole = NumpyPath2d(ezdxf.path.rect(50, 50))  # center = (0, 0)
         recorder.draw_filled_paths([square], [hole], props)
 
         player = recorder.player()
@@ -231,8 +232,8 @@ class TestCroppingRecords:
     def test_does_not_crop_holes_inside_crop_box(self):
         props = BackendProperties()
         recorder = Recorder()
-        square = ezdxf.path.rect(100, 100).to_2d_path()  # center = (0, 0)
-        hole = ezdxf.path.from_2d_vertices(
+        square = NumpyPath2d(ezdxf.path.rect(100, 100))  # center = (0, 0)
+        hole = NumpyPath2d.from_vertices(
             [(10, 10), (20, 10), (20, 20), (10, 20)], close=True
         )
         recorder.draw_filled_paths([square], [hole], props)
@@ -249,8 +250,8 @@ class TestCroppingRecords:
         props = BackendProperties()
         recorder = Recorder()
 
-        square = ezdxf.path.rect(100, 100).to_2d_path()  # center = (0, 0)
-        hole = ezdxf.path.from_2d_vertices(
+        square = NumpyPath2d(ezdxf.path.rect(100, 100))  # center = (0, 0)
+        hole = NumpyPath2d.from_vertices(
             [(-10, -10), (-20, -10), (-20, -20), (-10, -20)], close=True
         )
         recorder.draw_filled_paths([square], [hole], props)

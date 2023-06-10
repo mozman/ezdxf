@@ -14,7 +14,7 @@ from ezdxf.path import to_splines_and_polylines, to_hatches
 from ezdxf.layouts import BaseLayout
 
 from .type_hints import Color
-from .backend import BackendInterface, BkPath2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d
 from .config import Configuration
 from .properties import BackendProperties
 
@@ -155,15 +155,16 @@ class DXFBackend(BackendInterface):
         properties: BackendProperties,
     ) -> None:
         attribs = self.resolve_properties(properties)
-        for hatch in to_hatches(itertools.chain(paths, holes), dxfattribs=attribs):
+        paths2d = [p.to_path2d() for p in itertools.chain(paths, holes)]
+        for hatch in to_hatches(paths2d, dxfattribs=attribs):
             self.layout.add_entity(hatch)
             self.set_solid_fill(hatch, properties)
 
     def draw_filled_polygon(
-        self, points: Iterable[Vec2], properties: BackendProperties
+        self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
         hatch = self.layout.add_hatch(dxfattribs=self.resolve_properties(properties))
-        hatch.paths.add_polyline_path(points, is_closed=True)
+        hatch.paths.add_polyline_path(points.vertices(), is_closed=True)
         self.set_solid_fill(hatch, properties)
 
     def configure(self, config: Configuration) -> None:

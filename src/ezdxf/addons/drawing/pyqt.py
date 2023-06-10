@@ -7,12 +7,12 @@ import abc
 import math
 
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
-from ezdxf.addons.drawing.backend import Backend, BkPath2d
+from ezdxf.addons.drawing.backend import Backend, BkPath2d, BkPoints2d
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import BackendProperties
 from ezdxf.math import Vec2, Matrix44
-from ezdxf.path import to_qpainter_path
+from ezdxf.npshapes import to_qpainter_path
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):
@@ -158,13 +158,13 @@ class _PyQtBackend(Backend):
         oriented_paths: list[BkPath2d] = []
         for path in paths:
             try:
-                path = path.counter_clockwise()
+                path.counter_clockwise()
             except ValueError:  # cannot detect path orientation
                 continue
             oriented_paths.append(path)
         for path in holes:
             try:
-                path = path.clockwise()
+                path.clockwise()
             except ValueError:  # cannot detect path orientation
                 continue
             oriented_paths.append(path)
@@ -176,11 +176,11 @@ class _PyQtBackend(Backend):
         self._add_item(item, properties.handle)
 
     def draw_filled_polygon(
-        self, points: Iterable[Vec2], properties: BackendProperties
+        self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
         brush = self._get_fill_brush(properties.color)
         polygon = qg.QPolygonF()
-        for p in points:
+        for p in points.vertices():
             polygon.append(qc.QPointF(p.x, p.y))
         item = _CosmeticPolygon(polygon)
         item.setPen(self._no_line)

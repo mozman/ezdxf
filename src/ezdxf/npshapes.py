@@ -2,7 +2,7 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import Iterable, Optional, Iterator, Sequence
-from typing_extensions import Self
+from typing_extensions import Self, TypeAlias
 import abc
 
 import numpy as np
@@ -15,7 +15,16 @@ from ezdxf.math import (
     Bezier4P,
     BoundingBox2d,
 )
-from ezdxf.path import AbstractPath, Path2d, Command
+from ezdxf.path import (
+    AbstractPath,
+    Path2d,
+    Command,
+    PathElement,
+    LineTo,
+    MoveTo,
+    Curve3To,
+    Curve4To,
+)
 
 try:
     from ezdxf.acc import np_support  # type: ignore  # mypy ???
@@ -28,7 +37,14 @@ __all__ = [
     "NumpyShapesException",
     "EmptyShapeError",
     "to_qpainter_path",
+    "to_matplotlib_path",
 ]
+
+# comparing Command.<attrib> to ints is very slow
+CMD_MOVE_TO = int(Command.MOVE_TO)
+CMD_LINE_TO = int(Command.LINE_TO)
+CMD_CURVE3_TO = int(Command.CURVE3_TO)
+CMD_CURVE4_TO = int(Command.CURVE4_TO)
 
 
 class NumpyShapesException(Exception):
@@ -80,8 +96,10 @@ class NumpyPoints2d(NumpyShape2d):
         return len(self._vertices)
 
 
-NO_VERTICES = np.array([], dtype=np.float64)
-NO_COMMANDS = np.array([], dtype=np.int8)
+CommandNumpyType: TypeAlias = np.int8
+VertexNumpyType: TypeAlias = np.float64
+NO_VERTICES = np.array([], dtype=VertexNumpyType)
+NO_COMMANDS = np.array([], dtype=CommandNumpyType)
 
 
 class NumpyPath2d(NumpyShape2d):
@@ -101,8 +119,8 @@ class NumpyPath2d(NumpyShape2d):
                 vertices = [path.start]
             except IndexError:
                 vertices = [Vec2()]  # default start point of empty paths
-        self._vertices = np.array(vertices, dtype=np.float64)
-        self._commands = np.array(path.command_codes(), dtype=np.int8)
+        self._vertices = np.array(vertices, dtype=VertexNumpyType)
+        self._commands = np.array(path.command_codes(), dtype=CommandNumpyType)
 
     def __len__(self) -> int:
         return len(self._commands)
@@ -130,6 +148,25 @@ class NumpyPath2d(NumpyShape2d):
         """Internal API."""
         return list(self._commands)
 
+    def commands(self) -> Iterator[PathElement]:
+        vertices = self.vertices()
+        index = 1
+        for cmd in self._commands:
+            if cmd == CMD_LINE_TO:
+                yield LineTo(vertices[index])
+                index += 1
+            elif cmd == CMD_CURVE3_TO:
+                yield Curve3To(vertices[index + 1], vertices[index])
+                index += 2
+            elif cmd == CMD_CURVE4_TO:
+                yield Curve4To(
+                    vertices[index + 2], vertices[index], vertices[index + 1]
+                )
+                index += 3
+            elif cmd == CMD_MOVE_TO:
+                yield MoveTo(vertices[index])
+                index += 1
+
     clone = __copy__
 
     def to_path2d(self) -> Path2d:
@@ -139,17 +176,17 @@ class NumpyPath2d(NumpyShape2d):
         return Path2d.from_vertices_and_commands(vertices, commands)
 
     @classmethod
-    def from_vertices(cls, vertices: Iterable[Vec2], close: bool = False) -> Self:
+    def from_vertices(cls, vertices: Iterable[UVec], close: bool = False) -> Self:
         new_path = cls(None)
-        points = list(vertices)
+        points = Vec2.list(vertices)
         if len(points) == 0:
             return new_path
 
         if close and not points[0].isclose(points[-1]):
             points.append(points[0])
-        new_path._vertices = np.array(points, dtype=np.float64)
+        new_path._vertices = np.array(points, dtype=VertexNumpyType)
         new_path._commands = np.full(
-            len(points) - 1, fill_value=Command.LINE_TO, dtype=np.int8
+            len(points) - 1, fill_value=CMD_LINE_TO, dtype=CommandNumpyType
         )
         return new_path
 
@@ -159,7 +196,24 @@ class NumpyPath2d(NumpyShape2d):
         contains multiple sub-paths.
 
         """
-        return Command.MOVE_TO in self._commands
+        return CMD_MOVE_TO in self._commands
+
+    @property
+    def is_closed(self) -> bool:
+        """Returns ``True`` if the start point is close to the end point."""
+        if len(self._vertices) > 1:
+            return self.start.isclose(self.end)
+        return False
+
+    @property
+    def has_lines(self) -> bool:
+        """Returns ``True`` if the path has any line segments."""
+        return CMD_LINE_TO in self._commands
+
+    @property
+    def has_curves(self) -> bool:
+        """Returns ``True`` if the path has any curve segments."""
+        return CMD_CURVE3_TO in self._commands or CMD_CURVE4_TO in self._commands
 
     def sub_paths(self) -> list[Self]:
         """Yield all sub-paths as :term:`Single-Path` objects.
@@ -178,7 +232,7 @@ class NumpyPath2d(NumpyShape2d):
         commands = self._commands
         if len(commands) == 0:
             return []
-        if Command.MOVE_TO not in commands:
+        if CMD_MOVE_TO not in commands:
             return [self]
 
         sub_paths: list[Self] = []
@@ -188,13 +242,13 @@ class NumpyPath2d(NumpyShape2d):
         cmd_start_index = 0
         cmd_index = 0
         for cmd in commands:
-            if cmd == Command.LINE_TO:
+            if cmd == CMD_LINE_TO:
                 vtx_index += 1
-            elif cmd == Command.CURVE3_TO:
+            elif cmd == CMD_CURVE3_TO:
                 vtx_index += 2
-            elif cmd == Command.CURVE4_TO:
+            elif cmd == CMD_CURVE4_TO:
                 vtx_index += 3
-            elif cmd == Command.MOVE_TO:
+            elif cmd == CMD_MOVE_TO:
                 append_sub_path()
                 # MOVE_TO target vertex is the start vertex of the following path.
                 vtx_index += 1
@@ -202,7 +256,7 @@ class NumpyPath2d(NumpyShape2d):
                 cmd_start_index = cmd_index + 1
             cmd_index += 1
 
-        if commands[-1] != Command.MOVE_TO:
+        if commands[-1] != CMD_MOVE_TO:
             append_sub_path()
         return sub_paths
 
@@ -225,7 +279,7 @@ class NumpyPath2d(NumpyShape2d):
         commands = self._commands
         if not len(self._commands):
             return self
-        if commands[-1] == Command.MOVE_TO:
+        if commands[-1] == CMD_MOVE_TO:
             # The last move_to will become the first move_to.
             # A move_to as first command just moves the start point and can be
             # removed!
@@ -270,11 +324,11 @@ class NumpyPath2d(NumpyShape2d):
         yield start
         index = 1
         for cmd in self._commands:
-            if cmd == Command.LINE_TO or cmd == Command.MOVE_TO:
+            if cmd == CMD_LINE_TO or cmd == CMD_MOVE_TO:
                 end_location = vertices[index]
                 index += 1
                 yield end_location
-            elif cmd == Command.CURVE3_TO:
+            elif cmd == CMD_CURVE3_TO:
                 ctrl, end_location = vertices[index : index + 2]
                 index += 2
                 pts = Vec2.generate(
@@ -282,7 +336,7 @@ class NumpyPath2d(NumpyShape2d):
                 )
                 next(pts)  # skip first vertex
                 yield from pts
-            elif cmd == Command.CURVE4_TO:
+            elif cmd == CMD_CURVE4_TO:
                 ctrl1, ctrl2, end_location = vertices[index : index + 3]
                 index += 3
                 pts = Vec2.generate(
@@ -324,7 +378,7 @@ class NumpyPath2d(NumpyShape2d):
             if len(next_path._commands) == 0:
                 continue
             if not end.isclose(next_path.start):
-                commands.append(np.array((Command.MOVE_TO,), dtype=np.int8))
+                commands.append(np.array((CMD_MOVE_TO,), dtype=CommandNumpyType))
                 vertices.append(next_path._vertices)
             else:
                 vertices.append(next_path._vertices[1:])
@@ -360,16 +414,59 @@ def to_qpainter_path(paths: Iterable[NumpyPath2d]):
         qpath.moveTo(vertices[0])
         index = 1
         for cmd in path.command_codes():
-            if cmd == Command.LINE_TO:
+            # using Command.<attr> slows down this function by factor of 4!!!
+            if cmd == CMD_LINE_TO:
                 qpath.lineTo(vertices[index])
                 index += 1
-            elif cmd == Command.MOVE_TO:
-                qpath.moveTo(vertices[index])
-                index += 1
-            elif cmd == Command.CURVE3_TO:
+            elif cmd == CMD_CURVE3_TO:
                 qpath.quadTo(vertices[index], vertices[index + 1])
                 index += 2
-            elif cmd == Command.CURVE4_TO:
+            elif cmd == CMD_CURVE4_TO:
                 qpath.cubicTo(vertices[index], vertices[index + 1], vertices[index + 2])
                 index += 3
+            elif cmd == CMD_MOVE_TO:
+                qpath.moveTo(vertices[index])
+                index += 1
     return qpath
+
+
+MPL_CURVE3 = 3
+MPL_CURVE4 = 4
+MPL_LINETO = 2
+MPL_MOVETO = 1
+
+MPL_CURVE3_CODES = (MPL_CURVE3, MPL_CURVE3)
+MPL_CURVE4_CODES = (MPL_CURVE4, MPL_CURVE4, MPL_CURVE4)
+
+
+def to_matplotlib_path(paths: Iterable[NumpyPath2d]):
+    """Convert the given `paths` into a single :class:`matplotlib.path.Path` object.
+
+    Args:
+        paths: iterable of :class:`Path` or :class:`Path2d` objects
+
+    """
+    from matplotlib.path import Path as MatplotlibPath
+
+    paths = list(paths)
+    if len(paths) == 0:  # type: ignore
+        raise ValueError("one or more paths required")
+
+    vertices: list[tuple[float, float]] = []
+    codes: list[int] = []
+    for path in paths:
+        vertices.extend((v.x, v.y) for v in path.vertices())
+        codes.append(MPL_MOVETO)
+        for cmd in path.command_codes():
+            if cmd == CMD_LINE_TO:
+                codes.append(MPL_LINETO)
+            elif cmd == CMD_MOVE_TO:
+                codes.append(MPL_MOVETO)
+            elif cmd == CMD_CURVE3_TO:
+                codes.extend(MPL_CURVE3_CODES)
+            elif cmd == CMD_CURVE4_TO:
+                codes.extend(MPL_CURVE4_CODES)
+
+    # STOP command is currently not required
+    assert len(vertices) == len(codes)
+    return MatplotlibPath(vertices, codes)

@@ -7,6 +7,7 @@ import pytest
 from ezdxf.addons.drawing.clipper import ClippingRect
 from ezdxf.math import Vec2
 from ezdxf.path import rect
+from ezdxf import npshapes
 
 
 def test_clipping_points():
@@ -29,10 +30,10 @@ def test_clipping_lines():
 def test_clip_polyline():
     clipper = ClippingRect()
     clipper.push(rect(4, 4), None)
-    polyline = Vec2.list([(0, 1), (3, 0), (0, -1)])
+    polyline = npshapes.NumpyPoints2d([(0, 1), (3, 0), (0, -1)])
     result = clipper.clip_polygon(polyline)
     assert len(result) == 4
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

@@ -3,9 +3,8 @@
 from __future__ import annotations
 from typing import Iterable
 from ezdxf.math import Vec2
-from ezdxf.path import Path2d
 from .properties import BackendProperties
-from .backend import Backend
+from .backend import Backend, BkPath2d, BkPoints2d
 from .config import Configuration
 
 
@@ -28,9 +27,9 @@ class BasicBackend(Backend):
         self.collector.append(("line", start, end, properties))
 
     def draw_filled_polygon(
-        self, points: Iterable[Vec2], properties: BackendProperties
+        self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
-        self.collector.append(("filled_polygon", list(points), properties))
+        self.collector.append(("filled_polygon", points, properties))
 
     def set_background(self, color: str) -> None:
         self.collector.append(("bgcolor", color))
@@ -40,13 +39,13 @@ class BasicBackend(Backend):
 
 
 class PathBackend(BasicBackend):
-    def draw_path(self, path: Path2d, properties: BackendProperties) -> None:
+    def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         self.collector.append(("path", path, properties))
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path2d],
-        holes: Iterable[Path2d],
+        paths: Iterable[BkPath2d],
+        holes: Iterable[BkPath2d],
         properties: BackendProperties,
     ) -> None:
         self.collector.append(("filled_path", (tuple(paths), tuple(holes)), properties))

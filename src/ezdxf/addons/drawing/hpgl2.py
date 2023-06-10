@@ -11,7 +11,7 @@ from ezdxf.math import Vec2
 from ezdxf.path import Command
 
 from .type_hints import Color
-from .backend import BackendInterface, BkPath2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -28,6 +28,12 @@ DEFAULT_PEN = 0
 WHITE = colors.RGB(255, 255, 255)
 BLACK = colors.RGB(0, 0, 0)
 MAX_FLATTEN = 10
+
+# comparing Command.<attrib> to ints is very slow
+CMD_MOVE_TO = int(Command.MOVE_TO)
+CMD_LINE_TO = int(Command.LINE_TO)
+CMD_CURVE3_TO = int(Command.CURVE3_TO)
+CMD_CURVE4_TO = int(Command.CURVE4_TO)
 
 
 class PlotterBackend(recorder.Recorder):
@@ -363,12 +369,12 @@ class _RenderBackend(BackendInterface):
         self.fill_polygon()
 
     def draw_filled_polygon(
-        self, points: Iterable[Vec2], properties: BackendProperties
+        self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
-        points = list(points)
-        if points:
-            self.enter_polygon_mode(points[0])
-            self.add_polyline_encoded(points, properties)
+        points2d: list[Vec2] = points.vertices()
+        if points2d:
+            self.enter_polygon_mode(points2d[0])
+            self.add_polyline_encoded(points2d, properties)
             self.fill_polygon()
 
     def configure(self, config: Configuration) -> None:

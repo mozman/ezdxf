@@ -10,9 +10,10 @@ from ezdxf.addons.drawing.properties import Properties, BackendProperties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Vec2
-from ezdxf.path import Path2d
+from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
 
-BkPath2d: TypeAlias = Path2d
+BkPath2d: TypeAlias = NumpyPath2d
+BkPoints2d: TypeAlias = NumpyPoints2d
 
 
 class BackendInterface(ABC):
@@ -64,7 +65,7 @@ class BackendInterface(ABC):
 
     @abstractmethod
     def draw_filled_polygon(
-        self, points: Iterable[Vec2], properties: BackendProperties
+        self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
         raise NotImplementedError
 
@@ -162,10 +163,9 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         winding) and all holes into `holes` (clockwise winding) and look what
         the backend does with this information.
 
-        The HATCH fill strategies ("ignore", "outermost", "ignore") are resolved
-        by the frontend e.g. the holes sequence is empty for the "ignore"
-        strategy and for the "outermost" strategy, holes do not contain nested
-        holes.
+        The frontend resolves the HATCH fill strategies ("ignore", "outermost",
+        "ignore") e.g. the holes sequence is empty for the "ignore" strategy and for the
+        "outermost" strategy, holes do not contain nested holes.
 
         The default implementation draws all paths as filled polygon without
         holes by the :meth:`draw_filled_polygon` method. Backends can override
@@ -179,13 +179,15 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         """
         for path in paths:
             self.draw_filled_polygon(
-                path.flattening(distance=self.config.max_flattening_distance),
+                BkPoints2d(
+                    path.flattening(distance=self.config.max_flattening_distance)
+                ),
                 properties,
             )
 
     @abstractmethod
     def draw_filled_polygon(
-        self, points: Iterable[Vec2], properties: BackendProperties
+        self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
         """Fill a polygon whose outline is defined by the given points.
         Used to draw entities with simple outlines where :meth:`draw_path` may

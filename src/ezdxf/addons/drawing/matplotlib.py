@@ -12,8 +12,8 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 
-from ezdxf.path import to_matplotlib_path
-from ezdxf.addons.drawing.backend import Backend, BkPath2d
+from ezdxf.npshapes import to_matplotlib_path
+from ezdxf.addons.drawing.backend import Backend, BkPath2d, BkPoints2d
 from ezdxf.addons.drawing.properties import BackendProperties, LayoutProperties
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.type_hints import Color
@@ -178,14 +178,14 @@ class MatplotlibBackend(Backend):
         oriented_paths: list[BkPath2d] = []
         for path in paths:
             try:
-                path = path.counter_clockwise()
+                path.counter_clockwise()
             except ValueError:  # cannot detect path orientation
                 continue
             oriented_paths.append(path)
 
         for hole in holes:
             try:
-                hole = hole.clockwise()
+                hole.clockwise()
             except ValueError:  # cannot detect path orientation
                 continue
             oriented_paths.append(hole)
@@ -204,10 +204,10 @@ class MatplotlibBackend(Backend):
             self.ax.add_patch(patch)
 
     def draw_filled_polygon(
-        self, points: Iterable[Vec2], properties: BackendProperties
+        self, points: BkPoints2d, properties: BackendProperties
     ):
         self.ax.fill(
-            *zip(*((p.x, p.y) for p in points)),
+            *zip(*((p.x, p.y) for p in points.vertices())),
             color=properties.color,
             linewidth=0,
             zorder=self._get_z(),

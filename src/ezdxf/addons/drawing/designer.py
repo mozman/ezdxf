@@ -31,7 +31,7 @@ from ezdxf.tools.text import replace_non_printable_characters
 from ezdxf.render import linetypes
 from ezdxf.entities import DXFGraphic, Viewport
 
-from .backend import BackendInterface, BkPath2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d
 from .clipper import ClippingRect
 from .config import LinePolicy, TextPolicy, ColorPolicy, Configuration
 from .properties import BackendProperties, Filling
@@ -215,7 +215,7 @@ class Designer2d(Designer):
         m = vp.get_transformation_matrix()
         clipping_path = make_path(vp)
         if len(clipping_path):
-            self.clipper.push(clipping_path.to_2d_path(), m)
+            self.clipper.push(BkPath2d(clipping_path), m)
             return True
         return False
 
@@ -265,23 +265,25 @@ class Designer2d(Designer):
         self.backend.draw_solid_lines(lines2d, self.get_backend_properties(properties))
 
     def draw_path(self, path: Path2d | Path, properties: Properties):
-        path2d = path.to_2d_path() if isinstance(path, Path) else path
+        self._draw_path(BkPath2d(path), properties)
+
+    def _draw_path(self, path: BkPath2d, properties: Properties):
         if (
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
             if self.clipper.is_active:
                 for clipped_path in self.clipper.clip_paths(
-                    [path2d], self.config.max_flattening_distance
+                    [path], self.config.max_flattening_distance
                 ):
                     self.backend.draw_path(
                         clipped_path, self.get_backend_properties(properties)
                     )
                 return
-            self.backend.draw_path(path2d, self.get_backend_properties(properties))
+            self.backend.draw_path(path, self.get_backend_properties(properties))
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
-            vertices = path2d.flattening(
+            vertices = path.flattening(
                 self.config.max_flattening_distance, segments=16
             )
 
@@ -296,24 +298,36 @@ class Designer2d(Designer):
         holes: Iterable[Path | Path2d],
         properties: Properties,
     ) -> None:
-        paths2d = [(p.to_2d_path() if isinstance(p, Path) else p) for p in paths]
-        holes2d = [(p.to_2d_path() if isinstance(p, Path) else p) for p in holes]
+        bk_paths = [BkPath2d(p) for p in paths]
+        bk_holes = [BkPath2d(p) for p in holes]
+        self._draw_filled_paths(bk_paths, bk_holes, properties)
+
+    def _draw_filled_paths(
+        self,
+        paths: Iterable[BkPath2d],
+        holes: Iterable[BkPath2d],
+        properties: Properties,
+    ) -> None:
         if self.clipper.is_active:
             max_sagitta = self.config.max_flattening_distance
-            paths2d = self.clipper.clip_filled_paths(paths2d, max_sagitta)  # type: ignore
-            holes2d = self.clipper.clip_filled_paths(holes2d, max_sagitta)  # type: ignore
+            paths = self.clipper.clip_filled_paths(paths, max_sagitta)  # type: ignore
+            holes = self.clipper.clip_filled_paths(holes, max_sagitta)  # type: ignore
         self.backend.draw_filled_paths(
-            paths2d, holes2d, self.get_backend_properties(properties)
+            paths, holes, self.get_backend_properties(properties)
         )
 
     def draw_filled_polygon(
         self, points: Iterable[AnyVec], properties: Properties
     ) -> None:
-        points2d = Vec2.list(points)
+        self._draw_filled_polygon(BkPoints2d(points), properties)
+
+    def _draw_filled_polygon(
+        self, points: BkPoints2d, properties: Properties
+    ) -> None:
         if self.clipper.is_active:
-            points2d = self.clipper.clip_polygon(points2d)
+            points = self.clipper.clip_polygon(points)
         self.backend.draw_filled_polygon(
-            points2d, self.get_backend_properties(properties)
+            points, self.get_backend_properties(properties)
         )
 
     def pattern(self, properties: Properties) -> Sequence[float]:

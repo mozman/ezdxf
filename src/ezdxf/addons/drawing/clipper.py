@@ -5,8 +5,8 @@ from typing import Optional, Iterable, Iterator, Sequence
 
 from ezdxf.math import Matrix44, Vec2, BoundingBox2d
 from ezdxf.math.clipping import ClippingRect2d
-from ezdxf.path import Path2d, from_2d_vertices, single_paths
-
+from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
+from ezdxf.protocols import SupportsBoundingBox
 __all__ = ["ClippingRect"]
 
 
@@ -20,10 +20,10 @@ class ClippingRect:
     def is_active(self) -> bool:
         return self.view is not None
 
-    def push(self, path: Path2d, m: Optional[Matrix44]) -> None:
+    def push(self, path: SupportsBoundingBox, m: Optional[Matrix44]) -> None:
         if self.view is not None:
             self._stack.append((self.view, self.m))
-        box = BoundingBox2d(path.control_vertices())
+        box = path.bbox()
         self.view = ClippingRect2d(box.extmin, box.extmax)
         self.m = m
 
@@ -53,17 +53,17 @@ class ClippingRect:
         return start, end
 
     def clip_filled_paths(
-        self, paths: Iterable[Path2d], max_sagitta: float
-    ) -> Iterator[Path2d]:
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
         # Expected overall paths outside the view to be removed!
         view = self.view
         assert view is not None
         m = self.m
         for path in paths:
             if m is not None:
-                path = path.transform(m)
+                path.transform_inplace(m)
             # path in paperspace units!
-            box = BoundingBox2d(path.control_vertices())
+            box = path.bbox()
             if not view.has_intersection(box):
                 # path is complete outside the view
                 continue
@@ -71,7 +71,7 @@ class ClippingRect:
                 # path is complete inside the view, no clipping required
                 yield path
             else:  # clipping is required, but only clipping of polygons is supported
-                yield from_2d_vertices(
+                yield NumpyPath2d.from_vertices(
                     view.clip_polygon(
                         Vec2.list(path.flattening(max_sagitta, segments=4))
                     ),
@@ -79,8 +79,8 @@ class ClippingRect:
                 )
 
     def clip_paths(
-        self, paths: Iterable[Path2d], max_sagitta: float
-    ) -> Iterator[Path2d]:
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
         # Expected paths outside the view to be removed!
         view = self.view
         assert view is not None
@@ -88,25 +88,24 @@ class ClippingRect:
 
         for path in paths:
             if m is not None:
-                path = path.transform(m)
+                path.transform_inplace(m)
             # path in paperspace units!
             box = BoundingBox2d(path.control_vertices())
             if view.is_inside(box.extmin) and view.is_inside(box.extmax):
                 yield path
-            for sub_path in single_paths([path]):  # type: ignore
+            for sub_path in path.sub_paths():
                 polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=4))
                 for part in view.clip_polyline(polyline):
-                    yield from_2d_vertices(part, close=False)
+                    yield NumpyPath2d.from_vertices(part, close=False)
 
-    def clip_polygon(self, points: Iterable[Vec2]) -> Sequence[Vec2]:
+    def clip_polygon(self, points: NumpyPoints2d) -> NumpyPoints2d:
         # Expected polygons outside the view to be removed!
         if self.m is not None:
-            points = self.m.fast_2d_transform(points)
+            points.transform_inplace(self.m)
             # points in paperspace units!
-        points = list(points)
         view = self.view
         if view is not None:
-            box = BoundingBox2d(points)
-            if not view.is_inside(box.extmin) or not view.is_inside(box.extmax):
-                return view.clip_polygon(points)
+            extmin, extmax = points.extents()
+            if not view.is_inside(extmin) or not view.is_inside(extmax):
+                return NumpyPoints2d(view.clip_polygon(points.vertices()))
         return points

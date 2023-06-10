@@ -10,7 +10,7 @@ from ezdxf.path import Command
 from ezdxf.version import __version__
 
 from .type_hints import Color
-from .backend import BackendInterface, BkPath2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -315,9 +315,9 @@ class PyMuPdfRenderBackend(BackendInterface):
         shape.commit()
 
     def draw_filled_polygon(
-        self, points: Iterable[Vec2], properties: BackendProperties
+        self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
-        vertices = Vec2.list(points)
+        vertices = points.vertices()
         if len(vertices) < 3:
             return
         # input coordinates are page coordinates in pdf units

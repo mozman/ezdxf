@@ -5,6 +5,7 @@ import pytest
 from xml.etree import ElementTree as ET
 
 from ezdxf.math import Vec2
+from ezdxf.npshapes import NumpyPoints2d
 from ezdxf.addons.drawing import svg, layout
 from ezdxf.addons.drawing.properties import BackendProperties
 
@@ -64,7 +65,7 @@ class TestSVGBackend:
     def backend(self):
         backend_ = svg.SVGBackend()
         properties = BackendProperties(color="#ff0000", lineweight=0.25)
-        points = Vec2.list([(0, 0), (100, 0), (100, 100), (0, 100)])
+        points = NumpyPoints2d([(0, 0), (100, 0), (100, 100), (0, 100)])
         backend_.draw_filled_polygon(points, properties)
         return backend_
 

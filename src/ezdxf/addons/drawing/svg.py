@@ -12,7 +12,7 @@ from ezdxf.path import Command
 
 
 from .type_hints import Color
-from .backend import BackendInterface, BkPath2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -288,9 +288,11 @@ class SVGRenderBackend(BackendInterface):
         self.add_filling(" ".join(d), properties)
 
     def draw_filled_polygon(
-        self, points: Iterable[Vec2], properties: BackendProperties
+        self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
-        self.add_filling(self.make_polyline_str(list(points), close=True), properties)
+        self.add_filling(
+            self.make_polyline_str(points.vertices(), close=True), properties
+        )
 
     @staticmethod
     def make_polyline_str(points: Sequence[Vec2], close=False) -> str:
