@@ -119,9 +119,9 @@ class TestGlyphCache:
     def test_spaces_are_measured(self, cache):
         assert cache.get_text_length("   ", cache.font_measurements.cap_height) == 18
 
-    def test_spaces_are_rendered(self, cache):
-        p = cache.get_text_path("   ", cache.font_measurements.cap_height)
-        assert p.end.isclose((18, 0))
+    def test_spaces_are_not_rendered(self, cache):
+        p = cache.get_text_glyph_paths("   ", cache.font_measurements.cap_height)
+        assert len(p) == 0
 
 
 def test_resolve_shx_font_name():

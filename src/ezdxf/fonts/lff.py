@@ -321,7 +321,4 @@ class GlyphCache(Glyphs):
                 glyph.transform_inplace(m)
                 glyph_paths.append(glyph)
             current_location += self.get_advance_width(shape_number) * sx
-        if len(glyph_paths) == 0:  # only white space characters
-            glyph_paths.append(GlyphPath.from_vertices([(current_location, 0)]))
-
         return glyph_paths

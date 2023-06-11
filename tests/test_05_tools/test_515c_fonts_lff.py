@@ -2,7 +2,6 @@
 #  License: MIT License
 import pytest
 
-from ezdxf.math import BoundingBox2d
 from ezdxf import path
 from ezdxf.fonts import fonts
 
@@ -60,6 +59,11 @@ class TestLibreCadFont:
         box = path.precise_bbox(text_path)
         assert box.size.x > 16
         assert box.size.y == pytest.approx(3, abs=TOL)
+
+
+def test_low_level_glyph_cache_measures_spaces():
+    cache = fonts.font_manager.get_lff_glyph_cache(FONT)
+    assert cache.get_text_length("   ", cache.font_measurements.cap_height) == 20.25
 
 
 def test_map_shx_to_lff():
