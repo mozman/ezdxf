@@ -615,7 +615,7 @@ def render_shapes(
 ) -> GlyphPath:
     """Renders multiple shapes into a single glyph path."""
     ctx = ShapeRenderer(
-        GlyphPath(start),
+        path.Path(start),
         pen_down=True,
         stacked=stacked,
         get_codes=get_codes,
@@ -630,7 +630,7 @@ def render_shapes(
                 f"stack underflow while rendering shape number {shape_number}"
             )
         # move cursor to the start of the next char???
-    return ctx.p
+    return GlyphPath(ctx.p)
 
 
 #        0, 1, 2,   3, 4,    5,  6,  7,  8,  9,  A,    B, C,   D, E, F
@@ -643,7 +643,7 @@ class ShapeRenderer:
     """Low level glyph renderer for SHX/SHP fonts."""
     def __init__(
         self,
-        p: GlyphPath,
+        p: path.Path,
         get_codes: Callable[[int], Sequence[int]],
         *,
         vector_length: float = 1.0,
@@ -660,7 +660,7 @@ class ShapeRenderer:
 
     @property
     def current_location(self) -> Vec2:
-        return self.p.end
+        return Vec2(self.p.end)
 
     def push(self) -> None:
         self._location_stack.append(self.current_location)
@@ -946,17 +946,17 @@ class GlyphCache(Glyphs):
         height = box.size.y
         width = box.size.x
         start = glyph_A.start
-        p = GlyphPath(start)
+        p = path.Path(start)
         p.line_to(start + Vec2(width, 0))
         p.line_to(start + Vec2(width, height))
         p.line_to(start + Vec2(0, height))
         p.close()
         p.move_to(glyph_A.end)
-        return p
+        return GlyphPath(p)
 
     def _render_shape(self, shape_number) -> GlyphPath:
         ctx = ShapeRenderer(
-            GlyphPath(),
+            path.Path(),
             pen_down=True,
             stacked=False,
             get_codes=self.font.get_codes,
@@ -965,23 +965,27 @@ class GlyphCache(Glyphs):
             ctx.render(shape_number, reset_to_baseline=False)
         except StackUnderflow:
             pass
-        return ctx.p
+        return GlyphPath(ctx.p)
 
     def get_shape(self, shape_number: int) -> GlyphPath:
         try:
-            return self._glyph_cache[shape_number]
+            return self._glyph_cache[shape_number].clone()
         except KeyError:
             pass
         try:
             glyph = self._render_shape(shape_number)
         except UnsupportedShapeNumber:
             if shape_number < 32:
-                glyph = GlyphPath()
+                glyph = GlyphPath(None)
             else:
                 glyph = self.empty_box
         self._glyph_cache[shape_number] = glyph
-        self._advance_width_cache[shape_number] = glyph.end.x
-        return glyph
+        try:
+            width = glyph.end.x
+        except IndexError:
+            width = self.space_width
+        self._advance_width_cache[shape_number] = width
+        return glyph.clone()
 
     def get_advance_width(self, shape_number: int) -> float:
         if shape_number == 32:
@@ -1035,12 +1039,10 @@ class GlyphCache(Glyphs):
             if shape_number > 32:
                 glyph = self.get_shape(shape_number)
                 m[3, 0] = current_location
-                glyph_paths.append(glyph.transform(m))
+                glyph.transform_inplace(m)
+                glyph_paths.append(glyph)
             current_location += self.get_advance_width(shape_number) * sx
-        if len(glyph_paths):
-            last_glyph = glyph_paths[-1]
-            if not last_glyph.end.isclose((current_location, 0)):
-                last_glyph.move_to((current_location, 0))
-        else:  # only white space characters
-            glyph_paths.append(GlyphPath((current_location, 0)))
+        # TODO: is this really required and useful?
+        if len(glyph_paths) == 0:  # only white space characters
+            glyph_paths.append(GlyphPath.from_vertices([(current_location, 0)]))
         return glyph_paths

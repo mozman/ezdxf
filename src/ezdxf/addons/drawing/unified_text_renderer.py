@@ -1,11 +1,14 @@
 # Copyright (c) 2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-import ezdxf.path
+from typing import TYPE_CHECKING
 from ezdxf.fonts import fonts
 from ezdxf.fonts.font_measurements import FontMeasurements
 
 from .text_renderer import TextRenderer
+
+if TYPE_CHECKING:
+    from ezdxf.npshapes import NumpyPath2d
 
 
 class UnifiedTextRenderer(TextRenderer):
@@ -49,13 +52,13 @@ class UnifiedTextRenderer(TextRenderer):
 
     def get_text_path(
         self, text: str, font_face: fonts.FontFace, cap_height: float = 1.0
-    ) -> ezdxf.path.Path2d:
+    ) -> NumpyPath2d:
         abstract_font = self.get_font(font_face)
         return abstract_font.text_path_ex(text, cap_height)
 
     def get_text_glyph_paths(
         self, text: str, font_face: fonts.FontFace, cap_height: float = 1.0
-    ) -> list[ezdxf.path.Path2d]:
+    ) -> list[NumpyPath2d]:
         abstract_font = self.get_font(font_face)
         return abstract_font.text_glyph_paths(text, cap_height)
 

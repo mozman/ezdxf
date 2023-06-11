@@ -105,7 +105,7 @@ def get_font(font: fonts.FontFace) -> fonts.AbstractFont:
 
 
 def _str_to_path(s: str, render_engine: fonts.AbstractFont, size: float = 1.0) -> Path:
-    return render_engine.text_path_ex(s, cap_height=size).to_3d_path()
+    return render_engine.text_path_ex(s, cap_height=size).to_path()
 
 
 def alignment_transformation(

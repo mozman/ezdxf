@@ -148,7 +148,7 @@ class TestShapeRenderer:
 
     def test_render_bulges(self, shp):
         p = shp.render_shape(0x53)  # uppercase letter S
-        commands = p.commands()
+        commands = list(p.commands())
         assert [c.type for c in commands] == [
             path.Command.CURVE4_TO,
             path.Command.CURVE4_TO,
@@ -301,8 +301,8 @@ class TestShapeRenderer:
     def test_unsupported_printable_shape_number_returns_empty_box(self, shp):
         cache = shapefile.GlyphCache(shp)
         box = cache.get_shape(1234)
-        assert box is cache.empty_box
-        assert box.end.x == cache.space_width
+        assert box is not cache.empty_box, "expected a copy"
+        assert box.command_codes() == cache.empty_box.command_codes()
 
     def test_empty_box_has_advance_width_like_glyph_A(self, shp):
         cache = shapefile.GlyphCache(shp)

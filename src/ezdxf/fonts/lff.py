@@ -79,7 +79,7 @@ class Glyph:
                 p, convert_bulge_values(polyline), close=False, elevation=0, ocs=ocs
             )
             final_path.extend_multi_path(p)
-        return final_path.to_2d_path()
+        return GlyphPath(final_path)
 
 
 def convert_bulge_values(polyline: Polyline) -> Iterator[Sequence[float]]:
@@ -234,13 +234,13 @@ class GlyphCache(Glyphs):
         height = box.size.y
         width = box.size.x
         start = glyph_A.start
-        p = GlyphPath(start)
+        p = path.Path(start)
         p.line_to(start + Vec2(width, 0))
         p.line_to(start + Vec2(width, height))
         p.line_to(start + Vec2(0, height))
         p.close()
         p.move_to(glyph_A.end)
-        return p
+        return GlyphPath(p)
 
     def _render_shape(self, shape_number) -> GlyphPath:
         try:
@@ -255,18 +255,18 @@ class GlyphCache(Glyphs):
         if shape_number <= 32:
             raise ValueError("space and non-printable characters are not glyphs")
         try:
-            return self._glyph_cache[shape_number]
+            return self._glyph_cache[shape_number].clone()
         except KeyError:
             pass
         glyph = self._render_shape(shape_number)
         self._glyph_cache[shape_number] = glyph
         advance_width = 0.0
         if len(glyph):
-            box = BoundingBox2d(glyph.control_vertices())
+            box = glyph.bbox()
             assert box.extmax is not None
             advance_width = box.extmax.x + self.font.letter_spacing
         self._advance_width_cache[shape_number] = advance_width
-        return glyph
+        return glyph.clone()
 
     def get_advance_width(self, shape_number: int) -> float:
         if shape_number < 32:
@@ -318,13 +318,10 @@ class GlyphCache(Glyphs):
             if shape_number > 32:
                 glyph = self.get_shape(shape_number)
                 m[3, 0] = current_location
-                glyph_paths.append(glyph.transform(m))
+                glyph.transform_inplace(m)
+                glyph_paths.append(glyph)
             current_location += self.get_advance_width(shape_number) * sx
-        if len(glyph_paths):
-            last_glyph = glyph_paths[-1]
-            if not last_glyph.end.isclose((current_location, 0)):
-                last_glyph.move_to((current_location, 0))
-        else:  # only white space characters
-            glyph_paths.append(GlyphPath((current_location, 0)))
+        if len(glyph_paths) == 0:  # only white space characters
+            glyph_paths.append(GlyphPath.from_vertices([(current_location, 0)]))
 
         return glyph_paths

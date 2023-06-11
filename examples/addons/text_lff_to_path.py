@@ -30,6 +30,13 @@ def main():
     attr = {"layer": "STROKE", "color": 1}
     ff = fonts.FontFace(filename=FONT)
     s = f'1234567890 AXxp written with stroke font "{FONT}"'
+
+    lff_font = fonts.make_font(FONT, 1)
+    text_path = lff_font.text_path(s)
+    box = path.precise_bbox(text_path)
+    msp.add_lwpolyline(
+        box.rect_vertices(), close=True, dxfattribs={"color": 6}
+    )
     align = TextEntityAlignment.LEFT
     path.render_splines_and_polylines(
         msp, text2path.make_paths_from_str(s, ff, align=align, size=1), dxfattribs=attr

@@ -95,7 +95,7 @@ class TestGlyphCache:
         box = BoundingBox2d(glyph.control_vertices())
         assert box.size.x == 6
         assert box.size.y == 6
-        assert glyph is cache.get_shape(ord("A"))
+        assert glyph is not cache.get_shape(ord("A")), "expected a copy"
 
     def test_get_advance_width(self, cache):
         glyph = cache.get_shape(ord("A"))

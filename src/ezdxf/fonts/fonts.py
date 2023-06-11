@@ -448,7 +448,7 @@ class MonospaceFont(AbstractFont):
         p.line_to((text_width, cap_height))
         p.line_to((0, cap_height))
         p.close()
-        return p
+        return GlyphPath(p)
 
     def text_glyph_paths(
         self, text: str, cap_height: float, width_factor: float = 1.0

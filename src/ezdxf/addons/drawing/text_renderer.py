@@ -1,10 +1,12 @@
 #  Copyright (c) 2022-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TypeVar
+from typing import TypeVar, TYPE_CHECKING
 import abc
 from ezdxf.fonts import fonts
-from ezdxf.path import Path2d
+
+if TYPE_CHECKING:
+    from ezdxf.npshapes import NumpyPath2d
 
 T = TypeVar("T")
 
@@ -30,7 +32,13 @@ class TextRenderer(abc.ABC):
     @abc.abstractmethod
     def get_text_path(
         self, text: str, font_face: fonts.FontFace, cap_height: float = 1.0
-    ) -> Path2d:
+    ) -> NumpyPath2d:
+        ...
+
+    @abc.abstractmethod
+    def get_text_glyph_paths(
+        self, text: str, font_face: fonts.FontFace, cap_height: float = 1.0
+    ) -> list[NumpyPath2d]:
         ...
 
     @abc.abstractmethod

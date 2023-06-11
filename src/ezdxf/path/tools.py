@@ -168,7 +168,7 @@ def precise_bbox(path: Path | Path2d) -> BoundingBox:
         return BoundingBox()
     start = path.start
     points: list[Vec3] = [start]
-    for cmd in path:
+    for cmd in path.commands():
         if cmd.type == Command.LINE_TO:
             points.append(cmd.end)
         elif cmd.type == Command.CURVE4_TO:

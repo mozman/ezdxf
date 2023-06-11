@@ -6,6 +6,7 @@ from fontTools.pens.basePen import BasePen
 from fontTools.ttLib import TTFont
 
 from ezdxf.math import Matrix44, UVec, BoundingBox2d
+from ezdxf.path import Path
 from .font_manager import FontManager, UnsupportedFont
 from .font_measurements import FontMeasurements
 from .glyphs import GlyphPath, Glyphs
@@ -19,11 +20,11 @@ font_manager = FontManager()
 class PathPen(BasePen):
     def __init__(self, glyph_set) -> None:
         super().__init__(glyph_set)
-        self._path = GlyphPath()
+        self._path = Path()
 
     @property
     def path(self) -> GlyphPath:
-        return self._path
+        return GlyphPath(self._path)
 
     def _moveTo(self, pt: UVec) -> None:
         self._path.move_to(pt)
@@ -126,14 +127,14 @@ class TTFontRenderer(Glyphs):
     def get_glyph_path(self, char: str) -> GlyphPath:
         """Returns the raw glyph path, without any scaling applied."""
         try:
-            return self._glyph_path_cache[char]
+            return self._glyph_path_cache[char].clone()
         except KeyError:
             pass
         pen = PathPen(self.glyph_set)
         self.get_generic_glyph(char).draw(pen)
         glyph_path = pen.path
         self._glyph_path_cache[char] = glyph_path
-        return glyph_path
+        return glyph_path.clone()
 
     def get_glyph_width(self, char: str) -> float:
         """Returns the raw glyph width, without any scaling applied."""
@@ -170,7 +171,8 @@ class TTFontRenderer(Glyphs):
                 x_offset += self.kerning.get(prev_char, char) * x_factor
             # set horizontal offset:
             m[3, 0] = x_offset
-            glyph_path = self.get_glyph_path(char).transform(m)
+            glyph_path = self.get_glyph_path(char)
+            glyph_path.transform_inplace(m)
             if len(glyph_path):
                 glyph_paths.append(glyph_path)
             x_offset += self.get_glyph_width(char) * x_factor

@@ -282,9 +282,7 @@ class Designer2d(Designer):
             self.backend.draw_path(path, self.get_backend_properties(properties))
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
-            vertices = path.flattening(
-                self.config.max_flattening_distance, segments=16
-            )
+            vertices = path.flattening(self.config.max_flattening_distance, segments=16)
 
             self.draw_solid_lines(
                 ((Vec2(s), Vec2(e)) for s, e in renderer.line_segments(vertices)),
@@ -320,9 +318,7 @@ class Designer2d(Designer):
     ) -> None:
         self._draw_filled_polygon(BkPoints2d(points), properties)
 
-    def _draw_filled_polygon(
-        self, points: BkPoints2d, properties: Properties
-    ) -> None:
+    def _draw_filled_polygon(self, points: BkPoints2d, properties: Properties) -> None:
         if self.clipper.is_active:
             points = self.clipper.clip_polygon(points)
         self.backend.draw_filled_polygon(
@@ -379,23 +375,30 @@ class Designer2d(Designer):
             )
         except (RuntimeError, ValueError):
             return
+        for p in glyph_paths:
+            p.transform_inplace(transform)
+        transformed_paths: list[BkPath2d] = glyph_paths
 
-        transformed_paths: list[Path2d] = [p.transform(transform) for p in glyph_paths]
+        points: list[Vec2]
         if text_policy == TextPolicy.REPLACE_RECT:
-            bbox = BoundingBox2d()
+            points = []
             for p in transformed_paths:
-                bbox.extend(p.control_vertices())
-            self._draw_path(
-                BkPath2d.from_vertices(bbox.rect_vertices(), close=True), properties
-            )
+                points.extend(p.extents())
+            if len(points) < 2:
+                return
+            rect = BkPath2d.from_vertices(BoundingBox2d(points).rect_vertices())
+            self._draw_path(rect, properties)
             return
         if text_policy == TextPolicy.REPLACE_FILL:
-            bbox = BoundingBox2d()
+            points = []
             for p in transformed_paths:
-                bbox.extend(p.control_vertices())
+                points.extend(p.extents())
+            if len(points) < 2:
+                return
+            polygon = BkPoints2d(BoundingBox2d(points).rect_vertices())
             if properties.filling is None:
                 properties.filling = Filling()
-            self.draw_filled_polygon(bbox.rect_vertices(), properties)
+            self._draw_filled_polygon(polygon, properties)
             return
 
         if (
@@ -403,14 +406,16 @@ class Designer2d(Designer):
             or text_policy == TextPolicy.OUTLINE
         ):
             for text_path in transformed_paths:
-                self.draw_path(text_path, properties)
+                self._draw_path(text_path, properties)
             return
 
         polygons = make_polygon_structure(single_paths(transformed_paths))  # type: ignore
-        external_paths, holes = winding_deconstruction(polygons)  # type: ignore
+        external_paths: list[BkPath2d]
+        holes: list[BkPath2d]
+        external_paths, holes = winding_deconstruction(polygons)
         if properties.filling is None:
             properties.filling = Filling()
-        self.draw_filled_paths(external_paths, holes, properties)  # type: ignore
+        self._draw_filled_paths(external_paths, holes, properties)
 
     def finalize(self) -> None:
         self.backend.finalize()

@@ -9,6 +9,7 @@ import numpy as np
 from ezdxf.math import (
     Matrix44,
     Vec2,
+    Vec3,
     UVec,
     has_clockwise_orientation,
     Bezier3P,
@@ -17,6 +18,7 @@ from ezdxf.math import (
 )
 from ezdxf.path import (
     AbstractPath,
+    Path,
     Path2d,
     Command,
     PathElement,
@@ -116,7 +118,7 @@ class NumpyPath2d(NumpyShape2d):
         if isinstance(path, Path2d):
             vertices = path.control_vertices()
         else:
-            vertices = Vec2.list(path.control_vertices())
+            vertices = [Vec2(v) for v in path.control_vertices()]
         if len(vertices) == 0:
             try:  # control_vertices() does not return start point of empty paths
                 vertices = [path.start]
@@ -177,6 +179,12 @@ class NumpyPath2d(NumpyShape2d):
         vertices = [Vec2(v) for v in self._vertices]
         commands = [Command(c) for c in self._commands]
         return Path2d.from_vertices_and_commands(vertices, commands)
+
+    def to_path(self) -> Path:
+        """Returns a new :class:`Path2d` instance."""
+        vertices = [Vec3(v) for v in self._vertices]
+        commands = [Command(c) for c in self._commands]
+        return Path.from_vertices_and_commands(vertices, commands)
 
     @classmethod
     def from_vertices(cls, vertices: Iterable[UVec], close: bool = False) -> Self:

@@ -5,8 +5,9 @@ import pytest
 
 from ezdxf.npshapes import NumpyPoints2d, NumpyPath2d
 from ezdxf.math import Matrix44, BoundingBox2d, close_vectors, Vec2
-from ezdxf.path import Path2d, Command, from_vertices
+from ezdxf.path import Command, from_vertices, Path, Path2d
 from ezdxf.fonts import fonts
+from ezdxf.render import forms
 
 
 class TestNumpyPoints:
@@ -344,14 +345,21 @@ class TestSubPaths:
         assert vertices[1].isclose((0, 0))
 
 
-def test_path2d_conversion_methods():
-    f = fonts.make_font("DejaVuSans.ttf", 1.0)
-    source_path = f.text_path("ABCDEFabcdef")
+def test_path_conversion_methods():
+    source_path = from_vertices(forms.circle(32))
+    p0 = Path((2, 0))
+    p0.curve3_to((3, 0), (2.5, 1))
+    source_path.extend_multi_path(p0)
+    p0 = Path((3, 0))
+    p0.curve4_to((4, 0), (3.3, -1), (3.7, 1))
+
+    p0 = from_vertices(forms.translate(forms.circle(32)), (5, 0))
+    source_path.extend_multi_path(p0)
     assert source_path.has_sub_paths is True
     assert source_path.has_curves is True
     assert source_path.has_lines is True
 
-    converted_path = NumpyPath2d(source_path).to_path2d()
+    converted_path = NumpyPath2d(source_path).to_path()
     assert converted_path.has_sub_paths is True
     assert converted_path.has_curves is True
     assert converted_path.has_lines is True
