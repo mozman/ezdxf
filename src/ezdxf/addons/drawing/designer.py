@@ -18,13 +18,7 @@ import ezdxf.bbox
 
 from ezdxf.fonts import fonts
 from ezdxf.math import Vec2, Matrix44, BoundingBox2d, AnyVec
-from ezdxf.path import (
-    make_path,
-    Path,
-    make_polygon_structure,
-    single_paths,
-    winding_deconstruction,
-)
+from ezdxf.path import make_path, Path
 from ezdxf.tools.text import replace_non_printable_characters
 from ezdxf.render import linetypes
 from ezdxf.entities import DXFGraphic, Viewport
@@ -408,13 +402,9 @@ class Designer2d(Designer):
                 self._draw_path(text_path, properties)
             return
 
-        polygons = make_polygon_structure(single_paths(transformed_paths))  # type: ignore
-        external_paths: list[BkPath2d]
-        holes: list[BkPath2d]
-        external_paths, holes = winding_deconstruction(polygons)
         if properties.filling is None:
             properties.filling = Filling()
-        self._draw_filled_paths(external_paths, holes, properties)
+        self._draw_filled_paths(transformed_paths, [], properties)
 
     def finalize(self) -> None:
         self.backend.finalize()

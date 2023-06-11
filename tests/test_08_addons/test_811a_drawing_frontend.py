@@ -304,7 +304,7 @@ def test_mtext(msp, basic):
     msp.add_mtext("line1\nline2", dxfattribs={"style": "DEJAVU"})
     basic.draw_entities(msp)
     result = get_result(basic)
-    assert len(result) == 12
+    assert len(result) == 10  # each character is now one multi-path: changed in v1.1.0b4
     assert result[0][0] == "filled_polygon"
 
 
