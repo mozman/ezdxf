@@ -36,7 +36,8 @@ Version 1.1.0 Beta
   `fontTools` package
 - CHANGED: moved text rendering from backend classes to the `Frontend` class
 - CHANGED: moved clipping support from backend classes to the `Frontend` class
-- CHANGED: `BackendInterface` and all derived backends support only 2D shapes  
+- CHANGED: `BackendInterface` and all derived backends support only 2D shapes
+- REMOVED: Matplotlib/Qt path converters from `ezdxf.path.converter`
 - REMOVED: `Pillow` backend and the `pillow` command
 - REMOVED: `geomdl` test dependency
 - BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1

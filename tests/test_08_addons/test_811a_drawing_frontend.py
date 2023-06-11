@@ -6,11 +6,10 @@ import ezdxf
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.properties import BackendProperties
 
-from ezdxf.addons.drawing.backend import Backend
+from ezdxf.addons.drawing.backend import Backend, BkPath2d
 from ezdxf.addons.drawing.debug_backend import BasicBackend, PathBackend
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
-from ezdxf.path import from_2d_vertices
 
 
 class MyTestFrontend(Frontend):
@@ -61,7 +60,7 @@ def test_basic_frontend_init(basic):
 
 def test_backend_default_draw_path():
     backend = BasicBackend()
-    path = from_2d_vertices([(0, 0), (1, 0), (2, 0)])
+    path = BkPath2d.from_vertices([(0, 0), (1, 0), (2, 0)])
     backend.draw_path(path, BackendProperties())
     result = backend.collector
     assert len(result) == 2
@@ -333,7 +332,7 @@ def test_mesh(msp, basic):
     c.render_mesh(msp)
     basic.draw_entities(msp)
     result = get_result(basic)
-    assert len(result) == 16  # TODO: ???
+    assert len(result) == 24
     assert unique_types(result) == {"line"}
 
 
@@ -343,7 +342,7 @@ def test_polyface(msp, basic):
     c.render_polyface(msp)
     basic.draw_entities(msp)
     result = get_result(basic)
-    assert len(result) == 16  # TODO: ???
+    assert len(result) == 24
     entities = {e[0] for e in result}
     assert entities == {"line"}
 

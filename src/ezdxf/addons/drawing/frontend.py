@@ -62,7 +62,7 @@ from ezdxf.path import (
     from_hatch_boundary_path,
     make_polygon_structure,
     winding_deconstruction,
-    from_2d_vertices,
+    from_vertices,
 )
 from ezdxf.render import MeshBuilder, TraceBuilder
 from ezdxf import reorder
@@ -449,7 +449,7 @@ class UniversalFrontend:
                 return
             edge_visibility = entity.get_edges_visibility()
             if all(edge_visibility):
-                self.designer.draw_path(from_2d_vertices(points), properties)
+                self.designer.draw_path(from_vertices(points), properties)
             else:
                 for a, b, visible in zip(points, points[1:], edge_visibility):
                     if visible:
@@ -638,7 +638,7 @@ class UniversalFrontend:
     ) -> None:
         for face in builder.faces_as_vertices():
             self.designer.draw_path(
-                from_2d_vertices(face, close=True), properties=properties
+                from_vertices(face, close=True), properties=properties
             )
 
     def draw_polyline_entity(self, entity: DXFGraphic, properties: Properties) -> None:

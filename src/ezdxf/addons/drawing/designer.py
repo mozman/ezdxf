@@ -22,7 +22,6 @@ from ezdxf.path import (
     make_path,
     Path2d,
     Path,
-    from_2d_vertices,
     make_polygon_structure,
     single_paths,
     winding_deconstruction,
@@ -386,8 +385,8 @@ class Designer2d(Designer):
             bbox = BoundingBox2d()
             for p in transformed_paths:
                 bbox.extend(p.control_vertices())
-            self.draw_path(
-                from_2d_vertices(bbox.rect_vertices(), close=True), properties
+            self._draw_path(
+                BkPath2d.from_vertices(bbox.rect_vertices(), close=True), properties
             )
             return
         if text_policy == TextPolicy.REPLACE_FILL:
