@@ -5,8 +5,9 @@ from typing import Optional, Iterable, Iterator, Sequence
 
 from ezdxf.math import Matrix44, Vec2, BoundingBox2d
 from ezdxf.math.clipping import ClippingRect2d
-from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
+from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, single_paths
 from ezdxf.protocols import SupportsBoundingBox
+
 __all__ = ["ClippingRect"]
 
 
@@ -70,13 +71,17 @@ class ClippingRect:
             if view.is_inside(box.extmin) and view.is_inside(box.extmax):
                 # path is complete inside the view, no clipping required
                 yield path
-            else:  # clipping is required, but only clipping of polygons is supported
-                yield NumpyPath2d.from_vertices(
-                    view.clip_polygon(
-                        Vec2.list(path.flattening(max_sagitta, segments=4))
-                    ),
-                    close=True,
-                )
+            else:
+                # clipping is required, but only clipping of polygons is supported
+                if path.has_sub_paths:
+                    yield from self.clip_filled_paths(path.sub_paths(), max_sagitta)
+                else:
+                    yield NumpyPath2d.from_vertices(
+                        view.clip_polygon(
+                            Vec2.list(path.flattening(max_sagitta, segments=4))
+                        ),
+                        close=True,
+                    )
 
     def clip_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
