@@ -38,6 +38,7 @@ __all__ = [
     "EmptyShapeError",
     "to_qpainter_path",
     "to_matplotlib_path",
+    "single_paths",
 ]
 
 # comparing Command.<attrib> to ints is very slow
@@ -460,3 +461,12 @@ def to_matplotlib_path(paths: Iterable[NumpyPath2d]):
         for cmd in path.command_codes():
             codes.extend(MPL_CODES[cmd])
     return Path(np.concatenate(vertices), codes)
+
+
+def single_paths(paths: Iterable[NumpyPath2d]) -> list[NumpyPath2d]:
+    single_paths_: list[NumpyPath2d] = []
+    for p in paths:
+        sub_paths = p.sub_paths()
+        if sub_paths:
+            single_paths_.extend(sub_paths)
+    return single_paths_

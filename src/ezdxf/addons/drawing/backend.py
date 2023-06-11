@@ -10,7 +10,7 @@ from ezdxf.addons.drawing.properties import Properties, BackendProperties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Vec2
-from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
+from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, single_paths
 
 BkPath2d: TypeAlias = NumpyPath2d
 BkPoints2d: TypeAlias = NumpyPoints2d
@@ -211,20 +211,14 @@ def oriented_paths(paths: Iterable[BkPath2d]) -> tuple[list[BkPath2d], list[BkPa
     """Separate paths into exterior paths and holes. Exterior paths are oriented
     counter-clockwise, holes are oriented clockwise.
     """
-    from ezdxf.path import winding_deconstruction, single_paths
+    from ezdxf.path import winding_deconstruction, make_polygon_structure
 
-    polygons = make_polygon_structure(single_paths(paths))  # type: ignore
+    polygons = make_polygon_structure(single_paths(paths))
     external_paths: list[BkPath2d]
     holes: list[BkPath2d]
     external_paths, holes = winding_deconstruction(polygons)
     for p in external_paths:
-        try:
-            p.counter_clockwise()
-        except TypeError:  # can't detect orientation
-            pass
+        p.counter_clockwise()
     for p in holes:
-        try:
-            p.clockwise()
-        except TypeError:  # can't detect orientation
-            pass
+        p.clockwise()
     return external_paths, holes
