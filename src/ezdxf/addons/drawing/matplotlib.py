@@ -175,24 +175,10 @@ class MatplotlibBackend(Backend):
         properties: BackendProperties,
     ):
         linewidth = 0
-        oriented_paths: list[BkPath2d] = []
-        for path in paths:
-            try:
-                path.counter_clockwise()
-            except ValueError:  # cannot detect path orientation
-                continue
-            oriented_paths.append(path)
-
-        for hole in holes:
-            try:
-                hole.clockwise()
-            except ValueError:  # cannot detect path orientation
-                continue
-            oriented_paths.append(hole)
 
         try:
             patch = PathPatch(
-                to_matplotlib_path(oriented_paths),
+                to_matplotlib_path(list(paths) + list(holes)),
                 color=properties.color,
                 linewidth=linewidth,
                 fill=True,
