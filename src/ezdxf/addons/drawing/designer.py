@@ -288,22 +288,19 @@ class Designer2d(Designer):
         holes: Iterable[Path],
         properties: Properties,
     ) -> None:
-        bk_paths = [BkPath2d(p) for p in paths]
-        bk_holes = [BkPath2d(p) for p in holes]
-        self._draw_filled_paths(bk_paths, bk_holes, properties)
+        bk_paths = [BkPath2d(p) for p in paths] + [BkPath2d(p) for p in holes]
+        self._draw_filled_paths(bk_paths, properties)
 
     def _draw_filled_paths(
         self,
         paths: Iterable[BkPath2d],
-        holes: Iterable[BkPath2d],
         properties: Properties,
     ) -> None:
         if self.clipper.is_active:
             max_sagitta = self.config.max_flattening_distance
-            paths = self.clipper.clip_filled_paths(paths, max_sagitta)  # type: ignore
-            holes = self.clipper.clip_filled_paths(holes, max_sagitta)  # type: ignore
+            paths = self.clipper.clip_filled_paths(paths, max_sagitta)
         self.backend.draw_filled_paths(
-            paths, holes, self.get_backend_properties(properties)
+            paths, (), self.get_backend_properties(properties)
         )
 
     def draw_filled_polygon(
@@ -404,7 +401,7 @@ class Designer2d(Designer):
 
         if properties.filling is None:
             properties.filling = Filling()
-        self._draw_filled_paths(transformed_paths, [], properties)
+        self._draw_filled_paths(transformed_paths, properties)
 
     def finalize(self) -> None:
         self.backend.finalize()
