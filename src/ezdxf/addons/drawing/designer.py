@@ -20,7 +20,6 @@ from ezdxf.fonts import fonts
 from ezdxf.math import Vec2, Matrix44, BoundingBox2d, AnyVec
 from ezdxf.path import (
     make_path,
-    Path2d,
     Path,
     make_polygon_structure,
     single_paths,
@@ -95,14 +94,14 @@ class Designer(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def draw_path(self, path: Path | Path2d, properties: Properties):
+    def draw_path(self, path: Path, properties: Properties):
         ...
 
     @abc.abstractmethod
     def draw_filled_paths(
         self,
-        paths: Iterable[Path | Path2d],
-        holes: Iterable[Path | Path2d],
+        paths: Iterable[Path],
+        holes: Iterable[Path],
         properties: Properties,
     ) -> None:
         ...
@@ -263,7 +262,7 @@ class Designer2d(Designer):
             lines2d = clipped_lines  # type: ignore
         self.backend.draw_solid_lines(lines2d, self.get_backend_properties(properties))
 
-    def draw_path(self, path: Path2d | Path, properties: Properties):
+    def draw_path(self, path: Path, properties: Properties):
         self._draw_path(BkPath2d(path), properties)
 
     def _draw_path(self, path: BkPath2d, properties: Properties):
@@ -291,8 +290,8 @@ class Designer2d(Designer):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path | Path2d],
-        holes: Iterable[Path | Path2d],
+        paths: Iterable[Path],
+        holes: Iterable[Path],
         properties: Properties,
     ) -> None:
         bk_paths = [BkPath2d(p) for p in paths]

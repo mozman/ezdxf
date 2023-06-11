@@ -155,8 +155,8 @@ class DXFBackend(BackendInterface):
         properties: BackendProperties,
     ) -> None:
         attribs = self.resolve_properties(properties)
-        paths2d = [p.to_path2d() for p in itertools.chain(paths, holes)]
-        for hatch in to_hatches(paths2d, dxfattribs=attribs):
+        py_paths = [p.to_path() for p in itertools.chain(paths, holes)]
+        for hatch in to_hatches(py_paths, dxfattribs=attribs):
             self.layout.add_entity(hatch)
             self.set_solid_fill(hatch, properties)
 

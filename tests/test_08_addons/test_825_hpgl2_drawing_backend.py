@@ -4,7 +4,7 @@
 import pytest
 
 from ezdxf.math import Vec2
-from ezdxf.path import Path2d
+from ezdxf.path import Path
 from ezdxf.npshapes import NumpyPath2d
 from ezdxf.addons.drawing import hpgl2, layout
 from ezdxf.addons.drawing.properties import BackendProperties
@@ -48,7 +48,7 @@ class TestPlotterBackend:
         assert b"PE7<=__?Yf?Yf;" in result1
 
     def test_curves_are_ascii_encoded_relative_bezier_curves(self, properties):
-        path = Path2d((0, 0))
+        path = Path((0, 0))
         path.curve4_to((100, 100), (25, 0), (75, 100))
         backend = hpgl2.PlotterBackend()
         backend.draw_path(NumpyPath2d(path), properties)

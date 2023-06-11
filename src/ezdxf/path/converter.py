@@ -57,7 +57,7 @@ from ezdxf.entities import (
     SplineEdge,
 )
 from ezdxf.entities.polygon import DXFPolygon
-from .path import Path, AbstractPath, Path2d
+from .path import Path
 from .commands import Command
 from . import tools
 from .nesting import group_paths
@@ -495,7 +495,7 @@ def from_vertices(vertices: Iterable[UVec], close=False) -> Path:
 
 
 def to_lwpolylines(
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -510,7 +510,7 @@ def to_lwpolylines(
     to the start point of the first path.
 
     Args:
-        paths: iterable of :class:`Path` or :class:`Path2d` objects
+        paths: iterable of :class:`Path` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         extrusion: extrusion vector for all paths
@@ -520,7 +520,7 @@ def to_lwpolylines(
         iterable of :class:`~ezdxf.entities.LWPolyline` objects
 
     """
-    if isinstance(paths, AbstractPath):
+    if isinstance(paths, Path):
         paths = [paths]
     else:
         paths = list(paths)
@@ -551,7 +551,7 @@ def _get_ocs(extrusion: Vec3, reference_point: Vec3) -> tuple[OCS, float]:
 
 
 def to_polylines2d(
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -566,7 +566,7 @@ def to_polylines2d(
     to the start point of the first path.
 
     Args:
-        paths: iterable of :class:`Path` or :class:`Path2d` objects
+        paths: iterable of :class:`Path` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         extrusion: extrusion vector for all paths
@@ -576,7 +576,7 @@ def to_polylines2d(
         iterable of 2D :class:`~ezdxf.entities.Polyline` objects
 
     """
-    if isinstance(paths, AbstractPath):
+    if isinstance(paths, Path):
         paths = [paths]
     else:
         paths = list(paths)
@@ -602,7 +602,7 @@ def to_polylines2d(
 
 
 def to_hatches(
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     edge_path: bool = True,
     distance: float = MAX_DISTANCE,
@@ -620,7 +620,7 @@ def to_hatches(
     to the start point of the first path.
 
     Args:
-        paths: iterable of :class:`Path` or :class:`Path2d` objects
+        paths: iterable of :class:`Path` objects
         edge_path: ``True`` for edge paths build of LINE and SPLINE edges,
             ``False`` for only LWPOLYLINE paths as boundary paths
         distance:  maximum distance, see :meth:`Path.flattening`
@@ -646,12 +646,12 @@ def to_hatches(
         )
 
     yield from _polygon_converter(
-        Hatch, tools.to_3d_paths(paths), boundary_factory, extrusion, dxfattribs
+        Hatch, paths, boundary_factory, extrusion, dxfattribs
     )
 
 
 def to_mpolygons(
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -668,7 +668,7 @@ def to_mpolygons(
     to the start point of the first path.
 
     Args:
-        paths: iterable of :class:`Path` or :class:`Path2d` objects
+        paths: iterable of :class:`Path` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve to flatten LWPOLYLINE paths
         extrusion: extrusion vector to all paths
@@ -686,7 +686,7 @@ def to_mpolygons(
     dxfattribs.setdefault("fill_color", const.BYLAYER)  # type: ignore
 
     yield from _polygon_converter(
-        MPolygon, tools.to_3d_paths(paths), boundary_factory, extrusion, dxfattribs
+        MPolygon, paths, boundary_factory, extrusion, dxfattribs
     )
 
 
@@ -739,7 +739,7 @@ def _polygon_converter(
     extrusion: UVec = Z_AXIS,
     dxfattribs=None,
 ) -> Iterator[TPolygon]:
-    if isinstance(paths, AbstractPath):
+    if isinstance(paths, Path):
         paths = [paths]
     else:
         paths = list(paths)
@@ -775,7 +775,7 @@ def _polygon_converter(
 
 
 def to_polylines3d(
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -785,7 +785,7 @@ def to_polylines3d(
     entities.
 
     Args:
-        paths: iterable of :class:`Path` or :class:`Path2d` objects
+        paths: iterable of :class:`Path` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         dxfattribs: additional DXF attribs
@@ -794,7 +794,7 @@ def to_polylines3d(
         iterable of 3D :class:`~ezdxf.entities.Polyline` objects
 
     """
-    if isinstance(paths, AbstractPath):
+    if isinstance(paths, Path):
         paths = [paths]
 
     dxfattribs = dict(dxfattribs or {})
@@ -808,7 +808,7 @@ def to_polylines3d(
 
 
 def to_lines(
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -817,7 +817,7 @@ def to_lines(
     """Convert the given `paths` into :class:`~ezdxf.entities.Line` entities.
 
     Args:
-        paths: iterable of :class:`Path` or :class:`Path2d` objects
+        paths: iterable of :class:`Path` objects
         distance:  maximum distance, see :meth:`Path.flattening`
         segments: minimum segment count per Bézier curve
         dxfattribs: additional DXF attribs
@@ -826,7 +826,7 @@ def to_lines(
         iterable of :class:`~ezdxf.entities.Line` objects
 
     """
-    if isinstance(paths, AbstractPath):
+    if isinstance(paths, Path):
         paths = [paths]
     dxfattribs = dict(dxfattribs or {})
     prev_vertex = None
@@ -847,15 +847,13 @@ def to_lines(
 PathParts: TypeAlias = Union[BSpline, List[Vec3]]
 
 
-def to_bsplines_and_vertices(
-    path: Path | Path2d, g1_tol: float = G1_TOL
-) -> Iterator[PathParts]:
+def to_bsplines_and_vertices(path: Path, g1_tol: float = G1_TOL) -> Iterator[PathParts]:
     """Convert a :class:`Path` object into multiple cubic B-splines and
     polylines as lists of vertices. Breaks adjacent Bèzier without G1
     continuity into separated B-splines.
 
     Args:
-        path: :class:`Path` or :class:`Path2d` objects
+        path: :class:`Path` objects
         g1_tol: tolerance for G1 continuity check
 
     Returns:
@@ -920,7 +918,7 @@ def to_bsplines_and_vertices(
 
 
 def to_splines_and_polylines(
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     g1_tol: float = G1_TOL,
     dxfattribs=None,
@@ -937,7 +935,7 @@ def to_splines_and_polylines(
         iterable of :class:`~ezdxf.entities.Line` objects
 
     """
-    if isinstance(paths, AbstractPath):
+    if isinstance(paths, Path):
         paths = [paths]
     dxfattribs = dict(dxfattribs or {})
 

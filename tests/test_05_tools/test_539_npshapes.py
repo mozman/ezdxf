@@ -5,7 +5,7 @@ import pytest
 
 from ezdxf.npshapes import NumpyPoints2d, NumpyPath2d
 from ezdxf.math import Matrix44, BoundingBox2d, close_vectors, Vec2
-from ezdxf.path import Command, from_vertices, Path, Path2d
+from ezdxf.path import Command, from_vertices, Path
 from ezdxf.fonts import fonts
 from ezdxf.render import forms
 
@@ -37,7 +37,7 @@ class TestNumpyPoints:
 class TestNumpyPath2d:
     @pytest.fixture
     def path(self):
-        p = Path2d((1, 2))
+        p = Path((1, 2))
         p.line_to((7, 4))
         p.curve3_to((4, 7), (0, 1))
         p.move_to((10, 0))
@@ -46,7 +46,7 @@ class TestNumpyPath2d:
 
     def test_clone(self, path):
         np_path = NumpyPath2d(path)
-        clone_ = np_path.clone().to_path2d()
+        clone_ = np_path.clone().to_path()
         assert clone_.control_vertices() == path.control_vertices()
         assert clone_.command_codes() == path.command_codes()
 
@@ -61,19 +61,19 @@ class TestNumpyPath2d:
         assert np_path.has_sub_paths is True
 
     def test_has_no_subpaths(self):
-        np_path = NumpyPath2d(Path2d((1, 2)))
+        np_path = NumpyPath2d(Path((1, 2)))
         assert np_path.has_sub_paths is False
 
     def test_to_path_2d(self, path):
         np_path = NumpyPath2d(path)
         assert len(np_path) == len(path)
 
-        path2d = np_path.to_path2d()
-        assert len(path2d) == 4
-        assert path2d.start.isclose((1, 2))
-        assert path2d.end.isclose((15, 7))
+        path = np_path.to_path()
+        assert len(path) == 4
+        assert path.start.isclose((1, 2))
+        assert path.end.isclose((15, 7))
 
-        cmds = path2d.commands()
+        cmds = path.commands()
         assert cmds[0].type == Command.LINE_TO
         assert cmds[0].end.isclose((7, 4))
 
@@ -107,18 +107,18 @@ class TestNumpyPath2d:
         )
 
     def test_start_point_only_path(self):
-        p = NumpyPath2d(Path2d((10, 20)))
+        p = NumpyPath2d(Path((10, 20)))
         assert p.start.isclose((10, 20))
         # and back
-        assert p.to_path2d().start.isclose((10, 20))
+        assert p.to_path().start.isclose((10, 20))
 
     def test_from_empty_path(self):
-        p = NumpyPath2d(Path2d())
+        p = NumpyPath2d(Path())
         assert len(p) == 0
         assert p.start == (0, 0)
         assert p.end == (0, 0)
         # and back
-        assert p.to_path2d().start == (0, 0)  # default start point
+        assert p.to_path().start == (0, 0)  # default start point
 
     def test_create_empty_path_from_none(self):
         p = NumpyPath2d(None)
@@ -128,40 +128,40 @@ class TestNumpyPath2d:
         with pytest.raises(IndexError):
             assert p.end
         # and back
-        assert p.to_path2d().start == (0, 0)  # default start point
+        assert p.to_path().start == (0, 0)  # default start point
 
 
 @pytest.fixture
 def first():
-    p = Path2d()
+    p = Path()
     p.line_to((10, 0))
     return NumpyPath2d(p)
 
 
 @pytest.fixture
 def second():
-    p = Path2d((10, 0))
+    p = Path((10, 0))
     p.line_to((20, 0))
     return NumpyPath2d(p)
 
 
 @pytest.fixture
 def third():
-    p = Path2d((20, 0))
+    p = Path((20, 0))
     p.line_to((30, 0))
     return NumpyPath2d(p)
 
 
 @pytest.fixture
 def curve3():
-    p = Path2d((0, 0))
+    p = Path((0, 0))
     p.curve3_to((10, 0), (5, 3))
     return NumpyPath2d(p)
 
 
 @pytest.fixture
 def curve4():
-    p = Path2d((10, 0))
+    p = Path((10, 0))
     p.curve4_to((20, 0), (13, -3), (17, 3))
     return NumpyPath2d(p)
 
@@ -181,7 +181,7 @@ class TestNumpyPath2dExtend:
         assert first.end.isclose((10, 0))
 
     def test_extend_by_empty_2d_path(self, first):
-        empty = Path2d(Vec2(7, 7))  # has no drawing commands
+        empty = Path(Vec2(7, 7))  # has no drawing commands
         first.extend([NumpyPath2d(empty)])
         assert len(first) == 1
         assert first.start.isclose((0, 0))
@@ -317,24 +317,6 @@ class TestSubPaths:
         assert vertices[0].isclose((0, 0))
         assert vertices[1].isclose((10, 0))
 
-    def test_complex_paths(self):
-        f = fonts.make_font("DejaVuSans.ttf", 1.0)
-        source_path = f.text_path("ABCDEFabcdef")
-        # TODO: update tests if text_path() returns NumpyPath2d:
-        np_path = NumpyPath2d(source_path)
-
-        paths0 = list(source_path.sub_paths())
-        paths1 = np_path.sub_paths()
-        for p0, p1 in zip(paths0, paths1):
-            assert (
-                all(
-                    v0.isclose(v1)
-                    for v0, v1 in zip(p0.control_vertices(), p1.control_vertices())
-                )
-                is True
-            )
-            assert p0.command_codes() == p1.command_codes()
-
     def test_sub_paths_are_reversible(self, first, third):
         multi_path = NumpyPath2d.concatenate([first, third])
         paths = multi_path.sub_paths()
@@ -378,7 +360,7 @@ def test_path_conversion_methods():
 
 @pytest.fixture(scope="module")
 def p1():
-    path = Path2d()
+    path = Path()
     path.line_to((2, 0))
     path.curve4_to((4, 0), (2, 1), (4, 1))  # end, ctrl1, ctrl2
     path.curve3_to((6, 0), (5, -1))  # end, ctrl
@@ -399,20 +381,20 @@ class TestReversePath:
         assert len(p) == 0
 
     def test_reversing_one_line(self):
-        p = Path2d()
+        p = Path()
         p.line_to((1, 0))
         p2 = NumpyPath2d(p).reverse()
         vertices = p2.control_vertices()
         assert close_vectors(vertices, [(1, 0), (0, 0)])
 
     def test_reversing_one_curve3(self):
-        p = Path2d()
+        p = Path()
         p.curve3_to((3, 0), (1.5, 1))
         p2 = NumpyPath2d(p).reverse()
         assert close_vectors(p2.control_vertices(), [(3, 0), (1.5, 1), (0, 0)])
 
     def test_reversing_one_curve4(self):
-        p = Path2d()
+        p = Path()
         p.curve4_to((3, 0), (1, 1), (2, 1))
         p2 = NumpyPath2d(p).reverse()
         assert close_vectors(p2.control_vertices(), [(3, 0), (2, 1), (1, 1), (0, 0)])
@@ -431,7 +413,7 @@ class TestReversePath:
         assert close_vectors(v1, reversed(v2))
 
     def test_reversing_multi_path(self):
-        p = Path2d()
+        p = Path()
         p.line_to((1, 0, 0))
         p.move_to((2, 0, 0))
         p.line_to((3, 0, 0))
@@ -444,7 +426,7 @@ class TestReversePath:
         assert r.end == (0, 0, 0)
 
     def test_reversing_multi_path_with_a_move_to_cmd_at_the_end(self):
-        p = Path2d()
+        p = Path()
         p.line_to((1, 0, 0))
         p.move_to((2, 0, 0))
         # The last move_to will become the first move_to.

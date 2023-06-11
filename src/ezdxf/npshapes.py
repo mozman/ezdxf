@@ -17,9 +17,7 @@ from ezdxf.math import (
     BoundingBox2d,
 )
 from ezdxf.path import (
-    AbstractPath,
     Path,
-    Path2d,
     Command,
     PathElement,
     LineTo,
@@ -110,15 +108,12 @@ NO_COMMANDS = np.array([], dtype=CommandNumpyType)
 class NumpyPath2d(NumpyShape2d):
     """Represents a 2D path, the path control vertices and commands are stored as ndarray."""
 
-    def __init__(self, path: Optional[AbstractPath]) -> None:
+    def __init__(self, path: Optional[Path]) -> None:
         if path is None:
             self._vertices = NO_VERTICES
             self._commands = NO_COMMANDS
             return
-        if isinstance(path, Path2d):
-            vertices = path.control_vertices()
-        else:
-            vertices = [Vec2(v) for v in path.control_vertices()]
+        vertices = [Vec2(v) for v in path.control_vertices()]
         if len(vertices) == 0:
             try:  # control_vertices() does not return start point of empty paths
                 vertices = [path.start]
@@ -173,12 +168,6 @@ class NumpyPath2d(NumpyShape2d):
                 index += 1
 
     clone = __copy__
-
-    def to_path2d(self) -> Path2d:
-        """Returns a new :class:`Path2d` instance."""
-        vertices = [Vec2(v) for v in self._vertices]
-        commands = [Command(c) for c in self._commands]
-        return Path2d.from_vertices_and_commands(vertices, commands)
 
     def to_path(self) -> Path:
         """Returns a new :class:`Path2d` instance."""
@@ -364,9 +353,8 @@ class NumpyPath2d(NumpyShape2d):
     # Appending single commands (line_to, move_to, curve3_to, curve4_to) is not
     # efficient, because numpy arrays do not grow dynamically, they are reallocated for
     # every single command!
-    # Construct paths as ezdxf.path.Path2d and convert them to NumpyPath2d.
-    # Concatenation of NumpyPath2d objects is faster than extending Path2d objects,
-    # see profiling/numpy_concatenate.py
+    # Construct paths as ezdxf.path.Path and convert them to NumpyPath2d.
+    # Concatenation of NumpyPath2d objects is faster than extending Path objects
 
     def extend(self, paths: Sequence[NumpyPath2d]) -> None:
         """Extend an existing path by appending additional paths. The paths are

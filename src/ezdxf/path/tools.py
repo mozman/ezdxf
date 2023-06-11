@@ -36,7 +36,7 @@ from ezdxf.math import (
 from ezdxf.math.triangulation import mapbox_earcut_2d
 from ezdxf.query import EntityQuery
 
-from .path import Path, Path2d, AbstractPath
+from .path import Path
 from .commands import Command
 from . import converter, nesting
 
@@ -64,7 +64,6 @@ __all__ = [
     "add_2d_polyline",
     "add_spline",
     "to_multi_path",
-    "to_3d_paths",
     "single_paths",
     "have_close_control_vertices",
     "lines_to_curve3",
@@ -82,8 +81,6 @@ MIN_SEGMENTS = 4
 G1_TOL = 1e-4
 IS_CLOSE_TOL = 1e-10
 
-T = TypeVar("T", Path, Path2d)
-
 
 def to_multi_path(paths: Iterable[Path]) -> Path:
     """Returns a multi-path object from all given paths and their sub-paths.
@@ -95,18 +92,7 @@ def to_multi_path(paths: Iterable[Path]) -> Path:
     return multi_path
 
 
-def to_3d_paths(paths: Iterable[Path | Path2d]) -> Iterator[Path]:
-    """Yields all paths as 3D :class:`Path` instances."""
-    if isinstance(paths, AbstractPath):
-        paths = [paths]
-    for path in paths:
-        if isinstance(path, Path2d):
-            yield path.to_3d_path()
-        else:
-            yield path
-
-
-def single_paths(paths: Iterable[T]) -> Iterable[T]:
+def single_paths(paths: Iterable[Path]) -> Iterable[Path]:
     """Yields all given paths and their sub-paths as single path objects."""
     for p in paths:
         if p.has_sub_paths:
@@ -115,7 +101,7 @@ def single_paths(paths: Iterable[T]) -> Iterable[T]:
             yield p
 
 
-def transform_paths(paths: Iterable[T], m: Matrix44) -> list[T]:
+def transform_paths(paths: Iterable[Path], m: Matrix44) -> list[Path]:
     """Transform multiple path objects at once by transformation
     matrix `m`. Returns a list of the transformed path objects.
 
@@ -127,7 +113,7 @@ def transform_paths(paths: Iterable[T], m: Matrix44) -> list[T]:
     return [p.transform(m) for p in paths]
 
 
-def transform_paths_to_ocs(paths: Iterable[Path | Path2d], ocs: OCS) -> list[Path]:
+def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> list[Path]:
     """Transform multiple :class:`Path` objects at once from WCS to OCS.
     Returns a list of the transformed :class:`Path` objects.
 
@@ -138,10 +124,10 @@ def transform_paths_to_ocs(paths: Iterable[Path | Path2d], ocs: OCS) -> list[Pat
     """
     t = ocs.matrix.copy()
     t.transpose()
-    return transform_paths(to_3d_paths(paths), t)
+    return transform_paths(paths, t)
 
 
-def bbox(paths: Iterable[Path | Path2d], *, fast=False) -> BoundingBox:
+def bbox(paths: Iterable[Path], *, fast=False) -> BoundingBox:
     """Returns the :class:`~ezdxf.math.BoundingBox` for the given paths.
 
     Args:
@@ -162,7 +148,7 @@ def bbox(paths: Iterable[Path | Path2d], *, fast=False) -> BoundingBox:
     return box
 
 
-def precise_bbox(path: Path | Path2d) -> BoundingBox:
+def precise_bbox(path: Path) -> BoundingBox:
     """Returns the precise :class:`~ezdxf.math.BoundingBox` for the given paths."""
     if len(path) == 0:  # empty path
         return BoundingBox()
@@ -272,7 +258,7 @@ def _get_non_uniform_scaling(current_size: Vec3, target_size: Vec3):
 
 def render_lwpolylines(
     layout: GenericLayoutType,
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -314,7 +300,7 @@ def render_lwpolylines(
 
 def render_polylines2d(
     layout: GenericLayoutType,
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     distance: float = 0.01,
     segments: int = 4,
@@ -356,7 +342,7 @@ def render_polylines2d(
 
 def render_hatches(
     layout: GenericLayoutType,
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     edge_path: bool = True,
     distance: float = MAX_DISTANCE,
@@ -405,7 +391,7 @@ def render_hatches(
 
 def render_mpolygons(
     layout: GenericLayoutType,
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -449,7 +435,7 @@ def render_mpolygons(
 
 def render_polylines3d(
     layout: GenericLayoutType,
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -485,7 +471,7 @@ def render_polylines3d(
 
 def render_lines(
     layout: GenericLayoutType,
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
@@ -520,7 +506,7 @@ def render_lines(
 
 def render_splines_and_polylines(
     layout: GenericLayoutType,
-    paths: Iterable[Path | Path2d],
+    paths: Iterable[Path],
     *,
     g1_tol: float = G1_TOL,
     dxfattribs=None,

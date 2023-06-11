@@ -9,7 +9,7 @@ import enum
 import math
 from .deps import (
     Vec2,
-    Path2d,
+    Path,
     colors,
     Matrix44,
     BoundingBox2d,
@@ -44,7 +44,7 @@ class Backend(abc.ABC):
 
     @abc.abstractmethod
     def draw_paths(
-        self, properties: Properties, paths: Sequence[Path2d], filled: bool
+        self, properties: Properties, paths: Sequence[Path], filled: bool
     ) -> None:
         """Draws filled or outline paths from the sequence of `paths`. The input coordinates
         are page coordinates in plot units. The `paths` sequence can contain 0 or more
@@ -53,7 +53,7 @@ class Backend(abc.ABC):
 
         Args:
             properties: display :class:`Properties` for the filled polygon
-            paths: sequence of single :class:`ezdxf.path.Path2d` instances
+            paths: sequence of single :class:`ezdxf.path.Path` instances
             filled: draw filled paths if ``True`` otherwise outline paths
 
         """
@@ -101,7 +101,7 @@ class Recorder(Backend):
         self.store(RecordType.POLYLINE, properties, NumpyPoints2d(points))
 
     def draw_paths(
-        self, properties: Properties, paths: Sequence[Path2d], filled: bool
+        self, properties: Properties, paths: Sequence[Path], filled: bool
     ) -> None:
         data = tuple(NumpyPath2d(p) for p in paths)
         record_type = RecordType.FILLED_PATHS if filled else RecordType.OUTLINE_PATHS

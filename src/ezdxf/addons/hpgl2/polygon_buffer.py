@@ -3,13 +3,13 @@
 from __future__ import annotations
 from typing import Sequence
 from .backend import Backend
-from .deps import Vec2, Path2d
+from .deps import Vec2, Path
 from .properties import Properties
 
 
 class PolygonBuffer(Backend):
     def __init__(self):
-        self.path = Path2d()
+        self.path = Path()
         self.start_new_sub_polygon = False
 
     def draw_polyline(self, properties: Properties, points: Sequence[Vec2]) -> None:
@@ -28,7 +28,7 @@ class PolygonBuffer(Backend):
             self.path.line_to(p)
 
     def draw_paths(
-        self, properties: Properties, paths: Sequence[Path2d], filled: bool
+        self, properties: Properties, paths: Sequence[Path], filled: bool
     ) -> None:
         if filled:
             raise NotImplementedError()
@@ -40,7 +40,7 @@ class PolygonBuffer(Backend):
                 self.path.move_to(p.start)
             self.path.append_path(p)
 
-    def get_paths(self) -> Sequence[Path2d]:
+    def get_paths(self) -> Sequence[Path]:
         return list(self.path.sub_paths())
 
     def close_path(self):
@@ -49,5 +49,5 @@ class PolygonBuffer(Backend):
             self.start_new_sub_polygon = True
 
     def reset(self, location: Vec2) -> None:
-        self.path = Path2d(location)
+        self.path = Path(location)
         self.start_new_sub_polygon = False

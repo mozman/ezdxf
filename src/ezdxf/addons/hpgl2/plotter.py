@@ -6,7 +6,7 @@ import math
 
 from .deps import (
     Vec2,
-    Path2d,
+    Path,
     NULLVEC2,
     ConstructionCircle,
     Bezier4P,
@@ -250,7 +250,7 @@ class Plotter:
             # convert to page coordinates:
             ctrl1, ctrl2, end = self.page.page_points((ctrl1, ctrl2, end))
             # draw cubic bezier curve in absolute page coordinates:
-            p = Path2d(current_page_location)
+            p = Path(current_page_location)
             p.curve4_to(end, ctrl1, ctrl2)
             self.backend.draw_paths(self.properties, [p], filled=False)
 
@@ -261,11 +261,11 @@ class Plotter:
         )
         self.plot_abs_cubic_bezier(ctrl1, ctrl2, end)
 
-    def plot_filled_polygon_buffer(self, paths: Sequence[Path2d]):
+    def plot_filled_polygon_buffer(self, paths: Sequence[Path]):
         # input coordinates are page coordinates!
         self.backend.draw_paths(self.properties, paths, filled=True)
 
-    def plot_outline_polygon_buffer(self, paths: Sequence[Path2d]):
+    def plot_outline_polygon_buffer(self, paths: Sequence[Path]):
         # input coordinates are page coordinates!
         self.backend.draw_paths(self.properties, paths, filled=False)
 

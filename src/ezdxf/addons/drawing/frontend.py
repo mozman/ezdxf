@@ -681,8 +681,7 @@ class UniversalFrontend:
                 self.designer.draw_filled_polygon(points, properties)
             return
 
-        path = make_path(entity).to_2d_path()
-        self.designer.draw_path(path, properties)
+        self.designer.draw_path(make_path(entity), properties)
 
     def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         def draw_insert(insert: Insert):

@@ -23,7 +23,6 @@ from .glyphs import GlyphPath, Glyphs
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.entities import DXFEntity, Textstyle
-    from ezdxf.path import Path2d
 
 logger = logging.getLogger("ezdxf")
 FONT_MANAGER_CACHE_FILE = "font_manager_cache.json"
@@ -431,19 +430,19 @@ class MonospaceFont(AbstractFont):
         return len(text) * cap_height * width_factor
 
     def text_path(self, text: str) -> GlyphPath:
-        """Returns the rectangle text width x cap height as :class:`~ezdxf.path.Path2d` instance."""
+        """Returns the rectangle text width x cap height as :class:`NumpyPath2d` instance."""
         return self.text_path_ex(text, self.measurements.cap_height, self._width_factor)
 
     def text_path_ex(
         self, text: str, cap_height: float, width_factor: float = 1.0
     ) -> GlyphPath:
-        """Returns the rectangle text width x cap height as  :class:`~ezdxf.path.Path2d`
+        """Returns the rectangle text width x cap height as  :class:`NumpyPath2d`
         instance, bypasses the stored `cap_height` and `width_factor`.
         """
-        from ezdxf.path import Path2d
+        from ezdxf.path import Path
 
         text_width = self.text_width_ex(text, cap_height, width_factor)
-        p = Path2d((0, 0))
+        p = Path((0, 0))
         p.line_to((text_width, 0))
         p.line_to((text_width, cap_height))
         p.line_to((0, cap_height))
