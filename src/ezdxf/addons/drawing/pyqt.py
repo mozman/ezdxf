@@ -155,22 +155,9 @@ class _PyQtBackend(Backend):
         holes: Iterable[BkPath2d],
         properties: BackendProperties,
     ) -> None:
-        oriented_paths: list[BkPath2d] = []
-        for path in paths:
-            try:
-                path.counter_clockwise()
-            except ValueError:  # cannot detect path orientation
-                continue
-            oriented_paths.append(path)
-        for path in holes:
-            try:
-                path.clockwise()
-            except ValueError:  # cannot detect path orientation
-                continue
-            oriented_paths.append(path)
-        if len(oriented_paths) == 0:
-            return
-        item = _CosmeticPath(to_qpainter_path(oriented_paths))
+        # Default fill rule is OddEvenFill! Detecting the path orientation is not
+        # necessary!
+        item = _CosmeticPath(to_qpainter_path(list(paths) + list(holes)))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._get_fill_brush(properties.color))
         self._add_item(item, properties.handle)
