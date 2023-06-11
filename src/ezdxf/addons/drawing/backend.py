@@ -205,3 +205,26 @@ class Backend(BackendInterface, metaclass=ABCMeta):
 
     def finalize(self) -> None:
         pass
+
+
+def oriented_paths(paths: Iterable[BkPath2d]) -> tuple[list[BkPath2d], list[BkPath2d]]:
+    """Separate paths into exterior paths and holes. Exterior paths are oriented
+    counter-clockwise, holes are oriented clockwise.
+    """
+    from ezdxf.path import winding_deconstruction, single_paths
+
+    polygons = make_polygon_structure(single_paths(paths))  # type: ignore
+    external_paths: list[BkPath2d]
+    holes: list[BkPath2d]
+    external_paths, holes = winding_deconstruction(polygons)
+    for p in external_paths:
+        try:
+            p.counter_clockwise()
+        except TypeError:  # can't detect orientation
+            pass
+    for p in holes:
+        try:
+            p.clockwise()
+        except TypeError:  # can't detect orientation
+            pass
+    return external_paths, holes
