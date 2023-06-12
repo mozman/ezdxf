@@ -3,7 +3,6 @@
 """xplayer = cross backend player."""
 from __future__ import annotations
 from typing import Callable
-from ezdxf import path
 from ezdxf.math import Vec2
 from ezdxf.colors import RGB
 
@@ -39,13 +38,7 @@ def hpgl2_to_drawing(
             else:
                 backend.draw_path(BkPath2d.from_vertices(points), backend_properties)
         elif record_type == HPGL2RecordType.FILLED_PATHS:
-            # filled paths are stored as single paths! see: PolygonBuffer.get_paths()
-            external_paths: list[BkPath2d]
-            holes: list[BkPath2d]
-            external_paths, holes = path.winding_deconstruction(
-                path.make_polygon_structure(record_data)
-            )
-            backend.draw_filled_paths(external_paths, holes, backend_properties)  # type: ignore
+            backend.draw_filled_paths(record_data, (), backend_properties)  # type: ignore
         elif record_type == HPGL2RecordType.OUTLINE_PATHS:
             for p in record_data:
                 backend.draw_path(p, backend_properties)
