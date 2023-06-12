@@ -65,7 +65,7 @@ class TestSVGBackend:
     def backend(self):
         backend_ = svg.SVGBackend()
         properties = BackendProperties(color="#ff0000", lineweight=0.25)
-        points = NumpyPoints2d([(0, 0), (100, 0), (100, 100), (0, 100)])
+        points = NumpyPoints2d(Vec2.list([(0, 0), (100, 0), (100, 100), (0, 100)]))
         backend_.draw_filled_polygon(points, properties)
         return backend_
 

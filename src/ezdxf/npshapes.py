@@ -10,7 +10,6 @@ from ezdxf.math import (
     Matrix44,
     Vec2,
     Vec3,
-    UVec,
     has_clockwise_orientation,
     Bezier3P,
     Bezier4P,
@@ -56,6 +55,10 @@ class EmptyShapeError(NumpyShapesException):
     pass
 
 
+CommandNumpyType: TypeAlias = np.int8
+VertexNumpyType: TypeAlias = np.float64
+
+
 class NumpyShape2d(abc.ABC):
     """This is an optimization to store many 2D paths and polylines in a compact way
     without sacrificing basic functions like transformation and bounding box calculation.
@@ -83,7 +86,7 @@ class NumpyShape2d(abc.ABC):
 
     def vertices(self) -> list[Vec2]:
         """Returns the shape vertices as list of :class:`Vec2`."""
-        return Vec2.list(self._vertices)
+        return [Vec2(v) for v in self._vertices]
 
     def bbox(self) -> BoundingBox2d:
         """Returns the bounding box of all vertices."""
@@ -93,33 +96,47 @@ class NumpyShape2d(abc.ABC):
 class NumpyPoints2d(NumpyShape2d):
     """Represents an array of 2D points stored as a ndarray."""
 
-    def __init__(self, points: Iterable[UVec]) -> None:
-        self._vertices = np.array(Vec2.list(points), dtype=np.float64)
+    def __init__(self, points: Iterable[Vec2 | Vec3]) -> None:
+        self._vertices = np.array([(v.x, v.y) for v in points], dtype=VertexNumpyType)
 
     def __len__(self) -> int:
         return len(self._vertices)
 
 
-CommandNumpyType: TypeAlias = np.int8
-VertexNumpyType: TypeAlias = np.float64
 NO_VERTICES = np.array([], dtype=VertexNumpyType)
 NO_COMMANDS = np.array([], dtype=CommandNumpyType)
 
 
 class NumpyPath2d(NumpyShape2d):
-    """Represents a 2D path, the path control vertices and commands are stored as ndarray."""
+    """Represents a 2D path, the path control vertices and commands are stored as ndarray.
+
+    This class cannot build paths from scratch and is therefore not a drop-in replacement
+    for the :class:`ezdxf.path.Path` class. Operations like transform and reverse are
+    done inplace to utilize the `numpy` capabilities. This behavior is different from the
+    :class:`ezdxf.path.Path` class!!!
+
+    Construct new paths by the :class:`Path` class and convert them to
+    :class:`NumpyPath2d` instances::
+
+        path = Path((0, 0))
+        path.line_to((50, 70))
+        ...
+        path2d = NumpyPath2d(path)
+
+    """
 
     def __init__(self, path: Optional[Path]) -> None:
         if path is None:
             self._vertices = NO_VERTICES
             self._commands = NO_COMMANDS
             return
-        vertices = [Vec2(v) for v in path.control_vertices()]
+        # (v.x, v.y) is 4x faster than Vec2(v), see profiling/numpy_array_setup.py
+        vertices = [(v.x, v.y) for v in path.control_vertices()]
         if len(vertices) == 0:
-            try:  # control_vertices() does not return start point of empty paths
+            try:  # control_vertices() does not return the start point of empty paths
                 vertices = [path.start]
             except IndexError:
-                vertices = [Vec2()]  # default start point of empty paths
+                vertices = []
         self._vertices = np.array(vertices, dtype=VertexNumpyType)
         self._commands = np.array(path.command_codes(), dtype=CommandNumpyType)
 
@@ -137,7 +154,7 @@ class NumpyPath2d(NumpyShape2d):
         return Vec2(self._vertices[-1])
 
     def control_vertices(self) -> list[Vec2]:
-        return self.vertices()
+        return [Vec2(v) for v in self._vertices]
 
     def __copy__(self) -> Self:
         clone = self.__class__(None)
@@ -177,14 +194,17 @@ class NumpyPath2d(NumpyShape2d):
         return Path.from_vertices_and_commands(vertices, commands)
 
     @classmethod
-    def from_vertices(cls, vertices: Iterable[UVec], close: bool = False) -> Self:
+    def from_vertices(
+        cls, vertices: Iterable[Vec2 | Vec3], close: bool = False
+    ) -> Self:
         new_path = cls(None)
-        points = Vec2.list(vertices)
-        if len(points) == 0:
+        vertices = list(vertices)
+        if len(vertices) == 0:
             return new_path
-
-        if close and not points[0].isclose(points[-1]):
-            points.append(points[0])
+        if close and not vertices[0].isclose(vertices[-1]):
+            vertices.append(vertices[0])
+        # (v.x, v.y) is 4x faster than Vec2(v), see profiling/numpy_array_setup.py
+        points = [(v.x, v.y) for v in vertices]
         new_path._vertices = np.array(points, dtype=VertexNumpyType)
         new_path._commands = np.full(
             len(points) - 1, fill_value=CMD_LINE_TO, dtype=CommandNumpyType

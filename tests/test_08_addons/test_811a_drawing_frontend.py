@@ -3,6 +3,7 @@
 
 import pytest
 import ezdxf
+from ezdxf.math import Vec2
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.properties import BackendProperties
 
@@ -60,7 +61,7 @@ def test_basic_frontend_init(basic):
 
 def test_backend_default_draw_path():
     backend = BasicBackend()
-    path = BkPath2d.from_vertices([(0, 0), (1, 0), (2, 0)])
+    path = BkPath2d.from_vertices(Vec2.list([(0, 0), (1, 0), (2, 0)]))
     backend.draw_path(path, BackendProperties())
     result = backend.collector
     assert len(result) == 2

@@ -234,7 +234,7 @@ class TestCroppingRecords:
         recorder = Recorder()
         square = NumpyPath2d(ezdxf.path.rect(100, 100))  # center = (0, 0)
         hole = NumpyPath2d.from_vertices(
-            [(10, 10), (20, 10), (20, 20), (10, 20)], close=True
+            Vec2.list([(10, 10), (20, 10), (20, 20), (10, 20)]), close=True
         )
         recorder.draw_filled_paths([square], [hole], props)
 
@@ -252,7 +252,7 @@ class TestCroppingRecords:
 
         square = NumpyPath2d(ezdxf.path.rect(100, 100))  # center = (0, 0)
         hole = NumpyPath2d.from_vertices(
-            [(-10, -10), (-20, -10), (-20, -20), (-10, -20)], close=True
+            Vec2.list([(-10, -10), (-20, -10), (-20, -20), (-10, -20)]), close=True
         )
         recorder.draw_filled_paths([square], [hole], props)
 

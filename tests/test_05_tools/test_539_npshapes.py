@@ -6,14 +6,13 @@ import pytest
 from ezdxf.npshapes import NumpyPoints2d, NumpyPath2d
 from ezdxf.math import Matrix44, BoundingBox2d, close_vectors, Vec2
 from ezdxf.path import Command, from_vertices, Path
-from ezdxf.fonts import fonts
 from ezdxf.render import forms
 
 
 class TestNumpyPoints:
     @pytest.fixture
     def points(self):
-        return [(1, 2), (7, 4), (4, 7), (0, 1)]
+        return Vec2.list([(1, 2), (7, 4), (4, 7), (0, 1)])
 
     def test_conversion(self, points):
         pl = NumpyPoints2d(points)
