@@ -12,6 +12,7 @@ from typing import (
 )
 from typing_extensions import TypeAlias
 import abc
+import itertools
 
 from ezdxf.colors import RGB
 import ezdxf.bbox
@@ -288,7 +289,7 @@ class Designer2d(Designer):
         holes: Iterable[Path],
         properties: Properties,
     ) -> None:
-        bk_paths = [BkPath2d(p) for p in paths] + [BkPath2d(p) for p in holes]
+        bk_paths = itertools.chain(map(BkPath2d, paths), map(BkPath2d, holes))
         self._draw_filled_paths(bk_paths, properties)
 
     def _draw_filled_paths(

@@ -103,7 +103,7 @@ class Recorder(Backend):
     def draw_paths(
         self, properties: Properties, paths: Sequence[Path], filled: bool
     ) -> None:
-        data = tuple(NumpyPath2d(p) for p in paths)
+        data = tuple(map(NumpyPath2d, paths))
         record_type = RecordType.FILLED_PATHS if filled else RecordType.OUTLINE_PATHS
         self.store(record_type, properties, data)
 
