@@ -52,7 +52,7 @@ class DataRecord:
         bbox = BoundingBox2d()
         try:
             if self.type == RecordType.FILLED_PATHS:
-                for path in self.data[0]:  # only add paths, ignore holes
+                for path in self.data:
                     bbox.extend(path.extents())
             else:
                 bbox.extend(self.data.extents())
@@ -131,20 +131,14 @@ class Recorder(BackendInterface):
         self.store(RecordType.POINTS, properties, points)
 
     def draw_filled_paths(
-        self,
-        paths: Iterable[NumpyPath2d],
-        holes: Iterable[NumpyPath2d],
-        properties: BackendProperties,
+        self, paths: Iterable[NumpyPath2d], properties: BackendProperties
     ) -> None:
         paths = tuple(paths)
         if len(paths) == 0:
             return
 
         assert isinstance(paths[0], NumpyPath2d)
-        holes = tuple(holes)
-        if holes:
-            assert isinstance(holes[0], NumpyPath2d)
-        self.store(RecordType.FILLED_PATHS, properties, (paths, holes))
+        self.store(RecordType.FILLED_PATHS, properties, paths)
 
     def enter_entity(self, entity, properties) -> None:
         pass
@@ -256,9 +250,7 @@ class Player:
             elif record_type == RecordType.PATH:
                 backend.draw_path(data, properties)
             elif record_type == RecordType.FILLED_PATHS:
-                paths = data[0]
-                holes = data[1]
-                backend.draw_filled_paths(paths, holes, properties)
+                backend.draw_filled_paths(data, properties)
         backend.finalize()
 
     def transform(self, m: Matrix44) -> None:
@@ -267,9 +259,7 @@ class Player:
         """
         for record in self.records:
             if record.type == RecordType.FILLED_PATHS:
-                for p in record.data[0]:
-                    p.transform_inplace(m)
-                for p in record.data[1]:
+                for p in record.data:
                     p.transform_inplace(m)
             else:
                 record.data.transform_inplace(m)
@@ -361,12 +351,10 @@ def crop_records_rect(
             continue
 
         if record.type == RecordType.FILLED_PATHS:
-            paths_to_crop, inside = sort_paths(record.data[0])
-            exterior = crop_paths(paths_to_crop) + inside
-            if exterior:
-                paths_to_crop, inside = sort_paths(record.data[1])
-                holes = crop_paths(paths_to_crop) + inside
-                record.data = tuple(exterior), tuple(holes)
+            paths_to_crop, inside = sort_paths(record.data)
+            cropped_paths = crop_paths(paths_to_crop) + inside
+            if cropped_paths:
+                record.data = tuple(cropped_paths)
                 cropped_records.append(record)
         elif record.type == RecordType.PATH:
             # could be split into multiple parts

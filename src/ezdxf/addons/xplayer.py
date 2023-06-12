@@ -38,7 +38,7 @@ def hpgl2_to_drawing(
             else:
                 backend.draw_path(BkPath2d.from_vertices(points), backend_properties)
         elif record_type == HPGL2RecordType.FILLED_PATHS:
-            backend.draw_filled_paths(record_data, (), backend_properties)  # type: ignore
+            backend.draw_filled_paths(record_data, backend_properties)  # type: ignore
         elif record_type == HPGL2RecordType.OUTLINE_PATHS:
             for p in record_data:
                 backend.draw_path(p, backend_properties)

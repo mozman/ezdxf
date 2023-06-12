@@ -169,16 +169,13 @@ class MatplotlibBackend(Backend):
             self.ax.add_patch(patch)
 
     def draw_filled_paths(
-        self,
-        paths: Iterable[BkPath2d],
-        holes: Iterable[BkPath2d],
-        properties: BackendProperties,
+        self, paths: Iterable[BkPath2d], properties: BackendProperties
     ):
         linewidth = 0
 
         try:
             patch = PathPatch(
-                to_matplotlib_path(list(paths) + list(holes)),
+                to_matplotlib_path(paths),
                 color=properties.color,
                 linewidth=linewidth,
                 fill=True,
@@ -189,9 +186,7 @@ class MatplotlibBackend(Backend):
         else:
             self.ax.add_patch(patch)
 
-    def draw_filled_polygon(
-        self, points: BkPoints2d, properties: BackendProperties
-    ):
+    def draw_filled_polygon(self, points: BkPoints2d, properties: BackendProperties):
         self.ax.fill(
             *zip(*((p.x, p.y) for p in points.vertices())),
             color=properties.color,

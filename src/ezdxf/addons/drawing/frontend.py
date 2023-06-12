@@ -530,34 +530,20 @@ class UniversalFrontend:
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z),
         # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
-
-        external_paths: list[Path]
-        holes: list[Path]
-
+        paths: list[Path]
         if loops is not None:  # only MPOLYGON
-            external_paths, holes = winding_deconstruction(  # type: ignore
-                make_polygon_structure(loops)
-            )
+            paths = loops
         else:  # only HATCH
-            paths = polygon.paths.rendering_paths(polygon.dxf.hatch_style)
-            polygons: list = make_polygon_structure(
-                closed_loops(paths, ocs, elevation)  # type: ignore
+            boundary_paths = list(
+                polygon.paths.rendering_paths(polygon.dxf.hatch_style)
             )
-            external_paths, holes = winding_deconstruction(polygons)  # type: ignore
-
+            paths = closed_loops(boundary_paths, ocs, elevation)
         if show_only_outline:
-            for p in itertools.chain(ignore_text_boxes(external_paths), holes):
+            for p in ignore_text_boxes(paths):
                 self.designer.draw_path(p, properties)
             return
-
-        if external_paths:
-            self.designer.draw_filled_paths(
-                ignore_text_boxes(external_paths), holes, properties
-            )
-        elif holes:
-            # The first path is considered the exterior path, everything else are
-            # holes.
-            self.designer.draw_filled_paths([holes[0]], holes[1:], properties)
+        if paths:
+            self.designer.draw_filled_paths(ignore_text_boxes(paths), properties)
 
     def draw_mpolygon_entity(self, entity: DXFGraphic, properties: Properties):
         def resolve_fill_color() -> str:

@@ -4,7 +4,6 @@ from __future__ import annotations
 from typing import Iterable, Sequence, no_type_check
 
 import copy
-import itertools
 from xml.etree import ElementTree as ET
 
 from ezdxf.math import Vec2
@@ -276,13 +275,10 @@ class SVGRenderBackend(BackendInterface):
         self.add_strokes(self.make_path_str(path), properties)
 
     def draw_filled_paths(
-        self,
-        paths: Iterable[BkPath2d],
-        holes: Iterable[BkPath2d],
-        properties: BackendProperties,
+        self, paths: Iterable[BkPath2d], properties: BackendProperties
     ) -> None:
         d = []
-        for path in itertools.chain(paths, holes):
+        for path in paths:
             if len(path):
                 d.append(self.make_path_str(path, close=True))
         self.add_filling(" ".join(d), properties)

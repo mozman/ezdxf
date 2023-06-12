@@ -3,7 +3,6 @@
 from __future__ import annotations
 from typing import Iterable, TYPE_CHECKING, no_type_check
 from functools import lru_cache
-import itertools
 import enum
 
 
@@ -149,13 +148,10 @@ class DXFBackend(BackendInterface):
             self.layout.add_lwpolyline(path.control_vertices(), dxfattribs=attribs)
 
     def draw_filled_paths(
-        self,
-        paths: Iterable[BkPath2d],
-        holes: Iterable[BkPath2d],
-        properties: BackendProperties,
+        self, paths: Iterable[BkPath2d], properties: BackendProperties
     ) -> None:
         attribs = self.resolve_properties(properties)
-        py_paths = [p.to_path() for p in itertools.chain(paths, holes)]
+        py_paths = [p.to_path() for p in paths]
         for hatch in to_hatches(py_paths, dxfattribs=attribs):
             self.layout.add_entity(hatch)
             self.set_solid_fill(hatch, properties)

@@ -150,14 +150,11 @@ class _PyQtBackend(Backend):
         self._add_item(item, properties.handle)
 
     def draw_filled_paths(
-        self,
-        paths: Iterable[BkPath2d],
-        holes: Iterable[BkPath2d],
-        properties: BackendProperties,
+        self, paths: Iterable[BkPath2d], properties: BackendProperties
     ) -> None:
         # Default fill rule is OddEvenFill! Detecting the path orientation is not
         # necessary!
-        item = _CosmeticPath(to_qpainter_path(list(paths) + list(holes)))
+        item = _CosmeticPath(to_qpainter_path(paths))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._get_fill_brush(properties.color))
         self._add_item(item, properties.handle)
@@ -198,6 +195,7 @@ class PyQtBackend(_PyQtBackend):
         scene: Optional[qw.QGraphicsScene] = None,
     ):
         super().__init__(scene or qw.QGraphicsScene())
+
     # This implementation keeps all virtual entities alive by attaching references
     # to entities to the graphic scene items.
 

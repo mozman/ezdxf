@@ -136,7 +136,8 @@ def test_2d_text_as_filled_paths(msp, frontend):
     frontend.draw_entities(msp)
     _, *filled_paths = replay(frontend, PathBackend())
     assert filled_paths[0][0] == "filled_path"
-    assert len(filled_paths[0][1]) == 2
+    text_paths = filled_paths[0][1]
+    assert len(text_paths) == 8, "expected a path for each character"
 
 
 def test_bounding_box(msp, frontend):
@@ -217,7 +218,7 @@ class TestCroppingRecords:
         recorder = Recorder()
         square = NumpyPath2d(ezdxf.path.rect(100, 100))  # center = (0, 0)
         hole = NumpyPath2d(ezdxf.path.rect(50, 50))  # center = (0, 0)
-        recorder.draw_filled_paths([square], [hole], props)
+        recorder.draw_filled_paths([square, hole], props)
 
         player = recorder.player()
         data0 = player.records[0].data
@@ -225,9 +226,9 @@ class TestCroppingRecords:
 
         assert player.records[0].data is not data0, "should be new record data"
 
-        exterior, holes = player.records[0].data
-        assert exterior[0].extents() == ((0, 0), (50, 50)), "should be cropped"
-        assert holes[0].extents() == ((0, 0), (25, 25)), "should be cropped"
+        paths = player.records[0].data
+        assert paths[0].extents() == ((0, 0), (50, 50)), "should be cropped"
+        assert paths[1].extents() == ((0, 0), (25, 25)), "should be cropped"
 
     def test_does_not_crop_holes_inside_crop_box(self):
         props = BackendProperties()
@@ -236,15 +237,15 @@ class TestCroppingRecords:
         hole = NumpyPath2d.from_vertices(
             Vec2.list([(10, 10), (20, 10), (20, 20), (10, 20)]), close=True
         )
-        recorder.draw_filled_paths([square], [hole], props)
+        recorder.draw_filled_paths([square, hole], props)
 
         player = recorder.player()
-        _, holes = player.records[0].data
-        hole0 = holes[0]
+        paths = player.records[0].data
+        hole0 = paths[1]
         player.crop_rect((0, 0), (100, 100), 1)
 
-        _, holes = player.records[0].data
-        assert holes[0] is hole0, "should be identical to original hole"
+        paths = player.records[0].data
+        assert paths[1] is hole0, "should be identical to original hole"
 
     def test_does_remove_holes_outside_crop_box(self):
         props = BackendProperties()
@@ -254,10 +255,10 @@ class TestCroppingRecords:
         hole = NumpyPath2d.from_vertices(
             Vec2.list([(-10, -10), (-20, -10), (-20, -20), (-10, -20)]), close=True
         )
-        recorder.draw_filled_paths([square], [hole], props)
+        recorder.draw_filled_paths([square, hole], props)
 
         player = recorder.player()
         player.crop_rect((0, 0), (100, 100), 1)
 
-        _, holes = player.records[0].data
-        assert len(holes) == 0, "hole should be removed"
+        paths = player.records[0].data
+        assert len(paths) == 1, "hole should be removed"

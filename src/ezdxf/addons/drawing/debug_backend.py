@@ -21,9 +21,7 @@ class BasicBackend(Backend):
     def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         self.collector.append(("point", pos, properties))
 
-    def draw_line(
-        self, start: Vec2, end: Vec2, properties: BackendProperties
-    ) -> None:
+    def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         self.collector.append(("line", start, end, properties))
 
     def draw_filled_polygon(
@@ -43,9 +41,6 @@ class PathBackend(BasicBackend):
         self.collector.append(("path", path, properties))
 
     def draw_filled_paths(
-        self,
-        paths: Iterable[BkPath2d],
-        holes: Iterable[BkPath2d],
-        properties: BackendProperties,
+        self, paths: Iterable[BkPath2d], properties: BackendProperties
     ) -> None:
-        self.collector.append(("filled_path", (tuple(paths), tuple(holes)), properties))
+        self.collector.append(("filled_path", tuple(paths), properties))

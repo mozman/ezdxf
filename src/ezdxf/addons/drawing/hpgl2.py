@@ -2,9 +2,7 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import Iterable, Sequence, no_type_check
-
 import copy
-import itertools
 
 from ezdxf import colors
 from ezdxf.math import Vec2
@@ -330,9 +328,7 @@ class _RenderBackend(BackendInterface):
     def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         self.add_polyline_encoded([pos], properties)
 
-    def draw_line(
-        self, start: Vec2, end: Vec2, properties: BackendProperties
-    ) -> None:
+    def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         self.add_polyline_encoded([start, end], properties)
 
     def draw_solid_lines(
@@ -351,16 +347,13 @@ class _RenderBackend(BackendInterface):
             self.add_path(sub_path, properties)
 
     def draw_filled_paths(
-        self,
-        paths: Iterable[BkPath2d],
-        holes: Iterable[BkPath2d],
-        properties: BackendProperties,
+        self, paths: Iterable[BkPath2d], properties: BackendProperties
     ) -> None:
-        all_paths = list(itertools.chain(paths, holes))
-        if len(all_paths) == 0:
+        paths = list(paths)
+        if len(paths) == 0:
             return
-        self.enter_polygon_mode(all_paths[0].start)
-        for p in all_paths:
+        self.enter_polygon_mode(paths[0].start)
+        for p in paths:
             for sub_path in p.sub_paths():
                 if len(sub_path) == 0:
                     continue

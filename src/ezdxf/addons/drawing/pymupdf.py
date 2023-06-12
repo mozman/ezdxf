@@ -42,6 +42,7 @@ class PyMuPdfBackend(recorder.Recorder):
     .. _PyMuPdf: https://pypi.org/project/PyMuPDF/
 
     """
+
     def __init__(self) -> None:
         super().__init__()
         self._init_flip_y = True
@@ -275,9 +276,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         self.finish_line(shape, properties, close=False)
         shape.commit()
 
-    def draw_line(
-        self, start: Vec2, end: Vec2, properties: BackendProperties
-    ) -> None:
+    def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         shape = self.new_shape()
         shape.drawLine(Vec2(start), Vec2(end))
         self.finish_line(shape, properties, close=False)
@@ -301,15 +300,10 @@ class PyMuPdfRenderBackend(BackendInterface):
         shape.commit()
 
     def draw_filled_paths(
-        self,
-        paths: Iterable[BkPath2d],
-        holes: Iterable[BkPath2d],
-        properties: BackendProperties,
+        self, paths: Iterable[BkPath2d], properties: BackendProperties
     ) -> None:
         shape = self.new_shape()
         for p in paths:
-            add_path_to_shape(shape, p, close=True)
-        for p in holes:
             add_path_to_shape(shape, p, close=True)
         self.finish_filling(shape, properties)
         shape.commit()

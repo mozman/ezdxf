@@ -56,10 +56,7 @@ class BackendInterface(ABC):
 
     @abstractmethod
     def draw_filled_paths(
-        self,
-        paths: Iterable[BkPath2d],
-        holes: Iterable[BkPath2d],
-        properties: BackendProperties,
+        self, paths: Iterable[BkPath2d], properties: BackendProperties
     ) -> None:
         raise NotImplementedError
 
@@ -147,33 +144,21 @@ class Backend(BackendInterface, metaclass=ABCMeta):
                 prev = vertex
 
     def draw_filled_paths(
-        self,
-        paths: Iterable[BkPath2d],
-        holes: Iterable[BkPath2d],
-        properties: BackendProperties,
+        self, paths: Iterable[BkPath2d], properties: BackendProperties
     ) -> None:
         """Draw multiple filled paths (connected string of line segments and
-        Bezier curves) with holes.
+        Bezier curves).
 
-        The strategy to draw multiple paths at once was chosen, because a HATCH
-        entity can contain multiple unconnected areas and the holes are not easy
-        to assign to an external path.
+        The current implementation passes these paths to the backend, all backends
+        included in ezdxf handle holes by the even-odd method.  If a backend requires
+        oriented paths (exterior paths in counter-clockwise and holes in clockwise
+        orientation) use the function :func:`oriented_paths` to separate and orient the
+        input paths.
 
-        The idea is to put all filled areas into `paths` (counter-clockwise
-        winding) and all holes into `holes` (clockwise winding) and look what
-        the backend does with this information.
-
-        The frontend resolves the HATCH fill strategies ("ignore", "outermost",
-        "ignore") e.g. the holes sequence is empty for the "ignore" strategy and for the
-        "outermost" strategy, holes do not contain nested holes.
-
-        The default implementation draws all paths as filled polygon without
-        holes by the :meth:`draw_filled_polygon` method. Backends can override
-        this method if filled polygon with hole support is available.
+        The default implementation draws all paths as filled polygons.
 
         Args:
-            paths: sequence of exterior paths (counter-clockwise winding)
-            holes: sequence of holes (clockwise winding)
+            paths: sequence of paths
             properties: HATCH properties
 
         """
