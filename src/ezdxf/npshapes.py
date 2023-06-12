@@ -188,7 +188,7 @@ class NumpyPath2d(NumpyShape2d):
     clone = __copy__
 
     def to_path(self) -> Path:
-        """Returns a new :class:`Path2d` instance."""
+        """Returns a new :class:`ezdxf.path.Path` instance."""
         vertices = [Vec3(v) for v in self._vertices]
         commands = [Command(c) for c in self._commands]
         return Path.from_vertices_and_commands(vertices, commands)
