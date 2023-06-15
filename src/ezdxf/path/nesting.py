@@ -7,11 +7,11 @@ Terminology
 -----------
 
 exterior
-    creates a filled area, has counter-clockwise (ccw) winding in matplotlib
+    creates a filled area, has counter-clockwise (ccw) winding
     exterior := Path
 
 hole
-    creates an unfilled area, has clockwise winding (cw) in matplotlib,
+    creates an unfilled area, has clockwise winding (cw),
     hole := Polygon
 
 polygon
@@ -21,16 +21,15 @@ polygon
     polygon with 2 separated holes: [path, [path], [path]]
     polygon with 2 nested holes: [path, [path, [path]]]
 
-    polygon := [exterior, hole*]
+    polygon := [exterior, *hole]
 
 The result is a list of polygons:
 
 1 polygon returns: [[ext-path]]
 2 separated polygons returns: [[ext-path], [ext-path, [hole-path]]]
 
-A hole is just another polygon, for a correct visualisation in
-matplotlib the winding of the nested paths have to follow the alternating
-order ccw-cw-ccw-cw... :
+A hole is just another polygon, some render backends may require a distinct winding
+order for nested paths like: ccw-cw-ccw-cw...
 
 [Exterior-ccw,
     [Hole-Exterior-cw,
@@ -48,42 +47,13 @@ by using proxy objects:
 Bounding Box Proxy
 ------------------
 
-Use the bounding box, this is very fast but not accurate, but could handle
-most of the real world scenarios, in the assumption that most HATCHES are
-created from non-overlapping boundary paths.
+This implementation uses the bounding box of the path as proxy object, this is very fast
+but not accurate, but can handle most of the real world scenarios, in the assumption
+that most HATCHES are created from non-overlapping boundary paths.
 Overlap detection and resolving is not possible.
 
-Bounding Box Construction:
-- Fast: use bounding box from control vertices
-- Accurate: use bounding box from flattened curve
-
-Inside Check:
-- Fast: center point of the bounding box
-- Slow: use all corner points of the bounding box
-
-
-Convex Hull Proxy
------------------
-
-Use the convex hull of the path, this is more accurate but also
-much slower. Overlap detection and resolving is not possible.
-
-Convex Hull construction:
-- Fast: use convex hull from control vertices
-- Accurate: use convex hull from flattened curve
-
-Inside Check:
-- Fast: center point of convex hull
-- Slow: use all points of the convex hull
-
-
-Flattened Curve
----------------
-
-Use the flattened curve vertices, this is the most accurate solution and also
-the slowest. Overlap detection and resolving is possible: exterior is the
-union of two overlapping paths, hole is the intersection of this two paths,
-the hole vertices have to be subtracted from the exterior vertices.
+The input paths have to implement the SupportsBoundingBox protocol, which requires
+only a method bbox() that returns a BoundingBox2d instance for the path.
 
 Sort by Area
 ------------
