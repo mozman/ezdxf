@@ -164,6 +164,44 @@ Issues:
 - 2D selections always in top-view mode?
 - Using special box- and sphere selections for 3D selection?
 
+Boundary Path Constructor
+-------------------------
+
+(>v1.1) A module to create boundary paths for HATCH and MPOLYGON entities.
+
+The input data are DXF entities e.g. the result of a selection or an entity query, 
+the module functions and classes help to detect closed path in the entity collection 
+and returns one or more `BoundaryPaths` instances.  Although HATCH and MPOLYGON can 
+contain multiple separated areas in a single entity this module should create a boundary 
+path for each separated area.
+
+All entities have to be located in the xy-plane and in a later version maybe in the same 
+spatial plan defined by the extrusion vector and elevation.
+
+When the entities are located in the xy-plane the extrusion vector of CIRCLE, ARC and 
+ELLIPSE can be inverted.
+
+Simple closed paths:
+- CIRCLE
+- full 360° ARC
+- full 360° ELLIPSE
+- closed LWPOLYLINE or 2d POLYLINE
+- closed SPLINE
+- SOLID, TRACE, 3DFACE
+- maybe later: subtract TEXT, ATTRIB and MTEXT as text box paths
+
+Complex connected paths are build from multiple entities, input entities can be:
+- LINE
+- open ARC
+- open ELLIPSE
+- open LWPOLYLINE or 2d POLYLINE
+- open SPLINE
+
+The path detection algorithm should try to connect path elements by their closest end 
+points, by ambiguity the differnt possible paths are tracked recursively and the shortest 
+or longest path will be taken.  A gap tolerance is given by the user to connect end points 
+that are not coincident and the algorithm adds connection lines between these gaps.
+
 DXF Document
 ------------
 
