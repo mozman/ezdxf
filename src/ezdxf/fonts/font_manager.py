@@ -455,9 +455,14 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
             style = record.string.decode(record.getEncoding())
         if family and style:
             break
-    os2_table = ttf["OS/2"]
-    weight = os2_table.usWeightClass
-    width = os2_table.usWidthClass
+    try:
+        os2_table = ttf["OS/2"]
+    except Exception:  # e.g. ComickBook_Simple.ttf has an invalid "OS/2" table
+        weight = 400
+        width = 5
+    else:
+        weight = os2_table.usWeightClass
+        width = os2_table.usWidthClass
     return FontFace(
         filename=font_path.name,
         family=family,
