@@ -7,12 +7,14 @@ from typing import Iterable, NamedTuple, Optional, Sequence
 import os
 import platform
 import json
+import logging
 
 from pathlib import Path
 from fontTools.ttLib import TTFont, TTLibError
 from .font_face import FontFace
 from . import shapefile, lff
 
+logger = logging.getLogger("ezdxf")
 WINDOWS = "Windows"
 LINUX = "Linux"
 MACOS = "Darwin"
@@ -458,6 +460,7 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
     try:
         os2_table = ttf["OS/2"]
     except Exception:  # e.g. ComickBook_Simple.ttf has an invalid "OS/2" table
+        logger.info(f"cannot load OS/2 table of font '{font_path.name}'")
         weight = 400
         width = 5
     else:

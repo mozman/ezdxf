@@ -452,8 +452,7 @@ class MonospaceFont(AbstractFont):
     def text_glyph_paths(
         self, text: str, cap_height: float, width_factor: float = 1.0
     ) -> list[GlyphPath]:
-        """Returns the same rectangle as the method :meth:`text_path_ex` in a list.
-        """
+        """Returns the same rectangle as the method :meth:`text_path_ex` in a list."""
         return [self.text_path_ex(text, cap_height, width_factor)]
 
     def space_width(self) -> float:
@@ -518,13 +517,6 @@ class _CachedFont(AbstractFont, abc.ABC):
     def space_width(self) -> float:
         """Returns the width of a "space" char."""
         return self._space_width
-
-# --------------------------------------------------------------------------------------
-# NOTES:
-# "romantic.ttf" uses the Private Use Area (PUA) codepoints (f000-e000) for its glyphs
-# and has no glyphs for the usual code points.
-# see example: "CADKitSamples\Proposed Townhouse.dxf"
-# I deleted this font from my system!
 
 
 class TrueTypeFont(_CachedFont):
