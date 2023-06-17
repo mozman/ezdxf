@@ -52,8 +52,8 @@ def render_glyph_table(font: fonts.TrueTypeFont, layout: Layout):
                 )
                 continue
             m = Matrix44.translate(insert_x, insert_y, 0)
-            glyph = glyph.transform(m)
-            path.render_hatches(layout, [glyph], dxfattribs=glyph_attribs)
+            glyph.transform_inplace(m)
+            path.render_hatches(layout, [glyph.to_path()], dxfattribs=glyph_attribs)
 
 
 def render_font(font_name: str, sideload: bool):
