@@ -253,7 +253,7 @@ def attach(
 ) -> Insert:
     """Attach the file `filename` to the host document as external reference (XREF) and
     creates a default block reference for the XREF in the modelspace of the document.
-    The function raises a :class:`ValueError` exception if the block definition
+    The function raises an :class:`XrefDefinitionError` exception if the block definition
     already exist, but an XREF can be inserted multiple times by adding additional block
     references::
 

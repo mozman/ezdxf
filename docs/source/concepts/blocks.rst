@@ -28,4 +28,5 @@ the preservation of these undocumented DXF entities.
 
 .. seealso::
 
-    :ref:`tut_blocks`
+    - :ref:`Blocks` Section
+    - :ref:`tut_blocks`

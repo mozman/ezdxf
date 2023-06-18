@@ -1,3 +1,5 @@
 **/*.dxf
 **/*.dwg
+**/*.dwl
+**/*.dwl2
 **/*.geojson

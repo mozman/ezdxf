@@ -298,5 +298,51 @@ This works in most simple cases, resolving properties of objects in viewports or
 nested blocks requires additional information that is beyond the scope of a
 simple guide.
 
+How to Find XREF Definitions
+----------------------------
+
+XREFs are normal block definitions and can be found in the BLOCKS section:
+
+.. code-block:: Python
+
+    for block_layout in doc.blocks:
+        block = block_layout.block  # the BLOCK entity
+        if block.is_xref:
+            handle_xref(block_layout)
+        elif block.is_xref_overlay:
+            handle_xref_overlay(block_layout)
+
+.. seealso::
+
+    - documentation of the :mod:`ezdxf.xref` module
+    - :class:`ezdxf.layouts.BlockLayout`
+
+How to Find XREF References
+---------------------------
+
+An XREF reference is a block reference (INSERT entity) to the block definition of
+the XREF:
+
+.. code-block:: Python
+
+    for insert in msp.query("INSERT"):
+        if insert.is_xref:
+            handle_xref_reference(insert)
+            # ... or get the XREF definition
+            block_layout = insert.block()
+            if block_layout is not None:
+                block = block_layout.block
+                if block.is_xref:
+                    handle_xref(block_layout)
+                elif block.is_xref_overlay:
+                    handle_xref_overlay(block_layout)
+
+Like any normal block, an XREF can be inserted multiple times.
+
+.. seealso::
+
+    - documentation of the :mod:`ezdxf.xref` module
+    - :class:`ezdxf.layouts.BlockLayout`
+
 .. _DXF Group Codes in Numerical Order Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-3F0380A5-1C15-464D-BC66-2C5F094BCFB9
 .. _B-spline: https://en.wikipedia.org/wiki/B-spline
