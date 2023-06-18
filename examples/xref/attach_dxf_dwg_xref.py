@@ -4,7 +4,8 @@ import pathlib
 import ezdxf
 from ezdxf.addons import odafc
 from ezdxf.document import Drawing
-from ezdxf import xref, units
+from ezdxf import xref, units, colors
+from ezdxf.render import forms
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
@@ -19,8 +20,13 @@ if not CWD.exists():
 def make_dxf_xref_document(name: str, dxfversion="R2013") -> Drawing:
     # AutoCAD does not accept DXF R12 files as XREF :(
     ref_doc = ezdxf.new(dxfversion, units=units.M)
-    ref_doc.modelspace().add_circle(
-        center=(5, 5), radius=2.5, dxfattribs={"layer": "CIRCLE"}
+    ref_doc.layers.add("GEAR", color=colors.YELLOW)
+    msp = ref_doc.modelspace()
+    gear = forms.gear(
+        16, top_width=0.25, bottom_width=0.75, height=0.5, outside_radius=2.5
+    )
+    msp.add_lwpolyline(
+        forms.translate(gear, (5, 5)), close=True, dxfattribs={"layer": "GEAR"}
     )
     ref_doc.header["$INSBASE"] = (5, 5, 0)  # set XREF base point for insertion
     ref_doc.saveas(CWD / name)
