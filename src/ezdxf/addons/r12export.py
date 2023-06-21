@@ -4,10 +4,6 @@
 Module to export any DXF document as DXF version R12 without modifying the source
 document.
 
----------------------------------------------------------
-WARNING: THIS MODULE IS IN PLANNING STATE, DO NOT USE IT!
----------------------------------------------------------
-
 .. versionadded:: 1.1
 
 To get the best result use the ODA File Converter add-on::
