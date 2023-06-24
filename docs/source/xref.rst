@@ -42,6 +42,10 @@ For loading the content of DWG files is a loading function required, which loads
 DWG file as :class:`Drawing` document. The :mod:`~ezdxf.addons.odafc` add-on module
 provides such a function: :func:`~ezdxf.addons.odafc.readfile`
 
+.. seealso::
+
+    - :ref:`tut_xref_module`
+
 XREF Structures
 ---------------
 

@@ -17,6 +17,9 @@ opened or if the XREF is reloaded.
     Fortunately, other CAD applications are more cooperative, BricsCAD has no problem
     displaying DXF files as XREFs.
 
+    The :mod:`~ezdxf.addons.drawing` add-on included in `ezdxf` **does not display external
+    references at all!**
+
 There are some example files included in the `examples/xref <https://github.com/mozman/ezdxf/tree/master/examples/xref>`_
 folder of the repository:
 
@@ -57,9 +60,9 @@ Create a host document to which the XREF will be attached::
 
 Attach the XREF by the :func:`ezdxf.xref.attach` function and save the host DXF file::
 
-    xref.attach(host_doc, block_name="dxf_xref", insert=(0, 0), filename="xref.dxf")
+    xref.attach(host_doc, block_name="dxf_xref", insert=(0, 0), filename="attached_xref.dxf")
     host_doc.set_modelspace_vport(height=10, center=(0, 0))
-    host_doc.saveas("attached_dxf.dxf")
+    host_doc.saveas("attach_host_dxf.dxf")
 
 
 The :func:`attach` function is meant to simply attach an XREF once without any
@@ -85,16 +88,17 @@ Attach a DWG File
 
 Export the DXF file as DWG by the :mod:`~ezdxf.addons.odafc` add-on::
 
-    doc = make_dxf_xref_document("xref.dxf")
+    # It's not required to save the DXF file!
+    doc = make_dxf_xref_document("attached_xref.dxf")
     try:
-        odafc.export_dwg(doc, "xref.dwg", replace=True)
+        odafc.export_dwg(doc, "attached_xref.dwg", replace=True)
     except odafc.ODAFCError as e:
         print(str(e))
 
 Attach the DWG file by the :func:`ezdxf.xref.attach` function and save the host DXF file::
 
     host_doc = ezdxf.new(DXFVERSION, units=units.M)
-    xref.attach(host_doc, block_name="dwg_xref", filename="xref.dwg", insert=(0, 0))
+    xref.attach(host_doc, block_name="dwg_xref", filename="attached_xref.dwg", insert=(0, 0))
     host_doc.set_modelspace_vport(height=10, center=(0, 0))
     host_doc.saveas("attached_dwg.dxf")
 
@@ -106,6 +110,37 @@ Attached DWG file in Autodesk DWG TrueView 2023:
 
 Detach an XREF
 --------------
+
+The :func:`~ezdxf.xref.detach` function writes the content of a block definition into
+the modelspace of a new DXF document and convert the block to an external reference (XREF).
+The new DXF document has to be written/exported by the caller.
+The function does not create any block references. These references should already exist
+and do not need to be changed since references to blocks and XREFs are the same.
+
+.. literalinclude:: src/xref/detach_dxf_dwg_xref.py
+    :lines: 23-29
+
+.. important::
+
+    Save the host document after detaching the block!
+    Detaching a block definition modifies the host document.
+
+The :func:`detach` function returns a :class:`Drawing` instance, so it's possible
+to convert the DXF document to DWG by the :mod:`~ezdxf.addons.odafc` add-on if necessary
+(e.g. for Autodesk products). It's important that the argument :attr:`xref_filename`
+match the filename of the exported DWG file:
+
+.. literalinclude:: src/xref/detach_dxf_dwg_xref.py
+    :lines: 33-42
+
+It's recommended to clean up the entity database of the host document afterwards::
+
+    host_doc.entitydb.purge()
+
+For understanding, this is the :func:`make_block` function:
+
+.. literalinclude:: src/xref/detach_dxf_dwg_xref.py
+    :lines: 10-19
 
 Embed an XREF
 -------------

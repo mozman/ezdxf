@@ -419,6 +419,10 @@ def detach(
 
         doc.entitydb.purge()
 
+    The function does not create any block references. These references should already
+    exist and do not need to be changed since references to blocks and XREFs are the
+    same.
+
     Args:
         block: block definition to detach
         xref_filename: name of the external referenced file

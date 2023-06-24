@@ -7,8 +7,8 @@ from ezdxf import xref, units, colors
 from ezdxf.render import forms
 
 DXFVERSION = "R2013"
-DXF_NAME = "xref.dxf"
-DWG_NAME = "xref.dwg"
+DXF_NAME = "attached_xref.dxf"
+DWG_NAME = "attached_xref.dwg"
 
 
 def make_dxf_xref_document(name: str) -> Drawing:
@@ -42,14 +42,14 @@ def attach_dxf() -> None:
     host_doc = ezdxf.new(DXFVERSION, units=units.M)
     xref.attach(host_doc, block_name="dxf_xref", insert=(0, 0), filename=DXF_NAME)
     host_doc.set_modelspace_vport(height=10, center=(0, 0))
-    host_doc.saveas("attached_dxf.dxf")
+    host_doc.saveas("attach_host_dxf.dxf")
 
 
 def attach_dwg() -> None:
     host_doc = ezdxf.new(DXFVERSION, units=units.M)
     xref.attach(host_doc, block_name="dwg_xref", filename=DWG_NAME, insert=(0, 0))
     host_doc.set_modelspace_vport(height=10, center=(0, 0))
-    host_doc.saveas("attached_dwg.dxf")
+    host_doc.saveas("attach_host_dwg.dxf")
 
 
 def main():
