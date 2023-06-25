@@ -24,6 +24,8 @@ Version 1.1.0 Beta
 - NEW: support for measuring and rendering of .shx, .shp and .lff fonts, the basic 
   stroke fonts included in CAD applications
 - NEW: added setter to `BlockLayout.base_point` property
+- NEW: `ezdxf.entities.acad_table_to_block()` function, converts a `ACAD_TABLE` entity 
+  to an `INSERT` entity
 - CHANGED: moved font related modules into a new subpackage `ezdxf.fonts` 
   including a big refactoring
 - CHANGED: `FontFace` class - `weight` attribute is an int value (0-1000), `stretch` is 

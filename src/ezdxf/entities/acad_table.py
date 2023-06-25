@@ -24,53 +24,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.document import Drawing
 
-__all__ = ["AcadTable", "AcadTableBlockContent"]
-
-
-@factory.register_entity
-class AcadTableBlockContent(DXFTagStorage):
-    DXFTYPE = "ACAD_TABLE"
-
-    def proxy_graphic_content(self) -> Iterable[DXFGraphic]:
-        return super().__virtual_entities__()
-
-    def _block_content(self) -> Iterator[DXFGraphic]:
-        block_name: str = self.get_block_name()
-        return self.doc.blocks.get(block_name, [])  # type: ignore
-
-    def _block_reference_tags(self) -> Tags:
-        try:
-            return self.xtags.get_subclass("AcDbBlockReference")
-        except const.DXFKeyError:
-            return Tags()
-
-    def get_block_name(self) -> str:
-        tags = self._block_reference_tags()
-        return tags.get_first_value(2, "")
-
-    def get_insert_location(self) -> Vec3:
-        return self._block_reference_tags().get_first_value(10, Vec3())
-
-    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
-        """Implements the SupportsVirtualEntities protocol."""
-        insert: Vec3 = Vec3(self.get_insert_location())
-        m: Optional[Matrix44] = None
-        if insert:
-            # TODO: OCS transformation (extrusion) is ignored yet
-            m = Matrix44.translate(insert.x, insert.y, insert.z)
-
-        for entity in self._block_content():
-            try:
-                clone = entity.copy()
-            except const.DXFTypeError:
-                continue
-            if m is not None:
-                # noinspection PyUnboundLocalVariable
-                try:
-                    clone.transform(m)
-                except:  # skip entity at any transformation issue
-                    continue
-            yield clone
+__all__ = ["AcadTable", "AcadTableBlockContent", "acad_table_to_block"]
 
 
 acdb_block_reference = DefSubclass(
@@ -385,6 +339,87 @@ class TableStyle(DXFObject):
 
 class TableStyleManager(ObjectCollection[TableStyle]):
     def __init__(self, doc: Drawing):
-        super().__init__(
-            doc, dict_name="ACAD_TABLESTYLE", object_type="TABLESTYLE"
-        )
+        super().__init__(doc, dict_name="ACAD_TABLESTYLE", object_type="TABLESTYLE")
+
+
+@factory.register_entity
+class AcadTableBlockContent(DXFTagStorage):
+    DXFTYPE = "ACAD_TABLE"
+    DXFATTRIBS = DXFAttributes(
+        base_class, acdb_entity, acdb_block_reference, acdb_table
+    )
+
+    def load_dxf_attribs(
+        self, processor: Optional[SubclassProcessor] = None
+    ) -> DXFNamespace:
+        dxf = super().load_dxf_attribs(processor)
+        if processor:
+            processor.fast_load_dxfattribs(
+                dxf, acdb_block_reference_group_codes, subclass=2
+            )
+            processor.fast_load_dxfattribs(
+                dxf, acdb_table_group_codes, subclass=3, log=False
+            )
+        return dxf
+
+    def proxy_graphic_content(self) -> Iterable[DXFGraphic]:
+        return super().__virtual_entities__()
+
+    def _block_content(self) -> Iterator[DXFGraphic]:
+        block_name: str = self.get_block_name()
+        return self.doc.blocks.get(block_name, [])  # type: ignore
+
+    def get_block_name(self) -> str:
+        return self.dxf.get("geometry", "")
+
+    def get_insert_location(self) -> Vec3:
+        return self.dxf.get("insert", Vec3())
+
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
+        """Implements the SupportsVirtualEntities protocol."""
+        insert: Vec3 = Vec3(self.get_insert_location())
+        m: Optional[Matrix44] = None
+        if insert:
+            # TODO: OCS transformation (extrusion) is ignored yet
+            m = Matrix44.translate(insert.x, insert.y, insert.z)
+
+        for entity in self._block_content():
+            try:
+                clone = entity.copy()
+            except const.DXFTypeError:
+                continue
+            if m is not None:
+                # noinspection PyUnboundLocalVariable
+                try:
+                    clone.transform(m)
+                except:  # skip entity at any transformation issue
+                    continue
+            yield clone
+
+
+def acad_table_to_block(table: DXFEntity) -> None:
+    """Converts the given ACAD_TABLE entity to a block references (INSERT entity).
+
+    The original ACAD_TABLE entity will be destroyed.
+
+    .. versionadded:: 1.1
+
+    """
+    if not isinstance(table, AcadTableBlockContent):
+        return
+    doc = table.doc
+    owner = table.dxf.owner
+    block_name = table.get_block_name()
+    if doc is None or block_name == "" or owner is None:
+        return
+    try:
+        layout = doc.layouts.get_layout_by_key(owner)
+    except const.DXFKeyError:
+        return
+    # replace ACAD_TABLE entity by INSERT entity
+    layout.add_blockref(
+        block_name,
+        insert=table.get_insert_location(),
+        dxfattribs={"layer": table.dxf.get("layer", "0")},
+    )
+    layout.delete_entity(table)  # type: ignore

@@ -99,7 +99,7 @@ from .mleader import MLeader, MLeaderStyle, MLeaderStyleCollection, MultiLeader
 # register graphical entities R2007
 
 from .light import Light
-from .acad_table import AcadTableBlockContent
+from .acad_table import AcadTableBlockContent, acad_table_to_block
 
 # register graphical entities R2010
 
