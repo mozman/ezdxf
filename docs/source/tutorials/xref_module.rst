@@ -28,10 +28,27 @@ folder of the repository:
     - embed_dxf_dwg_xref.py
     - load_table_resources.py
 
+Supported Entities
+------------------
+
+All operations which move entities between layouts and XREFs copy these entities,
+therefore only entities which are copyable can be transferred.
+The following entities are not copyable:
+
+- All entities which are not documented by the DXF reference.
+- ACAD_TABLE
+- ACAD_PROXY_ENTITY
+- OLE2FRAME
+- ACIS based entities: BODY, 3DSOLID, REGION, ...
+- Custom entities from applications on top of AutoCAD like Map 3D, Civil 3D or
+  Architecture. The vertical integration stack is not documented by the DXF reference.
+
+Unsupported entities are ignored and do not raise exceptions.
+
 Environment Setup
 -----------------
 
-Required imports:
+Required imports to follow this tutorial:
 
 .. literalinclude:: src/xref/attach_dxf_dwg_xref.py
     :lines: 3-9
@@ -145,9 +162,46 @@ For understanding, this is the :func:`make_block` function:
 Embed an XREF
 -------------
 
+The :func:`embed` function loads the content of the XREF into the block definition,
+this is the reverse operation of detaching an XREF.
+
 For loading the content of DWG files is a loading function required, which loads the
 DWG file as :class:`Drawing` document. The :mod:`~ezdxf.addons.odafc` add-on module
-provides such a function: :func:`~ezdxf.addons.odafc.readfile`
+provides such a function: :func:`~ezdxf.addons.odafc.readfile`.
+
+This example embeds the XREF "attached_xref.dwg" of the first example as content of the
+block definition "GEAR", the "attach_host_dwg.dxf" file is the host DXF document:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.addons import odafc
+
+    doc = ezdxf.readfile("attach_host_dwg.dxf")
+    gear_xref = doc.blocks.get("GEAR")
+
+    try:
+        xref.embed(gear_xref, load_fn=odafc.readfile)
+    except FileNotFoundError as e:
+        print(str(e))
+
+The default loading function for DXF files is the :func:`ezdxf.readfile` function and
+doesn't have to be specified. For the loading function from the :mod:`~ezdxf.recover`
+module use a lambda function:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf import recover
+
+    doc = ezdxf.readfile("attach_host_dxf.dxf")
+    gear_xref = doc.blocks.get("GEAR")
+
+    try:
+        xref.embed(gear_xref, load_fn=lambda f: recover.readfile(f)[0])
+    except FileNotFoundError as e:
+        print(str(e))
+
 
 Load Modelspace
 ---------------

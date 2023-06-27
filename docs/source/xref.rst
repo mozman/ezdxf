@@ -88,10 +88,11 @@ The current implementation supports only copyable and transformable DXF entities
 these are all basic entity types as LINE, CIRCLE, ... and block references and their
 associated required table entries and objects from the OBJECTS section.
 
-Unsupported are all ACIS based entities, the TABLE entity, preserved unknown entities
+Unsupported are all ACIS based entities, the ACAD_TABLE entity, preserved unknown entities
 wrapped in a :class:`DXFTagStorage` class, proxy entities and objects.
 Support for these entities may be added in a later version of `ezdxf`.
 
+Unsupported entities are ignored and do not raise exceptions.
 
 Importing Data and Resources
 ----------------------------
