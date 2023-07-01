@@ -13,7 +13,6 @@ from typing import (
 import sys
 import struct
 import math
-import os
 from enum import IntEnum
 from itertools import repeat
 from ezdxf.lldxf import const
@@ -364,8 +363,14 @@ class ProxyGraphic:
     def attribute_linetype(self, data: bytes):
         if self._doc:
             index = struct.unpack("<L", data)[0]
-            if index < len(self.linetypes):
-                self.linetype = self.linetypes[index]
+            try:
+                # first two entries ByLayer and ByBlock are not included in CAD applications:
+                self.linetype = self.linetypes[index+2]
+            except IndexError:
+                if index == 32766:
+                    self.linetype = "BYBLOCK"
+                else:  # index is 32767 or invalid
+                    self.linetype = "BYLAYER"
 
     def attribute_marker(self, data: bytes):
         self.marker_index = struct.unpack("<L", data)[0]

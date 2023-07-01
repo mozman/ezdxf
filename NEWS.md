@@ -45,7 +45,9 @@ Version 1.1.0 Beta
 - BUGFIX: [#855](https://github.com/mozman/ezdxf/issues/855)
   scale `MTEXT/MLEADER` inline commands "absolute text height" at transformation
 - BUGFIX: [#898](https://github.com/mozman/ezdxf/issues/898)
-  use `dimclrd` color for dimension arrow blocks 
+  use `dimclrd` color for dimension arrow blocks
+- BUGFIX: [#906](https://github.com/mozman/ezdxf/issues/906)
+  linetype and fill flag parsing for proxy graphics 
 
 Version 1.0.3 - 2023-03-26
 --------------------------
