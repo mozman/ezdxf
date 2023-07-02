@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Iterator
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
+from ezdxf.query import EntityQuery
 from .dxfentity import SubclassProcessor
 from .dxfgfx import DXFGraphic
 from . import factory
@@ -11,6 +12,7 @@ from . import factory
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.entities import DXFNamespace
+    from ezdxf.layouts import BaseLayout
 
 
 # Group Codes of AcDbProxyEntity
@@ -93,9 +95,7 @@ class ACADProxyEntity(DXFGraphic):
         from ezdxf.proxygraphic import ProxyGraphic
 
         if self.proxy_graphic:
-            for e in ProxyGraphic(
-                self.proxy_graphic, self.doc
-            ).virtual_entities():
+            for e in ProxyGraphic(self.proxy_graphic, doc=self.doc).virtual_entities():
                 e.set_source_of_copy(self)
                 yield e
         return []
@@ -103,6 +103,32 @@ class ACADProxyEntity(DXFGraphic):
     def virtual_entities(self) -> Iterator[DXFGraphic]:
         """Yields proxy graphic as "virtual" entities."""
         return self.__virtual_entities__()
+
+    def explode(self, target_layout: Optional[BaseLayout] = None) -> EntityQuery:
+        """Explodes the proxy graphic for the ACAD_PROXY_ENTITY into the target layout,
+        if target layout is ``None``, the layout of the ACAD_PROXY_ENTITY will be used.
+        This method destroys the source ACAD_PROXY_ENTITY entity.
+
+        Args:
+            target_layout: target layout for exploded entities, ``None`` for
+                same layout as the source ACAD_PROXY_ENTITY.
+
+        Returns:
+            :class:`~ezdxf.query.EntityQuery` container referencing all exploded
+            DXF entities.
+
+        """
+        if target_layout is None:
+            target_layout = self.get_layout()
+            if target_layout is None:
+                raise const.DXFStructureError(
+                    "ACAD_PROXY_ENTITY without layout assignment, specify target layout"
+                )
+        entities: list[DXFGraphic] = list(self.__virtual_entities__())
+        for e in entities:
+            target_layout.add_entity(e)
+        self.destroy()
+        return EntityQuery(entities)
 
 
 def load_proxy_data(

@@ -582,7 +582,7 @@ class Insert(LinkedEntities):
             target_layout = self.get_layout()
             if target_layout is None:
                 raise DXFStructureError(
-                    "INSERT without layout assignment, specify target layout."
+                    "INSERT without layout assignment, specify target layout"
                 )
         return explode_block_reference(
             self, target_layout=target_layout, redraw_order=redraw_order

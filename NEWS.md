@@ -26,6 +26,8 @@ Version 1.1.0 Beta
 - NEW: added setter to `BlockLayout.base_point` property
 - NEW: `ezdxf.entities.acad_table_to_block()` function, converts a `ACAD_TABLE` entity 
   to an `INSERT` entity
+- NEW: `ACADProxyEntity.explode()` method, to explode `ACAD_PROXY_ENTITY` into proxy 
+  graphic entities
 - CHANGED: moved font related modules into a new subpackage `ezdxf.fonts` 
   including a big refactoring
 - CHANGED: `FontFace` class - `weight` attribute is an int value (0-1000), `stretch` is 
