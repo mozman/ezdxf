@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -365,7 +365,7 @@ class ProxyGraphic:
             index = struct.unpack("<L", data)[0]
             try:
                 # first two entries ByLayer and ByBlock are not included in CAD applications:
-                self.linetype = self.linetypes[index+2]
+                self.linetype = self.linetypes[index + 2]
             except IndexError:
                 if index == 32766:
                     self.linetype = "BYBLOCK"
@@ -503,7 +503,7 @@ class ProxyGraphic:
             hatch.dxf.elevation = Vec3(0, 0, elevation)
         return hatch
 
-    def _polyline(self, vertices, *, close=False, normal=Z_AXIS):
+    def _polyline(self, vertices: list[Vec3], *, close=False, normal=Z_AXIS):
         # Polyline without bulge values!
         # Current implementation ignores the normal vector!
         # Polyline ignores the filled flag, see #906
@@ -512,7 +512,8 @@ class ProxyGraphic:
         if count == 1 or (count == 2 and vertices[0].isclose(vertices[1])):
             attribs["location"] = vertices[0]
             return self._factory("POINT", dxfattribs=attribs)
-        attribs["flags"] = const.POLYLINE_3D_POLYLINE
+        if not is_2d_polyline(vertices):
+            attribs["flags"] = const.POLYLINE_3D_POLYLINE
         polyline = cast("Polyline", self._factory("POLYLINE", dxfattribs=attribs))
         polyline.append_vertices(vertices)
         if close:
@@ -800,7 +801,8 @@ class ProxyGraphic:
                 self.textstyles[font] = style
         return style
 
-    def _load_vertices(self, data: bytes, load_normal=False):
+    @staticmethod
+    def _load_vertices(data: bytes, load_normal=False) -> tuple[list[Vec3], bool]:
         normal = Z_AXIS
         bs = ByteStream(data)
         count = bs.read_long()
@@ -927,3 +929,10 @@ def _get_elevation(vertices) -> float:
     if vertices:
         return vertices[0].z
     return 0.0
+
+
+def is_2d_polyline(vertices: list[Vec3]) -> bool:
+    if len(vertices) < 1:
+        return True
+    z = vertices[0].z
+    return all(math.isclose(z, v.z) for v in vertices)
