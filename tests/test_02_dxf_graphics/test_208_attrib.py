@@ -156,9 +156,7 @@ def test_load_from_text(entity):
     assert entity.dxf.insert == (0, 0, 0)
 
 
-@pytest.mark.parametrize(
-    "txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)]
-)
+@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     attdef = TEST_CLASS.from_text(txt)
@@ -260,7 +258,28 @@ class TestEmbeddedMText:
             txt.dxf.color = 3
 
 
-EMBEDDED_MTEXT = r"""0
+def test_lock_position_and_ignore_version_tag():
+    """Version tag and lock_position tags are present."""
+    attrib = Attrib.from_text(LOCK_POSITION_AND_VERSION)
+    assert attrib.dxf.lock_position == 2
+
+
+def test_lock_position_without_version_tag():
+    """Just the lock_position tag is present."""
+    attrib = Attrib.from_text(LOCK_POSITION_WITHOUT_VERSION)
+    assert attrib.dxf.lock_position == 2
+
+
+def test_version_without_lock_position():
+    """Only the version tag is present and the lock_position tag is missing.
+
+    The version tag is always 0 and just for testing purposes set to 7:
+    """
+    attrib = Attrib.from_text(VERSION_WITHOUT_LOCK_POSITION)
+    assert attrib.dxf.lock_position == 7
+
+
+LOCK_POSITION_AND_VERSION = """0
 ATTRIB
 5
 2AE
@@ -298,6 +317,144 @@ Arial_3 NARROW
 AcDbAttribute
 280
 0
+2
+DRAWING-NAME
+70
+0
+74
+2
+280
+2
+"""
+
+LOCK_POSITION_WITHOUT_VERSION = """0
+ATTRIB
+5
+2AE
+330
+2AD
+100
+AcDbEntity
+8
+AttribLayer
+62
+7
+100
+AcDbText
+10
+574.8
+20
+961.1
+30
+0.0
+40
+3.0
+1
+TEST VENUE
+7
+Arial_3 NARROW
+72
+1
+11
+592.3
+21
+962.6
+31
+0.0
+100
+AcDbAttribute
+2
+DRAWING-NAME
+70
+0
+74
+2
+280
+2
+"""
+
+VERSION_WITHOUT_LOCK_POSITION = """0
+ATTRIB
+5
+2AE
+330
+2AD
+100
+AcDbEntity
+8
+AttribLayer
+62
+7
+100
+AcDbText
+10
+574.8
+20
+961.1
+30
+0.0
+40
+3.0
+1
+TEST VENUE
+7
+Arial_3 NARROW
+72
+1
+11
+592.3
+21
+962.6
+31
+0.0
+100
+AcDbAttribute
+280
+7
+2
+DRAWING-NAME
+70
+0
+74
+2
+"""
+
+EMBEDDED_MTEXT = r"""0
+ATTRIB
+5
+2AE
+330
+2AD
+100
+AcDbEntity
+8
+AttribLayer
+62
+7
+100
+AcDbText
+10
+574.8
+20
+961.1
+30
+0.0
+40
+3.0
+1
+TEST VENUE
+7
+Arial_3 NARROW
+72
+1
+11
+592.3
+21
+962.6
+31
+0.0
+100
+AcDbAttribute
 2
 DRAWING-NAME
 70

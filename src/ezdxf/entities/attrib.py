@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
@@ -71,8 +71,13 @@ __all__ = ["AttDef", "Attrib", "copy_attrib_as_text", "BaseAttrib"]
 # from the 2nd AcDbText subclass of the TEXT entity is stored in the
 # AcDbAttribute subclass:
 attrib_fields = {
+    # "version": DXFAttr(280, default=0, dxfversion=const.DXF2010),
+    # The "version" tag has the same group code as the lock_position tag!!!!!
     # Version number: 0 = 2010
-    "version": DXFAttr(280, default=0, dxfversion=const.DXF2010),
+    # This tag is not really used (at least by BricsCAD) but there exists DXF files
+    # which do use this tag: "dxftest\attrib\attrib_with_mtext_R2018.dxf"
+    # ezdxf stores the last group code 280 as "lock_position" attribute and does
+    # not export a version tag for any DXF version.
     # Tag string (cannot contain spaces):
     "tag": DXFAttr(
         2,
@@ -100,7 +105,7 @@ attrib_fields = {
     "lock_position": DXFAttr(
         280,
         default=0,
-        dxfversion=const.DXF2010,
+        dxfversion=const.DXF2007,  # tested with BricsCAD 2023/TrueView 2023
         optional=True,
         validator=validator.is_integer_bool,
         fixer=RETURN_DEFAULT,
@@ -449,7 +454,7 @@ class AttDef(BaseAttrib):
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
-                "version",
+                # write version tag (280, 0) here, if required in the future
                 "prompt",
                 "tag",
                 "flags",
@@ -523,7 +528,7 @@ class Attrib(BaseAttrib):
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
-                "version",
+                # write version tag (280, 0) here, if required in the future
                 "tag",
                 "flags",
                 "field_length",

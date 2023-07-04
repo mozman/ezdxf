@@ -212,6 +212,143 @@ class TestEmbeddedMTextSupport:
         assert result == expected
 
 
+def test_lock_position_and_ignore_version_tag():
+    """Version tag and lock_position tags are present."""
+    attdef = AttDef.from_text(LOCK_POSITION_AND_VERSION)
+    assert attdef.dxf.lock_position == 2
+
+
+def test_lock_position_without_version_tag():
+    """Just the lock_position tag is present."""
+    attdef = AttDef.from_text(LOCK_POSITION_WITHOUT_VERSION)
+    assert attdef.dxf.lock_position == 2
+
+
+def test_version_without_lock_position():
+    """Only the version tag is present and the lock_position tag is missing.
+
+    The version tag is always 0 and just for testing purposes set to 7:
+    """
+    attdef = AttDef.from_text(VERSION_WITHOUT_LOCK_POSITION)
+    assert attdef.dxf.lock_position == 7
+
+
+LOCK_POSITION_AND_VERSION = """  0
+ATTDEF
+5
+0
+330
+0
+100
+AcDbEntity
+8
+AttribLayer
+100
+AcDbText
+10
+1
+20
+2
+30
+0
+40
+3.0
+1
+TEST VENUE
+7
+Arial_3 NARROW
+100
+AcDbAttributeDefinition
+280
+0
+3
+TITLE-OF-DRAWING
+2
+DRAWING-NAME
+70
+0
+74
+2
+280
+2
+"""
+
+LOCK_POSITION_WITHOUT_VERSION = """  0
+ATTDEF
+5
+0
+330
+0
+100
+AcDbEntity
+8
+AttribLayer
+100
+AcDbText
+10
+1
+20
+2
+30
+0
+40
+3.0
+1
+TEST VENUE
+7
+Arial_3 NARROW
+100
+AcDbAttributeDefinition
+3
+TITLE-OF-DRAWING
+2
+DRAWING-NAME
+70
+0
+74
+2
+280
+2
+"""
+
+VERSION_WITHOUT_LOCK_POSITION = """  0
+ATTDEF
+5
+0
+330
+0
+100
+AcDbEntity
+8
+AttribLayer
+100
+AcDbText
+10
+1
+20
+2
+30
+0
+40
+3.0
+1
+TEST VENUE
+7
+Arial_3 NARROW
+100
+AcDbAttributeDefinition
+280
+7
+3
+TITLE-OF-DRAWING
+2
+DRAWING-NAME
+70
+0
+74
+2
+"""
+
 EMBEDDED_MTEXT = r"""  0
 ATTDEF
 5
@@ -248,8 +385,6 @@ Arial_3 NARROW
 0.0
 100
 AcDbAttributeDefinition
-280
-0
 3
 TITLE-OF-DRAWING
 2

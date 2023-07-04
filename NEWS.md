@@ -50,6 +50,9 @@ Version 1.1.0 Beta
   use `dimclrd` color for dimension arrow blocks
 - BUGFIX: [#906](https://github.com/mozman/ezdxf/issues/906)
   linetype and fill flag parsing for proxy graphics 
+- BUGFIX: [#907](https://github.com/mozman/ezdxf/issues/907)
+  fix ATTRIB and ATTDEF handling of version- and lock_position tags which share the 
+  same group code 280 in the same subclass
 
 Version 1.0.3 - 2023-03-26
 --------------------------
