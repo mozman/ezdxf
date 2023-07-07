@@ -18,6 +18,7 @@ and inherited classes like :class:`~ezdxf.layouts.Modelspace`,
     dxfgfx
     3dface
     3dsolid
+    acad_proxy_entity
     arc
     ../blocks/attrib
     body
