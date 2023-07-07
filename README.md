@@ -35,6 +35,7 @@ Quick-Info
 - retains third-party DXF content
 - optional C-extensions for CPython are included in the binary wheels, available 
   on [PyPI](https://pypi.org/project/ezdxf/) for Windows, Linux and macOS
+- command line interface to display and inspect .dxf files
 
 Included Extensions
 -------------------
@@ -127,6 +128,21 @@ drawing add-on:
 
 For more information about the setup & dependencies visit the 
 [documentation](https://ezdxf.mozman.at/docs/setup.html).
+
+Command Line
+-------
+
+To preview .dxf file in a graphical window:
+
+`python -m ezdxf draw <file.dxf>`
+
+To print basic information about .dxf file:
+
+`python -m ezdxf info <file.dxf>`
+
+To show detailed information about .dxf file contents:
+
+`python -m ezdxf browse <file.dxf>`
 
 Website
 -------
