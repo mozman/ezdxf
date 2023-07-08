@@ -35,7 +35,7 @@ Quick-Info
 - retains third-party DXF content
 - optional C-extensions for CPython are included in the binary wheels, available 
   on [PyPI](https://pypi.org/project/ezdxf/) for Windows, Linux and macOS
-- command line interface to display and inspect .dxf files
+- command line script `ezdxf` to display, convert and inspect DXF files
 
 Included Extensions
 -------------------
@@ -130,19 +130,38 @@ For more information about the setup & dependencies visit the
 [documentation](https://ezdxf.mozman.at/docs/setup.html).
 
 Command Line
--------
+------------
 
-To preview .dxf file in a graphical window:
+Use `python -m ezdxf ...` if your shell can't find the `ezdxf` script.
 
-`python -m ezdxf draw <file.dxf>`
+Get additional help for a sub-command:
 
-To print basic information about .dxf file:
+    ezdxf <cmd> -h
 
-`python -m ezdxf info <file.dxf>`
+Preview DXF files in a graphical window:
 
-To show detailed information about .dxf file contents:
+    ezdxf view <file.dxf>
 
-`python -m ezdxf browse <file.dxf>`
+Export the modelspace of DXF files as PNG|SVG|PDF:
+
+    ezdxf draw -o file.<png|svg|pdf> <file.dxf>
+
+Print basic information about DXF files:
+
+    ezdxf info <file.dxf>
+
+Show detailed information and structures of DXF files:
+
+    ezdxf browse <file.dxf>
+
+Audit DXF files:
+
+    ezdxf audit <file.dxf>
+
+Preview and convert HPGL/2 plot files:
+
+    ezdxf hpgl <file.plt>
+
 
 Website
 -------
