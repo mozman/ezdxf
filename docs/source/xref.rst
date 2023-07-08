@@ -133,13 +133,7 @@ High Level Functions
 Conflict Policy
 ---------------
 
-.. class:: ConflictPolicy
-
-    .. attribute:: KEEP
-
-    .. attribute:: XREF_PREFIX
-
-    .. attribute:: NUM_PREFIX
+.. autoclass:: ConflictPolicy
 
 Low Level Loading Interface
 ---------------------------

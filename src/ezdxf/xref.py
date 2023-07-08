@@ -104,15 +104,24 @@ class InternalError(XrefError):
 
 
 class ConflictPolicy(enum.Enum):
-    # What to do when a name conflict of existing and loaded resources occur:
-    # keep existing resource <name> and ignore loaded resource
+    """These conflict policies define how to handle resource name conflicts.
+
+    .. versionadded:: 1.1
+
+    Attributes:
+        KEEP: Keeps the existing resource name of the target document and ignore the
+            resource from the source document.
+        XREF_PREFIX: This policy handles the resource import like CAD applications by
+            **always** renaming the loaded resources to `<xref>$0$<name>`, where `xref`
+            is the name of source document, the `$0$` part is a number to create a
+            unique resource name and `<name>` is the name of the resource itself.
+        NUM_PREFIX: This policy renames the loaded resources to `$0$<name>` only if the
+            resource `<name>` already exists. The `$0$` prefix is a number to create a
+            unique resource name and `<name>` is the name of the resource itself.
+
+    """
     KEEP = enum.auto()
-
-    # ALWAYS rename imported resources to <xref>$0$<name>
-    # This is the default behavior of BricsCAD when binding an external reference.
     XREF_PREFIX = enum.auto()
-
-    # rename loaded resource to $0$<name> if the loaded resource <name> already exist
     NUM_PREFIX = enum.auto()
 
 
@@ -306,6 +315,8 @@ def find_xref(xref_filename: str, search_paths: Sequence[pathlib.Path]) -> pathl
     Args:
         xref_filename: filename of the XREF, absolute or relative path
         search_paths: search paths where to look for the XREF file
+
+    .. versionadded:: 1.1
 
     """
     filepath = pathlib.Path(xref_filename)
@@ -507,6 +518,8 @@ def load_modelspace(
         filter_fn: optional function to filter entities from the source modelspace
         conflict_policy: how to resolve name conflicts
 
+    .. versionadded:: 1.1
+
     """
     loader = Loader(sdoc, tdoc, conflict_policy=conflict_policy)
     loader.load_modelspace(filter_fn=filter_fn)
@@ -528,6 +541,8 @@ def load_paperspace(
         tdoc: target document
         filter_fn: optional function to filter entities from the source paperspace layout
         conflict_policy: how to resolve name conflicts
+
+    .. versionadded:: 1.1
 
     """
     if psp.doc is tdoc:

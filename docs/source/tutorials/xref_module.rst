@@ -206,11 +206,75 @@ module use a lambda function:
 Load Modelspace
 ---------------
 
+The :func:`ezdxf.xref.load_modelspace` function loads the content of the modelspace
+of the source document into a layout of the target document, the modelspace of the
+target document is the default target layout.
+
+.. hint::
+
+    Use this function to combine multiple existing DXF files.
+    If the goal is just to add new entities to an existing document, rather load the
+    source document as a template by :func:`ezdxf.readfile`, add your content and save
+    the document as a new DXF file with the :meth:`saveas` method.
+
 Load Paperspace
 ---------------
 
+The function :func:`ezdxf.xref.load_paperspace` loads a paperspace layout as a new
+paperspace layout into the target document. To be clear this function loads **only**
+the content of the paperspace layout, the content of the modelspace isn't loaded,
+therefore the loaded VIEWPORT entities show the content of the target modelspace.
+
+
 Write Block
 -----------
+
+The function :func:`ezdxf.xref.write_block` writes the given entities into the
+modelspace of a new DXF document, this document can be, but doesn't have to be used as
+an external referenced block.
+
+Conflict Policies
+-----------------
+
+A resource conflict occurs when the source and target documents contain elements such as
+layers, linetypes, text styles and so on that share the same name.
+
+Many of the functions shown above support an argument to define the
+:class:`ezdxf.xref.ConflictPolicy`, that gives you the choice how to handle resource
+name conflicts.
+
+ConflictPolicy.KEEP
+~~~~~~~~~~~~~~~~~~~
+
+Keeps the existing resource name of the target document and ignore the resource from the
+source document. The loaded entities from the source document use the resources defined
+in the target document and may alter their visual appearance, when the resources are
+different.
+
+ConflictPolicy.XREF_PREFIX
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This policy handles the resource import like CAD applications by **always** renaming the
+loaded resources to `<xref>$0$<name>`, where `xref` is the name of source document,
+the `$0$` part is a number to create a unique resource name and `<name>` is the name of
+the resource itself.
+
+.. important::
+
+    This policy ALWAYS renames the resource, even if the loaded resource doesn't have a
+    conflict in the target document.
+
+ConflictPolicy.NUM_PREFIX
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This policy renames the loaded resources to `$0$<name>` only if the resource `<name>`
+already exists. The `$0$` prefix is a number to create a unique resource name and
+`<name>` is the name of the resource itself.
+
+.. important::
+
+    This policy renames the resource ONLY when the loaded resource has a conflict in
+    the target document.
 
 Load Table Resources
 --------------------
