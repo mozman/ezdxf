@@ -3,6 +3,12 @@
 Tutorial for External References
 ================================
 
+.. contents::
+    :local:
+
+Introduction
+------------
+
 This tutorial uses the :mod:`ezdxf.xref` module to work with external references (XREF).
 
 Attached XREFs are links to the modelspace of a specified drawing file. Changes made
@@ -27,6 +33,7 @@ folder of the repository:
     - detach_block_as_xref.py
     - embed_dxf_dwg_xref.py
     - load_table_resources.py
+
 
 Supported Entities
 ------------------
@@ -216,6 +223,14 @@ target document is the default target layout.
     If the goal is just to add new entities to an existing document, rather load the
     source document as a template by :func:`ezdxf.readfile`, add your content and save
     the document as a new DXF file with the :meth:`saveas` method.
+
+Merge multiple DXF files:
+
+.. literalinclude:: src/xref/merge_dxf_files.py
+    :lines: 3-26
+
+.. image:: gfx/xref_merged.png
+    :align: center
 
 Load Paperspace
 ---------------
