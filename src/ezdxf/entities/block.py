@@ -29,6 +29,7 @@ from ezdxf.audit import Auditor, AuditError
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf import xref
 
 __all__ = ["Block", "EndBlk"]
 
@@ -198,6 +199,12 @@ class Block(DXFEntity):
                 AuditError.BLOCK_NAME_MISMATCH,
                 f"{str(self)} name '{block_name}' and {str(owner)} name '{owner_name}' mismatch",
             )
+
+    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        assert isinstance(clone, Block)
+        super().map_resources(clone, mapping)
+        clone.dxf.name = mapping.get_block_name(self.dxf.name)
 
 
 acdb_block_end = DefSubclass("AcDbBlockEnd", {})

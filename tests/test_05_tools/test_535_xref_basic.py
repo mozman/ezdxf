@@ -543,6 +543,9 @@ class TestAnonymousBlocks:
         assert (
             loaded_block_name == "*U4"
         ), "expected next available anonymous block name in tdoc"
+        block_layout = tdoc.blocks.get(loaded_block_name)
+        assert block_layout.block_record.dxf.name == loaded_block_name
+        assert block_layout.block.dxf.name == loaded_block_name
 
 
 def test_loaded_external_reference():
