@@ -120,6 +120,7 @@ class ConflictPolicy(enum.Enum):
             unique resource name and `<name>` is the name of the resource itself.
 
     """
+
     KEEP = enum.auto()
     XREF_PREFIX = enum.auto()
     NUM_PREFIX = enum.auto()
@@ -647,7 +648,10 @@ class LoadEntities(LoadingCommand):
         target_layout = self.target_layout
         for entity in self.entities:
             clone = transfer.get_entity_copy(entity)
-            if clone and is_graphic_entity(clone):
+            if clone is None:
+                transfer.debug(f"xref:cannot copy {str(entity)}")
+                continue
+            if is_graphic_entity(clone):
                 target_layout.add_entity(clone)  # type: ignore
             else:
                 transfer.debug(
@@ -936,9 +940,6 @@ class Loader:
 
         cpm = CopyMachine(self.tdoc)
 
-        if debug:
-            _log_debug_messages(cpm.debug_messages)
-
         cpm.copy_blocks(registry.source_blocks)
         transfer = _Transfer(
             registry=registry,
@@ -946,6 +947,7 @@ class Loader:
             objects=cpm.objects,
             handle_mapping=cpm.handle_mapping,
             conflict_policy=self.conflict_policy,
+            copy_errors=cpm.copy_errors,
         )
         if xref_prefix:
             transfer.xref_prefix = str(xref_prefix)
@@ -1084,11 +1086,13 @@ class _Transfer:
         handle_mapping: dict[str, str],
         *,
         conflict_policy=ConflictPolicy.KEEP,
+        copy_errors: set[str],
     ) -> None:
         self.registry = registry
         # entry NO_BLOCK (layout key "0") contains table entries
         self.copied_blocks = copies
         self.copied_objects = objects
+        self.copy_errors = copy_errors
         self.conflict_policy = conflict_policy
         self.xref_prefix = get_xref_name(registry.source_doc)
         self.layer_mapping: dict[str, str] = {}
@@ -1139,6 +1143,8 @@ class _Transfer:
         clone = self.get_entity_copy(entity)
         if clone:
             entity.map_resources(clone, self)
+        elif entity.dxf.handle in self.copy_errors:
+            pass
         else:
             raise InternalError(f"copy of {entity} not found")
 
@@ -1539,6 +1545,8 @@ class _Transfer:
     def finalize(self) -> None:
         # remove replaced entities:
         self.registry.target_doc.entitydb.purge()
+        for msg in self.debug_messages:
+            logger.log(logging.INFO, msg)
 
 
 def get_xref_name(doc: Drawing) -> str:
@@ -1575,13 +1583,10 @@ class CopyMachine:
         self.copies: dict[str, dict[str, DXFEntity]] = {}
         self.classes: list[DXFClass] = []
         self.objects: dict[str, DXFEntity] = {}
+        self.copy_errors: set[str] = set()
 
         # mapping from the source entity handle to the handle of the copied entity
         self.handle_mapping: dict[str, str] = {}
-        self.debug_messages: list[str] = []
-
-    def debug(self, msg: str) -> None:
-        self.debug_messages.append(msg)
 
     def copy_blocks(self, blocks: dict[str, dict[str, DXFEntity]]) -> None:
         for handle, block in blocks.items():
@@ -1615,7 +1620,7 @@ class CopyMachine:
         try:
             return entity.copy_external()
         except const.DXFError:
-            self.debug(f"cannot copy entity {str(entity)}")
+            self.copy_errors.add(entity.dxf.handle)
         return None
 
     def copy_dxf_class(self, cls: DXFClass) -> None:
