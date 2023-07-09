@@ -1,9 +1,9 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 import logging
-from ezdxf.audit import AuditError
+
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -179,7 +179,6 @@ class BlockRecord(DXFEntity):
             )
         for e in self.entity_space:
             registry.add_entity(e, block_key=key)
-        # todo: Modelspace and Paperspace layouts
 
     def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
@@ -194,7 +193,6 @@ class BlockRecord(DXFEntity):
 
         for entity in self.entity_space:
             mapping.map_resources_of_copy(entity)
-        # todo: Modelspace and Paperspace layouts
 
     def destroy(self):
         """Destroy associated data:

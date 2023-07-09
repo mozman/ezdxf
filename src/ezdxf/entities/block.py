@@ -24,6 +24,7 @@ from ezdxf.lldxf.const import (
 from ezdxf.math import NULLVEC
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .factory import register_entity
+from ezdxf.audit import Auditor, AuditError
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
@@ -35,9 +36,7 @@ acdb_entity = DefSubclass(
     "AcDbEntity",
     {
         # No auto fix for invalid layer names!
-        "layer": DXFAttr(
-            8, default="0", validator=validator.is_valid_layer_name
-        ),
+        "layer": DXFAttr(8, default="0", validator=validator.is_valid_layer_name),
         "paperspace": DXFAttr(
             67,
             default=0,
@@ -164,9 +163,7 @@ class Block(DXFEntity):
         :class:`~ezdxf.layouts.Paperspace` block definition.
         """
         name = self.dxf.name.lower()
-        return name.startswith("*model_space") or name.startswith(
-            "*paper_space"
-        )
+        return name.startswith("*model_space") or name.startswith("*paper_space")
 
     @property
     def is_anonymous(self) -> bool:
@@ -186,6 +183,21 @@ class Block(DXFEntity):
     def is_xref_overlay(self) -> bool:
         """Returns ``True`` if bock is an external referenced overlay file."""
         return self.get_flag_state(Block.XREF_OVERLAY)
+
+    def audit(self, auditor: Auditor):
+        owner_handle = self.dxf.get("owner")
+        if owner_handle is None:  # invalid owner handle - IGNORE
+            return
+        owner = auditor.entitydb.get(owner_handle)
+        if owner is None:  # invalid owner entity - IGNORE
+            return
+        owner_name = owner.dxf.get("name", "").upper()
+        block_name = self.dxf.get("name", "").upper()
+        if owner_name != block_name:
+            auditor.add_error(
+                AuditError.BLOCK_NAME_MISMATCH,
+                f"{str(self)} name '{block_name}' and {str(owner)} name '{owner_name}' mismatch",
+            )
 
 
 acdb_block_end = DefSubclass("AcDbBlockEnd", {})
