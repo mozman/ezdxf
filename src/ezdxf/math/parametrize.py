@@ -54,9 +54,10 @@ def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
         return
     s = 0.0
     yield s
-    for d in distances:
+    for d in distances[:-1]:
         s += d
-        yield min(s / total_length, 1.0)
+        yield s / total_length
+    yield 1.0
 
 
 def linear_distances(points: Iterable[Vec3]) -> Iterable[float]:
@@ -155,9 +156,7 @@ def estimate_end_tangent_magnitude(
 
     """
     if method == "chord":
-        total_length = sum(
-            p0.distance(p1) for p0, p1 in zip(points, points[1:])
-        )
+        total_length = sum(p0.distance(p1) for p0, p1 in zip(points, points[1:]))
         return total_length, total_length
     elif method == "arc":
         total_length = sum(arc_distances(points))
@@ -169,9 +168,7 @@ def estimate_end_tangent_magnitude(
             s += sum(linear_distances(curve.approximate(count)))
         return s, s
     else:
-        raise ValueError(
-            f"Unknown tangent magnitude calculation method: {method}"
-        )
+        raise ValueError(f"Unknown tangent magnitude calculation method: {method}")
 
 
 def tangents_3_point_interpolation(
@@ -187,10 +184,7 @@ def tangents_3_point_interpolation(
     alpha = [dt0 / (dt0 + dt1) for dt0, dt1 in zip(delta_t, delta_t[1:])]
     tangents: list[Vec3] = [Vec3()]  # placeholder
     tangents.extend(
-        [
-            (1.0 - alpha[k]) * d[k] + alpha[k] * d[k + 1]
-            for k in range(len(d) - 1)
-        ]
+        [(1.0 - alpha[k]) * d[k] + alpha[k] * d[k + 1] for k in range(len(d) - 1)]
     )
     tangents[0] = 2.0 * d[0] - tangents[1]
     tangents.append(2.0 * d[-1] - tangents[-1])
@@ -249,9 +243,7 @@ def finite_difference_interpolation(
     return t
 
 
-def cardinal_interpolation(
-    fit_points: list[Vec3], tension: float
-) -> list[Vec3]:
+def cardinal_interpolation(fit_points: list[Vec3], tension: float) -> list[Vec3]:
     # https://en.wikipedia.org/wiki/Cubic_Hermite_spline
     def tangent(p0, p1):
         return (p0 - p1).normalize(1.0 - tension)
