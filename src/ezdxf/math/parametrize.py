@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Iterable, Sequence
@@ -18,9 +18,9 @@ __all__ = [
 ]
 
 
-def create_t_vector(fit_points: list[Vec3], method: str) -> Iterable[float]:
+def create_t_vector(fit_points: list[Vec3], method: str) -> list[float]:
     if method == "uniform":
-        return uniform_t_vector(len(fit_points))  # equally spaced 0 .. 1
+        return uniform_t_vector(len(fit_points))
     elif method in ("distance", "chord"):
         return distance_t_vector(fit_points)
     elif method in ("centripetal", "sqrt_chord"):
@@ -31,33 +31,33 @@ def create_t_vector(fit_points: list[Vec3], method: str) -> Iterable[float]:
         raise ValueError("Unknown method: {}".format(method))
 
 
-def uniform_t_vector(length: int) -> Iterable[float]:
+def uniform_t_vector(length: int) -> list[float]:
     n = float(length - 1)
-    for t in range(length):
-        yield float(t) / n
+    return [t / n for t in range(length)]
 
 
-def distance_t_vector(fit_points: list[Vec3]) -> Iterable[float]:
-    yield from _normalize_distances(list(linear_distances(fit_points)))
+def distance_t_vector(fit_points: list[Vec3]) -> list[float]:
+    return _normalize_distances(list(linear_distances(fit_points)))
 
 
-def centripetal_t_vector(fit_points: list[Vec3]) -> Iterable[float]:
+def centripetal_t_vector(fit_points: list[Vec3]) -> list[float]:
     distances = [
         math.sqrt(p1.distance(p2)) for p1, p2 in zip(fit_points, fit_points[1:])
     ]
-    yield from _normalize_distances(distances)
+    return _normalize_distances(distances)
 
 
-def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
+def _normalize_distances(distances: Sequence[float]) -> list[float]:
     total_length = sum(distances)
     if abs(total_length) <= 1e-12:
-        return
+        return []
+    params: list[float] = [0.0]
     s = 0.0
-    yield s
     for d in distances[:-1]:
         s += d
-        yield s / total_length
-    yield 1.0
+        params.append(s / total_length)
+    params.append(1.0)
+    return params
 
 
 def linear_distances(points: Iterable[Vec3]) -> Iterable[float]:
@@ -74,9 +74,9 @@ def chord_length(points: Iterable[Vec3]) -> float:
     return sum(linear_distances(points))
 
 
-def arc_t_vector(fit_points: list[Vec3]) -> Iterable[float]:
+def arc_t_vector(fit_points: list[Vec3]) -> list[float]:
     distances = list(arc_distances(fit_points))
-    yield from _normalize_distances(distances)
+    return _normalize_distances(distances)
 
 
 def arc_distances(fit_points: list[Vec3]) -> Iterable[float]:
