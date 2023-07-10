@@ -56,7 +56,7 @@ def _normalize_distances(distances: Sequence[float]) -> Iterable[float]:
     yield s
     for d in distances:
         s += d
-        yield s / total_length
+        yield min(s / total_length, 1.0)
 
 
 def linear_distances(points: Iterable[Vec3]) -> Iterable[float]:

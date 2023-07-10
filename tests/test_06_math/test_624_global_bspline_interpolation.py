@@ -45,7 +45,7 @@ def test_chord_length_t_array(fit_points):
     t_vector = list(distance_t_vector(fit_points))
     assert len(t_vector) == len(fit_points)
     assert t_vector[0] == 0.0
-    assert t_vector[-1] == 1.0
+    assert t_vector[-1] == pytest.approx(1.0)
     for t1, t2 in zip(t_vector, t_vector[1:]):
         assert t1 <= t2
 
@@ -54,7 +54,7 @@ def test_centripetal_length_t_array(fit_points):
     t_vector = list(centripetal_t_vector(fit_points))
     assert len(t_vector) == len(fit_points)
     assert t_vector[0] == 0.0
-    assert t_vector[-1] == 1.0
+    assert t_vector[-1] == pytest.approx(1.0)
     for t1, t2 in zip(t_vector, t_vector[1:]):
         assert t1 <= t2
 
@@ -79,7 +79,7 @@ def test_arc_length_t_array(fit_points):
     t_vector = list(arc_t_vector(fit_points))
     assert len(t_vector) == len(fit_points)
     assert t_vector[0] == 0.0
-    assert t_vector[-1] == 1.0
+    assert t_vector[-1] == pytest.approx(1.0)
     for t1, t2 in zip(t_vector, t_vector[1:]):
         assert t1 <= t2
 
@@ -197,7 +197,7 @@ def test_bspline_interpolation(fit_points):
 
     t_array = list(create_t_vector(fit_points, "chord"))
     assert t_array[0] == 0.0
-    assert t_array[-1] == 1.0
+    assert t_array[-1] == pytest.approx(1.0)
     assert len(t_array) == len(fit_points)
 
     t_points = [spline.point(t) for t in t_array]

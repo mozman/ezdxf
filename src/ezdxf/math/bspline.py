@@ -412,7 +412,7 @@ def knots_from_parametrization(
         raise DXFValueError("Invalid n/p combination, more fit points required.")
 
     t = [float(v) for v in t]
-    if t[0] != 0.0 or t[-1] != 1.0:
+    if t[0] != 0.0 or not math.isclose(t[-1], 1.0):
         raise ValueError("Parametrization vector t has to be normalized.")
 
     if method == "average":
