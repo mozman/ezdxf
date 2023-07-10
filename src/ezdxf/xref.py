@@ -745,8 +745,14 @@ class LoadResources(LoadingCommand):
 
 
 class Loader:
-    """Load entities and resources from the source DXF document `sdoc` into a
+    """Load entities and resources from the source DXF document `sdoc` into the
     target DXF document.
+
+    Args:
+        sdoc: source DXF document
+        tdoc: target DXF document
+        conflict_policy: :class:`ConflictPolicy`
+
     """
 
     def __init__(
@@ -774,8 +780,14 @@ class Loader:
     ) -> None:
         """Loads the content of the modelspace of the source document into a layout of
         the target document, the modelspace of the target document is the default target
-        layout.  The target layout can be any layout: modelspace, paperspace layout or
-        block layout.
+        layout. The filter function `filter_fn` is used to skip source entities, the
+        function should return ``False`` for entities to ignore and ``True`` otherwise.
+
+        Args:
+            target_layout: target layout can be any layout: modelspace, paperspace
+                layout or block layout.
+            filter_fn: function to filter source entities
+
         """
         if target_layout is None:
             target_layout = self.tdoc.modelspace()
@@ -798,9 +810,17 @@ class Loader:
     ) -> None:
         """Loads a paperspace layout as a new paperspace layout into the target document.
         If a paperspace layout with same name already exists the layout will be renamed
-        to  "<layout name> (2)" or "<layout name> (3)" and so on. The content of the
-        modelspace which may be displayed through a VIEWPORT entity will **not** be
-        loaded!
+        to  "<layout name> (2)" or "<layout name> (3)" and so on.  The filter function
+        `filter_fn` is used to skip source entities, the function should return ``False``
+        for entities to ignore and ``True`` otherwise.
+
+        The content of the modelspace which may be displayed through a VIEWPORT entity
+        will **not** be loaded!
+
+        Args:
+            psp: the source paperspace layout
+            filter_fn: function to filter source entities
+
         """
         if not isinstance(psp, Paperspace):
             raise const.DXFTypeError(f"invalid paperspace layout type: {type(psp)}")
@@ -817,9 +837,18 @@ class Loader:
         filter_fn: Optional[FilterFunction] = None,
     ) -> None:
         """Loads the content of a paperspace layout into an existing layout of the target
-        document. The target layout can be any layout: modelspace, paperspace layout
-        or block layout.  The content of the modelspace which may be displayed through a
+        document.  The filter function `filter_fn` is used to skip source entities, the
+        function should return ``False`` for entities to ignore and ``True`` otherwise.
+
+        The content of the modelspace which may be displayed through a
         VIEWPORT entity will **not** be loaded!
+
+        Args:
+            psp: the source paperspace layout
+            target_layout: target layout can be any layout: modelspace, paperspace
+                layout or block layout.
+            filter_fn: function to filter source entities
+
         """
         if not isinstance(psp, Paperspace):
             raise LayoutError(f"invalid paperspace layout type: {type(psp)}")
@@ -846,6 +875,10 @@ class Loader:
         """Loads a block layout (block definition) as a new block layout into the target
         document. If a block layout with the same name exists the conflict policy will
         be applied.  This method cannot load modelspace or paperspace layouts.
+
+        Args:
+            block_layout: the source block layout
+
         """
         if not isinstance(block_layout, BlockLayout):
             raise LayoutError(f"invalid block layout type: {type(block_layout)}")
@@ -861,9 +894,14 @@ class Loader:
         target_layout: BaseLayout,
     ) -> None:
         """Loads the content of a block layout (block definition) into an existing layout
-        of the target document. The target layout can be any layout: modelspace,
-        paperspace layout or block layout.  This method cannot load the content of
+        of the target document.  This method cannot load the content of
         modelspace or paperspace layouts.
+
+        Args:
+            block_layout: the source block layout
+            target_layout: target layout can be any layout: modelspace, paperspace
+                layout or block layout.
+
         """
         if not isinstance(block_layout, BlockLayout):
             raise LayoutError(f"invalid block layout type: {type(block_layout)}")
@@ -929,6 +967,9 @@ class Loader:
         self.add_command(LoadResources(entities))
 
     def execute(self, xref_prefix: str = "") -> None:
+        """Execute all loading commands. The `xref_prefix` string is used as XREF name
+        when the conflict policy :attr:`ConflictPolicy.XREF_PREFIX` is applied.
+        """
         registry = _Registry(self.sdoc, self.tdoc)
         debug = ezdxf.options.debug
 

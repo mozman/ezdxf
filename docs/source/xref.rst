@@ -91,8 +91,10 @@ associated required table entries and objects from the OBJECTS section.
 Unsupported are all ACIS based entities, the ACAD_TABLE entity, preserved unknown entities
 wrapped in a :class:`DXFTagStorage` class, proxy entities and objects.
 Support for these entities may be added in a later version of `ezdxf`.
-
 Unsupported entities are ignored and do not raise exceptions.
+
+Most document features stored in the HEADER and OBJECTS sections are not supported by
+this module like GROUPS, LAYER_FILTER, GEODATA, SUN.
 
 Importing Data and Resources
 ----------------------------
@@ -138,5 +140,38 @@ Conflict Policy
 Low Level Loading Interface
 ---------------------------
 
+The :class:`Loader` class is the basic building block for loading entities and
+resources. The class manages a list of loading commands which is executed at once by
+calling the :meth:`Loader.execute` method. It is important to execute the commands at
+once to get a consistent renaming of resources when using resource name prefixes
+otherwise the loaded resources would get a new unique name at each loading process even
+when the resources are loaded from the same document.
+
 .. autoclass:: Loader
+
+    .. automethod:: load_modelspace
+
+    .. automethod:: load_paperspace_layout
+
+    .. automethod:: load_paperspace_layout_into
+
+    .. automethod:: load_block_layout
+
+    .. automethod:: load_block_layout_into
+
+    .. automethod:: load_layers
+
+    .. automethod:: load_linetypes
+
+    .. automethod:: load_text_styles
+
+    .. automethod:: load_dim_styles
+
+    .. automethod:: load_mline_styles
+
+    .. automethod:: load_mleader_styles
+
+    .. automethod:: load_materials
+
+    .. automethod:: execute
 
