@@ -1,16 +1,6 @@
 Planned for v1.1
 ================
 
-DXF Entities
-------------
-
-ACIS copy() method support: ACIS data does not reference any DXF resources and copying
-is not expensive, all copies share the same immutable ACIS data. 
-This feature allows loading ACIS entities from external references by the `xref` module.
-
-Other
------
-
 - `xref.attach_pdf(layout, filename, insert, scale=1, rotation=0, dxfattribs=None)`
   a simple interface to add PDF overlays, the management of underlay definitions is 
   done automatically 
@@ -37,6 +27,7 @@ Add-ons
     VIEWPORT borders are not plotted at all by the `drawing` add-on
   
   - (>v1.1) clipping path support for block references
+  - (>v1.1) improve linetype rendering of wide patterns, see #906
     
 - (>v1.1) DWG loader, planned for the future. Cython will be required for the 
   low level stuff, no pure Python implementation.
@@ -51,7 +42,6 @@ Render Tools
 
 DXF Entities
 ------------
-
 - (>v1.1) ACAD_TABLE entity load and export support beyond `AcadTableBlockContent`
 - (>v1.1) ACAD_TABLE tool to manage content at table and cell basis
 - (>v1.1) GEODATA version 1 support, see mpolygon examples and DXF reference R2009
@@ -68,6 +58,10 @@ DXF Entities
   doc.enable_acis_transfromation() 
 - (>v1.1) clipping path support for block references, see XCLIP command and 
   discussion #760
+
+(>v1.1) ACIS copy() method support: ACIS data does not reference any DXF resources and 
+copying is not expensive, all copies share the same immutable ACIS data. 
+This feature allows loading ACIS entities from external references by the `xref` module.
 
 (>1.1) Adding a `transform_matrix` attribute to entities which do not have transformation 
 support (yet) like ACIS entities which enables to add support for the `transform()` 
