@@ -251,6 +251,9 @@ an external referenced block.
 Conflict Policies
 -----------------
 
+Resources are definitions of layers, linetypes, text-, dimension-, mline- and mleader
+styles, materials and blocks.
+
 A resource conflict occurs when the source and target documents contain elements such as
 layers, linetypes, text styles and so on that share the same name.
 
@@ -293,3 +296,46 @@ already exists. The `$0$` prefix is a number to create a unique resource name an
 
 Load Table Resources
 --------------------
+
+Resources are definitions of layers, linetypes, text-, dimension-, mline- and mleader
+styles, materials and blocks.
+
+The :class:`Loader` class is the low level tool to build a loading operation from simple
+loading commands. Study the `source code`_ of the :mod:`xref` module, most of loading
+commands used above are build upon the :class:`Loader` class.
+This example shows how to import layer, linetype, text- and dimension style definitions:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf import xref
+
+    sdoc = ezdxf.new(setup=True)
+    tdoc = ezdxf.new()
+
+    # The default conflict policy is ConflictPolicy.KEEP
+    loader = xref.Loader(sdoc, tdoc)
+
+    # Load all layers:
+    loader.load_layers([layer.dxf.name for layer in sdoc.layers])
+
+    # Load specific linetypes:
+    loader.load_linetypes(["CENTER", "DASHED", "DASHDOT"])
+
+    # Load specific text style:
+    loader.load_text_styles(["OpenSans", "LiberationMono"])
+
+    # Load all DIMENSION styles, this command loads also the dependent text styles:
+    loader.load_dim_styles([dimstyle.dxf.name for dimstyle in sdoc.dimstyles])
+
+    # execute all loading commands:
+    loader.execute()
+    tdoc.saveas("target.dxf")
+
+.. note::
+
+    Loading a layer does not load the entities which do reference this layer, a layer
+    is not an entity container, it's just an DXF attribute, see also Basic Concepts:
+    :ref:`layer_concept`.
+
+.. _source code: https://github.com/mozman/ezdxf/blob/master/src/ezdxf/xref.py
