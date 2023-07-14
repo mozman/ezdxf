@@ -442,7 +442,7 @@ def averaged_knots_unconstrained(n: int, p: int, t: Sequence[float]) -> list[flo
 
     """
     assert t[0] == 0.0
-    assert t[-1] == 1.0
+    assert math.isclose(t[-1], 1.0)
 
     knots = [0.0] * (p + 1)
     knots.extend(sum(t[j : j + p]) / p for j in range(1, n - p + 1))
@@ -463,7 +463,7 @@ def averaged_knots_constrained(n: int, p: int, t: Sequence[float]) -> list[float
 
     """
     assert t[0] == 0.0
-    assert t[-1] == 1.0
+    assert math.isclose(t[-1], 1.0)
 
     knots = [0.0] * (p + 1)
     knots.extend(sum(t[j : j + p - 1]) / p for j in range(n - p))
@@ -501,7 +501,7 @@ def natural_knots_constrained(n: int, p: int, t: Sequence[float]) -> list[float]
 
     """
     assert t[0] == 0.0
-    assert t[-1] == 1.0
+    assert math.isclose(t[-1], 1.0)
 
     knots = [0.0] * (p + 1)
     knots.extend(t[1 : n - p + 1])
