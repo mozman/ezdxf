@@ -482,7 +482,7 @@ def natural_knots_unconstrained(n: int, p: int, t: Sequence[float]) -> list[floa
 
     """
     assert t[0] == 0.0
-    assert t[-1] == 1.0
+    assert math.isclose(t[-1], 1.0)
 
     knots = [0.0] * (p + 1)
     knots.extend(t[2 : n - p + 2])
@@ -521,7 +521,7 @@ def double_knots(n: int, p: int, t: Sequence[float]) -> list[float]:
 
     """
     assert t[0] == 0.0
-    assert t[-1] == 1.0
+    assert math.isclose(t[-1], 1.0)
 
     u = [0.0] * (p + 1)
     prev_t = 0.0
