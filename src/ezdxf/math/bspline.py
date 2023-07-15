@@ -225,7 +225,10 @@ def global_bspline_interpolation(
                 knot_generation_method,
             )
         elif len(_tangents) == len(_fit_points):
-            (control_points, knots,) = global_bspline_interpolation_first_derivatives(
+            (
+                control_points,
+                knots,
+            ) = global_bspline_interpolation_first_derivatives(
                 _fit_points, _tangents, degree, t_vector
             )
         else:
@@ -884,7 +887,9 @@ class BSpline:
         count = len(self._control_points)
         order = int(order)
         if order > count:
-            raise DXFValueError(f"Invalid need more control points for order {order}")
+            raise DXFValueError(
+                f"got {count} control points, need {order} or more for order of {order}"
+            )
 
         if knots is None:
             knots = open_uniform_knot_vector(count, order, normalize=True)
