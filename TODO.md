@@ -18,7 +18,7 @@ Add-ons
 - drawing add-on improvements: 
   - (>v1.1) Support for `Layout.dxf.plot_layout_options` in export mode of 
     class `RenderContext`:
-    - plot with plot-styles; disable loading of the ctb-table in set_currrent_layout()
+    - plot with plot-styles; disable loading of the ctb-table in set_current_layout()
     - plot entity lineweights; if disabled which linewidth should be used instead?
     - scale lineweights; scale by what?
     - plot transparencies
@@ -35,15 +35,13 @@ Add-ons
 Render Tools
 ------------
 
-- (>v1.1) ACAD_TABLE tool to render content as DXF primitives to create the 
+- (>v1.1) tool to create proxy graphic
+- (unlikely) ACAD_TABLE tool to render content as DXF primitives to create the 
   content of the anonymous block `*T...`
-- (>v1.1) factory methods to create ACAD_TABLE entities
-- (>v1.1) tool to create proxy graphic 
+- (unlikely) factory methods to create ACAD_TABLE entities
 
 DXF Entities
 ------------
-- (>v1.1) ACAD_TABLE entity load and export support beyond `AcadTableBlockContent`
-- (>v1.1) ACAD_TABLE tool to manage content at table and cell basis
 - (>v1.1) GEODATA version 1 support, see mpolygon examples and DXF reference R2009
 - (>v1.1) FIELD, used by ACAD_TABLE and MTEXT
 - (>v1.1) explode HATCH pattern into LINE entities, points are represented by 
@@ -58,6 +56,8 @@ DXF Entities
   doc.enable_acis_transfromation() 
 - (>v1.1) clipping path support for block references, see XCLIP command and 
   discussion #760
+- (unlikely) ACAD_TABLE entity load and export support beyond `AcadTableBlockContent`
+- (unlikely) ACAD_TABLE tool to manage content at table and cell basis
 
 (>v1.1) ACIS copy() method support: ACIS data does not reference any DXF resources and 
 copying is not expensive, all copies share the same immutable ACIS data. 
