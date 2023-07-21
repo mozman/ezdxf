@@ -28,12 +28,12 @@ __all__ = [
     'cubic_bezier_from_arc', 'cubic_bezier_from_ellipse',
 ]
 
-DEF ABS_TOL = 1e-12
-DEF REL_TOL = 1e-9
-DEF M_PI = 3.141592653589793
-DEF M_TAU = M_PI * 2.0
-DEF DEG2RAD = M_PI / 180.0
-DEF RECURSION_LIMIT = 1000
+cdef double ABS_TOL = 1e-12
+cdef double REL_TOL = 1e-9
+cdef double M_PI = 3.141592653589793
+cdef double M_TAU = M_PI * 2.0
+cdef double DEG2RAD = M_PI / 180.0
+cdef double RECURSION_LIMIT = 1000
 
 
 # noinspection PyUnresolvedReferences
@@ -138,11 +138,11 @@ cdef class Bezier4P:
             prev_point = point
         return length
 
-    def reverse(self) -> 'Bezier4P':
+    def reverse(self) -> Bezier4P:
         p0, p1, p2, p3 = self.control_points
         return Bezier4P((p3, p2, p1, p0))
 
-    def transform(self, Matrix44 m) -> 'Bezier4P':
+    def transform(self, Matrix44 m) -> Bezier4P:
         p0, p1, p2, p3 = self.control_points
         transform = m.transform
         return Bezier4P((
@@ -197,9 +197,9 @@ cdef class _Flattening:
             self.flatten(mid_point, end_point, mid_t, end_t)
         self._recursion_level -= 1
 
-DEF DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
-DEF OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
-DEF TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
+cdef double DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
+cdef double OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
+cdef double TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
 
 @cython.cdivision(True)
 def cubic_bezier_arc_parameters(

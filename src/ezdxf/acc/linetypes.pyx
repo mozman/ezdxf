@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 LineSegment = Tuple[Vec3, Vec3]
 
-DEF ABS_TOL = 1e-12
-DEF REL_TOL = 1e-9
+cdef double ABS_TOL = 1e-12
+cdef double REL_TOL = 1e-9
 
 cdef class _LineTypeRenderer:
     cdef vector[double] _dashes

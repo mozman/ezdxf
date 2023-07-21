@@ -12,12 +12,12 @@ import cython
 if TYPE_CHECKING:
     from ezdxf.math import UVec
 
-DEF ABS_TOL = 1e-12
-DEF RAD_ABS_TOL = 1e-15
-DEF DEG_ABS_TOL = 1e-13
-DEF REL_TOL = 1e-9
-DEF TOLERANCE = 1e-10
-DEF TAU = 6.283185307179586
+cdef double ABS_TOL = 1e-12
+cdef double RAD_ABS_TOL = 1e-15
+cdef double DEG_ABS_TOL = 1e-13
+cdef double REL_TOL = 1e-9
+cdef double TOLERANCE = 1e-10
+cdef double TAU = 6.283185307179586
 
 def has_clockwise_orientation(vertices: Iterable[UVec]) -> bool:
     """ Returns True if 2D `vertices` have clockwise orientation. Ignores

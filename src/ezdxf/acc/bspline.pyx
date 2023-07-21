@@ -23,8 +23,8 @@ NULL_LIST = [0.0]
 ONE_LIST = [1.0]
 
 cdef Vec3 NULLVEC = Vec3()
-DEF ABS_TOL = 1e-12
-DEF REL_TOL = 1e-9
+cdef double ABS_TOL = 1e-12
+cdef double REL_TOL = 1e-9
 
 # AutoCAD limits the degree to 11 or order = 12
 DEF MAX_ORDER = 12

@@ -6,8 +6,8 @@ from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple
 from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
 import random
 
-DEF ABS_TOL = 1e-12
-DEF REL_TOL = 1e-9
+cdef double ABS_TOL = 1e-12
+cdef double REL_TOL = 1e-9
 
 if TYPE_CHECKING:
     from ezdxf.math import AnyVec, UVec

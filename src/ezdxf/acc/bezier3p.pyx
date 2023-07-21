@@ -13,12 +13,12 @@ if TYPE_CHECKING:
 
 __all__ = ['Bezier3P']
 
-DEF ABS_TOL = 1e-12
-DEF REL_TOL = 1e-9
-DEF M_PI = 3.141592653589793
-DEF M_TAU = M_PI * 2.0
-DEF DEG2RAD = M_PI / 180.0
-DEF RECURSION_LIMIT = 1000
+cdef double ABS_TOL = 1e-12
+cdef double REL_TOL = 1e-9
+cdef double M_PI = 3.141592653589793
+cdef double M_TAU = M_PI * 2.0
+cdef double DEG2RAD = M_PI / 180.0
+cdef double RECURSION_LIMIT = 1000
 
 # noinspection PyUnresolvedReferences
 cdef class Bezier3P:
