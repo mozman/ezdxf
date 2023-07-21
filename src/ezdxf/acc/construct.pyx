@@ -1,6 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TYPE_CHECKING, Sequence, Optional, Tuple
 from libc.math cimport fabs
@@ -12,12 +12,14 @@ import cython
 if TYPE_CHECKING:
     from ezdxf.math import UVec
 
-cdef double ABS_TOL = 1e-12
+cdef extern from "constants.h":
+    const double ABS_TOL
+    const double REL_TOL
+    const double M_TAU
+
 cdef double RAD_ABS_TOL = 1e-15
 cdef double DEG_ABS_TOL = 1e-13
-cdef double REL_TOL = 1e-9
 cdef double TOLERANCE = 1e-10
-cdef double TAU = 6.283185307179586
 
 def has_clockwise_orientation(vertices: Iterable[UVec]) -> bool:
     """ Returns True if 2D `vertices` have clockwise orientation. Ignores
@@ -186,13 +188,13 @@ def arc_angle_span_rad(double start, double end) -> float:
     if isclose(start, end, REL_TOL, RAD_ABS_TOL):
         return 0.0
 
-    start %= TAU
-    if isclose(start, end % TAU, REL_TOL, RAD_ABS_TOL):
-        return TAU
+    start %= M_TAU
+    if isclose(start, end % M_TAU, REL_TOL, RAD_ABS_TOL):
+        return M_TAU
 
-    if not isclose(end, TAU, REL_TOL, RAD_ABS_TOL):
-        end %= TAU
+    if not isclose(end, M_TAU, REL_TOL, RAD_ABS_TOL):
+        end %= M_TAU
 
     if end < start:
-        end += TAU
+        end += M_TAU
     return end - start

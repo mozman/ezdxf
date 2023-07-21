@@ -18,8 +18,9 @@ from libc.math cimport fabs, sin, cos, tan
 if TYPE_CHECKING:
     from ezdxf.math import UVec
 
-cdef double ABS_TOL = 1e-12
-cdef double REL_TOL = 1e-9
+cdef extern from "constants.h":
+    const double ABS_TOL
+    const double REL_TOL
 
 cdef double[16] IDENTITY = [
     1.0, 0.0, 0.0, 0.0,

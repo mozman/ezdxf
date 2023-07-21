@@ -14,7 +14,7 @@ from .vector cimport (
     v3_add
 )
 from .matrix44 cimport Matrix44
-from libc.math cimport ceil, tan
+from libc.math cimport ceil, tan, M_PI
 from ._cpp_vec3 cimport CppVec3
 from ._cpp_cubic_bezier cimport CppCubicBezier
 from .construct import arc_angle_span_deg
@@ -28,10 +28,11 @@ __all__ = [
     'cubic_bezier_from_arc', 'cubic_bezier_from_ellipse',
 ]
 
-cdef double ABS_TOL = 1e-12
-cdef double REL_TOL = 1e-9
-cdef double M_PI = 3.141592653589793
-cdef double M_TAU = M_PI * 2.0
+cdef extern from "constants.h":
+    const double ABS_TOL
+    const double REL_TOL
+    const double M_TAU
+
 cdef double DEG2RAD = M_PI / 180.0
 cdef double RECURSION_LIMIT = 1000
 

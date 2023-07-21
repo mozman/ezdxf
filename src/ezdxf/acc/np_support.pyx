@@ -6,8 +6,9 @@ import numpy as np
 import cython
 from .vector cimport isclose
 
-cdef double ABS_TOL = 1e-12
-cdef double REL_TOL = 1e-9
+cdef extern from "constants.h":
+    const double ABS_TOL
+    const double REL_TOL
 
 def has_clockwise_orientation(vertices: np.ndarray) -> bool:
     """ Returns True if 2D `vertices` have clockwise orientation. Ignores

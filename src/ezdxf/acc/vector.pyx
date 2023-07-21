@@ -1,14 +1,19 @@
 # cython: language_level=3
 # cython: c_api_binop_methods=True
 # distutils: language = c++
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple
 from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
 import random
 
-cdef double ABS_TOL = 1e-12
-cdef double REL_TOL = 1e-9
+cdef extern from "constants.h":
+    const double ABS_TOL
+    const double REL_TOL
+    const double M_TAU
+
+cdef double RAD2DEG = 180.0 / M_PI;
+cdef double DEG2RAD = M_PI / 180.0;
 
 if TYPE_CHECKING:
     from ezdxf.math import AnyVec, UVec
@@ -20,9 +25,6 @@ cdef bint isclose(double a, double b, double rel_tol, double abs_tol):
            diff <= fabs(rel_tol * a) or \
            diff <= abs_tol
 
-cdef double RAD2DEG = 180.0 / M_PI
-cdef double DEG2RAD = M_PI / 180.0
-cdef double M_TAU = M_PI * 2.0
 
 cdef double normalize_rad_angle(double a):
     # Emulate the Python behavior of (a % math.tau)

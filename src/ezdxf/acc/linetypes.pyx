@@ -1,6 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2023, Manfred Moitzi
 #  License: MIT License
 from typing import Tuple, Iterable, TYPE_CHECKING, Sequence
 import cython
@@ -13,8 +13,9 @@ if TYPE_CHECKING:
 
 LineSegment = Tuple[Vec3, Vec3]
 
-cdef double ABS_TOL = 1e-12
-cdef double REL_TOL = 1e-9
+cdef extern from "constants.h":
+    const double ABS_TOL
+    const double REL_TOL
 
 cdef class _LineTypeRenderer:
     cdef vector[double] _dashes

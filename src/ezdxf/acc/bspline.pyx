@@ -1,6 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2023, Manfred Moitzi
 # License: MIT License
 # Cython implementation of the B-spline basis function.
 
@@ -11,6 +11,11 @@ from .vector cimport Vec3, isclose, v3_mul, v3_sub, v3_from_cpp_vec3
 from ._cpp_vec3 cimport CppVec3
 
 __all__ = ['Basis', 'Evaluator']
+
+cdef extern from "constants.h":
+    const double ABS_TOL
+    const double REL_TOL
+    const int MAX_SPLINE_ORDER
 
 # factorial from 0 to 18
 cdef double[19] FACTORIAL = [
@@ -23,11 +28,6 @@ NULL_LIST = [0.0]
 ONE_LIST = [1.0]
 
 cdef Vec3 NULLVEC = Vec3()
-cdef double ABS_TOL = 1e-12
-cdef double REL_TOL = 1e-9
-
-# AutoCAD limits the degree to 11 or order = 12
-DEF MAX_ORDER = 12
 
 @cython.cdivision(True)
 cdef double binomial_coefficient(int k, int i):
@@ -68,7 +68,7 @@ cdef class Basis:
 
     def __cinit__(self, knots: Iterable[float], int order, int count,
                   weights: Sequence[float] = None):
-        if order < 2 or order >= MAX_ORDER:
+        if order < 2 or order >= MAX_SPLINE_ORDER:
             raise ValueError('invalid order')
         self.order = order
         if count < 2:
@@ -155,7 +155,7 @@ cdef class Basis:
         # Source: The NURBS Book: Algorithm A2.2
         cdef int order = self.order
         cdef double*knots = self._knots
-        cdef double[MAX_ORDER] N, left, right
+        cdef double[MAX_SPLINE_ORDER] N, left, right
         cdef list result
         reset_double_array(N, order)
         reset_double_array(left, order)
@@ -204,7 +204,7 @@ cdef class Basis:
         if n > p:
             n = p
         cdef double*knots = self._knots
-        cdef double[MAX_ORDER] left, right
+        cdef double[MAX_SPLINE_ORDER] left, right
         reset_double_array(left, order, 1.0)
         reset_double_array(right, order, 1.0)
 
