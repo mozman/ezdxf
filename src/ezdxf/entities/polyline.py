@@ -487,7 +487,7 @@ class Polyline(LinkedEntities):
             # All vertices of a 2D polyline must have the same z-axis, which is
             # the elevation of the polyline:
             if vertices:
-                dxf.elevation = vertices[0].replace(x=0, y=0)
+                dxf.elevation = vertices[0].replace(x=0.0, y=0.0)
 
             for vertex, location in zip(self.vertices, vertices):
                 vdxf = vertex.dxf
@@ -1126,14 +1126,14 @@ def vertex_attribs(data: Sequence[float], format="xyseb") -> dict:
         if code == "v":
             location = Vec3(value)
         elif code == "b":
-            attribs["bulge"] = value
+            attribs["bulge"] = float(value)
         elif code == "s":
-            attribs["start_width"] = value
+            attribs["start_width"] = float(value)
         elif code == "e":
-            attribs["end_width"] = value
+            attribs["end_width"] = float(value)
         elif code == "x":
-            location = location.replace(x=value)
+            location = location.replace(x=float(value))
         elif code == "y":
-            location = location.replace(y=value)
+            location = location.replace(y=float(value))
     attribs["location"] = location
     return attribs

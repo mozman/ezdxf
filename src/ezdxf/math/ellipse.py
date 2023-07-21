@@ -67,9 +67,7 @@ class ConstructionEllipse:
         self.end_param = float(end_param)
         if not ccw:
             self.start_param, self.end_param = self.end_param, self.start_param
-        self.minor_axis = minor_axis(
-            self.major_axis, self.extrusion, self.ratio
-        )
+        self.minor_axis = minor_axis(self.major_axis, self.extrusion, self.ratio)
 
     @classmethod
     def from_arc(
@@ -206,14 +204,10 @@ class ConstructionEllipse:
             # New normal vector:
             new_extrusion = new_major_axis.cross(new_minor_axis).normalize()
             # Calculate exact minor axis:
-            new_minor_axis = minor_axis(
-                new_major_axis, new_extrusion, new_ratio
-            )
+            new_minor_axis = minor_axis(new_major_axis, new_extrusion, new_ratio)
             adjust_params = False
 
-        if adjust_params and not math.isclose(
-            start_param, end_param, abs_tol=1e-9
-        ):
+        if adjust_params and not math.isclose(start_param, end_param, abs_tol=1e-9):
             # open ellipse, adjusting start- and end parameter
             x_axis = new_major_axis.normalize()
             y_axis = new_minor_axis.normalize()
@@ -256,9 +250,7 @@ class ConstructionEllipse:
                 # TODO: use ellipse_param_span()?
                 #  2021-01-28 this is possibly the source of errors!
                 new_param_span = (end_param - start_param) % math.tau
-                if not math.isclose(
-                    old_param_span, new_param_span, abs_tol=1e-9
-                ):
+                if not math.isclose(old_param_span, new_param_span, abs_tol=1e-9):
                     start_param, end_param = end_param, start_param
             else:  # param span is exact pi (180 deg)
                 # expensive but it seem to work:
@@ -282,17 +274,10 @@ class ConstructionEllipse:
                     start_param, end_param = end_param, start_param
 
         if new_ratio > 1:
-            new_major_axis = minor_axis(
-                new_major_axis, new_extrusion, new_ratio
-            )
+            new_major_axis = minor_axis(new_major_axis, new_extrusion, new_ratio)
             new_ratio = 1.0 / new_ratio
-            new_minor_axis = minor_axis(
-                new_major_axis, new_extrusion, new_ratio
-            )
-            if not (
-                math.isclose(start_param, 0)
-                and math.isclose(end_param, math.tau)
-            ):
+            new_minor_axis = minor_axis(new_major_axis, new_extrusion, new_ratio)
+            if not (math.isclose(start_param, 0) and math.isclose(end_param, math.tau)):
                 start_param -= HALF_PI
                 end_param -= HALF_PI
 
@@ -410,9 +395,7 @@ class ConstructionEllipse:
             param = next_end_param
             start_point = end_point
 
-    def params_from_vertices(
-        self, vertices: Iterable[UVec]
-    ) -> Iterable[float]:
+    def params_from_vertices(self, vertices: Iterable[UVec]) -> Iterable[float]:
         """Yields ellipse params for all given `vertices`.
 
         The vertex don't have to be exact on the ellipse curve or in the range
@@ -459,9 +442,7 @@ class ConstructionEllipse:
         self.major_axis = self.minor_axis
         ratio = 1.0 / self.ratio
         self.ratio = max(ratio, 1e-6)
-        self.minor_axis = minor_axis(
-            self.major_axis, self.extrusion, self.ratio
-        )
+        self.minor_axis = minor_axis(self.major_axis, self.extrusion, self.ratio)
 
         start_param = self.start_param
         end_param = self.end_param
@@ -470,9 +451,7 @@ class ConstructionEllipse:
         self.start_param = (start_param - HALF_PI) % math.tau
         self.end_param = (end_param - HALF_PI) % math.tau
 
-    def add_to_layout(
-        self, layout: BaseLayout, dxfattribs=None
-    ) -> Ellipse:
+    def add_to_layout(self, layout: BaseLayout, dxfattribs=None) -> Ellipse:
         """Add ellipse as DXF :class:`~ezdxf.entities.Ellipse` entity to a
         layout.
 
@@ -499,7 +478,7 @@ class ConstructionEllipse:
         ocs = OCS(self.extrusion)
         return self.__class__(
             center=ocs.from_wcs(self.center),
-            major_axis=ocs.from_wcs(self.major_axis).replace(z=0),  # type: ignore
+            major_axis=ocs.from_wcs(self.major_axis).replace(z=0.0),  # type: ignore
             ratio=self.ratio,
             start_param=self.start_param,
             end_param=self.end_param,
@@ -595,9 +574,7 @@ def rytz_axis_construction(d1: Vec3, d2: Vec3) -> tuple[Vec3, Vec3, float]:
     """
     Q = Vec3(d1)  # vector CQ
     # calculate vector CP', location P'
-    if math.isclose(d1.z, 0, abs_tol=1e-9) and math.isclose(
-        d2.z, 0, abs_tol=1e-9
-    ):
+    if math.isclose(d1.z, 0, abs_tol=1e-9) and math.isclose(d2.z, 0, abs_tol=1e-9):
         # Vec3.orthogonal() works only for vectors in the xy-plane!
         P1 = Vec3(d2).orthogonal(ccw=False)
     else:
@@ -613,9 +590,7 @@ def rytz_axis_construction(d1: Vec3, d2: Vec3) -> tuple[Vec3, Vec3, float]:
         raise ArithmeticError("Conjugated axis required, invalid source data.")
     major_axis_length = (A - Q).magnitude
     minor_axis_length = (B - Q).magnitude
-    if math.isclose(major_axis_length, 0.0) or math.isclose(
-        minor_axis_length, 0.0
-    ):
+    if math.isclose(major_axis_length, 0.0) or math.isclose(minor_axis_length, 0.0):
         raise ArithmeticError("Conjugated axis required, invalid source data.")
     ratio = minor_axis_length / major_axis_length
     major_axis = B.normalize(major_axis_length)

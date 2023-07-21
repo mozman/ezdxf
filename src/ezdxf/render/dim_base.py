@@ -175,9 +175,7 @@ class Tolerance:  # and Limits
         self.text_width: float = 0.0
         self.text_upper: str = ""
         self.text_lower: str = ""
-        self.char_height: float = (
-            cap_height * self.text_scale_factor * self.dim_scale
-        )
+        self.char_height: float = cap_height * self.text_scale_factor * self.dim_scale
         if self.has_tolerance:
             self.init_tolerance()
         elif self.has_limits:
@@ -200,21 +198,15 @@ class Tolerance:  # and Limits
             self.text_width = self.get_text_width(self.text, self.text)
         else:  # 2 stacked values: +upper tolerance <above> -lower tolerance
             # requires 2 text lines
-            self.text_height = self.char_height + (
-                self.text_height * self.line_spacing
-            )
-            self.text_width = self.get_text_width(
-                self.text_upper, self.text_lower
-            )
+            self.text_height = self.char_height + (self.text_height * self.line_spacing)
+            self.text_width = self.get_text_width(self.text_upper, self.text_lower)
         self.update_tolerance_text(self.maximum, self.minimum)
 
     def update_tolerance_text(self, tol_upper: float, tol_lower: float):
         if tol_upper == tol_lower:
             self.text = PLUS_MINUS + self.format_text(abs(tol_upper))
         else:
-            self.text_upper = sign_char(tol_upper) + self.format_text(
-                abs(tol_upper)
-            )
+            self.text_upper = sign_char(tol_upper) + self.format_text(abs(tol_upper))
             self.text_lower = sign_char(tol_lower * -1) + self.format_text(
                 abs(tol_lower)
             )
@@ -223,9 +215,7 @@ class Tolerance:  # and Limits
         # self.text is always an empty string (default value)
         # Limit text are always 2 stacked numbers and requires the actual
         # measurement!
-        self.text_height = self.char_height + (
-            self.text_height * self.line_spacing
-        )
+        self.text_height = self.char_height + (self.text_height * self.line_spacing)
 
     def format_text(self, value: float) -> str:
         """Rounding and text formatting of tolerance `value`, removes leading
@@ -285,9 +275,7 @@ class Tolerance:  # and Limits
 class ExtensionLines:
     default_lineweight: int = const.LINEWEIGHT_BYBLOCK
 
-    def __init__(
-        self, dim_style: DimStyleOverride, default_color: int, scale: float
-    ):
+    def __init__(self, dim_style: DimStyleOverride, default_color: int, scale: float):
         get = dim_style.get
         self.color: int = get("dimclre", default_color)  # ACI
         self.linetype1: str = get("dimltex1", "")
@@ -332,9 +320,7 @@ class ExtensionLines:
 class DimensionLine:
     default_lineweight: int = const.LINEWEIGHT_BYBLOCK
 
-    def __init__(
-        self, dim_style: DimStyleOverride, default_color: int, scale: float
-    ):
+    def __init__(self, dim_style: DimStyleOverride, default_color: int, scale: float):
         get = dim_style.get
         self.color: int = get("dimclrd", default_color)  # ACI
 
@@ -471,9 +457,7 @@ class Measurement:
         self.text_gap: float = get("dimgap", 0.625) * scale
 
         # User defined text rotation - overrides everything:
-        self.user_text_rotation: float = dimension.get_dxf_attrib(
-            "text_rotation", None
-        )
+        self.user_text_rotation: float = dimension.get_dxf_attrib("text_rotation", None)
         # calculated text rotation
         self.text_rotation: float = self.user_text_rotation
         self.text_color: int = get("dimclrt", color)  # ACI
@@ -652,9 +636,7 @@ class Measurement:
         if self.text_valign == 0:
             return self.text_height * self.text_vertical_position
         else:
-            return (
-                self.text_height / 2.0 + self.text_gap
-            ) * self.vertical_placement
+            return (self.text_height / 2.0 + self.text_gap) * self.vertical_placement
 
     def text_width(self, text: str) -> float:
         """
@@ -678,9 +660,7 @@ class Measurement:
         else:  # user override
             return text
 
-    def location_override(
-        self, location: UVec, leader=False, relative=False
-    ) -> None:
+    def location_override(self, location: UVec, leader=False, relative=False) -> None:
         """Set user defined dimension text location. ezdxf defines a user
         defined location per definition as 'outside'.
 
@@ -810,9 +790,7 @@ class Geometry:
         dxfattribs["rotation"] = self.ucs.to_ocs_angle_deg(rotation)
         self.layout.add_blockref(name, insert, dxfattribs)
 
-    def add_text(
-        self, text: str, pos: Vec2, rotation: float, dxfattribs
-    ) -> None:
+    def add_text(self, text: str, pos: Vec2, rotation: float, dxfattribs) -> None:
         dxfattribs["rotation"] = self.ucs.to_ocs_angle_deg(rotation)
         entity = self.layout.add_text(text, dxfattribs=dxfattribs)
         # OCS of the measurement text is defined by the DIMENSION entity!
@@ -824,9 +802,7 @@ class Geometry:
             align=TextEntityAlignment.MIDDLE_CENTER,
         )
 
-    def add_mtext(
-        self, text: str, pos: Vec2, rotation: float, dxfattribs
-    ) -> None:
+    def add_mtext(self, text: str, pos: Vec2, rotation: float, dxfattribs) -> None:
         # OCS of the measurement text is defined by the DIMENSION entity!
         # Therefore remove OCS elevation, the elevation is defined by the
         # DIMENSION 'text_midpoint' (group code 11) and do not set 'extrusion'
@@ -843,7 +819,7 @@ class Geometry:
             # Despite the fact that the POINT entity has WCS coordinates,
             # the coordinates of defpoints in DIMENSION entities have OCS
             # coordinates.
-            location = self.ucs.to_ocs(Vec3(point)).replace(z=0)
+            location = self.ucs.to_ocs(Vec3(point)).replace(z=0.0)
             self.layout.add_point(location, dxfattribs=attribs)
 
     def add_line(
@@ -888,9 +864,7 @@ class Geometry:
             if inside == 2:  # start and end inside text_box
                 return  # do not draw line
             elif inside == 1:  # one point inside text_box or on a border line
-                intersection_points = text_box.intersect(
-                    ConstructionLine(start, end)
-                )
+                intersection_points = text_box.intersect(ConstructionLine(start, end))
                 if len(intersection_points) == 1:
                     # one point inside one point outside -> one intersection point
                     p1 = intersection_points[0]
@@ -901,14 +875,10 @@ class Geometry:
                 add_line_to_block(p1, p2)
                 return
             else:
-                intersection_points = text_box.intersect(
-                    ConstructionLine(start, end)
-                )
+                intersection_points = text_box.intersect(ConstructionLine(start, end))
                 if len(intersection_points) == 2:
                     # sort intersection points by distance to start point
-                    p1, p2 = order(
-                        intersection_points[0], intersection_points[1]
-                    )
+                    p1, p2 = order(intersection_points[0], intersection_points[1])
                     # line[start-p1] - gap - line[p2-end]
                     add_line_to_block(start, p1)
                     add_line_to_block(p2, end)
@@ -1007,15 +977,11 @@ class BaseDimensionRenderer:
         # >0 = Center marks are drawn
         self.dim_center_marks: int = get("dimcen", 0)
 
-        self.measurement = self.init_measurement(
-            self.default_color, self.dim_scale
-        )
+        self.measurement = self.init_measurement(self.default_color, self.dim_scale)
         self.dimension_line: DimensionLine = self.init_dimension_line(
             self.default_color, self.dim_scale
         )
-        self.arrows: Arrows = self.init_arrows(
-            self.default_color, self.dim_scale
-        )
+        self.arrows: Arrows = self.init_arrows(self.default_color, self.dim_scale)
         # Suppress arrow rendering - only rendering is suppressed (rendering
         # effect).
         # All placing related calculations are done without this settings.
@@ -1028,9 +994,7 @@ class BaseDimensionRenderer:
             self.default_color, self.dim_scale
         )
         # tolerances have to be initialized after measurement:
-        self.tol: Tolerance = self.init_tolerance(
-            self.dim_scale, self.measurement
-        )
+        self.tol: Tolerance = self.init_tolerance(self.dim_scale, self.measurement)
 
         # Update text height
         self.measurement.text_height = max(
@@ -1042,9 +1006,7 @@ class BaseDimensionRenderer:
 
         return Geometry(dimension, ucs or PassTroughUCS(), VirtualLayout())
 
-    def init_tolerance(
-        self, scale: float, measurement: Measurement
-    ) -> Tolerance:
+    def init_tolerance(self, scale: float, measurement: Measurement) -> Tolerance:
         return Tolerance(
             self.dim_style,
             cap_height=measurement.text_height,
@@ -1111,9 +1073,7 @@ class BaseDimensionRenderer:
             "color": self.default_color,
         }
 
-    def location_override(
-        self, location: UVec, leader=False, relative=False
-    ) -> None:
+    def location_override(self, location: UVec, leader=False, relative=False) -> None:
         """Set user defined dimension text location. ezdxf defines a user
         defined location per definition as 'outside'.
 
@@ -1205,9 +1165,7 @@ class BaseDimensionRenderer:
 
         if name in ARROWS:
             # generates automatically BLOCK definitions for arrows if needed
-            self.geometry.add_arrow_blockref(
-                name, insert, scale, rotation, attribs
-            )
+            self.geometry.add_arrow_blockref(name, insert, scale, rotation, attribs)
         else:
             if name is None or not self.geometry.has_block(name):
                 raise DXFUndefinedBlockError(f'Undefined block: "{name}"')
@@ -1216,9 +1174,7 @@ class BaseDimensionRenderer:
                 attribs["yscale"] = scale
             self.geometry.add_blockref(name, insert, rotation, attribs)
 
-    def add_text(
-        self, text: str, pos: Vec2, rotation: float, dxfattribs
-    ) -> None:
+    def add_text(self, text: str, pos: Vec2, rotation: float, dxfattribs) -> None:
         """
         Add TEXT (DXF R12) or MTEXT (DXF R2000+) entity to the dimension BLOCK.
 
@@ -1356,8 +1312,7 @@ def visible_arcs(
     if len(intersection_angles) == 2:
         if start_angle > end_angle:  # arc passes 0 degrees
             intersection_angles = [
-                (a if a >= start_angle else a + math.tau)
-                for a in intersection_angles
+                (a if a >= start_angle else a + math.tau) for a in intersection_angles
             ]
         intersection_angles.sort()
         return [
@@ -1380,9 +1335,7 @@ def get_text_style(doc: "Drawing", name: str) -> Textstyle:
     return cast("Textstyle", style)
 
 
-def get_char_height(
-    dim_style: DimStyleOverride, text_style: Textstyle
-) -> float:
+def get_char_height(dim_style: DimStyleOverride, text_style: Textstyle) -> float:
     """Unscaled character height defined by text style or DIMTXT."""
     height: float = text_style.dxf.get("height", 0.0)
     if height == 0.0:  # variable text height (not fixed)

@@ -455,10 +455,10 @@ def test_lerp(vec3):
 
 def test_replace(vec3):
     v = vec3(1, 2, 3)
-    assert v.replace(x=7) == (7, 2, 3)
-    assert v.replace(y=7) == (1, 7, 3)
-    assert v.replace(z=7) == (1, 2, 7)
-    assert v.replace(x=7, z=7) == (7, 2, 7)
+    assert v.replace(x=7.0) == (7, 2, 3)
+    assert v.replace(y=7.0) == (1, 7, 3)
+    assert v.replace(z=7.0) == (1, 2, 7)
+    assert v.replace(x=7.0, z=7.0) == (7, 2, 7)
 
 
 def test_project(vec3):

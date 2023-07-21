@@ -142,9 +142,7 @@ def test_copy_polyline():
         ), "POLYLINE is owner of the VERTEX entities"
 
 
-@pytest.mark.parametrize(
-    "txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)]
-)
+@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     polyline = Polyline.from_text(txt)
@@ -183,28 +181,26 @@ def test_polyline3d_transform_interface():
 
 def test_2d_polyline_has_default_width():
     assert Polyline().has_width is False
-    assert (
-        Polyline.new(dxfattribs={"default_start_width": 0.1}).has_width is True
-    )
+    assert Polyline.new(dxfattribs={"default_start_width": 0.1}).has_width is True
     assert Polyline.new(dxfattribs={"default_end_width": 0.1}).has_width is True
 
 
 def test_2d_polyline_has_any_start_width():
     pline = Polyline()
-    pline.append_formatted_vertices([(0, 0, 0.1)], format="xys")
+    pline.append_formatted_vertices([(0.0, 0.0, 0.1)], format="xys")
     assert pline.has_width is True
 
 
 def test_2d_polyline_has_any_end_width():
     pline = Polyline()
-    pline.append_formatted_vertices([(0, 0, 0.1)], format="xye")
+    pline.append_formatted_vertices([(0.0, 0.0, 0.1)], format="xye")
     assert pline.has_width is True
 
 
 def test_2d_polyline_has_any_arc():
     pline = Polyline()
     assert pline.has_arc is False
-    pline.append_formatted_vertices([(0, 0, 1.0)], format="xyb")
+    pline.append_formatted_vertices([(0.0, 0.0, 1.0)], format="xyb")
     assert pline.has_arc is True
 
 

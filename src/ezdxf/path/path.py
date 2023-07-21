@@ -439,7 +439,7 @@ class Path:
     def to_wcs(self, ocs: OCS, elevation: float) -> None:
         """Transform path from given `ocs` to WCS coordinates inplace."""
         self._vertices = list(
-            ocs.to_wcs(v.replace(z=elevation)) for v in self._vertices
+            ocs.to_wcs(v.replace(z=float(elevation))) for v in self._vertices
         )
 
     def sub_paths(self) -> Iterator[Self]:

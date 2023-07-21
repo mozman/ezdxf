@@ -541,7 +541,7 @@ class MLine(DXFGraphic):
         )
         # Transform given vertices into UCS and project them into the
         # UCS-xy-plane by setting the z-axis to 0:
-        vertices = [v.replace(z=0) for v in ucs.points_from_wcs(vertices)]
+        vertices = [v.replace(z=0.) for v in ucs.points_from_wcs(vertices)]
         start_angle = style.dxf.start_angle
         end_angle = style.dxf.end_angle
 

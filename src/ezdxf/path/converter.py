@@ -368,7 +368,7 @@ def from_hatch_edge_path(
         # clockwise ellipses at the loading stage!
         # See: ezdxf.entities.boundary_paths.EllipseEdge.load_tags()
         ellipse = ConstructionEllipse(
-            center=wcs(ocs_ellipse.center.replace(z=elevation)),
+            center=wcs(ocs_ellipse.center.replace(z=float(elevation))),
             major_axis=wcs_tangent(ocs_ellipse.major_axis),
             ratio=ocs_ellipse.ratio,
             extrusion=extrusion,

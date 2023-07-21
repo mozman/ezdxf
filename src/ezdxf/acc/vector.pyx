@@ -1,4 +1,5 @@
 # cython: language_level=3
+# cython: c_api_binop_methods=True
 # distutils: language = c++
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
@@ -183,7 +184,7 @@ cdef class Vec2:
     def normalize(self, double length = 1.) -> Vec2:
         return v2_normalize(self, length)
 
-    def project(self, other: "AnyVec") -> Vec2:
+    def project(self, other: AnyVec) -> Vec2:
         cdef Vec2 o = Vec2(other)
         return v2_project(self, o)
 
@@ -216,7 +217,7 @@ cdef class Vec2:
         else:
             return self.x < o.x
 
-    def __add__(self, other: "AnyVec") -> Vec2:
+    def __add__(self, other: AnyVec) -> Vec2:
         if not isinstance(other, Vec2):
             other = Vec2(other)
         return v2_add(self, <Vec2> other)
@@ -225,7 +226,7 @@ cdef class Vec2:
 
     __iadd__ = __add__  # immutable
 
-    def __sub__(self, other: "AnyVec") -> Vec2:
+    def __sub__(self, other: AnyVec) -> Vec2:
         if not isinstance(other, Vec2):
             other = Vec2(other)
         return v2_sub(self, <Vec2> other)
@@ -255,19 +256,19 @@ cdef class Vec2:
 
     # __rtruediv__ not supported -> TypeError
 
-    def dot(self, other: "AnyVec") -> float:
+    def dot(self, other: AnyVec) -> float:
         cdef Vec2 o = Vec2(other)
         return v2_dot(self, o)
 
-    def det(self, other: "AnyVec") -> float:
+    def det(self, other: AnyVec) -> float:
         cdef Vec2 o = Vec2(other)
         return v2_det(self, o)
 
-    def distance(self, other: "AnyVec") -> float:
+    def distance(self, other: AnyVec) -> float:
         cdef Vec2 o = Vec2(other)
         return v2_dist(self, o)
 
-    def angle_between(self, other: "AnyVec") -> float:
+    def angle_between(self, other: AnyVec) -> float:
         cdef Vec2 o = Vec2(other)
         return v2_angle_between(self, o)
 

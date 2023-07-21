@@ -392,7 +392,9 @@ class DXFPolygon(DXFGraphic):
 
         elevation = Vec3(dxf.elevation).z
         self.paths.transform(ocs, elevation=elevation)
-        dxf.elevation = ocs.transform_vertex(Vec3(0, 0, elevation)).replace(x=0, y=0)
+        dxf.elevation = ocs.transform_vertex(Vec3(0, 0, elevation)).replace(
+            x=0.0, y=0.0
+        )
         dxf.extrusion = ocs.new_extrusion
         if self.pattern:
             # todo: non-uniform scaling
