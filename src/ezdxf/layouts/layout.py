@@ -422,8 +422,13 @@ class Paperspace(Layout):
         if no main viewport exist.
 
         """
+        # Theory: the first VP found is the main VP of the layout, the attributes status
+        # and id are ignored by BricsCAD and AutoCAD!?
         for viewport in self.viewports():
-            if viewport.dxf.id == 1:
+            dxf = viewport.dxf
+            if dxf.hasattr("status") and dxf.status == 1:
+                return viewport
+            if dxf.id == 1:
                 return viewport
         return None
 
