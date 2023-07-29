@@ -37,3 +37,4 @@ Tutorials
     geo
     custom_data
     xref_module
+    image_export

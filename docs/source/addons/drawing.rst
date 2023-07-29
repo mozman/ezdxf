@@ -206,10 +206,7 @@ SVGBackend
 
 .. versionadded:: 1.1
 
-This is a native SVG rendering backend and does not require any external packages to
-render SVG images other than the core dependencies.
-
-.. class:: ezdxf.addons.drawing.svg.SVGBackend
+.. autoclass:: ezdxf.addons.drawing.svg.SVGBackend
 
     .. automethod:: get_xml_root_element
 

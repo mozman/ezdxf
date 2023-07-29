@@ -20,6 +20,10 @@ __all__ = ["SVGBackend"]
 
 
 class SVGBackend(recorder.Recorder):
+    """This is a native SVG rendering backend and does not require any external packages
+    to render SVG images other than the core dependencies.
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self._init_flip_y = True
