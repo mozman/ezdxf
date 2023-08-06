@@ -122,7 +122,7 @@ def build_system_font_cache() -> None:
     location in the cache directory of the users home directory "~/.cache/ezdxf" or the
     directory specified by the environment variable "XDG_CACHE_HOME".
     """
-    build_font_manager_cache(_get_font_manger_path())
+    build_font_manager_cache(_get_font_manager_path())
 
 
 def find_font_face(font_name: str) -> FontFace:
@@ -269,7 +269,7 @@ def load():
     _load_font_manager()
 
 
-def _get_font_manger_path():
+def _get_font_manager_path():
     cache_path = options.xdg_path("XDG_CACHE_HOME", CACHE_DIRECTORY)
     return cache_path / FONT_MANAGER_CACHE_FILE
 
@@ -278,7 +278,7 @@ def _load_font_manager() -> None:
     if "pytest" in sys.modules:
         return  # do nothing: system under test (sut)
 
-    fm_path = _get_font_manger_path()
+    fm_path = _get_font_manager_path()
     if fm_path.exists():
         try:
             font_manager.loads(fm_path.read_text())
