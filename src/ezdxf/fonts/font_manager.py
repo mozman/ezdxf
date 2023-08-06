@@ -41,8 +41,9 @@ FONT_DIRECTORIES = {
 }
 
 DEFAULT_FONTS = [
-    "Arialuni.ttf",  # for macOS
-    "Arial.ttf",
+    "ArialUni.ttf",  # for Windows
+    "Arial Unicode.ttf",  # for macOS
+    "Arial.ttf",  # for the case  "Arial Unicode" does not exist
     "DejaVuSansCondensed.ttf",  # widths of glyphs is similar to Arial
     "DejaVuSans.ttf",
     "LiberationSans-Regular.ttf",
