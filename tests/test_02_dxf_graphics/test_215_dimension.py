@@ -251,9 +251,9 @@ def test_dimension_transform_interface():
     dim.dxf.angle = 45
 
     dim.transform(Matrix44.translate(1, 2, 3))
-    assert dim.dxf.insert == (2, 2, 3)
-    assert dim.dxf.defpoint == (1, 3, 3)
-    assert dim.dxf.angle == 45
+    assert Vec3(2, 2, 3).isclose(dim.dxf.insert)
+    assert Vec3(1, 3, 3).isclose(dim.dxf.defpoint)
+    assert math.isclose(dim.dxf.angle, 45)
 
     dim.transform(Matrix44.z_rotate(math.radians(45)))
     assert math.isclose(dim.dxf.angle, 90)
