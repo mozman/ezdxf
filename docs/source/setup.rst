@@ -167,9 +167,11 @@ I use sometimes the Windows Subsystem for Linux (`WSL`_) with `Ubuntu`_ 20.04 LT
 for some tests (how to install `WSL`_).
 
 By doing as fresh install on `WSL & Ubuntu`, I encountered an additional
-requirement, the `build-essential` package adds the required C++ support::
+requirement, the `build-essential` package adds the required C++ support and the
+`python3.10-dev` package the required headers, change `3.10` to the Python version you
+are using::
 
-    sudo apt install build-essential
+    sudo apt install build-essential python3.10-dev
 
 The system Python 3 interpreter has the version 3.8 (in 2021), but I will show
 in a later section how to install an additional newer Python version from the
