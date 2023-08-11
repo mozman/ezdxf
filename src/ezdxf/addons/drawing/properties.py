@@ -42,6 +42,7 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import make_table_key as layer_key
 from ezdxf.fonts import fonts
 from ezdxf.tools.pattern import scale_pattern, HatchPatternType
+from ezdxf import SystemUnderTest
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -72,10 +73,6 @@ PAPER_SPACE_BG_COLOR = "#ffffff"
 VIEWPORT_COLOR = "#aaaaaa"  # arbitrary choice
 OLE2FRAME_COLOR = "#89adba"  # arbitrary choice
 logger = logging.getLogger("ezdxf")
-
-
-class SystemUnderTest(Exception):
-    pass
 
 
 def is_dark_color(color: Color, dark: float = 0.2) -> bool:
