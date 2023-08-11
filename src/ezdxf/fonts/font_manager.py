@@ -97,7 +97,7 @@ class FontCache:
             if entry is not None:
                 return entry
             else:  # no fallback font available
-                raise FontNotFoundError
+                raise FontNotFoundError("no fonts available, not even fallback fonts")
 
     def find_best_match(self, font_face: FontFace) -> Optional[FontFace]:
         entry = self._cache.get(self.key(font_face.filename), None)

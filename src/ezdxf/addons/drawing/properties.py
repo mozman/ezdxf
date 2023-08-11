@@ -14,6 +14,8 @@ from typing import (
 )
 import re
 import copy
+import logging
+import sys
 
 from ezdxf import options
 from ezdxf.colors import RGB
@@ -69,6 +71,11 @@ MODEL_SPACE_BG_COLOR = "#212830"
 PAPER_SPACE_BG_COLOR = "#ffffff"
 VIEWPORT_COLOR = "#aaaaaa"  # arbitrary choice
 OLE2FRAME_COLOR = "#89adba"  # arbitrary choice
+logger = logging.getLogger("ezdxf")
+
+
+class SystemUnderTest(Exception):
+    pass
 
 
 def is_dark_color(color: Color, dark: float = 0.2) -> bool:
@@ -168,6 +175,7 @@ class Properties:
 
 class BackendProperties(NamedTuple):
     """The backend receives a condensed version of the entity properties."""
+
     color: Color = "#000000"
     lineweight: float = 0.25  # in mm
     layer: str = "0"  # maybe useful to group entities (SVG, PDF)
@@ -508,7 +516,17 @@ class RenderContext:
                     family=family, weight=700 if bold else 400, italic=italic
                 )
         else:
-            font_face = fonts.resolve_font_face(font_file, order=self.shx_resolve_order)
+            try:
+                font_face = fonts.resolve_font_face(
+                    font_file, order=self.shx_resolve_order
+                )
+            except fonts.FontNotFoundError:
+                if "pytest" in sys.modules:
+                    raise SystemUnderTest(
+                        "see issue: https://github.com/mozman/ezdxf/issues/921"
+                    )
+                else:
+                    logger.warning("no fonts available, not even fallback fonts")
 
         if font_face is None:  # fall back to default font
             font_face = fonts.FontFace()
@@ -662,8 +680,7 @@ class RenderContext:
     def resolve_pen(
         self, entity: DXFGraphic, *, resolved_layer: Optional[str] = None
     ) -> int:
-        """Resolve the aci-color of `entity` as pen number in the range of [1..255].
-        """
+        """Resolve the aci-color of `entity` as pen number in the range of [1..255]."""
         pen = entity.dxf.color  # defaults to BYLAYER
         entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
         layer_properties = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES)
