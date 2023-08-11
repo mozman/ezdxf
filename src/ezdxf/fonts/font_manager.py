@@ -93,7 +93,11 @@ class FontCache:
         try:
             return self._cache[self.key(font_name)]
         except KeyError:
-            return self._cache[self.key(fallback)]
+            entry = self._cache.get(self.key(fallback))
+            if entry is not None:
+                return entry
+            else:  # no fallback font available
+                raise FontNotFoundError
 
     def find_best_match(self, font_face: FontFace) -> Optional[FontFace]:
         entry = self._cache.get(self.key(font_face.filename), None)
@@ -265,7 +269,7 @@ class FontManager:
                 cache_entry = self._font_cache.get(name, fallback_name)
                 fallback_name = cache_entry.file_path.name
                 break
-            except KeyError:
+            except FontNotFoundError:
                 pass
         self._fallback_font_name = fallback_name
         return fallback_name
