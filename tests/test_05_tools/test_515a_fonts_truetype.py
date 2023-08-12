@@ -21,6 +21,10 @@ TEST_FONTS = [
 ]
 
 
+def test_sut_font_cache_was_loaded():
+    assert fonts.SUT_FONT_MANAGER_CACHE is True
+
+
 @pytest.mark.parametrize("ttf,family", TEST_FONTS)
 def test_if_all_test_fonts_are_available(ttf, family):
     font_face = fonts.font_manager.get_font_face(ttf)

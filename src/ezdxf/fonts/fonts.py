@@ -25,6 +25,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("ezdxf")
 FONT_MANAGER_CACHE_FILE = "font_manager_cache.json"
+# SUT = System Under Test, see build_sut_font_manager_cache() function
+SUT_FONT_MANAGER_CACHE = False
 CACHE_DIRECTORY = ".cache"
 font_manager = FontManager()
 
@@ -289,7 +291,12 @@ def build_sut_font_manager_cache(repo_font_path: pathlib.Path) -> None:
 
     Load the fonts included in the repository folder "./fonts" to guarantee the tests
     have the same fonts available on all systems.
+
+    This function should be called from "conftest.py".
+
     """
+    global SUT_FONT_MANAGER_CACHE
+    SUT_FONT_MANAGER_CACHE = True
     font_manager.clear()
     cache_file = repo_font_path / "font_manager_cache.json"
     if cache_file.exists():
