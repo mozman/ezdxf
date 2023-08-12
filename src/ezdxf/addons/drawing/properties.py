@@ -42,7 +42,6 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import make_table_key as layer_key
 from ezdxf.fonts import fonts
 from ezdxf.tools.pattern import scale_pattern, HatchPatternType
-from ezdxf import SystemUnderTest
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -518,12 +517,7 @@ class RenderContext:
                     font_file, order=self.shx_resolve_order
                 )
             except fonts.FontNotFoundError:
-                if "pytest" in sys.modules:
-                    raise SystemUnderTest(
-                        "see issue: https://github.com/mozman/ezdxf/issues/921"
-                    )
-                else:
-                    logger.warning("no fonts available, not even fallback fonts")
+                logger.warning("no fonts available, not even fallback fonts")
 
         if font_face is None:  # fall back to default font
             font_face = fonts.FontFace()

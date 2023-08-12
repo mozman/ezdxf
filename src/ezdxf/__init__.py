@@ -65,9 +65,6 @@ from ezdxf.lldxf.encoding import (
 )
 
 
-class SystemUnderTest(Exception):
-    pass
-
 # setup DXF unicode encoder -> '\U+nnnn'
 codecs.register_error("dxfreplace", dxf_backslash_replace)
 

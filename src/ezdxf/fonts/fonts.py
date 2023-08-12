@@ -6,7 +6,6 @@ import abc
 import enum
 import logging
 import os
-import sys
 import pathlib
 
 from ezdxf import options
@@ -275,9 +274,6 @@ def _get_font_manager_path():
 
 
 def _load_font_manager() -> None:
-    if "pytest" in sys.modules:
-        return  # do nothing: system under test (sut)
-
     fm_path = _get_font_manager_path()
     if fm_path.exists():
         try:
@@ -294,8 +290,6 @@ def build_sut_font_manager_cache(repo_font_path: pathlib.Path) -> None:
     Load the fonts included in the repository folder "./fonts" to guarantee the tests
     have the same fonts available on all systems.
     """
-    if font_manager.has_font("DejaVuSans.ttf"):
-        return
     font_manager.clear()
     cache_file = repo_font_path / "font_manager_cache.json"
     if cache_file.exists():
