@@ -313,16 +313,30 @@ def build_sut_font_manager_cache(repo_font_path: pathlib.Path) -> None:
         print(f"Error writing cache file: {str(e)}")
 
 
+def make_cache_directory(path: pathlib.Path) -> None:
+    if not path.exists():
+        try:
+            path.mkdir(parents=True)
+        except IOError:
+            pass
+
+
 def build_font_manager_cache(path: pathlib.Path) -> None:
     font_manager.clear()
     font_manager.build()
     s = font_manager.dumps()
-    if not path.parent.exists():
-        path.parent.mkdir(parents=True)
+    cache_dir = path.parent
+    make_cache_directory(cache_dir)
+    if not cache_dir.exists():
+        logger.warning(
+            f"Cannot create cache home directory: '{str(cache_dir)}', cache files will "
+            f"not be saved.\nSee also issue https://github.com/mozman/ezdxf/issues/923."
+        )
+        return
     try:
         path.write_text(s)
     except IOError as e:
-        logger.info(f"Error writing cache file: {str(e)}")
+        logger.warning(f"Error writing cache file: '{str(e)}'")
 
 
 class FontRenderType(enum.Enum):
