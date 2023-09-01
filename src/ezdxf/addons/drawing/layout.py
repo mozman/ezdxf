@@ -224,10 +224,10 @@ class Settings:
         content_rotation: Rotate content about 0, 90,  180 or 270 degrees
         fit_page: Scale content to fit the page.
         scale: Factor to scale the DXF units of model- or paperspace, to represent 1mm
-            in the rendered SVG drawing.
+            in the rendered output drawing. Only uniform scaling is supported.
 
-            e.g. scale 1:100 and DXF units are m, so 0.01 DXF units are 1mm in the SVG
-            drawing or 1m = 1000mm corresponds to 10mm in the SVG drawing = 10 / 1000 = 0.01;
+            e.g. scale 1:100 and DXF units are meters, 1m = 1000mm corresponds 10mm in
+            the output drawing = 10 / 1000 = 0.01;
 
             e.g. scale 1:1; DXF units are mm = 1 / 1 = 1.0 the default value
 
