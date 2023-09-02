@@ -23,9 +23,9 @@ AcDbBlockRepBTag = "AcDbBlockRepBTag"
 def get_dynamic_block_definition(
     insert: Insert, doc: Optional[Drawing] = None
 ) -> Optional[BlockLayout]:
-    """Returns the the dynamic block definition if the given block reference is
-    referencing a dynamic block direct or indirect via an anonymous block. Returns
-    ``None`` otherwise.
+    """Returns the dynamic block definition if the given block reference is
+    referencing a dynamic block direct or indirect via an anonymous block.
+    Returns ``None`` otherwise.
     """
     block: Optional[BlockLayout] = None
     if doc is None:
@@ -38,21 +38,21 @@ def get_dynamic_block_definition(
         return block
 
     block_record = block.block_record
-    # check if block is a dynamic block
+    # check if block is a dynamic block definition
     if block_record.has_xdata(AcDbDynamicBlockGUID):
-        return block  # direct reference
+        return block
 
     try:  # check for indirect dynamic block reference
         xdata = block_record.get_xdata(AcDbBlockRepBTag)
     except const.DXFValueError:
         return None  # not a dynamic block reference
 
-    # get handle of original dynamic block
+    # get handle of dynamic block definition
     handle = xdata.get_first_value(1005, "")
     if handle == "":
-        return None  # lost reference to dynamic block
+        return None  # lost reference to dynamic block definition
     dyn_block_record = doc.entitydb.get(handle)
     if dyn_block_record:
         return doc.blocks.get(dyn_block_record.dxf.name)
-    # block record of dynamic block no found
+    # block record of dynamic block definition not found
     return None
