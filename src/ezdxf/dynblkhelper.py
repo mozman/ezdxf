@@ -15,6 +15,7 @@ from ezdxf.lldxf import const
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.layouts import BlockLayout
+    from ezdxf.entities import BlockRecord
 
 AcDbDynamicBlockGUID = "AcDbDynamicBlockGUID"
 AcDbBlockRepBTag = "AcDbBlockRepBTag"
@@ -27,32 +28,43 @@ def get_dynamic_block_definition(
     referencing a dynamic block direct or indirect via an anonymous block.
     Returns ``None`` otherwise.
     """
-    block: Optional[BlockLayout] = None
     if doc is None:
         doc = insert.doc
-    if doc is None:
-        return block
+        if doc is None:
+            return None
 
     block = doc.blocks.get(insert.dxf.name)
     if block is None:
-        return block
+        return None
 
     block_record = block.block_record
-    # check if block is a dynamic block definition
-    if block_record.has_xdata(AcDbDynamicBlockGUID):
-        return block
+    if is_dynamic_block_definition(block_record):
+        return block  # direct dynamic block reference
 
-    try:  # check for indirect dynamic block reference
-        xdata = block_record.get_xdata(AcDbBlockRepBTag)
-    except const.DXFValueError:
-        return None  # not a dynamic block reference
-
-    # get handle of dynamic block definition
-    handle = xdata.get_first_value(1005, "")
-    if handle == "":
+    # is indirect dynamic block reference?
+    handle = get_dynamic_block_record_handle(block_record)
+    if not handle:
         return None  # lost reference to dynamic block definition
     dyn_block_record = doc.entitydb.get(handle)
     if dyn_block_record:
         return doc.blocks.get(dyn_block_record.dxf.name)
-    # block record of dynamic block definition not found
     return None
+
+
+def is_dynamic_block_definition(block_record: BlockRecord) -> bool:
+    """Return ``True`` if the given block record is a dynamic block definition."""
+    return block_record.has_xdata(AcDbDynamicBlockGUID)
+
+
+def get_dynamic_block_record_handle(block_record: BlockRecord) -> str:
+    """Returns handle of the dynamic block record for an indirect dynamic block
+    reference. Returns an empty string if the block record do not reference a dynamic
+    block or the handle was not found.
+
+    """
+    try:  # check for indirect dynamic block reference
+        xdata = block_record.get_xdata(AcDbBlockRepBTag)
+    except const.DXFValueError:
+        return ""  # not a dynamic block reference
+    # get handle of dynamic block definition
+    return xdata.get_first_value(1005, "")
