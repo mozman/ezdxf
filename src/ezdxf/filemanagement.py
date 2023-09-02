@@ -1,10 +1,11 @@
-# Copyright (C) 2018-2022, Manfred Moitzi
+# Copyright (C) 2018-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TextIO, TYPE_CHECKING, Union, Sequence, Optional
 import base64
 import io
 import pathlib
+import os
 
 from ezdxf.tools.standards import setup_drawing
 from ezdxf.lldxf.const import DXF2013
@@ -95,7 +96,7 @@ def read(stream: TextIO) -> Drawing:
 
 
 def readfile(
-    filename: Union[str, pathlib.Path],
+    filename: str | os.PathLike,
     encoding: Optional[str] = None,
     errors: str = "surrogateescape",
 ) -> Drawing:
@@ -161,11 +162,12 @@ def readfile(
     return doc
 
 
-def dxf_file_info(filename: str) -> DXFInfo:
+def dxf_file_info(filename: str | os.PathLike) -> DXFInfo:
     """Reads basic file information from a DXF document: DXF version, encoding
     and handle seed.
 
     """
+    filename = str(filename)
     with open(filename, mode="rt", encoding="utf-8", errors="ignore") as fp:
         return dxf_stream_info(fp)
 
@@ -185,7 +187,7 @@ def dxf_stream_info(stream: TextIO) -> DXFInfo:
 
 
 def readzip(
-    zipfile: str,
+    zipfile: str | os.PathLike,
     filename: Optional[str] = None,
     errors: str = "surrogateescape",
 ) -> Drawing:
@@ -211,13 +213,13 @@ def readzip(
     """
     from ezdxf.tools.zipmanager import ctxZipReader
 
-    with ctxZipReader(zipfile, filename, errors=errors) as zipstream:  # type: ignore
-        doc = read(zipstream)
+    with ctxZipReader(str(zipfile), filename, errors=errors) as zipstream:
+        doc = read(zipstream)  # type: ignore
         doc.filename = zipstream.dxf_file_name
     return doc
 
 
-def decode_base64(data: bytes, errors: str = "surrogateescape") -> "Drawing":
+def decode_base64(data: bytes, errors: str = "surrogateescape") -> Drawing:
     """Load a DXF document from base64 encoded binary data, like uploaded data
     to web applications.
 

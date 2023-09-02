@@ -1,7 +1,7 @@
-# Copyright (c) 2014-2022, Manfred Moitzi
+# Copyright (c) 2014-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import BinaryIO, cast, TextIO, Optional
+from typing import BinaryIO, cast, TextIO, Optional, Iterator
 import zipfile
 from contextlib import contextmanager
 
@@ -52,9 +52,10 @@ class ZipReader:
             raise IOError("No DXF files found.")
 
     def get_dxf_file_names(self) -> list[str]:
+        assert self.zip_archive is not None
         return [
             name
-            for name in self.zip_archive.namelist()  # type: ignore
+            for name in self.zip_archive.namelist()
             if name.lower().endswith(".dxf")
         ]
 
@@ -64,21 +65,22 @@ class ZipReader:
         self.encoding = info.encoding if info.version < "AC1021" else "utf-8"
         self.dxfversion = info.version
 
-    # Required TextIO interface
     def readline(self) -> str:
-        next_line = self.dxf_file.readline().replace(CRLF, LF)  # type: ignore
+        assert self.dxf_file is not None
+        next_line = self.dxf_file.readline().replace(CRLF, LF)
         return str(next_line, self.encoding, self.errors)
 
     def close(self) -> None:
-        self.zip_archive.close()  # type: ignore
+        assert self.zip_archive is not None
+        self.zip_archive.close()
 
 
-@contextmanager  # type: ignore
-def ctxZipReader(  # type: ignore
+@contextmanager
+def ctxZipReader(
     zipfilename: str,
     filename: Optional[str] = None,
     errors: str = "surrogateescape",
-) -> ZipReader:
+) -> Iterator[ZipReader]:
     zip_reader = ZipReader(zipfilename, errors=errors)
     zip_reader.open(filename)
     yield zip_reader
