@@ -150,14 +150,158 @@ auto-detection mode, e.g. most plotter devices can only print upto a width of 90
 SVG Export
 ----------
 
+The steps to export a SVG by the :class:`~ezdxf.addons.drawing.svg.SVGBackend` are show
+in the first example, the configuration of the frontend and the page setup are shown in
+the previous sections.
+
+    1. Create the render context
+    2. Create the backend
+    3. Create and configure the frontend
+    4. Draw the content
+    5. Setup the page layout
+    6. Create the SVG output string
+
+This is the same code as for the first example:
+
+.. literalinclude:: src/export/basic_svg.py
+    :lines: 27-42
+
+The SVG backend flips the coordinates along the y-axis and transforms the content into a
+compact integer coordinate space and produces therefore a small file size but therefore
+the output coordinates are different to the DXF coordinates.
+
 PDF Export
 ----------
+
+The PDF export requires the the `PyMuPdf`_ package to be installed.
+
+The steps to export a PDF are very similar to SVG, except for the
+:class:`~ezdxf.addons.drawing.pymupdf.PyMuPdfBackend` class and the backend returns bytes
+and not a string:
+
+    1. Create the render context
+    2. Create the backend
+    3. Create and configure the frontend
+    4. Draw the content
+    5. Setup the page layout
+    6. Create the SVG output string
+
+Import the :mod:`pymupdf` backend module:
+
+.. literalinclude:: src/export/basic_pdf.py
+    :lines: 5
+
+The export function:
+
+.. literalinclude:: src/export/basic_pdf.py
+    :lines: 28-43
+
+.. image:: gfx/image_export_pdf_01.png
+    :align: center
+
+The PDF has is dark background for the modelspace by default and color index 7 is white.
+Create a frontend configuration and override the :class:`BackgroundPolicy` to get a
+white background:
+
+.. literalinclude:: src/export/basic_pdf.py
+    :lines: 52-54
+
+Now the exported PDF has a white background and color index 7 is black:
+
+.. image:: gfx/image_export_pdf_02.png
+    :align: center
+
 
 PNG Export
 ----------
 
+The PNG export is done by the :class:`~ezdxf.addons.drawing.pymupdf.PyMuPdfBackend`
+class and differs only in the method to get the PNG data bytes:
+
+.. literalinclude:: src/export/basic_png.py
+    :lines: 59-62
+
+The :mod:`pymupdf` backend supports multiple image formats:
+
+=== =========================
+png Portable Network Graphics
+ppm Portable Pixmap (no alpha channel)
+pbm Portable Bitmap (no alpha channel)
+=== =========================
+
 PLT/HPGL2 Export
 ----------------
 
+The :class:`~ezdxf.addons.drawing.hpgl2.PlotterBackend` creates HPGL/2 plot files for
+output on raster plotters. The :class:`PlotterBackend` is designed to print on white
+paper, so the background color is always white and color index 7 is black by default.
+
+.. warning::
+
+    The plot files are only tested by the plot file viewer `ViewCompanion Standard`_
+    but not on real hardware - please use with care and give feedback.
+
+The PLT/HPGL2 export is very similar to the SVG export:
+
+.. literalinclude:: src/export/basic_plt.py
+    :lines: 5-7, 29-44
+
+.. image:: gfx/image_export_plt_01.png
+    :align: center
+
+The HPGL/2 viewer does not show the margins around the content, but most construction
+drawings draw the page borders around the content.
+
+The :class:`PlotterBackend` has some quality preset methods to get the HPGL/2 data:
+
+- :meth:`~ezdxf.addons.drawing.hpgl2.PlotterBackend.compatible`
+- :meth:`~ezdxf.addons.drawing.hpgl2.PlotterBackend.low_quality`
+- :meth:`~ezdxf.addons.drawing.hpgl2.PlotterBackend.normal_quality` (default)
+- :meth:`~ezdxf.addons.drawing.hpgl2.PlotterBackend.high_quality`
+
+The difference are mostly the floating point precision and the usage of Bézier curves,
+but the Bézier curves are approximated by plotter drivers (even by HP drivers), so there
+is no real quality improvement, but curves need less space than approximated polylines
+so the file size is smaller.
+
+Very old plotter may not support Bézier curves and floating point coordinates, for these
+plotters the :meth:`compatible` method exports only polylines and integer coordinates.
+
+Usage::
+
+    # 6. get the HPGL2 rendering as bytes
+    plt_bytes = backend.high_quality(page)
+
 DXF Export
 ----------
+
+The :class:`~ezdxf.addons.drawing.dxf.DXFBackend` exports the content as DXF primitives:
+POINT, LINE, LWPOLYLINE, SPLINE and HATCH. All blocks are exploded, text is
+rendered as filled polygons represented by the HATCH entity and arcs are represented by
+SPLINE entities (internal Bèzier curve representation).
+
+This backend was added to convert HPGL/2 files to DXF files, because the
+:mod:`hpgl2` add-on reuses the backends of the :mod:`drawing` add-on for export.
+Maybe it is useful for other tasks too.
+
+This backend works different than the previous. There is no page setup and everything
+is rendered into a given layout of a DXF document:
+
+.. literalinclude:: src/export/basic_dxf.py
+    :lines: 5-7, 28-40
+
+
+Recorder Backend
+----------------
+
+The :class:`~ezdxf.addons.drawing.recorder.Recorder` backend is an intermediate layer to
+record the drawing commands of the :class:`~ezdxf.addons.drawing.frontend.Frontend` class.
+The :class:`~ezdxf.addons.drawing.recorder.Player` object can replay this records on any
+other backend class but also provides some additional features like bounding box
+detection, content transformation and cropping.
+
+The SVG/PDF/PLT backends use this intermediate layer internally to transform and place
+the content.
+
+.. _PyMuPdf: https://pypi.org/project/PyMuPDF/
+.. _ViewCompanion Standard: http://www.softwarecompanions.com/
