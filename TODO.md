@@ -1,14 +1,3 @@
-Planned for v1.1
-================
-
-- `xref.attach_pdf(layout, filename, insert, scale=1, rotation=0, dxfattribs=None)`
-  a simple interface to add PDF overlays, the management of underlay definitions is 
-  done automatically 
-
-- (???)`xref.attach_image(layout, filename, insert, scale=1, rotation=0, dxfattribs=None)`
-  a simple interface to add images (JPG/PNG/BMP) overlays, the management of image 
-  definitions is done automatically 
-
 Ideas for Future Releases
 =========================
 
