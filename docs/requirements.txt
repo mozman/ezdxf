@@ -1,2 +1,2 @@
-sphinx
-sphinx-rtd-theme
+sphinx>4
+sphinx-rtd-theme>=1
