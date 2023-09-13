@@ -1,5 +1,15 @@
-# Copyright (C) 2011-2021, Manfred Moitzi
+# Copyright (C) 2011-2023, Manfred Moitzi
 # License: MIT License
+"""Ezdxf is an interface library for the DXF file format.
+
+The package is designed to facilitate the creation and manipulation of DXF
+documents, with compatibility across various DXF versions. It empowers users to
+seamlessly load and edit DXF files while preserving all content, except for comments.
+
+Any unfamiliar DXF tags encountered in the document are gracefully ignored but retained
+for future modifications. This feature enables the processing of DXF documents
+containing data from third-party applications without any loss of valuable information.
+"""
 from typing import TextIO, Optional
 import sys
 import os

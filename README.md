@@ -5,12 +5,13 @@ ezdxf
 Abstract
 --------
 
-This Python package is for creating and modifying DXF documents, regardless of 
-the DXF version. The package supports loading and rewriting DXF file without 
-losing any content except comments.
-Unknown DXF tags in the document are ignored but kept for rewriting. 
-This behavior allows processing DXF documents that contain data from third-party 
-applications without loosing information.
+This Python package is designed to facilitate the creation and manipulation of DXF 
+documents, with compatibility across various DXF versions. It empowers users to 
+seamlessly load and edit DXF files while preserving all content, except for comments.
+
+Any unfamiliar DXF tags encountered in the document are gracefully ignored but retained 
+for future modifications. This feature enables the processing of DXF documents 
+containing data from third-party applications without any loss of valuable information.
 
 Quick-Info
 ----------
