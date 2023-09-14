@@ -1,4 +1,4 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import (
@@ -282,6 +282,9 @@ class HatchBaseLine:
         direction: the hatch line direction as :class:`~ezdxf.math.Vec2` instance, must not (0, 0)
         offset: the offset of the hatch line origin to the next or to the previous hatch line
         line_pattern: line pattern as sequence of floats, see also :class:`PatternRenderer`
+        min_hatch_line_distance: minimum hatch line distance to render, raises an
+            :class:`DenseHatchingLinesError` exception if the distance between hatch
+            lines is smaller than this value
 
     Raises:
         HatchLineDirectionError: hatch baseline has no direction, (0, 0) vector
@@ -295,6 +298,7 @@ class HatchBaseLine:
         direction: Vec2,
         offset: Vec2,
         line_pattern: Optional[list[float]] = None,
+        min_hatch_line_distance=MIN_HATCH_LINE_DISTANCE,
     ):
         self.origin = origin
         try:
@@ -303,7 +307,7 @@ class HatchBaseLine:
             raise HatchLineDirectionError("hatch baseline has no direction")
         self.offset = offset
         self.normal_distance: float = (-offset).det(self.direction - offset)
-        if abs(self.normal_distance) < MIN_HATCH_LINE_DISTANCE:
+        if abs(self.normal_distance) < min_hatch_line_distance:
             raise DenseHatchingLinesError("hatching lines are too narrow")
         self._end = self.origin + self.direction
         self.line_pattern: list[float] = line_pattern if line_pattern else []
@@ -643,7 +647,9 @@ def hatch_boundary_paths(polygon: DXFPolygon, filter_text_boxes=True) -> list[Pa
     return loops
 
 
-def pattern_baselines(polygon: DXFPolygon) -> Iterator[HatchBaseLine]:
+def pattern_baselines(
+    polygon: DXFPolygon, min_hatch_line_distance: float = MIN_HATCH_LINE_DISTANCE
+) -> Iterator[HatchBaseLine]:
     """Yields the hatch pattern baselines of HATCH and MPOLYGON entities as
     :class:`HatchBaseLine` instances.
     """
@@ -657,5 +663,9 @@ def pattern_baselines(polygon: DXFPolygon) -> Iterator[HatchBaseLine]:
     for line in pattern.lines:
         direction = Vec2.from_deg_angle(line.angle)
         yield HatchBaseLine(
-            line.base_point, direction, line.offset, line.dash_length_items
+            origin=line.base_point,
+            direction=direction,
+            offset=line.offset,
+            line_pattern=line.dash_length_items,
+            min_hatch_line_distance=min_hatch_line_distance,
         )

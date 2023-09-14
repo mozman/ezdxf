@@ -484,7 +484,8 @@ class UniversalFrontend:
                 )
                 return True
             return False
-
+        # todo: #929, it's now possible to override the MIN_HATCH_LINE_DISTANCE value
+        #  for hatching.pattern_baselines(), but this has to be a configuration setting!
         for baseline in hatching.pattern_baselines(polygon):
             for line in hatching.hatch_paths(baseline, paths, timeout):
                 line_pattern = baseline.pattern_renderer(line.distance)
