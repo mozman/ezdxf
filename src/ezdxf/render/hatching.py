@@ -30,7 +30,7 @@ from ezdxf.path import Path, LineTo, MoveTo, Curve3To, Curve4To
 if TYPE_CHECKING:
     from ezdxf.entities.polygon import DXFPolygon
 
-MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
+MIN_HATCH_LINE_DISTANCE = 1e-8  # ??? what's a good choice
 NONE_VEC2 = Vec2(math.nan, math.nan)
 KEY_NDIGITS = 4
 SORT_NDIGITS = 10

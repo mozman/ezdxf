@@ -562,6 +562,8 @@ class ProxyGraphic:
         if flag & 512:  # todo: is this correct? not documented by the ODA DWG ref.
             is_closed = True
         num_points = bs.read_bit_long()
+        if num_points <= 0:
+            return;
         if flag & 16:
             num_bulges = bs.read_bit_long()
 
