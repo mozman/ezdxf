@@ -5,7 +5,8 @@ News
 Version 1.1.1 - beta
 --------------------
 - Release notes: https://ezdxf.mozman.at/release-v1-1.html
-
+- BUGFIX: [#929](https://github.com/mozman/ezdxf/issues/929)
+  handling of the minimum hatch line distance
 
 Version 1.1.0 - 2023-09-09
 --------------------------
