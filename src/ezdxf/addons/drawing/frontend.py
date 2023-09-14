@@ -522,8 +522,12 @@ class UniversalFrontend:
         if filling.type == Filling.PATTERN:
             if loops is None:
                 loops = hatching.hatch_boundary_paths(polygon, filter_text_boxes=True)
-            self.draw_hatch_pattern(polygon, loops, properties)
-            return
+            try:
+                self.draw_hatch_pattern(polygon, loops, properties)
+            except hatching.DenseHatchingLinesError:
+                pass  # fallthrough to solid fill rendering
+            else:
+                return
 
         # draw SOLID filling
         ocs = polygon.ocs()
