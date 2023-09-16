@@ -71,7 +71,9 @@ class MatplotlibBackend(Backend):
     def configure(self, config: Configuration) -> None:
         if config.min_lineweight is None:
             # If not set by user, use ~1 pixel
-            config = config.with_changes(min_lineweight=72 / self.ax.get_figure().dpi)
+            figure = self.ax.get_figure()
+            if figure:
+                config = config.with_changes(min_lineweight=72.0 / figure.dpi)
         super().configure(config)
         # LinePolicy.ACCURATE is handled by the frontend since v0.18.1
 
