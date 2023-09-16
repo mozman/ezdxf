@@ -19,7 +19,7 @@ is_pymupdf_installed = True
 try:
     import fitz
 except ImportError:
-    print("Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/")
+    print("Python module PyMuPDF (AGPL!) is required: https://pypi.org/project/PyMuPDF/")
     fitz = None
     is_pymupdf_installed = False
 # PyMuPDF docs: https://pymupdf.readthedocs.io/en/latest/
@@ -34,12 +34,15 @@ SUPPORTED_IMAGE_FORMATS = ("png", "ppm", "pbm")
 
 class PyMuPdfBackend(recorder.Recorder):
     """This backend uses the `PyMuPdf`_ package to create PDF, PNG, PPM and PBM output.
+    PyMuPDF is licensed under the `AGPL`_. Sorry, but it's the best package for the job
+    I've found so far.
 
     Install package::
 
         pip install pymupdf
 
     .. _PyMuPdf: https://pypi.org/project/PyMuPDF/
+    .. _AGPL: https://www.gnu.org/licenses/agpl-3.0.html
 
     """
 
