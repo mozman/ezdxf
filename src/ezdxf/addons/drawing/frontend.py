@@ -13,7 +13,6 @@ from typing import (
 )
 from typing_extensions import TypeAlias
 import logging
-import itertools
 import time
 
 import ezdxf.bbox
@@ -60,8 +59,6 @@ from ezdxf.path import (
     Path,
     make_path,
     from_hatch_boundary_path,
-    make_polygon_structure,
-    winding_deconstruction,
     from_vertices,
 )
 from ezdxf.render import MeshBuilder, TraceBuilder
