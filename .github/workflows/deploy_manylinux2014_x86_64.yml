@@ -15,7 +15,7 @@ jobs:
       - name: Build manylinux2014_x86_64 wheels
         uses: pypa/cibuildwheel@v2.16
         env:
-          CIBW_BEFORE_BUILD: "pip install wheel cython"
+          CIBW_BEFORE_BUILD: "pip install setuptools wheel cython"
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           # cp37 - cp39 are deployed for manylinux2010
