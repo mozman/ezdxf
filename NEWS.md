@@ -5,6 +5,7 @@ News
 Version 1.1.1 - beta
 --------------------
 - Release notes: https://ezdxf.mozman.at/release-v1-1.html
+- INFO: `numpy` v1.25 has stopped providing Python 3.8 binary wheels on PyPI
 - BUGFIX: [#929](https://github.com/mozman/ezdxf/issues/929)
   handling of the minimum hatch line distance
 
