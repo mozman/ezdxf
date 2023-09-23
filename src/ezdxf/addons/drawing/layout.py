@@ -63,6 +63,33 @@ UNITS_TO_MM = {
 }
 
 
+class PageAlignment(enum.IntEnum):
+    """Page alignment of content as enum.
+
+    Attributes:
+        TOP_LEFT:
+        TOP_CENTER:
+        TOP_RIGHT:
+        MIDDLE_LEFT:
+        MIDDLE_CENTER:
+        MIDDLE_RIGHT:
+        BOTTOM_LEFT:
+        BOTTOM_CENTER:
+        BOTTOM_RIGHT:
+
+    """
+
+    TOP_LEFT = 1
+    TOP_CENTER = 2
+    TOP_RIGHT = 3
+    MIDDLE_LEFT = 4
+    MIDDLE_CENTER = 5
+    MIDDLE_RIGHT = 6
+    BOTTOM_LEFT = 7
+    BOTTOM_CENTER = 8
+    BOTTOM_RIGHT = 9
+
+
 class Margins(NamedTuple):
     """Page margins definition class
 
@@ -223,6 +250,8 @@ class Settings:
     Attributes:
         content_rotation: Rotate content about 0, 90,  180 or 270 degrees
         fit_page: Scale content to fit the page.
+        page_alignment: Supported by backends that use the :class:`Page` class to define
+            the size of the output media, default alignment is :attr:`PageAlignment.MIDDLE_CENTER`
         scale: Factor to scale the DXF units of model- or paperspace, to represent 1mm
             in the rendered output drawing. Only uniform scaling is supported.
 
@@ -250,6 +279,7 @@ class Settings:
     content_rotation: int = 0
     fit_page: bool = True
     scale: float = 1.0
+    page_alignment: PageAlignment = PageAlignment.MIDDLE_CENTER
     # for LineweightPolicy.RELATIVE
     # max_stroke_width is defined as percentage of the content extents
     max_stroke_width: float = 0.001  # 0.1% of max(width, height) in viewBox coords
@@ -258,7 +288,6 @@ class Settings:
     # StrokeWidthPolicy.fixed_1
     # fixed_stroke_width is defined as percentage of max_stroke_width
     fixed_stroke_width: float = 0.15  # 15% of max_stroke_width
-
     # PDF, HPGL expect the coordinates in the first quadrant and SVG has an inverted
     # y-axis, so transformation from DXF to the output coordinate system is required.
     # The output_coordinate_space defines the space into which the DXF coordinates are
@@ -332,6 +361,7 @@ class Layout:
             rotation=rotation,
             page=page,
             output_coordinate_space=settings.output_coordinate_space,
+            page_alignment=settings.page_alignment,
         )
         return m
 
@@ -385,6 +415,7 @@ def placement_matrix(
     rotation: float,
     page: Page,
     output_coordinate_space: float,
+    page_alignment: PageAlignment = PageAlignment.MIDDLE_CENTER,
 ) -> Matrix44:
     """Returns a matrix to place the bbox in the first quadrant of the coordinate
     system (+x, +y).
@@ -422,6 +453,62 @@ def placement_matrix(
     ) * scale_mm_to_vb
     dx = view_box_content_x - canvas.size.x
     dy = view_box_content_y - canvas.size.y
-    offset_x = margins.left * scale_mm_to_vb + dx / 2
-    offset_y = margins.top * scale_mm_to_vb + dy / 2  # SVG origin is top/left
+    offset_x = margins.left * scale_mm_to_vb  # left
+    offset_y = margins.top * scale_mm_to_vb  # top
+    if is_center_aligned(page_alignment):
+        offset_x += dx / 2
+    elif is_right_aligned(page_alignment):
+        offset_x += dx
+    if is_middle_aligned(page_alignment):
+        offset_y += dy / 2
+    elif is_bottom_aligned(page_alignment):
+        offset_y += dy
     return m @ Matrix44.translate(-tx + offset_x, -ty + offset_y, 0)
+
+
+def is_left_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.TOP_LEFT,
+        PageAlignment.MIDDLE_LEFT,
+        PageAlignment.BOTTOM_LEFT,
+    )
+
+
+def is_center_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.TOP_CENTER,
+        PageAlignment.MIDDLE_CENTER,
+        PageAlignment.BOTTOM_CENTER,
+    )
+
+
+def is_right_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.TOP_RIGHT,
+        PageAlignment.MIDDLE_RIGHT,
+        PageAlignment.BOTTOM_RIGHT,
+    )
+
+
+def is_top_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.TOP_LEFT,
+        PageAlignment.TOP_CENTER,
+        PageAlignment.TOP_RIGHT,
+    )
+
+
+def is_middle_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.MIDDLE_LEFT,
+        PageAlignment.MIDDLE_CENTER,
+        PageAlignment.MIDDLE_RIGHT,
+    )
+
+
+def is_bottom_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.BOTTOM_LEFT,
+        PageAlignment.BOTTOM_CENTER,
+        PageAlignment.BOTTOM_RIGHT,
+    )
