@@ -49,6 +49,11 @@ def test_allow_dxf_unicode_encoding_in_layer_names():
     assert is_valid_layer_name(r"tschüss mit \U+00FC") is True
 
 
+def test_allow_dxf_mplus_encoding_in_layer_names():
+    # I don't know the real name of this encoding, so I call it "mplus" encoding
+    assert is_valid_layer_name(r"\M+5D7DF\M+5CFDF\M+5BCDC") is True
+
+
 def test_strange_but_valid_layer_name():
     assert is_valid_layer_name("Layer|Layer") is True
 

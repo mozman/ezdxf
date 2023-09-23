@@ -9,6 +9,8 @@ Version 1.1.1 - beta
 - INFO: `numpy` v1.25 has stopped providing Python 3.8 binary wheels on PyPI
 - BUGFIX: [#929](https://github.com/mozman/ezdxf/issues/929)
   handling of the minimum hatch line distance
+- BUGFIX: [#932](https://github.com/mozman/ezdxf/issues/932)
+  tolerate special `\M+xxxxx` encoding in table names
 
 Version 1.1.0 - 2023-09-09
 --------------------------

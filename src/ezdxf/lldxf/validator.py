@@ -369,8 +369,14 @@ def is_dxf_stream(stream: TextIO) -> bool:
 
 
 def is_valid_table_name(name: str) -> bool:
-    # remove backslash of DXF unicode encoding \U+xxxx
-    chars = set(name.replace(r"\U+", ""))
+    # remove backslash of special DXF string encodings
+    if "\\" in name:
+        # remove prefix of special DXF unicode encoding
+        name = name.replace(r"\U+", "")
+        # remove prefix of special DXF encoding M+xxxxx
+        # I don't know the real name of this encoding, so I call it "mplus" encoding
+        name = name.replace(r"\M+", "")
+    chars = set(name)
     return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(chars))
 
 
@@ -384,8 +390,7 @@ def make_table_key(name: str) -> str:
 def is_valid_layer_name(name: str) -> bool:
     if is_adsk_special_layer(name):
         return True
-    else:
-        return is_valid_table_name(name)
+    return is_valid_table_name(name)
 
 
 def is_adsk_special_layer(name: str) -> bool:
