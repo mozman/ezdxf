@@ -21,7 +21,7 @@ EXAMPLE_DXF = pathlib.Path(__file__).parent.parent.parent.parent / "examples_dxf
 
 # ------------------------------------------------------------------------------
 # This example shows how to export the modelspace by the drawing add-on and the
-# native SVG backend.
+# PyMuPDF backend.
 #
 # docs: https://ezdxf.mozman.at/docs/addons/drawing.html
 # ------------------------------------------------------------------------------
