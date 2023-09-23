@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2021, Manfred Moitzi
+# Copyright (c) 2016-2023, Manfred Moitzi
 # License: MIT License
 import re
 import codecs
@@ -76,19 +76,9 @@ def _decode_mif(s: str) -> str:
     if s.startswith(r"\M+"):
         try:
             code_page = MIF_CODE_PAGE[s[3]]
-        except KeyError:
-            return s
-        try:
             codec = codecs.lookup(code_page)
-        except LookupError:
-            return s
-        try:
             byte_data = binascii.unhexlify(s[4:])
-        except binascii.Error:
-            return s
-        try:
             return codec.decode(byte_data)[0]
-        except UnicodeDecodeError:
-            return s
-    else:
-        return s
+        except Exception:
+            pass
+    return s
