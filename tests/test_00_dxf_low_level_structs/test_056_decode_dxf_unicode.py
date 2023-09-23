@@ -36,11 +36,7 @@ def test_has_mif_encoding():
 
 
 def test_decode_mif_encoding():
-    s = r"\M+5D7DF\M+5CFDF\M+5BCDC"
-    expected = "走线架"
-    codec = codecs.lookup("cp936")
-    assert codec.decode(binascii.unhexlify("D7DFCFDFBCDC"))[0] == expected
-    assert decode_mif_to_unicode(s) == expected
+    assert decode_mif_to_unicode(r"\M+5D7DF\M+5CFDF\M+5BCDC") == "走线架"
 
 
 def test_extra_digits():
