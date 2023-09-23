@@ -8,11 +8,12 @@ Version 1.1.1 - beta
 - NEW: Python 3.12 binary wheel deployment on PyPI
 - NEW: page alignment support in the `drawing` add-on for these backends: 
   `SVGBackend`, `PyMuPdfBackend` and the `PlotterBackend`
+- NEW: support for decoding of MIF encoded text `\M+cxxxx` in the `recover` module
 - INFO: `numpy` v1.25 has stopped providing Python 3.8 binary wheels on PyPI
 - BUGFIX: [#929](https://github.com/mozman/ezdxf/issues/929)
   handling of the minimum hatch line distance
 - BUGFIX: [#932](https://github.com/mozman/ezdxf/issues/932)
-  tolerate special `\M+xxxxx` encoding in table names
+  tolerate MIF encoding `\M+cxxxx` in table names
 
 Version 1.1.0 - 2023-09-09
 --------------------------
