@@ -21,7 +21,8 @@ __all__ = ["SVGBackend"]
 
 class SVGBackend(recorder.Recorder):
     """This is a native SVG rendering backend and does not require any external packages
-    to render SVG images other than the core dependencies.
+    to render SVG images other than the core dependencies.  This backend support content
+    cropping at page margins.
     """
 
     def __init__(self) -> None:
@@ -31,8 +32,9 @@ class SVGBackend(recorder.Recorder):
     def get_xml_root_element(
         self, page: layout.Page, settings: layout.Settings = layout.Settings()
     ) -> ET.Element:
+        top_origin = True
         settings = copy.copy(settings)
-        # The DXF coordinates are mapped to integer viewBox coordinates in the first
+        # DXF coordinates are mapped to integer viewBox coordinates in the first
         # quadrant, producing compact SVG files. The larger the coordinate range, the
         # more precise and the lager the files.
         settings.output_coordinate_space = 1_000_000
@@ -40,13 +42,25 @@ class SVGBackend(recorder.Recorder):
         # This player changes the original recordings!
         player = self.player()
 
+        # the page origin (0, 0) is in the top-left corner.
         output_layout = layout.Layout(player.bbox(), flip_y=self._init_flip_y)
         page = output_layout.get_final_page(page, settings)
         if page.width == 0 or page.height == 0:
             return ET.Element("svg")  # empty page
 
-        m = output_layout.get_placement_matrix(page, settings)
+        m = output_layout.get_placement_matrix(
+            page, settings=settings, top_origin=top_origin
+        )
+        # transform content to the output coordinates space:
         player.transform(m)
+        if settings.crop_at_margins:
+            p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
+            # scale factor to map page coordinates to output space coordinates:
+            output_scale = settings.page_output_scale_factor(page)
+            max_sagitta = 0.1 * output_scale  # curve approximation 0.1 mm
+            # crop content inplace by the margin rect:
+            player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
+
         self._init_flip_y = False
         backend = self.make_backend(page, settings)
         player.replay(backend)

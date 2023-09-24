@@ -19,7 +19,9 @@ is_pymupdf_installed = True
 try:
     import fitz
 except ImportError:
-    print("Python module PyMuPDF (AGPL!) is required: https://pypi.org/project/PyMuPDF/")
+    print(
+        "Python module PyMuPDF (AGPL!) is required: https://pypi.org/project/PyMuPDF/"
+    )
     fitz = None
     is_pymupdf_installed = False
 # PyMuPDF docs: https://pymupdf.readthedocs.io/en/latest/
@@ -34,6 +36,8 @@ SUPPORTED_IMAGE_FORMATS = ("png", "ppm", "pbm")
 
 class PyMuPdfBackend(recorder.Recorder):
     """This backend uses the `PyMuPdf`_ package to create PDF, PNG, PPM and PBM output.
+    This backend support content cropping at page margins.
+
     PyMuPDF is licensed under the `AGPL`_. Sorry, but it's the best package for the job
     I've found so far.
 
@@ -59,17 +63,31 @@ class PyMuPdfBackend(recorder.Recorder):
             page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
         """
+        top_origin = True
         # This player changes the original recordings!
         player = self.player()
+
+        # the page origin (0, 0) is in the top-left corner.
         output_layout = layout.Layout(player.bbox(), flip_y=self._init_flip_y)
         page = output_layout.get_final_page(page, settings)
 
-        # The DXF coordinates are mapped to PDF Units in the first quadrant
+        # DXF coordinates are mapped to PDF Units in the first quadrant
         settings = copy.copy(settings)
         settings.output_coordinate_space = get_coordinate_output_space(page)
 
-        m = output_layout.get_placement_matrix(page, settings)
+        m = output_layout.get_placement_matrix(
+            page, settings=settings, top_origin=top_origin
+        )
+        # transform content to the output coordinates space:
         player.transform(m)
+        if settings.crop_at_margins:
+            p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
+            # scale factor to map page coordinates to output space coordinates:
+            output_scale = settings.page_output_scale_factor(page)
+            max_sagitta = 0.1 * MM_TO_POINTS  # curve approximation 0.1 mm
+            # crop content inplace by the margin rect:
+            player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
+
         self._init_flip_y = False
         backend = self.make_backend(page, settings)
         player.replay(backend)

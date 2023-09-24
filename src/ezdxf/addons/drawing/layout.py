@@ -363,7 +363,9 @@ class Layout:
         content_size = self.get_content_size(rotation)
         return final_page_size(content_size, page, settings)
 
-    def get_placement_matrix(self, page: Page, settings=Settings()) -> Matrix44:
+    def get_placement_matrix(
+        self, page: Page, settings=Settings(), top_origin=True
+    ) -> Matrix44:
         # Argument `page` has to be the resolved final page size!
         rotation = self.get_rotation(settings)
 
@@ -386,6 +388,7 @@ class Layout:
             page=page,
             output_coordinate_space=settings.output_coordinate_space,
             page_alignment=settings.page_alignment,
+            top_origin=top_origin,
         )
         return m
 
@@ -440,6 +443,9 @@ def placement_matrix(
     page: Page,
     output_coordinate_space: float,
     page_alignment: PageAlignment = PageAlignment.MIDDLE_CENTER,
+    # top_origin True: page origin (0, 0) in top-left corner, +y axis pointing down
+    # top_origin False: page origin (0, 0) in bottom-left corner, +y axis pointing up
+    top_origin=True,
 ) -> Matrix44:
     """Returns a matrix to place the bbox in the first quadrant of the coordinate
     system (+x, +y).
@@ -468,7 +474,7 @@ def placement_matrix(
     # shift content to first quadrant +x/+y
     tx, ty = canvas.extmin  # type: ignore
 
-    # center content within margins
+    # align content within margins
     view_box_content_x = (
         page.width_in_mm - margins.left - margins.right
     ) * scale_mm_to_vb
@@ -478,7 +484,11 @@ def placement_matrix(
     dx = view_box_content_x - canvas.size.x
     dy = view_box_content_y - canvas.size.y
     offset_x = margins.left * scale_mm_to_vb  # left
-    offset_y = margins.top * scale_mm_to_vb  # top
+    if top_origin:
+        offset_y = margins.top * scale_mm_to_vb
+    else:
+        offset_y = margins.bottom * scale_mm_to_vb
+
     if is_center_aligned(page_alignment):
         offset_x += dx / 2
     elif is_right_aligned(page_alignment):
@@ -486,7 +496,11 @@ def placement_matrix(
     if is_middle_aligned(page_alignment):
         offset_y += dy / 2
     elif is_bottom_aligned(page_alignment):
-        offset_y += dy
+        if top_origin:
+            offset_y += dy
+    else:  # top aligned
+        if not top_origin:
+            offset_y += dy
     return m @ Matrix44.translate(-tx + offset_x, -ty + offset_y, 0)
 
 

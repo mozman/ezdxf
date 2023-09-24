@@ -36,7 +36,9 @@ CMD_CURVE4_TO = int(Command.CURVE4_TO)
 
 class PlotterBackend(recorder.Recorder):
     """The :class:`PlotterBackend` creates HPGL/2 plot files for output on raster
-    plotters. This backend does not need any additional packages.
+    plotters. This backend does not need any additional packages.  This backend support
+    content cropping at page margins.
+
     The plot files are tested by the plot file viewer `ViewCompanion Standard`_
     but not on real hardware - please use with care and give feedback.
 
@@ -67,21 +69,33 @@ class PlotterBackend(recorder.Recorder):
             base: base for polyline encoding, 32 for 7 bit encoding or 64 for 8 bit encoding
 
         """
+        top_origin = False
         settings = copy.copy(settings)
         # This player changes the original recordings!
         player = self.player()
 
+        # the page origin (0, 0) is in the bottom-left corner.
         output_layout = layout.Layout(player.bbox(), flip_y=False)
         page = output_layout.get_final_page(page, settings)
         if page.width == 0 or page.height == 0:
             return b""  # empty page
-        # The DXF coordinates are mapped to integer coordinates (plu) in the first
+        # DXF coordinates are mapped to integer coordinates (plu) in the first
         # quadrant: 40 plu = 1mm
         settings.output_coordinate_space = (
             max(page.width_in_mm, page.height_in_mm) * MM_TO_PLU
         )
-        m = output_layout.get_placement_matrix(page, settings)
+        # transform content to the output coordinates space:
+        m = output_layout.get_placement_matrix(
+            page, settings=settings, top_origin=top_origin
+        )
         player.transform(m)
+        if settings.crop_at_margins:
+            p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
+            # scale factor to map page coordinates to output space coordinates:
+            output_scale = settings.page_output_scale_factor(page)
+            max_sagitta = 0.1 * MM_TO_PLU  # curve approximation 0.1 mm
+            # crop content inplace by the margin rect:
+            player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
         backend = _RenderBackend(
             page,
             settings=settings,
