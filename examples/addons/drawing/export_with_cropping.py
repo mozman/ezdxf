@@ -49,7 +49,7 @@ def export_svg(doc: Drawing, alignment: layout.PageAlignment, outname: pathlib.P
         ),
     ).draw_layout(msp)
 
-    svg_string = backend.get_string(page, settings)
+    svg_string = backend.get_string(page, settings=settings)
     (CWD / outname).write_text(svg_string)
     print(f"exported: {outname}")
 

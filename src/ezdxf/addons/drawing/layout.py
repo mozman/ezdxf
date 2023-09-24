@@ -335,10 +335,10 @@ class Settings:
 
 
 class Layout:
-    def __init__(self, dxf_bbox: BoundingBox2d, flip_y=False) -> None:
+    def __init__(self, render_box: BoundingBox2d, flip_y=False) -> None:
         super().__init__()
         self.flip_y: float = -1.0 if flip_y else 1.0
-        self.dxf_bbox = dxf_bbox
+        self.render_box = render_box
 
     def get_rotation(self, settings: Settings) -> int:
         if settings.content_rotation not in (0, 90, 180, 270):
@@ -352,7 +352,7 @@ class Layout:
         return rotation
 
     def get_content_size(self, rotation: int) -> Vec2:
-        content_size = self.dxf_bbox.size
+        content_size = self.render_box.size
         if rotation in (90, 270):
             # swap x, y to apply rotation to content_size
             content_size = Vec2(content_size.y, content_size.x)
@@ -381,7 +381,7 @@ class Layout:
         scale_mm_to_output_space = settings.page_output_scale_factor(page)
         scale = scale_dxf_to_mm * scale_mm_to_output_space
         m = placement_matrix(
-            self.dxf_bbox,
+            self.render_box,
             sx=scale,
             sy=scale * self.flip_y,
             rotation=rotation,

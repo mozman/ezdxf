@@ -108,7 +108,7 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
             ),
         ).draw_layout(dxf_layout)
 
-        data = backend.get_bytes(page, settings, curves=True, decimal_places=0)
+        data = backend.get_bytes(page, settings=settings, curves=True, decimal_places=0)
         t2 = time.perf_counter()
         print(f"render time: {t2 - t1: .3f} seconds")
         (CWD / outname).write_bytes(data)
@@ -150,7 +150,9 @@ def text():
     doc.styles.add("ARIAL", font="Arial.ttf")
     msp = doc.modelspace()
     msp.add_lwpolyline([(0, 0), (1000, 0), (1000, 800), (0, 800)], close=True)
-    msp.add_text("0123456789", height=2.5, dxfattribs={"style": "ARIAL"}).set_placement((100, 400))
+    msp.add_text("0123456789", height=2.5, dxfattribs={"style": "ARIAL"}).set_placement(
+        (100, 400)
+    )
     backend = hpgl2.PlotterBackend()
     Frontend(RenderContext(doc), backend).draw_layout(msp)
     data = backend.low_quality(layout.Page(0, 0))
@@ -178,4 +180,3 @@ if __name__ == "__main__":
     # simple()
     # transparency()
     # triangle()
-

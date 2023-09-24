@@ -6,7 +6,7 @@ from typing import Iterable, Sequence, no_type_check
 import copy
 from xml.etree import ElementTree as ET
 
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, BoundingBox2d
 from ezdxf.path import Command
 
 
@@ -30,7 +30,11 @@ class SVGBackend(recorder.Recorder):
         self._init_flip_y = True
 
     def get_xml_root_element(
-        self, page: layout.Page, settings: layout.Settings = layout.Settings()
+        self,
+        page: layout.Page,
+        *,
+        settings: layout.Settings = layout.Settings(),
+        render_box: BoundingBox2d | None = None,
     ) -> ET.Element:
         top_origin = True
         settings = copy.copy(settings)
@@ -41,9 +45,11 @@ class SVGBackend(recorder.Recorder):
 
         # This player changes the original recordings!
         player = self.player()
+        if render_box is None:
+            render_box = player.bbox()
 
         # the page origin (0, 0) is in the top-left corner.
-        output_layout = layout.Layout(player.bbox(), flip_y=self._init_flip_y)
+        output_layout = layout.Layout(render_box, flip_y=self._init_flip_y)
         page = output_layout.get_final_page(page, settings)
         if page.width == 0 or page.height == 0:
             return ET.Element("svg")  # empty page
@@ -69,7 +75,9 @@ class SVGBackend(recorder.Recorder):
     def get_string(
         self,
         page: layout.Page,
+        *,
         settings: layout.Settings = layout.Settings(),
+        render_box: BoundingBox2d | None = None,
         xml_declaration=True,
     ) -> str:
         """Returns the XML data as unicode string.
@@ -77,11 +85,14 @@ class SVGBackend(recorder.Recorder):
         Args:
             page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
+            render_box: set explicit region to render, default is content bounding box
             xml_declaration: inserts the "<?xml version='1.0' encoding='utf-8'?>" string
                 in front of the <svg> element
 
         """
-        xml = self.get_xml_root_element(page, settings)
+        xml = self.get_xml_root_element(
+            page, settings=settings, render_box=render_box
+        )
         return ET.tostring(xml, encoding="unicode", xml_declaration=xml_declaration)
 
     @staticmethod

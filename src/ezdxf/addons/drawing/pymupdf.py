@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Iterable, no_type_check
 import copy
 
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, BoundingBox2d
 from ezdxf.colors import RGB
 from ezdxf.path import Command
 from ezdxf.version import __version__
@@ -55,20 +55,27 @@ class PyMuPdfBackend(recorder.Recorder):
         self._init_flip_y = True
 
     def _get_replay(
-        self, page: layout.Page, settings: layout.Settings = layout.Settings()
+        self,
+        page: layout.Page,
+        *,
+        settings: layout.Settings = layout.Settings(),
+        render_box: BoundingBox2d | None = None,
     ) -> PyMuPdfRenderBackend:
         """Returns the PDF document as bytes.
 
         Args:
             page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
+            render_box: set explicit region to render, default is content bounding box
         """
         top_origin = True
         # This player changes the original recordings!
         player = self.player()
+        if render_box is None:
+            render_box = player.bbox()
 
         # the page origin (0, 0) is in the top-left corner.
-        output_layout = layout.Layout(player.bbox(), flip_y=self._init_flip_y)
+        output_layout = layout.Layout(render_box, flip_y=self._init_flip_y)
         page = output_layout.get_final_page(page, settings)
 
         # DXF coordinates are mapped to PDF Units in the first quadrant
@@ -94,15 +101,20 @@ class PyMuPdfBackend(recorder.Recorder):
         return backend
 
     def get_pdf_bytes(
-        self, page: layout.Page, *, settings: layout.Settings = layout.Settings()
+        self,
+        page: layout.Page,
+        *,
+        settings: layout.Settings = layout.Settings(),
+        render_box: BoundingBox2d | None = None,
     ) -> bytes:
         """Returns the PDF document as bytes.
 
         Args:
             page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
+            render_box: set explicit region to render, default is content bounding box
         """
-        backend = self._get_replay(page, settings)
+        backend = self._get_replay(page, settings=settings, render_box=render_box)
         return backend.get_pdf_bytes()
 
     def get_pixmap_bytes(
@@ -113,6 +125,7 @@ class PyMuPdfBackend(recorder.Recorder):
         settings: layout.Settings = layout.Settings(),
         dpi: int = 96,
         alpha=False,
+        render_box: BoundingBox2d | None = None,
     ) -> bytes:
         """Returns a pixel image as bytes, supported image formats:
 
@@ -128,11 +141,11 @@ class PyMuPdfBackend(recorder.Recorder):
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
             dpi: output resolution in dots per inch
             alpha: add alpha channel (transparency)
-
+            render_box: set explicit region to render, default is content bounding box
         """
         if fmt not in SUPPORTED_IMAGE_FORMATS:
             raise ValueError(f"unsupported image format: '{fmt}'")
-        backend = self._get_replay(page, settings)
+        backend = self._get_replay(page, settings=settings, render_box=render_box)
         try:
             pixmap = backend.get_pixmap(dpi=dpi, alpha=alpha)
             return pixmap.tobytes(output=fmt)

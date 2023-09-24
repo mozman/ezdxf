@@ -117,7 +117,7 @@ def export(filepath: pathlib.Path, layout_names=("Model",)):
             ),
         ).draw_layout(dxf_layout)
 
-        svg_string = backend.get_string(page, settings)
+        svg_string = backend.get_string(page, settings=settings)
         t2 = time.perf_counter()
         print(f"render time: {t2 - t1: .3f} seconds")
         (CWD / outname).write_text(svg_string)
