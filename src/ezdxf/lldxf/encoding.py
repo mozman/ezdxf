@@ -42,23 +42,24 @@ def _decode(s: str) -> str:
 
 
 def has_dxf_unicode(s: str) -> bool:
-    r"""Detect if string `s` contains encoded DXF unicode characters "\\U+xxxx"."""
+    """Returns ``True``  if string `s` contains ``\\U+xxxx`` encoded characters."""
     return bool(re.search(BACKSLASH_UNICODE, s))
 
 
 def decode_dxf_unicode(s: str) -> str:
-    r"""Decode DXF unicode characters "\\U+xxxx" in string `s`."""
+    """Decode ``\\U+xxxx`` encoded characters."""
 
     return "".join(_decode(part) for part in re.split(BACKSLASH_UNICODE, s))
 
 
 def has_mif_encoding(s: str) -> bool:
-    r"""Detect if string `s` contains encoded MIF encoded characters "\\M+cxxxx"."""
+    """Returns ``True`` if string `s` contains MIF encoded (``\\M+cxxxx``) characters.
+    """
     return bool(re.search(MIF_ENCODED, s))
 
 
 def decode_mif_to_unicode(s: str) -> str:
-    r"""Decode MIF encoded characters "\\M+cxxxx" in string `s`."""
+    """Decode MIF encoded characters ``\\M+cxxxx``."""
     return "".join(_decode_mif(part) for part in re.split(MIF_ENCODED, s))
 
 
