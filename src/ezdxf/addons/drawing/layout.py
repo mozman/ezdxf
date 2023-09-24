@@ -203,6 +203,22 @@ class Page:
         if self.is_landscape:
             self.width, self.height = self.height, self.width
 
+    def get_margin_rect(self, top_origin=True) -> tuple[Vec2, Vec2]:
+        """Returns the bottom-left and the top-right corner of the page margins in mm.
+        The origin (0, 0) is the top-left corner of the page if `top_origin` is
+        ``True`` or in the bottom-left corner otherwise.
+        """
+        margins = self.margins_in_mm
+        right_margin = self.width_in_mm - margins.right
+        page_height = self.height_in_mm
+        if top_origin:
+            bottom_left = Vec2(margins.left, margins.top)
+            top_right = Vec2(right_margin, page_height - margins.bottom)
+        else:  # bottom origin
+            bottom_left = Vec2(margins.left, margins.bottom)
+            top_right = Vec2(right_margin, page_height - margins.top)
+        return bottom_left, top_right
+
     @classmethod
     def from_dxf_layout(cls, layout: DXFLayout) -> Self:
         # all layout measurements in mm
@@ -252,6 +268,8 @@ class Settings:
         fit_page: Scale content to fit the page.
         page_alignment: Supported by backends that use the :class:`Page` class to define
             the size of the output media, default alignment is :attr:`PageAlignment.MIDDLE_CENTER`
+        crop_at_margins: crops the content at the page margins if ``True``, when
+            supported by the backend, default is ``False``
         scale: Factor to scale the DXF units of model- or paperspace, to represent 1mm
             in the rendered output drawing. Only uniform scaling is supported.
 
@@ -280,6 +298,7 @@ class Settings:
     fit_page: bool = True
     scale: float = 1.0
     page_alignment: PageAlignment = PageAlignment.MIDDLE_CENTER
+    crop_at_margins: bool = False
     # for LineweightPolicy.RELATIVE
     # max_stroke_width is defined as percentage of the content extents
     max_stroke_width: float = 0.001  # 0.1% of max(width, height) in viewBox coords
@@ -302,6 +321,17 @@ class Settings:
                 f"invalid content rotation {self.content_rotation}, "
                 f"expected: 0, 90, 180, 270"
             )
+
+    def page_output_scale_factor(self, page: Page) -> float:
+        """Returns the scaling factor to map page coordinates in mm to output space
+        coordinates.
+        """
+        try:
+            return self.output_coordinate_space / max(
+                page.width_in_mm, page.height_in_mm
+            )
+        except ZeroDivisionError:
+            return 1.0
 
 
 class Layout:
@@ -346,13 +376,7 @@ class Layout:
         except ZeroDivisionError:
             scale_dxf_to_mm = 1.0
         # map output coordinates to range [0, output_coordinate_space]
-        try:
-            scale_mm_to_output_space = settings.output_coordinate_space / max(
-                page.width_in_mm, page.height_in_mm
-            )
-        except ZeroDivisionError:
-            scale_mm_to_output_space = 1.0
-
+        scale_mm_to_output_space = settings.page_output_scale_factor(page)
         scale = scale_dxf_to_mm * scale_mm_to_output_space
         m = placement_matrix(
             self.dxf_bbox,
