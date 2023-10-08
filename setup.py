@@ -83,7 +83,6 @@ ext_modules = [
         optional=True,
         language="c++",
     ),
-
 ]
 try:
     from Cython.Distutils import build_ext
@@ -163,7 +162,12 @@ setup(
     provides=["ezdxf"],
     cmdclass=commands,
     ext_modules=ext_modules,
-    install_requires=["pyparsing>=2.0.1", "typing_extensions", "numpy", "fonttools"],
+    install_requires=[
+        "pyparsing>=2.0.1",
+        "typing_extensions>=4.0.0",
+        "numpy",
+        "fonttools",
+    ],
     setup_requires=["wheel"],
     tests_require=["pytest"],
     extras_require={
@@ -175,8 +179,7 @@ setup(
         "all5": DRAW5 + DEV + TEST,
     },
     keywords=["DXF", "CAD"],
-    long_description=read("README.md")
-    + read("NEWS.md", until="Version 0.11.2"),
+    long_description=read("README.md") + read("NEWS.md", until="Version 0.11.2"),
     long_description_content_type="text/markdown",
     platforms="OS Independent",
     license="MIT License",
