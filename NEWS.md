@@ -2,8 +2,9 @@
 News
 ====
 
-Version 1.1.1 - beta
---------------------
+Version 1.1.1 - 2023-10-08
+--------------------------
+
 - Release notes: https://ezdxf.mozman.at/release-v1-1.html
 - NEW: Python 3.12 binary wheel deployment on PyPI
 - NEW: page alignment support for the `drawing` add-on for these backends: 
