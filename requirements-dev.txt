@@ -1,5 +1,5 @@
 pyparsing>=2.0.1
-typing_extensions>=4.0.0
+typing_extensions>=4.6.0
 numpy
 fonttools
 pytest
