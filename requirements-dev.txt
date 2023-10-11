@@ -8,3 +8,4 @@ matplotlib
 pyside6
 sphinx
 sphinx-rtd-theme
+sphinxcontrib-jquery
