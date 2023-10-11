@@ -636,8 +636,12 @@ class Drawing:
 
     def update_extents(self):
         msp = self.modelspace()
-        self.header["$EXTMIN"] = msp.dxf.extmin
-        self.header["$EXTMAX"] = msp.dxf.extmax
+        # many applications not maintain these values
+        extmin = msp.dxf.extmin
+        extmax = msp.dxf.extmax
+        if bool(extmin) and bool(extmax):
+            self.header["$EXTMIN"] = extmin
+            self.header["$EXTMAX"] = extmax
         active_layout = self.active_layout()
         self.header["$PEXTMIN"] = active_layout.dxf.extmin
         self.header["$PEXTMAX"] = active_layout.dxf.extmax
