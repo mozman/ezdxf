@@ -2,6 +2,13 @@
 News
 ====
 
+Version 1.1.2 - beta
+--------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v1-1.html
+- CHANGE: [#936](https://github.com/mozman/ezdxf/issues/936)
+  improve modelspace extents updates
+
 Version 1.1.1 - 2023-10-08
 --------------------------
 
