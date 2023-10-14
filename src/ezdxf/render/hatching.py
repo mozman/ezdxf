@@ -595,7 +595,7 @@ def _line_segments(vertices: list[Intersection], distance: float) -> Iterator[Li
 def hatch_entity(
     polygon: DXFPolygon,
     filter_text_boxes=True,
-    jiggle_origin: bool = False,
+    jiggle_origin: bool = True,
 ) -> Iterator[tuple[Vec3, Vec3]]:
     """Yields the hatch pattern of the given HATCH or MPOLYGON entity as 3D lines.
     Each line is a pair of :class:`~ezdxf.math.Vec3` instances as start- and end
