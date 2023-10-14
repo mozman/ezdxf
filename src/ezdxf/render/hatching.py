@@ -610,7 +610,7 @@ def hatch_entity(
             entity
         filter_text_boxes: ignore text boxes if ``True``
         jiggle_origin: move pattern line origins a small amount to avoid intersections
-            in corner points which causes errors in pattern
+            in corner points which causes errors in patterns
 
     """
     if polygon.pattern is None or polygon.dxf.solid_fill:
@@ -652,6 +652,11 @@ def hatch_boundary_paths(polygon: DXFPolygon, filter_text_boxes=True) -> list[Pa
     return loops
 
 
+def _jiggle_factor():
+    # range 0.0003 .. 0.0010
+    return random.random() * 0.0007 + 0.0003
+
+
 def pattern_baselines(
     polygon: DXFPolygon,
     min_hatch_line_distance: float = MIN_HATCH_LINE_DISTANCE,
@@ -659,7 +664,10 @@ def pattern_baselines(
     jiggle_origin: bool = False,
 ) -> Iterator[HatchBaseLine]:
     """Yields the hatch pattern baselines of HATCH and MPOLYGON entities as
-    :class:`HatchBaseLine` instances.
+    :class:`HatchBaseLine` instances.  Set `jiggle_origin` to ``True`` to move pattern
+    line origins a small amount to avoid intersections in corner points which causes
+    errors in patterns.
+
     """
     pattern = polygon.pattern
     if not pattern:
@@ -669,16 +677,22 @@ def pattern_baselines(
     # The stored scale and angle is just for reconstructing the base pattern
     # when applying a new scaling or rotation.
 
-    for line in pattern.lines:
-        origin = line.base_point
-        if jiggle_origin:
-            # move origin a small amount to avoid intersections in corner points
-            m = line.offset.magnitude
-            origin += Vec2(m * random.random() / 1000.0, m * random.random() / 1000.0)
+    jiggle_offset = Vec2()
+    if jiggle_origin:
+        # move origin of base pattern lines a small amount to avoid intersections with
+        # boundary corner points
+        offsets: list[float] = [line.offset.magnitude for line in pattern.lines]
+        if len(offsets):
+            # calculate the same random jiggle offset for all pattern base lines
+            mean = sum(offsets) / len(offsets)
+            x = _jiggle_factor() * mean
+            y = _jiggle_factor() * mean
+            jiggle_offset = Vec2(x, y)
 
+    for line in pattern.lines:
         direction = Vec2.from_deg_angle(line.angle)
         yield HatchBaseLine(
-            origin=origin,
+            origin=line.base_point + jiggle_offset,
             direction=direction,
             offset=line.offset,
             line_pattern=line.dash_length_items,

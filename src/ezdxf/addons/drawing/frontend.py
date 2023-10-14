@@ -485,7 +485,7 @@ class UniversalFrontend:
         for baseline in hatching.pattern_baselines(
             polygon,
             min_hatch_line_distance=self.config.min_hatch_line_distance,
-            jiggle_origin=False,
+            jiggle_origin=True,
         ):
             for line in hatching.hatch_paths(baseline, paths, timeout):
                 line_pattern = baseline.pattern_renderer(line.distance)
