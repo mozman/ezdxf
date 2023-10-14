@@ -92,5 +92,22 @@ class TestNumpyPath2dToMatplotlibPath:
         ]
 
 
+def test_orient_paths():
+    outer_path = npshapes.NumpyPath2d(
+        path.from_vertices([(0, 0), (0, 10), (10, 10), (10, 0)], close=True)
+    )  # clockwise
+    assert outer_path.has_clockwise_orientation() is True
+    hole = npshapes.NumpyPath2d(
+        path.from_vertices([(2, 2), (8, 2), (8, 8), (2, 8)], close=True)
+    )  # ccw
+    assert hole.has_clockwise_orientation() is False
+    outer_path, hole = npshapes.orient_paths([outer_path, hole])
+
+    assert (
+        outer_path.has_clockwise_orientation() is False
+    ), "counter-clockwise orientation required"
+    assert hole.has_clockwise_orientation() is True, "clockwise orientation required"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

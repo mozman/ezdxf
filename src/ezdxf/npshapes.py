@@ -23,6 +23,7 @@ from ezdxf.path import (
     MoveTo,
     Curve3To,
     Curve4To,
+    nesting,
 )
 
 try:
@@ -38,6 +39,7 @@ __all__ = [
     "to_qpainter_path",
     "to_matplotlib_path",
     "single_paths",
+    "orient_paths",
 ]
 
 # comparing Command.<attrib> to ints is very slow
@@ -465,13 +467,22 @@ MPL_CODES = [
 ]
 
 
-def to_matplotlib_path(paths: Iterable[NumpyPath2d]):
-    """Convert the given `paths` into a single :class:`matplotlib.path.Path`."""
+def to_matplotlib_path(paths: Iterable[NumpyPath2d], *, detect_holes=False):
+    """Convert the given `paths` into a single :class:`matplotlib.path.Path`.
+
+    Matplotlib requires counter-clockwise oriented outside paths and clockwise oriented
+    holes. Set the `detect_holes` argument to ``True`` if this path orientation is not
+    yet satisfied.
+    """
     from matplotlib.path import Path
 
     paths = list(paths)
     if len(paths) == 0:
         raise ValueError("one or more paths required")
+
+    if detect_holes:
+        # path orientation for holes is important, see #939
+        paths = orient_paths(paths)
 
     vertices: list[np.ndarray] = []
     codes: list[int] = []
@@ -490,3 +501,24 @@ def single_paths(paths: Iterable[NumpyPath2d]) -> list[NumpyPath2d]:
         if sub_paths:
             single_paths_.extend(sub_paths)
     return single_paths_
+
+
+def orient_paths(paths: list[NumpyPath2d]) -> list[NumpyPath2d]:
+    """Returns a new list of paths, with outer paths oriented counter-clockwise and
+    holes oriented clockwise.
+    """
+    sub_paths: list[NumpyPath2d] = single_paths(paths)
+    if len(sub_paths) < 2:
+        return paths
+
+    polygons = nesting.make_polygon_structure(sub_paths)
+    outer_paths: list[NumpyPath2d]
+    holes: list[NumpyPath2d]
+    outer_paths, holes = nesting.winding_deconstruction(polygons)
+
+    path: NumpyPath2d
+    for path in outer_paths:
+        path.counter_clockwise()
+    for path in holes:
+        path.clockwise()
+    return outer_paths + holes
