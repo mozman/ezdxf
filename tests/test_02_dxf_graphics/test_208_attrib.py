@@ -1,12 +1,14 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 import pytest
+import math
 
 import ezdxf
 from ezdxf.entities import Attrib, MText
 from ezdxf.entities.attrib import EmbeddedMText, EmbeddedMTextNS
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Matrix44
 
 TEST_CLASS = Attrib
 TEST_TYPE = "ATTRIB"
@@ -233,6 +235,19 @@ class TestEmbeddedMTextSupport:
         mtext.text = "LINE1\nLINE2"
         attrib.set_mtext(mtext)
         assert attrib.has_embedded_mtext_entity is True
+
+    def test_transformation_of_embedded_mtext(self):
+        attrib = Attrib.new(dxfattribs={"color": 3, "text": "TEST"})
+        mtext = MText.new(dxfattribs={"color": 3})
+        mtext.text = "LINE1\nLINE2"
+        mtext.set_location((5, 5))
+        attrib.set_mtext(mtext)
+
+        m = Matrix44.z_rotate(math.radians(45)) @ Matrix44.translate(-7, 3, 0)
+        attrib.transform(m)
+        mtext = attrib.virtual_mtext_entity()
+        assert attrib.dxf.insert.isclose(mtext.dxf.insert)
+        assert attrib.dxf.rotation == pytest.approx(mtext.get_rotation())
 
 
 class TestEmbeddedMText:

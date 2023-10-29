@@ -10,6 +10,7 @@ Version 1.1.2 - beta
   improve modelspace extents updates
 - BUGFIX: [#939](https://github.com/mozman/ezdxf/issues/939)
   `Matplotlib` requires oriented outer paths and holes to draw correct filled paths 
+- BUGFIX: transform embedded `MTEXT` entity in `ATTRIB` and `ATTDEF` entities  
 
 Version 1.1.1 - 2023-10-08
 --------------------------
