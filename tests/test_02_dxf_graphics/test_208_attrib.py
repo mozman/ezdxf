@@ -246,6 +246,7 @@ class TestEmbeddedMTextSupport:
         m = Matrix44.z_rotate(math.radians(45)) @ Matrix44.translate(-7, 3, 0)
         attrib.transform(m)
         mtext = attrib.virtual_mtext_entity()
+        assert attrib.dxf.insert.isclose((-7.0, 10.071067811865476, 0.0)) is True
         assert attrib.dxf.insert.isclose(mtext.dxf.insert)
         assert attrib.dxf.rotation == pytest.approx(mtext.get_rotation())
 

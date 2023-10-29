@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from typing_extensions import Self
 import copy
 from ezdxf.lldxf import validator
 from ezdxf.math import NULLVEC, Vec3, Z_AXIS, OCS, Matrix44
@@ -382,9 +383,15 @@ class BaseAttrib(Text):
             self._embedded_mtext.map_resources(clone._embedded_mtext, mapping)
         # todo: map handles in embedded XRECORD if a real world example shows up
 
-    def post_transform(self, m: Matrix44) -> None:
-        if self._embedded_mtext is not None:
-            self._embedded_mtext.transform(m)
+    def transform(self, m: Matrix44) -> Self:
+        if self._embedded_mtext is None:
+            super().transform(m)
+        else:
+            mtext = self._embedded_mtext.virtual_mtext_entity()
+            mtext.transform(m)
+            self.set_mtext(mtext, graphic_properties=False)
+            self.post_transform(m)
+        return self
 
 
 def _update_content_from_mtext(text: Text, mtext: MText) -> None:
@@ -700,8 +707,3 @@ class EmbeddedMText:
         """Translate resources from self to the copied entity."""
         if clone.dxf.hasattr("style"):
             clone.dxf.style = mapping.get_text_style(clone.dxf.style)
-
-    def transform(self, m: Matrix44) -> None:
-        mtext = self.virtual_mtext_entity()
-        mtext.transform(m)
-        self.set_mtext(mtext)
