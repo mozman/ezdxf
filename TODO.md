@@ -45,6 +45,7 @@ DXF Entities
   doc.enable_acis_transfromation() 
 - (>v1.1) clipping path support for block references, see XCLIP command and 
   discussion #760
+- (>v1.1) add support for multi-line ATTRIB entities in `Insert.add_auto_attribs()`
 - (unlikely) ACAD_TABLE entity load and export support beyond `AcadTableBlockContent`
 - (unlikely) ACAD_TABLE tool to manage content at table and cell basis
 
