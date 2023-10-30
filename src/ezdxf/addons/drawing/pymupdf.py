@@ -243,7 +243,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         if color == (1.0, 1.0, 1.0) or opacity == 0.0:
             return
         shape = self.new_shape()
-        shape.drawRect([0, 0, self.page_width_in_pt, self.page_height_in_pt])
+        shape.draw_rect([0, 0, self.page_width_in_pt, self.page_height_in_pt])
         shape.finish(width=None, color=None, fill=rgb, fill_opacity=opacity)
         shape.commit()
 
@@ -306,13 +306,13 @@ class PyMuPdfRenderBackend(BackendInterface):
     def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         shape = self.new_shape()
         pos = Vec2(pos)
-        shape.drawLine(pos, pos)
+        shape.draw_line(pos, pos)
         self.finish_line(shape, properties, close=False)
         shape.commit()
 
     def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         shape = self.new_shape()
-        shape.drawLine(Vec2(start), Vec2(end))
+        shape.draw_line(Vec2(start), Vec2(end))
         self.finish_line(shape, properties, close=False)
         shape.commit()
 
@@ -321,7 +321,7 @@ class PyMuPdfRenderBackend(BackendInterface):
     ) -> None:
         shape = self.new_shape()
         for start, end in lines:
-            shape.drawLine(start, end)
+            shape.draw_line(start, end)
         self.finish_line(shape, properties, close=False)
         shape.commit()
 
@@ -350,7 +350,7 @@ class PyMuPdfRenderBackend(BackendInterface):
             return
         # input coordinates are page coordinates in pdf units
         shape = self.new_shape()
-        shape.drawPolyline(vertices)
+        shape.draw_polyline(vertices)
         self.finish_filling(shape, properties)
         shape.commit()
 
@@ -384,18 +384,18 @@ def add_path_to_shape(shape, path: BkPath2d, close: bool) -> None:
         end = command.end
         if command.type == Command.MOVE_TO:
             if close and not sub_path_start.isclose(end):
-                shape.drawLine(start, sub_path_start)
+                shape.draw_line(start, sub_path_start)
             sub_path_start = end
         elif command.type == Command.LINE_TO:
-            shape.drawLine(start, end)
+            shape.draw_line(start, end)
         elif command.type == Command.CURVE3_TO:
-            shape.drawCurve(start, command.ctrl, end)
+            shape.draw_curve(start, command.ctrl, end)
         elif command.type == Command.CURVE4_TO:
-            shape.drawBezier(start, command.ctrl1, command.ctrl2, end)
+            shape.draw_bezier(start, command.ctrl1, command.ctrl2, end)
         start = end
         last_point = end
     if close and not sub_path_start.isclose(last_point):
-        shape.drawLine(last_point, sub_path_start)
+        shape.draw_line(last_point, sub_path_start)
 
 
 def map_lineweight_to_stroke_width(
