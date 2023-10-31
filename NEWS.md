@@ -2,8 +2,8 @@
 News
 ====
 
-Version 1.1.2 - beta
---------------------
+Version 1.1.2 - 2023-11-01
+--------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v1-1.html
 - CHANGE: [#936](https://github.com/mozman/ezdxf/issues/936)
