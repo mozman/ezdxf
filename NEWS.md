@@ -12,7 +12,7 @@ Version 1.1.2 - beta
   `Matplotlib` requires oriented outer paths and holes to draw correct filled paths 
 - BUGFIX: transform embedded `MTEXT` entity in `ATTRIB` and `ATTDEF` entities
 - BUGFIX: [#949](https://github.com/mozman/ezdxf/issues/949)
-  fixed `PyMuPDF` deprecated method names 
+  fixed `PyMuPDF` deprecated method names, requires `PyMuPDF` 1.20.0 or newer 
 
 Version 1.1.1 - 2023-10-08
 --------------------------
