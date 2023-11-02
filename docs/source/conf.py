@@ -30,6 +30,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
+    'sphinxcontrib.jquery',
 ]
 autodoc_typehints_format = "short"
 autodoc_preserve_defaults = True

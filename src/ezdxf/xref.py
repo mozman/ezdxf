@@ -1,12 +1,6 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
-"""
-Resource management module for transferring DXF resources between documents.
-
----------------------------------------------------------
-WARNING: THIS MODULE IS IN PLANNING STATE, DO NOT USE IT!
----------------------------------------------------------
-
+""" Resource management module for transferring DXF resources between documents.
 """
 from __future__ import annotations
 from typing import Optional, Sequence, Callable, Iterable

@@ -14,10 +14,10 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: pypy-3.8
+          python-version: pypy-3.9
       - name: create pure Python wheel
         run: |
-          pypy -m pip install wheel
+          pypy -m pip install setuptools wheel
           pypy setup.py bdist_wheel
       - name: Upload pure Python wheel to PyPI
         env:

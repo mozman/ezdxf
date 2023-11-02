@@ -208,6 +208,8 @@ class Configuration:
         hatching_timeout: hatching timeout for a single entity, very dense
             hatching patterns can cause a very long execution time, the default
             timeout for a single entity is 30 seconds.
+        min_hatch_line_distance: minimum hatch line distance to render, narrower pattern
+            lines are rendered as solid filling
         color_policy:
         custom_fg_color: Used for :class:`ColorPolicy.custom` policy, custom foreground
             color as "#RRGGBBAA" color string (RGB+alpha)
@@ -233,6 +235,8 @@ class Configuration:
     max_flattening_distance: float = disassemble.Primitive.max_flattening_distance
     circle_approximation_count: int = 128
     hatching_timeout: float = 30.0
+    # Keep value in sync with ezdxf.render.hatching.MIN_HATCH_LINE_DISTANCE
+    min_hatch_line_distance: float = 1e-4
     color_policy: ColorPolicy = ColorPolicy.COLOR
     custom_fg_color: Color = "#000000"
     background_policy: BackgroundPolicy = BackgroundPolicy.DEFAULT

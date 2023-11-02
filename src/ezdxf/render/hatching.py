@@ -1,4 +1,4 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import (
@@ -16,6 +16,7 @@ from collections import defaultdict
 import enum
 import math
 import dataclasses
+import random
 from ezdxf.math import (
     Vec2,
     Vec3,
@@ -282,6 +283,9 @@ class HatchBaseLine:
         direction: the hatch line direction as :class:`~ezdxf.math.Vec2` instance, must not (0, 0)
         offset: the offset of the hatch line origin to the next or to the previous hatch line
         line_pattern: line pattern as sequence of floats, see also :class:`PatternRenderer`
+        min_hatch_line_distance: minimum hatch line distance to render, raises an
+            :class:`DenseHatchingLinesError` exception if the distance between hatch
+            lines is smaller than this value
 
     Raises:
         HatchLineDirectionError: hatch baseline has no direction, (0, 0) vector
@@ -295,6 +299,7 @@ class HatchBaseLine:
         direction: Vec2,
         offset: Vec2,
         line_pattern: Optional[list[float]] = None,
+        min_hatch_line_distance=MIN_HATCH_LINE_DISTANCE,
     ):
         self.origin = origin
         try:
@@ -303,7 +308,7 @@ class HatchBaseLine:
             raise HatchLineDirectionError("hatch baseline has no direction")
         self.offset = offset
         self.normal_distance: float = (-offset).det(self.direction - offset)
-        if abs(self.normal_distance) < MIN_HATCH_LINE_DISTANCE:
+        if abs(self.normal_distance) < min_hatch_line_distance:
             raise DenseHatchingLinesError("hatching lines are too narrow")
         self._end = self.origin + self.direction
         self.line_pattern: list[float] = line_pattern if line_pattern else []
@@ -588,7 +593,9 @@ def _line_segments(vertices: list[Intersection], distance: float) -> Iterator[Li
 
 
 def hatch_entity(
-    polygon: DXFPolygon, filter_text_boxes=True
+    polygon: DXFPolygon,
+    filter_text_boxes=True,
+    jiggle_origin: bool = True,
 ) -> Iterator[tuple[Vec3, Vec3]]:
     """Yields the hatch pattern of the given HATCH or MPOLYGON entity as 3D lines.
     Each line is a pair of :class:`~ezdxf.math.Vec3` instances as start- and end
@@ -602,6 +609,8 @@ def hatch_entity(
         polygon: :class:`~ezdxf.entities.Hatch` or :class:`~ezdxf.entities.MPolygon`
             entity
         filter_text_boxes: ignore text boxes if ``True``
+        jiggle_origin: move pattern line origins a small amount to avoid intersections
+            in corner points which causes errors in patterns
 
     """
     if polygon.pattern is None or polygon.dxf.solid_fill:
@@ -613,7 +622,7 @@ def hatch_entity(
     paths = hatch_boundary_paths(polygon, filter_text_boxes)
     # todo: MPOLYGON offset
     # All paths in OCS!
-    for baseline in pattern_baselines(polygon):
+    for baseline in pattern_baselines(polygon, jiggle_origin=jiggle_origin):
         for line in hatch_paths(baseline, paths):
             line_pattern = baseline.pattern_renderer(line.distance)
             for s, e in line_pattern.render(line.start, line.end):
@@ -643,9 +652,22 @@ def hatch_boundary_paths(polygon: DXFPolygon, filter_text_boxes=True) -> list[Pa
     return loops
 
 
-def pattern_baselines(polygon: DXFPolygon) -> Iterator[HatchBaseLine]:
+def _jiggle_factor():
+    # range 0.0003 .. 0.0010
+    return random.random() * 0.0007 + 0.0003
+
+
+def pattern_baselines(
+    polygon: DXFPolygon,
+    min_hatch_line_distance: float = MIN_HATCH_LINE_DISTANCE,
+    *,
+    jiggle_origin: bool = False,
+) -> Iterator[HatchBaseLine]:
     """Yields the hatch pattern baselines of HATCH and MPOLYGON entities as
-    :class:`HatchBaseLine` instances.
+    :class:`HatchBaseLine` instances.  Set `jiggle_origin` to ``True`` to move pattern
+    line origins a small amount to avoid intersections in corner points which causes
+    errors in patterns.
+
     """
     pattern = polygon.pattern
     if not pattern:
@@ -654,8 +676,25 @@ def pattern_baselines(polygon: DXFPolygon) -> Iterator[HatchBaseLine]:
     # usage!
     # The stored scale and angle is just for reconstructing the base pattern
     # when applying a new scaling or rotation.
+
+    jiggle_offset = Vec2()
+    if jiggle_origin:
+        # move origin of base pattern lines a small amount to avoid intersections with
+        # boundary corner points
+        offsets: list[float] = [line.offset.magnitude for line in pattern.lines]
+        if len(offsets):
+            # calculate the same random jiggle offset for all pattern base lines
+            mean = sum(offsets) / len(offsets)
+            x = _jiggle_factor() * mean
+            y = _jiggle_factor() * mean
+            jiggle_offset = Vec2(x, y)
+
     for line in pattern.lines:
         direction = Vec2.from_deg_angle(line.angle)
         yield HatchBaseLine(
-            line.base_point, direction, line.offset, line.dash_length_items
+            origin=line.base_point + jiggle_offset,
+            direction=direction,
+            offset=line.offset,
+            line_pattern=line.dash_length_items,
+            min_hatch_line_distance=min_hatch_line_distance,
         )

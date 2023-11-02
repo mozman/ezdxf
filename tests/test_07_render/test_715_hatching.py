@@ -349,7 +349,8 @@ def test_explode_earth1_pattern():
         is_closed=1,
         flags=3,
     )
-    lines = list(hatching.hatch_entity(hatch))
+    # jiggle_origin=True has random behavior, which is not good for a test!
+    lines = list(hatching.hatch_entity(hatch, jiggle_origin=False))
     assert len(lines) == 139
 
 

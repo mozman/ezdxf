@@ -23,9 +23,7 @@ def polygon_hatching(filename: str):
     hole = list(forms.circle(16, radius=4))
     hole1 = Vec2.list(forms.translate(hole, (-2, -2)))
     hole2 = Vec2.list(forms.translate(hole, (2, 2)))
-    baseline = hatching.HatchBaseLine(
-        Vec2(), direction=Vec2(1, 1), offset=Vec2(-1, 1)
-    )
+    baseline = hatching.HatchBaseLine(Vec2(), direction=Vec2(1, 1), offset=Vec2(-1, 1))
     render_hatch(msp, baseline, polygon, [hole1, hole2])
     doc.saveas(CWD / filename)
 
@@ -75,16 +73,8 @@ POLYGONS = [
     list(forms.turtle("5 r 2 l 5 l 12 l 5 r 2 l 5")),
     list(forms.turtle("5 l 2 r 5 l 10 l 5 l 2 r 5")),
     list(forms.turtle("2 l 2 r 2 r 2 l 6 " "l 10 l 2 l 2 r 2 r 2 l 6")),
-    list(
-        forms.turtle(
-            "2 l 2 r 2 l 2 r 2 r 4 l 4 l 10 l 2 l 2 r 2 l 2 r 2 r 4 l 4"
-        )
-    ),
-    list(
-        forms.turtle(
-            "2 r 2 l 2 r 2 l 2 l 4 r 4 l 10 l 2 r 2 l 2 r 2 l 2 l 4 r 4"
-        )
-    ),
+    list(forms.turtle("2 l 2 r 2 l 2 r 2 r 4 l 4 l 10 l 2 l 2 r 2 l 2 r 2 r 4 l 4")),
+    list(forms.turtle("2 r 2 l 2 r 2 l 2 l 4 r 4 l 10 l 2 r 2 l 2 r 2 l 2 l 4 r 4")),
     list(
         forms.turtle(
             "2 l 2 r 2 r 2 l 2 l 4 r 2 r 4 l 2 l 10 l 2 r 2 l 2 l 2 r 2 r 4 l 2 l 4 r 2"
@@ -146,9 +136,7 @@ def hatch_circular_path(filename: str, size=10, angle=0):
     circle = path.unit_circle(segments=8, transform=m)
     direction = Vec2.from_deg_angle(angle)
     offset = direction.orthogonal() * 0.1
-    baseline = hatching.HatchBaseLine(
-        Vec2(0, 0), direction=direction, offset=offset
-    )
+    baseline = hatching.HatchBaseLine(Vec2(0, 0), direction=direction, offset=offset)
     msp.add_lwpolyline(
         circle.flattening(0.1), close=True, dxfattribs={"layer": "POLYGON"}
     )
@@ -173,9 +161,7 @@ def hole_examples(filename: str, size=10, dx=13, angle=0):
     ]
     direction = Vec2.from_deg_angle(angle)
     offset = direction.orthogonal() * 0.1
-    baseline = hatching.HatchBaseLine(
-        Vec2(0, 0), direction=direction, offset=offset
-    )
+    baseline = hatching.HatchBaseLine(Vec2(0, 0), direction=direction, offset=offset)
     render_hatch(msp, baseline, forms.square(size), holes)
     # adjacent holes
     holes = [
@@ -262,7 +248,7 @@ def debug_hatch():
         is_closed=1,
         flags=3,
     )
-    for start, end in hatching.hatch_entity(e, 1):  # type: ignore
+    for start, end in hatching.hatch_entity(e, 1, jiggle_origin=True):  # type: ignore
         msp.add_line(start, end)
 
 

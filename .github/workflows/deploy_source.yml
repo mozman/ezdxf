@@ -12,9 +12,11 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: Create source distribution
-        run: python setup.py sdist --formats=zip
+        run: |
+          python -m pip install setuptools
+          python setup.py sdist --formats=zip
       - name: Upload source package to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}

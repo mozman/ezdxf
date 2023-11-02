@@ -22,6 +22,8 @@ from ezdxf.lldxf import repair
 from ezdxf.lldxf.encoding import (
     has_dxf_unicode,
     decode_dxf_unicode,
+    has_mif_encoding,
+    decode_mif_to_unicode,
 )
 from ezdxf.lldxf.types import (
     DXFTag,
@@ -812,11 +814,14 @@ def byte_tag_compiler(
                             )
                         )
 
-                    # Convert DXF-Unicode notation "\U+xxxx" to unicode,
-                    # but exclude structure tags (code == 0):
-                    if code and has_dxf_unicode(str_):
-                        str_ = decode_dxf_unicode(str_)
-
+                    # exclude structure tags (code == 0):
+                    if code:
+                        # Convert DXF-Unicode notation "\U+xxxx" to unicode
+                        if has_dxf_unicode(str_):
+                            str_ = decode_dxf_unicode(str_)
+                        # Convert MIF notation "\M+cxxxx" to unicode
+                        elif has_mif_encoding(str_):
+                            str_ = decode_mif_to_unicode(str_)
                     yield DXFTag(code, str_)
                 else:
                     try:

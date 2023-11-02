@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Iterable, no_type_check
 import copy
 
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, BoundingBox2d
 from ezdxf.colors import RGB
 from ezdxf.path import Command
 from ezdxf.version import __version__
@@ -19,7 +19,9 @@ is_pymupdf_installed = True
 try:
     import fitz
 except ImportError:
-    print("Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/")
+    print(
+        "Python module PyMuPDF (AGPL!) is required: https://pypi.org/project/PyMuPDF/"
+    )
     fitz = None
     is_pymupdf_installed = False
 # PyMuPDF docs: https://pymupdf.readthedocs.io/en/latest/
@@ -34,12 +36,17 @@ SUPPORTED_IMAGE_FORMATS = ("png", "ppm", "pbm")
 
 class PyMuPdfBackend(recorder.Recorder):
     """This backend uses the `PyMuPdf`_ package to create PDF, PNG, PPM and PBM output.
+    This backend support content cropping at page margins.
+
+    PyMuPDF is licensed under the `AGPL`_. Sorry, but it's the best package for the job
+    I've found so far.
 
     Install package::
 
         pip install pymupdf
 
     .. _PyMuPdf: https://pypi.org/project/PyMuPDF/
+    .. _AGPL: https://www.gnu.org/licenses/agpl-3.0.html
 
     """
 
@@ -48,40 +55,66 @@ class PyMuPdfBackend(recorder.Recorder):
         self._init_flip_y = True
 
     def _get_replay(
-        self, page: layout.Page, settings: layout.Settings = layout.Settings()
+        self,
+        page: layout.Page,
+        *,
+        settings: layout.Settings = layout.Settings(),
+        render_box: BoundingBox2d | None = None,
     ) -> PyMuPdfRenderBackend:
         """Returns the PDF document as bytes.
 
         Args:
             page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
+            render_box: set explicit region to render, default is content bounding box
         """
+        top_origin = True
         # This player changes the original recordings!
         player = self.player()
-        output_layout = layout.Layout(player.bbox(), flip_y=self._init_flip_y)
+        if render_box is None:
+            render_box = player.bbox()
+
+        # the page origin (0, 0) is in the top-left corner.
+        output_layout = layout.Layout(render_box, flip_y=self._init_flip_y)
         page = output_layout.get_final_page(page, settings)
 
-        # The DXF coordinates are mapped to PDF Units in the first quadrant
+        # DXF coordinates are mapped to PDF Units in the first quadrant
         settings = copy.copy(settings)
         settings.output_coordinate_space = get_coordinate_output_space(page)
 
-        m = output_layout.get_placement_matrix(page, settings)
+        m = output_layout.get_placement_matrix(
+            page, settings=settings, top_origin=top_origin
+        )
+        # transform content to the output coordinates space:
         player.transform(m)
+        if settings.crop_at_margins:
+            p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
+            # scale factor to map page coordinates to output space coordinates:
+            output_scale = settings.page_output_scale_factor(page)
+            max_sagitta = 0.1 * MM_TO_POINTS  # curve approximation 0.1 mm
+            # crop content inplace by the margin rect:
+            player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
+
         self._init_flip_y = False
         backend = self.make_backend(page, settings)
         player.replay(backend)
         return backend
 
     def get_pdf_bytes(
-        self, page: layout.Page, *, settings: layout.Settings = layout.Settings()
+        self,
+        page: layout.Page,
+        *,
+        settings: layout.Settings = layout.Settings(),
+        render_box: BoundingBox2d | None = None,
     ) -> bytes:
         """Returns the PDF document as bytes.
 
         Args:
             page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
+            render_box: set explicit region to render, default is content bounding box
         """
-        backend = self._get_replay(page, settings)
+        backend = self._get_replay(page, settings=settings, render_box=render_box)
         return backend.get_pdf_bytes()
 
     def get_pixmap_bytes(
@@ -92,6 +125,7 @@ class PyMuPdfBackend(recorder.Recorder):
         settings: layout.Settings = layout.Settings(),
         dpi: int = 96,
         alpha=False,
+        render_box: BoundingBox2d | None = None,
     ) -> bytes:
         """Returns a pixel image as bytes, supported image formats:
 
@@ -107,11 +141,11 @@ class PyMuPdfBackend(recorder.Recorder):
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
             dpi: output resolution in dots per inch
             alpha: add alpha channel (transparency)
-
+            render_box: set explicit region to render, default is content bounding box
         """
         if fmt not in SUPPORTED_IMAGE_FORMATS:
             raise ValueError(f"unsupported image format: '{fmt}'")
-        backend = self._get_replay(page, settings)
+        backend = self._get_replay(page, settings=settings, render_box=render_box)
         try:
             pixmap = backend.get_pixmap(dpi=dpi, alpha=alpha)
             return pixmap.tobytes(output=fmt)
@@ -209,7 +243,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         if color == (1.0, 1.0, 1.0) or opacity == 0.0:
             return
         shape = self.new_shape()
-        shape.drawRect([0, 0, self.page_width_in_pt, self.page_height_in_pt])
+        shape.draw_rect([0, 0, self.page_width_in_pt, self.page_height_in_pt])
         shape.finish(width=None, color=None, fill=rgb, fill_opacity=opacity)
         shape.commit()
 
@@ -272,13 +306,13 @@ class PyMuPdfRenderBackend(BackendInterface):
     def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         shape = self.new_shape()
         pos = Vec2(pos)
-        shape.drawLine(pos, pos)
+        shape.draw_line(pos, pos)
         self.finish_line(shape, properties, close=False)
         shape.commit()
 
     def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         shape = self.new_shape()
-        shape.drawLine(Vec2(start), Vec2(end))
+        shape.draw_line(Vec2(start), Vec2(end))
         self.finish_line(shape, properties, close=False)
         shape.commit()
 
@@ -287,7 +321,7 @@ class PyMuPdfRenderBackend(BackendInterface):
     ) -> None:
         shape = self.new_shape()
         for start, end in lines:
-            shape.drawLine(start, end)
+            shape.draw_line(start, end)
         self.finish_line(shape, properties, close=False)
         shape.commit()
 
@@ -316,7 +350,7 @@ class PyMuPdfRenderBackend(BackendInterface):
             return
         # input coordinates are page coordinates in pdf units
         shape = self.new_shape()
-        shape.drawPolyline(vertices)
+        shape.draw_polyline(vertices)
         self.finish_filling(shape, properties)
         shape.commit()
 
@@ -350,18 +384,18 @@ def add_path_to_shape(shape, path: BkPath2d, close: bool) -> None:
         end = command.end
         if command.type == Command.MOVE_TO:
             if close and not sub_path_start.isclose(end):
-                shape.drawLine(start, sub_path_start)
+                shape.draw_line(start, sub_path_start)
             sub_path_start = end
         elif command.type == Command.LINE_TO:
-            shape.drawLine(start, end)
+            shape.draw_line(start, end)
         elif command.type == Command.CURVE3_TO:
-            shape.drawCurve(start, command.ctrl, end)
+            shape.draw_curve(start, command.ctrl, end)
         elif command.type == Command.CURVE4_TO:
-            shape.drawBezier(start, command.ctrl1, command.ctrl2, end)
+            shape.draw_bezier(start, command.ctrl1, command.ctrl2, end)
         start = end
         last_point = end
     if close and not sub_path_start.isclose(last_point):
-        shape.drawLine(last_point, sub_path_start)
+        shape.draw_line(last_point, sub_path_start)
 
 
 def map_lineweight_to_stroke_width(

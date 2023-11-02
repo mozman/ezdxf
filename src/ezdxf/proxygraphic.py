@@ -563,7 +563,8 @@ class ProxyGraphic:
             is_closed = True
         num_points = bs.read_bit_long()
         if num_points <= 0:
-            return;
+            return None  # ignored in method unsafe_virtual_entities()
+
         if flag & 16:
             num_bulges = bs.read_bit_long()
 

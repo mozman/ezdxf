@@ -13,7 +13,6 @@ from typing import (
 )
 from typing_extensions import TypeAlias
 import logging
-import itertools
 import time
 
 import ezdxf.bbox
@@ -60,8 +59,6 @@ from ezdxf.path import (
     Path,
     make_path,
     from_hatch_boundary_path,
-    make_polygon_structure,
-    winding_deconstruction,
     from_vertices,
 )
 from ezdxf.render import MeshBuilder, TraceBuilder
@@ -485,7 +482,11 @@ class UniversalFrontend:
                 return True
             return False
 
-        for baseline in hatching.pattern_baselines(polygon):
+        for baseline in hatching.pattern_baselines(
+            polygon,
+            min_hatch_line_distance=self.config.min_hatch_line_distance,
+            jiggle_origin=True,
+        ):
             for line in hatching.hatch_paths(baseline, paths, timeout):
                 line_pattern = baseline.pattern_renderer(line.distance)
                 for s, e in line_pattern.render(line.start, line.end):
@@ -522,8 +523,12 @@ class UniversalFrontend:
         if filling.type == Filling.PATTERN:
             if loops is None:
                 loops = hatching.hatch_boundary_paths(polygon, filter_text_boxes=True)
-            self.draw_hatch_pattern(polygon, loops, properties)
-            return
+            try:
+                self.draw_hatch_pattern(polygon, loops, properties)
+            except hatching.DenseHatchingLinesError:
+                pass  # fallthrough to solid fill rendering
+            else:
+                return
 
         # draw SOLID filling
         ocs = polygon.ocs()

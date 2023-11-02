@@ -5,7 +5,7 @@ from typing import Iterable, Sequence, no_type_check
 import copy
 
 from ezdxf import colors
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, BoundingBox2d
 from ezdxf.path import Command
 
 from .type_hints import Color
@@ -36,7 +36,9 @@ CMD_CURVE4_TO = int(Command.CURVE4_TO)
 
 class PlotterBackend(recorder.Recorder):
     """The :class:`PlotterBackend` creates HPGL/2 plot files for output on raster
-    plotters. This backend does not need any additional packages.
+    plotters. This backend does not need any additional packages.  This backend support
+    content cropping at page margins.
+
     The plot files are tested by the plot file viewer `ViewCompanion Standard`_
     but not on real hardware - please use with care and give feedback.
 
@@ -50,8 +52,9 @@ class PlotterBackend(recorder.Recorder):
     def get_bytes(
         self,
         page: layout.Page,
-        settings: layout.Settings = layout.Settings(),
         *,
+        settings: layout.Settings = layout.Settings(),
+        render_box: BoundingBox2d | None = None,
         curves=True,
         decimal_places: int = 1,
         base=64,
@@ -61,27 +64,42 @@ class PlotterBackend(recorder.Recorder):
         Args:
             page: page definition, see :class:`~ezdxf.addons.drawing.layout.Page`
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
+            render_box: set explicit region to render, default is content bounding box
             curves: use Bèzier curves for HPGL/2 output
             decimal_places: HPGL/2 output precision, less decimal places creates smaller
                 files but for the price of imprecise curves (text)
             base: base for polyline encoding, 32 for 7 bit encoding or 64 for 8 bit encoding
 
         """
+        top_origin = False
         settings = copy.copy(settings)
         # This player changes the original recordings!
         player = self.player()
+        if render_box is None:
+            render_box = player.bbox()
 
-        output_layout = layout.Layout(player.bbox(), flip_y=False)
+        # the page origin (0, 0) is in the bottom-left corner.
+        output_layout = layout.Layout(render_box, flip_y=False)
         page = output_layout.get_final_page(page, settings)
         if page.width == 0 or page.height == 0:
             return b""  # empty page
-        # The DXF coordinates are mapped to integer coordinates (plu) in the first
+        # DXF coordinates are mapped to integer coordinates (plu) in the first
         # quadrant: 40 plu = 1mm
         settings.output_coordinate_space = (
             max(page.width_in_mm, page.height_in_mm) * MM_TO_PLU
         )
-        m = output_layout.get_placement_matrix(page, settings)
+        # transform content to the output coordinates space:
+        m = output_layout.get_placement_matrix(
+            page, settings=settings, top_origin=top_origin
+        )
         player.transform(m)
+        if settings.crop_at_margins:
+            p1, p2 = page.get_margin_rect(top_origin=top_origin)  # in mm
+            # scale factor to map page coordinates to output space coordinates:
+            output_scale = settings.page_output_scale_factor(page)
+            max_sagitta = 0.1 * MM_TO_PLU  # curve approximation 0.1 mm
+            # crop content inplace by the margin rect:
+            player.crop_rect(p1 * output_scale, p2 * output_scale, max_sagitta)
         backend = _RenderBackend(
             page,
             settings=settings,
@@ -100,7 +118,9 @@ class PlotterBackend(recorder.Recorder):
         Has often the smallest file size and should be compatible to all output devices
         but has a low quality text rendering.
         """
-        return self.get_bytes(page, settings, curves=False, decimal_places=0, base=32)
+        return self.get_bytes(
+            page, settings=settings, curves=False, decimal_places=0, base=32
+        )
 
     def low_quality(
         self, page: layout.Page, settings: layout.Settings = layout.Settings()
@@ -110,7 +130,9 @@ class PlotterBackend(recorder.Recorder):
         Has a smaller file size than normal quality and the output device must support
         8-bit encoding and Bèzier curves.
         """
-        return self.get_bytes(page, settings, curves=True, decimal_places=0, base=64)
+        return self.get_bytes(
+            page, settings=settings, curves=True, decimal_places=0, base=64
+        )
 
     def normal_quality(
         self, page: layout.Page, settings: layout.Settings = layout.Settings()
@@ -120,7 +142,9 @@ class PlotterBackend(recorder.Recorder):
         Has a smaller file size than high quality and the output device must support
         8-bit encoding, Bèzier curves and fractional coordinates.
         """
-        return self.get_bytes(page, settings, curves=True, decimal_places=1, base=64)
+        return self.get_bytes(
+            page, settings=settings, curves=True, decimal_places=1, base=64
+        )
 
     def high_quality(
         self, page: layout.Page, settings: layout.Settings = layout.Settings()
@@ -130,7 +154,9 @@ class PlotterBackend(recorder.Recorder):
         Has the largest file size and the output device must support 8-bit encoding,
         Bèzier curves and fractional coordinates.
         """
-        return self.get_bytes(page, settings, curves=True, decimal_places=2, base=64)
+        return self.get_bytes(
+            page, settings=settings, curves=True, decimal_places=2, base=64
+        )
 
 
 class PenTable:

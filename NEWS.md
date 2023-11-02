@@ -2,6 +2,34 @@
 News
 ====
 
+Version 1.1.2 - 2023-11-01
+--------------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v1-1.html
+- CHANGE: [#936](https://github.com/mozman/ezdxf/issues/936)
+  improve modelspace extents updates
+- BUGFIX: [#939](https://github.com/mozman/ezdxf/issues/939)
+  `Matplotlib` requires oriented outer paths and holes to draw correct filled paths 
+- BUGFIX: transform embedded `MTEXT` entity in `ATTRIB` and `ATTDEF` entities
+- BUGFIX: [#949](https://github.com/mozman/ezdxf/issues/949)
+  fixed `PyMuPDF` deprecated method names, requires `PyMuPDF` 1.20.0 or newer 
+
+Version 1.1.1 - 2023-10-08
+--------------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v1-1.html
+- NEW: Python 3.12 binary wheel deployment on PyPI
+- NEW: page alignment support for the `drawing` add-on for these backends: 
+  `SVGBackend`, `PyMuPdfBackend` and the `PlotterBackend`
+- NEW: cropping content at page margins for the `drawing` add-on for these backends:
+  `SVGBackend`, `PyMuPdfBackend` and the `PlotterBackend`
+- NEW: support for decoding of MIF encoded text `\M+cxxxx` by the `recover` module
+- INFO: `numpy` v1.25 has stopped providing Python 3.8 binary wheels on PyPI
+- BUGFIX: [#929](https://github.com/mozman/ezdxf/issues/929)
+  handling of the minimum hatch line distance
+- BUGFIX: [#932](https://github.com/mozman/ezdxf/issues/932)
+  tolerate MIF encoding `\M+cxxxx` in table names
+
 Version 1.1.0 - 2023-09-09
 --------------------------
 

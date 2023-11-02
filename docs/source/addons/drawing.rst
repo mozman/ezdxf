@@ -197,6 +197,8 @@ The :class:`Layout` class uses following classes and enums for configuration:
     .. automethod:: scale
 
 
+.. autoclass:: ezdxf.addons.drawing.layout.PageAlignment
+
 .. autoclass:: ezdxf.addons.drawing.layout.Settings
 
 .. autoclass:: ezdxf.addons.drawing.layout.Units

@@ -83,7 +83,6 @@ ext_modules = [
         optional=True,
         language="c++",
     ),
-
 ]
 try:
     from Cython.Distutils import build_ext
@@ -129,8 +128,8 @@ def read(fname, until=""):
         return "File '%s' not found.\n" % fname
 
 
-DRAW = ["matplotlib", "PySide6", "PyMuPDF"]
-DRAW5 = ["matplotlib", "PyQt5", "PyMuPDF"]
+DRAW = ["matplotlib", "PySide6", "PyMuPDF>=1.20.0"]
+DRAW5 = ["matplotlib", "PyQt5", "PyMuPDF>=1.20.0"]
 TEST = ["pytest"]
 DEV = ["setuptools", "wheel", "Cython"]
 
@@ -163,7 +162,12 @@ setup(
     provides=["ezdxf"],
     cmdclass=commands,
     ext_modules=ext_modules,
-    install_requires=["pyparsing>=2.0.1", "typing_extensions", "numpy", "fonttools"],
+    install_requires=[
+        "pyparsing>=2.0.1",
+        "typing_extensions>=4.6.0",
+        "numpy",
+        "fonttools",
+    ],
     setup_requires=["wheel"],
     tests_require=["pytest"],
     extras_require={
@@ -175,8 +179,7 @@ setup(
         "all5": DRAW5 + DEV + TEST,
     },
     keywords=["DXF", "CAD"],
-    long_description=read("README.md")
-    + read("NEWS.md", until="Version 0.11.2"),
+    long_description=read("README.md") + read("NEWS.md", until="Version 0.11.2"),
     long_description_content_type="text/markdown",
     platforms="OS Independent",
     license="MIT License",
@@ -189,6 +192,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Intended Audience :: Developers",

@@ -63,6 +63,33 @@ UNITS_TO_MM = {
 }
 
 
+class PageAlignment(enum.IntEnum):
+    """Page alignment of content as enum.
+
+    Attributes:
+        TOP_LEFT:
+        TOP_CENTER:
+        TOP_RIGHT:
+        MIDDLE_LEFT:
+        MIDDLE_CENTER:
+        MIDDLE_RIGHT:
+        BOTTOM_LEFT:
+        BOTTOM_CENTER:
+        BOTTOM_RIGHT:
+
+    """
+
+    TOP_LEFT = 1
+    TOP_CENTER = 2
+    TOP_RIGHT = 3
+    MIDDLE_LEFT = 4
+    MIDDLE_CENTER = 5
+    MIDDLE_RIGHT = 6
+    BOTTOM_LEFT = 7
+    BOTTOM_CENTER = 8
+    BOTTOM_RIGHT = 9
+
+
 class Margins(NamedTuple):
     """Page margins definition class
 
@@ -176,6 +203,22 @@ class Page:
         if self.is_landscape:
             self.width, self.height = self.height, self.width
 
+    def get_margin_rect(self, top_origin=True) -> tuple[Vec2, Vec2]:
+        """Returns the bottom-left and the top-right corner of the page margins in mm.
+        The origin (0, 0) is the top-left corner of the page if `top_origin` is
+        ``True`` or in the bottom-left corner otherwise.
+        """
+        margins = self.margins_in_mm
+        right_margin = self.width_in_mm - margins.right
+        page_height = self.height_in_mm
+        if top_origin:
+            bottom_left = Vec2(margins.left, margins.top)
+            top_right = Vec2(right_margin, page_height - margins.bottom)
+        else:  # bottom origin
+            bottom_left = Vec2(margins.left, margins.bottom)
+            top_right = Vec2(right_margin, page_height - margins.top)
+        return bottom_left, top_right
+
     @classmethod
     def from_dxf_layout(cls, layout: DXFLayout) -> Self:
         # all layout measurements in mm
@@ -223,6 +266,10 @@ class Settings:
     Attributes:
         content_rotation: Rotate content about 0, 90,  180 or 270 degrees
         fit_page: Scale content to fit the page.
+        page_alignment: Supported by backends that use the :class:`Page` class to define
+            the size of the output media, default alignment is :attr:`PageAlignment.MIDDLE_CENTER`
+        crop_at_margins: crops the content at the page margins if ``True``, when
+            supported by the backend, default is ``False``
         scale: Factor to scale the DXF units of model- or paperspace, to represent 1mm
             in the rendered output drawing. Only uniform scaling is supported.
 
@@ -250,6 +297,8 @@ class Settings:
     content_rotation: int = 0
     fit_page: bool = True
     scale: float = 1.0
+    page_alignment: PageAlignment = PageAlignment.MIDDLE_CENTER
+    crop_at_margins: bool = False
     # for LineweightPolicy.RELATIVE
     # max_stroke_width is defined as percentage of the content extents
     max_stroke_width: float = 0.001  # 0.1% of max(width, height) in viewBox coords
@@ -258,7 +307,6 @@ class Settings:
     # StrokeWidthPolicy.fixed_1
     # fixed_stroke_width is defined as percentage of max_stroke_width
     fixed_stroke_width: float = 0.15  # 15% of max_stroke_width
-
     # PDF, HPGL expect the coordinates in the first quadrant and SVG has an inverted
     # y-axis, so transformation from DXF to the output coordinate system is required.
     # The output_coordinate_space defines the space into which the DXF coordinates are
@@ -274,12 +322,23 @@ class Settings:
                 f"expected: 0, 90, 180, 270"
             )
 
+    def page_output_scale_factor(self, page: Page) -> float:
+        """Returns the scaling factor to map page coordinates in mm to output space
+        coordinates.
+        """
+        try:
+            return self.output_coordinate_space / max(
+                page.width_in_mm, page.height_in_mm
+            )
+        except ZeroDivisionError:
+            return 1.0
+
 
 class Layout:
-    def __init__(self, dxf_bbox: BoundingBox2d, flip_y=False) -> None:
+    def __init__(self, render_box: BoundingBox2d, flip_y=False) -> None:
         super().__init__()
         self.flip_y: float = -1.0 if flip_y else 1.0
-        self.dxf_bbox = dxf_bbox
+        self.render_box = render_box
 
     def get_rotation(self, settings: Settings) -> int:
         if settings.content_rotation not in (0, 90, 180, 270):
@@ -293,7 +352,7 @@ class Layout:
         return rotation
 
     def get_content_size(self, rotation: int) -> Vec2:
-        content_size = self.dxf_bbox.size
+        content_size = self.render_box.size
         if rotation in (90, 270):
             # swap x, y to apply rotation to content_size
             content_size = Vec2(content_size.y, content_size.x)
@@ -304,7 +363,9 @@ class Layout:
         content_size = self.get_content_size(rotation)
         return final_page_size(content_size, page, settings)
 
-    def get_placement_matrix(self, page: Page, settings=Settings()) -> Matrix44:
+    def get_placement_matrix(
+        self, page: Page, settings=Settings(), top_origin=True
+    ) -> Matrix44:
         # Argument `page` has to be the resolved final page size!
         rotation = self.get_rotation(settings)
 
@@ -317,21 +378,17 @@ class Layout:
         except ZeroDivisionError:
             scale_dxf_to_mm = 1.0
         # map output coordinates to range [0, output_coordinate_space]
-        try:
-            scale_mm_to_output_space = settings.output_coordinate_space / max(
-                page.width_in_mm, page.height_in_mm
-            )
-        except ZeroDivisionError:
-            scale_mm_to_output_space = 1.0
-
+        scale_mm_to_output_space = settings.page_output_scale_factor(page)
         scale = scale_dxf_to_mm * scale_mm_to_output_space
         m = placement_matrix(
-            self.dxf_bbox,
+            self.render_box,
             sx=scale,
             sy=scale * self.flip_y,
             rotation=rotation,
             page=page,
             output_coordinate_space=settings.output_coordinate_space,
+            page_alignment=settings.page_alignment,
+            top_origin=top_origin,
         )
         return m
 
@@ -385,6 +442,10 @@ def placement_matrix(
     rotation: float,
     page: Page,
     output_coordinate_space: float,
+    page_alignment: PageAlignment = PageAlignment.MIDDLE_CENTER,
+    # top_origin True: page origin (0, 0) in top-left corner, +y axis pointing down
+    # top_origin False: page origin (0, 0) in bottom-left corner, +y axis pointing up
+    top_origin=True,
 ) -> Matrix44:
     """Returns a matrix to place the bbox in the first quadrant of the coordinate
     system (+x, +y).
@@ -413,7 +474,7 @@ def placement_matrix(
     # shift content to first quadrant +x/+y
     tx, ty = canvas.extmin  # type: ignore
 
-    # center content within margins
+    # align content within margins
     view_box_content_x = (
         page.width_in_mm - margins.left - margins.right
     ) * scale_mm_to_vb
@@ -422,6 +483,70 @@ def placement_matrix(
     ) * scale_mm_to_vb
     dx = view_box_content_x - canvas.size.x
     dy = view_box_content_y - canvas.size.y
-    offset_x = margins.left * scale_mm_to_vb + dx / 2
-    offset_y = margins.top * scale_mm_to_vb + dy / 2  # SVG origin is top/left
+    offset_x = margins.left * scale_mm_to_vb  # left
+    if top_origin:
+        offset_y = margins.top * scale_mm_to_vb
+    else:
+        offset_y = margins.bottom * scale_mm_to_vb
+
+    if is_center_aligned(page_alignment):
+        offset_x += dx / 2
+    elif is_right_aligned(page_alignment):
+        offset_x += dx
+    if is_middle_aligned(page_alignment):
+        offset_y += dy / 2
+    elif is_bottom_aligned(page_alignment):
+        if top_origin:
+            offset_y += dy
+    else:  # top aligned
+        if not top_origin:
+            offset_y += dy
     return m @ Matrix44.translate(-tx + offset_x, -ty + offset_y, 0)
+
+
+def is_left_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.TOP_LEFT,
+        PageAlignment.MIDDLE_LEFT,
+        PageAlignment.BOTTOM_LEFT,
+    )
+
+
+def is_center_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.TOP_CENTER,
+        PageAlignment.MIDDLE_CENTER,
+        PageAlignment.BOTTOM_CENTER,
+    )
+
+
+def is_right_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.TOP_RIGHT,
+        PageAlignment.MIDDLE_RIGHT,
+        PageAlignment.BOTTOM_RIGHT,
+    )
+
+
+def is_top_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.TOP_LEFT,
+        PageAlignment.TOP_CENTER,
+        PageAlignment.TOP_RIGHT,
+    )
+
+
+def is_middle_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.MIDDLE_LEFT,
+        PageAlignment.MIDDLE_CENTER,
+        PageAlignment.MIDDLE_RIGHT,
+    )
+
+
+def is_bottom_aligned(align: PageAlignment) -> bool:
+    return align in (
+        PageAlignment.BOTTOM_LEFT,
+        PageAlignment.BOTTOM_CENTER,
+        PageAlignment.BOTTOM_RIGHT,
+    )

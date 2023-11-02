@@ -1,5 +1,5 @@
 pyparsing>=2.0.1
-typing_extensions
+typing_extensions>=4.6.0
 numpy
 fonttools
 pytest
@@ -8,3 +8,4 @@ matplotlib
 pyside6
 sphinx
 sphinx-rtd-theme
+sphinxcontrib-jquery

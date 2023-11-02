@@ -44,7 +44,9 @@ def export_1(doc):
     # auto-detect page size and 2mm margins on all sides
     page = layout.Page(0, 0, layout.Units.mm, margins=layout.Margins.all(2))
     # scale content by 1, do not fit content to page
-    svg_string = backend.get_string(page, layout.Settings(scale=1, fit_page=False))
+    svg_string = backend.get_string(
+        page, settings=layout.Settings(scale=1, fit_page=False)
+    )
     with open("output_1.svg", "wt", encoding="utf8") as fp:
         fp.write(svg_string)
 
@@ -54,7 +56,9 @@ def export_2(doc):
     # auto-detect page size and 2mm margins on all sides
     page = layout.Page(0, 0, layout.Units.mm, margins=layout.Margins.all(2))
     # scale content by 10, do not fit content to page
-    svg_string = backend.get_string(page, layout.Settings(scale=10, fit_page=False))
+    svg_string = backend.get_string(
+        page, settings=layout.Settings(scale=10, fit_page=False)
+    )
     with open("output_2.svg", "wt", encoding="utf8") as fp:
         fp.write(svg_string)
 
