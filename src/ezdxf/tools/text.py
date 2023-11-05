@@ -1759,11 +1759,15 @@ _SAFETY_FACTOR = 1.01
 
 
 def set_estimation_safety_factor(factor: float) -> None:
+    """Set the global safety factor for MTEXT size estimation."""
     global _SAFETY_FACTOR
     _SAFETY_FACTOR = factor
 
 
 def reset_estimation_safety_factor() -> None:
+    """Reset the global safety factor for MTEXT size estimation to the hard coded
+    default value.
+    """
     global _SAFETY_FACTOR
     _SAFETY_FACTOR = 1.01
 
