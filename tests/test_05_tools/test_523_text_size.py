@@ -1,18 +1,19 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 
 import pytest
 
 import ezdxf
 from ezdxf.layouts import VirtualLayout
-from ezdxf.math import BoundingBox2d
 from ezdxf.tools.text_size import (
     text_size,
     mtext_size,
-    WordSizeDetector,
     estimate_mtext_extents,
 )
-
+from ezdxf.tools.text import (
+    set_estimation_safety_factor,
+    reset_estimation_safety_factor,
+)
 from ezdxf.tools.text_layout import leading
 
 
@@ -105,6 +106,7 @@ def test_mtext_size_of_an_empty_string(msp):
 
 
 def test_mtext_size_of_a_single_char(msp):
+    set_estimation_safety_factor(1.0)
     # Matplotlib support disabled and using MonospaceFont()
     mtext = msp.add_mtext("X", dxfattribs={"char_height": 2.0})
     size = mtext_size(mtext)
@@ -113,9 +115,11 @@ def test_mtext_size_of_a_single_char(msp):
     assert size.column_width == pytest.approx(1.8794373744139317)
     assert size.gutter_width == 0.0
     assert size.column_count == 1
+    reset_estimation_safety_factor()
 
 
 def test_mtext_size_of_a_string(msp):
+    set_estimation_safety_factor(1.0)
     # Matplotlib support disabled and using MonospaceFont()
     mtext = msp.add_mtext("XXX", dxfattribs={"char_height": 2.0})
     size = mtext_size(mtext)
@@ -124,9 +128,11 @@ def test_mtext_size_of_a_string(msp):
     assert size.column_width == size.total_width
     assert size.gutter_width == 0.0
     assert size.column_count == 1
+    reset_estimation_safety_factor()
 
 
 def test_estimate_mtext_extents(msp):
+    set_estimation_safety_factor(1.0)
     # Matplotlib support disabled and using MonospaceFont()
     mtext = msp.add_mtext(
         "XXXXXXXXXXXX\nYYYY\nZ",  # 5 lines!
@@ -138,12 +144,14 @@ def test_estimate_mtext_extents(msp):
     width, height = estimate_mtext_extents(mtext)
     assert height == pytest.approx(15.336)  # 5 lines!
     assert width == 8.0
+    reset_estimation_safety_factor()
 
 
 @pytest.mark.parametrize(
     "cap_height, expected", [(2.0, 6.703281982585398), (3.0, 10.054922973878098)]
 )
 def test_mtext_size_of_2_lines(cap_height, expected, msp):
+    set_estimation_safety_factor(1.0)
     # Matplotlib support disabled and using MonospaceFont()
     mtext = msp.add_mtext(
         "XXX\nYYYY",
@@ -157,6 +165,7 @@ def test_mtext_size_of_2_lines(cap_height, expected, msp):
     assert size.total_height == pytest.approx(expected_total_height)
     assert size.total_width == pytest.approx(expected), "expected width of 2nd line"
     assert size.column_width == size.total_width
+    reset_estimation_safety_factor()
 
 
 if __name__ == "__main__":

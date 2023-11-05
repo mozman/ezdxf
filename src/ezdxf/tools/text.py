@@ -54,8 +54,8 @@ class TextLine:
 
     Args:
         text: content string
-        font: ezdxf font definition like :class:`~ezdxf.tools.fonts.MonospaceFont`
-            or :class:`~ezdxf.tools.fonts.MatplotlibFont`
+        font: ezdxf font definition like :class:`~ezdxf.fonts.fonts.MonospaceFont`
+            or :class:`~ezdxf.fonts.fonts.TrueTypeFont`
 
     """
 
@@ -1731,8 +1731,6 @@ def estimate_mtext_extents(mtext: MText) -> tuple[float, float]:
     function, but the result is very inaccurate if inline codes are used or
     line wrapping at the column border is involved!
 
-    This function uses the optional `Matplotlib` package if available.
-
     Returns:
         Tuple[width, height]
 
@@ -1757,6 +1755,19 @@ def estimate_mtext_extents(mtext: MText) -> tuple[float, float]:
     )
 
 
+_SAFETY_FACTOR = 1.01
+
+
+def set_estimation_safety_factor(factor: float) -> None:
+    global _SAFETY_FACTOR
+    _SAFETY_FACTOR = factor
+
+
+def reset_estimation_safety_factor() -> None:
+    global _SAFETY_FACTOR
+    _SAFETY_FACTOR = 1.01
+
+
 def estimate_mtext_content_extents(
     content: str,
     font: fonts.AbstractFont,
@@ -1767,8 +1778,6 @@ def estimate_mtext_content_extents(
     content string. The result is very inaccurate if inline codes are used or
     line wrapping at the column border is involved!
     Column breaks ``\\N`` will be ignored.
-
-    This function uses the optional `Matplotlib` package if available.
 
     Args:
         content: the :class:`~ezdxf.entities.MText` content string
@@ -1792,7 +1801,7 @@ def estimate_mtext_content_extents(
         for line in lines:
             line_width = font.text_width(line)
             if line_width == 0 and line:
-                # line contains only white space:
+                # line contains only white space and text_width() returns 0
                 # - MatplotlibFont returns 0 as text width
                 # - MonospaceFont returns the correct width
                 line_width = len(line) * font.space_width()
@@ -1809,7 +1818,7 @@ def estimate_mtext_content_extents(
         spacing = leading(cap_height, line_spacing_factor) - cap_height
         height = cap_height * line_count + spacing * (line_count - 1)
 
-    return max_width, height
+    return max_width * _SAFETY_FACTOR, height
 
 
 def safe_string(s: Optional[str], max_len: int = MAX_STR_LEN) -> str:

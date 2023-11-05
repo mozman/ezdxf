@@ -1,4 +1,4 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 
 import pytest
@@ -20,6 +20,8 @@ from ezdxf.tools.text import (
     is_upside_down_text_angle,
     upright_text_angle,
     estimate_mtext_content_extents,
+    set_estimation_safety_factor,
+    reset_estimation_safety_factor,
 )
 from ezdxf.fonts.fonts import MonospaceFont
 from ezdxf.enums import TextEntityAlignment
@@ -49,7 +51,9 @@ class TestTextLine:
         assert text_line.height == 3.3325, "should not shrink height"
 
     def test_stretch_to_aligned(self, text_line):
-        text_line.stretch(TextEntityAlignment.ALIGNED, Vec3(0, 0), Vec3(15, 0))  # 50% stretch
+        text_line.stretch(
+            TextEntityAlignment.ALIGNED, Vec3(0, 0), Vec3(15, 0)
+        )  # 50% stretch
         assert text_line.width == 15.0, "should stretch width"
         # cap height * 1.333 * 1.5 = 4.99875
         assert text_line.height == 4.99875, "should stretch height"
@@ -117,9 +121,7 @@ class TestTextLineTransformation:
     def test_empty_input(self, text_line):
         assert text_line.transform_2d([]) == []
 
-    @pytest.mark.parametrize(
-        "location", [(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1)]
-    )
+    @pytest.mark.parametrize("location", [(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1)])
     def test_translation(self, text_line, location):
         v = [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)]
         vertices = text_line.transform_2d(vertices=v, insert=location)
@@ -261,10 +263,7 @@ def test_replace_non_printable():
     assert replace_non_printable_characters("abc def") == "abc def"
     assert replace_non_printable_characters("abc \tdef") == "abc \tdef"
     assert replace_non_printable_characters("abc\0def") == "abc▯def"
-    assert (
-        replace_non_printable_characters("abc\0def", replacement=" ")
-        == "abc def"
-    )
+    assert replace_non_printable_characters("abc\0def", replacement=" ") == "abc def"
 
 
 def test_plain_mtext_removes_formatting():
@@ -279,9 +278,7 @@ def test_plain_mtext_removes_formatting():
     )
     # Includes caret decoding!
     assert fast_plain_mtext(raw_text) == expected
-    assert (
-        fast_plain_mtext("\\:") == "\\:"
-    ), "invalid escape code is printed verbatim"
+    assert fast_plain_mtext("\\:") == "\\:", "invalid escape code is printed verbatim"
 
 
 def test_plain_mtext2_removes_formatting():
@@ -295,9 +292,7 @@ def test_plain_mtext2_removes_formatting():
         "1. Nummerierung\n2. Nummerierung\n\n1/2500  ein Bruch"
     )
     assert plain_mtext(raw_text, tabsize=1) == expected
-    assert (
-        plain_mtext("\\:\\;") == "\\:\\;"
-    ), "invalid escape code is printed verbatim"
+    assert plain_mtext("\\:\\;") == "\\:\\;", "invalid escape code is printed verbatim"
 
 
 def test_remove_commands_without_terminating_semicolon():
@@ -357,15 +352,9 @@ def test_text_wrapping():
     assert text_wrap("   \n    ", 1, get_text_width) == []
 
     assert text_wrap("abc", 0, get_text_width) == ["abc"]
-    assert text_wrap(" abc", 6, get_text_width) == [
-        " abc"
-    ], "preserve leading spaces"
-    assert text_wrap("abc ", 1, get_text_width) == [
-        "abc"
-    ], "do not wrap too long words"
-    assert text_wrap(" abc ", 6, get_text_width) == [
-        " abc"
-    ], "remove trailing spaces"
+    assert text_wrap(" abc", 6, get_text_width) == [" abc"], "preserve leading spaces"
+    assert text_wrap("abc ", 1, get_text_width) == ["abc"], "do not wrap too long words"
+    assert text_wrap(" abc ", 6, get_text_width) == [" abc"], "remove trailing spaces"
 
     assert text_wrap("abc\ndef", 1, get_text_width) == [
         "abc",
@@ -413,9 +402,7 @@ class TestIsTextVerticalStacked:
         assert is_text_vertical_stacked(text) is False
 
     def test_stacked_text_entity(self, doc):
-        text = doc.modelspace().add_text(
-            "Test", dxfattribs={"style": "Stacked"}
-        )
+        text = doc.modelspace().add_text("Test", dxfattribs={"style": "Stacked"})
         assert is_text_vertical_stacked(text) is True
 
     def test_stacked_mtext_entity(self, doc):
@@ -423,9 +410,7 @@ class TestIsTextVerticalStacked:
         the vertical stacked text feature.
 
         """
-        mtext = doc.modelspace().add_mtext(
-            "Test", dxfattribs={"style": "Stacked"}
-        )
+        mtext = doc.modelspace().add_mtext("Test", dxfattribs={"style": "Stacked"})
         assert is_text_vertical_stacked(mtext) is True
 
     def test_raise_type_error_for_unsupported_types(self):
@@ -489,21 +474,34 @@ class TestEstimateMTextContentExtents:
         assert width == 0.0
 
     def test_single_line(self, font):
+        set_estimation_safety_factor(1.0)
         width, height = estimate_mtext_content_extents("XXX", font)
         assert height == 2.0
         assert width == 6.0
+        reset_estimation_safety_factor()
 
     def test_many_lines_no_line_wrapping(self, font):
+        set_estimation_safety_factor(1.0)
         width, height = estimate_mtext_content_extents("XXX\nYYYY\nZ", font)
         assert height == pytest.approx(8.668)  # 3x line height + 2x spacing
         assert width == 8.0
+        reset_estimation_safety_factor()
 
     def test_many_lines_with_line_wrapping(self, font):
+        set_estimation_safety_factor(1.0)
         width, height = estimate_mtext_content_extents(
             "XXXXXXXXXXXX\nYYYY\nZ", font, column_width=8.0
         )
         assert height == pytest.approx(15.336)  # 5x line height + 4x spacing
         assert width == 8.0
+        reset_estimation_safety_factor()
+
+    def test_estimation_safety_factor(self, font):
+        set_estimation_safety_factor(1.01)
+        width, height = estimate_mtext_content_extents("XXX", font)
+        assert height == 2.0
+        assert width == pytest.approx(6.0 * 1.01)
+        reset_estimation_safety_factor()
 
 
 if __name__ == "__main__":
