@@ -450,7 +450,7 @@ def normalize_style(style: str) -> str:
 def get_ttf_font_face(font_path: Path) -> FontFace:
     try:
         ttf = TTFont(font_path, fontNumber=0)
-    except IOError:
+    except (IOError, TTLibError):
         return FontFace(filename=font_path.name)
 
     names = ttf["name"].names
