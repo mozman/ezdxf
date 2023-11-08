@@ -450,7 +450,8 @@ def normalize_style(style: str) -> str:
 def get_ttf_font_face(font_path: Path) -> FontFace:
     try:
         ttf = TTFont(font_path, fontNumber=0)
-    except (IOError, TTLibError):
+    except Exception as e:
+        logger.warning(f"cannot open font '{font_path}': {str(e)}")
         return FontFace(filename=font_path.name)
 
     names = ttf["name"].names
