@@ -9,6 +9,7 @@ Version 1.1.3b1 - beta
 - CHANGE: [#956](https://github.com/mozman/ezdxf/issues/956)
   added a safety factor of 1.01 to `MTEXT` size estimation, a "too precise" measurement
   causes sometimes unwanted line wraps
+- NEW: the `strip` command can remove handles from DXF R12 and older files
 
 Version 1.1.2 - 2023-11-01
 --------------------------

@@ -1,8 +1,6 @@
 #  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-
-import pathlib
 from typing import Callable, Optional, TYPE_CHECKING, Type
 import abc
 import sys
@@ -16,7 +14,7 @@ from pathlib import Path
 import ezdxf
 from ezdxf import recover
 from ezdxf.lldxf import const
-from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
+from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file, dxf_info
 from ezdxf.dwginfo import dwg_file_info
 
 if TYPE_CHECKING:
@@ -38,6 +36,15 @@ def get(cmd: str) -> Optional[Callable]:
 def add_parsers(subparsers) -> None:
     for cmd in _commands.values():  # in order of registration
         cmd.add_parser(subparsers)
+
+
+def is_dxf_r12_file(filename: str) -> bool:
+    try:
+        with open(filename, "rt", errors="ignore") as fp:
+            info = dxf_info(fp)
+    except IOError:
+        return False
+    return info.version <= const.DXF12
 
 
 class Command:
@@ -594,6 +601,12 @@ class Strip(Command):
             help="strip THUMBNAILIMAGE section",
         )
         parser.add_argument(
+            "--handles",
+            action="store_true",
+            required=False,
+            help="remove handles from DXF R12 or older files",
+        )
+        parser.add_argument(
             "-v",
             "--verbose",
             action="store_true",
@@ -607,11 +620,20 @@ class Strip(Command):
 
         for pattern in args.file:
             for filename in glob.glob(pattern):
+                codes = [999]
+                if args.handles:
+                    if is_dxf_r12_file(filename):
+                        codes.extend([5, 105])
+                    else:
+                        print(
+                            f"Cannot remove handles from DXF R13 or later: {filename}"
+                        )
                 strip(
                     filename,
                     backup=args.backup,
                     thumbnail=args.thumbnail,
                     verbose=args.verbose,
+                    codes=codes,
                 )
 
 

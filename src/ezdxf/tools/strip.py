@@ -1,6 +1,7 @@
 # Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
-from typing import BinaryIO, Optional
+from __future__ import annotations
+from typing import BinaryIO, Optional, Sequence
 from ezdxf.lldxf.validator import is_dxf_file, DXFStructureError
 from pathlib import Path
 
@@ -53,9 +54,13 @@ class ThumbnailRemover(TagWriter):
             super().write(raw_code_str, raw_value_str)
 
 
-def strip_comments(
-    infile: BinaryIO, tagwriter: TagWriter, verbose=False
+def strip_tags(
+    infile: BinaryIO,
+    tagwriter: TagWriter,
+    codes: Sequence[int],
+    verbose=False,
 ) -> int:
+    search_codes = set(codes)
     line_number: int = 1
     removed_tags: int = 0
     while True:
@@ -68,9 +73,7 @@ def strip_comments(
         try:
             code = int(raw_code_str)
         except ValueError:
-            code_str = raw_code_str.strip().decode(
-                encoding="utf8", errors="ignore"
-            )
+            code_str = raw_code_str.strip().decode(encoding="utf8", errors="ignore")
             raise DXFStructureError(
                 f'CANCELED: "{infile.name}" - found invalid '
                 f'group code "{code_str}" at line {line_number}'
@@ -86,13 +89,13 @@ def strip_comments(
                 f'CANCELED: "{infile.name}" - premature end of file'
             )
         line_number += 2
-        if code != 999:
+        if code not in search_codes:
             tagwriter.write(raw_code_str, raw_value_str)
         else:
             if verbose:
                 value = raw_value_str.strip()
                 _value = value.decode(encoding="utf8", errors="ignore")
-                print(f'removing comment: "{_value}"')
+                print(f'removing tag: ({code}, "{_value}")')
             removed_tags += 1
 
 
@@ -124,7 +127,16 @@ def safe_rename(source: Path, target: Path, backup=True, verbose=False) -> bool:
     return True
 
 
-def strip(filename: str, backup=False, thumbnail=False, verbose=False):
+DEFAULT_CODES = (999,)
+
+
+def strip(
+    filename: str,
+    backup=False,
+    thumbnail=False,
+    verbose=False,
+    codes: Sequence[int] = DEFAULT_CODES,
+):
     def remove_tmp_file():
         if tmp_file.exists():
             if verbose:
@@ -155,7 +167,7 @@ def strip(filename: str, backup=False, thumbnail=False, verbose=False):
         else:
             tagwriter = TagWriter(fp)
         try:
-            removed_tags = strip_comments(infile, tagwriter, verbose)
+            removed_tags = strip_tags(infile, tagwriter, codes=codes, verbose=verbose)
         except IOError as e:
             print(f"IOError: {str(e)}")
             error = True
@@ -171,9 +183,7 @@ def strip(filename: str, backup=False, thumbnail=False, verbose=False):
 
         if removed_tags > 0:
             tags = "tag" if removed_tags == 1 else "tags"
-            print(
-                f'"{source_file.name}" - {removed_tags} comment {tags} removed'
-            )
+            print(f'"{source_file.name}" - {removed_tags} {tags} removed')
             rename = True
 
         if rename:
