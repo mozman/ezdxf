@@ -231,7 +231,6 @@ def make_path_from_entity(entity: AnyText) -> Path:
     """
 
     check_entity_type(entity)
-    fonts.load()
     text = entity.plain_text()
     p = make_path_from_str(
         text,
