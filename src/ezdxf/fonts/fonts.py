@@ -305,7 +305,7 @@ def build_sut_font_manager_cache(repo_font_path: pathlib.Path) -> None:
             return
         except IOError as e:
             print(f"Error loading cache file: {str(e)}")
-    font_manager.build([str(repo_font_path)])
+    font_manager.build([str(repo_font_path)], support_dirs=False)
     s = font_manager.dumps()
     try:
         cache_file.write_text(s)
