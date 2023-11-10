@@ -1,6 +1,8 @@
 #  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
+import string
 import typing
 from typing import (
     TYPE_CHECKING,
@@ -637,6 +639,11 @@ DWGCODEPAGE = b"$DWGCODEPAGE"
 ACADVER = b"$ACADVER"
 
 
+def _strip_whitespace(s: str) -> str:
+    ws = set(string.whitespace)
+    return "".join([c for c in s if c not in ws])
+
+
 def detect_encoding(tags: Iterable[DXFTag]) -> str:
     """Detect text encoding from header variables $DWGCODEPAGE and $ACADVER
     out of a stream of DXFTag objects.
@@ -721,6 +728,7 @@ def byte_tag_compiler(
     def recover_float(s: Union[str, bytes]) -> float:
         if isinstance(s, bytes):
             s = s.decode(encoding="utf8", errors="ignore")
+        s = _strip_whitespace(s)
         value = _search_float(s)
         msg = f'recovered invalid floating point value "{s}" near line {line} as "{value}"'
         messages.append((AuditError.INVALID_FLOATING_POINT_VALUE, msg))
