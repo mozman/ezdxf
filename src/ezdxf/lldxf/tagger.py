@@ -17,6 +17,7 @@ from .types import (
     BINARY_DATA,
 )
 from .const import DXFStructureError
+from .utils import value_to_float
 from ezdxf.tools.codepage import toencoding
 
 
@@ -308,9 +309,9 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
                 try:
                     # z-axis like (30, 0.0) for base x-code 10
                     if z.code == code + 20:
-                        point = (float(x.value), float(y.value), float(z.value))  # type: ignore
+                        point = (value_to_float(x.value), value_to_float(y.value), value_to_float(z.value))  # type: ignore
                     else:
-                        point = (float(x.value), float(y.value))  # type: ignore
+                        point = (value_to_float(x.value), value_to_float(y.value))  # type: ignore
                         undo_tag = z
                 except ValueError:
                     raise DXFStructureError(

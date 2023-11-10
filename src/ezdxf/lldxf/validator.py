@@ -25,6 +25,7 @@ from .const import (
     TRANSPARENCY_BYBLOCK,
 )
 
+from .utils import value_to_float
 from .tagger import ascii_tags_loader, binary_tags_loader
 from .types import is_embedded_object_marker, DXFTag, NONE_TAG
 from ezdxf.tools.codepage import toencoding
@@ -138,12 +139,12 @@ def _detect_dxf_info(tagger: Iterator[DXFTag]) -> DXFInfo:
         var_name = str(tag.value)
         code, value = next(tagger)
         if code == 10:
-            x = float(value)
-            y = float(next(tagger).value)
+            x = value_to_float(value)
+            y = value_to_float(next(tagger).value)
             z = 0.0
             tag = next(tagger)
             if tag.code == 30:
-                z = float(tag.value)
+                z = value_to_float(tag.value)
             else:
                 undo_tag = tag
             value = Vec3(x, y, z)
