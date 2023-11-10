@@ -29,7 +29,7 @@ cdef double[16] IDENTITY = [
     0.0, 0.0, 0.0, 1.0
 ]
 
-cdef void set_floats(double *m, object values: Iterable[float]) except *:
+cdef void set_floats(double *m, object values) except *:
     cdef int i = 0
     for v in values:
         if i < 16:  # Do not write beyond array bounds
@@ -54,7 +54,7 @@ cdef class Matrix44:
     def __reduce__(self):
         return Matrix44, (tuple(self),)
 
-    def __getitem__(self, tuple index: Tuple[int, int]) -> float:
+    def __getitem__(self, tuple index) -> float:
         cdef int row = index[0]
         cdef int col = index[1]
         cdef int i = row * 4 + col
@@ -64,7 +64,7 @@ cdef class Matrix44:
         else:
             raise IndexError(f'index out of range: {index}')
 
-    def __setitem__(self, tuple index: Tuple[int, int], double value: float):
+    def __setitem__(self, tuple index, double value):
         cdef int row = index[0]
         cdef int col = index[1]
         cdef int i = row * 4 + col
@@ -107,7 +107,7 @@ cdef class Matrix44:
         return m44
 
     def get_row(self, int row) -> Tuple[float, ...]:
-        cdef index = row * 4
+        cdef int index = row * 4
         if 0 <= index < 13:
             return self.m[index], self.m[index + 1], self.m[index + 2], self.m[
                 index + 3]
