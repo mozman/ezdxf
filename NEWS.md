@@ -10,6 +10,8 @@ Version 1.1.3b1 - beta
   added a safety factor of 1.01 to `MTEXT` size estimation, a "too precise" measurement
   causes sometimes unwanted line wraps
 - NEW: the `strip` command can remove handles from DXF R12 and older files
+- BUGFIX: tests ignore fonts in support dirs; including this dirs caused problems on 
+  systems with partially installed SHX fonts
 
 Version 1.1.2 - 2023-11-01
 --------------------------

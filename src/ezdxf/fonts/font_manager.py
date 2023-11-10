@@ -390,11 +390,11 @@ class FontManager:
         else:
             return font_face.filename
 
-    def build(self, folders: Optional[Sequence[str]] = None) -> None:
+    def build(self, folders: Optional[Sequence[str]] = None, support_dirs=True) -> None:
         """Adds all supported font types located in the given `folders` to the font
         manager. If no directories are specified, the known font folders for Windows,
-        Linux and macOS are searched by default. Searches recursively all
-        subdirectories.
+        Linux and macOS are searched by default, except `support_dirs` is ``False``. 
+        Searches recursively all subdirectories. 
 
         The folders stored in the config SUPPORT_DIRS option are scanned recursively for
         .shx, .shp and .lff fonts, the basic stroke fonts included in CAD applications.
@@ -406,7 +406,9 @@ class FontManager:
             dirs = list(folders)
         else:
             dirs = FONT_DIRECTORIES.get(self.platform, LINUX_FONT_DIRS)
-        self.scan_all(dirs + list(options.support_dirs))
+        if support_dirs:
+            dirs = dirs + list(options.support_dirs)
+        self.scan_all(dirs)
 
     def scan_all(self, folders: Iterable[str]) -> None:
         for folder in folders:
