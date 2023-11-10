@@ -13,7 +13,7 @@ from ._cpp_vec3 cimport CppVec3
 
 cdef class Vec2:
     cdef readonly double x, y
-    cdef CppVec3 to_cpp_vec3(self)
+    cdef CppVec3 to_cpp_vec3(self: Vec2)
 
 # Vec2 C-functions:
 cdef Vec2 v2_add(Vec2 a, Vec2 b)
@@ -35,7 +35,7 @@ cdef Vec2 v2_from_cpp_vec3(CppVec3)
 
 cdef class Vec3:
     cdef readonly double x, y, z
-    cdef CppVec3 to_cpp_vec3(self)
+    cdef CppVec3 to_cpp_vec3(self: Vec2)
 
 # Vec3 C-functions:
 cdef Vec3 v3_add(Vec3 a, Vec3 b)

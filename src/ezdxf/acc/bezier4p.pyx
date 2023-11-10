@@ -275,7 +275,7 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
     cdef CppVec3 center = Vec3(ellipse.center).to_cpp_vec3()
     cdef CppVec3 x_axis = Vec3(ellipse.major_axis).to_cpp_vec3()
     cdef CppVec3 y_axis = Vec3(ellipse.minor_axis).to_cpp_vec3()
-    cdef Vec3 cp,
+    cdef Vec3 cp
     cdef CppVec3 c_res
     cdef list res
     for control_points in cubic_bezier_arc_parameters(

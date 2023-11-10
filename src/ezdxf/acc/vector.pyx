@@ -12,8 +12,8 @@ cdef extern from "constants.h":
     const double REL_TOL
     const double M_TAU
 
-cdef double RAD2DEG = 180.0 / M_PI;
-cdef double DEG2RAD = M_PI / 180.0;
+cdef double RAD2DEG = 180.0 / M_PI
+cdef double DEG2RAD = M_PI / 180.0
 
 if TYPE_CHECKING:
     from ezdxf.math import AnyVec, UVec
@@ -274,7 +274,7 @@ cdef class Vec2:
         cdef Vec2 o = Vec2(other)
         return v2_angle_between(self, o)
 
-    def rotate(self, double angle: float) -> Vec2:
+    def rotate(self, double angle) -> Vec2:
         cdef double self_angle = atan2(self.y, self.x)
         cdef double magnitude = hypot(self.x, self.y)
         return v2_from_angle(self_angle + angle, magnitude)
