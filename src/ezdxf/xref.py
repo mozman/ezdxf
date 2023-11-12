@@ -210,9 +210,9 @@ def define(doc: Drawing, block_name: str, filename: str, overlay=False) -> None:
 
     XREF attachment types:
 
-    - attached: the XREF that’s inserted into this drawing is also present in a
+    - attached: the XREF that's inserted into this drawing is also present in a
       document to which this document is inserted as an XREF.
-    - overlay: the XREF that’s inserted into this document is **not** present in a
+    - overlay: the XREF that's inserted into this document is **not** present in a
       document to which this document is inserted as an XREF.
 
     Args:
@@ -1643,7 +1643,7 @@ class CopyMachine:
             handle_mapping[handle] = clone.dxf.handle
             # Get handle mapping for in-object copies: DICTIONARY
             if hasattr(entity, "get_handle_mapping"):
-                self.handle_mapping.update(entity.get_handle_mapping(clone))
+                self.handle_mapping.update(entity.get_handle_mapping(clone))  # type: ignore
 
             if is_dxf_object(clone):
                 self.objects[handle] = clone
