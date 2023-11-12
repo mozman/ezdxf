@@ -103,7 +103,7 @@ if PYPY:
     commands = {}
 
 
-def get_version():
+def get_version() -> str:
     v = {}
     for line in open("./src/ezdxf/version.py").readlines():
         if line.strip().startswith("__version__"):
@@ -112,18 +112,10 @@ def get_version():
     raise IOError("__version__ string not found")
 
 
-def read(fname, until=""):
-    def read_until(lines):
-        last_index = -1
-        for index, line in enumerate(lines):
-            if line.startswith(until):
-                last_index = index
-                break
-        return "".join(lines[:last_index])
-
+def read(fname: str) -> str:
     try:
         with open(os.path.join(os.path.dirname(__file__), fname)) as f:
-            return read_until(f.readlines()) if until else f.read()
+            return f.read()
     except IOError:
         return "File '%s' not found.\n" % fname
 
@@ -179,7 +171,7 @@ setup(
         "all5": DRAW5 + DEV + TEST,
     },
     keywords=["DXF", "CAD"],
-    long_description=read("README.md") + read("NEWS.md", until="Version 0.11.2"),
+    long_description=read("README.md"),
     long_description_content_type="text/markdown",
     platforms="OS Independent",
     license="MIT License",

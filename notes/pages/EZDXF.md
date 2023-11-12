@@ -51,4 +51,4 @@
 - # Logseq
 	- this knowledge graph is build with [Loqseq](https://logseq.com/)
 	- open toolbox for workflows that deal with lots of information
-	- source data is available in the [repository](https://github.com/mozman/ezdxf`/notes) on Github.
+	- source data is available in the [repository](https://github.com/mozman/ezdxf/tree/master/notes) on Github.
