@@ -7,6 +7,7 @@
 	- BUGFIX: tests ignore fonts in support dirs; including this dirs caused problems on systems with partially installed SHX fonts
 	-
 - ## Version 1.1.2 - 2023-11-01
+  id:: 654fc008-346e-4d67-bde5-2ca9af3bf86b
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	- CHANGE: [#936](https://github.com/mozman/ezdxf/issues/936)
 	  improve modelspace extents updates
@@ -17,6 +18,7 @@
 	  fixed `PyMuPDF` deprecated method names, requires `PyMuPDF` 1.20.0 or newer
 	-
 - ## Version 1.1.1 - 2023-10-08
+  id:: 654fc008-39f0-48af-b636-8074c874c109
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	- NEW: Python 3.12 binary wheel deployment on PyPI
 	- NEW: page alignment support for the `drawing` add-on for these backends:
@@ -35,6 +37,7 @@
 	  tolerate MIF encoding `\M+cxxxx` in table names
 	-
 - ## Version 1.1.0 - 2023-09-09
+  id:: 654fc008-fba9-4937-a84e-2f3e2d9bd9a2
 	- [[Release Notes v1.1.x]]
 	  id:: 654f4c9f-8a29-4ad8-a581-2784df172d0d
 	- **WARNING** The font support changed drastically in this version, if you use the `ezdxf.tools.fonts` module your code will break, sorry! Pin the `ezdxf` version to v1.0.3 in your `requirements.txt` file to use the previous version!
@@ -169,6 +172,7 @@
 	  fixes `$FINGERPRINTGUID` and `$VERSIONGUID` handling
 	-
 - ## Version 0.18 - 2022-07-29
+  id:: 654fc008-f879-48f1-a332-8f89b77d304a
 	- Release notes: https://ezdxf.mozman.at/release-v0-18.html
 	- NEW: angular dimension rendering support, new factory methods:
 		- `add_angular_dim_2l()`

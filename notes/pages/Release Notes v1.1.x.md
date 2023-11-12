@@ -1,4 +1,7 @@
-## New Requirements
+# Release v1.1.0
+	- Changelog: ((654fc008-fba9-4937-a84e-2f3e2d9bd9a2))
+	-
+- ## New Requirements
 	- This version requires Python 3.8 or newer.
 	- The `numpy` and `fontTools` packages are hard dependencies.
 	- **WARNING:** The font support has changed drastically in this version. If you directly use the `ezdxf.tools.fonts` module, your code will break. We apologize for the inconvenience. To use the previous version, pin the `ezdxf` version to v1.0.3 in your `requirements.txt` file!
@@ -47,3 +50,11 @@
 	- If you have any comments, ideas, or suggestions, please feel free to post them in the [discussion forum](https://github.com/mozman/ezdxf/discussions) on GitHub.
 	-
 - ### See you sometime, take care, stay healthy!
+-
+- # Release v1.1.1
+	- Changelog: ((654fc008-39f0-48af-b636-8074c874c109))
+	- Bugfix release
+	-
+- # Release v1.1.2
+	- Changelog: ((654fc008-346e-4d67-bde5-2ca9af3bf86b))
+	- Bugfix release

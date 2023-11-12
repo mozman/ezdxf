@@ -293,7 +293,7 @@
  ;;  :journal?        false} ; Default value: false
 
  ;; Favorites to list on the left sidebar
- :favorites ["ezdxf" "ezdxf knowledge graph" "EZDXF Notes" "RELEASE NOTES" "CHANGELOG"]
+ :favorites ["ABOUT" "ezdxf" "ezdxf knowledge graph" "EZDXF Notes" "RELEASE NOTES" "CHANGELOG"]
 
  ;; Set flashcards interval.
  ;; Expected value:
