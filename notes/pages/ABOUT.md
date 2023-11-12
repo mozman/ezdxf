@@ -1,0 +1,47 @@
+- A Python interface to [[DXF]]
+	- create new [[DXF]] files
+	- read/modify/write existing [[DXF]] files
+	- supported [[DXF]] versions
+		- read/write/new support for [[DXF]] versions
+			- R12
+			- R2000
+			- R2004
+			- R2007
+			- R2010
+			- R2013
+			- R2018
+		- read-only support for [[DXF]] versions R13/R14 (upgraded to R2000)
+		- read-only support for older [[DXF]] versions than R12 (upgraded to R12)
+		- read/write support for ASCII [[DXF]] and Binary [[DXF]]
+	- retains third-party DXF content
+	- ((654fc96e-5aa7-49f9-b70e-45c3f2867976))
+	- the intended audience are programmers
+	- ((65509c8d-91b9-4461-886f-6d771ce566ea))
+	- OS independent
+	- works with [CPython](https://www.python.org) and [PyPy](https://www.pypy.org)
+	- has type annotations and passes `mypy --ignore-missing-imports -p ezdxf` successful
+	- additional required packages for the core package without add-ons
+		- [typing_extensions](https://pypi.org/project/typing-extensions/)
+		- [pyparsing](https://pypi.org/project/pyparsing)
+		- [numpy](https://pypi.org/project/numpy/)
+		- [fontTools](https://pypi.org/project/fonttools)
+	- optional C-extensions for CPython are included in the binary wheels on [PyPI](https://pypi.org/project/ezdxf/)
+		- supported platforms
+			- Windows
+				- amd64
+			- Linux
+				- manylinux_x64
+				- manylinux_aarch64
+				- musllinux_x64
+				- musllinux_aarch64
+			- macOS
+				- x64
+				- arm64
+				- universal2
+				-
+- Source Code Repository
+	- ((654fc842-3cb5-4081-a70c-0d83fa56b953))
+	-
+- Documentation
+	- ((654fc722-2018-4a67-a390-6e53bee15db9))
+	- ((654fc731-f2a4-4bff-b49b-7deef073f7c7))

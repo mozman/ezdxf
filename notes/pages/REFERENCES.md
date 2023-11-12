@@ -1,0 +1,25 @@
+# DXF References provided by Autodesk
+- [DXF R2018](https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3) Online Reference
+- [DXF R2014](http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e659029) Online Reference
+- [Download](https://www.autodesk.com/developer-network/platform-technologies/autocad-dxf-archive) DXF References
+- AutoCAD 2018 [Developer Documentation](https://help.autodesk.com/view/OARX/2018/ENU/)
+-
+- # DXF/AutoCAD
+- [Between the Lines](https://autodesk.blogs.com/between_the_lines/) by Shaan Hurley - a treasure trove for all interested in DXF and other Autodesk related information
+- [AfraLISP()](https://www.afralisp.net) Learn AutoLISP for AutoCAD productivity
+- [AutoCAD DevBlog](https://adndevblog.typepad.com/autocad/)
+-
+- # Autodesk
+- [The Autodesk File Rev. 5](https://www.fourmilab.ch/autofile/e5/) - Bits of History, Words of Experience
+	- Insights into the History of Autodesk edited by the founder John Walker
+-
+- # Tools
+- [Autodesk Viewer](https://viewer.autodesk.com/) a free online viewer for many file formats
+	- requires an Autodesk account
+	- free registration
+- [DWG TrueView](https://www.autodesk.de/viewers) an DXF/DWG offline viewer for Windows
+-
+- # AutoCAD Alternatives
+- [BricsCAD](https://www.bricsys.com/)
+- [ZWCAD](https://www.zwsoft.com/)
+- [GStarCAD](https://www.gstarcad.de/)
