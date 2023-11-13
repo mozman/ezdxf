@@ -6,3 +6,4 @@
 	- [[HOWTO]]
 	- [[REFERENCES]]
 	- [[IDEAS]]
+- {{embed [[COLLECTIONS]]}}

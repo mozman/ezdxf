@@ -9,11 +9,11 @@
 		- R2010
 		- R2013
 		- R2018
-	- [MIT-License](https://en.wikipedia.org/wiki/MIT_License)
+	- [[MIT-License]]
 	  id:: 654fc96e-5aa7-49f9-b70e-45c3f2867976
 	- requires Python 3.8 or newer
 	  id:: 65509c8d-91b9-4461-886f-6d771ce566ea
-	- works with [CPython](https://www.python.org) and [PyPy](https://www.pypy.org)
+	- works with [[CPython]] and [[PyPy]]
 	- OS independent
 	- go to [[ABOUT]] for more information
 -
@@ -32,7 +32,7 @@
 -
 - Ask Questions
 	- in the [discussion forum](https://github.com/mozman/ezdxf/discussions) on Github
-	- tag questions on [Stackoverflow](https://stackoverflow.com) with `ezdxf` or `dxf`
+	- tag questions on [[Stackoverflow]] with `ezdxf` or `dxf`
 	-
 - Report Errors
 	- https://github.com/mozman/ezdxf/issues
@@ -49,6 +49,7 @@
 	- [[IDEAS]]
 -
 - # Logseq
-	- this knowledge graph is build with [Loqseq](https://logseq.com/)
+	- this knowledge graph is build with [[Loqseq]]
 	- open toolbox for workflows that deal with lots of information
 	- source data is available in the [repository](https://github.com/mozman/ezdxf/tree/master/notes) on Github.
+-

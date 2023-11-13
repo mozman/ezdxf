@@ -1,5 +1,7 @@
-- by Fenton Webb
-- http://adndevblog.typepad.com/autocad/2013/02/dxf-files-binary-chunk-interpretation.html
+- Source
+	- [[AutoCAD DevBlog]]: [dxf-files-binary-chunk-interpretation.html](http://adndevblog.typepad.com/autocad/2013/02/dxf-files-binary-chunk-interpretation.html)
+	- ((6551c8c7-b9c9-441d-b28c-97e46cdbdc2e))
+	- Collection: [[DXF Internals]]
 - ## Issue
 	- I need to know how to interpret the binary data enclosed in AutoCAD DXF files, most importantly:
 		- the block preview bitmap,

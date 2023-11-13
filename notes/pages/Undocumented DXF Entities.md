@@ -1,4 +1,6 @@
-## Copying Undocumented DXF Entities
+- [[Unsorted Notes]]
+- ## Copying Undocumented DXF Entities
+	- #IDEAS
 	- Copying is the basic requirement for importing entities by the `xref` module.
 	- What are the requirements to support copying of undocumented entities?
 		- Pointer tags can be identified by their tag type

@@ -18,14 +18,14 @@
 	- the intended audience are programmers
 	- ((65509c8d-91b9-4461-886f-6d771ce566ea))
 	- OS independent
-	- works with [CPython](https://www.python.org) and [PyPy](https://www.pypy.org)
+	- works with [[CPython]] and [[PyPy]]
 	- has type annotations and passes `mypy --ignore-missing-imports -p ezdxf` successful
 	- additional required packages for the core package without add-ons
 		- [typing_extensions](https://pypi.org/project/typing-extensions/)
 		- [pyparsing](https://pypi.org/project/pyparsing)
 		- [numpy](https://pypi.org/project/numpy/)
 		- [fontTools](https://pypi.org/project/fonttools)
-	- optional C-extensions for CPython are included in the binary wheels on [PyPI](https://pypi.org/project/ezdxf/)
+	- optional C-extensions for CPython are included in the binary wheels on [[PyPI]]
 		- supported platforms
 			- Windows
 				- amd64

@@ -1,9 +1,12 @@
 # Proxy Graphic in DXF Binary Chunk Interpretation
-	- Source: <https://adndevblog.typepad.com/autocad/2013/02/proxy-graphic-in-dxf-binary-chunk-interpretation.html>
-	- Author: [Fenton Webb](https://adndevblog.typepad.com/autocad/fenton-webb.html)
-	- Read the comments!
+	- Source:
+		- [[AutoCAD DevBlog]]: [proxy-graphic-in-dxf-binary-chunk-interpretation.html](https://adndevblog.typepad.com/autocad/2013/02/proxy-graphic-in-dxf-binary-chunk-interpretation.html)
+		- Author: [Fenton Webb](https://adndevblog.typepad.com/autocad/fenton-webb.html)
+		  id:: 6551c8c7-b9c9-441d-b28c-97e46cdbdc2e
+		- Read the comments!
+	- Collection: [[DXF Internals]]
 - # Issue
-	- How to interpret the proxy graphic binary data enclosed in AutoCAD DXF files?
+	- How to interpret the [[ProxyGraphic]] binary data enclosed in AutoCAD DXF files?
 	-
 - # Solution
 	- Binary Data enclosed in DXF file is stored by block of 256 bytes maximum under DXF code 310 (i.e. 'kDxfBinaryChunk').
