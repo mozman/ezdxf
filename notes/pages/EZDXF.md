@@ -1,7 +1,7 @@
 - A Python interface to [[DXF]]
-	- create new [[DXF]] files
-	- read/modify/write existing [[DXF]] files
-	- supported [[DXF]] versions
+	- create new DXF files
+	- read/modify/write existing DXF files
+	- supported DXF versions
 		- R12
 		- R2000
 		- R2004
@@ -19,26 +19,23 @@
 -
 - Source Code Repositiory
   id:: 654fc81e-e026-46ab-ac63-e6c32c90711c
-	- https://github.com/mozman/ezdxf
+	- <https://github.com/mozman/ezdxf>
 	  id:: 654fc842-3cb5-4081-a70c-0d83fa56b953
 	-
-- Documentation
-	- current development version
+- [[Documentation]]
+	- ((655326e4-51ca-4fc4-92cf-a6d058022aef))
 	  id:: 654fc722-2018-4a67-a390-6e53bee15db9
-		- https://ezdxf.mozman.at/docs/
-	- latest stable release
-	  id:: 654fc731-f2a4-4bff-b49b-7deef073f7c7
-		- https://ezdxf.readthedocs.io/
+	- ((655326f7-c17c-4ecf-84b1-ab38e62a8862))
 -
 - Ask Questions
 	- in the [discussion forum](https://github.com/mozman/ezdxf/discussions) on Github
 	- tag questions on [[Stackoverflow]] with `ezdxf` or `dxf`
 	-
 - Report Errors
-	- https://github.com/mozman/ezdxf/issues
+	- <https://github.com/mozman/ezdxf/issues>
 	-
 - Project Landing Page
-	- https://ezdxf.mozman.at
+	- <https://ezdxf.mozman.at>
 -
 - # Further Reading
 	- [[RELEASE NOTES]]

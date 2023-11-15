@@ -1,3 +1,0 @@
-pi [Alt-0960?]: π  # alt-code does not work for me!
-diameter [Alt-0216]: Ø
-plus-minus [Alt-0177]: ±

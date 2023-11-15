@@ -1,0 +1,2 @@
+- [DXF Reference](https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F2FAD36F-0CE3-4943-9DAD-A9BCD2AE81DA)
+- [ezdxf Docs](https://ezdxf.mozman.at/docs/dxfinternals/tables/dimstyle_table.html)

@@ -1,7 +1,7 @@
 - A Python interface to [[DXF]]
-	- create new [[DXF]] files
-	- read/modify/write existing [[DXF]] files
-	- supported [[DXF]] versions
+	- create new DXF files
+	- read/modify/write existing DXF files
+	- supported DXF versions
 		- read/write/new support for [[DXF]] versions
 			- R12
 			- R2000
@@ -42,6 +42,7 @@
 - Source Code Repository
 	- ((654fc842-3cb5-4081-a70c-0d83fa56b953))
 	-
-- Documentation
-	- ((654fc722-2018-4a67-a390-6e53bee15db9))
-	- ((654fc731-f2a4-4bff-b49b-7deef073f7c7))
+- [[Documentation]]
+	- ((655326e4-51ca-4fc4-92cf-a6d058022aef))
+	- ((655326f7-c17c-4ecf-84b1-ab38e62a8862))
+-
