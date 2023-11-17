@@ -441,7 +441,7 @@
 	- PREVIEW: new features to try out, API may change until official release in v0.17
 	- PREVIEW: `move_to()` command and multi-path support for the `ezdxf.path.Path` class
 	- PREVIEW: `MPOLYGON` load/write/create support
-	- PREVIEW: store *ezdxf* and custom metadata in DXF files, see [docs]  (https://ezdxf.mozman.at/docs/drawing/management.html#ezdxf-metadata)
+	- PREVIEW: store *ezdxf* and custom metadata in DXF files, see [docs](https://ezdxf.mozman.at/docs/drawing/management.html#ezdxf-metadata)
 	- PREVIEW: command `ezdxf browse FILE`, PyQt DXF structure browser
 	- PREVIEW: command `ezdxf strip FILE [FILE ...]`, remove comment tags (999) and the 
 	  THUMBNAILIMAGE section
