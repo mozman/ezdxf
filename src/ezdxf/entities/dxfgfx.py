@@ -715,15 +715,21 @@ def is_graphic_entity(entity: DXFEntity) -> bool:
 
 
 def get_font_name(entity: DXFEntity) -> str:
-    """Returns the name of the font use by an entity.
-    This function always returns a font name even if the entity does not have
-    any font usage. The default font name is "txt".
+    """Returns the font name of any DXF entity.
 
+    This function always returns a font name even if the entity doesn't support text
+    styles.  The default font name is "txt".
     """
-    font_name = "txt"
-    if entity.doc and entity.dxf.is_supported("style"):
-        style_name = entity.dxf.style
-        style = entity.doc.styles.get(style_name)
-        if style:
-            font_name = style.dxf.font
-    return font_name
+    font_name = const.DEFAULT_TEXT_FONT
+    doc = entity.doc
+    if doc is None:
+        return font_name
+    try:
+        style_name = entity.dxf.get("style", const.DEFAULT_TEXT_STYLE)
+    except const.DXFAttributeError:
+        return font_name
+    try:
+        style = doc.styles.get(style_name)
+        return style.dxf.font
+    except const.DXFTableEntryError:
+        return font_name
