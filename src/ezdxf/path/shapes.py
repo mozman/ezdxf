@@ -150,7 +150,7 @@ def rect(
     w2 = float(width) / 2.0
     h2 = float(height) / 2.0
     path = converter.from_vertices(
-        [(w2, h2), (-w2, h2), (-w2, -h2), (w2, h2)], close=True
+        [(w2, h2), (-w2, h2), (-w2, -h2), (w2, -h2)], close=True
     )
     if transform is None:
         return path
