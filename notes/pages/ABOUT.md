@@ -46,3 +46,6 @@
 	- ((655326e4-51ca-4fc4-92cf-a6d058022aef))
 	- ((655326f7-c17c-4ecf-84b1-ab38e62a8862))
 -
+- [[RELEASE NOTES]]
+- [[CHANGELOG]]
+- Author and maintainer: [[Manfred Moitzi]]
