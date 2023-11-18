@@ -1,2 +1,2 @@
-profile:: <[johnthagen](https://github.com/johnthagen)>
+profile:: <https://github.com/johnthagen>
 tags:: contributor
