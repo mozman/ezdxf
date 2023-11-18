@@ -89,7 +89,8 @@ environment variable "XDG_CACHE_HOME".
 Rebuilding the Font Cache
 -------------------------
 
-When you add new fonts to your system you have to rebuild the font-cache of `ezdxf` to
+When you add new fonts to your system or add a font directory to the support directories 
+in the config file you have to rebuild the font-cache of `ezdxf` to
 recognize these new fonts:
 
 .. code-block:: Python
