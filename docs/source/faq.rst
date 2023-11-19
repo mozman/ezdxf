@@ -3,6 +3,9 @@
 FAQ
 ===
 
+These are the old FAQ until late 2023, new FAQs will only be added to the 
+:ref:`Knowledge_Graph`.
+
 .. _faq001:
 
 What is the Relationship between ezdxf, dxfwrite and dxfgrabber?
