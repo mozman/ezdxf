@@ -1,4 +1,6 @@
-## [[Font Cache]]
+tags:: FAQ
+
+- ## [[Font Cache]]
 	- [[ezdxf]] creates a new [[font cache]] if none exist, most likely at the first lauch of `ezdxf`
 	- The [[font cache]] will never be updated automatically!
 	- [[ezdxf]] searches recursively these default directories on your system for TrueType fonts #TTF
