@@ -96,7 +96,7 @@ recognize these new fonts:
 .. code-block:: Python
 
     import ezdxf
-    from ezdxf.tools import fonts
+    from ezdxf.fonts import fonts
 
     fonts.build_system_font_cache()
 

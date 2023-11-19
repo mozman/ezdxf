@@ -7,7 +7,7 @@ alias:: font-cache
 	  id:: 6559ccf9-2a1c-4efe-9875-f9a0f5e02b26
 	  ```Python
 	  import ezdxf
-	  from ezdxf.tools import fonts
+	  from ezdxf.fonts import fonts
 	  
 	  fonts.build_system_font_cache()
 	  ```
