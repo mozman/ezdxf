@@ -1,4 +1,4 @@
-## Version 1.1.3b1 - beta
+## Version 1.1.3b2 - beta
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	  id:: 654f4c9f-23cb-44c7-af4e-74d9d73b70f2
 	- CHANGE: [#956](https://github.com/mozman/ezdxf/issues/956)
