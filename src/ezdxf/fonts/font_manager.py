@@ -430,8 +430,12 @@ class FontManager:
                 continue
             ext = file.suffix.lower()
             if ext in SUPPORTED_TTF_TYPES:
-                font_face = get_ttf_font_face(file)
-                self._font_cache.add_entry(file, font_face)
+                try:
+                    font_face = get_ttf_font_face(file)
+                except Exception as e:
+                    logger.warning(f"cannot open font '{file}': {str(e)}")
+                else:
+                    self._font_cache.add_entry(file, font_face)
             elif ext in SUPPORTED_SHAPE_FILES:
                 font_face = get_shape_file_font_face(file)
                 self._font_cache.add_entry(file, font_face)
@@ -450,26 +454,20 @@ def normalize_style(style: str) -> str:
 
 
 def get_ttf_font_face(font_path: Path) -> FontFace:
-    try:
-        ttf = TTFont(font_path, fontNumber=0)
-    except Exception as e:
-        logger.warning(f"cannot open font '{font_path}': {str(e)}")
-        return FontFace(filename=font_path.name)
-
+    """The caller should catch ALL exception (see scan_folder function above) - strange 
+    things can happen when reading TTF files.
+    """
+    ttf = TTFont(font_path, fontNumber=0)
     names = ttf["name"].names
     family = ""
     style = ""
-    try:
-        for record in names:
-            if record.nameID == 1:
-                family = record.string.decode(record.getEncoding())
-            elif record.nameID == 2:
-                style = record.string.decode(record.getEncoding())
-            if family and style:
-                break
-    except Exception as e:
-        logger.warning(f"cannot open font '{font_path}': {str(e)}")
-        return FontFace(filename=font_path.name)
+    for record in names:
+        if record.nameID == 1:
+            family = record.string.decode(record.getEncoding())
+        elif record.nameID == 2:
+            style = record.string.decode(record.getEncoding())
+        if family and style:
+            break
     
     try:
         os2_table = ttf["OS/2"]
