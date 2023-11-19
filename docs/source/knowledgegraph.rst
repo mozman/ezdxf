@@ -6,7 +6,7 @@ Knowledge Graph
 I have started managing notes and documents that are not included in the `ezdxf` 
 documentation in `Logseq`_ in late 2023.  It works like a wiki but does not require a 
 backend server. The Information is edited as Markdown files, which is much more intuitive 
-than reStructured Text and stored in local files.  
+than reStructured Text, and the content is stored in local files.  
 
 The notes are included in the source code repository on Github in the `notes folder`_.
 
@@ -24,14 +24,15 @@ The Knowledge Graph includes:
 - In the future the `DXF Internals` section from this documentation may also move to the 
   Knowledge Graph.
 
-
 Logseq's outline structure is not ideal for all the documents I want to include, but I 
 chose `Logseq`_ over `Obsidian.md`_ because it is open source and can publish the 
 knowledge graph as a static website, static in the sense of no server-side code execution. 
 
-This feature is important for linking the information from outside the application and 
-cannot be achieved for free with `Obsidian.md`_. `Logseq`_ is an `Electron`_ application 
-that runs on all platforms, with the disadvantage: it's an `Electron`_ application.
+his feature is important to me for hosting the content of the Knowledge Graph on the 
+`ezdxf`` website  and cannot be achieved for free with `Obsidian.md`_. 
+
+`Logseq`_ is an `Electron`_ application that runs on all platforms, with the 
+disadvantage: it's an `Electron`_ application.
 
 .. _Logseq: https://www.logseq.com/
 .. _Obsidian.md: https://obsidian.md/
