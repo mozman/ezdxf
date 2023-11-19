@@ -78,6 +78,27 @@ Documentation of development version at https://ezdxf.mozman.at/docs
 
 Documentation of latest release at http://ezdxf.readthedocs.io/
 
+Knowledge Graph
+---------------
+
+The knowledge graph contains additional information beyond the documentation and is 
+managed by `logseq <https://logseq.com/>`_.  The source data is included in the repository 
+in the folder ``ezdxf/notes``.  There is also a `HTML export <https://ezdxf.mozman.at/notes/#/page/ezdxf>`_
+on the website which gets regular updates.
+
+Release Notes
+-------------
+
+The `release notes <https://ezdxf.mozman.at/notes/#/page/release%20notes>`_ are included 
+in the knowledge graph.
+
+Changelog
+---------
+
+The `changelog <https://ezdxf.mozman.at/notes/#/page/changelog>`_ is included 
+in the knowledge graph.
+
+
 Source Code & Feedback
 ----------------------
 

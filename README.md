@@ -168,6 +168,14 @@ Documentation of the development version at https://ezdxf.mozman.at/docs
 
 Documentation of the latest release at https://ezdxf.readthedocs.io/
 
+## Knowledge Graph
+
+The knowledge graph contains additional information beyond the documentation and is 
+managed by [logseq](https://logseq.com/).  The source data is included in the repository 
+in the folder `ezdxf/notes`.  There is also a [HTML export](https://ezdxf.mozman.at/notes/#/page/ezdxf) 
+on the website which gets regular updates.
+
+
 ## Contribution
 
 The source code of *ezdxf* can be found at __GitHub__, target your pull requests 
@@ -189,6 +197,17 @@ Post questions at [stack overflow](https://stackoverflow.com/) and use the tag `
 Issue tracker at __GitHub__:
 
 http://github.com/mozman/ezdxf/issues
+
+## Release Notes
+
+The [release notes](https://ezdxf.mozman.at/notes/#/page/release%20notes) are included 
+in the knowledge graph.
+
+## Changelog
+
+The [changelog](https://ezdxf.mozman.at/notes/#/page/changelog) is included 
+in the knowledge graph.
+
 
 ## Contact
 
