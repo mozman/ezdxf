@@ -459,13 +459,18 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
     names = ttf["name"].names
     family = ""
     style = ""
-    for record in names:
-        if record.nameID == 1:
-            family = record.string.decode(record.getEncoding())
-        elif record.nameID == 2:
-            style = record.string.decode(record.getEncoding())
-        if family and style:
-            break
+    try:
+        for record in names:
+            if record.nameID == 1:
+                family = record.string.decode(record.getEncoding())
+            elif record.nameID == 2:
+                style = record.string.decode(record.getEncoding())
+            if family and style:
+                break
+    except Exception as e:
+        logger.warning(f"cannot open font '{font_path}': {str(e)}")
+        return FontFace(filename=font_path.name)
+    
     try:
         os2_table = ttf["OS/2"]
     except Exception:  # e.g. ComickBook_Simple.ttf has an invalid "OS/2" table

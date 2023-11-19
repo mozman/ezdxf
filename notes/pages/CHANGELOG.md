@@ -6,9 +6,9 @@
 	- NEW: the `strip` command can remove handles from DXF R12 and older files
 	- BUGFIX: tests ignore fonts in support dirs; including this dirs caused problems on systems with partially installed [[SHX]] fonts
 	- CHANGE: [#966](https://github.com/mozman/ezdxf/pull/966)
-	- `ezdxf.entities.dxfgfx.get_font_name()` to correctly handle implicitly-styled [[TEXT]] entities, contributed  by [[neiljackson1984]]
+	  `ezdxf.entities.dxfgfx.get_font_name()` to correctly handle implicitly-styled [[TEXT]] entities, contributed  by [[neiljackson1984]]
 	- BUGFIX: [#965](https://github.com/mozman/ezdxf/pull/965)
-	- fixed typo in `ezdxf.path.rect()`, contributed  by [[neiljackson1984]]
+	  fixed typo in `ezdxf.path.rect()`, contributed  by [[neiljackson1984]]
 	-
 - ## Version 1.1.2 - 2023-11-01
   id:: 654fc008-346e-4d67-bde5-2ca9af3bf86b
