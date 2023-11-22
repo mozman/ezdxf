@@ -9,6 +9,8 @@
 	  `ezdxf.entities.dxfgfx.get_font_name()` to correctly handle implicitly-styled [[TEXT]] entities, contributed  by [[neiljackson1984]]
 	- BUGFIX: [#965](https://github.com/mozman/ezdxf/pull/965)
 	  fixed typo in `ezdxf.path.rect()`, contributed  by [[neiljackson1984]]
+	- BUGFIX: [#967](https://github.com/mozman/ezdxf/discussions/967)
+	- `make_font()` function didn't find fonts with uppercase extensions like `.SHX`
 	-
 - ## Version 1.1.2 - 2023-11-01
   id:: 654fc008-346e-4d67-bde5-2ca9af3bf86b

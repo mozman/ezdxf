@@ -658,7 +658,7 @@ def make_font(
     """
     if font_name == MONOSPACE:
         return MonospaceFont(cap_height, width_factor)
-    ext = pathlib.Path(font_name).suffix
+    ext = pathlib.Path(font_name).suffix.lower()
     last_resort = MonospaceFont(cap_height, width_factor)
     if ext in SUPPORTED_TTF_TYPES:
         try:
@@ -685,6 +685,10 @@ def make_font(
         )
         if font_face is not None:
             return make_font(font_face.filename, cap_height, width_factor)
+    else:
+        logger.warning(f"unsupported font-name suffix: {font_name}")
+        font_name = font_manager.fallback_font_name()
+
     # return default TrueType font
     try:
         return TrueTypeFont(font_name, cap_height, width_factor)
