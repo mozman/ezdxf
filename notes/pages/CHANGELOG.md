@@ -1,27 +1,27 @@
 ## Version 1.1.3b2 - beta
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	  id:: 654f4c9f-23cb-44c7-af4e-74d9d73b70f2
-	- CHANGE: [#956](https://github.com/mozman/ezdxf/issues/956)
-	  added a safety factor of 1.01 to [[MTEXT]] size estimation, a "too precise" measurement causes sometimes unwanted line wraps
+	- CHANGE: added a safety factor of 1.01 to [[MTEXT]] size estimation, a "too precise" measurement causes sometimes unwanted line wraps
+		- {{issue 956}}
 	- NEW: the `strip` command can remove handles from DXF R12 and older files
 	- BUGFIX: tests ignore fonts in support dirs; including this dirs caused problems on systems with partially installed [[SHX]] fonts
-	- CHANGE: [#966](https://github.com/mozman/ezdxf/pull/966)
-	  `ezdxf.entities.dxfgfx.get_font_name()` to correctly handle implicitly-styled [[TEXT]] entities, contributed  by [[neiljackson1984]]
-	- BUGFIX: [#965](https://github.com/mozman/ezdxf/pull/965)
-	  fixed typo in `ezdxf.path.rect()`, contributed  by [[neiljackson1984]]
-	- BUGFIX: [#967](https://github.com/mozman/ezdxf/discussions/967)
-	- `make_font()` function didn't find fonts with uppercase extensions like `.SHX`
+	- CHANGE: `ezdxf.entities.dxfgfx.get_font_name()` to correctly handle implicitly-styled [[TEXT]] entities, contributed  by [[neiljackson1984]]
+		- {{pr 966}}
+	- BUGFIX: fixed typo in `ezdxf.path.rect()`, contributed  by [[neiljackson1984]]
+		- {{pr 965}}
+	- BUGFIX: `make_font()` function didn't find fonts with uppercase extensions like `.SHX`
+		- {{discussion 967}}
 	-
 - ## Version 1.1.2 - 2023-11-01
   id:: 654fc008-346e-4d67-bde5-2ca9af3bf86b
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
-	- CHANGE: [#936](https://github.com/mozman/ezdxf/issues/936)
-	  improve [[modelspace]] extents updates
-	- BUGFIX: [#939](https://github.com/mozman/ezdxf/issues/939)
-	  [[Matplotlib]] requires oriented outer paths and holes to draw correct filled paths
+	- CHANGE: improve [[modelspace]] extents updates
+		- {{issue 936}}
+	- BUGFIX: [[Matplotlib]] requires oriented outer paths and holes to draw correct filled paths
+		- {{issue 936}}
 	- BUGFIX: transform embedded [[MTEXT]] entity in [[ATTRIB]] and [[ATTDEF]] entities
-	- BUGFIX: [#949](https://github.com/mozman/ezdxf/issues/949)
-	  fixed [[PyMuPDF]] deprecated method names, requires [[PyMuPDF]] 1.20.0 or newer
+	- BUGFIX: fixed [[PyMuPDF]] deprecated method names, requires [[PyMuPDF]] 1.20.0 or newer
+		- {{issue 949}}
 	-
 - ## Version 1.1.1 - 2023-10-08
   id:: 654fc008-39f0-48af-b636-8074c874c109
@@ -37,10 +37,10 @@
 		- [[PlotterBackend]]
 	- NEW: support for decoding of [[MIF]] encoded text `\M+cxxxx` by the [[recover]] module
 	- INFO: [[numpy]] v1.25 has stopped providing Python 3.8 binary wheels on PyPI
-	- BUGFIX: [#929](https://github.com/mozman/ezdxf/issues/929)
-	  handling of the minimum hatch line distance
-	- BUGFIX: [#932](https://github.com/mozman/ezdxf/issues/932)
-	  tolerate [[MIF]] encoding `\M+cxxxx` in table names
+	- BUGFIX: handling of the minimum hatch line distance
+		- {{issue 929}}
+	- BUGFIX: tolerate [[MIF]] encoding `\M+cxxxx` in table names
+		- {{issue 932}}
 	-
 - ## Version 1.1.0 - 2023-09-09
   id:: 654fc008-fba9-4937-a84e-2f3e2d9bd9a2
@@ -84,14 +84,14 @@
 	- REMOVED: `Pillow` backend and the `pillow` command
 	- REMOVED: `geomdl` test dependency
 	- BUGFIX: invalid bulge to Bezier curve conversion for bulge values >= 1
-	- BUGFIX: [#855](https://github.com/mozman/ezdxf/issues/855)
-	  scale [[MTEXT]] and [[MLEADER]] inline commands "absolute text height" at transformation
-	- BUGFIX: [#898](https://github.com/mozman/ezdxf/issues/898)
-	  use `dimclrd` color for dimension arrow blocks
-	- BUGFIX: [#906](https://github.com/mozman/ezdxf/issues/906)
-	  linetype and fill flag parsing for proxy graphics
-	- BUGFIX: [#907](https://github.com/mozman/ezdxf/issues/907)
-	  fix [[ATTRIB]] and [[ATTDEF]] handling of version- and lock_position tags which share the same group code 280 in the same subclass
+	- BUGFIX: scale [[MTEXT]] and [[MLEADER]] inline commands "absolute text height" at transformation
+		- {{issue 855}}
+	- BUGFIX: use `dimclrd` color for dimension arrow blocks
+		- {{issue 898}}
+	- BUGFIX: linetype and fill flag parsing for proxy graphics
+		- {{issue 906}}
+	- BUGFIX: fix [[ATTRIB]] and [[ATTDEF]] handling of version- and lock_position tags which share the same group code 280 in the same subclass
+		- {{issue 907}}
 	-
 - ## Version 1.0.3 - 2023-03-26
 	- ((654fc008-931d-4836-93ce-994fd8a347e0))

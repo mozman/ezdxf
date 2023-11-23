@@ -266,7 +266,11 @@
  ;; input "{{poem red,blue}}"
  ;; becomes
  ;; Rose is red, violet's blue. Life's ordered: Org assists you.
- :macros {}
+ :macros {
+          "discussion" "discussion [#$1](https://github.com/mozman/ezdxf/discussions/$1)"
+          "issue" "issue [#$1](https://github.com/mozman/ezdxf/issues/$1)"
+          "pr" "pull request [#$1](https://github.com/mozman/ezdxf/pull/$1)"
+          }
 
  ;; Configure the default expansion level for linked references.
  ;; For example, consider the following block hierarchy:
@@ -413,4 +417,5 @@
  ;;      ;use triple underscore `___` for slash `/` in page title
  ;;      ;use Percent-encoding for other invalid characters
  :file/name-format :triple-lowbar
- :feature/enable-flashcards? false}
+ :feature/enable-flashcards? false
+ :feature/enable-timetracking? false}

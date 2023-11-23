@@ -65,8 +65,8 @@ Set/Get Header Variables
 
 .. seealso::
 
-    :class:`HeaderSection` and online documentation from Autodesk for
-    available `header variables`_.
+    :class:`~ezdxf.sections.header.HeaderSection` and online documentation from Autodesk 
+    for available `header variables`_.
 
 .. _set drawing units:
 

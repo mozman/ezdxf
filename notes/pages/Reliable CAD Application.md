@@ -1,0 +1,12 @@
+- Because of the suboptimal quality of the  [[DXF Reference]] not all DXF viewers, creators or processors are of equal quality. I consider a CAD application as a reliable CAD application when the application creates valid DXF documents in the meaning and interpretation of [[Autodesk]] and a reliable DXF viewer when the result matches in most parts the result of the free [[DWG Trueview]] viewer provided by [[Autodesk]].
+-
+- These are some applications which do fit the criteria of a reliable CAD application:
+	- [[AutoCAD]] and [[DWG Trueview]]
+	- CAD applications based on the [[Open Design Alliance]] (ODA) SDK, even [[Autodesk]] is a corporate member, see their blog post from [22 Sep 2020](https://adsknews.autodesk.com/news/open-design-alliance-membership) at [adsknews](https://adsknews.autodesk.com/) but only to use the ODA IFC tools and not to improve the DWG/DXF compatibility
+	- [[BricsCAD]] - [[ODA]] based
+	- [[GstarCAD]] - [[ODA]] based
+	- [[ZWCAD]] - [[ODA]] based
+	-
+- Unfortunately, I cannot recommend any open source applications because everyone I know has serious shortcomings, at least as a [[DXF]] viewer, and I don’t trust them as a DXF creator either.
+- Please do not submit bug reports based on the use of [[LibreCAD]] or [[QCAD]], these applications are in no way reliable regarding the [[DXF]] format and I will not waste my time on them.
+- To be clear, not even [[ezdxf]] (which is not a CAD application) is a reliable library in this sense - it just keeps getting better, but is far from reliable.

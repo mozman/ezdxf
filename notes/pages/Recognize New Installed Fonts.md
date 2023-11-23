@@ -1,4 +1,4 @@
-tags:: FAQ
+tags:: FAQ, fonts, font-cache
 
 - ## [[Font Cache]]
 	- [[ezdxf]] creates a new [[font cache]] if none exist, most likely at the first lauch of `ezdxf`
