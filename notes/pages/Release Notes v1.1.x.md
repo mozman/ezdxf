@@ -59,3 +59,7 @@
 - # Release v1.1.2
 	- Changelog: ((654fc008-346e-4d67-bde5-2ca9af3bf86b))
 	- Bugfix release
+	-
+- # Release v1.1.3
+	- Changelog: ((65604fb6-9254-4146-abb1-4e93f6adfddc))
+	- Bugfix release
