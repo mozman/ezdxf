@@ -1,4 +1,4 @@
-## Version 1.1.3b2 - beta
+## Version 1.1.3 - 2023-11-23
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	  id:: 654f4c9f-23cb-44c7-af4e-74d9d73b70f2
 	- CHANGE: added a safety factor of 1.01 to [[MTEXT]] size estimation, a "too precise" measurement causes sometimes unwanted line wraps
