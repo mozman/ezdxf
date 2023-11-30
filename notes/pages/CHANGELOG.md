@@ -1,5 +1,9 @@
-## Version 1.1.3 - 2023-11-25
-id:: 65604fb6-9254-4146-abb1-4e93f6adfddc
+## Version 1.1.4 - beta
+id:: 6568dc88-ce84-4f46-b490-43768c491a2b
+	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
+	- CHANGE: the copy process of [[DICTIONARY]] entities ignores unsupported entities, this may help to process more [[AutoCAD]] files by the [[ezdxf.xref]] module, but can also make DXF docments unreadable for [[AutoCAD]]. If this change causes too much trouble, there is an option to implement it as an optional feature.
+- ## Version 1.1.3 - 2023-11-25
+  id:: 65604fb6-9254-4146-abb1-4e93f6adfddc
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	  id:: 654f4c9f-23cb-44c7-af4e-74d9d73b70f2
 	- CHANGE: added a safety factor of 1.01 to [[MTEXT]] size estimation, a "too precise" measurement causes sometimes unwanted line wraps
