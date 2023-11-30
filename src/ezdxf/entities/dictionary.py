@@ -106,7 +106,18 @@ class Dictionary(DXFObject):
         entity._value_code = self._value_code
         if self.dxf.hard_owned:
             # Reactors are removed from the cloned DXF objects.
-            entity._data = {key: entity.copy() for key, entity in self.items()}
+            data: dict[str, DXFEntity] = dict()
+            for key, ent in self.items():
+                # ignore strings and None - these entities do not exist
+                # in the entity database
+                if isinstance(ent, DXFEntity):
+                    try:
+                        data[key] = ent.copy()
+                    except DXFTypeError:
+                        logger.warning(
+                            f"copy process ignored {str(ent)} - this may cause problems in AutoCAD"
+                        )
+            entity._data = data  # type: ignore
         else:
             entity._data = dict(self._data)
 
@@ -117,6 +128,8 @@ class Dictionary(DXFObject):
             return handle_mapping
 
         for key, entity in self.items():
+            if not isinstance(entity, DXFEntity):
+                continue
             copied_entry = clone.get(key)
             if copied_entry:
                 handle_mapping[entity.dxf.handle] = copied_entry.dxf.handle
@@ -130,6 +143,8 @@ class Dictionary(DXFObject):
             return
         data = dict()
         for key, entity in self.items():
+            if not isinstance(entity, DXFEntity):
+                continue
             entity_copy = mapping.get_reference_of_copy(entity.dxf.handle)
             if entity_copy:
                 data[key] = entity
