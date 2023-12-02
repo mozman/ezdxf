@@ -324,21 +324,6 @@ class DXFEntity:
         """
         pass
 
-    def __deepcopy__(self, memodict: Optional[dict] = None):
-        """Some entities maybe linked by more than one entity, to be safe use
-        `memodict` for bookkeeping.
-
-        (internal API)
-        """
-        # todo: remove __deepcopy__()
-        memodict = memodict or {}
-        try:
-            return memodict[id(self)]
-        except KeyError:
-            copy = self.copy(copy_strategy=default_copy_strategy)
-            memodict[id(self)] = copy
-            return copy
-
     def set_source_of_copy(self, source: Optional[DXFEntity]):
         """Set immediate source entity of a copy.
 
