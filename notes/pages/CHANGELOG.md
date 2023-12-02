@@ -1,7 +1,10 @@
 ## Version 1.1.4 - beta
 id:: 6568dc88-ce84-4f46-b490-43768c491a2b
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
-	- CHANGE: the copy process of [[DICTIONARY]] entities ignores unsupported entities, this may help to process more [[AutoCAD]] files by the [[ezdxf.xref]] module, but can also make DXF docments unreadable for [[AutoCAD]]. If this change causes too much trouble, there is an option to implement it as an optional feature.
+	- CHANGE: rework of the copy process of DXF entities.
+		- The copy process ignores by default copy errors of linked entities.
+		- This may help to process more [[AutoCAD]] files by the [[ezdxf.xref]] module, but can also make DXF docments unreadable for [[AutoCAD]].
+	-
 - ## Version 1.1.3 - 2023-11-25
   id:: 65604fb6-9254-4146-abb1-4e93f6adfddc
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))

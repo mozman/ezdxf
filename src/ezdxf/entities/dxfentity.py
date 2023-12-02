@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 """ :class:`DXFEntity` is the super class of all DXF entities.
 
@@ -40,6 +40,7 @@ from .appdata import AppData, Reactors
 from .dxfns import DXFNamespace, SubclassProcessor
 from .xdata import XData
 from .xdict import ExtensionDict
+from .copy import default_copy_strategy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -49,6 +50,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.math import Matrix44
     from ezdxf import xref
+
 
 __all__ = ["DXFEntity", "DXFTagStorage", "base_class", "SubclassProcessor"]
 logger = logging.getLogger("ezdxf")
@@ -300,48 +302,7 @@ class DXFEntity:
         # Do not set copy state, this is not a real copy!
         return entity
 
-    def raw_copy(self: T) -> T:
-        """Returns a raw copy of `self` but without handle, owner and reactors.
-
-        This is the first stage of the copy process, see copy() method.
-
-        (internal API)
-        """
-        entity = self.__class__()
-        doc = self.doc
-        entity.doc = doc
-        # copy and bind dxf namespace to new entity
-        entity.dxf = self.dxf.copy(entity)
-        entity.dxf.reset_handles()
-
-        xdict = self.extension_dict
-        if xdict is not None and doc is not None and xdict.is_alive:
-            # All linked DXF objects are copied and added to the OBJECTS section:
-            entity.extension_dict = xdict.copy()
-        else:
-            entity.extension_dict = None
-
-        # Do not copy reactors:
-        entity.reactors = None
-        entity.proxy_graphic = self.proxy_graphic  # immutable bytes
-
-        # if appdata contains handles, they are treated as shared resources
-        entity.appdata = copy.deepcopy(self.appdata)
-
-        # if xdata contains handles, they are treated as shared resources
-        entity.xdata = copy.deepcopy(self.xdata)
-        return entity
-
-    def copy_data(self, entity: DXFEntity) -> None:
-        """Copy entity data like vertices or attribs to the copy of the entity.
-
-        This is the second stage of the copy process, see copy() method.
-
-        (internal API)
-        """
-        pass
-
-    def copy(self: T) -> T:
+    def copy(self: T, copy_strategy=default_copy_strategy) -> T:
         """Internal entity copy for usage in the same document or as virtual entity.
 
         Returns a copy of `self` but without handle, owner and reactors.
@@ -352,29 +313,16 @@ class DXFEntity:
 
         (internal API)
         """
-        clone = self.raw_copy()
-        clone.set_source_of_copy(self)
-        # DO NOT COPY DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE.
-        # Copying an entity from a block reference, takes it out of context of
-        # this block reference!
-        self.copy_data(clone)
-        return clone
+        return copy_strategy.copy(self)
 
-    def copy_external(self: T) -> T:
-        """External entity copy for usage in another document, this copy mode requires
-        registering and mapping of resources, see also:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+        """Copy entity data like vertices or attribs to the copy of the entity.
 
-            - DXFEntity.register_resources()
-            - DXFEntity.map_resources()
-
-        Introduced for usage by the xref module.
+        This is the second stage of the copy process, see copy() method.
 
         (internal API)
         """
-        clone = self.raw_copy()
-        # source of copy is not required
-        self.copy_data(clone)
-        return clone
+        pass
 
     def __deepcopy__(self, memodict: Optional[dict] = None):
         """Some entities maybe linked by more than one entity, to be safe use
@@ -382,11 +330,12 @@ class DXFEntity:
 
         (internal API)
         """
+        # todo: remove __deepcopy__()
         memodict = memodict or {}
         try:
             return memodict[id(self)]
         except KeyError:
-            copy = self.copy()
+            copy = self.copy(copy_strategy=default_copy_strategy)
             memodict[id(self)] = copy
             return copy
 
@@ -1031,9 +980,9 @@ class DXFTagStorage(DXFEntity):
         self.xtags = ExtendedTags()
         self.embedded_objects: Optional[list[Tags]] = None
 
-    def raw_copy(self: T) -> T:
-        raise const.DXFTypeError(
-            f"Cloning of tag storage {self.dxftype()} not supported."
+    def copy(self: T, copy_strategy=default_copy_strategy) -> T:
+        raise CopyNotSupported(
+            f"Copying of tag storage {self.dxftype()} not supported."
         )
 
     def transform(self, m: Matrix44) -> DXFGraphic:

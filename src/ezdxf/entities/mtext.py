@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -46,6 +46,7 @@ from . import factory
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .xdata import XData
+from .copy import default_copy_strategy
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -682,7 +683,7 @@ class MText(DXFGraphic):
     def has_columns(self) -> bool:
         return self._columns is not None
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
         assert isinstance(entity, MText)
         entity.text = self.text
         if self.has_columns:

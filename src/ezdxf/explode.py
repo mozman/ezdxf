@@ -25,6 +25,7 @@ from ezdxf.math.transformtools import (
     InsertTransformationError,
 )
 from ezdxf.query import EntityQuery
+from ezdxf.entities.copy import default_copy_strategy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.entities import (
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
         Insert,
         Attrib,
         Text,
-        LWPolyline,
+        Dimension,
     )
     from ezdxf.entities.polygon import DXFPolygon
     from ezdxf.layouts import BaseLayout
@@ -194,7 +195,7 @@ def virtual_block_reference_entities(
         skipped_entity_callback or default_logging_callback
     )
 
-    def disassemble(layout) -> Iterable[DXFGraphic]:
+    def disassemble(layout: BaseLayout) -> Iterable[DXFGraphic]:
         for entity in (
             layout.entities_in_redraw_order() if redraw_order else layout
         ):
@@ -202,15 +203,15 @@ def virtual_block_reference_entities(
             if entity.dxftype() == "ATTDEF":
                 continue
             try:
-                copy = entity.copy()
-            except const.DXFTypeError:
+                copy = entity.copy(copy_strategy=default_copy_strategy)
+            except CopyNotSupported:
                 if hasattr(entity, "virtual_entities"):
-                    yield from entity.virtual_entities()
+                    yield from entity.virtual_entities()  # type: ignore
                 else:
                     skipped_entity_callback(entity, "non copyable")  # type: ignore
             else:
                 if hasattr(copy, "remove_association"):
-                    copy.remove_association()
+                    copy.remove_association()  # type: ignore
                 yield copy
 
     def transform(entities):
@@ -319,10 +320,10 @@ def virtual_boundary_path_entities(
 
     def polyline():
         p = LWPolyline.new(dxfattribs=dict(graphic_attribs))
-        p.append_formatted_vertices(path.vertices, format="xyb")
+        p.append_formatted_vertices(path.vertices, format="xyb")  # type: ignore
         p.dxf.extrusion = ocs.uz
         p.dxf.elevation = elevation
-        p.closed = path.is_closed
+        p.closed = path.is_closed  # type: ignore
         return p
 
     graphic_attribs = polygon.graphic_properties()

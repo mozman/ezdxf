@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
@@ -6,6 +6,7 @@ from ezdxf.lldxf import const
 from . import factory
 from .dxfgfx import DXFGraphic
 from .dxfentity import SubclassProcessor
+from .copy import default_copy_strategy, CopyNotSupported
 from ezdxf.math import BoundingBox, Vec3
 
 if TYPE_CHECKING:
@@ -23,8 +24,8 @@ class OLE2Frame(DXFGraphic):
         super().__init__()
         self.acdb_ole2frame: Optional[Tags] = None
 
-    def raw_copy(self) -> OLE2Frame:
-        raise const.DXFTypeError(f"Cloning of {self.dxftype()} not supported.")
+    def copy(self, copy_strategy=default_copy_strategy) -> OLE2Frame:
+        raise CopyNotSupported(f"Copying of {self.dxftype()} not supported.")
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
@@ -52,7 +53,5 @@ class OLE2Frame(DXFGraphic):
 
     def binary_data(self) -> bytes:
         if self.acdb_ole2frame is not None:
-            return b"".join(
-                value for code, value in self.acdb_ole2frame if code == 310
-            )
+            return b"".join(value for code, value in self.acdb_ole2frame if code == 310)
         return b""

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Optional
@@ -9,9 +9,9 @@ from ezdxf.lldxf.const import (
     XDICT_HANDLE_CODE,
     APP_DATA_MARKER,
 )
+from .copy import default_copy_strategy
 
 if TYPE_CHECKING:
-    from ezdxf.audit import Auditor
     from ezdxf.document import Drawing
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.entities import (
@@ -52,7 +52,7 @@ class ExtensionDict:
         xdict = self._xdict
         assert xdict is not None, "destroyed extension dictionary"
         assert not isinstance(xdict, str), f"dictionary handle #{xdict} not resolved"
-        return xdict
+        return xdict  # type: ignore
 
     @property
     def handle(self) -> str:
@@ -118,11 +118,11 @@ class ExtensionDict:
         )
         return cls(xdict)
 
-    def copy(self) -> ExtensionDict:
+    def copy(self, copy_strategy=default_copy_strategy) -> ExtensionDict:
         """Deep copy of the extension dictionary all entries are virtual
         entities.
         """
-        new_xdict = self.dictionary.copy()
+        new_xdict = copy_strategy.copy(self.dictionary)
         return ExtensionDict(new_xdict)
 
     @property
@@ -177,7 +177,7 @@ class ExtensionDict:
     def destroy(self):
         """Destroy the underlying :class:`~ezdxf.entities.Dictionary` object."""
         if self.has_valid_dictionary:
-            self._xdict.destroy()
+            self._xdict.destroy()  # type: ignore
         self._xdict = None
 
     def add_dictionary(self, name: str, hard_owned: bool = True) -> Dictionary:

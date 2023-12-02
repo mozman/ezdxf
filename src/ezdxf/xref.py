@@ -37,6 +37,7 @@ from ezdxf.entities import (
     DXFLayout,
     VisualStyle,
 )
+from ezdxf.entities.copy import CopyStrategy, CopySettings
 from ezdxf.math import UVec, Vec3
 
 __all__ = [
@@ -1619,6 +1620,7 @@ class CopyMachine:
         self.classes: list[DXFClass] = []
         self.objects: dict[str, DXFEntity] = {}
         self.copy_errors: set[str] = set()
+        self.copy_strategy = CopyStrategy(CopySettings(set_source_of_copy=False))
 
         # mapping from the source entity handle to the handle of the copied entity
         self.handle_mapping: dict[str, str] = {}
@@ -1653,10 +1655,10 @@ class CopyMachine:
 
     def copy_entity(self, entity: DXFEntity) -> Optional[DXFEntity]:
         try:
-            return entity.copy_external()
+            return entity.copy(copy_strategy=self.copy_strategy)
         except const.DXFError:
             self.copy_errors.add(entity.dxf.handle)
         return None
 
     def copy_dxf_class(self, cls: DXFClass) -> None:
-        self.classes.append(cls.copy())
+        self.classes.append(cls.copy(copy_strategy=self.copy_strategy))

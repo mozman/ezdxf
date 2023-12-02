@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2022, Manfred Moitzi
+# Copyright (c) 2018-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -29,7 +29,7 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .dxfgfx import DXFGraphic, acdb_entity
 from .objectcollection import ObjectCollection
-
+from .copy import default_copy_strategy
 import logging
 
 if TYPE_CHECKING:
@@ -330,7 +330,7 @@ class MLine(DXFGraphic):
         """Count of MLINE vertices."""
         return len(self.vertices)
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
         assert isinstance(entity, MLine)
         entity.vertices = [v.copy() for v in self.vertices]
 
@@ -541,7 +541,7 @@ class MLine(DXFGraphic):
         )
         # Transform given vertices into UCS and project them into the
         # UCS-xy-plane by setting the z-axis to 0:
-        vertices = [v.replace(z=0.) for v in ucs.points_from_wcs(vertices)]
+        vertices = [v.replace(z=0.0) for v in ucs.points_from_wcs(vertices)]
         start_angle = style.dxf.start_angle
         end_angle = style.dxf.end_angle
 
@@ -873,7 +873,7 @@ class MLineStyle(DXFObject):
         super().__init__()
         self.elements = MLineStyleElements()
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
         assert isinstance(entity, MLineStyle)
         entity.elements = self.elements.copy()
 

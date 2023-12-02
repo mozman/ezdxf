@@ -1,10 +1,11 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Callable, Optional
 
 from ezdxf.entities import factory, DXFGraphic, SeqEnd, DXFEntity
 from ezdxf.lldxf import const
+from .copy import default_copy_strategy
 import logging
 
 if TYPE_CHECKING:
@@ -30,12 +31,14 @@ class LinkedEntities(DXFGraphic):
         self._sub_entities: list[DXFGraphic] = []
         self.seqend: Optional[SeqEnd] = None
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
         """Copy all sub-entities ands SEQEND. (internal API)"""
         assert isinstance(entity, LinkedEntities)
-        entity._sub_entities = [e.copy() for e in self._sub_entities]
+        entity._sub_entities = [
+            copy_strategy.copy(e) for e in self._sub_entities
+        ]
         if self.seqend:
-            entity.seqend = self.seqend.copy()
+            entity.seqend = copy_strategy.copy(self.seqend)
 
     def link_entity(self, entity: DXFEntity) -> None:
         """Link VERTEX to ATTRIB entities."""

@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Iterator
@@ -8,6 +8,7 @@ from ezdxf.query import EntityQuery
 from .dxfentity import SubclassProcessor
 from .dxfgfx import DXFGraphic
 from . import factory
+from .copy import default_copy_strategy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
@@ -53,8 +54,8 @@ class ACADProxyEntity(DXFGraphic):
         super().__init__()
         self.acdb_proxy_entity: Optional[Tags] = None
 
-    def raw_copy(self):
-        raise const.DXFTypeError(f"Cloning of {self.dxftype()} not supported.")
+    def copy(self, copy_strategy=default_copy_strategy):
+        raise CopyNotSupported(f"Copying of {self.dxftype()} not supported.")
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None

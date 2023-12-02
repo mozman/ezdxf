@@ -36,6 +36,7 @@ from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
+from .copy import default_copy_strategy
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -264,7 +265,7 @@ class Viewport(DXFGraphic):
         super().__init__()
         self._frozen_layers: list[str] = []
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
         assert isinstance(entity, Viewport)
         entity._frozen_layers = list(self._frozen_layers)
 
@@ -326,7 +327,7 @@ class Viewport(DXFGraphic):
                 if len(tags):
                     tags = self.load_frozen_layer_handles(tags)
                 if len(tags):
-                    processor.log_unprocessed_tags(tags, subclass=acdb_viewport.name)
+                    processor.log_unprocessed_tags(tags, subclass=acdb_viewport.name)  # type: ignore
         return dxf
 
     def post_load_hook(self, doc: Drawing):
@@ -636,8 +637,7 @@ class Viewport(DXFGraphic):
         return center_point
 
     def get_transformation_matrix(self) -> Matrix44:
-        """Returns the transformation matrix from modelspace to paperspace coordinates.
-        """
+        """Returns the transformation matrix from modelspace to paperspace coordinates."""
         # supports only top-view viewports!
         scale = self.get_scale()
         rotation_angle: float = self.dxf.view_twist_angle

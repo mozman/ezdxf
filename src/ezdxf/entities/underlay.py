@@ -19,6 +19,7 @@ from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
 from .factory import register_entity
+from .copy import default_copy_strategy
 from ezdxf.math.transformtools import (
     InsertTransformationError,
     InsertCoordinateSystem,
@@ -116,7 +117,7 @@ class Underlay(DXFGraphic):
         self._boundary_path: list[UVec] = []
         self._underlay_def: Optional[UnderlayDefinition] = None
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
         assert isinstance(entity, Underlay)
         entity._boundary_path = list(self._boundary_path)
         entity._underlay_def = self._underlay_def
@@ -189,7 +190,7 @@ class Underlay(DXFGraphic):
 
     def export_boundary_path(self, tagwriter: AbstractTagWriter):
         for vertex in self.boundary_path:
-            tagwriter.write_vertex(11, vertex[:2])
+            tagwriter.write_vertex(11, vertex[:2])  # type: ignore
 
     def register_resources(self, registry: xref.Registry) -> None:
         super().register_resources(registry)

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2023, Manfred Moitzi
 # License: MIT-License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
@@ -15,6 +15,7 @@ from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
+from .copy import default_copy_strategy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, DXFEntity
@@ -150,7 +151,7 @@ class VisualStyle(DXFObject):
         super().__init__()
         self.acad_xdata = None  # to preserve AutoCAD xdata
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
         """Copy acad internal data."""
         assert isinstance(entity, VisualStyle)
         entity.acad_xdata = copy.deepcopy(self.acad_xdata)
@@ -230,4 +231,4 @@ class VisualStyle(DXFObject):
             ],
         )
         if self.acad_xdata:
-            tagwriter.write_tags(self.acad_xdata)
+            tagwriter.write_tags(self.acad_xdata)  # type: ignore

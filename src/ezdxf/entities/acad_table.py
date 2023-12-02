@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional, Iterator
@@ -18,6 +18,7 @@ from .dxfentity import base_class, SubclassProcessor, DXFEntity, DXFTagStorage
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
 from .objectcollection import ObjectCollection
+from .copy import default_copy_strategy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
@@ -238,7 +239,7 @@ class AcadTable(DXFGraphic):
         super().__init__()
         self.data = None
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
         """Copy data."""
         assert isinstance(entity, AcadTable)
         entity.data = copy.deepcopy(self.data)
@@ -389,7 +390,6 @@ class AcadTableBlockContent(DXFTagStorage):
             except const.DXFTypeError:
                 continue
             if m is not None:
-                # noinspection PyUnboundLocalVariable
                 try:
                     clone.transform(m)
                 except:  # skip entity at any transformation issue
