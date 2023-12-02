@@ -5,7 +5,7 @@ id:: 6568dc88-ce84-4f46-b490-43768c491a2b
 		- The copy process ignores by default copy errors of linked entities.
 		- This may help to process more [[AutoCAD]] files by the [[ezdxf.xref]] module, but can also make DXF docments unreadable for [[AutoCAD]].
 	- BUGFIX: find [[ProxyGraphic]] in [[ACAD_PROXY_ENTITY]] for any DXF version
-		- issue [#978](https://github.com/mozman/ezdxf/issues/978)
+		- {{issue 978}}
 	- CHANGE: use system default font in [[drawing add-on]]
 	-
 - ## Version 1.1.3 - 2023-11-25
