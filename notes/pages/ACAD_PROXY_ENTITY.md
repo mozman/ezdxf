@@ -1,0 +1,12 @@
+- The [[ProxyGraphic]] **is not stored** in subclass [[AcDbEntity]] as in every other entity
+- The [[ProxyGraphic]] is stored in subclass [[AcDbProxyEntity]]
+- There are multiple binary chunks with group code 310 and a preceeding lenght tag
+- Each chunk has a different group code for the length tag
+- The assumption is:
+	- The [[ProxyGraphic]] chunk has a group code of 92 or 160 for the length tag - dependent on the DXF version
+	- 92 for DXF2010 and earlier
+	- 160 for DXF R2013 and later
+- This assumption is **wrong**
+	- issue [#978](https://github.com/mozman/ezdxf/issues/978)
+	- a DXF R2010 file with group code 160 for the length tag
+- The solution is to try both group codes and the first binary chunk will be taken as [[ProxyGraphic]]
