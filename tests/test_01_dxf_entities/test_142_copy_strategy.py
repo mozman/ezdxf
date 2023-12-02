@@ -6,7 +6,7 @@ import ezdxf
 from ezdxf.entities.copy import (
     CopyStrategy,
     CopySettings,
-    default_copy_strategy,
+    default_copy,
     CopyNotSupported,
 )
 from ezdxf.entities import Line, DXFObject
@@ -14,7 +14,7 @@ from ezdxf.layouts import Modelspace
 
 
 class UnknownEntity(DXFObject):
-    def copy(self, copy_strategy=default_copy_strategy):
+    def copy(self, copy_strategy=default_copy):
         raise CopyNotSupported()
 
 
@@ -52,7 +52,7 @@ def test_ignore_errors_in_linked_entities(msp: Modelspace):
     xdict = line.new_extension_dict()
     dictionary = xdict.dictionary
     dictionary["MyKey"] = UnknownEntity()
-    clone = line.copy(default_copy_strategy)
+    clone = line.copy(default_copy)
 
     xdict = clone.get_extension_dict()
     keys = list(xdict.keys())

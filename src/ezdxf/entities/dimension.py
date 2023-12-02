@@ -36,7 +36,7 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .dimstyleoverride import DimStyleOverride
-from .copy import default_copy_strategy, CopyNotSupported
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, DXFEntity, DimStyle
@@ -484,14 +484,14 @@ class Dimension(DXFGraphic, OverrideMixin):
         # store the content of the geometry block for virtual entities
         self.virtual_block_content: Optional[EntitySpace] = None
 
-    def copy(self, copy_strategy=default_copy_strategy) -> Dimension:
+    def copy(self, copy_strategy=default_copy) -> Dimension:
         virtual_copy = super().copy(copy_strategy=copy_strategy)
         # The new virtual copy can not reference the same geometry block as the
         # original dimension entity:
         virtual_copy.dxf.discard("geometry")
         return virtual_copy  # type: ignore
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Dimension)
         if self.virtual_block_content:
             # another copy of a virtual entity:
@@ -811,7 +811,7 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         for entity in self._block_content():
             try:
-                copy = entity.copy(copy_strategy=default_copy_strategy)
+                copy = entity.copy(copy_strategy=default_copy)
             except CopyNotSupported:
                 continue
 

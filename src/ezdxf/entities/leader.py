@@ -24,7 +24,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .dimension import OverrideMixin, register_override_handles
 from .dimstyleoverride import DimStyleOverride
-from .copy import default_copy_strategy
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -171,7 +171,7 @@ class Leader(DXFGraphic, OverrideMixin):
         super().__init__()
         self.vertices: list[Vec3] = []
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy vertices."""
         assert isinstance(entity, Leader)
         entity.vertices = Vec3.list(self.vertices)

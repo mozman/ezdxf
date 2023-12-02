@@ -35,7 +35,7 @@ from .mtext import (
     acdb_mtext,
 )
 from .factory import register_entity
-from .copy import default_copy_strategy
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
@@ -218,7 +218,7 @@ class BaseAttrib(Text):
         self._xrecord: Optional[Tags] = None
         self._embedded_mtext: Optional[EmbeddedMText] = None
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy entity data, xrecord data and embedded MTEXT are not stored
         in the entity database.
         """

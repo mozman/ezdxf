@@ -31,7 +31,7 @@ from ezdxf.tools.text import split_mtext_string
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
-from .copy import default_copy_strategy, CopyNotSupported
+from .copy import default_copy, CopyNotSupported
 from .. import units
 
 if TYPE_CHECKING:
@@ -257,7 +257,7 @@ class GeoData(DXFObject):
         self.faces: list[Sequence[int]] = []
         self.coordinate_system_definition = ""
 
-    def copy(self, copy_strategy=default_copy_strategy):
+    def copy(self, copy_strategy=default_copy):
         raise CopyNotSupported(f"Copying of {self.DXFTYPE} not supported.")
 
     def load_dxf_attribs(

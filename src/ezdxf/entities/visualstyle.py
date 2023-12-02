@@ -15,7 +15,7 @@ from ezdxf.lldxf.tags import Tags
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
-from .copy import default_copy_strategy
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, DXFEntity
@@ -151,7 +151,7 @@ class VisualStyle(DXFObject):
         super().__init__()
         self.acad_xdata = None  # to preserve AutoCAD xdata
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy acad internal data."""
         assert isinstance(entity, VisualStyle)
         entity.acad_xdata = copy.deepcopy(self.acad_xdata)

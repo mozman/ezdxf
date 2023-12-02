@@ -6,7 +6,7 @@ from ezdxf.lldxf import const
 from . import factory
 from .dxfgfx import DXFGraphic
 from .dxfentity import SubclassProcessor
-from .copy import default_copy_strategy, CopyNotSupported
+from .copy import default_copy, CopyNotSupported
 from ezdxf.math import BoundingBox, Vec3
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ class OLE2Frame(DXFGraphic):
         super().__init__()
         self.acdb_ole2frame: Optional[Tags] = None
 
-    def copy(self, copy_strategy=default_copy_strategy) -> OLE2Frame:
+    def copy(self, copy_strategy=default_copy) -> OLE2Frame:
         raise CopyNotSupported(f"Copying of {self.dxftype()} not supported.")
 
     def load_dxf_attribs(

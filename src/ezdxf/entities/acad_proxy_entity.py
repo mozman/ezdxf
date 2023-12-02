@@ -8,7 +8,7 @@ from ezdxf.query import EntityQuery
 from .dxfentity import SubclassProcessor
 from .dxfgfx import DXFGraphic
 from . import factory
-from .copy import default_copy_strategy, CopyNotSupported
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
@@ -54,7 +54,7 @@ class ACADProxyEntity(DXFGraphic):
         super().__init__()
         self.acdb_proxy_entity: Optional[Tags] = None
 
-    def copy(self, copy_strategy=default_copy_strategy):
+    def copy(self, copy_strategy=default_copy):
         raise CopyNotSupported(f"Copying of {self.dxftype()} not supported.")
 
     def load_dxf_attribs(

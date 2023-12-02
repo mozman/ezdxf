@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import (
     XDICT_HANDLE_CODE,
     APP_DATA_MARKER,
 )
-from .copy import default_copy_strategy
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -118,7 +118,7 @@ class ExtensionDict:
         )
         return cls(xdict)
 
-    def copy(self, copy_strategy=default_copy_strategy) -> ExtensionDict:
+    def copy(self, copy_strategy=default_copy) -> ExtensionDict:
         """Deep copy of the extension dictionary all entries are virtual
         entities.
         """

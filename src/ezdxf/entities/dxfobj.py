@@ -18,7 +18,7 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.tools import take2
 from .dxfentity import DXFEntity, base_class, SubclassProcessor, DXFTagStorage
 from .factory import register_entity
-from .copy import default_copy_strategy
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -86,7 +86,7 @@ class XRecord(DXFObject):
         super().__init__()
         self.tags = Tags()
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, XRecord)
         entity.tags = Tags(self.tags)
 
@@ -161,7 +161,7 @@ class VBAProject(DXFObject):
         super().__init__()
         self.data = b""
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, VBAProject)
         entity.data = entity.data
 
@@ -244,7 +244,7 @@ class SortEntsTable(DXFObject):
         super().__init__()
         self.table: dict[str, str] = dict()
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, SortEntsTable)
         entity.table = dict(entity.table)
 

@@ -23,7 +23,7 @@ from ezdxf.tools import crypt
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
-from .copy import default_copy_strategy, CopyNotSupported
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
@@ -136,7 +136,7 @@ class Body(DXFGraphic):
         else:
             return False
 
-    def copy(self, copy_strategy=default_copy_strategy):
+    def copy(self, copy_strategy=default_copy):
         """Prevent copying. (internal interface)"""
         # TODO: copying of ACIS data is possible
         raise CopyNotSupported("Copying of ACIS data not supported.")

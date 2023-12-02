@@ -15,7 +15,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 from .objectcollection import ObjectCollection
 from ezdxf.math import Matrix44
-from .copy import default_copy_strategy
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, DXFEntity
@@ -233,7 +233,7 @@ class Material(DXFObject):
         self.refraction_mapper_matrix: Optional[Matrix44] = None  # code 147
         self.normal_mapper_matrix: Optional[Matrix44] = None  # code 43 ???
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy material mapper matrices"""
 
         def copy(matrix):

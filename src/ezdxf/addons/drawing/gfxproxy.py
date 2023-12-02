@@ -6,7 +6,7 @@ from ezdxf.entities import DXFGraphic, DXFEntity
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import AbstractTagWriter
 from ezdxf.protocols import SupportsVirtualEntities
-from ezdxf.entities.copy import default_copy_strategy, CopyNotSupported
+from ezdxf.entities.copy import default_copy, CopyNotSupported
 
 
 class DXFGraphicProxy(DXFGraphic):
@@ -40,7 +40,7 @@ class DXFGraphicProxy(DXFGraphic):
     def virtual_entities(self) -> Iterable[DXFGraphic]:
         return self.__virtual_entities__()
 
-    def copy(self, copy_strategy=default_copy_strategy) -> DXFGraphicProxy:
+    def copy(self, copy_strategy=default_copy) -> DXFGraphicProxy:
         raise CopyNotSupported(f"Copying of DXFGraphicProxy() not supported.")
 
     def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:

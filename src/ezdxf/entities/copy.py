@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity
 
 
-__all__ = ["CopyStrategy", "CopySettings", "CopyNotSupported", "default_copy_strategy"]
+__all__ = ["CopyStrategy", "CopySettings", "CopyNotSupported", "default_copy"]
 
 
 T = TypeVar("T", bound="DXFEntity")
@@ -99,4 +99,4 @@ class CopyStrategy:
 
 
 # same strategy as DXFEntity.copy() of v1.1.3
-default_copy_strategy = CopyStrategy(CopySettings())
+default_copy = CopyStrategy(CopySettings())

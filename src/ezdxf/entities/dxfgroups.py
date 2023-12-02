@@ -24,7 +24,7 @@ from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
 from .factory import register_entity
 from .objectcollection import ObjectCollection
-from .copy import default_copy_strategy, CopyNotSupported
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -80,7 +80,7 @@ class DXFGroup(DXFObject):
         self._handles: set[str] = set()  # only needed at the loading stage
         self._data: list[DXFEntity] = []
 
-    def copy(self, copy_strategy=default_copy_strategy):
+    def copy(self, copy_strategy=default_copy):
         raise CopyNotSupported("Copying of GROUP not supported.")
 
     def load_dxf_attribs(

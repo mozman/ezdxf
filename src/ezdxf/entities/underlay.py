@@ -19,7 +19,7 @@ from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
 from .factory import register_entity
-from .copy import default_copy_strategy
+from .copy import default_copy
 from ezdxf.math.transformtools import (
     InsertTransformationError,
     InsertCoordinateSystem,
@@ -117,7 +117,7 @@ class Underlay(DXFGraphic):
         self._boundary_path: list[UVec] = []
         self._underlay_def: Optional[UnderlayDefinition] = None
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Underlay)
         entity._boundary_path = list(self._boundary_path)
         entity._underlay_def = self._underlay_def

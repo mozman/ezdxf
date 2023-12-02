@@ -18,7 +18,7 @@ from .dxfentity import base_class, SubclassProcessor, DXFEntity, DXFTagStorage
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
 from .objectcollection import ObjectCollection
-from .copy import default_copy_strategy
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
@@ -239,7 +239,7 @@ class AcadTable(DXFGraphic):
         super().__init__()
         self.data = None
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy data."""
         assert isinstance(entity, AcadTable)
         entity.data = copy.deepcopy(self.data)

@@ -36,7 +36,7 @@ from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
-from .copy import default_copy_strategy
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -265,7 +265,7 @@ class Viewport(DXFGraphic):
         super().__init__()
         self._frozen_layers: list[str] = []
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Viewport)
         entity._frozen_layers = list(self._frozen_layers)
 

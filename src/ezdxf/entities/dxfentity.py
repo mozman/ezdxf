@@ -40,7 +40,7 @@ from .appdata import AppData, Reactors
 from .dxfns import DXFNamespace, SubclassProcessor
 from .xdata import XData
 from .xdict import ExtensionDict
-from .copy import default_copy_strategy, CopyNotSupported
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -302,7 +302,7 @@ class DXFEntity:
         # Do not set copy state, this is not a real copy!
         return entity
 
-    def copy(self: T, copy_strategy=default_copy_strategy) -> T:
+    def copy(self: T, copy_strategy=default_copy) -> T:
         """Internal entity copy for usage in the same document or as virtual entity.
 
         Returns a copy of `self` but without handle, owner and reactors.
@@ -315,7 +315,7 @@ class DXFEntity:
         """
         return copy_strategy.copy(self)
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy entity data like vertices or attribs to the copy of the entity.
 
         This is the second stage of the copy process, see copy() method.
@@ -965,7 +965,7 @@ class DXFTagStorage(DXFEntity):
         self.xtags = ExtendedTags()
         self.embedded_objects: Optional[list[Tags]] = None
 
-    def copy(self: T, copy_strategy=default_copy_strategy) -> T:
+    def copy(self: T, copy_strategy=default_copy) -> T:
         raise CopyNotSupported(
             f"Copying of tag storage {self.dxftype()} not supported."
         )

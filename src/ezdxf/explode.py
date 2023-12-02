@@ -25,7 +25,7 @@ from ezdxf.math.transformtools import (
     InsertTransformationError,
 )
 from ezdxf.query import EntityQuery
-from ezdxf.entities.copy import default_copy_strategy, CopyNotSupported
+from ezdxf.entities.copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.entities import (
@@ -60,7 +60,7 @@ def explode_block_reference(
     target_layout: BaseLayout,
     *,
     redraw_order=False,
-    copy_strategy=default_copy_strategy,
+    copy_strategy=default_copy,
 ) -> EntityQuery:
     """Explode a block reference into DXF primitives.
 
@@ -164,7 +164,7 @@ def virtual_block_reference_entities(
     *,
     skipped_entity_callback: Optional[Callable[[DXFGraphic, str], None]] = None,
     redraw_order=False,
-    copy_strategy=default_copy_strategy,
+    copy_strategy=default_copy,
 ) -> Iterable[DXFGraphic]:
     """Yields 'virtual' parts of block reference `block_ref`.
 

@@ -16,7 +16,7 @@ from ezdxf.audit import AuditError, Auditor
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 from ezdxf.entities import factory
 from ezdxf.query import EntityQuery
-from ezdxf.entities.copy import default_copy_strategy
+from ezdxf.entities.copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
@@ -209,7 +209,7 @@ class EntityDB:
         doc = entity.doc
         assert doc is not None, "valid DXF document required"
         new_handle = self.next_handle()
-        new_entity: DXFEntity = entity.copy(copy_strategy=default_copy_strategy)
+        new_entity: DXFEntity = entity.copy(copy_strategy=default_copy)
         new_entity.dxf.handle = new_handle
         factory.bind(new_entity, doc)
         if isinstance(new_entity, DXFObject):

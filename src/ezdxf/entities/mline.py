@@ -29,7 +29,7 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .dxfgfx import DXFGraphic, acdb_entity
 from .objectcollection import ObjectCollection
-from .copy import default_copy_strategy
+from .copy import default_copy
 import logging
 
 if TYPE_CHECKING:
@@ -330,7 +330,7 @@ class MLine(DXFGraphic):
         """Count of MLINE vertices."""
         return len(self.vertices)
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, MLine)
         entity.vertices = [v.copy() for v in self.vertices]
 
@@ -873,7 +873,7 @@ class MLineStyle(DXFObject):
         super().__init__()
         self.elements = MLineStyleElements()
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, MLineStyle)
         entity.elements = self.elements.copy()
 

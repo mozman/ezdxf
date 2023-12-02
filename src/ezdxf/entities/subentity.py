@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Iterable, Callable, Optional
 
 from ezdxf.entities import factory, DXFGraphic, SeqEnd, DXFEntity
 from ezdxf.lldxf import const
-from .copy import default_copy_strategy
+from .copy import default_copy
 import logging
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ class LinkedEntities(DXFGraphic):
         self._sub_entities: list[DXFGraphic] = []
         self.seqend: Optional[SeqEnd] = None
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy_strategy) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy all sub-entities ands SEQEND. (internal API)"""
         assert isinstance(entity, LinkedEntities)
         entity._sub_entities = [
