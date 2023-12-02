@@ -142,6 +142,11 @@ class Designer2d(Designer):
         self.backend = backend
         self.config = Configuration()
         self.pattern_cache: dict[PatternKey, Sequence[float]] = dict()
+        try:  # request default font face
+            self.default_font_face = fonts.font_manager.get_font_face("")
+        except fonts.FontNotFoundError:  # no default font found
+            # last resort MonospaceFont which renders only "tofu"
+            pass
         self.clipper = ClippingRect()
         self.current_vp_scale = 1.0
         self._current_entity_handle: str = ""
