@@ -10,6 +10,7 @@ from ezdxf.math import (
     ConstructionLine,
     ConstructionCircle,
     Vec2,
+    UVec,
 )
 
 HALF_PI = math.pi / 2.0
@@ -236,11 +237,26 @@ def test_intersect_circle_intersect():
     )
 
 
-def test_inner_circle_touches_outer_circle_issue982():
+@pytest.mark.parametrize(
+    "center, expected",
+    [
+        [(1, 0), (-1, 0)],  # right of inner circle
+        [(-1, 0), (1, 0)],  # left of inner circle
+        [(0, 1), (0, -1)],  # above of inner circle
+        [(0, -1), (0, 1)],  # below of inner circle
+    ],
+    ids=[
+        "outer circle right of inner circle",
+        "outer circle left of inner circle",
+        "outer circle above of inner circle",
+        "outer circle below of inner circle",
+    ],
+)
+def test_inner_circle_touches_outer_circle_issue_982(center: UVec, expected: UVec):
     inner_circle = ConstructionCircle((0, 0), 1)
-    outer_circle = ConstructionCircle((1, 0), 2)
+    outer_circle = ConstructionCircle(center, 2)
     pnt = inner_circle.intersect_circle(outer_circle)[0]
-    assert pnt.isclose((-1, 0))
+    assert pnt.isclose(expected)
 
 
 def test_vertices():
