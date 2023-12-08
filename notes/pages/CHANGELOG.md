@@ -7,6 +7,11 @@ id:: 6568dc88-ce84-4f46-b490-43768c491a2b
 	- BUGFIX: find [[ProxyGraphic]] in [[ACAD_PROXY_ENTITY]] for any DXF version
 		- {{issue 978}}
 	- CHANGE: use system default font in [[drawing add-on]]
+	- BUGFIX: `ConstructionCircle.intersect_circle()` by [[hu-xiaonan]]
+		- {{pr 982}}
+	- BUGFIX: ResourceWarning about unclosed file on POSIX by [[danofsteel32]]
+		- {{pr 985}}
+	-
 	-
 - ## Version 1.1.3 - 2023-11-25
   id:: 65604fb6-9254-4146-abb1-4e93f6adfddc
