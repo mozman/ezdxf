@@ -227,10 +227,12 @@ class ConstructionCircle:
         if d_min <= d <= d_max:
             angle = (other.center - self.center).angle
             # Circles touches at one point:
-            if math.isclose(d, d_max, abs_tol=abs_tol) or math.isclose(
-                d, d_min, abs_tol=abs_tol
-            ):
+            if math.isclose(d, d_max, abs_tol=abs_tol):
                 return (self.point_at(angle),)
+            if math.isclose(d, d_min, abs_tol=abs_tol):
+                if r1 >= r2:
+                    return (self.point_at(angle),)
+                return (self.point_at(angle + math.pi),)
             else:  # Circles intersect in two points:
                 # Law of Cosines:
                 alpha = math.acos((r2 * r2 - r1 * r1 - d * d) / (-2.0 * r1 * d))
