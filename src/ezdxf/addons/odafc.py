@@ -431,22 +431,11 @@ def _run_with_no_gui(
         with _linux_dummy_display() as display:
             env = os.environ.copy()
             env["DISPLAY"] = display
-            proc = subprocess.Popen(
-                [command] + arguments,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                env=env,
-            )
-            proc.wait()
+            proc = subprocess.run([command] + arguments, text=True, capture_output=True, env=env)
 
     elif system == DARWIN:
         # TODO: unknown how to prevent the GUI from appearing on macOS
-        proc = subprocess.Popen(
-            [command] + arguments,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        proc.wait()
+        proc = subprocess.run([command] + arguments, text=True, capture_output=True)
 
     elif system == WINDOWS:
         # New code from George-Jiang to solve the GUI pop-up problem
@@ -469,13 +458,13 @@ def _run_with_no_gui(
     return proc
 
 
-def _odafc_failed(system: str, proc: subprocess.Popen, stderr: str) -> bool:
+def _odafc_failed(system: str, returncode: int, stderr: str) -> bool:
     # changed v0.18.1, see https://github.com/mozman/ezdxf/issues/707
     stderr = stderr.strip()
     if system == LINUX:
         # ODAFileConverter *always* crashes on Linux even if the output was successful
         return stderr != "" and stderr != "Quit (core dumped)"
-    elif proc.returncode != 0:
+    elif returncode != 0:
         return True
     else:
         return stderr != ""
@@ -497,14 +486,19 @@ def _execute_odafc(arguments: list[str]) -> Optional[bytes]:
     system = platform.system()
     oda_fc = _get_odafc_path(system)
     proc = _run_with_no_gui(system, oda_fc, arguments)
-    stdout = proc.stdout.read().decode("utf-8")
-    stderr = proc.stderr.read().decode("utf-8")
+    returncode = proc.returncode
+    if system == WINDOWS:
+        stdout = proc.stdout.read().decode("utf-8")
+        stderr = proc.stderr.read().decode("utf-8")
+    else:
+        stdout = proc.stdout
+        stderr = proc.stderr
 
-    if _odafc_failed(system, proc, stderr):
+    if _odafc_failed(system, returncode, stderr):
         msg = (
-            f"ODA File Converter failed: return code = {proc.returncode}.\n"
+            f"ODA File Converter failed: return code = {returncode}.\n"
             f"stdout: {stdout}\nstderr: {stderr}"
         )
         logger.debug(msg)
         raise UnknownODAFCError(msg)
-    return proc.stdout
+    return stdout
