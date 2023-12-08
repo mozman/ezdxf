@@ -199,56 +199,48 @@ def test_intersect_circle_intersect():
         assert len(points) == 2
         a, b = points
 
-        result1 = a.isclose(p1, abs_tol=abs_tol) and b.isclose(
-            p2, abs_tol=abs_tol
-        )
-        result2 = a.isclose(p2, abs_tol=abs_tol) and b.isclose(
-            p1, abs_tol=abs_tol
-        )
+        result1 = a.isclose(p1, abs_tol=abs_tol) and b.isclose(p2, abs_tol=abs_tol)
+        result2 = a.isclose(p2, abs_tol=abs_tol) and b.isclose(p1, abs_tol=abs_tol)
         return result1 or result2
 
     circle1 = ConstructionCircle((40, 20), 5)
     assert (
-        check_intersection((46.0, 20.0), (44.8958, 21.0153), (44.8958, 18.9847))
-        is True
+        check_intersection((46.0, 20.0), (44.8958, 21.0153), (44.8958, 18.9847)) is True
     )
     assert (
-        check_intersection((44.0, 20.0), (44.8438, 21.2402), (44.8438, 18.7598))
-        is True
+        check_intersection((44.0, 20.0), (44.8438, 21.2402), (44.8438, 18.7598)) is True
     )
     assert (
-        check_intersection((40.0, 26.0), (38.9847, 24.8958), (41.0153, 24.8958))
-        is True
+        check_intersection((40.0, 26.0), (38.9847, 24.8958), (41.0153, 24.8958)) is True
     )
     assert (
-        check_intersection((40.0, 24.0), (38.7598, 24.8438), (41.2402, 24.8438))
-        is True
+        check_intersection((40.0, 24.0), (38.7598, 24.8438), (41.2402, 24.8438)) is True
     )
     assert (
-        check_intersection((34.0, 20.0), (35.1042, 18.9847), (35.1042, 21.0153))
-        is True
+        check_intersection((34.0, 20.0), (35.1042, 18.9847), (35.1042, 21.0153)) is True
     )
     # assert check_intersection( (36.,20.),  (35.1563, 18.7598),  (35.1563, 21.2402)))
     assert (
-        check_intersection((40.0, 14.0), (38.9847, 15.1042), (41.0153, 15.1042))
+        check_intersection((40.0, 14.0), (38.9847, 15.1042), (41.0153, 15.1042)) is True
+    )
+    assert (
+        check_intersection((40.0, 14.0), (38.9847, 15.1042), (41.0153, 15.1042)) is True
+    )
+    assert (
+        check_intersection((36.8824, 17.4939), (35.4478, 17.9319), (37.0018, 15.9987))
         is True
     )
     assert (
-        check_intersection((40.0, 14.0), (38.9847, 15.1042), (41.0153, 15.1042))
+        check_intersection((35.3236, 16.2408), (35.5481, 17.7239), (36.8203, 16.1413))
         is True
     )
-    assert (
-        check_intersection(
-            (36.8824, 17.4939), (35.4478, 17.9319), (37.0018, 15.9987)
-        )
-        is True
-    )
-    assert (
-        check_intersection(
-            (35.3236, 16.2408), (35.5481, 17.7239), (36.8203, 16.1413)
-        )
-        is True
-    )
+
+
+def test_inner_circle_touches_outer_circle_issue982():
+    inner_circle = ConstructionCircle((0, 0), 1)
+    outer_circle = ConstructionCircle((1, 0), 2)
+    pnt = inner_circle.intersect_circle(outer_circle)[0]
+    assert pnt.isclose((-1, 0))
 
 
 def test_vertices():
