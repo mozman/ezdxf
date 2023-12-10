@@ -156,10 +156,10 @@ def column_heights(columns: MTextColumns) -> list[Optional[float]]:
     heights: list[Optional[float]]
     if columns.heights:  # dynamic manual
         heights = list(columns.heights)
-        # last height has to be auto height = None
-        heights[-1] = None
     else:  # static, dynamic auto
         heights = [columns.defined_height] * columns.count
+    # last height has to be auto height = None
+    heights[-1] = None
     return heights
 
 
