@@ -13,6 +13,8 @@ id:: 6568dc88-ce84-4f46-b490-43768c491a2b
 		- {{pr 985}}
 	- BUGFIX: `MTEXT` column rendering issue
 		- {{issue 986}}
+	- BUGFIX: catch exception raised by `fontTools`
+		- {{issue 990}}
 	-
 	-
 - ## Version 1.1.3 - 2023-11-25
