@@ -393,7 +393,7 @@ class BitStream:
                     bytes(self.read_unsigned_byte() for _ in range(4))
                     + data[4:]
                 )
-                return struct.unpack("<d", _data)
+                return struct.unpack("<d", _data)[0]
             elif bits == 2:
                 _data = bytearray(data)
                 _data[4] = self.read_unsigned_byte()
@@ -402,7 +402,7 @@ class BitStream:
                 _data[1] = self.read_unsigned_byte()
                 _data[2] = self.read_unsigned_byte()
                 _data[3] = self.read_unsigned_byte()
-                return struct.unpack("<d", _data)
+                return struct.unpack("<d", _data)[0]
             else:
                 return self.read_float()
 

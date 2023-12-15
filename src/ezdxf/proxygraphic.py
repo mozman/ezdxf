@@ -498,7 +498,7 @@ class ProxyGraphic:
     def _filled_polygon(self, vertices, attribs):
         hatch = cast("Hatch", self._factory("HATCH", dxfattribs=attribs))
         elevation = _get_elevation(vertices)
-        hatch.paths.add_polyline_path(Vec2.generate(vertices), is_closed=True)
+        hatch.paths.add_polyline_path(Vec2.generate(vertices), is_closed=True)  # type: ignore
         if elevation:
             hatch.dxf.elevation = Vec3(0, 0, elevation)
         return hatch
@@ -805,7 +805,7 @@ class ProxyGraphic:
         return style
 
     @staticmethod
-    def _load_vertices(data: bytes, load_normal=False) -> tuple[list[Vec3], bool]:
+    def _load_vertices(data: bytes, load_normal=False) -> tuple[list[Vec3], Vec3]:
         normal = Z_AXIS
         bs = ByteStream(data)
         count = bs.read_long()
