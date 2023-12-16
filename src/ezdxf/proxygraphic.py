@@ -693,18 +693,19 @@ class ProxyGraphic:
         normal = Vec3(bs.read_vertex())
         text_direction = Vec3(bs.read_vertex())
         height, width_factor, oblique_angle = bs.read_struct("<3d")
+        text = ""
         if unicode:
             try:
                 text = bs.read_padded_unicode_string()
             except UnicodeDecodeError as e:
-                print(str(e))
-                text = ""
+                logger.debug(f"ProxyGraphic._text(unicode=True); {str(e)}")
         else:
             try:
                 text = bs.read_padded_string(self.encoding)
             except UnicodeDecodeError as e:
-                print(str(e))
-                text = ""
+                logger.debug(
+                    f"ProxyGraphic._text(unicode=False); encoding={self.encoding}; {str(e)}"
+                )
         attribs = self._build_dxf_attribs()
         attribs["insert"] = start_point
         attribs["text"] = text
@@ -721,11 +722,12 @@ class ProxyGraphic:
         start_point = Vec3(bs.read_vertex())
         normal = Vec3(bs.read_vertex())
         text_direction = Vec3(bs.read_vertex())
+        text = ""
         try:
             text = bs.read_padded_string(encoding=encoding)
         except UnicodeDecodeError as e:
-            print(str(e))
-            text = ""
+            logger.debug(f"ProxyGraphic.text2(); text; encoding={encoding}; {str(e)}")
+
         ignore_length_of_string, raw = bs.read_struct("<2l")
         (
             height,
@@ -745,8 +747,11 @@ class ProxyGraphic:
         try:
             font_filename = bs.read_padded_string(encoding=encoding)
             big_font_filename = bs.read_padded_string(encoding=encoding)
-        except UnicodeDecodeError:
-            pass
+        except UnicodeDecodeError as e:
+            logger.debug(
+                f"ProxyGraphic.text2(); fonts; encoding='{encoding}'; {str(e)}"
+            )
+
         attribs = self._build_dxf_attribs()
         attribs["insert"] = start_point
         attribs["text"] = text
@@ -764,11 +769,12 @@ class ProxyGraphic:
         start_point = Vec3(bs.read_vertex())
         normal = Vec3(bs.read_vertex())
         text_direction = Vec3(bs.read_vertex())
+        text = ""
         try:
             text = bs.read_padded_unicode_string()
         except UnicodeDecodeError as e:
-            print(str(e))
-            text = ""
+            logger.debug(f"ProxyGraphic.unicode_text2(); text; {str(e)}")
+
         ignore_length_of_string, ignore_raw = bs.read_struct("<2l")
         (
             height,
@@ -792,8 +798,8 @@ class ProxyGraphic:
             type_face = bs.read_padded_unicode_string()
             font_filename = bs.read_padded_unicode_string()
             big_font_filename = bs.read_padded_unicode_string()
-        except UnicodeDecodeError:
-            pass
+        except UnicodeDecodeError as e:
+            logger.debug(f"ProxyGraphic.unicode_text2(); fonts; {str(e)}")
 
         attribs = self._build_dxf_attribs()
         attribs["insert"] = start_point
