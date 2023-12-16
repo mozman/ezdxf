@@ -17,6 +17,8 @@ id:: 6568dc88-ce84-4f46-b490-43768c491a2b
 		- {{issue 990}}
 	- BUGFIX: invalid return value in `read_bit_double_default()`
 		- {{issue 991}}
+	- BUGFIX: use document encoding to decode text in [[ProxyGraphic]]
+		- {{issue 991}}
 	-
 	-
 - ## Version 1.1.3 - 2023-11-25

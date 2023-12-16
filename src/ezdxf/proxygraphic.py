@@ -256,6 +256,7 @@ class ProxyGraphic:
         self._buffer: bytes = data
         self._index: int = 8
         self.dxfversion = doc.dxfversion if doc else dxfversion
+        self.encoding: str = "cp1252" if self.dxfversion < const.DXF2007 else "utf-8"
         self.color: int = const.BYLAYER
         self.layer: str = "0"
         self.linetype: str = "BYLAYER"
@@ -280,6 +281,7 @@ class ProxyGraphic:
             self.textstyles = {
                 style.dxf.font: style.dxf.name for style in self._doc.styles
             }
+            self.encoding = self._doc.encoding
 
     def info(self) -> Iterable[tuple[int, int, str]]:
         index = self._index
@@ -692,9 +694,17 @@ class ProxyGraphic:
         text_direction = Vec3(bs.read_vertex())
         height, width_factor, oblique_angle = bs.read_struct("<3d")
         if unicode:
-            text = bs.read_padded_unicode_string()
+            try:
+                text = bs.read_padded_unicode_string()
+            except UnicodeDecodeError as e:
+                print(str(e))
+                text = ""
         else:
-            text = bs.read_padded_string()
+            try:
+                text = bs.read_padded_string(self.encoding)
+            except UnicodeDecodeError as e:
+                print(str(e))
+                text = ""
         attribs = self._build_dxf_attribs()
         attribs["insert"] = start_point
         attribs["text"] = text
@@ -706,11 +716,16 @@ class ProxyGraphic:
         return self._factory("TEXT", dxfattribs=attribs)
 
     def text2(self, data: bytes):
+        encoding = self.encoding
         bs = ByteStream(data)
         start_point = Vec3(bs.read_vertex())
         normal = Vec3(bs.read_vertex())
         text_direction = Vec3(bs.read_vertex())
-        text = bs.read_padded_string()
+        try:
+            text = bs.read_padded_string(encoding=encoding)
+        except UnicodeDecodeError as e:
+            print(str(e))
+            text = ""
         ignore_length_of_string, raw = bs.read_struct("<2l")
         (
             height,
@@ -725,8 +740,13 @@ class ProxyGraphic:
             is_underline,
             is_overline,
         ) = bs.read_struct("<5L")
-        font_filename = bs.read_padded_string()
-        big_font_filename = bs.read_padded_string()
+        font_filename: str = "TXT.SHX"
+        big_font_filename: str = ""
+        try:
+            font_filename = bs.read_padded_string(encoding=encoding)
+            big_font_filename = bs.read_padded_string(encoding=encoding)
+        except UnicodeDecodeError:
+            pass
         attribs = self._build_dxf_attribs()
         attribs["insert"] = start_point
         attribs["text"] = text
@@ -744,7 +764,11 @@ class ProxyGraphic:
         start_point = Vec3(bs.read_vertex())
         normal = Vec3(bs.read_vertex())
         text_direction = Vec3(bs.read_vertex())
-        text = bs.read_padded_unicode_string()
+        try:
+            text = bs.read_padded_unicode_string()
+        except UnicodeDecodeError as e:
+            print(str(e))
+            text = ""
         ignore_length_of_string, ignore_raw = bs.read_struct("<2l")
         (
             height,
@@ -760,9 +784,17 @@ class ProxyGraphic:
             is_overline,
         ) = bs.read_struct("<5L")
         is_bold, is_italic, charset, pitch = bs.read_struct("<4L")
-        type_face = bs.read_padded_unicode_string()
-        font_filename = bs.read_padded_unicode_string()
-        big_font_filename = bs.read_padded_unicode_string()
+
+        type_face: str = ""
+        font_filename: str = "TXT.SHX"
+        big_font_filename: str = ""
+        try:
+            type_face = bs.read_padded_unicode_string()
+            font_filename = bs.read_padded_unicode_string()
+            big_font_filename = bs.read_padded_unicode_string()
+        except UnicodeDecodeError:
+            pass
+
         attribs = self._build_dxf_attribs()
         attribs["insert"] = start_point
         attribs["text"] = text
