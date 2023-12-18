@@ -395,7 +395,7 @@ def is_valid_layer_name(name: str) -> bool:
 
 def is_adsk_special_layer(name: str) -> bool:
     if name.startswith("*") and len(name) > 1:
-        # Special Autodesk layers starts with invalid character *
+        # Special Autodesk layers starts with the otherwise invalid character *
         # These layers do not show up in the layer panel.
         # Only the first letter can be an asterisk.
         return is_valid_table_name(name[1:])
