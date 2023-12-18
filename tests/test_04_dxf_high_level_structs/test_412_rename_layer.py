@@ -33,7 +33,7 @@ def test_rename_layer(dxf):
 
 def test_rename_layer_errors(dxf):
     layer = dxf.layers.get(LAYER)
-    pytest.raises(ValueError, layer.rename, "*XXX")
+    pytest.raises(ValueError, layer.rename, "XXX*")
     pytest.raises(ValueError, layer.rename, LAYER)
 
     layer = dxf.layers.get("0")

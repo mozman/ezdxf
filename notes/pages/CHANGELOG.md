@@ -19,6 +19,8 @@ id:: 6568dc88-ce84-4f46-b490-43768c491a2b
 		- {{issue 991}}
 	- BUGFIX: use document encoding to decode text in [[ProxyGraphic]]
 		- {{issue 991}}
+	- BUGFIX: the first letter of a layer name can be an asterisk `*`
+		- {{discussion 995}}
 	-
 	-
 - ## Version 1.1.3 - 2023-11-25
