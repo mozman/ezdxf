@@ -134,7 +134,7 @@ Factory function         :meth:`ezdxf.document.Drawing.mleader_styles.new`
 
         default is 0
 
-    .. attribute:: dxf.landing_gap
+    .. attribute:: dxf.landing_gap_size
 
         default landing gap size, default is 2.0
 
