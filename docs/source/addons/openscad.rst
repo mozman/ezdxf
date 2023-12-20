@@ -70,7 +70,7 @@ Script Class
 
     Helper class to build OpenSCAD scripts. This is a very simple string
     building class and does no checks at all! If you need more advanced
-    features to build OpenSCAD scripts look at the packages `pysolid`_ and
+    features to build OpenSCAD scripts look at the packages `solidpython2`_ and
     `openpyscad`_.
 
     .. automethod:: add
@@ -108,7 +108,7 @@ openpyscad
 ----------
 
 This add-on is not a complete wrapper around `OpenSCAD`_, if you need such a
-tool look at the `openpyscad`_ or `pysolid`_ packages at PyPI.
+tool look at the `openpyscad`_ or `solidpython2`_ packages at PyPI.
 
 Not sure if the `openpyscad`_ package is still maintained, the last commit at
 `github <https://github.com/taxpon/openpyscad>`_ is more than a year old and
@@ -155,42 +155,42 @@ Create an `openpyscad`_ :class:`Polyhedron` object from an `ezdxf`
 
 The type conversion is needed to get valid `OpenSCAD`_ code from `openpyscad`_!
 
-pysolid
--------
+solidpython2
+------------
 
-The `pysolid`_ package seems to be better maintained than the `openpyscad`_ package,
+The `solidpython2`_ package seems to be better maintained than the `openpyscad`_ package,
 but this is just an opinion based on newer commits at github
-(`link <https://github.com/SolidCode/SolidPython>`_) for the `pysolid`_ package.
+(`link <https://github.com/jeff-dh/SolidPython>`_) for the `solidpython2`_ package.
 
-Same example for `pysolid`_:
+Same example for `solidpython2`_:
 
 .. code-block:: Python
 
     from ezdxf.addons import openscad
-    from solid import cube, render_scad
+    from solid2 import cube, scad_render
 
     c1 = cube([10, 20, 10])
     c2 = cube([20, 10, 10])
 
     # dump OpenSCAD script as string:
-    script = render_scad(c1 + c2)
+    script = scad_render(c1 + c2)
 
     # execute script and load the result as MeshTransformer instance:
     mesh = openscad.run(script)
 
-Create a `pysolid`_ :class:`polyhedron` object from an `ezdxf`
+Create a `solidpython2`_ :class:`polyhedron` object from an `ezdxf`
 :class:`~ezdxf.render.MeshBuilder` object:
 
 .. code-block:: Python
 
     from ezdxf.render import forms
-    from solid import polyhedron, scad_render
+    from solid2 import polyhedron, scad_render
 
     # create an ezdxf MeshBuilder() object
     sphere = forms.sphere()
     sphere.flip_normals()  # required for OpenSCAD
 
-    # create a pysolid polyhedron() object
+    # create a solidpython2 polyhedron() object
     ph = polyhedron(
         points=[v.xyz for v in sphere.vertices],  # convert Vec3 objects to tuples!
         faces=sphere.faces,  # types are compatible
@@ -202,4 +202,4 @@ Create a `pysolid`_ :class:`polyhedron` object from an `ezdxf`
 
 .. _OpenSCAD: https://openscad.org
 .. _openpyscad: https://pypi.org/project/openpyscad/
-.. _pysolid:  https://pypi.org/project/pysolid/
+.. _solidpython2:  https://pypi.org/project/solidpython2/
