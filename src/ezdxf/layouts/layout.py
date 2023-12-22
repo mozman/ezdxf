@@ -70,7 +70,19 @@ class Layout(BaseLayout):
 
     def __init__(self, layout: DXFLayout, doc: Drawing):
         self.dxf_layout = layout
-        block_record = doc.entitydb[layout.dxf.block_record_handle]
+        handle = layout.dxf.get("block_record_handle", "0")
+        try:
+            block_record = doc.entitydb[handle]
+        except KeyError:
+            raise const.DXFStructureError(
+                f"required BLOCK_RECORD #{handle} for layout '{layout.dxf.name}' "
+                f"does not exist"
+            )
+        if block_record.dxftype() != "BLOCK_RECORD":
+            raise const.DXFStructureError(
+                f"expected BLOCK_RECORD(#{handle}) for layout '{layout.dxf.name}' "
+                f"has invalid entity type: {block_record.dxftype()}"
+            )
         # link maybe broken
         block_record.dxf.layout = layout.dxf.handle
         super().__init__(block_record)  # type: ignore
