@@ -1,0 +1,15 @@
+- {{issue 997}}
+- The recovering is done by the [[recover]] module.
+- The [[LAYOUT]] entities in the OBJECTS sections reference non existing [[BLOCK_RECORD]] entities by the DXF atttribute `block_record_handle` (group code 330 in the `AcDbLayout` section)
+- The reqired block definitions for these layouts do exist, but:
+	- The `owner` handle (group code 330) of the [[BLOCK]] entities  do reference the correct [[BLOCK_RECORD]] entities
+	- The DXF attribute `layout` (group code 340) of the [[BLOCK_RECORD]] **does not** reference the associated [[LAYOUT]] entity
+	- So there is no direct connection between [[Layout]] and [[BLOCK_RECORD]] or [[BLOCK]]
+- Recovering the modelspace is easy:
+	- connect the [[LAYOUT]] entity with name `Model` to the [[BLOCK]] and [[BLOCK_RECORD]] `*Model_Space`
+- Recovering the paperspace layouts is more tricky
+	- for each [[LAYOUT]] entity that has an invalid or non-existent [[BLOCK_RECORD]] reference, find a paperspace [[BLOCK]] (starting with `*Paper_Space`) that is not assigned to a [[LAYOUT]] and link both structures.
+	- that connects the sturctures in the order of appearance.
+	- additional cases to take into account:
+		- no [[BLOCK]] definition for a [[LAYOUT]]
+		- no [[BLOCK_RECORD]] for a [[LAYOUT]]
