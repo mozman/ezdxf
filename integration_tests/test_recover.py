@@ -1,4 +1,4 @@
-#  Copyright (c) 2020-2022, Manfred Moitzi
+#  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
 import pytest
 import pathlib
@@ -160,6 +160,47 @@ def test_readfile_empty_handles_dxf():
 def test_decode_dxf_unicode_automatically():
     # The test file contains the layer name: "Tschüss mit \U+00FC"
     doc, _ = recover.readfile(fullpath("dxf_unicode.dxf"))
-    assert (
-        any("Tschüss mit ü" == layer.dxf.name for layer in doc.layers) is True
-    )
+    assert any("Tschüss mit ü" == layer.dxf.name for layer in doc.layers) is True
+
+
+LAYOUT_BROKEN_LINKS = "layout_broken_links.dxf"
+
+
+@pytest.mark.xfail(reason="not implemented yet")
+def test_recover_layout_broken_links():
+    """LAYOUT entities have invalid block_record_handle values."""
+    doc, _ = recover.readfile(fullpath(LAYOUT_BROKEN_LINKS))
+    assert len(doc.layouts) == 3
+
+
+LAYOUT_MISSING_BLOCK_RECORD = "layout_missing_block_record.dxf"
+
+
+@pytest.mark.xfail(reason="not implemented yet")
+def test_recover_layout_missing_block_record():
+    """BLOCK_RECORD for Layout2 does not exist."""
+    doc, _ = recover.readfile(fullpath(LAYOUT_MISSING_BLOCK_RECORD))
+    assert len(doc.layouts) == 3
+
+
+LAYOUT_MISSING_BLOCK_DEFINITION = "layout_missing_block_definition.dxf"
+
+
+def test_recover_layout_missing_block_definition():
+    """BLOCK definition for Layout2 does not exist."""
+    doc, _ = recover.readfile(fullpath(LAYOUT_MISSING_BLOCK_DEFINITION))
+    assert len(doc.layouts) == 3
+    block_name = "*Paper_Space0"
+    
+    block_def = doc.blocks.get(block_name)
+    block_record = block_def.block_record
+    assert block_record.dxf.name == block_name
+
+    layout2 = doc.layouts.get("Layout2")
+    assert layout2.block_record_name == block_name
+    assert layout2.block_record is block_record
+
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

@@ -11,8 +11,8 @@
 	- for each [[LAYOUT]] entity that has an invalid or non-existent [[BLOCK_RECORD]] reference, find a paperspace [[BLOCK]] (starting with `*Paper_Space`) that is not assigned to a [[LAYOUT]] and link both structures.
 	- this procedure connects the structures in the order of appearance.
 	- additional cases to take into account:
-		- no [[BLOCK]] definition exist for [[LAYOUT]]
-		- no [[BLOCK_RECORD]] exist for [[LAYOUT]]
+		- no [[BLOCK]] definition exist for [[LAYOUT]] - this is already covered
+		- no [[BLOCK_RECORD]] exist for [[LAYOUT]] - not implemented yet
 -
 - # Source of the issue
 - The [[QGIS]] project implements the DXF exporter from scratch in C++ and that is the problem:
