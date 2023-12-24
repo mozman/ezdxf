@@ -1,4 +1,4 @@
-## Version 1.1.4 - beta
+## Version 1.1.4 - 2023-12-24
 id:: 6568dc88-ce84-4f46-b490-43768c491a2b
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	- CHANGE: rework of the copy process of DXF entities.
