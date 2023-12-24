@@ -1,0 +1,24 @@
+- {{issue 997}}
+- The recovering is done by the [[recover]] module.
+- The [[LAYOUT]] entities in the OBJECTS sections reference non existing [[BLOCK_RECORD]] entities by the DXF atttribute `block_record_handle` (group code 330 in the `AcDbLayout` section)
+- The reqired block definitions for these layouts do exist, but:
+	- The `owner` handle (group code 330) of the [[BLOCK]] entities  do reference the correct [[BLOCK_RECORD]] entities
+	- The DXF attribute `layout` (group code 340) of the [[BLOCK_RECORD]] **does not** reference the associated [[LAYOUT]] entity
+	- So there is no direct connection between [[Layout]] and [[BLOCK_RECORD]] or [[BLOCK]]
+- Recovering the modelspace is easy:
+	- connect the [[LAYOUT]] entity with name `Model` to the [[BLOCK]] and [[BLOCK_RECORD]] `*Model_Space`
+- Recovering the paperspace layouts is more tricky
+	- for each [[LAYOUT]] entity that has an invalid or non-existent [[BLOCK_RECORD]] reference, find a paperspace [[BLOCK]] (starting with `*Paper_Space`) that is not assigned to a [[LAYOUT]] and link both structures.
+	- this procedure connects the structures in the order of appearance.
+	- additional cases to take into account:
+		- no [[BLOCK]] definition exist for [[LAYOUT]] - this is already covered
+		- no [[BLOCK_RECORD]] exist for [[LAYOUT]] - not implemented yet
+-
+- # Source of the issue
+- The [[QGIS]] project implements the DXF exporter from scratch in C++ and that is the problem:
+	- They write the same [[OBJECTS]] section for every DXF file with fixed handles, but the entities handles of the content are created dynamically.
+	- So the handles in the [[OBJECTS]] section (fixed handles) will never match the handles in the [[TABLES]] section (dynamic handles).  And this is true for every entity in the [[OBJECTS]] section and therefor 85 or more errors in every DXF file they export!
+	- This is not a simple fix they have to rewrite the exporter for the [[OBJECTS]] section completely.
+- Links to the [[QGIS]] source code:
+	- [DXF Exporter](https://github.com/qgis/QGIS/tree/master/src/core/dxf)
+	- [DXF_TRAILER](https://github.com/qgis/QGIS/blob/7b41268c9900832dee30338e4400739538dec74d/src/core/dxf/qgsdxfexport_p.h#L426) string constant

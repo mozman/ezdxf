@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -50,6 +50,7 @@ from ezdxf.math import (
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, Ellipse
@@ -92,9 +93,7 @@ acdb_spline = DefSubclass(
         "n_control_points": DXFAttr(
             73, xtype=XType.callback, getter="control_point_count"
         ),
-        "n_fit_points": DXFAttr(
-            74, xtype=XType.callback, getter="fit_point_count"
-        ),
+        "n_fit_points": DXFAttr(74, xtype=XType.callback, getter="fit_point_count"),
         "knot_tolerance": DXFAttr(42, default=1e-10, optional=True),
         "control_point_tolerance": DXFAttr(43, default=1e-10, optional=True),
         "fit_tolerance": DXFAttr(44, default=1e-10, optional=True),
@@ -164,7 +163,7 @@ class Spline(DXFGraphic):
         self.knots = []
         self.weights = []
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy data: control_points, fit_points, weights, knot_values."""
         assert isinstance(entity, Spline)
         entity._control_points = copy.deepcopy(self._control_points)
@@ -335,9 +334,7 @@ class Spline(DXFGraphic):
             )
         elif self.fit_point_count():
             tangents = None
-            if self.dxf.hasattr("start_tangent") and self.dxf.hasattr(
-                "end_tangent"
-            ):
+            if self.dxf.hasattr("start_tangent") and self.dxf.hasattr("end_tangent"):
                 tangents = [self.dxf.start_tangent, self.dxf.end_tangent]
             # SPLINE from fit points has always a degree of 3!
             return fit_points_to_cad_cv(
@@ -345,9 +342,7 @@ class Spline(DXFGraphic):
                 tangents=tangents,
             )
         else:
-            raise ValueError(
-                "Construction tool requires control- or fit points."
-            )
+            raise ValueError("Construction tool requires control- or fit points.")
 
     def apply_construction_tool(self, s) -> Spline:
         """Apply SPLINE data from a :class:`~ezdxf.math.BSpline` construction
@@ -409,9 +404,7 @@ class Spline(DXFGraphic):
         else:
             raise TypeError("CIRCLE, ARC or ELLIPSE entity required.")
 
-        spline = Spline.new(
-            dxfattribs=entity.graphic_properties(), doc=entity.doc
-        )
+        spline = Spline.new(dxfattribs=entity.graphic_properties(), doc=entity.doc)
         s = BSpline.from_ellipse(ellipse)
         spline.dxf.degree = s.degree
         spline.dxf.flags = Spline.RATIONAL
@@ -420,9 +413,7 @@ class Spline(DXFGraphic):
         spline.weights = s.weights()  # type: ignore
         return spline
 
-    def set_open_uniform(
-        self, control_points: Sequence[UVec], degree: int = 3
-    ) -> None:
+    def set_open_uniform(self, control_points: Sequence[UVec], degree: int = 3) -> None:
         """Open B-spline with a uniform knot vector, start and end at your first
         and last control points.
 
@@ -432,9 +423,7 @@ class Spline(DXFGraphic):
         self.control_points = control_points  # type: ignore
         self.knots = open_uniform_knot_vector(len(control_points), degree + 1)
 
-    def set_uniform(
-        self, control_points: Sequence[UVec], degree: int = 3
-    ) -> None:
+    def set_uniform(self, control_points: Sequence[UVec], degree: int = 3) -> None:
         """B-spline with a uniform knot vector, does NOT start and end at your
         first and last control points.
 
@@ -473,9 +462,7 @@ class Spline(DXFGraphic):
         self.set_open_uniform(control_points, degree=degree)
         self.dxf.flags = self.dxf.flags | self.RATIONAL
         if len(weights) != len(self.control_points):
-            raise DXFValueError(
-                "Control point count must be equal to weights count."
-            )
+            raise DXFValueError("Control point count must be equal to weights count.")
         self.weights = weights  # type: ignore
 
     def set_uniform_rational(
@@ -492,9 +479,7 @@ class Spline(DXFGraphic):
         self.set_uniform(control_points, degree=degree)
         self.dxf.flags = self.dxf.flags | self.RATIONAL
         if len(weights) != len(self.control_points):
-            raise DXFValueError(
-                "Control point count must be equal to weights count."
-            )
+            raise DXFValueError("Control point count must be equal to weights count.")
         self.weights = weights  # type: ignore
 
     def set_closed_rational(
@@ -513,9 +498,7 @@ class Spline(DXFGraphic):
         weights = list(weights)
         weights.extend(weights[:degree])
         if len(weights) != len(self.control_points):
-            raise DXFValueError(
-                "Control point count must be equal to weights count."
-            )
+            raise DXFValueError("Control point count must be equal to weights count.")
         self.weights = weights
 
     def transform(self, m: Matrix44) -> Spline:
@@ -634,8 +617,7 @@ class Spline(DXFGraphic):
         if len(self.weights):
             auditor.fixed_error(
                 code=AuditError.INVALID_SPLINE_WEIGHT_COUNT,
-                message=f"Removed unused weights for {name} "
-                f"defined by fit points.",
+                message=f"Removed unused weights for {name} " f"defined by fit points.",
             )
             self.weights = []
 

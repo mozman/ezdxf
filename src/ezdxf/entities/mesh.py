@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -36,6 +36,7 @@ from ezdxf.tools import take2
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, DXFEntity
@@ -214,7 +215,7 @@ class Mesh(DXFGraphic):
         self._edges = EdgeArray()  # edge indices stored as array.array('L')
         self._creases = array.array("f")  # creases stored as array.array('f')
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy data: vertices, faces, edges, creases."""
         assert isinstance(entity, Mesh)
         entity._vertices = copy.deepcopy(self._vertices)

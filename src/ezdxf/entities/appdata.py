@@ -104,6 +104,10 @@ class Reactors:
         """Returns an iterator for all registered handles."""
         return iter(self.get())
 
+    def copy(self) -> Reactors:
+        """Returns a copy."""
+        return Reactors(self.reactors)
+
     @classmethod
     def from_tags(cls, tags: Optional[Tags] = None) -> Reactors:
         """Create Reactors() instance from tags.

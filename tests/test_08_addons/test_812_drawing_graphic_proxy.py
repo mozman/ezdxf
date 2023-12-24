@@ -6,7 +6,7 @@ from ezdxf.addons.drawing.gfxproxy import DXFGraphicProxy
 from ezdxf.entities import DXFObject, factory
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
-
+from ezdxf.entities.copy import CopyNotSupported
 
 class FakeObject(DXFObject):
     # does not support any graphical DXF attributes like layer, linetype ...
@@ -44,8 +44,8 @@ class TestDXFGraphicProxy:
             proxy.entity.dxf.hasattr("layer") is False
         ), "wrapped object does not support 'layer'"
 
-    def test_copy_raises_type_error(self, proxy):
-        with pytest.raises(TypeError):
+    def test_copy_raises_cpy_not_supported_exception(self, proxy):
+        with pytest.raises(CopyNotSupported):
             proxy.copy()
 
     def test_supports_virtual_entities_protocol(self, proxy):

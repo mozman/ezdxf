@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Union, Iterable, Iterator
@@ -36,6 +36,7 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .dimstyleoverride import DimStyleOverride
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, DXFEntity, DimStyle
@@ -45,6 +46,7 @@ if TYPE_CHECKING:
     from ezdxf.query import EntityQuery
     from ezdxf.math import OCS
     from ezdxf import xref
+
 
 logger = logging.getLogger("ezdxf")
 ADSK_CONSTRAINTS = "*ADSK_CONSTRAINTS"
@@ -274,7 +276,7 @@ class OverrideMixin:
 
         def set_linetype_handle(attrib_name, linetype_name):
             try:
-                ltype = self.doc.linetypes.get(linetype_name)
+                ltype = self.doc.linetypes.get(linetype_name)  # type: ignore
             except DXFTableEntryError:
                 logger.warning(f'Required line type "{linetype_name}" does not exist.')
             else:
@@ -482,18 +484,20 @@ class Dimension(DXFGraphic, OverrideMixin):
         # store the content of the geometry block for virtual entities
         self.virtual_block_content: Optional[EntitySpace] = None
 
-    def copy(self) -> Dimension:
-        virtual_copy = super().copy()
+    def copy(self, copy_strategy=default_copy) -> Dimension:
+        virtual_copy = super().copy(copy_strategy=copy_strategy)
         # The new virtual copy can not reference the same geometry block as the
         # original dimension entity:
         virtual_copy.dxf.discard("geometry")
         return virtual_copy  # type: ignore
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Dimension)
         if self.virtual_block_content:
             # another copy of a virtual entity:
-            virtual_content = EntitySpace(e.copy() for e in self.virtual_block_content)
+            virtual_content = EntitySpace(
+                copy_strategy.copy(e) for e in self.virtual_block_content
+            )
         else:
             # entity is a new virtual copy of self and can not share the same
             # geometry block to be independently transformable:
@@ -502,10 +506,6 @@ class Dimension(DXFGraphic, OverrideMixin):
             # to the insert location:
             entity.dxf.discard("insert")
         entity.virtual_block_content = virtual_content
-
-    def copy_external(self) -> Dimension:
-        # virtual content is not required
-        return self.raw_copy()  # type: ignore
 
     def post_bind_hook(self):
         """Called after binding a virtual dimension entity to a document.
@@ -517,10 +517,10 @@ class Dimension(DXFGraphic, OverrideMixin):
         doc = self.doc
         if self.virtual_block_content and doc is not None:
             # create a new geometry block:
-            block = self.doc.blocks.new_anonymous_block(type_char="D")
+            block = doc.blocks.new_anonymous_block(type_char="D")
             # move virtual block content to the new geometry block:
             for entity in self.virtual_block_content:
-                block.add_entity(entity)
+                block.add_entity(entity)  # type: ignore
             self.dxf.geometry = block.name
             # unlink virtual block content:
             self.virtual_block_content = None
@@ -806,13 +806,13 @@ class Dimension(DXFGraphic, OverrideMixin):
         insert = self.dxf.get("insert", None)
         if insert:
             transform = True
-            insert = ocs.to_wcs(insert)
+            insert = Vec3(ocs.to_wcs(insert))
             m = Matrix44.translate(insert.x, insert.y, insert.z)
 
         for entity in self._block_content():
             try:
-                copy = entity.copy()
-            except DXFTypeError:
+                copy = entity.copy(copy_strategy=default_copy)
+            except CopyNotSupported:
                 continue
 
             if ocs.transform:
@@ -822,8 +822,7 @@ class Dimension(DXFGraphic, OverrideMixin):
                 ocs_to_wcs(copy, dim_elevation)
 
             if transform:
-                # noinspection PyUnboundLocalVariable
-                copy.transform(m)
+                copy.transform(m)  # type: ignore
             yield copy
 
     def virtual_entities(self) -> Iterator[DXFGraphic]:

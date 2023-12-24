@@ -66,6 +66,7 @@ from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic, ProxyGraphicError
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
 from ezdxf.tools.text import has_inline_formatting_codes
+from ezdxf.tools import text_layout
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
 from ezdxf.fonts import fonts
@@ -374,7 +375,10 @@ class UniversalFrontend:
             self.skip_entity(mtext, "3D MTEXT not supported")
             return
         if mtext.has_columns or has_inline_formatting_codes(mtext.text):
-            self.draw_complex_mtext(mtext, properties)
+            try:
+                self.draw_complex_mtext(mtext, properties)
+            except text_layout.LayoutError as e:
+                print(f"skipping {str(mtext)} - {str(e)}")
         else:
             self.draw_simple_mtext(mtext, properties)
 
@@ -494,7 +498,7 @@ class UniversalFrontend:
                         s, e = ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
                             (e.x, e.y, elevation)
                         )
-                    lines.append((s, e))
+                    lines.append((s, e))  # type: ignore
         self.designer.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(

@@ -1,5 +1,6 @@
-- Source: <http://adndevblog.typepad.com/autocad/2017/09/dissecting-mtext-format-codes.html>
-- [[DXF Internals]]
+tags:: DXF-Internals, MTEXT
+url:: <http://adndevblog.typepad.com/autocad/2017/09/dissecting-mtext-format-codes.html>
+
 - The inline format codes of [[MTEXT]] entities looks like this:
 	- `\A1;\fAIGDT|b0|i0;\H2.5000;\ln\fArial|b0|i0;\H2.5000;68{\H1.3;\S+0,8^+0,1;}`
 - ## Understanding each format code:

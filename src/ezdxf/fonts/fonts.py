@@ -552,7 +552,11 @@ class TrueTypeFont(_CachedFont):
         except KeyError:
             pass
         try:
-            cache = TTFontRenderer(font_manager.get_ttf_font(ttf))
+            tt_font = font_manager.get_ttf_font(ttf)
+            try:  # see issue #990
+                cache = TTFontRenderer(tt_font)
+            except Exception:
+                raise UnsupportedFont
         except UnsupportedFont:
             fallback_font_name = font_manager.fallback_font_name()
             logger.info(f"replacing unsupported font '{ttf}' by '{fallback_font_name}'")

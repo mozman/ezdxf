@@ -1,0 +1,21 @@
+- The [snvalid()](https://help.autodesk.com/view/ACD/2016/ENU/?guid=GUID-2EFBE198-9860-456B-A090-206C743ACB90) [[AutoLISP]] function checks the symbol table name for valid characters.
+	- Symbol tables names are layer- linetype-, style names ...
+	- Characters disallowed in symbol table names:
+		- `< >` less-than and greater-than symbol
+		- `/\` forward slash and backslash
+		- `"`	quotation mark
+		- `:` colon
+		- `?` question mark
+		- `*` asterisk
+		- `|`vertical bar
+		- `,` comma
+		- `=` equal sign
+		- `` ` `` backquote
+		- `;` semicolon (ASCII 59)
+	- Known exceptions, used by [[AutoCAD]] for internal usage:
+		- `*ADSK_...`
+		- `*ACMAP`
+		- `*TEMPORARY`
+		- The `*` as first and **only** as first letter seems to be accepted by [[AutoCAD]]
+			- `*XYZ` is OK
+			- `XYZ*` is not OK

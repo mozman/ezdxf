@@ -1,12 +1,14 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
+#
+# Makefile for inplace compiling and testing the ezdxf package with Cython extensions
+# 
 # For Windows is an installation of MSYS or MinGW required and their "/bin"
 # folders have to be added to the PATH environment variable.
 # Copy this template to "makefile" and modify it to your needs,
 # or use "make -f makefile.template <target>"
 # The generic "makefile" is not tracked by git.
 
-BUILD_OPTIONS = setup.py build_ext -i
 ACC = src/ezdxf/acc
 
 # For Windows:
@@ -17,7 +19,7 @@ PYTHON3 = python3
 .PHONY: build test0 test1 clean sdist bdist packages
 
 build:
-	$(PYTHON3) $(BUILD_OPTIONS)
+	$(PYTHON3) -m pip install --no-build-isolation --editable .
 
 test0: build
 	$(PYTHON3) -m pytest tests
@@ -39,14 +41,6 @@ clean:
 	rm -f $(ACC)/mapbox_earcut.cpp
 	rm -f $(ACC)/linetypes.cpp
 	rm -f $(ACC)/np_support.cpp
-
-sdist: clean
-	$(PYTHON3) setup.py sdist --formats=zip
-
-bdist: clean
-	$(PYTHON3) setup.py bdist_wheel
-
-packages: sdist bdist
 
 # assuming mypy and ezdxf is installed, ezdxf maybe in development mode:
 # > pip install -e .

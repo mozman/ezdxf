@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Iterator
@@ -8,6 +8,7 @@ from ezdxf.query import EntityQuery
 from .dxfentity import SubclassProcessor
 from .dxfgfx import DXFGraphic
 from . import factory
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
@@ -53,8 +54,8 @@ class ACADProxyEntity(DXFGraphic):
         super().__init__()
         self.acdb_proxy_entity: Optional[Tags] = None
 
-    def raw_copy(self):
-        raise const.DXFTypeError(f"Cloning of {self.dxftype()} not supported.")
+    def copy(self, copy_strategy=default_copy):
+        raise CopyNotSupported(f"Copying of {self.dxftype()} not supported.")
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
@@ -62,17 +63,17 @@ class ACADProxyEntity(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             self.acdb_proxy_entity = processor.subclass_by_index(2)
-            self.load_proxy_graphic(processor.dxfversion)
+            self.load_proxy_graphic()
         return dxf
 
-    def load_proxy_graphic(self, dxfversion: Optional[str]) -> None:
-        if self.acdb_proxy_entity is not None:
-            if not dxfversion:
-                dxfversion = _detect_dxf_version(self.acdb_proxy_entity)
-            length_code = 92 if dxfversion < const.DXF2013 else 160
-            self.proxy_graphic = load_proxy_data(
-                self.acdb_proxy_entity, length_code, 310
-            )
+    def load_proxy_graphic(self) -> None:
+        if self.acdb_proxy_entity is None:
+            return
+        for length_code in (92, 160):
+            proxy_graphic = load_proxy_data(self.acdb_proxy_entity, length_code, 310)
+            if proxy_graphic:
+                self.proxy_graphic = proxy_graphic
+                return
 
     def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
         # Proxy graphic is stored in AcDbProxyEntity and not as usual in
@@ -145,10 +146,3 @@ def load_proxy_data(
         else:
             break  # at first tag with group code != data_code
     return b"".join(binary_data)
-
-
-def _detect_dxf_version(tags: Tags) -> str:
-    for tag in tags:
-        if 160 <= tag.code < 163:
-            return const.DXF2013
-    return const.DXF2000

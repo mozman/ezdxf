@@ -73,7 +73,7 @@ class TestGfxAttribLayer:
 
     def test_init_by_invalid_value_raises_exception(self):
         with pytest.raises(ezdxf.DXFValueError):
-            assert GfxAttribs(layer="*Test")
+            assert GfxAttribs(layer="Test*")
 
     def test_set_value(self):
         attribs = GfxAttribs()
@@ -83,7 +83,7 @@ class TestGfxAttribLayer:
     def test_set_invalid_value_raises_exception(self):
         attribs = GfxAttribs()
         with pytest.raises(ezdxf.DXFValueError):
-            attribs.layer = "*Test"
+            attribs.layer = "Test*"
 
     def test_str(self):
         assert str(GfxAttribs(layer="Test")) == "layer='Test'"

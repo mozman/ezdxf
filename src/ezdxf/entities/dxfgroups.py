@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2023, Manfred Moitzi
 # License: MIT-License
 from __future__ import annotations
 from typing import (
@@ -24,6 +24,7 @@ from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
 from .factory import register_entity
 from .objectcollection import ObjectCollection
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -79,8 +80,8 @@ class DXFGroup(DXFObject):
         self._handles: set[str] = set()  # only needed at the loading stage
         self._data: list[DXFEntity] = []
 
-    def raw_copy(self):
-        raise const.DXFTypeError("Copying of GROUP not supported.")
+    def copy(self, copy_strategy=default_copy):
+        raise CopyNotSupported("Copying of GROUP not supported.")
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None

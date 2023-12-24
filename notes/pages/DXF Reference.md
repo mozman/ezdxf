@@ -8,4 +8,8 @@
 	- [DXF R2018](https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3) Online Reference
 	- [DXF R2014](http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e659029) Online Reference
 	- [Download](https://www.autodesk.com/developer-network/platform-technologies/autocad-dxf-archive) DXF References
-	- see also [[REFERENCES]]
+-
+- ## See also
+	- [[What is DXF?]]
+	- [[DXF Ground Truth]]
+	- [[REFERENCES]]

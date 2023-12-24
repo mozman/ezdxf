@@ -1,0 +1,49 @@
+tags:: DXF-Internals
+
+- A collection of AutoCAD behaviors determined experimentally.
+- There may be mistakes and misunderstandings of the inner workings of the algorithms.
+- Not all edge cases may have been considered.
+-
+- ## Colors
+	- Most entities are colored contextually, based on the layer or block that they reside in.
+	- Usually entity colors are stored as AutoCAD Color Indices ([[ACI]]) as an index into a lookup table. Different CAD applications may use different color palettes making consistent coloring difficult.
+	- If a block reference [[INSERT]] is placed on layer "A", and the block contains an entity on layer "B" with [[BYLAYER]] color:
+		- the entity will be drawn with the color of layer "B"
+	- If a block reference is placed on layer "A", and the block contains an entity on layer "0" with [[BYLAYER]] color:
+		- the entity will be drawn with the color of layer "A", it seems that layer "0" is the only special case for this.
+	- If an entity has [[BYBLOCK]] color set, and it exists outside a block:
+		- it will take on the layout default color which is white in the modelspace and black in the paperspace.
+-
+- ## Layers and Draw Order
+	- Layer names are case-insensitive, the document layer table keys are stored in lowercase, and in original style in all other use cases (e.g. entity.dxf.layer).
+	- Layers do not play a role in entity draw order, only whether they appear at all based on the visibility of the layer.
+	- It appears that [[INSERT]] entities have a single element in terms of draw order
+		- Entities inside a block can overlap each other and so have a draw order inside the block, but two Insert entities cannot interleave the contents of their blocks.
+		- One is completely drawn on top of the other.
+	- For entities inside a block, the visibility of the layer that the block is inserted does not affect the visibility of the entity *unless* the entity was created on layer "0" in which case the reverse is true:
+		- scenario: block created containing entity A (layer "0") and entity B (layer "1").
+		- The block is placed on layer "2"
+			- entity B visible if and only if layer "1" is visible
+			- entity A visible if and only if layer "2" is visible
+-
+- ## TEXT
+	- The anchor of single line [[TEXT]] entities (and [[ATTRIB]] entities) is *always* the left-baseline regardless of what alignment parameters are stored in the DXF.
+	- Those are for re-adjusting the anchor when the text is edited.
+	- [[ATTRIB]] entities can have formatting commands in them
+-
+- ## MTEXT
+	- The `char_height` in DXF corresponds to the cap-height of the font.
+	- The default line spacing is 5/3 * cap-height between the previous baseline and the next baseline.
+	- The `line_space_factor` is a factor applied directly to this value, so a factor of 3/5 results in 0 space between lines, because each baseline is 1 * cap-height apart.
+	- The middle (vertical) justification of [[MTEXT]] entities seems to be midpoint between the x-height of the first line to the baseline of the last line.
+	- [[MTEXT]] word wrapping seems to only break on spaces, not underscores or dashes.
+	- [[MTEXT]] word wrapping seems to treat multiple spaces between lines as if they were a single space.
+	- Alignment seems to ignore extra spaces at the start or end of lines except for the first line, where spaces at the beginning of the string have an effect.
+	- Whitespace at the beginning of the text can trigger word wrapping, which creates a single blank line at the start
+	- If a line ends with an explicit newline character and is shorter than the column width, only one newline is inserted.
+	- If a line is a single word wider than the column width, it will not be broken but will instead spill outside the text box.
+	- Placing a space before this word will create an empty line and push the word onto the next line.
+-
+- ## POINT
+	- All [[POINT]] entities have the same style defined by the [[HEADER]] variable [[$PDMODE]].
+	- [[POINT]] entities can be drawn relative to the view scale or in absolute units.

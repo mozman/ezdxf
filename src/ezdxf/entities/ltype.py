@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -23,6 +23,7 @@ from ezdxf.entities.layer import acdb_symbol_table_record
 from ezdxf.lldxf.validator import is_valid_table_name
 from ezdxf.tools.complex_ltype import lin_compiler
 from .factory import register_entity
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
@@ -161,7 +162,7 @@ class Linetype(DXFEntity):
         super().__init__()
         self.pattern_tags = LinetypePattern(Tags())
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy pattern_tags."""
         assert isinstance(entity, Linetype)
         entity.pattern_tags = deepcopy(self.pattern_tags)

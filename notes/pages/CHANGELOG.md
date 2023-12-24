@@ -1,5 +1,30 @@
-## Version 1.1.3 - 2023-11-23
-id:: 65604fb6-9254-4146-abb1-4e93f6adfddc
+## Version 1.1.4 - 2023-12-24
+id:: 6568dc88-ce84-4f46-b490-43768c491a2b
+	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
+	- CHANGE: rework of the copy process of DXF entities.
+		- The copy process ignores by default copy errors of linked entities.
+		- This may help to process more [[AutoCAD]] files by the [[ezdxf.xref]] module, but can also make DXF documents unreadable for [[AutoCAD]].
+	- BUGFIX: find [[ProxyGraphic]] in [[ACAD_PROXY_ENTITY]] for any DXF version
+		- {{issue 978}}
+	- CHANGE: use system default font in [[drawing add-on]]
+	- BUGFIX: `ConstructionCircle.intersect_circle()` by [[hu-xiaonan]]
+		- {{pr 982}}
+	- BUGFIX: ResourceWarning about unclosed file on POSIX by [[danofsteel32]]
+		- {{pr 985}}
+	- BUGFIX: `MTEXT` column rendering issue
+		- {{issue 986}}
+	- BUGFIX: catch exception raised by `fontTools`
+		- {{issue 990}}
+	- BUGFIX: invalid return value in `read_bit_double_default()`
+		- {{issue 991}}
+	- BUGFIX: use document encoding to decode text in [[ProxyGraphic]]
+		- {{issue 991}}
+	- BUGFIX: the first letter of a layer name can be an asterisk `*`
+		- {{discussion 995}}
+	-
+	-
+- ## Version 1.1.3 - 2023-11-25
+  id:: 65604fb6-9254-4146-abb1-4e93f6adfddc
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	  id:: 654f4c9f-23cb-44c7-af4e-74d9d73b70f2
 	- CHANGE: added a safety factor of 1.01 to [[MTEXT]] size estimation, a "too precise" measurement causes sometimes unwanted line wraps
@@ -67,8 +92,7 @@ id:: 65604fb6-9254-4146-abb1-4e93f6adfddc
 	- NEW: added setter to `BlockLayout.base_point` property
 	- NEW: `ezdxf.entities.acad_table_to_block()` function, converts a [[ACAD_TABLE]] entity 
 	  to an [[INSERT]] entity
-	- NEW: `ACADProxyEntity.explode()` method, to explode [[ACAD_PROXY_ENTITY]] into proxy 
-	  graphic entities
+	- NEW: `ACADProxyEntity.explode()` method, to explode [[ACAD_PROXY_ENTITY]] into [[ProxyGraphic]] entities
 	- CHANGED: moved font related modules into a new subpackage `ezdxf.fonts` 
 	  including a big refactoring
 	- CHANGED: [[FontFace]] class

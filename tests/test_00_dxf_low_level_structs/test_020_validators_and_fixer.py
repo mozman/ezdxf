@@ -33,8 +33,6 @@ from ezdxf.entities.layer import is_valid_layer_color_index, fix_layer_color
 def test_invalid_layer_name():
     assert is_valid_layer_name("Layer Layer") is True
     assert is_valid_layer_name("Layer/") is False
-    assert is_valid_layer_name("Layer*") is False
-    assert is_valid_layer_name("*Layer") is False
     assert is_valid_layer_name("Layer=") is False
     assert is_valid_layer_name("Layer;") is False
     assert is_valid_layer_name("Layer:") is False
@@ -44,6 +42,14 @@ def test_invalid_layer_name():
     assert is_valid_layer_name("\\Layer`") is False
     assert is_valid_layer_name('"Layer"') is False
 
+def test_the_asterisk_in_layer_names():
+    """The `*` as first letter is used by AutoCAD for internal layer names, 
+    which do not show up in the layers panel. Only the first letter can be a asterisk.
+    """
+    assert is_valid_layer_name("*Layer") is True
+    assert is_valid_layer_name("*") is False
+    assert is_valid_layer_name("L*ayer") is False
+    assert is_valid_layer_name("Layer*") is False
 
 def test_allow_dxf_unicode_encoding_in_layer_names():
     assert is_valid_layer_name(r"tschüss mit \U+00FC") is True

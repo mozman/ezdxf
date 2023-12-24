@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 import logging
@@ -25,6 +25,7 @@ from ezdxf.math.transformtools import (
     InsertTransformationError,
 )
 from ezdxf.query import EntityQuery
+from ezdxf.entities.copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.entities import (
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
         Insert,
         Attrib,
         Text,
-        LWPolyline,
+        Dimension,
     )
     from ezdxf.entities.polygon import DXFPolygon
     from ezdxf.layouts import BaseLayout
@@ -59,6 +60,7 @@ def explode_block_reference(
     target_layout: BaseLayout,
     *,
     redraw_order=False,
+    copy_strategy=default_copy,
 ) -> EntityQuery:
     """Explode a block reference into DXF primitives.
 
@@ -75,6 +77,7 @@ def explode_block_reference(
         block_ref: Block reference entity (INSERT)
         target_layout: explicit target layout for exploded DXF entities
         redraw_order: create entities in ascending redraw order if ``True``
+        copy_strategy: customizable copy strategy
 
     .. warning::
 
@@ -94,7 +97,7 @@ def explode_block_reference(
 
     def _explode_single_block_ref(block_ref):
         for entity in virtual_block_reference_entities(
-            block_ref, redraw_order=redraw_order
+            block_ref, redraw_order=redraw_order, copy_strategy=copy_strategy
         ):
             dxftype = entity.dxftype()
             target_layout.add_entity(entity)
@@ -161,10 +164,12 @@ def virtual_block_reference_entities(
     *,
     skipped_entity_callback: Optional[Callable[[DXFGraphic, str], None]] = None,
     redraw_order=False,
+    copy_strategy=default_copy,
 ) -> Iterable[DXFGraphic]:
-    """Yields 'virtual' parts of block reference `block_ref`. This method is meant
-    to examine the block reference entities without the need to explode the
-    block reference. The `skipped_entity_callback()` will be called for all
+    """Yields 'virtual' parts of block reference `block_ref`.
+
+    This method is meant to examine the block reference entities without the need to
+    explode the block reference. The `skipped_entity_callback()` will be called for all
     entities which are not processed, signature:
     :code:`skipped_entity_callback(entity: DXFGraphic, reason: str)`,
     `entity` is the original (untransformed) DXF entity of the block definition,
@@ -178,6 +183,7 @@ def virtual_block_reference_entities(
         skipped_entity_callback: called whenever the transformation of an entity
             is not supported and so was skipped.
         redraw_order: yield entities in ascending redraw order if ``True``
+        copy_strategy: customizable copy strategy
 
     .. warning::
 
@@ -190,27 +196,23 @@ def virtual_block_reference_entities(
     assert block_ref.dxftype() == "INSERT"
     from ezdxf.entities import Ellipse
 
-    skipped_entity_callback = (
-        skipped_entity_callback or default_logging_callback
-    )
+    skipped_entity_callback = skipped_entity_callback or default_logging_callback
 
-    def disassemble(layout) -> Iterable[DXFGraphic]:
-        for entity in (
-            layout.entities_in_redraw_order() if redraw_order else layout
-        ):
+    def disassemble(layout: BaseLayout) -> Iterable[DXFGraphic]:
+        for entity in layout.entities_in_redraw_order() if redraw_order else layout:
             # Do not explode ATTDEF entities. Already available in Insert.attribs
             if entity.dxftype() == "ATTDEF":
                 continue
             try:
-                copy = entity.copy()
-            except const.DXFTypeError:
+                copy = entity.copy(copy_strategy=copy_strategy)
+            except CopyNotSupported:
                 if hasattr(entity, "virtual_entities"):
-                    yield from entity.virtual_entities()
+                    yield from entity.virtual_entities()  # type: ignore
                 else:
                     skipped_entity_callback(entity, "non copyable")  # type: ignore
             else:
                 if hasattr(copy, "remove_association"):
-                    copy.remove_association()
+                    copy.remove_association()  # type: ignore
                 yield copy
 
     def transform(entities):
@@ -231,9 +233,7 @@ def virtual_block_reference_entities(
                 elif dxftype in {"LWPOLYLINE", "POLYLINE"}:  # has arcs
                     yield from transform(entity.virtual_entities())
                 else:
-                    skipped_entity_callback(
-                        entity, "unsupported non-uniform scaling"
-                    )
+                    skipped_entity_callback(entity, "unsupported non-uniform scaling")
             except InsertTransformationError:
                 # INSERT entity can not be represented in the target coordinate
                 # system defined by transformation matrix `m`.
@@ -319,10 +319,10 @@ def virtual_boundary_path_entities(
 
     def polyline():
         p = LWPolyline.new(dxfattribs=dict(graphic_attribs))
-        p.append_formatted_vertices(path.vertices, format="xyb")
+        p.append_formatted_vertices(path.vertices, format="xyb")  # type: ignore
         p.dxf.extrusion = ocs.uz
         p.dxf.elevation = elevation
-        p.closed = path.is_closed
+        p.closed = path.is_closed  # type: ignore
         return p
 
     graphic_attribs = polygon.graphic_properties()
