@@ -63,3 +63,7 @@
 - # Release v1.1.3
 	- Changelog: ((65604fb6-9254-4146-abb1-4e93f6adfddc))
 	- Bugfix release
+-
+- # Release v1.1.4
+	- Changelog: ((6568dc88-ce84-4f46-b490-43768c491a2b))
+	- Bugfix release

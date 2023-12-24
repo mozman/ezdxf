@@ -3,7 +3,7 @@ id:: 6568dc88-ce84-4f46-b490-43768c491a2b
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	- CHANGE: rework of the copy process of DXF entities.
 		- The copy process ignores by default copy errors of linked entities.
-		- This may help to process more [[AutoCAD]] files by the [[ezdxf.xref]] module, but can also make DXF docments unreadable for [[AutoCAD]].
+		- This may help to process more [[AutoCAD]] files by the [[ezdxf.xref]] module, but can also make DXF documents unreadable for [[AutoCAD]].
 	- BUGFIX: find [[ProxyGraphic]] in [[ACAD_PROXY_ENTITY]] for any DXF version
 		- {{issue 978}}
 	- CHANGE: use system default font in [[drawing add-on]]
