@@ -8,6 +8,8 @@ from typing import (
     cast,
     Optional,
 )
+import logging
+
 from ezdxf.math import Vec2, UVec
 from ezdxf.entitydb import EntitySpace
 from ezdxf.lldxf import const
@@ -18,6 +20,8 @@ if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.layouts import BlockLayout
     from ezdxf.entities import GeoData, Viewport, DXFLayout, DXFGraphic, BlockRecord
+
+logger = logging.getLogger("ezdxf")
 
 
 def get_block_entity_space(doc: Drawing, block_record_handle: str) -> EntitySpace:
@@ -816,7 +820,11 @@ class Paperspace(Layout):
 
 def _find_layout_block_record(layout: DXFLayout) -> BlockRecord | None:
     """Find and link the lost BLOCK_RECORD for the given LAYOUT entity."""
+
     def link_layout(block_record: BlockRecord) -> None:
+        logger.info(
+            f"fixing broken links for '{layout.dxf.name}' between {str(layout)} and {str(block_record)}"
+        )
         layout.dxf.block_record_handle = block_record.dxf.handle
         block_record.dxf.layout = layout.dxf.handle
 
