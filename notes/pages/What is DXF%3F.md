@@ -1,0 +1,22 @@
+- The common assumption is also the cite of [Wikipedia](https://en.wikipedia.org/wiki/AutoCAD_DXF):
+	- AutoCAD [[DXF]] (Drawing eXchange Format) is a CAD data file format developed by [[Autodesk]] for enabling data interoperability between [[AutoCAD]] and **other** applications.
+	- [[DXF]] was originally introduced in December 1982 as part of AutoCAD 1.0, and was intended to provide an exact representation of the data in the [[AutoCAD]] native file format, [[DWG]] (Drawing).
+	- For many years [[Autodesk]] did not publish specifications making correct imports of [[DXF]] files difficult.
+	- [[Autodesk]] now publishes the [[DXF]] specifications online.
+	-
+- The more precise cite from the [DXF reference](https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3) itself:
+	- The DXF™ format is a tagged data representation of all the information contained in an AutoCAD® drawing file.
+	- Tagged data means that each data element in the file is preceded by an integer number that is called a group code.
+	- A group code’s value indicates what type of data element follows.
+	- This value also indicates the meaning of a data element for a given object (or record) type.
+	- Virtually all user-specified information in a drawing file can be represented in DXF format.
+-
+- No mention of interoperability between [[AutoCAD]] and **other** applications.
+- In reality the [[DXF]] format was designed to ensure [[AutoCAD]] cross-platform compatibility in the early days when different hardware platforms with different binary data formats were used.
+- The name [[DXF]] (Drawing eXchange Format) may suggest an universal exchange format, but it is not.
+- It is based on the infrastructure installed by [[Autodesk]] products (fonts) and the implementation details of [[AutoCAD]] or on licensed third party technologies (embedded [[ACIS]] entities).
+- For more information about the [[AutoCAD]] history see the document: [[The Autodesk File]] - Bits of History, Words of Experience by *John Walker*, founder of *Autodesk, Inc.* and co-author of *AutoCAD*.
+-
+- See also:
+	- [[DXF Reference]]
+	- [[DXF Ground Truth]]

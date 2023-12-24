@@ -1,10 +1,11 @@
-# Proxy Graphic in DXF Binary Chunk Interpretation
+tags:: DXF-Internals
+
+- # Proxy Graphic in DXF Binary Chunk Interpretation
 	- Source:
 		- [[AutoCAD DevBlog]]: [proxy-graphic-in-dxf-binary-chunk-interpretation.html](https://adndevblog.typepad.com/autocad/2013/02/proxy-graphic-in-dxf-binary-chunk-interpretation.html)
 		- Author: [Fenton Webb](https://adndevblog.typepad.com/autocad/fenton-webb.html)
 		  id:: 6551c8c7-b9c9-441d-b28c-97e46cdbdc2e
 		- Read the comments!
-	- Collection: [[DXF Internals]]
 - # Issue
 	- How to interpret the [[ProxyGraphic]] binary data enclosed in AutoCAD DXF files?
 	-

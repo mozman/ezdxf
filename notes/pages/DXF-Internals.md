@@ -1,0 +1,36 @@
+alias:: DXF Internals
+
+- [Autodesk AutoCAD - Developer Documentation](https://help.autodesk.com/view/OARX/2018/ENU/)
+- [Autodesk AutoCAD - DXF Reference](https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3)
+- [[What is DXF?]]
+-
+- ## DXF Versions
+	- [[DXF R12]]
+	- [[DXF R13/14]]
+	- [[DXF R2000]]
+	- [[DXF R2004]]
+	- [[DXF R2007]]
+	- [[DXF R2010]]
+	- [[DXF R2013]]
+	- [[DXF R2018]]
+-
+- ## Basic Structures
+	- [[DXF File Encoding]]
+	- [[DXF Tags]]
+	- [[Handles]]
+	- [[Data Model]]
+-
+- ## Sections
+	- [[HEADER]] Section
+	- [[CLASSES]] Section
+	- [[TABLES]] Section
+	- [[BLOCKS]] Section
+	- [[ENTITIES]] Section
+	- [[OBJECTS]] Section
+-
+- ## Management Structures
+	- [[Block Management Structures]]
+	- [[Layout Management Structures]]
+-
+- ## Miscellaneous
+	- [[Notes on Rendering DXF Content]]

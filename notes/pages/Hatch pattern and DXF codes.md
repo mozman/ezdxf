@@ -1,4 +1,5 @@
-- [[DXF Internals]]
+tags:: DXF-Internals
+
 - By Gopinath Taget
 - Source: <http://adndevblog.typepad.com/autocad/2013/01/hatch-pattern-and-dxf-codes.html>
 - You might wonder what the correlation is between the definition file of a hatch pattern("acad.pat", "cadiso.pat") and the DXF codes of [[HATCH]] entity.

@@ -17,7 +17,7 @@
 - [Autodesk Viewer](https://viewer.autodesk.com/) a free online viewer for many file formats
 	- requires an Autodesk account
 	- free registration
-- [DWG TrueView](https://www.autodesk.de/viewers) an DXF/DWG offline viewer for Windows
+- [[DWG TrueView]] an DXF/DWG offline viewer for Windows
 -
 - # AutoCAD Alternatives
 - [BricsCAD](https://www.bricsys.com/)
