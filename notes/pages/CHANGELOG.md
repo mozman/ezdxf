@@ -1,5 +1,9 @@
-## Version 1.1.4 - 2023-12-24
-id:: 6568dc88-ce84-4f46-b490-43768c491a2b
+## Version 1.1.5 - dev
+	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
+	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
+		- {{issue 997}}
+- ## Version 1.1.4 - 2023-12-24
+  id:: 6568dc88-ce84-4f46-b490-43768c491a2b
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
 	- CHANGE: rework of the copy process of DXF entities.
 		- The copy process ignores by default copy errors of linked entities.

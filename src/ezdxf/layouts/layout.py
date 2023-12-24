@@ -11,12 +11,13 @@ from typing import (
 from ezdxf.math import Vec2, UVec
 from ezdxf.entitydb import EntitySpace
 from ezdxf.lldxf import const
+from ezdxf.lldxf.validator import make_table_key
 from .base import BaseLayout
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
     from ezdxf.layouts import BlockLayout
-    from ezdxf.entities import GeoData, Viewport, DXFLayout, DXFGraphic
+    from ezdxf.entities import GeoData, Viewport, DXFLayout, DXFGraphic, BlockRecord
 
 
 def get_block_entity_space(doc: Drawing, block_record_handle: str) -> EntitySpace:
@@ -74,16 +75,18 @@ class Layout(BaseLayout):
         try:
             block_record = doc.entitydb[handle]
         except KeyError:
-            raise const.DXFStructureError(
-                f"required BLOCK_RECORD #{handle} for layout '{layout.dxf.name}' "
-                f"does not exist"
-            )
+            block_record = _find_layout_block_record(layout)  # type: ignore
+            if block_record is None:
+                raise const.DXFStructureError(
+                    f"required BLOCK_RECORD #{handle} for layout '{layout.dxf.name}' "
+                    f"does not exist"
+                )
         if block_record.dxftype() != "BLOCK_RECORD":
             raise const.DXFStructureError(
                 f"expected BLOCK_RECORD(#{handle}) for layout '{layout.dxf.name}' "
                 f"has invalid entity type: {block_record.dxftype()}"
             )
-        # link maybe broken
+        # link is maybe broken
         block_record.dxf.layout = layout.dxf.handle
         super().__init__(block_record)  # type: ignore
 
@@ -809,3 +812,43 @@ class Paperspace(Layout):
         limmin = self.doc.header.get("$PLIMMIN", (0, 0))
         limmax = self.doc.header.get("$PLIMMAX", (0, 0))
         return Vec2(limmin), Vec2(limmax)
+
+
+def _find_layout_block_record(layout: DXFLayout) -> BlockRecord | None:
+    """Find and link the lost BLOCK_RECORD for the given LAYOUT entity."""
+    def link_layout(block_record: BlockRecord) -> None:
+        layout.dxf.block_record_handle = block_record.dxf.handle
+        block_record.dxf.layout = layout.dxf.handle
+
+    doc = layout.doc
+    assert doc is not None
+    if layout.dxf.name == "Model":  # modelspace layout
+        key = make_table_key("*Model_Space")
+        for block_record in doc.tables.block_records:
+            if make_table_key(block_record.dxf.name) == key:
+                link_layout(block_record)
+                return block_record
+        return None
+
+    # paperspace layout
+    search_key = make_table_key("*Paper_Space")
+    paper_space_records = [
+        block_record
+        for block_record in doc.tables.block_records
+        if make_table_key(block_record.dxf.name).startswith(search_key)
+    ]
+
+    def search(key):
+        for block_record in paper_space_records:
+            layout_handle = block_record.dxf.get("layout", "0")
+            if doc.entitydb.get(layout_handle) is key:
+                link_layout(block_record)
+                return block_record
+        return None
+
+    # first search all records for the lost record
+    block_record = search(layout)
+    if block_record is None:
+        # link layout to the next orphaned record
+        block_record = search(None)
+    return block_record

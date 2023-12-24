@@ -163,35 +163,61 @@ def test_decode_dxf_unicode_automatically():
     assert any("Tschüss mit ü" == layer.dxf.name for layer in doc.layers) is True
 
 
-LAYOUT_BROKEN_LINKS = "layout_broken_links.dxf"
+def test_recover_layout_broken_links_1():
+    """
+    Links broken in one direction.
 
-
-@pytest.mark.xfail(reason="not implemented yet")
-def test_recover_layout_broken_links():
-    """LAYOUT entities have invalid block_record_handle values."""
-    doc, _ = recover.readfile(fullpath(LAYOUT_BROKEN_LINKS))
+    LAYOUT entities have invalid handles to block records but BLOCK_RECORDs have
+    valid handles to LAYOUT entities.
+    """
+    doc, _ = recover.readfile(fullpath("layout_broken_links.dxf"))
     assert len(doc.layouts) == 3
+    msp = doc.modelspace()
+    assert msp.block_record.dxf.name == "*Model_Space"
+    layout1 = doc.layouts.get("Layout1")
+    assert layout1.block_record.dxf.name == "*Paper_Space"
+    layout2 = doc.layouts.get("Layout2")
+    assert layout2.block_record.dxf.name == "*Paper_Space0"
 
 
-LAYOUT_MISSING_BLOCK_RECORD = "layout_missing_block_record.dxf"
+def test_recover_layout_broken_links_2():
+    """
+    Links broken in both directions.
+    
+    LAYOUT entities have invalid handles to block records and BLOCK_RECORDs have no 
+    LAYOUT handles.
+    """
+    doc, _ = recover.readfile(fullpath("layout_broken_links_2.dxf"))
+    assert len(doc.layouts) == 3
+    msp = doc.modelspace()
+    assert msp.block_record.dxf.name == "*Model_Space"
+    layout1 = doc.layouts.get("Layout1")
+    assert layout1.block_record.dxf.name == "*Paper_Space"
+    layout2 = doc.layouts.get("Layout2")
+    assert layout2.block_record.dxf.name == "*Paper_Space0"
 
 
-@pytest.mark.xfail(reason="not implemented yet")
 def test_recover_layout_missing_block_record():
     """BLOCK_RECORD for Layout2 does not exist."""
-    doc, _ = recover.readfile(fullpath(LAYOUT_MISSING_BLOCK_RECORD))
+    doc, _ = recover.readfile(fullpath("layout_missing_block_record.dxf"))
     assert len(doc.layouts) == 3
+    layout1 = doc.layouts.get("Layout1")
+    assert layout1.block_record.dxf.name == "*Paper_Space"
 
+    layout2 = doc.layouts.get("Layout2")
+    block_record2 = layout2.block_record
+    assert block_record2.dxf.name == "*Paper_Space0"
 
-LAYOUT_MISSING_BLOCK_DEFINITION = "layout_missing_block_definition.dxf"
+    block2 = doc.blocks.get(block_record2.dxf.name)
+    assert block2.name == block_record2.dxf.name
 
 
 def test_recover_layout_missing_block_definition():
     """BLOCK definition for Layout2 does not exist."""
-    doc, _ = recover.readfile(fullpath(LAYOUT_MISSING_BLOCK_DEFINITION))
+    doc, _ = recover.readfile(fullpath("layout_missing_block_definition.dxf"))
     assert len(doc.layouts) == 3
     block_name = "*Paper_Space0"
-    
+
     block_def = doc.blocks.get(block_name)
     block_record = block_def.block_record
     assert block_record.dxf.name == block_name
@@ -199,7 +225,6 @@ def test_recover_layout_missing_block_definition():
     layout2 = doc.layouts.get("Layout2")
     assert layout2.block_record_name == block_name
     assert layout2.block_record is block_record
-
 
 
 if __name__ == "__main__":
