@@ -14,7 +14,7 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.math import UVec, Vec2, Matrix44, Z_AXIS, NULLVEC
-
+from ezdxf.entities import factory
 from .dxfentity import SubclassProcessor, base_class, DXFEntity
 from .dxfobj import DXFObject
 from .copy import default_copy
@@ -58,7 +58,7 @@ acdb_spatial_filter = DefSubclass(
 acdb_spatial_filter_group_codes = group_code_mapping(acdb_spatial_filter)
 
 
-# @register_entity
+@factory.register_entity
 class SpatialFilter(DXFObject):
     DXFTYPE = "SPATIAL_FILTER"
     DXFATTRIBS = DXFAttributes(base_class, acdb_filter, acdb_spatial_filter)
@@ -98,8 +98,8 @@ class SpatialFilter(DXFObject):
     @property
     def inverse_insert_matrix(self) -> Matrix44:
         """Returns the inverse insert matrix.
-        
-        This matrix is the inverse of the original block reference (insert entity) 
+
+        This matrix is the inverse of the original block reference (insert entity)
         transformation.  The original block reference transformation is the one that
         is applied to all entities in the block when the block reference is regenerated.
         """
@@ -111,7 +111,7 @@ class SpatialFilter(DXFObject):
     @property
     def transform_matrix(self) -> Matrix44:
         """Returns the transform matrix.
-        
+
         This matrix transforms points into the coordinate system of the clip boundary.
         """
         return self._transform_matrix.copy()
@@ -177,16 +177,18 @@ class SpatialFilter(DXFObject):
         for vertex in self._clipping_path:
             tagwriter.write_vertex(10, vertex)
         self.dxf.export_dxf_attribs(
-            tagwriter,
-            [
-                "extrusion",
-                "origin",
-                "display_clipping_path",
-                "has_front_clipping_plane",
-                "front_clipping_plane_distance",
-                "has_back_clipping_plane",
-                "back_clipping_plane_distance",
-            ],
+            tagwriter, ["extrusion", "origin", "display_clipping_path"]
         )
+        has_front_clipping = self.dxf.has_front_clipping_plane
+        tagwriter.write_tag2(72, has_front_clipping)
+        if has_front_clipping:  
+            # AutoCAD does no accept tag 40, if front clipping is disabled
+            tagwriter.write_tag2(40, self.dxf.front_clipping_plane_distance)
+        has_back_clipping = self.dxf.has_back_clipping_plane
+        tagwriter.write_tag2(73, has_back_clipping)
+        if has_back_clipping:  
+            # AutoCAD does no accept tag 41, if back clipping is disabled
+            tagwriter.write_tag2(41, self.dxf.back_clipping_plane_distance)
+
         write_matrix(self._inverse_insert_matrix)
         write_matrix(self._transform_matrix)

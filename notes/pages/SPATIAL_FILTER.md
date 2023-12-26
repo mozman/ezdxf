@@ -14,6 +14,9 @@ tags:: DXF-Internals
 	- As the name implies - this is a 3D object. The spatial boundaries are defined by the front- and back clipping planes.
 		- Group code 40 defines the `front_clipping_plane_distance` (from the `origin` in direction of the `extrusion vector`)
 		- Group code 41 defines the `back_clipping_plane_distance` (from the `origin` in direction of the `extrusion vector`)
+		- **Important:**
+			- The group codes 40 and 41 should not be written if front- or back clipping is disabled
+				- [[AutoCAD]] doesn't like that
 -
 - ## Inverted Clip Boundary
 	- There is no flag to indicate an `inverted` clipping boundary
