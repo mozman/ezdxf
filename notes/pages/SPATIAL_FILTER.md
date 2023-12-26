@@ -1,0 +1,4 @@
+- [DXF Reference](https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-34F179D8-2030-47E4-8D49-F87B6538A05A)
+- This object is used to describe the clipping path for [[XREF]] and [[BLOCKS]] create by the [[XCLIP]] command
+- The SPATIAL_FILTER object is attached to the [[INSERT]] entity via the [[Extension Dictionary]]
+- The entity is supported from [[DXF R2000]] onwards

@@ -32,7 +32,7 @@
 	- LATER explode [[HATCH]] pattern into [[LINE]] entities, points are represented by zero-length [[LINE]] entities, because the [[POINT]] entity has a special meaning.
 	- LATER [[HATCH]] - move hatch pattern origin
 		- examples/entities/hatch_pattern_modify_origin.py
-		- see discussion [#769](https://github.com/mozman/ezdxf/discussions/769)
+		- {{discussion 769}}
 	- #maybe extend [[ACIS]] support
 		- `transform()` method support, each ACIS entity has a transformation matrix which can be modified
 			- but this is expensive
@@ -43,7 +43,7 @@
 	- LATER clipping path support for block references
 	  id:: 65508de8-19be-495f-b83c-94600d9556bc
 		- see [[XCLIP]] command
-		- discussion [#760](https://github.com/mozman/ezdxf/discussions/760)
+		- {{discussion 760}}
 	- LATER add support for multi-line [[ATTRIB]] entities in `Insert.add_auto_attribs()`
 	- #unlikely [[ACAD_TABLE]] entity load and export support beyond `AcadTableBlockContent`
 	- #unlikely [[ACAD_TABLE]] tool to manage content at table and cell basis
