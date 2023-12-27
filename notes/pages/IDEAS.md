@@ -156,13 +156,10 @@
 		  or longest path will be taken.
 		- A gap tolerance is given by the user to connect end points that are not coincident and the algorithm adds connection lines between these gaps.
 		-
-- # DXF Document
-	- LATER copy DXF document by serializing and reloading the document in memory or by file-system, this is not efficient but safe.
-	-
 - # Increase Minimal Required Python Version
 	- In general `numpy` defines the minimal required Python version.
 	-
-	- Python 3.9 in late 2023, after release of Python 3.12 - done in v1.2.0
+	- Python 3.9 for v1.2.0 and later
 		- https://docs.python.org/3/whatsnew/3.9.html
 		- type hinting generics in standard collections
 			- `dict[tuple[int, str], list[str]]` can be used in regular code outside of annotations, import of `List`, `Dict` or `Tuple` is not required anymore
