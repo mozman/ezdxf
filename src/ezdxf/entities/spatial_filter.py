@@ -66,8 +66,8 @@ class SpatialFilter(DXFObject):
 
     def __init__(self) -> None:
         super().__init__()
-        # clipping path in OCS coordinates
-        self._clipping_path: tuple[Vec2, ...] = tuple()
+        # clipping path vertices in OCS coordinates
+        self._boundary_vertices: tuple[Vec2, ...] = tuple()
 
         # This matrix is the inverse of the original block reference (insert entity)
         # transformation.  The original block reference transformation is the one that
@@ -80,19 +80,19 @@ class SpatialFilter(DXFObject):
     def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, SpatialFilter)
         # immutable data
-        entity._clipping_path = self._clipping_path
+        entity._boundary_vertices = self._boundary_vertices
         entity._inverse_insert_matrix = self._inverse_insert_matrix
         entity._transform_matrix = self._transform_matrix
 
     @property
-    def clipping_path(self) -> tuple[Vec2, ...]:
-        """Returns the clipping path in OCS coordinates."""
-        return self._clipping_path
+    def boundary_vertices(self) -> tuple[Vec2, ...]:
+        """Returns the clipping path vertices in OCS coordinates."""
+        return self._boundary_vertices
 
-    def set_clipping_path(self, vertices: Iterable[UVec]) -> None:
-        """Set the clipping path in OCS coordinates."""
-        self._clipping_path = tuple(Vec2(v) for v in vertices)
-        if len(self._clipping_path) < 2:
+    def set_boundary_vertices(self, vertices: Iterable[UVec]) -> None:
+        """Set the clipping path vertices in OCS coordinates."""
+        self._boundary_vertices = tuple(Vec2(v) for v in vertices)
+        if len(self._boundary_vertices) < 2:
             raise const.DXFValueError("2 or more vertices required")
 
     @property
@@ -156,7 +156,7 @@ class SpatialFilter(DXFObject):
                 # fmt: on
             )
 
-        self._clipping_path = tuple(Vec2(tag.value) for tag in tags.find_all(10))
+        self._boundary_vertices = tuple(Vec2(tag.value) for tag in tags.find_all(10))
         matrix_values = [float(tag.value) for tag in tags.find_all(40)]
         # use only last 24 values
         self._inverse_insert_matrix = to_matrix(matrix_values[-24:-12])
@@ -173,8 +173,8 @@ class SpatialFilter(DXFObject):
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, AcDbFilter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, AcDbSpatialFilter)
-        tagwriter.write_tag2(70, len(self._clipping_path))
-        for vertex in self._clipping_path:
+        tagwriter.write_tag2(70, len(self._boundary_vertices))
+        for vertex in self._boundary_vertices:
             tagwriter.write_vertex(10, vertex)
         self.dxf.export_dxf_attribs(
             tagwriter, ["extrusion", "origin", "display_clipping_path"]

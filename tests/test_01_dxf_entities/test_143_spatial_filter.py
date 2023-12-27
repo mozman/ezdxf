@@ -8,7 +8,7 @@ from ezdxf.entities.spatial_filter import SpatialFilter
 
 def test_setup_from_tags():
     sp_filter = SpatialFilter.from_text(SPATIAL_FILTER_0)
-    assert len(sp_filter.clipping_path) == 2
+    assert len(sp_filter.boundary_vertices) == 2
     assert sp_filter.dxf.extrusion == (0, 0, 1)
     assert sp_filter.dxf.origin == (0, 0, 0)
     assert sp_filter.dxf.display_clipping_path == 1
