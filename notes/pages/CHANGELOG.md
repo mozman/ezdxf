@@ -1,7 +1,12 @@
-## Version 1.1.5 - dev
-	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))
+## Version 1.2.0 - dev
+id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
+	- ((658c0484-28db-436e-b828-8fc509ecbd29))
+	- NEW: `ezdxf` requires Python 3.9 or later
+	- NEW: support for the [[SPATIAL_FILTER]] entity.
+		- This is the basic requirement to support clipping of block references and XREFs aka the [[XCLIP]] command in CAD applications
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
+-
 - ## Version 1.1.4 - 2023-12-24
   id:: 6568dc88-ce84-4f46-b490-43768c491a2b
 	- ((654f4c9f-8a29-4ad8-a581-2784df172d0d))

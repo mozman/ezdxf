@@ -17,7 +17,7 @@ containing data from third-party applications without any loss of valuable infor
   existing DXF documents
 - MIT-License
 - the intended audience are programmers
-- requires at least Python 3.8
+- requires at least Python 3.9
 - OS independent
 - tested with CPython and pypy3
 - has type annotations and passes `mypy --ignore-missing-imports -p ezdxf` successful

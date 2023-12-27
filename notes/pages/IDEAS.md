@@ -162,7 +162,7 @@
 - # Increase Minimal Required Python Version
 	- In general `numpy` defines the minimal required Python version.
 	-
-	- Python 3.9 in late 2023, after release of Python 3.12
+	- Python 3.9 in late 2023, after release of Python 3.12 - done in v1.2.0
 		- https://docs.python.org/3/whatsnew/3.9.html
 		- type hinting generics in standard collections
 			- `dict[tuple[int, str], list[str]]` can be used in regular code outside of annotations, import of `List`, `Dict` or `Tuple` is not required anymore
