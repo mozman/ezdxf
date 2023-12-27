@@ -39,12 +39,25 @@ tags:: DXF-Internals
 			- This matrix transforms points into the coordinate system of the clip boundary
 		-
 - ## Transformation
+	- [[Exploring the transformation behavior of SPATIAL_FILTER]]
 	- The [[SPATIAL_FILTER]] object has to be transformed along with the [[INSERT]] entity
 		- What attributes have to be transformed?
-			- origin
-			- boundary vertices
-			- `ACAD_XREC_ROUNDTRIP`
-		- What attributes can be ccopied from the [[INSERT]] entity?
-			- extrusion vector
-		- How to create or transform the transformations matrices?
-	-
+			- None so far!
+			- `origin` is always (0, 0, 0) and remains always (0, 0, 0) in the cases I investigated
+			- The boundary vertices remain at the original location as the boundary path was entered via the [[XCLIP]] command.
+			- `ACAD_XREC_ROUNDTRIP` - not tested but I am sure they behave like the boundary path vertices - so nothing to do
+			- `inverse_insert_matrix` is not changed
+			- `transformation_martix` is not changed
+-
+- ## Creating the boundary path in BLOCK coordinates
+	- the `inverse_insert_matrix` is the identity matrix
+	- `transformation_matrix` is the identity matrix
+	- `origin` is (0, 0, 0)
+	- `extrusion` is (0, 0, 1)
+-
+- ## Creating the boundary path in WCS coordinates
+	- Transform boundary vertices into [[OCS]] coordinates
+	- the `inverse_insert_matrix` is the inverse of the [[INSERT]] matrix
+	- `transformation_matrix` is the identity matrix
+	- `origin` is (0, 0, 0)
+	- `extrusion` is the `extrusion` vector of the [[INSERT]] entity
