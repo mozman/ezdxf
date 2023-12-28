@@ -173,26 +173,14 @@ class _PyQtBackend(Backend):
         item.setBrush(brush)
         self._add_item(item, properties.handle)
 
-    def draw_image(
-        self,
-        image: np.ndarray,
-        clipping_boundary: Optional[list[Vec2]],
-        transform: Matrix44,
-        properties: BackendProperties,
-    ) -> None:
+    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: BackendProperties) -> None:
         height, width, depth = image.shape
         assert depth == 4
         bytes_per_row = width * depth
         image = np.ascontiguousarray(np.flip(image, axis=0))
-        q_image = qg.QImage(image.data, width, height, bytes_per_row, qg.QImage.Format.Format_RGBA8888)
-
-        if clipping_boundary is None:
-            clip = None
-        else:
-            clip = qg.QPolygon([qc.QPoint(p.x, height - p.y) for p in clipping_boundary])
-
-        item = _ClippablePixmapItem(clip)
-        item.setPixmap(qg.QPixmap(q_image))
+        pixmap = qg.QPixmap(qg.QImage(image.data, width, height, bytes_per_row, qg.QImage.Format.Format_RGBA8888))
+        item = qw.QGraphicsPixmapItem()
+        item.setPixmap(pixmap)
         item.setTransformationMode(qc.Qt.TransformationMode.SmoothTransformation)
         item.setTransform(_matrix_to_qtransform(transform))
         self._add_item(item, properties.handle)
@@ -281,27 +269,6 @@ class _CosmeticPolygon(qw.QGraphicsPolygonItem):
     ) -> None:
         _set_cosmetic_brush(self, painter)
         super().paint(painter, option, widget)
-
-
-class _ClippablePixmapItem(qw.QGraphicsPixmapItem):
-    def __init__(self, clip: Optional[qg.QPolygon]):
-        super().__init__()
-        self._clip = clip
-
-    def paint(
-        self,
-        painter: qg.QPainter,
-        option: qw.QStyleOptionGraphicsItem,
-        widget: Optional[qw.QWidget] = None,
-    ) -> None:
-        if self._clip is not None:
-            painter.save()
-            painter.setClipping(True)
-            painter.setClipRegion(self._clip, qc.Qt.ClipOperation.IntersectClip)
-            super().paint(painter, option, widget)
-            painter.restore()
-        else:
-            super().paint(painter, option, widget)
 
 
 def _set_cosmetic_brush(

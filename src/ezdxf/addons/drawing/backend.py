@@ -69,13 +69,7 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_image(
-        self,
-        image: np.ndarray,
-        clipping_boundary: Optional[list[Vec2]],
-        transform: Matrix44,
-        properties: BackendProperties,
-    ) -> None:
+    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -193,20 +187,11 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_image(
-        self,
-        image: np.ndarray,
-        clipping_boundary: Optional[list[Vec2]],
-        transform: Matrix44,
-        properties: BackendProperties,
-    ) -> None:
+    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: BackendProperties) -> None:
         """Draw an image with the given pixels
 
         Args:
             image: an array of RGBA pixels
-            clipping_boundary: either None (in which case no clipping boundary should
-                be applied) or a list of pixel coordinates (not wcs coordinates) that
-                make up a clipping polygon to apply when drawing the image
             transform: the transformation to apply to the image when drawing
                 (the transform from pixel coordinates to wcs)
         """

@@ -18,6 +18,7 @@ from typing import (
 
 import PIL.Image
 import PIL.ImageEnhance
+import PIL.ImageDraw
 import numpy as np
 from typing_extensions import TypeAlias
 import logging
@@ -666,11 +667,9 @@ class UniversalFrontend:
                     loaded_image.putalpha(255)
 
                 if image.dxf.flags & Image.USE_CLIPPING_BOUNDARY:
-                    clipping_boundary = image.boundary_path_ocs()
-                else:
-                    clipping_boundary = None
+                    loaded_image = _mask_image(loaded_image, [(p.x, p.y) for p in image.boundary_path_ocs()])
 
-                self.designer.draw_image(np.asarray(loaded_image), clipping_boundary, image.get_wcs_transform(), properties)
+                self.designer.draw_image(np.asarray(loaded_image), image.get_wcs_transform(), properties)
 
             elif show_filename_if_missing:
                 # TODO: unclear what logic AutoCAD uses to determine the font size. Also text is supposed to be centered
@@ -922,3 +921,11 @@ def _blend_image_towards(image: PIL.Image.Image, amount: float, color: tuple[int
     updated_image = PIL.Image.blend(image, destination, amount)
     updated_image.putalpha(original_alpha)
     return updated_image
+
+
+def _mask_image(image: PIL.Image.Image, clip_polygon: list[tuple[float, float]]) -> PIL.Image.Image:
+    mask = PIL.Image.new('L', image.size, 0)
+    PIL.ImageDraw.ImageDraw(mask).polygon(clip_polygon, outline=None, width=0, fill=1)
+    masked_image = np.array(image)
+    masked_image[:, :, 3] *= np.asarray(mask)
+    return PIL.Image.fromarray(masked_image, 'RGBA')
