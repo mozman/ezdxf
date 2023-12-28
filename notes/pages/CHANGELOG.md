@@ -4,6 +4,8 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- NEW: `ezdxf` requires Python 3.9 or later
 	- NEW: support for the [[SPATIAL_FILTER]] entity.
 		- This is the basic requirement to support clipping of block references and XREFs aka the [[XCLIP]] command in CAD applications
+	- NEW: `ezdxf.xclip` module for adding 2D clipping paths to block references and XREFs
+		- replicates the [[XCLIP]] command
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
 -

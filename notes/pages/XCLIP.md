@@ -6,3 +6,11 @@
 - ## DXF Structure
 	- The [[Extension Dictionary]] of the [[INSERT]] entity has an entry called `ACAD_FILTER` which references a [[DICTIONARY]] entity
 	- The `ACAD_FILTER` dictionary has an entry `SPATIAL` which references a [[SPATIAL_FILTER]] entity, this entity stores the information about the clipping path
+-
+- ## Clipping Path Visibility
+	- The visibility of the clipping path is stored in the [[SPATIAL_FILTER]] entity
+	- The system variable [XCLIPFRAME](https://help.autodesk.com/view/ACD/2024/ENU/?guid=GUID-DA921BBF-A545-4144-A63D-D866772C3759) determines when the clipping path is displayed:
+		- 0: The frame is not visible and it is not plotted. The frame temporarily reappears during selection preview or object selection.
+		- 1: The clipped xref frame is displayed and plotted
+		- 2: The clipped xref frame is displayed but not plotted
+	- Init value of `XCLIPFRAME` is 2.

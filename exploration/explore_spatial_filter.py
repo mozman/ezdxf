@@ -1,31 +1,33 @@
 # Copyright (c) 2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-import sys
-import argparse
 from pathlib import Path
-
+import math
 import ezdxf
-from ezdxf import colors
-from ezdxf.entities import Insert, DXFEntity, SpatialFilter, Dictionary
-from ezdxf.math import Vec2
+from ezdxf import colors, xclip
+from ezdxf.entities import Insert
+from ezdxf.math import Vec2, Matrix44
 
 OUTBOX = Path("~/Desktop/Outbox").expanduser()
 if not OUTBOX.exists():
     OUTBOX = Path(".")
 
 DEFAULT_FILES = [
-    #"BlockClipped.dxf",
-    #"BlockClippedBasicTransform.dxf",
-    #"TransformedBlockClipped.dxf",
+    "BlockClipped.dxf",
+    "BlockClippedBasicTransform.dxf",
+    "TransformedBlockClipped.dxf",
     "BlockClipped_OriginOffset.dxf",
 ]
-ACAD_FILTER = "ACAD_FILTER"
-SPATIAL = "SPATIAL"
 
 
 def make_base_block():
     doc = ezdxf.new()
+    # The HEADER variable `$XCLIPFRAME` ultimately determines whether the 
+    # clipping path is displayed or plotted:
+    # 0= not displayed, not plotted
+    # 1= displayed, not plotted
+    # 2= displayed, plotted
+    doc.header["$XCLIPFRAME"] = 2
     blk = doc.blocks.new("BaseBlock", base_point=(5, 5))
     blk.add_lwpolyline([(5, 5), (10, 5), (10, 10), (5, 10)], close=True)
     blk.add_line((5, 7.5), (10, 7.5), dxfattribs={"color": colors.RED})
@@ -36,23 +38,35 @@ def make_base_block():
     doc.saveas(OUTBOX / "BaseBlock_origin_offset.dxf")
 
 
-def get_spatial_filter(entity: DXFEntity) -> SpatialFilter | None:
-    try:
-        xdict = entity.get_extension_dict()
-    except AttributeError:
-        return None
-    acad_filter = xdict.get(ACAD_FILTER)
-    if not isinstance(acad_filter, Dictionary):
-        return None
-    acad_spatial_filter = acad_filter.get(SPATIAL)
-    if isinstance(acad_spatial_filter, SpatialFilter):
-        return acad_spatial_filter
-    return None
+def copy_clipped_block_defs():
+    def copy_insert(
+        entity: Insert, x: float, y: float, angle: float = 0.0, scale: float = 1.0
+    ) -> Insert:
+        new_insert = entity.copy()
+        m = (
+            Matrix44.scale(scale, scale, scale)
+            @ Matrix44.z_rotate(math.radians(angle))
+            @ Matrix44.translate(x, y, 0)
+        )
+        new_insert.transform(m)
+        return new_insert
+
+    script_path = Path(__file__).parent
+    doc = ezdxf.readfile(script_path / "BlockClipped.dxf")
+    msp = doc.modelspace()
+    insert = msp[0]
+    assert isinstance(insert, Insert)
+
+    msp.add_entity(copy_insert(insert, 10, 0))
+    msp.add_entity(copy_insert(insert, 10, 10, 45))
+    msp.add_entity(copy_insert(insert, 0, 10, 0, 2))
+    doc.saveas(OUTBOX / "transformed_clipped_blocks.dxf")
+
 
 
 def get_boundary_vertices(insert: Insert) -> tuple[Vec2, ...]:
     vertices: tuple[Vec2, ...] = tuple()
-    spatial_filter = get_spatial_filter(insert)
+    spatial_filter = xclip.get_spatial_filter(insert)
     if spatial_filter is None:
         return vertices
     return spatial_filter.boundary_vertices
@@ -65,7 +79,7 @@ def print_transform_params(insert: Insert) -> None:
     print(f"  scale-x: {insert.dxf.xscale}")
     print(f"  scale-y: {insert.dxf.yscale}")
     print(f"  scale-z: {insert.dxf.zscale}")
-    spatial_filter = get_spatial_filter(insert)
+    spatial_filter = xclip.get_spatial_filter(insert)
     if spatial_filter:
         print(f"  {str(spatial_filter)}")
 
@@ -98,5 +112,6 @@ def main(filenames: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    # make_base_block()
+    make_base_block()
+    # copy_clipped_block_defs()
     main(DEFAULT_FILES)

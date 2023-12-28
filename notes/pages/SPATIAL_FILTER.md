@@ -7,17 +7,23 @@ tags:: DXF-Internals
 -
 - ## Clip Boundary Geometry
 	- The group code 10 tags define the clipping boundary in [[OCS]] coordinates based on an xref scale of 1
-	- The [[OCS]] is defined by group code 210, the  `extrusion vector`
-		- Q: Can this extrusion vector differ from the extrusion vector of the parent [[INSERT]] entity?
+	- The [[OCS]] of the boundary path is defined by group code 210, the  `extrusion vector`
+		- All examined samples have an `extrusion` vector of (0, 0, 1)
 	- The group code 11 is used to define the `origin` of the local coordinate system of the clip boundary
-		- I guess in WCS coordinates
+		- All examined samples have an `origin` of (0, 0, 0)
+		- This is maybe just the elevation value stored in the z-axis like in the [[POLYLINE]] entity
 	- As the name implies - this is a 3D object. The spatial boundaries are defined by the front- and back clipping planes.
 		- Group code 40 defines the `front_clipping_plane_distance` (from the `origin` in direction of the `extrusion vector`)
 		- Group code 41 defines the `back_clipping_plane_distance` (from the `origin` in direction of the `extrusion vector`)
 		- **Important:**
 			- The group codes 40 and 41 should not be written if front- or back clipping is disabled
 				- [[AutoCAD]] doesn't like that
--
+	- In all examined samples created by [[BricsCAD]] was the OCS of boundary path aligned with the coordinate system of the block definition.
+	- The clipping path doen't have to be closes (first vertex != last vertex).
+	- Two vertices define a rectangle/cuboid where the sides are parallel to the x-, y- an z-axis.
+	- The clipping path is the geometry entered via the [[XCLIP]] command in OCS coordinates  (=WCS in most cases).
+	- The boundary vertices are transformed into block coordinates by applying the `inverse_insert_matrix`.
+	-
 - ## Inverted Clip Boundary
 	- There is no flag to indicate an `inverted` clipping boundary
 	- The regular clipping clipping path, the outer triangle
@@ -48,6 +54,7 @@ tags:: DXF-Internals
 			- `ACAD_XREC_ROUNDTRIP` - not tested but I am sure they behave like the boundary path vertices - so nothing to do
 			- `inverse_insert_matrix` is not changed
 			- `transformation_martix` is not changed
+		- A test of copying clipped block references by `ezdxf` (created by BricsCAD) already works after implementing the SPATIAL_FILTER entity and without applying any additional transformations in the [[INSERT]].
 -
 - ## Creating the boundary path in BLOCK coordinates
 	- the `inverse_insert_matrix` is the identity matrix

@@ -40,7 +40,7 @@
 			- the transformation matrix modified
 			- ACIS data recompiled
 			- this is expensive and therfore the transformation feature has to be enabled manually for each DXF document by `doc.enable_acis_transfromation()`
-	- LATER clipping path support for block references
+	- DONE clipping path support for block references
 	  id:: 65508de8-19be-495f-b83c-94600d9556bc
 		- see [[XCLIP]] command
 		- {{discussion 760}}

@@ -42,6 +42,12 @@ acdb_spatial_filter = DefSubclass(
             fixer=RETURN_DEFAULT,
         ),
         "origin": DXFAttr(11, xtype=XType.point3d, default=NULLVEC),
+
+        # The HEADER variable $XCLIPFRAME determines if the clipping path is really 
+        # displayed and plotted:
+        #   0 - not displayed, not plotted
+        #   1 - displayed, not plotted
+        #   2 - displayed and plotted
         "display_clipping_path": DXFAttr(
             71, default=1, validator=validator.is_integer_bool, fixer=RETURN_DEFAULT
         ),
