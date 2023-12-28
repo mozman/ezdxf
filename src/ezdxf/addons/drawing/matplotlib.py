@@ -7,17 +7,20 @@ import logging
 from os import PathLike
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.collections import LineCollection
+from matplotlib.image import AxesImage
 from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
+from matplotlib.transforms import Affine2D
 
 from ezdxf.npshapes import to_matplotlib_path
 from ezdxf.addons.drawing.backend import Backend, BkPath2d, BkPoints2d
 from ezdxf.addons.drawing.properties import BackendProperties, LayoutProperties
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.type_hints import Color
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, Matrix44
 from ezdxf.layouts import Layout
 from .config import Configuration
 
@@ -195,6 +198,33 @@ class MatplotlibBackend(Backend):
             linewidth=0,
             zorder=self._get_z(),
         )
+
+    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: BackendProperties) -> None:
+        height, width, depth = image.shape
+        assert depth == 4
+
+        # using AxesImage directly avoids an issue with ax.imshow where the data limits
+        # are updated to include the un-transformed image because the transform is applied
+        # afterward. We can use a slight hack which is that the outlines of images are drawn
+        # as well as the image itself, so we don't have to adjust the data limits at all here
+        # as the outline will take care of that
+        handle = AxesImage(self.ax, interpolation='antialiased')
+        handle.set_data(np.flip(image, axis=0))
+        handle.set_zorder(self._get_z())
+
+        (
+            m11, m12, m13, m14,
+            m21, m22, m23, m24,
+            m31, m32, m33, m34,
+            m41, m42, m43, m44,
+        ) = transform
+        matplotlib_transform = Affine2D(matrix=np.array([
+            [m11, m21, m41],
+            [m12, m22, m42],
+            [0, 0, 1],
+        ]))
+        handle.set_transform(matplotlib_transform + self.ax.transData)
+        self.ax.add_image(handle)
 
     def clear(self):
         self.ax.clear()
