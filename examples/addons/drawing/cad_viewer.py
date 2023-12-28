@@ -54,7 +54,7 @@ def _main():
             print(f"Invalid or corrupted DXF file: {args.cad_file}")
             sys.exit(2)
 
-        v.set_document(doc, auditor)
+        v.set_document(doc, auditor, draw=False)
         try:
             v.draw_layout(args.layout)
         except KeyError:
