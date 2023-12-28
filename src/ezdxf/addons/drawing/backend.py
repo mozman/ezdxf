@@ -3,13 +3,15 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod, ABCMeta
 from typing import Optional, Iterable
+
+import numpy as np
 from typing_extensions import TypeAlias
 
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.properties import Properties, BackendProperties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, Matrix44
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, single_paths
 
 BkPath2d: TypeAlias = NumpyPath2d
@@ -63,6 +65,16 @@ class BackendInterface(ABC):
     @abstractmethod
     def draw_filled_polygon(
         self, points: BkPoints2d, properties: BackendProperties
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def draw_image(
+        self,
+        image: np.ndarray,
+        clipping_boundary: Optional[list[Vec2]],
+        transform: Matrix44,
+        properties: BackendProperties,
     ) -> None:
         raise NotImplementedError
 
@@ -177,6 +189,26 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         """Fill a polygon whose outline is defined by the given points.
         Used to draw entities with simple outlines where :meth:`draw_path` may
         be an inefficient way to draw such a polygon.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def draw_image(
+        self,
+        image: np.ndarray,
+        clipping_boundary: Optional[list[Vec2]],
+        transform: Matrix44,
+        properties: BackendProperties,
+    ) -> None:
+        """Draw an image with the given pixels
+
+        Args:
+            image: an array of RGBA pixels
+            clipping_boundary: either None (in which case no clipping boundary should
+                be applied) or a list of pixel coordinates (not wcs coordinates) that
+                make up a clipping polygon to apply when drawing the image
+            transform: the transformation to apply to the image when drawing
+                (the transform from pixel coordinates to wcs)
         """
         raise NotImplementedError
 

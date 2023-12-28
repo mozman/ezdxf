@@ -10,6 +10,8 @@ from typing import (
     Iterator,
     Callable,
 )
+
+import numpy as np
 from typing_extensions import TypeAlias
 import abc
 import itertools
@@ -114,6 +116,16 @@ class Designer(abc.ABC):
         properties: Properties,
         cap_height: float,
         dxftype: str = "TEXT",
+    ) -> None:
+        ...
+
+    @abc.abstractmethod
+    def draw_image(
+        self,
+        image: np.ndarray,
+        clipping_boundary: Optional[list[Vec2]],
+        transform: Matrix44,
+        properties: Properties,
     ) -> None:
         ...
 
@@ -403,6 +415,15 @@ class Designer2d(Designer):
         if properties.filling is None:
             properties.filling = Filling()
         self._draw_filled_paths(transformed_paths, properties)
+
+    def draw_image(
+        self,
+        image: np.ndarray,
+        clipping_boundary: Optional[list[Vec2]],
+        transform: Matrix44,
+        properties: Properties
+    ) -> None:
+        self.backend.draw_image(image, clipping_boundary, transform, self.get_backend_properties(properties))
 
     def finalize(self) -> None:
         self.backend.finalize()

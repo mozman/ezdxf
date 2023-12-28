@@ -1,7 +1,11 @@
 # Copyright (c) 2020-2023, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
+
+import contextlib
 import math
+import os
+from itertools import pairwise
 from typing import (
     Iterable,
     cast,
@@ -11,6 +15,10 @@ from typing import (
     Optional,
     TYPE_CHECKING,
 )
+
+import PIL.Image
+import PIL.ImageEnhance
+import numpy as np
 from typing_extensions import TypeAlias
 import logging
 import time
@@ -19,7 +27,7 @@ import ezdxf.bbox
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
-    HatchPolicy,
+    HatchPolicy, ImagePolicy,
 )
 from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.properties import (
@@ -48,7 +56,7 @@ from ezdxf.entities import (
     Face3d,
     OLE2Frame,
     Point,
-    Viewport,
+    Viewport, Image,
 )
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
@@ -70,6 +78,7 @@ from ezdxf.tools import text_layout
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
 from ezdxf.fonts import fonts
+from ezdxf.colors import RGB
 from .type_hints import Color
 
 if TYPE_CHECKING:
@@ -159,6 +168,7 @@ class UniversalFrontend:
             "WIPEOUT": self.draw_wipeout_entity,
             "MTEXT": self.draw_mtext_entity,
             "OLE2FRAME": self.draw_ole2frame_entity,
+            "IMAGE": self.draw_image_entity,
         }
         for dxftype in ("LINE", "XLINE", "RAY"):
             dispatch_table[dxftype] = self.draw_line_entity
@@ -613,6 +623,71 @@ class UniversalFrontend:
         if not bbox.is_empty:
             self._draw_filled_rect(bbox.rect_vertices(), OLE2FRAME_COLOR)
 
+    def draw_image_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        image = cast(Image, entity)
+
+        if self.config.image_policy in (ImagePolicy.DISPLAY, ImagePolicy.RECT, ImagePolicy.MISSING):
+            loaded_image = None
+            show_filename_if_missing = True
+
+            if self.config.image_policy == ImagePolicy.RECT or not image.dxf.flags & Image.SHOW_IMAGE:
+                loaded_image = None
+                show_filename_if_missing = False
+            elif self.config.image_policy != ImagePolicy.MISSING and self.ctx.document_dir is not None:
+                image_path = self.ctx.document_dir / image.image_def.dxf.filename.replace('\\', os.path.sep)
+                with contextlib.suppress(FileNotFoundError):
+                    loaded_image = PIL.Image.open(image_path)
+
+            if loaded_image is not None:
+                loaded_image = loaded_image.convert('RGBA')
+
+                if image.dxf.contrast != 50:
+                    # note: this is only an approximation. Unclear what the exact operation AutoCAD uses
+                    amount = image.dxf.contrast / 50
+                    loaded_image = PIL.ImageEnhance.Contrast(loaded_image).enhance(amount)
+
+                if image.dxf.fade != 0:
+                    # note: this is only an approximation. Unclear what the exact operation AutoCAD uses
+                    amount = image.dxf.fade / 100
+                    color = RGB.from_hex(self.ctx.current_layout_properties.background_color)
+                    loaded_image = _blend_image_towards(loaded_image, amount, color)
+
+                if image.dxf.brightness != 50:
+                    # note: this is only an approximation. Unclear what the exact operation AutoCAD uses
+                    amount = image.dxf.brightness / 50 - 1
+                    if amount > 0:
+                        color = (255, 255, 255, 255)
+                    else:
+                        color = (0, 0, 0, 255)
+                        amount = -amount
+                    loaded_image = _blend_image_towards(loaded_image, amount, color)
+
+                if not image.dxf.flags & Image.USE_TRANSPARENCY:
+                    loaded_image.putalpha(255)
+
+                if image.dxf.flags & Image.USE_CLIPPING_BOUNDARY:
+                    clipping_boundary = image.boundary_path_ocs()
+                else:
+                    clipping_boundary = None
+
+                self.designer.draw_image(np.asarray(loaded_image), clipping_boundary, image.get_wcs_transform(), properties)
+
+            elif show_filename_if_missing:
+                # TODO: unclear what logic AutoCAD uses to determine the font size. Also text is supposed to be centered
+                default_cap_height = 50  # chosen empirically
+                self.designer.draw_text(image.image_def.dxf.filename, image.get_wcs_transform(), properties, default_cap_height)
+
+            self.designer.draw_solid_lines(list(pairwise(v.vec2 for v in image.boundary_path_wcs())), properties)
+
+        elif self.config.image_policy == ImagePolicy.PROXY:
+            self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
+
+        elif self.config.image_policy == ImagePolicy.IGNORE:
+            pass
+
+        else:
+            raise ValueError(self.config.image_policy)
+
     def _draw_filled_rect(
         self,
         points: Iterable[Vec2],
@@ -839,3 +914,11 @@ def _draw_viewports(frontend: UniversalFrontend, viewports: list[Viewport]) -> N
     # Draw viewports in order of "status"
     for viewport in viewports:
         frontend.draw_viewport(viewport)
+
+
+def _blend_image_towards(image: PIL.Image.Image, amount: float, color: tuple[int, int, int, int]) -> PIL.Image.Image:
+    original_alpha = image.split()[-1]
+    destination = PIL.Image.new('RGBA', image.size, color)
+    updated_image = PIL.Image.blend(image, destination, amount)
+    updated_image.putalpha(original_alpha)
+    return updated_image
