@@ -81,6 +81,10 @@ def add_clipping_path_in_wcs_coordinates():
 
 
 def add_inverted_clipping_path():
+    # ------------------------------------------------------------------------------
+    # WARNING: The created DXF document is not compatible to AutoCAD!
+    # AutoCAD will not load DXF files with inverted clipping paths created by ezdxf.
+    # ------------------------------------------------------------------------------
     doc = ezdxf.new()
     msp = doc.modelspace()
 

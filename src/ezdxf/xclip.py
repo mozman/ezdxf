@@ -23,8 +23,9 @@ SPATIAL = "SPATIAL"
 
 @dataclasses.dataclass
 class ClippingPath:
-    vertices: Sequence[Vec2]
-    outer_boundary: Sequence[Vec2]
+    vertices: Sequence[Vec2] = tuple()
+    inverted_clip: Sequence[Vec2] = tuple()
+    inverted_clip_compare: Sequence[Vec2] = tuple()
     is_inverted_clip: bool = False
 
 
@@ -97,7 +98,7 @@ class XClip:
         """Returns the clipping path in block coordinates (relative to the block origin)."""
         vertices: Sequence[Vec2] = []
         if not isinstance(self._spatial_filter, SpatialFilter):
-            return ClippingPath(vertices, vertices)
+            return ClippingPath()
         m = self._spatial_filter.inverse_insert_matrix
         vertices = Vec2.tuple(
             m.transform_vertices(self._spatial_filter.boundary_vertices)
@@ -105,17 +106,17 @@ class XClip:
         if len(vertices) == 2:
             vertices = _rect_path(vertices)
 
-        is_inverted_clip = False
-        outer_boundary: Sequence[Vec2] = tuple()
+        clipping_path = ClippingPath(vertices, is_inverted_clip=False)
         xrec = get_roundtrip_xrecord(self._spatial_filter)
         if isinstance(xrec, RoundtripXRecord):
-            inner_path_vertices = get_inner_path_vertices(xrec, m)
-            if inner_path_vertices:
-                outer_boundary = vertices
-                vertices = inner_path_vertices
-                is_inverted_clip = True
-
-        return ClippingPath(vertices, outer_boundary, is_inverted_clip)
+            clipping_path.inverted_clip = get_roundtrip_vertices(
+                xrec, ACAD_INVERTEDCLIP_ROUNDTRIP, m
+            )
+            clipping_path.inverted_clip_compare = get_roundtrip_vertices(
+                xrec, ACAD_INVERTEDCLIP_ROUNDTRIP_COMPARE, m
+            )
+            clipping_path.is_inverted_clip = True
+        return clipping_path
 
     def get_wcs_clipping_path(self) -> ClippingPath:
         """Returns the clipping path in WCS coordinates (relative to the WCS origin) as
@@ -127,12 +128,17 @@ class XClip:
         block_clipping_path = self.get_block_clipping_path()
         m = self._insert.matrix44()
         vertices = Vec2.tuple(m.transform_vertices(block_clipping_path.vertices))
-        outer_boundary_path = Vec2.tuple(
-            m.transform_vertices(block_clipping_path.outer_boundary)
+        wcs_clipping_path = ClippingPath(
+            vertices, is_inverted_clip=block_clipping_path.is_inverted_clip
         )
-        return ClippingPath(
-            vertices, outer_boundary_path, block_clipping_path.is_inverted_clip
-        )
+        if block_clipping_path.is_inverted_clip:
+            wcs_clipping_path.inverted_clip = Vec2.tuple(
+                m.transform_vertices(block_clipping_path.inverted_clip)
+            )
+            wcs_clipping_path.inverted_clip_compare = Vec2.tuple(
+                m.transform_vertices(block_clipping_path.inverted_clip_compare)
+            )
+        return wcs_clipping_path
 
     def set_block_clipping_path(self, vertices: Iterable[UVec]) -> None:
         """Set clipping path in block coordinates (relative to block origin).
@@ -206,10 +212,10 @@ class XClip:
             raise const.DXFValueError("no clipping path set")
         if current_clipping_path.is_inverted_clip:
             raise const.DXFValueError("clipping path is already inverted")
-        
+
         assert self._insert.doc is not None
         self._insert.doc.add_acad_incompatibility_message(
-            "AutoCAD will not load DXF files with inverted clipping paths created by ezdxf!!!!"
+            "\nAutoCAD will not load DXF files with inverted clipping paths created by ezdxf"
         )
         grow_factor = 0.0
         if extents is None:
@@ -225,10 +231,10 @@ class XClip:
         if grow_factor:
             bbox.grow(max(bbox.size) * grow_factor)
 
-        inner_path_vertices = current_clipping_path.vertices
-        full_path_vertices = _inverted_boundary_path(bbox, inner_path_vertices)
-        self.set_block_clipping_path(full_path_vertices)
-        self._set_inverted_clipping_path(inner_path_vertices, full_path_vertices)
+        inverted_clip = current_clipping_path.vertices
+        inverted_clip_compare = _get_inverted_clip_compare_vertices(bbox, inverted_clip)
+        self.set_block_clipping_path(inverted_clip_compare)  # ???
+        self._set_inverted_clipping_path(inverted_clip, inverted_clip_compare)
 
     def _detect_block_extents(self) -> Sequence[Vec2]:
         from ezdxf import bbox
@@ -292,7 +298,7 @@ def _rect_path(vertices: Iterable[Vec2]) -> Sequence[Vec2]:
     return BoundingBox2d(vertices).rect_vertices()
 
 
-def _inverted_boundary_path(
+def _get_inverted_clip_compare_vertices(
     bbox: BoundingBox2d, hole: Sequence[Vec2]
 ) -> Sequence[Vec2]:
     assert (bbox.extmax is not None) and (bbox.extmin is not None)
@@ -425,7 +431,9 @@ def get_roundtrip_xrecord(
     return None
 
 
-def get_inner_path_vertices(xrec: RoundtripXRecord, m: Matrix44) -> Sequence[Vec2]:
-    tags = xrec.get_section(ACAD_INVERTEDCLIP_ROUNDTRIP)
+def get_roundtrip_vertices(
+    xrec: RoundtripXRecord, section_name: str, m: Matrix44
+) -> Sequence[Vec2]:
+    tags = xrec.get_section(section_name)
     vertices = m.transform_vertices(Vec3(t.value) for t in tags)
     return Vec2.tuple(vertices)

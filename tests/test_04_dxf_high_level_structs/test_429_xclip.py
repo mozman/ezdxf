@@ -54,7 +54,7 @@ def test_new_clipping_path_geometry(clipper: xclip.XClip):
     clipping_path = clipper.get_block_clipping_path()
 
     assert len(clipping_path.vertices) == 3
-    assert len(clipping_path.outer_boundary) == 0
+    assert len(clipping_path.inverted_clip) == 0
     assert clipping_path.is_inverted_clip is False
 
 
@@ -190,11 +190,11 @@ def test_invert_clipping_path_properties(clipper: xclip.XClip):
 
     assert clipping_path.is_inverted_clip is True
     # the inner clipping path - "The Hole"
-    bbox = BoundingBox2d(clipping_path.vertices)
+    bbox = BoundingBox2d(clipping_path.inverted_clip)
     assert bbox.extmin.isclose((2, 2))
     assert bbox.extmax.isclose((8, 8))
 
-    bbox = BoundingBox2d(clipping_path.outer_boundary)
+    bbox = BoundingBox2d(clipping_path.vertices)
     # outer boundary is extents of block content + 10%
     # block content = Line((0, 0), (10, 10))
     assert bbox.extmin.isclose((-1, -1))
