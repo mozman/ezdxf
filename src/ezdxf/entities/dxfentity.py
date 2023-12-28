@@ -728,17 +728,25 @@ class DXFEntity:
             raise AttributeError("Entity has no extension dictionary.")
 
     def new_extension_dict(self) -> ExtensionDict:
-        """Create a new :class:`~ezdxf.entities.xdict.ExtensionDict` instance ."""
+        """Create a new :class:`~ezdxf.entities.xdict.ExtensionDict` instance."""
         assert self.doc is not None
         xdict = ExtensionDict.new(self.dxf.handle, self.doc)
         self.extension_dict = xdict
         return xdict
 
     def discard_extension_dict(self) -> None:
-        """Delete :class:`~ezdxf.entities.xdict.ExtensionDict` instance ."""
+        """Delete :class:`~ezdxf.entities.xdict.ExtensionDict` instance."""
         if isinstance(self.extension_dict, ExtensionDict):
             self.extension_dict.destroy()
         self.extension_dict = None
+
+    def discard_empty_extension_dict(self) -> None:
+        """Delete :class:`~ezdxf.entities.xdict.ExtensionDict` instance when empty."""
+        if (
+            isinstance(self.extension_dict, ExtensionDict)
+            and len(self.extension_dict) == 0
+        ):
+            self.discard_extension_dict()
 
     def has_app_data(self, appid: str) -> bool:
         """Returns ``True`` if application defined data for `appid` exist."""

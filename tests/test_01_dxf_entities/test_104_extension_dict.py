@@ -3,12 +3,13 @@
 # Created 2019-02-13
 import pytest
 import ezdxf
+from ezdxf.document import Drawing
 from ezdxf.entities import factory, DXFEntity
 from ezdxf.entities.xdict import ExtensionDict
 
 
 @pytest.fixture(scope="module")
-def doc():
+def doc() -> Drawing:
     return ezdxf.new()
 
 
@@ -96,11 +97,28 @@ def test_discard_existing_extension_dict(doc):
     assert entity.has_extension_dict is False
 
 
-def test_discard_non_existing_extension_dict_without_exception(doc):
+def test_discard_non_existing_extension_dict_without_exception(doc: Drawing):
     msp = doc.modelspace()
     entity = msp.add_line((0, 0), (10, 0))
     entity.discard_extension_dict()
     assert entity.has_extension_dict is False
+
+
+def test_discard_empty_extension(doc: Drawing):
+    msp = doc.modelspace()
+    entity = msp.add_line((0, 0), (10, 0))
+    entity.discard_empty_extension_dict()
+    assert entity.has_extension_dict is False
+
+def test_do_not_discard_non_empty_extension(doc: Drawing):
+    msp = doc.modelspace()
+    entity = msp.add_line((0, 0), (10, 0))
+    xdict = entity.new_extension_dict()
+    key = "PLACEHOLDER_KEY"
+    xdict.add_placeholder(key)
+    entity.discard_empty_extension_dict()
+    assert entity.has_extension_dict is True
+    assert key in xdict
 
 
 def test_multiple_destroy_calls(doc, entity):
@@ -130,3 +148,6 @@ def test_add_new_dictionary_to_xdict(doc):
     new_dict = xdict.add_dictionary("TEST")
     assert new_dict.dxf.owner == xdict.handle
 
+
+if __name__ == '__main__':
+    pytest.main([__file__])
