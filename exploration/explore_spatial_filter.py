@@ -13,10 +13,11 @@ if not OUTBOX.exists():
     OUTBOX = Path(".")
 
 DEFAULT_FILES = [
-    "BlockClipped.dxf",
-    "BlockClippedBasicTransform.dxf",
-    "TransformedBlockClipped.dxf",
-    "BlockClipped_OriginOffset.dxf",
+    #"BlockClipped.dxf",
+    #"BlockClippedBasicTransform.dxf",
+    #"TransformedBlockClipped.dxf",
+    #"BlockClipped_OriginOffset.dxf",
+    "InvertedClippingBricsCAD.dxf",
 ]
 
 
@@ -112,6 +113,6 @@ def main(filenames: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    make_base_block()
+    # make_base_block()
     # copy_clipped_block_defs()
     main(DEFAULT_FILES)

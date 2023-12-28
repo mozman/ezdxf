@@ -5,12 +5,19 @@ from typing import Iterable, Sequence
 import dataclasses
 
 from ezdxf.lldxf import const
-from ezdxf.entities import SpatialFilter, DXFEntity, Dictionary, Insert
+from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.types import dxftag
+from ezdxf.entities import SpatialFilter, DXFEntity, Dictionary, Insert, XRecord
 from ezdxf.math import Vec2, Vec3, UVec, Z_AXIS, Matrix44, BoundingBox2d
+from ezdxf.entities.acad_xrec_roundtrip import RoundtripXRecord
 
 __all__ = ["get_spatial_filter", "XClip", "ClippingPath"]
 
 ACAD_FILTER = "ACAD_FILTER"
+ACAD_XREC_ROUNDTRIP = "ACAD_XREC_ROUNDTRIP"
+ACAD_INVERTEDCLIP_ROUNDTRIP = "ACAD_INVERTEDCLIP_ROUNDTRIP"
+ACAD_INVERTEDCLIP_ROUNDTRIP_COMPARE = "ACAD_INVERTEDCLIP_ROUNDTRIP_COMPARE"
+
 SPATIAL = "SPATIAL"
 
 
@@ -18,7 +25,7 @@ SPATIAL = "SPATIAL"
 class ClippingPath:
     vertices: Sequence[Vec2]
     outer_boundary: Sequence[Vec2]
-    is_inverted_path: bool = False
+    is_inverted_clip: bool = False
 
 
 class XClip:
@@ -30,10 +37,10 @@ class XClip:
 
         This class handles only 2D clipping paths.
 
-    The visibility of the clipping path can be set individually for each block 
-    reference, but the HEADER variable `$XCLIPFRAME` ultimately determines whether the 
+    The visibility of the clipping path can be set individually for each block
+    reference, but the HEADER variable `$XCLIPFRAME` ultimately determines whether the
     clipping path is displayed or plotted:
-    
+
     === =============== ===
     0   not displayed   not plotted
     1   displayed       not plotted
@@ -68,6 +75,14 @@ class XClip:
             return bool(self._spatial_filter.dxf.display_clipping_path)
         return False
 
+    @property
+    def is_inverted_clip(self) -> bool:
+        """Returns ``True`` if clipping path is inverted."""
+        xrec = get_roundtrip_xrecord(self._spatial_filter)
+        if xrec is None:
+            return False
+        return xrec.has_section(ACAD_INVERTEDCLIP_ROUNDTRIP)
+
     def show_clipping_path(self) -> None:
         """Display the clipping path polygon in CAD applications."""
         if isinstance(self._spatial_filter, SpatialFilter):
@@ -89,7 +104,18 @@ class XClip:
         )
         if len(vertices) == 2:
             vertices = _rect_path(vertices)
-        return ClippingPath(vertices, [], is_inverted_path=False)
+
+        is_inverted_clip = False
+        outer_boundary: Sequence[Vec2] = tuple()
+        xrec = get_roundtrip_xrecord(self._spatial_filter)
+        if isinstance(xrec, RoundtripXRecord):
+            inner_path_vertices = get_inner_path_vertices(xrec, m)
+            if inner_path_vertices:
+                outer_boundary = vertices
+                vertices = inner_path_vertices
+                is_inverted_clip = True
+
+        return ClippingPath(vertices, outer_boundary, is_inverted_clip)
 
     def get_wcs_clipping_path(self) -> ClippingPath:
         """Returns the clipping path in WCS coordinates (relative to the WCS origin) as
@@ -105,7 +131,7 @@ class XClip:
             m.transform_vertices(block_clipping_path.outer_boundary)
         )
         return ClippingPath(
-            vertices, outer_boundary_path, block_clipping_path.is_inverted_path
+            vertices, outer_boundary_path, block_clipping_path.is_inverted_clip
         )
 
     def set_block_clipping_path(self, vertices: Iterable[UVec]) -> None:
@@ -136,7 +162,7 @@ class XClip:
         m = Matrix44()
         spatial_filter.set_inverse_insert_matrix(m)
         spatial_filter.set_transform_matrix(m)
-        discard_inverted_clipping_path(spatial_filter)
+        self._discard_inverted_clip()
 
     def set_wcs_clipping_path(self, vertices: Iterable[UVec]) -> None:
         """Set clipping path in WCS coordinates (relative to WCS origin).
@@ -162,6 +188,78 @@ class XClip:
             _vertices = _rect_path(_vertices)
         self.set_block_clipping_path(m.transform_vertices(_vertices))
 
+    def invert_clipping_path(self, extents: Iterable[UVec] | None = None) -> None:
+        """Invert cliping path. The outer boundary is defined by the bounding box of the
+        given `extents` vertices or auto-detected if `extents` is ``None``.
+
+        The `extents` are BLOCK coordinates.
+        Requires an existing clipping path and that clipping path cannot be inverted.
+
+        .. warning::
+
+            AutoCAD will not load DXF files with inverted clipping paths created by
+            ezdxf!!!!
+
+        """
+        current_clipping_path = self.get_block_clipping_path()
+        if len(current_clipping_path.vertices) < 2:
+            raise const.DXFValueError("no clipping path set")
+        if current_clipping_path.is_inverted_clip:
+            raise const.DXFValueError("clipping path is already inverted")
+        
+        assert self._insert.doc is not None
+        self._insert.doc.add_acad_incompatibility_message(
+            "AutoCAD will not load DXF files with inverted clipping paths created by ezdxf!!!!"
+        )
+        grow_factor = 0.0
+        if extents is None:
+            extents = self._detect_block_extents()
+            # grow bounding box by 10%, bbox detection is not very precise for text
+            # based entities:
+            grow_factor = 0.1
+
+        bbox = BoundingBox2d(extents)
+        if bbox.extmin is None or bbox.extmax is None:
+            raise const.DXFValueError("extents not detectable")
+
+        if grow_factor:
+            bbox.grow(max(bbox.size) * grow_factor)
+
+        inner_path_vertices = current_clipping_path.vertices
+        full_path_vertices = _inverted_boundary_path(bbox, inner_path_vertices)
+        self.set_block_clipping_path(full_path_vertices)
+        self._set_inverted_clipping_path(inner_path_vertices, full_path_vertices)
+
+    def _detect_block_extents(self) -> Sequence[Vec2]:
+        from ezdxf import bbox
+
+        insert = self._insert
+        doc = insert.doc
+        assert doc is not None, "valid DXF document required"
+        no_vertices: Sequence[Vec2] = tuple()
+        block = doc.blocks.get(insert.dxf.name)
+        if block is None:
+            return no_vertices
+
+        _bbox = bbox.extents(block, fast=True)
+        if _bbox.extmin is None or _bbox.extmax is None:
+            return no_vertices
+        return Vec2.tuple([_bbox.extmin, _bbox.extmax])
+
+    def _set_inverted_clipping_path(
+        self, clip_vertices: Iterable[Vec2], compare_vertices: Iterable[Vec2]
+    ) -> None:
+        spatial_filter = self._spatial_filter
+        assert isinstance(spatial_filter, SpatialFilter)
+        xrec = get_roundtrip_xrecord(spatial_filter)
+        if xrec is None:
+            xrec = new_roundtrip_xrecord(spatial_filter)
+
+        clip_tags = Tags(dxftag(10, Vec3(v)) for v in clip_vertices)
+        compare_tags = Tags(dxftag(10, Vec3(v)) for v in compare_vertices)
+        xrec.set_section(ACAD_INVERTEDCLIP_ROUNDTRIP, clip_tags)
+        xrec.set_section(ACAD_INVERTEDCLIP_ROUNDTRIP_COMPARE, compare_tags)
+
     def discard_clipping_path(self) -> None:
         """Delete the clipping path. The clipping path doesn't have to exist.
 
@@ -178,6 +276,10 @@ class XClip:
         entitydb.delete_entity(self._spatial_filter)
         self._spatial_filter = None
 
+    def _discard_inverted_clip(self) -> None:
+        if isinstance(self._spatial_filter, SpatialFilter):
+            self._spatial_filter.discard_extension_dict()
+
     def cleanup(self):
         """Discard the extension dictionary of the base entity when empty."""
         self._insert.discard_empty_extension_dict()
@@ -190,27 +292,70 @@ def _rect_path(vertices: Iterable[Vec2]) -> Sequence[Vec2]:
     return BoundingBox2d(vertices).rect_vertices()
 
 
-def _outer_boundary_path(vertices: Iterable[Vec2], start: Vec2) -> Sequence[Vec2]:
-    bbox = BoundingBox2d(vertices)
+def _inverted_boundary_path(
+    bbox: BoundingBox2d, hole: Sequence[Vec2]
+) -> Sequence[Vec2]:
     assert (bbox.extmax is not None) and (bbox.extmin is not None)
-    if not bbox.inside(start):
-        raise ValueError("starting point is not inside the outer boundary")
+
+    inverted_path = list(hole)
+    start = hole[-1]
+
     min_x, min_y = bbox.extmin
     max_x, max_y = bbox.extmax
-    return (
-        start,
-        Vec2(start.x, max_y),
-        Vec2(min_x, max_y),
-        bbox.extmin,
-        Vec2(max_x, min_y),
-        bbox.extmax,
-        Vec2(start.x, max_y),
-        start,
-    )
-
-
-def _find_top_starting_point(vertices: Iterable[Vec2]) -> Vec2:
-    return max(vertices, key=lambda v: v.y)
+    dist_left = start.x - min_x
+    dist_right = max_x - start.x
+    dist_top = max_y - start.y
+    dist_bottom = start.y - min_y
+    min_dist = min(dist_left, dist_right, dist_bottom, dist_top)
+    if min_dist == dist_top:
+        inverted_path.extend(
+            (
+                Vec2(start.x, max_y),
+                Vec2(max_x, max_y),
+                Vec2(max_x, min_y),
+                Vec2(min_x, min_y),
+                Vec2(min_x, max_y),
+                Vec2(start.x, max_y),
+                start,
+            )
+        )
+    elif min_dist == dist_bottom:
+        inverted_path.extend(
+            (
+                Vec2(start.x, min_y),
+                Vec2(min_x, min_y),
+                Vec2(min_x, max_y),
+                Vec2(max_x, max_y),
+                Vec2(max_x, min_y),
+                Vec2(start.x, min_y),
+                start,
+            )
+        )
+    elif min_dist == dist_left:
+        inverted_path.extend(
+            (
+                Vec2(min_x, start.y),
+                Vec2(min_x, max_y),
+                Vec2(max_x, max_y),
+                Vec2(max_x, min_y),
+                Vec2(min_x, min_y),
+                Vec2(min_x, start.y),
+                start,
+            )
+        )
+    elif min_dist == dist_right:
+        inverted_path.extend(
+            (
+                Vec2(max_x, start.y),
+                Vec2(max_x, min_y),
+                Vec2(min_x, min_y),
+                Vec2(min_x, max_y),
+                Vec2(max_x, max_y),
+                Vec2(max_x, start.y),
+                start,
+            )
+        )
+    return inverted_path
 
 
 def get_spatial_filter(entity: DXFEntity) -> SpatialFilter | None:
@@ -252,7 +397,35 @@ def new_spatial_filter(entity: DXFEntity) -> SpatialFilter:
     return spatial_filter
 
 
-def discard_inverted_clipping_path(spatial_filter: SpatialFilter) -> None:
-    # The inverted clipping path is stored in the extension dict by the key
-    # ACAD_XREC_ROUNDTRIP.
-    spatial_filter.discard_extension_dict()
+def new_roundtrip_xrecord(spatial_filter: SpatialFilter) -> RoundtripXRecord:
+    try:
+        xdict = spatial_filter.get_extension_dict()
+    except AttributeError:
+        xdict = spatial_filter.new_extension_dict()
+    xrec = xdict.get(ACAD_XREC_ROUNDTRIP)
+    if xrec is None:
+        xrec = xdict.add_xrecord(ACAD_XREC_ROUNDTRIP)
+        xrec.set_reactors([xdict.handle])
+    assert isinstance(xrec, XRecord)
+    return RoundtripXRecord(xrec)
+
+
+def get_roundtrip_xrecord(
+    spatial_filter: SpatialFilter | None,
+) -> RoundtripXRecord | None:
+    if spatial_filter is None:
+        return None
+    try:
+        xdict = spatial_filter.get_extension_dict()
+    except AttributeError:
+        return None
+    xrecord = xdict.get(ACAD_XREC_ROUNDTRIP)
+    if isinstance(xrecord, XRecord):
+        return RoundtripXRecord(xrecord)
+    return None
+
+
+def get_inner_path_vertices(xrec: RoundtripXRecord, m: Matrix44) -> Sequence[Vec2]:
+    tags = xrec.get_section(ACAD_INVERTEDCLIP_ROUNDTRIP)
+    vertices = m.transform_vertices(Vec3(t.value) for t in tags)
+    return Vec2.tuple(vertices)

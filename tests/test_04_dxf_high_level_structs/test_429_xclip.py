@@ -3,9 +3,10 @@
 import pytest
 import ezdxf
 from ezdxf.document import Drawing
-from ezdxf.entities import factory, Dictionary
+from ezdxf.entities import factory, Dictionary, XRecord
 from ezdxf import xclip
 from ezdxf.math import BoundingBox2d
+from ezdxf.entities.acad_xrec_roundtrip import RoundtripXRecord
 
 TEST_BLK = "TEST_BLK"
 
@@ -13,7 +14,8 @@ TEST_BLK = "TEST_BLK"
 @pytest.fixture(scope="module")
 def doc() -> Drawing:
     _doc = ezdxf.new()
-    _doc.blocks.new(TEST_BLK)
+    blk = _doc.blocks.new(TEST_BLK)
+    blk.add_line((0, 0), (10, 10))
     return _doc
 
 
@@ -24,7 +26,7 @@ def clipper(doc: Drawing) -> xclip.XClip:
     return xclip.XClip(insert)
 
 
-def test_new_clipping_path_structure(doc: Drawing):
+def test_new_clipping_path_dxf_structure(doc: Drawing):
     msp = doc.modelspace()
     insert = msp.add_blockref(TEST_BLK, (10, 10))
     clipper = xclip.XClip(insert)
@@ -53,7 +55,7 @@ def test_new_clipping_path_geometry(clipper: xclip.XClip):
 
     assert len(clipping_path.vertices) == 3
     assert len(clipping_path.outer_boundary) == 0
-    assert clipping_path.is_inverted_path is False
+    assert clipping_path.is_inverted_clip is False
 
 
 @pytest.mark.parametrize("vertices", [[], [(0, 0)]])
@@ -137,7 +139,7 @@ def test_cleanup_base_entity(clipper: xclip.XClip):
 
 
 def test_get_wcs_clipping_path(doc: Drawing):
-    """The clipping path defined in BLOCK coordinates should be transformed to the 
+    """The clipping path defined in BLOCK coordinates should be transformed to the
     location of the INSERT entity.
     """
     msp = doc.modelspace()
@@ -152,7 +154,7 @@ def test_get_wcs_clipping_path(doc: Drawing):
 
 
 def test_set_wcs_clipping_path(doc: Drawing):
-    """The clipping path defined in WCS coordinates should be stored as BLOCK 
+    """The clipping path defined in WCS coordinates should be stored as BLOCK
     coordinates.
     """
     msp = doc.modelspace()
@@ -164,6 +166,54 @@ def test_set_wcs_clipping_path(doc: Drawing):
     bbox = BoundingBox2d(clipping_path.vertices)
     assert bbox.extmin.isclose((0, 0))
     assert bbox.extmax.isclose((1, 1))
+
+
+def test_invert_clip_without_clipping_path(clipper: xclip.XClip):
+    with pytest.raises(ValueError):
+        clipper.invert_clipping_path()
+
+
+def test_cannot_invert_clipping_path_twice(clipper: xclip.XClip):
+    clipper.set_block_clipping_path([(2, 2), (8, 8)])
+    clipper.invert_clipping_path()
+
+    with pytest.raises(ValueError):
+        clipper.invert_clipping_path()
+
+
+def test_invert_clipping_path_properties(clipper: xclip.XClip):
+    clipper.set_block_clipping_path([(2, 2), (8, 8)])
+    clipper.invert_clipping_path()
+
+    assert clipper.is_inverted_clip is True
+    clipping_path = clipper.get_block_clipping_path()
+
+    assert clipping_path.is_inverted_clip is True
+    # the inner clipping path - "The Hole"
+    bbox = BoundingBox2d(clipping_path.vertices)
+    assert bbox.extmin.isclose((2, 2))
+    assert bbox.extmax.isclose((8, 8))
+
+    bbox = BoundingBox2d(clipping_path.outer_boundary)
+    # outer boundary is extents of block content + 10%
+    # block content = Line((0, 0), (10, 10))
+    assert bbox.extmin.isclose((-1, -1))
+    assert bbox.extmax.isclose((11, 11))
+
+
+def test_invert_clipping_path_dxf_structure(clipper: xclip.XClip):
+    clipper.set_block_clipping_path([(2, 2), (8, 8)])
+    clipper.invert_clipping_path()
+
+    spatial_filter = clipper.get_spatial_filter()
+    assert spatial_filter is not None
+    xdict = spatial_filter.get_extension_dict()
+    xrec = xdict["ACAD_XREC_ROUNDTRIP"]
+    assert isinstance(xrec, XRecord) is True
+
+    rtr = RoundtripXRecord(xrec)
+    assert len(rtr.get_section("ACAD_INVERTEDCLIP_ROUNDTRIP")) == 4
+    assert len(rtr.get_section("ACAD_INVERTEDCLIP_ROUNDTRIP_COMPARE")) == 11
 
 
 if __name__ == "__main__":

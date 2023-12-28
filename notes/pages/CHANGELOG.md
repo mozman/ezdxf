@@ -6,6 +6,9 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 		- This is the basic requirement to support clipping of block references and XREFs aka the [[XCLIP]] command in CAD applications
 	- NEW: `ezdxf.xclip` module for adding 2D clipping paths to block references and XREFs
 		- replicates the [[XCLIP]] command
+		- **WARNING:**
+			- [[AutoCAD]] does not open DXF files with **inverted** clipping paths created by `ezdxf`.
+		- [[BricsCAD]] does accept **inverted** clipping paths created by `ezdxf`.
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
 -

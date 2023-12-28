@@ -80,9 +80,41 @@ def add_clipping_path_in_wcs_coordinates():
     print(f"created: {filename}")
 
 
+def add_inverted_clipping_path():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+
+    name = make_block(doc)
+    insert0 = msp.add_blockref(name, (10, 10))
+
+    # The XClip class has a similar functionality as the XCLIP command in CAD applications
+    clipper = xclip.XClip(insert0)
+
+    # Define the clipping in BLOCK coordinates, this is the coordinate system with that
+    # the content of the BLOCK was created.
+    # The clipping path is a triangle:
+    clipper.set_block_clipping_path([(2.5, 4), (1, 1), (4, 1)])
+
+    # invert the clipping path - the content of the triangle is invisible
+    clipper.invert_clipping_path()
+
+    # Adding a rectangular clipping path defined by 2 vertices:
+    insert1 = msp.add_blockref(name, (20, 10))
+    clipper = xclip.XClip(insert1)
+    clipper.set_block_clipping_path([(1, 1), (4, 4)])
+    # invert the clipping path - the content of the rectangle is invisible
+    clipper.invert_clipping_path()
+
+    doc.set_modelspace_vport(height=20, center=(15, 10))
+    filename = CWD / "add_inverted_clipping_path.dxf"
+    doc.saveas(filename)
+    print(f"created: {filename}")
+
+
 def main():
     add_clipping_path_in_block_coordinates()
     add_clipping_path_in_wcs_coordinates()
+    add_inverted_clipping_path()
 
 
 if __name__ == "__main__":
