@@ -5,7 +5,6 @@ from __future__ import annotations
 import contextlib
 import math
 import os
-from itertools import pairwise
 from typing import (
     Iterable,
     cast,
@@ -25,6 +24,9 @@ import logging
 import time
 
 import ezdxf.bbox
+
+# TODO: replace by itertools when Python 3.10 is minmal version
+from ezdxf.tools import take2 as pairwise  
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
