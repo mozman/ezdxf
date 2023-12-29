@@ -666,6 +666,9 @@ class UniversalFrontend:
                 if not image.dxf.flags & Image.USE_TRANSPARENCY:
                     loaded_image.putalpha(255)
 
+                if image.transparency != 0.0:
+                    loaded_image = _multiply_alpha(loaded_image, 1.0 - image.transparency)
+
                 if image.dxf.flags & Image.USE_CLIPPING_BOUNDARY:
                     loaded_image = _mask_image(loaded_image, [(p.x, p.y) for p in image.boundary_path_ocs()])
 
@@ -929,3 +932,9 @@ def _mask_image(image: PIL.Image.Image, clip_polygon: list[tuple[float, float]])
     masked_image = np.array(image)
     masked_image[:, :, 3] *= np.asarray(mask)
     return PIL.Image.fromarray(masked_image, 'RGBA')
+
+
+def _multiply_alpha(image: PIL.Image.Image, amount: float) -> PIL.Image.Image:
+    output_image = np.array(image, dtype=np.float64)
+    output_image[:, :, 3] *= amount
+    return PIL.Image.fromarray(output_image.astype(np.uint8), 'RGBA')
