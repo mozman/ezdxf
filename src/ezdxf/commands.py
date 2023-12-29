@@ -13,6 +13,7 @@ from pathlib import Path
 
 import ezdxf
 from ezdxf import recover
+from ezdxf.addons.drawing.config import BackgroundPolicy
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file, dxf_info
 from ezdxf.dwginfo import dwg_file_info
@@ -302,6 +303,12 @@ class Draw(Command):
             help='select the layout to draw, default is "Model"',
         )
         parser.add_argument(
+            "--background",
+            default="DEFAULT",
+            choices=[p.name for p in BackgroundPolicy],
+            help='choose the background color to use',
+        )
+        parser.add_argument(
             "--all-layers-visible",
             action="store_true",
             help="draw all layers including the ones marked as invisible",
@@ -379,7 +386,7 @@ class Draw(Command):
             for layer_properties in ctx.layers.values():
                 layer_properties.is_visible = True
 
-        config = Configuration()
+        config = Configuration().with_changes(background_policy=BackgroundPolicy[args.background])
         if args.all_entities_visible:
 
             class AllVisibleFrontend(Frontend):
