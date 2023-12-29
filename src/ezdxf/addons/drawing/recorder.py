@@ -104,6 +104,27 @@ class FilledPathsRecord(DataRecord):
             path.transform_inplace(m)
 
 
+class ImageRecord(DataRecord):
+    def __init__(
+        self, boundary: NumpyPoints2d, image: np.ndarray, transform: Matrix44
+    ) -> None:
+        super().__init__()
+        self.boundary: NumpyPoints2d = boundary
+        self.image: np.ndarray = image
+        self.transform: Matrix44 = transform
+
+    def bbox(self) -> BoundingBox2d:
+        try:
+            return self.boundary.bbox()
+        except EmptyShapeError:
+            pass
+        return BoundingBox2d()
+
+    def transform_inplace(self, m: Matrix44) -> None:
+        self.boundary.transform_inplace(m)
+        self.transform @= m
+
+
 class Recorder(BackendInterface):
     """Records the output of the Frontend class."""
 
@@ -182,7 +203,16 @@ class Recorder(BackendInterface):
     def draw_image(
         self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
     ) -> None:
-        pass  # TODO: not implemented
+        try:
+            width = image.shape[0]
+            height = image.shape[1]
+        except IndexError:
+            return
+        boundary = NumpyPoints2d(  # TODO: correct image coordinate system?
+            [Vec2(0, 0), Vec2(width, 0), Vec2(width, height), Vec2(0, height)]
+        )
+        boundary.transform_inplace(transform)
+        self.store(ImageRecord(boundary, image, transform), properties)
 
     def enter_entity(self, entity, properties) -> None:
         pass
@@ -283,6 +313,8 @@ class Player:
                 backend.draw_path(record.path, properties)
             elif isinstance(record, FilledPathsRecord):
                 backend.draw_filled_paths(record.paths, properties)
+            elif isinstance(record, ImageRecord):
+                backend.draw_image(record.image, record.transform, properties)
         backend.finalize()
 
     def transform(self, m: Matrix44) -> None:
@@ -407,6 +439,11 @@ def crop_records_rect(
                 points.append(clipper.clip_line(s, e))  # type: ignore
             record.lines = NumpyPoints2d(points)
             cropped_records.append(record)
+        elif isinstance(record, ImageRecord):
+            pass  
+            # TODO: Image cropping not supported
+            #   Crop image boundary and apply transparency to cropped 
+            #   parts of the image? -> Image boundary is now a polygon!
         else:
             raise ValueError("invalid record type")
     return cropped_records
