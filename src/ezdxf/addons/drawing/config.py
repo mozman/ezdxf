@@ -122,8 +122,8 @@ class BackgroundPolicy(Enum):
 
     Attributes:
         DEFAULT: as resolved by the :class:`Frontend` class
-        WHITE: white background
-        BLACK: black background
+        WHITE: white background (paperspace mode)
+        BLACK: black background (modelspace mode)
         OFF: fully transparent background
         CUSTOM: custom background color by :attr:`Configuration.custom_bg_color`
 

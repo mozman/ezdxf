@@ -26,8 +26,6 @@ import time
 
 import ezdxf.bbox
 
-# TODO: replace by itertools when Python 3.10 is minmal version
-from ezdxf.tools import take2 as pairwise
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
@@ -719,8 +717,9 @@ class UniversalFrontend:
                     default_cap_height,
                 )
 
+            points = [v.vec2 for v in image.boundary_path_wcs()]
             self.designer.draw_solid_lines(
-                list(pairwise(v.vec2 for v in image.boundary_path_wcs())), properties
+                list(zip(points, points[1:])), properties
             )
 
         elif self.config.image_policy == ImagePolicy.PROXY:
