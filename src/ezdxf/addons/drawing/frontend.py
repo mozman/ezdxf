@@ -995,9 +995,19 @@ def _find_image_path(document_dir: pathlib.Path, filename: str) -> pathlib.Path:
 
     # BricsCAD/AutoCAD stores filenames with single backslashes.
     filename = filename.replace("\\", os.path.sep)
+    
+    # try absolute path:
     filepath = pathlib.Path(filename)
     if filepath.exists():
         return filepath
+    
+    # try relative path to document:
     filepath = document_dir / filename
     filepath.resolve()
+    if filepath.exists():
+        return filepath
+    
+    # try document dir:
+    filepath = document_dir / pathlib.Path(filename).name  # stem + suffix
     return filepath
+
