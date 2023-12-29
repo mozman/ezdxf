@@ -1,8 +1,12 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
+import math
 from typing import Iterable, no_type_check
 import copy
+
+import PIL.Image
 import numpy as np
 
 from ezdxf.math import Vec2, BoundingBox2d, Matrix44
@@ -358,7 +362,38 @@ class PyMuPdfRenderBackend(BackendInterface):
     def draw_image(
         self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
     ) -> None:
-        pass  # TODO: not implemented
+        height, width, depth = image.shape
+        assert depth == 4
+        corners = list(transform.transform_vertices([Vec2(0, 0), Vec2(width, 0), Vec2(width, height), Vec2(0, height)]))
+        xs = [p.x for p in corners]
+        ys = [p.y for p in corners]
+        r = fitz.Rect((min(xs), min(ys)), (max(xs), max(ys)))
+
+        # translation and non-uniform scale are handled by having the image stretch to fill the given rect.
+        angle = (corners[1] - corners[0]).angle_deg
+        need_rotate = not math.isclose(angle, 0.0)
+        # already mirroring once to go from pixels (+y down) to wcs (+y up)
+        # so a positive determinant means an additional reflection
+        need_flip = transform.determinant() > 0
+
+        if need_rotate or need_flip:
+            pil_image = PIL.Image.fromarray(image, mode='RGBA')
+            if need_flip:
+                pil_image = pil_image.transpose(PIL.Image.Transpose.FLIP_TOP_BOTTOM)
+            if need_rotate:
+                pil_image = pil_image.rotate(
+                    -angle,
+                    resample=PIL.Image.Resampling.BICUBIC,
+                    expand=True,
+                    fillcolor=(0, 0, 0, 0),
+                )
+            image = np.asarray(pil_image)
+            height, width, depth = image.shape
+
+        pixmap = fitz.Pixmap(fitz.Colorspace(fitz.CS_RGB), width, height, bytes(image.data), True)
+        # TODO: could improve by caching and re-using xrefs. If a document contains many
+        #  identical images redundant copies will be stored for each one
+        self.page.insert_image(r, keep_proportion=False, pixmap=pixmap)
 
     def configure(self, config: Configuration) -> None:
         self.lineweight_policy = config.lineweight_policy
