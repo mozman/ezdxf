@@ -1,6 +1,9 @@
 # Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
+
+import os
+import pathlib
 from typing import (
     TYPE_CHECKING,
     Iterable,
@@ -21,7 +24,7 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2010
-from ezdxf.math import Vec3, Vec2, BoundingBox2d, UVec
+from ezdxf.math import Vec3, Vec2, BoundingBox2d, UVec, Matrix44
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
@@ -34,7 +37,6 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.lldxf.types import DXFTag
     from ezdxf.document import Drawing
-    from ezdxf.math import Matrix44
     from ezdxf import xref
 
 __all__ = ["Image", "ImageDef", "ImageDefReactor", "RasterVariables", "Wipeout"]
@@ -170,6 +172,22 @@ class ImageBase(DXFGraphic):
         self.post_transform(m)
         return self
 
+    def get_wcs_transform(self) -> Matrix44:
+        m = Matrix44()
+        m.set_row(0, Vec3(self.dxf.u_pixel))
+        m.set_row(1, Vec3(self.dxf.v_pixel))
+        m.set_row(3, Vec3(self.dxf.insert))
+        return m
+
+    def boundary_path_ocs(self) -> list[Vec2]:
+        boundary_path = self.boundary_path
+        if len(boundary_path) == 2:  # rectangle
+            p0, p1 = boundary_path
+            boundary_path = [p0, Vec2(p1.x, p0.y), p1, Vec2(p0.x, p1.y)]
+        if not boundary_path[0].isclose(boundary_path[-1]):
+            boundary_path.append(boundary_path[0])
+        return boundary_path
+
     def boundary_path_wcs(self) -> list[Vec3]:
         """Returns the boundary/clipping path in WCS coordinates.
 
@@ -188,15 +206,8 @@ class ImageBase(DXFGraphic):
         origin = Vec3(self.dxf.insert)
         origin += u * 0.5 - v * 0.5
         height = self.dxf.image_size.y
-        boundary_path = self.boundary_path
-        if len(boundary_path) == 2:  # rectangle
-            p0, p1 = boundary_path
-            boundary_path = [p0, Vec2(p1.x, p0.y), p1, Vec2(p0.x, p1.y)]
-        # Boundary/Clipping path origin 0/0 is in the Left/Top corner
-        # of the image!
-        vertices = [origin + (u * p.x) + (v * (height - p.y)) for p in boundary_path]
-        if not vertices[0].isclose(vertices[-1]):
-            vertices.append(vertices[0])
+        # Boundary/Clipping path origin 0/0 is in the Left/Top corner of the image!
+        vertices = [origin + (u * p.x) + (v * (height - p.y)) for p in self.boundary_path_ocs()]
         return vertices
 
     def destroy(self) -> None:

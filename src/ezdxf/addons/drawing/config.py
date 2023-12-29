@@ -143,7 +143,7 @@ class TextPolicy(Enum):
         OUTLINE: text is rendered as outline paths
         REPLACE_RECT: replace text by a rectangle
         REPLACE_FILL: replace text by a filled rectangle
-        IGNORE: ignore text at all
+        IGNORE: ignore text entirely
 
     """
 
@@ -151,6 +151,25 @@ class TextPolicy(Enum):
     OUTLINE = auto()
     REPLACE_RECT = auto()
     REPLACE_FILL = auto()
+    IGNORE = auto()
+
+
+class ImagePolicy(Enum):
+    """This enum is used to define the image rendering.
+
+    Attributes:
+        DISPLAY: display images as they would appear in a regular CAD application
+        RECT: display images as rectangles
+        MISSING: images are always rendered as-if they are missing (rectangle + path text)
+        PROXY: images are rendered using their proxy representations (rectangle)
+        IGNORE: ignore images entirely
+
+    """
+
+    DISPLAY = auto()
+    RECT = auto()
+    MISSING = auto()
+    PROXY = auto()
     IGNORE = auto()
 
 
@@ -218,6 +237,7 @@ class Configuration:
             background color as "#RRGGBBAA" color string (RGB+alpha)
         lineweight_policy:
         text_policy:
+        image_policy: the method for drawing IMAGE entities
 
     """
 
@@ -243,6 +263,7 @@ class Configuration:
     custom_bg_color: Color = "#ffffff"
     lineweight_policy: LineweightPolicy = LineweightPolicy.ABSOLUTE
     text_policy: TextPolicy = TextPolicy.FILLING
+    image_policy: ImagePolicy = ImagePolicy.DISPLAY
 
     @staticmethod
     def defaults() -> Configuration:

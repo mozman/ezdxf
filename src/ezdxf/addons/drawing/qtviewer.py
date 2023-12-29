@@ -261,6 +261,7 @@ class CADWidget(qw.QWidget):
         document: Drawing,
         *,
         layout: str = "Model",
+        draw: bool = True,
     ):
         self._doc = document
         # initialize bounding box cache for faste paperspace drawing
@@ -269,7 +270,8 @@ class CADWidget(qw.QWidget):
         self._reset_backend()
         self._visible_layers = set()
         self._current_layout = None
-        self.draw_layout(layout)
+        if draw:
+            self.draw_layout(layout)
 
     def set_visible_layers(self, layers: Set[str]) -> None:
         self._visible_layers = layers
@@ -438,6 +440,7 @@ class CADViewer(qw.QMainWindow):
         auditor: Auditor,
         *,
         layout: str = "Model",
+        draw: bool = True,
     ):
         error_count = len(auditor.errors)
         if error_count > 0:
@@ -458,7 +461,7 @@ class CADViewer(qw.QMainWindow):
                 self._watch_mtime = None
         else:
             self._watch_mtime = None
-        self._cad.set_document(document, layout=layout)
+        self._cad.set_document(document, layout=layout, draw=draw)
         self._doc = document
         self._populate_layouts()
         self._populate_layer_list()
