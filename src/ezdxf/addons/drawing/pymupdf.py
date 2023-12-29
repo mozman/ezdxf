@@ -55,7 +55,7 @@ class PyMuPdfBackend(recorder.Recorder):
         super().__init__()
         self._init_flip_y = True
 
-    def _get_replay(
+    def get_replay(
         self,
         page: layout.Page,
         *,
@@ -115,7 +115,7 @@ class PyMuPdfBackend(recorder.Recorder):
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
             render_box: set explicit region to render, default is content bounding box
         """
-        backend = self._get_replay(page, settings=settings, render_box=render_box)
+        backend = self.get_replay(page, settings=settings, render_box=render_box)
         return backend.get_pdf_bytes()
 
     def get_pixmap_bytes(
@@ -146,7 +146,7 @@ class PyMuPdfBackend(recorder.Recorder):
         """
         if fmt not in SUPPORTED_IMAGE_FORMATS:
             raise ValueError(f"unsupported image format: '{fmt}'")
-        backend = self._get_replay(page, settings=settings, render_box=render_box)
+        backend = self.get_replay(page, settings=settings, render_box=render_box)
         try:
             pixmap = backend.get_pixmap(dpi=dpi, alpha=alpha)
             return pixmap.tobytes(output=fmt)
@@ -235,7 +235,7 @@ class PyMuPdfRenderBackend(BackendInterface):
     def get_pixmap(self, dpi: int, alpha=False):
         return self.page.get_pixmap(dpi=dpi, alpha=alpha)
 
-    def get_svg_image(self) -> bytes:
+    def get_svg_image(self) -> str:
         return self.page.get_svg_image()
 
     def set_background(self, color: Color) -> None:
