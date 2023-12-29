@@ -66,7 +66,7 @@ from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
 from ezdxf.layouts import Layout
-from ezdxf.math import Vec2, Vec3, OCS, NULLVEC
+from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44
 from ezdxf.path import (
     Path,
     make_path,
@@ -711,12 +711,26 @@ class UniversalFrontend:
                 )
 
             elif show_filename_if_missing:
-                # TODO: unclear what logic AutoCAD uses to determine the font size.
-                # Also text is supposed to be centered
-                default_cap_height = 50  # chosen empirically
+                default_cap_height = 20
+                text = image_def.dxf.filename
+                font = self.designer.text_engine.get_font(self.get_font_face(properties))
+                text_width = font.text_width_ex(text, default_cap_height)
+                image_size = image.dxf.image_size
+                desired_width = image_size.x * 0.75
+                scale = desired_width / text_width
+                translate = Matrix44.translate(
+                    (image_size.x - desired_width) / 2,
+                    (image_size.y - default_cap_height * scale) / 2,
+                    0,
+                )
+                transform = (
+                    Matrix44.scale(scale)
+                    @ translate
+                    @ image.get_wcs_transform()
+                )
                 self.designer.draw_text(
-                    image_def.dxf.filename,
-                    image.get_wcs_transform(),
+                    text,
+                    transform,
                     properties,
                     default_cap_height,
                 )
