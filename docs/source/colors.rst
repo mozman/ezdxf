@@ -42,6 +42,21 @@ RGB Class
 
     .. automethod:: from_floats
 
+RGBA Class
+==========
+
+.. autoclass:: RGBA
+
+    .. autoproperty:: luminance
+
+    .. automethod:: to_hex
+
+    .. automethod:: from_hex
+
+    .. automethod:: to_floats
+
+    .. automethod:: from_floats
+
 ACI Color Values
 ================
 

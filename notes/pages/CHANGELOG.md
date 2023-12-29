@@ -9,6 +9,10 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 		- **WARNING:**
 			- [[AutoCAD]] does not open DXF files with **inverted** clipping paths created by `ezdxf`.
 		- [[BricsCAD]] does accept **inverted** clipping paths created by `ezdxf`.
+	- NEW: support for the [[IMAGE]] entity in the `drawing` add-on by [[Matt Broadway]]
+		- {{pr 999}}
+		- currently only the `PyQt` and the `Matplotlib` backends are supported
+	- NEW: `ezdxf.colors.RGBA` class
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
 -

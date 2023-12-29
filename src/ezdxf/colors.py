@@ -1,7 +1,7 @@
 #  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Union, NamedTuple
+from typing import Union, NamedTuple, Sequence
 from typing_extensions import Self
 import math
 
@@ -52,15 +52,71 @@ class RGB(NamedTuple):
         """Returns perceived luminance for an RGB color in range [0.0, 1.0]
         from dark to light.
         """
-        r, g, b = self.to_floats()
-        return round(math.sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b), 3)
+        return luminance(self)
 
 
 class RGBA(NamedTuple):
+    """Named tuple representing an RGBA color value. 
+    The default alpha channel is 255 (opaque).
+
+    Attributes:
+        r: red channel in range [0, 255]
+        g: green channel in range [0, 255]
+        b: blue channel in range [0, 255]
+        a: alpha channel in range [0, 255], where 0 is transparent and 255 is opaque
+    """
+
     r: int
     g: int
     b: int
-    a: int
+    a: int = 255  # default alpha channel is opaque
+
+    def to_floats(self) -> tuple[float, float, float, float]:
+        """Returns the color value as a tuple of floats in range [0, 1]."""
+        return self.r / 255, self.g / 255, self.b / 255, self.a / 255
+
+    @classmethod
+    def from_floats(cls, values: Sequence[float]) -> Self:
+        """Returns an :class:`RGBA` instance from floats in range [0, 1].
+
+        The alpha channel is optional. 
+        The default alpha channel is 255 (opaque).
+        """
+        r = max(min(255, round(values[0] * 255)), 0)
+        g = max(min(255, round(values[1] * 255)), 0)
+        b = max(min(255, round(values[2] * 255)), 0)
+        try:
+            a = max(min(255, round(values[3] * 255)), 0)
+        except IndexError:
+            a = 255  # default to opaque == RGB(r, g, b)
+        return cls(r, g, b, a)
+
+    def to_hex(self) -> str:
+        """Returns the color value as hex string "#RRGGBBAA"."""
+        return f"#{self.r:02x}{self.g:02x}{self.b:02x}{self.a:02x}"
+
+    @classmethod
+    def from_hex(cls, color: str) -> Self:
+        """Returns an :class:`RGBA` instance from a hex color string, the `color` string
+        is a hex string "RRGGBBAA" with an optional leading "#". 
+        The alpha channel is optional. 
+        The default alpha channel is 255 (opaque).
+        """
+        hex_string = color.lstrip("#")
+        r = int(hex_string[0:2], 16)
+        g = int(hex_string[2:4], 16)
+        b = int(hex_string[4:6], 16)
+        a = 255
+        if len(hex_string) > 6:
+            a = int(hex_string[6:8], 16)
+        return cls(r, g, b, a)
+
+    @property
+    def luminance(self) -> float:
+        """Returns perceived luminance for an RGB color in range [0.0, 1.0]
+        from dark to light.
+        """
+        return luminance(self)
 
 
 BYBLOCK = 0
@@ -209,7 +265,7 @@ def aci2rgb(index: int) -> RGB:
     return int2rgb(DXF_DEFAULT_COLORS[index])
 
 
-def luminance(color: RGB) -> float:
+def luminance(color: Sequence[float]) -> float:
     """Returns perceived luminance for an RGB color in the range [0.0, 1.0]
     from dark to light.
     """

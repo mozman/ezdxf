@@ -1,7 +1,7 @@
-# Copyright (c) 2014-2020, Manfred Moitzi
+# Copyright (c) 2014-2023, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.colors import int2rgb, rgb2int, aci2rgb, luminance
+from ezdxf.colors import int2rgb, rgb2int, aci2rgb, luminance, RGB, RGBA
 
 
 def test_rgb():
@@ -43,3 +43,52 @@ def test_luminance():
     assert black == 0.0
     assert white == 1.0
     assert black < blue < red < magenta < green < cyan < yellow < white
+
+
+class TestRGB:
+    def test_from_hex_(self):
+        assert RGB.from_hex("#aabbcc") == (0xAA, 0xBB, 0xCC)
+
+    def test_from_hex_with_alpha(self):
+        assert RGB.from_hex("#aabbccdd") == (0xAA, 0xBB, 0xCC)
+
+    def test_from_floats(self):
+        assert RGB.from_floats((1, 0.5, 0)) == (255, 128, 0)
+
+    def test_to_floats(self):
+        assert RGB(255, 128, 0).to_floats() == (1.0, 0.5019607843137255, 0.0)
+
+    def test_to_hex(self):
+        assert RGB.from_hex("#aabbcc").to_hex() == "#aabbcc"
+
+    def test_luminance(self):
+        rgb = RGB.from_hex("#aabbcc")
+        assert rgb.luminance == luminance(rgb)
+
+
+class TestRGBA:
+    def test_from_hex(self):
+        assert RGBA.from_hex("#aabbccdd") == (0xAA, 0xBB, 0xCC, 0xDD)
+
+    def test_to_hex(self):
+        assert RGBA.from_hex("#aabbccdd").to_hex() == "#aabbccdd"
+
+    def test_from_floats(self):
+        assert RGBA.from_floats((1, 0.5, 0, 0)) == (255, 128, 0, 0)
+        assert RGBA.from_floats((1, 0.5, 0, 1)) == (255, 128, 0, 255)
+
+    def test_to_floats(self):
+        assert RGBA(255, 128, 0, 255).to_floats() == (1.0, 0.5019607843137255, 0.0, 1.0)
+
+    def test_luminance(self):
+        rgba = RGBA.from_hex("#aabbcc")
+        assert rgba.luminance == luminance(rgba)
+
+    def test_default_alpha_channel_is_opaque(self):
+        assert RGBA(0xAA, 0xBB, 0xCC) == (0xAA, 0xBB, 0xCC, 0xFF)
+        assert RGBA.from_hex("#aabbcc") == (0xAA, 0xBB, 0xCC, 0xFF)
+        assert RGBA.from_floats((1, 0.5, 0)) == (255, 128, 0, 255)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
