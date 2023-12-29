@@ -16,7 +16,7 @@ from matplotlib.path import Path
 from matplotlib.transforms import Affine2D
 
 from ezdxf.npshapes import to_matplotlib_path
-from ezdxf.addons.drawing.backend import Backend, BkPath2d, BkPoints2d
+from ezdxf.addons.drawing.backend import Backend, BkPath2d, BkPoints2d, ImageData
 from ezdxf.addons.drawing.properties import BackendProperties, LayoutProperties
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.type_hints import Color
@@ -200,9 +200,9 @@ class MatplotlibBackend(Backend):
         )
 
     def draw_image(
-        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+        self, image_data: ImageData, properties: BackendProperties
     ) -> None:
-        height, width, depth = image.shape
+        height, width, depth = image_data.image.shape
         assert depth == 4
 
         # using AxesImage directly avoids an issue with ax.imshow where the data limits
@@ -211,7 +211,7 @@ class MatplotlibBackend(Backend):
         # as well as the image itself, so we don't have to adjust the data limits at all here
         # as the outline will take care of that
         handle = AxesImage(self.ax, interpolation="antialiased")
-        handle.set_data(np.flip(image, axis=0))
+        handle.set_data(np.flip(image_data.image, axis=0))
         handle.set_zorder(self._get_z())
 
         (
@@ -231,7 +231,7 @@ class MatplotlibBackend(Backend):
             m42,
             m43,
             m44,
-        ) = transform
+        ) = image_data.transform
         matplotlib_transform = Affine2D(
             matrix=np.array(
                 [

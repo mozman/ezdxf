@@ -15,7 +15,7 @@ from ezdxf.path import Command
 from ezdxf.version import __version__
 
 from .type_hints import Color
-from .backend import BackendInterface, BkPath2d, BkPoints2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -359,12 +359,17 @@ class PyMuPdfRenderBackend(BackendInterface):
         self.finish_filling(shape, properties)
         shape.commit()
 
-    def draw_image(
-        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
-    ) -> None:
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
+        transform = image_data.transform
+        image = image_data.image
         height, width, depth = image.shape
         assert depth == 4
-        corners = list(transform.transform_vertices([Vec2(0, 0), Vec2(width, 0), Vec2(width, height), Vec2(0, height)]))
+
+        corners = list(
+            transform.transform_vertices(
+                [Vec2(0, 0), Vec2(width, 0), Vec2(width, height), Vec2(0, height)]
+            )
+        )
         xs = [p.x for p in corners]
         ys = [p.y for p in corners]
         r = fitz.Rect((min(xs), min(ys)), (max(xs), max(ys)))
@@ -377,7 +382,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         need_flip = transform.determinant() > 0
 
         if need_rotate or need_flip:
-            pil_image = PIL.Image.fromarray(image, mode='RGBA')
+            pil_image = PIL.Image.fromarray(image, mode="RGBA")
             if need_flip:
                 pil_image = pil_image.transpose(PIL.Image.Transpose.FLIP_TOP_BOTTOM)
             if need_rotate:
@@ -390,7 +395,9 @@ class PyMuPdfRenderBackend(BackendInterface):
             image = np.asarray(pil_image)
             height, width, depth = image.shape
 
-        pixmap = fitz.Pixmap(fitz.Colorspace(fitz.CS_RGB), width, height, bytes(image.data), True)
+        pixmap = fitz.Pixmap(
+            fitz.Colorspace(fitz.CS_RGB), width, height, bytes(image.data), True
+        )
         # TODO: could improve by caching and re-using xrefs. If a document contains many
         #  identical images redundant copies will be stored for each one
         self.page.insert_image(r, keep_proportion=False, pixmap=pixmap)

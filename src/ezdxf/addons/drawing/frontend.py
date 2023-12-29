@@ -32,13 +32,15 @@ from ezdxf.addons.drawing.config import (
     HatchPolicy,
     ImagePolicy,
 )
-from ezdxf.addons.drawing.backend import BackendInterface
+from ezdxf.addons.drawing.backend import BackendInterface, ImageData
 from ezdxf.addons.drawing.properties import (
     RenderContext,
     OLE2FRAME_COLOR,
     Properties,
     Filling,
-    LayoutProperties, MODEL_SPACE_BG_COLOR, PAPER_SPACE_BG_COLOR,
+    LayoutProperties,
+    MODEL_SPACE_BG_COLOR,
+    PAPER_SPACE_BG_COLOR,
 )
 from ezdxf.addons.drawing.config import BackgroundPolicy, TextPolicy
 from ezdxf.addons.drawing.text import simplified_text_chunks
@@ -83,6 +85,7 @@ from ezdxf.lldxf import const
 from ezdxf.render import hatching
 from ezdxf.fonts import fonts
 from ezdxf.colors import RGB, RGBA
+from ezdxf.npshapes import NumpyPoints2d
 from .type_hints import Color
 
 if TYPE_CHECKING:
@@ -700,20 +703,24 @@ class UniversalFrontend:
                     loaded_image = _multiply_alpha(
                         loaded_image, 1.0 - image.transparency
                     )
-
+                boundary_path = image.boundary_path_ocs()
                 if image.dxf.flags & Image.USE_CLIPPING_BOUNDARY:
                     loaded_image = _mask_image(
-                        loaded_image, [(p.x, p.y) for p in image.boundary_path_ocs()]
+                        loaded_image, [(p.x, p.y) for p in boundary_path]
                     )
-
-                self.designer.draw_image(
-                    np.asarray(loaded_image), image.get_wcs_transform(), properties
+                image_data = ImageData(
+                    image=np.asarray(loaded_image),
+                    transform=image.get_wcs_transform(),
+                    boundary_path=NumpyPoints2d(boundary_path),
                 )
+                self.designer.draw_image(image_data, properties)
 
             elif show_filename_if_missing:
                 default_cap_height = 20
                 text = image_def.dxf.filename
-                font = self.designer.text_engine.get_font(self.get_font_face(properties))
+                font = self.designer.text_engine.get_font(
+                    self.get_font_face(properties)
+                )
                 text_width = font.text_width_ex(text, default_cap_height)
                 image_size = image.dxf.image_size
                 desired_width = image_size.x * 0.75
@@ -724,9 +731,7 @@ class UniversalFrontend:
                     0,
                 )
                 transform = (
-                    Matrix44.scale(scale)
-                    @ translate
-                    @ image.get_wcs_transform()
+                    Matrix44.scale(scale) @ translate @ image.get_wcs_transform()
                 )
                 self.designer.draw_text(
                     text,
@@ -736,9 +741,7 @@ class UniversalFrontend:
                 )
 
             points = [v.vec2 for v in image.boundary_path_wcs()]
-            self.designer.draw_solid_lines(
-                list(zip(points, points[1:])), properties
-            )
+            self.designer.draw_solid_lines(list(zip(points, points[1:])), properties)
 
         elif self.config.image_policy == ImagePolicy.PROXY:
             self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)

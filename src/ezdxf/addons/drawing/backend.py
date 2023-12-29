@@ -6,6 +6,7 @@ from typing import Optional, Iterable
 
 import numpy as np
 from typing_extensions import TypeAlias
+import dataclasses
 
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.properties import Properties, BackendProperties
@@ -16,6 +17,23 @@ from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, single_paths
 
 BkPath2d: TypeAlias = NumpyPath2d
 BkPoints2d: TypeAlias = NumpyPoints2d
+
+
+@dataclasses.dataclass
+class ImageData:
+    """Image data.
+
+    Attributes:
+        image: an array of RGBA pixels
+        transform: the transformation to apply to the image when drawing
+            (the transform from pixel coordinates to wcs)
+        boundary_path: boundary path vertices in pixel coordinates
+
+    """
+
+    image: np.ndarray
+    transform: Matrix44
+    boundary_path: NumpyPoints2d
 
 
 class BackendInterface(ABC):
@@ -69,9 +87,7 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_image(
-        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
-    ) -> None:
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -189,16 +205,8 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_image(
-        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
-    ) -> None:
-        """Draw an image with the given pixels
-
-        Args:
-            image: an array of RGBA pixels
-            transform: the transformation to apply to the image when drawing
-                (the transform from pixel coordinates to wcs)
-        """
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
+        """Draw an image with the given pixels."""
         raise NotImplementedError
 
     @abstractmethod

@@ -3,11 +3,9 @@
 from __future__ import annotations
 from typing import Iterable
 
-import numpy as np
-
-from ezdxf.math import Vec2, Matrix44
+from ezdxf.math import Vec2
 from .properties import BackendProperties
-from .backend import Backend, BkPath2d, BkPoints2d
+from .backend import Backend, BkPath2d, BkPoints2d, ImageData
 from .config import Configuration
 
 
@@ -33,9 +31,9 @@ class BasicBackend(Backend):
         self.collector.append(("filled_polygon", points, properties))
 
     def draw_image(
-        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+        self, image_data: ImageData, properties: BackendProperties
     ) -> None:
-        self.collector.append(("image", image, transform, properties))
+        self.collector.append(("image", image_data, properties))
 
     def set_background(self, color: str) -> None:
         self.collector.append(("bgcolor", color))

@@ -12,7 +12,7 @@ from ezdxf.path import Command
 
 
 from .type_hints import Color
-from .backend import BackendInterface, BkPath2d, BkPoints2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -318,9 +318,7 @@ class SVGRenderBackend(BackendInterface):
             self.make_polyline_str(points.vertices(), close=True), properties
         )
 
-    def draw_image(
-        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
-    ) -> None:
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
         pass  # TODO: not implemented
 
     @staticmethod

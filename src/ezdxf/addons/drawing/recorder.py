@@ -18,7 +18,7 @@ from ezdxf.math import BoundingBox2d, Matrix44, Vec2, UVec
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, EmptyShapeError
 from ezdxf.tools import take2
 
-from .backend import BackendInterface
+from .backend import BackendInterface, ImageData
 from .config import Configuration
 from .properties import BackendProperties
 from .type_hints import Color
@@ -105,13 +105,10 @@ class FilledPathsRecord(DataRecord):
 
 
 class ImageRecord(DataRecord):
-    def __init__(
-        self, boundary: NumpyPoints2d, image: np.ndarray, transform: Matrix44
-    ) -> None:
+    def __init__(self, boundary: NumpyPoints2d, image_data: ImageData) -> None:
         super().__init__()
         self.boundary: NumpyPoints2d = boundary
-        self.image: np.ndarray = image
-        self.transform: Matrix44 = transform
+        self.image_data: ImageData = image_data
 
     def bbox(self) -> BoundingBox2d:
         try:
@@ -122,7 +119,7 @@ class ImageRecord(DataRecord):
 
     def transform_inplace(self, m: Matrix44) -> None:
         self.boundary.transform_inplace(m)
-        self.transform @= m
+        self.image_data.transform @= m
 
 
 class Recorder(BackendInterface):
@@ -200,19 +197,11 @@ class Recorder(BackendInterface):
         assert isinstance(paths[0], NumpyPath2d)
         self.store(FilledPathsRecord(paths), properties)
 
-    def draw_image(
-        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
-    ) -> None:
-        try:
-            width = image.shape[0]
-            height = image.shape[1]
-        except IndexError:
-            return
-        boundary = NumpyPoints2d(  # TODO: correct image coordinate system?
-            [Vec2(0, 0), Vec2(width, 0), Vec2(width, height), Vec2(0, height)]
-        )
-        boundary.transform_inplace(transform)
-        self.store(ImageRecord(boundary, image, transform), properties)
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
+        # preserve the boundary in image_data in pixel coordinates
+        boundary = copy.deepcopy(image_data.boundary_path)
+        boundary.transform_inplace(image_data.transform)
+        self.store(ImageRecord(boundary, image_data), properties)
 
     def enter_entity(self, entity, properties) -> None:
         pass
@@ -314,7 +303,7 @@ class Player:
             elif isinstance(record, FilledPathsRecord):
                 backend.draw_filled_paths(record.paths, properties)
             elif isinstance(record, ImageRecord):
-                backend.draw_image(record.image, record.transform, properties)
+                backend.draw_image(record.image_data, properties)
         backend.finalize()
 
     def transform(self, m: Matrix44) -> None:
@@ -440,9 +429,9 @@ def crop_records_rect(
             record.lines = NumpyPoints2d(points)
             cropped_records.append(record)
         elif isinstance(record, ImageRecord):
-            pass  
+            pass
             # TODO: Image cropping not supported
-            #   Crop image boundary and apply transparency to cropped 
+            #   Crop image boundary and apply transparency to cropped
             #   parts of the image? -> Image boundary is now a polygon!
         else:
             raise ValueError("invalid record type")

@@ -10,7 +10,7 @@ from ezdxf.math import Vec2, BoundingBox2d, Matrix44
 from ezdxf.path import Command
 
 from .type_hints import Color
-from .backend import BackendInterface, BkPath2d, BkPoints2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -397,9 +397,7 @@ class _RenderBackend(BackendInterface):
             self.add_polyline_encoded(points2d, properties)
             self.fill_polygon()
 
-    def draw_image(
-        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
-    ) -> None:
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
         pass  # TODO: not implemented
 
     def configure(self, config: Configuration) -> None:

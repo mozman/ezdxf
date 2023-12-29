@@ -9,7 +9,7 @@ import math
 import numpy as np
 
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
-from ezdxf.addons.drawing.backend import Backend, BkPath2d, BkPoints2d
+from ezdxf.addons.drawing.backend import Backend, BkPath2d, BkPoints2d, ImageData
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import BackendProperties
@@ -173,9 +173,9 @@ class _PyQtBackend(Backend):
         item.setBrush(brush)
         self._add_item(item, properties.handle)
 
-    def draw_image(
-        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
-    ) -> None:
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
+        image = image_data.image
+        transform = image_data.transform
         height, width, depth = image.shape
         assert depth == 4
         bytes_per_row = width * depth
