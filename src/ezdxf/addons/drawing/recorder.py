@@ -3,7 +3,6 @@
 from __future__ import annotations
 from typing import (
     Iterable,
-    Any,
     Iterator,
     Sequence,
     Callable,
@@ -12,11 +11,10 @@ from typing import (
 )
 from typing_extensions import Self, TypeAlias
 import copy
-import enum
-import dataclasses
+import abc
 import numpy as np
 
-from ezdxf.math import BoundingBox2d, Matrix44, Vec2, UVec, _matrix44
+from ezdxf.math import BoundingBox2d, Matrix44, Vec2, UVec
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, EmptyShapeError
 from ezdxf.tools import take2
 
@@ -26,40 +24,84 @@ from .properties import BackendProperties
 from .type_hints import Color
 
 
-class RecordType(enum.Enum):
-    """Enum, determines the data record type.
+class DataRecord(abc.ABC):
+    def __init__(self) -> None:
+        self.property_hash: int = 0
+        self.handle: str = ""
 
-    Attributes:
-        POINTS:
-        SOLID_LINES:
-        PATH:
-        FILLED_PATHS:
-    """
+    @abc.abstractmethod
+    def bbox(self) -> BoundingBox2d:
+        ...
 
-    POINTS = enum.auto()  # n=1 point; n=2 line; n>2 filled polygon
-    SOLID_LINES = enum.auto()
-    PATH = enum.auto()
-    FILLED_PATHS = enum.auto()
+    @abc.abstractmethod
+    def transform_inplace(self, m: Matrix44) -> None:
+        ...
 
 
-@dataclasses.dataclass
-class DataRecord:
-    type: RecordType
-    property_hash: int
-    handle: str  # top-level entity handle
-    data: Any
+class PointsRecord(DataRecord):
+    # n=1 point; n=2 line; n>2 filled polygon
+    def __init__(self, points: NumpyPoints2d) -> None:
+        super().__init__()
+        self.points: NumpyPoints2d = points
+
+    def bbox(self) -> BoundingBox2d:
+        try:
+            return self.points.bbox()
+        except EmptyShapeError:
+            pass
+        return BoundingBox2d()
+
+    def transform_inplace(self, m: Matrix44) -> None:
+        self.points.transform_inplace(m)
+
+
+class SolidLinesRecord(DataRecord):
+    def __init__(self, lines: NumpyPoints2d) -> None:
+        super().__init__()
+        self.lines: NumpyPoints2d = lines
+
+    def bbox(self) -> BoundingBox2d:
+        try:
+            return self.lines.bbox()
+        except EmptyShapeError:
+            pass
+        return BoundingBox2d()
+
+    def transform_inplace(self, m: Matrix44) -> None:
+        self.lines.transform_inplace(m)
+
+
+class PathRecord(DataRecord):
+    def __init__(self, path: NumpyPath2d) -> None:
+        super().__init__()
+        self.path: NumpyPath2d = path
+
+    def bbox(self) -> BoundingBox2d:
+        try:
+            return self.path.bbox()
+        except EmptyShapeError:
+            pass
+        return BoundingBox2d()
+
+    def transform_inplace(self, m: Matrix44) -> None:
+        self.path.transform_inplace(m)
+
+
+class FilledPathsRecord(DataRecord):
+    def __init__(self, paths: Sequence[NumpyPath2d]) -> None:
+        super().__init__()
+        self.paths: Sequence[NumpyPath2d] = paths
 
     def bbox(self) -> BoundingBox2d:
         bbox = BoundingBox2d()
-        try:
-            if self.type == RecordType.FILLED_PATHS:
-                for path in self.data:
-                    bbox.extend(path.extents())
-            else:
-                bbox.extend(self.data.extents())
-        except EmptyShapeError:
-            pass
+        for path in self.paths:
+            if len(path):
+                bbox.extend(path.extents())
         return bbox
+
+    def transform_inplace(self, m: Matrix44) -> None:
+        for path in self.paths:
+            path.transform_inplace(m)
 
 
 class Recorder(BackendInterface):
@@ -92,24 +134,20 @@ class Recorder(BackendInterface):
     def set_background(self, color: Color) -> None:
         self.background = color
 
-    def store(
-        self, type_: RecordType, properties: BackendProperties, data: Any
-    ) -> None:
+    def store(self, record: DataRecord, properties: BackendProperties) -> None:
         # exclude top-level entity handle to reduce the variance:
         # color, lineweight, layer, pen
         prop_hash = hash(properties[:4])
-        self.records.append(
-            DataRecord(
-                type=type_, property_hash=prop_hash, handle=properties.handle, data=data
-            )
-        )
+        record.property_hash = prop_hash
+        record.handle = properties.handle
+        self.records.append(record)
         self.properties[prop_hash] = properties
 
     def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
-        self.store(RecordType.POINTS, properties, NumpyPoints2d((pos,)))
+        self.store(PointsRecord(NumpyPoints2d((pos,))), properties)
 
     def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
-        self.store(RecordType.POINTS, properties, NumpyPoints2d((start, end)))
+        self.store(PointsRecord(NumpyPoints2d((start, end))), properties)
 
     def draw_solid_lines(
         self, lines: Iterable[tuple[Vec2, Vec2]], properties: BackendProperties
@@ -119,17 +157,17 @@ class Recorder(BackendInterface):
                 yield s
                 yield e
 
-        self.store(RecordType.SOLID_LINES, properties, NumpyPoints2d(flatten()))
+        self.store(SolidLinesRecord(NumpyPoints2d(flatten())), properties)
 
     def draw_path(self, path: NumpyPath2d, properties: BackendProperties) -> None:
         assert isinstance(path, NumpyPath2d)
-        self.store(RecordType.PATH, properties, path)
+        self.store(PathRecord(path), properties)
 
     def draw_filled_polygon(
         self, points: NumpyPoints2d, properties: BackendProperties
     ) -> None:
         assert isinstance(points, NumpyPoints2d)
-        self.store(RecordType.POINTS, properties, points)
+        self.store(PointsRecord(points), properties)
 
     def draw_filled_paths(
         self, paths: Iterable[NumpyPath2d], properties: BackendProperties
@@ -139,7 +177,7 @@ class Recorder(BackendInterface):
             return
 
         assert isinstance(paths[0], NumpyPath2d)
-        self.store(RecordType.FILLED_PATHS, properties, paths)
+        self.store(FilledPathsRecord(paths), properties)
 
     def draw_image(
         self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
@@ -192,7 +230,7 @@ class Player:
         # config is a frozen dataclass:
         player.config = self.config
         player.background = self.background
-        # recordings are mutable - transformed inplace:
+        # recordings are mutable: transform and crop inplace
         player.records = copy.deepcopy(self.records)
         # the properties dict may grow, but entries will never be removed:
         player.properties = self.properties
@@ -201,27 +239,14 @@ class Player:
 
     copy = __copy__
 
-    def recordings(self) -> Iterator[tuple[RecordType, BackendProperties, Any]]:
-        """Yields all recordings as `(RecordType, BackendProperties, Data)` tuples.
-
-        The content of the `Data` field is determined by the enum :class:`RecordType`:
-
-        - :attr:`RecordType.POINTS` returns a :class:`NumpyPoints2d` instance,
-          len() == 1 is a point, len() == 2 is a line, len() > 2 is a filled polygon
-        - :attr:`RecordType.SOLID_LINES` returns a :class:`NumpyPoints2d` instance
-          where each pair (n, n+1) represents the start- and end point of a line
-        - :attr:`RecordType.PATH`: returns a :class:`NumpyPath2d` instance that
-          represents a linear 2D path
-        - :attr:`RecordType.FILLED_PATHS` returns a tuple (exterior_paths, holes),
-          where exterior_paths and holes are tuples of :class:`NumpyPath2d`.
-
-        """
+    def recordings(self) -> Iterator[tuple[DataRecord, BackendProperties]]:
+        """Yields all recordings as `(DataRecord, BackendProperties)` tuples."""
         props = self.properties
         for record in self.records:
             properties = BackendProperties(
                 *props[record.property_hash][:4], record.handle
             )
-            yield record.type, properties, record.data
+            yield record, properties
 
     def replay(
         self, backend: BackendInterface, override: Optional[OverrideFunc] = None
@@ -234,29 +259,30 @@ class Player:
 
         backend.configure(self.config)
         backend.set_background(self.background)
-        for record_type, properties, data in self.recordings():
+        for record, properties in self.recordings():
             if override:
                 state = override(properties)
                 if not state.is_visible:
                     continue
                 properties = state.properties
-            if record_type == RecordType.POINTS:
-                if len(data) == 0:
+            if isinstance(record, PointsRecord):
+                count = len(record.points)
+                if count == 0:
                     continue
-                if len(data) > 2:
-                    backend.draw_filled_polygon(data, properties)
+                if count > 2:
+                    backend.draw_filled_polygon(record.points, properties)
                     continue
-                vertices = data.vertices()
+                vertices = record.points.vertices()
                 if len(vertices) == 1:
                     backend.draw_point(vertices[0], properties)
                 else:
                     backend.draw_line(vertices[0], vertices[1], properties)
-            elif record_type == RecordType.SOLID_LINES:
-                backend.draw_solid_lines(take2(data.vertices()), properties)
-            elif record_type == RecordType.PATH:
-                backend.draw_path(data, properties)
-            elif record_type == RecordType.FILLED_PATHS:
-                backend.draw_filled_paths(data, properties)
+            elif isinstance(record, SolidLinesRecord):
+                backend.draw_solid_lines(take2(record.lines.vertices()), properties)
+            elif isinstance(record, PathRecord):
+                backend.draw_path(record.path, properties)
+            elif isinstance(record, FilledPathsRecord):
+                backend.draw_filled_paths(record.paths, properties)
         backend.finalize()
 
     def transform(self, m: Matrix44) -> None:
@@ -264,11 +290,7 @@ class Player:
         :class:`~ezdxf.math.Matrix44`.
         """
         for record in self.records:
-            if record.type == RecordType.FILLED_PATHS:
-                for p in record.data:
-                    p.transform_inplace(m)
-            else:
-                record.data.transform_inplace(m)
+            record.transform_inplace(m)
 
         if self._bbox.has_data:
             # works for 90-, 180- and 270-degree rotation
@@ -356,38 +378,34 @@ def crop_records_rect(
             cropped_records.append(record)
             continue
 
-        if record.type == RecordType.FILLED_PATHS:
-            paths_to_crop, inside = sort_paths(record.data)
+        if isinstance(record, FilledPathsRecord):
+            paths_to_crop, inside = sort_paths(record.paths)
             cropped_paths = crop_paths(paths_to_crop) + inside
             if cropped_paths:
-                record.data = tuple(cropped_paths)
+                record.paths = tuple(cropped_paths)
                 cropped_records.append(record)
-        elif record.type == RecordType.PATH:
+        elif isinstance(record, PathRecord):
             # could be split into multiple parts
-            for p in clipper.clip_paths([record.data], distance):  # type: ignore
-                cropped_records.append(
-                    DataRecord(
-                        record.type,
-                        record.property_hash,
-                        record.handle,
-                        p,
-                    )
-                )
-        elif record.type == RecordType.POINTS:
-            count = len(record.data)
+            for p in clipper.clip_paths([record.path], distance):  # type: ignore
+                path_record = PathRecord(p)
+                path_record.property_hash = record.property_hash
+                path_record.handle = record.handle
+                cropped_records.append(path_record)
+        elif isinstance(record, PointsRecord):
+            count = len(record.points)
             if count == 1:
                 pass
             elif count == 2:
-                s, e = record.data.vertices()
-                record.data = NumpyPoints2d(clipper.clip_line(s, e))
+                s, e = record.points.vertices()
+                record.points = NumpyPoints2d(clipper.clip_line(s, e))
             else:  # filled polygon
-                record.data = clipper.clip_polygon(record.data)
+                record.points = clipper.clip_polygon(record.points)
             cropped_records.append(record)
-        elif record.type == RecordType.SOLID_LINES:
+        elif isinstance(record, SolidLinesRecord):
             points: list[Vec2] = []  # type: ignore
-            for s, e in take2(record.data.vertices()):
+            for s, e in take2(record.lines.vertices()):
                 points.append(clipper.clip_line(s, e))  # type: ignore
-            record.data = NumpyPoints2d(points)
+            record.lines = NumpyPoints2d(points)
             cropped_records.append(record)
         else:
             raise ValueError("invalid record type")
