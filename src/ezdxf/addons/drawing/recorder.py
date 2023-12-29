@@ -14,8 +14,9 @@ from typing_extensions import Self, TypeAlias
 import copy
 import enum
 import dataclasses
+import numpy as np
 
-from ezdxf.math import BoundingBox2d, Matrix44, Vec2, UVec
+from ezdxf.math import BoundingBox2d, Matrix44, Vec2, UVec, _matrix44
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, EmptyShapeError
 from ezdxf.tools import take2
 
@@ -139,6 +140,11 @@ class Recorder(BackendInterface):
 
         assert isinstance(paths[0], NumpyPath2d)
         self.store(RecordType.FILLED_PATHS, properties, paths)
+
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+    ) -> None:
+        pass  # TODO: not implemented
 
     def enter_entity(self, entity, properties) -> None:
         pass

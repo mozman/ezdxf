@@ -5,8 +5,9 @@ from typing import Iterable, Sequence, no_type_check
 
 import copy
 from xml.etree import ElementTree as ET
+import numpy as np
 
-from ezdxf.math import Vec2, BoundingBox2d
+from ezdxf.math import Vec2, BoundingBox2d, Matrix44
 from ezdxf.path import Command
 
 
@@ -90,9 +91,7 @@ class SVGBackend(recorder.Recorder):
                 in front of the <svg> element
 
         """
-        xml = self.get_xml_root_element(
-            page, settings=settings, render_box=render_box
-        )
+        xml = self.get_xml_root_element(page, settings=settings, render_box=render_box)
         return ET.tostring(xml, encoding="unicode", xml_declaration=xml_declaration)
 
     @staticmethod
@@ -318,6 +317,11 @@ class SVGRenderBackend(BackendInterface):
         self.add_filling(
             self.make_polyline_str(points.vertices(), close=True), properties
         )
+
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+    ) -> None:
+        pass  # TODO: not implemented
 
     @staticmethod
     def make_polyline_str(points: Sequence[Vec2], close=False) -> str:

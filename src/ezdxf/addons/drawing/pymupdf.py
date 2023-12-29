@@ -3,8 +3,9 @@
 from __future__ import annotations
 from typing import Iterable, no_type_check
 import copy
+import numpy as np
 
-from ezdxf.math import Vec2, BoundingBox2d
+from ezdxf.math import Vec2, BoundingBox2d, Matrix44
 from ezdxf.colors import RGB
 from ezdxf.path import Command
 from ezdxf.version import __version__
@@ -353,6 +354,11 @@ class PyMuPdfRenderBackend(BackendInterface):
         shape.draw_polyline(vertices)
         self.finish_filling(shape, properties)
         shape.commit()
+
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+    ) -> None:
+        pass  # TODO: not implemented
 
     def configure(self, config: Configuration) -> None:
         self.lineweight_policy = config.lineweight_policy

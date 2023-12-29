@@ -60,6 +60,7 @@ class HatchPolicy(Enum):
         SHOW_SOLID: show HATCH entities as solid filling regardless of the pattern
 
     """
+
     NORMAL = auto()
     IGNORE = auto()
     SHOW_OUTLINE = auto()

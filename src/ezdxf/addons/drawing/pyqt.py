@@ -173,12 +173,22 @@ class _PyQtBackend(Backend):
         item.setBrush(brush)
         self._add_item(item, properties.handle)
 
-    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: BackendProperties) -> None:
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+    ) -> None:
         height, width, depth = image.shape
         assert depth == 4
         bytes_per_row = width * depth
         image = np.ascontiguousarray(np.flip(image, axis=0))
-        pixmap = qg.QPixmap(qg.QImage(image.data, width, height, bytes_per_row, qg.QImage.Format.Format_RGBA8888))
+        pixmap = qg.QPixmap(
+            qg.QImage(
+                image.data,
+                width,
+                height,
+                bytes_per_row,
+                qg.QImage.Format.Format_RGBA8888,
+            )
+        )
         item = qw.QGraphicsPixmapItem()
         item.setPixmap(pixmap)
         item.setTransformationMode(qc.Qt.TransformationMode.SmoothTransformation)

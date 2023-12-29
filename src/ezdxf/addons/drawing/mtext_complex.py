@@ -218,9 +218,7 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
             ),
         )
 
-    def fraction(
-        self, data: tuple[str, str, str], ctx: MTextContext
-    ) -> tl.ContentCell:
+    def fraction(self, data: tuple[str, str, str], ctx: MTextContext) -> tl.ContentCell:
         upr, lwr, type_ = data
         if type_:
             return tl.Fraction(

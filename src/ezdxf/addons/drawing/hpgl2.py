@@ -3,9 +3,10 @@
 from __future__ import annotations
 from typing import Iterable, Sequence, no_type_check
 import copy
+import numpy as np
 
 from ezdxf import colors
-from ezdxf.math import Vec2, BoundingBox2d
+from ezdxf.math import Vec2, BoundingBox2d, Matrix44
 from ezdxf.path import Command
 
 from .type_hints import Color
@@ -395,6 +396,11 @@ class _RenderBackend(BackendInterface):
             self.enter_polygon_mode(points2d[0])
             self.add_polyline_encoded(points2d, properties)
             self.fill_polygon()
+
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+    ) -> None:
+        pass  # TODO: not implemented
 
     def configure(self, config: Configuration) -> None:
         self.lineweight_policy = config.lineweight_policy

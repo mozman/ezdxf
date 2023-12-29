@@ -69,7 +69,9 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: BackendProperties) -> None:
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+    ) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -187,7 +189,9 @@ class Backend(BackendInterface, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: BackendProperties) -> None:
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+    ) -> None:
         """Draw an image with the given pixels
 
         Args:

@@ -56,6 +56,13 @@ class RGB(NamedTuple):
         return round(math.sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b), 3)
 
 
+class RGBA(NamedTuple):
+    r: int
+    g: int
+    b: int
+    a: int
+
+
 BYBLOCK = 0
 BYLAYER = 256
 BYOBJECT = 257

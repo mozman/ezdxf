@@ -32,7 +32,9 @@ class BasicBackend(Backend):
     ) -> None:
         self.collector.append(("filled_polygon", points, properties))
 
-    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: BackendProperties) -> None:
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+    ) -> None:
         self.collector.append(("image", image, transform, properties))
 
     def set_background(self, color: str) -> None:

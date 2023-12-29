@@ -199,7 +199,9 @@ class MatplotlibBackend(Backend):
             zorder=self._get_z(),
         )
 
-    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: BackendProperties) -> None:
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: BackendProperties
+    ) -> None:
         height, width, depth = image.shape
         assert depth == 4
 
@@ -208,21 +210,37 @@ class MatplotlibBackend(Backend):
         # afterward. We can use a slight hack which is that the outlines of images are drawn
         # as well as the image itself, so we don't have to adjust the data limits at all here
         # as the outline will take care of that
-        handle = AxesImage(self.ax, interpolation='antialiased')
+        handle = AxesImage(self.ax, interpolation="antialiased")
         handle.set_data(np.flip(image, axis=0))
         handle.set_zorder(self._get_z())
 
         (
-            m11, m12, m13, m14,
-            m21, m22, m23, m24,
-            m31, m32, m33, m34,
-            m41, m42, m43, m44,
+            m11,
+            m12,
+            m13,
+            m14,
+            m21,
+            m22,
+            m23,
+            m24,
+            m31,
+            m32,
+            m33,
+            m34,
+            m41,
+            m42,
+            m43,
+            m44,
         ) = transform
-        matplotlib_transform = Affine2D(matrix=np.array([
-            [m11, m21, m41],
-            [m12, m22, m42],
-            [0, 0, 1],
-        ]))
+        matplotlib_transform = Affine2D(
+            matrix=np.array(
+                [
+                    [m11, m21, m41],
+                    [m12, m22, m42],
+                    [0, 0, 1],
+                ]
+            )
+        )
         handle.set_transform(matplotlib_transform + self.ax.transData)
         self.ax.add_image(handle)
 

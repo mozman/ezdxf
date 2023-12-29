@@ -14,7 +14,6 @@ from typing import (
 import numpy as np
 from typing_extensions import TypeAlias
 import abc
-import itertools
 
 from ezdxf.colors import RGB
 import ezdxf.bbox
@@ -120,7 +119,9 @@ class Designer(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: Properties) -> None:
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: Properties
+    ) -> None:
         ...
 
     @abc.abstractmethod
@@ -410,8 +411,12 @@ class Designer2d(Designer):
             properties.filling = Filling()
         self._draw_filled_paths(transformed_paths, properties)
 
-    def draw_image(self, image: np.ndarray, transform: Matrix44, properties: Properties) -> None:
-        self.backend.draw_image(image, transform, self.get_backend_properties(properties))
+    def draw_image(
+        self, image: np.ndarray, transform: Matrix44, properties: Properties
+    ) -> None:
+        self.backend.draw_image(
+            image, transform, self.get_backend_properties(properties)
+        )
 
     def finalize(self) -> None:
         self.backend.finalize()

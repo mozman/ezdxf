@@ -28,7 +28,8 @@ import ezdxf.bbox
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
-    HatchPolicy, ImagePolicy,
+    HatchPolicy,
+    ImagePolicy,
 )
 from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.properties import (
@@ -57,7 +58,8 @@ from ezdxf.entities import (
     Face3d,
     OLE2Frame,
     Point,
-    Viewport, Image,
+    Viewport,
+    Image,
 )
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
@@ -79,7 +81,7 @@ from ezdxf.tools import text_layout
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
 from ezdxf.fonts import fonts
-from ezdxf.colors import RGB
+from ezdxf.colors import RGB, RGBA
 from .type_hints import Color
 
 if TYPE_CHECKING:
@@ -626,40 +628,61 @@ class UniversalFrontend:
 
     def draw_image_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         image = cast(Image, entity)
+        image_policy = self.config.image_policy
+        image_def = image.image_def
+        assert image_def is not None
 
-        if self.config.image_policy in (ImagePolicy.DISPLAY, ImagePolicy.RECT, ImagePolicy.MISSING):
+        if image_policy in (
+            ImagePolicy.DISPLAY,
+            ImagePolicy.RECT,
+            ImagePolicy.MISSING,
+        ):
             loaded_image = None
             show_filename_if_missing = True
 
-            if self.config.image_policy == ImagePolicy.RECT or not image.dxf.flags & Image.SHOW_IMAGE:
+            if (
+                image_policy == ImagePolicy.RECT
+                or not image.dxf.flags & Image.SHOW_IMAGE
+            ):
                 loaded_image = None
                 show_filename_if_missing = False
-            elif self.config.image_policy != ImagePolicy.MISSING and self.ctx.document_dir is not None:
-                image_path = self.ctx.document_dir / image.image_def.dxf.filename.replace('\\', os.path.sep)
+            elif (
+                image_policy != ImagePolicy.MISSING
+                and self.ctx.document_dir is not None
+            ):
+                assert image_def is not None
+                image_path = self.ctx.document_dir / image_def.dxf.filename.replace(
+                    "\\", os.path.sep
+                )
                 with contextlib.suppress(FileNotFoundError):
                     loaded_image = PIL.Image.open(image_path)
 
             if loaded_image is not None:
-                loaded_image = loaded_image.convert('RGBA')
+                color: RGB | RGBA
+                loaded_image = loaded_image.convert("RGBA")
 
                 if image.dxf.contrast != 50:
                     # note: this is only an approximation. Unclear what the exact operation AutoCAD uses
                     amount = image.dxf.contrast / 50
-                    loaded_image = PIL.ImageEnhance.Contrast(loaded_image).enhance(amount)
+                    loaded_image = PIL.ImageEnhance.Contrast(loaded_image).enhance(
+                        amount
+                    )
 
                 if image.dxf.fade != 0:
                     # note: this is only an approximation. Unclear what the exact operation AutoCAD uses
                     amount = image.dxf.fade / 100
-                    color = RGB.from_hex(self.ctx.current_layout_properties.background_color)
+                    color = RGB.from_hex(
+                        self.ctx.current_layout_properties.background_color
+                    )
                     loaded_image = _blend_image_towards(loaded_image, amount, color)
 
                 if image.dxf.brightness != 50:
                     # note: this is only an approximation. Unclear what the exact operation AutoCAD uses
                     amount = image.dxf.brightness / 50 - 1
                     if amount > 0:
-                        color = (255, 255, 255, 255)
+                        color = RGBA(255, 255, 255, 255)
                     else:
-                        color = (0, 0, 0, 255)
+                        color = RGBA(0, 0, 0, 255)
                         amount = -amount
                     loaded_image = _blend_image_towards(loaded_image, amount, color)
 
@@ -667,22 +690,35 @@ class UniversalFrontend:
                     loaded_image.putalpha(255)
 
                 if image.transparency != 0.0:
-                    loaded_image = _multiply_alpha(loaded_image, 1.0 - image.transparency)
+                    loaded_image = _multiply_alpha(
+                        loaded_image, 1.0 - image.transparency
+                    )
 
                 if image.dxf.flags & Image.USE_CLIPPING_BOUNDARY:
-                    loaded_image = _mask_image(loaded_image, [(p.x, p.y) for p in image.boundary_path_ocs()])
+                    loaded_image = _mask_image(
+                        loaded_image, [(p.x, p.y) for p in image.boundary_path_ocs()]
+                    )
 
-                self.designer.draw_image(np.asarray(loaded_image), image.get_wcs_transform(), properties)
+                self.designer.draw_image(
+                    np.asarray(loaded_image), image.get_wcs_transform(), properties
+                )
 
             elif show_filename_if_missing:
                 # TODO: unclear what logic AutoCAD uses to determine the font size. Also text is supposed to be centered
                 default_cap_height = 50  # chosen empirically
-                self.designer.draw_text(image.image_def.dxf.filename, image.get_wcs_transform(), properties, default_cap_height)
+                self.designer.draw_text(
+                    image_def.dxf.filename,
+                    image.get_wcs_transform(),
+                    properties,
+                    default_cap_height,
+                )
 
-            self.designer.draw_solid_lines(list(pairwise(v.vec2 for v in image.boundary_path_wcs())), properties)
+            self.designer.draw_solid_lines(
+                list(pairwise(v.vec2 for v in image.boundary_path_wcs())), properties
+            )
 
         elif self.config.image_policy == ImagePolicy.PROXY:
-            self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
+            self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)  # type: ignore
 
         elif self.config.image_policy == ImagePolicy.IGNORE:
             pass
@@ -918,23 +954,27 @@ def _draw_viewports(frontend: UniversalFrontend, viewports: list[Viewport]) -> N
         frontend.draw_viewport(viewport)
 
 
-def _blend_image_towards(image: PIL.Image.Image, amount: float, color: tuple[int, int, int, int]) -> PIL.Image.Image:
+def _blend_image_towards(
+    image: PIL.Image.Image, amount: float, color: RGB | RGBA
+) -> PIL.Image.Image:
     original_alpha = image.split()[-1]
-    destination = PIL.Image.new('RGBA', image.size, color)
+    destination = PIL.Image.new("RGBA", image.size, color)
     updated_image = PIL.Image.blend(image, destination, amount)
     updated_image.putalpha(original_alpha)
     return updated_image
 
 
-def _mask_image(image: PIL.Image.Image, clip_polygon: list[tuple[float, float]]) -> PIL.Image.Image:
-    mask = PIL.Image.new('L', image.size, 0)
+def _mask_image(
+    image: PIL.Image.Image, clip_polygon: list[tuple[float, float]]
+) -> PIL.Image.Image:
+    mask = PIL.Image.new("L", image.size, 0)
     PIL.ImageDraw.ImageDraw(mask).polygon(clip_polygon, outline=None, width=0, fill=1)
     masked_image = np.array(image)
     masked_image[:, :, 3] *= np.asarray(mask)
-    return PIL.Image.fromarray(masked_image, 'RGBA')
+    return PIL.Image.fromarray(masked_image, "RGBA")
 
 
 def _multiply_alpha(image: PIL.Image.Image, amount: float) -> PIL.Image.Image:
     output_image = np.array(image, dtype=np.float64)
     output_image[:, :, 3] *= amount
-    return PIL.Image.fromarray(output_image.astype(np.uint8), 'RGBA')
+    return PIL.Image.fromarray(output_image.astype(np.uint8), "RGBA")
