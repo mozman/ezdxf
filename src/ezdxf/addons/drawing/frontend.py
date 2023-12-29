@@ -988,26 +988,25 @@ def _multiply_alpha(image: PIL.Image.Image, amount: float) -> PIL.Image.Image:
 
 
 def _find_image_path(document_dir: pathlib.Path, filename: str) -> pathlib.Path:
-    # BricsCAD stores the path to the image as full-path or relative-path if so 
+    # BricsCAD stores the path to the image as full-path or relative-path if so
     # set in the "Attach Raster Image" dialog.
     # See notes in knowledge graph: [[IMAGE File Paths]]
     # https://ezdxf.mozman.at/notes/#/page/image%20file%20paths
 
-    # BricsCAD/AutoCAD stores filenames with single backslashes.
+    # BricsCAD/AutoCAD stores filepaths with backslashes.
     filename = filename.replace("\\", os.path.sep)
-    
+
     # try absolute path:
     filepath = pathlib.Path(filename)
     if filepath.exists():
         return filepath
-    
+
     # try relative path to document:
     filepath = document_dir / filename
-    filepath.resolve()
+    filepath = filepath.resolve()
     if filepath.exists():
         return filepath
-    
+
     # try document dir:
     filepath = document_dir / pathlib.Path(filename).name  # stem + suffix
     return filepath
-
