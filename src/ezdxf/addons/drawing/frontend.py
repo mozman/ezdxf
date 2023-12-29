@@ -14,6 +14,7 @@ from typing import (
     Optional,
     TYPE_CHECKING,
 )
+import pathlib
 
 import PIL.Image
 import PIL.ImageEnhance
@@ -26,7 +27,7 @@ import time
 import ezdxf.bbox
 
 # TODO: replace by itertools when Python 3.10 is minmal version
-from ezdxf.tools import take2 as pairwise  
+from ezdxf.tools import take2 as pairwise
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
@@ -652,9 +653,8 @@ class UniversalFrontend:
                 image_policy != ImagePolicy.MISSING
                 and self.ctx.document_dir is not None
             ):
-                assert image_def is not None
-                image_path = self.ctx.document_dir / image_def.dxf.filename.replace(
-                    "\\", os.path.sep
+                image_path = _find_image_path(
+                    self.ctx.document_dir, image_def.dxf.filename
                 )
                 with contextlib.suppress(FileNotFoundError):
                     loaded_image = PIL.Image.open(image_path)
@@ -664,14 +664,16 @@ class UniversalFrontend:
                 loaded_image = loaded_image.convert("RGBA")
 
                 if image.dxf.contrast != 50:
-                    # note: this is only an approximation. Unclear what the exact operation AutoCAD uses
+                    # note: this is only an approximation.
+                    # Unclear what the exact operation AutoCAD uses
                     amount = image.dxf.contrast / 50
                     loaded_image = PIL.ImageEnhance.Contrast(loaded_image).enhance(
                         amount
                     )
 
                 if image.dxf.fade != 0:
-                    # note: this is only an approximation. Unclear what the exact operation AutoCAD uses
+                    # note: this is only an approximation.
+                    # Unclear what the exact operation AutoCAD uses
                     amount = image.dxf.fade / 100
                     color = RGB.from_hex(
                         self.ctx.current_layout_properties.background_color
@@ -679,7 +681,8 @@ class UniversalFrontend:
                     loaded_image = _blend_image_towards(loaded_image, amount, color)
 
                 if image.dxf.brightness != 50:
-                    # note: this is only an approximation. Unclear what the exact operation AutoCAD uses
+                    # note: this is only an approximation.
+                    # Unclear what the exact operation AutoCAD uses
                     amount = image.dxf.brightness / 50 - 1
                     if amount > 0:
                         color = RGBA(255, 255, 255, 255)
@@ -706,7 +709,8 @@ class UniversalFrontend:
                 )
 
             elif show_filename_if_missing:
-                # TODO: unclear what logic AutoCAD uses to determine the font size. Also text is supposed to be centered
+                # TODO: unclear what logic AutoCAD uses to determine the font size.
+                # Also text is supposed to be centered
                 default_cap_height = 50  # chosen empirically
                 self.designer.draw_text(
                     image_def.dxf.filename,
@@ -720,7 +724,7 @@ class UniversalFrontend:
             )
 
         elif self.config.image_policy == ImagePolicy.PROXY:
-            self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)  # type: ignore
+            self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
 
         elif self.config.image_policy == ImagePolicy.IGNORE:
             pass
@@ -822,13 +826,14 @@ class UniversalFrontend:
         else:
             raise TypeError(entity.dxftype())
 
-    def draw_proxy_graphic(self, data: bytes, doc) -> None:
-        if data:
-            try:
-                self.draw_entities(virtual_entities(ProxyGraphic(data, doc)))
-            except ProxyGraphicError as e:
-                print(str(e))
-                print(POST_ISSUE_MSG)
+    def draw_proxy_graphic(self, data: bytes | None, doc) -> None:
+        if not data:
+            return
+        try:
+            self.draw_entities(virtual_entities(ProxyGraphic(data, doc)))
+        except ProxyGraphicError as e:
+            print(str(e))
+            print(POST_ISSUE_MSG)
 
 
 class Frontend(UniversalFrontend):
@@ -980,3 +985,19 @@ def _multiply_alpha(image: PIL.Image.Image, amount: float) -> PIL.Image.Image:
     output_image = np.array(image, dtype=np.float64)
     output_image[:, :, 3] *= amount
     return PIL.Image.fromarray(output_image.astype(np.uint8), "RGBA")
+
+
+def _find_image_path(document_dir: pathlib.Path, filename: str) -> pathlib.Path:
+    # BricsCAD stores the path to the image as full-path or relative-path if so 
+    # set in the "Attach Raster Image" dialog.
+    # See notes in knowledge graph: [[IMAGE File Paths]]
+    # https://ezdxf.mozman.at/notes/#/page/image%20file%20paths
+
+    # BricsCAD/AutoCAD stores filenames with single backslashes.
+    filename = filename.replace("\\", os.path.sep)
+    filepath = pathlib.Path(filename)
+    if filepath.exists():
+        return filepath
+    filepath = document_dir / filename
+    filepath.resolve()
+    return filepath

@@ -1,0 +1,16 @@
+- BricsCAD stores the path to the image as full-path or relative-path if so set in the "Attach Raster Image" dialog.
+- DWG TrueView (AutoCAD) (picky|bad as always!)
+	- DWG TrueView **does not display** the image when the path is relative and the Image is not located in the same folder.
+		- example: `..\Inbox\image1.jpg`
+		- ![image.png](../assets/image_1703844712825_0.png)
+		- Reloading the Image solves the issue - see next point.
+		-
+	- DWG TrueView **does not display** the image when the path is relative and the Image is located in the same folder.
+		- example: `.\image1.jpg`
+		- Reloading the Image solves the issue:
+		- ![image.png](../assets/image_1703844407237_0.png)
+		- ![image.png](../assets/image_1703844461815_0.png)
+		-
+		-
+	- DWG TrueView **does display** the image automatically when the path is absolute.
+		- example: `C:\Users\mozman\Desktop\Inbox\image1.jpg`

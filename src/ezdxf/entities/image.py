@@ -529,12 +529,15 @@ class Wipeout(ImageBase):
         self._reset_handles()
         super().export_entity(tagwriter)
 
+# About Image File Paths:
+# See notes in knowledge graph: [[IMAGE File Paths]]
+# https://ezdxf.mozman.at/notes/#/page/image%20file%20paths
 
 acdb_image_def = DefSubclass(
     "AcDbRasterImageDef",
     {
         "class_version": DXFAttr(90, default=0),
-        # File name of image:
+        # File name of image: 
         "filename": DXFAttr(1),
         # Image size in pixels:
         "image_size": DXFAttr(10, xtype=XType.point2d),
