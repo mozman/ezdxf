@@ -38,7 +38,7 @@ from ezdxf.addons.drawing.properties import (
     OLE2FRAME_COLOR,
     Properties,
     Filling,
-    LayoutProperties,
+    LayoutProperties, MODEL_SPACE_BG_COLOR, PAPER_SPACE_BG_COLOR,
 )
 from ezdxf.addons.drawing.config import BackgroundPolicy, TextPolicy
 from ezdxf.addons.drawing.text import simplified_text_chunks
@@ -262,10 +262,14 @@ class UniversalFrontend:
             override = False
         elif policy == BackgroundPolicy.OFF:
             color = "#ffffff00"  # white, fully transparent
-        elif policy == BackgroundPolicy.BLACK:
-            color = "#000000"
         elif policy == BackgroundPolicy.WHITE:
             color = "#ffffff"
+        elif policy == BackgroundPolicy.BLACK:
+            color = "#000000"
+        elif policy == BackgroundPolicy.PAPERSPACE:
+            color = PAPER_SPACE_BG_COLOR
+        elif policy == BackgroundPolicy.MODELSPACE:
+            color = MODEL_SPACE_BG_COLOR
         elif policy == BackgroundPolicy.CUSTOM:
             color = self.config.custom_bg_color
         if override:
