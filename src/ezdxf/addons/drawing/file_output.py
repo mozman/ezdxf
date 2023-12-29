@@ -177,7 +177,7 @@ class MuPDFFileOutput(FileOutputRenderBackend):
         elif output.suffix == '.svg':
             output.write_text(backend.get_svg_image())
         else:
-            pixmap = backend.get_pixmap(int(self._dpi / 100), alpha=True)
+            pixmap = backend.get_pixmap(int(self._dpi), alpha=True)
             pixmap.save(str(output))
 
 
