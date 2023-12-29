@@ -124,7 +124,7 @@ class PyQtFileOutput(FileOutputRenderBackend):
 
             view = self._qw.QGraphicsView(self._scene)
             view.setRenderHint(self._qg.QPainter.RenderHint.Antialiasing)
-            sizef = self._scene.sceneRect() * self._dpi / 92
+            sizef: QRectF = self._scene.sceneRect() * self._dpi / 92  # type: ignore
             image = self._qg.QImage(
                 self._qc.QSize(round(sizef.width()), round(sizef.height())),
                 self._qg.QImage.Format.Format_ARGB32
