@@ -122,7 +122,7 @@ def read(fname: str) -> str:
 
 DRAW = ["matplotlib", "PySide6", "PyMuPDF>=1.20.0", "Pillow"]
 DRAW5 = ["matplotlib", "PyQt5", "PyMuPDF>=1.20.0", "Pillow"]
-TEST = ["pytest"]
+TEST = ["pytest", "Pillow"]
 DEV = ["setuptools", "wheel", "Cython"]
 
 setup(
@@ -160,8 +160,8 @@ setup(
         "numpy",
         "fonttools",
     ],
-    setup_requires=["wheel"],
-    tests_require=["pytest"],
+    setup_requires=["setuptools", "wheel"],
+    tests_require=TEST,
     extras_require={
         "draw": DRAW,
         "draw5": DRAW5,
