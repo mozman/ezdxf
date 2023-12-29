@@ -1,6 +1,9 @@
 #  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
+import pathlib
+import tempfile
 from typing import Callable, Optional, TYPE_CHECKING, Type
 import abc
 import sys
@@ -13,7 +16,10 @@ from pathlib import Path
 
 import ezdxf
 from ezdxf import recover
+from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.config import BackgroundPolicy
+from ezdxf.addons.drawing.file_output import MatplotlibFileOutput, open_file, PyQtFileOutput, SvgFileOutput, \
+    MuPDFFileOutput
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file, dxf_info
 from ezdxf.dwginfo import dwg_file_info
@@ -283,13 +289,19 @@ class Draw(Command):
     @staticmethod
     def add_parser(subparsers):
         parser = subparsers.add_parser(
-            Draw.NAME, help="draw and convert DXF files by Matplotlib"
+            Draw.NAME, help="draw and save DXF as a bitmap or vector image"
         )
         parser.add_argument(
             "file",
             metavar="FILE",
             nargs="?",
             help="DXF file to view or convert",
+        )
+        parser.add_argument(
+            "--backend",
+            default="matplotlib",
+            choices=["matplotlib", "qt", "mupdf", "custom_svg"],
+            help='choose the backend to use for rendering',
         )
         parser.add_argument(
             "--formats",
@@ -321,13 +333,19 @@ class Draw(Command):
             "if the layer is visible)",
         )
         parser.add_argument(
-            "-o", "--out", required=False, help="output filename for export"
+            "-o", "--out", required=False, type=pathlib.Path, help="output filename for export"
         )
         parser.add_argument(
             "--dpi",
             type=int,
             default=300,
             help="target render resolution, default is 300",
+        )
+        parser.add_argument(
+            "-f",
+            "--force",
+            action="store_true",
+            help="overwrite the destination if it already exists",
         )
         parser.add_argument(
             "-v",
@@ -338,26 +356,26 @@ class Draw(Command):
 
     @staticmethod
     def run(args):
-        # Import on demand for a quicker startup:
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError:
-            print("Matplotlib package not found.")
-            sys.exit(2)
-
         from ezdxf.addons.drawing import RenderContext, Frontend
-        from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
         from ezdxf.addons.drawing.config import Configuration
 
+        if args.backend == 'matplotlib':
+            file_output = MatplotlibFileOutput(args.dpi)
+        elif args.backend == 'qt':
+            file_output = PyQtFileOutput(args.dpi)
+        elif args.backend == 'mupdf':
+            file_output = MuPDFFileOutput(args.dpi)
+        elif args.backend == 'custom_svg':
+            file_output = SvgFileOutput(args.dpi)
+        else:
+            raise ValueError(args.backend)
+
         verbose = args.verbose
-        # Print all supported export formats:
+
         if args.formats:
-            fig = plt.figure()
-            for (
-                extension,
-                description,
-            ) in fig.canvas.get_supported_filetypes().items():
-                print(f"{extension}: {description}")
+            print(f'formats supported by {args.backend}:')
+            for (extension, description) in file_output.supported_formats():
+                print(f"  {extension}: {description}")
             sys.exit(0)
 
         if args.file:
@@ -365,6 +383,7 @@ class Draw(Command):
         else:
             print("argument FILE is required")
             sys.exit(1)
+
         print(f'loading file "{filename}"...')
         doc, _ = load_document(filename)
 
@@ -377,16 +396,14 @@ class Draw(Command):
             )
             sys.exit(1)
 
-        fig = plt.figure()
-        ax = fig.add_axes([0, 0, 1, 1])
         ctx = RenderContext(doc)
-        out = MatplotlibBackend(ax)
+        config = Configuration().with_changes(background_policy=BackgroundPolicy[args.background])
+        out = file_output.backend()
 
         if args.all_layers_visible:
             for layer_properties in ctx.layers.values():
                 layer_properties.is_visible = True
 
-        config = Configuration().with_changes(background_policy=BackgroundPolicy[args.background])
         if args.all_entities_visible:
 
             class AllVisibleFrontend(Frontend):
@@ -398,6 +415,7 @@ class Draw(Command):
             frontend = AllVisibleFrontend(ctx, out, config=config)
         else:
             frontend = Frontend(ctx, out, config=config)
+
         t0 = time.perf_counter()
         if verbose:
             print(f"drawing layout '{layout.name}' ...")
@@ -405,19 +423,35 @@ class Draw(Command):
         t1 = time.perf_counter()
         if verbose:
             print(f"took {t1-t0:.4f} seconds")
+
         if args.out is not None:
-            print(f'exporting to "{args.out}"...')
-            t0 = time.perf_counter()
-            fig.savefig(args.out, dpi=args.dpi)
-            plt.close(fig)
-            t1 = time.perf_counter()
-            if verbose:
-                print(f"took {t1 - t0:.4f} seconds")
+            if pathlib.Path(args.out).suffix not in {f'.{ext}' for ext, _ in file_output.supported_formats()}:
+                print(
+                    f'the format of the output path "{args.out}" '
+                    f'is not supported by the backend {args.backend}'
+                )
+                sys.exit(1)
+
+            if args.out.exists() and not args.force:
+                print(f'the destination "{args.out}" already exists. Not writing')
+                sys.exit(1)
+            else:
+                print(f'exporting to "{args.out}"...')
+                t0 = time.perf_counter()
+                file_output.save(args.out)
+                t1 = time.perf_counter()
+                if verbose:
+                    print(f"took {t1 - t0:.4f} seconds")
 
         else:
+            print(f'exporting to temporary file...')
+            output_dir = pathlib.Path(tempfile.mkdtemp(prefix='ezdxf_draw'))
+            output_path = output_dir / f'output.{file_output.default_format()}'
+            file_output.save(output_path)
+            print(f'saved to "{output_path}"')
             if verbose:
                 print("opening viewer...")
-            plt.show()
+            open_file(output_path)
 
 
 @register
