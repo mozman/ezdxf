@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Union, Optional, Sequence
+from typing_extensions import Self
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -201,7 +202,7 @@ class Body(DXFGraphic):
             self.doc.acdsdata.del_acis_data(self.dxf.handle)  # type: ignore
         super().destroy()
 
-    def transform(self, m: Matrix44) -> DXFGraphic:
+    def transform(self, m: Matrix44) -> Self:
         raise NotImplementedError("cannot transform ACIS entities")
 
 

@@ -2,6 +2,8 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Union, Iterable, Iterator
+from typing_extensions import Self
+
 import math
 import logging
 from ezdxf.audit import AuditError
@@ -975,7 +977,7 @@ class ArcDimension(Dimension):
         )
         self.dxf.dimtype = dimtype  # restore original dimtype
 
-    def transform(self, m: Matrix44) -> Dimension:
+    def transform(self, m: Matrix44) -> Self:
         """Transform the ARC_DIMENSION entity by transformation matrix `m` inplace.
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
@@ -1044,7 +1046,7 @@ class RadialDimensionLarge(Dimension):
             ["chord_point", "override_center", "jog_point", "unknown2"],
         )
 
-    def transform(self, m: Matrix44) -> Dimension:
+    def transform(self, m: Matrix44) -> Self:
         """Transform the LARGE_RADIAL_DIMENSION entity by transformation matrix
         `m` inplace.
 

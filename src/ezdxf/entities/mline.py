@@ -8,6 +8,8 @@ from typing import (
     Sequence,
     Iterator,
 )
+from typing_extensions  import Self
+
 from collections import OrderedDict, namedtuple
 import math
 
@@ -623,7 +625,7 @@ class MLine(DXFGraphic):
                 return
         self.dxf.style_name = "Standard"
 
-    def transform(self, m: Matrix44) -> DXFGraphic:
+    def transform(self, m: Matrix44) -> Self:
         """Transform MLINE entity by transformation matrix `m` inplace."""
         for vertex in self.vertices:
             vertex.transform(m)
