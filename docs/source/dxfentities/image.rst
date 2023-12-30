@@ -107,6 +107,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: set_boundary_path
 
+    .. automethod:: pixel_boundary_path
+    
     .. automethod:: boundary_path_wcs
 
     .. automethod:: transform

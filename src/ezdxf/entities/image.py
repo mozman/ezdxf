@@ -123,7 +123,9 @@ class ImageBase(DXFGraphic):
 
     @property
     def boundary_path(self):
-        """A list of vertices as pixel coordinates, Two vertices describe a
+        """Returns the boundray path in raw form in pixel coordinates.
+
+        A list of vertices as pixel coordinates, Two vertices describe a
         rectangle, lower left corner is (-0.5, -0.5) and upper right corner
         is (ImageSizeX-0.5, ImageSizeY-0.5), more than two vertices is a
         polygon as clipping path. All vertices as pixel coordinates. (read/write)
@@ -179,7 +181,15 @@ class ImageBase(DXFGraphic):
         m.set_row(3, Vec3(self.dxf.insert))
         return m
 
-    def boundary_path_ocs(self) -> list[Vec2]:
+    def pixel_boundary_path(self) -> list[Vec2]:
+        """Returns the boundary path as closed loop in pixel coordinates.  Resolves the 
+        simple form of two vertices as a rectangle.
+
+        .. versionchanged:: 1.2.0
+
+            renamed from :meth:`boundray_path_ocs()`
+
+        """
         boundary_path = self.boundary_path
         if len(boundary_path) == 2:  # rectangle
             p0, p1 = boundary_path
@@ -207,7 +217,10 @@ class ImageBase(DXFGraphic):
         origin += u * 0.5 - v * 0.5
         height = self.dxf.image_size.y
         # Boundary/Clipping path origin 0/0 is in the Left/Top corner of the image!
-        vertices = [origin + (u * p.x) + (v * (height - p.y)) for p in self.boundary_path_ocs()]
+        vertices = [
+            origin + (u * p.x) + (v * (height - p.y))
+            for p in self.pixel_boundary_path()
+        ]
         return vertices
 
     def destroy(self) -> None:
@@ -529,6 +542,7 @@ class Wipeout(ImageBase):
         self._reset_handles()
         super().export_entity(tagwriter)
 
+
 # About Image File Paths:
 # See notes in knowledge graph: [[IMAGE File Paths]]
 # https://ezdxf.mozman.at/notes/#/page/image%20file%20paths
@@ -537,7 +551,7 @@ acdb_image_def = DefSubclass(
     "AcDbRasterImageDef",
     {
         "class_version": DXFAttr(90, default=0),
-        # File name of image: 
+        # File name of image:
         "filename": DXFAttr(1),
         # Image size in pixels:
         "image_size": DXFAttr(10, xtype=XType.point2d),

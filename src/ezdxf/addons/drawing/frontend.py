@@ -703,7 +703,7 @@ class UniversalFrontend:
                     loaded_image = _multiply_alpha(
                         loaded_image, 1.0 - image.transparency
                     )
-                boundary_path = image.boundary_path_ocs()
+                boundary_path = image.pixel_boundary_path()
                 if image.dxf.flags & Image.USE_CLIPPING_BOUNDARY:
                     loaded_image = _mask_image(
                         loaded_image, [(p.x, p.y) for p in boundary_path]
