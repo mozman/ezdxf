@@ -711,7 +711,7 @@ class UniversalFrontend:
                 image_data = ImageData(
                     image=np.asarray(loaded_image),
                     transform=image.get_wcs_transform(),
-                    boundary_path=NumpyPoints2d(boundary_path),
+                    pixel_boundary_path=NumpyPoints2d(boundary_path),
                 )
                 self.designer.draw_image(image_data, properties)
 

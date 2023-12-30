@@ -27,13 +27,13 @@ class ImageData:
         image: an array of RGBA pixels
         transform: the transformation to apply to the image when drawing
             (the transform from pixel coordinates to wcs)
-        boundary_path: boundary path vertices in pixel coordinates
+        pixel_boundary_path: boundary path vertices in pixel coordinates
 
     """
 
     image: np.ndarray
     transform: Matrix44
-    boundary_path: NumpyPoints2d
+    pixel_boundary_path: NumpyPoints2d
 
 
 class BackendInterface(ABC):

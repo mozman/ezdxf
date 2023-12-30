@@ -199,7 +199,7 @@ class Recorder(BackendInterface):
 
     def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
         # preserve the boundary in image_data in pixel coordinates
-        boundary = copy.deepcopy(image_data.boundary_path)
+        boundary = copy.deepcopy(image_data.pixel_boundary_path)
         boundary.transform_inplace(image_data.transform)
         self.store(ImageRecord(boundary, image_data), properties)
 
