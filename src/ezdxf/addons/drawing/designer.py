@@ -26,7 +26,7 @@ from ezdxf.render import linetypes
 from ezdxf.entities import DXFGraphic, Viewport
 
 from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
-from .clipper import ClippingRect
+from .clipper import ClippingPortal, ClippingRect
 from .config import LinePolicy, TextPolicy, ColorPolicy, Configuration
 from .properties import BackendProperties, Filling
 from .properties import Properties, RenderContext
@@ -152,7 +152,7 @@ class Designer2d(Designer):
         except fonts.FontNotFoundError:  # no default font found
             # last resort MonospaceFont which renders only "tofu"
             pass
-        self.clipper = ClippingRect()
+        self.clipping_portal = ClippingPortal()
         self.current_vp_scale = 1.0
         self._current_entity_handle: str = ""
         self._color_mapping: dict[str, str] = dict()
@@ -217,18 +217,19 @@ class Designer2d(Designer):
         m = vp.get_transformation_matrix()
         clipping_path = make_path(vp)
         if len(clipping_path):
-            self.clipper.push(BkPath2d(clipping_path), m)
+            clipping_shape = ClippingRect(clipping_path.control_vertices())
+            self.clipping_portal.push(clipping_shape, m)
             return True
         return False
 
     def exit_viewport(self):
-        self.clipper.pop()
+        self.clipping_portal.pop()
         self.current_vp_scale = 1.0
 
     def draw_point(self, pos: AnyVec, properties: Properties) -> None:
         point = Vec2(pos)
-        if self.clipper.is_active:
-            point = self.clipper.clip_point(point)
+        if self.clipping_portal.is_active:
+            point = self.clipping_portal.clip_point(point)
             if point is None:
                 return
         self.backend.draw_point(point, self.get_backend_properties(properties))
@@ -240,8 +241,8 @@ class Designer2d(Designer):
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
-            if self.clipper.is_active:
-                points = self.clipper.clip_line(s, e)
+            if self.clipping_portal.is_active:
+                points = self.clipping_portal.clip_line(s, e)
                 if len(points) != 2:
                     return
                 start, end = points
@@ -257,10 +258,10 @@ class Designer2d(Designer):
         self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
     ) -> None:
         lines2d = [(Vec2(s), Vec2(e)) for s, e in lines]
-        if self.clipper.is_active:
+        if self.clipping_portal.is_active:
             clipped_lines: list[Sequence[Vec2]] = []
             for start, end in lines2d:
-                points = self.clipper.clip_line(start, end)
+                points = self.clipping_portal.clip_line(start, end)
                 if points:
                     clipped_lines.append(points)
             lines2d = clipped_lines  # type: ignore
@@ -274,8 +275,8 @@ class Designer2d(Designer):
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
-            if self.clipper.is_active:
-                for clipped_path in self.clipper.clip_paths(
+            if self.clipping_portal.is_active:
+                for clipped_path in self.clipping_portal.clip_paths(
                     [path], self.config.max_flattening_distance
                 ):
                     self.backend.draw_path(
@@ -304,9 +305,9 @@ class Designer2d(Designer):
         paths: Iterable[BkPath2d],
         properties: Properties,
     ) -> None:
-        if self.clipper.is_active:
+        if self.clipping_portal.is_active:
             max_sagitta = self.config.max_flattening_distance
-            paths = self.clipper.clip_filled_paths(paths, max_sagitta)
+            paths = self.clipping_portal.clip_filled_paths(paths, max_sagitta)
         self.backend.draw_filled_paths(paths, self.get_backend_properties(properties))
 
     def draw_filled_polygon(
@@ -315,8 +316,8 @@ class Designer2d(Designer):
         self._draw_filled_polygon(BkPoints2d(points), properties)
 
     def _draw_filled_polygon(self, points: BkPoints2d, properties: Properties) -> None:
-        if self.clipper.is_active:
-            points = self.clipper.clip_polygon(points)
+        if self.clipping_portal.is_active:
+            points = self.clipping_portal.clip_polygon(points)
         self.backend.draw_filled_polygon(
             points, self.get_backend_properties(properties)
         )
@@ -410,8 +411,10 @@ class Designer2d(Designer):
         self._draw_filled_paths(transformed_paths, properties)
 
     def draw_image(self, image_data: ImageData, properties: Properties) -> None:
-        if self.clipper.is_active:
-           image_data.transform = self.clipper.transform_matrix(image_data.transform)
+        if self.clipping_portal.is_active:
+            image_data.transform = self.clipping_portal.transform_matrix(
+                image_data.transform
+            )
         self.backend.draw_image(image_data, self.get_backend_properties(properties))
 
     def finalize(self) -> None:

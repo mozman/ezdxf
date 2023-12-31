@@ -354,7 +354,7 @@ def crop_records_rect(
     records: list[DataRecord], crop_rect: BoundingBox2d, distance: float
 ) -> list[DataRecord]:
     """Crop recorded shapes inplace by a rectangle."""
-    from .clipper import ClippingRect
+    from .clipper import ClippingPortal, ClippingRect
 
     def sort_paths(np_paths: Sequence[NumpyPath2d]):
         _inside: list[NumpyPath2d] = []
@@ -387,8 +387,8 @@ def crop_records_rect(
     if size.x < 1e-12 or size.y < 1e-12:
         return cropped_records
 
-    clipper = ClippingRect()
-    clipper.push(NumpyPath2d.from_vertices(crop_rect.rect_vertices()), None)
+    clipper = ClippingPortal()
+    clipper.push(ClippingRect(crop_rect.rect_vertices()), None)
     for record in records:
         record_box = record.bbox()
         if not crop_rect.has_intersection(record_box):
