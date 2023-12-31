@@ -410,6 +410,8 @@ class Designer2d(Designer):
         self._draw_filled_paths(transformed_paths, properties)
 
     def draw_image(self, image_data: ImageData, properties: Properties) -> None:
+        if self.clipper.is_active:
+           image_data.transform = self.clipper.transform_matrix(image_data.transform)
         self.backend.draw_image(image_data, self.get_backend_properties(properties))
 
     def finalize(self) -> None:

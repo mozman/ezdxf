@@ -114,3 +114,8 @@ class ClippingRect:
             if not view.is_inside(extmin) or not view.is_inside(extmax):
                 return NumpyPoints2d(view.clip_polygon(points.vertices()))
         return points
+
+    def transform_matrix(self, m: Matrix44) -> Matrix44:
+        if self.m is not None:
+            return m @ self.m
+        return m
