@@ -703,15 +703,11 @@ class UniversalFrontend:
                     loaded_image = _multiply_alpha(
                         loaded_image, 1.0 - image.transparency
                     )
-                boundary_path = image.pixel_boundary_path()
-                if image.dxf.flags & Image.USE_CLIPPING_BOUNDARY:
-                    loaded_image = _mask_image(
-                        loaded_image, [(p.x, p.y) for p in boundary_path]
-                    )
                 image_data = ImageData(
                     image=np.asarray(loaded_image),
                     transform=image.get_wcs_transform(),
-                    pixel_boundary_path=NumpyPoints2d(boundary_path),
+                    pixel_boundary_path=NumpyPoints2d(image.pixel_boundary_path()),
+                    use_clipping_boundary=image.dxf.flags & Image.USE_CLIPPING_BOUNDARY,
                 )
                 self.designer.draw_image(image_data, properties)
 
@@ -989,16 +985,6 @@ def _blend_image_towards(
     updated_image = PIL.Image.blend(image, destination, amount)
     updated_image.putalpha(original_alpha)
     return updated_image
-
-
-def _mask_image(
-    image: PIL.Image.Image, clip_polygon: list[tuple[float, float]]
-) -> PIL.Image.Image:
-    mask = PIL.Image.new("L", image.size, 0)
-    PIL.ImageDraw.ImageDraw(mask).polygon(clip_polygon, outline=None, width=0, fill=1)
-    masked_image = np.array(image)
-    masked_image[:, :, 3] *= np.asarray(mask)
-    return PIL.Image.fromarray(masked_image, "RGBA")
 
 
 def _multiply_alpha(image: PIL.Image.Image, amount: float) -> PIL.Image.Image:

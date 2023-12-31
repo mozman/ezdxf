@@ -11,9 +11,13 @@ from typing import (
     Callable,
 )
 
-import numpy as np
+
 from typing_extensions import TypeAlias
 import abc
+import numpy as np
+import PIL.Image
+import PIL.ImageDraw
+
 
 from ezdxf.colors import RGB
 import ezdxf.bbox
@@ -415,6 +419,8 @@ class Designer2d(Designer):
             image_data.transform = self.clipping_portal.transform_matrix(
                 image_data.transform
             )
+        if image_data.use_clipping_boundary:
+            _mask_image(image_data)
         self.backend.draw_image(image_data, self.get_backend_properties(properties))
 
     def finalize(self) -> None:
@@ -428,6 +434,16 @@ class Designer2d(Designer):
 
     def exit_entity(self, entity: DXFGraphic) -> None:
         self.backend.exit_entity(entity)
+
+
+def _mask_image(image_data: ImageData) -> None:
+    image = PIL.Image.fromarray(image_data.image, mode="RGBA")
+    clip_polygon = [(p.x, p.y) for p in image_data.pixel_boundary_path.vertices()]
+    mask = PIL.Image.new("L", image.size, 0)
+    PIL.ImageDraw.ImageDraw(mask).polygon(clip_polygon, outline=None, width=0, fill=1)
+    masked_image = np.array(image)
+    masked_image[:, :, 3] *= np.asarray(mask)
+    image_data.image = np.asarray(masked_image)
 
 
 def invert_color(color: Color) -> Color:

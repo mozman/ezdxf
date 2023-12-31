@@ -34,6 +34,7 @@ class ImageData:
     image: np.ndarray
     transform: Matrix44
     pixel_boundary_path: NumpyPoints2d
+    use_clipping_boundary: bool = False
 
 
 class BackendInterface(ABC):
