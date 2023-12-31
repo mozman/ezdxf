@@ -29,7 +29,7 @@ from ezdxf.render import linetypes
 from ezdxf.entities import DXFGraphic, Viewport
 
 from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
-from .clipper import ClippingPortal, ClippingRect
+from .clipper import ClippingPortal, ClippingRect, ClippingShape
 from .config import LinePolicy, TextPolicy, ColorPolicy, Configuration
 from .properties import BackendProperties, Filling
 from .properties import Properties, RenderContext
@@ -66,6 +66,14 @@ class Designer(abc.ABC):
 
     @abc.abstractmethod
     def set_current_entity_handle(self, handle: str) -> None:
+        ...
+
+    @abc.abstractmethod
+    def push_clipping_shape(self, shape: ClippingShape, transform: Matrix44) -> None:
+        ...
+    
+    @abc.abstractmethod
+    def pop_clipping_shape(self) -> None:
         ...
 
     @abc.abstractmethod
@@ -194,6 +202,12 @@ class Designer2d(Designer):
         assert handle is not None
         self._current_entity_handle = handle
 
+    def push_clipping_shape(self, shape: ClippingShape, transform: Matrix44) -> None:
+        self.clipping_portal.push(shape, transform)
+    
+    def pop_clipping_shape(self) -> None:
+        self.clipping_portal.pop()
+
     def draw_viewport(
         self,
         vp: Viewport,
@@ -227,6 +241,11 @@ class Designer2d(Designer):
 
     def exit_viewport(self):
         self.clipping_portal.pop()
+        # Current assumption and implementation:
+        # Viewports are not nested and not contained in any other structure.
+        assert (
+            self.clipping_portal.is_active is False
+        ), "This assumption is no longer valid!"
         self.current_vp_scale = 1.0
 
     def draw_point(self, pos: AnyVec, properties: Properties) -> None:
@@ -475,14 +494,14 @@ def _mask_image(image_data: ImageData) -> None:
 
 
 def _clip_image_boundary_path(
-    cliping_portal: ClippingPortal, pixel_boundary_path: BkPoints2d, m: Matrix44
+    clipping_portal: ClippingPortal, pixel_boundary_path: BkPoints2d, m: Matrix44
 ) -> list[BkPoints2d]:
     original = [pixel_boundary_path]
     wcs_path = BkPath2d.from_vertices(
         m.transform_vertices(pixel_boundary_path.vertices())
     )
     # include transformation applied by the clipping portal
-    inverse = cliping_portal.transform_matrix(m)
+    inverse = clipping_portal.transform_matrix(m)
     try:
         inverse.inverse()
     except ZeroDivisionError:
@@ -490,7 +509,7 @@ def _clip_image_boundary_path(
         return original
 
     clipped_wcs_paths: list[BkPath2d] = list(
-        cliping_portal.clip_filled_paths([wcs_path], 99)
+        clipping_portal.clip_filled_paths([wcs_path], 99)
     )
     if (len(clipped_wcs_paths) == 1) and (clipped_wcs_paths[0] is wcs_path):
         return original

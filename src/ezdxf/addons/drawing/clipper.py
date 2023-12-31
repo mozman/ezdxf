@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Optional, Iterable, Iterator, Sequence, Protocol
 
 from ezdxf.math import Matrix44, Vec2, BoundingBox2d, UVec
-from ezdxf.math.clipping import ClippingRect2d
+from ezdxf.math.clipping import ClippingRect2d as _ClippingRect2d
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
 
 __all__ = ["ClippingShape", "ClippingPortal", "ClippingRect"]
@@ -122,7 +122,7 @@ class ClippingRect:
             raise ValueError("clipping box not detectable")
         size: Vec2 = bbox.size
         self.nothing_can_pass = size.x * size.y < 1e-9
-        self.clipper: ClippingRect2d = ClippingRect2d(bbox.extmin, bbox.extmax)
+        self.clipper = _ClippingRect2d(bbox.extmin, bbox.extmax)
 
     def clip_point(self, point: Vec2) -> Optional[Vec2]:
         # Expected points outside the view to be removed!

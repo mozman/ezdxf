@@ -1,10 +1,6 @@
 # Copyright (c) 2020-2023, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
-
-import contextlib
-import math
-import os
 from typing import (
     Iterable,
     cast,
@@ -14,18 +10,21 @@ from typing import (
     Optional,
     TYPE_CHECKING,
 )
+from typing_extensions import TypeAlias
+import contextlib
+import math
+import os
 import pathlib
+import logging
+import time
 
 import PIL.Image
 import PIL.ImageEnhance
 import PIL.ImageDraw
 import numpy as np
-from typing_extensions import TypeAlias
-import logging
-import time
+
 
 import ezdxf.bbox
-
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
@@ -64,6 +63,7 @@ from ezdxf.entities import (
     Viewport,
     Image,
 )
+from ezdxf.addons.drawing.clipper import ClippingRect
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
@@ -86,6 +86,8 @@ from ezdxf.render import hatching
 from ezdxf.fonts import fonts
 from ezdxf.colors import RGB, RGBA
 from ezdxf.npshapes import NumpyPoints2d
+from ezdxf import xclip
+
 from .type_hints import Color
 
 if TYPE_CHECKING:
@@ -817,12 +819,24 @@ class UniversalFrontend:
         def draw_insert(insert: Insert):
             self.draw_entities(insert.attribs)
             # draw_entities() includes the visibility check:
+            clip = xclip.XClip(insert)
+            if clip.has_clipping_path:
+                boundary_path = clip.get_wcs_clipping_path()
+                clipping_shape = ClippingRect(boundary_path.vertices)
+                self.designer.push_clipping_shape(clipping_shape, None)
             self.draw_entities(
                 insert.virtual_entities(
                     skipped_entity_callback=self.skip_entity
                     # TODO: redraw_order=True?
                 )
             )
+            if clip.has_clipping_path:
+                if clip.is_clipping_path_visible and clip.get_xclip_frame_policy():
+                    self.designer.draw_path(
+                        path=from_vertices(boundary_path.vertices, close=True),
+                        properties=properties,
+                    )
+                self.designer.pop_clipping_shape()
 
         if isinstance(entity, Insert):
             self.ctx.push_state(properties)

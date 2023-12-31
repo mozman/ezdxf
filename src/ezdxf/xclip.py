@@ -64,6 +64,12 @@ class XClip:
         """
         return self._spatial_filter
 
+    def get_xclip_frame_policy(self) -> int:
+        policy: int = 2
+        if self._insert.doc is not None:
+            policy = self._insert.doc.header.get("$XCLIPFRAME", 2)
+        return policy
+
     @property
     def has_clipping_path(self) -> bool:
         """Returns if the INSERT entity has a clipping path."""
