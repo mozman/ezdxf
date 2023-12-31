@@ -1,20 +1,24 @@
 ## Version 1.2.0 - dev
 id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- ((658c0484-28db-436e-b828-8fc509ecbd29))
-	- NEW: `ezdxf` requires Python 3.9 or later
+	- NEW: `ezdxf` requires Python 3.9 or newer
 	- NEW: support for the [[SPATIAL_FILTER]] entity.
 		- This is the basic requirement to support clipping of block references and XREFs aka the [[XCLIP]] command in CAD applications
 	- NEW: `ezdxf.xclip` module for adding 2D clipping paths to block references and XREFs
 		- replicates the [[XCLIP]] command
 		- **WARNING:**
 			- [[AutoCAD]] does not open DXF files with **inverted** clipping paths created by `ezdxf`.
-		- [[BricsCAD]] does accept **inverted** clipping paths created by `ezdxf`.
-	- NEW: support for the [[IMAGE]] entity in the `drawing` add-on by [[mbway]]
+		- [[BricsCAD]] tolerates **inverted** clipping paths created by `ezdxf`.
+	- NEW: support for the [[IMAGE]] entity in the [[drawing add-on]], added by [[mbway]]
 		- {{pr 999}}
-		- currently only the `PyQt` and the `Matplotlib` backends are supported
+		- supported by these backends:
+			- [[PyQtBackend]]
+			- [[MatplotlibBackend]]
+			- [[PyMuPdfBackend]]
 	- NEW: the `ezdxf draw` command supports additional backends by option `--backend {matplotlib,qt,mupdf,custom_svg}`, added by [[mbway]]
 	- NEW: `ezdxf.colors.RGBA` class
 	- CHANGE: renamed `Image.boundray_path_ocs()` to `Image.pixel_boundary_path()`
+	- CHANGE: refactoring of the [[RecorderBackend]]
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
 -
