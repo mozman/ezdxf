@@ -489,7 +489,9 @@ def _clip_image_boundary_path(
         # transformation from WCS to pixel coordinates is not possible
         return original
 
-    clipped_wcs_paths: list[BkPath2d] = list(cliping_portal.clip_paths([wcs_path], 99))
+    clipped_wcs_paths: list[BkPath2d] = list(
+        cliping_portal.clip_filled_paths([wcs_path], 99)
+    )
     if (len(clipped_wcs_paths) == 1) and (clipped_wcs_paths[0] is wcs_path):
         return original
     return [  # transform to pixel coordinates
