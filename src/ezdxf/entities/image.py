@@ -13,6 +13,8 @@ from typing import (
     Union,
     Type,
 )
+from typing_extensions import Self
+
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -166,7 +168,7 @@ class ImageBase(DXFGraphic):
         self.dxf.clipping_boundary_type = 1
         self.dxf.count_boundary_points = 2
 
-    def transform(self, m: Matrix44) -> ImageBase:
+    def transform(self, m: Matrix44) -> Self:
         """Transform IMAGE entity by transformation matrix `m` inplace."""
         self.dxf.insert = m.transform(self.dxf.insert)
         self.dxf.u_pixel = m.transform_direction(self.dxf.u_pixel)
