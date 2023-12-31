@@ -10,10 +10,9 @@ from typing import (
     Iterator,
     Callable,
 )
-
-
 from typing_extensions import TypeAlias
 import abc
+
 import numpy as np
 import PIL.Image
 import PIL.ImageDraw
@@ -416,9 +415,38 @@ class Designer2d(Designer):
 
     def draw_image(self, image_data: ImageData, properties: Properties) -> None:
         if self.clipping_portal.is_active:
+            # the pixel boundary path can be split into multiple paths
+            boundary_paths = _clip_image_boundary_path(
+                self.clipping_portal,
+                image_data.pixel_boundary_path,
+                image_data.transform,
+            )
             image_data.transform = self.clipping_portal.transform_matrix(
                 image_data.transform
             )
+            if len(boundary_paths) == 1:
+                new_boundary_path = boundary_paths[0]
+                if new_boundary_path is not image_data.pixel_boundary_path:
+                    image_data.pixel_boundary_path = new_boundary_path
+                    image_data.use_clipping_boundary = True
+                self._draw_image(image_data, properties)
+            else:
+                for boundary_path in boundary_paths:
+                    # This is not efficient but works.
+                    # This should be a rare usecase so optimization is not required.
+                    self._draw_image(
+                        ImageData(
+                            image=image_data.image.copy(),
+                            transform=image_data.transform,
+                            pixel_boundary_path=boundary_path,
+                            use_clipping_boundary=True,
+                        ),
+                        properties,
+                    )
+        else:
+            self._draw_image(image_data, properties)
+
+    def _draw_image(self, image_data: ImageData, properties: Properties) -> None:
         if image_data.use_clipping_boundary:
             _mask_image(image_data)
         self.backend.draw_image(image_data, self.get_backend_properties(properties))
@@ -444,6 +472,30 @@ def _mask_image(image_data: ImageData) -> None:
     masked_image = np.array(image)
     masked_image[:, :, 3] *= np.asarray(mask)
     image_data.image = np.asarray(masked_image)
+
+
+def _clip_image_boundary_path(
+    cliping_portal: ClippingPortal, pixel_boundary_path: BkPoints2d, m: Matrix44
+) -> list[BkPoints2d]:
+    original = [pixel_boundary_path]
+    wcs_path = BkPath2d.from_vertices(
+        m.transform_vertices(pixel_boundary_path.vertices())
+    )
+    # include transformation applied by the clipping portal
+    inverse = cliping_portal.transform_matrix(m)
+    try:
+        inverse.inverse()
+    except ZeroDivisionError:
+        # transformation from WCS to pixel coordinates is not possible
+        return original
+
+    clipped_wcs_paths: list[BkPath2d] = list(cliping_portal.clip_paths([wcs_path], 99))
+    if (len(clipped_wcs_paths) == 1) and (clipped_wcs_paths[0] is wcs_path):
+        return original
+    return [  # transform to pixel coordinates
+        BkPoints2d(inverse.transform_vertices(clipped_wcs_path.vertices()))
+        for clipped_wcs_path in clipped_wcs_paths
+    ]
 
 
 def invert_color(color: Color) -> Color:

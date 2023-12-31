@@ -45,7 +45,7 @@ class ClippingPortal:
     @property
     def is_active(self) -> bool:
         return self.portal is not None
-
+   
     def push(self, portal: ClippingShape, transform: Matrix44 | None) -> None:
         if self.portal is not None:
             self._stack.append((self.portal, self.transform))
