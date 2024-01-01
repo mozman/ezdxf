@@ -16,7 +16,7 @@ import abc
 from ezdxf.math import BoundingBox2d, Matrix44, Vec2, UVec
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, EmptyShapeError
 from ezdxf.tools import take2
-from ezdxf.tools.clipping_portal import ClippingPortal, ClippingRect
+from ezdxf.tools.clipping_portal import ClippingRect
 
 from .backend import BackendInterface, ImageData
 from .config import Configuration
@@ -386,8 +386,7 @@ def crop_records_rect(
     if size.x < 1e-12 or size.y < 1e-12:
         return cropped_records
 
-    clipper = ClippingPortal()
-    clipper.push(ClippingRect(crop_rect.rect_vertices()), None)
+    clipper = ClippingRect(crop_rect.rect_vertices())
     for record in records:
         record_box = record.bbox()
         if not crop_rect.has_intersection(record_box):
@@ -406,7 +405,7 @@ def crop_records_rect(
                 cropped_records.append(record)
         elif isinstance(record, PathRecord):
             # could be split into multiple parts
-            for p in clipper.clip_paths([record.path], distance):  # type: ignore
+            for p in clipper.clip_paths([record.path], distance):
                 path_record = PathRecord(p)
                 path_record.property_hash = record.property_hash
                 path_record.handle = record.handle
@@ -424,7 +423,7 @@ def crop_records_rect(
                     _record = copy.copy(record)  # shallow copy
                     _record.points = NumpyPoints2d(segment)
                     cropped_records.append(_record)
-            else:  
+            else:
                 for polygon in clipper.clip_polygon(record.points):
                     if not polygon:
                         continue
