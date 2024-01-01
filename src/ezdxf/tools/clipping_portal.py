@@ -1,7 +1,7 @@
 #  Copyright (c) 2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Optional, Iterable, Iterator, Sequence
+from typing import Optional, Iterable, Iterator, Sequence, NamedTuple, Callable
 import abc
 
 from ezdxf.math import Matrix44, Vec2, BoundingBox2d, UVec
@@ -72,88 +72,126 @@ class ClippingShape(abc.ABC):
         ...
 
 
+class ClippingStage(NamedTuple):
+    portal: ClippingShape
+    transform: Matrix44 | None
+
+
 class ClippingPortal:
-    """The ClippingPortal manages a clipping path hierarchy."""
+    """The ClippingPortal manages a clipping path stack."""
 
     def __init__(self) -> None:
-        self._stack: list[tuple[ClippingShape, Matrix44 | None]] = []
-        self.portal: ClippingShape | None = None
-        self.transform: Matrix44 | None = None
+        self._stages: list[ClippingStage] = []
 
     @property
     def is_active(self) -> bool:
-        return self.portal is not None
+        return bool(self._stages)
 
     def push(self, portal: ClippingShape, transform: Matrix44 | None) -> None:
-        if self.portal is not None:
-            self._stack.append((self.portal, self.transform))
-        self.portal = portal
-        self.transform = transform
+        self._stages.append(ClippingStage(portal, transform))
 
     def pop(self) -> None:
-        if self._stack:
-            self.portal, self.transform = self._stack.pop()
-        else:
-            self.portal = None
-            self.transform = None
+        if self._stages:
+            self._stages.pop()
+
+    def foreach_stage(self, command: Callable[[ClippingStage], bool]) -> None:
+        for stage in self._stages[::-1]:
+            if not command(stage):
+                return
 
     def clip_point(self, point: Vec2) -> Optional[Vec2]:
-        if self.transform:
-            point = Vec2(self.transform.transform(point))
-        if self.portal:
-            return self.portal.clip_point(point)
-        return point
+        result: Vec2 | None = point
+
+        def do(stage: ClippingStage) -> bool:
+            nonlocal result
+            assert result is not None
+            if stage.transform:
+                result = Vec2(stage.transform.transform(result))
+            result = stage.portal.clip_point(result)
+            return result is not None
+
+        self.foreach_stage(do)
+        return result
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
-        m = self.transform
-        if m:
-            start, end = m.fast_2d_transform((start, end))
-        if self.portal:
-            return self.portal.clip_line(start, end)
-        return ((start, end),)
+        def do(stage: ClippingStage) -> bool:
+            lines = list(result)
+            result.clear()
+            for s, e in lines:
+                if stage.transform:
+                    s, e = stage.transform.fast_2d_transform((s, e))
+                result.extend(stage.portal.clip_line(s, e))
+            return bool(result)
+
+        result = [(start, end)]
+        self.foreach_stage(do)
+        return result
 
     def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
-        if self.transform is not None:
-            points.transform_inplace(self.transform)
-        if self.portal:
-            return self.portal.clip_polyline(points)
-        return (points,)
+        def do(stage: ClippingStage) -> bool:
+            polylines = list(result)
+            result.clear()
+            for polyline in polylines:
+                if stage.transform:
+                    polyline.transform_inplace(stage.transform)
+                result.extend(stage.portal.clip_polyline(polyline))
+            return bool(result)
+
+        result = [points]
+        self.foreach_stage(do)
+        return result
 
     def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
-        if self.transform is not None:
-            points.transform_inplace(self.transform)
-        if self.portal:
-            return self.portal.clip_polygon(points)
-        return (points,)
+        def do(stage: ClippingStage) -> bool:
+            polygons = list(result)
+            result.clear()
+            for polygon in polygons:
+                if stage.transform:
+                    polygon.transform_inplace(stage.transform)
+                result.extend(stage.portal.clip_polygon(polygon))
+            return bool(result)
+
+        result = [points]
+        self.foreach_stage(do)
+        return result
 
     def clip_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        paths = _transform_paths(list(paths), self.transform)
-        if self.portal:
-            return self.portal.clip_paths(paths, max_sagitta)
-        return iter(paths)
+    ) -> Sequence[NumpyPath2d]:
+        def do(stage: ClippingStage) -> bool:
+            paths = list(result)
+            result.clear()
+            for path in paths:
+                if stage.transform:
+                    path.transform_inplace(stage.transform)
+            result.extend(stage.portal.clip_paths(paths, max_sagitta))
+            return bool(result)
+
+        result = list(paths)
+        self.foreach_stage(do)
+        return result
 
     def clip_filled_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        paths = _transform_paths(list(paths), self.transform)
-        if self.portal:
-            return self.portal.clip_filled_paths(paths, max_sagitta)
-        return iter(paths)
+    ) -> Sequence[NumpyPath2d]:
+        def do(stage: ClippingStage) -> bool:
+            paths = list(result)
+            result.clear()
+            for path in paths:
+                if stage.transform:
+                    path.transform_inplace(stage.transform)
+            result.extend(stage.portal.clip_filled_paths(paths, max_sagitta))
+            return bool(result)
+
+        result = list(paths)
+        self.foreach_stage(do)
+        return result
 
     def transform_matrix(self, m: Matrix44) -> Matrix44:
-        if self.transform is not None:
-            return m @ self.transform
+        for _, transform in self._stages:
+            if transform is not None:
+                m @= transform
         return m
-
-
-def _transform_paths(paths: list[NumpyPath2d], m: Matrix44 | None) -> list[NumpyPath2d]:
-    if m is None:
-        return paths
-    for path in paths:
-        path.transform_inplace(m)
-    return paths
 
 
 class ClippingRect(ClippingShape):
