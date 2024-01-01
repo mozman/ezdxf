@@ -833,7 +833,7 @@ class UniversalFrontend:
             if clip.has_clipping_path:
                 if clip.is_clipping_path_visible and clip.get_xclip_frame_policy():
                     self.designer.draw_path(
-                        path=from_vertices(boundary_path.vertices, close=True),
+                        path=from_vertices(boundary_path.vertices, close=True),  # type: ignore
                         properties=properties,
                     )
                 self.designer.pop_clipping_shape()

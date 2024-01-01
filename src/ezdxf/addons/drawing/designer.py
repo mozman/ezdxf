@@ -69,7 +69,7 @@ class Designer(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def push_clipping_shape(self, shape: ClippingShape, transform: Matrix44) -> None:
+    def push_clipping_shape(self, shape: ClippingShape, transform: Matrix44|None) -> None:
         ...
 
     @abc.abstractmethod
@@ -202,7 +202,7 @@ class Designer2d(Designer):
         assert handle is not None
         self._current_entity_handle = handle
 
-    def push_clipping_shape(self, shape: ClippingShape, transform: Matrix44) -> None:
+    def push_clipping_shape(self, shape: ClippingShape, transform: Matrix44|None) -> None:
         self.clipping_portal.push(shape, transform)
 
     def pop_clipping_shape(self) -> None:
@@ -596,7 +596,7 @@ def filter_vp_entities(
     # WARNING: this works only with top-view viewports
     # The current state of the drawing add-on supports only top-view viewports!
     def is_visible(e):
-        entity_bbox = bbox_cache.get(e)
+        entity_bbox = bbox_cache.get(e)  # type: ignore
         if entity_bbox is None:
             # compute and add bounding box
             entity_bbox = ezdxf.bbox.extents((e,), fast=True, cache=bbox_cache)
