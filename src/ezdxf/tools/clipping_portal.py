@@ -16,8 +16,9 @@ class ClippingShape(Protocol):
 
     - point: a single point
     - line: a line between two vertices
-    - path: open shape with straight lines and Bezier-curves as edges
-    - polygon: closed shape with straight lines as edges
+    - polyline: open polyline with one or more straight line segments
+    - polygon: closed shape with straight line as edges
+    - path: open shape with straight lines and Bezier-curves as segments
     - filled-path: closed shape with straight lines and Bezier-curves as edges
 
     Difference between open and closed shapes:
@@ -36,7 +37,7 @@ class ClippingShape(Protocol):
 
     """
 
-    remove_outside: bool  
+    remove_outside: bool
     # - True: remove geometry outside the clipping shape
     # - False: remove geometry inside the clipping shape
 
@@ -46,15 +47,18 @@ class ClippingShape(Protocol):
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         ...
 
+    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+        ...
+
     def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         ...
 
-    def clip_filled_paths(
+    def clip_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
     ) -> Iterator[NumpyPath2d]:
         ...
 
-    def clip_paths(
+    def clip_filled_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
     ) -> Iterator[NumpyPath2d]:
         ...
@@ -100,31 +104,35 @@ class ClippingPortal:
             return self.portal.clip_line(start, end)
         return ((start, end),)
 
-    def clip_filled_paths(
-        self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        # Expected overall paths outside the view to be removed!
-        paths = _transform_paths(list(paths), self.transform)
+    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+        if self.transform is not None:
+            points.transform_inplace(self.transform)
         if self.portal:
-            return self.portal.clip_filled_paths(paths, max_sagitta)
-        return iter(paths)
-
-    def clip_paths(
-        self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        # Expected paths outside the view to be removed!
-        paths = _transform_paths(list(paths), self.transform)
-        if self.portal:
-            return self.portal.clip_paths(paths, max_sagitta)
-        return iter(paths)
+            return self.portal.clip_polyline(points)
+        return (points,)
 
     def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
-        # Expected polygons outside the view to be removed!
         if self.transform is not None:
             points.transform_inplace(self.transform)
         if self.portal:
             return self.portal.clip_polygon(points)
         return (points,)
+
+    def clip_paths(
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
+        paths = _transform_paths(list(paths), self.transform)
+        if self.portal:
+            return self.portal.clip_paths(paths, max_sagitta)
+        return iter(paths)
+
+    def clip_filled_paths(
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
+        paths = _transform_paths(list(paths), self.transform)
+        if self.portal:
+            return self.portal.clip_filled_paths(paths, max_sagitta)
+        return iter(paths)
 
     def transform_matrix(self, m: Matrix44) -> Matrix44:
         if self.transform is not None:
@@ -141,7 +149,13 @@ def _transform_paths(paths: list[NumpyPath2d], m: Matrix44 | None) -> list[Numpy
 
 
 class ClippingRect:
-    # Current implementation does not support remove_outside=False
+    """Represents a rectangle as clipping shape where the edges are parallel to
+    the x- and  y-axis of the coordinate system.
+
+    The current implementation does not support outside clipping: `remove_outside=False`
+
+    """
+
     remove_outside = True
 
     def __init__(self, vertices: Iterable[UVec], remove_outside=True) -> None:
@@ -186,6 +200,52 @@ class ClippingRect:
             return (cropped_segment,)  # type: ignore
         return tuple()
 
+    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+        if self.remove_all:
+            return (NumpyPoints2d(tuple()),)
+        if self.remove_none:
+            return (points,)
+
+        clipper = self.clipper
+        extmin, extmax = points.extents()
+        if not clipper.is_inside(extmin) or not clipper.is_inside(extmax):
+            return [
+                NumpyPoints2d(part) for part in clipper.clip_polyline(points.vertices())
+            ]
+        return (points,)
+
+    def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+        if self.remove_all:
+            return (NumpyPoints2d(tuple()),)
+        if self.remove_none:
+            return (points,)
+
+        clipper = self.clipper
+        extmin, extmax = points.extents()
+        if not clipper.is_inside(extmin) or not clipper.is_inside(extmax):
+            # ClippingRect2d handles only convex clipping paths and returns always a
+            # single polygon:
+            points = NumpyPoints2d(clipper.clip_polygon(points.vertices()))
+        return (points,)
+
+    def clip_paths(
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
+        if self.remove_all:
+            return tuple()
+        if self.remove_none:
+            return paths
+
+        clipper = self.clipper
+        for path in paths:
+            box = BoundingBox2d(path.control_vertices())
+            if clipper.is_inside(box.extmin) and clipper.is_inside(box.extmax):
+                yield path
+            for sub_path in path.sub_paths():
+                polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=4))
+                for part in clipper.clip_polyline(polyline):
+                    yield NumpyPath2d.from_vertices(part, close=False)
+
     def clip_filled_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
     ) -> Iterator[NumpyPath2d]:
@@ -214,35 +274,3 @@ class ClippingRect:
                         ),
                         close=True,
                     )
-
-    def clip_paths(
-        self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        if self.remove_all:
-            return tuple()
-        if self.remove_none:
-            return paths
-
-        clipper = self.clipper
-        for path in paths:
-            box = BoundingBox2d(path.control_vertices())
-            if clipper.is_inside(box.extmin) and clipper.is_inside(box.extmax):
-                yield path
-            for sub_path in path.sub_paths():
-                polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=4))
-                for part in clipper.clip_polyline(polyline):
-                    yield NumpyPath2d.from_vertices(part, close=False)
-
-    def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
-        if self.remove_all:
-            return (NumpyPoints2d(tuple()),)
-        if self.remove_none:
-            return (points,)
-
-        clipper = self.clipper
-        extmin, extmax = points.extents()
-        if not clipper.is_inside(extmin) or not clipper.is_inside(extmax):
-            # ClippingRect2d handles only convex clipping paths and returns always a
-            # single polygon:
-            points = NumpyPoints2d(clipper.clip_polygon(points.vertices()))
-        return (points,)
