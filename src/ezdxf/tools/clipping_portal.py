@@ -1,7 +1,8 @@
 #  Copyright (c) 2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Optional, Iterable, Iterator, Sequence, Protocol
+from typing import Optional, Iterable, Iterator, Sequence
+import abc
 
 from ezdxf.math import Matrix44, Vec2, BoundingBox2d, UVec
 from ezdxf.math.clipping import ClippingRect2d as _ClippingRect2d
@@ -10,7 +11,7 @@ from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
 __all__ = ["ClippingShape", "ClippingPortal", "ClippingRect"]
 
 
-class ClippingShape(Protocol):
+class ClippingShape(abc.ABC):
     """The ClippingShape defines a single clipping path and executes the clipping on
     basic geometries:
 
@@ -30,6 +31,7 @@ class ClippingShape(Protocol):
         - clipping a closed shape returns one or more closed shapes
 
     Notes:
+
         An arbitrary clipping polygon can split any basic geometry (except point) into
         multiple parts.
 
@@ -37,27 +39,33 @@ class ClippingShape(Protocol):
 
     """
 
-    remove_outside: bool
+    remove_outside: bool = True
     # - True: remove geometry outside the clipping shape
     # - False: remove geometry inside the clipping shape
 
+    @abc.abstractmethod
     def clip_point(self, point: Vec2) -> Optional[Vec2]:
         ...
 
+    @abc.abstractmethod
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         ...
 
+    @abc.abstractmethod
     def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         ...
 
+    @abc.abstractmethod
     def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         ...
 
+    @abc.abstractmethod
     def clip_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
     ) -> Iterator[NumpyPath2d]:
         ...
 
+    @abc.abstractmethod
     def clip_filled_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
     ) -> Iterator[NumpyPath2d]:
@@ -148,15 +156,14 @@ def _transform_paths(paths: list[NumpyPath2d], m: Matrix44 | None) -> list[Numpy
     return paths
 
 
-class ClippingRect:
+class ClippingRect(ClippingShape):
     """Represents a rectangle as clipping shape where the edges are parallel to
     the x- and  y-axis of the coordinate system.
 
-    The current implementation does not support outside clipping: `remove_outside=False`
+    The current implementation does not support removing the content inside the
+    clipping shape (remove_outside=False).
 
     """
-
-    remove_outside = True
 
     def __init__(self, vertices: Iterable[UVec], remove_outside=True) -> None:
         self.remove_outside = remove_outside
