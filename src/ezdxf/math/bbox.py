@@ -4,6 +4,8 @@ from __future__ import annotations
 from typing import Iterable, Optional, Iterator, Sequence, Any
 import abc
 
+import numpy as np
+
 from ezdxf.math import Vec3, Vec2, UVec, AnyVec
 
 
@@ -45,9 +47,7 @@ class AbstractBoundingBox:
             yield self.extmax
 
     @abc.abstractmethod
-    def extends_detector(
-        self, vertices: Iterable[UVec]
-    ) -> tuple[AnyVec, AnyVec]:
+    def extends_detector(self, vertices: Iterable[UVec]) -> tuple[AnyVec, AnyVec]:
         pass
 
     @property
@@ -68,9 +68,7 @@ class AbstractBoundingBox:
         ...
 
     @abc.abstractmethod
-    def intersection(
-        self, other: AbstractBoundingBox
-    ) -> AbstractBoundingBox:
+    def intersection(self, other: AbstractBoundingBox) -> AbstractBoundingBox:
         ...
 
     def contains(self, other: AbstractBoundingBox) -> bool:
@@ -177,6 +175,7 @@ class BoundingBox(AbstractBoundingBox):
         vertices: iterable of ``(x, y, z)`` tuples or :class:`Vec3` objects
 
     """
+
     __slots__ = ("extmin", "extmax")
 
     @property
@@ -190,10 +189,8 @@ class BoundingBox(AbstractBoundingBox):
             return sx * sy * sz == 0.0
         return True
 
-    def extends_detector(
-        self, vertices: Iterable[UVec]
-    ) -> tuple[Vec3, Vec3]:
-        return extends3d(vertices)
+    def extends_detector(self, vertices: Iterable[UVec]) -> tuple[Vec3, Vec3]:
+        return extents3d(vertices)
 
     def inside(self, vertex: UVec) -> bool:
         """Returns ``True`` if `vertex` is inside this bounding box.
@@ -205,9 +202,7 @@ class BoundingBox(AbstractBoundingBox):
         x, y, z = Vec3(vertex).xyz
         xmin, ymin, zmin = self.extmin.xyz
         xmax, ymax, zmax = self.extmax.xyz
-        return (
-            (xmin <= x <= xmax) and (ymin <= y <= ymax) and (zmin <= z <= zmax)
-        )
+        return (xmin <= x <= xmax) and (ymin <= y <= ymax) and (zmin <= z <= zmax)
 
     def has_intersection(self, other: AbstractBoundingBox) -> bool:
         """Returns ``True`` if this bounding box intersects with `other` but does
@@ -335,6 +330,7 @@ class BoundingBox2d(AbstractBoundingBox):
         vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vec3` objects
 
     """
+
     __slots__ = ("extmin", "extmax")
 
     @property
@@ -347,10 +343,8 @@ class BoundingBox2d(AbstractBoundingBox):
             return sx * sy == 0.0
         return True
 
-    def extends_detector(
-        self, vertices: Iterable[UVec]
-    ) -> tuple[Vec2, Vec2]:
-        return extends2d(vertices)
+    def extends_detector(self, vertices: Iterable[UVec]) -> tuple[Vec2, Vec2]:
+        return extents2d(vertices)
 
     def inside(self, vertex: UVec) -> bool:
         """Returns ``True`` if `vertex` is inside this bounding box.
@@ -441,53 +435,19 @@ class BoundingBox2d(AbstractBoundingBox):
         return True
 
 
-def extends3d(vertices: Iterable[UVec]) -> tuple[Vec3, Vec3]:
-    minx, miny, minz = None, None, None
-    maxx, maxy, maxz = None, None, None
-    for v in vertices:
-        v = Vec3(v)
-        if minx is None:
-            minx, miny, minz = v.xyz  # type: ignore
-            maxx, maxy, maxz = v.xyz  # type: ignore
-        else:
-            x, y, z = v.xyz
-            if x < minx:
-                minx = x
-            elif x > maxx:
-                maxx = x
-            if y < miny:
-                miny = y
-            elif y > maxy:
-                maxy = y
-            if z < minz:
-                minz = z
-            elif z > maxz:
-                maxz = z
-    if minx is None:
-        raise ValueError("No vertices give.")
-    return Vec3(minx, miny, minz), Vec3(maxx, maxy, maxz)
-
-
-def extends2d(vertices: Iterable[UVec]) -> tuple[Vec2, Vec2]:
-    minx, miny = None, None
-    maxx, maxy = None, None
-    for v in vertices:
-        v = Vec2(v)
-        x, y = v.x, v.y  # type: ignore
-        if minx is None:
-            minx = x
-            maxx = x
-            miny = y
-            maxy = y
-        else:
-            if x < minx:
-                minx = x
-            elif x > maxx:
-                maxx = x
-            if y < miny:
-                miny = y
-            elif y > maxy:
-                maxy = y
-    if minx is None:
+def extents3d(vertices: Iterable[UVec]) -> tuple[Vec3, Vec3]:
+    """Returns the extents of the bounding box as tuple (extmin, extmax)."""
+    vertices = np.array([Vec3(v).xyz for v in vertices], dtype=np.float64)
+    if len(vertices):
+        return Vec3(vertices.min(0)), Vec3(vertices.max(0))
+    else:
         raise ValueError("no vertices given")
-    return Vec2(minx, miny), Vec2(maxx, maxy)
+
+
+def extents2d(vertices: Iterable[UVec]) -> tuple[Vec2, Vec2]:
+    """Returns the extents of the bounding box as tuple (extmin, extmax)."""
+    vertices = np.array([(x, y) for x, y, *_ in vertices], dtype=np.float64)
+    if len(vertices):
+        return Vec2(vertices.min(0)), Vec2(vertices.max(0))
+    else:
+        raise ValueError("no vertices given")
