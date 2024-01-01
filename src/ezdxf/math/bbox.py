@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, Optional, Iterator, Sequence
+from typing import Iterable, Optional, Iterator, Sequence, Any
 import abc
 
 from ezdxf.math import Vec3, Vec2, UVec, AnyVec
@@ -14,8 +14,8 @@ class AbstractBoundingBox:
     __slots__ = ("extmin", "extmax")
 
     def __init__(self, vertices: Optional[Iterable[UVec]] = None):
-        self.extmax: Optional[AnyVec] = None
-        self.extmin: Optional[AnyVec] = None
+        self.extmax: Any = None
+        self.extmin: Any = None
         if vertices is not None:
             try:
                 self.extmin, self.extmax = self.extends_detector(vertices)

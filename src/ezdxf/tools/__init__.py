@@ -1,7 +1,7 @@
 # Copyright (c) 2015-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Any, Iterable
+from typing import Any, Iterable, TypeVar
 from uuid import uuid4
 import functools
 import html
@@ -65,7 +65,10 @@ def guid() -> str:
     return "{" + str(uuid4()).upper() + "}"
 
 
-def take2(iterable: Iterable) -> Iterable[tuple[Any, Any]]:
+T = TypeVar("T")
+
+
+def take2(iterable: Iterable[T]) -> Iterable[tuple[T, T]]:
     """Iterate `iterable` as 2-tuples.
 
     :code:`[1, 2, 3, 4, ...] -> (1, 2), (3, 4), ...`
