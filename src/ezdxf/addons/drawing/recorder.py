@@ -1,4 +1,4 @@
-#  Copyright (c) 2023, Manfred Moitzi
+#  Copyright (c) 2023-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import (
@@ -12,11 +12,11 @@ from typing import (
 from typing_extensions import Self, TypeAlias
 import copy
 import abc
-import numpy as np
 
 from ezdxf.math import BoundingBox2d, Matrix44, Vec2, UVec
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, EmptyShapeError
 from ezdxf.tools import take2
+from ezdxf.tools.clipping_portal import ClippingPortal, ClippingRect
 
 from .backend import BackendInterface, ImageData
 from .config import Configuration
@@ -354,7 +354,6 @@ def crop_records_rect(
     records: list[DataRecord], crop_rect: BoundingBox2d, distance: float
 ) -> list[DataRecord]:
     """Crop recorded shapes inplace by a rectangle."""
-    from .clipper import ClippingPortal, ClippingRect
 
     def sort_paths(np_paths: Sequence[NumpyPath2d]):
         _inside: list[NumpyPath2d] = []
@@ -415,17 +414,28 @@ def crop_records_rect(
         elif isinstance(record, PointsRecord):
             count = len(record.points)
             if count == 1:
-                pass
+                # record is inside the clipping shape!
+                cropped_records.append(record)
             elif count == 2:
                 s, e = record.points.vertices()
-                record.points = NumpyPoints2d(clipper.clip_line(s, e))
-            else:  # filled polygon
-                record.points = clipper.clip_polygon(record.points)
-            cropped_records.append(record)
+                for segment in clipper.clip_line(s, e):
+                    if not segment:
+                        continue
+                    _record = copy.copy(record)  # shallow copy
+                    _record.points = NumpyPoints2d(segment)
+                    cropped_records.append(_record)
+            else:  
+                for polygon in clipper.clip_polygon(record.points):
+                    if not polygon:
+                        continue
+                    _record = copy.copy(record)  # shallow copy!
+                    _record.points = polygon
+                    cropped_records.append(_record)
         elif isinstance(record, SolidLinesRecord):
-            points: list[Vec2] = []  # type: ignore
+            points: list[Vec2] = []
             for s, e in take2(record.lines.vertices()):
-                points.append(clipper.clip_line(s, e))  # type: ignore
+                for segment in clipper.clip_line(s, e):
+                    points.extend(segment)
             record.lines = NumpyPoints2d(points)
             cropped_records.append(record)
         elif isinstance(record, ImageRecord):

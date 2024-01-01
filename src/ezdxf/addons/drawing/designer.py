@@ -1,4 +1,4 @@
-#  Copyright (c) 2023, Manfred Moitzi
+#  Copyright (c) 2023-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import (
@@ -24,12 +24,12 @@ import ezdxf.bbox
 from ezdxf.fonts import fonts
 from ezdxf.math import Vec2, Matrix44, BoundingBox2d, AnyVec
 from ezdxf.path import make_path, Path
-from ezdxf.tools.text import replace_non_printable_characters
 from ezdxf.render import linetypes
 from ezdxf.entities import DXFGraphic, Viewport
+from ezdxf.tools.text import replace_non_printable_characters
+from ezdxf.tools.clipping_portal import ClippingPortal, ClippingRect, ClippingShape
 
 from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
-from .clipper import ClippingPortal, ClippingRect, ClippingShape
 from .config import LinePolicy, TextPolicy, ColorPolicy, Configuration
 from .properties import BackendProperties, Filling
 from .properties import Properties, RenderContext
@@ -71,7 +71,7 @@ class Designer(abc.ABC):
     @abc.abstractmethod
     def push_clipping_shape(self, shape: ClippingShape, transform: Matrix44) -> None:
         ...
-    
+
     @abc.abstractmethod
     def pop_clipping_shape(self) -> None:
         ...
@@ -204,7 +204,7 @@ class Designer2d(Designer):
 
     def push_clipping_shape(self, shape: ClippingShape, transform: Matrix44) -> None:
         self.clipping_portal.push(shape, transform)
-    
+
     def pop_clipping_shape(self) -> None:
         self.clipping_portal.pop()
 
@@ -263,12 +263,12 @@ class Designer2d(Designer):
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
+            bk_properties = self.get_backend_properties(properties)    
             if self.clipping_portal.is_active:
-                points = self.clipping_portal.clip_line(s, e)
-                if len(points) != 2:
-                    return
-                start, end = points
-            self.backend.draw_line(start, end, self.get_backend_properties(properties))
+                for segment in self.clipping_portal.clip_line(s, e):
+                    self.backend.draw_line(segment[0], segment[1], bk_properties)
+            else:
+                self.backend.draw_line(s, e, bk_properties)
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
             self.draw_solid_lines(  # includes transformation
@@ -279,14 +279,12 @@ class Designer2d(Designer):
     def draw_solid_lines(
         self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
     ) -> None:
-        lines2d = [(Vec2(s), Vec2(e)) for s, e in lines]
+        lines2d: list[tuple[Vec2, Vec2]] = [(Vec2(s), Vec2(e)) for s, e in lines]
         if self.clipping_portal.is_active:
-            clipped_lines: list[Sequence[Vec2]] = []
+            cropped_lines: list[tuple[Vec2, Vec2]] = []
             for start, end in lines2d:
-                points = self.clipping_portal.clip_line(start, end)
-                if points:
-                    clipped_lines.append(points)
-            lines2d = clipped_lines  # type: ignore
+                cropped_lines.extend(self.clipping_portal.clip_line(start, end))
+            lines2d = cropped_lines
         self.backend.draw_solid_lines(lines2d, self.get_backend_properties(properties))
 
     def draw_path(self, path: Path, properties: Properties):
@@ -338,11 +336,12 @@ class Designer2d(Designer):
         self._draw_filled_polygon(BkPoints2d(points), properties)
 
     def _draw_filled_polygon(self, points: BkPoints2d, properties: Properties) -> None:
+        bk_properties = self.get_backend_properties(properties)
         if self.clipping_portal.is_active:
-            points = self.clipping_portal.clip_polygon(points)
-        self.backend.draw_filled_polygon(
-            points, self.get_backend_properties(properties)
-        )
+            for points in self.clipping_portal.clip_polygon(points):
+                self.backend.draw_filled_polygon(points, bk_properties)
+        else:
+            self.backend.draw_filled_polygon(points, bk_properties)
 
     def pattern(self, properties: Properties) -> Sequence[float]:
         """Get pattern - implements pattern caching."""

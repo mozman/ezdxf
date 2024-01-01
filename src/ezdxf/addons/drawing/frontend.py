@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023, Matthew Broadway
+# Copyright (c) 2020-2024, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -63,7 +63,7 @@ from ezdxf.entities import (
     Viewport,
     Image,
 )
-from ezdxf.addons.drawing.clipper import ClippingRect
+from ezdxf.tools.clipping_portal import ClippingRect
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
