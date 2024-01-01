@@ -188,7 +188,7 @@ class ClippingPortal:
         return result
 
     def transform_matrix(self, m: Matrix44) -> Matrix44:
-        for _, transform in self._stages:
+        for _, transform in self._stages[::-1]:
             if transform is not None:
                 m @= transform
         return m
