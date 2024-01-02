@@ -3,7 +3,7 @@
 # distutils: language = c++
 # Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple
+from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple, Iterator
 from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
 import random
 
@@ -113,7 +113,7 @@ cdef class Vec2:
         return tuple(Vec2.generate(items))
 
     @staticmethod
-    def generate(items: Iterable[UVec]) -> Iterable[Vec2]:
+    def generate(items: Iterable[UVec]) -> Iterator[Vec2]:
         return (Vec2(item) for item in items)
 
     @staticmethod

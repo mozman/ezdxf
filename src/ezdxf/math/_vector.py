@@ -611,7 +611,7 @@ class Vec2:
         return tuple(cls.generate(items))
 
     @classmethod
-    def generate(cls, items: Iterable[UVec]) -> Iterable[Vec2]:
+    def generate(cls, items: Iterable[UVec]) -> Iterator[Vec2]:
         return (cls(item) for item in items)
 
     @classmethod

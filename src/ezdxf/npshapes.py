@@ -6,6 +6,8 @@ from typing_extensions import Self, TypeAlias
 import abc
 
 import numpy as np
+import numpy.typing as npt
+
 from ezdxf.math import (
     Matrix44,
     Vec2,
@@ -68,7 +70,7 @@ class NumpyShape2d(abc.ABC):
     without sacrificing basic functions like transformation and bounding box calculation.
     """
 
-    _vertices: np.ndarray = EMPTY_SHAPE
+    _vertices: npt.NDArray[VertexNumpyType] = EMPTY_SHAPE
 
     def extents(self) -> tuple[Vec2, Vec2]:
         """Returns the extents of the bounding box as tuple (extmin, extmax)."""
@@ -77,12 +79,12 @@ class NumpyShape2d(abc.ABC):
             return Vec2(v.min(0)), Vec2(v.max(0))
         else:
             raise EmptyShapeError("empty shape has no extends")
-        
+
     @abc.abstractmethod
     def clone(self) -> Self:
         ...
 
-    def np_vertices(self) -> np.ndarray:
+    def np_vertices(self) -> npt.NDArray[VertexNumpyType]:
         return self._vertices
 
     def transform_inplace(self, m: Matrix44) -> None:
@@ -115,6 +117,8 @@ class NumpyPoints2d(NumpyShape2d):
         clone._vertices = self._vertices.copy()
         return clone
 
+    __copy__ = clone
+
     def __len__(self) -> int:
         return len(self._vertices)
 
@@ -136,6 +140,8 @@ class NumpyPath2d(NumpyShape2d):
         path2d = NumpyPath2d(path)
 
     """
+
+    _commands: npt.NDArray[CommandNumpyType]
 
     def __init__(self, path: Optional[Path]) -> None:
         if path is None:
@@ -198,7 +204,6 @@ class NumpyPath2d(NumpyShape2d):
             elif cmd == CMD_MOVE_TO:
                 yield MoveTo(vertices[index])
                 index += 1
-
 
     def to_path(self) -> Path:
         """Returns a new :class:`ezdxf.path.Path` instance."""
