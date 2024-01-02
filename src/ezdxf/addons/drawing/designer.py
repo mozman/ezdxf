@@ -437,9 +437,9 @@ class Designer2d(Designer):
         self._draw_filled_paths(transformed_paths, properties)
 
     def draw_image(self, image_data: ImageData, properties: Properties) -> None:
-        # the outer bounds contain the visible parts of the image for the 
+        # the outer bounds contain the visible parts of the image for the
         # clip mode "remove inside"
-        outer_bounds: list[BkPoints2d] = []  
+        outer_bounds: list[BkPoints2d] = []
 
         if self.clipping_portal.is_active:
             # the pixel boundary path can be split into multiple paths
@@ -448,7 +448,7 @@ class Designer2d(Designer):
             clipping_paths = _clip_image_polygon(
                 self.clipping_portal, pixel_boundary_path, transform
             )
-            if not image_data.remove_outside:  
+            if not image_data.remove_outside:
                 # remove inside:
                 #  detect the visible parts of the image which are not removed by
                 #  clipping through viewports or block references
@@ -471,7 +471,7 @@ class Designer2d(Designer):
                 self._draw_image(image_data, outer_bounds, properties)
             else:
                 for clipping_path in clipping_paths:
-                    # when clipping path is split into multiple parts: 
+                    # when clipping path is split into multiple parts:
                     #  copy image for each part, not efficient but works
                     #  this should be a rare usecase so optimization is not required
                     self._draw_image(
@@ -490,11 +490,11 @@ class Designer2d(Designer):
     def _draw_image(
         self,
         image_data: ImageData,
-        outer_boundaries: list[BkPoints2d],
+        outer_bounds: list[BkPoints2d],
         properties: Properties,
     ) -> None:
         if image_data.use_clipping_boundary:
-            _mask_image(image_data, outer_boundaries)
+            _mask_image(image_data, outer_bounds)
         self.backend.draw_image(image_data, self.get_backend_properties(properties))
 
     def finalize(self) -> None:
@@ -511,18 +511,18 @@ class Designer2d(Designer):
 
 
 def _mask_image(image_data: ImageData, outer_bounds: list[BkPoints2d]) -> None:
-    """Mask away the clipped parts of the image. The argument `outer_bounds` is only 
-    used for clip mode "remove_inside". The outer bounds can be composed of multiple 
-    parts. If `outer_bounds` is empty the image has no removed parts and is fully 
+    """Mask away the clipped parts of the image. The argument `outer_bounds` is only
+    used for clip mode "remove_inside". The outer bounds can be composed of multiple
+    parts. If `outer_bounds` is empty the image has no removed parts and is fully
     visible before applying the image clipping path.
 
     Args:
-        image_data: 
+        image_data:
             image_data.pixel_boundary: path contains the image clipping path
             image_data.remove_outside: defines the clipping mode (inside/outside)
         outer_bounds: countain the parts of the image which are __not__ removed by
             clipping through viewports or clipped block references
-            e.g. an image without any removed parts has the outer bounds 
+            e.g. an image without any removed parts has the outer bounds
             [(0, 0) (width, 0), (width, height), (0, height)]
 
     """
@@ -530,7 +530,9 @@ def _mask_image(image_data: ImageData, outer_bounds: list[BkPoints2d]) -> None:
     # create an empty image
     clipping_image = PIL.Image.new("L", image_data.image_size(), 0)
     # paint in the clipping path
-    PIL.ImageDraw.ImageDraw(clipping_image).polygon(clip_polygon, outline=None, width=0, fill=1)
+    PIL.ImageDraw.ImageDraw(clipping_image).polygon(
+        clip_polygon, outline=None, width=0, fill=1
+    )
     clipping_mask = np.asarray(clipping_image)
 
     if not image_data.remove_outside:  # clip mode "remove_inside"
