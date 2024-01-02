@@ -59,6 +59,8 @@ class EmptyShapeError(NumpyShapesException):
 
 CommandNumpyType: TypeAlias = np.int8
 VertexNumpyType: TypeAlias = np.float64
+EMPTY_SHAPE = np.array([], dtype=VertexNumpyType)
+NO_COMMANDS = np.array([], dtype=CommandNumpyType)
 
 
 class NumpyShape2d(abc.ABC):
@@ -66,7 +68,7 @@ class NumpyShape2d(abc.ABC):
     without sacrificing basic functions like transformation and bounding box calculation.
     """
 
-    _vertices: np.ndarray
+    _vertices: np.ndarray = EMPTY_SHAPE
 
     def extents(self) -> tuple[Vec2, Vec2]:
         """Returns the extents of the bounding box as tuple (extmin, extmax)."""
@@ -75,6 +77,10 @@ class NumpyShape2d(abc.ABC):
             return Vec2(v.min(0)), Vec2(v.max(0))
         else:
             raise EmptyShapeError("empty shape has no extends")
+        
+    @abc.abstractmethod
+    def clone(self) -> Self:
+        ...
 
     def np_vertices(self) -> np.ndarray:
         return self._vertices
@@ -98,15 +104,19 @@ class NumpyShape2d(abc.ABC):
 class NumpyPoints2d(NumpyShape2d):
     """Represents an array of 2D points stored as a ndarray."""
 
-    def __init__(self, points: Iterable[Vec2 | Vec3]) -> None:
-        self._vertices = np.array([(v.x, v.y) for v in points], dtype=VertexNumpyType)
+    def __init__(self, points: Optional[Iterable[Vec2 | Vec3]]) -> None:
+        if points:
+            self._vertices = np.array(
+                [(v.x, v.y) for v in points], dtype=VertexNumpyType
+            )
+
+    def clone(self) -> Self:
+        clone = self.__class__(None)
+        clone._vertices = self._vertices.copy()
+        return clone
 
     def __len__(self) -> int:
         return len(self._vertices)
-
-
-NO_VERTICES = np.array([], dtype=VertexNumpyType)
-NO_COMMANDS = np.array([], dtype=CommandNumpyType)
 
 
 class NumpyPath2d(NumpyShape2d):
@@ -129,7 +139,7 @@ class NumpyPath2d(NumpyShape2d):
 
     def __init__(self, path: Optional[Path]) -> None:
         if path is None:
-            self._vertices = NO_VERTICES
+            self._vertices = EMPTY_SHAPE
             self._commands = NO_COMMANDS
             return
         # (v.x, v.y) is 4x faster than Vec2(v), see profiling/numpy_array_setup.py
@@ -158,11 +168,13 @@ class NumpyPath2d(NumpyShape2d):
     def control_vertices(self) -> list[Vec2]:
         return [Vec2(v) for v in self._vertices]
 
-    def __copy__(self) -> Self:
+    def clone(self) -> Self:
         clone = self.__class__(None)
         clone._commands = self._commands.copy()
         clone._vertices = self._vertices.copy()
         return clone
+
+    __copy__ = clone
 
     def command_codes(self) -> list[int]:
         """Internal API."""
@@ -187,7 +199,6 @@ class NumpyPath2d(NumpyShape2d):
                 yield MoveTo(vertices[index])
                 index += 1
 
-    clone = __copy__
 
     def to_path(self) -> Path:
         """Returns a new :class:`ezdxf.path.Path` instance."""
