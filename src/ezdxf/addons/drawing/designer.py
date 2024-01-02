@@ -500,7 +500,6 @@ def _clip_image_boundary_path(
     clipping_portal: ClippingPortal, pixel_boundary_path: BkPoints2d, m: Matrix44
 ) -> list[BkPoints2d]:
     original = [pixel_boundary_path]
-    wcs_polygon = BkPoints2d(m.transform_vertices(pixel_boundary_path.vertices()))
     # include transformation applied by the clipping portal
     inverse = clipping_portal.transform_matrix(m)
     try:
@@ -509,6 +508,8 @@ def _clip_image_boundary_path(
         # inverse transformation from WCS to pixel coordinates is not possible
         return original
 
+    wcs_polygon = pixel_boundary_path.clone()
+    wcs_polygon.transform_inplace(m)
     clipped_wcs_polygons = clipping_portal.clip_polygon(wcs_polygon)
     if (len(clipped_wcs_polygons) == 1) and (clipped_wcs_polygons[0] is wcs_polygon):
         return original
