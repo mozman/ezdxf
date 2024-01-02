@@ -437,37 +437,64 @@ class Designer2d(Designer):
         self._draw_filled_paths(transformed_paths, properties)
 
     def draw_image(self, image_data: ImageData, properties: Properties) -> None:
+        # the outer bounds contain the visible parts of the image for the 
+        # clip mode "remove inside"
+        outer_bounds: list[BkPoints2d] = []  
+
         if self.clipping_portal.is_active:
             # the pixel boundary path can be split into multiple paths
-            boundary_paths = _clip_image_boundary_path(self.clipping_portal, image_data)
+            transform = image_data.flip_matrix() * image_data.transform
+            pixel_boundary_path = image_data.pixel_boundary_path
+            clipping_paths = _clip_image_polygon(
+                self.clipping_portal, pixel_boundary_path, transform
+            )
+            if not image_data.remove_outside:  
+                # remove inside:
+                #  detect the visible parts of the image which are not removed by
+                #  clipping through viewports or block references
+                width, height = image_data.image_size()
+                outer_boundary = BkPoints2d(
+                    Vec2.generate([(0, 0), (width, 0), (width, height), (0, height)])
+                )
+                outer_bounds = _clip_image_polygon(
+                    self.clipping_portal, outer_boundary, transform
+                )
             image_data.transform = self.clipping_portal.transform_matrix(
                 image_data.transform
             )
-            if len(boundary_paths) == 1:
-                new_boundary_path = boundary_paths[0]
-                if new_boundary_path is not image_data.pixel_boundary_path:
-                    image_data.pixel_boundary_path = new_boundary_path
+            if len(clipping_paths) == 1:
+                new_clipping_path = clipping_paths[0]
+                if new_clipping_path is not image_data.pixel_boundary_path:
+                    image_data.pixel_boundary_path = new_clipping_path
+                    # forced clipping triggered by viewport- or block reference clipping:
                     image_data.use_clipping_boundary = True
-                self._draw_image(image_data, properties)
+                self._draw_image(image_data, outer_bounds, properties)
             else:
-                for boundary_path in boundary_paths:
-                    # This is not efficient but works.
-                    # This should be a rare usecase so optimization is not required.
+                for clipping_path in clipping_paths:
+                    # when clipping path is split into multiple parts: 
+                    #  copy image for each part, not efficient but works
+                    #  this should be a rare usecase so optimization is not required
                     self._draw_image(
                         ImageData(
                             image=image_data.image.copy(),
                             transform=image_data.transform,
-                            pixel_boundary_path=boundary_path,
+                            pixel_boundary_path=clipping_path,
                             use_clipping_boundary=True,
                         ),
+                        outer_bounds,
                         properties,
                     )
         else:
-            self._draw_image(image_data, properties)
+            self._draw_image(image_data, outer_bounds, properties)
 
-    def _draw_image(self, image_data: ImageData, properties: Properties) -> None:
+    def _draw_image(
+        self,
+        image_data: ImageData,
+        outer_boundaries: list[BkPoints2d],
+        properties: Properties,
+    ) -> None:
         if image_data.use_clipping_boundary:
-            _mask_image(image_data)
+            _mask_image(image_data, outer_boundaries)
         self.backend.draw_image(image_data, self.get_backend_properties(properties))
 
     def finalize(self) -> None:
@@ -483,25 +510,55 @@ class Designer2d(Designer):
         self.backend.exit_entity(entity)
 
 
-def _mask_image(image_data: ImageData) -> None:
+def _mask_image(image_data: ImageData, outer_bounds: list[BkPoints2d]) -> None:
+    """Mask away the clipped parts of the image. The argument `outer_bounds` is only 
+    used for clip mode "remove_inside". The outer bounds can be composed of multiple 
+    parts. If `outer_bounds` is empty the image has no removed parts and is fully 
+    visible before applying the image clipping path.
+
+    Args:
+        image_data: 
+            image_data.pixel_boundary: path contains the image clipping path
+            image_data.remove_outside: defines the clipping mode (inside/outside)
+        outer_bounds: countain the parts of the image which are __not__ removed by
+            clipping through viewports or clipped block references
+            e.g. an image without any removed parts has the outer bounds 
+            [(0, 0) (width, 0), (width, height), (0, height)]
+
+    """
     clip_polygon = [(p.x, p.y) for p in image_data.pixel_boundary_path.vertices()]
-    mask = PIL.Image.new("L", image_data.image_size(), 0)
-    PIL.ImageDraw.ImageDraw(mask).polygon(clip_polygon, outline=None, width=0, fill=1)
-    mask_array = np.asarray(mask)
-    if not image_data.remove_outside:
-        opaque_mask = np.full(mask_array.shape, fill_value=1, dtype=mask_array.dtype)
-        mask_array = opaque_mask - mask_array
-    image_data.image[:, :, 3] *= mask_array
+    # create an empty image
+    clipping_image = PIL.Image.new("L", image_data.image_size(), 0)
+    # paint in the clipping path
+    PIL.ImageDraw.ImageDraw(clipping_image).polygon(clip_polygon, outline=None, width=0, fill=1)
+    clipping_mask = np.asarray(clipping_image)
+
+    if not image_data.remove_outside:  # clip mode "remove_inside"
+        if outer_bounds:
+            # create a new empty image
+            visible_image = PIL.Image.new("L", image_data.image_size(), 0)
+            # paint in parts of the image which are still visible
+            for boundary in outer_bounds:
+                clip_polygon = [(p.x, p.y) for p in boundary.vertices()]
+                PIL.ImageDraw.ImageDraw(visible_image).polygon(
+                    clip_polygon, outline=None, width=0, fill=1
+                )
+            # remove the clipping path
+            clipping_mask = np.asarray(visible_image) - clipping_mask
+        else:
+            # create mask for fully visible image
+            fully_visible_image_mask = np.full(
+                clipping_mask.shape, fill_value=1, dtype=clipping_mask.dtype
+            )
+            # remove the clipping path
+            clipping_mask = fully_visible_image_mask - clipping_mask
+    image_data.image[:, :, 3] *= clipping_mask
 
 
-def _clip_image_boundary_path(
-    clipping_portal: ClippingPortal, image_data: ImageData
+def _clip_image_polygon(
+    clipping_portal: ClippingPortal, polygon_px: BkPoints2d, m: Matrix44
 ) -> list[BkPoints2d]:
-    pixel_boundary_path = image_data.pixel_boundary_path
-
-    # flip image coordinate system
-    m = image_data.flip_matrix() @ image_data.transform
-    original = [pixel_boundary_path]
+    original = [polygon_px]
 
     # inverse matrix includes the transformation applied by the clipping portal
     inverse = clipping_portal.transform_matrix(m)
@@ -511,15 +568,18 @@ def _clip_image_boundary_path(
         # inverse transformation from WCS to pixel coordinates is not possible
         return original
 
-    wcs_polygon = pixel_boundary_path.clone()
-    wcs_polygon.transform_inplace(m)
-    clipped_wcs_polygons = clipping_portal.clip_polygon(wcs_polygon)
-    if (len(clipped_wcs_polygons) == 1) and (clipped_wcs_polygons[0] is wcs_polygon):
+    # transform image coordinates to WCS coordinates
+    polygon = polygon_px.clone()
+    polygon.transform_inplace(m)
+
+    clipped_polygons = clipping_portal.clip_polygon(polygon)
+    if (len(clipped_polygons) == 1) and (clipped_polygons[0] is polygon):
         # this shows the caller that the image boundary path wasn't clipped
         return original
-    for polygon in clipped_wcs_polygons:
+    # transform WCS coordinates to image coordinates
+    for polygon in clipped_polygons:
         polygon.transform_inplace(inverse)
-    return clipped_wcs_polygons
+    return clipped_polygons  # in image coordinates!
 
 
 def invert_color(color: Color) -> Color:
