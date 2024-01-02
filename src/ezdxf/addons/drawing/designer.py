@@ -489,8 +489,7 @@ def _mask_image(image_data: ImageData) -> None:
     PIL.ImageDraw.ImageDraw(mask).polygon(clip_polygon, outline=None, width=0, fill=1)
     mask_array = np.asarray(mask)
     if not image_data.remove_outside:
-        opaque_mask = mask_array.copy()
-        opaque_mask.fill(1)
+        opaque_mask = np.full(mask_array.shape, fill_value=1, dtype=mask_array.dtype)
         mask_array = opaque_mask - mask_array
     image_data.image[:, :, 3] *= mask_array
 
