@@ -63,7 +63,7 @@ from ezdxf.entities import (
     Viewport,
     Image,
 )
-from ezdxf.tools.clipping_portal import ClippingRect
+from ezdxf.tools import clipping_portal
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
@@ -817,19 +817,25 @@ class UniversalFrontend:
 
     def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         def draw_insert(insert: Insert):
+            # Block reference attributes are located __outside__ the block reference!
             self.draw_entities(insert.attribs)
-            # draw_entities() includes the visibility check:
             clip = xclip.XClip(insert)
             if clip.has_clipping_path:
                 boundary_path = clip.get_wcs_clipping_path()
-                clipping_shape = ClippingRect(boundary_path.vertices)
+                remove_outside = not boundary_path.is_inverted_clip
+                clipping_shape = clipping_portal.find_best_clipping_shape(
+                    boundary_path.vertices, remove_outside
+                )
                 self.designer.push_clipping_shape(clipping_shape, None)
+
+            # draw_entities() includes the visibility check:
             self.draw_entities(
                 insert.virtual_entities(
                     skipped_entity_callback=self.skip_entity
                     # TODO: redraw_order=True?
                 )
             )
+            
             if clip.has_clipping_path:
                 if clip.is_clipping_path_visible and clip.get_xclip_frame_policy():
                     self.designer.draw_path(

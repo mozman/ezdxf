@@ -8,7 +8,12 @@ from ezdxf.math import Matrix44, Vec2, BoundingBox2d, UVec
 from ezdxf.math.clipping import ClippingRect2d as _ClippingRect2d
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
 
-__all__ = ["ClippingShape", "ClippingPortal", "ClippingRect"]
+__all__ = [
+    "ClippingShape",
+    "ClippingPortal",
+    "ClippingRect",
+    "find_best_clipping_shape",
+]
 
 
 class ClippingShape(abc.ABC):
@@ -319,3 +324,21 @@ class ClippingRect(ClippingShape):
                         ),
                         close=True,
                     )
+
+
+def find_best_clipping_shape(
+    polygon: Iterable[UVec], remove_outside=True
+) -> ClippingShape:
+    """Returns the best clipping shape for the given clipping polygon.
+
+    The function analyses the given polygon (rectangular, convex or concave polygon, ...)
+    and returns the optimized (fastest) clipping shape.
+
+    Args:
+        polygon: clipping polygon as iterable vertices
+        remove_outside: remove objects outside the clipping shape or inside the clipping
+            shape (inverted clipping shape)
+
+    """
+    # That's all I got so far:
+    return ClippingRect(polygon, remove_outside=remove_outside)
