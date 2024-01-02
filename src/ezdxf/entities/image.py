@@ -185,7 +185,8 @@ class ImageBase(DXFGraphic):
 
     def pixel_boundary_path(self) -> list[Vec2]:
         """Returns the boundary path as closed loop in pixel coordinates.  Resolves the 
-        simple form of two vertices as a rectangle.
+        simple form of two vertices as a rectangle.  The image coordinate system has an 
+        inverted y-axis and the top-left corner is (0, 0).
 
         .. versionchanged:: 1.2.0
 

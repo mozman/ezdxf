@@ -18,6 +18,15 @@ from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, single_paths
 BkPath2d: TypeAlias = NumpyPath2d
 BkPoints2d: TypeAlias = NumpyPoints2d
 
+# fmt: off
+_IMAGE_FLIP_MATRIX = [
+    1.0, 0.0, 0.0, 0.0, 
+    0.0, -1.0, 0.0, 0.0, 
+    0.0, 0.0, 1.0, 0.0, 
+    0.0, 999, 0.0, 1.0  # index 13: 999 = image height
+]
+# fmt: on
+
 
 @dataclasses.dataclass
 class ImageData:
@@ -27,7 +36,8 @@ class ImageData:
         image: an array of RGBA pixels
         transform: the transformation to apply to the image when drawing
             (the transform from pixel coordinates to wcs)
-        pixel_boundary_path: boundary path vertices in pixel coordinates
+        pixel_boundary_path: boundary path vertices in pixel coordinates, the image
+            coordinate system has an inverted y-axis and the top-left corner is (0, 0)
 
     """
 
@@ -35,6 +45,19 @@ class ImageData:
     transform: Matrix44
     pixel_boundary_path: NumpyPoints2d
     use_clipping_boundary: bool = False
+
+    def image_size(self) -> tuple[int, int]:
+        """Returns the image size as tuple (width, height)."""
+        image_height, image_width, *_ = self.image.shape
+        return image_width, image_height
+
+    def flip_matrix(self) -> Matrix44:
+        """Returns the transformation matrix to align the image coordinate system with
+        the WCS.
+        """
+        _, image_height = self.image_size()
+        _IMAGE_FLIP_MATRIX[13] = image_height
+        return Matrix44(_IMAGE_FLIP_MATRIX)
 
 
 class BackendInterface(ABC):

@@ -438,11 +438,7 @@ class Designer2d(Designer):
     def draw_image(self, image_data: ImageData, properties: Properties) -> None:
         if self.clipping_portal.is_active:
             # the pixel boundary path can be split into multiple paths
-            boundary_paths = _clip_image_boundary_path(
-                self.clipping_portal,
-                image_data.pixel_boundary_path,
-                image_data.transform,
-            )
+            boundary_paths = _clip_image_boundary_path(self.clipping_portal, image_data)
             image_data.transform = self.clipping_portal.transform_matrix(
                 image_data.transform
             )
@@ -497,10 +493,15 @@ def _mask_image(image_data: ImageData) -> None:
 
 
 def _clip_image_boundary_path(
-    clipping_portal: ClippingPortal, pixel_boundary_path: BkPoints2d, m: Matrix44
+    clipping_portal: ClippingPortal, image_data: ImageData
 ) -> list[BkPoints2d]:
+    pixel_boundary_path = image_data.pixel_boundary_path
+
+    # flip image coordinate system
+    m = image_data.flip_matrix() @ image_data.transform
     original = [pixel_boundary_path]
-    # include transformation applied by the clipping portal
+
+    # inverse matrix includes the transformation applied by the clipping portal
     inverse = clipping_portal.transform_matrix(m)
     try:
         inverse.inverse()
@@ -512,6 +513,7 @@ def _clip_image_boundary_path(
     wcs_polygon.transform_inplace(m)
     clipped_wcs_polygons = clipping_portal.clip_polygon(wcs_polygon)
     if (len(clipped_wcs_polygons) == 1) and (clipped_wcs_polygons[0] is wcs_polygon):
+        # this shows the caller that the image boundary path wasn't clipped
         return original
     for polygon in clipped_wcs_polygons:
         polygon.transform_inplace(inverse)
