@@ -16,6 +16,7 @@ import abc
 import numpy as np
 import PIL.Image
 import PIL.ImageDraw
+import PIL.ImageOps
 
 
 from ezdxf.colors import RGB
@@ -486,7 +487,12 @@ def _mask_image(image_data: ImageData) -> None:
     clip_polygon = [(p.x, p.y) for p in image_data.pixel_boundary_path.vertices()]
     mask = PIL.Image.new("L", image_data.image_size(), 0)
     PIL.ImageDraw.ImageDraw(mask).polygon(clip_polygon, outline=None, width=0, fill=1)
-    image_data.image[:, :, 3] *= np.asarray(mask)
+    mask_array = np.asarray(mask)
+    if not image_data.remove_outside:
+        opaque_mask = mask_array.copy()
+        opaque_mask.fill(1)
+        mask_array = opaque_mask - mask_array
+    image_data.image[:, :, 3] *= mask_array
 
 
 def _clip_image_boundary_path(

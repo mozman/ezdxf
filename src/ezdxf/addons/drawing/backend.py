@@ -38,6 +38,8 @@ class ImageData:
             (the transform from pixel coordinates to wcs)
         pixel_boundary_path: boundary path vertices in pixel coordinates, the image
             coordinate system has an inverted y-axis and the top-left corner is (0, 0)
+        remove_outside: remove image outside the clipping boundary if ``True`` otherwise
+            remove image inside the clipping boundary
 
     """
 
@@ -45,6 +47,7 @@ class ImageData:
     transform: Matrix44
     pixel_boundary_path: NumpyPoints2d
     use_clipping_boundary: bool = False
+    remove_outside: bool = True
 
     def image_size(self) -> tuple[int, int]:
         """Returns the image size as tuple (width, height)."""

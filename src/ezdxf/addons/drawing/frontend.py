@@ -710,6 +710,7 @@ class UniversalFrontend:
                     transform=image.get_wcs_transform(),
                     pixel_boundary_path=NumpyPoints2d(image.pixel_boundary_path()),
                     use_clipping_boundary=image.dxf.flags & Image.USE_CLIPPING_BOUNDARY,
+                    remove_outside=image.dxf.clip_mode == 0,
                 )
                 self.designer.draw_image(image_data, properties)
 
@@ -835,7 +836,7 @@ class UniversalFrontend:
                     # TODO: redraw_order=True?
                 )
             )
-            
+
             if clip.has_clipping_path:
                 if clip.is_clipping_path_visible and clip.get_xclip_frame_policy():
                     self.designer.draw_path(
