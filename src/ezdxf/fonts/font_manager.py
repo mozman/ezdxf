@@ -76,6 +76,9 @@ class FontCache:
     def __getitem__(self, item: str) -> CacheEntry:
         return self._cache[self.key(item)]
 
+    def __setitem__(self, item: str, entry: CacheEntry) -> None:
+        self._cache[self.key(item)] = entry
+
     def __len__(self):
         return len(self._cache)
 
@@ -393,8 +396,8 @@ class FontManager:
     def build(self, folders: Optional[Sequence[str]] = None, support_dirs=True) -> None:
         """Adds all supported font types located in the given `folders` to the font
         manager. If no directories are specified, the known font folders for Windows,
-        Linux and macOS are searched by default, except `support_dirs` is ``False``. 
-        Searches recursively all subdirectories. 
+        Linux and macOS are searched by default, except `support_dirs` is ``False``.
+        Searches recursively all subdirectories.
 
         The folders stored in the config SUPPORT_DIRS option are scanned recursively for
         .shx, .shp and .lff fonts, the basic stroke fonts included in CAD applications.
@@ -409,6 +412,18 @@ class FontManager:
         if support_dirs:
             dirs = dirs + list(options.support_dirs)
         self.scan_all(dirs)
+
+    def add_synonyms(self, synonyms: dict[str, str], reverse=True) -> None:
+        font_cache = self._font_cache
+        for font_name, synonym in synonyms.items():
+            if not font_name in font_cache:
+                continue
+            if synonym in font_cache:
+                continue
+            cache_entry = font_cache[font_name]
+            font_cache[synonym] = cache_entry
+        if reverse:
+            self.add_synonyms({v: k for k, v in synonyms.items()}, reverse=False)
 
     def scan_all(self, folders: Iterable[str]) -> None:
         for folder in folders:
@@ -454,7 +469,7 @@ def normalize_style(style: str) -> str:
 
 
 def get_ttf_font_face(font_path: Path) -> FontFace:
-    """The caller should catch ALL exception (see scan_folder function above) - strange 
+    """The caller should catch ALL exception (see scan_folder function above) - strange
     things can happen when reading TTF files.
     """
     ttf = TTFont(font_path, fontNumber=0)
@@ -468,7 +483,7 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
             style = record.string.decode(record.getEncoding())
         if family and style:
             break
-    
+
     try:
         os2_table = ttf["OS/2"]
     except Exception:  # e.g. ComickBook_Simple.ttf has an invalid "OS/2" table

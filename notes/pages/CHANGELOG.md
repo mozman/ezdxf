@@ -17,6 +17,8 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 			- [[PyMuPdfBackend]]
 	- NEW: the `ezdxf draw` command supports additional backends by option `--backend {matplotlib,qt,mupdf,custom_svg}`, added by [[mbway]]
 	- NEW: `ezdxf.colors.RGBA` class
+	- NEW: support for font-name synonyms, find macOS fonts on Windows/Linux and vice vesa
+		- {{discussion 1002}}
 	- CHANGE: renamed `Image.boundray_path_ocs()` to `Image.pixel_boundary_path()`
 	- CHANGE: refactoring of the [[RecorderBackend]]
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
