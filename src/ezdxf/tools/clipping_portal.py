@@ -113,7 +113,7 @@ class ClippingPortal:
         self.foreach_stage(do)
         return result
 
-    def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
+    def clip_line(self, start: Vec2, end: Vec2) -> list[tuple[Vec2, Vec2]]:
         def do(stage: ClippingStage) -> bool:
             lines = list(result)
             result.clear()
@@ -127,7 +127,7 @@ class ClippingPortal:
         self.foreach_stage(do)
         return result
 
-    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+    def clip_polyline(self, points: NumpyPoints2d) -> list[NumpyPoints2d]:
         def do(stage: ClippingStage) -> bool:
             polylines = list(result)
             result.clear()
@@ -141,7 +141,7 @@ class ClippingPortal:
         self.foreach_stage(do)
         return result
 
-    def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+    def clip_polygon(self, points: NumpyPoints2d) -> list[NumpyPoints2d]:
         def do(stage: ClippingStage) -> bool:
             polygons = list(result)
             result.clear()
@@ -157,7 +157,7 @@ class ClippingPortal:
 
     def clip_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Sequence[NumpyPath2d]:
+    ) -> list[NumpyPath2d]:
         def do(stage: ClippingStage) -> bool:
             paths = list(result)
             result.clear()
@@ -173,7 +173,7 @@ class ClippingPortal:
 
     def clip_filled_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Sequence[NumpyPath2d]:
+    ) -> list[NumpyPath2d]:
         def do(stage: ClippingStage) -> bool:
             paths = list(result)
             result.clear()
