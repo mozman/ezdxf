@@ -483,13 +483,10 @@ class Designer2d(Designer):
 
 
 def _mask_image(image_data: ImageData) -> None:
-    image = PIL.Image.fromarray(image_data.image, mode="RGBA")
     clip_polygon = [(p.x, p.y) for p in image_data.pixel_boundary_path.vertices()]
-    mask = PIL.Image.new("L", image.size, 0)
+    mask = PIL.Image.new("L", image_data.image_size(), 0)
     PIL.ImageDraw.ImageDraw(mask).polygon(clip_polygon, outline=None, width=0, fill=1)
-    masked_image = np.array(image)
-    masked_image[:, :, 3] *= np.asarray(mask)
-    image_data.image = np.asarray(masked_image)
+    image_data.image[:, :, 3] *= np.asarray(mask)
 
 
 def _clip_image_boundary_path(

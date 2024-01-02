@@ -706,7 +706,7 @@ class UniversalFrontend:
                         loaded_image, 1.0 - image.transparency
                     )
                 image_data = ImageData(
-                    image=np.asarray(loaded_image),
+                    image=np.array(loaded_image),
                     transform=image.get_wcs_transform(),
                     pixel_boundary_path=NumpyPoints2d(image.pixel_boundary_path()),
                     use_clipping_boundary=image.dxf.flags & Image.USE_CLIPPING_BOUNDARY,
