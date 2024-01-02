@@ -69,7 +69,9 @@ class Designer(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def push_clipping_shape(self, shape: ClippingShape, transform: Matrix44|None) -> None:
+    def push_clipping_shape(
+        self, shape: ClippingShape, transform: Matrix44 | None
+    ) -> None:
         ...
 
     @abc.abstractmethod
@@ -202,7 +204,9 @@ class Designer2d(Designer):
         assert handle is not None
         self._current_entity_handle = handle
 
-    def push_clipping_shape(self, shape: ClippingShape, transform: Matrix44|None) -> None:
+    def push_clipping_shape(
+        self, shape: ClippingShape, transform: Matrix44 | None
+    ) -> None:
         self.clipping_portal.push(shape, transform)
 
     def pop_clipping_shape(self) -> None:
@@ -263,7 +267,7 @@ class Designer2d(Designer):
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
-            bk_properties = self.get_backend_properties(properties)    
+            bk_properties = self.get_backend_properties(properties)
             if self.clipping_portal.is_active:
                 for segment in self.clipping_portal.clip_line(s, e):
                     self.backend.draw_line(segment[0], segment[1], bk_properties)
@@ -496,26 +500,21 @@ def _clip_image_boundary_path(
     clipping_portal: ClippingPortal, pixel_boundary_path: BkPoints2d, m: Matrix44
 ) -> list[BkPoints2d]:
     original = [pixel_boundary_path]
-    wcs_path = BkPath2d.from_vertices(
-        m.transform_vertices(pixel_boundary_path.vertices())
-    )
+    wcs_polygon = BkPoints2d(m.transform_vertices(pixel_boundary_path.vertices()))
     # include transformation applied by the clipping portal
     inverse = clipping_portal.transform_matrix(m)
     try:
         inverse.inverse()
     except ZeroDivisionError:
-        # transformation from WCS to pixel coordinates is not possible
+        # inverse transformation from WCS to pixel coordinates is not possible
         return original
 
-    clipped_wcs_paths: list[BkPath2d] = list(
-        clipping_portal.clip_filled_paths([wcs_path], 99)
-    )
-    if (len(clipped_wcs_paths) == 1) and (clipped_wcs_paths[0] is wcs_path):
+    clipped_wcs_polygons = clipping_portal.clip_polygon(wcs_polygon)
+    if (len(clipped_wcs_polygons) == 1) and (clipped_wcs_polygons[0] is wcs_polygon):
         return original
-    return [  # transform to pixel coordinates
-        BkPoints2d(inverse.transform_vertices(clipped_wcs_path.vertices()))
-        for clipped_wcs_path in clipped_wcs_paths
-    ]
+    for polygon in clipped_wcs_polygons:
+        polygon.transform_inplace(inverse)
+    return clipped_wcs_polygons
 
 
 def invert_color(color: Color) -> Color:
