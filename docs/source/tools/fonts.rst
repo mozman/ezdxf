@@ -44,6 +44,7 @@ font files.
 
 - macOS:
     - /Library/Fonts
+    - /System/Library/Fonts
 
 The `fc-list` command on Linux shows all available fonts and their location.
 
