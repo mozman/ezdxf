@@ -33,7 +33,10 @@ LINUX_FONT_DIRS = [
     "~/.local/share/fonts",
     "~/.local/share/texmf/fonts",
 ]
-MACOS_FONT_DIRS = ["/Library/Fonts/"]
+MACOS_FONT_DIRS = [
+    "/Library/Fonts/",
+    "/System/Library/Fonts/"
+]
 FONT_DIRECTORIES = {
     WINDOWS: WIN_FONT_DIRS,
     LINUX: LINUX_FONT_DIRS,
