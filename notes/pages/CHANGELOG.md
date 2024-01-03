@@ -21,8 +21,7 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 		- {{discussion 1002}}
 	- NEW: additional font search directory added for macOS `/System/Library/Fonts/` by [[ru4ert]]
 		- {{pr 1004}}
-		- These fonts are only available to `ezdxf` when you rebuild the fontmanager-cache:
-			- `ezdxf --fonts`
+		- the cache version number has been increased so that the fontmanger-cache is automatically rebuilt
 	- CHANGE: renamed `Image.boundray_path_ocs()` to `Image.pixel_boundary_path()`
 	- CHANGE: refactoring of the [[RecorderBackend]]
 	- REMOVE: `ezdxf.math.linspace`, replaced by `numpy.linspace`

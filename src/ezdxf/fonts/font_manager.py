@@ -52,7 +52,7 @@ DEFAULT_FONTS = [
     "LiberationSans-Regular.ttf",
     "OpenSans-Regular.ttf",
 ]
-CURRENT_CACHE_VERSION = 1
+CURRENT_CACHE_VERSION = 2
 
 
 class CacheEntry(NamedTuple):
