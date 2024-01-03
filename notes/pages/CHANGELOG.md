@@ -19,6 +19,10 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- NEW: `ezdxf.colors.RGBA` class
 	- NEW: support for font-name synonyms, find macOS fonts on Windows/Linux and vice vesa
 		- {{discussion 1002}}
+	- NEW: additional font search directory added for macOS `/System/Library/Fonts/` by [[ru4ert]]
+		- {{pr 1004}}
+		- These fonts are only available to `ezdxf` when you rebuild the fontmanager-cache:
+			- `ezdxf --fonts`
 	- CHANGE: renamed `Image.boundray_path_ocs()` to `Image.pixel_boundary_path()`
 	- CHANGE: refactoring of the [[RecorderBackend]]
 	- REMOVE: `ezdxf.math.linspace`, replaced by `numpy.linspace`
