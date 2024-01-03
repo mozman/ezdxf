@@ -1,15 +1,15 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Union, Iterable, Optional
+from typing import Iterable, Optional, Iterator, TYPE_CHECKING
 import math
-from ezdxf.math import Vec2, UVec
-from .construct2d import convex_hull_2d
-from .offset2d import offset_vertices_2d
-from .bbox import BoundingBox2d
+from ezdxf.math import Vec2, UVec, Matrix44
 
 
 __all__ = ["Shape2d"]
+
+if TYPE_CHECKING:
+    from ezdxf.math import BoundingBox2d
 
 
 class Shape2d:
@@ -24,32 +24,41 @@ class Shape2d:
     """
 
     def __init__(self, vertices: Optional[Iterable[UVec]] = None):
-        self.vertices: list[Vec2] = (
-            [] if vertices is None else Vec2.list(vertices)
-        )
+        from ezdxf.npshapes import NumpyPoints2d
+
+        _vec2: Iterator[Vec2] | None = None
+        if vertices is not None:
+            _vec2 = Vec2.generate(vertices)
+        self.np_vertices = NumpyPoints2d(_vec2)
+
+    @property
+    def vertices(self) -> list[Vec2]:
+        return self.np_vertices.vertices()
 
     @property
     def bounding_box(self) -> BoundingBox2d:
-        """:class:`BoundingBox2d`"""
-        return BoundingBox2d(self.vertices)
+        """Returns the bounding box of the shape."""
+        return self.np_vertices.bbox()
 
     def copy(self) -> Shape2d:
-        return self.__class__(self.vertices)
+        clone = self.__class__()
+        clone.np_vertices = self.np_vertices.clone()
+        return clone
 
     __copy__ = copy
 
     def translate(self, vector: UVec) -> None:
         """Translate shape about `vector`."""
-        delta = Vec2(vector)
-        self.vertices = [v + delta for v in self.vertices]
+        offset = Vec2(vector)
+        self.np_vertices.transform_inplace(Matrix44.translate(offset.x, offset.y, 0))
 
     def scale(self, sx: float = 1.0, sy: float = 1.0) -> None:
         """Scale shape about `sx` in x-axis and `sy` in y-axis."""
-        self.vertices = [Vec2((v.x * sx, v.y * sy)) for v in self.vertices]
+        self.np_vertices.transform_inplace(Matrix44.scale(sx, sy, 1))
 
     def scale_uniform(self, scale: float) -> None:
         """Scale shape uniform about `scale` in x- and y-axis."""
-        self.vertices = [v * scale for v in self.vertices]
+        self.np_vertices.transform_inplace(Matrix44.scale(scale, scale, 1))
 
     def rotate(self, angle: float, center: Optional[UVec] = None) -> None:
         """Rotate shape around rotation `center` about `angle` in degrees."""
@@ -57,12 +66,15 @@ class Shape2d:
 
     def rotate_rad(self, angle: float, center: Optional[UVec] = None) -> None:
         """Rotate shape around rotation `center` about `angle` in radians."""
+        m = Matrix44.z_rotate(angle)
         if center is not None:
             center = Vec2(center)
-            self.translate(-center)  # faster than a Matrix44 multiplication
-        self.vertices = [v.rotate(angle) for v in self.vertices]
-        if center is not None:
-            self.translate(center)  # faster than a Matrix44 multiplication
+            m = (
+                Matrix44.translate(-center.x, -center.y, 0)
+                @ m
+                @ Matrix44.translate(center.x, center.y, 0)
+            )
+        self.np_vertices.transform_inplace(m)
 
     def offset(self, offset: float, closed: bool = False) -> Shape2d:
         """Returns a new offset shape, for more information see also
@@ -75,24 +87,33 @@ class Shape2d:
             closed: ``True`` to handle as closed shape
 
         """
+        from ezdxf.math.offset2d import offset_vertices_2d
+
         return self.__class__(
-            offset_vertices_2d(self.vertices, offset=offset, closed=closed)
+            offset_vertices_2d(
+                self.np_vertices.vertices(), offset=offset, closed=closed
+            )
         )
 
     def convex_hull(self) -> Shape2d:
         """Returns convex hull as new shape."""
-        return self.__class__(convex_hull_2d(self.vertices))
+        from ezdxf.math.construct2d import convex_hull_2d
+
+        return self.__class__(convex_hull_2d(self.np_vertices.vertices()))
 
     # Sequence interface
     def __len__(self) -> int:
         """Returns `count` of vertices."""
-        return len(self.vertices)
+        return len(self.np_vertices)
 
-    def __getitem__(self, item: Union[int, slice]) -> Vec2:
+    def __getitem__(self, item: int | slice) -> Vec2:
         """Get vertex by index `item`, supports ``list`` like slicing."""
-        return self.vertices[item]
+        np_vertices = self.np_vertices.np_vertices()
+        if isinstance(item, int):
+            return Vec2(np_vertices[item])
+        else:
+            return Vec2.list(np_vertices[item])  # type: ignore
 
-    # limited List interface
     def append(self, vertex: UVec) -> None:
         """Append single `vertex`.
 
@@ -100,13 +121,16 @@ class Shape2d:
              vertex: vertex as :class:`Vec2` compatible object
 
         """
-        self.vertices.append(Vec2(vertex))
+        self.extend((vertex,))
 
-    def extend(self, vertices: Iterable) -> None:
+    def extend(self, vertices: Iterable[UVec]) -> None:
         """Append multiple `vertices`.
 
         Args:
              vertices: iterable of vertices as :class:`Vec2` compatible objects
 
         """
-        self.vertices.extend(Vec2.generate(vertices))
+        from ezdxf.npshapes import NumpyPoints2d
+
+        new_vertices = self.np_vertices.vertices() + Vec2.list(vertices)
+        self.np_vertices = NumpyPoints2d(new_vertices)
