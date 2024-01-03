@@ -1,15 +1,16 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 
 from typing import Iterable
 import pathlib
 import math
+import numpy as np
+
 import ezdxf
 from ezdxf import zoom
 from ezdxf.math import (
     Vec3,
     estimate_tangents,
-    linspace,
     estimate_end_tangent_magnitude,
 )
 from ezdxf.math import (
@@ -24,7 +25,7 @@ if not CWD.exists():
 
 
 def sine_wave(count: int, scale: float = 1.0) -> Iterable[Vec3]:
-    for t in linspace(0, math.tau, count):
+    for t in np.linspace(0, math.tau, count):
         yield Vec3(t * scale, math.sin(t) * scale)
 
 

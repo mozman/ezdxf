@@ -1,8 +1,10 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 import time
 import math
-from ezdxf.math import global_bspline_interpolation, linspace
+import numpy as np
+
+from ezdxf.math import global_bspline_interpolation
 from ezdxf.render import random_3d_path
 
 path = list(random_3d_path(100, max_step_size=10, max_heading=math.pi * 0.8))
@@ -11,13 +13,13 @@ spline = global_bspline_interpolation(path)
 
 def profile_bspline_point_new(count, spline):
     for _ in range(count):
-        for t in linspace(0, 1.0, 100):
+        for t in np.linspace(0, 1.0, 100):
             spline.point(t)
 
 
 def profile_bspline_derivatives_new(count, spline):
     for _ in range(count):
-        list(spline.derivatives(t=linspace(0, 1.0, 100)))
+        list(spline.derivatives(t=np.linspace(0, 1.0, 100)))
 
 
 def profile(text, func, *args):

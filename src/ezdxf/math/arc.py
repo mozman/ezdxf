@@ -1,12 +1,13 @@
-# Copyright (c) 2018-2022 Manfred Moitzi
+# Copyright (c) 2018-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Sequence, Iterator, Optional
 import math
+import numpy as np
 
 from ezdxf.math import Vec2, UVec
 from .bbox import BoundingBox2d
-from .construct2d import enclosing_angles, linspace
+from .construct2d import enclosing_angles
 from .circle import ConstructionCircle
 from .line import ConstructionRay, ConstructionLine
 from .ucs import UCS
@@ -96,7 +97,7 @@ class ConstructionArc:
         stop: float = self.end_angle % 360
         if stop <= start:
             stop += 360
-        for angle in linspace(start, stop, num=num, endpoint=True):
+        for angle in np.linspace(start, stop, num=num, endpoint=True):
             yield angle % 360
 
     @property
@@ -140,7 +141,7 @@ class ConstructionArc:
                 stop += 360
             angle_span: float = math.radians(stop - start)
             count = arc_segment_count(radius, angle_span, sagitta)
-            yield from self.vertices(linspace(start, stop, count + 1))
+            yield from self.vertices(np.linspace(start, stop, count + 1))
 
     def tangents(self, a: Iterable[float]) -> Iterable[Vec2]:
         """Yields tangents on arc for angles in iterable `a` in WCS as

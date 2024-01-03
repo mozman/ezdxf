@@ -1,9 +1,11 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
+import numpy as np
+
 from ezdxf.acc import USE_C_EXT
 from ezdxf.version import __version__
 
@@ -20,7 +22,7 @@ else:
     from ezdxf.acc.bspline import Basis as CBasis, Evaluator as CEvaluator
 
 from ezdxf.render import random_3d_path
-from ezdxf.math import fit_points_to_cad_cv, linspace
+from ezdxf.math import fit_points_to_cad_cv
 
 SPLINE_COUNT = 20
 POINT_COUNT = 20
@@ -84,34 +86,34 @@ def log(name: str, pytime: float, cytime: float):
 def bspline_points(cls, count):
     for curve in splines:
         spline = cls(curve)
-        for u in linspace(0, spline.basis.max_t, count):
+        for u in np.linspace(0, spline.basis.max_t, count):
             spline.point(u)
 
 
 def bspline_multi_points(cls, count):
     for curve in splines:
         spline = cls(curve)
-        list(spline.points(linspace(0, spline.basis.max_t, count)))
+        list(spline.points(np.linspace(0, spline.basis.max_t, count)))
 
 
 def bspline_derivative(cls, count):
     for curve in splines:
         spline = cls(curve)
-        for u in linspace(0, spline.basis.max_t, count):
+        for u in np.linspace(0, spline.basis.max_t, count):
             spline.derivative(u, 1)
 
 
 def bspline_multi_derivative(cls, count):
     for curve in splines:
         spline = cls(curve)
-        list(spline.derivatives(linspace(0, spline.basis.max_t, count), 1))
+        list(spline.derivatives(np.linspace(0, spline.basis.max_t, count), 1))
 
 
 def bspline_points_rational(cls, count):
     for curve in splines:
         weights = [1.0] * curve.count
         spline = cls(curve, weights)
-        for u in linspace(0, spline.basis.max_t, count):
+        for u in np.linspace(0, spline.basis.max_t, count):
             spline.point(u)
 
 

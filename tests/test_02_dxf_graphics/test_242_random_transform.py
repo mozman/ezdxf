@@ -1,11 +1,13 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
 import pytest
 import random
 import math
+import numpy as np
+
 from ezdxf.entities import Circle, Arc, Ellipse, Insert
-from ezdxf.math import Matrix44, Vec3, linspace, X_AXIS, Y_AXIS, Z_AXIS
+from ezdxf.math import Matrix44, Vec3, X_AXIS, Y_AXIS, Z_AXIS
 import ezdxf
 
 if TYPE_CHECKING:
@@ -70,7 +72,7 @@ def test_random_circle_transformation(sx, sy, sz):
     def build():
         circle = Circle()
         vertices = list(
-            circle.vertices(linspace(0, 360, vertex_count, endpoint=False))
+            circle.vertices(np.linspace(0, 360, vertex_count, endpoint=False))
         )
         m = Matrix44.chain(
             Matrix44.axis_rotate(

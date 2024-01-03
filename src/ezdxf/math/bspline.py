@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2022, Manfred Moitzi
+# Copyright (c) 2012-2024, Manfred Moitzi
 # License: MIT License
 """
 B-Splines
@@ -26,6 +26,8 @@ from typing import (
     Optional,
 )
 import math
+import numpy as np
+
 from ezdxf.math import (
     Vec3,
     UVec,
@@ -34,7 +36,6 @@ from ezdxf.math import (
     Evaluator,
     create_t_vector,
     estimate_end_tangent_magnitude,
-    linspace,
     distance_point_line_3d,
     arc_angle_span_deg,
 )
@@ -1052,7 +1053,7 @@ class BSpline:
         knots = self.knots()
         lower_bound = knots[self.order - 1]
         upper_bound = knots[self.count]
-        return linspace(lower_bound, upper_bound, segments + 1)
+        return np.linspace(lower_bound, upper_bound, segments + 1)
 
     def flattening(self, distance: float, segments: int = 4) -> Iterator[Vec3]:
         """Adaptive recursive flattening. The argument `segments` is the

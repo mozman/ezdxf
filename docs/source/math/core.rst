@@ -42,8 +42,6 @@ Utility Functions
 
 .. autofunction:: xround
 
-.. autofunction:: linspace
-
 .. autofunction:: area
 
 .. autofunction:: arc_angle_span_deg

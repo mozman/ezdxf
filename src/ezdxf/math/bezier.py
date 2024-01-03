@@ -1,11 +1,12 @@
-# Copyright (c) 2010-2022 Manfred Moitzi
+# Copyright (c) 2010-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Iterable, Sequence
 from functools import lru_cache
 import math
+import numpy as np
+
 from ezdxf.math import Vec3, NULLVEC, Matrix44, UVec
-from .construct2d import linspace
 
 
 __all__ = ["Bezier"]
@@ -152,7 +153,7 @@ class Bezier:
 
     def params(self, segments: int) -> Iterable[float]:
         """Yield evenly spaced parameters from 0 to 1 for given segment count."""
-        yield from linspace(0.0, 1.0, segments + 1)
+        yield from np.linspace(0.0, 1.0, segments + 1)
 
     def point(self, t: float) -> Vec3:
         """Returns a point for parameter `t` in range [0, 1] as :class:`Vec3`

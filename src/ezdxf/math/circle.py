@@ -1,9 +1,11 @@
-# Copyright (c) 2010-2022 Manfred Moitzi
+# Copyright (c) 2010-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Iterator, Iterable
 import math
-from ezdxf.math import Vec2, linspace, UVec
+import numpy as np
+
+from ezdxf.math import Vec2, UVec
 from .line import ConstructionRay, ConstructionLine
 from .bbox import BoundingBox2d
 
@@ -97,7 +99,7 @@ class ConstructionCircle:
         from .arc import arc_segment_count
 
         count = arc_segment_count(self.radius, math.tau, sagitta)
-        yield from self.vertices(linspace(0.0, math.tau, count + 1))
+        yield from self.vertices(np.linspace(0.0, math.tau, count + 1))
 
     def inside(self, point: UVec) -> bool:
         """Returns ``True`` if `point` is inside circle."""

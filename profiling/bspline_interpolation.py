@@ -3,11 +3,12 @@
 import time
 import pathlib
 import math
+import numpy as np
+
 import ezdxf
 from ezdxf.math import (
     global_bspline_interpolation,
     BoundingBox,
-    linspace,
     BSpline,
 )
 from ezdxf.render import random_3d_path
@@ -16,6 +17,7 @@ CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = pathlib.Path(".")
 
+
 def profile_bspline_interpolation(count, path):
     for _ in range(count):
         global_bspline_interpolation(path)
@@ -23,7 +25,7 @@ def profile_bspline_interpolation(count, path):
 
 def profile_vertex_calculation(count, spline, num):
     for _ in range(count):
-        for t in linspace(0.0, spline.max_t, num):
+        for t in np.linspace(0.0, spline.max_t, num):
             spline.point(t)
 
 
@@ -49,9 +51,7 @@ def export_path(path):
 path = list(random_3d_path(100, max_step_size=10, max_heading=math.pi * 0.8))
 export_path(path)
 
-profile(
-    "B-spline interpolation 300x: ", profile_bspline_interpolation, 300, path
-)
+profile("B-spline interpolation 300x: ", profile_bspline_interpolation, 300, path)
 
 spline = BSpline.from_fit_points(path, degree=3)
 profile(

@@ -14,12 +14,13 @@ from typing_extensions import TypeAlias
 from abc import abstractmethod
 from collections import namedtuple
 import math
+import numpy as np
+
 from ezdxf.math import (
     Vec2,
     Vec3,
     UVec,
     BSpline,
-    linspace,
     ConstructionRay,
     OCS,
     ParallelRaysError,
@@ -348,9 +349,9 @@ class CurvedTrace(AbstractTrace):
         """
         curve_trace = cls()
         count = segments + 1
-        t = linspace(0, spline.max_t, count)
+        t = np.linspace(0, spline.max_t, count)
         for ((point, derivative), width) in zip(
-            spline.derivatives(t, n=1), linspace(start_width, end_width, count)
+            spline.derivatives(t, n=1), np.linspace(start_width, end_width, count)
         ):
             normal = Vec2(derivative).orthogonal(True)
             curve_trace._append(Vec2(point), normal, width)
@@ -386,7 +387,7 @@ class CurvedTrace(AbstractTrace):
         center = Vec2(arc.center)
         for point, width in zip(
             arc.vertices(arc.angles(count)),
-            linspace(start_width, end_width, count),
+            np.linspace(start_width, end_width, count),
         ):
             curve_trace._append(point, point - center, width)
         return curve_trace

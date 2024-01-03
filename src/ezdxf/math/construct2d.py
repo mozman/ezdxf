@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023, Manfred Moitzi
+# Copyright (c) 2011-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Iterable, Sequence, Iterator
@@ -31,7 +31,6 @@ __all__ = [
     "is_point_in_polygon_2d",
     "is_point_left_of_line",
     "point_to_line_relation",
-    "linspace",
     "enclosing_angles",
     "sign",
     "area",
@@ -41,32 +40,6 @@ __all__ = [
     "decdeg2dms",
     "ellipse_param_span",
 ]
-
-
-def linspace(
-    start: float, stop: float, num: int, endpoint=True
-) -> Iterator[float]:
-    """Return evenly spaced numbers over a specified interval, like
-    numpy.linspace().
-
-    Returns `num` evenly spaced samples, calculated over the interval
-    [start, stop]. The endpoint of the interval can optionally be excluded.
-
-    """
-    if num < 0:
-        raise ValueError(f"Number of samples, {num}, must be non-negative.")
-    elif num == 0:
-        return
-    elif num == 1:
-        yield start
-        return
-
-    start_dec = Decimal(start)
-    count = (num - 1) if endpoint else num
-    delta = (Decimal(stop) - start_dec) / count
-    for _ in range(num):
-        yield float(start_dec)
-        start_dec += delta
 
 
 def sign(f: float) -> float:
@@ -127,6 +100,7 @@ def convex_hull_2d(points: Iterable[UVec]) -> list[Vec2]:
         points: iterable of points, z-axis is ignored
 
     """
+
     # Source: https://massivealgorithms.blogspot.com/2019/01/convex-hull-sweep-line.html?m=1
     def cross(o: Vec2, a: Vec2, b: Vec2) -> float:
         return (a - o).det(b - o)
@@ -134,9 +108,7 @@ def convex_hull_2d(points: Iterable[UVec]) -> list[Vec2]:
     vertices = Vec2.list(set(points))
     vertices.sort()
     if len(vertices) < 3:
-        raise ValueError(
-            "Convex hull calculation requires 3 or more unique points."
-        )
+        raise ValueError("Convex hull calculation requires 3 or more unique points.")
 
     n: int = len(vertices)
     hull: list[Vec2] = [Vec2()] * (2 * n)
@@ -156,9 +128,7 @@ def convex_hull_2d(points: Iterable[UVec]) -> list[Vec2]:
     return hull[:k]
 
 
-def enclosing_angles(
-    angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE
-):
+def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE):
     isclose = partial(math.isclose, abs_tol=abs_tol)
 
     s = start_angle % math.tau
@@ -238,9 +208,7 @@ def point_to_line_relation(
         return -1
 
 
-def is_point_left_of_line(
-    point: Vec2, start: Vec2, end: Vec2, colinear=False
-) -> bool:
+def is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2, colinear=False) -> bool:
     """Returns ``True`` if `point` is "left of line" defined by `start-` and
     `end` point, a colinear point is also "left of line" if argument `colinear`
     is ``True``.
@@ -344,10 +312,7 @@ def area(vertices: Iterable[UVec]) -> float:
         _vertices.append(_vertices[0])
 
     return abs(
-        sum(
-            (p1.x * p2.y - p1.y * p2.x)
-            for p1, p2 in zip(_vertices, _vertices[1:])
-        )
+        sum((p1.x * p2.y - p1.y * p2.x) for p1, p2 in zip(_vertices, _vertices[1:]))
         * 0.5
     )
 
@@ -365,9 +330,7 @@ def has_matrix_2d_stretching(m: Matrix44) -> bool:
     return not math.isclose(ux.magnitude_square, uy.magnitude_square)
 
 
-def is_convex_polygon_2d(
-    polygon: list[Vec2], *, strict=False, epsilon=1e-6
-) -> bool:
+def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> bool:
     """Returns ``True`` if the 2D `polygon` is convex. This function works with
     open and closed polygons and clockwise or counter-clockwise vertex
     orientation.

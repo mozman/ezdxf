@@ -1,7 +1,9 @@
-# Copyright (c) 2010-2022, Manfred Moitzi
+# Copyright (c) 2010-2024, Manfred Moitzi
 # License: MIT License
 import pytest
 from math import radians
+import numpy as np
+
 from ezdxf.math import xround, Vec2
 from ezdxf.math.construct2d import *
 
@@ -249,7 +251,7 @@ def test_more_points():
 def test_decdeg2dms():
     ss = 1.0 / 3600.0
     mm = 1.0 / 60.0
-    for value in linspace(-2, 2, 71):
+    for value in np.linspace(-2, 2, 71):
         d, m, s = decdeg2dms(value)
         result = d + m * mm + s * ss
         assert value == pytest.approx(result)
@@ -259,13 +261,13 @@ def test_decdeg2dms():
 
 
 def test_linspace():
-    assert list(linspace(1, 4, num=4)) == [1, 2, 3, 4]
-    assert list(linspace(1, 4, num=1)) == [1]
-    assert list(linspace(1, 4, num=0)) == []
-    assert list(linspace(1, 5, num=4, endpoint=False)) == [1, 2, 3, 4]
-    assert list(linspace(2, -2, num=5)) == [2, 1, 0, -1, -2]
+    assert list(np.linspace(1, 4, num=4)) == [1, 2, 3, 4]
+    assert list(np.linspace(1, 4, num=1)) == [1]
+    assert list(np.linspace(1, 4, num=0)) == []
+    assert list(np.linspace(1, 5, num=4, endpoint=False)) == [1, 2, 3, 4]
+    assert list(np.linspace(2, -2, num=5)) == [2, 1, 0, -1, -2]
     with pytest.raises(ValueError):
-        list(linspace(1, 4, num=-1))
+        list(np.linspace(1, 4, num=-1))
 
 
 def test_area():

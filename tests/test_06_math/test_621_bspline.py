@@ -1,8 +1,9 @@
-# Copyright (c) 2012-2021 Manfred Moitzi
+# Copyright (c) 2012-2024 Manfred Moitzi
 # License: MIT License
 import pytest
+import numpy as np
 from ezdxf.math import Vec3, BSpline, close_vectors
-from ezdxf.math.bspline import normalize_knots, subdivide_params, linspace
+from ezdxf.math.bspline import normalize_knots, subdivide_params
 
 DEFPOINTS = [
     (0.0, 0.0, 0.0),
@@ -12,7 +13,7 @@ DEFPOINTS = [
     (50.0, 0.0, 30.0),
 ]
 
-PARAMS = list(linspace(0, 1, 21))
+PARAMS = list(np.linspace(0, 1, 21))
 
 
 def test_is_clamped(weired_spline1):

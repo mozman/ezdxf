@@ -10,11 +10,12 @@ from typing import (
 )
 import abc
 from typing_extensions import Protocol, TypeAlias
+import numpy as np
+
 from ezdxf.math import (
     Vec2,
     Vec3,
     UVec,
-    linspace,
     NULLVEC,
     intersection_line_line_2d,
     BoundingBox2d,
@@ -184,7 +185,7 @@ class ConstructionPolyline(Sequence):
         if count < 2:
             raise ValueError(f"invalid count: {count}")
         vertex_at = self._vertex_at
-        for distance in linspace(0.0, self.length, count):
+        for distance in np.linspace(0.0, self.length, count):
             yield vertex_at(distance)
 
     def divide_by_length(
@@ -268,7 +269,7 @@ class ApproxParamT:
         assert hasattr(curve, "point")
         assert segments > 0
         self._polyline = ConstructionPolyline(
-            curve.point(t) for t in linspace(0.0, max_t, segments + 1)
+            curve.point(t) for t in np.linspace(0.0, max_t, segments + 1)
         )
         self._max_t = max_t
         self._step = max_t / segments
