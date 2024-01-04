@@ -770,11 +770,13 @@ def global_bspline_interpolation_first_derivatives(
         [1.0] + [0.0] * (count - 1),  # Q0
         [-1.0, +1.0] + [0.0] * (count - 2),  # D0
     ]
+    ncols = len(A[0])
     for f in (nbasis(t) for t in t_vector[1:-1]):
-        A.extend(f)  # Qi, Di
+        A.extend([row[:ncols] for row in f])  # Qi, Di
     # swapped equations!
     A.append([0.0] * (count - 2) + [-1.0, +1.0])  # Dn
     A.append([0.0] * (count - 1) + [+1.0])  # Qn
+    assert len(set(len(row) for row in A)) == 1, "inhomogeneous matrix detected"
 
     # Build right handed matrix B
     B: list[Vec3] = []

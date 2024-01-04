@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2022 Manfred Moitzi
+# Copyright (c) 2018-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -8,7 +8,6 @@ from typing import (
     Sequence,
     Union,
     Any,
-    Iterator,
     cast,
     Optional,
 )
@@ -18,6 +17,9 @@ from itertools import repeat
 import math
 import reprlib
 
+import numpy as np
+import numpy.typing as npt
+
 __all__ = [
     "Matrix",
     "gauss_vector_solver",
@@ -25,7 +27,6 @@ __all__ = [
     "gauss_jordan_solver",
     "gauss_jordan_inverse",
     "LUDecomposition",
-    "freeze_matrix",
     "tridiagonal_vector_solver",
     "tridiagonal_matrix_solver",
     "detect_banded_matrix",
@@ -47,21 +48,13 @@ MatrixData: TypeAlias = List[List[float]]
 IterableMatrixData: TypeAlias = Iterable[Iterable[float]]
 FrozenMatrixData: TypeAlias = Tuple[Tuple[float, ...]]
 Shape: TypeAlias = Tuple[int, int]
+NDArray: TypeAlias = npt.NDArray[np.float64]
 
 
 def copy_float_matrix(A) -> MatrixData:
     if isinstance(A, Matrix):
         A = A.matrix
     return [[float(v) for v in row] for row in A]
-
-
-def freeze_matrix(A: Union[IterableMatrixData, Matrix]) -> Matrix:
-    """Returns a frozen matrix, all data is stored in immutable tuples."""
-    if isinstance(A, Matrix):
-        A = A.matrix
-    m = Matrix()
-    m.matrix = tuple(tuple(float(v) for v in row) for row in A)  # type: ignore
-    return m
 
 
 @lru_cache(maxsize=128)
@@ -111,36 +104,37 @@ class Matrix:
         self,
         items: Any = None,
         shape: Optional[Shape] = None,
-        matrix: Optional[MatrixData] = None,
+        matrix: Optional[MatrixData | NDArray] = None,
     ):
-        self.matrix: MatrixData = matrix  # type: ignore
         self.abs_tol: float = 1e-12
+        self.matrix: NDArray = np.array((), dtype=np.float64)
+        if matrix is not None:
+            self.matrix = np.array(matrix, dtype=np.float64)               
+            return
+        
         if items is None:
             if shape is not None:
-                self.matrix = Matrix.reshape(repeat(0.0), shape).matrix
+                self.matrix = np.zeros(shape)
             else:  # items is None, shape is None
                 return
         elif isinstance(items, Matrix):
             if shape is None:
                 shape = items.shape
-            self.matrix = Matrix.reshape(items, shape=shape).matrix
+            self.matrix = items.matrix.reshape(shape).copy()
         else:
             items = list(items)
             try:
-                self.matrix = [list(row) for row in items]
+                self.matrix = np.array([list(row) for row in items], dtype=np.float64)
             except TypeError:
-                self.matrix = Matrix.reshape(
-                    items, shape  # type: ignore
-                ).matrix
+                if shape is not None:
+                    self.matrix = np.array(list(items), dtype=np.float64).reshape(shape)
 
-    def __iter__(self) -> Iterator[float]:
-        for row in self.matrix:
-            yield from row
+    def __iter__(self) -> NDArray:
+        return np.ravel(self.matrix)
 
     def __copy__(self) -> "Matrix":
-        m = Matrix()
+        m = Matrix(matrix=self.matrix.copy())
         m.abs_tol = self.abs_tol
-        m.matrix = [list(row) for row in self.rows()]
         return m
 
     def __str__(self) -> str:
@@ -154,42 +148,30 @@ class Matrix:
         """Returns a new matrix for iterable `items` in the configuration of
         `shape`.
         """
-        items = iter(items)
-        rows, cols = shape
-        return Matrix(
-            matrix=[[next(items) for _ in range(cols)] for _ in range(rows)]
-        )
+        return Matrix(matrix=np.array(list(items), dtype=np.float64).reshape(shape))
 
     @property
     def nrows(self) -> int:
         """Count of matrix rows."""
-        return len(self.matrix)
+        return self.matrix.shape[0]
 
     @property
     def ncols(self) -> int:
         """Count of matrix columns."""
-        return len(self.matrix[0])
+        return self.matrix.shape[1]
 
     @property
     def shape(self) -> Shape:
         """Shape of matrix as (n, m) tuple for n rows and m columns."""
-        return self.nrows, self.ncols
+        return self.matrix.shape  # type: ignore
 
     def row(self, index: int) -> list[float]:
         """Returns row `index` as list of floats."""
-        return self.matrix[index]
-
-    def iter_row(self, index: int) -> Iterator[float]:
-        """Yield values of row `index`."""
-        return iter(self.matrix[index])
+        return list(self.matrix[index])
 
     def col(self, index: int) -> list[float]:
         """Return column `index` as list of floats."""
-        return [row[index] for row in self.matrix]
-
-    def iter_col(self, index: int) -> Iterator[float]:
-        """Yield values of column `index`."""
-        return (row[index] for row in self.matrix)
+        return list(self.matrix[:, index])
 
     def diag(self, index: int) -> list[float]:
         """Returns diagonal `index` as list of floats.
@@ -205,51 +187,32 @@ class Matrix:
         - index +1 is [01, 12, 23]
 
         """
-        return list(self.iter_diag(index))
+        return list(self.matrix.diagonal(index))
 
-    def iter_diag(self, index: int) -> Iterator[float]:
-        """Yield values of diagonal `index`, see also :meth:`diag`."""
-        get = self.__getitem__
-        col_offset = max(index, 0)
-        row_offset = abs(min(index, 0))
-        for i in range(max(self.nrows, self.ncols)):
-            try:
-                yield get((i + row_offset, i + col_offset))
-            except IndexError:
-                break
-
-    def rows(self) -> MatrixData:
+    def rows(self) -> list[list[float]]:
         """Return a list of all rows."""
-        return self.matrix
+        return list(list(r) for r in self.matrix)
 
-    def cols(self) -> MatrixData:
+    def cols(self) -> list[list[float]]:
         """Return a list of all columns."""
-        return [self.col(i) for i in range(self.ncols)]
+        return [list(self.col(i)) for i in range(self.ncols)]
 
-    def set_row(
-        self, index: int, items: Union[float, Sequence[float]] = 1.0
-    ) -> None:
+    def set_row(self, index: int, items: float | Iterable[float] = 1.0) -> None:
         """Set row values to a fixed value or from an iterable of floats."""
         if isinstance(items, (float, int)):
             items = [float(items)] * self.ncols
-
+        items = list(items)
         if len(items) != self.ncols:
             raise ValueError("Invalid item count")
-        self.matrix[index] = list(items)
+        self.matrix[index] = items
 
-    def set_col(
-        self, index: int, items: Union[float, Iterable[float]] = 1.0
-    ) -> None:
+    def set_col(self, index: int, items: float | Iterable[float] = 1.0) -> None:
         """Set column values to a fixed value or from an iterable of floats."""
         if isinstance(items, (float, int)):
             items = [float(items)] * self.nrows
+        self.matrix[:, index] = list(items)
 
-        for row, item in zip(self.rows(), items):
-            row[index] = item
-
-    def set_diag(
-        self, index: int = 0, items: Union[float, Iterable[float]] = 1.0
-    ) -> None:
+    def set_diag(self, index: int = 0, items: float | Iterable[float] = 1.0) -> None:
         """Set diagonal values to a fixed value or from an iterable of floats.
 
         An `index` of ``0`` specifies the main diagonal, negative values
@@ -270,7 +233,7 @@ class Matrix:
 
         for index, value in zip(range(max(self.nrows, self.ncols)), items):
             try:
-                self.matrix[index + row_offset][index + col_offset] = value
+                self.matrix[index + row_offset, index + col_offset] = value
             except IndexError:
                 return
 
@@ -283,36 +246,27 @@ class Matrix:
 
     def append_row(self, items: Sequence[float]) -> None:
         """Append a row to the matrix."""
-        if self.matrix is None:
-            self.matrix = [list(items)]
+        if self.matrix.size == 0:
+            self.matrix = np.array([items], dtype=np.float64)
         elif len(items) == self.ncols:
-            self.matrix.append(list(items))
+            self.matrix = np.r_[self.matrix, items]
         else:
             raise ValueError("Invalid item count.")
 
     def append_col(self, items: Sequence[float]) -> None:
         """Append a column to the matrix."""
-        if self.matrix is None:
-            self.matrix = [[item] for item in items]
+        if self.matrix.size == 0:
+            self.matrix = np.array([[item] for item in items], dtype=np.float64)
         elif len(items) == self.nrows:
-            for row, item in zip(self.matrix, items):
-                row.append(item)
+            self.matrix = np.c_[self.matrix, items]
         else:
             raise ValueError("Invalid item count.")
 
-    def swap_rows(self, a: int, b: int) -> None:
-        """Swap rows `a` and `b` inplace."""
-        m = self.matrix
-        m[a], m[b] = m[b], m[a]
-
-    def swap_cols(self, a: int, b: int) -> None:
-        """Swap columns `a` and `b` inplace."""
-        for row in self.rows():
-            row[a], row[b] = row[b], row[a]
-
     def freeze(self) -> Matrix:
         """Returns a frozen matrix, all data is stored in immutable tuples."""
-        return freeze_matrix(self.matrix)
+        m = self.__copy__()
+        m.matrix.flags.writeable = False
+        return m
 
     def lu_decomp(self) -> LUDecomposition:
         """Returns the `LU decomposition`_ as :class:`LUDecomposition` object,
@@ -326,114 +280,86 @@ class Matrix:
         numpy is not supported.
 
         """
-        row, col = item
-        return self.matrix[row][col]
+        return float(self.matrix[item])
 
     def __setitem__(self, item: tuple[int, int], value: float):
         """Set value by (row, col) index tuple, fancy slicing as known from
         numpy is not supported.
 
         """
-        row, col = item
-        self.matrix[row][col] = value
+        self.matrix[item] = value
 
     def __eq__(self, other: object) -> bool:
         """Returns ``True`` if matrices are equal, tolerance value for
         comparison is adjustable by the attribute :attr:`Matrix.abs_tol`.
 
         """
+        # TODO: is there a better way by numpy
         if not isinstance(other, Matrix):
             raise TypeError("Matrix class required.")
         if self.shape != other.shape:
             raise TypeError("Matrices have different shapes.")
-        for row1, row2 in zip(self.matrix, other.matrix):
-            for item1, item2 in zip(row1, row2):
-                if not math.isclose(item1, item2, abs_tol=self.abs_tol):
-                    return False
+        for v1, v2 in zip(np.ravel(self.matrix), np.ravel(other.matrix)):
+            if not math.isclose(v1, v2, abs_tol=self.abs_tol):
+                return False
         return True
 
-    def __mul__(self, other: Union[Matrix, float]) -> Matrix:
+    def __mul__(self, other: Matrix | float) -> Matrix:
         """Matrix multiplication by another matrix or a float, returns a new
         matrix.
 
         """
         if isinstance(other, Matrix):
-            matrix = Matrix(
-                matrix=[
-                    [
-                        sum(a * b for a, b in zip(X_row, Y_col))
-                        for Y_col in zip(*other.matrix)
-                    ]
-                    for X_row in self.matrix
-                ]
-            )
+            return Matrix(matrix=np.matmul(self.matrix, other.matrix))
         else:
-            factor = float(other)
-            matrix = Matrix(
-                matrix=[[item * factor for item in row] for row in self.matrix]
-            )
+            matrix = Matrix(matrix=self.matrix * float(other))
         return matrix
 
     __imul__ = __mul__
 
-    def __add__(self, other: Union[Matrix, float]) -> Matrix:
+    def __add__(self, other: Matrix | float) -> Matrix:
         """Matrix addition by another matrix or a float, returns a new matrix."""
         if isinstance(other, Matrix):
-            matrix = Matrix.reshape(
-                [a + b for a, b in zip(self, other)], shape=self.shape
-            )
+            return Matrix(matrix = self.matrix + other.matrix)
         else:
-            value = float(other)
-            matrix = Matrix(
-                matrix=[[item + value for item in row] for row in self.matrix]
-            )
-        return matrix
+            return Matrix(matrix=self.matrix + float(other))
 
     __iadd__ = __add__
 
-    def __sub__(self, other: Union[Matrix, float]) -> Matrix:
+    def __sub__(self, other: Matrix| float) -> Matrix:
         """Matrix subtraction by another matrix or a float, returns a new
         matrix.
 
         """
         if isinstance(other, Matrix):
-            matrix = Matrix.reshape(
-                [a - b for a, b in zip(self, other)], shape=self.shape
-            )
+            return Matrix(matrix = self.matrix - other.matrix)
         else:
-            value = float(other)
-            matrix = Matrix(
-                matrix=[[item - value for item in row] for row in self.matrix]
-            )
-        return matrix
+            return Matrix(matrix = self.matrix - float(other))
 
     __isub__ = __sub__
 
     def transpose(self) -> Matrix:
         """Returns a new transposed matrix."""
-        return Matrix(matrix=list(zip_to_list(*self.matrix)))
+        return Matrix(matrix=self.matrix.T)
 
     def inverse(self) -> Matrix:
         """Returns inverse of matrix as new object."""
         if self.nrows != self.ncols:
             raise TypeError("Inverse of non-square matrix not supported.")
-
-        if self.nrows > 10:
-            return LUDecomposition(self.matrix).inverse()
-        else:  # faster for small matrices
-            return gauss_jordan_inverse(self.matrix)
+        try:
+            return Matrix(matrix=np.linalg.inv(self.matrix))
+        except np.linalg.LinAlgError:
+            raise ZeroDivisionError
 
     def determinant(self) -> float:
         """Returns determinant of matrix, raises :class:`ZeroDivisionError`
         if matrix is singular.
 
         """
-        return LUDecomposition(self.matrix).determinant()
+        return float(np.linalg.det(self.matrix))
 
 
-def quadratic_equation(
-    a: float, b: float, c: float, abs_tol=1e-12
-) -> Sequence[float]:
+def quadratic_equation(a: float, b: float, c: float, abs_tol=1e-12) -> Sequence[float]:
     """Returns the solution for the quadratic equation ``a*x^2 + b*x + c = 0``.
 
     Returns 0-2 solutions as a tuple of floats.
@@ -878,9 +804,7 @@ class LUDecomposition:
         raise :class:`ZeroDivisionError` for a singular matrix.
 
         """
-        return self.solve_matrix(
-            Matrix.identity(shape=(self.nrows, self.nrows)).matrix
-        )
+        return self.solve_matrix(Matrix.identity(shape=(self.nrows, self.nrows)).matrix)
 
     def determinant(self) -> float:
         """Returns the determinant of matrix, raises :class:`ZeroDivisionError`
@@ -894,9 +818,7 @@ class LUDecomposition:
         return det
 
 
-def tridiagonal_vector_solver(
-    A: IterableMatrixData, B: Iterable[float]
-) -> list[float]:
+def tridiagonal_vector_solver(A: IterableMatrixData, B: Iterable[float]) -> list[float]:
     """Solves the linear equation system given by a tri-diagonal nxn Matrix
     A . x = B, right-hand side quantities as vector B. Matrix A is diagonal
     matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
@@ -928,9 +850,7 @@ def tridiagonal_vector_solver(
     return _solve_tridiagonal_matrix(a, b, c, list(B))
 
 
-def tridiagonal_matrix_solver(
-    A: IterableMatrixData, B: IterableMatrixData
-) -> Matrix:
+def tridiagonal_matrix_solver(A: IterableMatrixData, B: IterableMatrixData) -> Matrix:
     """Solves the linear equation system given by a tri-diagonal nxn Matrix
     A . x = B, right-hand side quantities as nxm Matrix B. Matrix A is diagonal
     matrix defined by 3 diagonals [-1 (a), 0 (b), +1 (c)].
@@ -970,9 +890,7 @@ def tridiagonal_matrix_solver(
         raise ValueError("Row count of matrices A and B has to match.")
 
     return Matrix(
-        matrix=[
-            _solve_tridiagonal_matrix(a, b, c, col) for col in matrix_b.cols()
-        ]
+        matrix=[_solve_tridiagonal_matrix(a, b, c, col) for col in matrix_b.cols()]
     ).transpose()
 
 
@@ -1046,7 +964,7 @@ def detect_banded_matrix(A: Matrix, check_all=True) -> tuple[int, int]:
     def detect_m2() -> int:
         m2: int = 0
         for d in range(1, A.ncols):
-            if any(A.iter_diag(d)):
+            if any(A.diag(d)):
                 m2 = d
             elif not check_all:
                 break
@@ -1055,7 +973,7 @@ def detect_banded_matrix(A: Matrix, check_all=True) -> tuple[int, int]:
     def detect_m1() -> int:
         m1: int = 0
         for d in range(1, A.nrows):
-            if any(A.iter_diag(-d)):
+            if any(A.diag(-d)):
                 m1 = d
             elif not check_all:
                 break

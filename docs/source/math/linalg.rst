@@ -29,8 +29,6 @@ Functions
 
 .. autofunction:: compact_banded_matrix
 
-.. autofunction:: freeze_matrix
-
 Matrix Class
 ------------
 
@@ -48,15 +46,9 @@ Matrix Class
 
     .. automethod:: row
 
-    .. automethod:: iter_row
-
     .. automethod:: col
 
-    .. automethod:: iter_col
-
     .. automethod:: diag
-
-    .. automethod:: iter_diag
 
     .. automethod:: rows
 
@@ -71,10 +63,6 @@ Matrix Class
     .. automethod:: append_row
 
     .. automethod:: append_col
-
-    .. automethod:: swap_rows
-
-    .. automethod:: swap_cols
 
     .. automethod:: transpose
 

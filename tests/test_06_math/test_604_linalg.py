@@ -51,9 +51,10 @@ def test_matrix_setter(X):
 
 
 def test_row(X):
-    assert X.row(0) == [12, 7]
-    assert X.row(1) == [4, 5]
-    assert X.row(2) == [3, 8]
+    a = list(X.row(0))
+    assert list(X.row(0)) == [12, 7]
+    assert list(X.row(1)) == [4, 5]
+    assert list(X.row(2)) == [3, 8]
     assert list(X.rows()) == [[12, 7], [4, 5], [3, 8]]
 
 
@@ -100,7 +101,7 @@ def test_freeze_matrix(X):
     assert m == X
     assert m[0, 0] == 12
     assert m[2, 1] == 8
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         m[0, 0] = 1.0
 
 
@@ -165,20 +166,6 @@ def test_transpose(X):
     # is T mutable?
     T[0, 0] = 99
     assert T[0, 0] == 99
-
-
-def test_swap_rows(X):
-    # X = [[12, 7], [4, 5], [3, 8]]
-    X.swap_rows(0, 2)
-    assert X.row(0) == [3, 8]
-    assert X.row(2) == [12, 7]
-
-
-def test_swap_cols(X):
-    # X = [[12, 7], [4, 5], [3, 8]]
-    X.swap_cols(0, 1)
-    assert X.col(0) == [7, 5, 8]
-    assert X.col(1) == [12, 4, 3]
 
 
 def test_add(X):
@@ -415,8 +402,8 @@ TRI_DIAGONAL = [
     [0, 0, 2, 2, 6],
     [0, 0, 0, 4, 6],
 ]
-
-TRI_SOLUTION = gauss_matrix_solver(TRI_DIAGONAL, zip(B1, B2, B3))
+def tri_solution():
+    return gauss_matrix_solver(TRI_DIAGONAL, zip(B1, B2, B3))
 
 
 @pytest.fixture
@@ -431,9 +418,9 @@ def tridiag():
 
 def test_tridiagonal_vector_solver(tridiag):
     result = tridiagonal_vector_solver(tridiag, B1)
-    are_close_vectors(result, TRI_SOLUTION.col(0))
+    are_close_vectors(result, tri_solution().col(0))
 
 
 def test_tridiagonal_matrix_solver(tridiag):
     result = tridiagonal_matrix_solver(tridiag, zip(B1, B2, B3))
-    assert result == TRI_SOLUTION
+    assert result == tri_solution()
