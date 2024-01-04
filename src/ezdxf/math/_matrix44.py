@@ -2,12 +2,13 @@
 # Home-page: http://code.google.com/p/gameobjects/
 # Author: Will McGugan
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
-# Copyright (c) 2011-2023 Manfred Moitzi
+# Copyright (c) 2011-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Iterable, Iterator, TYPE_CHECKING, Optional
 import math
 import numpy as np
+import numpy.typing as npt
 
 from math import sin, cos, tan
 from itertools import chain
@@ -49,15 +50,18 @@ class Matrix44:
 
     """
 
+    __slots__ = ("_matrix",)
+    _matrix: npt.NDArray[np.float64]
+
     # fmt: off
-    _identity = (
+    _identity = np.array([
         1.0, 0.0, 0.0, 0.0,
         0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
+        ], dtype=np.float64
     )
     # fmt: on
-    __slots__ = ("_matrix",)
 
     def __init__(self, *args):
         """
@@ -70,21 +74,21 @@ class Matrix44:
         """
         nargs = len(args)
         if nargs == 0:
-            self._matrix = list(Matrix44._identity)
+            self._matrix = Matrix44._identity.copy()
         elif nargs == 1:
-            self._matrix = floats(args[0])
+            self._matrix = np.array(args[0], dtype=np.float64)
         elif nargs == 4:
-            self._matrix = floats(chain(*args))
+            self._matrix = np.array(list(chain(*args)), dtype=np.float64)
         else:
             raise ValueError(
                 "Invalid count of arguments (4 row vectors or one "
                 "list with 16 values)."
             )
-        if len(self._matrix) != 16:
+        if self._matrix.shape != (16,):
             raise ValueError("Invalid matrix count")
 
     def __repr__(self) -> str:
-        """Returns the representation string of the matrix:
+        """Returns the representation string of the matrix in row-major order:
         ``Matrix44((col0, col1, col2, col3), (...), (...), (...))``
         """
 
@@ -507,9 +511,10 @@ class Matrix44:
         """Returns a new matrix as result of the matrix multiplication with
         another matrix.
         """
-        res_matrix = self.copy()
-        res_matrix.__imul__(other)
-        return res_matrix
+        m1 = self._matrix.reshape(4, 4)
+        m2 = other._matrix.reshape(4, 4)
+        result = np.matmul(m1, m2)
+        return self.__class__(np.ravel(result))
 
     # __matmul__ = __mul__ does not work!
 
@@ -517,37 +522,17 @@ class Matrix44:
         """Returns a new matrix as result of the matrix multiplication with
         another matrix.
         """
-        res_matrix = self.copy()
-        res_matrix.__imul__(other)
-        return res_matrix
+        m1 = self._matrix.reshape(4, 4)
+        m2 = other._matrix.reshape(4, 4)
+        result = np.matmul(m1, m2)
+        return self.__class__(np.ravel(result))
 
     def __imul__(self, other: Matrix44) -> Matrix44:
         """Inplace multiplication with another matrix."""
-        m1 = self._matrix
-        m2 = other._matrix
-        # fmt: off
-        self._matrix = [
-            m1[0] * m2[0] + m1[1] * m2[4] + m1[2] * m2[8] + m1[3] * m2[12],
-            m1[0] * m2[1] + m1[1] * m2[5] + m1[2] * m2[9] + m1[3] * m2[13],
-            m1[0] * m2[2] + m1[1] * m2[6] + m1[2] * m2[10] + m1[3] * m2[14],
-            m1[0] * m2[3] + m1[1] * m2[7] + m1[2] * m2[11] + m1[3] * m2[15],
-
-            m1[4] * m2[0] + m1[5] * m2[4] + m1[6] * m2[8] + m1[7] * m2[12],
-            m1[4] * m2[1] + m1[5] * m2[5] + m1[6] * m2[9] + m1[7] * m2[13],
-            m1[4] * m2[2] + m1[5] * m2[6] + m1[6] * m2[10] + m1[7] * m2[14],
-            m1[4] * m2[3] + m1[5] * m2[7] + m1[6] * m2[11] + m1[7] * m2[15],
-
-            m1[8] * m2[0] + m1[9] * m2[4] + m1[10] * m2[8] + m1[11] * m2[12],
-            m1[8] * m2[1] + m1[9] * m2[5] + m1[10] * m2[9] + m1[11] * m2[13],
-            m1[8] * m2[2] + m1[9] * m2[6] + m1[10] * m2[10] + m1[11] * m2[14],
-            m1[8] * m2[3] + m1[9] * m2[7] + m1[10] * m2[11] + m1[11] * m2[15],
-
-            m1[12] * m2[0] + m1[13] * m2[4] + m1[14] * m2[8] + m1[15] * m2[12],
-            m1[12] * m2[1] + m1[13] * m2[5] + m1[14] * m2[9] + m1[15] * m2[13],
-            m1[12] * m2[2] + m1[13] * m2[6] + m1[14] * m2[10] + m1[15] * m2[14],
-            m1[12] * m2[3] + m1[13] * m2[7] + m1[14] * m2[11] + m1[15] * m2[15]
-        ]
-        # fmt: on
+        m1 = self._matrix.reshape(4, 4)
+        m2 = other._matrix.reshape(4, 4)
+        result = np.matmul(m1, m2)
+        self._matrix = np.ravel(result)
         return self
 
     def rows(self) -> Iterator[tuple[float, ...]]:
@@ -712,46 +697,12 @@ class Matrix44:
 
     def transpose(self) -> None:
         """Swaps the rows for columns inplace."""
-        # fmt: off
-        (
-            m00, m01, m02, m03,
-            m10, m11, m12, m13,
-            m20, m21, m22, m23,
-            m30, m31, m32, m33,
-        ) = self._matrix
-        self._matrix = [
-            m00, m10, m20, m30,
-            m01, m11, m21, m31,
-            m02, m12, m22, m32,
-            m03, m13, m23, m33
-        ]
-        # fmt: on
+        m = self._matrix.reshape(4, 4)
+        self._matrix = np.ravel(m.T)
 
     def determinant(self) -> float:
         """Returns determinant."""
-        # fmt: off
-        (
-            m00, m01, m02, m03,
-            m10, m11, m12, m13,
-            m20, m21, m22, m23,
-            m30, m31, m32, m33,
-        ) = self._matrix
-
-        return (
-            m00 * m11 * m22 * m33 - m00 * m11 * m23 * m32 +
-            m00 * m12 * m23 * m31 - m00 * m12 * m21 * m33 +
-            m00 * m13 * m21 * m32 - m00 * m13 * m22 * m31 -
-            m01 * m12 * m23 * m30 + m01 * m12 * m20 * m33 -
-            m01 * m13 * m20 * m32 + m01 * m13 * m22 * m30 -
-            m01 * m10 * m22 * m33 + m01 * m10 * m23 * m32 +
-            m02 * m13 * m20 * m31 - m02 * m13 * m21 * m30 +
-            m02 * m10 * m21 * m33 - m02 * m10 * m23 * m31 +
-            m02 * m11 * m23 * m30 - m02 * m11 * m20 * m33 -
-            m03 * m10 * m21 * m32 + m03 * m10 * m22 * m31 -
-            m03 * m11 * m22 * m30 + m03 * m11 * m20 * m32 -
-            m03 * m12 * m20 * m31 + m03 * m12 * m21 * m30
-        )
-        # fmt: on
+        return np.linalg.det(self._matrix.reshape(4, 4))
 
     def inverse(self) -> None:
         """Calculates the inverse of the matrix.
@@ -760,63 +711,8 @@ class Matrix44:
              ZeroDivisionError: if matrix has no inverse.
 
         """
-        det = self.determinant()
-        f = 1.0 / det  # catch ZeroDivisionError by caller
-        # fmt: off
-        (
-            m00, m01, m02, m03,
-            m10, m11, m12, m13,
-            m20, m21, m22, m23,
-            m30, m31, m32, m33,
-        ) = self._matrix
-        self._matrix = [
-            (
-                m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 -
-                m11 * m23 * m32 - m12 * m21 * m33 + m11 * m22 * m33) * f,
-            (
-                m03 * m22 * m31 - m02 * m23 * m31 - m03 * m21 * m32 +
-                m01 * m23 * m32 + m02 * m21 * m33 - m01 * m22 * m33) * f,
-            (
-                m02 * m13 * m31 - m03 * m12 * m31 + m03 * m11 * m32 -
-                m01 * m13 * m32 - m02 * m11 * m33 + m01 * m12 * m33) * f,
-            (
-                m03 * m12 * m21 - m02 * m13 * m21 - m03 * m11 * m22 +
-                m01 * m13 * m22 + m02 * m11 * m23 - m01 * m12 * m23) * f,
-            (
-                m13 * m22 * m30 - m12 * m23 * m30 - m13 * m20 * m32 +
-                m10 * m23 * m32 + m12 * m20 * m33 - m10 * m22 * m33) * f,
-            (
-                m02 * m23 * m30 - m03 * m22 * m30 + m03 * m20 * m32 -
-                m00 * m23 * m32 - m02 * m20 * m33 + m00 * m22 * m33) * f,
-            (
-                m03 * m12 * m30 - m02 * m13 * m30 - m03 * m10 * m32 +
-                m00 * m13 * m32 + m02 * m10 * m33 - m00 * m12 * m33) * f,
-            (
-                m02 * m13 * m20 - m03 * m12 * m20 + m03 * m10 * m22 -
-                m00 * m13 * m22 - m02 * m10 * m23 + m00 * m12 * m23) * f,
-            (
-                m11 * m23 * m30 - m13 * m21 * m30 + m13 * m20 * m31 -
-                m10 * m23 * m31 - m11 * m20 * m33 + m10 * m21 * m33) * f,
-            (
-                m03 * m21 * m30 - m01 * m23 * m30 - m03 * m20 * m31 +
-                m00 * m23 * m31 + m01 * m20 * m33 - m00 * m21 * m33) * f,
-            (
-                m01 * m13 * m30 - m03 * m11 * m30 + m03 * m10 * m31 -
-                m00 * m13 * m31 - m01 * m10 * m33 + m00 * m11 * m33) * f,
-            (
-                m03 * m11 * m20 - m01 * m13 * m20 - m03 * m10 * m21 +
-                m00 * m13 * m21 + m01 * m10 * m23 - m00 * m11 * m23) * f,
-            (
-                m12 * m21 * m30 - m11 * m22 * m30 - m12 * m20 * m31 +
-                m10 * m22 * m31 + m11 * m20 * m32 - m10 * m21 * m32) * f,
-            (
-                m01 * m22 * m30 - m02 * m21 * m30 + m02 * m20 * m31 -
-                m00 * m22 * m31 - m01 * m20 * m32 + m00 * m21 * m32) * f,
-            (
-                m02 * m11 * m30 - m01 * m12 * m30 - m02 * m10 * m31 +
-                m00 * m12 * m31 + m01 * m10 * m32 - m00 * m11 * m32) * f,
-            (
-                m01 * m12 * m20 - m02 * m11 * m20 + m02 * m10 * m21 -
-                m00 * m12 * m21 - m01 * m10 * m22 + m00 * m11 * m22) * f,
-        ]
-        # fmt: on
+        try:
+            inverse = np.linalg.inv(self._matrix.reshape(4, 4))
+        except np.linalg.LinAlgError:
+            raise ZeroDivisionError
+        self._matrix = np.ravel(inverse)

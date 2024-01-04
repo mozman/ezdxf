@@ -277,13 +277,17 @@ class TestMatrix44:
         m = m44([1] * 16)
         pytest.raises(ZeroDivisionError, m.inverse)
 
+    def test_determinant(self, m44):
+        matrix = m44((3, 1, 3, 3), (5, 5, 6, 7), (8, 9, 0, 11), (12, 14, 14, 15))
+        assert isclose(matrix.determinant(), 289.)
+
     def test_axis_rotate_for_axis_normalization(self, m44):
         m1 = m44.axis_rotate((0, 0, 1), 1.23)
         m2 = m44.axis_rotate((0, 0, 0.5), 1.23)
         for a, b in zip(m1, m2):
             assert isclose(a, b)
 
-    def test_assign_after_initialised(self, m44):
+    def test_assign_after_initialized(self, m44):
         matrix = m44()
         matrix[0, 0] = 12
         matrix2 = m44()

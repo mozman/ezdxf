@@ -405,7 +405,7 @@ def test_determinant():
     ]
     det = LUDecomposition(A).determinant()
     chk = Matrix44(*A)
-    assert chk.determinant() == det
+    assert math.isclose(chk.determinant(), det)
 
 
 TRI_DIAGONAL = [
