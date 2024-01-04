@@ -152,7 +152,7 @@ class NumpyPath2d(NumpyShape2d):
         vertices = [(v.x, v.y) for v in path.control_vertices()]
         if len(vertices) == 0:
             try:  # control_vertices() does not return the start point of empty paths
-                vertices = [path.start]
+                vertices = [Vec2(path.start)]
             except IndexError:
                 vertices = []
         self._vertices = np.array(vertices, dtype=VertexNumpyType)
@@ -503,11 +503,17 @@ def to_matplotlib_path(paths: Iterable[NumpyPath2d], *, detect_holes=False):
     vertices: list[np.ndarray] = []
     codes: list[int] = []
     for path in paths:
+        
         vertices.append(path.np_vertices())
         codes.append(MPL_MOVETO)
         for cmd in path.command_codes():
             codes.extend(MPL_CODES[cmd])
-    return Path(np.concatenate(vertices), codes)
+    points = np.concatenate(vertices)
+    try:
+        return Path(points, codes)
+    except Exception as e:
+        raise ValueError(f"matplotlib.path.Path({str(points)}, {str(codes)}): {str(e)}")
+
 
 
 def single_paths(paths: Iterable[NumpyPath2d]) -> list[NumpyPath2d]:

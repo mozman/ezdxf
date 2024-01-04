@@ -159,6 +159,7 @@ class MatplotlibBackend(Backend):
         """Draw a solid line path, line type rendering is done by the
         frontend since v0.18.1
         """
+        
         mpl_path = to_matplotlib_path([path])
         try:
             patch = PathPatch(

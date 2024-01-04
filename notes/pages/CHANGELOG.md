@@ -27,6 +27,8 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- REMOVE: `ezdxf.math.linspace`, replaced by `numpy.linspace`
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
+	- BUGFIX: `NumpyPath2d` could contain a 3d vertex
+		- {{issue 1003}}
 -
 - ## Version 1.1.4 - 2023-12-24
   id:: 6568dc88-ce84-4f46-b490-43768c491a2b
