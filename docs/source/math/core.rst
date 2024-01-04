@@ -26,7 +26,6 @@ Utility Functions
     ellipse_param_span
     has_matrix_2d_stretching
     has_matrix_3d_stretching
-    linspace
     open_uniform_knot_vector
     required_knot_values
     uniform_knot_vector

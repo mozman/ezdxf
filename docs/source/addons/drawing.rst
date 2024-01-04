@@ -365,6 +365,11 @@ HatchPolicy
 
 .. autoclass:: ezdxf.addons.drawing.config.HatchPolicy
 
+ImagePolicy
+-----------
+
+.. autoclass:: ezdxf.addons.drawing.config.ImagePolicy
+
 LinePolicy
 ----------
 

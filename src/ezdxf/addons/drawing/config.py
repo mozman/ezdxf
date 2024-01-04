@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, Matthew Broadway
+# Copyright (c) 2021-2024, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
 from typing import Optional
@@ -13,15 +13,21 @@ from .type_hints import Color
 
 
 class LinePolicy(Enum):
-    """
+    """This enum is used to define how to render linetypes.
+
+    .. note::
+
+        Text and shapes in linetypes are not supported.
+
     Attributes:
         SOLID: draw all lines as solid regardless of the linetype style
         ACCURATE: render styled lines as accurately as possible
+        APPROXIMATE: ignored since v0.18.1 - uses always ACCURATE by default
 
     """
 
     SOLID = auto()
-    APPROXIMATE = auto()  # ignored since v0.18.1 => ACCURATE
+    APPROXIMATE = auto()  # ignored since v0.18.1
     ACCURATE = auto()
 
 
