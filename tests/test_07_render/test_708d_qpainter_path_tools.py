@@ -6,7 +6,7 @@ import pytest
 pytest.importorskip("PySide6")
 
 from ezdxf import path
-from ezdxf.math import quadratic_to_cubic_bezier, Bezier3P
+from ezdxf.math import quadratic_to_cubic_bezier, Bezier3P, Vec2
 from ezdxf import npshapes
 
 
@@ -35,7 +35,7 @@ class TestNumpyPath2dToQPainterPath:
         assert (l2.x, l2.y) == (7, 8)
 
     def test_curve3_to(self):
-        bez3 = Bezier3P([(0, 0), (2, 1), (4, 0)])
+        bez3 = Bezier3P(Vec2.list([(0, 0), (2, 1), (4, 0)]))
         p = path.Path()
         p.curve3_to(bez3.control_points[2], bez3.control_points[1])
         qpath = npshapes.to_qpainter_path([npshapes.NumpyPath2d(p)])

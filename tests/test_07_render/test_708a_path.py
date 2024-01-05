@@ -137,8 +137,8 @@ def test_sub_paths_inherit_parent_user_data():
 
 def test_add_curves3():
     path = Path()
-    c1 = Bezier3P(((0, 0), (1, 1), (2, 0)))
-    c2 = Bezier3P(((2, 0), (1, -1), (0, 0)))
+    c1 = Bezier3P(Vec2.list(((0, 0), (1, 1), (2, 0))))
+    c2 = Bezier3P(Vec2.list(((2, 0), (1, -1), (0, 0))))
     tools.add_bezier3p(path, [c1, c2])
     assert len(path) == 2
     assert path.end == (0, 0)
@@ -146,8 +146,8 @@ def test_add_curves3():
 
 def test_add_curves4():
     path = Path()
-    c1 = Bezier4P(((0, 0), (0, 1), (2, 1), (2, 0)))
-    c2 = Bezier4P(((2, 0), (2, -1), (0, -1), (0, 0)))
+    c1 = Bezier4P(Vec2.list(((0, 0), (0, 1), (2, 1), (2, 0))))
+    c2 = Bezier4P(Vec2.list(((2, 0), (2, -1), (0, -1), (0, 0))))
     tools.add_bezier4p(path, [c1, c2])
     assert len(path) == 2
     assert path.end == (0, 0)
@@ -155,8 +155,8 @@ def test_add_curves4():
 
 def test_add_curves3_with_gap():
     path = Path()
-    c1 = Bezier3P(((0, 0), (1, 1), (2, 0)))
-    c2 = Bezier3P(((2, -1), (3, -2), (0, -1)))
+    c1 = Bezier3P(Vec2.list(((0, 0), (1, 1), (2, 0))))
+    c2 = Bezier3P(Vec2.list(((2, -1), (3, -2), (0, -1))))
     tools.add_bezier3p(path, [c1, c2])
     assert len(path) == 3  # added a line segment between curves
     assert path.end == (0, -1)
@@ -164,8 +164,8 @@ def test_add_curves3_with_gap():
 
 def test_add_curves4_with_gap():
     path = Path()
-    c1 = Bezier4P(((0, 0, 0), (0, 1, 0), (2, 1, 0), (2, 0, 0)))
-    c2 = Bezier4P(((2, -1, 0), (2, -2, 0), (0, -2, 0), (0, -1, 0)))
+    c1 = Bezier4P(Vec3.list(((0, 0, 0), (0, 1, 0), (2, 1, 0), (2, 0, 0))))
+    c2 = Bezier4P(Vec3.list(((2, -1, 0), (2, -2, 0), (0, -2, 0), (0, -1, 0))))
     tools.add_bezier4p(path, [c1, c2])
     assert len(path) == 3  # added a line segment between curves
     assert path.end == (0, -1, 0)
@@ -173,7 +173,7 @@ def test_add_curves4_with_gap():
 
 def test_add_curves3_reverse():
     path = Path(start=(0, 0))
-    c1 = Bezier3P(((2, 0), (1, 1), (0, 0)))
+    c1 = Bezier3P(Vec2.list(((2, 0), (1, 1), (0, 0))))
     tools.add_bezier3p(path, [c1])
     assert len(path) == 1
     assert path.end == (2, 0, 0)
@@ -181,7 +181,7 @@ def test_add_curves3_reverse():
 
 def test_add_curves4_reverse():
     path = Path(start=(0, 0, 0))
-    c1 = Bezier4P(((2, 0, 0), (2, 1, 0), (0, 1, 0), (0, 0, 0)))
+    c1 = Bezier4P(Vec3.list(((2, 0, 0), (2, 1, 0), (0, 1, 0), (0, 0, 0))))
     tools.add_bezier4p(path, [c1])
     assert len(path) == 1
     assert path.end == (2, 0, 0)

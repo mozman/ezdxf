@@ -69,19 +69,19 @@ def test_quadratic_to_cubic_bezier():
 
 
 # G1 continuity: normalized end-tangent == normalized start-tangent of next curve
-B1 = Bezier4P([(0, 0), (1, 1), (2, 1), (3, 0)])
+B1 = Bezier4P(Vec2.list([(0, 0), (1, 1), (2, 1), (3, 0)]))
 
 # B1/B2 has G1 continuity:
-B2 = Bezier4P([(3, 0), (4, -1), (5, -1), (6, 0)])
+B2 = Bezier4P(Vec2.list([(3, 0), (4, -1), (5, -1), (6, 0)]))
 
 # B1/B3 has no G1 continuity:
-B3 = Bezier4P([(3, 0), (4, 1), (5, 1), (6, 0)])
+B3 = Bezier4P(Vec2.list([(3, 0), (4, 1), (5, 1), (6, 0)]))
 
 # B1/B4 G1 continuity off tolerance:
-B4 = Bezier4P([(3, 0), (4, -1.03), (5, -1.0), (6, 0)])
+B4 = Bezier4P(Vec2.list([(3, 0), (4, -1.03), (5, -1.0), (6, 0)]))
 
 # B1/B5 has a gap between B1 end and B5 start:
-B5 = Bezier4P([(4, 0), (5, -1), (6, -1), (7, 0)])
+B5 = Bezier4P(Vec2.list([(4, 0), (5, -1), (6, -1), (7, 0)]))
 
 
 def test_g1_continuity_for_bezier_curves():
@@ -95,8 +95,8 @@ def test_g1_continuity_for_bezier_curves():
     ), "end- and start point should match"
 
 
-D1 = Bezier4P([(0, 0), (1, 1), (3, 0), (3, 0)])
-D2 = Bezier4P([(3, 0), (3, 0), (5, -1), (6, 0)])
+D1 = Bezier4P(Vec2.list([(0, 0), (1, 1), (3, 0), (3, 0)]))
+D2 = Bezier4P(Vec2.list([(3, 0), (3, 0), (5, -1), (6, 0)]))
 
 
 def test_g1_continuity_for_degenerated_bezier_curves():
@@ -197,28 +197,30 @@ def test_cubic_bezier_from_3_points():
 
 class TestBezierCurveBoundingBox:
     def test_linear_curve(self):
-        bbox = cubic_bezier_bbox(Bezier4P([(0, 0), (1, 1), (2, 2), (3, 3)]))
+        bbox = cubic_bezier_bbox(Bezier4P(Vec2.list([(0, 0), (1, 1), (2, 2), (3, 3)])))
         assert bbox.extmin == (0, 0, 0)
         assert bbox.extmax == (3, 3, 0)
 
     def test_reverse_linear_curve(self):
-        bbox = cubic_bezier_bbox(Bezier4P([(3, 3), (2, 2), (-2, -2), (-3, -3)]))
+        bbox = cubic_bezier_bbox(
+            Bezier4P(Vec2.list([(3, 3), (2, 2), (-2, -2), (-3, -3)]))
+        )
         assert bbox.extmin == (-3, -3, 0)
         assert bbox.extmax == (3, 3, 0)
 
     def test_cubic_bezier_curve_with_one_extrema(self):
-        curve = Bezier4P([(0, 0), (0, 1), (2, 1), (2, 0)])
+        curve = Bezier4P(Vec2.list([(0, 0), (0, 1), (2, 1), (2, 0)]))
         bbox = cubic_bezier_bbox(curve)
         assert bbox.extmax.y == pytest.approx(0.75)
 
     def test_cubic_bezier_curve_with_two_extrema(self):
-        curve = Bezier4P([(0, 0), (0, 1), (2, -1), (2, 0)])
+        curve = Bezier4P(Vec2.list([(0, 0), (0, 1), (2, -1), (2, 0)]))
         bbox = cubic_bezier_bbox(curve)
         assert bbox.extmin.y == pytest.approx(-0.28867513459481287)
         assert bbox.extmax.y == pytest.approx(+0.28867513459481287)
 
     def test_closed_3d_cubic_bezier_curve(self):
-        curve = Bezier4P([(0, 0, -1), (2, 3, 0), (-2, 3, 0), (0, 0, -1)])
+        curve = Bezier4P(Vec3.list([(0, 0, -1), (2, 3, 0), (-2, 3, 0), (0, 0, -1)]))
         bbox = cubic_bezier_bbox(curve)
         assert bbox.extmin.x == pytest.approx(-0.5773502691896258)
         assert bbox.extmin.z == pytest.approx(-1.0)
@@ -227,7 +229,7 @@ class TestBezierCurveBoundingBox:
         assert bbox.extmax.z == pytest.approx(-0.25)
 
     def test_quadratic_bezier_curve_box(self):
-        curve = Bezier3P([(0, 0), (1, 1), (2, 0)])
+        curve = Bezier3P(Vec2.list([(0, 0), (1, 1), (2, 0)]))
         bbox = quadratic_bezier_bbox(curve)
         assert bbox.extmax.y == pytest.approx(0.5)
 
@@ -235,12 +237,10 @@ class TestBezierCurveBoundingBox:
 class TestRayCubicBezierCurve2dIntersection:
     @pytest.fixture(scope="class")
     def curve(self):
-        return Bezier4P([(0, -2), (2, 6), (4, -6), (6, 2)])
+        return Bezier4P(Vec2.list([(0, -2), (2, 6), (4, -6), (6, 2)]))
 
     def test_no_intersection(self, curve):
-        assert (
-            len(intersection_ray_cubic_bezier_2d((0, -6), (1, -6), curve)) == 0
-        )
+        assert len(intersection_ray_cubic_bezier_2d((0, -6), (1, -6), curve)) == 0
 
     def test_one_intersection_point(self, curve):
         points = intersection_ray_cubic_bezier_2d((3, -6), (3, 6), curve)
@@ -248,9 +248,7 @@ class TestRayCubicBezierCurve2dIntersection:
         assert points[0].isclose((3, 0))
 
     def test_two_intersection_points(self, curve):
-        points = intersection_ray_cubic_bezier_2d(
-            (-1.4, -2.5), (7.1, 3.9), curve
-        )
+        points = intersection_ray_cubic_bezier_2d((-1.4, -2.5), (7.1, 3.9), curve)
         assert len(points) == 2
         expected = (
             (0.18851028511733303, -1.3039451970881237),
@@ -269,14 +267,14 @@ class TestRayCubicBezierCurve2dIntersection:
         assert all(p.isclose(e) for e, p in zip(expected, points)) is True
 
     def test_collinear_ray_and_curve(self):
-        curve = Bezier4P([(0, 0), (1, 0), (2, 0), (3, 0)])
+        curve = Bezier4P(Vec2.list([(0, 0), (1, 0), (2, 0), (3, 0)]))
         ip = intersection_ray_cubic_bezier_2d((0, 0), (1, 0), curve)
         assert len(ip) == 1
         assert ip[0].isclose((0, 0))  # ???
 
     @pytest.mark.parametrize("x", [0, 0.5, 1, 3])
     def test_linear_ray_and_curve(self, x):
-        curve = Bezier4P([(0, 0), (1, 0), (2, 0), (3, 0)])
+        curve = Bezier4P(Vec2.list([(0, 0), (1, 0), (2, 0), (3, 0)]))
         # ray defined in +y direction
         ip = intersection_ray_cubic_bezier_2d((x, -1), (x, 0), curve)
         assert len(ip) == 1

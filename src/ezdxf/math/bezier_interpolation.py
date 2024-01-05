@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2022 Manfred Moitzi
+# Copyright (c) 2010-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Iterable, Sequence
@@ -11,7 +11,7 @@ __all__ = ["cubic_bezier_interpolation", "tangents_cubic_bezier_interpolation"]
 
 def cubic_bezier_interpolation(
     points: Iterable[UVec],
-) -> Iterable[Bezier4P]:
+) -> Iterable[Bezier4P[Vec3]]:
     """Returns an interpolation curve for given data `points` as multiple cubic
     Bézier-curves. Returns n-1 cubic Bézier-curves for n given data points,
     curve i goes from point[i] to point[i+1].

@@ -4,11 +4,11 @@
 # License: MIT License
 # type: ignore -- pylance sucks at type-checking cython files
 from typing import List, Tuple, TYPE_CHECKING, Sequence
-from .vector cimport Vec3, isclose, v3_dist, v3_from_cpp_vec3, v3_add
+from .vector cimport Vec3, isclose, v3_dist, v3_from_cpp_vec3, v3_add, Vec2
 from .matrix44 cimport Matrix44
 from ._cpp_vec3 cimport CppVec3
 from ._cpp_quad_bezier cimport CppQuadBezier
-
+import warnings
 if TYPE_CHECKING:
     from ezdxf.math import UVec
 
@@ -26,6 +26,11 @@ cdef class Bezier3P:
     cdef Vec3 offset
 
     def __cinit__(self, defpoints: Sequence[UVec]):
+        if not isinstance(defpoints[0], (Vec2, Vec3)):
+            warnings.warn(
+                DeprecationWarning, 
+                "Bezier3P requires defpoints of type Vec2 or Vec3 in the furture",
+            )
         cdef CppVec3 cpp_offset
         if len(defpoints) == 3:
             self.offset = Vec3(defpoints[0])

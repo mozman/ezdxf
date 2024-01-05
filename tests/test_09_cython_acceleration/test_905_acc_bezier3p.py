@@ -13,7 +13,7 @@ from ezdxf.acc.matrix44 import Matrix44
 
 # check functions:
 
-POINTS = [(0.0, 0.0), (5.0, 5.0), (10.0, 0.0)]
+POINTS = Vec3.list([(0.0, 0.0), (5.0, 5.0), (10.0, 0.0)])
 
 
 def test_default_constructor():

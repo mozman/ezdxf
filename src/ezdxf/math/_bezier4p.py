@@ -65,11 +65,8 @@ class Bezier4P(Generic[T]):
     A `Bézier curve`_ is a parametric curve, parameter `t` goes from 0 to 1,
     where 0 is the first control point and 1 is the fourth control point.
 
-    Special behavior:
-
-        - 2D control points in, returns 2D results as :class:`~ezdxf.math.Vec2` objects
-        - 3D control points in, returns 3D results as :class:`~ezdxf.math.Vec3` objects
-        - Object is immutable.
+    The class supports the point types `~ezdxf.math.Vec2` and `~ezdxf.math.Vec3`,
+    and the class instances are immutable.
 
     Args:
         defpoints: iterable of definition points as :class:`Vec2` or
@@ -79,19 +76,18 @@ class Bezier4P(Generic[T]):
 
     __slots__ = ("_control_points", "_offset")
 
-    def __init__(self, defpoints: Sequence[UVec]):
+    def __init__(self, defpoints: Sequence[T]):
         if len(defpoints) != 4:
             raise ValueError("Four control points required.")
+        point_type = defpoints[0].__class__
+        if not point_type.__name__ in ("Vec2", "Vec3"):  # Cython types!!!
+            raise TypeError(f"invalid point type: {point_type.__name__}")
 
-        is3d = any(len(p) > 2 for p in defpoints)
-        vector_class = Vec3 if is3d else Vec2
         # The start point is the curve offset
-        offset: T = vector_class(defpoints[0])  # type: ignore
+        offset: T = defpoints[0]
         self._offset: T = offset
         # moving the curve to the origin reduces floating point errors:
-        self._control_points: Sequence[T] = tuple(  # type: ignore
-            vector_class(p) - offset for p in defpoints
-        )
+        self._control_points: tuple[T, ...] = tuple(p - offset for p in defpoints)
 
     @property
     def control_points(self) -> Sequence[T]:
@@ -223,11 +219,11 @@ class Bezier4P(Generic[T]):
             prev_point = point
         return length
 
-    def reverse(self) -> Bezier4P:
+    def reverse(self) -> Bezier4P[T]:
         """Returns a new Bèzier-curve with reversed control point order."""
         return Bezier4P(list(reversed(self.control_points)))
 
-    def transform(self, m: Matrix44) -> Bezier4P:
+    def transform(self, m: Matrix44) -> Bezier4P[Vec3]:
         """General transformation interface, returns a new :class:`Bezier4p`
         curve as a 3D curve.
 
@@ -235,11 +231,7 @@ class Bezier4P(Generic[T]):
              m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
 
         """
-        defpoints: Iterable[Vec3]
-        if len(self._offset) == 2:
-            defpoints = Vec3.generate(self.control_points)
-        else:
-            defpoints = self.control_points  # type: ignore
+        defpoints = Vec3.generate(self.control_points)
         return Bezier4P(tuple(m.transform_vertices(defpoints)))
 
 

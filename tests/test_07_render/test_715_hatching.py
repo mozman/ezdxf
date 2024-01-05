@@ -95,7 +95,7 @@ class TestIntersectHatchLine:
     def test_cubic_bezier_curve(self, horizontal_baseline):
         # low level intersection tests:
         # test_630b - TestRayCubicBezierCurve2dIntersection()
-        curve = Bezier4P([(0, -2), (2, 6), (4, -6), (6, 2)])
+        curve = Bezier4P(Vec2.list([(0, -2), (2, 6), (4, -6), (6, 2)]))
         hatch_line = horizontal_baseline.hatch_line(0)
         ips = hatch_line.intersect_cubic_bezier_curve(curve)
         assert len(ips) == 3

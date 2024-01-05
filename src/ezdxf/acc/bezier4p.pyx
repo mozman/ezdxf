@@ -5,8 +5,10 @@
 # type: ignore -- pylance sucks at type-checking cython files
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
+import warnings
 from .vector cimport (
     Vec3,
+    Vec2,
     isclose,
     v3_dist,
     v3_from_angle,
@@ -45,6 +47,11 @@ cdef class Bezier4P:
 
     def __cinit__(self, defpoints: Sequence[UVec]):
         cdef CppVec3 cpp_offset
+        if not isinstance(defpoints[0], (Vec2, Vec3)):
+            warnings.warn(
+                DeprecationWarning, 
+                "Bezier4P requires defpoints of type Vec2 or Vec3 in the future",
+            )
         if len(defpoints) == 4:
             self.offset = Vec3(defpoints[0])
             cpp_offset = self.offset.to_cpp_vec3()
