@@ -22,8 +22,6 @@ import numpy.typing as npt
 __all__ = [
     "Matrix",
     "numpy_matrix_solver",
-    "gauss_jordan_solver",
-    "gauss_jordan_inverse",
     "LUDecomposition",
     "tridiagonal_vector_solver",
     "tridiagonal_matrix_solver",
@@ -424,12 +422,8 @@ def numpy_matrix_solver(A: MatrixData | NDArray, B: MatrixData | NDArray) -> Mat
     numpy.linalg.solve() function.
 
     Args:
-        A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], [a21, a22, ..., a2n],
-            ... [an1, an2, ..., ann]]
+        A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], ... [an1, an2, ..., ann]]
         B: matrix [[b11, b12, ..., b1m], [b21, b22, ..., b2m], ... [bn1, bn2, ..., bnm]]
-
-    Returns:
-        matrix as :class:`Matrix` object
 
     Raises:
         numpy.linalg.LinAlgError: singular matrix
@@ -442,15 +436,12 @@ def numpy_matrix_solver(A: MatrixData | NDArray, B: MatrixData | NDArray) -> Mat
 
 def numpy_vector_solver(A: MatrixData | NDArray, B: Iterable[float]) -> list[float]:
     """Solves the linear equation system given by a nxn Matrix A . x = B,
-    right-hand side quantities as vector B with n elements by the numpy.linalg.solver.
+    right-hand side quantities as vector B with n elements by the numpy.linalg.solve() 
+    function.
 
     Args:
-        A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], [a21, a22, ..., a2n],
-            ... [an1, an2, ..., ann]]
+        A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], ... [an1, an2, ..., ann]]
         B: vector [b1, b2, ..., bn]
-
-    Returns:
-        vector as list of floats
 
     Raises:
         numpy.linalg.LinAlgError: singular matrix
@@ -459,109 +450,6 @@ def numpy_vector_solver(A: MatrixData | NDArray, B: Iterable[float]) -> list[flo
     mat_A = np.array(A, dtype=np.float64)
     mat_B = np.array([[float(v)] for v in B], dtype=np.float64)
     return list(np.ravel(np.linalg.solve(mat_A, mat_B)))
-
-
-def gauss_jordan_solver(
-    A: MatrixData | NDArray, B: MatrixData | NDArray
-) -> tuple[Matrix, Matrix]:
-    """Solves the linear equation system given by a nxn Matrix A . x = B,
-    right-hand side quantities as nxm Matrix B by the `Gauss-Jordan`_ algorithm,
-    which is the slowest of all, but it is very reliable. Returns a copy of the
-    modified input matrix `A` and the result matrix `x`.
-
-    Internally used for matrix inverse calculation.
-
-    Args:
-        A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], [a21, a22, ..., a2n],
-            ... [an1, an2, ..., ann]]
-        B: matrix [[b11, b12, ..., b1m], [b21, b22, ..., b2m], ... [bn1, bn2, ..., bnm]]
-
-    Returns:
-        2-tuple of :class:`Matrix` objects
-
-    Raises:
-        ZeroDivisionError: singular matrix
-
-    """
-    # copy input data
-    matrix_a = copy_float_matrix(A)
-    matrix_b = copy_float_matrix(B)
-
-    n = len(matrix_a)
-    m = len(matrix_b[0])
-
-    if len(matrix_a[0]) != n:
-        raise ValueError("A square nxn matrix A is required.")
-    if len(matrix_b) != n:
-        raise ValueError("Row count of matrices A and B has to match.")
-
-    icol = 0
-    irow = 0
-    col_indices = [0] * n
-    row_indices = [0] * n
-    ipiv = [0] * n
-
-    for i in range(n):
-        big = 0.0
-        for j in range(n):
-            if ipiv[j] != 1:
-                for k in range(n):
-                    if ipiv[k] == 0:
-                        if abs(matrix_a[j][k]) >= big:
-                            big = abs(matrix_a[j][k])
-                            irow = j
-                            icol = k
-
-        ipiv[icol] += 1
-        if irow != icol:
-            matrix_a[irow], matrix_a[icol] = matrix_a[icol], matrix_a[irow]
-            matrix_b[irow], matrix_b[icol] = matrix_b[icol], matrix_b[irow]
-
-        row_indices[i] = irow
-        col_indices[i] = icol
-
-        pivinv = 1.0 / matrix_a[icol][icol]
-        matrix_a[icol][icol] = 1.0
-        matrix_a[icol] = [v * pivinv for v in matrix_a[icol]]
-        matrix_b[icol] = [v * pivinv for v in matrix_b[icol]]
-        for row in range(n):
-            if row == icol:
-                continue
-            dum = matrix_a[row][icol]
-            matrix_a[row][icol] = 0.0
-            for col in range(n):
-                matrix_a[row][col] -= matrix_a[icol][col] * dum
-            for col in range(m):
-                matrix_b[row][col] -= matrix_b[icol][col] * dum
-
-    for i in range(n - 1, -1, -1):
-        irow = row_indices[i]
-        icol = col_indices[i]
-        if irow != icol:
-            for _row in matrix_a:
-                _row[irow], _row[icol] = _row[icol], _row[irow]
-    return Matrix(matrix=matrix_a), Matrix(matrix=matrix_b)
-
-
-def gauss_jordan_inverse(A: MatrixData) -> Matrix:
-    """Returns the inverse of matrix `A` as :class:`Matrix` object.
-
-    .. hint::
-
-        For small matrices (n<10) is this function faster than
-        LUDecomposition(m).inverse() and as fast even if the decomposition is
-        already done.
-
-    Raises:
-        ZeroDivisionError: singular matrix
-
-    """
-    if isinstance(A, Matrix):
-        matrix_a = A.matrix
-    else:
-        matrix_a = list(A)
-    nrows = len(matrix_a)
-    return gauss_jordan_solver(matrix_a, list(repeat([0.0], nrows)))[0]
 
 
 class LUDecomposition:
