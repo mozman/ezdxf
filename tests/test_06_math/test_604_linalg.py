@@ -5,7 +5,6 @@ import pytest
 import math
 from ezdxf.math.linalg import (
     Matrix,
-    LUDecomposition,
     tridiagonal_vector_solver,
     tridiagonal_matrix_solver,
 )
@@ -14,6 +13,7 @@ from ezdxf.math.legacy import (
     gauss_vector_solver,
     gauss_jordan_solver,
     gauss_jordan_inverse,
+    LUDecomposition,
 )
 
 

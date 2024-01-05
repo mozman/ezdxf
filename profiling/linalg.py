@@ -5,7 +5,6 @@ import random
 
 from ezdxf.math.linalg import (
     Matrix,
-    LUDecomposition,
     numpy_matrix_solver,
     numpy_vector_solver,
 )
@@ -14,6 +13,7 @@ from ezdxf.math.legacy import (
     gauss_matrix_solver,
     gauss_jordan_solver,
     gauss_jordan_inverse,
+    LUDecomposition,
 )
 
 

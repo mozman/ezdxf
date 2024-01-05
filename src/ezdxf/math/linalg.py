@@ -11,6 +11,8 @@ from typing import (
     Optional,
 )
 from typing_extensions import TypeAlias
+import abc
+
 from functools import lru_cache
 from itertools import repeat
 import math
@@ -21,8 +23,10 @@ import numpy.typing as npt
 
 __all__ = [
     "Matrix",
+    "Solver",
+    "numpy_vector_solver",
     "numpy_matrix_solver",
-    "LUDecomposition",
+    "NumpySolver",
     "tridiagonal_vector_solver",
     "tridiagonal_matrix_solver",
     "detect_banded_matrix",
@@ -263,13 +267,6 @@ class Matrix:
         m.matrix.flags.writeable = False
         return m
 
-    def lu_decomp(self) -> LUDecomposition:
-        """Returns the `LU decomposition`_ as :class:`LUDecomposition` object,
-        a faster linear equation solver.
-
-        """
-        return LUDecomposition(self.matrix)
-
     def __getitem__(self, item: tuple[int, int]) -> float:
         """Get value by (row, col) index tuple, fancy slicing as known from
         numpy is not supported.
@@ -354,6 +351,16 @@ class Matrix:
         return float(np.linalg.det(self.matrix))
 
 
+class Solver(abc.ABC):
+    @abc.abstractmethod
+    def solve_matrix(self, B: MatrixData | NDArray) -> Matrix:
+        ...
+
+    @abc.abstractmethod
+    def solve_vector(self, B: Iterable[float]) -> list[float]:
+        ...
+
+
 def quadratic_equation(a: float, b: float, c: float, abs_tol=1e-12) -> Sequence[float]:
     """Returns the solution for the quadratic equation ``a*x^2 + b*x + c = 0``.
 
@@ -436,7 +443,7 @@ def numpy_matrix_solver(A: MatrixData | NDArray, B: MatrixData | NDArray) -> Mat
 
 def numpy_vector_solver(A: MatrixData | NDArray, B: Iterable[float]) -> list[float]:
     """Solves the linear equation system given by a nxn Matrix A . x = B,
-    right-hand side quantities as vector B with n elements by the numpy.linalg.solve() 
+    right-hand side quantities as vector B with n elements by the numpy.linalg.solve()
     function.
 
     Args:
@@ -452,158 +459,15 @@ def numpy_vector_solver(A: MatrixData | NDArray, B: Iterable[float]) -> list[flo
     return list(np.ravel(np.linalg.solve(mat_A, mat_B)))
 
 
-class LUDecomposition:
-    """Represents a `LU decomposition`_ matrix of A, raise :class:`ZeroDivisionError`
-    for a singular matrix.
-
-    This algorithm is a little bit faster than the `Gauss-Elimination`_
-    algorithm using CPython and much faster when using pypy.
-
-    The :attr:`LUDecomposition.matrix` attribute gives access to the matrix data
-    as list of rows like in the :class:`Matrix` class, and the :attr:`LUDecomposition.index`
-    attribute gives access to the swapped row indices.
-
-    Args:
-        A: matrix [[a11, a12, ..., a1n], [a21, a22, ..., a2n], [a21, a22, ..., a2n],
-            ... [an1, an2, ..., ann]]
-
-    raises:
-        ZeroDivisionError: singular matrix
-
-    """
-
-    __slots__ = ("matrix", "index", "_det")
-
-    def __init__(self, A: MatrixData | NDArray):
-        lu: MatrixData = copy_float_matrix(A)
-        n: int = len(lu)
-        det: float = 1.0
-        index: list[int] = []
-
-        # find max value for each row, raises ZeroDivisionError for singular matrix!
-        scaling: list[float] = [1.0 / max(abs(v) for v in row) for row in lu]
-
-        for k in range(n):
-            big: float = 0.0
-            imax: int = k
-            for i in range(k, n):
-                temp: float = scaling[i] * abs(lu[i][k])
-                if temp > big:
-                    big = temp
-                    imax = i
-
-            if k != imax:
-                for col in range(n):
-                    temp = lu[imax][col]
-                    lu[imax][col] = lu[k][col]
-                    lu[k][col] = temp
-
-                det = -det
-                scaling[imax] = scaling[k]
-
-            index.append(imax)
-            for i in range(k + 1, n):
-                temp = lu[i][k] / lu[k][k]
-                lu[i][k] = temp
-                for j in range(k + 1, n):
-                    lu[i][j] -= temp * lu[k][j]
-
-        self.index: list[int] = index
-        self.matrix: MatrixData = lu
-        self._det: float = det
-
-    def __str__(self) -> str:
-        return str(self.matrix)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__} {reprlib.repr(self.matrix)}"
-
-    @property
-    def nrows(self) -> int:
-        """Count of matrix rows (and cols)."""
-        return len(self.matrix)
-
-    def solve_vector(self, B: Iterable[float]) -> list[float]:
-        """Solves the linear equation system given by the nxn Matrix A . x = B,
-        right-hand side quantities as vector B with n elements.
-
-        Args:
-            B: vector [b1, b2, ..., bn]
-
-        Returns:
-            vector as list of floats
-
-        """
-        X: list[float] = [float(v) for v in B]
-        lu: MatrixData = self.matrix
-        index: list[int] = self.index
-        n: int = self.nrows
-        ii: int = 0
-
-        if len(X) != n:
-            raise ValueError(
-                "Item count of vector B has to be equal to matrix row count."
-            )
-
-        for i in range(n):
-            ip: int = index[i]
-            sum_: float = X[ip]
-            X[ip] = X[i]
-            if ii != 0:
-                for j in range(ii - 1, i):
-                    sum_ -= lu[i][j] * X[j]
-            elif sum_ != 0.0:
-                ii = i + 1
-            X[i] = sum_
-
-        for row in range(n - 1, -1, -1):
-            sum_ = X[row]
-            for col in range(row + 1, n):
-                sum_ -= lu[row][col] * X[col]
-            X[row] = sum_ / lu[row][row]
-        return X
+class NumpySolver(Solver):
+    def __init__(self, A: MatrixData | NDArray) -> None:
+        self.mat_A = np.array(A, dtype=np.float64)
 
     def solve_matrix(self, B: MatrixData | NDArray) -> Matrix:
-        """Solves the linear equation system given by the nxn Matrix A . x = B,
-        right-hand side quantities as nxm Matrix B.
+        return numpy_matrix_solver(self.mat_A, B)
 
-        Args:
-            B: matrix [[b11, b12, ..., b1m], [b21, b22, ..., b2m],
-                ... [bn1, bn2, ..., bnm]]
-
-        Returns:
-            matrix as :class:`Matrix` object
-
-        """
-        if not isinstance(B, Matrix):
-            matrix_b = Matrix(matrix=[list(row) for row in B])
-        else:
-            matrix_b = cast(Matrix, B)
-
-        if matrix_b.nrows != self.nrows:
-            raise ValueError("Row count of self and matrix B has to match.")
-
-        return Matrix(
-            matrix=[self.solve_vector(col) for col in matrix_b.cols()]
-        ).transpose()
-
-    def inverse(self) -> Matrix:
-        """Returns the inverse of matrix as :class:`Matrix` object,
-        raise :class:`ZeroDivisionError` for a singular matrix.
-
-        """
-        return self.solve_matrix(Matrix.identity(shape=(self.nrows, self.nrows)).matrix)
-
-    def determinant(self) -> float:
-        """Returns the determinant of matrix, raises :class:`ZeroDivisionError`
-        if matrix is singular.
-
-        """
-        det: float = self._det
-        lu: MatrixData = self.matrix
-        for i in range(self.nrows):
-            det *= lu[i][i]
-        return det
+    def solve_vector(self, B: Iterable[float]) -> list[float]:
+        return numpy_vector_solver(self.mat_A, B)
 
 
 def tridiagonal_vector_solver(A: MatrixData, B: Iterable[float]) -> list[float]:
@@ -800,7 +664,7 @@ def compact_banded_matrix(A: Matrix, m1: int, m2: int) -> Matrix:
     return m
 
 
-class BandedMatrixLU:
+class BandedMatrixLU(Solver):
     """Represents a LU decomposition of a compact banded matrix."""
 
     def __init__(self, A: Matrix, m1: int, m2: int):
@@ -903,7 +767,7 @@ class BandedMatrixLU:
 
         return x
 
-    def solve_matrix(self, B: MatrixData) -> Matrix:
+    def solve_matrix(self, B: MatrixData | NDArray) -> Matrix:
         """
         Solves the linear equation system given by the banded nxn Matrix
         A . x = B, right-hand side quantities as nxm Matrix B.
@@ -916,10 +780,7 @@ class BandedMatrixLU:
             matrix as :class:`Matrix` object
 
         """
-        if not isinstance(B, Matrix):
-            matrix_b = Matrix(matrix=[list(row) for row in B])
-        else:
-            matrix_b = cast(Matrix, B)
+        matrix_b = Matrix(matrix=B)
         if matrix_b.nrows != self.nrows:
             raise ValueError("Row count of self and matrix B has to match.")
 

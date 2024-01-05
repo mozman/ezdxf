@@ -8,8 +8,9 @@ from ezdxf.math.linalg import (
     Matrix,
     BandedMatrixLU,
     banded_matrix,
-    LUDecomposition,
+    NumpySolver,
 )
+
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
@@ -28,10 +29,10 @@ def random_matrix(shape, m1: int, m2: int):
     return m
 
 
-def profile_LU_matrix_solver(count: int, A: Matrix, B: Matrix):
+def profile_numpy_matrix_solver(count: int, A: Matrix, B: Matrix):
     for _ in range(count):
-        lu = LUDecomposition(A)
-        lu.solve_matrix(B)
+        lu = NumpySolver(A.matrix)
+        lu.solve_matrix(B.matrix)
 
 
 def profile_banded_matrix_solver(count, A: Matrix, B: Matrix):
@@ -76,11 +77,11 @@ with open(CWD / "profiling_banded_matrix.csv", mode="wt", newline="") as f:
                     )
                 )
             )
-            t0 = profile(profile_LU_matrix_solver, REPEAT, A, B)
+            t0 = profile(profile_numpy_matrix_solver, REPEAT, A, B)
             t1 = profile(profile_banded_matrix_solver, REPEAT, A, B)
             factor = t0 / t1
             print(
-                f"Matrix {size}x{size}, m1={m1}, m2={m2}, {REPEAT}x: Standard LU {t0:0.3f}s Banded LU {t1:0.3}s factor: x{factor:.1f}"
+                f"Matrix {size}x{size}, m1={m1}, m2={m2}, {REPEAT}x: Numpy {t0:0.3f}s Banded LU {t1:0.3}s factor: x{factor:.1f}"
             )
             writer.writerow(
                 [

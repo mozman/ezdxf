@@ -323,8 +323,8 @@ def test_from_spline():
     spline = factory.new("SPLINE")
     spline.fit_points = [(2, 0), (4, 1), (6, -1), (8, 0)]
     path = make_path(spline)
-    assert path.start == (2, 0)
-    assert path.end == (8, 0)
+    assert path.start.isclose((2, 0))
+    assert path.end.isclose((8, 0))
 
 
 def test_add_ellipse():
