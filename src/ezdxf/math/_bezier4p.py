@@ -65,11 +65,11 @@ class Bezier4P(Generic[T]):
     A `Bézier curve`_ is a parametric curve, parameter `t` goes from 0 to 1,
     where 0 is the first control point and 1 is the fourth control point.
 
-    The class supports the point types `~ezdxf.math.Vec2` and `~ezdxf.math.Vec3`,
-    and the class instances are immutable.
+    The class supports points of type :class:`Vec2` and :class:`Vec3` as input, the 
+    class instances are immutable.
 
     Args:
-        defpoints: iterable of definition points as :class:`Vec2` or
+        defpoints: sequence of definition points as :class:`Vec2` or
             :class:`Vec3` compatible objects.
 
     """
@@ -91,8 +91,7 @@ class Bezier4P(Generic[T]):
 
     @property
     def control_points(self) -> Sequence[T]:
-        """Control points as tuple of :class:`~ezdxf.math.Vec3` or
-        :class:`~ezdxf.math.Vec2` objects.
+        """Control points as tuple of :class:`Vec3` or :class:`Vec2` objects.
         """
         # ezdxf optimization: p0 is always (0, 0, 0)
         p0, p1, p2, p3 = self._control_points
@@ -112,7 +111,7 @@ class Bezier4P(Generic[T]):
         return self._get_curve_tangent(t)
 
     def point(self, t: float) -> T:
-        """Returns point for location `t`` at the Bèzier-curve.
+        """Returns point for location `t` at the Bèzier-curve.
 
         Args:
             t: curve position in the range ``[0, 1]``
@@ -228,7 +227,7 @@ class Bezier4P(Generic[T]):
         curve as a 3D curve.
 
         Args:
-             m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
+             m: 4x4 transformation :class:`Matrix44`
 
         """
         defpoints = Vec3.generate(self.control_points)
