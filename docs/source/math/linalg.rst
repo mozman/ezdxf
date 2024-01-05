@@ -11,14 +11,6 @@ Linear algebra module **for internal usage**: :mod:`ezdxf.math.linalg`
 Functions
 ---------
 
-.. autofunction:: gauss_jordan_solver
-
-.. autofunction:: gauss_jordan_inverse
-
-.. autofunction:: gauss_vector_solver
-
-.. autofunction:: gauss_matrix_solver
-
 .. autofunction:: tridiagonal_vector_solver
 
 .. autofunction:: tridiagonal_matrix_solver
@@ -28,6 +20,7 @@ Functions
 .. autofunction:: detect_banded_matrix
 
 .. autofunction:: compact_banded_matrix
+
 
 Matrix Class
 ------------
@@ -72,8 +65,6 @@ Matrix Class
 
     .. automethod:: freeze
 
-    .. automethod:: lu_decomp
-
     .. automethod:: __getitem__
 
     .. automethod:: __setitem__
@@ -86,20 +77,16 @@ Matrix Class
 
     .. automethod:: __mul__
 
-LUDecomposition Class
----------------------
 
-.. autoclass:: LUDecomposition
+NumpySolver
+-----------
 
-    .. autoattribute:: nrows
+.. autoclass:: NumpySolver
 
     .. automethod:: solve_vector
 
     .. automethod:: solve_matrix
 
-    .. automethod:: inverse
-
-    .. automethod:: determinant
 
 BandedMatrixLU Class
 --------------------

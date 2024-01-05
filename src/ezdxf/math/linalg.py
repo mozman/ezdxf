@@ -80,13 +80,8 @@ def binomial_coefficient(k: int, i: int) -> float:
 
 
 class Matrix:
-    """Basic matrix implementation without any optimization for speed or
-    memory usage. Matrix data is stored in row major order, this means in a
-    list of rows, where each row is a list of floats. Direct access to the
-    data is accessible by the attribute :attr:`Matrix.matrix`.
-
-    The matrix can be frozen by function :func:`freeze_matrix` or method
-    :meth:`Matrix.freeze`, than the data is stored in immutable tuples.
+    """Basic matrix implementation based :class:`numpy.ndarray`. Matrix data is stored in
+    row major order, this means in a list of rows, where each row is a list of floats.
 
     Initialization:
 
@@ -94,6 +89,12 @@ class Matrix:
         - Matrix(matrix[, shape=(rows, cols)]) ... from copy of matrix and optional reshape
         - Matrix([[row_0], [row_1], ..., [row_n]]) ... from Iterable[Iterable[float]]
         - Matrix([a1, a2, ..., an], shape=(rows, cols)) ... from Iterable[float] and shape
+
+    .. versionchanged:: 1.2
+        Implementation based on :class:`numpy.ndarray`.
+
+    Attributes:
+        matrix: matrix data as :class:`numpy.ndarray`
 
     """
 
@@ -460,14 +461,40 @@ def numpy_vector_solver(A: MatrixData | NDArray, B: Iterable[float]) -> list[flo
 
 
 class NumpySolver(Solver):
+    """Replaces in v1.2 the :class:`LUDecomposition` solver."""
+
     def __init__(self, A: MatrixData | NDArray) -> None:
         self.mat_A = np.array(A, dtype=np.float64)
 
     def solve_matrix(self, B: MatrixData | NDArray) -> Matrix:
-        return numpy_matrix_solver(self.mat_A, B)
+        """
+        Solves the linear equation system given by the nxn Matrix
+        A . x = B, right-hand side quantities as nxm Matrix B.
+
+        Args:
+            B: matrix [[b11, b12, ..., b1m], [b21, b22, ..., b2m],
+                ... [bn1, bn2, ..., bnm]]
+
+        Raises:
+            numpy.linalg.LinAlgError: singular matrix
+
+        """
+        mat_B = np.array(B, dtype=np.float64)
+        return Matrix(matrix=np.linalg.solve(self.mat_A, mat_B))
 
     def solve_vector(self, B: Iterable[float]) -> list[float]:
-        return numpy_vector_solver(self.mat_A, B)
+        """Solves the linear equation system given by the nxn Matrix
+        A . x = B, right-hand side quantities as vector B with n elements.
+
+        Args:
+            B: vector [b1, b2, ..., bn]
+
+        Raises:
+            numpy.linalg.LinAlgError: singular matrix
+
+        """
+        mat_B = np.array([[float(v)] for v in B], dtype=np.float64)
+        return list(np.ravel(np.linalg.solve(self.mat_A, mat_B)))
 
 
 def tridiagonal_vector_solver(A: MatrixData, B: Iterable[float]) -> list[float]:

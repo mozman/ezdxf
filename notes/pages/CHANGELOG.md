@@ -24,7 +24,11 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 		- the cache version number has been increased so that the fontmanger-cache is automatically rebuilt
 	- CHANGE: renamed `Image.boundray_path_ocs()` to `Image.pixel_boundary_path()`
 	- CHANGE: refactoring of the [[RecorderBackend]]
-	- REMOVE: `ezdxf.math.linspace`, replaced by `numpy.linspace`
+	- CHANGE: replaced `ezdxf.math.linspace` by `numpy.linspace`
+	- CHANGE: replaced functions `gauss_jordan_solver()`, `gauss_jordan_inverse()`, `gauss_vector_solver()` and `gauss_matrix_solver()` by a `numpy` based solution
+		- moved replaced functions to module `ezdxf.math.legacy`
+	- CHANGE: replaced `LUDecomposition` class by `NumpySolver` class
+		- moved `LUDecomposition` to module `ezdxf.math.legacy`
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
 	- BUGFIX: `NumpyPath2d` could contain a 3d vertex

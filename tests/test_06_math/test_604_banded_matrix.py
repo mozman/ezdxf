@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from typing import Iterable
 import pytest
@@ -74,9 +74,9 @@ B1 = [5, 3, 2, 6, 8, 2, 1]
 B2 = [9, 1, 7, 6, 4, 5, 0]
 B3 = [0, 9, 3, 7, 1, 9, 9]
 
-CHK1 = gauss_vector_solver(BANDED_MATRIX, B1)
-CHK2 = gauss_vector_solver(BANDED_MATRIX, B2)
-CHK3 = gauss_vector_solver(BANDED_MATRIX, B3)
+CHK1 = gauss_vector_solver(BANDED_MATRIX.matrix, B1)
+CHK2 = gauss_vector_solver(BANDED_MATRIX.matrix, B2)
+CHK3 = gauss_vector_solver(BANDED_MATRIX.matrix, B3)
 
 
 def test_solve_banded_matrix_vector():
