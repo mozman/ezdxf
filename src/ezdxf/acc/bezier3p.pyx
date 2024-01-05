@@ -2,6 +2,7 @@
 # distutils: language = c++
 # Copyright (c) 2021-2023 Manfred Moitzi
 # License: MIT License
+# type: ignore -- pylance sucks at type-checking cython files
 from typing import List, Tuple, TYPE_CHECKING, Sequence
 from .vector cimport Vec3, isclose, v3_dist, v3_from_cpp_vec3, v3_add
 from .matrix44 cimport Matrix44

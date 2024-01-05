@@ -2,7 +2,7 @@
 # distutils: language = c++
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-
+# type: ignore -- pylance sucks at type-checking cython files
 # C-support functions:
 
 cdef bint isclose(double a, double b, double rel_tol, double abs_tol)

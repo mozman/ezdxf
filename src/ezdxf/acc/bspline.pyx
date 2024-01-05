@@ -3,6 +3,7 @@
 # Copyright (c) 2021-2023, Manfred Moitzi
 # License: MIT License
 # Cython implementation of the B-spline basis function.
+# type: ignore -- pylance sucks at type-checking cython files
 
 from typing import List, Iterable, Sequence, Tuple
 import cython

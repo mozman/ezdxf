@@ -2,6 +2,7 @@
 # distutils: language = c++
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
+# type: ignore  -- pylance sucks at type-checking cython files
 import numpy as np
 import cython
 from .vector cimport isclose

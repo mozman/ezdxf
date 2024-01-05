@@ -3,6 +3,7 @@
 # distutils: language = c++
 # Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
+# type: ignore -- pylance sucks at type-checking cython files
 from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple, Iterator
 from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
 import random
@@ -153,7 +154,7 @@ cdef class Vec2:
         else:
             raise IndexError(f'invalid index {index}')
 
-    def __iter__(self) -> Iterable[float]:
+    def __iter__(self) -> Iterator[float]:
         yield self.x
         yield self.y
 
@@ -456,7 +457,7 @@ cdef class Vec3:
         res.z = self.z if z is None else z
         return res
 
-    def round(self, ndigits: int = None) -> Vec3:
+    def round(self, ndigits: int | None = None) -> Vec3:
         return Vec3(
             round(self.x, ndigits),
             round(self.y, ndigits),
@@ -472,7 +473,7 @@ cdef class Vec3:
         return tuple(Vec3.generate(items))
 
     @staticmethod
-    def generate(items: Iterable[UVec]) -> Iterable[Vec3]:
+    def generate(items: Iterable[UVec]) -> Iterator[Vec3]:
         return (Vec3(item) for item in items)
 
     @staticmethod
@@ -522,7 +523,7 @@ cdef class Vec3:
         else:
             raise IndexError(f'invalid index {index}')
 
-    def __iter__(self) -> Iterable[float]:
+    def __iter__(self) -> Iterator[float]:
         yield self.x
         yield self.y
         yield self.z

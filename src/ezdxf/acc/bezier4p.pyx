@@ -2,6 +2,7 @@
 # distutils: language = c++
 # Copyright (c) 2020-2022 Manfred Moitzi
 # License: MIT License
+# type: ignore -- pylance sucks at type-checking cython files
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
 from .vector cimport (
