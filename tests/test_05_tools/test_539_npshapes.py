@@ -3,13 +3,13 @@
 
 import pytest
 
-from ezdxf.npshapes import NumpyPoints2d, NumpyPath2d
-from ezdxf.math import Matrix44, BoundingBox2d, close_vectors, Vec2
+from ezdxf.npshapes import NumpyPoints2d, NumpyPath2d, NumpyPoints3d
+from ezdxf.math import Matrix44, BoundingBox2d, close_vectors, Vec2, Vec3
 from ezdxf.path import Command, from_vertices, Path
 from ezdxf.render import forms
 
 
-class TestNumpyPoints:
+class TestNumpyPoints2d:
     @pytest.fixture
     def points(self):
         return Vec2.list([(1, 2), (7, 4), (4, 7), (0, 1)])
@@ -29,6 +29,30 @@ class TestNumpyPoints:
         m = Matrix44.translate(7, 8, 0)
         t_pts = m.fast_2d_transform(points)
         pl = NumpyPoints2d(points)
+        pl.transform_inplace(m)
+        assert all(v0.isclose(v1) for v0, v1 in zip(pl.vertices(), t_pts))
+
+
+class TestNumpyPoints3d:
+    @pytest.fixture
+    def points(self):
+        return Vec3.list([(1, 2, 3), (7, 4, 3), (4, 7, 9), (0, 1, 3)])
+
+    def test_conversion(self, points):
+        pl = NumpyPoints3d(points)
+        assert len(pl) == len(points)
+        assert all(v0.isclose(v1) for v0, v1 in zip(pl.vertices(), points))
+
+    def test_extents(self, points):
+        pl = NumpyPoints3d(points)
+        extmin, extmax = pl.extents()
+        assert extmin.isclose((0, 1, 3))
+        assert extmax.isclose((7, 7, 9))
+
+    def test_transform_inplace(self, points):
+        m = Matrix44.translate(7, 8, 0)
+        t_pts = list(m.transform_vertices(points))
+        pl = NumpyPoints3d(points)
         pl.transform_inplace(m)
         assert all(v0.isclose(v1) for v0, v1 in zip(pl.vertices(), t_pts))
 

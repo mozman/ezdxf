@@ -10,12 +10,14 @@ import numpy.typing as npt
 
 from ezdxf.math import (
     Matrix44,
+    UVec,
     Vec2,
     Vec3,
     has_clockwise_orientation,
     Bezier3P,
     Bezier4P,
     BoundingBox2d,
+    BoundingBox,
 )
 from ezdxf.path import (
     Path,
@@ -36,6 +38,7 @@ except ImportError:
 __all__ = [
     "NumpyPath2d",
     "NumpyPoints2d",
+    "NumpyPoints3d",
     "NumpyShapesException",
     "EmptyShapeError",
     "to_qpainter_path",
@@ -503,7 +506,6 @@ def to_matplotlib_path(paths: Iterable[NumpyPath2d], *, detect_holes=False):
     vertices: list[np.ndarray] = []
     codes: list[int] = []
     for path in paths:
-        
         vertices.append(path.np_vertices())
         codes.append(MPL_MOVETO)
         for cmd in path.command_codes():
@@ -513,7 +515,6 @@ def to_matplotlib_path(paths: Iterable[NumpyPath2d], *, detect_holes=False):
         return Path(points, codes)
     except Exception as e:
         raise ValueError(f"matplotlib.path.Path({str(points)}, {str(codes)}): {str(e)}")
-
 
 
 def single_paths(paths: Iterable[NumpyPath2d]) -> list[NumpyPath2d]:
@@ -544,3 +545,61 @@ def orient_paths(paths: list[NumpyPath2d]) -> list[NumpyPath2d]:
     for path in holes:
         path.clockwise()
     return outer_paths + holes
+
+
+class NumpyShape3d(abc.ABC):
+    """This is an optimization to store many 3D paths and polylines in a compact way
+    without sacrificing basic functions like transformation and bounding box calculation.
+    """
+
+    _vertices: npt.NDArray[VertexNumpyType] = EMPTY_SHAPE
+
+    def extents(self) -> tuple[Vec3, Vec3]:
+        """Returns the extents of the bounding box as tuple (extmin, extmax)."""
+        v = self._vertices
+        if len(v) > 0:
+            return Vec3(v.min(0)), Vec3(v.max(0))
+        else:
+            raise EmptyShapeError("empty shape has no extends")
+
+    @abc.abstractmethod
+    def clone(self) -> Self:
+        ...
+
+    def np_vertices(self) -> npt.NDArray[VertexNumpyType]:
+        return self._vertices
+
+    def transform_inplace(self, m: Matrix44) -> None:
+        """Transforms the vertices of the shape inplace."""
+        v = self._vertices
+        if len(v) == 0:
+            return
+        m.transform_array_inplace(v, 3)
+
+    def vertices(self) -> list[Vec3]:
+        """Returns the shape vertices as list of :class:`Vec3`."""
+        return [Vec3(v) for v in self._vertices]
+
+    def bbox(self) -> BoundingBox:
+        """Returns the bounding box of all vertices."""
+        return BoundingBox(self.extents())
+
+
+class NumpyPoints3d(NumpyShape3d):
+    """Represents an array of 3D points stored as a ndarray."""
+
+    def __init__(self, points: Optional[Iterable[UVec]]) -> None:
+        if points:
+            self._vertices = np.array(
+                [Vec3(v).xyz for v in points], dtype=VertexNumpyType
+            )
+
+    def clone(self) -> Self:
+        clone = self.__class__(None)
+        clone._vertices = self._vertices.copy()
+        return clone
+
+    __copy__ = clone
+
+    def __len__(self) -> int:
+        return len(self._vertices)
