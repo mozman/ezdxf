@@ -8,9 +8,9 @@ from ezdxf.math.linalg import (
     detect_banded_matrix,
     compact_banded_matrix,
     BandedMatrixLU,
-    gauss_vector_solver,
     banded_matrix,
 )
+from ezdxf.math.legacy import gauss_vector_solver
 
 BANDED_MATRIX = Matrix(
     matrix=[

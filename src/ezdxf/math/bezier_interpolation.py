@@ -45,7 +45,7 @@ def cubic_bezier_interpolation(
     points_vector.append(8.0 * pnts[num - 1] + pnts[num])
 
     # solve tri-diagonal linear equation system
-    solution = tridiagonal_matrix_solver((a, b, c), points_vector)
+    solution = tridiagonal_matrix_solver([a, b, c], points_vector)
     control_points_1 = Vec3.list(solution.rows())
     control_points_2 = [
         p * 2.0 - cp for p, cp in zip(pnts[1:], control_points_1[1:])

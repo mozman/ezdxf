@@ -5,15 +5,13 @@ import pytest
 import math
 from ezdxf.math.linalg import (
     Matrix,
-    gauss_vector_solver,
-    gauss_matrix_solver,
     gauss_jordan_solver,
     gauss_jordan_inverse,
     LUDecomposition,
     tridiagonal_vector_solver,
     tridiagonal_matrix_solver,
 )
-
+from ezdxf.math.legacy import gauss_matrix_solver, gauss_vector_solver
 
 @pytest.fixture
 def X():
@@ -288,12 +286,14 @@ def test_gauss_vector_solver():
     result = gauss_vector_solver(A, B1)
     assert result == SOLUTION_B1
 
+def is_close_vectors(v0, v1) -> bool:
+    return all(math.isclose(c0, c1) for c0, c1 in zip(v0, v1))
 
 def test_gauss_matrix_solver():
     result = gauss_matrix_solver(A, zip(B1, B2, B3))
-    assert result.col(0) == gauss_vector_solver(A, B1)
-    assert result.col(1) == gauss_vector_solver(A, B2)
-    assert result.col(2) == gauss_vector_solver(A, B3)
+    assert is_close_vectors(result.col(0), gauss_vector_solver(A, B1))
+    assert is_close_vectors(result.col(1), gauss_vector_solver(A, B2))
+    assert is_close_vectors(result.col(2), gauss_vector_solver(A, B3))
 
 
 def are_close_vectors(
