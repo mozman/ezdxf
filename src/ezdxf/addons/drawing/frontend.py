@@ -808,7 +808,7 @@ class UniversalFrontend:
                         Vec3(v.x, v.y, elevation) for v in polygon
                     )
                 else:
-                    points = polygon
+                    points = polygon  # type: ignore
                 # Set default SOLID filling for LWPOLYLINE
                 properties.filling = Filling()
                 self.designer.draw_filled_polygon(points, properties)

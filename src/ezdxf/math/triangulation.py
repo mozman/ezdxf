@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Manfred Moitzi
+# Copyright (c) 2022-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Iterable, Iterator, Sequence, Optional
@@ -79,12 +79,10 @@ def mapbox_earcut_3d(
         ZeroDivisionError: normal vector calculation failed
 
     """
-    polygon = list(exterior)
+    polygon = Vec3.list(exterior)
     if len(polygon) == 0:
         return
 
-    if not isinstance(polygon[0], Vec3):
-        raise TypeError("Vec3() as input type required")
     if polygon[0].isclose(polygon[-1]):
         polygon.pop()
     count = len(polygon)
@@ -95,13 +93,15 @@ def mapbox_earcut_3d(
         return
 
     ocs = OCS(safe_normal_vector(polygon))
-    elevation = ocs.from_wcs(polygon[0]).z  # type: ignore
+    elevation = ocs.from_wcs(polygon[0]).z
     exterior_ocs = list(ocs.points_from_wcs(polygon))
     holes_ocs: list[list[Vec3]] = []
     if holes:
         holes_ocs = [list(ocs.points_from_wcs(hole)) for hole in holes]
-
-    for triangle in earcut(exterior_ocs, holes_ocs):
+        
+    # Vec3 supports the _Point protocol in _mapbox_earcut.py
+    # required attributes: x, y
+    for triangle in earcut(exterior_ocs, holes_ocs):  # type: ignore
         yield tuple(  # type: ignore
             ocs.points_to_wcs(Vec3(v.x, v.y, elevation) for v in triangle)
         )

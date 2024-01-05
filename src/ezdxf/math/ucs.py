@@ -1,7 +1,7 @@
-# Copyright (c) 2018-2023 Manfred Moitzi
+# Copyright (c) 2018-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Sequence, Iterable, Optional
+from typing import TYPE_CHECKING, Sequence, Iterable, Optional, Iterator
 from ezdxf.math import Vec3, UVec, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf.colors import RGB
 
@@ -59,37 +59,40 @@ class OCS:
         """z-axis unit vector"""
         return self.matrix.uz if self.transform else Z_AXIS
 
-    def from_wcs(self, point: UVec) -> UVec:
+    def from_wcs(self, point: UVec) -> Vec3:
         """Returns OCS vector for WCS `point`."""
+        p3 = Vec3(point)
         if self.transform:
-            return self.matrix.ocs_from_wcs(point)
+            return self.matrix.ocs_from_wcs(p3)
         else:
-            return point
+            return p3
 
-    def points_from_wcs(self, points: Iterable[UVec]) -> Iterable[UVec]:
+    def points_from_wcs(self, points: Iterable[UVec]) -> Iterator[Vec3]:
         """Returns iterable of OCS vectors from WCS `points`."""
+        _points = Vec3.generate(points)
         if self.transform:
             from_wcs = self.matrix.ocs_from_wcs
-            for point in points:
+            for point in _points:
                 yield from_wcs(point)
         else:
-            yield from points
+            yield from _points
 
-    def to_wcs(self, point: UVec) -> UVec:
+    def to_wcs(self, point: UVec) -> Vec3:
         """Returns WCS vector for OCS `point`."""
         if self.transform:
             return self.matrix.ocs_to_wcs(point)
         else:
-            return point
+            return Vec3(point)
 
-    def points_to_wcs(self, points: Iterable[UVec]) -> Iterable[UVec]:
+    def points_to_wcs(self, points: Iterable[UVec]) -> Iterator[Vec3]:
         """Returns iterable of WCS vectors for OCS `points`."""
+        _points = Vec3.generate(points)
         if self.transform:
             to_wcs = self.matrix.ocs_to_wcs
-            for point in points:
+            for point in _points:
                 yield to_wcs(point)
         else:
-            yield from points
+            yield from _points
 
     def render_axis(
         self,
