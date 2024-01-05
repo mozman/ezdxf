@@ -20,14 +20,14 @@ __all__ = ["RTree"]
 INF = float("inf")
 
 
-class Node:
+class Node(abc.ABC):
     __slots__ = ("bbox",)
 
     def __init__(self, bbox: BoundingBox):
-        self.bbox = bbox
+        self.bbox: BoundingBox = bbox
 
     @abc.abstractmethod
-    def __len__(self):
+    def __len__(self) -> int:
         ...
 
     @abc.abstractmethod
@@ -45,9 +45,7 @@ class Node:
         ...
 
     @abc.abstractmethod
-    def points_in_sphere(
-        self, center: AnyVec, radius: float
-    ) -> Iterator[AnyVec]:
+    def points_in_sphere(self, center: AnyVec, radius: float) -> Iterator[AnyVec]:
         ...
 
     @abc.abstractmethod
@@ -77,15 +75,12 @@ class LeafNode(Node):
     def _nearest_neighbor(
         self, target: AnyVec, nn: AnyVec = None, nn_dist: float = INF
     ) -> tuple[AnyVec, float]:
-
         distance, point = min((target.distance(p), p) for p in self.points)
         if distance < nn_dist:
             nn, nn_dist = point, distance
         return nn, nn_dist
 
-    def points_in_sphere(
-        self, center: AnyVec, radius: float
-    ) -> Iterator[AnyVec]:
+    def points_in_sphere(self, center: AnyVec, radius: float) -> Iterator[AnyVec]:
         return (p for p in self.points if center.distance(p) <= radius)
 
     def points_in_bbox(self, bbox: BoundingBox) -> Iterator[AnyVec]:
@@ -102,7 +97,7 @@ class InnerNode(Node):
             # build union of all child bounding boxes
             self.bbox.extend([child.bbox.extmin, child.bbox.extmax])
 
-    def __len__(self):
+    def __len__(self) -> int:
         return sum(len(c) for c in self.children)
 
     def __iter__(self) -> Iterator[AnyVec]:
@@ -131,9 +126,7 @@ class InnerNode(Node):
                     nn_dist = distance
         return nn, nn_dist
 
-    def points_in_sphere(
-        self, center: AnyVec, radius: float
-    ) -> Iterator[AnyVec]:
+    def points_in_sphere(self, center: AnyVec, radius: float) -> Iterator[AnyVec]:
         for child in self.children:
             if is_sphere_intersecting_bbox(
                 Vec3(center), radius, child.bbox.center, child.bbox.size
@@ -204,9 +197,7 @@ class RTree:
         """
         return self._root.nearest_neighbor(target)
 
-    def points_in_sphere(
-        self, center: AnyVec, radius: float
-    ) -> Iterator[AnyVec]:
+    def points_in_sphere(self, center: AnyVec, radius: float) -> Iterator[AnyVec]:
         """Returns all points in the range of the given sphere including the
         points at the boundary.
         """
@@ -235,8 +226,7 @@ class RTree:
         Returns 0.0 if less than two points in tree.
         """
         radii: list[float] = [
-            spherical_envelope(leaf.points)[1]
-            for leaf in collect_leafs(self._root)
+            spherical_envelope(leaf.points)[1] for leaf in collect_leafs(self._root)
         ]
         return average_exclusive_outliers(radii, spread)
 
@@ -271,13 +261,12 @@ def make_node(
 
 def box_split(points: list[AnyVec], max_size: int) -> Sequence[Node]:
     n = len(points)
-    size = BoundingBox(points).size.xyz
+    size: tuple[float, float, float] = BoundingBox(points).size.xyz
     dim = size.index(max(size))
     points.sort(key=lambda vec: vec[dim])
     k = math.ceil(n / max_size)
     return tuple(
-        make_node(points[i : i + k], max_size, box_split)
-        for i in range(0, n, k)
+        make_node(points[i : i + k], max_size, box_split) for i in range(0, n, k)
     )
 
 
@@ -298,9 +287,7 @@ def is_sphere_intersecting_bbox(
 
 def find_closest_child(children: Sequence[Node], point: AnyVec) -> Node:
     assert len(children) > 0
-    _, node = min(
-        (point.distance(child.bbox.center), child) for child in children
-    )
+    _, node = min((point.distance(child.bbox.center), child) for child in children)
     return node
 
 
