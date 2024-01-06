@@ -12,6 +12,7 @@ __all__ = [
     "ClippingShape",
     "ClippingPortal",
     "ClippingRect",
+    "MultiClip",
     "find_best_clipping_shape",
 ]
 
@@ -47,6 +48,10 @@ class ClippingShape(abc.ABC):
     remove_outside: bool = True
     # - True: remove geometry outside the clipping shape
     # - False: remove geometry inside the clipping shape
+
+    @abc.abstractmethod
+    def bbox(self) -> BoundingBox2d:
+        ...
 
     @abc.abstractmethod
     def clip_point(self, point: Vec2) -> Optional[Vec2]:
@@ -221,7 +226,11 @@ class ClippingRect(ClippingShape):
                 self.remove_all = True
             else:  # remove inside
                 self.remove_none = True
+        self._bbox = bbox
         self.clipper = _ClippingRect2d(bbox.extmin, bbox.extmax)
+
+    def bbox(self) -> BoundingBox2d:
+        return self._bbox
 
     def clip_point(self, point: Vec2) -> Optional[Vec2]:
         if self.remove_all:
@@ -324,6 +333,72 @@ class ClippingRect(ClippingShape):
                         ),
                         close=True,
                     )
+
+
+class MultiClip(ClippingShape):
+    """The MultiClip combines multiple clipping shapes into a single clipping shape.
+
+    Overlapping clipping shapes and clipping shapes that "remove_inside" will yield
+    strange results but are not actively prevented.
+
+    """
+
+    def __init__(self, shapes: Iterable[ClippingShape]) -> None:
+        self._clipping_ranges: list[tuple[ClippingShape, BoundingBox2d]] = [
+            (shape, shape.bbox()) for shape in shapes if not shape.bbox().is_empty
+        ]
+
+    def bbox(self) -> BoundingBox2d:
+        bbox = BoundingBox2d()
+        for _, extents in self._clipping_ranges:
+            bbox.extend(extents)
+        return bbox
+    
+    def shapes_in_range(self, bbox: BoundingBox2d) -> list[ClippingShape]:
+        return [
+            shape
+            for shape, extents in self._clipping_ranges
+            if bbox.has_intersection(extents)
+        ]
+
+    def clip_point(self, point: Vec2) -> Optional[Vec2]:
+        for shape, _ in self._clipping_ranges:
+            clipped_point = shape.clip_point(point)
+            if clipped_point is not None:
+                return clipped_point
+        return None
+
+    def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
+        result: list[tuple[Vec2, Vec2]] = []
+        for clipper in self.shapes_in_range(BoundingBox2d((start, end))):
+            result.extend(clipper.clip_line(start, end))
+        return result
+
+    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+        result: list[NumpyPoints2d] = []
+        for shape in self.shapes_in_range(points.bbox()):
+            result.extend(shape.clip_polyline(points))
+        return result
+
+    def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+        result: list[NumpyPoints2d] = []
+        for shape in self.shapes_in_range(points.bbox()):
+            result.extend(shape.clip_polygon(points))
+        return result
+
+    def clip_paths(
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
+        for path in paths:
+            for shape in self.shapes_in_range(path.bbox()):
+                yield from shape.clip_paths((path,), max_sagitta)
+
+    def clip_filled_paths(
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
+        for path in paths:
+            for shape in self.shapes_in_range(path.bbox()):
+                yield from shape.clip_filled_paths((path,), max_sagitta)
 
 
 def find_best_clipping_shape(
