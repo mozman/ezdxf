@@ -5,13 +5,13 @@ from typing import Optional, Iterable, Iterator, Sequence, NamedTuple, Callable
 import abc
 
 from ezdxf.math import Matrix44, Vec2, BoundingBox2d, UVec
-from ezdxf.math.clipping import ClippingRect2d as _ClippingRect2d
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
 
 __all__ = [
     "ClippingShape",
     "ClippingPortal",
     "ClippingRect",
+    "ConvexClippingPolygon",
     "MultiClip",
     "find_best_clipping_shape",
 ]
@@ -214,6 +214,8 @@ class ClippingRect(ClippingShape):
     """
 
     def __init__(self, vertices: Iterable[UVec], remove_outside=True) -> None:
+        from ezdxf.math.clipping import ClippingRect2d
+
         self.remove_outside = remove_outside
         self.remove_all = False
         self.remove_none = False
@@ -227,7 +229,7 @@ class ClippingRect(ClippingShape):
             else:  # remove inside
                 self.remove_none = True
         self._bbox = bbox
-        self.clipper = _ClippingRect2d(bbox.extmin, bbox.extmax)
+        self.clipper = ClippingRect2d(bbox.extmin, bbox.extmax)
 
     def bbox(self) -> BoundingBox2d:
         return self._bbox
@@ -335,6 +337,94 @@ class ClippingRect(ClippingShape):
                     )
 
 
+class ConvexClippingPolygon(ClippingShape):
+    """Represents an arbitrary convex polygon as clipping shape.
+
+    The current implementation does not support removing the content inside the
+    clipping shape (remove_outside=False).
+
+    """
+
+    def __init__(self, vertices: Iterable[UVec], remove_outside=True) -> None:
+        from ezdxf.math.clipping import ClippingPolygon2d
+
+        self.remove_outside = remove_outside
+        bbox = BoundingBox2d(vertices)
+        if not bbox.has_data:
+            raise ValueError("clipping box not detectable")
+        self._bbox = bbox
+        self.clipper = ClippingPolygon2d(Vec2.generate(vertices))
+
+    def bbox(self) -> BoundingBox2d:
+        return self._bbox
+
+    def clip_point(self, point: Vec2) -> Optional[Vec2]:
+        is_inside = self.clipper.is_inside(Vec2(point))
+        if self.remove_outside:
+            if not is_inside:
+                return None
+        else:  # remove inside
+            if is_inside:
+                return None
+        return point
+
+    def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
+        cropped_segment = self.clipper.clip_line(start, end)
+        if cropped_segment:
+            return (cropped_segment,)  # type: ignore
+        return tuple()
+
+    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+        clipper = self.clipper
+        polyline_bbox = BoundingBox2d(points.extents())
+        if not polyline_bbox.has_intersection(self._bbox):
+            # polyline is complete outside
+            return tuple()
+        return [
+            NumpyPoints2d(part) for part in clipper.clip_polyline(points.vertices())
+        ]
+
+    def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+        clipper = self.clipper
+        polygon_bbox = BoundingBox2d(points.extents())
+        if not polygon_bbox.has_intersection(self._bbox):
+            # polygon is complete outside
+            return tuple()
+        points = NumpyPoints2d(clipper.clip_polygon(points.vertices()))
+        return (points,)
+
+    def clip_paths(
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
+        clipper = self.clipper
+        for path in paths:
+            for sub_path in path.sub_paths():
+                path_bbox = BoundingBox2d(sub_path.control_vertices())
+                if not path_bbox.has_intersection(self._bbox):
+                    # path is complete outside
+                    continue
+                polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=4))
+                for part in clipper.clip_polyline(polyline):
+                    yield NumpyPath2d.from_vertices(part, close=False)
+
+    def clip_filled_paths(
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
+        clipper = self.clipper
+        for path in paths:
+            for sub_path in path.sub_paths():
+                path_bbox = BoundingBox2d(sub_path.control_vertices())
+                if not path_bbox.has_intersection(self._bbox):
+                    # path is complete outside
+                    continue
+                yield NumpyPath2d.from_vertices(
+                    clipper.clip_polygon(
+                        Vec2.list(path.flattening(max_sagitta, segments=4))
+                    ),
+                    close=True,
+                )
+
+
 class MultiClip(ClippingShape):
     """The MultiClip combines multiple clipping shapes into a single clipping shape.
 
@@ -353,7 +443,7 @@ class MultiClip(ClippingShape):
         for _, extents in self._clipping_ranges:
             bbox.extend(extents)
         return bbox
-    
+
     def shapes_in_range(self, bbox: BoundingBox2d) -> list[ClippingShape]:
         return [
             shape
