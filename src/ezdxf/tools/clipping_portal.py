@@ -218,7 +218,7 @@ class ClippingRect(ClippingShape):
         self.remove_all = False
         self.remove_none = False
         bbox = BoundingBox2d(vertices)
-        if bbox.extmin is None or bbox.extmax is None:
+        if not bbox.has_data:
             raise ValueError("clipping box not detectable")
         size: Vec2 = bbox.size
         if size.x * size.y < 1e-9:

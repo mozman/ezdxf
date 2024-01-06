@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Manfred Moitzi
+# Copyright (c) 2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Iterable, Sequence
@@ -231,7 +231,7 @@ class XClip:
             grow_factor = 0.1
 
         bbox = BoundingBox2d(extents)
-        if bbox.extmin is None or bbox.extmax is None:
+        if not bbox.has_data:
             raise const.DXFValueError("extents not detectable")
 
         if grow_factor:
@@ -254,7 +254,7 @@ class XClip:
             return no_vertices
 
         _bbox = bbox.extents(block, fast=True)
-        if _bbox.extmin is None or _bbox.extmax is None:
+        if not _bbox.has_data:
             return no_vertices
         return Vec2.tuple([_bbox.extmin, _bbox.extmax])
 
