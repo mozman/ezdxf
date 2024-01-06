@@ -14,7 +14,9 @@ cdef extern from "constants.h":
     const double ABS_TOL
     const double REL_TOL
 
+
 NDArray: TypeAlias = npt.NDArray[np.float64]
+
 
 def has_clockwise_orientation(vertices: np.ndarray) -> bool:
     """ Returns True if 2D `vertices` have clockwise orientation. Ignores
@@ -31,6 +33,7 @@ def has_clockwise_orientation(vertices: np.ndarray) -> bool:
         raise ValueError('At least 3 vertices required.')
 
     return _has_clockwise_orientation(vertices, vertices.shape[0])
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -65,13 +68,17 @@ cdef bint _has_clockwise_orientation(double [:, ::1] vertices, Py_ssize_t size):
         p1y = p2y
     return s > 0.0
 
+
 def lu_decompose(A: NDArray, m1: int, m2: int) -> tuple[NDArray, NDArray, NDArray]:
     upper: np.ndarray = np.array(A, dtype=np.float64)
     n: int = upper.shape[0]
     lower: np.ndarray = np.zeros((n, m1), dtype=np.float64)
-    index: np.ndarray = np.zeros((n,), dtype=np.int32)
+
+    # Is <np.int_> better to match <int> on all platforms?
+    index: np.ndarray = np.zeros((n,), dtype=np.int32)  
     _lu_decompose_cext(upper, lower, index, n, m1, m2)
     return upper, lower, index
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -127,9 +134,11 @@ def solve_vector_banded_matrix(
     m2: int,
 ) -> NDArray:
     n: int = upper.shape[0]
-    x = np.array(x)
+    x = np.array(x)  # copy x because array x gets modified
     if x.shape[0] != n:
-        raise ValueError("Item count of vector B has to be equal to matrix row count.")
+        raise ValueError(
+            "Item count of vector <x> has to match the row count of matrix <upper>."
+        )
     _solve_vector_banded_matrix_cext(x, upper, lower, index, n, m1, m2)
     return x
 
@@ -145,9 +154,6 @@ cdef _solve_vector_banded_matrix_cext(
     int m1,
     int m2,
 ):
-    """Solves the linear equation system given by the banded nxn Matrix
-    A . x = B, right-hand side quantities as vector B with n elements.
-    """
     cdef int mm = m1 + m2 + 1
     cdef int l = m1
     cdef int i, j, k
