@@ -551,12 +551,12 @@ def _get_best_solver(matrix: list| linalg.Matrix, degree: int) -> linalg.Solver:
     """
     # v1.2: added NumpySolver
     #   Acceleration of banded diagonal matrix solver is still a thing but only for 
-    #   really big matrices N > 30
+    #   really big matrices N > 30 in pure Python and N > 20 for C-extension np_support
     # PyPy has no advantages when using the NumpySolver
     if not isinstance(matrix, linalg.Matrix):
         matrix =linalg.Matrix(matrix)
 
-    if matrix.nrows < 30:  # use default equation solver
+    if matrix.nrows < 20:  # use default equation solver
         return linalg.NumpySolver(matrix.matrix)
     else:
         # Theory: band parameters m1, m2 are at maximum degree-1, for

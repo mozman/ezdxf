@@ -3,6 +3,8 @@
 from typing import Iterable
 import pytest
 import math
+import numpy as np
+
 from ezdxf.math.linalg import (
     Matrix,
     detect_banded_matrix,
@@ -90,12 +92,11 @@ def test_solve_banded_matrix_vector():
 def test_solve_banded_matrix_matrix():
     m, m1, m2 = banded_matrix(BANDED_MATRIX)
     lu = BandedMatrixLU(m, m1, m2)
-    r = lu.solve_matrix(list(zip(B1, B2, B3)))
+    mat_B = np.array(list(zip(B1, B2, B3)))
+    r = lu.solve_matrix(mat_B)
     are_close_vectors(r.col(0), CHK1)
     are_close_vectors(r.col(1), CHK2)
     are_close_vectors(r.col(2), CHK3)
-
-    assert math.isclose(lu.determinant(), BANDED_MATRIX.determinant())
 
 
 if __name__ == "__main__":

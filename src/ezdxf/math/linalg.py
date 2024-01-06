@@ -695,58 +695,19 @@ class BandedMatrixLU(Solver):
     """Represents a LU decomposition of a compact banded matrix."""
 
     def __init__(self, A: Matrix, m1: int, m2: int):
-        # upper triangle of LU decomposition
-        self.upper: MatrixData = copy_float_matrix(A)
+        lu_decompose = _lu_decompose
+        try:
+            from ezdxf.acc.np_support import lu_decompose  # type: ignore
+        except ImportError:
+            pass
         self.m1: int = int(m1)
         self.m2: int = int(m2)
-
-        # lower triangle of LU decomposition
-        n: int = self.nrows
-        self.lower: MatrixData = [[0.0] * m1 for _ in range(n)]
-        self.index: list[int] = [0] * n
-        self._det: float = 1.0
-
-        m1 = self.m1
-        m2 = self.m2
-        upper: MatrixData = self.upper
-        lower: MatrixData = self.lower
-
-        mm: int = m1 + m2 + 1
-        l: int = m1
-        for i in range(m1):
-            for j in range(m1 - i, mm):
-                upper[i][j - l] = upper[i][j]
-            l -= 1
-            for j in range(mm - l - 1, mm):
-                upper[i][j] = 0.0
-
-        l = m1
-        for k in range(n):
-            dum = upper[k][0]
-            i = k
-            if l < n:
-                l += 1
-            for j in range(k + 1, l):
-                if abs(upper[j][0]) > abs(dum):
-                    dum = upper[j][0]
-                    i = j
-            self.index[k] = i + 1
-            if i != k:
-                self._det = -self._det
-                for j in range(mm):
-                    upper[k][j], upper[i][j] = upper[i][j], upper[k][j]
-
-            for i in range(k + 1, l):
-                dum = upper[i][0] / upper[k][0]
-                lower[k][i - k - 1] = dum
-                for j in range(1, mm):
-                    upper[i][j - 1] = upper[i][j] - dum * upper[k][j]
-                upper[i][mm - 1] = 0.0
+        self.upper, self.lower, self.index = lu_decompose(A.matrix, self.m1, self.m2)
 
     @property
     def nrows(self) -> int:
         """Count of matrix rows."""
-        return len(self.upper)
+        return self.upper.shape[0]
 
     def solve_vector(self, B: Iterable[float]) -> list[float]:
         """Solves the linear equation system given by the banded nxn Matrix
@@ -759,40 +720,22 @@ class BandedMatrixLU(Solver):
             vector as list of floats
 
         """
-        x: list[float] = list(B)
+        solve_vector_banded_matrix = _solve_vector_banded_matrix
+        try:
+            from ezdxf.acc.np_support import solve_vector_banded_matrix  # type: ignore
+        except ImportError:
+            pass
+
+        x: NDArray = np.array(B, dtype=np.float64)
         if len(x) != self.nrows:
             raise ValueError(
                 "Item count of vector B has to be equal to matrix row count."
             )
-
-        n: int = self.nrows
-        m1: int = self.m1
-        m2: int = self.m2
-        index: list[int] = self.index
-        al: MatrixData = self.lower
-        au: MatrixData = self.upper
-
-        mm: int = m1 + m2 + 1
-        l: int = m1
-        for k in range(n):
-            j = index[k] - 1
-            if j != k:
-                x[k], x[j] = x[j], x[k]
-            if l < n:
-                l += 1
-            for j in range(k + 1, l):
-                x[j] -= al[k][j - k - 1] * x[k]
-
-        l = 1
-        for i in range(n - 1, -1, -1):
-            dum = x[i]
-            for k in range(1, l):
-                dum -= au[i][k] * x[k + i]
-            x[i] = dum / au[i][0]
-            if l < mm:
-                l += 1
-
-        return x
+        return list(
+            solve_vector_banded_matrix(
+                x, self.upper, self.lower, self.index, self.m1, self.m2
+            )
+        )
 
     def solve_matrix(self, B: MatrixData | NDArray) -> Matrix:
         """
@@ -815,12 +758,91 @@ class BandedMatrixLU(Solver):
             matrix=[self.solve_vector(col) for col in matrix_b.cols()]
         ).transpose()
 
-    def determinant(self) -> float:
-        """Returns the determinant of matrix."""
-        dd: float = self._det
-        au: MatrixData = self.upper
 
-        for i in range(0, len(au)):
-            dd *= au[i][0]
+def _lu_decompose(A: NDArray, m1: int, m2: int) -> tuple[NDArray, NDArray, NDArray]:
+    # upper triangle of LU decomposition
+    upper: NDArray = np.array(A, dtype=np.float64)
 
-        return dd
+    # lower triangle of LU decomposition
+    n: int = upper.shape[0]
+    lower: NDArray = np.zeros((n, m1), dtype=np.float64)
+    index: NDArray = np.zeros((n,), dtype=np.int64)
+
+    mm: int = m1 + m2 + 1
+    l: int = m1
+    for i in range(m1):
+        for j in range(m1 - i, mm):
+            upper[i][j - l] = upper[i][j]
+        l -= 1
+        for j in range(mm - l - 1, mm):
+            upper[i][j] = 0.0
+
+    l = m1
+    for k in range(n):
+        dum = upper[k][0]
+        i = k
+        if l < n:
+            l += 1
+        for j in range(k + 1, l):
+            if abs(upper[j][0]) > abs(dum):
+                dum = upper[j][0]
+                i = j
+        index[k] = i + 1
+        if i != k:
+            for j in range(mm):
+                upper[k][j], upper[i][j] = upper[i][j], upper[k][j]
+
+        for i in range(k + 1, l):
+            dum = upper[i][0] / upper[k][0]
+            lower[k][i - k - 1] = dum
+            for j in range(1, mm):
+                upper[i][j - 1] = upper[i][j] - dum * upper[k][j]
+            upper[i][mm - 1] = 0.0
+    return upper, lower, index
+
+
+def _solve_vector_banded_matrix(
+    x: NDArray,
+    upper: NDArray,
+    lower: NDArray,
+    index: NDArray,
+    m1: int,
+    m2: int,
+) -> NDArray:
+    """Solves the linear equation system given by the banded nxn Matrix
+    A . x = B, right-hand side quantities as vector B with n elements.
+
+    Args:
+        B: vector [b1, b2, ..., bn]
+
+    Returns:
+        vector as list of floats
+
+    """
+    n: int = upper.shape[0]
+    if x.shape[0] != n:
+        raise ValueError("Item count of vector B has to be equal to matrix row count.")
+
+    al: NDArray = lower
+    au: NDArray = upper
+    mm: int = m1 + m2 + 1
+    l: int = m1
+    for k in range(n):
+        j = index[k] - 1
+        if j != k:
+            x[k], x[j] = x[j], x[k]
+        if l < n:
+            l += 1
+        for j in range(k + 1, l):
+            x[j] -= al[k][j - k - 1] * x[k]
+
+    l = 1
+    for i in range(n - 1, -1, -1):
+        dum = x[i]
+        for k in range(1, l):
+            dum -= au[i][k] * x[k + i]
+        x[i] = dum / au[i][0]
+        if l < mm:
+            l += 1
+
+    return x
