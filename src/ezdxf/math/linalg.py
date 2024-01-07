@@ -20,6 +20,8 @@ import reprlib
 
 import numpy as np
 import numpy.typing as npt
+from ezdxf.acc import USE_C_EXT
+
 
 __all__ = [
     "Matrix",
@@ -696,10 +698,10 @@ class BandedMatrixLU(Solver):
 
     def __init__(self, A: Matrix, m1: int, m2: int):
         lu_decompose = _lu_decompose
-        try:
+        if USE_C_EXT:
+            # import error shows an installation issue
             from ezdxf.acc.np_support import lu_decompose  # type: ignore
-        except ImportError:
-            pass
+
         self.m1: int = int(m1)
         self.m2: int = int(m2)
         self.upper, self.lower, self.index = lu_decompose(A.matrix, self.m1, self.m2)
@@ -720,11 +722,11 @@ class BandedMatrixLU(Solver):
             vector as list of floats
 
         """
+
         solve_vector_banded_matrix = _solve_vector_banded_matrix
-        try:
+        if USE_C_EXT:
+            # import error shows an installation issue
             from ezdxf.acc.np_support import solve_vector_banded_matrix  # type: ignore
-        except ImportError:
-            pass
 
         x: NDArray = np.array(B, dtype=np.float64)
         if len(x) != self.nrows:
