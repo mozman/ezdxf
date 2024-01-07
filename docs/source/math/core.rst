@@ -101,6 +101,7 @@ Bulge Related Functions
     distance_point_line_2d
     intersect_polylines_2d
     intersection_line_line_2d
+    is_axes_aligned_rectangle_2d
     is_convex_polygon_2d
     is_point_in_polygon_2d
     is_point_left_of_line
@@ -117,6 +118,8 @@ Bulge Related Functions
 .. autofunction:: intersect_polylines_2d
 
 .. autofunction:: intersection_line_line_2d
+
+.. autofunction:: is_axes_aligned_rectangle_2d
 
 .. autofunction:: is_convex_polygon_2d
 

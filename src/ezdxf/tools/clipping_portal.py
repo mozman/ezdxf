@@ -3,8 +3,16 @@
 from __future__ import annotations
 from typing import Optional, Iterable, Iterator, Sequence, NamedTuple, Callable
 import abc
+import math
 
-from ezdxf.math import Matrix44, Vec2, BoundingBox2d, UVec
+from ezdxf.math import (
+    Matrix44,
+    Vec2,
+    BoundingBox2d,
+    UVec,
+    is_convex_polygon_2d,
+    is_axes_aligned_rectangle_2d,
+)
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
 
 __all__ = [
@@ -505,5 +513,10 @@ def find_best_clipping_shape(
             shape (inverted clipping shape)
 
     """
-    # That's all I got so far:
-    return ClippingRect(polygon, remove_outside=remove_outside)
+    points = Vec2.list(polygon)
+    if is_axes_aligned_rectangle_2d(points):
+        return ClippingRect(points, remove_outside=remove_outside)
+    elif is_convex_polygon_2d(points, strict=False):
+        return ConvexClippingPolygon(points, remove_outside=remove_outside)
+    # concave clipping shape does not exist yet
+    return ConvexClippingPolygon(points, remove_outside=remove_outside)

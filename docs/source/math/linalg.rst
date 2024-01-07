@@ -119,7 +119,6 @@ BandedMatrixLU Class
 
     .. automethod:: solve_matrix
 
-    .. automethod:: determinant
 
 .. _Gauss-Jordan: https://en.wikipedia.org/wiki/Gaussian_elimination
 .. _Gauss-Elimination: https://en.wikipedia.org/wiki/Gaussian_elimination

@@ -12,7 +12,7 @@ class TestClippingRect:
     def test_clipping_points(self):
         clipper = ClippingRect([(-1, -1), (1, 1)])
         assert clipper.clip_point(Vec2(3, 3)) is None
-        assert clipper.clip_point(Vec2(0.5, 0.5)).isclose((0.5, 0.5))
+        assert clipper.clip_point(Vec2(0.5, 0.5)).isclose((0.5, 0.5))  # type: ignore
 
     def test_clipping_lines(self):
         clipper = ClippingRect([(-1, -1), (1, 1)])

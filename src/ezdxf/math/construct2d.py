@@ -1,7 +1,7 @@
 # Copyright (c) 2011-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, Sequence, Iterator
+from typing import Iterable, Sequence
 
 from functools import partial
 import math
@@ -14,7 +14,6 @@ from ezdxf.math import (
     Y_AXIS,
     arc_angle_span_rad,
 )
-from decimal import Decimal
 
 TOLERANCE = 1e-10
 RADIANS_90 = math.pi / 2.0
@@ -27,6 +26,7 @@ __all__ = [
     "convex_hull_2d",
     "distance_point_line_2d",
     "is_convex_polygon_2d",
+    "is_axes_aligned_rectangle_2d",
     "is_point_on_line_2d",
     "is_point_in_polygon_2d",
     "is_point_left_of_line",
@@ -71,7 +71,7 @@ def ellipse_param_span(start_param: float, end_param: float) -> float:
     return arc_angle_span_rad(float(start_param), float(end_param))
 
 
-def closest_point(base: UVec, points: Iterable[UVec]) -> Vec3:
+def closest_point(base: UVec, points: Iterable[UVec]) -> Vec3 | None:
     """Returns the closest point to a give `base` point.
 
     Args:
@@ -80,11 +80,11 @@ def closest_point(base: UVec, points: Iterable[UVec]) -> Vec3:
 
     """
     base = Vec3(base)
-    min_dist = None
-    found = None
+    min_dist: float | None = None
+    found: Vec3 | None = None
     for point in points:
         p = Vec3(point)
-        dist = (base - p).magnitude
+        dist = base.distance(p)
         if (min_dist is None) or (dist < min_dist):
             min_dist = dist
             found = p
@@ -331,7 +331,9 @@ def has_matrix_2d_stretching(m: Matrix44) -> bool:
 
 
 def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> bool:
-    """Returns ``True`` if the 2D `polygon` is convex. This function works with
+    """Returns ``True`` if the 2D `polygon` is convex. 
+    
+    This function works with
     open and closed polygons and clockwise or counter-clockwise vertex
     orientation.
     Coincident vertices will always be skipped and if argument `strict`
@@ -363,4 +365,46 @@ def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> 
         # Do all determinants have the same sign?
         m = signs[0]
         return all(m == s for s in signs)
+    return False
+
+
+def is_axes_aligned_rectangle_2d(points: list[Vec2]) -> bool:
+    """Returns ``True`` if the given points represent a rectangle aligned with the 
+    coordinate system axes.
+    
+    The sides of the rectangle must be parallel to the x- and y-axes of the coordinate 
+    system.  The rectangle can be open or closed (first point == last point) and 
+    oriented clockwise or counter-clockwise.  Only works with 4 or 5 vertices, rectangles 
+    that have sides with collinear edges are not considered rectangles.
+
+    .. versionadded:: 1.2.0
+
+    """
+
+    def is_horizontal(a: Vec2, b: Vec2) -> bool:
+        return math.isclose(a.y, b.y)
+
+    def is_vertical(a: Vec2, b: Vec2):
+        return math.isclose(a.x, b.x)
+
+    count = len(points)
+    if points[0].isclose(points[-1]):
+        count -= 1
+    if count != 4:
+        return False
+    p0, p1, p2, p3, *_ = points
+    if (
+        is_horizontal(p0, p1)
+        and is_vertical(p1, p2)
+        and is_horizontal(p2, p3)
+        and is_vertical(p3, p0)
+    ):
+        return True
+    if (
+        is_horizontal(p1, p2)
+        and is_vertical(p2, p3)
+        and is_horizontal(p3, p0)
+        and is_vertical(p0, p1)
+    ):
+        return True
     return False
