@@ -200,19 +200,27 @@ class XClip:
             _vertices = _rect_path(_vertices)
         self.set_block_clipping_path(m.transform_vertices(_vertices))
 
-    def invert_clipping_path(self, extents: Iterable[UVec] | None = None) -> None:
-        """Invert cliping path. The outer boundary is defined by the bounding box of the
-        given `extents` vertices or auto-detected if `extents` is ``None``.
+    def invert_clipping_path(
+        self, extents: Iterable[UVec] | None = None, *, ignore_acad_compatibility=False
+    ) -> None:
+        """Invert clipping path. (experimental feature)
+        
+        The outer boundary is defined by the bounding box of the given `extents` 
+        vertices or auto-detected if `extents` is ``None``.
 
         The `extents` are BLOCK coordinates.
         Requires an existing clipping path and that clipping path cannot be inverted.
-
+        
         .. warning::
 
-            AutoCAD will not load DXF files with inverted clipping paths created by
-            ezdxf!!!!
+            You have to set the flag `ignore_acad_compatibility` to ``True`` to use 
+            this feature.  AutoCAD will not load DXF files with inverted clipping paths 
+            created by ezdxf!!!! 
 
         """
+        if ignore_acad_compatibility is False:
+            return
+        
         current_clipping_path = self.get_block_clipping_path()
         if len(current_clipping_path.vertices) < 2:
             raise const.DXFValueError("no clipping path set")

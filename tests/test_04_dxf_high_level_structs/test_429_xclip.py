@@ -170,20 +170,20 @@ def test_set_wcs_clipping_path(doc: Drawing):
 
 def test_invert_clip_without_clipping_path(clipper: xclip.XClip):
     with pytest.raises(ValueError):
-        clipper.invert_clipping_path()
+        clipper.invert_clipping_path(ignore_acad_compatibility=True)
 
 
 def test_cannot_invert_clipping_path_twice(clipper: xclip.XClip):
     clipper.set_block_clipping_path([(2, 2), (8, 8)])
-    clipper.invert_clipping_path()
+    clipper.invert_clipping_path(ignore_acad_compatibility=True)
 
     with pytest.raises(ValueError):
-        clipper.invert_clipping_path()
+        clipper.invert_clipping_path(ignore_acad_compatibility=True)
 
 
 def test_invert_clipping_path_properties(clipper: xclip.XClip):
     clipper.set_block_clipping_path([(2, 2), (8, 8)])
-    clipper.invert_clipping_path()
+    clipper.invert_clipping_path(ignore_acad_compatibility=True)
 
     assert clipper.is_inverted_clip is True
     clipping_path = clipper.get_block_clipping_path()
@@ -203,7 +203,7 @@ def test_invert_clipping_path_properties(clipper: xclip.XClip):
 
 def test_invert_clipping_path_dxf_structure(clipper: xclip.XClip):
     clipper.set_block_clipping_path([(2, 2), (8, 8)])
-    clipper.invert_clipping_path()
+    clipper.invert_clipping_path(ignore_acad_compatibility=True)
 
     spatial_filter = clipper.get_spatial_filter()
     assert spatial_filter is not None
