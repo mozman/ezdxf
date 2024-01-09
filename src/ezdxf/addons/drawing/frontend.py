@@ -823,10 +823,15 @@ class UniversalFrontend:
             clip = xclip.XClip(insert)
             if clip.has_clipping_path:
                 boundary_path = clip.get_wcs_clipping_path()
-                remove_outside = not boundary_path.is_inverted_clip
-                clipping_shape = clipping_portal.find_best_clipping_shape(
-                    boundary_path.vertices, remove_outside
-                )
+                if not boundary_path.is_inverted_clip:
+                    clipping_shape = clipping_portal.find_best_clipping_shape(
+                        boundary_path.vertices
+                    )
+                else:  # inverted clipping path
+                    clipping_shape = clipping_portal.make_inverted_clipping_shape(
+                        boundary_path.vertices,
+                        extents=xclip.clipping_path_extents(boundary_path),
+                    )
                 self.designer.push_clipping_shape(clipping_shape, None)
 
             # draw_entities() includes the visibility check:

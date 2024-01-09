@@ -3,7 +3,6 @@
 from __future__ import annotations
 from typing import Optional, Iterable, Iterator, Sequence, NamedTuple, Callable
 import abc
-import math
 
 from ezdxf.math import (
     Matrix44,
@@ -22,6 +21,7 @@ __all__ = [
     "ConvexClippingPolygon",
     "MultiClip",
     "find_best_clipping_shape",
+    "make_inverted_clipping_shape",
 ]
 
 
@@ -52,10 +52,6 @@ class ClippingShape(abc.ABC):
         All current implemented clipping algorithms flatten Bezier-curves into polylines.
 
     """
-
-    remove_outside: bool = True
-    # - True: remove geometry outside the clipping shape
-    # - False: remove geometry inside the clipping shape
 
     @abc.abstractmethod
     def bbox(self) -> BoundingBox2d:
@@ -214,28 +210,21 @@ class ClippingPortal:
 
 class ClippingRect(ClippingShape):
     """Represents a rectangle as clipping shape where the edges are parallel to
-    the x- and  y-axis of the coordinate system.
-
-    The current implementation does not support removing the content inside the
-    clipping shape (remove_outside=False).
+    the x- and  y-axis of the coordinate system.  Removes the geometry outside the
+    clipping rectangle.
 
     """
 
-    def __init__(self, vertices: Iterable[UVec], remove_outside=True) -> None:
+    def __init__(self, vertices: Iterable[UVec]) -> None:
         from ezdxf.math.clipping import ClippingRect2d
 
-        self.remove_outside = remove_outside
         self.remove_all = False
-        self.remove_none = False
         bbox = BoundingBox2d(vertices)
         if not bbox.has_data:
             raise ValueError("clipping box not detectable")
         size: Vec2 = bbox.size
         if size.x * size.y < 1e-9:
-            if self.remove_outside:
-                self.remove_all = True
-            else:  # remove inside
-                self.remove_none = True
+            self.remove_all = True
         self._bbox = bbox
         self.clipper = ClippingRect2d(bbox.extmin, bbox.extmax)
 
@@ -245,23 +234,14 @@ class ClippingRect(ClippingShape):
     def clip_point(self, point: Vec2) -> Optional[Vec2]:
         if self.remove_all:
             return None
-        elif self.remove_none:
-            return point
-
         is_inside = self.clipper.is_inside(Vec2(point))
-        if self.remove_outside:
-            if not is_inside:
-                return None
-        else:  # remove inside
-            if is_inside:
-                return None
+        if not is_inside:
+            return None
         return point
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         if self.remove_all:
             return tuple()
-        if self.remove_none:
-            return ((start, end),)
 
         # rectangular clipping box returns always a single line segment or an empty tuple
         cropped_segment = self.clipper.clip_line(start, end)
@@ -272,8 +252,6 @@ class ClippingRect(ClippingShape):
     def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         if self.remove_all:
             return (NumpyPoints2d(tuple()),)
-        if self.remove_none:
-            return (points,)
 
         clipper = self.clipper
         extmin, extmax = points.extents()
@@ -286,8 +264,6 @@ class ClippingRect(ClippingShape):
     def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         if self.remove_all:
             return (NumpyPoints2d(tuple()),)
-        if self.remove_none:
-            return (points,)
 
         clipper = self.clipper
         extmin, extmax = points.extents()
@@ -302,8 +278,6 @@ class ClippingRect(ClippingShape):
     ) -> Iterator[NumpyPath2d]:
         if self.remove_all:
             return tuple()
-        if self.remove_none:
-            return paths
 
         clipper = self.clipper
         for path in paths:
@@ -320,8 +294,6 @@ class ClippingRect(ClippingShape):
     ) -> Iterator[NumpyPath2d]:
         if self.remove_all:
             return tuple()
-        if self.remove_none:
-            return paths
 
         clipper = self.clipper
         for path in paths:
@@ -346,17 +318,14 @@ class ClippingRect(ClippingShape):
 
 
 class ConvexClippingPolygon(ClippingShape):
-    """Represents an arbitrary convex polygon as clipping shape.
-
-    The current implementation does not support removing the content inside the
-    clipping shape (remove_outside=False).
+    """Represents an arbitrary convex polygon as clipping shape.  Removes the geometry
+    outside the clipping polygon.
 
     """
 
-    def __init__(self, vertices: Iterable[UVec], remove_outside=True) -> None:
+    def __init__(self, vertices: Iterable[UVec]) -> None:
         from ezdxf.math.clipping import ClippingPolygon2d
 
-        self.remove_outside = remove_outside
         bbox = BoundingBox2d(vertices)
         if not bbox.has_data:
             raise ValueError("clipping box not detectable")
@@ -368,12 +337,8 @@ class ConvexClippingPolygon(ClippingShape):
 
     def clip_point(self, point: Vec2) -> Optional[Vec2]:
         is_inside = self.clipper.is_inside(Vec2(point))
-        if self.remove_outside:
-            if not is_inside:
-                return None
-        else:  # remove inside
-            if is_inside:
-                return None
+        if not is_inside:
+            return None
         return point
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
@@ -436,8 +401,8 @@ class ConvexClippingPolygon(ClippingShape):
 class MultiClip(ClippingShape):
     """The MultiClip combines multiple clipping shapes into a single clipping shape.
 
-    Overlapping clipping shapes and clipping shapes that "remove_inside" will yield
-    strange results but are not actively prevented.
+    Overlapping clipping shapes will yield strange results but are not actively
+    prevented.
 
     """
 
@@ -499,9 +464,7 @@ class MultiClip(ClippingShape):
                 yield from shape.clip_filled_paths((path,), max_sagitta)
 
 
-def find_best_clipping_shape(
-    polygon: Iterable[UVec], remove_outside=True
-) -> ClippingShape:
+def find_best_clipping_shape(polygon: Iterable[UVec]) -> ClippingShape:
     """Returns the best clipping shape for the given clipping polygon.
 
     The function analyses the given polygon (rectangular, convex or concave polygon, ...)
@@ -509,14 +472,32 @@ def find_best_clipping_shape(
 
     Args:
         polygon: clipping polygon as iterable vertices
-        remove_outside: remove objects outside the clipping shape or inside the clipping
-            shape (inverted clipping shape)
 
     """
     points = Vec2.list(polygon)
     if is_axes_aligned_rectangle_2d(points):
-        return ClippingRect(points, remove_outside=remove_outside)
+        return ClippingRect(points)
     elif is_convex_polygon_2d(points, strict=False):
-        return ConvexClippingPolygon(points, remove_outside=remove_outside)
+        return ConvexClippingPolygon(points)
     # concave clipping shape does not exist yet
-    return ConvexClippingPolygon(points, remove_outside=remove_outside)
+    return ConvexClippingPolygon(points)
+
+
+def make_inverted_clipping_shape(
+    polygon: Iterable[UVec], extents: BoundingBox2d
+) -> ClippingShape:
+    """Returns an inverted clipping shape that removes the geometry outside the clipping 
+    polygon and inside the given extents.
+
+    .. note::
+
+        Not implemented yet!
+
+    Args:
+        polygon: clipping polygon as iterable vertices
+        extends: outer bounds of the clipping shape
+
+    """
+
+    # not supported/implemented yet and function signature may change!
+    return find_best_clipping_shape(polygon)

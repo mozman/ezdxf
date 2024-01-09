@@ -23,25 +23,33 @@ SPATIAL = "SPATIAL"
 
 @dataclasses.dataclass
 class ClippingPath:
-    """Stores the SPATIAL_FILTER clipping paths in original form that I still don't fully 
-    understand for `inverted` clipping paths. All boundary paths are simple polygons as a 
+    """Stores the SPATIAL_FILTER clipping paths in original form that I still don't fully
+    understand for `inverted` clipping paths. All boundary paths are simple polygons as a
     sequence of :class:`~ezdxf.math.Vec2`.
 
     Attributes:
-        vertices: Contains the boundary polygon for regular clipping paths. 
+        vertices: Contains the boundary polygon for regular clipping paths.
             Contains the outer boundary path for inverted clippings paths - but not always!
         inverted_clip:
             Contains the inner boundary for inverted clipping paths - but not always!
         inverted_clip_compare:
-            Contains the combined inner- and the outer boundaries for inverted 
+            Contains the combined inner- and the outer boundaries for inverted
             clipping paths - but not always!
         is_inverted_clip: ``True`` for inverted clipping paths
 
     """
+
     vertices: Sequence[Vec2] = tuple()
     inverted_clip: Sequence[Vec2] = tuple()
     inverted_clip_compare: Sequence[Vec2] = tuple()
     is_inverted_clip: bool = False
+
+
+def clipping_path_extents(cp: ClippingPath) -> BoundingBox2d:
+    """Returns the extents of the clipping path."""
+    if cp.is_inverted_clip:
+        return BoundingBox2d(cp.inverted_clip_compare)  # best guess so far
+    return BoundingBox2d(cp.vertices)
 
 
 class XClip:
@@ -219,23 +227,23 @@ class XClip:
         self, extents: Iterable[UVec] | None = None, *, ignore_acad_compatibility=False
     ) -> None:
         """Invert clipping path. (experimental feature)
-        
-        The outer boundary is defined by the bounding box of the given `extents` 
+
+        The outer boundary is defined by the bounding box of the given `extents`
         vertices or auto-detected if `extents` is ``None``.
 
         The `extents` are BLOCK coordinates.
         Requires an existing clipping path and that clipping path cannot be inverted.
-        
+
         .. warning::
 
-            You have to set the flag `ignore_acad_compatibility` to ``True`` to use 
-            this feature.  AutoCAD will not load DXF files with inverted clipping paths 
-            created by ezdxf!!!! 
+            You have to set the flag `ignore_acad_compatibility` to ``True`` to use
+            this feature.  AutoCAD will not load DXF files with inverted clipping paths
+            created by ezdxf!!!!
 
         """
         if ignore_acad_compatibility is False:
             return
-        
+
         current_clipping_path = self.get_block_clipping_path()
         if len(current_clipping_path.vertices) < 2:
             raise const.DXFValueError("no clipping path set")
