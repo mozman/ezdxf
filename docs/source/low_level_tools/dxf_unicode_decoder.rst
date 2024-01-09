@@ -1,10 +1,7 @@
-Functions
-=========
-
 .. _DXF Unicode Decoder:
 
 DXF Unicode Decoder
--------------------
+===================
 
 The DXF format uses a special form of unicode encoding: "\\U+xxxx".
 
@@ -23,29 +20,3 @@ new support functions to decode unicode characters "\\U+xxxx" manually.
 .. autofunction:: ezdxf.has_dxf_unicode
 
 .. autofunction:: ezdxf.decode_dxf_unicode
-
-Tools
------
-
-Some handy tool functions used internally by ``ezdxf``.
-
-.. autofunction:: ezdxf.tools.juliandate
-
-.. autofunction:: ezdxf.tools.calendardate
-
-.. autofunction:: ezdxf.tools.set_flag_state
-
-.. autofunction:: ezdxf.tools.guid
-
-.. autofunction:: ezdxf.tools.bytes_to_hexstr
-
-.. autofunction:: ezdxf.tools.suppress_zeros
-
-.. autofunction:: ezdxf.tools.normalize_text_angle
-
-SAT Format "Encryption"
------------------------
-
-.. autofunction:: ezdxf.tools.crypt.encode
-
-.. autofunction:: ezdxf.tools.crypt.decode

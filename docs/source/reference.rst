@@ -26,7 +26,6 @@ DXF Document
     drawing/drawing
     drawing/recover
     r12strict
-    appsettings
 
 DXF Structures
 --------------
@@ -100,13 +99,13 @@ Construction
 .. toctree::
     :maxdepth: 1
 
-    path
-    disassemble
     bbox
-    upright
+    disassemble
+    math_construction_tools
+    path
     reorder
     transform
-    math_construction_tools
+    upright
 
 Custom Data
 -----------
@@ -131,12 +130,14 @@ Tools
 .. toctree::
     :maxdepth: 2
 
-    tools/functions
+    tools/acis
+    tools/appsettings
+    tools/comments
     tools/gfxattribs
     tools/text
     tools/text_size
-    tools/acis
-
+    tools/xclip
+    tools/zoom   
 
 Global Options
 --------------
@@ -147,14 +148,16 @@ Global Options
     options
 
 
-Miscellaneous
--------------
+Low Level Tools
+---------------
 
 .. toctree::
     :maxdepth: 1
 
-    zoom
-    comments
+    low_level_tools/functions
+    low_level_tools/dxf_unicode_decoder
+    low_level_tools/sat_crypt
+
 
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301
 .. _Autodesk: http://usa.autodesk.com/

@@ -23,6 +23,21 @@ SPATIAL = "SPATIAL"
 
 @dataclasses.dataclass
 class ClippingPath:
+    """Stores the SPATIAL_FILTER clipping paths in original form that I still don't fully 
+    understand for `inverted` clipping paths. All boundary paths are simple polygons as a 
+    sequence of :class:`~ezdxf.math.Vec2`.
+
+    Attributes:
+        vertices: Contains the boundary polygon for regular clipping paths. 
+            Contains the outer boundary path for inverted clippings paths - but not always!
+        inverted_clip:
+            Contains the inner boundary for inverted clipping paths - but not always!
+        inverted_clip_compare:
+            Contains the combined inner- and the outer boundaries for inverted 
+            clipping paths - but not always!
+        is_inverted_clip: ``True`` for inverted clipping paths
+
+    """
     vertices: Sequence[Vec2] = tuple()
     inverted_clip: Sequence[Vec2] = tuple()
     inverted_clip_compare: Sequence[Vec2] = tuple()
@@ -39,8 +54,8 @@ class XClip:
         This class handles only 2D clipping paths.
 
     The visibility of the clipping path can be set individually for each block
-    reference, but the HEADER variable `$XCLIPFRAME` ultimately determines whether the
-    clipping path is displayed or plotted:
+    reference, but the HEADER variable $XCLIPFRAME ultimately determines whether the
+    clipping path is displayed or plotted by the application:
 
     === =============== ===
     0   not displayed   not plotted
