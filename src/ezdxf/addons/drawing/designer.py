@@ -28,7 +28,11 @@ from ezdxf.path import make_path, Path
 from ezdxf.render import linetypes
 from ezdxf.entities import DXFGraphic, Viewport
 from ezdxf.tools.text import replace_non_printable_characters
-from ezdxf.tools.clipping_portal import ClippingPortal, ClippingRect, ClippingShape
+from ezdxf.tools.clipping_portal import (
+    ClippingPortal,
+    ClippingShape,
+    find_best_clipping_shape,
+)
 
 from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
 from .config import LinePolicy, TextPolicy, ColorPolicy, Configuration
@@ -239,7 +243,8 @@ class Designer2d(Designer):
         m = vp.get_transformation_matrix()
         clipping_path = make_path(vp)
         if len(clipping_path):
-            clipping_shape = ClippingRect(clipping_path.control_vertices())
+            # TODO: flatten clipping path! max_sagitta = ?
+            clipping_shape = find_best_clipping_shape(clipping_path.control_vertices())
             self.clipping_portal.push(clipping_shape, m)
             return True
         return False

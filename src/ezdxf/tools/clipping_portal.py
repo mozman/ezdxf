@@ -487,7 +487,7 @@ def make_inverted_clipping_shape(
     polygon: Iterable[UVec], extents: BoundingBox2d
 ) -> ClippingShape:
     """Returns an inverted clipping shape that removes the geometry outside the clipping 
-    polygon and inside the given extents.
+    polygon but inside the given extents.
 
     .. note::
 
