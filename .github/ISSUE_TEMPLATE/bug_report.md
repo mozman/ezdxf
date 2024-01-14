@@ -7,14 +7,6 @@ assignees: ''
 
 ---
 
-If you feel very uncomfortable writing in English or don't have access to a translation 
-service like Google Translate, you can also write in your native language because I have 
-access to Google Translate. However, this will take longer to solve the issue and there 
-will be misunderstandings.
-
-如果您觉得用英语写作很不舒服，或者无法使用谷歌翻译等翻译服务，您也可以用您的母语写作，因为我可以使用谷歌翻译。
-然而，这将需要更长的时间来解决问题，并且会产生误解。
-
 **Describe the bug**
 A clear and concise description of what the bug is.
 
