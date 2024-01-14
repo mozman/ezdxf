@@ -100,7 +100,7 @@ def add_inverted_clipping_path():
     clipper.set_block_clipping_path([(2.5, 4), (1, 1), (4, 1)])
 
     # invert the clipping path - the content of the triangle is invisible
-    clipper.invert_clipping_path()
+    clipper.invert_clipping_path(ignore_acad_compatibility=True)
 
     # Adding a rectangular clipping path defined by 2 vertices:
     insert1 = msp.add_blockref(name, (20, 10))

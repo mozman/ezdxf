@@ -32,6 +32,7 @@ to meet the specific needs of different industries and applications.
     mleaderstyle
     placeholder
     plotsettings
+    spatial_filter
     sun
     underlaydef
     xrecord
