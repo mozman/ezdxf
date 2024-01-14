@@ -821,7 +821,9 @@ class UniversalFrontend:
             # Block reference attributes are located __outside__ the block reference!
             self.draw_entities(insert.attribs)
             clip = xclip.XClip(insert)
-            if clip.has_clipping_path:
+            is_clipping_active = clip.has_clipping_path and clip.is_clipping_enabled
+
+            if is_clipping_active:
                 boundary_path = clip.get_wcs_clipping_path()
                 if not boundary_path.is_inverted_clip:
                     clipping_shape = clipping_portal.find_best_clipping_shape(
@@ -842,12 +844,11 @@ class UniversalFrontend:
                 )
             )
 
-            if clip.has_clipping_path:
-                if clip.is_clipping_path_visible and clip.get_xclip_frame_policy():
-                    self.designer.draw_path(
-                        path=from_vertices(boundary_path.vertices, close=True),  # type: ignore
-                        properties=properties,
-                    )
+            if is_clipping_active and clip.get_xclip_frame_policy():
+                self.designer.draw_path(
+                    path=from_vertices(boundary_path.vertices, close=True),  # type: ignore
+                    properties=properties,
+                )
                 self.designer.pop_clipping_shape()
 
         if isinstance(entity, Insert):

@@ -8,6 +8,15 @@ The `SPATIAL_FILTER`_ object stores the clipping path for external references an
 references.  For more information about getting, setting and removing clippings paths 
 read the docs for the :class:`ezdxf.xclip.XClip` class.
 
+The HEADER variable $XCLIPFRAME determines if the clipping path is displayed and 
+plotted:
+
+=== ===========================
+0   not displayed, not plotted
+1   displayed, not plotted
+2   displayed and plotted
+=== ===========================
+
 .. seealso::
 
     - :mod:`ezdxf.xclip`
@@ -26,18 +35,9 @@ Factory function         internal data structure
         Defines the distance of the back clipping plane from the origin in direction of 
         the extrusion vector.
 
-    .. attribute:: dxf.display_clipping_path
+    .. attribute:: dxf.is_clipping_enabled
 
-        The clipping path polygon is visible when 1 and invisible when 0.
-
-        The HEADER variable $XCLIPFRAME determines if the clipping path is really 
-        displayed and plotted:
-
-        === ===========================
-        0   not displayed, not plotted
-        1   displayed, not plotted
-        2   displayed and plotted
-        === ===========================
+        Block reference clipping is enabled when 1 and disabled when 0.
 
 
     .. attribute:: dxf.extrusion

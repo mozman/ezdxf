@@ -43,17 +43,17 @@ raise an exception when no clipping path exist.
 
     .. autoproperty:: has_clipping_path
 
-    .. autoproperty:: is_clipping_path_visible
+    .. autoproperty:: is_clipping_enabled
 
     .. autoproperty:: is_inverted_clip
+
+    .. automethod:: disable_clipping
+
+    .. automethod:: enable_clipping
 
     .. automethod:: get_spatial_filter
 
     .. automethod:: get_xclip_frame_policy
-
-    .. automethod:: show_clipping_path
-
-    .. automethod:: hide_clipping_path
 
     .. automethod:: get_block_clipping_path
 

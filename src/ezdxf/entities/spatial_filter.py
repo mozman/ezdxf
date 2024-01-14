@@ -26,6 +26,12 @@ if TYPE_CHECKING:
 
 __all__ = ["SpatialFilter"]
 
+# The HEADER variable $XCLIPFRAME determines if the clipping path polygon is displayed 
+# and plotted:
+#   0 - not displayed, not plotted
+#   1 - displayed, not plotted
+#   2 - displayed and plotted
+
 logger = logging.getLogger("ezdxf")
 AcDbFilter = "AcDbFilter"
 AcDbSpatialFilter = "AcDbSpatialFilter"
@@ -42,13 +48,7 @@ acdb_spatial_filter = DefSubclass(
             fixer=RETURN_DEFAULT,
         ),
         "origin": DXFAttr(11, xtype=XType.point3d, default=NULLVEC),
-
-        # The HEADER variable $XCLIPFRAME determines if the clipping path is really 
-        # displayed and plotted:
-        #   0 - not displayed, not plotted
-        #   1 - displayed, not plotted
-        #   2 - displayed and plotted
-        "display_clipping_path": DXFAttr(
+        "is_clipping_enabled": DXFAttr(
             71, default=1, validator=validator.is_integer_bool, fixer=RETURN_DEFAULT
         ),
         "has_front_clipping_plane": DXFAttr(
@@ -183,7 +183,7 @@ class SpatialFilter(DXFObject):
         for vertex in self._boundary_vertices:
             tagwriter.write_vertex(10, vertex)
         self.dxf.export_dxf_attribs(
-            tagwriter, ["extrusion", "origin", "display_clipping_path"]
+            tagwriter, ["extrusion", "origin", "is_clipping_enabled"]
         )
         has_front_clipping = self.dxf.has_front_clipping_plane
         tagwriter.write_tag2(72, has_front_clipping)

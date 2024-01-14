@@ -99,10 +99,10 @@ class XClip:
         return self._spatial_filter is not None
 
     @property
-    def is_clipping_path_visible(self) -> bool:
-        """Returns if the clipping path polygon should be visible in CAD applications."""
+    def is_clipping_enabled(self) -> bool:
+        """Returns ``True`` if block reference clipping is enabled."""
         if isinstance(self._spatial_filter, SpatialFilter):
-            return bool(self._spatial_filter.dxf.display_clipping_path)
+            return bool(self._spatial_filter.dxf.is_clipping_enabled)
         return False
 
     @property
@@ -113,15 +113,15 @@ class XClip:
             return False
         return xrec.has_section(ACAD_INVERTEDCLIP_ROUNDTRIP)
 
-    def show_clipping_path(self) -> None:
-        """Display the clipping path polygon in CAD applications."""
+    def enable_clipping(self) -> None:
+        """Enable block reference clipping."""
         if isinstance(self._spatial_filter, SpatialFilter):
-            self._spatial_filter.dxf.display_clipping_path = 1
+            self._spatial_filter.dxf.is_clipping_enabled = 1
 
-    def hide_clipping_path(self) -> None:
-        """Hide the clipping path polygon in CAD applications."""
+    def disable_clipping(self) -> None:
+        """Disable block reference clipping."""
         if isinstance(self._spatial_filter, SpatialFilter):
-            self._spatial_filter.dxf.display_clipping_path = 0
+            self._spatial_filter.dxf.is_clipping_enabled = 0
 
     def get_block_clipping_path(self) -> ClippingPath:
         """Returns the clipping path in block coordinates (relative to the block origin)."""

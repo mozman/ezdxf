@@ -24,6 +24,17 @@ tags:: DXF-Internals
 	- The clipping path is the geometry entered via the [[XCLIP]] command in OCS coordinates  (=WCS in most cases).
 	- The boundary vertices are transformed into block coordinates by applying the `inverse_insert_matrix`.
 	-
+- ## Visibility of the Clipping Path
+	- The [[HEADER]] variable [[$XCLIPFRAME]] defines if the clippining polygon is visible
+		- 0 = not displayed, not plotted
+		- 1 = displayed, not plotted
+		- 2 = displayed and plotted
+-
+- ## Clipping Status
+	- The group code 71 defines if the state of the block reference clipping
+		- 0 = off
+		- 1 = on
+	-
 - ## Inverted Clip Boundary
 	- There is no flag to indicate an `inverted` clipping boundary
 	- The regular clipping clipping path, the outer triangle

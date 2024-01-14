@@ -77,7 +77,7 @@ def test_rectangular_clipping_path_geometry(clipper: xclip.XClip):
 
 def test_new_spatial_filter_parmeters(clipper: xclip.XClip):
     clipper.set_block_clipping_path([(-1, -1), (2, 2)])
-    assert clipper.is_clipping_path_visible is True
+    assert clipper.is_clipping_enabled is True
     assert clipper.has_clipping_path is True
 
     spatial_filter = clipper.get_spatial_filter()
@@ -89,22 +89,22 @@ def test_new_spatial_filter_parmeters(clipper: xclip.XClip):
     assert spatial_filter.dxf.extrusion == (0, 0, 1)
 
 
-def test_switch_clipping_path_visibility_without_path(clipper: xclip.XClip):
-    clipper.show_clipping_path()
-    assert clipper.is_clipping_path_visible is False
-    clipper.hide_clipping_path()
-    assert clipper.is_clipping_path_visible is False
+def test_enable_clipping_without_path_set(clipper: xclip.XClip):
+    clipper.enable_clipping()
+    assert clipper.is_clipping_enabled is False
+    clipper.disable_clipping()
+    assert clipper.is_clipping_enabled is False
 
 
-def test_switch_clipping_path_visibility(clipper: xclip.XClip):
+def test_toggle_clipping_state(clipper: xclip.XClip):
     clipper.set_block_clipping_path([(0, 0), (1, 1)])
-    assert clipper.is_clipping_path_visible is True, "clipping path visible by default"
+    assert clipper.is_clipping_enabled is True, "clipping path is enabled by default"
 
-    clipper.hide_clipping_path()
-    assert clipper.is_clipping_path_visible is False
+    clipper.disable_clipping()
+    assert clipper.is_clipping_enabled is False
 
-    clipper.show_clipping_path()
-    assert clipper.is_clipping_path_visible is True
+    clipper.enable_clipping()
+    assert clipper.is_clipping_enabled is True
 
 
 def test_discard_clipping_path(doc: Drawing):

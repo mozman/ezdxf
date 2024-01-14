@@ -11,7 +11,7 @@ def test_setup_from_tags():
     assert len(sp_filter.boundary_vertices) == 2
     assert sp_filter.dxf.extrusion == (0, 0, 1)
     assert sp_filter.dxf.origin == (0, 0, 0)
-    assert sp_filter.dxf.display_clipping_path == 1
+    assert sp_filter.dxf.is_clipping_enabled == 1
     assert sp_filter.dxf.has_front_clipping_plane == 0
     assert sp_filter.dxf.front_clipping_plane_distance == 0.0
     assert sp_filter.dxf.has_back_clipping_plane == 0
