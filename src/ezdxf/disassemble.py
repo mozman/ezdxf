@@ -560,9 +560,14 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
 
     Decomposition of XREF, UNDERLAY and ACAD_TABLE entities is not supported.
 
+    This function does not apply the clipping path created by the XCLIP command. 
+    The function returns all entities and ignores the clipping path polygon and no 
+    entity is clipped.
+
     """
     for entity in entities:
         if isinstance(entity, Insert):
+            # TODO: emit internal XCLIP marker entity?
             if entity.mcount > 1:
                 yield from recursive_decompose(entity.multi_insert())
             else:

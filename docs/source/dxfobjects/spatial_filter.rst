@@ -21,6 +21,42 @@ Factory function         internal data structure
 
 .. class:: SpatialFilter
 
+    .. attribute:: dxf.back_clipping_plane_distance
+
+        Defines the distance of the back clipping plane from the origin in direction of 
+        the extrusion vector.
+
+    .. attribute:: dxf.display_clipping_path
+
+        The clipping path polygon is visible when 1 and invisible when 0.
+
+        The HEADER variable $XCLIPFRAME determines if the clipping path is really 
+        displayed and plotted:
+
+        === ===========================
+        0   not displayed, not plotted
+        1   displayed, not plotted
+        2   displayed and plotted
+        === ===========================
+
+
+    .. attribute:: dxf.extrusion
+
+        Defines the orientation of the OCS
+
+    .. attribute:: dxf.front_clipping_plane_distance
+
+        Defines the distance of the front clipping plane from the origin in direction of 
+        the extrusion vector.
+
+    .. attribute:: dxf.has_back_clipping_plane
+
+    .. attribute:: dxf.has_front_clipping_plane
+
+    .. attribute:: dxf.origin
+
+        Defines the origin of the OCS
+
     .. autoproperty:: boundary_vertices
 
     .. autoproperty:: inverse_insert_matrix
