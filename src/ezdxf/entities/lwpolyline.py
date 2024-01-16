@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -10,7 +10,7 @@ from typing import (
     Iterator,
     Optional,
 )
-from typing_extensions import TypeAlias
+from typing_extensions import TypeAlias, Self
 import array
 import copy
 from contextlib import contextmanager
@@ -199,7 +199,7 @@ class LWPolyline(DXFGraphic):
 
     def __iter__(self) -> Iterator[LWPointType]:
         """Returns iterable of tuples (x, y, start_width, end_width, bulge)."""
-        return iter(self.lwpoints)
+        return iter(self.lwpoints)  # type: ignore
 
     def __getitem__(self, index: int) -> LWPointType:
         """Returns point at position `index` as (x, y, start_width, end_width,
@@ -209,7 +209,7 @@ class LWPolyline(DXFGraphic):
         All coordinates in :ref:`OCS`.
 
         """
-        return self.lwpoints[index]
+        return self.lwpoints[index]  # type: ignore
 
     def __setitem__(self, index: int, value: Sequence[float]) -> None:
         """
@@ -434,24 +434,24 @@ class LWPolylinePoints(VertexArray):
     VERTEX_SIZE = 5
 
     @classmethod
-    def from_tags(cls, tags):
+    def from_tags(cls, tags: Iterable[DXFTag]) -> tuple[Self, Tags]:  # type: ignore
         """Setup point array from tags."""
 
-        def get_vertex():
+        def build_vertex(point: list[float]) -> list[float]:
             point.append(attribs.get(cls.START_WIDTH_CODE, 0))
             point.append(attribs.get(cls.END_WIDTH_CODE, 0))
             point.append(attribs.get(cls.BULGE_CODE, 0))
-            return tuple(point)
+            return point
 
         unprocessed_tags = Tags()
-        data = []
-        point = None
-        attribs = {}
+        data: list[float]= []
+        point: list[float] | None = None
+        attribs: dict[int, float]= {}
         for tag in tags:
             if tag.code in LWPOINTCODES:
                 if tag.code == 10:
                     if point is not None:
-                        data.extend(get_vertex())
+                        data.extend(build_vertex(point))
                     # just use x- and  y-axis
                     point = list(tag.value[0:2])
                     attribs = {}
@@ -460,7 +460,7 @@ class LWPolylinePoints(VertexArray):
             else:
                 unprocessed_tags.append(tag)
         if point is not None:
-            data.extend(get_vertex())
+            data.extend(build_vertex(point))
         return cls(data=data), unprocessed_tags
 
     def append(self, point: Sequence[float], format: str = DEFAULT_FORMAT) -> None:
