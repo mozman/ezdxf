@@ -364,7 +364,7 @@ def test_gauss_jordan_inverse():
     assert result.nrows == len(A)
     assert result.ncols == len(A[0])
     m = Matrix(matrix=EXPECTED_INVERSE)
-    assert result == m
+    assert result.isclose(m)
 
 
 def test_LU_decomposition_solve_vector():
@@ -382,7 +382,7 @@ def test_LU_decomposition_solve_matrix():
 
 def test_LU_decomposition_inverse():
     m = Matrix(matrix=EXPECTED_INVERSE)
-    assert LUDecomposition(A).inverse() == m
+    assert m.isclose(LUDecomposition(A).inverse())
 
 
 def test_determinant():
@@ -429,4 +429,4 @@ def test_tridiagonal_vector_solver(tridiag):
 
 def test_tridiagonal_matrix_solver(tridiag):
     result = tridiagonal_matrix_solver(tridiag, zip(B1, B2, B3))
-    assert result == tri_solution()
+    assert result.isclose(tri_solution())

@@ -33,37 +33,39 @@ Matrix Class
 
     .. autoattribute:: shape
 
-    .. automethod:: reshape
+    .. automethod:: append_col
 
-    .. automethod:: identity
-
-    .. automethod:: row
+    .. automethod:: append_row
 
     .. automethod:: col
 
-    .. automethod:: diag
-
-    .. automethod:: rows
-
     .. automethod:: cols
 
-    .. automethod:: set_row
+    .. automethod:: determinant
+
+    .. automethod:: diag
+
+    .. automethod:: freeze
+
+    .. automethod:: identity
+
+    .. automethod:: inverse
+
+    .. automethod:: isclose
+
+    .. automethod:: reshape
+
+    .. automethod:: row
+
+    .. automethod:: rows
 
     .. automethod:: set_col
 
     .. automethod:: set_diag
 
-    .. automethod:: append_row
-
-    .. automethod:: append_col
+    .. automethod:: set_row
 
     .. automethod:: transpose
-
-    .. automethod:: inverse
-
-    .. automethod:: determinant
-
-    .. automethod:: freeze
 
     .. automethod:: __getitem__
 

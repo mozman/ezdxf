@@ -285,19 +285,23 @@ class Matrix:
         self.matrix[item] = value
 
     def __eq__(self, other: object) -> bool:
-        """Returns ``True`` if matrices are equal, tolerance value for
-        comparison is adjustable by the attribute :attr:`Matrix.abs_tol`.
-
-        """
-        # TODO: is there a better way by numpy
+        """Returns ``True`` if matrices are equal."""
         if not isinstance(other, Matrix):
             raise TypeError("Matrix class required.")
         if self.shape != other.shape:
             raise TypeError("Matrices have different shapes.")
-        for v1, v2 in zip(np.ravel(self.matrix), np.ravel(other.matrix)):
-            if not math.isclose(v1, v2, abs_tol=self.abs_tol):
-                return False
-        return True
+        return bool(np.all(self.matrix == other.matrix))
+
+    def isclose(self, other: object) -> bool:
+        """Returns ``True`` if matrices are close to equal, tolerance value for
+        comparison is adjustable by the attribute :attr:`Matrix.abs_tol`.
+
+        """
+        if not isinstance(other, Matrix):
+            raise TypeError("Matrix class required.")
+        if self.shape != other.shape:
+            raise TypeError("Matrices have different shapes.")
+        return bool(np.all(np.isclose(self.matrix, other.matrix, atol=self.abs_tol)))
 
     def __mul__(self, other: Matrix | float) -> Matrix:
         """Matrix multiplication by another matrix or a float, returns a new
