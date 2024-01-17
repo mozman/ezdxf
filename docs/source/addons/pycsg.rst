@@ -31,17 +31,17 @@ Example for usage:
     # build solid union
     union = CSG(cube1) + CSG(cylinder1)
     # convert to mesh and render mesh to modelspace
-    union.mesh().render(msp, dxfattribs={'color': 1})
+    union.mesh().render_mesh(msp, dxfattribs={'color': 1})
 
     # build solid difference
     difference = CSG(cube1) - CSG(cylinder1)
     # convert to mesh, translate mesh and render mesh to modelspace
-    difference.mesh().translate(1.5).render(msp, dxfattribs={'color': 3})
+    difference.mesh().translate(1.5).render_mesh(msp, dxfattribs={'color': 3})
 
     # build solid intersection
     intersection = CSG(cube1) * CSG(cylinder1)
     # convert to mesh, translate mesh and render mesh to modelspace
-    intersection.mesh().translate(2.75).render(msp, dxfattribs={'color': 5})
+    intersection.mesh().translate(2.75).render_mesh(msp, dxfattribs={'color': 5})
 
     doc.saveas('csg.dxf')
 
@@ -90,13 +90,13 @@ argument `quads` to ``True``.
     sphere1 = sphere(count=32, stacks=16, radius=.5, quads=True)
 
     union = (CSG(cube1) + CSG(sphere1)).mesh()
-    union.render(msp, dxfattribs={'color': 1})
+    union.render_mesh(msp, dxfattribs={'color': 1})
 
     subtract = (CSG(cube1) - CSG(sphere1)).mesh().translate(2.5)
-    subtract.render(msp, dxfattribs={'color': 3})
+    subtract.render_mesh(msp, dxfattribs={'color': 3})
 
     intersection = (CSG(cube1) * CSG(sphere1)).mesh().translate(4)
-    intersection.render(msp, dxfattribs={'color': 5})
+    intersection.render_mesh(msp, dxfattribs={'color': 5})
 
 .. image:: gfx/pycsg02.png
     :alt: Cube vs Sphere
@@ -127,8 +127,8 @@ Required runtime on an old Xeon E5-1620 Workstation @ 3.60GHz, with default recu
 
     subtract = (CSG(sponge1, meshid=1) - CSG(sphere1, meshid=2))
     # get mesh result by id
-    subtract.mesh(1).render(msp, dxfattribs={'layer': 'sponge'})
-    subtract.mesh(2).render(msp, dxfattribs={'layer': 'sphere'})
+    subtract.mesh(1).render_mesh(msp, dxfattribs={'layer': 'sponge'})
+    subtract.mesh(2).render_mesh(msp, dxfattribs={'layer': 'sphere'})
 
 .. image:: gfx/menger_sponge_vs_sphere_level_3.png
     :alt: Menger Sponge vs Sphere
