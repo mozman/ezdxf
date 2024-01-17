@@ -5,6 +5,9 @@ from typing import Iterable, Sequence
 
 from functools import partial
 import math
+import numpy as np
+import numpy.typing as npt
+
 from ezdxf.math import (
     Vec3,
     Vec2,
@@ -34,6 +37,7 @@ __all__ = [
     "enclosing_angles",
     "sign",
     "area",
+    "np_area",
     "circle_radius_3p",
     "TOLERANCE",
     "has_matrix_2d_stretching",
@@ -300,21 +304,39 @@ def circle_radius_3p(a: Vec3, b: Vec3, c: Vec3) -> float:
 
 
 def area(vertices: Iterable[UVec]) -> float:
-    """Returns the area of a polygon, returns the projected area in the
-    xy-plane for any vertices (z-axis will be ignored).
+    """Returns the area of a polygon.
+
+    Returns the projected area in the xy-plane for any vertices (z-axis will be ignored).
+
     """
-    _vertices = Vec2.list(vertices)
-    if len(_vertices) < 3:
+    # TODO: how to do all this in numpy efficiently?
+
+    vec2s = Vec2.list(vertices)
+    if len(vec2s) < 3:
         return 0.0
 
     # close polygon:
-    if not _vertices[0].isclose(_vertices[-1]):
-        _vertices.append(_vertices[0])
+    if not vec2s[0].isclose(vec2s[-1]):
+        vec2s.append(vec2s[0])
+    return np_area(np.array([(v.x, v.y) for v in vec2s], dtype=np.float64))
 
-    return abs(
-        sum((p1.x * p2.y - p1.y * p2.x) for p1, p2 in zip(_vertices, _vertices[1:]))
-        * 0.5
-    )
+
+def np_area(vertices: npt.NDArray) -> float:
+    """Returns the area of a polygon.
+
+    Returns the projected area in the xy-plane, the z-axis will be ignored.
+    The polygon has to be closed (first vertex == last vertex) and should have 3 or more
+    corner vertices to return a valid result.
+
+    Args:
+        vertices: numpy array [:, n], n > 1
+
+    """
+    p1x = vertices[:-1, 0]
+    p2x = vertices[1:, 0]
+    p1y = vertices[:-1, 1]
+    p2y = vertices[1:, 1]
+    return np.abs(np.sum(p1x * p2y - p1y * p2x)) * 0.5
 
 
 def has_matrix_2d_stretching(m: Matrix44) -> bool:
@@ -331,8 +353,8 @@ def has_matrix_2d_stretching(m: Matrix44) -> bool:
 
 
 def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> bool:
-    """Returns ``True`` if the 2D `polygon` is convex. 
-    
+    """Returns ``True`` if the 2D `polygon` is convex.
+
     This function works with
     open and closed polygons and clockwise or counter-clockwise vertex
     orientation.
@@ -369,12 +391,12 @@ def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> 
 
 
 def is_axes_aligned_rectangle_2d(points: list[Vec2]) -> bool:
-    """Returns ``True`` if the given points represent a rectangle aligned with the 
+    """Returns ``True`` if the given points represent a rectangle aligned with the
     coordinate system axes.
-    
-    The sides of the rectangle must be parallel to the x- and y-axes of the coordinate 
-    system.  The rectangle can be open or closed (first point == last point) and 
-    oriented clockwise or counter-clockwise.  Only works with 4 or 5 vertices, rectangles 
+
+    The sides of the rectangle must be parallel to the x- and y-axes of the coordinate
+    system.  The rectangle can be open or closed (first point == last point) and
+    oriented clockwise or counter-clockwise.  Only works with 4 or 5 vertices, rectangles
     that have sides with collinear edges are not considered rectangles.
 
     .. versionadded:: 1.2.0
