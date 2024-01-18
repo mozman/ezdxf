@@ -103,11 +103,17 @@ argument `quads` to ``True``.
 
 Hard Core CSG - Menger Sponge Level 3 vs Sphere
 
-Required runtime on an old Xeon E5-1620 Workstation @ 3.60GHz, with default recursion limit of 1000 on Windows 10:
+Required runtime on an old Xeon E5-1620 Workstation @ 3.60GHz (2020), with default 
+recursion limit of 1000 on Windows 10:
 
     - CPython 3.8.1 64bit: ~60 seconds,
-    - pypy3 [PyPy 7.2.0] 32bit: ~6 seconds, and using ``__slots__`` reduced runtime below 5 seconds, yes - pypy is
-      worth a look for long running scripts!
+    - PyPy [PyPy 7.2.0] 32bit: ~6 seconds, and using ``__slots__`` reduced runtime 
+      below 5 seconds, yes - PyPy is worth a look for long running scripts!
+
+Updated runtime in 2024 on an i7-12700K @ 3.60GHz (peak ~5GHz), Windows 11:
+
+    - CPython 3.11.6 64bit: ~3.4 seconds
+    - PyPy 3.9.18 [PyPy 7.3.13] 64bit: ~1.5 seconds
 
 .. code-block:: Python
 
