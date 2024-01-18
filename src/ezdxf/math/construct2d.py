@@ -368,7 +368,8 @@ def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> 
     if len(polygon) < 3:
         return False
 
-    signs: list[int] = []
+    global_sign: int = 0
+    current_sign: int = 0
     prev = polygon[-1]
     prev_prev = polygon[-2]
     for vertex in polygon:
@@ -377,17 +378,18 @@ def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> 
 
         det = (prev - vertex).det(prev_prev - prev)
         if abs(det) >= epsilon:
-            signs.append(-1 if det < 0.0 else +1)
+            current_sign = -1 if det < 0.0 else +1 
+            if not global_sign:
+                global_sign = current_sign
+            # do all determinants have the same sign?
+            if global_sign != current_sign:
+                return  False
         elif strict:  # collinear vertices
-            return False
+            return False       
+            
         prev_prev = prev
         prev = vertex
-
-    if signs:
-        # Do all determinants have the same sign?
-        m = signs[0]
-        return all(m == s for s in signs)
-    return False
+    return bool(global_sign)
 
 
 def is_axes_aligned_rectangle_2d(points: list[Vec2]) -> bool:
