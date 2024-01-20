@@ -208,7 +208,7 @@ class Code:
         self.blocks.update(code.blocks)
 
         # append source code lines
-        self.add_lines(self.code, indent=indent)
+        self.add_lines(code.code, indent=indent)
 
 
 _PURGE_DXF_ATTRIBUTES = {
