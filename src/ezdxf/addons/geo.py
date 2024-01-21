@@ -144,7 +144,7 @@ def dxf_entities(
             object with a :attr:`__geo__interface__` property
         polygon: see :class:`PolygonConversion`
         dxfattribs: dict with additional DXF attributes
-        post_process: post process function of type :class:`PostProcesFunc` that get the
+        post_process: post process function of type :class:`PostProcessFunc` that get the
             created DXF entity and the geo mapping as input, see reference implementation
             :func:`assign_layers`
 
