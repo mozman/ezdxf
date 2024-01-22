@@ -958,7 +958,8 @@ class CreatorInterface:
         dxfattribs=None,
     ) -> Spline:
         """Add a :class:`~ezdxf.entities.Spline` entity passing through the
-        given fit points.
+        given fit points.  This method creates the same control points as CAD 
+        applications.
 
         Args:
             fit_points: iterable of fit points as (x, y[, z]) in :ref:`WCS`
