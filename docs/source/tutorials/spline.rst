@@ -129,6 +129,71 @@ Example to raise the influence of the first control point:
 
 .. image:: gfx/spline6.png
 
+Spline Tangents
+---------------
+
+The tangents of a spline are the directions of the first derivative of the curve:
+
+.. code-block:: python
+
+    # additional required imports:
+    from ezdxf.math import Vec3, estimate_tangents
+    import numpy as np
+
+    # snip -x-x-x-
+
+    fit_points = Vec3.list(
+        [
+            (0, 0, 0),
+            (1000, 600, 0),
+            (1500, 1200, 0),
+            (500, 1250, 0),
+            (0, 0, 0),
+        ]
+    )
+    spline = msp.add_spline(fit_points)
+
+    # draw the curve tangents as red lines:
+    ct = spline.construction_tool()
+    for t in np.linspace(0, ct.max_t, 30):
+        point, derivative = ct.derivative(t, 1)
+        msp.add_line(point, point + derivative.normalize(200), dxfattribs={"color": 1})
+
+.. image:: gfx/spline7.png
+
+To get a smooth closed curve the start- and end tangents have to be set manually 
+when the control points are calculated and they have to point in the same direction:
+
+.. code-block:: python
+
+    t0= Vec3(1, -1, 0)  # the length (magnitude) of the tangent is not relevant!
+    spline = msp.add_cad_spline_control_frame(fit_points, tangents=[t0, t0])
+
+.. image:: gfx/spline8.png
+
+To avoid guess work the function :func:`ezdxf.math.estimate_tangents` can be used to 
+estimate the start- and end tangents of the curve:
+
+.. code-block:: python
+
+    tangents = estimate_tangents(fit_points)
+    # linear interpolation of the first and the last tangent:
+    t0 = tangents[0].lerp(tangents[-1], 0.5)
+    msp.add_cad_spline_control_frame(fit_points, tangents=[t0, t0])
+
+.. image:: gfx/spline9.png
+
+It is also possible to add the SPLINE by fit-points and setting the tangents as 
+DXF attributes:
+
+.. code-block:: python
+
+    spline = msp.add_spline(fit_points)
+    spline.dxf.flags = spline.PERIODIC | spline.CLOSED
+    spline.dxf.start_tangent = t0
+    spline.dxf.end_tangent = t0
+
+
 Spline properties
 -----------------
 
@@ -147,13 +212,12 @@ the last point is connected to the first point:
     # open spline
     spline.closed = False
 
-
 Set start- and end tangent for splines defined by fit points:
 
 .. code-block:: python
 
     spline.dxf.start_tangent = (0, 1, 0)
-    spline.dxf.end_tangent = (1, 0, 0)
+    spline.dxf.end_tangent = (0, 1, 0)
 
 Get data count as stored in DXF attributes:
 
