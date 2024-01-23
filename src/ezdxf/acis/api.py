@@ -1,8 +1,8 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2024, Manfred Moitzi
 #  License: MIT License
 # Public API module (interface)
 """
-The main goals of these ACIS support library is:
+The main goals of this ACIS support library is:
 
     1. load and parse simple and known ACIS data structures
     2. create and export simple and known ACIS data structures
