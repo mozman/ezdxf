@@ -2,6 +2,7 @@
 # License: MIT License
 import pytest
 import math
+import ezdxf
 from ezdxf.math import Vec3, BoundingBox, Matrix44, close_vectors
 from ezdxf.render import forms
 from ezdxf.addons.menger_sponge import MengerSponge
@@ -305,6 +306,19 @@ def test_render_polyface(cube_polyface, msp):
     assert new_polyface.is_poly_face_mesh is True
     assert len(new_polyface.vertices) == 8 + 6
     assert new_polyface.vertices[0] is not cube_polyface.vertices[0]
+
+
+def test_render_3dsolid():
+    """Test if the render_3dsolid() method works.
+
+    The ACIS content is tested by the tests for the acis module 529-532.
+    """
+    # A valid DXF document is required!
+    doc = ezdxf.new(ezdxf.DXF2000)
+    msp = doc.modelspace()
+    cube = forms.cube()
+    solid3d = cube.render_3dsolid(msp)
+    assert solid3d.dxftype() == "3DSOLID"
 
 
 def test_from_polymesh(msp):
@@ -816,10 +830,7 @@ def test_concave_mesh_tessellation():
     ids="none x y z xy xz yz xyz".split(),
 )
 def test_check_face_normals_after_transformation(sx, sy, sz, expected):
-    assert (
-        face_normals_after_transformation(Matrix44.scale(sx, sy, sz))
-        is expected
-    )
+    assert face_normals_after_transformation(Matrix44.scale(sx, sy, sz)) is expected
 
 
 class TestFaceOrientationDetector:
@@ -964,9 +975,7 @@ def test_unify_torus_normals_by_majority():
     faces = torus.faces
     # remove some faces
     faces = [
-        f
-        for i, f in enumerate(faces)
-        if i not in {2, 3, 17, 34, 99, 100, 101, 120}
+        f for i, f in enumerate(faces) if i not in {2, 3, 17, 34, 99, 100, 101, 120}
     ]
     # reverse some face normals
     for i in [0, 3, 17, 34, 99, 100, 101, 119]:
@@ -983,9 +992,7 @@ def test_unify_torus_normals_by_majority():
 
 
 def test_volume6():
-    assert volume6(
-        Vec3(0, 0, 1), Vec3(2, 0, 1), Vec3(1, 1, 1)
-    ) == pytest.approx(2.0)
+    assert volume6(Vec3(0, 0, 1), Vec3(2, 0, 1), Vec3(1, 1, 1)) == pytest.approx(2.0)
 
 
 def test_volume_of_closed_surface():

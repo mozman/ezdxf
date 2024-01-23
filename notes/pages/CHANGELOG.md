@@ -19,6 +19,7 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- NEW: additional font search directory added for macOS `/System/Library/Fonts/` by [[ru4ert]]
 		- {{pr 1004}}
 		- the cache version number has been increased so that the fontmanger-cache is automatically rebuilt
+	- NEW: `MeshBuilder.render_3dsolid()`, create [[3DSOLID]] entities from simple polyhedrons (experimental)
 	- CHANGE: renamed `Image.boundray_path_ocs()` to `Image.pixel_boundary_path()`
 	- CHANGE: refactoring of the [[RecorderBackend]]
 	- CHANGE: replaced `ezdxf.math.linspace` by `numpy.linspace`

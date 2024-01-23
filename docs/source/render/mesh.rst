@@ -84,6 +84,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: render_3dfaces
 
+    .. automethod:: render_3dsolid
+
     .. automethod:: render_mesh
 
     .. automethod:: render_normals
