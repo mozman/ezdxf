@@ -414,7 +414,7 @@ class Mesh(DXFGraphic):
 class MeshData:
     def __init__(self, mesh: Mesh) -> None:
         self.vertices: list[Vec3] = Vec3.list(mesh.vertices)
-        self.faces: list[tuple[int, ...]] = list(mesh.faces)  # type: ignore
+        self.faces: list[Sequence[int]] = list(mesh.faces)  # type: ignore
         self.edges: list[tuple[int, int]] = list(mesh.edges)
         self.edge_crease_values: list[float] = list(mesh.creases)
 
@@ -475,8 +475,8 @@ class MeshData:
         def remap_edges() -> None:
             self.edges = remap_indices(self.edges)  # type: ignore
 
-        def remap_indices(indices: Sequence[Sequence[int]]) -> list[tuple[int, ...]]:
-            mapped_indices: list[tuple[int, ...]] = []
+        def remap_indices(indices: Sequence[Sequence[int]]) -> list[Sequence[int]]:
+            mapped_indices: list[Sequence[int]] = []
             for entry in indices:
                 mapped_indices.append(tuple(index_map[index] for index in entry))
             return mapped_indices
