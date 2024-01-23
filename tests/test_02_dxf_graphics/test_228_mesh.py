@@ -139,7 +139,7 @@ def test_add_faces(msp):
         mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
         assert 4 == len(mesh_data.vertices)
         assert 1 == len(mesh_data.faces)
-        assert [0, 1, 2, 3] == mesh_data.faces[0]
+        assert (0, 1, 2, 3) == mesh_data.faces[0]
 
 
 def test_add_edge_crease(msp):
@@ -234,7 +234,7 @@ def test_optimize(msp):
         assert 24 == len(mesh_data.vertices)
         assert 6 == len(mesh_data.faces)
         mesh_data.optimize()
-        assert 8 == len(mesh_data.vertices), "Doublettes not removed"
+        assert 8 == len(mesh_data.vertices), "coincident vertices not removed"
         assert 6 == len(mesh_data.faces)
         assert 0 == len(mesh_data.edges)
 
