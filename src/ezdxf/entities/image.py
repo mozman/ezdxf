@@ -1,6 +1,9 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
+
+import os
+import pathlib
 from typing import (
     TYPE_CHECKING,
     Iterable,
@@ -10,6 +13,8 @@ from typing import (
     Union,
     Type,
 )
+from typing_extensions import Self
+
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -21,11 +26,12 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2010
-from ezdxf.math import Vec3, Vec2, BoundingBox2d, UVec
+from ezdxf.math import Vec3, Vec2, BoundingBox2d, UVec, Matrix44
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
 from .factory import register_entity
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -33,7 +39,6 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.lldxf.types import DXFTag
     from ezdxf.document import Drawing
-    from ezdxf.math import Matrix44
     from ezdxf import xref
 
 __all__ = ["Image", "ImageDef", "ImageDefReactor", "RasterVariables", "Wipeout"]
@@ -62,7 +67,7 @@ class ImageBase(DXFGraphic):
         # see also WCS coordinate calculation
         self._boundary_path: list[Vec2] = []
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, ImageBase)
         entity._boundary_path = list(self._boundary_path)
 
@@ -120,7 +125,9 @@ class ImageBase(DXFGraphic):
 
     @property
     def boundary_path(self):
-        """A list of vertices as pixel coordinates, Two vertices describe a
+        """Returns the boundray path in raw form in pixel coordinates.
+
+        A list of vertices as pixel coordinates, Two vertices describe a
         rectangle, lower left corner is (-0.5, -0.5) and upper right corner
         is (ImageSizeX-0.5, ImageSizeY-0.5), more than two vertices is a
         polygon as clipping path. All vertices as pixel coordinates. (read/write)
@@ -161,13 +168,38 @@ class ImageBase(DXFGraphic):
         self.dxf.clipping_boundary_type = 1
         self.dxf.count_boundary_points = 2
 
-    def transform(self, m: Matrix44) -> ImageBase:
+    def transform(self, m: Matrix44) -> Self:
         """Transform IMAGE entity by transformation matrix `m` inplace."""
         self.dxf.insert = m.transform(self.dxf.insert)
         self.dxf.u_pixel = m.transform_direction(self.dxf.u_pixel)
         self.dxf.v_pixel = m.transform_direction(self.dxf.v_pixel)
         self.post_transform(m)
         return self
+
+    def get_wcs_transform(self) -> Matrix44:
+        m = Matrix44()
+        m.set_row(0, Vec3(self.dxf.u_pixel))
+        m.set_row(1, Vec3(self.dxf.v_pixel))
+        m.set_row(3, Vec3(self.dxf.insert))
+        return m
+
+    def pixel_boundary_path(self) -> list[Vec2]:
+        """Returns the boundary path as closed loop in pixel coordinates.  Resolves the 
+        simple form of two vertices as a rectangle.  The image coordinate system has an 
+        inverted y-axis and the top-left corner is (0, 0).
+
+        .. versionchanged:: 1.2.0
+
+            renamed from :meth:`boundray_path_ocs()`
+
+        """
+        boundary_path = self.boundary_path
+        if len(boundary_path) == 2:  # rectangle
+            p0, p1 = boundary_path
+            boundary_path = [p0, Vec2(p1.x, p0.y), p1, Vec2(p0.x, p1.y)]
+        if not boundary_path[0].isclose(boundary_path[-1]):
+            boundary_path.append(boundary_path[0])
+        return boundary_path
 
     def boundary_path_wcs(self) -> list[Vec3]:
         """Returns the boundary/clipping path in WCS coordinates.
@@ -187,15 +219,11 @@ class ImageBase(DXFGraphic):
         origin = Vec3(self.dxf.insert)
         origin += u * 0.5 - v * 0.5
         height = self.dxf.image_size.y
-        boundary_path = self.boundary_path
-        if len(boundary_path) == 2:  # rectangle
-            p0, p1 = boundary_path
-            boundary_path = [p0, Vec2(p1.x, p0.y), p1, Vec2(p0.x, p1.y)]
-        # Boundary/Clipping path origin 0/0 is in the Left/Top corner
-        # of the image!
-        vertices = [origin + (u * p.x) + (v * (height - p.y)) for p in boundary_path]
-        if not vertices[0].isclose(vertices[-1]):
-            vertices.append(vertices[0])
+        # Boundary/Clipping path origin 0/0 is in the Left/Top corner of the image!
+        vertices = [
+            origin + (u * p.x) + (v * (height - p.y))
+            for p in self.pixel_boundary_path()
+        ]
         return vertices
 
     def destroy(self) -> None:
@@ -322,9 +350,9 @@ class Image(ImageBase):
         image.image_def = image_def
         return image
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Image)
-        super().copy_data(entity)
+        super().copy_data(entity, copy_strategy=copy_strategy)
         # Each IMAGE has its own ImageDefReactor object, which will be created by
         # binding the copy to the document.
         entity.dxf.discard("image_def_reactor_handle")
@@ -517,6 +545,10 @@ class Wipeout(ImageBase):
         self._reset_handles()
         super().export_entity(tagwriter)
 
+
+# About Image File Paths:
+# See notes in knowledge graph: [[IMAGE File Paths]]
+# https://ezdxf.mozman.at/notes/#/page/image%20file%20paths
 
 acdb_image_def = DefSubclass(
     "AcDbRasterImageDef",

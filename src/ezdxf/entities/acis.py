@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Union, Optional, Sequence
+from typing_extensions import Self
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -23,10 +24,12 @@ from ezdxf.tools import crypt
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+
 
 __all__ = [
     "Body",
@@ -113,9 +116,7 @@ class Body(DXFGraphic):
     def sab(self) -> bytes:
         """Get/Set :term:`SAB` data as bytes."""
         if (  # load SAB data on demand
-            self.doc is not None
-            and self.has_binary_data
-            and len(self._sab) == 0
+            self.doc is not None and self.has_binary_data and len(self._sab) == 0
         ):
             self._sab = self.doc.acdsdata.get_acis_data(self.dxf.handle)
         return self._sab
@@ -136,9 +137,10 @@ class Body(DXFGraphic):
         else:
             return False
 
-    def raw_copy(self):
+    def copy(self, copy_strategy=default_copy):
         """Prevent copying. (internal interface)"""
-        raise DXFTypeError("Copying of ACIS data not supported.")
+        # TODO: copying of ACIS data is possible
+        raise CopyNotSupported("Copying of ACIS data not supported.")
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
@@ -200,7 +202,7 @@ class Body(DXFGraphic):
             self.doc.acdsdata.del_acis_data(self.dxf.handle)  # type: ignore
         super().destroy()
 
-    def transform(self, m: Matrix44) -> DXFGraphic:
+    def transform(self, m: Matrix44) -> Self:
         raise NotImplementedError("cannot transform ACIS entities")
 
 
@@ -285,9 +287,7 @@ def load_matrix(subclass: Tags, code: int) -> Matrix44:
     return Matrix44(values)
 
 
-def export_matrix(
-    tagwriter: AbstractTagWriter, code: int, matrix: Matrix44
-) -> None:
+def export_matrix(tagwriter: AbstractTagWriter, code: int, matrix: Matrix44) -> None:
     for value in list(matrix):
         tagwriter.write_tag2(code, value)
 
@@ -356,9 +356,7 @@ acdb_extruded_surface = DefSubclass(
         "base_point_set": DXFAttr(294, default=0),  # bool
         "sweep_entity_transform_computed": DXFAttr(295, default=0),  # bool
         "path_entity_transform_computed": DXFAttr(296, default=0),  # bool
-        "reference_vector_for_controlling_twist": DXFAttr(
-            11, xtype=XType.point3d
-        ),
+        "reference_vector_for_controlling_twist": DXFAttr(11, xtype=XType.point3d),
     },
 )
 acdb_extruded_surface_group_codes = group_code_mapping(acdb_extruded_surface)
@@ -426,9 +424,7 @@ class ExtrudedSurface(Surface):
         export_matrix(
             tagwriter, code=46, matrix=self.sweep_entity_transformation_matrix
         )
-        export_matrix(
-            tagwriter, code=47, matrix=self.path_entity_transformation_matrix
-        )
+        export_matrix(tagwriter, code=47, matrix=self.path_entity_transformation_matrix)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -509,9 +505,7 @@ class LoftedSurface(Surface):
         export_matrix(
             tagwriter, code=40, matrix=self.transformation_matrix_lofted_entity
         )
-        self.dxf.export_dxf_attribs(
-            tagwriter, acdb_lofted_surface.attribs.keys()
-        )
+        self.dxf.export_dxf_attribs(tagwriter, acdb_lofted_surface.attribs.keys())
 
 
 acdb_revolved_surface = DefSubclass(
@@ -635,9 +629,7 @@ acdb_swept_surface = DefSubclass(
         "base_point_set": DXFAttr(294, default=0),  # bool
         "sweep_entity_transform_computed": DXFAttr(295, default=0),  # bool
         "path_entity_transform_computed": DXFAttr(296, default=0),  # bool
-        "reference_vector_for_controlling_twist": DXFAttr(
-            11, xtype=XType.point3d
-        ),
+        "reference_vector_for_controlling_twist": DXFAttr(11, xtype=XType.point3d),
     },
 )
 acdb_swept_surface_group_codes = group_code_mapping(acdb_swept_surface)
@@ -697,9 +689,7 @@ class SweptSurface(Surface):
         export_matrix(
             tagwriter, code=40, matrix=self.transformation_matrix_sweep_entity
         )
-        export_matrix(
-            tagwriter, code=41, matrix=self.transformation_matrix_path_entity
-        )
+        export_matrix(tagwriter, code=41, matrix=self.transformation_matrix_path_entity)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -715,9 +705,7 @@ class SweptSurface(Surface):
         export_matrix(
             tagwriter, code=46, matrix=self.sweep_entity_transformation_matrix
         )
-        export_matrix(
-            tagwriter, code=47, matrix=self.path_entity_transformation_matrix
-        )
+        export_matrix(tagwriter, code=47, matrix=self.path_entity_transformation_matrix)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [

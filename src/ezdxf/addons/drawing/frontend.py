@@ -1,7 +1,6 @@
-# Copyright (c) 2020-2023, Matthew Broadway
+# Copyright (c) 2020-2024, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
-import math
 from typing import (
     Iterable,
     cast,
@@ -12,22 +11,35 @@ from typing import (
     TYPE_CHECKING,
 )
 from typing_extensions import TypeAlias
+import contextlib
+import math
+import os
+import pathlib
 import logging
 import time
+
+import PIL.Image
+import PIL.ImageEnhance
+import PIL.ImageDraw
+import numpy as np
+
 
 import ezdxf.bbox
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
     HatchPolicy,
+    ImagePolicy,
 )
-from ezdxf.addons.drawing.backend import BackendInterface
+from ezdxf.addons.drawing.backend import BackendInterface, ImageData
 from ezdxf.addons.drawing.properties import (
     RenderContext,
     OLE2FRAME_COLOR,
     Properties,
     Filling,
     LayoutProperties,
+    MODEL_SPACE_BG_COLOR,
+    PAPER_SPACE_BG_COLOR,
 )
 from ezdxf.addons.drawing.config import BackgroundPolicy, TextPolicy
 from ezdxf.addons.drawing.text import simplified_text_chunks
@@ -49,12 +61,14 @@ from ezdxf.entities import (
     OLE2Frame,
     Point,
     Viewport,
+    Image,
 )
+from ezdxf.tools import clipping_portal
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
 from ezdxf.layouts import Layout
-from ezdxf.math import Vec2, Vec3, OCS, NULLVEC
+from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44
 from ezdxf.path import (
     Path,
     make_path,
@@ -66,9 +80,14 @@ from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic, ProxyGraphicError
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
 from ezdxf.tools.text import has_inline_formatting_codes
+from ezdxf.tools import text_layout
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
 from ezdxf.fonts import fonts
+from ezdxf.colors import RGB, RGBA
+from ezdxf.npshapes import NumpyPoints2d
+from ezdxf import xclip
+
 from .type_hints import Color
 
 if TYPE_CHECKING:
@@ -158,6 +177,7 @@ class UniversalFrontend:
             "WIPEOUT": self.draw_wipeout_entity,
             "MTEXT": self.draw_mtext_entity,
             "OLE2FRAME": self.draw_ole2frame_entity,
+            "IMAGE": self.draw_image_entity,
         }
         for dxftype in ("LINE", "XLINE", "RAY"):
             dispatch_table[dxftype] = self.draw_line_entity
@@ -247,10 +267,14 @@ class UniversalFrontend:
             override = False
         elif policy == BackgroundPolicy.OFF:
             color = "#ffffff00"  # white, fully transparent
-        elif policy == BackgroundPolicy.BLACK:
-            color = "#000000"
         elif policy == BackgroundPolicy.WHITE:
             color = "#ffffff"
+        elif policy == BackgroundPolicy.BLACK:
+            color = "#000000"
+        elif policy == BackgroundPolicy.PAPERSPACE:
+            color = PAPER_SPACE_BG_COLOR
+        elif policy == BackgroundPolicy.MODELSPACE:
+            color = MODEL_SPACE_BG_COLOR
         elif policy == BackgroundPolicy.CUSTOM:
             color = self.config.custom_bg_color
         if override:
@@ -374,7 +398,10 @@ class UniversalFrontend:
             self.skip_entity(mtext, "3D MTEXT not supported")
             return
         if mtext.has_columns or has_inline_formatting_codes(mtext.text):
-            self.draw_complex_mtext(mtext, properties)
+            try:
+                self.draw_complex_mtext(mtext, properties)
+            except text_layout.LayoutError as e:
+                print(f"skipping {str(mtext)} - {str(e)}")
         else:
             self.draw_simple_mtext(mtext, properties)
 
@@ -494,7 +521,7 @@ class UniversalFrontend:
                         s, e = ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
                             (e.x, e.y, elevation)
                         )
-                    lines.append((s, e))
+                    lines.append((s, e))  # type: ignore
         self.designer.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(
@@ -609,6 +636,121 @@ class UniversalFrontend:
         if not bbox.is_empty:
             self._draw_filled_rect(bbox.rect_vertices(), OLE2FRAME_COLOR)
 
+    def draw_image_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        image = cast(Image, entity)
+        image_policy = self.config.image_policy
+        image_def = image.image_def
+        assert image_def is not None
+
+        if image_policy in (
+            ImagePolicy.DISPLAY,
+            ImagePolicy.RECT,
+            ImagePolicy.MISSING,
+        ):
+            loaded_image = None
+            show_filename_if_missing = True
+
+            if (
+                image_policy == ImagePolicy.RECT
+                or not image.dxf.flags & Image.SHOW_IMAGE
+            ):
+                loaded_image = None
+                show_filename_if_missing = False
+            elif (
+                image_policy != ImagePolicy.MISSING
+                and self.ctx.document_dir is not None
+            ):
+                image_path = _find_image_path(
+                    self.ctx.document_dir, image_def.dxf.filename
+                )
+                with contextlib.suppress(FileNotFoundError):
+                    loaded_image = PIL.Image.open(image_path)
+
+            if loaded_image is not None:
+                color: RGB | RGBA
+                loaded_image = loaded_image.convert("RGBA")
+
+                if image.dxf.contrast != 50:
+                    # note: this is only an approximation.
+                    # Unclear what the exact operation AutoCAD uses
+                    amount = image.dxf.contrast / 50
+                    loaded_image = PIL.ImageEnhance.Contrast(loaded_image).enhance(
+                        amount
+                    )
+
+                if image.dxf.fade != 0:
+                    # note: this is only an approximation.
+                    # Unclear what the exact operation AutoCAD uses
+                    amount = image.dxf.fade / 100
+                    color = RGB.from_hex(
+                        self.ctx.current_layout_properties.background_color
+                    )
+                    loaded_image = _blend_image_towards(loaded_image, amount, color)
+
+                if image.dxf.brightness != 50:
+                    # note: this is only an approximation.
+                    # Unclear what the exact operation AutoCAD uses
+                    amount = image.dxf.brightness / 50 - 1
+                    if amount > 0:
+                        color = RGBA(255, 255, 255, 255)
+                    else:
+                        color = RGBA(0, 0, 0, 255)
+                        amount = -amount
+                    loaded_image = _blend_image_towards(loaded_image, amount, color)
+
+                if not image.dxf.flags & Image.USE_TRANSPARENCY:
+                    loaded_image.putalpha(255)
+
+                if image.transparency != 0.0:
+                    loaded_image = _multiply_alpha(
+                        loaded_image, 1.0 - image.transparency
+                    )
+                image_data = ImageData(
+                    image=np.array(loaded_image),
+                    transform=image.get_wcs_transform(),
+                    pixel_boundary_path=NumpyPoints2d(image.pixel_boundary_path()),
+                    use_clipping_boundary=image.dxf.flags & Image.USE_CLIPPING_BOUNDARY,
+                    remove_outside=image.dxf.clip_mode == 0,
+                )
+                self.designer.draw_image(image_data, properties)
+
+            elif show_filename_if_missing:
+                default_cap_height = 20
+                text = image_def.dxf.filename
+                font = self.designer.text_engine.get_font(
+                    self.get_font_face(properties)
+                )
+                text_width = font.text_width_ex(text, default_cap_height)
+                image_size = image.dxf.image_size
+                desired_width = image_size.x * 0.75
+                scale = desired_width / text_width
+                translate = Matrix44.translate(
+                    (image_size.x - desired_width) / 2,
+                    (image_size.y - default_cap_height * scale) / 2,
+                    0,
+                )
+                transform = (
+                    Matrix44.scale(scale) @ translate @ image.get_wcs_transform()
+                )
+                self.designer.draw_text(
+                    text,
+                    transform,
+                    properties,
+                    default_cap_height,
+                )
+
+            points = [v.vec2 for v in image.boundary_path_wcs()]
+            self.designer.draw_solid_lines(list(zip(points, points[1:])), properties)
+
+        elif self.config.image_policy == ImagePolicy.PROXY:
+            self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
+
+        elif self.config.image_policy == ImagePolicy.IGNORE:
+            pass
+
+        else:
+            raise ValueError(self.config.image_policy)
+
     def _draw_filled_rect(
         self,
         points: Iterable[Vec2],
@@ -666,7 +808,7 @@ class UniversalFrontend:
                         Vec3(v.x, v.y, elevation) for v in polygon
                     )
                 else:
-                    points = polygon
+                    points = polygon  # type: ignore
                 # Set default SOLID filling for LWPOLYLINE
                 properties.filling = Filling()
                 self.designer.draw_filled_polygon(points, properties)
@@ -676,7 +818,24 @@ class UniversalFrontend:
 
     def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         def draw_insert(insert: Insert):
+            # Block reference attributes are located __outside__ the block reference!
             self.draw_entities(insert.attribs)
+            clip = xclip.XClip(insert)
+            is_clipping_active = clip.has_clipping_path and clip.is_clipping_enabled
+
+            if is_clipping_active:
+                boundary_path = clip.get_wcs_clipping_path()
+                if not boundary_path.is_inverted_clip:
+                    clipping_shape = clipping_portal.find_best_clipping_shape(
+                        boundary_path.vertices
+                    )
+                else:  # inverted clipping path
+                    clipping_shape = clipping_portal.make_inverted_clipping_shape(
+                        boundary_path.vertices,
+                        extents=xclip.clipping_path_extents(boundary_path),
+                    )
+                self.designer.push_clipping_shape(clipping_shape, None)
+
             # draw_entities() includes the visibility check:
             self.draw_entities(
                 insert.virtual_entities(
@@ -684,6 +843,13 @@ class UniversalFrontend:
                     # TODO: redraw_order=True?
                 )
             )
+
+            if is_clipping_active and clip.get_xclip_frame_policy():
+                self.designer.draw_path(
+                    path=from_vertices(boundary_path.vertices, close=True),  # type: ignore
+                    properties=properties,
+                )
+                self.designer.pop_clipping_shape()
 
         if isinstance(entity, Insert):
             self.ctx.push_state(properties)
@@ -703,13 +869,14 @@ class UniversalFrontend:
         else:
             raise TypeError(entity.dxftype())
 
-    def draw_proxy_graphic(self, data: bytes, doc) -> None:
-        if data:
-            try:
-                self.draw_entities(virtual_entities(ProxyGraphic(data, doc)))
-            except ProxyGraphicError as e:
-                print(str(e))
-                print(POST_ISSUE_MSG)
+    def draw_proxy_graphic(self, data: bytes | None, doc) -> None:
+        if not data:
+            return
+        try:
+            self.draw_entities(virtual_entities(ProxyGraphic(data, doc)))
+        except ProxyGraphicError as e:
+            print(str(e))
+            print(POST_ISSUE_MSG)
 
 
 class Frontend(UniversalFrontend):
@@ -835,3 +1002,44 @@ def _draw_viewports(frontend: UniversalFrontend, viewports: list[Viewport]) -> N
     # Draw viewports in order of "status"
     for viewport in viewports:
         frontend.draw_viewport(viewport)
+
+
+def _blend_image_towards(
+    image: PIL.Image.Image, amount: float, color: RGB | RGBA
+) -> PIL.Image.Image:
+    original_alpha = image.split()[-1]
+    destination = PIL.Image.new("RGBA", image.size, color)
+    updated_image = PIL.Image.blend(image, destination, amount)
+    updated_image.putalpha(original_alpha)
+    return updated_image
+
+
+def _multiply_alpha(image: PIL.Image.Image, amount: float) -> PIL.Image.Image:
+    output_image = np.array(image, dtype=np.float64)
+    output_image[:, :, 3] *= amount
+    return PIL.Image.fromarray(output_image.astype(np.uint8), "RGBA")
+
+
+def _find_image_path(document_dir: pathlib.Path, filename: str) -> pathlib.Path:
+    # BricsCAD stores the path to the image as full-path or relative-path if so
+    # set in the "Attach Raster Image" dialog.
+    # See notes in knowledge graph: [[IMAGE File Paths]]
+    # https://ezdxf.mozman.at/notes/#/page/image%20file%20paths
+
+    # BricsCAD/AutoCAD stores filepaths with backslashes.
+    filename = filename.replace("\\", os.path.sep)
+
+    # try absolute path:
+    filepath = pathlib.Path(filename)
+    if filepath.exists():
+        return filepath
+
+    # try relative path to document:
+    filepath = document_dir / filename
+    filepath = filepath.resolve()
+    if filepath.exists():
+        return filepath
+
+    # try document dir:
+    filepath = document_dir / pathlib.Path(filename).name  # stem + suffix
+    return filepath

@@ -1,15 +1,19 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 import time
 import random
 
 from ezdxf.math.linalg import (
     Matrix,
+    numpy_matrix_solver,
+    numpy_vector_solver,
+)
+from ezdxf.math.legacy import (
     gauss_vector_solver,
-    LUDecomposition,
     gauss_matrix_solver,
     gauss_jordan_solver,
     gauss_jordan_inverse,
+    LUDecomposition,
 )
 
 
@@ -34,14 +38,24 @@ B_MATRIX.append_col(B2_VECTOR)
 B_MATRIX.append_col(B3_VECTOR)
 
 
-def profile_gauss_vector_solver(count):
+def profile_numpy_matrix_solver(count):
     for _ in range(count):
-        gauss_vector_solver(RANDOM_GAUSS_MATRIX_1, B1_VECTOR)
+        numpy_matrix_solver(RANDOM_GAUSS_MATRIX_1.matrix, B_MATRIX.matrix)
+
+
+def profile_numpy_vector_solver(count):
+    for _ in range(count):
+        numpy_vector_solver(RANDOM_GAUSS_MATRIX_1.matrix, B1_VECTOR)
 
 
 def profile_gauss_matrix_solver(count):
     for _ in range(count):
-        gauss_matrix_solver(RANDOM_GAUSS_MATRIX_1, B_MATRIX)
+        gauss_matrix_solver(RANDOM_GAUSS_MATRIX_1.matrix, B_MATRIX.matrix)
+
+
+def profile_gauss_vector_solver(count):
+    for _ in range(count):
+        gauss_vector_solver(RANDOM_GAUSS_MATRIX_1.matrix, B1_VECTOR)
 
 
 def profile_gauss_jordan_solver(count):
@@ -70,6 +84,10 @@ def profile_LU_decomposition_inverse(count):
     for _ in range(count):
         LUDecomposition(RANDOM_GAUSS_MATRIX_1).inverse()
 
+def profile_numpy_inverse(count):
+    for _ in range(count):
+        RANDOM_GAUSS_MATRIX_1.inverse()
+
 
 def profile(text, func, *args):
     t0 = time.perf_counter()
@@ -77,26 +95,33 @@ def profile(text, func, *args):
     t1 = time.perf_counter()
     print(f"{text} {t1 - t0:.3f}s")
 
-
+line = "-" *79
+print(line)
 print(f"Profiling a random {SIZE}x{SIZE} Matrix, 5x each task:")
+print(line)
+profile("numpy matrix solver - 3 vectors: ", profile_numpy_matrix_solver, 5)
 profile(
-    "Gauss-Jordan matrix solver - 3 vectors: ", profile_gauss_jordan_solver, 5
+    "numpy vector solver - 1 vector : ",
+    profile_numpy_vector_solver,
+    5,
 )
+profile("numpy inverse: ", profile_numpy_inverse, 5)
+print(line)
+profile("Gauss-Jordan matrix solver - 3 vectors: ", profile_gauss_jordan_solver, 5)
 profile("Gauss-Jordan inverse: ", profile_gauss_jordan_inverse, 5)
+print(line)
 profile(
     "Gauss elimination vector solver - 1 vector : ",
     profile_gauss_vector_solver,
     5,
 )
 profile(
-    "Gauss elimination matrix solver  - 3 vectors: ",
+    "Gauss elimination matrix solver - 3 vectors: ",
     profile_gauss_matrix_solver,
     5,
 )
-profile(
-    "LU decomposition vector solver - 1 vector: ", profile_LU_vector_solver, 5
-)
-profile(
-    "LU decomposition matrix solver - 3 vectors: ", profile_LU_matrix_solver, 5
-)
+print(line)
+profile("LU decomposition vector solver - 1 vector: ", profile_LU_vector_solver, 5)
+profile("LU decomposition matrix solver - 3 vectors: ", profile_LU_matrix_solver, 5)
 profile("LU decomposition inverse: ", profile_LU_decomposition_inverse, 5)
+print(line)

@@ -137,11 +137,17 @@ class TestByteTagCompiler:
         assert tags[1] == (70, 456000)
         assert len(msg) == 0
 
-    def test_spaces_in_floats_returns_invalid_value(self):
-        loader = bytes_loader(BytesIO(b"50\n1.000 e20\n"))
+    @pytest.mark.parametrize("b", [
+        b"50\n1.000 e20\n",
+        b"50\n1.000 E20\n",
+        b"50\n1.000\te20\n",
+        b"50\n1.000\tE20\n",
+    ])
+    def test_ignore_whitespace_in_floats(self, b):
+        loader = bytes_loader(BytesIO(b))
         msg = []
         tags = list(byte_tag_compiler(loader, messages=msg))
-        assert tags[0] == (50, 1), "invalid interpretation"
+        assert tags[0] == (50, 1e20)
         assert msg[0][0] == AuditError.INVALID_FLOATING_POINT_VALUE
 
 

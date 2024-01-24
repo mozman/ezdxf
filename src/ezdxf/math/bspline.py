@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2022, Manfred Moitzi
+# Copyright (c) 2012-2024, Manfred Moitzi
 # License: MIT License
 """
 B-Splines
@@ -22,10 +22,11 @@ from typing import (
     Iterator,
     Sequence,
     TYPE_CHECKING,
-    Union,
     Optional,
 )
 import math
+import numpy as np
+
 from ezdxf.math import (
     Vec3,
     UVec,
@@ -34,13 +35,12 @@ from ezdxf.math import (
     Evaluator,
     create_t_vector,
     estimate_end_tangent_magnitude,
-    linspace,
     distance_point_line_3d,
     arc_angle_span_deg,
 )
 from ezdxf.math import linalg
 from ezdxf.lldxf.const import DXFValueError
-from ezdxf import PYPY
+
 
 if TYPE_CHECKING:
     from ezdxf.math import (
@@ -50,11 +50,6 @@ if TYPE_CHECKING:
         Bezier4P,
     )
 
-# Acceleration of banded diagonal matrix solver kicks in at:
-# N=15 for CPython on Windows and Linux
-# N=60 for pypy3 on Windows and Linux
-USE_BANDED_MATRIX_SOLVER_CPYTHON_LIMIT = 15
-USE_BANDED_MATRIX_SOLVER_PYPY_LIMIT = 60
 
 __all__ = [
     # High level functions:
@@ -550,24 +545,26 @@ def double_knots(n: int, p: int, t: Sequence[float]) -> list[float]:
     return u
 
 
-def _get_best_solver(matrix: Union[list, linalg.Matrix], degree: int):
-    """Returns best suited linear equation solver depending on matrix
-    configuration and python interpreter.
+def _get_best_solver(matrix: list| linalg.Matrix, degree: int) -> linalg.Solver:
+    """Returns best suited linear equation solver depending on matrix configuration and 
+    python interpreter.
     """
-    A = matrix if isinstance(matrix, linalg.Matrix) else linalg.Matrix(matrix=matrix)
-    if PYPY:
-        limit = USE_BANDED_MATRIX_SOLVER_PYPY_LIMIT
-    else:
-        limit = USE_BANDED_MATRIX_SOLVER_CPYTHON_LIMIT
-    if A.nrows < limit:  # use default equation solver
-        return linalg.LUDecomposition(A.matrix)
+    # v1.2: added NumpySolver
+    #   Acceleration of banded diagonal matrix solver is still a thing but only for 
+    #   really big matrices N > 30 in pure Python and N > 20 for C-extension np_support
+    # PyPy has no advantages when using the NumpySolver
+    if not isinstance(matrix, linalg.Matrix):
+        matrix =linalg.Matrix(matrix)
+
+    if matrix.nrows < 20:  # use default equation solver
+        return linalg.NumpySolver(matrix.matrix)
     else:
         # Theory: band parameters m1, m2 are at maximum degree-1, for
         # B-spline interpolation and approximation:
         # m1 = m2 = degree-1
         # But the speed gain is not that big and just to be sure:
-        m1, m2 = linalg.detect_banded_matrix(A, check_all=False)
-        A = linalg.compact_banded_matrix(A, m1, m2)
+        m1, m2 = linalg.detect_banded_matrix(matrix, check_all=False)
+        A = linalg.compact_banded_matrix(matrix, m1, m2)
         return linalg.BandedMatrixLU(A, m1, m2)
 
 
@@ -605,7 +602,8 @@ def unconstrained_global_bspline_interpolation(
     )
     N = Basis(knots=knots, order=degree + 1, count=len(fit_points))
     solver = _get_best_solver([N.basis_vector(t) for t in t_vector], degree)
-    control_points = solver.solve_matrix(fit_points)
+    mat_B = np.array(fit_points, dtype=np.float64)
+    control_points = solver.solve_matrix(mat_B)
     return Vec3.list(control_points.rows()), knots
 
 
@@ -769,11 +767,13 @@ def global_bspline_interpolation_first_derivatives(
         [1.0] + [0.0] * (count - 1),  # Q0
         [-1.0, +1.0] + [0.0] * (count - 2),  # D0
     ]
+    ncols = len(A[0])
     for f in (nbasis(t) for t in t_vector[1:-1]):
-        A.extend(f)  # Qi, Di
+        A.extend([row[:ncols] for row in f])  # Qi, Di
     # swapped equations!
     A.append([0.0] * (count - 2) + [-1.0, +1.0])  # Dn
     A.append([0.0] * (count - 1) + [+1.0])  # Qn
+    assert len(set(len(row) for row in A)) == 1, "inhomogeneous matrix detected"
 
     # Build right handed matrix B
     B: list[Vec3] = []
@@ -1052,7 +1052,7 @@ class BSpline:
         knots = self.knots()
         lower_bound = knots[self.order - 1]
         upper_bound = knots[self.count]
-        return linspace(lower_bound, upper_bound, segments + 1)
+        return np.linspace(lower_bound, upper_bound, segments + 1)
 
     def flattening(self, distance: float, segments: int = 4) -> Iterator[Vec3]:
         """Adaptive recursive flattening. The argument `segments` is the

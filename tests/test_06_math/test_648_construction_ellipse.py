@@ -1,14 +1,14 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 import random
 
 import pytest
 import math
+import numpy as np
 
 from ezdxf.math import (
     Vec3,
     angle_to_param,
-    linspace,
     ConstructionEllipse,
     ellipse_param_span,
 )
@@ -138,7 +138,7 @@ def test_params():
     count = 9
     e = ConstructionEllipse(start_param=math.pi / 2, end_param=-math.pi / 2)
     params = list(e.params(count))
-    expected = list(linspace(math.pi / 2, math.pi / 2.0 * 3.0, count))
+    expected = list(np.linspace(math.pi / 2, math.pi / 2.0 * 3.0, count))
     assert params == expected
 
 

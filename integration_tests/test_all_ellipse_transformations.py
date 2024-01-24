@@ -1,10 +1,12 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 
 import pytest
 from itertools import product
 import math
-from ezdxf.math import Matrix44, linspace, Vec3
+import numpy as np
+
+from ezdxf.math import Matrix44, Vec3
 from ezdxf.entities import Ellipse
 
 UNIFORM_SCALING = [
@@ -87,7 +89,7 @@ def check(ellipse, vertices, count):
 def test_random_ellipse_transformations(sx, sy, sz, start, end):
     vertex_count = 8
 
-    for angle in linspace(0, math.tau, 19):
+    for angle in np.linspace(0, math.tau, 19):
         for dx, dy, dz in product([2, 0, -2], repeat=3):
             axis = Vec3.random()
 

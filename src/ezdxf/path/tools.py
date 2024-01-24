@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -7,9 +7,10 @@ from typing import (
     Iterator,
     Optional,
     Sequence,
-    TypeVar,
 )
 import math
+import numpy as np
+
 from ezdxf.math import (
     Vec2,
     Vec3,
@@ -27,7 +28,6 @@ from ezdxf.math import (
     reverse_bezier_curves,
     bulge_to_arc,
     linear_vertex_spacing,
-    linspace,
     inscribe_circle_tangent_length,
     cubic_bezier_arc_parameters,
     cubic_bezier_bbox,
@@ -657,7 +657,7 @@ def add_2d_polyline(
         end_angle = end_angle % math.tau
         if start_angle > end_angle:
             end_angle += math.tau
-        angles = list(linspace(start_angle, end_angle, num_bez + 1))
+        angles = list(np.linspace(start_angle, end_angle, num_bez + 1))
         curves = []
         for i in range(num_bez):
             ellipse = ConstructionEllipse.from_arc(

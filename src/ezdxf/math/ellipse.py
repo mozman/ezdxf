@@ -2,6 +2,8 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Any
+import numpy as np
+
 import math
 from ezdxf.math import (
     Vec3,
@@ -12,7 +14,6 @@ from ezdxf.math import (
     OCS,
     Matrix44,
     arc_angle_span_rad,
-    linspace,
     distance_point_line_3d,
     enclosing_angles,
 )
@@ -518,7 +519,7 @@ def get_params(start: float, end: float, num: int) -> Iterable[float]:
     if end <= start:
         end += math.tau
 
-    for param in linspace(start, end, num):
+    for param in np.linspace(start, end, num):
         yield param % math.tau
 
 

@@ -37,6 +37,7 @@ from ezdxf.entities import (
     DXFLayout,
     VisualStyle,
 )
+from ezdxf.entities.copy import CopyStrategy, CopySettings
 from ezdxf.math import UVec, Vec3
 
 __all__ = [
@@ -210,9 +211,9 @@ def define(doc: Drawing, block_name: str, filename: str, overlay=False) -> None:
 
     XREF attachment types:
 
-    - attached: the XREF that’s inserted into this drawing is also present in a
+    - attached: the XREF that's inserted into this drawing is also present in a
       document to which this document is inserted as an XREF.
-    - overlay: the XREF that’s inserted into this document is **not** present in a
+    - overlay: the XREF that's inserted into this document is **not** present in a
       document to which this document is inserted as an XREF.
 
     Args:
@@ -1619,6 +1620,7 @@ class CopyMachine:
         self.classes: list[DXFClass] = []
         self.objects: dict[str, DXFEntity] = {}
         self.copy_errors: set[str] = set()
+        self.copy_strategy = CopyStrategy(CopySettings(set_source_of_copy=False))
 
         # mapping from the source entity handle to the handle of the copied entity
         self.handle_mapping: dict[str, str] = {}
@@ -1643,7 +1645,7 @@ class CopyMachine:
             handle_mapping[handle] = clone.dxf.handle
             # Get handle mapping for in-object copies: DICTIONARY
             if hasattr(entity, "get_handle_mapping"):
-                self.handle_mapping.update(entity.get_handle_mapping(clone))
+                self.handle_mapping.update(entity.get_handle_mapping(clone))  # type: ignore
 
             if is_dxf_object(clone):
                 self.objects[handle] = clone
@@ -1653,10 +1655,10 @@ class CopyMachine:
 
     def copy_entity(self, entity: DXFEntity) -> Optional[DXFEntity]:
         try:
-            return entity.copy_external()
+            return entity.copy(copy_strategy=self.copy_strategy)
         except const.DXFError:
             self.copy_errors.add(entity.dxf.handle)
         return None
 
     def copy_dxf_class(self, cls: DXFClass) -> None:
-        self.classes.append(cls.copy())
+        self.classes.append(cls.copy(copy_strategy=self.copy_strategy))

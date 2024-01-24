@@ -5,13 +5,15 @@ import pytest
 import math
 from ezdxf.math.linalg import (
     Matrix,
-    gauss_vector_solver,
+    tridiagonal_vector_solver,
+    tridiagonal_matrix_solver,
+)
+from ezdxf.math.legacy import (
     gauss_matrix_solver,
+    gauss_vector_solver,
     gauss_jordan_solver,
     gauss_jordan_inverse,
     LUDecomposition,
-    tridiagonal_vector_solver,
-    tridiagonal_matrix_solver,
 )
 
 
@@ -51,9 +53,10 @@ def test_matrix_setter(X):
 
 
 def test_row(X):
-    assert X.row(0) == [12, 7]
-    assert X.row(1) == [4, 5]
-    assert X.row(2) == [3, 8]
+    a = list(X.row(0))
+    assert list(X.row(0)) == [12, 7]
+    assert list(X.row(1)) == [4, 5]
+    assert list(X.row(2)) == [3, 8]
     assert list(X.rows()) == [[12, 7], [4, 5], [3, 8]]
 
 
@@ -100,7 +103,7 @@ def test_freeze_matrix(X):
     assert m == X
     assert m[0, 0] == 12
     assert m[2, 1] == 8
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         m[0, 0] = 1.0
 
 
@@ -165,20 +168,6 @@ def test_transpose(X):
     # is T mutable?
     T[0, 0] = 99
     assert T[0, 0] == 99
-
-
-def test_swap_rows(X):
-    # X = [[12, 7], [4, 5], [3, 8]]
-    X.swap_rows(0, 2)
-    assert X.row(0) == [3, 8]
-    assert X.row(2) == [12, 7]
-
-
-def test_swap_cols(X):
-    # X = [[12, 7], [4, 5], [3, 8]]
-    X.swap_cols(0, 1)
-    assert X.col(0) == [7, 5, 8]
-    assert X.col(1) == [12, 4, 3]
 
 
 def test_add(X):
@@ -302,16 +291,18 @@ def test_gauss_vector_solver():
     assert result == SOLUTION_B1
 
 
+def is_close_vectors(v0, v1) -> bool:
+    return all(math.isclose(c0, c1) for c0, c1 in zip(v0, v1))
+
+
 def test_gauss_matrix_solver():
     result = gauss_matrix_solver(A, zip(B1, B2, B3))
-    assert result.col(0) == gauss_vector_solver(A, B1)
-    assert result.col(1) == gauss_vector_solver(A, B2)
-    assert result.col(2) == gauss_vector_solver(A, B3)
+    assert is_close_vectors(result.col(0), gauss_vector_solver(A, B1))
+    assert is_close_vectors(result.col(1), gauss_vector_solver(A, B2))
+    assert is_close_vectors(result.col(2), gauss_vector_solver(A, B3))
 
 
-def are_close_vectors(
-    v1: Iterable[float], v2: Iterable[float], abs_tol: float = 1e-12
-):
+def are_close_vectors(v1: Iterable[float], v2: Iterable[float], abs_tol: float = 1e-12):
     for i, j in zip(v1, v2):
         assert math.isclose(i, j, abs_tol=abs_tol)
 
@@ -373,7 +364,7 @@ def test_gauss_jordan_inverse():
     assert result.nrows == len(A)
     assert result.ncols == len(A[0])
     m = Matrix(matrix=EXPECTED_INVERSE)
-    assert result == m
+    assert result.isclose(m)
 
 
 def test_LU_decomposition_solve_vector():
@@ -391,7 +382,7 @@ def test_LU_decomposition_solve_matrix():
 
 def test_LU_decomposition_inverse():
     m = Matrix(matrix=EXPECTED_INVERSE)
-    assert LUDecomposition(A).inverse() == m
+    assert m.isclose(LUDecomposition(A).inverse())
 
 
 def test_determinant():
@@ -405,7 +396,7 @@ def test_determinant():
     ]
     det = LUDecomposition(A).determinant()
     chk = Matrix44(*A)
-    assert chk.determinant() == det
+    assert math.isclose(chk.determinant(), det)
 
 
 TRI_DIAGONAL = [
@@ -416,7 +407,9 @@ TRI_DIAGONAL = [
     [0, 0, 0, 4, 6],
 ]
 
-TRI_SOLUTION = gauss_matrix_solver(TRI_DIAGONAL, zip(B1, B2, B3))
+
+def tri_solution():
+    return gauss_matrix_solver(TRI_DIAGONAL, zip(B1, B2, B3))
 
 
 @pytest.fixture
@@ -431,9 +424,9 @@ def tridiag():
 
 def test_tridiagonal_vector_solver(tridiag):
     result = tridiagonal_vector_solver(tridiag, B1)
-    are_close_vectors(result, TRI_SOLUTION.col(0))
+    are_close_vectors(result, tri_solution().col(0))
 
 
 def test_tridiagonal_matrix_solver(tridiag):
     result = tridiagonal_matrix_solver(tridiag, zip(B1, B2, B3))
-    assert result == TRI_SOLUTION
+    assert result.isclose(tri_solution())

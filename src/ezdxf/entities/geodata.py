@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2023, Manfred Moitzi
 # License: MIT-License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence, Iterable, Optional
@@ -31,6 +31,7 @@ from ezdxf.tools.text import split_mtext_string
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .factory import register_entity
+from .copy import default_copy, CopyNotSupported
 from .. import units
 
 if TYPE_CHECKING:
@@ -256,8 +257,8 @@ class GeoData(DXFObject):
         self.faces: list[Sequence[int]] = []
         self.coordinate_system_definition = ""
 
-    def raw_copy(self):
-        raise DXFTypeError(f"Cloning of {self.DXFTYPE} not supported.")
+    def copy(self, copy_strategy=default_copy):
+        raise CopyNotSupported(f"Copying of {self.DXFTYPE} not supported.")
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
@@ -302,9 +303,9 @@ class GeoData(DXFObject):
         face: list[int] = []
         for code, value in tags:
             if code == src:
-                self.source_vertices.append(value)
+                self.source_vertices.append(value)  # type: ignore
             elif code == target:
-                self.target_vertices.append(value)
+                self.target_vertices.append(value)  # type: ignore
             elif code in face_indices:
                 if code == 97 and len(face):
                     if len(face) != 3:
@@ -462,10 +463,7 @@ class GeoData(DXFObject):
             except AttributeError:
                 namespace = ""
 
-            if (
-                alias.get("type") == "CoordinateSystem"
-                and namespace == "EPSG Code"
-            ):
+            if alias.get("type") == "CoordinateSystem" and namespace == "EPSG Code":
                 try:
                     crs = int(alias.get("id"))  # type: ignore
                 except ValueError:
@@ -492,9 +490,7 @@ class GeoData(DXFObject):
                 elif first_axis in ("N", "S"):
                     xy_ordering = False
                 else:
-                    raise InvalidGeoDataException(
-                        f"unknown first axis: {first_axis}"
-                    )
+                    raise InvalidGeoDataException(f"unknown first axis: {first_axis}")
                 break
 
         if crs is None:
@@ -595,8 +591,7 @@ class GeoData(DXFObject):
         wcs_units = doc.units
         if units == 0:
             raise DXFValueError(
-                "DXF document requires units to be set, "
-                'current state is "unitless".'
+                "DXF document requires units to be set, " 'current state is "unitless".'
             )
         meter_factor = units.METER_FACTOR[wcs_units]
         if meter_factor is None:

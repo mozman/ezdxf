@@ -4,10 +4,12 @@ from typing import cast
 import pathlib
 import math
 import random
+import numpy as np
+
 import ezdxf
 from ezdxf import zoom
 from ezdxf.enums import TextEntityAlignment
-from ezdxf.math import linspace, Vec3, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
+from ezdxf.math import Vec3, Matrix44, Z_AXIS, Y_AXIS, X_AXIS
 from ezdxf.entities import Circle, Arc, Ellipse, Insert, Text, MText, Hatch
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
@@ -105,7 +107,7 @@ def circle(radius=1, count=16):
     circle_ = Circle.new(
         dxfattribs={"center": (0, 0, 0), "radius": radius}, doc=doc
     )
-    control_vertices = list(circle_.vertices(linspace(0, 360, count)))
+    control_vertices = list(circle_.vertices(np.linspace(0, 360, count)))
     return circle_, control_vertices
 
 

@@ -92,7 +92,7 @@ class Tags(list):
         """
         return any(tag.code == code for tag in self)
 
-    def get_first_value(self, code: int, default=DXFValueError) -> Any:
+    def get_first_value(self, code: int, default: Any=DXFValueError) -> Any:
         """Returns value of first :class:`~ezdxf.lldxf.types.DXFTag` with given
         group code or default if `default` != :class:`DXFValueError`, else
         raises :class:`DXFValueError`.

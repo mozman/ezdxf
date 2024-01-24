@@ -2,6 +2,7 @@
 # Copyright (c) 2020-2023, Matthew Broadway
 # License: MIT License
 import argparse
+import logging
 import signal
 import sys
 
@@ -29,7 +30,11 @@ def _main():
     parser.add_argument("-l", "--layout", default="Model")
     # disable lineweight at all by default:
     parser.add_argument("--lineweight_scaling", type=float, default=0)
+    parser.add_argument("--verbose", action='store_true', help='whether to print output when rendering')
     args = parser.parse_args()
+
+    level = "DEBUG" if args.verbose else "INFO"
+    logging.basicConfig(level=level)
 
     # setup drawing add-on configuration
     config = Configuration(
@@ -49,7 +54,7 @@ def _main():
             print(f"Invalid or corrupted DXF file: {args.cad_file}")
             sys.exit(2)
 
-        v.set_document(doc, auditor)
+        v.set_document(doc, auditor, draw=False)
         try:
             v.draw_layout(args.layout)
         except KeyError:

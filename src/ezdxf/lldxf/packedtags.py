@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2022 Manfred Moitzi
+# Copyright (c) 2018-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Optional
@@ -10,7 +10,7 @@ from .const import DXFTypeError, DXFIndexError, DXFValueError
 from .tags import Tags
 from ezdxf.tools.indexing import Index
 from ezdxf.lldxf.tagwriter import AbstractTagWriter
-from ezdxf.math import Matrix44
+from ezdxf.math import Matrix44, UVec
 
 
 class TagList:
@@ -200,7 +200,7 @@ class VertexArray:
             if delta > 20:
                 delta = 0
 
-    def append(self, point: Sequence[float]) -> None:
+    def append(self, point: UVec) -> None:
         """Append `point`."""
         if len(point) != self.VERTEX_SIZE:
             raise DXFValueError(
@@ -208,7 +208,7 @@ class VertexArray:
             )
         self.values.extend(point)
 
-    def extend(self, points: Iterable[Sequence[float]]) -> None:
+    def extend(self, points: Iterable[UVec]) -> None:
         """Extend array by `points`."""
         for point in points:
             self.append(point)
@@ -217,7 +217,7 @@ class VertexArray:
         """Delete all vertices."""
         del self.values[:]
 
-    def set(self, points: Iterable[Sequence[float]]) -> None:
+    def set(self, points: Iterable[UVec]) -> None:
         """Replace all vertices by `points`."""
         self.clear()
         self.extend(points)

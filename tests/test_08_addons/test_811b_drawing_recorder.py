@@ -7,7 +7,7 @@ import ezdxf.path
 from ezdxf.npshapes import NumpyPath2d
 from ezdxf.math import Vec2
 from ezdxf.addons.drawing import RenderContext, Frontend
-from ezdxf.addons.drawing.recorder import Recorder, BackendProperties, Override
+from ezdxf.addons.drawing.recorder import Recorder, BackendProperties, Override, FilledPathsRecord
 from ezdxf.addons.drawing.debug_backend import PathBackend
 
 
@@ -221,12 +221,16 @@ class TestCroppingRecords:
         recorder.draw_filled_paths([square, hole], props)
 
         player = recorder.player()
-        data0 = player.records[0].data
+        record0 = player.records[0]
+        assert isinstance(record0, FilledPathsRecord) 
+        paths0 = record0.paths
+
         player.crop_rect((0, 0), (100, 100), 1)
+        record1 = player.records[0]
+        assert isinstance(record1, FilledPathsRecord) 
+        assert record1.paths is not paths0, "should be new record data"
 
-        assert player.records[0].data is not data0, "should be new record data"
-
-        paths = player.records[0].data
+        paths = record1.paths
         assert paths[0].extents() == ((0, 0), (50, 50)), "should be cropped"
         assert paths[1].extents() == ((0, 0), (25, 25)), "should be cropped"
 
@@ -240,11 +244,17 @@ class TestCroppingRecords:
         recorder.draw_filled_paths([square, hole], props)
 
         player = recorder.player()
-        paths = player.records[0].data
-        hole0 = paths[1]
+        record0 = player.records[0]
+        assert isinstance(record0, FilledPathsRecord) 
+
+        paths0 = record0.paths
+        hole0 = paths0[1]
         player.crop_rect((0, 0), (100, 100), 1)
 
-        paths = player.records[0].data
+        record1 = player.records[0]
+        assert isinstance(record1, FilledPathsRecord) 
+
+        paths = record1.paths
         assert paths[1] is hole0, "should be identical to original hole"
 
     def test_does_remove_holes_outside_crop_box(self):
@@ -260,5 +270,7 @@ class TestCroppingRecords:
         player = recorder.player()
         player.crop_rect((0, 0), (100, 100), 1)
 
-        paths = player.records[0].data
-        assert len(paths) == 1, "hole should be removed"
+        record0 = player.records[0]
+        assert isinstance(record0, FilledPathsRecord) 
+
+        assert len(record0.paths) == 1, "hole should be removed"

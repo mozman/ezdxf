@@ -39,8 +39,8 @@ class SierpinskyPyramid:
             location=location, length=length, level=level, sides=sides
         )
 
-    def vertices(self) -> Iterator[UVec]:
-        """Yields the pyramid vertices as list of (x, y, z) tuples."""
+    def vertices(self) -> Iterator[list[Vec3]]:
+        """Yields the pyramid vertices as list of :class:`ezdxf.math.Vec3`."""
         for location, length in self.pyramid_definitions:
             yield self._calc_vertices(location, length)
 
@@ -48,7 +48,7 @@ class SierpinskyPyramid:
 
     def _calc_vertices(
         self, location: UVec, length: float
-    ) -> list[UVec]:
+    ) -> list[Vec3]:
         """
         Calculates the pyramid vertices.
 
@@ -56,7 +56,7 @@ class SierpinskyPyramid:
             location: location of the pyramid as center point of the base
             length: pyramid side length
 
-        Returns: list of (x, y, z) tuples
+        Returns: list of :class:`ezdxf.math.Vec3`
 
         """
         len2 = length / 2.0

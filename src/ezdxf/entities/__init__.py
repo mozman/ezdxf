@@ -36,6 +36,7 @@ from .idbuffer import IDBuffer
 from .sun import Sun
 from .material import Material, MaterialCollection
 from .oleframe import OLE2Frame
+from .spatial_filter import SpatialFilter
 
 # register DXF objects R2007
 from .visualstyle import VisualStyle

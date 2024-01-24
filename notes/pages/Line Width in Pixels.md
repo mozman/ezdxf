@@ -1,0 +1,2 @@
+- [lineweights.ods](../assets/lineweights_1700073572548_0.ods)
+- ![image.png](../assets/image_1700073536237_0.png)

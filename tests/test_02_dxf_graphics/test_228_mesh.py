@@ -1,7 +1,8 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
+from ezdxf.layouts import Modelspace
 from ezdxf.entities.mesh import Mesh
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vec3, Matrix44
@@ -104,7 +105,7 @@ def mesh(doc):
     return Mesh.from_text(MESH2, doc)
 
 
-def test_mesh_properties(mesh):
+def test_mesh_properties(mesh: Mesh):
     assert "MESH" == mesh.dxftype()
     assert 256 == mesh.dxf.color
     assert "0" == mesh.dxf.layer
@@ -112,13 +113,13 @@ def test_mesh_properties(mesh):
     assert mesh.dxf.paperspace == 0
 
 
-def test_mesh_dxf_attribs(mesh):
+def test_mesh_dxf_attribs(mesh: Mesh):
     assert 2 == mesh.dxf.version
     assert 0 == mesh.dxf.blend_crease
     assert 3 == mesh.dxf.subdivision_levels
 
 
-def test_mesh_geometric_data(mesh):
+def test_mesh_geometric_data(mesh: Mesh):
     with mesh.edit_data() as mesh_data:
         assert 56 == len(mesh_data.vertices)
         assert 54 == len(mesh_data.faces)
@@ -126,23 +127,23 @@ def test_mesh_geometric_data(mesh):
         assert 108 == len(mesh_data.edge_crease_values)
 
 
-def test_create_empty_mesh(msp):
+def test_create_empty_mesh(msp: Modelspace):
     mesh = msp.add_mesh()
     assert 2 == mesh.dxf.version
     assert 0 == mesh.dxf.blend_crease
     assert 0 == mesh.dxf.subdivision_levels
 
 
-def test_add_faces(msp):
+def test_add_faces(msp: Modelspace):
     mesh = msp.add_mesh()
     with mesh.edit_data() as mesh_data:
         mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
         assert 4 == len(mesh_data.vertices)
         assert 1 == len(mesh_data.faces)
-        assert [0, 1, 2, 3] == mesh_data.faces[0]
+        assert (0, 1, 2, 3) == mesh_data.faces[0]
 
 
-def test_add_edge_crease(msp):
+def test_add_edge_crease(msp: Modelspace):
     mesh = msp.add_mesh()
     with mesh.edit_data() as mesh_data:
         mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
@@ -153,7 +154,7 @@ def test_add_edge_crease(msp):
         assert len(mesh_data.edge_crease_values) == len(mesh_data.edges)
 
 
-def test_dxf_export_adds_required_crease_values(msp):
+def test_dxf_export_adds_required_crease_values(msp: Modelspace):
     mesh = msp.add_mesh()
     with mesh.edit_data() as mesh_data:
         mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
@@ -164,7 +165,7 @@ def test_dxf_export_adds_required_crease_values(msp):
     assert [tag.value for tag in collector.tags if tag.code == 140] == [0.0]
 
 
-def test_dxf_export_removes_crease_not_required(msp):
+def test_dxf_export_removes_crease_not_required(msp: Modelspace):
     mesh = msp.add_mesh()
     with mesh.edit_data() as mesh_data:
         mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
@@ -175,7 +176,7 @@ def test_dxf_export_removes_crease_not_required(msp):
     assert [tag.value for tag in collector.tags if tag.code == 140] == [1.0]
 
 
-def test_auditor_fixes_invalid_crease_count(msp):
+def test_auditor_fixes_invalid_crease_count(msp: Modelspace):
     mesh = msp.add_mesh()
     with mesh.edit_data() as mesh_data:
         mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
@@ -199,14 +200,14 @@ def test_auditor_fixes_invalid_crease_count(msp):
     assert list(mesh.creases) == [0.0]
 
 
-def test_vertex_format(msp):
+def test_vertex_format(msp: Modelspace):
     mesh = msp.add_mesh()
     with mesh.edit_data() as mesh_data:
         with pytest.raises(ezdxf.DXFValueError):
             mesh_data.add_vertex((0, 0))  # only (x, y, z) vertices allowed
 
 
-def test_optimize(msp):
+def test_optimize(msp: Modelspace):
     vertices = [
         (0, 0, 0),
         (1, 0, 0),
@@ -234,7 +235,7 @@ def test_optimize(msp):
         assert 24 == len(mesh_data.vertices)
         assert 6 == len(mesh_data.faces)
         mesh_data.optimize()
-        assert 8 == len(mesh_data.vertices), "Doublettes not removed"
+        assert 8 == len(mesh_data.vertices), "coincident vertices not removed"
         assert 6 == len(mesh_data.faces)
         assert 0 == len(mesh_data.edges)
 

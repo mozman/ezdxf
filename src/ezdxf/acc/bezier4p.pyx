@@ -2,10 +2,13 @@
 # distutils: language = c++
 # Copyright (c) 2020-2022 Manfred Moitzi
 # License: MIT License
+# type: ignore -- pylance sucks at type-checking cython files
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
+import warnings
 from .vector cimport (
     Vec3,
+    Vec2,
     isclose,
     v3_dist,
     v3_from_angle,
@@ -44,6 +47,11 @@ cdef class Bezier4P:
 
     def __cinit__(self, defpoints: Sequence[UVec]):
         cdef CppVec3 cpp_offset
+        if not isinstance(defpoints[0], (Vec2, Vec3)):
+            warnings.warn(
+                DeprecationWarning, 
+                "Bezier4P requires defpoints of type Vec2 or Vec3 in the future",
+            )
         if len(defpoints) == 4:
             self.offset = Vec3(defpoints[0])
             cpp_offset = self.offset.to_cpp_vec3()
@@ -275,7 +283,7 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
     cdef CppVec3 center = Vec3(ellipse.center).to_cpp_vec3()
     cdef CppVec3 x_axis = Vec3(ellipse.major_axis).to_cpp_vec3()
     cdef CppVec3 y_axis = Vec3(ellipse.minor_axis).to_cpp_vec3()
-    cdef Vec3 cp,
+    cdef Vec3 cp
     cdef CppVec3 c_res
     cdef list res
     for control_points in cubic_bezier_arc_parameters(

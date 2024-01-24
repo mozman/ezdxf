@@ -2,6 +2,9 @@
 # Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
+
+import os
+import pathlib
 from typing import (
     TYPE_CHECKING,
     Optional,
@@ -336,6 +339,7 @@ class RenderContext:
         self.measurement = Measurement.Imperial
         self.pdsize: float = 0
         self.pdmode: int = 0
+        self.document_dir: Optional[pathlib.Path] = None
         self._hatch_pattern_cache: dict[str, HatchPatternType] = dict()
         self.current_layout_properties = LayoutProperties.modelspace()
         self.plot_styles = self._load_plot_style_table(self.override_ctb)
@@ -352,6 +356,10 @@ class RenderContext:
             self.linetype_scale = doc.header.get("$LTSCALE", 1.0)
             self.pdsize = doc.header.get("$PDSIZE", 1.0)
             self.pdmode = doc.header.get("$PDMODE", 0)
+            if doc.filename is not None:
+                self.document_dir = pathlib.Path(
+                    doc.filename.replace("\\", os.path.sep)
+                ).parent.resolve()
             self._setup_text_styles(doc)
             try:
                 self.units = InsertUnits(doc.header.get("$INSUNITS", 0))

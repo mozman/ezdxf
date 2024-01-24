@@ -12,9 +12,9 @@ A clear and concise description of what the bug is.
 
 **To Reproduce**
 Information and data needed to reproduce the error:
-1. A *simplified* Python script which triggers the error.
+1. A *simplified* and executable Python script which triggers the error.
 2. Information about the *ezdxf* version and the OS.
-3. If a 3rd party DXF file causes the error, add a *simplified* and *zipped* 
+3. If processing a loaded DXF file causes the error, add a *simplified* and *zipped* 
    DXF file which still triggers the error.
 
 **Confidential Data**

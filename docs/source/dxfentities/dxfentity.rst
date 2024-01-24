@@ -90,6 +90,8 @@ Common base class for all DXF entities and objects.
     .. automethod:: new_extension_dict
 
     .. automethod:: discard_extension_dict
+        
+    .. automethod:: discard_empty_extension_dict
 
     .. automethod:: has_app_data
 

@@ -6,14 +6,18 @@ from typing_extensions import Self, TypeAlias
 import abc
 
 import numpy as np
+import numpy.typing as npt
+
 from ezdxf.math import (
     Matrix44,
+    UVec,
     Vec2,
     Vec3,
     has_clockwise_orientation,
     Bezier3P,
     Bezier4P,
     BoundingBox2d,
+    BoundingBox,
 )
 from ezdxf.path import (
     Path,
@@ -34,6 +38,7 @@ except ImportError:
 __all__ = [
     "NumpyPath2d",
     "NumpyPoints2d",
+    "NumpyPoints3d",
     "NumpyShapesException",
     "EmptyShapeError",
     "to_qpainter_path",
@@ -59,6 +64,8 @@ class EmptyShapeError(NumpyShapesException):
 
 CommandNumpyType: TypeAlias = np.int8
 VertexNumpyType: TypeAlias = np.float64
+EMPTY_SHAPE = np.array([], dtype=VertexNumpyType)
+NO_COMMANDS = np.array([], dtype=CommandNumpyType)
 
 
 class NumpyShape2d(abc.ABC):
@@ -66,7 +73,7 @@ class NumpyShape2d(abc.ABC):
     without sacrificing basic functions like transformation and bounding box calculation.
     """
 
-    _vertices: np.ndarray
+    _vertices: npt.NDArray[VertexNumpyType] = EMPTY_SHAPE
 
     def extents(self) -> tuple[Vec2, Vec2]:
         """Returns the extents of the bounding box as tuple (extmin, extmax)."""
@@ -76,7 +83,11 @@ class NumpyShape2d(abc.ABC):
         else:
             raise EmptyShapeError("empty shape has no extends")
 
-    def np_vertices(self) -> np.ndarray:
+    @abc.abstractmethod
+    def clone(self) -> Self:
+        ...
+
+    def np_vertices(self) -> npt.NDArray[VertexNumpyType]:
         return self._vertices
 
     def transform_inplace(self, m: Matrix44) -> None:
@@ -98,15 +109,21 @@ class NumpyShape2d(abc.ABC):
 class NumpyPoints2d(NumpyShape2d):
     """Represents an array of 2D points stored as a ndarray."""
 
-    def __init__(self, points: Iterable[Vec2 | Vec3]) -> None:
-        self._vertices = np.array([(v.x, v.y) for v in points], dtype=VertexNumpyType)
+    def __init__(self, points: Optional[Iterable[Vec2 | Vec3]]) -> None:
+        if points:
+            self._vertices = np.array(
+                [(v.x, v.y) for v in points], dtype=VertexNumpyType
+            )
+
+    def clone(self) -> Self:
+        clone = self.__class__(None)
+        clone._vertices = self._vertices.copy()
+        return clone
+
+    __copy__ = clone
 
     def __len__(self) -> int:
         return len(self._vertices)
-
-
-NO_VERTICES = np.array([], dtype=VertexNumpyType)
-NO_COMMANDS = np.array([], dtype=CommandNumpyType)
 
 
 class NumpyPath2d(NumpyShape2d):
@@ -127,16 +144,18 @@ class NumpyPath2d(NumpyShape2d):
 
     """
 
+    _commands: npt.NDArray[CommandNumpyType]
+
     def __init__(self, path: Optional[Path]) -> None:
         if path is None:
-            self._vertices = NO_VERTICES
+            self._vertices = EMPTY_SHAPE
             self._commands = NO_COMMANDS
             return
         # (v.x, v.y) is 4x faster than Vec2(v), see profiling/numpy_array_setup.py
         vertices = [(v.x, v.y) for v in path.control_vertices()]
         if len(vertices) == 0:
             try:  # control_vertices() does not return the start point of empty paths
-                vertices = [path.start]
+                vertices = [Vec2(path.start)]
             except IndexError:
                 vertices = []
         self._vertices = np.array(vertices, dtype=VertexNumpyType)
@@ -158,11 +177,13 @@ class NumpyPath2d(NumpyShape2d):
     def control_vertices(self) -> list[Vec2]:
         return [Vec2(v) for v in self._vertices]
 
-    def __copy__(self) -> Self:
+    def clone(self) -> Self:
         clone = self.__class__(None)
         clone._commands = self._commands.copy()
         clone._vertices = self._vertices.copy()
         return clone
+
+    __copy__ = clone
 
     def command_codes(self) -> list[int]:
         """Internal API."""
@@ -186,8 +207,6 @@ class NumpyPath2d(NumpyShape2d):
             elif cmd == CMD_MOVE_TO:
                 yield MoveTo(vertices[index])
                 index += 1
-
-    clone = __copy__
 
     def to_path(self) -> Path:
         """Returns a new :class:`ezdxf.path.Path` instance."""
@@ -491,7 +510,11 @@ def to_matplotlib_path(paths: Iterable[NumpyPath2d], *, detect_holes=False):
         codes.append(MPL_MOVETO)
         for cmd in path.command_codes():
             codes.extend(MPL_CODES[cmd])
-    return Path(np.concatenate(vertices), codes)
+    points = np.concatenate(vertices)
+    try:
+        return Path(points, codes)
+    except Exception as e:
+        raise ValueError(f"matplotlib.path.Path({str(points)}, {str(codes)}): {str(e)}")
 
 
 def single_paths(paths: Iterable[NumpyPath2d]) -> list[NumpyPath2d]:
@@ -522,3 +545,61 @@ def orient_paths(paths: list[NumpyPath2d]) -> list[NumpyPath2d]:
     for path in holes:
         path.clockwise()
     return outer_paths + holes
+
+
+class NumpyShape3d(abc.ABC):
+    """This is an optimization to store many 3D paths and polylines in a compact way
+    without sacrificing basic functions like transformation and bounding box calculation.
+    """
+
+    _vertices: npt.NDArray[VertexNumpyType] = EMPTY_SHAPE
+
+    def extents(self) -> tuple[Vec3, Vec3]:
+        """Returns the extents of the bounding box as tuple (extmin, extmax)."""
+        v = self._vertices
+        if len(v) > 0:
+            return Vec3(v.min(0)), Vec3(v.max(0))
+        else:
+            raise EmptyShapeError("empty shape has no extends")
+
+    @abc.abstractmethod
+    def clone(self) -> Self:
+        ...
+
+    def np_vertices(self) -> npt.NDArray[VertexNumpyType]:
+        return self._vertices
+
+    def transform_inplace(self, m: Matrix44) -> None:
+        """Transforms the vertices of the shape inplace."""
+        v = self._vertices
+        if len(v) == 0:
+            return
+        m.transform_array_inplace(v, 3)
+
+    def vertices(self) -> list[Vec3]:
+        """Returns the shape vertices as list of :class:`Vec3`."""
+        return [Vec3(v) for v in self._vertices]
+
+    def bbox(self) -> BoundingBox:
+        """Returns the bounding box of all vertices."""
+        return BoundingBox(self.extents())
+
+
+class NumpyPoints3d(NumpyShape3d):
+    """Represents an array of 3D points stored as a ndarray."""
+
+    def __init__(self, points: Optional[Iterable[UVec]]) -> None:
+        if points:
+            self._vertices = np.array(
+                [Vec3(v).xyz for v in points], dtype=VertexNumpyType
+            )
+
+    def clone(self) -> Self:
+        clone = self.__class__(None)
+        clone._vertices = self._vertices.copy()
+        return clone
+
+    __copy__ = clone
+
+    def __len__(self) -> int:
+        return len(self._vertices)

@@ -4,16 +4,16 @@ from __future__ import annotations
 from typing import Iterable, TYPE_CHECKING, no_type_check
 from functools import lru_cache
 import enum
-
+import numpy as np
 
 from ezdxf import colors
 from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS
-from ezdxf.math import Vec2, BoundingBox2d
+from ezdxf.math import Vec2, BoundingBox2d, Matrix44
 from ezdxf.path import to_splines_and_polylines, to_hatches
 from ezdxf.layouts import BaseLayout
 
 from .type_hints import Color
-from .backend import BackendInterface, BkPath2d, BkPoints2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
 from .config import Configuration
 from .properties import BackendProperties
 
@@ -162,6 +162,9 @@ class DXFBackend(BackendInterface):
         hatch = self.layout.add_hatch(dxfattribs=self.resolve_properties(properties))
         hatch.paths.add_polyline_path(points.vertices(), is_closed=True)
         self.set_solid_fill(hatch, properties)
+
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
+        pass  # TODO: not implemented
 
     def configure(self, config: Configuration) -> None:
         pass

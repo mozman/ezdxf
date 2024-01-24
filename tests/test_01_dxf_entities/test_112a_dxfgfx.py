@@ -84,7 +84,7 @@ def test_is_linetype_validator_active(entity):
 
 def test_is_layer_name_validator_active(entity):
     with pytest.raises(DXFValueError):
-        entity.dxf.layer = "*Invalid"
+        entity.dxf.layer = "Invalid*"
 
 
 def test_clone_graphical_entity(entity):

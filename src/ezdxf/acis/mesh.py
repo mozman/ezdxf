@@ -1,4 +1,4 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Iterator, Sequence, Optional, Iterable
@@ -79,7 +79,7 @@ def flat_polygon_faces_from_body(
 
 
 def flat_polygon_faces_from_lump(
-    lump: Lump, m: Matrix44 = None
+    lump: Lump, m: Matrix44 | None = None
 ) -> Iterator[Sequence[Vec3]]:
     """Yields all flat polygon faces from the given :class:`Lump` entity as
     sequence of :class:`~ezdxf.math.Vec3` instances. Applies the transformation
@@ -148,7 +148,7 @@ def body_from_mesh(mesh: MeshBuilder, precision: int = 6) -> Body:
     separated :class:`~ezdxf.acis.entities.Lump` node.
     If each mesh should get its own :class:`~ezdxf.acis.entities.Body` entity,
     separate the meshes beforehand by the method
-    :class:`~ezdxf.render.MeshBuilder.separate_meshes`.
+    :meth:`~ezdxf.render.MeshBuilder.separate_meshes`.
 
     A closed mesh creates a solid body and an open mesh creates an open (hollow)
     shell. The detection if the mesh is open or closed is based on the edges

@@ -6,8 +6,10 @@ from typing import Optional, Iterable
 import abc
 import math
 
+import numpy as np
+
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
-from ezdxf.addons.drawing.backend import Backend, BkPath2d, BkPoints2d
+from ezdxf.addons.drawing.backend import Backend, BkPath2d, BkPoints2d, ImageData
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import BackendProperties
@@ -169,6 +171,28 @@ class _PyQtBackend(Backend):
         item = _CosmeticPolygon(polygon)
         item.setPen(self._no_line)
         item.setBrush(brush)
+        self._add_item(item, properties.handle)
+
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
+        image = image_data.image
+        transform = image_data.transform
+        height, width, depth = image.shape
+        assert depth == 4
+        bytes_per_row = width * depth
+        image = np.ascontiguousarray(np.flip(image, axis=0))
+        pixmap = qg.QPixmap(
+            qg.QImage(
+                image.data,
+                width,
+                height,
+                bytes_per_row,
+                qg.QImage.Format.Format_RGBA8888,
+            )
+        )
+        item = qw.QGraphicsPixmapItem()
+        item.setPixmap(pixmap)
+        item.setTransformationMode(qc.Qt.TransformationMode.SmoothTransformation)
+        item.setTransform(_matrix_to_qtransform(transform))
         self._add_item(item, properties.handle)
 
     def clear(self) -> None:

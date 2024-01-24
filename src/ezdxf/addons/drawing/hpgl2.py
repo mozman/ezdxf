@@ -3,13 +3,14 @@
 from __future__ import annotations
 from typing import Iterable, Sequence, no_type_check
 import copy
+import numpy as np
 
 from ezdxf import colors
-from ezdxf.math import Vec2, BoundingBox2d
+from ezdxf.math import Vec2, BoundingBox2d, Matrix44
 from ezdxf.path import Command
 
 from .type_hints import Color
-from .backend import BackendInterface, BkPath2d, BkPoints2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -395,6 +396,9 @@ class _RenderBackend(BackendInterface):
             self.enter_polygon_mode(points2d[0])
             self.add_polyline_encoded(points2d, properties)
             self.fill_polygon()
+
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
+        pass  # TODO: not implemented
 
     def configure(self, config: Configuration) -> None:
         self.lineweight_policy = config.lineweight_policy

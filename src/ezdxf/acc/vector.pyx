@@ -3,7 +3,8 @@
 # distutils: language = c++
 # Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple
+# type: ignore -- pylance sucks at type-checking cython files
+from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple, Iterator
 from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
 import random
 
@@ -12,8 +13,8 @@ cdef extern from "constants.h":
     const double REL_TOL
     const double M_TAU
 
-cdef double RAD2DEG = 180.0 / M_PI;
-cdef double DEG2RAD = M_PI / 180.0;
+cdef double RAD2DEG = 180.0 / M_PI
+cdef double DEG2RAD = M_PI / 180.0
 
 if TYPE_CHECKING:
     from ezdxf.math import AnyVec, UVec
@@ -113,7 +114,7 @@ cdef class Vec2:
         return tuple(Vec2.generate(items))
 
     @staticmethod
-    def generate(items: Iterable[UVec]) -> Iterable[Vec2]:
+    def generate(items: Iterable[UVec]) -> Iterator[Vec2]:
         return (Vec2(item) for item in items)
 
     @staticmethod
@@ -153,7 +154,7 @@ cdef class Vec2:
         else:
             raise IndexError(f'invalid index {index}')
 
-    def __iter__(self) -> Iterable[float]:
+    def __iter__(self) -> Iterator[float]:
         yield self.x
         yield self.y
 
@@ -274,7 +275,7 @@ cdef class Vec2:
         cdef Vec2 o = Vec2(other)
         return v2_angle_between(self, o)
 
-    def rotate(self, double angle: float) -> Vec2:
+    def rotate(self, double angle) -> Vec2:
         cdef double self_angle = atan2(self.y, self.x)
         cdef double magnitude = hypot(self.x, self.y)
         return v2_from_angle(self_angle + angle, magnitude)
@@ -456,7 +457,7 @@ cdef class Vec3:
         res.z = self.z if z is None else z
         return res
 
-    def round(self, ndigits: int = None) -> Vec3:
+    def round(self, ndigits: int | None = None) -> Vec3:
         return Vec3(
             round(self.x, ndigits),
             round(self.y, ndigits),
@@ -472,7 +473,7 @@ cdef class Vec3:
         return tuple(Vec3.generate(items))
 
     @staticmethod
-    def generate(items: Iterable[UVec]) -> Iterable[Vec3]:
+    def generate(items: Iterable[UVec]) -> Iterator[Vec3]:
         return (Vec3(item) for item in items)
 
     @staticmethod
@@ -522,7 +523,7 @@ cdef class Vec3:
         else:
             raise IndexError(f'invalid index {index}')
 
-    def __iter__(self) -> Iterable[float]:
+    def __iter__(self) -> Iterator[float]:
         yield self.x
         yield self.y
         yield self.z

@@ -1,9 +1,7 @@
 
-ezdxf
-=====
+# ezdxf
 
-Abstract
---------
+## Abstract
 
 This Python package is designed to facilitate the creation and manipulation of DXF 
 documents, with compatibility across various DXF versions. It empowers users to 
@@ -13,22 +11,21 @@ Any unfamiliar DXF tags encountered in the document are gracefully ignored but r
 for future modifications. This feature enables the processing of DXF documents 
 containing data from third-party applications without any loss of valuable information.
 
-Quick-Info
-----------
+## Quick-Info
 
-- *ezdxf* is a Python package to create new DXF files and read/modify/write 
+- `ezdxf` is a Python package to create new DXF files and read/modify/write 
   existing DXF documents
 - MIT-License
 - the intended audience are programmers
-- requires at least Python 3.8
+- requires at least Python 3.9
 - OS independent
 - tested with CPython and pypy3
 - has type annotations and passes `mypy --ignore-missing-imports -p ezdxf` successful
-- additional required packages for the core package without add-ons: 
-  [typing_extensions](https://pypi.org/project/typing-extensions/), 
-  [pyparsing](https://pypi.org/project/pyparsing/),
-  [numpy](https://pypi.org/project/numpy/),
-  [fontTools](https://pypi.org/project/fonttools/)
+- additional required packages for the core package without add-ons
+  - [typing_extensions](https://pypi.org/project/typing-extensions/)
+  - [pyparsing](https://pypi.org/project/pyparsing/)
+  - [numpy](https://pypi.org/project/numpy/)
+  - [fontTools](https://pypi.org/project/fonttools/)
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
 - additional read-only support for DXF versions R13/R14 (upgraded to R2000)
 - additional read-only support for older DXF versions than R12 (upgraded to R12)
@@ -38,8 +35,7 @@ Quick-Info
   on [PyPI](https://pypi.org/project/ezdxf/) for Windows, Linux and macOS
 - command line script `ezdxf` to display, convert and inspect DXF files
 
-Included Extensions
--------------------
+## Included Extensions
 
 Additional packages required for these add-ons are not automatically installed 
 during the *basic* setup, for more information about the setup & dependencies 
@@ -114,8 +110,7 @@ The r12writer supports only the ENTITIES section of a DXF R12 drawing, no HEADER
 TABLES or BLOCKS section is present, except FIXED-TABLES are written, than some 
 additional predefined text styles and line types are available.
 
-Installation
-------------
+## Installation
 
 Basic installation by pip including the optional C-extensions from PyPI as 
 binary wheels:
@@ -130,8 +125,7 @@ drawing add-on:
 For more information about the setup & dependencies visit the 
 [documentation](https://ezdxf.mozman.at/docs/setup.html).
 
-Command Line
-------------
+## Command Line
 
 Use `python -m ezdxf ...` if your shell can't find the `ezdxf` script.
 
@@ -164,20 +158,25 @@ Preview and convert HPGL/2 plot files:
     ezdxf hpgl <file.plt>
 
 
-Website
--------
+## Website
 
 https://ezdxf.mozman.at/
 
-Documentation
--------------
+## Documentation
 
 Documentation of the development version at https://ezdxf.mozman.at/docs
 
 Documentation of the latest release at https://ezdxf.readthedocs.io/
 
-Contribution
-------------
+## Knowledge Graph
+
+The knowledge graph contains additional information beyond the documentation and is 
+managed by [logseq](https://logseq.com/).  The source data is included in the repository 
+in the folder `ezdxf/notes`.  There is also a [HTML export](https://ezdxf.mozman.at/notes/#/page/ezdxf) 
+on the website which gets regular updates.
+
+
+## Contribution
 
 The source code of *ezdxf* can be found at __GitHub__, target your pull requests 
 to the `master` branch:
@@ -185,8 +184,7 @@ to the `master` branch:
 https://github.com/mozman/ezdxf.git
 
 
-Feedback
---------
+## Feedback
 
 Questions and feedback at __GitHub Discussions__:
 
@@ -200,8 +198,18 @@ Issue tracker at __GitHub__:
 
 http://github.com/mozman/ezdxf/issues
 
-Contact
--------
+## Release Notes
+
+The [release notes](https://ezdxf.mozman.at/notes/#/page/release%20notes) are included 
+in the knowledge graph.
+
+## Changelog
+
+The [changelog](https://ezdxf.mozman.at/notes/#/page/changelog) is included 
+in the knowledge graph.
+
+
+## Contact
 
 Please __always__ post questions at the [forum](https://github.com/mozman/ezdxf/discussions) 
 or [stack overflow](https://stackoverflow.com/) to make answers 

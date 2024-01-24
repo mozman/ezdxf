@@ -139,6 +139,10 @@ Draw
 
 Convert the DXF file "gear.dxf" into a SVG file by the *Matplotlib* backend:
 
+.. versionadded:: 1.2.0
+  
+  support for more backends
+
 .. code-block:: Text
 
     C:\> ezdxf draw -o gear.svg gear.dxf
@@ -172,27 +176,35 @@ Print help:
 
 .. code-block:: Text
 
-    C:\> ezdxf draw -h
-    usage: ezdxf draw [-h] [--formats] [-l LAYOUT] [--all-layers-visible]
-                      [--all-entities-visible] [-o OUT] [--dpi DPI] [-v]
-                      [FILE]
+  C:\> ezdxf draw -h
+  usage: ezdxf draw [-h] [--backend {matplotlib,qt,mupdf,custom_svg}] [--formats]
+                    [-l LAYOUT]
+                    [--background {DEFAULT,WHITE,BLACK,PAPERSPACE,MODELSPACE,OFF,CUSTOM}]
+                    [--all-layers-visible] [--all-entities-visible] [-o OUT]
+                    [--dpi DPI] [-f] [-v]
+                    [FILE]
 
-    positional arguments:
-      FILE                  DXF file to view or convert
+  positional arguments:
+    FILE                  DXF file to view or convert
 
-    optional arguments:
-      -h, --help            show this help message and exit
-      --formats             show all supported export formats and exit
-      -l LAYOUT, --layout LAYOUT
-                            select the layout to draw, default is "Model"
-      --all-layers-visible  draw all layers including the ones marked as invisible
-      --all-entities-visible
-                            draw all entities including the ones marked as
-                            invisible (some entities are individually marked as
-                            invisible even if the layer is visible)
-      -o OUT, --out OUT     output filename for export
-      --dpi DPI             target render resolution, default is 300
-      -v, --verbose         give more output
+  options:
+    -h, --help            show this help message and exit
+    --backend {matplotlib,qt,mupdf,custom_svg}
+                          choose the backend to use for rendering
+    --formats             show all supported export formats and exit
+    -l LAYOUT, --layout LAYOUT
+                          select the layout to draw, default is "Model"
+    --background {DEFAULT,WHITE,BLACK,PAPERSPACE,MODELSPACE,OFF,CUSTOM}
+                          choose the background color to use
+    --all-layers-visible  draw all layers including the ones marked as invisible
+    --all-entities-visible
+                          draw all entities including the ones marked as invisible
+                          (some entities are individually marked as invisible even if
+                          the layer is visible)
+    -o OUT, --out OUT     output filename for export
+    --dpi DPI             target render resolution, default is 300
+    -f, --force           overwrite the destination if it already exists
+    -v, --verbose         give more output
 
 .. _view_command:
 
@@ -425,20 +437,25 @@ Strip
 Strip comment tags (group code 999) from ASCII DXF files and can remove the
 THUMBNAILIMAGE section. Binary DXF files are not supported.
 
+.. versionadded:: 1.1.3
+  
+    remove handles from DXF R12 and older
+
 .. code-block:: Text
 
-    C:\> ezdxf strip -h
-    usage: ezdxf strip [-h] [-b] [-v] FILE [FILE ...]
+  C:\> ezdxf strip -h
+  usage: ezdxf strip [-h] [-b] [-t] [--handles] [-v] FILE [FILE ...]
 
-    positional arguments:
-      FILE           DXF file to process, wildcards "*" and "?" are supported
+  positional arguments:
+    FILE             DXF file to process, wildcards "*" and "?" are supported
 
-    optional arguments:
-      -h, --help       show this help message and exit
-      -b, --backup     make a backup copy with extension ".bak" from the DXF file,
-                       overwrites existing backup files
-      -t, --thumbnail  strip THUMBNAILIMAGE section
-      -v, --verbose    give more output
+  options:
+    -h, --help       show this help message and exit
+    -b, --backup     make a backup copy with extension ".bak" from the DXF file,
+                    overwrites existing backup files
+    -t, --thumbnail  strip THUMBNAILIMAGE section
+    --handles        remove handles from DXF R12 or older files
+    -v, --verbose    give more output
 
 .. _config_command:
 

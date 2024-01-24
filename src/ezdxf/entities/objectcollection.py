@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2022 Manfred Moitzi
+# Copyright (c) 2018-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -42,6 +42,7 @@ class ObjectCollection(Generic[T]):
     objects have the name "Standard".
 
     """
+
     def __init__(
         self,
         doc: Drawing,
@@ -51,9 +52,7 @@ class ObjectCollection(Generic[T]):
         self.doc: Drawing = doc
         self.object_dict_name = dict_name
         self.object_type: str = object_type
-        self.object_dict: Dictionary = doc.rootdict.get_required_dict(
-            dict_name
-        )
+        self.object_dict: Dictionary = doc.rootdict.get_required_dict(dict_name)
 
     def update_object_dict(self) -> None:
         self.object_dict = self.doc.rootdict.get_required_dict(self.object_dict_name)
@@ -62,7 +61,7 @@ class ObjectCollection(Generic[T]):
         pass
 
     def __iter__(self) -> Iterator[tuple[str, T]]:
-        return self.object_dict.items()
+        return self.object_dict.items()  # type: ignore
 
     def __len__(self) -> int:
         return len(self.object_dict)
@@ -109,7 +108,7 @@ class ObjectCollection(Generic[T]):
         name = make_table_key(name)
         for entry_name, obj in self.object_dict.items():
             if make_table_key(entry_name) == name:
-                return obj
+                return obj  # type: ignore
         return default
 
     def new(self, name: str) -> T:
@@ -131,9 +130,7 @@ class ObjectCollection(Generic[T]):
         """
         name = validate_name(name)
         if not self.is_unique_name(name):
-            raise DXFValueError(
-                f"{self.object_type} entry {name} already exists."
-            )
+            raise DXFValueError(f"{self.object_type} entry {name} already exists.")
         return self._new(name, dxfattribs={"name": name})
 
     def duplicate_entry(self, name: str, new_name: str) -> T:

@@ -1,6 +1,8 @@
 #  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
+import string
 import typing
 from typing import (
     TYPE_CHECKING,
@@ -191,6 +193,7 @@ class Recover:
             recover_tool.section_dict["TABLES"] = tables
         if recover_tool.dxfversion > "AC1009":
             recover_tool.recover_rootdict()
+            recover_tool.fix_broken_layout_links()
         section_dict = recover_tool.section_dict
         for name, entities in section_dict.items():
             if name in {"TABLES", "BLOCKS", "OBJECTS", "ENTITIES"}:
@@ -446,6 +449,12 @@ class Recover:
                 )
             )
 
+    def fix_broken_layout_links(self):
+        """Fixes broke links (block_record_handle) between LAYOUT and BLOCK_RECORD 
+        entities. See issue #997 for more information.
+        """
+        pass
+
 
 def _detect_dxf_version(header: list) -> str:
     next_is_dxf_version = False
@@ -637,6 +646,11 @@ DWGCODEPAGE = b"$DWGCODEPAGE"
 ACADVER = b"$ACADVER"
 
 
+def _strip_whitespace(s: str) -> str:
+    ws = set(string.whitespace)
+    return "".join([c for c in s if c not in ws])
+
+
 def detect_encoding(tags: Iterable[DXFTag]) -> str:
     """Detect text encoding from header variables $DWGCODEPAGE and $ACADVER
     out of a stream of DXFTag objects.
@@ -721,6 +735,7 @@ def byte_tag_compiler(
     def recover_float(s: Union[str, bytes]) -> float:
         if isinstance(s, bytes):
             s = s.decode(encoding="utf8", errors="ignore")
+        s = _strip_whitespace(s)
         value = _search_float(s)
         msg = f'recovered invalid floating point value "{s}" near line {line} as "{value}"'
         messages.append((AuditError.INVALID_FLOATING_POINT_VALUE, msg))

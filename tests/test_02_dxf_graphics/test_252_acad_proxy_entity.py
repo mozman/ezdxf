@@ -9,7 +9,7 @@ from ezdxf.entities import ACADProxyEntity
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Matrix44
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
-
+from ezdxf.entities.copy import CopyNotSupported
 
 @pytest.fixture(scope="module")
 def proxy() -> ACADProxyEntity:
@@ -71,7 +71,7 @@ def test_proxy_entity_is_not_transformable(proxy):
 
 def test_proxy_graphic_is_not_copyable(proxy):
     # Has to be copied as virtual entities!
-    with pytest.raises(TypeError):
+    with pytest.raises(CopyNotSupported):
         proxy.copy()
 
 

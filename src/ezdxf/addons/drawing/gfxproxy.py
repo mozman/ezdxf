@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Iterable, Iterator
@@ -6,6 +6,7 @@ from ezdxf.entities import DXFGraphic, DXFEntity
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import AbstractTagWriter
 from ezdxf.protocols import SupportsVirtualEntities
+from ezdxf.entities.copy import default_copy, CopyNotSupported
 
 
 class DXFGraphicProxy(DXFGraphic):
@@ -39,8 +40,8 @@ class DXFGraphicProxy(DXFGraphic):
     def virtual_entities(self) -> Iterable[DXFGraphic]:
         return self.__virtual_entities__()
 
-    def raw_copy(self) -> DXFGraphicProxy:
-        raise const.DXFTypeError(f"Cloning of DXFGraphicProxy() not supported.")
+    def copy(self, copy_strategy=default_copy) -> DXFGraphicProxy:
+        raise CopyNotSupported(f"Copying of DXFGraphicProxy() not supported.")
 
     def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         # prevent dxf export

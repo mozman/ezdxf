@@ -1,4 +1,4 @@
-include NEWS.md README.md LICENSE
+include README.md LICENSE
 include requirements.txt
 include src/ezdxf/py.typed
 recursive-include src/ezdxf/acc *.hpp *.cpp *.h *.c *.pxd *.pyx

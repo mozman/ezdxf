@@ -1,4 +1,4 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import cast, Sequence

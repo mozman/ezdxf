@@ -1,0 +1,3 @@
+- The [[AutoCAD]] application is the ground truth of [[DXF]], because the [[DXF Reference]] isn't feature complete and does not describe every structure you need to know to build correct and valid  [[DXF]] files.
+	- If [[AutoCAD]] opens a [[DXF]] file - the DXF file is valid.
+	- The free [[DWG Trueview]] application uses the same rendering engine as [[AutoCAD]] and can be used to verify [[DXF]] files.

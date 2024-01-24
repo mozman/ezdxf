@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Iterable, Sequence, Optional, Iterator, Union, Callable
@@ -103,10 +103,10 @@ class ClippingPolygon2d:
                 clip_end.y - clip_start.y
             ) * (point.x - clip_start.x) >= 0.0
 
-        def edge_intersection() -> Vec2:
+        def edge_intersection() -> Vec2:  
             return intersection_line_line_2d(
                 (edge_start, edge_end), (clip_start, clip_end)
-            )
+            ) # type: ignore
 
         # The clipping polygon is always treated as a closed polyline!
         clip_start = self._clipping_polygon[-1]
@@ -136,7 +136,7 @@ class ClippingPolygon2d:
         def edge_intersection() -> Vec2:
             return intersection_line_line_2d(
                 (edge_start, edge_end), (clip_start, clip_end)
-            )
+            )  # type: ignore
 
         # The clipping polygon is always treated as a closed polyline!
         clip_start = self._clipping_polygon[-1]
@@ -223,7 +223,7 @@ def clip_polygon_2d(
 ) -> Sequence[Vec2]:
     """Clip the `subject` polygon by the **convex** clipping polygon `clip`.
 
-    Implements the `Sutherland–Hodgman`_ algorithm for clipping polygons.
+    Implements the `Sutherland-Hodgman`_ algorithm for clipping polygons.
 
     Args:
         clip: the convex clipping polygon as iterable of vertices
@@ -235,7 +235,7 @@ def clip_polygon_2d(
     Returns:
         the clipped subject as list of :class:`~ezdxf.math.Vec2`
 
-    .. _Sutherland–Hodgman: https://de.wikipedia.org/wiki/Algorithmus_von_Sutherland-Hodgman
+    .. _Sutherland-Hodgman: https://de.wikipedia.org/wiki/Algorithmus_von_Sutherland-Hodgman
 
     """
     clipper = ClippingPolygon2d(Vec2.generate(clip), ccw_check)
@@ -270,7 +270,7 @@ class _Node:
         self.prev: _Node = None  # type: ignore
 
         # Reference to the corresponding intersection vertex in the other polygon
-        self.neighbour: _Node = None  # type: ignore
+        self.neighbor: _Node = None  # type: ignore
 
         # True if intersection is an entry point, False if exit
         self.entry: bool = entry
@@ -286,8 +286,8 @@ class _Node:
 
     def set_checked(self):
         self.checked = True
-        if self.neighbour and not self.neighbour.checked:
-            self.neighbour.set_checked()
+        if self.neighbor and not self.neighbor.checked:
+            self.neighbor.set_checked()
 
 
 class IntersectionError(Exception):
@@ -429,8 +429,8 @@ class GHPolygon:
                         clipper_node = _Node(
                             ip, uc, intersect=True, entry=False
                         )
-                        subject_node.neighbour = clipper_node
-                        clipper_node.neighbour = subject_node
+                        subject_node.neighbor = clipper_node
+                        clipper_node.neighbor = subject_node
 
                         self.insert(
                             subject_node,
@@ -477,7 +477,7 @@ class GHPolygon:
                         if current.intersect:
                             break
 
-                current = current.neighbour
+                current = current.neighbor
                 if current.checked:
                     break
 

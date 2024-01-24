@@ -11,14 +11,6 @@ Linear algebra module **for internal usage**: :mod:`ezdxf.math.linalg`
 Functions
 ---------
 
-.. autofunction:: gauss_jordan_solver
-
-.. autofunction:: gauss_jordan_inverse
-
-.. autofunction:: gauss_vector_solver
-
-.. autofunction:: gauss_matrix_solver
-
 .. autofunction:: tridiagonal_vector_solver
 
 .. autofunction:: tridiagonal_matrix_solver
@@ -29,7 +21,6 @@ Functions
 
 .. autofunction:: compact_banded_matrix
 
-.. autofunction:: freeze_matrix
 
 Matrix Class
 ------------
@@ -42,49 +33,39 @@ Matrix Class
 
     .. autoattribute:: shape
 
-    .. automethod:: reshape
+    .. automethod:: append_col
 
-    .. automethod:: identity
-
-    .. automethod:: row
-
-    .. automethod:: iter_row
+    .. automethod:: append_row
 
     .. automethod:: col
 
-    .. automethod:: iter_col
+    .. automethod:: cols
+
+    .. automethod:: determinant
 
     .. automethod:: diag
 
-    .. automethod:: iter_diag
+    .. automethod:: freeze
+
+    .. automethod:: identity
+
+    .. automethod:: inverse
+
+    .. automethod:: isclose
+
+    .. automethod:: reshape
+
+    .. automethod:: row
 
     .. automethod:: rows
-
-    .. automethod:: cols
-
-    .. automethod:: set_row
 
     .. automethod:: set_col
 
     .. automethod:: set_diag
 
-    .. automethod:: append_row
-
-    .. automethod:: append_col
-
-    .. automethod:: swap_rows
-
-    .. automethod:: swap_cols
+    .. automethod:: set_row
 
     .. automethod:: transpose
-
-    .. automethod:: inverse
-
-    .. automethod:: determinant
-
-    .. automethod:: freeze
-
-    .. automethod:: lu_decomp
 
     .. automethod:: __getitem__
 
@@ -98,20 +79,16 @@ Matrix Class
 
     .. automethod:: __mul__
 
-LUDecomposition Class
----------------------
 
-.. autoclass:: LUDecomposition
+NumpySolver
+-----------
 
-    .. autoattribute:: nrows
+.. autoclass:: NumpySolver
 
     .. automethod:: solve_vector
 
     .. automethod:: solve_matrix
 
-    .. automethod:: inverse
-
-    .. automethod:: determinant
 
 BandedMatrixLU Class
 --------------------
@@ -144,7 +121,6 @@ BandedMatrixLU Class
 
     .. automethod:: solve_matrix
 
-    .. automethod:: determinant
 
 .. _Gauss-Jordan: https://en.wikipedia.org/wiki/Gaussian_elimination
 .. _Gauss-Elimination: https://en.wikipedia.org/wiki/Gaussian_elimination

@@ -159,7 +159,6 @@ which is for some backends a requirement to place the DXF content on size limite
 
 .. autoclass:: ezdxf.addons.drawing.recorder.Override
 
-.. autoclass:: ezdxf.addons.drawing.recorder.RecordType
 
 Layout
 ------
@@ -365,6 +364,11 @@ HatchPolicy
 -----------
 
 .. autoclass:: ezdxf.addons.drawing.config.HatchPolicy
+
+ImagePolicy
+-----------
+
+.. autoclass:: ezdxf.addons.drawing.config.ImagePolicy
 
 LinePolicy
 ----------

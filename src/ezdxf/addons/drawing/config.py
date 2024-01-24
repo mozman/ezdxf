@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, Matthew Broadway
+# Copyright (c) 2021-2024, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
 from typing import Optional
@@ -13,15 +13,21 @@ from .type_hints import Color
 
 
 class LinePolicy(Enum):
-    """
+    """This enum is used to define how to render linetypes.
+
+    .. note::
+
+        Text and shapes in linetypes are not supported.
+
     Attributes:
         SOLID: draw all lines as solid regardless of the linetype style
         ACCURATE: render styled lines as accurately as possible
+        APPROXIMATE: ignored since v0.18.1 - uses always ACCURATE by default
 
     """
 
     SOLID = auto()
-    APPROXIMATE = auto()  # ignored since v0.18.1 => ACCURATE
+    APPROXIMATE = auto()  # ignored since v0.18.1
     ACCURATE = auto()
 
 
@@ -60,6 +66,7 @@ class HatchPolicy(Enum):
         SHOW_SOLID: show HATCH entities as solid filling regardless of the pattern
 
     """
+
     NORMAL = auto()
     IGNORE = auto()
     SHOW_OUTLINE = auto()
@@ -123,6 +130,8 @@ class BackgroundPolicy(Enum):
         DEFAULT: as resolved by the :class:`Frontend` class
         WHITE: white background
         BLACK: black background
+        PAPERSPACE: default paperspace background
+        MODELSPACE: default modelspace background
         OFF: fully transparent background
         CUSTOM: custom background color by :attr:`Configuration.custom_bg_color`
 
@@ -131,6 +140,8 @@ class BackgroundPolicy(Enum):
     DEFAULT = auto()
     WHITE = auto()
     BLACK = auto()
+    PAPERSPACE = auto()
+    MODELSPACE = auto()
     OFF = auto()
     CUSTOM = auto()
 
@@ -143,7 +154,7 @@ class TextPolicy(Enum):
         OUTLINE: text is rendered as outline paths
         REPLACE_RECT: replace text by a rectangle
         REPLACE_FILL: replace text by a filled rectangle
-        IGNORE: ignore text at all
+        IGNORE: ignore text entirely
 
     """
 
@@ -151,6 +162,25 @@ class TextPolicy(Enum):
     OUTLINE = auto()
     REPLACE_RECT = auto()
     REPLACE_FILL = auto()
+    IGNORE = auto()
+
+
+class ImagePolicy(Enum):
+    """This enum is used to define the image rendering.
+
+    Attributes:
+        DISPLAY: display images as they would appear in a regular CAD application
+        RECT: display images as rectangles
+        MISSING: images are always rendered as-if they are missing (rectangle + path text)
+        PROXY: images are rendered using their proxy representations (rectangle)
+        IGNORE: ignore images entirely
+
+    """
+
+    DISPLAY = auto()
+    RECT = auto()
+    MISSING = auto()
+    PROXY = auto()
     IGNORE = auto()
 
 
@@ -218,6 +248,7 @@ class Configuration:
             background color as "#RRGGBBAA" color string (RGB+alpha)
         lineweight_policy:
         text_policy:
+        image_policy: the method for drawing IMAGE entities
 
     """
 
@@ -243,6 +274,7 @@ class Configuration:
     custom_bg_color: Color = "#ffffff"
     lineweight_policy: LineweightPolicy = LineweightPolicy.ABSOLUTE
     text_policy: TextPolicy = TextPolicy.FILLING
+    image_policy: ImagePolicy = ImagePolicy.DISPLAY
 
     @staticmethod
     def defaults() -> Configuration:

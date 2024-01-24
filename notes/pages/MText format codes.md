@@ -1,0 +1,44 @@
+tags:: DXF-Internals, MTEXT
+url:: <http://adndevblog.typepad.com/autocad/2017/09/dissecting-mtext-format-codes.html>
+
+- The inline format codes of [[MTEXT]] entities looks like this:
+	- `\A1;\fAIGDT|b0|i0;\H2.5000;\ln\fArial|b0|i0;\H2.5000;68{\H1.3;\S+0,8^+0,1;}`
+- ## Understanding each format code:
+	- `\f` = Font file name, in this example it is `AIGDT`
+		- AIGDT stands for Autodesk Inventor Geomertic Dimension and Tolerance font file.
+		- codes starting with pipe are generally displays the traits of font
+			- `b` tells _bold_ where `0` is off, and `1` is on.
+			- `i` tells _italic_ where `0` is off and `1` is on.
+			- `c` tells _code page_ followed by code page number for example `|c238`
+			- `p`  tells _pitch_ followed by number for example `|p10`
+- `\L`    Start underline
+- `\l`    Stop underline
+- `\O`    Start overstrike
+- `\o`    Stop overstrike
+- `\K`    Start strike-through
+- `\P`    New paragraph (new line)
+- `\pxi`    Control codes for bullets, numbered paragraphs and columns
+- `\X`    Paragraph wrap on the dimension line (only in dimensions)
+- `\Q`    Slanting (obliquing) text by angle - eg. `\Q30;`
+- `\H`    Text height - eg. `\H3x` or `\H2.500`
+- `\W`    Text width - eg. `\W0.8x`
+- `\S`     Stacking Fractions
+	- eg. `\SX/Y` renders $$\dfrac{X}{Y}$$
+	- eg. `\SX^Y` renders $$\Large ^{X}_{Y}$$
+	- eg. `\S1#4` renders $$^1/_4$$
+- `\A`   Alignment
+	- `\A0;` = bottom
+	- `\A1;` = center
+	- `\A2;` = top
+- `\C`  Color change
+	- `\C1;` = red
+	- `\C2;` = yellow
+	- `\C3;` = green
+	- `\C4;` = cyan
+	- `\C5;` = blue
+	- `\C6;` = magenta
+	- `\C7;` = white
+- `\T`  Tracking, char.spacing - eg. `\T2;`
+- `\~`  Non-wrapping space, hard space
+- `{}` - Braces - define the text area influenced by the code
+- `\`  Escape character - eg. `\\ = "\"`, `\{ = "{"`

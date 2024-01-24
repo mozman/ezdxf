@@ -1,10 +1,13 @@
-# Copyright (c) 2011-2023, Manfred Moitzi
+# Copyright (c) 2011-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, Sequence, Iterator
+from typing import Iterable, Sequence
 
 from functools import partial
 import math
+import numpy as np
+import numpy.typing as npt
+
 from ezdxf.math import (
     Vec3,
     Vec2,
@@ -14,7 +17,6 @@ from ezdxf.math import (
     Y_AXIS,
     arc_angle_span_rad,
 )
-from decimal import Decimal
 
 TOLERANCE = 1e-10
 RADIANS_90 = math.pi / 2.0
@@ -27,46 +29,21 @@ __all__ = [
     "convex_hull_2d",
     "distance_point_line_2d",
     "is_convex_polygon_2d",
+    "is_axes_aligned_rectangle_2d",
     "is_point_on_line_2d",
     "is_point_in_polygon_2d",
     "is_point_left_of_line",
     "point_to_line_relation",
-    "linspace",
     "enclosing_angles",
     "sign",
     "area",
+    "np_area",
     "circle_radius_3p",
     "TOLERANCE",
     "has_matrix_2d_stretching",
     "decdeg2dms",
     "ellipse_param_span",
 ]
-
-
-def linspace(
-    start: float, stop: float, num: int, endpoint=True
-) -> Iterator[float]:
-    """Return evenly spaced numbers over a specified interval, like
-    numpy.linspace().
-
-    Returns `num` evenly spaced samples, calculated over the interval
-    [start, stop]. The endpoint of the interval can optionally be excluded.
-
-    """
-    if num < 0:
-        raise ValueError(f"Number of samples, {num}, must be non-negative.")
-    elif num == 0:
-        return
-    elif num == 1:
-        yield start
-        return
-
-    start_dec = Decimal(start)
-    count = (num - 1) if endpoint else num
-    delta = (Decimal(stop) - start_dec) / count
-    for _ in range(num):
-        yield float(start_dec)
-        start_dec += delta
 
 
 def sign(f: float) -> float:
@@ -98,7 +75,7 @@ def ellipse_param_span(start_param: float, end_param: float) -> float:
     return arc_angle_span_rad(float(start_param), float(end_param))
 
 
-def closest_point(base: UVec, points: Iterable[UVec]) -> Vec3:
+def closest_point(base: UVec, points: Iterable[UVec]) -> Vec3 | None:
     """Returns the closest point to a give `base` point.
 
     Args:
@@ -107,11 +84,11 @@ def closest_point(base: UVec, points: Iterable[UVec]) -> Vec3:
 
     """
     base = Vec3(base)
-    min_dist = None
-    found = None
+    min_dist: float | None = None
+    found: Vec3 | None = None
     for point in points:
         p = Vec3(point)
-        dist = (base - p).magnitude
+        dist = base.distance(p)
         if (min_dist is None) or (dist < min_dist):
             min_dist = dist
             found = p
@@ -127,6 +104,7 @@ def convex_hull_2d(points: Iterable[UVec]) -> list[Vec2]:
         points: iterable of points, z-axis is ignored
 
     """
+
     # Source: https://massivealgorithms.blogspot.com/2019/01/convex-hull-sweep-line.html?m=1
     def cross(o: Vec2, a: Vec2, b: Vec2) -> float:
         return (a - o).det(b - o)
@@ -134,9 +112,7 @@ def convex_hull_2d(points: Iterable[UVec]) -> list[Vec2]:
     vertices = Vec2.list(set(points))
     vertices.sort()
     if len(vertices) < 3:
-        raise ValueError(
-            "Convex hull calculation requires 3 or more unique points."
-        )
+        raise ValueError("Convex hull calculation requires 3 or more unique points.")
 
     n: int = len(vertices)
     hull: list[Vec2] = [Vec2()] * (2 * n)
@@ -156,9 +132,7 @@ def convex_hull_2d(points: Iterable[UVec]) -> list[Vec2]:
     return hull[:k]
 
 
-def enclosing_angles(
-    angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE
-):
+def enclosing_angles(angle, start_angle, end_angle, ccw=True, abs_tol=TOLERANCE):
     isclose = partial(math.isclose, abs_tol=abs_tol)
 
     s = start_angle % math.tau
@@ -238,9 +212,7 @@ def point_to_line_relation(
         return -1
 
 
-def is_point_left_of_line(
-    point: Vec2, start: Vec2, end: Vec2, colinear=False
-) -> bool:
+def is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2, colinear=False) -> bool:
     """Returns ``True`` if `point` is "left of line" defined by `start-` and
     `end` point, a colinear point is also "left of line" if argument `colinear`
     is ``True``.
@@ -332,24 +304,39 @@ def circle_radius_3p(a: Vec3, b: Vec3, c: Vec3) -> float:
 
 
 def area(vertices: Iterable[UVec]) -> float:
-    """Returns the area of a polygon, returns the projected area in the
-    xy-plane for any vertices (z-axis will be ignored).
+    """Returns the area of a polygon.
+
+    Returns the projected area in the xy-plane for any vertices (z-axis will be ignored).
+
     """
-    _vertices = Vec2.list(vertices)
-    if len(_vertices) < 3:
+    # TODO: how to do all this in numpy efficiently?
+
+    vec2s = Vec2.list(vertices)
+    if len(vec2s) < 3:
         return 0.0
 
     # close polygon:
-    if not _vertices[0].isclose(_vertices[-1]):
-        _vertices.append(_vertices[0])
+    if not vec2s[0].isclose(vec2s[-1]):
+        vec2s.append(vec2s[0])
+    return np_area(np.array([(v.x, v.y) for v in vec2s], dtype=np.float64))
 
-    return abs(
-        sum(
-            (p1.x * p2.y - p1.y * p2.x)
-            for p1, p2 in zip(_vertices, _vertices[1:])
-        )
-        * 0.5
-    )
+
+def np_area(vertices: npt.NDArray) -> float:
+    """Returns the area of a polygon.
+
+    Returns the projected area in the xy-plane, the z-axis will be ignored.
+    The polygon has to be closed (first vertex == last vertex) and should have 3 or more
+    corner vertices to return a valid result.
+
+    Args:
+        vertices: numpy array [:, n], n > 1
+
+    """
+    p1x = vertices[:-1, 0]
+    p2x = vertices[1:, 0]
+    p1y = vertices[:-1, 1]
+    p2y = vertices[1:, 1]
+    return np.abs(np.sum(p1x * p2y - p1y * p2x)) * 0.5
 
 
 def has_matrix_2d_stretching(m: Matrix44) -> bool:
@@ -365,10 +352,10 @@ def has_matrix_2d_stretching(m: Matrix44) -> bool:
     return not math.isclose(ux.magnitude_square, uy.magnitude_square)
 
 
-def is_convex_polygon_2d(
-    polygon: list[Vec2], *, strict=False, epsilon=1e-6
-) -> bool:
-    """Returns ``True`` if the 2D `polygon` is convex. This function works with
+def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> bool:
+    """Returns ``True`` if the 2D `polygon` is convex.
+
+    This function works with
     open and closed polygons and clockwise or counter-clockwise vertex
     orientation.
     Coincident vertices will always be skipped and if argument `strict`
@@ -381,7 +368,8 @@ def is_convex_polygon_2d(
     if len(polygon) < 3:
         return False
 
-    signs: list[int] = []
+    global_sign: int = 0
+    current_sign: int = 0
     prev = polygon[-1]
     prev_prev = polygon[-2]
     for vertex in polygon:
@@ -390,14 +378,57 @@ def is_convex_polygon_2d(
 
         det = (prev - vertex).det(prev_prev - prev)
         if abs(det) >= epsilon:
-            signs.append(-1 if det < 0.0 else +1)
+            current_sign = -1 if det < 0.0 else +1 
+            if not global_sign:
+                global_sign = current_sign
+            # do all determinants have the same sign?
+            if global_sign != current_sign:
+                return  False
         elif strict:  # collinear vertices
-            return False
+            return False       
+            
         prev_prev = prev
         prev = vertex
+    return bool(global_sign)
 
-    if signs:
-        # Do all determinants have the same sign?
-        m = signs[0]
-        return all(m == s for s in signs)
+
+def is_axes_aligned_rectangle_2d(points: list[Vec2]) -> bool:
+    """Returns ``True`` if the given points represent a rectangle aligned with the
+    coordinate system axes.
+
+    The sides of the rectangle must be parallel to the x- and y-axes of the coordinate
+    system.  The rectangle can be open or closed (first point == last point) and
+    oriented clockwise or counter-clockwise.  Only works with 4 or 5 vertices, rectangles
+    that have sides with collinear edges are not considered rectangles.
+
+    .. versionadded:: 1.2.0
+
+    """
+
+    def is_horizontal(a: Vec2, b: Vec2) -> bool:
+        return math.isclose(a.y, b.y)
+
+    def is_vertical(a: Vec2, b: Vec2):
+        return math.isclose(a.x, b.x)
+
+    count = len(points)
+    if points[0].isclose(points[-1]):
+        count -= 1
+    if count != 4:
+        return False
+    p0, p1, p2, p3, *_ = points
+    if (
+        is_horizontal(p0, p1)
+        and is_vertical(p1, p2)
+        and is_horizontal(p2, p3)
+        and is_vertical(p3, p0)
+    ):
+        return True
+    if (
+        is_horizontal(p1, p2)
+        and is_vertical(p2, p3)
+        and is_horizontal(p3, p0)
+        and is_vertical(p0, p1)
+    ):
+        return True
     return False

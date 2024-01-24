@@ -1,7 +1,7 @@
-# Copyright (c) 2018-2023 Manfred Moitzi
+# Copyright (c) 2018-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Sequence, Iterable, Optional
+from typing import TYPE_CHECKING, Sequence, Iterable, Optional, Iterator
 from ezdxf.math import Vec3, UVec, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf.colors import RGB
 
@@ -59,37 +59,40 @@ class OCS:
         """z-axis unit vector"""
         return self.matrix.uz if self.transform else Z_AXIS
 
-    def from_wcs(self, point: UVec) -> UVec:
+    def from_wcs(self, point: UVec) -> Vec3:
         """Returns OCS vector for WCS `point`."""
+        p3 = Vec3(point)
         if self.transform:
-            return self.matrix.ocs_from_wcs(point)
+            return self.matrix.ocs_from_wcs(p3)
         else:
-            return point
+            return p3
 
-    def points_from_wcs(self, points: Iterable[UVec]) -> Iterable[UVec]:
+    def points_from_wcs(self, points: Iterable[UVec]) -> Iterator[Vec3]:
         """Returns iterable of OCS vectors from WCS `points`."""
+        _points = Vec3.generate(points)
         if self.transform:
             from_wcs = self.matrix.ocs_from_wcs
-            for point in points:
+            for point in _points:
                 yield from_wcs(point)
         else:
-            yield from points
+            yield from _points
 
-    def to_wcs(self, point: UVec) -> UVec:
+    def to_wcs(self, point: UVec) -> Vec3:
         """Returns WCS vector for OCS `point`."""
         if self.transform:
             return self.matrix.ocs_to_wcs(point)
         else:
-            return point
+            return Vec3(point)
 
-    def points_to_wcs(self, points: Iterable[UVec]) -> Iterable[UVec]:
+    def points_to_wcs(self, points: Iterable[UVec]) -> Iterator[Vec3]:
         """Returns iterable of WCS vectors for OCS `points`."""
+        _points = Vec3.generate(points)
         if self.transform:
             to_wcs = self.matrix.ocs_to_wcs
-            for point in points:
+            for point in _points:
                 yield to_wcs(point)
         else:
-            yield from points
+            yield from _points
 
     def render_axis(
         self,
@@ -193,7 +196,7 @@ class UCS:
         """Returns WCS point for UCS `point`."""
         return self.matrix.transform(point)
 
-    def points_to_wcs(self, points: Iterable[Vec3]) -> Iterable[Vec3]:
+    def points_to_wcs(self, points: Iterable[Vec3]) -> Iterator[Vec3]:
         """Returns iterable of WCS vectors for UCS `points`."""
         return self.matrix.transform_vertices(points)
 
@@ -205,7 +208,7 @@ class UCS:
         """Returns UCS point for WCS `point`."""
         return self.matrix.ucs_vertex_from_wcs(point)
 
-    def points_from_wcs(self, points: Iterable[Vec3]) -> Iterable[Vec3]:
+    def points_from_wcs(self, points: Iterable[Vec3]) -> Iterator[Vec3]:
         """Returns iterable of UCS vectors from WCS `points`."""
         from_wcs = self.from_wcs
         for point in points:
@@ -224,7 +227,7 @@ class UCS:
         wpoint = self.to_wcs(point)
         return OCS(self.uz).from_wcs(wpoint)
 
-    def points_to_ocs(self, points: Iterable[Vec3]) -> Iterable[Vec3]:
+    def points_to_ocs(self, points: Iterable[Vec3]) -> Iterator[Vec3]:
         """Returns iterable of OCS vectors for UCS `points`.
 
         The :class:`OCS` is defined by the z-axis of the :class:`UCS`.
@@ -492,14 +495,14 @@ class PassTroughUCS(UCS):
     def to_wcs(self, point: Vec3) -> Vec3:
         return point
 
-    def points_to_wcs(self, points: Iterable[Vec3]) -> Iterable[Vec3]:
-        return points
+    def points_to_wcs(self, points: Iterable[Vec3]) -> Iterator[Vec3]:
+        return iter(points)
 
     def to_ocs(self, point: Vec3) -> Vec3:
         return point
 
-    def points_to_ocs(self, points: Iterable[Vec3]) -> Iterable[Vec3]:
-        return points
+    def points_to_ocs(self, points: Iterable[Vec3]) -> Iterator[Vec3]:
+        return iter(points)
 
     def to_ocs_angle_deg(self, angle: float) -> float:
         return angle
@@ -510,5 +513,5 @@ class PassTroughUCS(UCS):
     def from_wcs(self, point: Vec3) -> Vec3:
         return point
 
-    def points_from_wcs(self, points: Iterable[Vec3]) -> Iterable[Vec3]:
-        return points
+    def points_from_wcs(self, points: Iterable[Vec3]) -> Iterator[Vec3]:
+        return iter(points)

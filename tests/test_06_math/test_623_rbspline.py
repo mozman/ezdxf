@@ -1,14 +1,14 @@
-# Copyright (c) 2012-2020 Manfred Moitzi
+# Copyright (c) 2012-2024 Manfred Moitzi
 # License: MIT License
 
 import math
 from math import isclose
+
 from ezdxf.math import (
     rational_bspline_from_arc,
     rational_bspline_from_ellipse,
     ConstructionEllipse,
     ConstructionArc,
-    linspace,
     BSpline,
     open_uniform_bspline,
 )

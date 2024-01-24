@@ -1,7 +1,8 @@
 # cython: language_level=3
 # distutils: language = c++
-#  Copyright (c) 2022-2023, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2022-2023, Manfred Moitzi
+# License: MIT License
+# type: ignore -- pylance sucks at type-checking cython files
 from typing import Tuple, Iterable, TYPE_CHECKING, Sequence
 import cython
 from .vector cimport Vec3, isclose, v3_from_cpp_vec3

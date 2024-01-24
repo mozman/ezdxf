@@ -16,6 +16,7 @@ from .font_manager import (
     FontNotFoundError,
     UnsupportedFont,
 )
+from .font_synonyms import FONT_SYNONYMS
 from .font_measurements import FontMeasurements
 from .glyphs import GlyphPath, Glyphs
 
@@ -268,6 +269,9 @@ def load():
     of `ezdxf`.
     """
     _load_font_manager()
+    # Add font name synonyms, see discussion #1002
+    # Find macOS fonts on Windows/Linux and vice versa.
+    font_manager.add_synonyms(FONT_SYNONYMS, reverse=True)
 
 
 def _get_font_manager_path():
@@ -305,7 +309,7 @@ def build_sut_font_manager_cache(repo_font_path: pathlib.Path) -> None:
             return
         except IOError as e:
             print(f"Error loading cache file: {str(e)}")
-    font_manager.build([str(repo_font_path)])
+    font_manager.build([str(repo_font_path)], support_dirs=False)
     s = font_manager.dumps()
     try:
         cache_file.write_text(s)
@@ -552,7 +556,11 @@ class TrueTypeFont(_CachedFont):
         except KeyError:
             pass
         try:
-            cache = TTFontRenderer(font_manager.get_ttf_font(ttf))
+            tt_font = font_manager.get_ttf_font(ttf)
+            try:  # see issue #990
+                cache = TTFontRenderer(tt_font)
+            except Exception:
+                raise UnsupportedFont
         except UnsupportedFont:
             fallback_font_name = font_manager.fallback_font_name()
             logger.info(f"replacing unsupported font '{ttf}' by '{fallback_font_name}'")
@@ -658,7 +666,7 @@ def make_font(
     """
     if font_name == MONOSPACE:
         return MonospaceFont(cap_height, width_factor)
-    ext = pathlib.Path(font_name).suffix
+    ext = pathlib.Path(font_name).suffix.lower()
     last_resort = MonospaceFont(cap_height, width_factor)
     if ext in SUPPORTED_TTF_TYPES:
         try:
@@ -685,6 +693,10 @@ def make_font(
         )
         if font_face is not None:
             return make_font(font_face.filename, cap_height, width_factor)
+    else:
+        logger.warning(f"unsupported font-name suffix: {font_name}")
+        font_name = font_manager.fallback_font_name()
+
     # return default TrueType font
     try:
         return TrueTypeFont(font_name, cap_height, width_factor)
@@ -730,4 +742,4 @@ def get_entity_font_face(entity: DXFEntity, doc: Optional[Drawing] = None) -> Fo
     return font_face
 
 
-_load_font_manager()
+load()

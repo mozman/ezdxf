@@ -109,7 +109,7 @@ class MengerSponge:
             location=location, length=length, level=level, kind=kind
         )
 
-    def vertices(self) -> Iterator[UVec]:
+    def vertices(self) -> Iterator[list[Vec3]]:
         """Yields the cube vertices as list of (x, y, z) tuples."""
         for location, length in self.cube_definitions:
             x, y, z = location
@@ -200,7 +200,7 @@ def manifold_faces(faces: list[Sequence[int]]) -> Iterator[Sequence[int]]:
 
 def _subdivide(
     location: UVec = (0.0, 0.0, 0.0), length: float = 1.0, kind: int = 0
-) -> list[tuple[UVec, float]]:
+) -> list[tuple[Vec3, float]]:
     """Divides a cube in sub-cubes and keeps only cubes determined by the
     building schema.
 

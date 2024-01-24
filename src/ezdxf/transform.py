@@ -14,7 +14,7 @@ from ezdxf.math import (
     InsertTransformationError,
 )
 from ezdxf.entities import DXFEntity, DXFGraphic, Circle, LWPolyline, Polyline, Ellipse
-
+from ezdxf.entities.copy import default_copy, CopyNotSupported
 MIN_SCALING_FACTOR = 1e-12
 
 
@@ -169,8 +169,8 @@ def _copy_entities(entities: Iterable[DXFEntity], log: Logger) -> list[DXFEntity
         if not entity.is_alive:
             continue
         try:
-            clone = entity.copy()
-        except const.DXFTypeError:
+            clone = entity.copy(copy_strategy=default_copy)
+        except CopyNotSupported:
             log.add(
                 Error.COPY_NOT_SUPPORTED,
                 f"{str(entity)} entity does not support copy",

@@ -1,7 +1,6 @@
-# Copyright (c) 2021-2023, Manfred Moitzi
+# Copyright (c) 2021-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Optional
 import math
 from ezdxf.math import (
     cubic_bezier_arc_parameters,
@@ -30,7 +29,7 @@ def unit_circle(
     start_angle: float = 0,
     end_angle: float = math.tau,
     segments: int = 1,
-    transform: Matrix44 = None,
+    transform: Matrix44 | None = None,
 ) -> Path:
     """Returns a unit circle as a :class:`Path` object, with the center at
     (0, 0, 0) and the radius of 1 drawing unit.
@@ -66,7 +65,7 @@ def wedge(
     start_angle: float,
     end_angle: float,
     segments: int = 1,
-    transform: Matrix44 = None,
+    transform: Matrix44 | None = None,
 ) -> Path:
     """Returns a wedge as a :class:`Path` object, with the center at
     (0, 0, 0) and the radius of 1 drawing unit.
@@ -131,7 +130,7 @@ def elliptic_transformation(
 
 
 def rect(
-    width: float = 1, height: float = 1, transform: Matrix44 = None
+    width: float = 1, height: float = 1, transform: Matrix44 | None = None
 ) -> Path:
     """Returns a closed rectangle as a :class:`Path` object, with the center at
     (0, 0, 0) and the given `width` and `height` in drawing units.
@@ -150,7 +149,7 @@ def rect(
     w2 = float(width) / 2.0
     h2 = float(height) / 2.0
     path = converter.from_vertices(
-        [(w2, h2), (-w2, h2), (-w2, -h2), (w2, h2)], close=True
+        [(w2, h2), (-w2, h2), (-w2, -h2), (w2, -h2)], close=True
     )
     if transform is None:
         return path
@@ -160,9 +159,9 @@ def rect(
 
 def ngon(
     count: int,
-    length: Optional[float] = None,
+    length: float | None = None,
     radius: float = 1.0,
-    transform: Optional[Matrix44] = None,
+    transform: Matrix44 | None = None,
 ) -> Path:
     """Returns a `regular polygon <https://en.wikipedia.org/wiki/Regular_polygon>`_
     a :class:`Path` object, with the center at (0, 0, 0).
@@ -184,7 +183,7 @@ def ngon(
     return converter.from_vertices(vertices, close=True)
 
 
-def star(count: int, r1: float, r2: float, transform: Matrix44 = None) -> Path:
+def star(count: int, r1: float, r2: float, transform: Matrix44 | None = None) -> Path:
     """Returns a `star shape <https://en.wikipedia.org/wiki/Star_polygon>`_ as
     a :class:`Path` object, with the center at (0, 0, 0).
 
@@ -213,7 +212,7 @@ def gear(
     bottom_width: float,
     height: float,
     outside_radius: float,
-    transform: Matrix44 = None,
+    transform: Matrix44 | None = None,
 ) -> Path:
     """
     Returns a `gear <https://en.wikipedia.org/wiki/Gear>`_ (cogwheel) shape as
@@ -233,9 +232,7 @@ def gear(
         transform: transformation Matrix applied to the gear shape
 
     """
-    vertices = forms.gear(
-        count, top_width, bottom_width, height, outside_radius
-    )
+    vertices = forms.gear(count, top_width, bottom_width, height, outside_radius)
     if transform is not None:
         vertices = transform.transform_vertices(vertices)
     return converter.from_vertices(vertices, close=True)
@@ -262,6 +259,7 @@ def helix(
         segments: cubic Bezier segments per turn
 
     """
+
     # Source of algorithm: https://www.arc.id.au/HelixDrawing.html
     def bezier_ctrl_points(b, angle, segments):
         zz = 0.0
@@ -280,6 +278,7 @@ def helix(
         b_1 = (1.0 - cos_a) * (3.0 - cos_a) * alpha * p
         b_2 = math.sin(alpha) * (4.0 - cos_a) * math.tan(alpha)
         return b_1 / b_2
+
     rx = radius
     ry = radius
     if not ccw:

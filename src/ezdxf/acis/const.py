@@ -1,4 +1,4 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2024, Manfred Moitzi
 #  License: MIT License
 import enum
 from ezdxf.version import __version__

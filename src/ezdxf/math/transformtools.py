@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING
@@ -30,7 +30,6 @@ __all__ = [
     "InsertCoordinateSystem",
 ]
 
-_FLIPPED_Z_AXIS = Vec3(0, 0, -1)
 _PLACEHOLDER_OCS = OCS()
 DEG = 180.0 / math.pi  # radians to degrees
 RADIANS = math.pi / 180.0  # degrees to radians
@@ -92,7 +91,7 @@ def transform_extrusion(extrusion: UVec, m: Matrix44) -> tuple[Vec3, bool]:
 
 
 class OCSTransform:
-    def __init__(self, extrusion: Vec3 = None, m: Matrix44 = None):
+    def __init__(self, extrusion: Vec3 | None = None, m: Matrix44 | None = None):
         if m is None:
             self.m = Matrix44()
         else:

@@ -1,0 +1,16 @@
+- [AutoCAD Help for XCLIP command](https://help.autodesk.com/view/ACD/2022/ENU/?guid=GUID-104EDB9F-F025-4F67-B5C9-B3F174CFE2F3)
+- [How clip to XREFS and Blocks](https://www.autodesk.com/blogs/autocad/how-to-use-the-xclip-command-for-clipping-boundaries-with-xrefs-and-blocks-tuesday-tips-with-brandon/)
+- The clipping path is attached to the [[INSERT]] entity via the [[Extension Dictionary]] and is stored in the [[SPATIAL_FILTER]] entity
+- The boundary  polyline can be open but must consist of straight line segments and cannot intersect itself.
+- The clipping can be inverted
+- ## DXF Structure
+	- The [[Extension Dictionary]] of the [[INSERT]] entity has an entry called `ACAD_FILTER` which references a [[DICTIONARY]] entity
+	- The `ACAD_FILTER` dictionary has an entry `SPATIAL` which references a [[SPATIAL_FILTER]] entity, this entity stores the information about the clipping path
+-
+- ## Clipping Path Visibility
+	- The visibility of the clipping path is stored in the [[SPATIAL_FILTER]] entity
+	- The system variable [XCLIPFRAME](https://help.autodesk.com/view/ACD/2024/ENU/?guid=GUID-DA921BBF-A545-4144-A63D-D866772C3759) determines when the clipping path is displayed:
+		- 0: The frame is not visible and it is not plotted. The frame temporarily reappears during selection preview or object selection.
+		- 1: The clipped xref frame is displayed and plotted
+		- 2: The clipped xref frame is displayed but not plotted
+	- Init value of `XCLIPFRAME` is 2.

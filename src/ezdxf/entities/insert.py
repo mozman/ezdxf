@@ -627,6 +627,10 @@ class Insert(LinkedEntities):
         if the property :attr:`Insert.mcount` > 1, use the :meth:`Insert.multi_insert`
         method to resolve the MINSERT entity into multiple INSERT entities.
 
+        This method does not apply the clipping path created by the XCLIP command. 
+        The method returns all entities and ignores the clipping path polygon and no 
+        entity is clipped.
+
         The `skipped_entity_callback()` will be called for all entities which are not
         processed, signature:
         :code:`skipped_entity_callback(entity: DXFEntity, reason: str)`,

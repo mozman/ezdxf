@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2024, Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -34,13 +34,16 @@ class TestBoundingBox:
         bbox = BoundingBox([])
         assert bbox.has_data is False
 
-    @pytest.mark.parametrize("v", [
-        [],
-        [(0, 0, 0)],
-        [(1, 0, 0), (2, 0, 0)],
-        [(1, 1, 0), (2, 2, 0)],
-        [(1, 1, 1), (1, 1, 1)],
-    ])
+    @pytest.mark.parametrize(
+        "v",
+        [
+            [],
+            [(0, 0, 0)],
+            [(1, 0, 0), (2, 0, 0)],
+            [(1, 1, 0), (2, 2, 0)],
+            [(1, 1, 1), (1, 1, 1)],
+        ],
+    )
     def test_is_empty(self, v):
         """Volume is 0."""
         assert BoundingBox(v).is_empty is True
@@ -202,7 +205,7 @@ class TestBoundingBox:
         assert bbox.extmin == (0, 0, 0)
         assert bbox.extmax == (15, 16, 17)
 
-    def test_union_bbox_with_emtpy_bbox(self):
+    def test_union_bbox_with_empty_bbox(self):
         bbox1 = BoundingBox([(0, 0, 0), (10, 10, 10)])
         bbox = bbox1.union(BoundingBox())
         assert bbox.extmin == (0, 0, 0)
@@ -219,6 +222,13 @@ class TestBoundingBox:
         assert bbox.has_data is False
         assert bbox.is_empty is True
 
+    def test_union_different_bounding_boxes(self):
+        bbox1 = BoundingBox([(0, 0, 0), (10, 10, 10)])
+        bbox2 = BoundingBox2d([(5, 5), (15, 16)])
+        bbox = bbox1.union(BoundingBox(bbox2))
+        assert bbox.extmin == (0, 0, 0)
+        assert bbox.extmax == (15, 16, 10)
+
     def test_rect_vertices_for_empty_bbox_raises_value_error(self):
         with pytest.raises(ValueError):
             BoundingBox().rect_vertices()
@@ -229,9 +239,7 @@ class TestBoundingBox:
 
     def test_rect_vertices_returns_vertices_in_counter_clockwise_order(self):
         bbox = BoundingBox([(0, 0, 0), (1, 2, 3)])
-        assert bbox.rect_vertices() == Vec2.tuple(
-            [(0, 0), (1, 0), (1, 2), (0, 2)]
-        )
+        assert bbox.rect_vertices() == Vec2.tuple([(0, 0), (1, 0), (1, 2), (0, 2)])
 
     def test_cube_vertices_returns_vertices_in_counter_clockwise_order(self):
         bbox = BoundingBox([(0, 0, 0), (1, 2, 3)])
@@ -294,13 +302,16 @@ class TestBoundingBox2d:
         assert bbox.size == (10, 10)
         assert bbox.has_data is True
 
-    @pytest.mark.parametrize("v", [
-        [],
-        [(0, 0)],
-        [(1, 0), (2, 0)],
-        [(0, 1), (0, 2)],
-        [(1, 1), (1, 1)],
-    ])
+    @pytest.mark.parametrize(
+        "v",
+        [
+            [],
+            [(0, 0)],
+            [(1, 0), (2, 0)],
+            [(0, 1), (0, 2)],
+            [(1, 1), (1, 1)],
+        ],
+    )
     def test_is_empty(self, v):
         """Area is 0."""
         assert BoundingBox2d(v).is_empty is True
@@ -349,9 +360,7 @@ class TestBoundingBox2d:
 
     def test_rect_vertices_returns_vertices_in_counter_clockwise_order(self):
         bbox = BoundingBox2d([(0, 0, 0), (1, 2, 3)])
-        assert bbox.rect_vertices() == Vec2.tuple(
-            [(0, 0), (1, 0), (1, 2), (0, 2)]
-        )
+        assert bbox.rect_vertices() == Vec2.tuple([(0, 0), (1, 0), (1, 2), (0, 2)])
 
     def test_contains_other_bounding_box(self):
         box_a = BoundingBox2d([(0, 0), (10, 10)])
@@ -363,20 +372,20 @@ class TestBoundingBox2d:
         assert box_a.contains(box_c) is False
 
     def test_2d_box_contains_3d_box(self):
+        # casting is required since v1.2 for valid type-checking
         box_a = BoundingBox2d(
             [(0, 0), (10, 10)]
         )  # this is flat-land, z-axis does not exist
         box_b = BoundingBox([(1, 1, 1), (9, 9, 9)])
-        assert box_a.contains(box_b) is True, "z-axis should be ignored"
+        assert box_a.contains(BoundingBox2d(box_b)) is True, "z-axis should be ignored"
 
     def test_3d_box_contains_2d_box(self):
-        box_a = BoundingBox2d(
-            [(1, 1), (9, 9)]
-        )  # lives in the xy-plane, z-axis is 0
+        # casting is required since v1.2 for valid type-checking
+        box_a = BoundingBox2d([(1, 1), (9, 9)])  # lives in the xy-plane, z-axis is 0
         box_b = BoundingBox([(0, 0, 0), (10, 10, 10)])
-        assert box_b.contains(box_a) is True, "xy-plane is included"
+        assert box_b.contains(BoundingBox(box_a)) is True, "xy-plane is included"
         box_c = BoundingBox([(0, 0, 1), (10, 10, 10)])
-        assert box_c.contains(box_a) is False, "xy-plane is not included"
+        assert box_c.contains(BoundingBox(box_a)) is False, "xy-plane is not included"
 
     def test_grow_bounding_box(self):
         box = BoundingBox2d([(0, 0), (1, 1)])
@@ -426,11 +435,14 @@ class Test2DIntersection:
         assert b.extmin.isclose((1, 1))
         assert b.extmax.isclose((2, 2))
 
-    @pytest.mark.parametrize("v1, v2", [
-        ([(0, 0), (2, 2)], [(1, 1), (3, 3)]),
-        ([(-1, -1), (1, 1)], [(0, 0), (2, 2)]),
-        ([(-2, -2), (0, 0)], [(-3, -3), (-1, -1)]),
-    ])
+    @pytest.mark.parametrize(
+        "v1, v2",
+        [
+            ([(0, 0), (2, 2)], [(1, 1), (3, 3)]),
+            ([(-1, -1), (1, 1)], [(0, 0), (2, 2)]),
+            ([(-2, -2), (0, 0)], [(-3, -3), (-1, -1)]),
+        ],
+    )
     def test_multiple_intersections(self, v1, v2):
         b1 = BoundingBox2d(v1)
         b2 = BoundingBox2d(v2)
@@ -491,11 +503,14 @@ class Test3DIntersection:
         assert b.extmin.isclose((1, 1, 1))
         assert b.extmax.isclose((2, 2, 2))
 
-    @pytest.mark.parametrize("v1, v2", [
-        ([(0, 0, 0), (2, 2, 2)], [(1, 1, 1), (3, 3, 3)]),
-        ([(-1, -1, -1), (1, 1, 1)], [(0, 0, 0), (2, 2, 2)]),
-        ([(-2, -2, -2), (0, 0, 0)], [(-3, -3, -3), (-1, -1, -1)]),
-    ])
+    @pytest.mark.parametrize(
+        "v1, v2",
+        [
+            ([(0, 0, 0), (2, 2, 2)], [(1, 1, 1), (3, 3, 3)]),
+            ([(-1, -1, -1), (1, 1, 1)], [(0, 0, 0), (2, 2, 2)]),
+            ([(-2, -2, -2), (0, 0, 0)], [(-3, -3, -3), (-1, -1, -1)]),
+        ],
+    )
     def test_multiple_intersections(self, v1, v2):
         b1 = BoundingBox(v1)
         b2 = BoundingBox(v2)

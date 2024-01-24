@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -31,11 +31,12 @@ from ezdxf.lldxf.const import (
     DXFIndexError,
 )
 from ezdxf.lldxf.packedtags import VertexArray, TagArray, TagList
-from ezdxf.math import Matrix44, UVec
+from ezdxf.math import Matrix44, UVec, Vec3
 from ezdxf.tools import take2
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, DXFEntity
@@ -178,9 +179,7 @@ def create_face_list(tags: Tags, start_index: int) -> FaceList:
 
 
 def create_edge_array(tags: Tags, start_index: int) -> EdgeArray:
-    return EdgeArray(
-        data=collect_values(tags, start_index, code=90)
-    )  # int values
+    return EdgeArray(data=collect_values(tags, start_index, code=90))  # int values
 
 
 def collect_values(
@@ -191,9 +190,7 @@ def collect_values(
 
 
 def create_crease_array(tags: Tags, start_index: int) -> array.array:
-    return array.array(
-        "f", collect_values(tags, start_index, code=140)
-    )  # float values
+    return array.array("f", collect_values(tags, start_index, code=140))  # float values
 
 
 COUNT_ERROR_MSG = "'MESH (#{}) without {} count.'"
@@ -214,7 +211,7 @@ class Mesh(DXFGraphic):
         self._edges = EdgeArray()  # edge indices stored as array.array('L')
         self._creases = array.array("f")  # creases stored as array.array('f')
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy data: vertices, faces, edges, creases."""
         assert isinstance(entity, Mesh)
         entity._vertices = copy.deepcopy(self._vertices)
@@ -246,9 +243,7 @@ class Mesh(DXFGraphic):
             try:
                 vertex_count_index = mesh_tags.tag_index(92)
             except DXFValueError:
-                raise DXFStructureError(
-                    COUNT_ERROR_MSG.format(handle, "vertex")
-                )
+                raise DXFStructureError(COUNT_ERROR_MSG.format(handle, "vertex"))
             vertices = create_vertex_array(mesh_tags, vertex_count_index + 1)
             # Remove vertex count tag and all vertex tags
             end_index = vertex_count_index + 1 + len(vertices)
@@ -283,9 +278,7 @@ class Mesh(DXFGraphic):
             try:
                 crease_count_index = mesh_tags.tag_index(95)
             except DXFValueError:
-                raise DXFStructureError(
-                    COUNT_ERROR_MSG.format(handle, "crease")
-                )
+                raise DXFStructureError(COUNT_ERROR_MSG.format(handle, "crease"))
             else:
                 creases = create_crease_array(mesh_tags, crease_count_index + 1)
                 # Remove crease count tag and all crease tags
@@ -419,26 +412,26 @@ class Mesh(DXFGraphic):
 
 
 class MeshData:
-    def __init__(self, mesh) -> None:
-        self.vertices: list[Sequence[float]] = list(mesh.vertices)
-        self.faces: list[array.array] = list(mesh.faces)
+    def __init__(self, mesh: Mesh) -> None:
+        self.vertices: list[Vec3] = Vec3.list(mesh.vertices)
+        self.faces: list[Sequence[int]] = list(mesh.faces)  # type: ignore
         self.edges: list[tuple[int, int]] = list(mesh.edges)
         self.edge_crease_values: list[float] = list(mesh.creases)
 
     def add_face(self, vertices: Iterable[UVec]) -> Sequence[int]:
-        """Add a face by coordinates, vertices is a list of ``(x, y, z)``
-        tuples.
-        """
-        return self.add_entity(vertices, self.faces)
+        """Add a face by a list of vertices."""
+        indices = tuple(self.add_vertex(vertex) for vertex in vertices)
+        self.faces.append(indices)
+        return indices
 
     def add_edge_crease(self, v1: int, v2: int, crease: float):
         """Add an edge crease value, the edge is defined by the vertex indices
         `v1` and `v2`.
+
         The crease value defines the amount of subdivision that will be applied
-        to this edge.
-        A crease value of the subdivision level prevents the edge from
-        deformation and a value of 0.0 means no protection from
-        subdividing.
+        to this edge.  A crease value of the subdivision level prevents the edge from
+        deformation and a value of 0.0 means no protection from subdividing.
+
         """
         if v1 < 0 or v1 > len(self.vertices):
             raise DXFIndexError("vertex index `v1` out of range")
@@ -447,73 +440,47 @@ class MeshData:
         self.edges.append((v1, v2))
         self.edge_crease_values.append(crease)
 
-    def add_entity(
-        self, vertices: Iterable[UVec], entity_list: list
-    ) -> Sequence[int]:
-        indices = [self.add_vertex(vertex) for vertex in vertices]
-        entity_list.append(indices)
-        return indices
-
     def add_vertex(self, vertex: UVec) -> int:
         if len(vertex) != 3:
-            raise DXFValueError(
-                "Parameter vertex has to be a 3-tuple (x, y, z)."
-            )
+            raise DXFValueError("Parameter vertex has to be a 3-tuple (x, y, z).")
         index = len(self.vertices)
-        self.vertices.append(tuple(vertex))
+        self.vertices.append(Vec3(vertex))
         return index
 
-    def optimize(self, precision: int = 6):
-        """
-        Try to reduce vertex count by merging near vertices. `precision`
-        defines the decimal places for coordinate be equal to merge two vertices.
+    def optimize(self):
+        """Reduce vertex count by merging coincident vertices."""
 
-        """
-
-        def remove_doublette_vertices() -> dict[int, int]:
-            def prepare_vertices() -> Iterable[tuple[float, float, float, int]]:
-                for index, vertex in enumerate(self.vertices):
-                    x, y, z = vertex
-                    yield (
-                        round(x, precision),
-                        round(y, precision),
-                        round(z, precision),
-                        index,
-                    )
-
-            sorted_vertex_list = list(sorted(prepare_vertices()))
-            original_vertices = self.vertices
+        def merge_coincident_vertices() -> dict[int, int]:
+            original_vertices = [
+                (v.xyz, index, v) for index, v in enumerate(self.vertices)
+            ]
+            original_vertices.sort()
             self.vertices = []
             index_map: dict[int, int] = {}
-            cmp_vertex = None
+            prev_vertex = sentinel = Vec3()
             index = 0
-            while len(sorted_vertex_list):
-                vertex_entry = sorted_vertex_list.pop()
-                original_index = vertex_entry[3]
-                vertex = original_vertices[original_index]
-                if vertex != cmp_vertex:
-                    # this is not a doublette
+            for _, original_index, vertex in original_vertices:
+                if prev_vertex is sentinel or not vertex.isclose(prev_vertex):
                     index = len(self.vertices)
                     self.vertices.append(vertex)
                     index_map[original_index] = index
-                    cmp_vertex = vertex
-                else:  # it is a doublette
+                    prev_vertex = vertex
+                else:  # this is a coincident vertex
                     index_map[original_index] = index
             return index_map
 
         def remap_faces() -> None:
-            self.faces = remap_indices(self.faces)  # type: ignore
+            self.faces = remap_indices(self.faces)
 
         def remap_edges() -> None:
             self.edges = remap_indices(self.edges)  # type: ignore
 
-        def remap_indices(entity_list: Sequence[Sequence[int]]) -> list[tuple]:
-            mapped_indices: list[tuple] = []
-            for entity in entity_list:
-                index_list = [index_map[index] for index in entity]
-                mapped_indices.append(tuple(index_list))
+        def remap_indices(indices: Sequence[Sequence[int]]) -> list[Sequence[int]]:
+            mapped_indices: list[Sequence[int]] = []
+            for entry in indices:
+                mapped_indices.append(tuple(index_map[index] for index in entry))
             return mapped_indices
 
-        index_map = remove_doublette_vertices()
+        index_map = merge_coincident_vertices()
         remap_faces()
         remap_edges()

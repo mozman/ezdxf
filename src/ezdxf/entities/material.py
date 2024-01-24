@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2022, Manfred Moitzi
+# Copyright (c) 2018-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
@@ -15,6 +15,7 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 from .objectcollection import ObjectCollection
 from ezdxf.math import Matrix44
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, DXFEntity
@@ -42,9 +43,7 @@ def fetch_matrix(tags: Tags, code: int) -> tuple[Tags, Optional[Matrix44]]:
         return tags, None
 
 
-def export_matrix(
-    tagwriter: AbstractTagWriter, code: int, matrix: Matrix44
-) -> None:
+def export_matrix(tagwriter: AbstractTagWriter, code: int, matrix: Matrix44) -> None:
     if matrix is not None:
         for value in matrix:
             tagwriter.write_tag2(code, value)
@@ -58,18 +57,12 @@ acdb_material = DefSubclass(
         "ambient_color_method": DXFAttr(
             70, default=0
         ),  # 0=use current color; 1=override current color
-        "ambient_color_factor": DXFAttr(
-            40, default=1.0
-        ),  # valid range is 0.0 to 1.0
-        "ambient_color_value": DXFAttr(
-            90
-        ),  # integer representing an AcCmEntityColor
+        "ambient_color_factor": DXFAttr(40, default=1.0),  # valid range is 0.0 to 1.0
+        "ambient_color_value": DXFAttr(90),  # integer representing an AcCmEntityColor
         "diffuse_color_method": DXFAttr(
             71, default=0
         ),  # 0=use current color; 1=override current color
-        "diffuse_color_factor": DXFAttr(
-            41, default=1.0
-        ),  # valid range is 0.0 to 1.0
+        "diffuse_color_factor": DXFAttr(41, default=1.0),  # valid range is 0.0 to 1.0
         "diffuse_color_value": DXFAttr(
             91, default=-1023410177
         ),  # integer representing an AcCmEntityColor
@@ -82,26 +75,18 @@ acdb_material = DefSubclass(
         "diffuse_map_projection_method": DXFAttr(
             73, default=1
         ),  # 1=Planar; 2=Box; 3=Cylinder; 4=Sphere
-        "diffuse_map_tiling_method": DXFAttr(
-            74, default=1
-        ),  # 1=Tile; 2=Crop; 3=Clamp
+        "diffuse_map_tiling_method": DXFAttr(74, default=1),  # 1=Tile; 2=Crop; 3=Clamp
         "diffuse_map_auto_transform_method": DXFAttr(75, default=1),  # bitset;
         # 1 = No auto transform
         # 2 = Scale mapper to current entity extents; translate mapper to entity origin
         # 4 = Include current block transform in mapper transform
         # 16x group code 43: Transform matrix of diffuse map mapper (16 reals; row major format; default = identity matrix)
-        "specular_gloss_factor": DXFAttr(
-            44, default=0.5
-        ),  # valid range is 0.0 to 1.0
+        "specular_gloss_factor": DXFAttr(44, default=0.5),  # valid range is 0.0 to 1.0
         "specular_color_method": DXFAttr(
             73, default=0
         ),  # 0=use current color; 1=override current color
-        "specular_color_factor": DXFAttr(
-            45, default=1.0
-        ),  # valid range is 0.0 to 1.0
-        "specular_color_value": DXFAttr(
-            92
-        ),  # integer representing an AcCmEntityColor
+        "specular_color_factor": DXFAttr(45, default=1.0),  # valid range is 0.0 to 1.0
+        "specular_color_value": DXFAttr(92),  # integer representing an AcCmEntityColor
         "specular_map_blend_factor": DXFAttr(
             46, default=1.0
         ),  # valid range is 0.0 to 1.0
@@ -111,12 +96,8 @@ acdb_material = DefSubclass(
         "specular_map_projection_method": DXFAttr(
             78, default=1
         ),  # 1=Planar; 2=Box; 3=Cylinder; 4=Sphere
-        "specular_map_tiling_method": DXFAttr(
-            79, default=1
-        ),  # 1=Tile; 2=Crop; 3=Clamp
-        "specular_map_auto_transform_method": DXFAttr(
-            170, default=1
-        ),  # bitset;
+        "specular_map_tiling_method": DXFAttr(79, default=1),  # 1=Tile; 2=Crop; 3=Clamp
+        "specular_map_auto_transform_method": DXFAttr(170, default=1),  # bitset;
         # 1 = No auto transform
         # 2 = Scale mapper to current entity extents; translate mapper to entity origin
         # 4 = Include current block transform in mapper transform
@@ -133,9 +114,7 @@ acdb_material = DefSubclass(
         "reflection_map_tiling_method": DXFAttr(
             173, default=1
         ),  # 1=Tile; 2=Crop; 3=Clamp
-        "reflection_map_auto_transform_method": DXFAttr(
-            174, default=1
-        ),  # bitset;
+        "reflection_map_auto_transform_method": DXFAttr(174, default=1),  # bitset;
         # 1 = No auto transform
         # 2 = Scale mapper to current entity extents; translate mapper to entity origin
         # 4 = Include current block transform in mapper transform
@@ -150,34 +129,26 @@ acdb_material = DefSubclass(
         "opacity_map_projection_method": DXFAttr(
             176, default=1
         ),  # 1=Planar; 2=Box; 3=Cylinder; 4=Sphere
-        "opacity_map_tiling_method": DXFAttr(
-            177, default=1
-        ),  # 1=Tile; 2=Crop; 3=Clamp
+        "opacity_map_tiling_method": DXFAttr(177, default=1),  # 1=Tile; 2=Crop; 3=Clamp
         "opacity_map_auto_transform_method": DXFAttr(178, default=1),  # bitset;
         # 1 = No auto transform
         # 2 = Scale mapper to current entity extents; translate mapper to entity origin
         # 4 = Include current block transform in mapper transform
         # 16x group code 142: Transform matrix of reflection map mapper (16 reals; row major format; default = identity matrix)
-        "bump_map_blend_factor": DXFAttr(
-            143, default=1.0
-        ),  # valid range is 0.0 to 1.0
+        "bump_map_blend_factor": DXFAttr(143, default=1.0),  # valid range is 0.0 to 1.0
         "bump_map_source": DXFAttr(179, default=1),
         # 0=use current scene; 1=use image file (specified by file name; null file name specifies no map)
         "bump_map_file_name": DXFAttr(8, default=""),
         "bump_map_projection_method": DXFAttr(
             270, default=1
         ),  # 1=Planar; 2=Box; 3=Cylinder; 4=Sphere
-        "bump_map_tiling_method": DXFAttr(
-            271, default=1
-        ),  # 1=Tile; 2=Crop; 3=Clamp
+        "bump_map_tiling_method": DXFAttr(271, default=1),  # 1=Tile; 2=Crop; 3=Clamp
         "bump_map_auto_transform_method": DXFAttr(272, default=1),  # bitset;
         # 1 = No auto transform
         # 2 = Scale mapper to current entity extents; translate mapper to entity origin
         # 4 = Include current block transform in mapper transform
         # 16x group code 144: Transform matrix of bump map mapper (16 reals; row major format; default = identity matrix)
-        "refraction_index": DXFAttr(
-            145, default=1.0
-        ),  # valid range is 0.0 to 1.0
+        "refraction_index": DXFAttr(145, default=1.0),  # valid range is 0.0 to 1.0
         "refraction_map_blend_factor": DXFAttr(
             146, default=1.0
         ),  # valid range is 0.0 to 1.0
@@ -190,9 +161,7 @@ acdb_material = DefSubclass(
         "refraction_map_tiling_method": DXFAttr(
             275, default=1
         ),  # 1=Tile; 2=Crop; 3=Clamp
-        "refraction_map_auto_transform_method": DXFAttr(
-            276, default=1
-        ),  # bitset;
+        "refraction_map_auto_transform_method": DXFAttr(276, default=1),  # bitset;
         # 1 = No auto transform
         # 2 = Scale mapper to current entity extents; translate mapper to entity origin
         # 4 = Include current block transform in mapper transform
@@ -209,9 +178,7 @@ acdb_material = DefSubclass(
         "normal_map_projection_method": DXFAttr(
             73, default=1
         ),  # 1=Planar; 2=Box; 3=Cylinder; 4=Sphere
-        "normal_map_tiling_method": DXFAttr(
-            74, default=1
-        ),  # 1=Tile; 2=Crop; 3=Clamp
+        "normal_map_tiling_method": DXFAttr(74, default=1),  # 1=Tile; 2=Crop; 3=Clamp
         "normal_map_auto_transform_method": DXFAttr(75, default=1),  # bitset;
         # 1 = No auto transform
         # 2 = Scale mapper to current entity extents; translate mapper to entity origin
@@ -266,7 +233,7 @@ class Material(DXFObject):
         self.refraction_mapper_matrix: Optional[Matrix44] = None  # code 147
         self.normal_mapper_matrix: Optional[Matrix44] = None  # code 43 ???
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy material mapper matrices"""
 
         def copy(matrix):

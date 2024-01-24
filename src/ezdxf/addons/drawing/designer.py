@@ -1,4 +1,4 @@
-#  Copyright (c) 2023, Manfred Moitzi
+#  Copyright (c) 2023-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import (
@@ -12,7 +12,12 @@ from typing import (
 )
 from typing_extensions import TypeAlias
 import abc
-import itertools
+
+import numpy as np
+import PIL.Image
+import PIL.ImageDraw
+import PIL.ImageOps
+
 
 from ezdxf.colors import RGB
 import ezdxf.bbox
@@ -20,12 +25,16 @@ import ezdxf.bbox
 from ezdxf.fonts import fonts
 from ezdxf.math import Vec2, Matrix44, BoundingBox2d, AnyVec
 from ezdxf.path import make_path, Path
-from ezdxf.tools.text import replace_non_printable_characters
 from ezdxf.render import linetypes
 from ezdxf.entities import DXFGraphic, Viewport
+from ezdxf.tools.text import replace_non_printable_characters
+from ezdxf.tools.clipping_portal import (
+    ClippingPortal,
+    ClippingShape,
+    find_best_clipping_shape,
+)
 
-from .backend import BackendInterface, BkPath2d, BkPoints2d
-from .clipper import ClippingRect
+from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
 from .config import LinePolicy, TextPolicy, ColorPolicy, Configuration
 from .properties import BackendProperties, Filling
 from .properties import Properties, RenderContext
@@ -62,6 +71,16 @@ class Designer(abc.ABC):
 
     @abc.abstractmethod
     def set_current_entity_handle(self, handle: str) -> None:
+        ...
+
+    @abc.abstractmethod
+    def push_clipping_shape(
+        self, shape: ClippingShape, transform: Matrix44 | None
+    ) -> None:
+        ...
+
+    @abc.abstractmethod
+    def pop_clipping_shape(self) -> None:
         ...
 
     @abc.abstractmethod
@@ -118,6 +137,10 @@ class Designer(abc.ABC):
         ...
 
     @abc.abstractmethod
+    def draw_image(self, image_data: ImageData, properties: Properties) -> None:
+        ...
+
+    @abc.abstractmethod
     def finalize(self) -> None:
         ...
 
@@ -142,7 +165,12 @@ class Designer2d(Designer):
         self.backend = backend
         self.config = Configuration()
         self.pattern_cache: dict[PatternKey, Sequence[float]] = dict()
-        self.clipper = ClippingRect()
+        try:  # request default font face
+            self.default_font_face = fonts.font_manager.get_font_face("")
+        except fonts.FontNotFoundError:  # no default font found
+            # last resort MonospaceFont which renders only "tofu"
+            pass
+        self.clipping_portal = ClippingPortal()
         self.current_vp_scale = 1.0
         self._current_entity_handle: str = ""
         self._color_mapping: dict[str, str] = dict()
@@ -181,6 +209,14 @@ class Designer2d(Designer):
         assert handle is not None
         self._current_entity_handle = handle
 
+    def push_clipping_shape(
+        self, shape: ClippingShape, transform: Matrix44 | None
+    ) -> None:
+        self.clipping_portal.push(shape, transform)
+
+    def pop_clipping_shape(self) -> None:
+        self.clipping_portal.pop()
+
     def draw_viewport(
         self,
         vp: Viewport,
@@ -207,18 +243,25 @@ class Designer2d(Designer):
         m = vp.get_transformation_matrix()
         clipping_path = make_path(vp)
         if len(clipping_path):
-            self.clipper.push(BkPath2d(clipping_path), m)
+            # TODO: flatten clipping path! max_sagitta = ?
+            clipping_shape = find_best_clipping_shape(clipping_path.control_vertices())
+            self.clipping_portal.push(clipping_shape, m)
             return True
         return False
 
     def exit_viewport(self):
-        self.clipper.pop()
+        self.clipping_portal.pop()
+        # Current assumption and implementation:
+        # Viewports are not nested and not contained in any other structure.
+        assert (
+            self.clipping_portal.is_active is False
+        ), "This assumption is no longer valid!"
         self.current_vp_scale = 1.0
 
     def draw_point(self, pos: AnyVec, properties: Properties) -> None:
         point = Vec2(pos)
-        if self.clipper.is_active:
-            point = self.clipper.clip_point(point)
+        if self.clipping_portal.is_active:
+            point = self.clipping_portal.clip_point(point)
             if point is None:
                 return
         self.backend.draw_point(point, self.get_backend_properties(properties))
@@ -230,12 +273,12 @@ class Designer2d(Designer):
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
-            if self.clipper.is_active:
-                points = self.clipper.clip_line(s, e)
-                if len(points) != 2:
-                    return
-                start, end = points
-            self.backend.draw_line(start, end, self.get_backend_properties(properties))
+            bk_properties = self.get_backend_properties(properties)
+            if self.clipping_portal.is_active:
+                for segment in self.clipping_portal.clip_line(s, e):
+                    self.backend.draw_line(segment[0], segment[1], bk_properties)
+            else:
+                self.backend.draw_line(s, e, bk_properties)
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
             self.draw_solid_lines(  # includes transformation
@@ -246,14 +289,12 @@ class Designer2d(Designer):
     def draw_solid_lines(
         self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
     ) -> None:
-        lines2d = [(Vec2(s), Vec2(e)) for s, e in lines]
-        if self.clipper.is_active:
-            clipped_lines: list[Sequence[Vec2]] = []
+        lines2d: list[tuple[Vec2, Vec2]] = [(Vec2(s), Vec2(e)) for s, e in lines]
+        if self.clipping_portal.is_active:
+            cropped_lines: list[tuple[Vec2, Vec2]] = []
             for start, end in lines2d:
-                points = self.clipper.clip_line(start, end)
-                if points:
-                    clipped_lines.append(points)
-            lines2d = clipped_lines  # type: ignore
+                cropped_lines.extend(self.clipping_portal.clip_line(start, end))
+            lines2d = cropped_lines
         self.backend.draw_solid_lines(lines2d, self.get_backend_properties(properties))
 
     def draw_path(self, path: Path, properties: Properties):
@@ -264,8 +305,8 @@ class Designer2d(Designer):
             self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
-            if self.clipper.is_active:
-                for clipped_path in self.clipper.clip_paths(
+            if self.clipping_portal.is_active:
+                for clipped_path in self.clipping_portal.clip_paths(
                     [path], self.config.max_flattening_distance
                 ):
                     self.backend.draw_path(
@@ -294,9 +335,9 @@ class Designer2d(Designer):
         paths: Iterable[BkPath2d],
         properties: Properties,
     ) -> None:
-        if self.clipper.is_active:
+        if self.clipping_portal.is_active:
             max_sagitta = self.config.max_flattening_distance
-            paths = self.clipper.clip_filled_paths(paths, max_sagitta)
+            paths = self.clipping_portal.clip_filled_paths(paths, max_sagitta)
         self.backend.draw_filled_paths(paths, self.get_backend_properties(properties))
 
     def draw_filled_polygon(
@@ -305,11 +346,12 @@ class Designer2d(Designer):
         self._draw_filled_polygon(BkPoints2d(points), properties)
 
     def _draw_filled_polygon(self, points: BkPoints2d, properties: Properties) -> None:
-        if self.clipper.is_active:
-            points = self.clipper.clip_polygon(points)
-        self.backend.draw_filled_polygon(
-            points, self.get_backend_properties(properties)
-        )
+        bk_properties = self.get_backend_properties(properties)
+        if self.clipping_portal.is_active:
+            for points in self.clipping_portal.clip_polygon(points):
+                self.backend.draw_filled_polygon(points, bk_properties)
+        else:
+            self.backend.draw_filled_polygon(points, bk_properties)
 
     def pattern(self, properties: Properties) -> Sequence[float]:
         """Get pattern - implements pattern caching."""
@@ -399,6 +441,67 @@ class Designer2d(Designer):
             properties.filling = Filling()
         self._draw_filled_paths(transformed_paths, properties)
 
+    def draw_image(self, image_data: ImageData, properties: Properties) -> None:
+        # the outer bounds contain the visible parts of the image for the
+        # clip mode "remove inside"
+        outer_bounds: list[BkPoints2d] = []
+
+        if self.clipping_portal.is_active:
+            # the pixel boundary path can be split into multiple paths
+            transform = image_data.flip_matrix() * image_data.transform
+            pixel_boundary_path = image_data.pixel_boundary_path
+            clipping_paths = _clip_image_polygon(
+                self.clipping_portal, pixel_boundary_path, transform
+            )
+            if not image_data.remove_outside:
+                # remove inside:
+                #  detect the visible parts of the image which are not removed by
+                #  clipping through viewports or block references
+                width, height = image_data.image_size()
+                outer_boundary = BkPoints2d(
+                    Vec2.generate([(0, 0), (width, 0), (width, height), (0, height)])
+                )
+                outer_bounds = _clip_image_polygon(
+                    self.clipping_portal, outer_boundary, transform
+                )
+            image_data.transform = self.clipping_portal.transform_matrix(
+                image_data.transform
+            )
+            if len(clipping_paths) == 1:
+                new_clipping_path = clipping_paths[0]
+                if new_clipping_path is not image_data.pixel_boundary_path:
+                    image_data.pixel_boundary_path = new_clipping_path
+                    # forced clipping triggered by viewport- or block reference clipping:
+                    image_data.use_clipping_boundary = True
+                self._draw_image(image_data, outer_bounds, properties)
+            else:
+                for clipping_path in clipping_paths:
+                    # when clipping path is split into multiple parts:
+                    #  copy image for each part, not efficient but works
+                    #  this should be a rare usecase so optimization is not required
+                    self._draw_image(
+                        ImageData(
+                            image=image_data.image.copy(),
+                            transform=image_data.transform,
+                            pixel_boundary_path=clipping_path,
+                            use_clipping_boundary=True,
+                        ),
+                        outer_bounds,
+                        properties,
+                    )
+        else:
+            self._draw_image(image_data, outer_bounds, properties)
+
+    def _draw_image(
+        self,
+        image_data: ImageData,
+        outer_bounds: list[BkPoints2d],
+        properties: Properties,
+    ) -> None:
+        if image_data.use_clipping_boundary:
+            _mask_image(image_data, outer_bounds)
+        self.backend.draw_image(image_data, self.get_backend_properties(properties))
+
     def finalize(self) -> None:
         self.backend.finalize()
 
@@ -410,6 +513,80 @@ class Designer2d(Designer):
 
     def exit_entity(self, entity: DXFGraphic) -> None:
         self.backend.exit_entity(entity)
+
+
+def _mask_image(image_data: ImageData, outer_bounds: list[BkPoints2d]) -> None:
+    """Mask away the clipped parts of the image. The argument `outer_bounds` is only
+    used for clip mode "remove_inside". The outer bounds can be composed of multiple
+    parts. If `outer_bounds` is empty the image has no removed parts and is fully
+    visible before applying the image clipping path.
+
+    Args:
+        image_data:
+            image_data.pixel_boundary: path contains the image clipping path
+            image_data.remove_outside: defines the clipping mode (inside/outside)
+        outer_bounds: countain the parts of the image which are __not__ removed by
+            clipping through viewports or clipped block references
+            e.g. an image without any removed parts has the outer bounds
+            [(0, 0) (width, 0), (width, height), (0, height)]
+
+    """
+    clip_polygon = [(p.x, p.y) for p in image_data.pixel_boundary_path.vertices()]
+    # create an empty image
+    clipping_image = PIL.Image.new("L", image_data.image_size(), 0)
+    # paint in the clipping path
+    PIL.ImageDraw.ImageDraw(clipping_image).polygon(
+        clip_polygon, outline=None, width=0, fill=1
+    )
+    clipping_mask = np.asarray(clipping_image)
+
+    if not image_data.remove_outside:  # clip mode "remove_inside"
+        if outer_bounds:
+            # create a new empty image
+            visible_image = PIL.Image.new("L", image_data.image_size(), 0)
+            # paint in parts of the image which are still visible
+            for boundary in outer_bounds:
+                clip_polygon = [(p.x, p.y) for p in boundary.vertices()]
+                PIL.ImageDraw.ImageDraw(visible_image).polygon(
+                    clip_polygon, outline=None, width=0, fill=1
+                )
+            # remove the clipping path
+            clipping_mask = np.asarray(visible_image) - clipping_mask
+        else:
+            # create mask for fully visible image
+            fully_visible_image_mask = np.full(
+                clipping_mask.shape, fill_value=1, dtype=clipping_mask.dtype
+            )
+            # remove the clipping path
+            clipping_mask = fully_visible_image_mask - clipping_mask
+    image_data.image[:, :, 3] *= clipping_mask
+
+
+def _clip_image_polygon(
+    clipping_portal: ClippingPortal, polygon_px: BkPoints2d, m: Matrix44
+) -> list[BkPoints2d]:
+    original = [polygon_px]
+
+    # inverse matrix includes the transformation applied by the clipping portal
+    inverse = clipping_portal.transform_matrix(m)
+    try:
+        inverse.inverse()
+    except ZeroDivisionError:
+        # inverse transformation from WCS to pixel coordinates is not possible
+        return original
+
+    # transform image coordinates to WCS coordinates
+    polygon = polygon_px.clone()
+    polygon.transform_inplace(m)
+
+    clipped_polygons = clipping_portal.clip_polygon(polygon)
+    if (len(clipped_polygons) == 1) and (clipped_polygons[0] is polygon):
+        # this shows the caller that the image boundary path wasn't clipped
+        return original
+    # transform WCS coordinates to image coordinates
+    for polygon in clipped_polygons:
+        polygon.transform_inplace(inverse)
+    return clipped_polygons  # in image coordinates!
 
 
 def invert_color(color: Color) -> Color:
@@ -490,7 +667,7 @@ def filter_vp_entities(
     # WARNING: this works only with top-view viewports
     # The current state of the drawing add-on supports only top-view viewports!
     def is_visible(e):
-        entity_bbox = bbox_cache.get(e)
+        entity_bbox = bbox_cache.get(e)  # type: ignore
         if entity_bbox is None:
             # compute and add bounding box
             entity_bbox = ezdxf.bbox.extents((e,), fast=True, cache=bbox_cache)

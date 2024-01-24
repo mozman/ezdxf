@@ -16,7 +16,7 @@ Quick-Info
   existing DXF documents
 - MIT-License
 - the intended audience are programmers
-- requires at least Python 3.8
+- requires at least Python 3.9
 - OS independent
 - tested with CPython and pypy3
 - has type annotations and passes ``mypy --ignore-missing-imports -p ezdxf`` successful
@@ -78,6 +78,27 @@ Documentation of development version at https://ezdxf.mozman.at/docs
 
 Documentation of latest release at http://ezdxf.readthedocs.io/
 
+Knowledge Graph
+---------------
+
+The :ref:`knowledge_graph` contains additional information beyond the documentation and is 
+managed by `logseq <https://logseq.com/>`_.  The source data is included in the repository 
+in the folder ``ezdxf/notes``.  There is also a `HTML export <https://ezdxf.mozman.at/notes/#/page/ezdxf>`_
+on the website which gets regular updates.
+
+Release Notes
+-------------
+
+The `release notes <https://ezdxf.mozman.at/notes/#/page/release%20notes>`_ are included 
+in the :ref:`knowledge_graph`.
+
+Changelog
+---------
+
+The `changelog <https://ezdxf.mozman.at/notes/#/page/changelog>`_ is included 
+in the :ref:`knowledge_graph`.
+
+
 Source Code & Feedback
 ----------------------
 
@@ -99,7 +120,7 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    introduction
    setup
@@ -116,6 +137,7 @@ Contents
    dxfinternals/index
    develop/index
    glossary
+   knowledgegraph
 
 Indices and tables
 ------------------

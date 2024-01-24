@@ -4,3 +4,6 @@ hatch_*.dxf
 insert_nesting_level_0.dxf
 insert_nesting_level_1.dxf
 mtext_simple_all_alignments.dxf
+transparency_checker.dxf
+mline_*.dxf
+aci_color_table.dxf

@@ -32,7 +32,7 @@ from ezdxf.math import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.entities import Polyface, Polymesh, Mesh
+    from ezdxf.entities import Polyface, Polymesh, Mesh, Solid3d
     from ezdxf.eztypes import GenericLayoutType
 
 T = TypeVar("T")
@@ -384,9 +384,7 @@ class MeshDiagnose:
 
     def has_non_planar_faces(self) -> bool:
         """Returns ``True`` if any face is non-planar."""
-        return not all(
-            is_planar_face(face) for face in self._mesh.faces_as_vertices()
-        )
+        return not all(is_planar_face(face) for face in self._mesh.faces_as_vertices())
 
     def volume(self) -> float:
         """Returns the volume of a closed surface or 0 otherwise.
@@ -697,6 +695,40 @@ class MeshBuilder:
         )
         return polyface
 
+    def render_3dsolid(self, layout: GenericLayoutType, dxfattribs=None) -> Solid3d:
+        """Render mesh as :class:`~ezdxf.entities.Solid3d` entity into `layout`.
+
+        This is an **experimental** feature to create simple 3DSOLID entities from 
+        polyhedrons.
+        
+        The method supports closed and open shells.  A 3DSOLID entity can contain 
+        multiple shells.  Separate the meshes beforehand by the method 
+        :meth:`separate_meshes` if required.  The normals vectors of all faces should 
+        point outwards. Faces can have more than 3 vertices (ngons) but non-planar 
+        faces and concave faces will cause problems in some CAD applications.  The 
+        method :meth:`mesh_tesselation` can help to break down the faces into triangles.
+
+        Requires a valid DXF document for `layout` and DXF version R2000 or newer.
+
+        Args:
+            layout: :class:`~ezdxf.layouts.BaseLayout` object
+            dxfattribs: dict of DXF attributes e.g. ``{'layer': 'mesh', 'color': 7}``
+        
+        Raises:
+            DXFValueError: valid DXF document required, if :attr:`layout.doc` is ``None``
+            DXFVersionError: invalid DXF version
+
+        .. versionadded:: 1.2.0
+
+        """
+        from ezdxf.acis import api as acis
+
+        dxfattribs = dict(dxfattribs) if dxfattribs else {}
+        solid3d = layout.add_3dsolid(dxfattribs=dxfattribs)
+        body = acis.body_from_mesh(self)
+        acis.export_dxf(solid3d, [body])
+        return solid3d
+
     def render_3dfaces(
         self,
         layout: GenericLayoutType,
@@ -788,9 +820,7 @@ class MeshBuilder:
         """
         yield from subdivide_ngons(self.faces_as_vertices(), max_vertex_count)
 
-    def tessellation(
-        self, max_vertex_count: int = 4
-    ) -> Iterator[Sequence[Vec3]]:
+    def tessellation(self, max_vertex_count: int = 4) -> Iterator[Sequence[Vec3]]:
         """Yields all faces as sequence of :class:`~ezdxf.math.Vec3` instances,
         each face has no more vertices than the given `max_vertex_count`. This
         method uses the "ear clipping" algorithm which works with concave faces
@@ -817,8 +847,7 @@ class MeshBuilder:
         return MeshTransformer.from_builder(mesh)
 
     def flip_normals(self) -> None:
-        """Flips the normals of all faces by reversing the vertex order inplace.
-        """
+        """Flips the normals of all faces by reversing the vertex order inplace."""
         self.faces = list(flip_face_normals(self.faces))
 
     def separate_meshes(self) -> list[MeshTransformer]:
@@ -835,9 +864,7 @@ class MeshBuilder:
         """
         self.faces = list(normalize_faces(self.faces, close=False))
 
-    def face_orientation_detector(
-        self, reference: int = 0
-    ) -> FaceOrientationDetector:
+    def face_orientation_detector(self, reference: int = 0) -> FaceOrientationDetector:
         """Returns a :class:`FaceOrientationDetector` or short `fod` instance.
         The forward orientation is defined by the `reference` face which is
         0 by default.
@@ -908,9 +935,7 @@ class MeshBuilder:
                 contains multiple disconnected meshes
 
         """
-        mesh = unify_face_normals_by_reference(
-            self, reference=reference, fod=fod
-        )
+        mesh = unify_face_normals_by_reference(self, reference=reference, fod=fod)
         if force_outwards:
             _force_face_normals_pointing_outwards(mesh, reference)
         return mesh
@@ -930,9 +955,7 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(matrix.transform_vertices(self.vertices))
         return self
 
-    def translate(
-        self, dx: Union[float, UVec] = 0, dy: float = 0, dz: float = 0
-    ):
+    def translate(self, dx: Union[float, UVec] = 0, dy: float = 0, dz: float = 0):
         """Translate mesh inplace.
 
         Args:
@@ -957,9 +980,7 @@ class MeshTransformer(MeshBuilder):
             sz: scale factor for z-axis
 
         """
-        self.vertices = [
-            Vec3(x * sx, y * sy, z * sz) for x, y, z in self.vertices
-        ]
+        self.vertices = [Vec3(x * sx, y * sy, z * sz) for x, y, z in self.vertices]
         return self
 
     def scale_uniform(self, s: float):
@@ -979,9 +1000,7 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = list(
-            Matrix44.x_rotate(angle).transform_vertices(self.vertices)
-        )
+        self.vertices = list(Matrix44.x_rotate(angle).transform_vertices(self.vertices))
         return self
 
     def rotate_y(self, angle: float):
@@ -991,9 +1010,7 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = list(
-            Matrix44.y_rotate(angle).transform_vertices(self.vertices)
-        )
+        self.vertices = list(Matrix44.y_rotate(angle).transform_vertices(self.vertices))
         return self
 
     def rotate_z(self, angle: float):
@@ -1003,9 +1020,7 @@ class MeshTransformer(MeshBuilder):
             angle: rotation angle in radians
 
         """
-        self.vertices = list(
-            Matrix44.z_rotate(angle).transform_vertices(self.vertices)
-        )
+        self.vertices = list(Matrix44.z_rotate(angle).transform_vertices(self.vertices))
         return self
 
     def rotate_axis(self, axis: UVec, angle: float):
@@ -1231,9 +1246,9 @@ def _merge_adjacent_coplanar_faces(
             raise ValueError("found invalid face count < 3")
         xface = _XFace(face)
         extended_faces.append(xface)
-        oriented_faces.setdefault(
-            xface.orientation(vertices, precision), []
-        ).append(xface)
+        oriented_faces.setdefault(xface.orientation(vertices, precision), []).append(
+            xface
+        )
 
     mesh = MeshVertexMerger()
     done = set()
@@ -1255,9 +1270,7 @@ def _merge_adjacent_coplanar_faces(
                     face = merge_full_patch(face, parallel_face.indices)
                 else:
                     try:
-                        face = merge_connected_paths(
-                            face, parallel_face.indices
-                        )
+                        face = merge_connected_paths(face, parallel_face.indices)
                     except (NodeMergingError, DegeneratedPathError):
                         continue
                 done.add(parallel_face.fingerprint)
@@ -1325,9 +1338,7 @@ def remove_colinear_face_vertices(vertices: Sequence[Vec3]) -> Iterator[Vec3]:
         yield _vertices[-2]  # last vertex
 
 
-def merge_connected_paths(
-    p1: Sequence[int], p2: Sequence[int]
-) -> Sequence[int]:
+def merge_connected_paths(p1: Sequence[int], p2: Sequence[int]) -> Sequence[int]:
     def build_nodes(p: Sequence[int]):
         nodes = {e1: e2 for e1, e2 in zip(p, p[1:])}
         nodes[p[-1]] = p[0]
@@ -1414,9 +1425,7 @@ def separate_meshes(m: MeshBuilder) -> Iterator[MeshTransformer]:
     """
     # At the beginning each face is a separated lump and all connected faces
     # should be merged:
-    disconnected_lumps = list(
-        merge_lumps(Lump(face) for face in open_faces(m.faces))
-    )
+    disconnected_lumps = list(merge_lumps(Lump(face) for face in open_faces(m.faces)))
     if len(disconnected_lumps) > 1:
         vertices = m.vertices
         # create new separated meshes:
@@ -1498,9 +1507,7 @@ class FaceOrientationDetector:
 
     def __init__(self, mesh: MeshBuilder, reference: int = 0):
         self._mesh = mesh
-        self.edge_mapping: dict[Edge, list[Face]] = _make_edge_mapping(
-            mesh.faces
-        )
+        self.edge_mapping: dict[Edge, list[Face]] = _make_edge_mapping(mesh.faces)
         self.reference = reference
         self.is_manifold = True  # 2-manifold is meant
         self.forward: dict[int, Face] = dict()
@@ -1590,9 +1597,7 @@ class FaceOrientationDetector:
         forward: dict[int, Face] = dict()
         backward: dict[int, Face] = dict()
         # the reference face defines the forward orientation
-        process_faces: list[tuple[Face, bool]] = [
-            (self._mesh.faces[reference], True)
-        ]
+        process_faces: list[tuple[Face, bool]] = [(self._mesh.faces[reference], True)]
         while len(process_faces):
             # current face and orientation, True = forward, False = backward
             face, face_orientation = process_faces.pop(0)
@@ -1624,10 +1629,7 @@ class FaceOrientationDetector:
             forward_connected_faces = edge_mapping.get(edge, empty)
             reversed_edge = edge[1], edge[0]
             backward_connected_faces = edge_mapping.get(reversed_edge, empty)
-            if (
-                len(forward_connected_faces) + len(backward_connected_faces)
-                != 2
-            ):
+            if len(forward_connected_faces) + len(backward_connected_faces) != 2:
                 return False
         return True
 

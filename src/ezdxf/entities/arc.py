@@ -1,12 +1,13 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Iterator
+from typing import TYPE_CHECKING, Iterator
 import math
+import numpy as np
+
 from ezdxf.math import (
     Vec3,
     Matrix44,
-    linspace,
     ConstructionArc,
     arc_angle_span_deg,
 )
@@ -87,7 +88,7 @@ class Arc(Circle):
         stop = self.dxf.end_angle % 360
         if stop <= start:
             stop += 360
-        for angle in linspace(start, stop, num=num, endpoint=True):
+        for angle in np.linspace(start, stop, num=num, endpoint=True):
             yield angle % 360
 
     def flattening(self, sagitta: float) -> Iterator[Vec3]:

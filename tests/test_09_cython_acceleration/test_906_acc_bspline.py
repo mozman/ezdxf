@@ -1,14 +1,15 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 
 import pytest
 import math
+import numpy as np
 
 pytest.importorskip("ezdxf.acc.bspline")
 
 from ezdxf.math._bspline import Basis as PyBasis, Evaluator as PyEvaluator
 from ezdxf.acc.bspline import Basis as CyBasis, Evaluator as CyEvaluator
-from ezdxf.math import linspace, Vec3, close_vectors
+from ezdxf.math import Vec3, close_vectors
 
 COUNT = 10
 ORDER = 4
@@ -30,7 +31,7 @@ POINTS = [
 
 @pytest.fixture
 def t_vector():
-    return list(linspace(0, max(KNOTS), 20))
+    return list(np.linspace(0, max(KNOTS), 20))
 
 
 @pytest.fixture

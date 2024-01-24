@@ -32,13 +32,15 @@ if USE_C_EXT:
     arc_funcs.append(cython_arc_func)
     ellipse_funcs.append(cython_ellipse_func)
 
-DEFPOINTS2D = [(0.0, 0.0), (3.0, 0.0), (7.0, 10.0), (10.0, 10.0)]
-DEFPOINTS3D = [
-    (0.0, 0.0, 0.0),
-    (10.0, 20.0, 20.0),
-    (30.0, 10.0, 25.0),
-    (40.0, 10.0, 25.0),
-]
+DEFPOINTS2D = Vec2.list([(0.0, 0.0), (3.0, 0.0), (7.0, 10.0), (10.0, 10.0)])
+DEFPOINTS3D = Vec3.list(
+    [
+        (0.0, 0.0, 0.0),
+        (10.0, 20.0, 20.0),
+        (30.0, 10.0, 25.0),
+        (40.0, 10.0, 25.0),
+    ]
+)
 
 
 @pytest.fixture(params=curve_classes)
@@ -80,7 +82,7 @@ def test_2d_tangent_computation(bezier):
 
 
 def test_approximate(bezier):
-    curve = bezier([(0, 0), (0, 1), (1, 1), (1, 0)])
+    curve = bezier(Vec2.list([(0, 0), (0, 1), (1, 1), (1, 0)]))
     with pytest.raises(ValueError):
         list(curve.approximate(0))
     assert list(curve.approximate(1)) == [(0, 0), (1, 0)]
@@ -99,9 +101,7 @@ def test_transform_interface(bezier):
     curve = bezier(DEFPOINTS3D)
     new = curve.transform(Matrix44.translate(1, 2, 3))
     assert new.control_points[0] == Vec3(DEFPOINTS3D[0]) + (1, 2, 3)
-    assert (
-        new.control_points[0] != curve.control_points[0]
-    ), "expected a new object"
+    assert new.control_points[0] != curve.control_points[0], "expected a new object"
 
 
 def test_transform_returns_always_3d_curves(bezier):
@@ -111,25 +111,27 @@ def test_transform_returns_always_3d_curves(bezier):
 
 
 def test_flattening(bezier):
-    curve = bezier([(0, 0), (1, 1), (2, -1), (3, 0)])
+    curve = bezier(Vec2.list([(0, 0), (1, 1), (2, -1), (3, 0)]))
     assert len(list(curve.flattening(1.0, segments=4))) == 5
     assert len(list(curve.flattening(0.1, segments=4))) == 7
 
 
 def test_flattening_for_equal_start_and_end_points(bezier):
-    curve = bezier([(0, 0), (1, 0), (1, 1), (0, 0)])
+    curve = bezier(Vec2.list([(0, 0), (1, 0), (1, 1), (0, 0)]))
     assert len(list(curve.flattening(0.1, segments=4))) == 5
 
 
 def test_flattening_with_large_elevation(bezier):
     elevation = 1.391912e19
     curve = bezier(
-        [
-            (0, 0, elevation),
-            (1, 1, elevation),
-            (2, -1, elevation),
-            (3, 0, elevation),
-        ]
+        Vec3.list(
+            [
+                (0, 0, elevation),
+                (1, 1, elevation),
+                (2, -1, elevation),
+                (3, 0, elevation),
+            ]
+        )
     )
     assert len(list(curve.flattening(0.1, segments=4))) > 3
 
@@ -137,12 +139,14 @@ def test_flattening_with_large_elevation(bezier):
 def test_flattening_for_equal_start_and_end_points_large_elevation(bezier):
     elevation = 1.391912e19
     curve = bezier(
-        [
-            (0, 0, elevation),
-            (1, 0, elevation),
-            (1, 1, elevation),
-            (0, 0, elevation),
-        ]
+        Vec3.list(
+            [
+                (0, 0, elevation),
+                (1, 0, elevation),
+                (1, 1, elevation),
+                (0, 0, elevation),
+            ]
+        )
     )
     assert len(list(curve.flattening(0.1, segments=4))) == 5
 
@@ -171,12 +175,12 @@ def test_flattening_for_equal_start_and_end_points_large_elevation(bezier):
 )
 def test_flattening_big_z_coordinates(bezier, z):
     """Test based on issue #574"""
-    cp = [
+    cp = Vec3.list([
         (888, 770, z),
         (887, 623, z),
         (901, 478, z),
         (930, 335, z),
-    ]
+    ])
     curve = bezier(cp)
     points = list(curve.flattening(0.01))
     # Don't care about the result, it should just not break!

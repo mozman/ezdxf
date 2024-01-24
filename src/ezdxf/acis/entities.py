@@ -1,4 +1,4 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Union, Callable, Type, Any, Sequence, Iterator
@@ -23,7 +23,7 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> list[Body]:
     """
     if isinstance(data, (bytes, bytearray)):
         return SabLoader.load(data)
-    return SatLoader.load(data)
+    return SatLoader.load(data)  # type: ignore
 
 
 def export_sat(

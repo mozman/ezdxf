@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2022, Manfred Moitzi
+# Copyright (c) 2018-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Optional, Iterable, Any, Iterator
@@ -40,6 +40,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 
 from .factory import register_entity
 from .objectcollection import ObjectCollection
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
@@ -323,7 +324,7 @@ class MultiLeader(DXFGraphic):
                     block_attribs[index] = attr._replace(text=new_text)
         return tags
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy leaders"""
         assert isinstance(entity, MultiLeader)
         entity.context = copy.deepcopy(self.context)

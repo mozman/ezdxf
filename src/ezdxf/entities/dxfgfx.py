@@ -1,7 +1,9 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2023 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Iterable, Any
+from typing_extensions import Self
+
 from ezdxf.entities import factory
 from ezdxf import options
 from ezdxf.lldxf import validator
@@ -214,7 +216,7 @@ class DXFGraphic(DXFEntity):
         processor.fast_load_dxfattribs(dxf, acdb_entity_group_codes, 1)
         return dxf
 
-    def post_new_hook(self):
+    def post_new_hook(self) -> None:
         """Post-processing and integrity validation after entity creation
         (internal API)
         """
@@ -316,7 +318,7 @@ class DXFGraphic(DXFEntity):
         self.export_acdb_entity(tagwriter)
         # XDATA and embedded objects export is also done by the parent class.
 
-    def export_acdb_entity(self, tagwriter: AbstractTagWriter):
+    def export_acdb_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export subclass 'AcDbEntity' as DXF tags. (internal API)"""
         # Full control over tag order and YES, sometimes order matters
         not_r12 = tagwriter.dxfversion > DXF12
@@ -411,7 +413,7 @@ class DXFGraphic(DXFEntity):
                 raise const.DXFValueError("Source layout for entity not found.")
         source.move_to_layout(self, layout)
 
-    def copy_to_layout(self, layout: BaseLayout) -> DXFEntity:
+    def copy_to_layout(self, layout: BaseLayout) -> Self:
         """
         Copy entity to another `layout`, returns new created entity as
         :class:`DXFEntity` object. Copying between different DXF drawings is
@@ -466,9 +468,8 @@ class DXFGraphic(DXFEntity):
         if dxf.hasattr("transparency"):
             auditor.check_transparency(self)
 
-    def transform(self, m: Matrix44) -> DXFGraphic:
-        """Inplace transformation interface, returns `self`
-        (floating interface).
+    def transform(self, m: Matrix44) -> Self:
+        """Inplace transformation interface, returns `self` (floating interface).
 
         Args:
              m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
@@ -486,7 +487,7 @@ class DXFGraphic(DXFEntity):
         """Check if post transform call is required."""
         return self.xdata is not None
 
-    def translate(self, dx: float, dy: float, dz: float) -> DXFGraphic:
+    def translate(self, dx: float, dy: float, dz: float) -> Self:
         """Translate entity inplace about `dx` in x-axis, `dy` in y-axis and
         `dz` in z-axis, returns `self` (floating interface).
 
@@ -496,21 +497,21 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.translate(dx, dy, dz))
 
-    def scale(self, sx: float, sy: float, sz: float) -> DXFGraphic:
+    def scale(self, sx: float, sy: float, sz: float) -> Self:
         """Scale entity inplace about `dx` in x-axis, `dy` in y-axis and `dz`
         in z-axis, returns `self` (floating interface).
 
         """
         return self.transform(Matrix44.scale(sx, sy, sz))
 
-    def scale_uniform(self, s: float) -> DXFGraphic:
+    def scale_uniform(self, s: float) -> Self:
         """Scale entity inplace uniform about `s` in x-axis, y-axis and z-axis,
         returns `self` (floating interface).
 
         """
         return self.transform(Matrix44.scale(s))
 
-    def rotate_axis(self, axis: UVec, angle: float) -> DXFGraphic:
+    def rotate_axis(self, axis: UVec, angle: float) -> Self:
         """Rotate entity inplace about vector `axis`, returns `self`
         (floating interface).
 
@@ -521,7 +522,7 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.axis_rotate(axis, angle))
 
-    def rotate_x(self, angle: float) -> DXFGraphic:
+    def rotate_x(self, angle: float) -> Self:
         """Rotate entity inplace about x-axis, returns `self`
         (floating interface).
 
@@ -531,7 +532,7 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.x_rotate(angle))
 
-    def rotate_y(self, angle: float) -> DXFGraphic:
+    def rotate_y(self, angle: float) -> Self:
         """Rotate entity inplace about y-axis, returns `self`
         (floating interface).
 
@@ -541,7 +542,7 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.y_rotate(angle))
 
-    def rotate_z(self, angle: float) -> DXFGraphic:
+    def rotate_z(self, angle: float) -> Self:
         """Rotate entity inplace about z-axis, returns `self`
         (floating interface).
 
@@ -611,7 +612,7 @@ class DXFGraphic(DXFEntity):
         self.dxf.discard("plotstyle_enum")
         self.dxf.discard("plotstyle_handle")
 
-    def _new_compound_entity(self, type_: str, dxfattribs) -> DXFGraphic:
+    def _new_compound_entity(self, type_: str, dxfattribs) -> Self:
         """Create and bind  new entity with same layout settings as `self`.
 
         Used by INSERT & POLYLINE to create appended DXF entities, don't use it
@@ -715,15 +716,21 @@ def is_graphic_entity(entity: DXFEntity) -> bool:
 
 
 def get_font_name(entity: DXFEntity) -> str:
-    """Returns the name of the font use by an entity.
-    This function always returns a font name even if the entity does not have
-    any font usage. The default font name is "txt".
+    """Returns the font name of any DXF entity.
 
+    This function always returns a font name even if the entity doesn't support text
+    styles.  The default font name is "txt".
     """
-    font_name = "txt"
-    if entity.doc and entity.dxf.hasattr("style"):
-        style_name = entity.dxf.style
-        style = entity.doc.styles.get(style_name)
-        if style:
-            font_name = style.dxf.font
-    return font_name
+    font_name = const.DEFAULT_TEXT_FONT
+    doc = entity.doc
+    if doc is None:
+        return font_name
+    try:
+        style_name = entity.dxf.get("style", const.DEFAULT_TEXT_STYLE)
+    except const.DXFAttributeError:
+        return font_name
+    try:
+        style = doc.styles.get(style_name)
+        return style.dxf.font
+    except const.DXFTableEntryError:
+        return font_name

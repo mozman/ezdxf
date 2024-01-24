@@ -1,17 +1,17 @@
-# Copyright (c) 2022, Manfred Moitzi
+# Copyright (c) 2022-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, Iterator, Sequence, Optional
+from typing import Iterable, Iterator, Sequence
 import ezdxf
 from ezdxf.math import Vec2, UVec, Vec3, safe_normal_vector, OCS
 
+from ._mapbox_earcut import earcut
+
 if ezdxf.options.use_c_ext:
     try:
-        from ezdxf.acc.mapbox_earcut import earcut
+        from ezdxf.acc.mapbox_earcut import earcut  # type: ignore
     except ImportError:
-        from ._mapbox_earcut import earcut
-else:
-    from ._mapbox_earcut import earcut
+        pass
 
 __all__ = [
     "mapbox_earcut_2d",
@@ -20,7 +20,7 @@ __all__ = [
 
 
 def mapbox_earcut_2d(
-    exterior: Iterable[UVec], holes: Optional[Iterable[Iterable[UVec]]] = None
+    exterior: Iterable[UVec], holes: Iterable[Iterable[UVec]] | None = None
 ) -> list[Sequence[Vec2]]:
     """Mapbox triangulation algorithm with hole support for 2D polygons.
 
@@ -43,7 +43,7 @@ def mapbox_earcut_2d(
     .. _Steiner point: https://en.wikipedia.org/wiki/Steiner_point_(computational_geometry)
 
     """
-    points: list[Vec2] = Vec2.list(exterior)
+    points = Vec2.list(exterior)
     if len(points) == 0:
         return []
     holes_: list[list[Vec2]] = []
@@ -53,10 +53,9 @@ def mapbox_earcut_2d(
 
 
 def mapbox_earcut_3d(
-    exterior: Iterable[UVec], holes: Optional[Iterable[Iterable[UVec]]] = None
-) -> Iterator[tuple[Vec3, Vec3, Vec3]]:
-    """Mapbox triangulation algorithm with hole support for flat
-    3D polygons.
+    exterior: Iterable[UVec], holes: Iterable[Iterable[UVec]] | None = None
+) -> Iterator[Sequence[Vec3]]:
+    """Mapbox triangulation algorithm with hole support for flat 3D polygons.
 
     Implements a modified ear slicing algorithm, optimized by z-order
     curve hashing and extended to handle holes, twisted polygons, degeneracies
@@ -79,12 +78,10 @@ def mapbox_earcut_3d(
         ZeroDivisionError: normal vector calculation failed
 
     """
-    polygon = list(exterior)
+    polygon = Vec3.list(exterior)
     if len(polygon) == 0:
         return
 
-    if not isinstance(polygon[0], Vec3):
-        raise TypeError("Vec3() as input type required")
     if polygon[0].isclose(polygon[-1]):
         polygon.pop()
     count = len(polygon)
@@ -95,13 +92,15 @@ def mapbox_earcut_3d(
         return
 
     ocs = OCS(safe_normal_vector(polygon))
-    elevation = ocs.from_wcs(polygon[0]).z  # type: ignore
+    elevation = ocs.from_wcs(polygon[0]).z
     exterior_ocs = list(ocs.points_from_wcs(polygon))
     holes_ocs: list[list[Vec3]] = []
     if holes:
         holes_ocs = [list(ocs.points_from_wcs(hole)) for hole in holes]
 
-    for triangle in earcut(exterior_ocs, holes_ocs):
-        yield tuple(  # type: ignore
+    # Vec3 supports the _Point protocol in _mapbox_earcut.py
+    # required attributes: x, y
+    for triangle in earcut(exterior_ocs, holes_ocs):  # type: ignore
+        yield tuple(
             ocs.points_to_wcs(Vec3(v.x, v.y, elevation) for v in triangle)
         )

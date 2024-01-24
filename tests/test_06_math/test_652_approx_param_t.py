@@ -8,13 +8,14 @@ from ezdxf.math import (
     Bezier4P,
     BSpline,
     open_uniform_knot_vector,
+    Vec2,
 )
 
 
 class TestGenericFeatures:
     @pytest.fixture
     def curve(self):
-        return Bezier3P([(0, 0), (1, 2), (2, 4)])
+        return Bezier3P(Vec2.list([(0, 0), (1, 2), (2, 4)]))
 
     def test_access_to_construction_polyline(self, curve):
         approx = ApproxParamT(curve, segments=100)
@@ -28,7 +29,7 @@ class TestGenericFeatures:
 class TestQuadraticBezier:
     @pytest.fixture(scope="class")
     def approx(self):
-        return ApproxParamT(Bezier3P([(0, 0), (1, 2), (2, 4)]))
+        return ApproxParamT(Bezier3P(Vec2.list([(0, 0), (1, 2), (2, 4)])))
 
     def test_start_param(self, approx):
         assert approx.param_t(0) == pytest.approx(0.0)
@@ -45,7 +46,7 @@ class TestQuadraticBezier:
 class TestCubicBezier:
     @pytest.fixture(scope="class")
     def approx(self):
-        return ApproxParamT(Bezier4P([(0, 0), (1, 2), (2, 4), (3, 1)]))
+        return ApproxParamT(Bezier4P(Vec2.list([(0, 0), (1, 2), (2, 4), (3, 1)])))
 
     def test_start_param(self, approx):
         assert approx.param_t(0) == pytest.approx(0.0)

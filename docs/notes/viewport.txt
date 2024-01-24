@@ -1,4 +1,0 @@
-Every paper space layout contains as default VIEWPORT entity with the id=1, (group code 69).
-
-VIEWPORT id has to be unique to the paper space, it is placed not to the whole
-DXF drawing.

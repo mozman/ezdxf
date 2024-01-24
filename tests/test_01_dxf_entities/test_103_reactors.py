@@ -30,6 +30,17 @@ def test_reactors_new():
     assert handles[0] == "AA"
     assert handles[3] == "DDDD"
 
+def test_copy_reactors():
+    reactors0 = Reactors(["DDDD", "AA", "CCCC", "BBB"])
+    reactors = reactors0.copy()
+    assert reactors is not reactors0
+    
+    assert len(reactors) == 4
+    handles = reactors.get()
+    # sorted handles
+    assert handles[0] == "AA"
+    assert handles[3] == "DDDD"
+
 
 def test_reactors_add():
     reactors = Reactors(["AA", "BBB", "CCCC"])

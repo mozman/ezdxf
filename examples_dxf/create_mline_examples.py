@@ -1,14 +1,8 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2023, Manfred Moitzi
 #  License: MIT License
-from pathlib import Path
 import ezdxf
 from ezdxf.lldxf import const
 from ezdxf.math import Shape2d
-
-OUTBOX = Path("~/Desktop/Outbox").expanduser()
-if not OUTBOX.exists():
-    OUTBOX = Path(".")
-
 
 def add_top_zero_bottom_mlines(
     msp, vertices, closed: bool = False, style: str = "Standard"
@@ -48,7 +42,7 @@ def create_simple_mline(style="Standard"):
     msp = doc.modelspace()
     add_top_zero_bottom_mlines(msp, [(0, 0), (10, 0)], style=style)
     doc.set_modelspace_vport(60, center=(10, 30))
-    doc.saveas(OUTBOX / f"mline_1_seg_{style}.dxf")
+    doc.saveas(f"mline_1_seg_{style}.dxf")
 
 
 def create_3seg_mline(style="Standard"):
@@ -59,7 +53,7 @@ def create_3seg_mline(style="Standard"):
         msp, [(0, 0), (10, 0), (15, 5), (15, 10)], style=style
     )
     doc.set_modelspace_vport(60, center=(10, 30))
-    doc.saveas(OUTBOX / f"mline_3_seg_{style}.dxf")
+    doc.saveas(f"mline_3_seg_{style}.dxf")
 
 
 def create_square_mline(style="Standard"):
@@ -70,7 +64,7 @@ def create_square_mline(style="Standard"):
         msp, [(0, 0), (10, 0), (10, 10), (0, 10)], closed=True, style=style
     )
     doc.set_modelspace_vport(60, center=(10, 30))
-    doc.saveas(OUTBOX / f"mline_square_{style}.dxf")
+    doc.saveas(f"mline_square_{style}.dxf")
 
 
 def setup_styles(doc):

@@ -158,9 +158,12 @@ def column_heights(columns: MTextColumns) -> list[Optional[float]]:
         heights = list(columns.heights)
         # last height has to be auto height = None
         heights[-1] = None
-    else:  # static, dynamic auto
-        heights = [columns.defined_height] * columns.count
-    return heights
+        return heights
+    # static, dynamic auto
+    defined_height = abs(columns.defined_height)
+    if defined_height < 1e-6:
+        return [None]
+    return [defined_height] * columns.count
 
 
 class AbstractMTextRenderer(abc.ABC):

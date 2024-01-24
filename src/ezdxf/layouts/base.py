@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator, Union, Iterable, Optional
@@ -249,6 +249,8 @@ class BaseLayout(_AbstractLayout):
             copy: if ``True`` copy entity from other document else unlink from
                 other document
 
+        Raises:
+            CopyNotSupported: copying of `entity` i not supported
         """
         foreign_doc = entity.doc
         dxftype = entity.dxftype()
@@ -289,9 +291,7 @@ class BaseLayout(_AbstractLayout):
         for entity in list(self):
             self.delete_entity(entity)
 
-    def move_to_layout(
-        self, entity: DXFGraphic, layout: BaseLayout
-    ) -> None:
+    def move_to_layout(self, entity: DXFGraphic, layout: BaseLayout) -> None:
         """Move entity to another layout.
 
         Args:
@@ -345,11 +345,9 @@ class BaseLayout(_AbstractLayout):
                 raise DXFValueError(
                     "Extension dictionary entry ACAD_SORTENTS does not exist."
                 )
-        return sortents_table
+        return sortents_table  #type: ignore
 
-    def set_redraw_order(
-        self, handles: Union[dict, Iterable[tuple[str, str]]]
-    ) -> None:
+    def set_redraw_order(self, handles: Union[dict, Iterable[tuple[str, str]]]) -> None:
         """If the header variable $SORTENTS `Regen` flag (bit-code value 16)
         is set, AutoCAD regenerates entities in ascending handles order.
 
@@ -372,7 +370,7 @@ class BaseLayout(_AbstractLayout):
         """
         sortents = self.get_sortents_table()
         if isinstance(handles, dict):
-            handles = handles.items()
+            handles = handles.items()  # type: ignore
         sortents.set_handles(handles)
 
     def get_redraw_order(self) -> Iterable[tuple[str, str]]:
@@ -389,7 +387,7 @@ class BaseLayout(_AbstractLayout):
             sortents_table = xdict["ACAD_SORTENTS"]
         except DXFKeyError:
             return tuple()
-        return iter(sortents_table)
+        return iter(sortents_table)  # type: ignore
 
     def entities_in_redraw_order(self, reverse=False) -> Iterable[DXFGraphic]:
         """Yields all entities from layout in ascending redraw order or
@@ -416,7 +414,7 @@ class VirtualLayout(_AbstractLayout):
     """
 
     def __init__(self):
-        super().__init__(None)
+        super().__init__(None)  # type: ignore
         self.entity_space = EntitySpace()
 
     @property

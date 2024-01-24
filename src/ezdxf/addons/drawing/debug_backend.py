@@ -2,9 +2,10 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import Iterable
+
 from ezdxf.math import Vec2
 from .properties import BackendProperties
-from .backend import Backend, BkPath2d, BkPoints2d
+from .backend import Backend, BkPath2d, BkPoints2d, ImageData
 from .config import Configuration
 
 
@@ -28,6 +29,11 @@ class BasicBackend(Backend):
         self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
         self.collector.append(("filled_polygon", points, properties))
+
+    def draw_image(
+        self, image_data: ImageData, properties: BackendProperties
+    ) -> None:
+        self.collector.append(("image", image_data, properties))
 
     def set_background(self, color: str) -> None:
         self.collector.append(("bgcolor", color))

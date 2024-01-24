@@ -14,8 +14,8 @@ if USE_C_EXT:
 
     curve_classes.append(CBezier3P)
 
-DEFPOINTS2D = [(0.0, 0.0), (5.0, 5.0), (10.0, 0.0)]
-DEFPOINTS3D = [(0.0, 0.0, 0.0), (50.0, 50.0, 50.0), (100.0, 0.0, 0.0)]
+DEFPOINTS2D = Vec2.list([(0.0, 0.0), (5.0, 5.0), (10.0, 0.0)])
+DEFPOINTS3D = Vec3.list([(0.0, 0.0, 0.0), (50.0, 50.0, 50.0), (100.0, 0.0, 0.0)])
 
 
 @pytest.fixture(params=curve_classes)
@@ -106,11 +106,11 @@ def test_flattening(bezier):
 )
 def test_flattening_big_z_coordinates(bezier, z):
     """Test based on issue #574"""
-    cp = [
+    cp = Vec3.list([
         (888, 770, z),
         (887, 623, z),
         (901, 478, z),
-    ]
+    ])
     curve = bezier(cp)
     points = list(curve.flattening(0.01))
     # Don't care about the result, it should just not break!

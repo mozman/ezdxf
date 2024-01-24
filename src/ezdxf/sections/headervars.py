@@ -2011,7 +2011,7 @@ HEADER_VAR_MAP = {
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21400,
-        default=0,
+        default=2,
     ),
     "$HALOGAP": HeaderVarDef(
         name="$HALOGAP",

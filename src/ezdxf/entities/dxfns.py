@@ -562,7 +562,7 @@ class SubclassProcessor:
     def simple_dxfattribs_loader(
         self, dxf: DXFNamespace, group_code_mapping: dict[int, str]
     ) -> None:
-        # Most tests in text suite 201 for the POINT entity
+        # tested in test suite 201 for the POINT entity
         """Load DXF attributes from all subclasses into the DXF namespace.
 
         Can not handle same group codes in different subclasses, does not remove

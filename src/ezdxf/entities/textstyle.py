@@ -65,7 +65,7 @@ acdb_style = DefSubclass(
         # Primary font file name:
         # ATTENTION: The font file name can be an empty string and the font family
         # may be stored in XDATA! See also posts at the (unrelated) issue #380.
-        "font": DXFAttr(3, default="txt"),
+        "font": DXFAttr(3, default=const.DEFAULT_TEXT_FONT),
         # Big font name, blank if none
         "bigfont": DXFAttr(4, default=""),
     },

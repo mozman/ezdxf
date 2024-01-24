@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2022, Manfred Moitzi
+# Copyright (c) 2018-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 
 ABS_TOL = 1e-12
 isclose = partial(math.isclose, abs_tol=ABS_TOL)
+
+__all__ = ["Vec3", "Vec2"]
 
 
 class Vec3:
@@ -137,7 +139,7 @@ class Vec3:
         return tuple(cls.generate(items))
 
     @classmethod
-    def generate(cls, items: Iterable[UVec]) -> Iterable[Vec3]:
+    def generate(cls, items: Iterable[UVec]) -> Iterator[Vec3]:
         """Returns an iterable of :class:`Vec3` objects."""
         return (cls(item) for item in items)
 
@@ -155,8 +157,8 @@ class Vec3:
         """
         return cls.from_angle(math.radians(angle), length)
 
-    @staticmethod  # allows overriding by inheritance
-    def decompose(*args) -> Tuple[float, float, float]:
+    @staticmethod
+    def decompose(*args) -> Tuple[float, float, float]:  # cannot use "tuple" here!
         """Converts input into a (x, y, z) tuple.
 
         Valid arguments are:
@@ -237,9 +239,9 @@ class Vec3:
     def __getitem__(self, index: int) -> float:
         """Support for indexing:
 
-            - v[0] is v.x
-            - v[1] is v.y
-            - v[2] is v.z
+        - v[0] is v.x
+        - v[1] is v.y
+        - v[2] is v.z
 
         """
         if isinstance(index, slice):
@@ -430,9 +432,7 @@ class Vec3:
     def __mul__(self, other: float) -> Vec3:
         """Scalar Mul operator: `self` * `other`."""
         scalar = float(other)
-        return self.__class__(
-            self._x * scalar, self._y * scalar, self._z * scalar
-        )
+        return self.__class__(self._x * scalar, self._y * scalar, self._z * scalar)
 
     def __rmul__(self, other: float) -> Vec3:
         """Scalar RMul operator: `other` * `self`."""
@@ -441,9 +441,7 @@ class Vec3:
     def __truediv__(self, other: float) -> Vec3:
         """Scalar Div operator: `self` / `other`."""
         scalar = float(other)
-        return self.__class__(
-            self._x / scalar, self._y / scalar, self._z / scalar
-        )
+        return self.__class__(self._x / scalar, self._y / scalar, self._z / scalar)
 
     @staticmethod
     def sum(items: Iterable[UVec]) -> Vec3:
@@ -577,7 +575,7 @@ class Vec2:
 
     __slots__ = ["x", "y"]
 
-    def __init__(self, v=(0.0, 0.0), y=None):
+    def __init__(self, v=(0.0, 0.0), y=None) -> None:
         try:  # fast path for Vec2() and Vec3() or any object providing x and y attributes
             self.x = v.x
             self.y = v.y
@@ -611,7 +609,7 @@ class Vec2:
         return tuple(cls.generate(items))
 
     @classmethod
-    def generate(cls, items: Iterable[UVec]) -> Iterable[Vec2]:
+    def generate(cls, items: Iterable[UVec]) -> Iterator[Vec2]:
         return (cls(item) for item in items)
 
     @classmethod

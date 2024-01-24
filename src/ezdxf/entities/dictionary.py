@@ -22,6 +22,7 @@ from ezdxf.audit import AuditError
 from ezdxf.entities import factory, DXFGraphic
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
+from .copy import default_copy, CopyNotSupported
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace, XRecord
@@ -98,7 +99,7 @@ class Dictionary(DXFObject):
         self._data: dict[str, Union[str, DXFObject]] = dict()
         self._value_code = VALUE_CODE
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
         """Copy hard owned entities but do not store the copies in the entity
         database, this is a second step (factory.bind), this is just real copying.
         """
@@ -106,7 +107,21 @@ class Dictionary(DXFObject):
         entity._value_code = self._value_code
         if self.dxf.hard_owned:
             # Reactors are removed from the cloned DXF objects.
-            entity._data = {key: entity.copy() for key, entity in self.items()}
+            data: dict[str, DXFEntity] = dict()
+            for key, ent in self.items():
+                # ignore strings and None - these entities do not exist
+                # in the entity database
+                if isinstance(ent, DXFEntity):
+                    try:  # todo: follow CopyStrategy.ignore_copy_errors_in_linked entities
+                        data[key] = ent.copy(copy_strategy=copy_strategy)
+                    except CopyNotSupported:
+                        if copy_strategy.settings.ignore_copy_errors_in_linked_entities:
+                            logger.warning(
+                                f"copy process ignored {str(ent)} - this may cause problems in AutoCAD"
+                            )
+                        else:
+                            raise
+            entity._data = data  # type: ignore
         else:
             entity._data = dict(self._data)
 
@@ -117,6 +132,8 @@ class Dictionary(DXFObject):
             return handle_mapping
 
         for key, entity in self.items():
+            if not isinstance(entity, DXFEntity):
+                continue
             copied_entry = clone.get(key)
             if copied_entry:
                 handle_mapping[entity.dxf.handle] = copied_entry.dxf.handle
@@ -130,6 +147,8 @@ class Dictionary(DXFObject):
             return
         data = dict()
         for key, entity in self.items():
+            if not isinstance(entity, DXFEntity):
+                continue
             entity_copy = mapping.get_reference_of_copy(entity.dxf.handle)
             if entity_copy:
                 data[key] = entity
@@ -155,10 +174,10 @@ class Dictionary(DXFObject):
         object_section = doc.objects
         owner_handle = self.dxf.handle
         for _, entity in self.items():
-            entity.dxf.owner = owner_handle
-            factory.bind(entity, doc)
+            entity.dxf.owner = owner_handle  # type: ignore
+            factory.bind(entity, doc)  # type: ignore
             # For a correct DXF export add entities to the objects section:
-            object_section.add_object(entity)
+            object_section.add_object(entity)  # type: ignore
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
@@ -198,13 +217,13 @@ class Dictionary(DXFObject):
 
         def items():
             for key, handle in self.items():
-                entity = db.get(handle)
+                entity = db.get(handle)  # type: ignore
                 if entity is not None and entity.is_alive:
                     yield key, entity
 
         if len(self):
             for k, v in list(items()):
-                self.__setitem__(k, v)
+                self.__setitem__(k, v)  # type: ignore
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
@@ -447,7 +466,7 @@ class Dictionary(DXFObject):
         else:
             dict_var = self.get(key)
             dict_var.dxf.value = str(value)  # type: ignore
-        return dict_var
+        return dict_var  #type: ignore
 
     def link_dxf_object(self, name: str, obj: DXFObject) -> None:
         """Add `obj` and set owner of `obj` to this dictionary.
@@ -485,7 +504,7 @@ class Dictionary(DXFObject):
         db = auditor.entitydb
         for key, entry in self._data.items():
             if isinstance(entry, str):
-                if entry not in db:
+                if entry not in db:  # type: ignore
                     append(key)
             elif entry.is_alive:
                 if entry.dxf.handle not in db:
@@ -529,7 +548,8 @@ class DictionaryWithDefault(Dictionary):
         super().__init__()
         self._default: Optional[DXFObject] = None
 
-    def copy_data(self, entity: DXFEntity) -> None:
+    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+        super().copy_data(entity, copy_strategy=copy_strategy)
         assert isinstance(entity, DictionaryWithDefault)
         entity._default = self._default
 
@@ -577,7 +597,7 @@ class DictionaryWithDefault(Dictionary):
 
     def audit(self, auditor: Auditor) -> None:
         def create_missing_default_object():
-            placeholder = self.doc.objects.add_placeholder(owner=self.dxf.handle)
+            placeholder = self.doc.objects.add_placeholder(owner=self.dxf.handle)  # type: ignore
             self.set_default(placeholder)
             auditor.fixed_error(
                 code=AuditError.CREATED_MISSING_OBJECT,
@@ -585,7 +605,7 @@ class DictionaryWithDefault(Dictionary):
             )
 
         if self._default is None or not self._default.is_alive:
-            if auditor.entitydb.locked:
+            if auditor.entitydb.locked:  # type: ignore
                 auditor.add_post_audit_job(create_missing_default_object)
             else:
                 create_missing_default_object()

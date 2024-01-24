@@ -1,16 +1,18 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from typing import Iterable
 import pytest
 import math
+import numpy as np
+
 from ezdxf.math.linalg import (
     Matrix,
     detect_banded_matrix,
     compact_banded_matrix,
     BandedMatrixLU,
-    gauss_vector_solver,
     banded_matrix,
 )
+from ezdxf.math.legacy import gauss_vector_solver
 
 BANDED_MATRIX = Matrix(
     matrix=[
@@ -74,9 +76,9 @@ B1 = [5, 3, 2, 6, 8, 2, 1]
 B2 = [9, 1, 7, 6, 4, 5, 0]
 B3 = [0, 9, 3, 7, 1, 9, 9]
 
-CHK1 = gauss_vector_solver(BANDED_MATRIX, B1)
-CHK2 = gauss_vector_solver(BANDED_MATRIX, B2)
-CHK3 = gauss_vector_solver(BANDED_MATRIX, B3)
+CHK1 = gauss_vector_solver(BANDED_MATRIX.matrix, B1)
+CHK2 = gauss_vector_solver(BANDED_MATRIX.matrix, B2)
+CHK3 = gauss_vector_solver(BANDED_MATRIX.matrix, B3)
 
 
 def test_solve_banded_matrix_vector():
@@ -90,12 +92,11 @@ def test_solve_banded_matrix_vector():
 def test_solve_banded_matrix_matrix():
     m, m1, m2 = banded_matrix(BANDED_MATRIX)
     lu = BandedMatrixLU(m, m1, m2)
-    r = lu.solve_matrix(list(zip(B1, B2, B3)))
+    mat_B = np.array(list(zip(B1, B2, B3)))
+    r = lu.solve_matrix(mat_B)
     are_close_vectors(r.col(0), CHK1)
     are_close_vectors(r.col(1), CHK2)
     are_close_vectors(r.col(2), CHK3)
-
-    assert math.isclose(lu.determinant(), BANDED_MATRIX.determinant())
 
 
 if __name__ == "__main__":

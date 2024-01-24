@@ -1,9 +1,10 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Iterable
+import numpy as np
+
 from ezdxf.math import Vec3
-from .construct2d import linspace
 
 
 class CSpline:
@@ -35,5 +36,5 @@ class CSpline:
 
 def approximate(csplines: Iterable[CSpline], count) -> Iterable[Vec3]:
     for cspline in csplines:
-        for t in linspace(0.0, 1.0, count):
+        for t in np.linspace(0.0, 1.0, count):
             yield cspline.point(t)

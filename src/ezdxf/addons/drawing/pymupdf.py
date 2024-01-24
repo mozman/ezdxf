@@ -1,16 +1,21 @@
 #  Copyright (c) 2023, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
+import math
 from typing import Iterable, no_type_check
 import copy
 
-from ezdxf.math import Vec2, BoundingBox2d
+import PIL.Image
+import numpy as np
+
+from ezdxf.math import Vec2, BoundingBox2d, Matrix44
 from ezdxf.colors import RGB
 from ezdxf.path import Command
 from ezdxf.version import __version__
 
 from .type_hints import Color
-from .backend import BackendInterface, BkPath2d, BkPoints2d
+from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
 from .config import Configuration, LineweightPolicy
 from .properties import BackendProperties
 from . import layout, recorder
@@ -54,7 +59,7 @@ class PyMuPdfBackend(recorder.Recorder):
         super().__init__()
         self._init_flip_y = True
 
-    def _get_replay(
+    def get_replay(
         self,
         page: layout.Page,
         *,
@@ -114,7 +119,7 @@ class PyMuPdfBackend(recorder.Recorder):
             settings: layout settings, see :class:`~ezdxf.addons.drawing.layout.Settings`
             render_box: set explicit region to render, default is content bounding box
         """
-        backend = self._get_replay(page, settings=settings, render_box=render_box)
+        backend = self.get_replay(page, settings=settings, render_box=render_box)
         return backend.get_pdf_bytes()
 
     def get_pixmap_bytes(
@@ -145,7 +150,7 @@ class PyMuPdfBackend(recorder.Recorder):
         """
         if fmt not in SUPPORTED_IMAGE_FORMATS:
             raise ValueError(f"unsupported image format: '{fmt}'")
-        backend = self._get_replay(page, settings=settings, render_box=render_box)
+        backend = self.get_replay(page, settings=settings, render_box=render_box)
         try:
             pixmap = backend.get_pixmap(dpi=dpi, alpha=alpha)
             return pixmap.tobytes(output=fmt)
@@ -234,7 +239,7 @@ class PyMuPdfRenderBackend(BackendInterface):
     def get_pixmap(self, dpi: int, alpha=False):
         return self.page.get_pixmap(dpi=dpi, alpha=alpha)
 
-    def get_svg_image(self) -> bytes:
+    def get_svg_image(self) -> str:
         return self.page.get_svg_image()
 
     def set_background(self, color: Color) -> None:
@@ -353,6 +358,49 @@ class PyMuPdfRenderBackend(BackendInterface):
         shape.draw_polyline(vertices)
         self.finish_filling(shape, properties)
         shape.commit()
+
+    def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
+        transform = image_data.transform
+        image = image_data.image
+        height, width, depth = image.shape
+        assert depth == 4
+
+        corners = list(
+            transform.transform_vertices(
+                [Vec2(0, 0), Vec2(width, 0), Vec2(width, height), Vec2(0, height)]
+            )
+        )
+        xs = [p.x for p in corners]
+        ys = [p.y for p in corners]
+        r = fitz.Rect((min(xs), min(ys)), (max(xs), max(ys)))
+
+        # translation and non-uniform scale are handled by having the image stretch to fill the given rect.
+        angle = (corners[1] - corners[0]).angle_deg
+        need_rotate = not math.isclose(angle, 0.0)
+        # already mirroring once to go from pixels (+y down) to wcs (+y up)
+        # so a positive determinant means an additional reflection
+        need_flip = transform.determinant() > 0
+
+        if need_rotate or need_flip:
+            pil_image = PIL.Image.fromarray(image, mode="RGBA")
+            if need_flip:
+                pil_image = pil_image.transpose(PIL.Image.Transpose.FLIP_TOP_BOTTOM)
+            if need_rotate:
+                pil_image = pil_image.rotate(
+                    -angle,
+                    resample=PIL.Image.Resampling.BICUBIC,
+                    expand=True,
+                    fillcolor=(0, 0, 0, 0),
+                )
+            image = np.asarray(pil_image)
+            height, width, depth = image.shape
+
+        pixmap = fitz.Pixmap(
+            fitz.Colorspace(fitz.CS_RGB), width, height, bytes(image.data), True
+        )
+        # TODO: could improve by caching and re-using xrefs. If a document contains many
+        #  identical images redundant copies will be stored for each one
+        self.page.insert_image(r, keep_proportion=False, pixmap=pixmap)
 
     def configure(self, config: Configuration) -> None:
         self.lineweight_policy = config.lineweight_policy

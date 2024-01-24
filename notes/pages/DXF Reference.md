@@ -1,0 +1,15 @@
+# Quality of the DXF Reference
+	- The DXF reference is by far no specification nor a standard like the W3C standard for [[SVG]] or the ISO standard for [[PDF]].
+	- The reference describes many but not all [[DXF]] entities and some basic concepts like the tag structure or the arbitrary axis algorithm.
+	- But the existing documentation (reference) is incomplete and partly misleading or wrong.
+	- Also missing from the reference are some important parts like the complex relationship between the entities to create higher order structures like block definitions, layouts (model space & paper space) or dynamic blocks to name a few.
+	-
+- ## Ressources
+	- [DXF R2018](https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3) Online Reference
+	- [DXF R2014](http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e659029) Online Reference
+	- [Download](https://www.autodesk.com/developer-network/platform-technologies/autocad-dxf-archive) DXF References
+-
+- ## See also
+	- [[What is DXF?]]
+	- [[DXF Ground Truth]]
+	- [[REFERENCES]]
