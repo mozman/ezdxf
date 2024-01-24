@@ -703,7 +703,10 @@ class MeshBuilder:
         
         The method supports closed and open shells.  A 3DSOLID entity can contain 
         multiple shells.  Separate the meshes beforehand by the method 
-        :meth:`separate_meshes` if required.
+        :meth:`separate_meshes` if required.  The normals vectors of all faces should 
+        point outwards. Faces can have more than 3 vertices (ngons) but non-planar 
+        faces and concave faces will cause problems in some CAD applications.  The 
+        method :meth:`mesh_tesselation` can help to break down the faces into triangles.
 
         Requires a valid DXF document for `layout` and DXF version R2000 or newer.
 
