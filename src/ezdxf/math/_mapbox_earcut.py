@@ -48,22 +48,18 @@
 # A Steiner point is defined as a hole with a single point!
 #
 from __future__ import annotations
-from typing import TypeVar, Sequence, Optional
-from typing_extensions import Protocol
+from typing import Sequence, Optional, Protocol, TypeVar
 
 import math
 
 
-class _Point(Protocol):
+class Point(Protocol):
     x: float
     y: float
 
 
-T = TypeVar("T", bound=_Point)
-
-
 class Node:
-    def __init__(self, i: int, point: T):
+    def __init__(self, i: int, point: Point) -> None:
         self.i: int = i
 
         # store source point for output
@@ -91,9 +87,10 @@ class Node:
         return self.x == other.x and self.y == other.y
 
 
-def earcut(
-    exterior: list[T], holes: list[list[T]]
-) -> list[Sequence[T]]:
+T = TypeVar("T", bound=Point)
+
+
+def earcut(exterior: list[T], holes: list[list[T]]) -> list[Sequence[T]]:
     """Implements a modified ear slicing algorithm, optimized by z-order
     curve hashing and extended to handle holes, twisted polygons, degeneracies
     and self-intersections in a way that doesn't guarantee correctness of
@@ -145,11 +142,11 @@ def earcut(
         inv_size = max(max_x - min_x, max_y - min_y)
         inv_size = 32767 / inv_size if inv_size != 0 else 0
 
-    earcut_linked(outer_node, triangles, min_x, min_y, inv_size, 0)
+    earcut_linked(outer_node, triangles, min_x, min_y, inv_size, 0)  # type: ignore
     return triangles
 
 
-def linked_list(points: Sequence[T], start: int, ccw: bool) -> Node:
+def linked_list(points: Sequence[Point], start: int, ccw: bool) -> Node:
     """Create a circular doubly linked list from polygon points in the specified
     winding order
     """
@@ -171,7 +168,7 @@ def linked_list(points: Sequence[T], start: int, ccw: bool) -> Node:
     return last
 
 
-def signed_area(points: Sequence[T]) -> float:
+def signed_area(points: Sequence[Point]) -> float:
     s: float = 0.0
     if not len(points):
         return s
@@ -238,9 +235,9 @@ def sign(num: float) -> int:
 
 
 def on_segment(p: Node, q: Node, r: Node) -> bool:
-    return max(p.x, r.x) >= q.x >= min(p.x, r.x) and max(
+    return max(p.x, r.x) >= q.x >= min(p.x, r.x) and max(p.y, r.y) >= q.y >= min(
         p.y, r.y
-    ) >= q.y >= min(p.y, r.y)
+    )
 
 
 def intersects(p1: Node, q1: Node, p2: Node, q2: Node) -> bool:
@@ -264,7 +261,7 @@ def intersects(p1: Node, q1: Node, p2: Node, q2: Node) -> bool:
     return False
 
 
-def insert_node(i: int, point: T, last: Node) -> Node:
+def insert_node(i: int, point: Point, last: Node) -> Node:
     """create a node and optionally link it with previous one (in a circular
     doubly linked list)
     """
@@ -292,7 +289,7 @@ def remove_node(p: Node) -> None:
 
 
 def eliminate_holes(
-    holes: Sequence[Sequence[T]], start: int, outer_node: Node
+    holes: Sequence[Sequence[Point]], start: int, outer_node: Node
 ) -> Node:
     """link every hole into the outer loop, producing a single-ring polygon
     without holes
@@ -359,7 +356,7 @@ def filter_points(start: Node, end: Optional[Node] = None) -> Node:
 # main ear slicing loop which triangulates a polygon (given as a linked list)
 def earcut_linked(
     ear: Node,
-    triangles: list[Sequence[T]],
+    triangles: list[Sequence[Point]],
     min_x: float,
     min_y: float,
     inv_size: float,
@@ -380,9 +377,7 @@ def earcut_linked(
         next = ear.next
 
         _is_ear = (
-            is_ear_hashed(ear, min_x, min_y, inv_size)
-            if inv_size
-            else is_ear(ear)
+            is_ear_hashed(ear, min_x, min_y, inv_size) if inv_size else is_ear(ear)
         )
         if _is_ear:
             # cut off the triangle
@@ -593,9 +588,7 @@ def index_curve(start: Node, min_x: float, min_y: float, inv_size: float):
     sort_linked(p)
 
 
-def z_order(
-    x0: float, y0: float, min_x: float, min_y: float, inv_size: float
-) -> int:
+def z_order(x0: float, y0: float, min_x: float, min_y: float, inv_size: float) -> int:
     """Z-order of a point given coords and inverse of the longer side of data
     bbox.
     """
@@ -620,7 +613,7 @@ def z_order(
 # http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
 def sort_linked(head: Node) -> Node:
     in_size = 1
-    tail : Node
+    tail: Node
     while True:
         p = head
         head = None  # type: ignore
@@ -688,7 +681,7 @@ def split_polygon(a: Node, b: Node) -> Node:
 
 
 # go through all polygon nodes and cure small local self-intersections
-def cure_local_intersections(start: Node, triangles: list[Sequence[T]]) -> Node:
+def cure_local_intersections(start: Node, triangles: list[Sequence[Point]]) -> Node:
     p = start
     while True:
         a = p.prev
@@ -714,7 +707,7 @@ def cure_local_intersections(start: Node, triangles: list[Sequence[T]]) -> Node:
 
 def split_ear_cut(
     start: Node,
-    triangles: list[Sequence[T]],
+    triangles: list[Sequence[Point]],
     min_x: float,
     min_y: float,
     inv_size: float,
@@ -792,17 +785,13 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
                 p.y,
             )
         ):
-
             tan = abs(hy - p.y) / (hx - p.x)  # tangential
 
             if locally_inside(p, hole) and (
                 tan < tan_min
                 or (
                     tan == tan_min
-                    and (
-                        p.x > m.x
-                        or (p.x == m.x and sector_contains_sector(m, p))
-                    )
+                    and (p.x > m.x or (p.x == m.x and sector_contains_sector(m, p)))
                 )
             ):
                 m = p
