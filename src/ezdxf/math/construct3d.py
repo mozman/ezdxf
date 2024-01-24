@@ -1,7 +1,7 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Sequence, Iterable, Optional
+from typing import Sequence, Iterable, Optional, Iterator
 from enum import IntEnum
 import math
 from ezdxf.math import (
@@ -71,18 +71,18 @@ def is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool:
 
 
 def subdivide_face(
-    face: Sequence[AnyVec], quads: bool = True
-) -> Iterable[tuple[Vec3, ...]]:
+    face: Sequence[Vec3], quads: bool = True
+) -> Iterator[Sequence[Vec3]]:
     """Subdivides faces by subdividing edges and adding a center vertex.
 
     Args:
-        face: a sequence of vertices, :class:`Vec2` and :class:`Vec3` objects
-            supported.
+        face: a sequence of :class:`Vec3`
         quads: create quad faces if ``True`` else create triangles
 
     """
     if len(face) < 3:
         raise ValueError("3 or more vertices required.")
+    
     len_face: int = len(face)
     mid_pos = Vec3.sum(face) / len_face
     subdiv_location: list[Vec3] = [
@@ -100,14 +100,13 @@ def subdivide_face(
 
 
 def subdivide_ngons(
-    faces: Iterable[Sequence[AnyVec]],
+    faces: Iterable[Sequence[Vec3]],
     max_vertex_count=4,
-) -> Iterable[Sequence[Vec3]]:
+) -> Iterator[Sequence[Vec3]]:
     """Subdivides faces into triangles by adding a center vertex.
 
     Args:
-        faces: iterable of faces as sequence of :class:`Vec2` and
-            :class:`Vec3` objects
+        faces: iterable of faces as sequence of :class:`Vec3`
         max_vertex_count: subdivide only ngons with more vertices
 
     """
