@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2022, Manfred Moitzi
+# Copyright (c) 2012-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from .bezier import bernstein_basis
@@ -16,8 +16,8 @@ class BezierSurface:
 
     Args:
         defpoints: matrix (list of lists) of `m` rows and `n` columns:
-                   [ [m1n1, m1n2, ... ], [m2n1, m2n2, ...] ... ]  each element is a
-                   3D location as ``(x, y, z)`` tuple.
+            [ [m1n1, m1n2, ... ], [m2n1, m2n2, ...] ... ]  each element is a
+            3D location as ``(x, y, z)`` tuple.
 
     """
 
@@ -62,11 +62,12 @@ class BezierSurface:
 
         """
         point = [0.0, 0.0, 0.0]
-        for irow in range(self.nrows):
-            rowbasis = bernstein_basis(self.nrows, irow, u)
-            row = self._defpoints[irow]
+        for row_index in range(self.nrows):
+            rowbasis = bernstein_basis(self.nrows, row_index, u)
+            row = self._defpoints[row_index]
             for col in range(self.ncols):
                 colbasis = bernstein_basis(self.ncols, col, v)
                 for axis in (0, 1, 2):
                     point[axis] += row[col][axis] * rowbasis * colbasis
                 return Vec3(point)
+        return Vec3(point)

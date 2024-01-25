@@ -255,6 +255,6 @@ def bernstein_basis(n: int, i: int, t: float) -> float:
     return Ni * ti * tni
 
 
-@lru_cache(maxsize=16)
+@lru_cache(maxsize=None)
 def factorial(n: int):
     return math.factorial(n)
