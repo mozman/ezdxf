@@ -283,7 +283,7 @@ class Drawing:
     @property
     def units(self) -> int:
         """Get and set the document/modelspace base units as enum, for more
-        information read this: :ref:`dxf units`.
+        information read this: :ref:`dxf units`. Requires DXF R2000 or newer.
 
         """
         return self.header.get("$INSUNITS", 0)
@@ -291,6 +291,10 @@ class Drawing:
     @units.setter
     def units(self, unit_enum: int) -> None:
         if 0 <= unit_enum < 25:
+            if self.dxfversion < DXF2000:
+                logger.warning(
+                    "Drawing units ($INSUNITS) are not exported for DXF R12."
+                )
             self.header["$INSUNITS"] = unit_enum
         else:
             raise ValueError(f"Invalid units enum: {unit_enum}")
