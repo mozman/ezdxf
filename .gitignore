@@ -3,6 +3,7 @@
 .eggs
 .idea
 .vscode
+.coverage
 DXFResearch
 build
 dist
