@@ -693,8 +693,16 @@ def store_layer_overrides(
             return layer.new_extension_dict()
 
     def set_xdict_tags(key: str, tags: list[DXFTag]):
+        from ezdxf.entities import XRecord
+
         xdict = get_xdict()
         xrec = xdict.get(key)
+        if not isinstance(xrec, XRecord) and xrec is not None:
+            logger.debug(
+                f"Found entity {str(xrec)} as override storage in {str(layer)} "
+                f"but expected XRECORD"
+            )
+            xrec = None
         if xrec is None:
             xrec = xdict.add_xrecord(key)
             xrec.dxf.cloning = 1
