@@ -413,7 +413,7 @@ class Layer(DXFEntity):
         self.dxf.linetype = "Continuous"
         auditor.fixed_error(
             code=AuditError.UNDEFINED_LINETYPE,
-            message=f"Replaced undefined linetype {linetype} in layer {self.dxf.name} by CONTINOUSE",
+            message=f"Replaced undefined linetype {linetype} in layer '{self.dxf.name}' by CONTINUOUS",
             dxf_entity=self,
             data=linetype,
         )
