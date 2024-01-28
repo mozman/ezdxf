@@ -1,4 +1,34 @@
-alias:: ODAFC
+alias:: ODAFC, ODA File Converter
 
 - Download link: <https://www.opendesign.com/guestfiles/oda_file_converter>
 - Documentation of the `odafc` add-on: <https://ezdxf.mozman.at/docs/addons/odafc.html>
+- Use the [[odafc-addon]] for converting between different versions of [[DWG]], [[DXB]] and [[DXF]].
+-
+- ## Download links for version 24.x:
+	- Windows (unicode conversion issue)
+		- {{odafc-link ODAFileConverter_QT5_vc16_amd64dll_24.12.msi}}
+	- RPM
+		- {{odafc-link ODAFileConverter_QT5_lnxX64_8.3dll_24.12.rpm}}
+	- DEB
+		- {{odafc-link ODAFileConverter_QT5_lnxX64_8.3dll_24.12.deb}}
+	- AppImage
+		- {{odafc-link ODAFileConverter_QT5_lnxX64_8.3dll_24.12.AppImage}}
+	- Mac OS X DMG
+		- {{odafc-link ODAFileConverter_QT5_macOsX_x64_13.0dll_24.12.dmg}}
+	- Mac OS X PKG
+		- {{odafc-link ODAFileConverter_QT5_macOsX_x64_13.0dll_24.12.pkg}}
+-
+- ## Download links for version 23.x:
+	- Windows
+		- {{odafc-link ODAFileConverter_QT5_vc16_amd64dll_23.12.msi}}
+	- DEB
+		- {{odafc-link ODAFileConverter_QT5_lnxX64_8.3dll_23.12.deb}}
+	- RPM
+		- {{odafc-link ODAFileConverter_QT5_lnxX64_8.3dll_23.12.rpm}}
+	- AppImage
+		- {{odafc-link ODAFileConverter_QT5_lnxX64_8.3dll_23.12.AppImage}}
+	- Mac OS X DMG
+		- {{odafc-link ODAFileConverter_QT5_macOsX_x64_11.0dll_23.12.dmg}}
+	- Mac OS X PKG
+		- {{odafc-link ODAFileConverter_QT5_macOsX_x64_11.0dll_23.12.pkg}}
+	-
