@@ -17,7 +17,7 @@
 	- OS independent
 	- go to [[ABOUT]] for more information
 -
-- Source Code Repositiory
+- Source Code Repository
   id:: 654fc81e-e026-46ab-ac63-e6c32c90711c
 	- <https://github.com/mozman/ezdxf>
 	  id:: 654fc842-3cb5-4081-a70c-0d83fa56b953
