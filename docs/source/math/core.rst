@@ -1074,7 +1074,6 @@ Curves
     Bezier
     Bezier3P
     Bezier4P
-    BezierSurface
     EulerSpiral
 
 BSpline
@@ -1217,19 +1216,6 @@ ApproxParamT
     .. automethod:: param_t
 
     .. automethod:: distance
-
-BezierSurface
--------------
-
-.. autoclass:: BezierSurface
-
-    .. autoattribute:: nrows
-
-    .. autoattribute:: ncols
-
-    .. automethod:: point
-
-    .. automethod:: approximate
 
 
 EulerSpiral

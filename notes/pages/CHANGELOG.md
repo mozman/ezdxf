@@ -30,6 +30,7 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- CHANGE: replaced `LUDecomposition` class by `NumpySolver` class
 		- moved `LUDecomposition` to module `ezdxf.math.legacy`
 	- CHANGE: `MeshData.vertices` has to be a list of `Vec3`
+	- REMOVE: untested and incorrect implementation of `ezdxf.math.BezierSurface`
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
 	- BUGFIX: `NumpyPath2d` could contain a 3d vertex
