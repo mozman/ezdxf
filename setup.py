@@ -165,10 +165,8 @@ setup(
     extras_require={
         "draw": DRAW,
         "draw5": DRAW5,
-        "test": TEST,
-        "dev": DEV + TEST,
-        "all": DRAW + DEV + TEST,
-        "all5": DRAW5 + DEV + TEST,
+        "dev": DRAW + TEST + DEV,
+        "dev5": DRAW5 + TEST + DEV,
     },
     keywords=["DXF", "CAD"],
     long_description=read("README.md"),
