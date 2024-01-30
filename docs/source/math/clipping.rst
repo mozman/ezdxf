@@ -14,7 +14,7 @@ Clipping module: :mod:`ezdxf.math.clipping`
 
 .. autofunction:: greiner_hormann_intersection
 
-.. autoclass:: ClippingPolygon2d
+.. autoclass:: ConvexClippingPolygon2d
 
     .. automethod:: clip_polygon
 
