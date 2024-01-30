@@ -20,7 +20,7 @@ __all__ = [
     "greiner_hormann_intersection",
     "cohen_sutherland_line_clipping_2d",
     "Clipping",
-    "ClippingPolygon2d",
+    "ConvexClippingPolygon2d",
     "ClippingRect2d",
 ]
 
@@ -30,9 +30,7 @@ class Clipping(Protocol):
         """Returns the clipped polygon."""
         ...
 
-    def clip_polyline(
-        self, polyline: Iterable[Vec2]
-    ) -> Sequence[Sequence[Vec2]]:
+    def clip_polyline(self, polyline: Iterable[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
         ...
 
@@ -72,8 +70,8 @@ def _clip_polyline(
     return parts
 
 
-class ClippingPolygon2d:
-    """The clipping path is an arbitrary polygon."""
+class ConvexClippingPolygon2d:
+    """The clipping path is an arbitrary convex 2D polygon."""
 
     def __init__(self, vertices: Iterable[Vec2], ccw_check=True):
         clip = list(vertices)
@@ -81,16 +79,12 @@ class ClippingPolygon2d:
             if clip[0].isclose(clip[-1]):
                 clip.pop()
         if len(clip) < 3:
-            raise ValueError(
-                "more than 3 vertices as clipping polygon required"
-            )
+            raise ValueError("more than 3 vertices as clipping polygon required")
         if ccw_check and has_clockwise_orientation(clip):
             clip.reverse()
         self._clipping_polygon: list[Vec2] = clip
 
-    def clip_polyline(
-        self, polyline: Iterable[Vec2]
-    ) -> Sequence[Sequence[Vec2]]:
+    def clip_polyline(self, polyline: Iterable[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
         return _clip_polyline(polyline, self.clip_line)
 
@@ -103,10 +97,10 @@ class ClippingPolygon2d:
                 clip_end.y - clip_start.y
             ) * (point.x - clip_start.x) >= 0.0
 
-        def edge_intersection() -> Vec2:  
+        def edge_intersection() -> Vec2:
             return intersection_line_line_2d(
                 (edge_start, edge_end), (clip_start, clip_end)
-            ) # type: ignore
+            )  # type: ignore
 
         # The clipping polygon is always treated as a closed polyline!
         clip_start = self._clipping_polygon[-1]
@@ -170,7 +164,8 @@ class ClippingPolygon2d:
 
 
 class ClippingRect2d:
-    """The clipping path is a rectangle parallel to the x- and y-axis.
+    """The clipping path is an axis-aligned rectangle, where all sides are parallel to 
+    the x- and y-axis.
 
     This class will get an optimized implementation in the future.
 
@@ -180,7 +175,7 @@ class ClippingRect2d:
         self._bbox = BoundingBox2d((bottom_left, top_right))
         bottom_left = self._bbox.extmin
         top_right = self._bbox.extmax
-        self._clipping_polygon = ClippingPolygon2d(
+        self._clipping_polygon = ConvexClippingPolygon2d(
             [
                 bottom_left,
                 Vec2(top_right.x, bottom_left.y),
@@ -194,9 +189,7 @@ class ClippingRect2d:
         """Returns the clipped polygon."""
         return self._clipping_polygon.clip_polygon(polygon)
 
-    def clip_polyline(
-        self, polyline: Iterable[Vec2]
-    ) -> Sequence[Sequence[Vec2]]:
+    def clip_polyline(self, polyline: Iterable[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
         return _clip_polyline(polyline, self.clip_line)
 
@@ -211,8 +204,7 @@ class ClippingRect2d:
         return self._bbox.inside(point)
 
     def has_intersection(self, other: BoundingBox2d) -> bool:
-        """Returns ``True`` if `other` bounding box intersects the clipping rectangle.
-        """
+        """Returns ``True`` if `other` bounding box intersects the clipping rectangle."""
         return self._bbox.has_intersection(other)
 
 
@@ -238,7 +230,7 @@ def clip_polygon_2d(
     .. _Sutherland-Hodgman: https://de.wikipedia.org/wiki/Algorithmus_von_Sutherland-Hodgman
 
     """
-    clipper = ClippingPolygon2d(Vec2.generate(clip), ccw_check)
+    clipper = ConvexClippingPolygon2d(Vec2.generate(clip), ccw_check)
     return clipper.clip_polygon(Vec2.generate(subject))
 
 
@@ -423,12 +415,8 @@ class GHPolygon:
                         )
                         if ip is None:
                             continue
-                        subject_node = _Node(
-                            ip, us, intersect=True, entry=False
-                        )
-                        clipper_node = _Node(
-                            ip, uc, intersect=True, entry=False
-                        )
+                        subject_node = _Node(ip, us, intersect=True, entry=False)
+                        clipper_node = _Node(ip, uc, intersect=True, entry=False)
                         subject_node.neighbor = clipper_node
                         clipper_node.neighbor = subject_node
 
@@ -584,9 +572,7 @@ def greiner_hormann_difference(
     return greiner_hormann(p1, p2, BooleanOperation.DIFFERENCE)
 
 
-def greiner_hormann_union(
-    p1: Iterable[UVec], p2: Iterable[UVec]
-) -> list[list[Vec2]]:
+def greiner_hormann_union(p1: Iterable[UVec], p2: Iterable[UVec]) -> list[list[Vec2]]:
     """Returns the UNION of polygon `p1` | polygon `p2`.
     This algorithm works only for polygons with real intersection points
     and line end points on face edges are not considered as such intersection

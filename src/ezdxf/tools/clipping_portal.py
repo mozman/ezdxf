@@ -324,13 +324,13 @@ class ConvexClippingPolygon(ClippingShape):
     """
 
     def __init__(self, vertices: Iterable[UVec]) -> None:
-        from ezdxf.math.clipping import ClippingPolygon2d
+        from ezdxf.math.clipping import ConvexClippingPolygon2d
 
         bbox = BoundingBox2d(vertices)
         if not bbox.has_data:
             raise ValueError("clipping box not detectable")
         self._bbox = bbox
-        self.clipper = ClippingPolygon2d(Vec2.generate(vertices))
+        self.clipper = ConvexClippingPolygon2d(Vec2.generate(vertices))
 
     def bbox(self) -> BoundingBox2d:
         return self._bbox
