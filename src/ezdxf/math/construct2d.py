@@ -249,6 +249,9 @@ def is_point_in_polygon_2d(
     """Test if `point` is inside `polygon`. Returns ``-1`` (for outside) if the
     polygon is degenerated, no exception will be raised.
 
+    Supports convex and concave polygons with clockwise or counter-clockwise oriented
+    polygon vertices.
+
     Args:
         point: 2D point to test as :class:`Vec2`
         polygon: sequence of 2D points as :class:`Vec2`
@@ -260,6 +263,7 @@ def is_point_in_polygon_2d(
     """
     # Source: http://www.faqs.org/faqs/graphics/algorithms-faq/
     # Subject 2.03: How do I find if a point lies within a polygon?
+    # TODO: Cython implementation
     if not polygon:  # empty polygon
         return -1
 
@@ -281,7 +285,7 @@ def is_point_in_polygon_2d(
             if (c <= y <= d) and math.fabs(
                 (y2 - y1) * x - (x2 - x1) * y + (x2 * y1 - y2 * x1)
             ) <= abs_tol:
-                return 0
+                return 0  # on boundary line
         if ((y1 <= y < y2) or (y2 <= y < y1)) and (
             x < (x2 - x1) * (y - y1) / (y2 - y1) + x1
         ):
@@ -289,9 +293,9 @@ def is_point_in_polygon_2d(
         x1 = x2
         y1 = y2
     if inside:
-        return 1
+        return 1  # inside polygon
     else:
-        return -1
+        return -1  # outside polygon
 
 
 def circle_radius_3p(a: Vec3, b: Vec3, c: Vec3) -> float:
@@ -355,16 +359,16 @@ def has_matrix_2d_stretching(m: Matrix44) -> bool:
 def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> bool:
     """Returns ``True`` if the 2D `polygon` is convex.
 
-    This function works with
-    open and closed polygons and clockwise or counter-clockwise vertex
-    orientation.
-    Coincident vertices will always be skipped and if argument `strict`
-    is ``True``, polygons with collinear vertices are not considered as
-    convex.
+    This function supports open and closed polygons with clockwise or counter-clockwise 
+    vertex orientation.
+
+    Coincident vertices will always be skipped and if argument `strict` is ``True``, 
+    polygons with collinear vertices are not considered as convex.
 
     This solution works only for simple non-self-intersecting polygons!
 
     """
+    # TODO: Cython implementation
     if len(polygon) < 3:
         return False
 
@@ -378,15 +382,15 @@ def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> 
 
         det = (prev - vertex).det(prev_prev - prev)
         if abs(det) >= epsilon:
-            current_sign = -1 if det < 0.0 else +1 
+            current_sign = -1 if det < 0.0 else +1
             if not global_sign:
                 global_sign = current_sign
             # do all determinants have the same sign?
             if global_sign != current_sign:
-                return  False
+                return False
         elif strict:  # collinear vertices
-            return False       
-            
+            return False
+
         prev_prev = prev
         prev = vertex
     return bool(global_sign)
