@@ -109,7 +109,7 @@ class R12FastStreamWriter:
 
     """
 
-    def __init__(self, stream: Union[TextIO], fixed_tables=False):
+    def __init__(self, stream: TextIO, fixed_tables=False):
         self.stream = stream
         if fixed_tables:
             stream.write(PREFACE)

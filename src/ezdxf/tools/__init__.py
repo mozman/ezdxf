@@ -13,12 +13,12 @@ escape = functools.partial(html.escape, quote=True)
 
 def float2transparency(value: float) -> int:
     """
-    Returns DXF transparency value as integer in the range from ``0`` to ``255``, where ``0`` is 100% transparent
-    and ``255`` is opaque.
+    Returns DXF transparency value as integer in the range from ``0`` to ``255``, where 
+    ``0`` is 100% transparent and ``255`` is opaque.
 
     Args:
-        value: transparency value as float in the range from ``0`` to ``1``, where ``0`` is opaque
-               and ``1`` is 100% transparency.
+        value: transparency value as float in the range from ``0`` to ``1``, where ``0`` 
+           is opaque and ``1`` is 100% transparency.
 
     """
     return int((1.0 - float(value)) * 255) | 0x02000000
@@ -26,11 +26,12 @@ def float2transparency(value: float) -> int:
 
 def transparency2float(value: int) -> float:
     """
-    Returns transparency value as float from ``0`` to ``1``, ``0`` for no transparency (opaque) and ``1``
-    for 100% transparency.
+    Returns transparency value as float from ``0`` to ``1``, ``0`` for no transparency 
+    (opaque) and ``1`` for 100% transparency.
 
     Args:
-        value: DXF integer transparency value, ``0`` for 100% transparency and ``255`` for opaque
+        value: DXF integer transparency value, ``0`` for 100% transparency and ``255`` 
+            for opaque
 
     """
     # 255 -> 0.

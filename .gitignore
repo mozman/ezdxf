@@ -4,6 +4,7 @@
 .idea
 .vscode
 .coverage
+.pylintrc
 DXFResearch
 build
 dist

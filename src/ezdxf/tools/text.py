@@ -473,9 +473,9 @@ def fast_plain_mtext(text: str, split=False) -> Union[list[str], str]:
         elif char in "{}":  # grouping
             pass  # discard group markers
         elif char == "%":  # special characters
-            if len(raw_chars) and raw_chars[-1] == "%":
+            if raw_chars and raw_chars[-1] == "%":
                 raw_chars.pop()  # discard next '%'
-                if len(raw_chars):
+                if raw_chars:
                     code = raw_chars.pop()
                     letter = const.SPECIAL_CHAR_ENCODING.get(code.lower())
                     if letter:
