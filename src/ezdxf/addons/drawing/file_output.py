@@ -209,6 +209,6 @@ def open_file(path: pathlib.Path) -> None:
     if system == 'Darwin':
         subprocess.call(['open', str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     elif system == 'Windows':
-        os.startfile(str(path))  # type: ignore
+        os.startfile(str(path))
     else:
         subprocess.call(['xdg-open', str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

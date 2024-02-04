@@ -227,7 +227,7 @@ def uniform_appid(appid: str) -> str:
 
 
 def is_app_data_marker(tag: DXFTag) -> bool:
-    return tag.code == APP_DATA_MARKER and tag.value.startswith("{")  # type: ignore
+    return tag.code == APP_DATA_MARKER and tag.value.startswith("{")
 
 
 def is_embedded_object_marker(tag: DXFTag) -> bool:
@@ -307,7 +307,7 @@ class DXFVertex(DXFTag):
 
     @property
     def value(self) -> tuple[float, ...]:
-        return tuple(self._value)  # type: ignore
+        return tuple(self._value)
 
     def dxftags(self) -> Iterable[DXFTag]:
         """Returns all vertex components as single :class:`DXFTag` objects."""
@@ -359,7 +359,7 @@ def dxftag(code: int, value: Any) -> DXFTag:
     if code in BINARY_DATA:
         return DXFBinaryTag(code, value)
     elif code in POINT_CODES:
-        return DXFVertex(code, value)  # type: ignore
+        return DXFVertex(code, value)
     else:
         return DXFTag(code, cast_tag_value(code, value))
 
@@ -370,7 +370,7 @@ def tuples_to_tags(iterable: Iterable[tuple[int, Any]]) -> Iterable[DXFTag]:
     """
     for code, value in iterable:
         if code in POINT_CODES:
-            yield DXFVertex(code, value)  # type: ignore
+            yield DXFVertex(code, value)
         elif code in BINARY_DATA:
             assert isinstance(value, (str, bytes))
             yield DXFBinaryTag.from_string(code, value)

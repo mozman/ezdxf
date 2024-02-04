@@ -46,7 +46,7 @@ def round_tags(tags: Tags, ndigits: int) -> Iterator[DXFTag]:
         if isinstance(tag, DXFVertex):
             yield DXFVertex(tag.code, (round(d, ndigits) for d in tag.value))
         elif isinstance(tag.value, float):
-            yield DXFTag(tag.code, round(tag.value, ndigits))  # type: ignore
+            yield DXFTag(tag.code, round(tag.value, ndigits))
         else:
             yield tag
 

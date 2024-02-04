@@ -32,9 +32,9 @@ class DXFGraphicProxy(DXFGraphic):
     def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
         if isinstance(self.entity, SupportsVirtualEntities):
-            return self.entity.__virtual_entities__()  # type: ignore
+            return self.entity.__virtual_entities__()
         if hasattr(self.entity, "virtual_entities"):
-            return self.entity.virtual_entities()  # type: ignore
+            return self.entity.virtual_entities()
         return iter([])
 
     def virtual_entities(self) -> Iterable[DXFGraphic]:

@@ -461,7 +461,7 @@ class LinetypeTable(Table[Linetype]):
                 "length": float(length),
             }
         )
-        return self.new_entry(dxfattribs)  # type: ignore
+        return self.new_entry(dxfattribs)
 
 
 class TextstyleTable(Table[Textstyle]):

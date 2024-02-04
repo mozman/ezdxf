@@ -661,7 +661,7 @@ def is_text_vertical_stacked(text: DXFEntity) -> bool:
     if text.doc:
         style = text.doc.styles.get(text.dxf.style)
         if style:
-            return style.is_vertical_stacked  # type: ignore
+            return style.is_vertical_stacked
     return False
 
 
@@ -1744,7 +1744,7 @@ def estimate_mtext_extents(mtext: MText) -> tuple[float, float]:
         if doc:
             style = doc.styles.get(mtext.dxf.get_default("style"))
             if style is not None:
-                return style.make_font(cap_height)  # type: ignore
+                return style.make_font(cap_height)
         return fonts.make_font(const.DEFAULT_TTF, cap_height=cap_height)
 
     return estimate_mtext_content_extents(

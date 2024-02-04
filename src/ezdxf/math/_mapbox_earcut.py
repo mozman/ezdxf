@@ -330,7 +330,7 @@ def eliminate_hole(hole: Node, outer_node: Node) -> Node:
 def filter_points(start: Node, end: Optional[Node] = None) -> Node:
     """eliminate colinear or duplicate points"""
     if start is None:
-        return start  # type: ignore
+        return start
     if end is None:
         end = start
 
@@ -643,7 +643,7 @@ def sort_linked(head: Node) -> Node:
                     tail.next_z = e
                 else:
                     head = e
-                e.prev_z = tail  # type: ignore
+                e.prev_z = tail
                 tail = e
             p = q
         tail.next_z = None  # type: ignore
@@ -759,7 +759,7 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
             break
 
     if m is None:
-        return None  # type: ignore
+        return None
 
     # look for points inside the triangle of hole point, segment intersection and endpoint;
     # if there are no points found, we have a valid connection;

@@ -13,7 +13,7 @@ def dxf_backslash_replace(exc: Exception):
     if isinstance(exc, (UnicodeEncodeError, UnicodeTranslateError)):
         s = ""
         # mypy does not recognize properties: exc.start, exc.end, exc.object
-        for c in exc.object[exc.start : exc.end]:  # type: ignore
+        for c in exc.object[exc.start : exc.end]:
             x = ord(c)
             if x <= 0xFF:
                 s += "\\x%02x" % x
@@ -24,7 +24,7 @@ def dxf_backslash_replace(exc: Exception):
                 s += "\\U+%04x" % x
             else:
                 s += "\\U+%08x" % x
-        return s, exc.end  # type: ignore
+        return s, exc.end
     else:
         raise TypeError(f"Can't handle {exc.__class__.__name__}")
 

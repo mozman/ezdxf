@@ -219,7 +219,7 @@ class HeaderSection:
     @classmethod
     def from_text(cls, text: str) -> HeaderSection:
         """Load constructor from text for testing"""
-        return cls.load(Tags.from_text(text))  # type: ignore
+        return cls.load(Tags.from_text(text))
 
     def _headervar_factory(self, key: str, value: Any) -> DXFTag:
         if key in HEADER_VAR_MAP:

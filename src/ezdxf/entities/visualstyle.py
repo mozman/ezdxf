@@ -231,4 +231,4 @@ class VisualStyle(DXFObject):
             ],
         )
         if self.acad_xdata:
-            tagwriter.write_tags(self.acad_xdata)  # type: ignore
+            tagwriter.write_tags(self.acad_xdata)

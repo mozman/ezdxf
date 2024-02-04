@@ -840,7 +840,7 @@ class ShapeRenderer:
             arc.start_point if ccw else arc.end_point
         )
         if self.pen_down:
-            path.add_ellipse(self.p, arc, reset=False)  # type: ignore
+            path.add_ellipse(self.p, arc, reset=False)
         else:
             self.p.move_to(arc.end_point if ccw else arc.start_point)
 
@@ -861,7 +861,7 @@ class ShapeRenderer:
             ccw=ccw,
         )
         if self.pen_down:
-            path.add_ellipse(self.p, arc, reset=False)  # type: ignore
+            path.add_ellipse(self.p, arc, reset=False)
         else:
             self.p.move_to(arc.end_point if ccw else arc.start_point)
 

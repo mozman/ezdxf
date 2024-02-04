@@ -528,7 +528,7 @@ class Insert(LinkedEntities):
             insert -= m.transform_direction(block_layout.block.dxf.base_point)  # type: ignore
 
         # set translation
-        m.set_row(3, insert.xyz)  # type: ignore
+        m.set_row(3, insert.xyz)
         return m
 
     def ucs(self):

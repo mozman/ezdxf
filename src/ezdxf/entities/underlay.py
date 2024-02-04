@@ -190,7 +190,7 @@ class Underlay(DXFGraphic):
 
     def export_boundary_path(self, tagwriter: AbstractTagWriter):
         for vertex in self.boundary_path:
-            tagwriter.write_vertex(11, vertex[:2])  # type: ignore
+            tagwriter.write_vertex(11, vertex[:2])
 
     def register_resources(self, registry: xref.Registry) -> None:
         super().register_resources(registry)

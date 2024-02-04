@@ -154,7 +154,7 @@ def lwpolyline_to_polyline(lwpolyline: LWPolyline) -> Polyline:
         }
     )
     polyline.new_seqend()
-    polyline.append_formatted_vertices(lwpolyline.get_points(), format="xyseb")  # type: ignore
+    polyline.append_formatted_vertices(lwpolyline.get_points(), format="xyseb")
     if lwpolyline.is_closed:
         polyline.close()
     if lwpolyline.dxf.hasattr("const_width"):

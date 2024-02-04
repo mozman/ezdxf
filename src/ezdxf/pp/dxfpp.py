@@ -332,10 +332,10 @@ class DXF2HtmlConverter:
                     tpl = TAG_INVALID_LINK_TPL
 
             if tag.code in BINARY_FLAGS:
-                vstr = with_bitmask(tag.value)  # type: ignore
+                vstr = with_bitmask(tag.value)
             else:
                 if hasattr(tag, "tostring"):
-                    s = tag.tostring()  # type: ignore
+                    s = tag.tostring()
                 else:
                     s = str(tag.value)
                 vstr = trim_str(s)
@@ -425,7 +425,7 @@ class DXF2HtmlConverter:
         """DXF block entity as <div> container."""
         block = entities[0]
         block_html = self.entity2html(block, create_ref_links=True)
-        block_name: str = block.get_first_value(2)  # type: ignore
+        block_name: str = block.get_first_value(2)
         if block_name.upper() not in ("*MODEL_SPACE", "*PAPER_SPACE"):
             entities_html = self.entities2html(
                 entities[1:-1], create_ref_links=True

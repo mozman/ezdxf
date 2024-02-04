@@ -581,7 +581,7 @@ class MeshBuilder:
             # data will be copied at setting in edit_data()
             # ignore edges and creases!
             data.vertices = list(vertices)
-            data.faces = list(self.faces)  # type: ignore
+            data.faces = list(self.faces)
         return mesh
 
     def render_normals(
@@ -796,7 +796,7 @@ class MeshBuilder:
         mesh = self
         level = min(int(level), 5)
         while level > 0:
-            mesh = _subdivide(mesh, quads)  # type: ignore
+            mesh = _subdivide(mesh, quads)
             level -= 1
         return MeshTransformer.from_builder(mesh)
 

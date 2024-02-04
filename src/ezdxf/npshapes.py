@@ -31,7 +31,7 @@ from ezdxf.path import (
 )
 
 try:
-    from ezdxf.acc import np_support  # type: ignore  # mypy ???
+    from ezdxf.acc import np_support
 except ImportError:
     np_support = None
 

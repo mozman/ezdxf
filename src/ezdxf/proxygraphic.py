@@ -62,7 +62,7 @@ def load_proxy_graphic(
         for tag in tags.pop_tags(codes=(length_code, data_code))
         if tag.code == data_code
     ]
-    return b"".join(binary_data) if len(binary_data) else None  # type: ignore
+    return b"".join(binary_data) if len(binary_data) else None
 
 
 def export_proxy_graphic(
@@ -447,10 +447,10 @@ class ProxyGraphic:
             # target OCS
             ocs = OCS(normal)
             # convert start angle == UCS x-axis to OCS
-            start_angle = ocs.from_wcs(ucs.to_wcs(X_AXIS)).angle_deg  # type: ignore
+            start_angle = ocs.from_wcs(ucs.to_wcs(X_AXIS)).angle_deg
             # convert end angle to OCS
             end_vec = Vec3.from_angle(sweep_angle)
-            end_angle = ocs.from_wcs(ucs.to_wcs(end_vec)).angle_deg  # type: ignore
+            end_angle = ocs.from_wcs(ucs.to_wcs(end_vec)).angle_deg
             # setup OCS for ARC entity
             attribs["extrusion"] = normal
             # convert WCS center to OCS center
@@ -500,7 +500,7 @@ class ProxyGraphic:
     def _filled_polygon(self, vertices, attribs):
         hatch = cast("Hatch", self._factory("HATCH", dxfattribs=attribs))
         elevation = _get_elevation(vertices)
-        hatch.paths.add_polyline_path(Vec2.generate(vertices), is_closed=True)  # type: ignore
+        hatch.paths.add_polyline_path(Vec2.generate(vertices), is_closed=True)
         if elevation:
             hatch.dxf.elevation = Vec3(0, 0, elevation)
         return hatch

@@ -416,7 +416,7 @@ def _update_location_from_mtext(text: Text, mtext: MText) -> None:
         ocs = OCS(extrusion)
         insert = ocs.from_wcs(insert)
         dxf.extrusion = extrusion.normalize()
-        dxf.rotation = ocs.from_wcs(text_direction).angle_deg  # type: ignore
+        dxf.rotation = ocs.from_wcs(text_direction).angle_deg
 
     dxf.insert = insert
     dxf.align_point = insert  # the same point for all MTEXT alignments!

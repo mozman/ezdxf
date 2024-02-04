@@ -215,12 +215,12 @@ def virtual_block_reference_entities(
                 copy = entity.copy(copy_strategy=copy_strategy)
             except CopyNotSupported:
                 if hasattr(entity, "virtual_entities"):
-                    yield from entity.virtual_entities()  # type: ignore
+                    yield from entity.virtual_entities()
                 else:
-                    skipped_entity_callback(entity, "non copyable")  # type: ignore
+                    skipped_entity_callback(entity, "non copyable")
             else:
                 if hasattr(copy, "remove_association"):
-                    copy.remove_association()  # type: ignore
+                    copy.remove_association()
                 yield copy
 
     def transform(entities):
@@ -327,10 +327,10 @@ def virtual_boundary_path_entities(
 
     def polyline():
         p = LWPolyline.new(dxfattribs=dict(graphic_attribs))
-        p.append_formatted_vertices(path.vertices, format="xyb")  # type: ignore
+        p.append_formatted_vertices(path.vertices, format="xyb")
         p.dxf.extrusion = ocs.uz
         p.dxf.elevation = elevation
-        p.closed = path.is_closed  # type: ignore
+        p.closed = path.is_closed
         return p
 
     graphic_attribs = polygon.graphic_properties()

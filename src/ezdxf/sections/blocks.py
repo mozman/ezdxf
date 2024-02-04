@@ -223,7 +223,7 @@ class BlocksSection:
     def __iter__(self) -> Iterator[BlockLayout]:
         """Iterable of all :class:`~ezdxf.layouts.BlockLayout` objects."""
         return (
-            block_record.block_layout  # type: ignore
+            block_record.block_layout
             for block_record in self.block_records
         )
 

@@ -632,9 +632,9 @@ def load_layer_overrides(layer: Layer) -> dict[str, OverrideAttributes]:
         ovr = get_ovr(vp_handle)
         type_, data = clr.decode_raw_color(value)
         if type_ == clr.COLOR_TYPE_ACI:
-            ovr.aci = data  # type: ignore
+            ovr.aci = data
         elif type_ == clr.COLOR_TYPE_RGB:
-            ovr.rgb = data  # type: ignore
+            ovr.rgb = data
 
     def set_ltype(vp_handle: str, lt_handle: str):
         ltype = entitydb.get(lt_handle)
@@ -747,7 +747,7 @@ def store_layer_overrides(
     def collect_linetypes():
         for vp_handle, ovr in vp_exist.items():
             if ovr.linetype != default.linetype:
-                ltype = layer.doc.linetypes.get(ovr.linetype)  # type: ignore
+                ltype = layer.doc.linetypes.get(ovr.linetype)
                 if ltype is not None:
                     yield ltype.dxf.handle, vp_handle
 

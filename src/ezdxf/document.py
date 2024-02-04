@@ -378,7 +378,7 @@ class Drawing:
         header_entities: list[Tags] = sections.get("HEADER", [])  # type: ignore
         if header_entities:
             # All header tags are the first DXF structure entity
-            self.header = HeaderSection.load(header_entities[0])  # type: ignore
+            self.header = HeaderSection.load(header_entities[0])
         else:
             # Create default header, files without header are by default DXF R12
             self.header = HeaderSection.new(dxfversion=DXF12)
@@ -1387,7 +1387,7 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> list[str]:
         append_container(doc.viewports, "VPORT")
         append_container(doc.block_records, "BLOCK_RECORD")
         if doc.dxfversion > DXF12:
-            append_container(list(doc.classes), "CLASS", container="section")  # type: ignore
+            append_container(list(doc.classes), "CLASS", container="section")
         data.append(f"Entities in modelspace: {len(doc.modelspace())}")
         if verbose:
             data.extend(count(doc.modelspace()))

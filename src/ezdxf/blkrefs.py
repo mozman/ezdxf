@@ -76,7 +76,7 @@ class BlockDefinitionIndex:
         """Returns an iterator of all :class:`~ezdxf.entities.BlockRecord`
         entities representing BLOCK definitions.
         """
-        return iter(self._doc.tables.block_records)  # type: ignore
+        return iter(self._doc.tables.block_records)
 
     def rebuild(self):
         """Rebuild index from scratch."""

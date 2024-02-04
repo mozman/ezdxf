@@ -696,7 +696,7 @@ class RankBasedSelection(RouletteSelection):
     def reset(self, candidates: Iterable[DNA]):
         # dna.fitness is not None here!
         self._candidates = list(candidates)
-        self._candidates.sort(key=dna_fitness)  # type: ignore
+        self._candidates.sort(key=dna_fitness)
         # weight of best_fitness == len(strands)
         # and decreases until 1 for the least fitness
         self._weights = list(range(1, len(self._candidates) + 1))
@@ -717,5 +717,5 @@ class TournamentSelection(Selection):
             values = [
                 random.choice(self._candidates) for _ in range(self.candidates)
             ]
-            values.sort(key=dna_fitness)  # type: ignore
+            values.sort(key=dna_fitness)
             yield values[-1]

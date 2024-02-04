@@ -186,7 +186,7 @@ class _R12StrictRename:
                 continue
             old_name = config[0].dxf.name
             new_name = translate(old_name)
-            for entry in config:  # type: ignore
+            for entry in config:
                 entry.dxf.name = new_name
             self.doc.viewports.replace(old_name, config)
 

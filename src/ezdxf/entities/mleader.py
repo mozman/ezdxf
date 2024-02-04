@@ -1376,7 +1376,7 @@ class MLeaderStyle(DXFObject):
         leader_type: int = 1,
     ):
         assert self.doc is not None, "valid DXF document required"
-        self.dxf.leader_line_color = colors.encode_raw_color(color)  # type: ignore
+        self.dxf.leader_line_color = colors.encode_raw_color(color)
         linetype_ = self.doc.linetypes.get(linetype)
         if linetype_ is None:
             raise ValueError(f"invalid linetype name '{linetype}'")

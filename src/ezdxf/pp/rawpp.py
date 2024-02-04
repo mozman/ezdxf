@@ -24,7 +24,7 @@ def rawpp(tagger: Iterable[DXFTag], filename: str, binary=False) -> str:
         type_str = tag_type_str(tag.code)
         value = tag.value
         if tag.code in BINARY_FLAGS:
-            vstr = with_bitmask(value)  # type: ignore
+            vstr = with_bitmask(value)
         else:
 
             if isinstance(value, bytes):

@@ -308,9 +308,9 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
                 try:
                     # z-axis like (30, 0.0) for base x-code 10
                     if z.code == code + 20:
-                        point = (float(x.value), float(y.value), float(z.value))  # type: ignore
+                        point = (float(x.value), float(y.value), float(z.value))
                     else:
-                        point = (float(x.value), float(y.value))  # type: ignore
+                        point = (float(x.value), float(y.value))
                         undo_tag = z
                 except ValueError:
                     raise DXFStructureError(
@@ -323,7 +323,7 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
                     tag = x
                 else:
                     try:
-                        tag = DXFBinaryTag.from_string(code, x.value)  # type: ignore
+                        tag = DXFBinaryTag.from_string(code, x.value)
                     except ValueError:
                         raise DXFStructureError(
                             f"Invalid binary data near line: {line}."
@@ -333,7 +333,7 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
                 try:
                     # Fast path!
                     if code == 0:
-                        value = x.value.strip()  # type: ignore
+                        value = x.value.strip()
                     else:
                         value = x.value
                     yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
@@ -341,7 +341,7 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
                     # ProE stores int values as floats :((
                     if TYPE_TABLE.get(code, str) is int:
                         try:
-                            yield DXFTag(code, int(float(x.value)))  # type: ignore
+                            yield DXFTag(code, int(float(x.value)))
                         except ValueError:
                             raise DXFStructureError(error_msg(x))
                     else:

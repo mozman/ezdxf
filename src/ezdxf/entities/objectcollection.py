@@ -61,7 +61,7 @@ class ObjectCollection(Generic[T]):
         pass
 
     def __iter__(self) -> Iterator[tuple[str, T]]:
-        return self.object_dict.items()  # type: ignore
+        return self.object_dict.items()
 
     def __len__(self) -> int:
         return len(self.object_dict)
@@ -108,7 +108,7 @@ class ObjectCollection(Generic[T]):
         name = make_table_key(name)
         for entry_name, obj in self.object_dict.items():
             if make_table_key(entry_name) == name:
-                return obj  # type: ignore
+                return obj
         return default
 
     def new(self, name: str) -> T:

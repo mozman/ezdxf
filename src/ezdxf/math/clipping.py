@@ -41,7 +41,7 @@ class Clipping(Protocol):
         ...
 
     def is_inside(self, point: Vec2) -> bool:
-        """Returns ``True`` if `point is inside the clipping path."""
+        """Returns ``True`` if `point` is inside the clipping path."""
         ...
 
 
@@ -101,7 +101,7 @@ class ConvexClippingPolygon2d:
         def edge_intersection() -> Vec2:
             return intersection_line_line_2d(
                 (edge_start, edge_end), (clip_start, clip_end)
-            )  # type: ignore
+            )
 
         # The clipping polygon is always treated as a closed polyline!
         clip_start = self._clipping_polygon[-1]
@@ -131,7 +131,7 @@ class ConvexClippingPolygon2d:
         def edge_intersection() -> Vec2:
             return intersection_line_line_2d(
                 (edge_start, edge_end), (clip_start, clip_end)
-            )  # type: ignore
+            )
 
         # The clipping polygon is always treated as a closed polyline!
         clip_start = self._clipping_polygon[-1]

@@ -220,7 +220,7 @@ class TagCollector(AbstractTagWriter):
     # Start of low level interface:
     def write_tag(self, tag: DXFTag) -> None:
         if hasattr(tag, "dxftags"):
-            self.tags.extend(tag.dxftags())  # type: ignore
+            self.tags.extend(tag.dxftags())
         else:
             self.tags.append(tag)
 

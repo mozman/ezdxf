@@ -147,7 +147,7 @@ class VertexArray:
         vertices = array("d")
         for tag in tags:
             if tag.code == code:
-                vertices.extend(tag.value)  # type: ignore
+                vertices.extend(tag.value)
         return cls(data=vertices)
 
     def _index(self, item) -> int:

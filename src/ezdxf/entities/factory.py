@@ -56,7 +56,7 @@ def new(
         dxfattribs=dxfattribs,
         doc=doc,
     )
-    return entity.cast() if hasattr(entity, "cast") else entity  # type: ignore
+    return entity.cast() if hasattr(entity, "cast") else entity
 
 
 def create_db_entry(dxftype, dxfattribs, doc: Drawing) -> DXFEntity:
@@ -67,7 +67,7 @@ def create_db_entry(dxftype, dxfattribs, doc: Drawing) -> DXFEntity:
 
 def load(tags: ExtendedTags, doc: Optional[Drawing] = None) -> DXFEntity:
     entity = cls(tags.dxftype()).load(tags, doc)
-    return entity.cast() if hasattr(entity, "cast") else entity  # type: ignore
+    return entity.cast() if hasattr(entity, "cast") else entity
 
 
 def cls(dxftype: str) -> DXFEntity:

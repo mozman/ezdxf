@@ -32,5 +32,5 @@ def get_tag_loader(
         raise IOError(f"File '{filename}' is not an ASCII DXF file.")
 
     info = dxf_file_info(filename)
-    with open(filename, mode="rt", encoding=info.encoding, errors=errors) as fp:  # type: ignore
-        return list(ascii_tags_loader(fp, skip_comments=True))  # type: ignore
+    with open(filename, mode="rt", encoding=info.encoding, errors=errors) as fp:
+        return list(ascii_tags_loader(fp, skip_comments=True))

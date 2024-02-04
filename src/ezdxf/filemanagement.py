@@ -150,8 +150,8 @@ def readfile(
     if encoding is not None:
         # override default encodings if absolute necessary
         info.encoding = encoding
-    with open(filename, mode="rt", encoding=info.encoding, errors=errors) as fp:  # type: ignore
-        doc = read(fp)  # type: ignore
+    with open(filename, mode="rt", encoding=info.encoding, errors=errors) as fp:
+        doc = read(fp)
 
     doc.filename = filename
     if encoding is not None and is_supported_encoding(encoding):

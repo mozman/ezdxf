@@ -30,7 +30,7 @@ class DXFTagsTable(QTableView):
         first_row: int = 0
         selection = self.selectedIndexes()
         if selection:
-            first_row = selection[0].row()  # type: ignore
+            first_row = selection[0].row()
         return first_row
 
     def selected_rows(self) -> list[int]:

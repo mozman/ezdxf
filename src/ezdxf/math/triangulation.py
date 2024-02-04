@@ -100,7 +100,7 @@ def mapbox_earcut_3d(
 
     # Vec3 supports the _Point protocol in _mapbox_earcut.py
     # required attributes: x, y
-    for triangle in earcut(exterior_ocs, holes_ocs):  # type: ignore
+    for triangle in earcut(exterior_ocs, holes_ocs):
         yield tuple(
             ocs.points_to_wcs(Vec3(v.x, v.y, elevation) for v in triangle)
         )
