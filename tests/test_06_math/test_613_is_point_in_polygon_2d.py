@@ -3,9 +3,10 @@
 import pytest
 from ezdxf.math import Vec2, is_convex_polygon_2d
 
-from ezdxf.math._construct import is_point_in_polygon_2d
+from ezdxf.math._construct import is_point_in_polygon_2d  # Python version
+
 is_point_in_polygon_cy = is_point_in_polygon_2d
-try:
+try:  # Cython version
     from ezdxf.acc.construct import is_point_in_polygon_2d as is_point_in_polygon_cy
 except ImportError:
     pass
@@ -139,6 +140,24 @@ POINTS_OUTSIDE = Vec2.list(
 )
 
 
+#   0123456
+# 8 .......
+# 7 .+-6-+.
+# 6 .|...5.
+# 5 .|.+4+.
+# 4 .7.3...
+# 3 .|.+2+.
+# 2 .|...1.
+# 1 .+-0-+.
+# 0 .......
+#   0123456
+
+POINTS_ON_BOUNDARY = Vec2.list(
+    # 0       1       2       3       4       5       6       7
+    [(1, 3), (5, 2), (4, 3), (3, 4), (4, 5), (5, 6), (3, 7), (1, 4)]
+)
+
+
 def test_shape_c_is_not_convex():
     assert is_convex_polygon_2d(SHAPE_C_CCW) is False
     assert is_convex_polygon_2d(SHAPE_C_CW) is False
@@ -146,7 +165,12 @@ def test_shape_c_is_not_convex():
 
 @pytest.mark.parametrize("point", POINTS_INSIDE)
 def test_is_inside_ccw_polygon(point: Vec2):
-    assert is_point_in_polygon_2d(point, SHAPE_C_CCW) >= 0
+    assert is_point_in_polygon_2d(point, SHAPE_C_CCW) == 1
+
+
+@pytest.mark.parametrize("point", POINTS_ON_BOUNDARY)
+def test_is_on_boundary_ccw_polygon(point: Vec2):
+    assert is_point_in_polygon_2d(point, SHAPE_C_CCW) == 0
 
 
 @pytest.mark.parametrize("point", POINTS_OUTSIDE)
@@ -156,7 +180,12 @@ def test_is_outside_ccw_polygon(point: Vec2):
 
 @pytest.mark.parametrize("point", POINTS_INSIDE)
 def test_is_inside_cw_polygon(point: Vec2):
-    assert is_point_in_polygon_2d(point, SHAPE_C_CW) >= 0
+    assert is_point_in_polygon_2d(point, SHAPE_C_CW) == 1
+
+
+@pytest.mark.parametrize("point", POINTS_ON_BOUNDARY)
+def test_is_on_boundary_cw_polygon(point: Vec2):
+    assert is_point_in_polygon_2d(point, SHAPE_C_CW) == 0
 
 
 @pytest.mark.parametrize("point", POINTS_OUTSIDE)
@@ -168,10 +197,14 @@ def test_is_outside_cw_polygon(point: Vec2):
     is_point_in_polygon_cy is is_point_in_polygon_2d,
     reason="no Cython implementation available",
 )
-class TestCytonImplementation:
+class TestCythonImplementation:
     @pytest.mark.parametrize("point", POINTS_INSIDE)
     def test_is_inside_ccw_polygon(self, point: Vec2):
-        assert is_point_in_polygon_cy(point, SHAPE_C_CCW) >= 0
+        assert is_point_in_polygon_cy(point, SHAPE_C_CCW) == 1
+
+    @pytest.mark.parametrize("point", POINTS_ON_BOUNDARY)
+    def test_is_on_boundary_ccw_polygon(self, point: Vec2):
+        assert is_point_in_polygon_cy(point, SHAPE_C_CCW) == 0
 
     @pytest.mark.parametrize("point", POINTS_OUTSIDE)
     def test_is_outside_ccw_polygon(self, point: Vec2):
