@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022, Manfred Moitzi
+# Copyright (c) 2011-2024, Manfred Moitzi
 # License: MIT License
 # These are the pure Python implementations of the Cython accelerated
 # construction tools: ezdxf/acc/construct.pyx
@@ -216,3 +216,61 @@ def arc_angle_span_rad(start: float, end: float) -> float:
     if end < start:
         end += tau
     return end - start
+
+
+def is_point_in_polygon_2d(
+    point: Vec2, polygon: list[Vec2], abs_tol=TOLERANCE
+) -> int:
+    """
+    Test if `point` is inside `polygon`.  Returns +1 for inside, 0 for on the 
+    boundary and  -1 for outside.
+
+    Supports convex and concave polygons with clockwise or counter-clockwise oriented
+    polygon vertices.  Does not raise an exception for degenerated polygons.
+
+
+    Args:
+        point: 2D point to test as :class:`Vec2`
+        polygon: list of 2D points as :class:`Vec2`
+        abs_tol: tolerance for distance check
+
+    Returns:
+        +1 for inside, 0 for on the boundary, -1 for outside
+
+    """
+    # Source: http://www.faqs.org/faqs/graphics/algorithms-faq/
+    # Subject 2.03: How do I find if a point lies within a polygon?
+    # polygon: the Cython implementation needs a list as input to be fast!
+    assert isinstance(polygon, list)
+    if len(polygon) < 3: # empty polygon
+        return -1
+
+    if polygon[0].isclose(polygon[-1]):  # open polygon is required
+        polygon = polygon[:-1]
+    if len(polygon) < 3:
+        return -1
+    x = point.x
+    y = point.y
+    inside = False
+    x1, y1 = polygon[-1]
+    for x2, y2 in polygon:
+        # is point on polygon boundary line:
+        # is point in x-range of line
+        a, b = (x2, x1) if x2 < x1 else (x1, x2)
+        if a <= x <= b:
+            # is point in y-range of line
+            c, d = (y2, y1) if y2 < y1 else (y1, y2)
+            if (c <= y <= d) and abs(
+                (y2 - y1) * x - (x2 - x1) * y + (x2 * y1 - y2 * x1)
+            ) <= abs_tol:
+                return 0  # on boundary line
+        if ((y1 <= y < y2) or (y2 <= y < y1)) and (
+            x < (x2 - x1) * (y - y1) / (y2 - y1) + x1
+        ):
+            inside = not inside
+        x1 = x2
+        y1 = y2
+    if inside:
+        return 1  # inside polygon
+    else:
+        return -1  # outside polygon

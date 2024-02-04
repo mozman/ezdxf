@@ -1,7 +1,14 @@
 # Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math import is_point_in_polygon_2d, Vec2, is_convex_polygon_2d
+from ezdxf.math import Vec2, is_convex_polygon_2d
+
+from ezdxf.math._construct import is_point_in_polygon_2d
+is_point_in_polygon_cy = is_point_in_polygon_2d
+try:
+    from ezdxf.acc.construct import is_point_in_polygon_2d as is_point_in_polygon_cy
+except ImportError:
+    pass
 
 
 def test_inside_horizontal_box():
@@ -155,6 +162,20 @@ def test_is_inside_cw_polygon(point: Vec2):
 @pytest.mark.parametrize("point", POINTS_OUTSIDE)
 def test_is_outside_cw_polygon(point: Vec2):
     assert is_point_in_polygon_2d(point, SHAPE_C_CW) == -1
+
+
+@pytest.mark.skipif(
+    is_point_in_polygon_cy is is_point_in_polygon_2d,
+    reason="no Cython implementation available",
+)
+class TestCytonImplementation:
+    @pytest.mark.parametrize("point", POINTS_INSIDE)
+    def test_is_inside_ccw_polygon(self, point: Vec2):
+        assert is_point_in_polygon_cy(point, SHAPE_C_CCW) >= 0
+
+    @pytest.mark.parametrize("point", POINTS_OUTSIDE)
+    def test_is_outside_ccw_polygon(self, point: Vec2):
+        assert is_point_in_polygon_cy(point, SHAPE_C_CCW) == -1
 
 
 if __name__ == "__main__":
