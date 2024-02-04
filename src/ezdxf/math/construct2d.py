@@ -240,9 +240,6 @@ def distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float:
     return math.fabs((start - point).det(end - point)) / (end - start).magnitude
 
 
-
-    
-
 def circle_radius_3p(a: Vec3, b: Vec3, c: Vec3) -> float:
     ba = b - a
     ca = c - a
@@ -304,10 +301,10 @@ def has_matrix_2d_stretching(m: Matrix44) -> bool:
 def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> bool:
     """Returns ``True`` if the 2D `polygon` is convex.
 
-    This function supports open and closed polygons with clockwise or counter-clockwise 
+    This function supports open and closed polygons with clockwise or counter-clockwise
     vertex orientation.
 
-    Coincident vertices will always be skipped and if argument `strict` is ``True``, 
+    Coincident vertices will always be skipped and if argument `strict` is ``True``,
     polygons with collinear vertices are not considered as convex.
 
     This solution works only for simple non-self-intersecting polygons!
