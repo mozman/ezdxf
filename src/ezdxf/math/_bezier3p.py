@@ -1,5 +1,6 @@
 # Copyright (c) 2021-2024 Manfred Moitzi
 # License: MIT License
+# pylint: disable=unused-variable
 from __future__ import annotations
 from typing import (
     Iterator,
@@ -19,7 +20,7 @@ __all__ = ["Bezier3P"]
 
 
 def check_if_in_valid_range(t: float) -> None:
-    if not (0 <= t <= 1.0):
+    if not 0.0 <= t <= 1.0:
         raise ValueError("t not in range [0 to 1]")
 
 
@@ -30,7 +31,7 @@ class Bezier3P(Generic[T]):
     """Implements an optimized quadratic `Bézier curve`_ for exact 3 control
     points.
 
-    The class supports points of type :class:`Vec2` and :class:`Vec3` as input, the 
+    The class supports points of type :class:`Vec2` and :class:`Vec3` as input, the
     class instances are immutable.
 
     Args:
@@ -56,8 +57,7 @@ class Bezier3P(Generic[T]):
 
     @property
     def control_points(self) -> Sequence[T]:
-        """Control points as tuple of :class:`Vec3` or :class:`Vec2` objects.
-        """
+        """Control points as tuple of :class:`Vec3` or :class:`Vec2` objects."""
         # ezdxf optimization: p0 is always (0, 0, 0)
         p0, p1, p2 = self._control_points
         offset = self._offset

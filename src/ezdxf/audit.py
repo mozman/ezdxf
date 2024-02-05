@@ -107,7 +107,7 @@ class ErrorEntry:
         self.message: str = message  # error message
         self.data: Any = data  # additional data as an arbitrary object
 
-
+# pylint: disable=too-many-public-methods
 class Auditor:
     def __init__(self, doc: Drawing) -> None:
         assert doc is not None and doc.rootdict is not None and doc.entitydb is not None
@@ -491,7 +491,7 @@ class BlockCycleDetector:
         self.blocks = self._build_block_ledger(doc.blocks)
 
     def _build_block_ledger(self, blocks: BlocksSection) -> dict[str, set[str]]:
-        ledger = dict()
+        ledger = {}
         for block in blocks:
             inserts = {
                 self.key(insert.dxf.get("name", "")) for insert in block.query("INSERT")

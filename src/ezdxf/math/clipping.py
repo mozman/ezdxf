@@ -30,19 +30,15 @@ __all__ = [
 class Clipping(Protocol):
     def clip_polygon(self, polygon: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polygon."""
-        ...
 
     def clip_polyline(self, polyline: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
-        ...
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         """Returns the parts of the clipped line."""
-        ...
 
     def is_inside(self, point: Vec2) -> bool:
         """Returns ``True`` if `point` is inside the clipping path."""
-        ...
 
 
 def _clip_polyline(
@@ -380,6 +376,7 @@ class GHPolygon:
     def difference(self, clip: GHPolygon) -> list[list[Vec2]]:
         return self.clip(clip, False, True)
 
+    # pylint: disable=too-many-branches
     def clip(self, clip: GHPolygon, s_entry, c_entry) -> list[list[Vec2]]:
         """Clip this polygon using another one as a clipper.
 
@@ -657,7 +654,7 @@ def cohen_sutherland_line_clipping_2d(
     x = x0
     y = y0
     while True:
-        if not (code0 | code1):  # ACCEPT
+        if not code0 | code1:  # ACCEPT
             # bitwise OR is 0: both points inside window; trivially accept and
             # exit loop:
             return Vec2(x0, y0), Vec2(x1, y1)
