@@ -414,7 +414,7 @@ class Mesh(DXFGraphic):
 class MeshData:
     def __init__(self, mesh: Mesh) -> None:
         self.vertices: list[Vec3] = Vec3.list(mesh.vertices)
-        self.faces: list[Sequence[int]] = list(mesh.faces)  # type: ignore
+        self.faces: list[Sequence[int]] = list(mesh.faces)
         self.edges: list[tuple[int, int]] = list(mesh.edges)
         self.edge_crease_values: list[float] = list(mesh.creases)
 

@@ -1190,8 +1190,8 @@ class EllipseEdge(AbstractEdge):
 
         # Transform WCS representation to new OCS
         wcs_to_ocs = ocs.new_ocs.from_wcs
-        self.center = wcs_to_ocs(e.center).vec2  # type: ignore
-        self.major_axis = wcs_to_ocs(e.major_axis).vec2  # type: ignore
+        self.center = wcs_to_ocs(e.center).vec2
+        self.major_axis = wcs_to_ocs(e.major_axis).vec2
         self.ratio = e.ratio
 
         # ConstructionEllipse() is always in ccw orientation

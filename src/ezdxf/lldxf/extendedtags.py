@@ -230,7 +230,7 @@ class ExtendedTags:
             """
             data = Tags([starttag])
             # Alternative closing tag 'APPID}':
-            closing_strings = ("}", starttag.value[1:] + "}")  # type: ignore
+            closing_strings = ("}", starttag.value[1:] + "}")
             while True:
                 try:
                     tag = next(tags)

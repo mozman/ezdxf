@@ -54,36 +54,29 @@ class ClippingShape(abc.ABC):
     """
 
     @abc.abstractmethod
-    def bbox(self) -> BoundingBox2d:
-        ...
+    def bbox(self) -> BoundingBox2d: ...
 
     @abc.abstractmethod
-    def clip_point(self, point: Vec2) -> Optional[Vec2]:
-        ...
+    def clip_point(self, point: Vec2) -> Optional[Vec2]: ...
 
     @abc.abstractmethod
-    def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
-        ...
+    def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]: ...
 
     @abc.abstractmethod
-    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
-        ...
+    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]: ...
 
     @abc.abstractmethod
-    def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
-        ...
+    def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]: ...
 
     @abc.abstractmethod
     def clip_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        ...
+    ) -> Iterator[NumpyPath2d]: ...
 
     @abc.abstractmethod
     def clip_filled_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        ...
+    ) -> Iterator[NumpyPath2d]: ...
 
 
 class ClippingStage(NamedTuple):
@@ -244,10 +237,7 @@ class ClippingRect(ClippingShape):
             return tuple()
 
         # rectangular clipping box returns always a single line segment or an empty tuple
-        cropped_segment = self.clipper.clip_line(start, end)
-        if cropped_segment:
-            return (cropped_segment,)  # type: ignore
-        return tuple()
+        return self.clipper.clip_line(start, end)
 
     def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         if self.remove_all:
@@ -270,8 +260,11 @@ class ClippingRect(ClippingShape):
         if not clipper.is_inside(extmin) or not clipper.is_inside(extmax):
             # ClippingRect2d handles only convex clipping paths and returns always a
             # single polygon:
-            points = NumpyPoints2d(clipper.clip_polygon(points.vertices()))
-        return (points,)
+            return [
+                NumpyPoints2d(part) for part in clipper.clip_polygon(points.vertices())
+            ]
+        else:
+            return (points,)
 
     def clip_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
@@ -309,12 +302,10 @@ class ClippingRect(ClippingShape):
                 if path.has_sub_paths:
                     yield from self.clip_filled_paths(path.sub_paths(), max_sagitta)
                 else:
-                    yield NumpyPath2d.from_vertices(
-                        clipper.clip_polygon(
-                            Vec2.list(path.flattening(max_sagitta, segments=4))
-                        ),
-                        close=True,
-                    )
+                    for part in clipper.clip_polygon(
+                        Vec2.list(path.flattening(max_sagitta, segments=4))
+                    ):
+                        yield NumpyPath2d.from_vertices(part, close=True)
 
 
 class ConvexClippingPolygon(ClippingShape):
@@ -324,13 +315,13 @@ class ConvexClippingPolygon(ClippingShape):
     """
 
     def __init__(self, vertices: Iterable[UVec]) -> None:
-        from ezdxf.math.clipping import ClippingPolygon2d
+        from ezdxf.math.clipping import ConvexClippingPolygon2d
 
         bbox = BoundingBox2d(vertices)
         if not bbox.has_data:
             raise ValueError("clipping box not detectable")
         self._bbox = bbox
-        self.clipper = ClippingPolygon2d(Vec2.generate(vertices))
+        self.clipper = ConvexClippingPolygon2d(Vec2.generate(vertices))
 
     def bbox(self) -> BoundingBox2d:
         return self._bbox
@@ -342,10 +333,7 @@ class ConvexClippingPolygon(ClippingShape):
         return point
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
-        cropped_segment = self.clipper.clip_line(start, end)
-        if cropped_segment:
-            return (cropped_segment,)  # type: ignore
-        return tuple()
+        return self.clipper.clip_line(start, end)
 
     def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         clipper = self.clipper
@@ -363,8 +351,7 @@ class ConvexClippingPolygon(ClippingShape):
         if not polygon_bbox.has_intersection(self._bbox):
             # polygon is complete outside
             return tuple()
-        points = NumpyPoints2d(clipper.clip_polygon(points.vertices()))
-        return (points,)
+        return [NumpyPoints2d(part) for part in clipper.clip_polygon(points.vertices())]
 
     def clip_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
@@ -390,12 +377,10 @@ class ConvexClippingPolygon(ClippingShape):
                 if not path_bbox.has_intersection(self._bbox):
                     # path is complete outside
                     continue
-                yield NumpyPath2d.from_vertices(
-                    clipper.clip_polygon(
-                        Vec2.list(path.flattening(max_sagitta, segments=4))
-                    ),
-                    close=True,
-                )
+                for part in clipper.clip_polygon(
+                    Vec2.list(path.flattening(max_sagitta, segments=4))
+                ):
+                    yield NumpyPath2d.from_vertices(part, close=True)
 
 
 class MultiClip(ClippingShape):
@@ -486,7 +471,7 @@ def find_best_clipping_shape(polygon: Iterable[UVec]) -> ClippingShape:
 def make_inverted_clipping_shape(
     polygon: Iterable[UVec], extents: BoundingBox2d
 ) -> ClippingShape:
-    """Returns an inverted clipping shape that removes the geometry outside the clipping 
+    """Returns an inverted clipping shape that removes the geometry outside the clipping
     polygon but inside the given extents.
 
     .. note::

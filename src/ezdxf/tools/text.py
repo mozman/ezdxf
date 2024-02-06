@@ -473,9 +473,9 @@ def fast_plain_mtext(text: str, split=False) -> Union[list[str], str]:
         elif char in "{}":  # grouping
             pass  # discard group markers
         elif char == "%":  # special characters
-            if len(raw_chars) and raw_chars[-1] == "%":
+            if raw_chars and raw_chars[-1] == "%":
                 raw_chars.pop()  # discard next '%'
-                if len(raw_chars):
+                if raw_chars:
                     code = raw_chars.pop()
                     letter = const.SPECIAL_CHAR_ENCODING.get(code.lower())
                     if letter:
@@ -661,7 +661,7 @@ def is_text_vertical_stacked(text: DXFEntity) -> bool:
     if text.doc:
         style = text.doc.styles.get(text.dxf.style)
         if style:
-            return style.is_vertical_stacked  # type: ignore
+            return style.is_vertical_stacked
     return False
 
 
@@ -1744,7 +1744,7 @@ def estimate_mtext_extents(mtext: MText) -> tuple[float, float]:
         if doc:
             style = doc.styles.get(mtext.dxf.get_default("style"))
             if style is not None:
-                return style.make_font(cap_height)  # type: ignore
+                return style.make_font(cap_height)
         return fonts.make_font(const.DEFAULT_TTF, cap_height=cap_height)
 
     return estimate_mtext_content_extents(

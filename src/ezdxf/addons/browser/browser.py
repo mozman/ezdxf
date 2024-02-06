@@ -276,7 +276,7 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
             action.setIcon(icon)
         if tip:
             action.setToolTip(tip)
-        action.triggered.connect(slot)  # type: ignore
+        action.triggered.connect(slot)
         return action
 
     def setup_menu(self):
@@ -610,7 +610,7 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
     def show_entity_found_message(self, entity: Tags, index: int):
         dxftype = entity.dxftype()
         if dxftype == "SECTION":
-            tail = " @ {0} Section".format(entity.get_first_value(2))  # type: ignore
+            tail = " @ {0} Section".format(entity.get_first_value(2))
         else:
             try:
                 handle = entity.get_handle()

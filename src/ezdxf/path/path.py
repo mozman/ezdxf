@@ -220,9 +220,9 @@ class Path:
         """Append a single path element."""
         t = cmd.type
         if t == Command.LINE_TO:
-            self.line_to(cmd.end)  # type: ignore
+            self.line_to(cmd.end)
         elif t == Command.MOVE_TO:
-            self.move_to(cmd.end)  # type: ignore
+            self.move_to(cmd.end)
         elif t == Command.CURVE3_TO:
             self.curve3_to(cmd.end, cmd.ctrl)  # type: ignore
         elif t == Command.CURVE4_TO:

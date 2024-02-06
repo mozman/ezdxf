@@ -428,7 +428,7 @@ class DXFEntity:
         """
         blockref = getattr(self, DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE, None)
         if blockref is not None and blockref.is_alive:
-            return blockref  # type: ignore
+            return blockref
         return None
 
     def set_source_block_reference(self, blockref: Insert) -> None:
@@ -664,11 +664,11 @@ class DXFEntity:
         if tagwriter.dxfversion >= const.DXF2000:
             tagwriter.write_tag2(_handle_code, self.dxf.handle)
             if self.appdata:
-                self.appdata.export_dxf(tagwriter)  # type: ignore
+                self.appdata.export_dxf(tagwriter)
             if self.has_extension_dict:
                 self.extension_dict.export_dxf(tagwriter)  # type: ignore
             if self.reactors:
-                self.reactors.export_dxf(tagwriter)  # type: ignore
+                self.reactors.export_dxf(tagwriter)
             tagwriter.write_tag2(const.OWNER_CODE, self.dxf.owner)
         else:  # DXF R12
             if tagwriter.write_handles:

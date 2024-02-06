@@ -66,7 +66,7 @@ acdb_circle = DefSubclass(
 
 acdb_circle_group_codes = group_code_mapping(acdb_circle)
 merged_circle_group_codes = merge_group_code_mappings(
-    acdb_entity_group_codes, acdb_circle_group_codes  # type: ignore
+    acdb_entity_group_codes, acdb_circle_group_codes
 )
 
 
@@ -163,9 +163,7 @@ class Circle(DXFGraphic):
         y-axis and `dz` in z-axis, returns `self` (floating interface).
         """
         ocs = self.ocs()
-        self.dxf.center = ocs.from_wcs(
-            Vec3(dx, dy, dz) + ocs.to_wcs(self.dxf.center)
-        )
+        self.dxf.center = ocs.from_wcs(Vec3(dx, dy, dz) + ocs.to_wcs(self.dxf.center))
         # Avoid Matrix44 instantiation if not required:
         if self.is_post_transform_required:
             self.post_transform(Matrix44.translate(dx, dy, dz))

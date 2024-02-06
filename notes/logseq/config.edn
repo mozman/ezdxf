@@ -270,6 +270,7 @@
           "discussion" "discussion [#$1](https://github.com/mozman/ezdxf/discussions/$1)"
           "issue" "issue [#$1](https://github.com/mozman/ezdxf/issues/$1)"
           "pr" "pull request [#$1](https://github.com/mozman/ezdxf/pull/$1)"
+		  "odafc-link" "download link: [$1](https://download.opendesign.com/guestfiles/Demo/$1)"
           }
 
  ;; Configure the default expansion level for linked references.

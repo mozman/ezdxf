@@ -233,5 +233,5 @@ def placement_matrix(
     if rotation:
         m @= Matrix44.z_rotate(math.radians(rotation))
     corners = m.fast_2d_transform(bbox.rect_vertices())
-    tx, ty = BoundingBox2d(corners).extmin  # type: ignore
+    tx, ty = BoundingBox2d(corners).extmin
     return m @ Matrix44.translate(-tx, -ty, 0)

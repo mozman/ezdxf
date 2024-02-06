@@ -480,7 +480,7 @@ class HPGL2Viewer(QtWidgets.QMainWindow):
         m = self.get_export_matrix()
         corners = m.fast_2d_transform(bbox.rect_vertices())
         # move content to origin:
-        tx, ty = BoundingBox2d(corners).extmin  # type: ignore
+        tx, ty = BoundingBox2d(corners).extmin
         m @= Matrix44.translate(-tx, -ty, 0)
         player.transform(m)
         bbox = player.bbox()

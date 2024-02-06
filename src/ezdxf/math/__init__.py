@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022, Manfred Moitzi
+# Copyright (c) 2011-2024, Manfred Moitzi
 # License: MIT License
 from typing import Iterable
 # Using * imports to simplify namespace imports, therefore every module
@@ -13,7 +13,6 @@ from .parametrize import *
 from .bspline import *
 from .bezier import *
 from .bezier_interpolation import *
-from .surfaces import *
 from .eulerspiral import *
 from .ucs import *
 from .bulge import *

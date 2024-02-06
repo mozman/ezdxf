@@ -171,7 +171,7 @@ class EntityDB:
         # Add sub entities ATTRIB, VERTEX and SEQEND to database:
         # Add linked MTEXT columns to database:
         if hasattr(entity, "add_sub_entities_to_entitydb"):
-            entity.add_sub_entities_to_entitydb(self)  # type: ignore
+            entity.add_sub_entities_to_entitydb(self)
 
     def delete_entity(self, entity: DXFEntity) -> None:
         """Remove `entity` from database and destroy the `entity`."""
@@ -183,7 +183,7 @@ class EntityDB:
         """Discard `entity` from database without destroying the `entity`."""
         if entity.is_alive:
             if hasattr(entity, "process_sub_entities"):
-                entity.process_sub_entities(lambda e: self.discard(e))  # type: ignore
+                entity.process_sub_entities(lambda e: self.discard(e))
 
             handle = entity.dxf.handle
             try:

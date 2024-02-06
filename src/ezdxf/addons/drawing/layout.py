@@ -472,7 +472,7 @@ def placement_matrix(
     canvas = BoundingBox2d(corners)
 
     # shift content to first quadrant +x/+y
-    tx, ty = canvas.extmin  # type: ignore
+    tx, ty = canvas.extmin
 
     # align content within margins
     view_box_content_x = (

@@ -39,7 +39,7 @@
 			- the ACIS data has to be parsed
 			- the transformation matrix modified
 			- ACIS data recompiled
-			- this is expensive and therfore the transformation feature has to be enabled manually for each DXF document by `doc.enable_acis_transfromation()`
+			- this is expensive and therfor the transformation feature has to be enabled manually for each DXF document by `doc.enable_acis_transfromation()`
 	- DONE clipping path support for block references
 	  id:: 65508de8-19be-495f-b83c-94600d9556bc
 		- see [[XCLIP]] command
@@ -51,7 +51,7 @@
 		- ACIS data does not reference any DXF resources and copying is not expensive, all copies share the same immutable ACIS data.
 		- This feature allows loading ACIS entities from external references by the `xref` module.
 	- #maybe Adding a `transform_matrix` attribute to entities which do not have transformation support (yet) like [[ACIS]] entities which enables to add support for the `transform()` method.
-		- A new method `apply_transform_martix()` has to be called to apply the `transform_matrix` to the entity itself before export or it should raise a `NotImplementedError` exception.
+		- A new method `apply_transform_matrix()` has to be called to apply the `transform_matrix` to the entity itself before export or it should raise a `NotImplementedError` exception.
 		- This could be implemented for
 			- [[ACIS]] entities inherited from base class [[BODY]]
 			- [[ACAD_PROXY_ENTITY]]

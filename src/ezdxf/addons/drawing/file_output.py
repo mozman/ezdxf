@@ -49,7 +49,7 @@ class MatplotlibFileOutput(FileOutputRenderBackend):
         return list(self._fig.canvas.get_supported_filetypes().items())
 
     def default_format(self) -> str:
-        return 'png'
+        return "png"
 
     def backend(self) -> BackendInterface:
         return self._backend
@@ -91,22 +91,26 @@ class PyQtFileOutput(FileOutputRenderBackend):
         ]
 
     def default_format(self) -> str:
-        return 'png'
+        return "png"
 
     def backend(self) -> BackendInterface:
         return self._backend
 
     def save(self, output: pathlib.Path) -> None:
-        if output.suffix.lower() == '.svg':
+        if output.suffix.lower() == ".svg":
             from PySide6.QtSvg import QSvgGenerator
 
             generator = QSvgGenerator()
             generator.setFileName(str(output))
             generator.setResolution(int(self._dpi))
             scene_rect = self._scene.sceneRect()
-            output_size = self._qc.QSize(round(scene_rect.size().width()), round(scene_rect.size().height()))
+            output_size = self._qc.QSize(
+                round(scene_rect.size().width()), round(scene_rect.size().height())
+            )
             generator.setSize(output_size)
-            generator.setViewBox(self._qc.QRect(0, 0, output_size.width(), output_size.height()))
+            generator.setViewBox(
+                self._qc.QRect(0, 0, output_size.width(), output_size.height())
+            )
 
             painter = self._qg.QPainter()
 
@@ -127,7 +131,7 @@ class PyQtFileOutput(FileOutputRenderBackend):
             sizef: QRectF = self._scene.sceneRect() * self._dpi / 92  # type: ignore
             image = self._qg.QImage(
                 self._qc.QSize(round(sizef.width()), round(sizef.height())),
-                self._qg.QImage.Format.Format_ARGB32
+                self._qg.QImage.Format.Format_ARGB32,
             )
             painter = self._qg.QPainter(image)
             painter.setRenderHint(self._qg.QPainter.RenderHint.Antialiasing)
@@ -164,17 +168,18 @@ class MuPDFFileOutput(FileOutputRenderBackend):
         ]
 
     def default_format(self) -> str:
-        return 'pdf'
+        return "pdf"
 
     def backend(self) -> BackendInterface:
         return self._backend
 
     def save(self, output: pathlib.Path) -> None:
         from ezdxf.addons.drawing import layout
+
         backend = self._backend.get_replay(layout.Page(0, 0))
-        if output.suffix == '.pdf':
+        if output.suffix == ".pdf":
             output.write_bytes(backend.get_pdf_bytes())
-        elif output.suffix == '.svg':
+        elif output.suffix == ".svg":
             output.write_text(backend.get_svg_image())
         else:
             pixmap = backend.get_pixmap(int(self._dpi), alpha=True)
@@ -190,25 +195,32 @@ class SvgFileOutput(FileOutputRenderBackend):
         self._backend = SVGBackend()
 
     def supported_formats(self) -> list[tuple[str, str]]:
-        return [('svg', 'Scalable Vector Graphics')]
+        return [("svg", "Scalable Vector Graphics")]
 
     def default_format(self) -> str:
-        return 'svg'
+        return "svg"
 
     def backend(self) -> BackendInterface:
         return self._backend
 
     def save(self, output: pathlib.Path) -> None:
         from ezdxf.addons.drawing import layout
+
         output.write_text(self._backend.get_string(layout.Page(0, 0)))
 
 
 def open_file(path: pathlib.Path) -> None:
     """open the given path in the default application"""
     system = platform.system()
-    if system == 'Darwin':
-        subprocess.call(['open', str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    elif system == 'Windows':
+    if system == "Darwin":
+        subprocess.call(
+            ["open", str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+    elif system == "Windows":
         os.startfile(str(path))  # type: ignore
     else:
-        subprocess.call(['xdg-open', str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.call(
+            ["xdg-open", str(path)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )

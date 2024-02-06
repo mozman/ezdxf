@@ -303,9 +303,9 @@ class GeoData(DXFObject):
         face: list[int] = []
         for code, value in tags:
             if code == src:
-                self.source_vertices.append(value)  # type: ignore
+                self.source_vertices.append(value)
             elif code == target:
-                self.target_vertices.append(value)  # type: ignore
+                self.target_vertices.append(value)
             elif code in face_indices:
                 if code == 97 and len(face):
                     if len(face) != 3:

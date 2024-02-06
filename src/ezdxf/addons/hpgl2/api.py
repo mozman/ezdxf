@@ -390,7 +390,7 @@ def record_plotter_output(
 
     if merge_control == MergeControl.AUTO:
         if plotter.has_merge_control:
-            merge_control = MergeControl.LUMINANCE  # type: ignore
+            merge_control = MergeControl.LUMINANCE
     if merge_control == MergeControl.LUMINANCE:
         if DEBUG:
             print("merge control on: sorting filled polygons by luminance")

@@ -161,7 +161,7 @@ class Bezier:
             tangent: start tangent as vector, example: (5, 0, 0) means a
                      horizontal tangent with a length of 5 drawing units
         """
-        self.points.append((point, None, tangent, None))
+        self.points.append((Vec3(point), None, tangent, None))
 
     def append(
         self,
@@ -184,10 +184,10 @@ class Bezier:
         """
         tangent1 = Vec3(tangent1)
         if tangent2 is None:
-            tangent2 = -tangent1  # type: ignore
+            tangent2 = -tangent1
         else:
             tangent2 = Vec3(tangent2)
-        self.points.append((point, tangent1, tangent2, int(segments)))
+        self.points.append((Vec3(point), tangent1, tangent2, int(segments)))
 
     def _build_bezier_segments(self) -> Iterable[Segment]:
         if len(self.points) > 1:

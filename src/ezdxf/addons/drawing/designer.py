@@ -667,7 +667,7 @@ def filter_vp_entities(
     # WARNING: this works only with top-view viewports
     # The current state of the drawing add-on supports only top-view viewports!
     def is_visible(e):
-        entity_bbox = bbox_cache.get(e)  # type: ignore
+        entity_bbox = bbox_cache.get(e)
         if entity_bbox is None:
             # compute and add bounding box
             entity_bbox = ezdxf.bbox.extents((e,), fast=True, cache=bbox_cache)

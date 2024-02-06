@@ -233,7 +233,7 @@ class PointPrimitive(Primitive):
 
 class MeshPrimitive(ConvertedPrimitive):
     def _convert_entity(self):
-        self._mesh = MeshBuilder.from_mesh(self.entity)  # type: ignore
+        self._mesh = MeshBuilder.from_mesh(self.entity)
 
 
 class QuadrilateralPrimitive(ConvertedPrimitive):

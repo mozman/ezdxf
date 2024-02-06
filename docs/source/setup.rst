@@ -26,25 +26,30 @@ C-extensions from `PyPI`_ as binary wheels::
 Installation with Extras
 ------------------------
 
-To use all features of the drawing add-on, add the [draw] tag::
+To use all features of the drawing add-on, add the ``[draw]`` tag::
 
     pip3 install ezdxf[draw]
 
-======== ===================================================
-Tag      Additional Installed Packages
-======== ===================================================
-[draw]   `Matplotlib`_, `PySide6`_, `PyMuPDF`_
-[draw5]  `Matplotlib`_, `PyQt5`_, `PyMuPDF`_ (use only if PySide6 is not available)
-[test]   pytest
-[dev]    setuptools, wheel, Cython + [test]
-[all]    [draw] + [test] + [dev]
-[all5]   [draw5] + [test] + [dev]  (use only if PySide6 is not available)
-======== ===================================================
+=========== ===================================================
+Tag         Additional Installed Packages
+=========== ===================================================
+``[draw]``  `Matplotlib`_, `PySide6`_, `PyMuPDF`_, `Pillow`_
+``[dev]``   ``[draw]`` + setuptools, wheel, Cython, pytest (full development setup)
+=========== ===================================================
+
+If `PySide6`_ is not available on your system, use `PyQt5`_ by this options:
+
+=========== ===================================================
+Tag         Additional Installed Packages
+=========== ===================================================
+``[draw5]`` `Matplotlib`_, `PyQt5`_, `PyMuPDF`_, `Pillow`_ 
+``[dev5]``  ``[draw5]`` + setuptools, wheel, Cython, pytest (full development setup)
+=========== ===================================================
 
 PySide6 Issue
 -------------
 
-Maybe `PySide6`_ won't launch on debian based distributions and shows this error message:
+Maybe `PySide6`_ won't launch on Debian based distributions and shows this error message:
 
 .. code-block:: Text
 
@@ -109,15 +114,15 @@ installation by `pip` from the source code package works without the C-extension
 but is slower. There are binary wheels available on `PyPi`_ which included the
 compiled C-extensions.
 
-Windows 10
-++++++++++
+Windows
++++++++
 
 Make a build directory and a virtual environment::
 
     mkdir build
     cd build
-    py -m venv py310
-    py310/Scripts/activate.bat
+    py -m venv .venv
+    .venv/Scripts/activate.bat
 
 
 A working C++ compiler setup is required to compile the C-extensions from source
@@ -151,7 +156,7 @@ my development environment.
 
 The output should look like this::
 
-    ezdxf 0.17.2b4 from D:\Source\build\py310\lib\site-packages\ezdxf
+    ezdxf 0.17.2b4 from D:\Source\build\.venv\lib\site-packages\ezdxf
     Python version: 3.10.1 (tags/v3.10.1:2cd268a, Dec  6 2021, 19:10:37) [MSC v.1929 64 bit (AMD64)]
     using C-extensions: yes
     using Matplotlib: no
@@ -180,8 +185,8 @@ source code::
     cd ~
     mkdir build
     cd build
-    python3 -m venv py38
-    source py38/bin/activate
+    python3 -m venv .venv
+    source .venv/bin/activate
 
 Install `Cython` and `wheel` in the venv to get the C-extensions compiled::
 
@@ -202,7 +207,7 @@ Check if the installation was successful::
 
 The output should look like this::
 
-    ezdxf 0.17.2b4 from /home/mozman/src/py38/lib/python3.8/site-packages/ezdxf
+    ezdxf 0.17.2b4 from /home/mozman/src/.venv/lib/python3.8/site-packages/ezdxf
     Python version: 3.8.10 (default, Nov 26 2021, 20:14:08)
     [GCC 9.3.0]
     using C-extensions: yes
@@ -237,8 +242,8 @@ and the Qt bindings from the system installation::
     cd ~
     mkdir build
     cd build
-    python3 -m venv --system-site-packages py37
-    source py37/bin/activate
+    python3 -m venv --system-site-packages .venv
+    source .venv/bin/activate
 
 Install `Cython` and  `wheel` in the venv to get the C-extensions compiled::
 
@@ -259,7 +264,7 @@ Check if the installation was successful::
 
 The output should look like this::
 
-    ezdxf 0.17.2b4 from /home/pi/src/py37/lib/python3.7/site-packages/ezdxf
+    ezdxf 0.17.2b4 from /home/pi/src/.venv/lib/python3.7/site-packages/ezdxf
     Python version: 3.7.3 (default, Jan 22 2021, 20:04:44)
     [GCC 8.3.0]
     using C-extensions: yes
@@ -287,8 +292,8 @@ Create and activate the venv::
     cd ~
     mkdir build
     cd build
-    python3 -m venv --system-site-packages py39
-    source py39/bin/activate
+    python3 -m venv --system-site-packages .venv
+    source .venv/bin/activate
 
 The rest is the same procedure as for the `Raspberry Pi OS`_::
 
@@ -325,7 +330,7 @@ the `PyQt5`_ package.
 Install Optional Packages
 -------------------------
 
-Install the optional dependencies by `pip` only for `Windows 10`_ and
+Install the optional dependencies by `pip` only for `Windows`_ and
 `WSL & Ubuntu`_, for `Raspberry Pi OS`_ and `Manjaro on Raspberry Pi`_ install
 these packages by the system packager::
 
@@ -413,8 +418,7 @@ this new Python version available, so there is no benefit of using the option
     source py39/bin/activate
 
 I have not tried to build `Matplotlib`_ and `PyQt5`_ by myself and the
-installation by `pip` from `piwheels`_ did not work, in this case you don't
-get `Matplotlib`_ support for better font measuring and the `drawing` add-on
+installation by `pip` from `piwheels`_ did not work, in this case the `drawing` add-on
 will not work.
 
 Proceed with the `ezdxf` installation from source as shown for the  `Raspberry Pi OS`_.

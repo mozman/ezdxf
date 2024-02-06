@@ -610,7 +610,7 @@ class SubclassProcessor:
             name = get_attrib_name(tag.code)
             if isinstance(name, str) and not name.startswith("*"):
                 unprotected_set_attrib(
-                    name, cast_value(tag.code, tag.value)  # type: ignore
+                    name, cast_value(tag.code, tag.value)
                 )
 
 

@@ -521,7 +521,7 @@ class UniversalFrontend:
                         s, e = ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
                             (e.x, e.y, elevation)
                         )
-                    lines.append((s, e))  # type: ignore
+                    lines.append((s, e))
         self.designer.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(
@@ -846,7 +846,7 @@ class UniversalFrontend:
 
             if is_clipping_active and clip.get_xclip_frame_policy():
                 self.designer.draw_path(
-                    path=from_vertices(boundary_path.vertices, close=True),  # type: ignore
+                    path=from_vertices(boundary_path.vertices, close=True),
                     properties=properties,
                 )
                 self.designer.pop_clipping_shape()

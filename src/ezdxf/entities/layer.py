@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, cast, Any
@@ -26,6 +26,7 @@ from ezdxf.lldxf.const import (
     LINEWEIGHT_BYLAYER,
     LINEWEIGHT_DEFAULT,
 )
+from ezdxf.audit import AuditError
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
 from .factory import register_entity
 
@@ -34,6 +35,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.entitydb import EntityDB
     from ezdxf import xref
+    from ezdxf.audit import Auditor
 
 
 __all__ = ["Layer", "acdb_symbol_table_record", "LayerOverrides"]
@@ -109,9 +111,7 @@ acdb_layer_table_record = DefSubclass(
         "unknown1": DXFAttr(348, dxfversion=DXF2007, optional=True),
     },
 )
-acdb_layer_table_record_group_codes = group_code_mapping(
-    acdb_layer_table_record
-)
+acdb_layer_table_record_group_codes = group_code_mapping(acdb_layer_table_record)
 AcAecLayerStandard = "AcAecLayerStandard"
 AcCmTransparency = "AcCmTransparency"
 
@@ -163,6 +163,7 @@ class Layer(DXFEntity):
         )
 
     def set_required_attributes(self):
+        assert self.doc is not None, "valid DXF document required"
         if not self.dxf.hasattr("material_handle"):
             global_ = self.doc.materials["Global"]
             if isinstance(global_, DXFEntity):
@@ -305,9 +306,7 @@ class Layer(DXFEntity):
             self.doc.appids.new(AcCmTransparency)
         if 0 <= value <= 1:
             self.discard_xdata(AcCmTransparency)
-            self.set_xdata(
-                AcCmTransparency, [(1071, clr.float2transparency(value))]
-            )
+            self.set_xdata(AcCmTransparency, [(1071, clr.float2transparency(value))])
         else:
             raise ValueError("Value out of range [0, 1].")
 
@@ -368,15 +367,13 @@ class Layer(DXFEntity):
                 # todo: if LAYER_FILTER implemented, add support for
                 #  renaming layers
                 logger.debug(
-                    f'renaming layer "{old_name}" - document contains '
-                    f"LAYER_FILTER"
+                    f'renaming layer "{old_name}" - document contains ' f"LAYER_FILTER"
                 )
             elif entity_type == "LAYER_INDEX":
                 # todo: if LAYER_INDEX implemented, add support for
                 #  renaming layers
                 logger.debug(
-                    f'renaming layer "{old_name}" - document contains '
-                    f"LAYER_INDEX"
+                    f'renaming layer "{old_name}" - document contains ' f"LAYER_INDEX"
                 )
 
     def get_vp_overrides(self) -> LayerOverrides:
@@ -407,6 +404,19 @@ class Layer(DXFEntity):
         # todo: map layer overrides
         # remove layer overrides
         clone.discard_extension_dict()
+
+    def audit(self, auditor: Auditor) -> None:
+        super().audit(auditor)
+        linetype = self.dxf.linetype
+        if auditor.doc.linetypes.has_entry(linetype):
+            return
+        self.dxf.linetype = "Continuous"
+        auditor.fixed_error(
+            code=AuditError.UNDEFINED_LINETYPE,
+            message=f"Replaced undefined linetype {linetype} in layer '{self.dxf.name}' by CONTINUOUS",
+            dxf_entity=self,
+            data=linetype,
+        )
 
 
 @dataclass
@@ -683,8 +693,16 @@ def store_layer_overrides(
             return layer.new_extension_dict()
 
     def set_xdict_tags(key: str, tags: list[DXFTag]):
+        from ezdxf.entities import XRecord
+
         xdict = get_xdict()
         xrec = xdict.get(key)
+        if not isinstance(xrec, XRecord) and xrec is not None:
+            logger.debug(
+                f"Found entity {str(xrec)} as override storage in {str(layer)} "
+                f"but expected XRECORD"
+            )
+            xrec = None
         if xrec is None:
             xrec = xdict.add_xrecord(key)
             xrec.dxf.cloning = 1
@@ -699,9 +717,7 @@ def store_layer_overrides(
             xrec.destroy()
             xdict.discard(key)
 
-    def make_tags(
-        data: list[tuple[Any, str]], name: str, code: int
-    ) -> list[DXFTag]:
+    def make_tags(data: list[tuple[Any, str]], name: str, code: int) -> list[DXFTag]:
         tags: list[DXFTag] = []
         for value, vp_handle in data:
             tags.extend(

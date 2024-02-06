@@ -199,7 +199,7 @@ class LWPolyline(DXFGraphic):
 
     def __iter__(self) -> Iterator[LWPointType]:
         """Returns iterable of tuples (x, y, start_width, end_width, bulge)."""
-        return iter(self.lwpoints)  # type: ignore
+        return iter(self.lwpoints)
 
     def __getitem__(self, index: int) -> LWPointType:
         """Returns point at position `index` as (x, y, start_width, end_width,
@@ -209,7 +209,7 @@ class LWPolyline(DXFGraphic):
         All coordinates in :ref:`OCS`.
 
         """
-        return self.lwpoints[index]  # type: ignore
+        return self.lwpoints[index]
 
     def __setitem__(self, index: int, value: Sequence[float]) -> None:
         """

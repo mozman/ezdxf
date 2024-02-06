@@ -52,7 +52,7 @@ class ExtensionDict:
         xdict = self._xdict
         assert xdict is not None, "destroyed extension dictionary"
         assert not isinstance(xdict, str), f"dictionary handle #{xdict} not resolved"
-        return xdict  # type: ignore
+        return xdict
 
     @property
     def handle(self) -> str:
@@ -177,7 +177,7 @@ class ExtensionDict:
     def destroy(self):
         """Destroy the underlying :class:`~ezdxf.entities.Dictionary` object."""
         if self.has_valid_dictionary:
-            self._xdict.destroy()  # type: ignore
+            self._xdict.destroy()
         self._xdict = None
 
     def add_dictionary(self, name: str, hard_owned: bool = True) -> Dictionary:

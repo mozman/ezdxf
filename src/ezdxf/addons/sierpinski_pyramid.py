@@ -130,7 +130,7 @@ class SierpinskyPyramid:
         faces = self.faces()
         for vertices in self:
             mesh = MeshTransformer()
-            mesh.add_mesh(vertices=vertices, faces=faces)  # type: ignore
+            mesh.add_mesh(vertices=vertices, faces=faces)
             yield mesh
 
     def mesh(self) -> MeshTransformer:
@@ -138,7 +138,7 @@ class SierpinskyPyramid:
         faces = self.faces()
         mesh = MeshVertexMerger()
         for vertices in self:
-            mesh.add_mesh(vertices=vertices, faces=faces)  # type: ignore
+            mesh.add_mesh(vertices=vertices, faces=faces)
         return MeshTransformer.from_builder(mesh)
 
 

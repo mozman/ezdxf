@@ -1,9 +1,9 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 import pathlib
 import ezdxf
-from ezdxf import zoom
+from ezdxf import zoom, colors
 from ezdxf.math import (
     Vec3,
     estimate_tangents,
@@ -28,12 +28,10 @@ closed_points.append(points[0])
 def setup():
     doc = ezdxf.new()
     msp = doc.modelspace()
-    msp.add_lwpolyline(
-        points, dxfattribs={"color": ezdxf.colors.BLUE, "layer": "frame"}
-    )
+    msp.add_lwpolyline(points, dxfattribs={"color": colors.BLUE, "layer": "frame"})
     for p in points:
         msp.add_circle(
-            p, radius=0.1, dxfattribs={"color": ezdxf.colors.RED, "layer": "frame"}
+            p, radius=0.1, dxfattribs={"color": colors.RED, "layer": "frame"}
         )
     return doc, msp
 
@@ -44,14 +42,14 @@ def open_spline_from_fit_points_by_global_interpolation():
     # First spline defined by control vertices interpolated from given fit points
     s = global_bspline_interpolation(points, degree=3)
     msp.add_spline(
-        dxfattribs={"color": ezdxf.colors.CYAN, "layer": "Global Curve Interpolation"}
+        dxfattribs={"color": colors.CYAN, "layer": "Global Curve Interpolation"}
     ).apply_construction_tool(s)
     # Second spline defined only by fit points as reference, does not match the
     # BricsCAD interpolation.
     msp.add_spline(
         points,
         degree=3,
-        dxfattribs={"layer": "BricsCAD B-spline", "color": ezdxf.colors.YELLOW},
+        dxfattribs={"layer": "BricsCAD B-spline", "color": colors.YELLOW},
     )
 
     zoom.extents(msp)
@@ -75,7 +73,7 @@ def open_spline_from_fit_points_and_estimated_end_tangents():
         points, degree=3, tangents=(start_tangent, end_tangent)
     )
     msp.add_spline(
-        dxfattribs={"color": ezdxf.colors.CYAN, "layer": "Global Interpolation"}
+        dxfattribs={"color": colors.CYAN, "layer": "Global Interpolation"}
     ).apply_construction_tool(s)
 
     # Result matches the BricsCAD interpolation if fit points, start- and end
@@ -83,7 +81,7 @@ def open_spline_from_fit_points_and_estimated_end_tangents():
     spline = msp.add_spline(
         points,
         degree=3,
-        dxfattribs={"layer": "BricsCAD B-spline", "color": ezdxf.colors.YELLOW},
+        dxfattribs={"layer": "BricsCAD B-spline", "color": colors.YELLOW},
     )
     spline.dxf.start_tangent = Vec3.from_deg_angle(100)
     spline.dxf.end_tangent = Vec3.from_deg_angle(-100)
@@ -108,14 +106,14 @@ def open_spline_from_fit_points_and_5_point_tangent_estimation():
         points, degree=3, tangents=(start_tangent, end_tangent)
     )
     msp.add_spline(
-        dxfattribs={"color": ezdxf.colors.CYAN, "layer": "Global Interpolation"}
+        dxfattribs={"color": colors.CYAN, "layer": "Global Interpolation"}
     ).apply_construction_tool(s)
     # Result does not matches the BricsCAD interpolation
     # tangents angle: (101.0035408517495, -101.0035408517495) degree
     msp.add_spline(
         points,
         degree=3,
-        dxfattribs={"layer": "BricsCAD B-spline", "color": ezdxf.colors.YELLOW},
+        dxfattribs={"layer": "BricsCAD B-spline", "color": colors.YELLOW},
     )
 
     zoom.extents(msp)
@@ -137,13 +135,13 @@ def check_open_spline_from_fit_points_and_5_point_tangent_estimation():
         points, degree=3, tangents=(start_tangent, end_tangent)
     )
     msp.add_spline(
-        dxfattribs={"color": ezdxf.colors.CYAN, "layer": "Global Interpolation"}
+        dxfattribs={"color": colors.CYAN, "layer": "Global Interpolation"}
     ).apply_construction_tool(s)
     # Now result matches the BricsCAD interpolation - but only in this case
     msp.add_spline(
         points,
         degree=3,
-        dxfattribs={"layer": "BricsCAD B-spline", "color": ezdxf.colors.YELLOW},
+        dxfattribs={"layer": "BricsCAD B-spline", "color": colors.YELLOW},
     )
 
     zoom.extents(msp)
@@ -168,7 +166,7 @@ def open_spline_from_fit_points_with_end_tangents():
         degree=2,  # degree is ignored by BricsCAD and AutoCAD, both use degree=3
         dxfattribs={
             "layer": "SPLINE from fit points by CAD applications",
-            "color": ezdxf.colors.YELLOW,
+            "color": colors.YELLOW,
         },
     )
     spline.dxf.start_tangent = start_tangent
@@ -178,7 +176,7 @@ def open_spline_from_fit_points_with_end_tangents():
     s = fit_points_to_cad_cv(points, tangents=[start_tangent, end_tangent])
     msp.add_spline(
         dxfattribs={
-            "color": ezdxf.colors.CYAN,
+            "color": colors.CYAN,
             "layer": "SPLINE from control vertices by ezdxf",
         }
     ).apply_construction_tool(s)
@@ -212,13 +210,13 @@ def spline_by_cubic_bezier_interpolation():
     msp.add_spline(
         points,
         degree=2,
-        dxfattribs={"layer": "BricsCAD B-spline", "color": ezdxf.colors.YELLOW},
+        dxfattribs={"layer": "BricsCAD B-spline", "color": colors.YELLOW},
     )
     bezier_curves = cubic_bezier_interpolation(points)
     s = bezier_to_bspline(bezier_curves)
     msp.add_spline(
         dxfattribs={
-            "color": ezdxf.colors.MAGENTA,
+            "color": colors.MAGENTA,
             "layer": "Cubic Bezier Curve Interpolation",
         }
     ).apply_construction_tool(s)
@@ -238,8 +236,8 @@ def spline_by_cubic_bezier_interpolation():
 # ----------------------------------------------------------------------------
 def check_visually_fit_points_to_cad_cv():
     doc = ezdxf.new()
-    doc.layers.add("CAD", color=ezdxf.colors.RED)
-    doc.layers.add("EZDXF", color=ezdxf.colors.YELLOW)
+    doc.layers.add("CAD", color=colors.RED)
+    doc.layers.add("EZDXF", color=colors.YELLOW)
     msp = doc.modelspace()
     msp.add_spline(points, dxfattribs={"layer": "CAD"})
 
@@ -260,7 +258,7 @@ def closed_spline_from_fit_points():
         closed_points,
         dxfattribs={
             "layer": "SPLINE from fit points by CAD applications",
-            "color": ezdxf.colors.YELLOW,
+            "color": colors.YELLOW,
         },
     )
     # spline.closed = True  # ignored if first points != last point
@@ -268,14 +266,14 @@ def closed_spline_from_fit_points():
     # Create SPLINE defined by control vertices from fit points:
     msp.add_spline(
         dxfattribs={
-            "color": ezdxf.colors.MAGENTA,
+            "color": colors.MAGENTA,
             "layer": "Cubic Bezier Curve Interpolation",
         }
     ).apply_construction_tool(fit_points_to_cubic_bezier(closed_points))
 
     # The fit_points_to_cad_cv() function creates the same result as CAD applications:
     msp.add_spline(
-        dxfattribs={"color": ezdxf.colors.CYAN, "layer": "fit_points_to_cad_cv()"}
+        dxfattribs={"color": colors.CYAN, "layer": "fit_points_to_cad_cv()"}
     ).apply_construction_tool(fit_points_to_cad_cv(closed_points))
 
     zoom.extents(msp)
@@ -293,7 +291,7 @@ def closed_spline_from_fit_points_with_tangent():
         closed_points,
         dxfattribs={
             "layer": "SPLINE from fit points by CAD applications",
-            "color": ezdxf.colors.RED,
+            "color": colors.RED,
         },
     )
     spline.closed = True  # ignored for splines from fit points
@@ -309,7 +307,7 @@ def closed_spline_from_fit_points_with_tangent():
 
     # Create SPLINE defined by control vertices from fit points:
     msp.add_spline(
-        dxfattribs={"color": ezdxf.colors.YELLOW, "layer": "fit_points_to_cad_cv()"}
+        dxfattribs={"color": colors.YELLOW, "layer": "fit_points_to_cad_cv()"}
     ).apply_construction_tool(
         fit_points_to_cad_cv(closed_points, [start_tangent, end_tangent])
     )
@@ -330,13 +328,13 @@ def random_walk_open_spline():
         walk,
         dxfattribs={
             "layer": "SPLINE from fit points by CAD applications",
-            "color": ezdxf.colors.RED,
+            "color": colors.RED,
         },
     )
 
     msp.add_spline(
         dxfattribs={
-            "color": ezdxf.colors.YELLOW,
+            "color": colors.YELLOW,
             "layer": "EZDXF fit_points_to_cad_cv",
         }
     ).apply_construction_tool(fit_points_to_cad_cv(walk))

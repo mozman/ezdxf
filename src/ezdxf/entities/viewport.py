@@ -327,7 +327,7 @@ class Viewport(DXFGraphic):
                 if len(tags):
                     tags = self.load_frozen_layer_handles(tags)
                 if len(tags):
-                    processor.log_unprocessed_tags(tags, subclass=acdb_viewport.name)  # type: ignore
+                    processor.log_unprocessed_tags(tags, subclass=acdb_viewport.name)
         return dxf
 
     def post_load_hook(self, doc: Drawing):
@@ -674,7 +674,7 @@ class Viewport(DXFGraphic):
             frame = Vec2.list(((-w2, -h2), (w2, -h2), (w2, h2), (-w2, h2)))
             angle = math.radians(rotation_angle)
             bbox = BoundingBox2d(v.rotate(angle) + msp_center_point for v in frame)
-            return bbox.extmin.x, bbox.extmin.y, bbox.extmax.x, bbox.extmax.y  # type: ignore
+            return bbox.extmin.x, bbox.extmin.y, bbox.extmax.x, bbox.extmax.y
         else:
             mx, my, _ = msp_center_point
             return mx - w2, my - h2, mx + w2, my + h2

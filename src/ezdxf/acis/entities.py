@@ -23,7 +23,7 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> list[Body]:
     """
     if isinstance(data, (bytes, bytearray)):
         return SabLoader.load(data)
-    return SatLoader.load(data)  # type: ignore
+    return SatLoader.load(data)
 
 
 def export_sat(

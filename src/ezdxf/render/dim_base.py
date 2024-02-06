@@ -1063,7 +1063,7 @@ class BaseDimensionRenderer:
             else:
                 width = self.measurement.text_width(text)
                 if self.tol.has_tolerance:
-                    width += self.tol.text_width  # type: ignore
+                    width += self.tol.text_width
         return width
 
     def default_attributes(self) -> dict[str, Any]:

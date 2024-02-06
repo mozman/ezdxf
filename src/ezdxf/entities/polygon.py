@@ -190,7 +190,7 @@ class DXFPolygon(DXFGraphic):
             return None
         color = xdata_bgcolor.get_first_value(1071, 0)
         try:
-            return colors.int2rgb(int(color))  # type: ignore
+            return colors.int2rgb(int(color))
         except ValueError:  # invalid data type
             return RGB(0, 0, 0)
 

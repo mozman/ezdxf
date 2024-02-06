@@ -20,6 +20,8 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 		- {{pr 1004}}
 		- the cache version number has been increased so that the fontmanger-cache is automatically rebuilt
 	- NEW: `MeshBuilder.render_3dsolid()`, create [[3DSOLID]] entities from simple polyhedrons (experimental)
+	- NEW: `Auditor` fixes non-existing linetypes in layers, replaced by `Continuous`
+		- {{discussion 1018}}
 	- CHANGE: renamed `Image.boundray_path_ocs()` to `Image.pixel_boundary_path()`
 	- CHANGE: refactoring of the [[RecorderBackend]]
 	- CHANGE: replaced `ezdxf.math.linspace` by `numpy.linspace`
@@ -28,6 +30,8 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- CHANGE: replaced `LUDecomposition` class by `NumpySolver` class
 		- moved `LUDecomposition` to module `ezdxf.math.legacy`
 	- CHANGE: `MeshData.vertices` has to be a list of `Vec3`
+	- CHANGE: renamed `ClippingPolygon2d` to `ConvexClippingPolygon2d`
+	- REMOVE: untested and incorrect implementation of `ezdxf.math.BezierSurface`
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
 	- BUGFIX: `NumpyPath2d` could contain a 3d vertex

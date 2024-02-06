@@ -130,7 +130,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             action.setShortcut(shortcut)
         if tip:
             action.setToolTip(tip)
-        action.triggered.connect(slot)  # type: ignore
+        action.triggered.connect(slot)
         return action
 
     def setup_menu(self):
@@ -202,7 +202,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         if dxf_entity is None:
             return
         path, _ = QFileDialog.getSaveFileName(
-            self,  # type: ignore
+            self,
             caption="Export Current Entity View",
             dir=f"{dxf_entity.dxftype()}-{dxf_entity.dxf.handle}.txt",
             filter="Text Files (*.txt *.TXT)",
@@ -224,7 +224,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             filename += ".sat"
 
         path, _ = QFileDialog.getSaveFileName(
-            self,  # type: ignore
+            self,
             caption="Export ACIS Raw Data",
             dir=filename,
             filter=filter_,

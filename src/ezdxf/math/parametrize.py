@@ -219,7 +219,7 @@ def tangents_5_point_interpolation(
 
 def _delta_q(points: list[Vec3]) -> list[Vec3]:
     n = len(points)
-    q = [0.0]  # placeholder
+    q = [Vec3()]  # placeholder
     q.extend([points[k + 1] - points[k] for k in range(n - 1)])
     q[0] = 2.0 * q[1] - q[2]
     q.append(2.0 * q[n - 1] - q[n - 2])  # q[n]

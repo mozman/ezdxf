@@ -126,7 +126,7 @@ class Tags(list):
         if default is DXFValueError:
             raise DXFValueError(code)
         else:
-            return default  # type: ignore
+            return default
 
     def find_all(self, code: int) -> Tags:
         """Returns a list of :class:`~ezdxf.lldxf.types.DXFTag` with given

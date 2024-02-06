@@ -29,7 +29,7 @@ class DimStyleOverride:
     def __init__(self, dimension: Dimension, override: Optional[dict] = None):
         self.dimension = dimension
         dim_style_name: str = dimension.get_dxf_attrib("dimstyle", "STANDARD")
-        self.dimstyle: DimStyle = self.doc.dimstyles.get(dim_style_name)  # type: ignore
+        self.dimstyle: DimStyle = self.doc.dimstyles.get(dim_style_name)
         self.dimstyle_attribs: dict = self.get_dstyle_dict()
 
         # Special ezdxf attributes beyond the DXF reference, therefore not

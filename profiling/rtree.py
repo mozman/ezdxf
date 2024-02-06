@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 import time
 from ezdxf.math import Vec3, closest_point
@@ -118,9 +118,7 @@ def profile_brute_force_nearest_neighbor(repeat: int):
         name = f"Brute Force({size})"
 
         search_points = random_points(100, 50.0)
-        t0 = profile(
-            profile_brute_force_closest_point, repeat, points, search_points
-        )
+        t0 = profile(profile_brute_force_closest_point, repeat, points, search_points)
         time_str = f"{t0:6.2f}s"
         print(f"{name} contains all points, {repeat}x , {time_str}")
         log.append((size, t0))
@@ -128,6 +126,8 @@ def profile_brute_force_nearest_neighbor(repeat: int):
 
 
 def show_log(log, name: str):
+    if plt is None:
+        return
     x = []
     y = []
     for size, t0 in log:
@@ -171,9 +171,7 @@ if __name__ == "__main__":
     if PROFILE_RTREE_NEIGHBOR:
         log = profile_rtree_nearest_neighbor(10, max_size)
         if plt:
-            show_log(
-                log, f"Random RTree nearest neighbor, max node size={max_size}"
-            )
+            show_log(log, f"Random RTree nearest neighbor, max node size={max_size}")
     if PROFILE_BRUTE_FORCE_NEIGHBOR:
         log = profile_brute_force_nearest_neighbor(10)
         if plt:

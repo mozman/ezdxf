@@ -337,7 +337,7 @@ class GroupCollection(ObjectCollection[DXFGroup]):
     def groups(self) -> Iterator[DXFGroup]:
         """Iterable of all existing groups."""
         for name, group in self:
-            yield group  # type: ignore
+            yield group
 
     def next_name(self) -> str:
         name = self._next_name()
@@ -365,7 +365,7 @@ class GroupCollection(ObjectCollection[DXFGroup]):
             selectable: group is selectable if ``True``
 
         """
-        if name is not None and name in self:  # type: ignore
+        if name is not None and name in self:
             raise const.DXFValueError(f"GROUP '{name}' already exists.")
 
         if name is None:

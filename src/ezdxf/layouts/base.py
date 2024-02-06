@@ -345,7 +345,7 @@ class BaseLayout(_AbstractLayout):
                 raise DXFValueError(
                     "Extension dictionary entry ACAD_SORTENTS does not exist."
                 )
-        return sortents_table  #type: ignore
+        return sortents_table
 
     def set_redraw_order(self, handles: Union[dict, Iterable[tuple[str, str]]]) -> None:
         """If the header variable $SORTENTS `Regen` flag (bit-code value 16)
@@ -370,7 +370,7 @@ class BaseLayout(_AbstractLayout):
         """
         sortents = self.get_sortents_table()
         if isinstance(handles, dict):
-            handles = handles.items()  # type: ignore
+            handles = handles.items()
         sortents.set_handles(handles)
 
     def get_redraw_order(self) -> Iterable[tuple[str, str]]:
@@ -387,7 +387,7 @@ class BaseLayout(_AbstractLayout):
             sortents_table = xdict["ACAD_SORTENTS"]
         except DXFKeyError:
             return tuple()
-        return iter(sortents_table)  # type: ignore
+        return iter(sortents_table)
 
     def entities_in_redraw_order(self, reverse=False) -> Iterable[DXFGraphic]:
         """Yields all entities from layout in ascending redraw order or
@@ -414,7 +414,7 @@ class VirtualLayout(_AbstractLayout):
     """
 
     def __init__(self):
-        super().__init__(None)  # type: ignore
+        super().__init__(None)
         self.entity_space = EntitySpace()
 
     @property

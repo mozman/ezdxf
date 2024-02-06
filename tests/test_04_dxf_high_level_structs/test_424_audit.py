@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -64,6 +64,13 @@ def test_for_valid_layer_name(entity, auditor):
     assert len(auditor) == 1
     assert auditor.errors[0].code == AuditError.INVALID_LAYER_NAME
 
+def test_if_layer_linetype_exist():
+    doc = ezdxf.new()
+    doc.layers.add("Layer0", linetype="DoesNotExist")
+    auditor = doc.audit()
+    assert len(auditor.fixes) == 1
+    fix = auditor.fixes[0]
+    assert fix.code == AuditError.UNDEFINED_LINETYPE
 
 def test_for_existing_owner(entity, auditor):
     entity.dxf.owner = "FFFFFF"

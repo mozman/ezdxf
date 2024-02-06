@@ -174,10 +174,10 @@ class Dictionary(DXFObject):
         object_section = doc.objects
         owner_handle = self.dxf.handle
         for _, entity in self.items():
-            entity.dxf.owner = owner_handle  # type: ignore
-            factory.bind(entity, doc)  # type: ignore
+            entity.dxf.owner = owner_handle
+            factory.bind(entity, doc)
             # For a correct DXF export add entities to the objects section:
-            object_section.add_object(entity)  # type: ignore
+            object_section.add_object(entity)
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
@@ -217,13 +217,13 @@ class Dictionary(DXFObject):
 
         def items():
             for key, handle in self.items():
-                entity = db.get(handle)  # type: ignore
+                entity = db.get(handle)
                 if entity is not None and entity.is_alive:
                     yield key, entity
 
         if len(self):
             for k, v in list(items()):
-                self.__setitem__(k, v)  # type: ignore
+                self.__setitem__(k, v)
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
@@ -466,7 +466,7 @@ class Dictionary(DXFObject):
         else:
             dict_var = self.get(key)
             dict_var.dxf.value = str(value)  # type: ignore
-        return dict_var  #type: ignore
+        return dict_var
 
     def link_dxf_object(self, name: str, obj: DXFObject) -> None:
         """Add `obj` and set owner of `obj` to this dictionary.
@@ -504,7 +504,7 @@ class Dictionary(DXFObject):
         db = auditor.entitydb
         for key, entry in self._data.items():
             if isinstance(entry, str):
-                if entry not in db:  # type: ignore
+                if entry not in db:
                     append(key)
             elif entry.is_alive:
                 if entry.dxf.handle not in db:
@@ -597,7 +597,7 @@ class DictionaryWithDefault(Dictionary):
 
     def audit(self, auditor: Auditor) -> None:
         def create_missing_default_object():
-            placeholder = self.doc.objects.add_placeholder(owner=self.dxf.handle)  # type: ignore
+            placeholder = self.doc.objects.add_placeholder(owner=self.dxf.handle)
             self.set_default(placeholder)
             auditor.fixed_error(
                 code=AuditError.CREATED_MISSING_OBJECT,
@@ -605,7 +605,7 @@ class DictionaryWithDefault(Dictionary):
             )
 
         if self._default is None or not self._default.is_alive:
-            if auditor.entitydb.locked:  # type: ignore
+            if auditor.entitydb.locked:
                 auditor.add_post_audit_job(create_missing_default_object)
             else:
                 create_missing_default_object()

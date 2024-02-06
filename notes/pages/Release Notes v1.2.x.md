@@ -20,11 +20,11 @@
 		- `qt`: [[PyQtBackend]]
 		- `mupdf`: [[PyMuPdfBackend]]
 		- `custom_svg`: [[SVGBackend]]
-	- The command `ezdxf draw --formats --backend <backend-name>` shows te supported output formats for the specified backend.
+	- The command `ezdxf draw --formats --backend <backend-name>` shows the supported output formats for the specified backend.
 		-
 - ## New Module `ezdxf.xclip`
 	- The `ezdxf.xclip` module contains the the new `XClip` class. The `XClip` class can set or remove the clipping path of external references or block references like the [[XCLIP]] command in CAD applications.
-	- The `XClip` class supports only 2D clippings path and cannot create inverted clipping paths.
+	- The `XClip` class supports only 2D clipping paths and cannot create inverted clipping paths.
 	- ![cropped-block-reference.png](../assets/cropped-block-reference_1705221063928_0.png)
 	- For more information read the [docs](https://ezdxf.mozman.at/docs/tools/xclip.html).
 -

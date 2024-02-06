@@ -283,7 +283,7 @@ class Drawing:
     @property
     def units(self) -> int:
         """Get and set the document/modelspace base units as enum, for more
-        information read this: :ref:`dxf units`.
+        information read this: :ref:`dxf units`. Requires DXF R2000 or newer.
 
         """
         return self.header.get("$INSUNITS", 0)
@@ -291,6 +291,10 @@ class Drawing:
     @units.setter
     def units(self, unit_enum: int) -> None:
         if 0 <= unit_enum < 25:
+            if self.dxfversion < DXF2000:
+                logger.warning(
+                    "Drawing units ($INSUNITS) are not exported for DXF R12."
+                )
             self.header["$INSUNITS"] = unit_enum
         else:
             raise ValueError(f"Invalid units enum: {unit_enum}")
@@ -374,7 +378,7 @@ class Drawing:
         header_entities: list[Tags] = sections.get("HEADER", [])  # type: ignore
         if header_entities:
             # All header tags are the first DXF structure entity
-            self.header = HeaderSection.load(header_entities[0])  # type: ignore
+            self.header = HeaderSection.load(header_entities[0])
         else:
             # Create default header, files without header are by default DXF R12
             self.header = HeaderSection.new(dxfversion=DXF12)
@@ -1383,7 +1387,7 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> list[str]:
         append_container(doc.viewports, "VPORT")
         append_container(doc.block_records, "BLOCK_RECORD")
         if doc.dxfversion > DXF12:
-            append_container(list(doc.classes), "CLASS", container="section")  # type: ignore
+            append_container(list(doc.classes), "CLASS", container="section")
         data.append(f"Entities in modelspace: {len(doc.modelspace())}")
         if verbose:
             data.extend(count(doc.modelspace()))

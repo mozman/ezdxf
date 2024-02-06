@@ -101,7 +101,7 @@ def strip_tags(
 
 def safe_rename(source: Path, target: Path, backup=True, verbose=False) -> bool:
     backup_file = target.with_suffix(".bak")
-    backup_file.unlink(missing_ok=True)  # type: ignore
+    backup_file.unlink(missing_ok=True)
     _target = Path(target)
     if _target.exists():
         if verbose:
@@ -123,7 +123,7 @@ def safe_rename(source: Path, target: Path, backup=True, verbose=False) -> bool:
     if not backup:
         if verbose:
             print(f'deleting backup file "{backup_file.name}"')
-        backup_file.unlink(missing_ok=True)  # type: ignore
+        backup_file.unlink(missing_ok=True)
     return True
 
 

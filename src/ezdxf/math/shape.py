@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, Optional, Iterator, TYPE_CHECKING
+from typing import Iterable, Optional, Iterator, TYPE_CHECKING, overload
 import math
 from ezdxf.math import Vec2, UVec, Matrix44
 
@@ -106,13 +106,17 @@ class Shape2d:
         """Returns `count` of vertices."""
         return len(self.np_vertices)
 
-    def __getitem__(self, item: int | slice) -> Vec2:
+    @overload
+    def __getitem__(self, item: int) -> Vec2: ...
+    @overload
+    def __getitem__(self, item: slice) -> list[Vec2]: ...
+    def __getitem__(self, item: int | slice) -> Vec2|list[Vec2]:
         """Get vertex by index `item`, supports ``list`` like slicing."""
         np_vertices = self.np_vertices.np_vertices()
         if isinstance(item, int):
             return Vec2(np_vertices[item])
         else:
-            return Vec2.list(np_vertices[item])  # type: ignore
+            return Vec2.list(np_vertices[item])
 
     def append(self, vertex: UVec) -> None:
         """Append single `vertex`.

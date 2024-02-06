@@ -31,7 +31,6 @@ __all__ = [
     "is_convex_polygon_2d",
     "is_axes_aligned_rectangle_2d",
     "is_point_on_line_2d",
-    "is_point_in_polygon_2d",
     "is_point_left_of_line",
     "point_to_line_relation",
     "enclosing_angles",
@@ -241,59 +240,6 @@ def distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float:
     return math.fabs((start - point).det(end - point)) / (end - start).magnitude
 
 
-# Candidate for a faster Cython implementation:
-# is also used for testing 3D ray and line intersection with polygon
-def is_point_in_polygon_2d(
-    point: Vec2, polygon: Sequence[Vec2], abs_tol=TOLERANCE
-) -> int:
-    """Test if `point` is inside `polygon`. Returns ``-1`` (for outside) if the
-    polygon is degenerated, no exception will be raised.
-
-    Args:
-        point: 2D point to test as :class:`Vec2`
-        polygon: sequence of 2D points as :class:`Vec2`
-        abs_tol: tolerance for distance check
-
-    Returns:
-        ``+1`` for inside, ``0`` for on boundary line, ``-1`` for outside
-
-    """
-    # Source: http://www.faqs.org/faqs/graphics/algorithms-faq/
-    # Subject 2.03: How do I find if a point lies within a polygon?
-    if not polygon:  # empty polygon
-        return -1
-
-    if polygon[0].isclose(polygon[-1]):  # open polygon is required
-        polygon = polygon[:-1]
-    if len(polygon) < 3:
-        return -1
-    x = point.x
-    y = point.y
-    inside = False
-    x1, y1 = polygon[-1]
-    for x2, y2 in polygon:
-        # is point on polygon boundary line:
-        # is point in x-range of line
-        a, b = (x2, x1) if x2 < x1 else (x1, x2)
-        if a <= x <= b:
-            # is point in y-range of line
-            c, d = (y2, y1) if y2 < y1 else (y1, y2)
-            if (c <= y <= d) and math.fabs(
-                (y2 - y1) * x - (x2 - x1) * y + (x2 * y1 - y2 * x1)
-            ) <= abs_tol:
-                return 0
-        if ((y1 <= y < y2) or (y2 <= y < y1)) and (
-            x < (x2 - x1) * (y - y1) / (y2 - y1) + x1
-        ):
-            inside = not inside
-        x1 = x2
-        y1 = y2
-    if inside:
-        return 1
-    else:
-        return -1
-
-
 def circle_radius_3p(a: Vec3, b: Vec3, c: Vec3) -> float:
     ba = b - a
     ca = c - a
@@ -355,16 +301,16 @@ def has_matrix_2d_stretching(m: Matrix44) -> bool:
 def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> bool:
     """Returns ``True`` if the 2D `polygon` is convex.
 
-    This function works with
-    open and closed polygons and clockwise or counter-clockwise vertex
-    orientation.
-    Coincident vertices will always be skipped and if argument `strict`
-    is ``True``, polygons with collinear vertices are not considered as
-    convex.
+    This function supports open and closed polygons with clockwise or counter-clockwise
+    vertex orientation.
+
+    Coincident vertices will always be skipped and if argument `strict` is ``True``,
+    polygons with collinear vertices are not considered as convex.
 
     This solution works only for simple non-self-intersecting polygons!
 
     """
+    # TODO: Cython implementation
     if len(polygon) < 3:
         return False
 
@@ -378,15 +324,15 @@ def is_convex_polygon_2d(polygon: list[Vec2], *, strict=False, epsilon=1e-6) -> 
 
         det = (prev - vertex).det(prev_prev - prev)
         if abs(det) >= epsilon:
-            current_sign = -1 if det < 0.0 else +1 
+            current_sign = -1 if det < 0.0 else +1
             if not global_sign:
                 global_sign = current_sign
             # do all determinants have the same sign?
             if global_sign != current_sign:
-                return  False
+                return False
         elif strict:  # collinear vertices
-            return False       
-            
+            return False
+
         prev_prev = prev
         prev = vertex
     return bool(global_sign)

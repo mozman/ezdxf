@@ -93,9 +93,9 @@ class ComplexLineTypePart:
             else:
                 try:
                     # Case insensitive search for text style:
-                    font = doc.styles.get(self.font)  # type: ignore
+                    font = doc.styles.get(self.font)
                 except DXFTableEntryError:
-                    font = doc.styles.new(self.font)  # type: ignore
+                    font = doc.styles.new(self.font)
             return font.dxf.handle
 
         # Note: AutoCAD/BricsCAD do NOT report an error or even crash, if the
