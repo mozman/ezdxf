@@ -3,6 +3,8 @@
 from __future__ import annotations
 from typing import Iterable, Sequence, Optional, Iterator, Union, Callable
 from typing_extensions import Protocol
+import enum
+
 from ezdxf.math import (
     Vec2,
     UVec,
@@ -12,7 +14,7 @@ from ezdxf.math import (
     TOLERANCE,
     BoundingBox2d,
 )
-import enum
+from ezdxf.tools import take2
 
 
 __all__ = [
@@ -192,9 +194,11 @@ class ClippingRect2d:
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         """Returns the clipped line."""
-        result = cohen_sutherland_line_clipping_2d(self._bbox.extmin, self._bbox.extmax, start, end)
+        result = cohen_sutherland_line_clipping_2d(
+            self._bbox.extmin, self._bbox.extmax, start, end
+        )
         if len(result) == 2:
-            return (result, )  # type: ignore
+            return (result,)  # type: ignore
         return tuple()
 
     def is_inside(self, point: Vec2) -> bool:
@@ -218,6 +222,7 @@ class ConcaveClippingPolygon2d:
             raise ValueError("more than 3 vertices as clipping polygon required")
         # open polygon; clockwise or counter-clockwise oriented vertices
         self._clipping_polygon = clip
+        self._bbox = BoundingBox2d(clip)
 
     def is_inside(self, point: Vec2) -> bool:
         """Returns ``True`` if `point` is inside the clipping polygon."""
@@ -225,7 +230,24 @@ class ConcaveClippingPolygon2d:
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         """Returns the clipped line."""
-        return []
+        line = (start, end)
+        if not self._bbox.has_overlap(BoundingBox2d(line)):
+            return tuple()
+        
+        intersections = polygon_line_intersections_2d(self._clipping_polygon, line)
+        start_is_inside = is_point_in_polygon_2d(start, self._clipping_polygon) > 0
+        if len(intersections) == 0:
+            if start_is_inside:
+                return (line,)
+            return tuple()
+        intersections.append(end)
+        # inside/outside rule
+        if start_is_inside:
+            # first inside-segment begins at start
+            intersections.insert(0, start)
+        # intersection segments:
+        # (0, 1) outside (2, 3) outside (4, 5) ...
+        return list(take2(intersections))
 
     def clip_polyline(self, polyline: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
@@ -234,6 +256,25 @@ class ConcaveClippingPolygon2d:
     def clip_polygon(self, polygon: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polygon."""
         return []
+
+
+def polygon_line_intersections_2d(
+    polygon: list[Vec2], line: tuple[Vec2, Vec2]
+) -> list[Vec2]:
+    """Returns all intersections of polygon with line.
+    All intersections points are ordered from start to end of line.
+    Start and end points are not included if not explicit intersection points.
+    """
+    intersection_points: list[Vec2] = []
+    a = polygon[-1]
+    for b in polygon:
+        ip = intersection_line_line_2d((a, b), line, virtual=False)
+        if ip is not None:
+            intersection_points.append(ip)
+        a = b
+    start, end = line
+    intersection_points.sort(reverse=start > end)
+    return intersection_points
 
 
 # Based on the paper "Efficient Clipping of Arbitrary Polygons" by
