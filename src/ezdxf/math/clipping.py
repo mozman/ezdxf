@@ -11,6 +11,7 @@ from ezdxf.math import (
     intersection_line_line_2d,
     is_point_in_polygon_2d,
     has_clockwise_orientation,
+    point_to_line_relation,
     TOLERANCE,
     BoundingBox2d,
 )
@@ -233,7 +234,7 @@ class ConcaveClippingPolygon2d:
         line = (start, end)
         if not self._bbox.has_overlap(BoundingBox2d(line)):
             return tuple()
-        
+
         intersections = polygon_line_intersections_2d(self._clipping_polygon, line)
         start_is_inside = is_point_in_polygon_2d(start, self._clipping_polygon) > 0
         if len(intersections) == 0:
@@ -265,14 +266,36 @@ def polygon_line_intersections_2d(
     All intersections points are ordered from start to end of line.
     Start and end points are not included if not explicit intersection points.
     """
+    # pylint: disable=C0200
     intersection_points: list[Vec2] = []
-    a = polygon[-1]
-    for b in polygon:
-        ip = intersection_line_line_2d((a, b), line, virtual=False)
-        if ip is not None:
-            intersection_points.append(ip)
-        a = b
     start, end = line
+    size = len(polygon)
+    prev_ip: Vec2 | None = None
+    for index in range(size):
+        a = polygon[index - 1]
+        b = polygon[index]
+        ip = intersection_line_line_2d((a, b), line, virtual=False)
+        if ip is None:
+            continue
+        if prev_ip is not None and ip.isclose(prev_ip):
+            # every intersection point counts only once!
+            continue
+        # edge case: line intersects "exact" in point a
+        if ip.isclose(a):
+            a_prev = polygon[index - 2]
+            rel_prev = point_to_line_relation(a_prev, start, end)
+            rel_next = point_to_line_relation(b, start, end)
+            if rel_prev == rel_next:
+                continue
+        # edge case: line intersects "exact" in point b
+        elif ip.isclose(b):
+            b_next = polygon[(index + 1) % size]
+            rel_prev = point_to_line_relation(a, start, end)
+            rel_next = point_to_line_relation(b_next, start, end)
+            if rel_prev == rel_next:
+                continue
+        intersection_points.append(ip)
+        prev_ip = ip
     intersection_points.sort(reverse=start > end)
     return intersection_points
 

@@ -224,6 +224,55 @@ class TestLineClipping:
         assert s1.isclose((4, 5))
         assert e1.isclose((4, 7))
 
+    def test_line_intersection_at_vertex(self, polygon: CCP):
+        # 4 .|.|...
+        # 3 .|.+-+.
+        # 2 .|b..|.
+        # 1 .x---+.
+        # 0 a......
+        #   0123456
+        result = polygon.clip_line(Vec2(0, 0), Vec2(2, 2))
+        assert len(result) == 1
+        s, e = result[0]
+        assert s.isclose((1, 1))
+        assert e.isclose((2, 2))
+
+    def test_line_touches_at_vertex(self, polygon: CCP):
+        # 4 .|.|...
+        # 3 .|.+-+.
+        # 2 a|...|.
+        # 1 .x---+.
+        # 0 ..b....
+        #   0123456
+        result = polygon.clip_line(Vec2(0, 2), Vec2(2, 0))
+        assert len(result) == 0
+
+    def test_line_is_colinear_to_edge(self, polygon: CCP):
+        # 4 .|.|...
+        # 3 .|.+-+.
+        # 2 .|...|.
+        # 1 ax---xb
+        # 0 .......
+        #   0123456
+        result = polygon.clip_line(Vec2(0, 1), Vec2(6, 1))
+        assert len(result) == 1
+        s, e = result[0]
+        assert s.isclose((1, 1))
+        assert e.isclose((5, 1))
+
+    def test_line_is_equal_to_edge(self, polygon: CCP):
+        # 4 .|.|...
+        # 3 .|.+-+.
+        # 2 .|...|.
+        # 1 .a---b.
+        # 0 .......
+        #   0123456
+        result = polygon.clip_line(Vec2(1, 1), Vec2(5, 1))
+        assert len(result) == 1
+        s, e = result[0]
+        assert s.isclose((1, 1))
+        assert e.isclose((5, 1))
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
