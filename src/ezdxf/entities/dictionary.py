@@ -9,6 +9,7 @@ from ezdxf.lldxf.const import (
     DXFKeyError,
     DXFValueError,
     DXFTypeError,
+    DXFStructureError,
 )
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -490,7 +491,11 @@ class Dictionary(DXFObject):
         dxf_dict = self.get(key)
         if dxf_dict is None:
             dxf_dict = self.add_new_dict(key, hard_owned=hard_owned)
-        return dxf_dict  # type: ignore
+        elif not isinstance(dxf_dict, Dictionary):
+            raise DXFStructureError(
+                f"expected a DICTIONARY entity, got {str(dxf_dict)} for key: {key}"
+            )
+        return dxf_dict
 
     def audit(self, auditor: Auditor) -> None:
         if not self.is_alive:
