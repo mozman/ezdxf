@@ -75,24 +75,24 @@ POINTS_OUTSIDE = Vec2.list(
 
 
 @pytest.fixture(scope="module")
-def polygon():
+def polygon_c():
     return CCP(SHAPE_C)
 
 
 # see also test_613_is_point_in_polygon_2d
 @pytest.mark.parametrize("point", POINTS_INSIDE)
-def test_point_is_inside_polygon(point: Vec2, polygon: CCP):
-    assert polygon.is_inside(point) is True
+def test_point_is_inside_polygon(point: Vec2, polygon_c: CCP):
+    assert polygon_c.is_inside(point) is True
 
 
 # see also test_613_is_point_in_polygon_2d
 @pytest.mark.parametrize("point", POINTS_OUTSIDE)
-def test_point_is_outside_polygon(point: Vec2, polygon: CCP):
-    assert polygon.is_inside(point) is False
+def test_point_is_outside_polygon(point: Vec2, polygon_c: CCP):
+    assert polygon_c.is_inside(point) is False
 
 
 class TestLineClipping:
-    def test_a_and_b_outside_no_intersections_v(self, polygon: CCP):
+    def test_a_and_b_outside_no_intersections_v(self, polygon_c: CCP):
         # 8 b......
         # 7 .+---+.
         # 6 .|...|.
@@ -103,71 +103,83 @@ class TestLineClipping:
         # 1 .+---+.
         # 0 a......
         #   0123456
-        result = polygon.clip_line(Vec2(0, 0), Vec2(0, 8))
+        result = polygon_c.clip_line(Vec2(0, 0), Vec2(0, 8))
         assert len(result) == 0
 
-    def test_a_and_b_outside_no_intersections_h(self, polygon: CCP):
+    def test_a_and_b_outside_no_intersections_h(self, polygon_c: CCP):
         # 3 .|.+-+.
         # 2 .|...|.
         # 1 .+---+.
         # 0 a.....b
         #   0123456
-        result = polygon.clip_line(Vec2(0, 0), Vec2(6, 0))
+        result = polygon_c.clip_line(Vec2(0, 0), Vec2(6, 0))
         assert len(result) == 0
 
-    def test_a_outside_b_inside_1_intersection_v(self, polygon: CCP):
+    def test_a_and_b_inside_no_intersections_h(self, polygon_c: CCP):
+        # 3 .|.+-+.
+        # 2 .|a.b|.
+        # 1 .+---+.
+        # 0 .......
+        #   0123456
+        result = polygon_c.clip_line(Vec2(2, 2), Vec2(4, 2))
+        assert len(result) == 1
+        s, e = result[0]
+        assert s.isclose((2, 2))
+        assert e.isclose((4, 2))
+
+    def test_a_outside_b_inside_1_intersection_v(self, polygon_c: CCP):
         # 4 .|.|...
         # 3 .|.+-+.
         # 2 .|b..|.
         # 1 .+x--+.
         # 0 ..a....
         #   0123456
-        result = polygon.clip_line(Vec2(2, 0), Vec2(2, 2))
+        result = polygon_c.clip_line(Vec2(2, 0), Vec2(2, 2))
         assert len(result) == 1
         s, e = result[0]
         assert s.isclose((2, 1))
         assert e.isclose((2, 2))
 
-    def test_a_outside_b_inside_1_intersection_h(self, polygon: CCP):
+    def test_a_outside_b_inside_1_intersection_h(self, polygon_c: CCP):
         # 4 .|.|...
         # 3 .|.+-+.
         # 2 axb..|.
         # 1 .+---+.
         # 0 .......
         #   0123456
-        result = polygon.clip_line(Vec2(0, 2), Vec2(2, 2))
+        result = polygon_c.clip_line(Vec2(0, 2), Vec2(2, 2))
         assert len(result) == 1
         s, e = result[0]
         assert s.isclose((1, 2))
         assert e.isclose((2, 2))
 
-    def test_a_inside_b_outside_1_intersection_v(self, polygon: CCP):
+    def test_a_inside_b_outside_1_intersection_v(self, polygon_c: CCP):
         # 4 .|.|...
         # 3 .|.+-+.
         # 2 .|a..|.
         # 1 .+x--+.
         # 0 ..b....
         #   0123456
-        result = polygon.clip_line(Vec2(2, 2), Vec2(2, 0))
+        result = polygon_c.clip_line(Vec2(2, 2), Vec2(2, 0))
         assert len(result) == 1
         s, e = result[0]
         assert s.isclose((2, 2))
         assert e.isclose((2, 1))
 
-    def test_a_inside_b_outside_1_intersection_h(self, polygon: CCP):
+    def test_a_inside_b_outside_1_intersection_h(self, polygon_c: CCP):
         # 4 .|.|...
         # 3 .|.+-+.
         # 2 bxa..|.
         # 1 .+---+.
         # 0 .......
         #   0123456
-        result = polygon.clip_line(Vec2(2, 2), Vec2(0, 2))
+        result = polygon_c.clip_line(Vec2(2, 2), Vec2(0, 2))
         assert len(result) == 1
         s, e = result[0]
         assert s.isclose((2, 2))
         assert e.isclose((1, 2))
 
-    def test_a_outside_b_outside_2_intersections(self, polygon: CCP):
+    def test_a_outside_b_outside_2_intersections(self, polygon_c: CCP):
         # 6 .|...|.
         # 5 .|.+-+.
         # 4 .|.|b..
@@ -176,13 +188,13 @@ class TestLineClipping:
         # 1 .+--x+.
         # 0 ....a..
         #   0123456
-        result = polygon.clip_line(Vec2(4, 0), Vec2(4, 4))
+        result = polygon_c.clip_line(Vec2(4, 0), Vec2(4, 4))
         assert len(result) == 1
         s, e = result[0]
         assert s.isclose((4, 1))
         assert e.isclose((4, 3))
 
-    def test_a_outside_b_inside_3_intersections(self, polygon: CCP):
+    def test_a_outside_b_inside_3_intersections(self, polygon_c: CCP):
         # 8 .......
         # 7 .+---+.
         # 6 .|..b|.
@@ -193,7 +205,7 @@ class TestLineClipping:
         # 1 .+--x+.
         # 0 ....a..
         #   0123456
-        result = polygon.clip_line(Vec2(4, 0), Vec2(4, 6))
+        result = polygon_c.clip_line(Vec2(4, 0), Vec2(4, 6))
         assert len(result) == 2
         s0, e0 = result[0]
         assert s0.isclose((4, 1))
@@ -203,7 +215,7 @@ class TestLineClipping:
         assert s1.isclose((4, 5))
         assert e1.isclose((4, 6))
 
-    def test_a_inside_b_outside_3_intersections(self, polygon: CCP):
+    def test_a_inside_b_outside_3_intersections(self, polygon_c: CCP):
         # 8 ....b..
         # 7 .+--x+.
         # 6 .|...|.
@@ -214,7 +226,7 @@ class TestLineClipping:
         # 1 .+---+.
         # 0 .......
         #   0123456
-        result = polygon.clip_line(Vec2(4, 2), Vec2(4, 8))
+        result = polygon_c.clip_line(Vec2(4, 2), Vec2(4, 8))
         assert len(result) == 2
         s0, e0 = result[0]
         assert s0.isclose((4, 2))
@@ -224,54 +236,231 @@ class TestLineClipping:
         assert s1.isclose((4, 5))
         assert e1.isclose((4, 7))
 
-    def test_line_intersection_at_vertex(self, polygon: CCP):
+    def test_line_intersection_at_vertex(self, polygon_c: CCP):
         # 4 .|.|...
         # 3 .|.+-+.
         # 2 .|b..|.
         # 1 .x---+.
         # 0 a......
         #   0123456
-        result = polygon.clip_line(Vec2(0, 0), Vec2(2, 2))
+        result = polygon_c.clip_line(Vec2(0, 0), Vec2(2, 2))
         assert len(result) == 1
         s, e = result[0]
         assert s.isclose((1, 1))
         assert e.isclose((2, 2))
 
-    def test_line_touches_at_vertex(self, polygon: CCP):
+    def test_line_touches_at_vertex(self, polygon_c: CCP):
         # 4 .|.|...
-        # 3 .|.+-+.
+        # 3 .|.3-2.
         # 2 a|...|.
-        # 1 .x---+.
+        # 1 .x---1.
         # 0 ..b....
         #   0123456
-        result = polygon.clip_line(Vec2(0, 2), Vec2(2, 0))
+        result = polygon_c.clip_line(Vec2(0, 2), Vec2(2, 0))
         assert len(result) == 0
 
-    def test_line_is_colinear_to_edge(self, polygon: CCP):
+    def test_line_is_colinear_to_outer_edge(self, polygon_c: CCP):
         # 4 .|.|...
-        # 3 .|.+-+.
+        # 3 .|.3-2.
         # 2 .|...|.
-        # 1 ax---xb
+        # 1 ax+++xb
         # 0 .......
         #   0123456
-        result = polygon.clip_line(Vec2(0, 1), Vec2(6, 1))
+        result = polygon_c.clip_line(Vec2(0, 1), Vec2(6, 1))
         assert len(result) == 1
         s, e = result[0]
         assert s.isclose((1, 1))
         assert e.isclose((5, 1))
 
-    def test_line_is_equal_to_edge(self, polygon: CCP):
+    def test_line_is_colinear_to_inner_edge(self, polygon_c: CCP):
+        # 4 .|.|...
+        # 3 ax+x+xb
+        # 2 .|...|.
+        # 1 .0---1.
+        # 0 .......
+        #   0123456
+        result = polygon_c.clip_line(Vec2(0, 3), Vec2(6, 3))
+        assert len(result) == 2
+        s, e = result[0]
+        assert s.isclose((1, 3))
+        assert e.isclose((3, 3))
+        s, e = result[1]
+        assert s.isclose((3, 3))
+        assert e.isclose((5, 3))
+
+    def test_line_is_colinear_to_inner_edge_reverse(self, polygon_c: CCP):
+        # 4 .|.|...
+        # 3 bx+x+xa
+        # 2 .|...|.
+        # 1 .0---1.
+        # 0 .......
+        #   0123456
+        result = polygon_c.clip_line(Vec2(6, 3), Vec2(0, 3))
+        assert len(result) == 2
+        s, e = result[0]
+        assert s.isclose((5, 3))
+        assert e.isclose((3, 3))
+        s, e = result[1]
+        assert s.isclose((3, 3))
+        assert e.isclose((1, 3))
+
+    def test_line_is_equal_to_edge(self, polygon_c: CCP):
         # 4 .|.|...
         # 3 .|.+-+.
         # 2 .|...|.
         # 1 .a---b.
         # 0 .......
         #   0123456
-        result = polygon.clip_line(Vec2(1, 1), Vec2(5, 1))
+        result = polygon_c.clip_line(Vec2(1, 1), Vec2(5, 1))
         assert len(result) == 1
         s, e = result[0]
         assert s.isclose((1, 1))
         assert e.isclose((5, 1))
+
+
+#              11111
+#    012345678901234
+# 10 ...............
+# 9  .7---6...3---2.
+# 8  .|...|...|...|.
+# 7  .|...|...|...|.
+# 6  .|...|...|...|.
+# 5  .|...5---4...|.
+# 4  .|...........|.
+# 3  .|...........|.
+# 2  .|...........|.
+# 1  .0-----------1.
+# 0  ...............
+#              11111
+#    012345678901234
+SHAPE_U = Vec2.list(
+    # 0       1        2        3       4       5       6       7
+    [(1, 1), (13, 1), (13, 9), (9, 9), (9, 5), (5, 5), (5, 9), (1, 9)]
+)
+
+
+@pytest.fixture(scope="module")
+def polygon_u():
+    return CCP(SHAPE_U)
+
+
+class TestPolylineClipping:
+    def test_polyline_outside(self, polygon_u: CCP):
+        result = polygon_u.clip_polyline(
+            Vec2.list([(0, 0), (14, 0), (14, 10), (0, 10)])
+        )
+        assert len(result) == 0
+
+    def test_polyline_inside_no_intersection(self, polygon_u: CCP):
+        # 6  .|...|...|...|.
+        # 5  .|...5---4...|.
+        # 4  .|d+++++++++c|.
+        # 3  .|..........+|.
+        # 2  .|a+++++++++b|.
+        # 1  .0-----------1.
+        # 0  ...............
+        #              11111
+        #    012345678901234
+        #                                            a       b        c        d
+        result = polygon_u.clip_polyline(Vec2.list([(2, 2), (12, 2), (12, 4), (2, 4)]))
+        assert len(result) == 1
+        polyline = result[0]
+        assert len(polyline) == 4
+        assert polyline[0].isclose((2, 2))
+        assert polyline[2].isclose((12, 4))
+
+    def test_polyline_inside_with_intersection(self, polygon_u: CCP):
+        # 7  .|...|...|...|.
+        # 6  .|d++x...x++c|.
+        # 5  .|...5---4..+|.
+        # 4  .|..........+|.
+        # 3  .|..........+|.
+        # 2  .|a+++++++++b|.
+        # 1  .0-----------1.
+        # 0  ...............
+        #              11111
+        #    012345678901234
+        #                                            a       b        c        d
+        result = polygon_u.clip_polyline(Vec2.list([(2, 2), (12, 2), (12, 6), (2, 6)]))
+        assert len(result) == 2
+        p1, p2 = result
+        assert p1[0].isclose((2, 2))
+        assert p1[1].isclose((12, 2))
+        assert p1[2].isclose((12, 6))
+        assert p1[3].isclose((9, 6))
+
+        assert p2[0].isclose((5, 6))
+        assert p2[1].isclose((2, 6))
+
+    def test_polyline_crossing_border(self, polygon_u: CCP):
+        # 7  .|...|...|...|.
+        # 6  .|d++x...x++c|.
+        # 5  .|...5---4..+|.
+        # 4  .|..........+|.
+        # 3  .|..........+|.
+        # 2  .|..........+|.
+        # 1  .0----------x1.
+        # 0  ..a+++++++++b..
+        #              11111
+        #    012345678901234
+        #                                            a       b        c        d
+        result = polygon_u.clip_polyline(Vec2.list([(2, 0), (12, 0), (12, 6), (2, 6)]))
+        assert len(result) == 2
+        p1, p2 = result
+        assert p1[0].isclose((12, 1))
+        assert p1[1].isclose((12, 6))
+        assert p1[2].isclose((9, 6))
+
+        assert p2[0].isclose((5, 6))
+        assert p2[1].isclose((2, 6))
+
+    def test_polyline_along_the_border_1(self, polygon_u: CCP):
+        # 10 ...............
+        # 9  .d+++x...x+++c.
+        # 8  .|...|...|...+.
+        # 7  .|...|...|...+.
+        # 6  .|...|...|...+.
+        # 5  .|...5---4...+.
+        # 4  .|...........+.
+        # 3  .|...........+.
+        # 2  .|...........+.
+        # 1  .a+++++++++++b.
+        # 0  ...............
+        #              11111
+        #    012345678901234
+        #                                            a       b        c        d
+        result = polygon_u.clip_polyline(Vec2.list([(1, 1), (13, 1), (13, 9), (1, 9)]))
+        assert len(result) == 2
+        p1, p2 = result
+        assert p1[0].isclose((1, 1))
+        assert p1[1].isclose((13, 1))
+        assert p1[2].isclose((13, 9))
+        assert p1[3].isclose((9, 9))
+
+        assert p2[0].isclose((5, 9))
+        assert p2[1].isclose((1, 9))
+
+    def test_polyline_along_the_border_2(self, polygon_u: CCP):
+        # 6  .|...|...|...|.
+        # 5  .d+++x+++x+++c.
+        # 4  .|...........+.
+        # 3  .|...........+.
+        # 2  .|...........+.
+        # 1  .a+++++++++++b.
+        # 0  ...............
+        #              11111
+        #    012345678901234
+        #                                            a       b        c        d
+        result = polygon_u.clip_polyline(Vec2.list([(1, 1), (13, 1), (13, 5), (1, 5)]))
+        assert len(result) == 1
+        p1 = result[0]
+        assert p1[0].isclose((1, 1))
+        assert p1[1].isclose((13, 1))
+        assert p1[2].isclose((13, 5))
+        assert p1[3].isclose((9, 5))
+        assert p1[4].isclose((5, 5))
+        assert p1[5].isclose((1, 5))
+
 
 
 if __name__ == "__main__":

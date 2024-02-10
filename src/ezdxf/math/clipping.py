@@ -15,7 +15,7 @@ from ezdxf.math import (
     TOLERANCE,
     BoundingBox2d,
 )
-from ezdxf.tools import take2
+from ezdxf.tools import take2, pairwise
 
 
 __all__ = [
@@ -236,27 +236,65 @@ class ConcaveClippingPolygon2d:
             return tuple()
 
         intersections = polygon_line_intersections_2d(self._clipping_polygon, line)
-        start_is_inside = is_point_in_polygon_2d(start, self._clipping_polygon) > 0
+        start_is_inside = is_point_in_polygon_2d(start, self._clipping_polygon) >= 0
         if len(intersections) == 0:
             if start_is_inside:
                 return (line,)
             return tuple()
-        intersections.append(end)
-        # inside/outside rule
-        if start_is_inside:
+        end_is_inside = is_point_in_polygon_2d(end, self._clipping_polygon) >= 0
+        if end_is_inside and not intersections[-1].isclose(end):
+            # last inside-segment ends at end
+            intersections.append(end)
+        if start_is_inside and not intersections[0].isclose(start):
             # first inside-segment begins at start
             intersections.insert(0, start)
+
+        if has_colinear_edge(self._clipping_polygon, start, end):
+            # slow detection: doesn't work with inside/outside rule!
+            # test if mid-point of intersection-segment is inside the polygon.
+            # intersection-segment colinear with a polygon edge is inside!
+            segments: list[tuple[Vec2, Vec2]] = []
+            for a, b in pairwise(intersections):
+                if is_point_in_polygon_2d(a.lerp(b), self._clipping_polygon) >= 0:
+                    segments.append((a, b))
+            return segments
+
+        # inside/outside rule
         # intersection segments:
         # (0, 1) outside (2, 3) outside (4, 5) ...
         return list(take2(intersections))
 
     def clip_polyline(self, polyline: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
-        return []
+        if not self._bbox.has_overlap(BoundingBox2d(polyline)):
+            return tuple()
+        segments: list[list[Vec2]] = []
+        for start, end in pairwise(polyline):
+            for a, b in self.clip_line(start, end):
+                if segments:
+                    last_seg = segments[-1]
+                    if last_seg[-1].isclose(a):
+                        last_seg.append(b)
+                        continue
+                segments.append([a, b])
+        return segments
 
     def clip_polygon(self, polygon: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polygon."""
         return []
+
+
+def has_colinear_edge(polygon: list[Vec2], start: Vec2, end: Vec2) -> bool:
+    """Returns ``True`` if `polygon` has any colinear edge to line `start->end`."""
+    a = polygon[-1]
+    rel_a = point_to_line_relation(a, start, end)
+    for b in polygon:
+        rel_b = point_to_line_relation(b, start, end)
+        if rel_a == 0 and rel_b == 0:
+            return True
+        a = b
+        rel_a = rel_b
+    return False
 
 
 def polygon_line_intersections_2d(
@@ -265,6 +303,7 @@ def polygon_line_intersections_2d(
     """Returns all intersections of polygon with line.
     All intersections points are ordered from start to end of line.
     Start and end points are not included if not explicit intersection points.
+
     """
     # pylint: disable=C0200
     intersection_points: list[Vec2] = []
