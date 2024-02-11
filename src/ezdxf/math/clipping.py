@@ -268,8 +268,6 @@ class ConcaveClippingPolygon2d:
 
     def clip_polyline(self, polyline: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
-        if not self._bbox.has_overlap(BoundingBox2d(polyline)):
-            return tuple()
         segments: list[list[Vec2]] = []
         for start, end in pairwise(polyline):
             for a, b in self.clip_line(start, end):
