@@ -292,12 +292,11 @@ class ConcaveClippingPolygon2d:
             return tuple()  # polygons do not overlap
         result = clip_arbitrary_polygons(self._clipping_polygon, vertices)
         if len(result) == 0:
-            clip_box = self._bbox
-            if clip_box.inside(polygon_box.extmin) or clip_box.inside(
-                polygon_box.extmax
-            ):
-                return (vertices,)
-            return (self._clipping_polygon.copy(),)
+            is_outside = any(is_point_in_polygon_2d(v, self._clipping_polygon) < 0 for v in vertices)
+            if is_outside:
+                return tuple()
+            return (vertices,)
+            # return (self._clipping_polygon.copy(),)
         return result
 
 
