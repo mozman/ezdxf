@@ -462,6 +462,107 @@ class TestPolylineClipping:
         assert p1[5].isclose((1, 5))
 
 
+class TestPolygonClipping:
+    """Based on the paper "Efficient Clipping of Arbitrary Polygons" by
+    Günther Greiner and Kai Hormann.
+
+    Tests see test_619_greiner_hormann.py
+    """
+
+    @pytest.mark.parametrize(
+        "vertices",
+        [
+            [],
+            [Vec2()],
+            [Vec2(), Vec2()],
+            [Vec2(), Vec2(), Vec2()],
+        ],
+        ids=["#0", "#1", "#2", "#3"],
+    )
+    def test_too_few_vertices(self, vertices, polygon_u: CCP):
+        assert len(polygon_u.clip_polygon(vertices)) == 0
+
+    def test_polygon_inside_no_intersection(self, polygon_u: CCP):
+        # 6  .|...|...|...|.
+        # 5  .|...5---4...|.
+        # 4  .|d+++++++++c|.
+        # 3  .|+.........+|.
+        # 2  .|a+++++++++b|.
+        # 1  .0-----------1.
+        # 0  ...............
+        #              11111
+        #    012345678901234
+        #                                           a       b        c        d
+        result = polygon_u.clip_polygon(Vec2.list([(2, 2), (12, 2), (12, 4), (2, 4)]))
+        # returns the subject polygon [a, b, c, d]
+        assert len(result) == 1
+        polygon = result[0]
+        assert len(polygon) == 4
+        assert polygon[0].isclose((2, 2))
+        assert polygon[2].isclose((12, 4))
+
+    def test_polygon_outside_no_intersection(self, polygon_u: CCP):
+        # 10 d.............c
+        # 9  .7---6...3---2.
+        # 8  .|...|...|...|.
+        # 7  .|...|...|...|.
+        # 6  .|...|...|...|.
+        # 5  .|...5---4...|.
+        # 4  .|...........|.
+        # 3  .|...........|.
+        # 2  .|...........|.
+        # 1  .0-----------1.
+        # 0  a.............b
+        #              11111
+        #    012345678901234
+        #                                           a       b        c         d
+        result = polygon_u.clip_polygon(Vec2.list([(0, 0), (14, 0), (14, 10), (0, 10)]))
+        # returns the clipping polygon [0, 1, 2, 3, 4, 5, 6, 7]
+        assert len(result) == 1
+        polygon = result[0]
+        assert len(polygon) == 8
+        assert polygon[0] == Vec2(1, 1)
+        assert polygon[7] == Vec2(1, 9)
+
+    def test_polygon_inside_with_intersection(self, polygon_u: CCP):
+        # 7  .|d++x...x++c|.
+        # 6  .|+..+...+..+|.
+        # 5  .|+..5+++4..+|.
+        # 4  .|+.........+|.
+        # 3  .|+.........+|.
+        # 2  .|a+++++++++b|.
+        # 1  .0-----------1.
+        # 0  ...............
+        #              11111
+        #    012345678901234
+        #                                           a       b        c        d
+        result = polygon_u.clip_polygon(Vec2.list([(2, 2), (12, 2), (12, 7), (2, 7)]))
+        assert len(result) == 1
+        polygon = result[0]
+        assert len(polygon) == 9
+        # returns a closed polygon!
+        assert polygon[0].isclose(polygon[-1]) is True
+
+    def test_polygon_colinear_edges(self, polygon_u: CCP):
+        # 5  .d+++5+++4++c|.
+        # 4  .+..........+|.
+        # 3  .+..........+|.
+        # 2  .a++++++++++b|.
+        # 1  .0-----------1.
+        # 0  ...............
+        #              11111
+        #    012345678901234
+        #                                           a       b        c        d
+        result = polygon_u.clip_polygon(Vec2.list([(1, 2), (12, 2), (12, 5), (1, 5)]))
+        # The Greiner-Hormann algorithm has issues with intersection points on polygon
+        # edges.
+        assert len(result) == 1
+        polygon = result[0]
+        # intersection points (4) and (5) are missing!
+        assert len(polygon) == 4
+        # returns an open polygon!
+        assert polygon[0].isclose(polygon[-1]) is False
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

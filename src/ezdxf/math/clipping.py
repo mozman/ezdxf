@@ -1,7 +1,7 @@
 #  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Sequence, Optional, Iterator, Union, Callable
+from typing import Iterable, Sequence, Optional, Iterator, Callable
 from typing_extensions import Protocol
 import enum
 
@@ -227,6 +227,8 @@ class ConcaveClippingPolygon2d:
 
     def is_inside(self, point: Vec2) -> bool:
         """Returns ``True`` if `point` is inside the clipping polygon."""
+        if not self._bbox.inside(point):
+            return False
         return is_point_in_polygon_2d(point, self._clipping_polygon) >= 0
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
@@ -281,7 +283,40 @@ class ConcaveClippingPolygon2d:
 
     def clip_polygon(self, polygon: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polygon."""
-        return []
+        vertices = list(polygon)
+        if len(vertices) > 1:
+            if vertices[0].isclose(vertices[-1]):
+                vertices.pop()
+        if len(vertices) < 3:
+            return tuple()
+        polygon_box = BoundingBox2d(vertices)
+        if not self._bbox.has_intersection(polygon_box):
+            return tuple()  # polygons do not overlap
+        result = clip_arbitrary_polygons(self._clipping_polygon, vertices)
+        if len(result) == 0:
+            clip_box = self._bbox
+            if clip_box.inside(polygon_box.extmin) or clip_box.inside(
+                polygon_box.extmax
+            ):
+                return (vertices,)
+            return (self._clipping_polygon.copy(),)
+        return result
+
+
+def clip_arbitrary_polygons(
+    clipper: list[Vec2], subject: list[Vec2]
+) -> Sequence[Sequence[Vec2]]:
+    """Returns the parts of the clipped subject. Both polygons can be concave
+
+    Args:
+        clipper: clipping window closed polygon
+        subject: closed polygon to clip
+
+    """
+    # Caching of gh_clipper is not possible, because both GHPolygons get modified!
+    gh_clipper = GHPolygon.from_vec2(clipper)
+    gh_subject = GHPolygon.from_vec2(subject)
+    return gh_clipper.intersection(gh_subject)
 
 
 def has_colinear_edge(polygon: list[Vec2], start: Vec2, end: Vec2) -> bool:
@@ -348,17 +383,13 @@ def polygon_line_intersections_2d(
 class _Node:
     def __init__(
         self,
-        vtx: Union[Vec2, _Node],
+        vtx: Vec2,
         alpha: float = 0.0,
         intersect=False,
         entry=True,
         checked=False,
     ):
-        self.vtx: Vec2
-        if isinstance(vtx, _Node):
-            self.vtx = vtx.vtx
-        else:
-            self.vtx = vtx
+        self.vtx = vtx
 
         # Reference to the next vertex of the polygon
         self.next: _Node = None  # type: ignore
@@ -414,9 +445,13 @@ class GHPolygon:
     @staticmethod
     def build(vertices: Iterable[UVec]) -> GHPolygon:
         """Build a new GHPolygon from an iterable of vertices."""
+        return GHPolygon.from_vec2(Vec2.list(vertices))
+
+    @staticmethod
+    def from_vec2(vertices: Sequence[Vec2]) -> GHPolygon:
+        """Build a new GHPolygon from an iterable of vertices."""
         polygon = GHPolygon()
-        _vertices = Vec2.list(vertices)
-        for v in _vertices:
+        for v in vertices:
             polygon.add(_Node(v))
         return polygon
 
@@ -554,28 +589,26 @@ class GHPolygon:
         clipped_polygons: list[list[Vec2]] = []
         while self.unprocessed():
             current: _Node = self.first_intersect  # type: ignore
-            clipped = GHPolygon()
-            clipped.add(_Node(current))
+            clipped: list[Vec2] = [current.vtx]
             while True:
                 current.set_checked()
                 if current.entry:
                     while True:
                         current = current.next
-                        clipped.add(_Node(current))
+                        clipped.append(current.vtx)
                         if current.intersect:
                             break
                 else:
                     while True:
                         current = current.prev
-                        clipped.add(_Node(current))
+                        clipped.append(current.vtx)
                         if current.intersect:
                             break
 
                 current = current.neighbor
                 if current.checked:
                     break
-
-            clipped_polygons.append(clipped.points)
+            clipped_polygons.append(clipped)
         return clipped_polygons
 
 
