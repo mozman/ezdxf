@@ -243,7 +243,9 @@ class ClippingPolygon(ClippingShape):
             # polyline is complete outside
             return tuple()
         return [
-            NumpyPoints2d(part) for part in clipper.clip_polyline(points.vertices())
+            NumpyPoints2d(part)
+            for part in clipper.clip_polyline(points.vertices())
+            if len(part) > 0
         ]
 
     def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
@@ -252,7 +254,11 @@ class ClippingPolygon(ClippingShape):
         if not polygon_bbox.has_intersection(self._bbox):
             # polygon is complete outside
             return tuple()
-        return [NumpyPoints2d(part) for part in clipper.clip_polygon(points.vertices())]
+        return [
+            NumpyPoints2d(part)
+            for part in clipper.clip_polygon(points.vertices())
+            if len(part) > 0
+        ]
 
     def clip_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
@@ -266,7 +272,8 @@ class ClippingPolygon(ClippingShape):
                     continue
                 polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=4))
                 for part in clipper.clip_polyline(polyline):
-                    yield NumpyPath2d.from_vertices(part, close=False)
+                    if len(part) > 0:
+                        yield NumpyPath2d.from_vertices(part, close=False)
 
     def clip_filled_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
@@ -281,7 +288,8 @@ class ClippingPolygon(ClippingShape):
                 for part in clipper.clip_polygon(
                     Vec2.list(path.flattening(max_sagitta, segments=4))
                 ):
-                    yield NumpyPath2d.from_vertices(part, close=True)
+                    if len(part) > 0:
+                        yield NumpyPath2d.from_vertices(part, close=True)
 
 
 class ClippingRect(ClippingPolygon):

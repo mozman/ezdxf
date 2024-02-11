@@ -338,7 +338,10 @@ class Designer2d(Designer):
         if self.clipping_portal.is_active:
             max_sagitta = self.config.max_flattening_distance
             paths = self.clipping_portal.clip_filled_paths(paths, max_sagitta)
-        self.backend.draw_filled_paths(paths, self.get_backend_properties(properties))
+        _paths = list(paths)
+        if len(_paths) == 0:
+            return
+        self.backend.draw_filled_paths(_paths, self.get_backend_properties(properties))
 
     def draw_filled_polygon(
         self, points: Iterable[AnyVec], properties: Properties
@@ -349,8 +352,9 @@ class Designer2d(Designer):
         bk_properties = self.get_backend_properties(properties)
         if self.clipping_portal.is_active:
             for points in self.clipping_portal.clip_polygon(points):
-                self.backend.draw_filled_polygon(points, bk_properties)
-        else:
+                if len(points) > 0:
+                    self.backend.draw_filled_polygon(points, bk_properties)
+        elif len(points) > 0:
             self.backend.draw_filled_polygon(points, bk_properties)
 
     def pattern(self, properties: Properties) -> Sequence[float]:
