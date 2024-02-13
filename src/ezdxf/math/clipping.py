@@ -27,6 +27,7 @@ __all__ = [
     "ConvexClippingPolygon2d",
     "ConcaveClippingPolygon2d",
     "ClippingRect2d",
+    "InvertedClippingPolygon2d",
 ]
 
 
@@ -292,7 +293,9 @@ class ConcaveClippingPolygon2d:
             return tuple()  # polygons do not overlap
         result = clip_arbitrary_polygons(self._clipping_polygon, vertices)
         if len(result) == 0:
-            is_outside = any(is_point_in_polygon_2d(v, self._clipping_polygon) < 0 for v in vertices)
+            is_outside = any(
+                is_point_in_polygon_2d(v, self._clipping_polygon) < 0 for v in vertices
+            )
             if is_outside:
                 return tuple()
             return (vertices,)
@@ -369,6 +372,104 @@ def polygon_line_intersections_2d(
         prev_ip = ip
     intersection_points.sort(reverse=start > end)
     return intersection_points
+
+
+class InvertedClippingPolygon2d(ConcaveClippingPolygon2d):
+    """This class represents an inverted clipping path.  Everything between the inner
+    polygon and the outer extents is considered as inside.  The inner clipping path is
+    an arbitrary 2D polygon.
+    """
+
+    def __init__(self, inner_polygon: Iterable[Vec2], outer_bounds: BoundingBox2d):
+        # pylint: disable=super-init-not-called
+        clip = list(inner_polygon)
+        if len(clip) > 1:
+            if not clip[0].isclose(clip[-1]):  # close inner_polygon
+                clip.append(clip[0])
+        if len(clip) < 4:
+            raise ValueError("more than 3 vertices as clipping polygon required")
+        # requirements for inner_polygon:
+        # arbitrary polygon (convex or concave)
+        # closed polygon (first vertex == last vertex)
+        # clockwise or counter-clockwise oriented vertices
+        self._clipping_polygon = make_inverted_clipping_polygon(clip, outer_bounds)
+        self._bbox = outer_bounds
+
+
+def make_inverted_clipping_polygon(
+    inner_polygon: list[Vec2], outer_bounds: BoundingBox2d
+) -> list[Vec2]:
+    """Creates a closed concave clipping polygon by connecting the inner polygon with
+    the surrounding rectangle.  The connection goes from the last vertex of the
+    inner polygon to the closest corner of the rectangle.  The polygon follows the
+    rectangle boundary in clockwise order and ends the last vertex of the inner
+    polygon.
+    """
+    # TODO: The selection of the inner connection vertex has to be improved!
+    #   By just taking the last vertex the connection line between inner polygon and
+    #   outer rectangle can cross some edges of the inner polygon!
+    assert (outer_bounds.extmax is not None) and (outer_bounds.extmin is not None)
+    inverted_path = list(inner_polygon)
+    if not inner_polygon[0].isclose(inner_polygon[-1]):
+        inverted_path.append(inverted_path[0])
+    start = inner_polygon[-1]
+
+    min_x, min_y = outer_bounds.extmin
+    max_x, max_y = outer_bounds.extmax
+    dist_left = start.x - min_x
+    dist_right = max_x - start.x
+    dist_top = max_y - start.y
+    dist_bottom = start.y - min_y
+    min_dist = min(dist_left, dist_right, dist_bottom, dist_top)
+    if min_dist == dist_top:
+        inverted_path.extend(
+            (
+                Vec2(start.x, max_y),
+                Vec2(max_x, max_y),
+                Vec2(max_x, min_y),
+                Vec2(min_x, min_y),
+                Vec2(min_x, max_y),
+                Vec2(start.x, max_y),
+                start,
+            )
+        )
+    elif min_dist == dist_bottom:
+        inverted_path.extend(
+            (
+                Vec2(start.x, min_y),
+                Vec2(min_x, min_y),
+                Vec2(min_x, max_y),
+                Vec2(max_x, max_y),
+                Vec2(max_x, min_y),
+                Vec2(start.x, min_y),
+                start,
+            )
+        )
+    elif min_dist == dist_left:
+        inverted_path.extend(
+            (
+                Vec2(min_x, start.y),
+                Vec2(min_x, max_y),
+                Vec2(max_x, max_y),
+                Vec2(max_x, min_y),
+                Vec2(min_x, min_y),
+                Vec2(min_x, start.y),
+                start,
+            )
+        )
+    elif min_dist == dist_right:
+        inverted_path.extend(
+            (
+                Vec2(max_x, start.y),
+                Vec2(max_x, min_y),
+                Vec2(min_x, min_y),
+                Vec2(min_x, max_y),
+                Vec2(max_x, max_y),
+                Vec2(max_x, start.y),
+                start,
+            )
+        )
+    return inverted_path
 
 
 # Based on the paper "Efficient Clipping of Arbitrary Polygons" by
