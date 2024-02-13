@@ -3,6 +3,7 @@
 from __future__ import annotations
 from typing import Iterable, Sequence, Optional, Iterator, Callable
 from typing_extensions import Protocol
+import math
 import enum
 
 from ezdxf.math import (
@@ -399,77 +400,38 @@ class InvertedClippingPolygon2d(ConcaveClippingPolygon2d):
 def make_inverted_clipping_polygon(
     inner_polygon: list[Vec2], outer_bounds: BoundingBox2d
 ) -> list[Vec2]:
-    """Creates a closed concave clipping polygon by connecting the inner polygon with
-    the surrounding rectangle.  The connection goes from the last vertex of the
-    inner polygon to the closest corner of the rectangle.  The polygon follows the
-    rectangle boundary in clockwise order and ends the last vertex of the inner
-    polygon.
+    """Creates a closed inverted clipping polygon by connecting the inner polygon with
+    the surrounding rectangle at their closest vertices.
     """
-    # TODO: The selection of the inner connection vertex has to be improved!
-    #   By just taking the last vertex the connection line between inner polygon and
-    #   outer rectangle can cross some edges of the inner polygon!
-    assert (outer_bounds.extmax is not None) and (outer_bounds.extmin is not None)
-    inverted_path = list(inner_polygon)
-    if not inner_polygon[0].isclose(inner_polygon[-1]):
-        inverted_path.append(inverted_path[0])
-    start = inner_polygon[-1]
+    assert outer_bounds.has_data is True
+    inner_polygon = inner_polygon.copy()
+    if inner_polygon[0].isclose(inner_polygon[-1]):
+        inner_polygon.pop()
+    assert len(inner_polygon) > 2
+    outer_rect = list(outer_bounds.rect_vertices())  # counter-clockwise
+    outer_rect.reverse()  # clockwise
+    ci, co = find_closest_vertices(inner_polygon, outer_rect)
+    result = inner_polygon[ci:]
+    result.extend(inner_polygon[: ci + 1])
+    result.extend(outer_rect[co:])
+    result.extend(outer_rect[: co + 1])
+    result.append(result[0])
+    return result
 
-    min_x, min_y = outer_bounds.extmin
-    max_x, max_y = outer_bounds.extmax
-    dist_left = start.x - min_x
-    dist_right = max_x - start.x
-    dist_top = max_y - start.y
-    dist_bottom = start.y - min_y
-    min_dist = min(dist_left, dist_right, dist_bottom, dist_top)
-    if min_dist == dist_top:
-        inverted_path.extend(
-            (
-                Vec2(start.x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, max_y),
-                Vec2(start.x, max_y),
-                start,
-            )
-        )
-    elif min_dist == dist_bottom:
-        inverted_path.extend(
-            (
-                Vec2(start.x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, min_y),
-                Vec2(start.x, min_y),
-                start,
-            )
-        )
-    elif min_dist == dist_left:
-        inverted_path.extend(
-            (
-                Vec2(min_x, start.y),
-                Vec2(min_x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, start.y),
-                start,
-            )
-        )
-    elif min_dist == dist_right:
-        inverted_path.extend(
-            (
-                Vec2(max_x, start.y),
-                Vec2(max_x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, start.y),
-                start,
-            )
-        )
-    return inverted_path
+
+def find_closest_vertices(
+    vertices0: list[Vec2], vertices1: list[Vec2]
+) -> tuple[int, int]:
+    """Returns the indices of the closest vertices of both lists."""
+    min_dist = math.inf
+    result: tuple[int, int] = 0, 0
+    for i0, v0 in enumerate(vertices0):
+        for i1, v1 in enumerate(vertices1):
+            distance = v0.distance(v1)
+            if distance < min_dist:
+                min_dist = distance
+                result = i0, i1
+    return result
 
 
 # Based on the paper "Efficient Clipping of Arbitrary Polygons" by

@@ -6,19 +6,78 @@ import pytest
 
 from ezdxf.math import Vec2, BoundingBox2d
 from ezdxf.math.clipping import InvertedClippingPolygon2d as ICP
+from ezdxf.math.clipping import (
+    find_closest_vertices,
+    make_inverted_clipping_polygon,
+)
 
-# The connection between inner polygon and outer bounds, is created 
+
+@pytest.mark.parametrize(
+    "extmin,extmax,expected",
+    [
+        [(0, 0), (1, 1), (0, 0)],
+        [(8, 1), (9, 2), (1, 1)],
+        [(8, 8), (9, 9), (2, 2)],
+        [(1, 8), (2, 9), (3, 3)],
+    ],
+    ids=["lower-left", "lower-right", "upper-right", "upper-left"],
+)
+def test_find_closest_vertices(extmin, extmax, expected):
+    outer = BoundingBox2d([(0, 0), (10, 10)]).rect_vertices()
+    inner = BoundingBox2d([extmin, extmax]).rect_vertices()
+    assert find_closest_vertices(inner, outer) == expected
+
+
+# 9  7........6
+# 8  ......3-2.
+# 7  ......|.|.
+# 6  ......0-1.
+# 5  ..........
+# 4  ..........
+# 3  ..........
+# 2  ..........
+# 1  ..........
+# 0  4........5
+#    0123456789
+def test_make_inverted_clipping_polygon():
+    #                                4       6
+    outer_boundary = BoundingBox2d([(0, 0), (9, 9)])
+    #                           0       1       2       3
+    inner_polygon = Vec2.list([(6, 6), (8, 6), (8, 8), (6, 8)])
+    result = make_inverted_clipping_polygon(inner_polygon, outer_boundary)
+    assert len(result) == 11
+    # closest vertices are: 2-6 where the the inner polygon will be connected
+    # to the outer boundary
+    for num, point in enumerate(
+        [
+            (8, 8),  # 2: start inner path at closest vertex pair
+            (6, 8),  # 3: walk in counter clockwise order
+            (6, 6),  # 0
+            (8, 6),  # 1
+            (8, 8),  # 2: close inner path
+            (9, 9),  # 6: connect to outer boundary
+            (9, 0),  # 5: walk in clockwise order
+            (0, 0),  # 4
+            (0, 9),  # 7
+            (9, 9),  # 6: closer outer boundary
+            (8, 8),  # 2: connect to inner polygon
+        ]
+    ):
+        assert result[num] == point
+
+
+# The connection between inner polygon and outer bounds, is created
 # automatically at setup! This creates a closed concave clipping shape.
-# 
+#
 #    0123456789
 # 9  ..........
 # 8  .+------5.
-# 7  .|\.....|. 
-# 6  .|.3--2.|. automatically at setup! This creates a closed concave clipping shape.
+# 7  .|......|.
+# 6  .|.3--2.|.
 # 5  .|.|..|.|.
 # 4  .|.|..|.|.
 # 3  .|.0--1.|.
-# 2  .|......|.
+# 2  .|/.....|.
 # 1  .4------+.
 # 0  ..........
 #    0123456789
