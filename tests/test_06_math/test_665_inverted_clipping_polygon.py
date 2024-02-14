@@ -1,6 +1,5 @@
 # Copyright (c) 2024, Manfred Moitzi
 # License: MIT License
-# pylint: disable=redefined-outer-name  # pytest-fixtures!
 from __future__ import annotations
 import pytest
 
@@ -10,6 +9,9 @@ from ezdxf.math.clipping import (
     find_closest_vertices,
     make_inverted_clipping_polygon,
 )
+
+# The InvertedClippingPolygon2d is based on the ConcaveClippingPolygon2d,
+# so not all clipping tests are replicated here. See test_664.
 
 
 @pytest.mark.parametrize(
@@ -46,7 +48,7 @@ def test_make_inverted_clipping_polygon():
     inner_polygon = Vec2.list([(6, 6), (8, 6), (8, 8), (6, 8)])
     result = make_inverted_clipping_polygon(inner_polygon, outer_boundary)
     assert len(result) == 11
-    # closest vertices are: 2-6 where the the inner polygon will be connected
+    # closest vertices are: 2<->6 where the the inner polygon will be connected
     # to the outer boundary
     for num, point in enumerate(
         [
@@ -135,6 +137,67 @@ def test_point_is_inside_polygon(point: Vec2, inverted_polygon: ICP):
 @pytest.mark.parametrize("point", POINTS_OUTSIDE)
 def test_point_is_outside_polygon(point: Vec2, inverted_polygon: ICP):
     assert inverted_polygon.is_inside(point) is False
+
+
+class TestLineClipping:
+    def test_basic_clipping(self, inverted_polygon: ICP):
+        """Does the inside/outside detection work for inverted polygons?"""
+        # 5  .|.|..|.|.
+        # 4  ax=x..x=xb
+        # 3  .|.0--1.|.
+        # 2  .|/.....|.
+        # 1  .4------+.
+        # 0  ..........
+        #    0123456789
+        result = inverted_polygon.clip_line(Vec2(0, 4), Vec2(9, 4))
+        assert len(result) == 2
+        l1, l2 = result
+        assert l1[0].isclose((1, 4))
+        assert l1[1].isclose((3, 4))
+        assert l2[0].isclose((6, 4))
+        assert l2[1].isclose((8, 4))
+
+    def test_connection_line_create_intersection_point(self, inverted_polygon: ICP):
+        """A line should be clipped at the diagonal connection line between 4<->0.
+        There are two clipping lines 4->0 and 4<-0. The zero-length segment between the 
+        real segments should not be returned.
+        """
+        # 5  .|.|..|.|.
+        # 4  .|.|..|.|.
+        # 3  .|.0--1.|.
+        # 2  axx=====xb
+        # 1  .4------+.
+        # 0  ..........
+        #    0123456789
+        result = inverted_polygon.clip_line(Vec2(0, 2), Vec2(9, 2))
+        assert len(result) == 2
+        l1, l2 = result
+        assert l1[0].isclose((1, 2))
+        assert l1[1].isclose((2, 2))
+        # zero-length segment (2, 2) -> (2, 2) is ignored or outside!
+        assert l2[0].isclose((2, 2))
+        assert l2[1].isclose((8, 2))
+
+    def test_colinear_line(self, inverted_polygon: ICP):
+        """Colinear line segments are inside per definition."""
+        # 5  .|.|..|.|.
+        # 4  .|.|..|.|.
+        # 3  ax=x==x=xb
+        # 2  .|/.....|.
+        # 1  .4------+.
+        # 0  ..........
+        #    0123456789
+        result = inverted_polygon.clip_line(Vec2(0, 3), Vec2(9, 3))
+        assert len(result) == 3
+        l1, l2, l3 = result
+        assert l1[0].isclose((1, 3))
+        assert l1[1].isclose((3, 3))
+        # zero-length segment (3, 3) -> (3, 3) is ignored or outside!
+        assert l2[0].isclose((3, 3))
+        assert l2[1].isclose((6, 3))
+        assert l3[0].isclose((6, 3))
+        assert l3[1].isclose((8, 3))
+
 
 
 if __name__ == "__main__":

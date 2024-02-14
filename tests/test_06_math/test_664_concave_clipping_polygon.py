@@ -273,6 +273,7 @@ class TestLineClipping:
         assert e.isclose((5, 1))
 
     def test_line_is_colinear_to_inner_edge(self, polygon_c: CCP):
+        """Colinear line segments are inside per definition."""
         # 4 .|.|...
         # 3 ax+x+xb
         # 2 .|...|.
@@ -289,6 +290,7 @@ class TestLineClipping:
         assert e.isclose((5, 3))
 
     def test_line_is_colinear_to_inner_edge_reverse(self, polygon_c: CCP):
+        """Colinear line segments are inside per definition."""
         # 4 .|.|...
         # 3 bx+x+xa
         # 2 .|...|.

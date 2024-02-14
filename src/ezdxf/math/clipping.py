@@ -259,8 +259,10 @@ class ConcaveClippingPolygon2d:
             # intersection-segment colinear with a polygon edge is inside!
             segments: list[tuple[Vec2, Vec2]] = []
             for a, b in pairwise(intersections):
+                if a.isclose(b):  # ignore zero-length segments
+                    continue
                 if is_point_in_polygon_2d(a.lerp(b), self._clipping_polygon) >= 0:
-                    segments.append((a, b))
+                   segments.append((a, b))
             return segments
 
         # inside/outside rule
