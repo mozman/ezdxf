@@ -44,12 +44,24 @@ class ClippingPath:
     inverted_clip_compare: Sequence[Vec2] = tuple()
     is_inverted_clip: bool = False
 
+    def inner_polygon(self) -> Sequence[Vec2]:
+        """Returns the inner clipping polygon as sequence of Vec2."""
+        # The exact data structure of inverted clippings polygons is still not
+        # clear to me, so use the smallest polygon as inner clipping polygon.
+        if not self.is_inverted_clip:
+            return self.vertices
+        inner_polygon = self.vertices
+        if bbox_area(self.inverted_clip) < bbox_area(inner_polygon):
+            inner_polygon = self.inverted_clip
+        return inner_polygon
 
-def clipping_path_extents(cp: ClippingPath) -> BoundingBox2d:
-    """Returns the extents of the clipping path."""
-    if cp.is_inverted_clip:
-        return BoundingBox2d(cp.inverted_clip_compare)  # best guess so far
-    return BoundingBox2d(cp.vertices)
+    def outer_bounds(self) -> BoundingBox2d:
+        """Returns the maximum extents as BoundingBox2d."""
+        if not self.is_inverted_clip:
+            return BoundingBox2d(self.vertices)
+        # The exact data structure of inverted clippings polygons is still not
+        # clear to me, this is my best guess:
+        return BoundingBox2d(self.inverted_clip_compare)
 
 
 class XClip:
@@ -157,13 +169,18 @@ class XClip:
         block_clipping_path = self.get_block_clipping_path()
         m = self._insert.matrix44()
         vertices = Vec2.tuple(m.transform_vertices(block_clipping_path.vertices))
+        if len(vertices) == 2:  # rectangle by diagonal corner vertices
+            vertices = BoundingBox2d(vertices).rect_vertices()
         wcs_clipping_path = ClippingPath(
             vertices, is_inverted_clip=block_clipping_path.is_inverted_clip
         )
         if block_clipping_path.is_inverted_clip:
-            wcs_clipping_path.inverted_clip = Vec2.tuple(
-                m.transform_vertices(block_clipping_path.inverted_clip)
-            )
+            inverted_clip = Vec2.tuple(m.transform_vertices(
+                block_clipping_path.inverted_clip
+            ))
+            if len(inverted_clip) == 2:  # rectangle by diagonal corner vertices
+                inverted_clip = BoundingBox2d(inverted_clip).rect_vertices()
+            wcs_clipping_path.inverted_clip = inverted_clip
             wcs_clipping_path.inverted_clip_compare = Vec2.tuple(
                 m.transform_vertices(block_clipping_path.inverted_clip_compare)
             )
@@ -474,3 +491,11 @@ def get_roundtrip_vertices(
     tags = xrec.get_section(section_name)
     vertices = m.transform_vertices(Vec3(t.value) for t in tags)
     return Vec2.tuple(vertices)
+
+
+def bbox_area(vertice: Sequence[Vec2]) -> float:
+    bbox = BoundingBox2d(vertice)
+    if bbox.has_data:
+        size = bbox.size
+        return size.x * size.y
+    return 0.0

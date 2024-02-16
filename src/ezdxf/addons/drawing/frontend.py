@@ -831,8 +831,8 @@ class UniversalFrontend:
                     )
                 else:  # inverted clipping path
                     clipping_shape = clipping_portal.make_inverted_clipping_shape(
-                        boundary_path.vertices,
-                        extents=xclip.clipping_path_extents(boundary_path),
+                        boundary_path.inner_polygon(),
+                        outer_bounds=boundary_path.outer_bounds(),
                     )
                 self.designer.push_clipping_shape(clipping_shape, None)
 
@@ -846,7 +846,7 @@ class UniversalFrontend:
 
             if is_clipping_active and clip.get_xclip_frame_policy():
                 self.designer.draw_path(
-                    path=from_vertices(boundary_path.vertices, close=True),
+                    path=from_vertices(boundary_path.inner_polygon(), close=True),
                     properties=properties,
                 )
                 self.designer.pop_clipping_shape()

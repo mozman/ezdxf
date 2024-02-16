@@ -30,6 +30,7 @@ __all__ = [
     "ClippingPortal",
     "ClippingRect",
     "ConvexClippingPolygon",
+    "InvertedClippingPolygon",
     "MultiClip",
     "find_best_clipping_shape",
     "make_inverted_clipping_shape",
@@ -372,6 +373,19 @@ class ConcaveClippingPolygon(ClippingPolygon):
         super().__init__(BoundingBox2d(polygon), ConcaveClippingPolygon2d(polygon))
 
 
+class InvertedClippingPolygon(ClippingPolygon):
+    """Represents an arbitrary inverted clipping polygon.  Removes the geometry
+    inside the clipping polygon.
+
+    """
+
+    def __init__(self, vertices: Iterable[UVec], outer_bounds: BoundingBox2d) -> None:
+        from ezdxf.math.clipping import InvertedClippingPolygon2d
+
+        polygon = Vec2.list(vertices)
+        super().__init__(outer_bounds, InvertedClippingPolygon2d(polygon, outer_bounds))
+
+
 class MultiClip(ClippingShape):
     """The MultiClip combines multiple clipping shapes into a single clipping shape.
 
@@ -457,20 +471,15 @@ def find_best_clipping_shape(polygon: Iterable[UVec]) -> ClippingShape:
 
 
 def make_inverted_clipping_shape(
-    polygon: Iterable[UVec], extents: BoundingBox2d
+    polygon: Iterable[UVec], outer_bounds: BoundingBox2d
 ) -> ClippingShape:
-    """Returns an inverted clipping shape that removes the geometry outside the clipping
-    polygon but inside the given extents.
-
-    .. note::
-
-        Not implemented yet!
+    """Returns an inverted clipping shape that removes the geometry inside the clipping
+    polygon and beyond the outer bounds.
 
     Args:
         polygon: clipping polygon as iterable vertices
-        extends: outer bounds of the clipping shape
+        outer_bounds: outer bounds of the clipping shape
 
     """
 
-    # not supported/implemented yet and function signature may change!
-    return find_best_clipping_shape(polygon)
+    return InvertedClippingPolygon(polygon, outer_bounds)
