@@ -39,8 +39,7 @@ are send to the backend that renders the output format.
 The exported SVG shows a spiral centered on an A4 page with a margin of 20mm, notice
 the background has a dark color like the usual background of the modelspace:
 
-.. image:: gfx/image_export_01.png
-    :align: center
+.. figure:: gfx/image_export_01.png
 
 
 Frontend Configuration
@@ -63,8 +62,7 @@ Create a new configuration and override the background and color policy between 
 
 The new exported SVG has a white background and all lines are black:
 
-.. image:: gfx/image_export_02.png
-    :align: center
+.. figure:: gfx/image_export_02.png
 
 There are many configuration options:
 
@@ -116,8 +114,19 @@ unit (mm):
 
 The page has a size of 14x14mm, a content size of 10x10mm and 2mm margins on all sides.
 
-.. image:: gfx/image_export_03.png
-    :align: center
+.. figure:: gfx/image_export_03.png
+
+Page Size From Paperspace
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The page size stored in the LAYOUT entity of a paperspace layout can be readout by the 
+classmethod :meth:`Page.from_dxf_layout`:
+
+.. code-block::
+
+    psp = doc.paperspace("Layout1")
+    page = layout.Page.from_dxf_layout(psp)
+
 
 Scaling Content
 ~~~~~~~~~~~~~~~
@@ -126,13 +135,12 @@ Scaling the content by factor 10 means, 10 page units represent 1 drawing unit, 
 a scale of 10:1 and only uniform scaling is supported.
 
 .. literalinclude:: src/export/page_auto_detect.py
-    :lines: 54-59
+    :lines: 54-61
 
 The page has a size of 104x104mm, a content size of 100x100mm and 2mm margins on all
 sides.
 
-.. image:: gfx/image_export_04.png
-    :align: center
+.. figure:: gfx/image_export_04.png
 
 Limit Page Size
 ~~~~~~~~~~~~~~~
@@ -196,8 +204,7 @@ The export function:
 .. literalinclude:: src/export/basic_pdf.py
     :lines: 28-43
 
-.. image:: gfx/image_export_pdf_01.png
-    :align: center
+.. figure:: gfx/image_export_pdf_01.png
 
 The PDF has is dark background for the modelspace by default and color index 7 is white.
 Create a frontend configuration and override the :class:`BackgroundPolicy` to get a
@@ -208,8 +215,7 @@ white background:
 
 Now the exported PDF has a white background and color index 7 is black:
 
-.. image:: gfx/image_export_pdf_02.png
-    :align: center
+.. figure:: gfx/image_export_pdf_02.png
 
 
 PNG Export
@@ -246,8 +252,7 @@ The PLT/HPGL2 export is very similar to the SVG export:
 .. literalinclude:: src/export/basic_plt.py
     :lines: 5-7, 29-44
 
-.. image:: gfx/image_export_plt_01.png
-    :align: center
+.. figure:: gfx/image_export_plt_01.png
 
 The HPGL/2 viewer does not show the margins around the content, but most construction
 drawings draw the page borders around the content.
