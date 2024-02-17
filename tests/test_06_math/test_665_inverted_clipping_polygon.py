@@ -140,6 +140,7 @@ def test_point_is_outside_polygon(point: Vec2, inverted_polygon: ICP):
 
 
 class TestLineClipping:
+    # just test the basics to see if the implementation runs, more tests in test_664.
     def test_basic_clipping(self, inverted_polygon: ICP):
         """Does the inside/outside detection work for inverted polygons?"""
         # 5  .|.|..|.|.
@@ -159,7 +160,7 @@ class TestLineClipping:
 
     def test_connection_line_create_intersection_point(self, inverted_polygon: ICP):
         """A line should be clipped at the diagonal connection line between 4<->0.
-        There are two clipping lines 4->0 and 4<-0. The zero-length segment between the 
+        There are two clipping lines 4->0 and 4<-0. The zero-length segment between the
         real segments should not be returned.
         """
         # 5  .|.|..|.|.
@@ -198,6 +199,52 @@ class TestLineClipping:
         assert l3[0].isclose((6, 3))
         assert l3[1].isclose((8, 3))
 
+
+class TestPolygonClipping:
+    # just test the basics to see if the implementation runs, more tests in test_664.
+    def test_polygon_outside(self, inverted_polygon: ICP):
+        # 9  ..........
+        # 8  .+------5.
+        # 7  .|......|.
+        # 6  .|.3--2.|.
+        # 5  .|.|dc|.|.
+        # 4  .|.|ab|.|.
+        # 3  .|.0--1.|.
+        # 2  .|/.....|.
+        # 1  .4------+.
+        # 0  ..........
+        #    0123456789
+
+        result = inverted_polygon.clip_polygon(
+            #           a       b       c       d
+            Vec2.list([(4, 4), (5, 4), (5, 5), (4, 5)])
+        )
+        assert len(result) == 0
+
+    def test_polygon_clipping(self, inverted_polygon: ICP):
+        # 5  .|.|..|.|.
+        # 4  .|.|..|.|.
+        # 3  .|.0--1.|.
+        # 2  .|/d--c.|.
+        # 1  .4-x--x-+.
+        # 0  ...a--b...
+        #    0123456789
+
+        result = inverted_polygon.clip_polygon(
+            #           a       b       c       d
+            Vec2.list([(3, 0), (6, 0), (6, 2), (3, 2)])
+        )
+        assert len(result) == 1
+        clipped_polygon = result[0]
+        # The clipped polygon doesn't have to be closed, future implementation may 
+        # change and the results of the Greiner-Horman algorithm for "edge-cases" are 
+        # not consistent!
+        assert len(clipped_polygon) in (4, 5)
+        if len(clipped_polygon) == 5:
+            assert clipped_polygon[0].isclose(clipped_polygon[-1])
+        bbox = BoundingBox2d(clipped_polygon)
+        assert bbox.extmin.isclose((3, 1))  # lower-left clipped vertex
+        assert bbox.extmax.isclose((6, 2))  # vertex c
 
 
 if __name__ == "__main__":
