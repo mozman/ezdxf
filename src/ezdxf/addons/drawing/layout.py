@@ -221,6 +221,13 @@ class Page:
 
     @classmethod
     def from_dxf_layout(cls, layout: DXFLayout) -> Self:
+        """Returns the :class:`Page` based on the DXF attributes stored in the LAYOUT 
+        entity. The modelspace layout often **doesn't** have usable page settings!
+
+        Args:
+            layout: any paperspace layout or the modelspace layout
+
+        """
         # all layout measurements in mm
         width = round(layout.dxf.paper_width, 1)
         height = round(layout.dxf.paper_height, 1)

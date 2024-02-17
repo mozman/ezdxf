@@ -183,6 +183,10 @@ The :class:`Layout` class uses following classes and enums for configuration:
 
     .. autoproperty:: is_portrait
 
+    .. automethod:: from_dxf_layout
+
+    .. automethod:: get_margin_rect
+
     .. automethod:: to_landscape
 
     .. automethod:: to_portrait
