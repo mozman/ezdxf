@@ -377,6 +377,24 @@ cdef Vec2 v2_from_cpp_vec3(CppVec3 c):
     v.y = c.y
     return v
 
+
+# Inplace operators only for internal usage in Cython modules!
+# Vec2 instances must not be shared!
+cdef void v2_iadd(Vec2 a, Vec2 b):
+    a.x += b.x
+    a.y += b.y
+
+
+cdef void v2_isub(Vec2 a, Vec2 b):
+    a.x -= b.x
+    a.y -= b.y
+
+
+cdef void v2_imul(Vec2 a, double factor):
+    a.x *= factor
+    a.y *= factor
+
+
 cdef class Vec3:
     """ Immutable 3D vector.
 
@@ -837,3 +855,20 @@ def lerp(p1: UVec, p2: UVec, double factor = 0.5) -> Vec3:
     cdef Vec3 a = Vec3(p1)
     cdef Vec3 b = Vec3(p2)
     return v3_lerp(a, b, factor)
+
+# Inplace operators only for internal usage in Cython modules!
+# Vec3 instances must not be shared!
+cdef void v3_iadd(Vec3 a, Vec3 b):
+    a.x += b.x
+    a.y += b.y
+    a.z += b.z
+
+cdef void v3_isub(Vec3 a, Vec3 b):
+    a.x -= b.x
+    a.y -= b.y
+    a.z -= b.z
+
+cdef void v3_imul(Vec3 a, double factor):
+    a.x *= factor
+    a.y *= factor
+    a.z *= factor

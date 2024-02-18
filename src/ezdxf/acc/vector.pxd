@@ -33,6 +33,12 @@ cdef Vec2 v2_from_cpp_vec3(CppVec3)
 # magnitude = hypot(vec2.x, vec2.y)
 # angle = atan2(vec2.y, vec2.x)
 
+# Vec2 inplace operators only for internal usage in Cython modules!
+# Vec2 objects must not be shared!
+cdef void v2_iadd(Vec2 a, Vec2 b)
+cdef void v2_isub(Vec2 a, Vec2 b)
+cdef void v2_imul(Vec2 a, double factor)
+
 cdef class Vec3:
     cdef readonly double x, y, z
     cdef CppVec3 to_cpp_vec3(self: Vec2)
@@ -56,3 +62,9 @@ cdef Vec3 v3_ortho(Vec3 a, bint ccw)
 cdef Vec3 v3_project(Vec3 a, Vec3 b)
 cdef bint v3_isclose(Vec3 a, Vec3 b, double rel_tol, double abs_tol)
 cdef Vec3 v3_from_cpp_vec3(CppVec3)
+
+# Vec3 inplace operators only for internal usage in Cython modules!
+# Vec3 instaces must not be shared!
+cdef void v3_iadd(Vec3 a, Vec3 b)
+cdef void v3_isub(Vec3 a, Vec3 b)
+cdef void v3_imul(Vec3 a, double factor)
