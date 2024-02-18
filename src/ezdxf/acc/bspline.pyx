@@ -3,7 +3,7 @@
 # Copyright (c) 2021-2024, Manfred Moitzi
 # License: MIT License
 # Cython implementation of the B-spline basis function.
-from typing import List, Iterable, Sequence, Tuple
+from typing import Iterable, Sequence, Iterator
 import cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from .vector cimport Vec3, isclose, v3_mul, v3_sub
@@ -38,7 +38,7 @@ cdef double binomial_coefficient(int k, int i):
     return k_fact / (k_i_fact * i_fact)
 
 @cython.boundscheck(False)
-cdef int bisect_right(double*a, double x, int lo, int hi):
+cdef int bisect_right(double *a, double x, int lo, int hi):
     cdef int mid
     while lo < hi:
         mid = (lo + hi) // 2
@@ -61,11 +61,15 @@ cdef class Basis:
     cdef readonly double max_t
     cdef tuple weights_  # public attribute for Cython Evaluator
     # private:
-    cdef double*_knots
+    cdef double *_knots
     cdef int knot_count
 
-    def __cinit__(self, knots: Iterable[float], int order, int count,
-                  weights: Sequence[float] = None):
+    def __cinit__(
+            self, knots: Iterable[float], 
+            int order, 
+            int count,
+            weights: Sequence[float] = None
+        ):
         if order < 2 or order >= MAX_SPLINE_ORDER:
             raise ValueError('invalid order')
         self.order = order
@@ -96,11 +100,11 @@ cdef class Basis:
         return self.order - 1
 
     @property
-    def knots(self) -> Tuple[float, ...]:
+    def knots(self) -> tuple[float, ...]:
         return tuple(x for x in self._knots[:self.knot_count])
 
     @property
-    def weights(self) -> Tuple[float, ...]:
+    def weights(self) -> tuple[float, ...]:
         return self.weights_
 
     @property
@@ -129,7 +133,7 @@ cdef class Basis:
         """ Determine the knot span index. """
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
-        cdef double*knots = self._knots
+        cdef double *knots = self._knots
         cdef int count = self.count  # text book: n+1
         cdef int p = self.order - 1
         cdef int span
@@ -152,7 +156,7 @@ cdef class Basis:
     cpdef list basis_funcs(self, int span, double u):
         # Source: The NURBS Book: Algorithm A2.2
         cdef int order = self.order
-        cdef double*knots = self._knots
+        cdef double *knots = self._knots
         cdef double[MAX_SPLINE_ORDER] N, left, right
         cdef list result
         reset_double_array(N, order)
@@ -182,7 +186,7 @@ cdef class Basis:
         else:
             return result
 
-    cpdef list span_weighting(self, nbasis: List[float], int span):
+    cpdef list span_weighting(self, nbasis: list[float], int span):
         cdef list products = [
             nb * w for nb, w in zip(
                 nbasis,
@@ -310,7 +314,7 @@ cdef class Evaluator:
             v3_sum_mul_add(v3_sum, cpoint, <double> N[i])
         return v3_sum_to_vec3(v3_sum)
 
-    def points(self, t: Iterable[float]) -> Iterable[Vec3]:
+    def points(self, t: Iterable[float]) -> Iterator[Vec3]:
         cdef double u
         for u in t:
             yield self.point(u)
@@ -378,8 +382,7 @@ cdef class Evaluator:
                 CK.append(v3_sum_to_vec3(v3_sum))
         return CK
 
-    def derivatives(
-            self, t: Iterable[float], int n = 1) -> Iterable[List[Vec3]]:
+    def derivatives(self, t: Iterable[float], int n = 1) -> Iterator[list[Vec3]]:
         cdef double u
         for u in t:
             yield self.derivative(u, n)
