@@ -48,7 +48,7 @@ cdef int bisect_right(double *a, double x, int lo, int hi):
             lo = mid + 1
     return lo
 
-cdef reset_double_array(double *a, int count, double value=0.0):
+cdef reset_double_array(double *a, int count, double value):
     cdef int i
     for i in range(count):
         a[i] = value
@@ -159,9 +159,9 @@ cdef class Basis:
         cdef double *knots = self._knots
         cdef double[MAX_SPLINE_ORDER] N, left, right
         cdef list result
-        reset_double_array(N, order)
-        reset_double_array(left, order)
-        reset_double_array(right, order)
+        reset_double_array(N, order, 0.0)
+        reset_double_array(left, order, 0.0)
+        reset_double_array(right, order, 0.0)
 
         cdef int j, r, i1
         cdef double temp, saved, temp_r, temp_l
@@ -200,17 +200,23 @@ cdef class Basis:
             return NULL_LIST * len(nbasis)
 
     cpdef list basis_funcs_derivatives(self, int span, double u, int n = 1):
+        # pyright: reportUndefinedVariable=false
+        # pyright flags Cython multi-arrays incorrect: 
+        # cdef double[4][4] a  # this is a valid array definition in Cython!
+        # https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html#c-arrays
         # Source: The NURBS Book: Algorithm A2.3
         cdef int order = self.order
         cdef int p = order - 1
         if n > p:
             n = p
-        cdef double*knots = self._knots
+        cdef double *knots = self._knots
         cdef double[MAX_SPLINE_ORDER] left, right
         reset_double_array(left, order, 1.0)
         reset_double_array(right, order, 1.0)
 
-        cdef list ndu = [ONE_LIST * order for _ in range(order)]
+        cdef double[MAX_SPLINE_ORDER][MAX_SPLINE_ORDER] ndu  # pyright: ignore
+        reset_double_array(<double *> ndu, MAX_SPLINE_ORDER*MAX_SPLINE_ORDER, 1.0)
+
         cdef int j, r, i1
         cdef double temp, saved, tmp_r, tmp_l
         for j in range(1, order):
@@ -232,12 +238,17 @@ cdef class Basis:
             ndu[j][j] = saved
 
         # load the basis_vector functions
-        cdef list derivatives = [NULL_LIST * order for _ in range(order)]
+        cdef double[MAX_SPLINE_ORDER][MAX_SPLINE_ORDER] derivatives  # pyright: ignore
+        reset_double_array(
+            <double *> derivatives, MAX_SPLINE_ORDER*MAX_SPLINE_ORDER, 0.0
+        )
         for j in range(order):
             derivatives[0][j] = ndu[j][p]
 
         # loop over function index
-        cdef list a = [ONE_LIST * order, ONE_LIST * order]
+        cdef double[2][MAX_SPLINE_ORDER] a  # pyright: ignore
+        reset_double_array(<double *> a, 2*MAX_SPLINE_ORDER, 1.0)
+
         cdef int s1, s2, k, rk, pk, j1, j2, t
         cdef double d
         for r in range(order):
@@ -281,7 +292,15 @@ cdef class Basis:
             for j in range(order):
                 derivatives[k][j] *= rr
             rr *= (p - k)
-        return derivatives[:n + 1]
+
+        # return result as Python lists
+        cdef list result = [], row
+        for k in range(0, n + 1):
+            row = []
+            result.append(row)
+            for j in range(order):
+                row.append(derivatives[k][j])
+        return result
 
 cdef class Evaluator:
     """ B-spline curve point and curve derivative evaluator. """
@@ -295,16 +314,17 @@ cdef class Evaluator:
     cpdef Vec3 point(self, double u):
         # Source: The NURBS Book: Algorithm A3.1
         cdef Basis basis = self._basis
-        cdef int p = basis.order - 1
         if isclose(u, basis.max_t, REL_TOL, ABS_TOL):
             u = basis.max_t
-
-        cdef int span = basis.find_span(u)
-        cdef list N = basis.basis_funcs(span, u)
-        cdef int i
-        cdef Vec3 cpoint, v3_sum = Vec3()
-        cdef tuple control_points = self._control_points
-        cdef double factor
+        cdef:
+            int p = basis.order - 1
+            int span = basis.find_span(u)
+            list N = basis.basis_funcs(span, u)
+            int i
+            Vec3 cpoint, v3_sum = Vec3()
+            tuple control_points = self._control_points
+            double factor
+            
         for i in range(p + 1):
             factor = <double> N[i]
             cpoint = <Vec3> control_points[span - p + i]
@@ -321,19 +341,19 @@ cdef class Evaluator:
     cpdef list derivative(self, double u, int n = 1):
         """ Return point and derivatives up to n <= degree for parameter u. """
         # Source: The NURBS Book: Algorithm A3.2
-        cdef list CK = [], CKw = [], wders = []
-        cdef tuple weights
+        
         cdef Basis basis = self._basis
         if isclose(u, basis.max_t, REL_TOL, ABS_TOL):
             u = basis.max_t
-
-        cdef int p = basis.degree
-        cdef int span = basis.find_span(u)
-        cdef list basis_funcs_ders = basis.basis_funcs_derivatives(span, u, n)
-        cdef int k, j, i
-        cdef double wder, bas_func_weight, bas_func
-        cdef Vec3 cpoint, v3_sum
-        cdef tuple control_points = self._control_points
+        cdef:
+            list CK = [], CKw = [], wders = []
+            tuple control_points = self._control_points
+            tuple weights
+            Vec3 cpoint, v3_sum
+            double wder, bas_func_weight, bas_func
+            int k, j, i, p = basis.degree
+            int span = basis.find_span(u)
+            list basis_funcs_ders = basis.basis_funcs_derivatives(span, u, n)
 
         if basis.is_rational:
             # Homogeneous point representation required:
