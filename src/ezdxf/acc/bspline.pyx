@@ -1,15 +1,12 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2021-2023, Manfred Moitzi
+# Copyright (c) 2021-2024, Manfred Moitzi
 # License: MIT License
 # Cython implementation of the B-spline basis function.
-# type: ignore -- pylance sucks at type-checking cython files
-
 from typing import List, Iterable, Sequence, Tuple
 import cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from .vector cimport Vec3, isclose, v3_mul, v3_sub, v3_from_cpp_vec3
-from ._cpp_vec3 cimport CppVec3
+from .vector cimport Vec3, isclose, v3_mul, v3_sub
 
 __all__ = ['Basis', 'Evaluator']
 
@@ -291,12 +288,13 @@ cdef class Evaluator:
         self._basis = basis
         self._control_points = Vec3.tuple(control_points)
 
-    cdef CppVec3 control_point(self, int index):
-        cdef Vec3 v3 = <Vec3> self._control_points[index]
-        return v3.to_cpp_vec3()
-
     cpdef Vec3 point(self, double u):
         # Source: The NURBS Book: Algorithm A3.1
+        cdef double v3_sum[3]
+        v3_sum[0] = 0.0
+        v3_sum[1] = 0.0
+        v3_sum[2] = 0.0
+
         cdef Basis basis = self._basis
         cdef int p = basis.order - 1
         if isclose(u, basis.max_t, REL_TOL, ABS_TOL):
@@ -305,11 +303,12 @@ cdef class Evaluator:
         cdef int span = basis.find_span(u)
         cdef list N = basis.basis_funcs(span, u)
         cdef int i
-        cdef CppVec3 sum_ = CppVec3(), cpoint
+        cdef Vec3 cpoint
+        cdef tuple control_points = self._control_points
         for i in range(p + 1):
-            cpoint = self.control_point(span - p + i)
-            sum_ = sum_ + (cpoint * <double> N[i])
-        return v3_from_cpp_vec3(sum_)
+            cpoint = <Vec3> control_points[span - p + i] 
+            v3_sum_mul_add(v3_sum, cpoint, <double> N[i])
+        return v3_sum_to_vec3(v3_sum)
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
         cdef double u
@@ -319,8 +318,11 @@ cdef class Evaluator:
     cpdef list derivative(self, double u, int n = 1):
         """ Return point and derivatives up to n <= degree for parameter u. """
         # Source: The NURBS Book: Algorithm A3.2
-        cdef Vec3 vec3sum
-        cdef CppVec3 cppsum
+        cdef double v3_sum[3]
+        v3_sum[0] = 0.0
+        v3_sum[1] = 0.0
+        v3_sum[2] = 0.0
+
         cdef list CK = [], CKw = [], wders = []
         cdef tuple weights
         cdef Basis basis = self._basis
@@ -332,20 +334,26 @@ cdef class Evaluator:
         cdef list basis_funcs_ders = basis.basis_funcs_derivatives(span, u, n)
         cdef int k, j, i
         cdef double wder, bas_func_weight, bas_func
+        cdef Vec3 cpoint, vec3sum
+        cdef tuple control_points = self._control_points
+
         if basis.is_rational:
             # Homogeneous point representation required:
             # (x*w, y*w, z*w, w)
             weights = basis.weights_
             for k in range(n + 1):
-                cppsum = CppVec3()
+                v3_sum[0] = 0.0
+                v3_sum[1] = 0.0
+                v3_sum[2] = 0.0
                 wder = 0.0
                 for j in range(p + 1):
                     i = span - p + j
                     bas_func_weight = basis_funcs_ders[k][j] * weights[i]
                     # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
-                    cppsum = cppsum + (self.control_point(i) * bas_func_weight)
+                    cpoint = <Vec3> control_points[i] 
+                    v3_sum_mul_add(v3_sum, cpoint, bas_func_weight)
                     wder += bas_func_weight
-                CKw.append(v3_from_cpp_vec3(cppsum))
+                CKw.append(v3_sum_to_vec3(v3_sum))
                 wders.append(wder)
 
             # Source: The NURBS Book: Algorithm A4.2
@@ -353,18 +361,21 @@ cdef class Evaluator:
                 vec3sum = CKw[k]
                 for j in range(1, k + 1):
                     bas_func_weight = binomial_coefficient(k, j) * wders[j]
-                    vec3sum = v3_sub(vec3sum,
-                                     v3_mul(CK[k - j], bas_func_weight))
+                    vec3sum = v3_sub(
+                        vec3sum,
+                        v3_mul(CK[k - j], bas_func_weight)
+                    )
                 CK.append(vec3sum / wders[0])
         else:
             for k in range(n + 1):
-                cppsum = CppVec3()
+                v3_sum[0] = 0.0
+                v3_sum[1] = 0.0
+                v3_sum[2] = 0.0
                 for j in range(p + 1):
                     bas_func = basis_funcs_ders[k][j]
-                    cppsum = cppsum + (
-                            self.control_point(span - p + j) * bas_func
-                    )
-                CK.append(v3_from_cpp_vec3(cppsum))
+                    cpoint = <Vec3> control_points[span - p + j] 
+                    v3_sum_mul_add(v3_sum, cpoint, bas_func)
+                CK.append(v3_sum_to_vec3(v3_sum))
         return CK
 
     def derivatives(
@@ -372,3 +383,24 @@ cdef class Evaluator:
         cdef double u
         for u in t:
             yield self.derivative(u, n)
+
+
+cdef void v3_sum_mul_add(double *v3_sum, Vec3 vector, double factor):
+    """Multiply vector by factor and add to v3_sum. 
+    v3_sum has to be an array double[3].
+    """
+    v3_sum[0] += vector.x * factor
+    v3_sum[1] += vector.y * factor
+    v3_sum[2] += vector.z * factor
+
+
+cdef Vec3 v3_sum_to_vec3(double *v3_sum):
+    """Returns the vector sum v3_sum as Vec3 Python instance. 
+    v3_sum has to be an array double[3].
+    """
+    cdef Vec3 result = Vec3()
+    result.x = v3_sum[0]
+    result.y = v3_sum[1]
+    result.z = v3_sum[2]
+
+    return result
