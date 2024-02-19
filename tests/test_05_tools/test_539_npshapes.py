@@ -32,6 +32,22 @@ class TestNumpyPoints2d:
         pl.transform_inplace(m)
         assert all(v0.isclose(v1) for v0, v1 in zip(pl.vertices(), t_pts))
 
+    def test_to_tuples(self, points):
+        pl = NumpyPoints2d(points)
+        vertices = pl.to_tuples()
+        assert isinstance(vertices, list)
+        assert len(vertices) == len(points)
+        assert isinstance(vertices[0], tuple)
+        assert len(vertices[0]) == 2
+
+    def test_to_list(self, points):
+        pl = NumpyPoints2d(points)
+        vertices = pl.to_list()
+        assert isinstance(vertices, list)
+        assert len(vertices) == len(points)
+        assert isinstance(vertices[0], list)
+        assert len(vertices[0]) == 2
+
 
 class TestNumpyPoints3d:
     @pytest.fixture

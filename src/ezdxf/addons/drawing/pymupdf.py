@@ -350,7 +350,7 @@ class PyMuPdfRenderBackend(BackendInterface):
     def draw_filled_polygon(
         self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
-        vertices = points.as_tuples()
+        vertices = points.to_list()
         if len(vertices) < 3:
             return
         # pymupdf >= 1.23.19 does not accept Vec2() instances
