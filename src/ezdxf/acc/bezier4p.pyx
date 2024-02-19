@@ -39,7 +39,12 @@ cdef double RECURSION_LIMIT = 1000
 
 
 cdef class Bezier4P:
-    cdef FastQuadCurve curve    # pyright: ignore
+    cdef:
+        FastQuadCurve curve    # pyright: ignore
+        readonly Vec3 start_point
+        Vec3 cp1
+        Vec3 cp2
+        readonly Vec3 end_point
 
     def __cinit__(self, defpoints: Sequence[UVec]):
         if not isinstance(defpoints[0], (Vec2, Vec3)):
@@ -48,29 +53,23 @@ cdef class Bezier4P:
                 "Bezier4P requires defpoints of type Vec2 or Vec3 in the future",
             )
         if len(defpoints) == 4:
+            self.start_point = Vec3(defpoints[0])
+            self.cp1 = Vec3(defpoints[1])
+            self.cp2 = Vec3(defpoints[2])
+            self.end_point = Vec3(defpoints[3])
+
             self.curve = FastQuadCurve(
-                Vec3(defpoints[0]),
-                Vec3(defpoints[1]),
-                Vec3(defpoints[2]),
-                Vec3(defpoints[3]),
+                self.start_point,
+                self.cp1,
+                self.cp2,
+                self.end_point
             )
         else:
             raise ValueError("Four control points required.")
 
     @property
     def control_points(self) -> tuple[Vec3, Vec3, Vec3, Vec3]:
-        return self.curve.offset, \
-               v3_add(self.curve.p1, self.curve.offset), \
-               v3_add(self.curve.p2, self.curve.offset), \
-               v3_add(self.curve.p3, self.curve.offset)
-
-    @property
-    def start_point(self) -> Vec3:
-        return self.curve.offset
-
-    @property
-    def end_point(self) -> Vec3:
-        return v3_add(self.curve.p3, self.curve.offset)
+        return self.start_point, self.cp1, self.cp2, self.end_point
 
     def __reduce__(self):
         return Bezier4P, (self.control_points,)
@@ -103,8 +102,8 @@ cdef class Bezier4P:
     def flattening(self, double distance, int segments = 4) -> list[Vec3]:
         cdef double dt = 1.0 / segments
         cdef double t0 = 0.0, t1
-        cdef _Flattening f = _Flattening(self.curve, distance)
-        cdef Vec3 start_point = self.curve.offset
+        cdef _Flattening f = _Flattening(self, distance)
+        cdef Vec3 start_point = self.start_point
         cdef Vec3 end_point
         # Flattening of the translated curve!
         while t0 < 1.0:
@@ -139,18 +138,11 @@ cdef class Bezier4P:
         return length
 
     def reverse(self) -> Bezier4P:
-        p0, p1, p2, p3 = self.control_points
-        return Bezier4P((p3, p2, p1, p0))
+        return Bezier4P((self.end_point, self.cp2, self.cp1, self.start_point))
 
     def transform(self, Matrix44 m) -> Bezier4P:
-        p0, p1, p2, p3 = self.control_points
-        transform = m.transform
-        return Bezier4P((
-            transform(<Vec3> p0),
-            transform(<Vec3> p1),
-            transform(<Vec3> p2),
-            transform(<Vec3> p3),
-        ))
+        return Bezier4P(tuple(m.transform_vertices(self.control_points)))
+
 
 cdef class _Flattening:
     cdef FastQuadCurve curve  # pyright: ignore
@@ -159,10 +151,10 @@ cdef class _Flattening:
     cdef int _recursion_level
     cdef int _recursion_error
 
-    def __cinit__(self, FastQuadCurve curve, double distance):
-        self.curve = curve
+    def __cinit__(self, Bezier4P curve, double distance):
+        self.curve = curve.curve
         self.distance = distance
-        self.points = [curve.offset]
+        self.points = [curve.start_point]
         self._recursion_level = 0
         self._recursion_error = 0
 
@@ -320,13 +312,19 @@ cdef class FastQuadCurve:
     cdef Vec3 point(self, double t):
         # 1st control point (p0) is always (0, 0, 0)
         # => p0 * a is always (0, 0, 0)
-        cdef double weights[4]
-        cdef Vec3 result = Vec3()
+        cdef:
+            Vec3 result = Vec3()
+            double t2 = t * t
+            double _1_minus_t = 1.0 - t
+            # a = _1_minus_t * _1_minus_t * _1_minus_t  # not required
+            double b = 3.0 * _1_minus_t * _1_minus_t * t
+            double c = 3.0 * _1_minus_t * t2
+            double d = t2 * t
+            
 
-        bernstein_poly_d0(t, weights)
-        iadd_mul(result, self.p1, weights[1])
-        iadd_mul(result, self.p2, weights[2])
-        iadd_mul(result, self.p3, weights[3])
+        iadd_mul(result, self.p1, b)
+        iadd_mul(result, self.p2, c)
+        iadd_mul(result, self.p3, d)
 
         # add offset at last - it is maybe very large
         iadd(result, self.offset)
@@ -336,13 +334,17 @@ cdef class FastQuadCurve:
 
     cdef Vec3 tangent(self, double t):
         # tangent vector is independent from offset location!
-        cdef double weights[4]
-        cdef Vec3 result = Vec3()
+        cdef:
+            Vec3 result = Vec3()
+            double t2 = t * t
+            # a = -3.0 * (1.0 - t) * (1.0 - t)  # not required
+            double b = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
+            double c = 3.0 * t * (2.0 - 3.0 * t)
+            double d = 3.0 * t2
 
-        bernstein_poly_d1(t, weights)
-        iadd_mul(result, self.p1, weights[1])
-        iadd_mul(result, self.p2, weights[2])
-        iadd_mul(result, self.p3, weights[3])
+        iadd_mul(result, self.p1, b)
+        iadd_mul(result, self.p2, c)
+        iadd_mul(result, self.p3, d)
 
         return result
 
@@ -356,29 +358,4 @@ cdef void iadd(Vec3 a, Vec3 b):
     a.x += b.x
     a.y += b.y
     a.z += b.z
-
-
-cdef void bernstein_poly_d0(double t, double *weights):
-    # Required domain check for t has to be done by the caller!
-    #  0 <= t <= 1
-    cdef:
-        double t2 = t * t
-        double _1_minus_t = 1.0 - t
-        double _1_minus_t_square = _1_minus_t * _1_minus_t
-
-    weights[0] = _1_minus_t_square * _1_minus_t  # not required
-    weights[1] = 3.0 * _1_minus_t_square * t
-    weights[2] = 3.0 * _1_minus_t * t2
-    weights[3] = t2 * t
-
-
-cdef void bernstein_poly_d1(double t, double *weights):
-    # Required domain check for t has to be done by the caller!
-    # 0 <= t <= 1
-    cdef double t2 = t * t
-
-    weights[0] = -3.0 * (1.0 - t) * (1.0 - t)  # not required
-    weights[1] = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
-    weights[2] = 3.0 * t * (2.0 - 3.0 * t)
-    weights[3] = 3.0 * t2
 
