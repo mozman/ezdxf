@@ -3,7 +3,6 @@
 # distutils: language = c++
 # Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
-# type: ignore -- pylance sucks at type-checking cython files
 from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple, Iterator
 from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
 import random
@@ -855,88 +854,3 @@ def lerp(p1: UVec, p2: UVec, double factor = 0.5) -> Vec3:
     cdef Vec3 a = Vec3(p1)
     cdef Vec3 b = Vec3(p2)
     return v3_lerp(a, b, factor)
-
-
-# ----------------------------------------
-# CVec3 is a simple struct-based 3D vector
-# ----------------------------------------
-cdef CVec3 cv3_from_vec3(Vec3 a):
-    cdef CVec3 result
-
-    result.x = a.x
-    result.y = a.y
-    result.z = a.z
-
-    return result
-
-
-cdef Vec3 v3_from_cvec3(CVec3 a):
-    cdef Vec3 result = Vec3()
-
-    result.x = a.x
-    result.y = a.y
-    result.z = a.z
-
-    return result
-
-
-cdef bint cv3_isclose(CVec3 a, CVec3 b, double rel_tol, double abs_tol):
-    return isclose(a.x, b.x, rel_tol, abs_tol) and \
-           isclose(a.y, b.y, rel_tol, abs_tol) and \
-           isclose(a.z, b.z, rel_tol, abs_tol)
-
-
-cdef CVec3 cv3_add(CVec3 a, CVec3 b):
-    cdef CVec3 result
-
-    result.x = a.x + b.x
-    result.y = a.y + b.y
-    result.z = a.z + b.z
-
-    return result
-
-
-cdef CVec3 cv3_sub(CVec3 a, CVec3 b):
-    cdef CVec3 result
-
-    result.x = a.x - b.x
-    result.y = a.y - b.y
-    result.z = a.z - b.z
-
-    return result
-
-
-cdef CVec3 cv3_mul(CVec3 a, double factor):
-    cdef CVec3 result
-
-    result.x = a.x * factor
-    result.y = a.y * factor
-    result.z = a.z * factor
-
-    return result
-
-
-cdef inline double cv3_magnitude_sqr(CVec3 a):
-    return a.x * a.x + a.y * a.y + a.z * a.z
-
-
-cdef inline double cv3_magnitude(CVec3 a):
-    return sqrt(cv3_magnitude_sqr(a))
-
-
-cdef void cv3_iadd(CVec3 a, Vec3 b):
-    a.x += b.x
-    a.y += b.y
-    a.z += b.z
-
-
-cdef void cv3_isub(CVec3 a, Vec3 b):
-    a.x -= b.x
-    a.y -= b.y
-    a.z -= b.z
-
-
-cdef void cv3_imul(CVec3 a, double factor):
-    a.x *= factor
-    a.y *= factor
-    a.z *= factor

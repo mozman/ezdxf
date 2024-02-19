@@ -4,17 +4,7 @@
 # License: MIT License
 from typing import Iterator, TYPE_CHECKING, Sequence
 import cython
-from .vector cimport (
-    Vec3, 
-    CVec3, 
-    cv3_isclose, 
-    cv3_sub, 
-    cv3_add, 
-    cv3_mul, 
-    cv3_magnitude, 
-    cv3_from_vec3, 
-    v3_from_cvec3
-)
+from .vector cimport Vec3, v3_isclose, v3_sub, v3_add, v3_mul, v3_magnitude
 from libcpp.vector cimport vector
 
 if TYPE_CHECKING:
@@ -49,27 +39,27 @@ cdef class _LineTypeRenderer:
             self._is_dash = True
 
     def line_segment(self, start: UVec, end: UVec) -> Iterator[LineSegment]:
-        cdef CVec3 cv3_start = cv3_from_vec3(Vec3(start))
-        cdef CVec3 cv3_end = cv3_from_vec3(Vec3(end))
-        cdef CVec3 segment_vec, segment_dir
+        cdef Vec3 v3_start = Vec3(start)
+        cdef Vec3 v3_end = Vec3(end)
+        cdef Vec3 segment_vec, segment_dir
         cdef double segment_length, dash_length
         cdef vector[double] dashes
 
-        if self.is_solid or cv3_isclose(cv3_start, cv3_end, REL_TOL, ABS_TOL):
-            yield v3_from_cvec3(cv3_start), v3_from_cvec3(cv3_end)
+        if self.is_solid or v3_isclose(v3_start, v3_end, REL_TOL, ABS_TOL):
+            yield v3_start, v3_end
             return
 
-        segment_vec = cv3_sub(cv3_end, cv3_start)
-        segment_length = cv3_magnitude(segment_vec)
+        segment_vec = v3_sub(v3_end, v3_start)
+        segment_length = v3_magnitude(segment_vec)
         with cython.cdivision:
-            segment_dir = cv3_mul(segment_vec, 1.0 / segment_length)  # normalize
+            segment_dir = v3_mul(segment_vec, 1.0 / segment_length)  # normalize
 
         self._render_dashes(segment_length, dashes)
         for dash_length in dashes:
-            cv3_end = cv3_add(cv3_start, cv3_mul(segment_dir, abs(dash_length)))
+            v3_end = v3_add(v3_start, v3_mul(segment_dir, abs(dash_length)))
             if dash_length > 0:
-                yield v3_from_cvec3(cv3_start), v3_from_cvec3(cv3_end)
-            cv3_start = cv3_end
+                yield v3_start, v3_end
+            v3_start = v3_end
 
     cdef _render_dashes(self, double length, vector[double] &dashes):
         if length <= self._current_dash_length:

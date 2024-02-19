@@ -2,7 +2,6 @@
 # distutils: language = c++
 # Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
-# type: ignore -- pylance sucks at type-checking cython files
 # C-support functions:
 
 cdef bint isclose(double a, double b, double rel_tol, double abs_tol)
@@ -62,25 +61,4 @@ cdef Vec3 v3_ortho(Vec3 a, bint ccw)
 cdef Vec3 v3_project(Vec3 a, Vec3 b)
 cdef bint v3_isclose(Vec3 a, Vec3 b, double rel_tol, double abs_tol)
 cdef Vec3 v3_from_cpp_vec3(CppVec3)
-
-# ----------------------------------------
-# CVec3 is a simple struct-based 3D vector
-# ----------------------------------------
-
-cdef struct CVec3:
-    double x
-    double y
-    double z
-
-cdef CVec3 cv3_from_vec3(Vec3 a)
-cdef Vec3 v3_from_cvec3(CVec3 a)
-cdef bint cv3_isclose(CVec3 a, CVec3 b, double rel_tol, double abs_tol)
-cdef CVec3 cv3_add(CVec3 a, CVec3 b)
-cdef CVec3 cv3_sub(CVec3 a, CVec3 b)
-cdef CVec3 cv3_mul(CVec3 a, double factor)
-cdef double cv3_magnitude_sqr(CVec3 a)
-cdef double cv3_magnitude(CVec3 a)
-cdef void cv3_iadd(CVec3 a, Vec3 b)
-cdef void cv3_isub(CVec3 a, Vec3 b)
-cdef void cv3_imul(CVec3 a, double factor)
 
