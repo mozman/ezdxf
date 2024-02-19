@@ -26,10 +26,10 @@ from ezdxf.acc.bezier4p import (
     cubic_bezier_from_arc as cython_bezier_from_arc,
     cubic_bezier_from_ellipse as cython_bezier_from_ellipse,
 )
-from ezdxf.math import ConstructionEllipse
+from ezdxf.math import ConstructionEllipse, Vec3
 from ezdxf.version import __version__
 
-POINTS = [(0, 0), (1, 0), (1, 1), (0, 1)]
+POINTS = Vec3.list([(0, 0), (1, 0), (1, 1), (0, 1)])
 
 
 def open_log(name: str):
