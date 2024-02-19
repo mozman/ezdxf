@@ -101,6 +101,10 @@ class NumpyShape2d(abc.ABC):
         """Returns the shape vertices as list of :class:`Vec2`."""
         return [Vec2(v) for v in self._vertices]
 
+    def as_tuples(self) -> list[tuple[float, float]]:
+        """Returns the shape vertices as list of 2-tuples."""
+        return [tuple(v) for v in self._vertices]
+    
     def bbox(self) -> BoundingBox2d:
         """Returns the bounding box of all vertices."""
         return BoundingBox2d(self.extents())
