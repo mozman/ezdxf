@@ -1,18 +1,26 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2022-2023, Manfred Moitzi
+# Copyright (c) 2022-2024, Manfred Moitzi
 # License: MIT License
-# type: ignore -- pylance sucks at type-checking cython files
-from typing import Tuple, Iterable, TYPE_CHECKING, Sequence
+from typing import Iterator, TYPE_CHECKING, Sequence
 import cython
-from .vector cimport Vec3, isclose, v3_from_cpp_vec3
-from ._cpp_vec3 cimport CppVec3
+from .vector cimport (
+    Vec3, 
+    CVec3, 
+    cv3_isclose, 
+    cv3_sub, 
+    cv3_add, 
+    cv3_mul, 
+    cv3_magnitude, 
+    cv3_from_vec3, 
+    v3_from_cvec3
+)
 from libcpp.vector cimport vector
 
 if TYPE_CHECKING:
     from ezdxf.math import UVec
 
-LineSegment = Tuple[Vec3, Vec3]
+LineSegment = tuple[Vec3, Vec3]
 
 cdef extern from "constants.h":
     const double ABS_TOL
@@ -40,30 +48,28 @@ cdef class _LineTypeRenderer:
             self._current_dash_length = self._dashes[0]
             self._is_dash = True
 
-    def line_segment(self, start: UVec, end: UVec) -> Iterable[LineSegment]:
-        cdef Vec3 _start = Vec3(start)
-        cdef Vec3 _end = Vec3(end)
-        cdef CppVec3 cpp_start = CppVec3(_start.x, _start.y, _start.z)
-        cdef CppVec3 cpp_end = CppVec3(_end.x, _end.y, _end.z)
-        cdef CppVec3 segment_vec, segment_dir
+    def line_segment(self, start: UVec, end: UVec) -> Iterator[LineSegment]:
+        cdef CVec3 cv3_start = cv3_from_vec3(Vec3(start))
+        cdef CVec3 cv3_end = cv3_from_vec3(Vec3(end))
+        cdef CVec3 segment_vec, segment_dir
         cdef double segment_length, dash_length
         cdef vector[double] dashes
 
-        if self.is_solid or cpp_start.isclose(cpp_end, ABS_TOL):
-            yield v3_from_cpp_vec3(cpp_start), v3_from_cpp_vec3(cpp_end)
+        if self.is_solid or cv3_isclose(cv3_start, cv3_end, REL_TOL, ABS_TOL):
+            yield v3_from_cvec3(cv3_start), v3_from_cvec3(cv3_end)
             return
 
-        segment_vec = cpp_end - cpp_start
-        segment_length = segment_vec.magnitude()
+        segment_vec = cv3_sub(cv3_end, cv3_start)
+        segment_length = cv3_magnitude(segment_vec)
         with cython.cdivision:
-            segment_dir = segment_vec * (1.0 / segment_length)  # normalize
+            segment_dir = cv3_mul(segment_vec, 1.0 / segment_length)  # normalize
 
         self._render_dashes(segment_length, dashes)
         for dash_length in dashes:
-            cpp_end = cpp_start + (segment_dir * abs(dash_length))
+            cv3_end = cv3_add(cv3_start, cv3_mul(segment_dir, abs(dash_length)))
             if dash_length > 0:
-                yield v3_from_cpp_vec3(cpp_start), v3_from_cpp_vec3(cpp_end)
-            cpp_start = cpp_end
+                yield v3_from_cvec3(cv3_start), v3_from_cvec3(cv3_end)
+            cv3_start = cv3_end
 
     cdef _render_dashes(self, double length, vector[double] &dashes):
         if length <= self._current_dash_length:
