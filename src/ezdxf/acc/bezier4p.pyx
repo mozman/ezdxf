@@ -1,25 +1,24 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2020-2022 Manfred Moitzi
+# Copyright (c) 2020-2024 Manfred Moitzi
 # License: MIT License
-# type: ignore -- pylance sucks at type-checking cython files
-from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
+from typing import TYPE_CHECKING, Sequence, Iterable, Iterator
 import cython
 import warnings
 from .vector cimport (
     Vec3,
     Vec2,
     isclose,
+    v3_add,
+    v3_sub,
+    v3_mul,
     v3_dist,
+    v3_lerp,
     v3_from_angle,
     normalize_rad_angle,
-    v3_from_cpp_vec3,
-    v3_add
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, tan, M_PI
-from ._cpp_vec3 cimport CppVec3
-from ._cpp_cubic_bezier cimport CppCubicBezier
 from .construct import arc_angle_span_deg
 
 if TYPE_CHECKING:
@@ -40,37 +39,35 @@ cdef double DEG2RAD = M_PI / 180.0
 cdef double RECURSION_LIMIT = 1000
 
 
-# noinspection PyUnresolvedReferences
 cdef class Bezier4P:
-    cdef CppCubicBezier curve
+    cdef ControlPoints curve
     cdef Vec3 offset
 
     def __cinit__(self, defpoints: Sequence[UVec]):
-        cdef CppVec3 cpp_offset
+        cdef Vec3 offset
         if not isinstance(defpoints[0], (Vec2, Vec3)):
             warnings.warn(
                 DeprecationWarning, 
                 "Bezier4P requires defpoints of type Vec2 or Vec3 in the future",
             )
         if len(defpoints) == 4:
-            self.offset = Vec3(defpoints[0])
-            cpp_offset = self.offset.to_cpp_vec3()
-            self.curve = CppCubicBezier(
-                CppVec3(),
-                Vec3(defpoints[1]).to_cpp_vec3() - cpp_offset,
-                Vec3(defpoints[2]).to_cpp_vec3() - cpp_offset,
-                Vec3(defpoints[3]).to_cpp_vec3() - cpp_offset,
+            offset = Vec3(defpoints[0])
+            self.offset = offset
+            self.curve = ControlPoints(
+                Vec3(),
+                v3_sub(Vec3(defpoints[1]), offset),
+                v3_sub(Vec3(defpoints[2]), offset),
+                v3_sub(Vec3(defpoints[3]), offset),
             )
         else:
             raise ValueError("Four control points required.")
 
     @property
-    def control_points(self) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
-        cdef CppVec3 cpp_offset = self.offset.to_cpp_vec3()
+    def control_points(self) -> tuple[Vec3, Vec3, Vec3, Vec3]:
         return self.offset, \
-               v3_from_cpp_vec3(self.curve.p1 + cpp_offset), \
-               v3_from_cpp_vec3(self.curve.p2 + cpp_offset), \
-               v3_from_cpp_vec3(self.curve.p3 + cpp_offset)
+               v3_add(self.curve.p1, self.offset), \
+               v3_add(self.curve.p2, self.offset), \
+               v3_add(self.curve.p3, self.offset)
 
     @property
     def start_point(self) -> Vec3:
@@ -78,24 +75,24 @@ cdef class Bezier4P:
 
     @property
     def end_point(self) -> Vec3:
-        return v3_add(v3_from_cpp_vec3(self.curve.p3), self.offset)
+        return v3_add(self.curve.p3, self.offset)
 
     def __reduce__(self):
         return Bezier4P, (self.control_points,)
 
     def point(self, double t) -> Vec3:
         if 0.0 <= t <= 1.0:
-            return v3_add(v3_from_cpp_vec3(self.curve.point(t)), self.offset)
+            return v3_add(self.curve.point(t), self.offset)
         else:
             raise ValueError("t not in range [0 to 1]")
 
     def tangent(self, double t) -> Vec3:
         if 0.0 <= t <= 1.0:
-            return v3_from_cpp_vec3(self.curve.tangent(t))
+            return self.curve.tangent(t)
         else:
             raise ValueError("t not in range [0 to 1]")
 
-    def approximate(self, int segments) -> List[Vec3]:
+    def approximate(self, int segments) -> list[Vec3]:
         cdef double delta_t
         cdef int segment
         cdef list points = [self.start_point]
@@ -108,12 +105,12 @@ cdef class Bezier4P:
         points.append(self.end_point)
         return points
 
-    def flattening(self, double distance, int segments = 4) -> List[Vec3]:
+    def flattening(self, double distance, int segments = 4) -> list[Vec3]:
         cdef double dt = 1.0 / segments
         cdef double t0 = 0.0, t1
         cdef _Flattening f = _Flattening(self, distance)
-        cdef CppVec3 start_point = self.curve.p0
-        cdef CppVec3 end_point
+        cdef Vec3 start_point = self.curve.p0
+        cdef Vec3 end_point
         cdef Vec3 offset = self.offset
         # Flattening of the translated curve!
         while t0 < 1.0:
@@ -162,7 +159,7 @@ cdef class Bezier4P:
         ))
 
 cdef class _Flattening:
-    cdef CppCubicBezier curve
+    cdef ControlPoints curve
     cdef double distance
     cdef list points
     cdef int _recursion_level
@@ -171,7 +168,7 @@ cdef class _Flattening:
     def __cinit__(self, Bezier4P curve, double distance):
         self.curve = curve.curve
         self.distance = distance
-        self.points = [v3_from_cpp_vec3(self.curve.p0)]
+        self.points = [self.curve.p0]
         self._recursion_level = 0
         self._recursion_error = 0
 
@@ -184,8 +181,8 @@ cdef class _Flattening:
 
     cdef flatten(
         self,
-        CppVec3 start_point,
-        CppVec3 end_point,
+        Vec3 start_point,
+        Vec3 end_point,
         double start_t,
         double end_t
     ):
@@ -196,11 +193,11 @@ cdef class _Flattening:
             return
         self._recursion_level += 1
         cdef double mid_t = (start_t + end_t) * 0.5
-        cdef CppVec3 mid_point = self.curve.point(mid_t)
-        cdef double d = mid_point.distance(start_point.lerp(end_point, 0.5))
+        cdef Vec3 mid_point = self.curve.point(mid_t)
+        cdef double d = v3_dist(mid_point, v3_lerp(start_point, end_point, 0.5))
         if d < self.distance:
             # Convert CppVec3 to Python type Vec3:
-            self.points.append(v3_from_cpp_vec3(end_point))
+            self.points.append(end_point)
         else:
             self.flatten(start_point, mid_point, start_t, mid_t)
             self.flatten(mid_point, end_point, mid_t, end_t)
@@ -212,8 +209,10 @@ cdef double TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
 
 @cython.cdivision(True)
 def cubic_bezier_arc_parameters(
-        double start_angle, double end_angle,
-        int segments = 1) -> Iterable[Tuple[Vec3, Vec3, Vec3, Vec3]]:
+    double start_angle, 
+    double end_angle,
+    int segments = 1,
+) -> Iterator[tuple[Vec3, Vec3, Vec3, Vec3]]:
     if segments < 1:
         raise ValueError('Invalid argument segments (>= 1).')
     cdef double delta_angle = end_angle - start_angle
@@ -244,10 +243,14 @@ def cubic_bezier_arc_parameters(
         yield start_point, cp1, cp2, end_point
 
 def cubic_bezier_from_arc(
-        center = (0, 0), double radius = 1.0, double start_angle = 0.0,
-        double end_angle = 360.0, int segments = 1) -> Iterable[Bezier4P]:
-    cdef CppVec3 center_ = Vec3(center).to_cpp_vec3()
-    cdef CppVec3 tmp
+    center = (0, 0), 
+    double radius = 1.0, 
+    double start_angle = 0.0,
+    double end_angle = 360.0, 
+    int segments = 1
+) -> Iterable[Bezier4P]:
+    cdef Vec3 center_ = Vec3(center)
+    cdef Vec3 tmp
     cdef list res
     cdef int i
     cdef double angle_span = arc_angle_span_deg(start_angle, end_angle)
@@ -260,16 +263,17 @@ def cubic_bezier_from_arc(
     while start_angle > end_angle:
         end_angle += M_TAU
 
-    for control_points in cubic_bezier_arc_parameters(
-            start_angle, end_angle, segments):
-        res = list()
+    for control_points in cubic_bezier_arc_parameters(start_angle, end_angle, segments):
+        res = []
         for i in range(4):
-            tmp = (<Vec3> control_points[i]).to_cpp_vec3()
-            res.append(v3_from_cpp_vec3(center_ + tmp * radius))
+            tmp = <Vec3> control_points[i]
+            res.append(v3_add(center_, v3_mul(tmp, radius)))
         yield Bezier4P(res)
 
-def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
-                              int segments = 1) -> Iterable[Bezier4P]:
+def cubic_bezier_from_ellipse(
+    ellipse: ConstructionEllipse,
+    int segments = 1
+) -> Iterator[Bezier4P]:
     cdef double param_span = ellipse.param_span
     if abs(param_span) < 1e-9:
         return
@@ -280,17 +284,92 @@ def cubic_bezier_from_ellipse(ellipse: 'ConstructionEllipse',
     while start_angle > end_angle:
         end_angle += M_TAU
 
-    cdef CppVec3 center = Vec3(ellipse.center).to_cpp_vec3()
-    cdef CppVec3 x_axis = Vec3(ellipse.major_axis).to_cpp_vec3()
-    cdef CppVec3 y_axis = Vec3(ellipse.minor_axis).to_cpp_vec3()
+    cdef Vec3 center = Vec3(ellipse.center)
+    cdef Vec3 x_axis = Vec3(ellipse.major_axis)
+    cdef Vec3 y_axis = Vec3(ellipse.minor_axis)
     cdef Vec3 cp
-    cdef CppVec3 c_res
+    cdef Vec3 c_res
     cdef list res
-    for control_points in cubic_bezier_arc_parameters(
-            start_angle, end_angle, segments):
+    for control_points in cubic_bezier_arc_parameters(start_angle, end_angle, segments):
         res = list()
         for i in range(4):
             cp = <Vec3> control_points[i]
-            c_res = center + x_axis * cp.x + y_axis * cp.y
-            res.append(v3_from_cpp_vec3(c_res))
+            c_res = v3_add_3_mul(center, v3_mul(x_axis, cp.x), v3_mul(y_axis, cp.y))
+            res.append(c_res)
         yield Bezier4P(res)
+
+
+cdef Vec3 v3_add_3_mul(Vec3 a, Vec3 b, Vec3 c):
+    cdef Vec3 result = Vec3()
+
+    result.x = a.x + b.x + c.x
+    result.y = a.y + b.y + c.y
+    result.z = a.z + b.z + c.z
+
+    return result
+
+
+cdef class ControlPoints:
+    cdef:
+        Vec3 p0
+        Vec3 p1
+        Vec3 p2
+        Vec3 p3
+
+    def __cinit__(self, Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3):
+        self.p0 = p0
+        self.p1 = p1
+        self.p2 = p2
+        self.p3 = p3
+
+
+    cdef Vec3 point(self, double t):
+        cdef double weights[4]
+        bernstein_poly_d0(t, weights)
+        return self.evaluate(weights)
+
+
+    cdef Vec3 tangent(self, double t):
+        cdef double weights[4]
+        bernstein_poly_d1(t, weights)
+        return self.evaluate(weights)
+
+
+    cdef Vec3 evaluate(self, double *weights):
+        cdef Vec3 result = Vec3()
+
+        iadd_mul(result, self.p0, weights[0])
+        iadd_mul(result, self.p1, weights[1])
+        iadd_mul(result, self.p2, weights[2])
+        iadd_mul(result, self.p3, weights[3])
+        return result
+
+
+cdef void iadd_mul(Vec3 p, Vec3 cp, double f):
+    p.x += cp.x * f
+    p.y += cp.y * f
+    p.z += cp.z * f
+
+
+cdef void bernstein_poly_d0(double t, double *weights):
+    # Required domain check for t has to be done by the caller!
+    #  0 <= t <= 1
+    cdef:
+        double t2 = t * t
+        double _1_minus_t = 1.0 - t
+        double _1_minus_t_square = _1_minus_t * _1_minus_t
+    weights[0] = _1_minus_t_square * _1_minus_t
+    weights[1] = 3.0 * _1_minus_t_square * t
+    weights[2] = 3.0 * _1_minus_t * t2
+    weights[3] = t2 * t
+
+
+cdef void bernstein_poly_d1(double t, double *weights):
+    # Required domain check for t has to be done by the caller!
+    # 0 <= t <= 1
+    cdef double t2 = t * t
+    weights[0] = -3.0 * (1.0 - t) * (1.0 - t)
+    weights[1] = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
+    weights[2] = 3.0 * t * (2.0 - 3.0 * t)
+    weights[3] = 3.0 * t2
+

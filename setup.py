@@ -29,7 +29,6 @@ ext_modules = [
         "ezdxf.acc.bezier4p",
         [
             "src/ezdxf/acc/bezier4p.pyx",
-            "src/ezdxf/acc/_cpp_cubic_bezier.cpp",
         ],
         optional=True,
         language="c++",
