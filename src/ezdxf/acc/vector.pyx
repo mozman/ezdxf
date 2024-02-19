@@ -377,23 +377,6 @@ cdef Vec2 v2_from_cpp_vec3(CppVec3 c):
     return v
 
 
-# Inplace operators only for internal usage in Cython modules!
-# Vec2 instances must not be shared!
-cdef void v2_iadd(Vec2 a, Vec2 b):
-    a.x += b.x
-    a.y += b.y
-
-
-cdef void v2_isub(Vec2 a, Vec2 b):
-    a.x -= b.x
-    a.y -= b.y
-
-
-cdef void v2_imul(Vec2 a, double factor):
-    a.x *= factor
-    a.y *= factor
-
-
 cdef class Vec3:
     """ Immutable 3D vector.
 
