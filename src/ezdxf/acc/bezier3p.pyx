@@ -18,8 +18,11 @@ cdef double RECURSION_LIMIT = 1000
 
 
 cdef class Bezier3P:
-    cdef ControlPoints curve  # pyright: ignore
-    cdef Vec3 offset
+    cdef:
+        FastQuadCurve curve  # pyright: ignore
+        readonly Vec3 start_point
+        Vec3 cp1
+        readonly Vec3 end_point
 
     def __cinit__(self, defpoints: Sequence[UVec]):
         if not isinstance(defpoints[0], (Vec2, Vec3)):
@@ -28,35 +31,28 @@ cdef class Bezier3P:
                 "Bezier3P requires defpoints of type Vec2 or Vec3 in the future",
             )
         if len(defpoints) == 3:
-            offset = Vec3(defpoints[0])
-            self.offset = offset
-            self.curve = ControlPoints(
-                Vec3(),
-                Vec3(defpoints[1]) - offset,
-                Vec3(defpoints[2]) - offset,
+            self.start_point = Vec3(defpoints[0])
+            self.cp1 = Vec3(defpoints[1])
+            self.end_point = Vec3(defpoints[2])
+
+            self.curve = FastQuadCurve(
+                self.start_point,
+                self.cp1,
+                self.end_point
             )
         else:
             raise ValueError("Three control points required.")
 
     @property
     def control_points(self) -> tuple[Vec3, Vec3, Vec3]:
-        offset = self.offset
-        return offset, v3_add(self.curve.p1, offset), v3_add(self.curve.p2, offset)
-
-    @property
-    def start_point(self) -> Vec3:
-        return self.offset
-
-    @property
-    def end_point(self) -> Vec3:
-        return v3_add(self.curve.p2, self.offset)
+        return self.start_point, self.cp1, self.end_point
 
     def __reduce__(self):
         return Bezier3P, (self.control_points,)
 
     def point(self, double t) -> Vec3:
         if 0.0 <= t <= 1.0:
-            return v3_add(self.curve.point(t), self.offset)
+            return self.curve.point(t)
         else:
             raise ValueError("t not in range [0 to 1]")
 
@@ -83,14 +79,12 @@ cdef class Bezier3P:
         cdef double dt = 1.0 / segments
         cdef double t0 = 0.0, t1
         cdef _Flattening f = _Flattening(self, distance)
-        cdef Vec3 start_point = self.curve.p0
+        cdef Vec3 start_point = self.start_point
         cdef Vec3 end_point
-        cdef Vec3 offset = self.offset
-        # Flattening of the translated curve!
         while t0 < 1.0:
             t1 = t0 + dt
             if isclose(t1, 1.0, REL_TOL, ABS_TOL):
-                end_point = self.curve.p2
+                end_point = self.end_point
                 t1 = 1.0
             else:
                 end_point = self.curve.point(t1)
@@ -102,8 +96,7 @@ cdef class Bezier3P:
                 )
             t0 = t1
             start_point = end_point
-        # translate vertices to original location:
-        return [v3_add(p, offset) for p in f.points]
+        return f.points
 
     def approximated_length(self, segments: int = 128) -> float:
         cdef double length = 0.0
@@ -119,20 +112,14 @@ cdef class Bezier3P:
         return length
 
     def reverse(self) -> Bezier3P:
-        p0, p1, p2 = self.control_points
-        return Bezier3P((p2, p1, p0))
+        return Bezier3P((self.end_point, self.cp1, self.start_point))
 
     def transform(self, Matrix44 m) -> Bezier3P:
-        p0, p1, p2 = self.control_points
-        transform = m.transform
-        return Bezier3P((
-            transform(p0),
-            transform(p1),
-            transform(p2),
-        ))
+        return Bezier3P(tuple(m.transform_vertices(self.control_points)))
+
 
 cdef class _Flattening:
-    cdef ControlPoints curve  # pyright: ignore
+    cdef FastQuadCurve curve  # pyright: ignore
     cdef double distance
     cdef list points
     cdef int _recursion_level
@@ -141,7 +128,7 @@ cdef class _Flattening:
     def __cinit__(self, Bezier3P curve, double distance):
         self.curve = curve.curve
         self.distance = distance
-        self.points = [self.curve.p0]
+        self.points = [curve.start_point]
         self._recursion_level = 0
         self._recursion_error = 0
 
@@ -165,7 +152,7 @@ cdef class _Flattening:
         self._recursion_level += 1
         cdef double mid_t = (start_t + end_t) * 0.5
         cdef Vec3 mid_point = self.curve.point(mid_t)
-        cdef double d = v3_dist(mid_point, v3_lerp(start_point,end_point, 0.5))
+        cdef double d = v3_dist(mid_point, v3_lerp(start_point, end_point, 0.5))
         if d < self.distance:
             self.points.append(end_point)
         else:
@@ -174,43 +161,63 @@ cdef class _Flattening:
         self._recursion_level -= 1
 
 
-cdef class ControlPoints:
+cdef class FastQuadCurve:
     cdef:
-        Vec3 p0
-        Vec3 p1
-        Vec3 p2
+        double[3] offset
+        double[3] p1
+        double[3] p2
 
     def __cinit__(self, Vec3 p0, Vec3 p1, Vec3 p2):
-        self.p0 = p0
-        self.p1 = p1
-        self.p2 = p2
+        self.offset[0] = p0.x
+        self.offset[1] = p0.y
+        self.offset[2] = p0.z
+
+        # 1st control point (p0) is always (0, 0, 0)
+        self.p1[0] = p1.x - p0.x
+        self.p1[1] = p1.y - p0.y
+        self.p1[2] = p1.z - p0.z
+
+        self.p2[0] = p2.x - p0.x
+        self.p2[1] = p2.y - p0.y
+        self.p2[2] = p2.z - p0.z
 
 
     cdef Vec3 point(self, double t):
-        cdef double _1_minus_t = 1.0 - t
-        cdef double a = _1_minus_t * _1_minus_t
-        cdef double b = 2.0 * t * _1_minus_t
-        cdef double c = t * t
-        return self.evaluate(a, b, c)
+        # 1st control point (p0) is always (0, 0, 0)
+        # => p0 * a is always (0, 0, 0)
+        cdef:
+            Vec3 result = Vec3()
+            double _1_minus_t = 1.0 - t
+            # double a = (1 - t) ** 2
+            double b = 2.0 * t * _1_minus_t
+            double c = t * t
 
-
-    cdef Vec3 tangent(self, double t):
-        cdef double a = -2.0 * (1.0 - t)
-        cdef double b = 2.0 - 4.0 * t
-        cdef double c = 2.0 * t
-        return self.evaluate(a, b, c)
-
-
-    cdef Vec3 evaluate(self, double a, double b, double c):
-        cdef Vec3 result = Vec3()
-
-        iadd_mul(result, self.p0, a)
         iadd_mul(result, self.p1, b)
         iadd_mul(result, self.p2, c)
+
+        # add offset at last - it is maybe very large
+        result.x += self.offset[0]
+        result.y += self.offset[1]
+        result.z += self.offset[2]
+
         return result
 
 
-cdef void iadd_mul(Vec3 p, Vec3 cp, double f):
-    p.x += cp.x * f
-    p.y += cp.y * f
-    p.z += cp.z * f
+    cdef Vec3 tangent(self, double t):
+        # tangent vector is independent from offset location!
+        cdef:
+            Vec3 result = Vec3()
+            # double a = -2 * (1 - t)
+            double b = 2.0 - 4.0 * t
+            double c = 2.0 * t
+
+        iadd_mul(result, self.p1, b)
+        iadd_mul(result, self.p2, c)
+
+        return result
+
+
+cdef void iadd_mul(Vec3 a, double[3] b, double c):
+    a.x += b[0] * c
+    a.y += b[1] * c
+    a.z += b[2] * c
