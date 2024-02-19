@@ -9,7 +9,7 @@ cdef extern from "_cpp_quad_bezier.hpp":
     cdef cppclass CppQuadBezier:
         CppVec3 p0, p1, p2
 
-        CppQuadBezier();
-        CppQuadBezier(CppVec3, CppVec3, CppVec3);
-        CppVec3 point(double t);
-        CppVec3 tangent(double t);
+        CppQuadBezier()
+        CppQuadBezier(CppVec3, CppVec3, CppVec3)
+        CppVec3 point(double t)
+        CppVec3 tangent(double t)
