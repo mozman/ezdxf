@@ -9,7 +9,6 @@ from .vector cimport (
     Vec2,
     isclose,
     v3_add,
-    v3_sub,
     v3_mul,
     v3_dist,
     v3_lerp,
@@ -40,7 +39,7 @@ cdef double RECURSION_LIMIT = 1000
 
 cdef class Bezier4P:
     cdef:
-        FastQuadCurve curve    # pyright: ignore
+        FastCubicCurve curve    # pyright: ignore
         readonly Vec3 start_point
         Vec3 cp1
         Vec3 cp2
@@ -58,7 +57,7 @@ cdef class Bezier4P:
             self.cp2 = Vec3(defpoints[2])
             self.end_point = Vec3(defpoints[3])
 
-            self.curve = FastQuadCurve(
+            self.curve = FastCubicCurve(
                 self.start_point,
                 self.cp1,
                 self.cp2,
@@ -105,7 +104,6 @@ cdef class Bezier4P:
         cdef _Flattening f = _Flattening(self, distance)
         cdef Vec3 start_point = self.start_point
         cdef Vec3 end_point
-        # Flattening of the translated curve!
         while t0 < 1.0:
             t1 = t0 + dt
             if isclose(t1, 1.0, REL_TOL, ABS_TOL):
@@ -145,7 +143,7 @@ cdef class Bezier4P:
 
 
 cdef class _Flattening:
-    cdef FastQuadCurve curve  # pyright: ignore
+    cdef FastCubicCurve curve  # pyright: ignore
     cdef double distance
     cdef list points
     cdef int _recursion_level
@@ -294,20 +292,31 @@ cdef Vec3 v3_add_3(Vec3 a, Vec3 b, Vec3 c):
     return result
 
 
-cdef class FastQuadCurve:
+cdef class FastCubicCurve:
     cdef:
-        Vec3 offset
-        Vec3 p1
-        Vec3 p2
-        Vec3 p3
+        double[3] offset
+        double[3] p1
+        double[3] p2
+        double[3] p3
 
     def __cinit__(self, Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3):
-        # 1st control point (p0) is always (0, 0, 0)
-        self.offset = p0
-        self.p1 = v3_sub(p1, p0)
-        self.p2 = v3_sub(p2, p0)
-        self.p3 = v3_sub(p3, p0)
+        self.offset[0] = p0.x
+        self.offset[1] = p0.y
+        self.offset[2] = p0.z
 
+        # 1st control point (p0) is always (0, 0, 0)
+        self.p1[0] = p1.x - p0.x
+        self.p1[1] = p1.y - p0.y
+        self.p1[2] = p1.z - p0.z
+
+        self.p2[0] = p2.x - p0.x
+        self.p2[1] = p2.y - p0.y
+        self.p2[2] = p2.z - p0.z
+
+        self.p3[0] = p3.x - p0.x
+        self.p3[1] = p3.y - p0.y
+        self.p3[2] = p3.z - p0.z
+        
 
     cdef Vec3 point(self, double t):
         # 1st control point (p0) is always (0, 0, 0)
@@ -316,18 +325,19 @@ cdef class FastQuadCurve:
             Vec3 result = Vec3()
             double t2 = t * t
             double _1_minus_t = 1.0 - t
-            # a = _1_minus_t * _1_minus_t * _1_minus_t  # not required
+            # a = (1 - t) ** 3
             double b = 3.0 * _1_minus_t * _1_minus_t * t
             double c = 3.0 * _1_minus_t * t2
             double d = t2 * t
             
-
         iadd_mul(result, self.p1, b)
         iadd_mul(result, self.p2, c)
         iadd_mul(result, self.p3, d)
 
         # add offset at last - it is maybe very large
-        iadd(result, self.offset)
+        result.x += self.offset[0]
+        result.y += self.offset[1]
+        result.z += self.offset[2]
 
         return result
 
@@ -337,7 +347,7 @@ cdef class FastQuadCurve:
         cdef:
             Vec3 result = Vec3()
             double t2 = t * t
-            # a = -3.0 * (1.0 - t) * (1.0 - t)  # not required
+            # a = -3 * (1 - t) ** 2
             double b = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
             double c = 3.0 * t * (2.0 - 3.0 * t)
             double d = 3.0 * t2
@@ -349,13 +359,8 @@ cdef class FastQuadCurve:
         return result
 
 
-cdef void iadd_mul(Vec3 a, Vec3 b, double c):
-    a.x += b.x * c
-    a.y += b.y * c
-    a.z += b.z * c
-
-cdef void iadd(Vec3 a, Vec3 b):
-    a.x += b.x
-    a.y += b.y
-    a.z += b.z
+cdef void iadd_mul(Vec3 a, double[3] b, double c):
+    a.x += b[0] * c
+    a.y += b[1] * c
+    a.z += b[2] * c
 
