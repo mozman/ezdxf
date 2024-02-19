@@ -6,4 +6,3 @@
 #define M_TAU 6.283185307179586
 // AutoCAD limits the degree of SPLINE to 11 or order = 12
 #define MAX_SPLINE_ORDER 12
-#define MAX_DASH_ITEMS 64
