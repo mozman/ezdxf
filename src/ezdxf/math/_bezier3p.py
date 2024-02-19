@@ -127,31 +127,14 @@ class Bezier3P(Generic[T]):
             segments: minimum segment count
 
         """
-
-        def subdiv(
-            start_point: T,
-            end_point: T,
-            start_t: float,
-            end_t: float,
-        ) -> Iterator[T]:
-            mid_t: float = (start_t + end_t) * 0.5
-            mid_point: T = self._get_curve_point(mid_t)
-            chk_point: T = start_point.lerp(end_point)
-            # center point is faster than projecting mid-point onto
-            # vector start -> end:
-            d = chk_point.distance(mid_point)
-            if d < distance:
-                yield end_point
-            else:
-                yield from subdiv(start_point, mid_point, start_t, mid_t)
-                yield from subdiv(mid_point, end_point, mid_t, end_t)
-
+        stack: list[tuple[float, T]] = []
         dt: float = 1.0 / segments
         t0: float = 0.0
         t1: float
         cp = self.control_points
         start_point: T = cp[0]
         end_point: T
+
         yield start_point
         while t0 < 1.0:
             t1 = t0 + dt
@@ -160,9 +143,25 @@ class Bezier3P(Generic[T]):
                 t1 = 1.0
             else:
                 end_point = self._get_curve_point(t1)
-            yield from subdiv(start_point, end_point, t0, t1)
-            t0 = t1
-            start_point = end_point
+
+            while True:
+                mid_t: float = (t0 + t1) * 0.5
+                mid_point: T = self._get_curve_point(mid_t)
+                chk_point: T = start_point.lerp(end_point)
+
+                d = chk_point.distance(mid_point)
+                if d < distance:
+                    yield end_point
+                    t0 = t1
+                    start_point = end_point
+                    if stack:
+                        t1, end_point = stack.pop()
+                    else:
+                        break
+                else:
+                    stack.append((t1, end_point))
+                    t1 = mid_t
+                    end_point = mid_point
 
     def _get_curve_point(self, t: float) -> T:
         # 1st control point (p0) is always (0, 0, 0)
