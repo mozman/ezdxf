@@ -1,5 +1,4 @@
 # cython: language_level=3
-# distutils: language = c++
 # Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from .vector cimport Vec3

@@ -1,5 +1,4 @@
 # cython: language_level=3
-# distutils: language = c++
 # Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TYPE_CHECKING, Sequence, Optional

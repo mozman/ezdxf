@@ -1,5 +1,4 @@
 # cython: language_level=3
-# distutils: language = c++
 # Source: https://github.com/mapbox/earcut
 # License: ISC License (MIT compatible)
 #

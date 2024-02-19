@@ -1,5 +1,4 @@
 # cython: language_level=3
-# distutils: language = c++
 # Copyright (c) 2021-2024 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Sequence
@@ -133,7 +132,7 @@ cdef class Bezier3P:
         ))
 
 cdef class _Flattening:
-    cdef ControlPoints curve
+    cdef ControlPoints curve  # pyright: ignore
     cdef double distance
     cdef list points
     cdef int _recursion_level
@@ -173,6 +172,7 @@ cdef class _Flattening:
             self.flatten(start_point, mid_point, start_t, mid_t)
             self.flatten(mid_point, end_point, mid_t, end_t)
         self._recursion_level -= 1
+
 
 cdef class ControlPoints:
     cdef:

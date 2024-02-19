@@ -1,4 +1,4 @@
-#  Copyright (c) 2020-2021, Manfred Moitzi
+#  Copyright (c) 2020-2024, Manfred Moitzi
 #  License: MIT License
 import sys
 from ezdxf._options import options

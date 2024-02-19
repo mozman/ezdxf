@@ -15,7 +15,6 @@ ext_modules = [
             "src/ezdxf/acc/vector.pyx",
         ],
         optional=True,
-        language="c++",
     ),
     Extension(
         "ezdxf.acc.matrix44",
@@ -23,7 +22,6 @@ ext_modules = [
             "src/ezdxf/acc/matrix44.pyx",
         ],
         optional=True,
-        language="c++",
     ),
     Extension(
         "ezdxf.acc.bezier4p",
@@ -31,7 +29,6 @@ ext_modules = [
             "src/ezdxf/acc/bezier4p.pyx",
         ],
         optional=True,
-        language="c++",
     ),
     Extension(
         "ezdxf.acc.bezier3p",
@@ -39,7 +36,6 @@ ext_modules = [
             "src/ezdxf/acc/bezier3p.pyx",
         ],
         optional=True,
-        language="c++",
     ),
     Extension(
         "ezdxf.acc.bspline",
@@ -47,7 +43,6 @@ ext_modules = [
             "src/ezdxf/acc/bspline.pyx",
         ],
         optional=True,
-        language="c++",
     ),
     Extension(
         "ezdxf.acc.construct",
@@ -55,7 +50,6 @@ ext_modules = [
             "src/ezdxf/acc/construct.pyx",
         ],
         optional=True,
-        language="c++",
     ),
     Extension(
         "ezdxf.acc.mapbox_earcut",
@@ -63,7 +57,6 @@ ext_modules = [
             "src/ezdxf/acc/mapbox_earcut.pyx",
         ],
         optional=True,
-        language="c++",
     ),
     Extension(
         "ezdxf.acc.linetypes",
@@ -71,7 +64,6 @@ ext_modules = [
             "src/ezdxf/acc/linetypes.pyx",
         ],
         optional=True,
-        language="c++",
     ),
     Extension(
         "ezdxf.acc.np_support",
@@ -79,7 +71,6 @@ ext_modules = [
             "src/ezdxf/acc/np_support.pyx",
         ],
         optional=True,
-        language="c++",
     ),
 ]
 try:

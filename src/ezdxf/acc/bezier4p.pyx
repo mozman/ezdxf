@@ -1,5 +1,4 @@
 # cython: language_level=3
-# distutils: language = c++
 # Copyright (c) 2020-2024 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Sequence, Iterable, Iterator
@@ -159,7 +158,7 @@ cdef class Bezier4P:
         ))
 
 cdef class _Flattening:
-    cdef ControlPoints curve
+    cdef ControlPoints curve  # pyright: ignore
     cdef double distance
     cdef list points
     cdef int _recursion_level

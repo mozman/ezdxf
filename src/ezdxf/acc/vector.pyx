@@ -1,6 +1,5 @@
 # cython: language_level=3
 # cython: c_api_binop_methods=True
-# distutils: language = c++
 # Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple, Iterator
