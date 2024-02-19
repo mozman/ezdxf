@@ -857,9 +857,9 @@ def lerp(p1: UVec, p2: UVec, double factor = 0.5) -> Vec3:
     return v3_lerp(a, b, factor)
 
 
-# -----------------------------------
-# CVec3 is a simple C-based 3D vector
-# -----------------------------------
+# ----------------------------------------
+# CVec3 is a simple struct-based 3D vector
+# ----------------------------------------
 cdef CVec3 cv3_from_vec3(Vec3 a):
     cdef CVec3 result
 

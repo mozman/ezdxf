@@ -1,6 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 # type: ignore -- pylance sucks at type-checking cython files
 # C-support functions:
@@ -13,7 +13,7 @@ from ._cpp_vec3 cimport CppVec3
 
 cdef class Vec2:
     cdef readonly double x, y
-    cdef CppVec3 to_cpp_vec3(self: Vec2)
+    cdef CppVec3 to_cpp_vec3(self)
 
 # Vec2 C-functions:
 cdef Vec2 v2_add(Vec2 a, Vec2 b)
@@ -41,7 +41,7 @@ cdef void v2_imul(Vec2 a, double factor)
 
 cdef class Vec3:
     cdef readonly double x, y, z
-    cdef CppVec3 to_cpp_vec3(self: Vec2)
+    cdef CppVec3 to_cpp_vec3(self)
 
 # Vec3 C-functions:
 cdef Vec3 v3_add(Vec3 a, Vec3 b)
@@ -63,9 +63,9 @@ cdef Vec3 v3_project(Vec3 a, Vec3 b)
 cdef bint v3_isclose(Vec3 a, Vec3 b, double rel_tol, double abs_tol)
 cdef Vec3 v3_from_cpp_vec3(CppVec3)
 
-# -----------------------------------
-# CVec3 is a simple C-based 3D vector
-# -----------------------------------
+# ----------------------------------------
+# CVec3 is a simple struct-based 3D vector
+# ----------------------------------------
 
 cdef struct CVec3:
     double x
