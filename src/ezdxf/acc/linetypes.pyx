@@ -5,7 +5,6 @@
 from typing import Iterator, TYPE_CHECKING, Sequence
 import cython
 from .vector cimport Vec3, v3_isclose, v3_sub, v3_add, v3_mul, v3_magnitude
-from libcpp.vector cimport vector
 
 if TYPE_CHECKING:
     from ezdxf.math import UVec
@@ -15,9 +14,10 @@ LineSegment = tuple[Vec3, Vec3]
 cdef extern from "constants.h":
     const double ABS_TOL
     const double REL_TOL
+    const int MAX_DASH_ITEMS
 
 cdef class _LineTypeRenderer:
-    cdef vector[double] _dashes
+    cdef double[MAX_DASH_ITEMS] _dashes
     cdef int _dash_count
     cdef readonly bint is_solid
     cdef bint _is_dash
@@ -25,8 +25,12 @@ cdef class _LineTypeRenderer:
     cdef double _current_dash_length
 
     def __init__(self, dashes: Sequence[float]):
-        self._dashes = dashes  # this really works!!
-        self._dash_count = self._dashes.size()
+        cdef list _dashes = list(dashes)
+        cdef int i
+
+        self._dash_count = min(len(_dashes), MAX_DASH_ITEMS)
+        for i in range(self._dash_count):
+            self._dashes[i] = _dashes[i]
 
         self.is_solid = True
         self._is_dash = False
@@ -43,7 +47,7 @@ cdef class _LineTypeRenderer:
         cdef Vec3 v3_end = Vec3(end)
         cdef Vec3 segment_vec, segment_dir
         cdef double segment_length, dash_length
-        cdef vector[double] dashes
+        cdef list dashes = []
 
         if self.is_solid or v3_isclose(v3_start, v3_end, REL_TOL, ABS_TOL):
             yield v3_start, v3_end
@@ -61,10 +65,10 @@ cdef class _LineTypeRenderer:
                 yield v3_start, v3_end
             v3_start = v3_end
 
-    cdef _render_dashes(self, double length, vector[double] &dashes):
+    cdef _render_dashes(self, double length, list dashes):
         if length <= self._current_dash_length:
             self._current_dash_length -= length
-            dashes.push_back(length if self._is_dash else -length)
+            dashes.append(length if self._is_dash else -length)
             if self._current_dash_length < ABS_TOL:
                 self._cycle_dashes()
         else:
