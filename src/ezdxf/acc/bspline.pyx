@@ -2,7 +2,6 @@
 # distutils: language = c++
 # Copyright (c) 2021-2024, Manfred Moitzi
 # License: MIT License
-# Cython implementation of the B-spline basis function.
 from typing import Iterable, Sequence, Iterator
 import cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free

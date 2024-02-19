@@ -2,7 +2,6 @@
 # distutils: language = c++
 # Copyright (c) 2021-2024 Manfred Moitzi
 # License: MIT License
-# type: ignore -- pylance sucks at type-checking cython files
 from typing import TYPE_CHECKING, Sequence
 from .vector cimport Vec3, isclose, v3_dist, v3_lerp, v3_add, Vec2
 from .matrix44 cimport Matrix44
@@ -20,7 +19,7 @@ cdef double RECURSION_LIMIT = 1000
 
 
 cdef class Bezier3P:
-    cdef ControlPoints curve
+    cdef ControlPoints curve  # pyright: ignore
     cdef Vec3 offset
 
     def __cinit__(self, defpoints: Sequence[UVec]):
@@ -169,7 +168,6 @@ cdef class _Flattening:
         cdef Vec3 mid_point = self.curve.point(mid_t)
         cdef double d = v3_dist(mid_point, v3_lerp(start_point,end_point, 0.5))
         if d < self.distance:
-            # Convert CppVec3 to Python type Vec3:
             self.points.append(end_point)
         else:
             self.flatten(start_point, mid_point, start_t, mid_t)

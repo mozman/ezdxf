@@ -40,7 +40,7 @@ cdef double RECURSION_LIMIT = 1000
 
 
 cdef class Bezier4P:
-    cdef ControlPoints curve
+    cdef ControlPoints curve    # pyright: ignore
     cdef Vec3 offset
 
     def __cinit__(self, defpoints: Sequence[UVec]):
@@ -196,7 +196,6 @@ cdef class _Flattening:
         cdef Vec3 mid_point = self.curve.point(mid_t)
         cdef double d = v3_dist(mid_point, v3_lerp(start_point, end_point, 0.5))
         if d < self.distance:
-            # Convert CppVec3 to Python type Vec3:
             self.points.append(end_point)
         else:
             self.flatten(start_point, mid_point, start_t, mid_t)

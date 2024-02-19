@@ -20,7 +20,7 @@
 # Cython implementation of module ezdxf.math._mapbox_earcut.py
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
-# type: ignore -- pylance sucks at type-checking cython files
+# type: ignore
 from libc.math cimport fmin, fmax, fabs, INFINITY
 
 
