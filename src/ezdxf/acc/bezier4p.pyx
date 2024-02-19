@@ -39,49 +39,45 @@ cdef double RECURSION_LIMIT = 1000
 
 
 cdef class Bezier4P:
-    cdef ControlPoints curve    # pyright: ignore
-    cdef Vec3 offset
+    cdef FastQuadCurve curve    # pyright: ignore
 
     def __cinit__(self, defpoints: Sequence[UVec]):
-        cdef Vec3 offset
         if not isinstance(defpoints[0], (Vec2, Vec3)):
             warnings.warn(
                 DeprecationWarning, 
                 "Bezier4P requires defpoints of type Vec2 or Vec3 in the future",
             )
         if len(defpoints) == 4:
-            offset = Vec3(defpoints[0])
-            self.offset = offset
-            self.curve = ControlPoints(
-                Vec3(),
-                v3_sub(Vec3(defpoints[1]), offset),
-                v3_sub(Vec3(defpoints[2]), offset),
-                v3_sub(Vec3(defpoints[3]), offset),
+            self.curve = FastQuadCurve(
+                Vec3(defpoints[0]),
+                Vec3(defpoints[1]),
+                Vec3(defpoints[2]),
+                Vec3(defpoints[3]),
             )
         else:
             raise ValueError("Four control points required.")
 
     @property
     def control_points(self) -> tuple[Vec3, Vec3, Vec3, Vec3]:
-        return self.offset, \
-               v3_add(self.curve.p1, self.offset), \
-               v3_add(self.curve.p2, self.offset), \
-               v3_add(self.curve.p3, self.offset)
+        return self.curve.offset, \
+               v3_add(self.curve.p1, self.curve.offset), \
+               v3_add(self.curve.p2, self.curve.offset), \
+               v3_add(self.curve.p3, self.curve.offset)
 
     @property
     def start_point(self) -> Vec3:
-        return self.offset
+        return self.curve.offset
 
     @property
     def end_point(self) -> Vec3:
-        return v3_add(self.curve.p3, self.offset)
+        return v3_add(self.curve.p3, self.curve.offset)
 
     def __reduce__(self):
         return Bezier4P, (self.control_points,)
 
     def point(self, double t) -> Vec3:
         if 0.0 <= t <= 1.0:
-            return v3_add(self.curve.point(t), self.offset)
+            return self.curve.point(t)
         else:
             raise ValueError("t not in range [0 to 1]")
 
@@ -100,22 +96,21 @@ cdef class Bezier4P:
             raise ValueError(segments)
         delta_t = 1.0 / segments
         for segment in range(1, segments):
-            points.append(self.point(delta_t * segment))
+            points.append(self.curve.point(delta_t * segment))
         points.append(self.end_point)
         return points
 
     def flattening(self, double distance, int segments = 4) -> list[Vec3]:
         cdef double dt = 1.0 / segments
         cdef double t0 = 0.0, t1
-        cdef _Flattening f = _Flattening(self, distance)
-        cdef Vec3 start_point = self.curve.p0
+        cdef _Flattening f = _Flattening(self.curve, distance)
+        cdef Vec3 start_point = self.curve.offset
         cdef Vec3 end_point
-        cdef Vec3 offset = self.offset
         # Flattening of the translated curve!
         while t0 < 1.0:
             t1 = t0 + dt
             if isclose(t1, 1.0, REL_TOL, ABS_TOL):
-                end_point = self.curve.p3
+                end_point = self.end_point
                 t1 = 1.0
             else:
                 end_point = self.curve.point(t1)
@@ -127,8 +122,8 @@ cdef class Bezier4P:
                 )
             t0 = t1
             start_point = end_point
-        # translate vertices to original location:
-        return [v3_add(p, offset) for p in f.points]
+        
+        return f.points
 
     def approximated_length(self, segments: int = 128) -> float:
         cdef double length = 0.0
@@ -158,16 +153,16 @@ cdef class Bezier4P:
         ))
 
 cdef class _Flattening:
-    cdef ControlPoints curve  # pyright: ignore
+    cdef FastQuadCurve curve  # pyright: ignore
     cdef double distance
     cdef list points
     cdef int _recursion_level
     cdef int _recursion_error
 
-    def __cinit__(self, Bezier4P curve, double distance):
-        self.curve = curve.curve
+    def __cinit__(self, FastQuadCurve curve, double distance):
+        self.curve = curve
         self.distance = distance
-        self.points = [self.curve.p0]
+        self.points = [curve.offset]
         self._recursion_level = 0
         self._recursion_error = 0
 
@@ -292,12 +287,12 @@ def cubic_bezier_from_ellipse(
         res = list()
         for i in range(4):
             cp = <Vec3> control_points[i]
-            c_res = v3_add_3_mul(center, v3_mul(x_axis, cp.x), v3_mul(y_axis, cp.y))
+            c_res = v3_add_3(center, v3_mul(x_axis, cp.x), v3_mul(y_axis, cp.y))
             res.append(c_res)
         yield Bezier4P(res)
 
 
-cdef Vec3 v3_add_3_mul(Vec3 a, Vec3 b, Vec3 c):
+cdef Vec3 v3_add_3(Vec3 a, Vec3 b, Vec3 c):
     cdef Vec3 result = Vec3()
 
     result.x = a.x + b.x + c.x
@@ -307,46 +302,60 @@ cdef Vec3 v3_add_3_mul(Vec3 a, Vec3 b, Vec3 c):
     return result
 
 
-cdef class ControlPoints:
+cdef class FastQuadCurve:
     cdef:
-        Vec3 p0
+        Vec3 offset
         Vec3 p1
         Vec3 p2
         Vec3 p3
 
     def __cinit__(self, Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3):
-        self.p0 = p0
-        self.p1 = p1
-        self.p2 = p2
-        self.p3 = p3
+        # 1st control point (p0) is always (0, 0, 0)
+        self.offset = p0
+        self.p1 = v3_sub(p1, p0)
+        self.p2 = v3_sub(p2, p0)
+        self.p3 = v3_sub(p3, p0)
 
 
     cdef Vec3 point(self, double t):
+        # 1st control point (p0) is always (0, 0, 0)
+        # => p0 * a is always (0, 0, 0)
         cdef double weights[4]
-        bernstein_poly_d0(t, weights)
-        return self.evaluate(weights)
-
-
-    cdef Vec3 tangent(self, double t):
-        cdef double weights[4]
-        bernstein_poly_d1(t, weights)
-        return self.evaluate(weights)
-
-
-    cdef Vec3 evaluate(self, double *weights):
         cdef Vec3 result = Vec3()
 
-        iadd_mul(result, self.p0, weights[0])
+        bernstein_poly_d0(t, weights)
         iadd_mul(result, self.p1, weights[1])
         iadd_mul(result, self.p2, weights[2])
         iadd_mul(result, self.p3, weights[3])
+
+        # add offset at last - it is maybe very large
+        iadd(result, self.offset)
+
         return result
 
 
-cdef void iadd_mul(Vec3 p, Vec3 cp, double f):
-    p.x += cp.x * f
-    p.y += cp.y * f
-    p.z += cp.z * f
+    cdef Vec3 tangent(self, double t):
+        # tangent vector is independent from offset location!
+        cdef double weights[4]
+        cdef Vec3 result = Vec3()
+
+        bernstein_poly_d1(t, weights)
+        iadd_mul(result, self.p1, weights[1])
+        iadd_mul(result, self.p2, weights[2])
+        iadd_mul(result, self.p3, weights[3])
+
+        return result
+
+
+cdef void iadd_mul(Vec3 a, Vec3 b, double c):
+    a.x += b.x * c
+    a.y += b.y * c
+    a.z += b.z * c
+
+cdef void iadd(Vec3 a, Vec3 b):
+    a.x += b.x
+    a.y += b.y
+    a.z += b.z
 
 
 cdef void bernstein_poly_d0(double t, double *weights):
@@ -356,7 +365,8 @@ cdef void bernstein_poly_d0(double t, double *weights):
         double t2 = t * t
         double _1_minus_t = 1.0 - t
         double _1_minus_t_square = _1_minus_t * _1_minus_t
-    weights[0] = _1_minus_t_square * _1_minus_t
+
+    weights[0] = _1_minus_t_square * _1_minus_t  # not required
     weights[1] = 3.0 * _1_minus_t_square * t
     weights[2] = 3.0 * _1_minus_t * t2
     weights[3] = t2 * t
@@ -366,7 +376,8 @@ cdef void bernstein_poly_d1(double t, double *weights):
     # Required domain check for t has to be done by the caller!
     # 0 <= t <= 1
     cdef double t2 = t * t
-    weights[0] = -3.0 * (1.0 - t) * (1.0 - t)
+
+    weights[0] = -3.0 * (1.0 - t) * (1.0 - t)  # not required
     weights[1] = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
     weights[2] = 3.0 * t * (2.0 - 3.0 * t)
     weights[3] = 3.0 * t2
