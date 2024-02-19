@@ -187,9 +187,8 @@ cdef class FastQuadCurve:
         # => p0 * a is always (0, 0, 0)
         cdef:
             Vec3 result = Vec3()
-            double _1_minus_t = 1.0 - t
             # double a = (1 - t) ** 2
-            double b = 2.0 * t * _1_minus_t
+            double b = 2.0 * t * (1.0 - t)
             double c = t * t
 
         iadd_mul(result, self.p1, b)
