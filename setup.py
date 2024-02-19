@@ -38,7 +38,6 @@ ext_modules = [
         "ezdxf.acc.bezier3p",
         [
             "src/ezdxf/acc/bezier3p.pyx",
-            "src/ezdxf/acc/_cpp_quad_bezier.cpp",
         ],
         optional=True,
         language="c++",
