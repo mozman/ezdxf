@@ -188,6 +188,9 @@ class ClippingRect2d:
             ],
             ccw_check=False,
         )
+        self._line_clipper = CohenSutherlandLineClipping2d(
+            self._bbox.extmin, self._bbox.extmax
+        )
 
     def clip_polygon(self, polygon: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polygon."""
@@ -199,9 +202,7 @@ class ClippingRect2d:
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         """Returns the clipped line."""
-        result = cohen_sutherland_line_clipping_2d(
-            self._bbox.extmin, self._bbox.extmax, start, end
-        )
+        result = self._line_clipper.clip_line(start, end)
         if len(result) == 2:
             return (result,)  # type: ignore
         return tuple()
@@ -819,81 +820,89 @@ BOTTOM = 0x4
 TOP = 0x8
 
 
-def cohen_sutherland_line_clipping_2d(
-    w_min: Vec2, w_max: Vec2, p0: Vec2, p1: Vec2
-) -> Sequence[Vec2]:
+class CohenSutherlandLineClipping2d:
     """Cohen-Sutherland 2D line clipping algorithm, source:
     https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
 
     Args:
         w_min: bottom-left corner of the clipping rectangle
         w_max: top-right corner of the clipping rectangle
-        p0: start-point of the line to clip
-        p1: end-point of the line to clip
 
     """
 
-    def encode(x: float, y: float) -> int:
+    __slots__ = ("x_min", "x_max", "y_min", "y_max")
+
+    def __init__(self, w_min: Vec2, w_max: Vec2) -> None:
+        self.x_min, self.y_min = w_min
+        self.x_max, self.y_max = w_max
+
+    def encode(self, x: float, y: float) -> int:
         code: int = 0
-        if x < x_min:
+        if x < self.x_min:
             code |= LEFT
-        elif x > x_max:
+        elif x > self.x_max:
             code |= RIGHT
-        if y < y_min:
+        if y < self.y_min:
             code |= BOTTOM
-        elif y > y_max:
+        elif y > self.y_max:
             code |= TOP
         return code
 
-    x0, y0 = p0
-    x1, y1 = p1
-    x_min, y_min = w_min
-    x_max, y_max = w_max
-    code0 = encode(x0, y0)
-    code1 = encode(x1, y1)
-    x = x0
-    y = y0
-    while True:
-        if not code0 | code1:  # ACCEPT
-            # bitwise OR is 0: both points inside window; trivially accept and
-            # exit loop:
-            return Vec2(x0, y0), Vec2(x1, y1)
-        if code0 & code1:  # REJECT
-            # bitwise AND is not 0: both points share an outside zone (LEFT,
-            # RIGHT, TOP, or BOTTOM), so both must be outside window;
-            # exit loop
-            return tuple()
+    def clip_line(self, p0: Vec2, p1: Vec2) -> Sequence[Vec2]:
+        """Returns the clipped line part as tuple[Vec2, Vec2] or an empty tuple.
 
-        # failed both tests, so calculate the line segment to clip
-        # from an outside point to an intersection with clip edge
-        # At least one endpoint is outside the clip rectangle; pick it
-        code = code1 if code1 > code0 else code0
+        Args:
+            p0: start-point of the line to clip
+            p1: end-point of the line to clip
 
-        # Now find the intersection point;
-        # use formulas:
-        # slope = (y1 - y0) / (x1 - x0)
-        # x = x0 + (1 / slope) * (ym - y0), where ym is y_min or y_max
-        # y = y0 + slope * (xm - x0), where xm is x_min or x_max
-        # No need to worry about divide-by-zero because, in each case, the
-        # code bit being tested guarantees the denominator is non-zero
-        if code & TOP:  # point is above the clip window
-            x = x0 + (x1 - x0) * (y_max - y0) / (y1 - y0)
-            y = y_max
-        elif code & BOTTOM:  # point is below the clip window
-            x = x0 + (x1 - x0) * (y_min - y0) / (y1 - y0)
-            y = y_min
-        elif code & RIGHT:  # point is to the right of clip window
-            y = y0 + (y1 - y0) * (x_max - x0) / (x1 - x0)
-            x = x_max
-        elif code & LEFT:  # point is to the left of clip window
-            y = y0 + (y1 - y0) * (x_min - x0) / (x1 - x0)
-            x = x_min
+        """
+        x0, y0 = p0
+        x1, y1 = p1
+        code0 = self.encode(x0, y0)
+        code1 = self.encode(x1, y1)
+        x = x0
+        y = y0
+        while True:
+            if not code0 | code1:  # ACCEPT
+                # bitwise OR is 0: both points inside window; trivially accept and
+                # exit loop:
+                return Vec2(x0, y0), Vec2(x1, y1)
+            if code0 & code1:  # REJECT
+                # bitwise AND is not 0: both points share an outside zone (LEFT,
+                # RIGHT, TOP, or BOTTOM), so both must be outside window;
+                # exit loop
+                return tuple()
 
-        if code == code0:
-            x0 = x
-            y0 = y
-            code0 = encode(x0, y0)
-        else:
-            x1 = x
-            y1 = y
-            code1 = encode(x1, y1)
+            # failed both tests, so calculate the line segment to clip
+            # from an outside point to an intersection with clip edge
+            # At least one endpoint is outside the clip rectangle; pick it
+            code = code1 if code1 > code0 else code0
+
+            # Now find the intersection point;
+            # use formulas:
+            # slope = (y1 - y0) / (x1 - x0)
+            # x = x0 + (1 / slope) * (ym - y0), where ym is y_min or y_max
+            # y = y0 + slope * (xm - x0), where xm is x_min or x_max
+            # No need to worry about divide-by-zero because, in each case, the
+            # code bit being tested guarantees the denominator is non-zero
+            if code & TOP:  # point is above the clip window
+                x = x0 + (x1 - x0) * (self.y_max - y0) / (y1 - y0)
+                y = self.y_max
+            elif code & BOTTOM:  # point is below the clip window
+                x = x0 + (x1 - x0) * (self.y_min - y0) / (y1 - y0)
+                y = self.y_min
+            elif code & RIGHT:  # point is to the right of clip window
+                y = y0 + (y1 - y0) * (self.x_max - x0) / (x1 - x0)
+                x = self.x_max
+            elif code & LEFT:  # point is to the left of clip window
+                y = y0 + (y1 - y0) * (self.x_min - x0) / (x1 - x0)
+                x = self.x_min
+
+            if code == code0:
+                x0 = x
+                y0 = y
+                code0 = self.encode(x0, y0)
+            else:
+                x1 = x
+                y1 = y
+                code1 = self.encode(x1, y1)
