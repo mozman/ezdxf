@@ -69,7 +69,7 @@ def bezier4p_approximate(Curve, count):
 def bezier4p_flattening(Curve, count):
     c = Curve(POINTS)
     for _ in range(count):
-        list(c.flattening(0.01))
+        list(c.flattening(0.001))
 
 
 def bezier4p_arc_parameters(func, count):
