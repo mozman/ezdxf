@@ -380,11 +380,7 @@ class Draw(Command):
             from ezdxf.addons.drawing.config import Configuration
             from ezdxf.addons.drawing.file_output import (
                 open_file,
-            MatplotlibFileOutput,
-            MatplotlibFileOutput,
-            open_file,
                 MatplotlibFileOutput,
-            open_file,
                 PyQtFileOutput,
                 SvgFileOutput,
                 MuPDFFileOutput,
