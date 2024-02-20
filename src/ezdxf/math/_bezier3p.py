@@ -59,7 +59,7 @@ class Bezier3P(Generic[T]):
     def control_points(self) -> Sequence[T]:
         """Control points as tuple of :class:`Vec3` or :class:`Vec2` objects."""
         # ezdxf optimization: p0 is always (0, 0, 0)
-        p0, p1, p2 = self._control_points
+        _, p1, p2 = self._control_points
         offset = self._offset
         return offset, p1 + offset, p2 + offset
 
@@ -166,9 +166,9 @@ class Bezier3P(Generic[T]):
     def _get_curve_point(self, t: float) -> T:
         # 1st control point (p0) is always (0, 0, 0)
         # => p0 * a is always (0, 0, 0)
-        p0, p1, p2 = self._control_points
+        _, p1, p2 = self._control_points
         _1_minus_t = 1.0 - t
-        # a = _1_minus_t * _1_minus_t
+        # a = (1 - t) ** 2
         b = 2.0 * t * _1_minus_t
         c = t * t
         # add offset at last - it is maybe very large
@@ -178,8 +178,8 @@ class Bezier3P(Generic[T]):
         # tangent vector is independent from offset location!
         # 1st control point (p0) is always (0, 0, 0)
         # => p0 * a is always (0, 0, 0)
-        p0, p1, p2 = self._control_points
-        # a = -2.0 * (1.0 - t)
+        _, p1, p2 = self._control_points
+        # a = -2 * (1 - t)
         b = 2.0 - 4.0 * t
         c = 2.0 * t
         return p1 * b + p2 * c
