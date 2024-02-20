@@ -23,12 +23,12 @@ __all__ = [
     "greiner_hormann_union",
     "greiner_hormann_difference",
     "greiner_hormann_intersection",
-    "cohen_sutherland_line_clipping_2d",
     "Clipping",
     "ConvexClippingPolygon2d",
     "ConcaveClippingPolygon2d",
     "ClippingRect2d",
     "InvertedClippingPolygon2d",
+    "CohenSutherlandLineClipping2d",
 ]
 
 
@@ -123,7 +123,7 @@ class ConvexClippingPolygon2d:
         return ((edge_start, edge_end),)
 
     def clip_polygon(self, polygon: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
-        """Returns the parts of the clipped polygon."""
+        """Returns the parts of the clipped polygon. A polygon is a closed polyline."""
 
         def is_inside(point: Vec2) -> bool:
             # is point left of line:
@@ -170,9 +170,6 @@ class ConvexClippingPolygon2d:
 class ClippingRect2d:
     """The clipping path is an axis-aligned rectangle, where all sides are parallel to
     the x- and y-axis.
-
-    This class will get an optimized implementation in the future.
-
     """
 
     def __init__(self, bottom_left: Vec2, top_right: Vec2):
@@ -193,7 +190,7 @@ class ClippingRect2d:
         )
 
     def clip_polygon(self, polygon: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
-        """Returns the parts of the clipped polygon."""
+        """Returns the parts of the clipped polygon. A polygon is a closed polyline."""
         return self._clipping_polygon.clip_polygon(polygon)
 
     def clip_polyline(self, polyline: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
@@ -287,7 +284,7 @@ class ConcaveClippingPolygon2d:
         return segments
 
     def clip_polygon(self, polygon: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
-        """Returns the parts of the clipped polygon."""
+        """Returns the parts of the clipped polygon. A polygon is a closed polyline."""
         vertices = list(polygon)
         if len(vertices) > 1:
             if vertices[0].isclose(vertices[-1]):
