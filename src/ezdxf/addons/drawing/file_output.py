@@ -146,8 +146,10 @@ class MuPDFFileOutput(FileOutputRenderBackend):
     def __init__(self, dpi: float) -> None:
         super().__init__(dpi)
 
-        from ezdxf.addons.drawing.pymupdf import PyMuPdfBackend
+        from ezdxf.addons.drawing.pymupdf import PyMuPdfBackend, is_pymupdf_installed
 
+        if not is_pymupdf_installed:
+            raise ImportError("PyMuPDF not found")
         self._backend = PyMuPdfBackend()
 
     def supported_formats(self) -> list[tuple[str, str]]:
