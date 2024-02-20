@@ -377,7 +377,7 @@ class Draw(Command):
     def run(args):
         try:
             from ezdxf.addons.drawing import RenderContext, Frontend
-            from ezdxf.addons.drawing.config import Configuration
+            from ezdxf.addons.drawing.config import Configuration, BackgroundPolicy
             from ezdxf.addons.drawing.file_output import (
                 open_file,
                 MatplotlibFileOutput,
@@ -389,13 +389,26 @@ class Draw(Command):
             print(str(e))
             sys.exit(1)
 
-        if args.backend == "matplotlib":
-            file_output = MatplotlibFileOutput(args.dpi)
+        if args.backend == "matplotlib":               
+            try:
+                file_output = MatplotlibFileOutput(args.dpi)
+            except ImportError as e:
+                print(str(e))
+                sys.exit(1)               
         elif args.backend == "qt":
-            file_output = PyQtFileOutput(args.dpi)
+            try:
+                file_output = PyQtFileOutput(args.dpi)
+            except ImportError as e:
+                print(str(e))
+                sys.exit(1)
         elif args.backend == "mupdf":
-            file_output = MuPDFFileOutput(args.dpi)
+            try:
+                file_output = MuPDFFileOutput(args.dpi)
+            except ImportError as e:
+                print(str(e))
+                sys.exit(1)
         elif args.backend == "custom_svg":
+            # has no additional dependencies
             file_output = SvgFileOutput(args.dpi)
         else:
             raise ValueError(args.backend)
