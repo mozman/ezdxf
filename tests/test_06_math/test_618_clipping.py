@@ -2,7 +2,7 @@
 #  License: MIT License
 from __future__ import annotations
 import pytest
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, BoundingBox2d
 from ezdxf.math.clipping import (
     ConvexClippingPolygon2d,
     ClippingRect2d,
@@ -87,6 +87,33 @@ class TestClipPolylineAtConvexBoundary:
         assert p0[1].isclose((3, 2))
         assert p1[0].isclose((5, 2))
         assert p1[1].isclose((7, 0))
+
+    def test_closed_rectangle(self):
+        # 9  ...+--f...
+        # 8  .d-x==x-c.
+        # 7  .|.|..|.|.
+        # 6  .|.|..|.|.
+        # 5  .|.|..|.|.
+        # 4  .|.|..|.|.
+        # 3  .|.|..|.|.
+        # 2  .|.|..|.|.
+        # 1  .a-x==x-b.
+        # 0  ...e--+...
+        #    0123456789
+        #                  a       b       c       d       a
+        rect = Vec2.list([(1, 1), (8, 1), (8, 8), (1, 8), (1, 1)])
+        #                             e           f
+        clipper = ClippingRect2d(Vec2(3, 0), Vec2(6, 9))
+        result = clipper.clip_polyline(rect)
+        assert len(result) == 2
+
+        bbox = BoundingBox2d(result[0])
+        assert bbox.extmin.isclose((3, 1))
+        assert bbox.extmax.isclose((6, 1))
+
+        bbox = BoundingBox2d(result[1])
+        assert bbox.extmin.isclose((3, 8))
+        assert bbox.extmax.isclose((6, 8))
 
 
 class TestClipPolygonAtConvexBoundary:

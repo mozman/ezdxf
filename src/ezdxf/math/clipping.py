@@ -55,18 +55,20 @@ def _clip_polyline(
         return []
     result: list[Vec2] = []
     parts: list[list[Vec2]] = []
-    start = polyline[0]
+    next_start = polyline[0]
     for end in polyline[1:]:
+        start = next_start
+        next_start = end
         for clipped_line in line_clipper(start, end):
-            start = end
-            if len(clipped_line) == 2:
-                if result:
-                    clip_start, clip_end = clipped_line
-                    if result[-1].isclose(clip_start):
-                        result.append(clip_end)
-                        continue
-                    parts.append(result)
-                result = list(clipped_line)
+            if len(clipped_line) != 2:
+                continue
+            if result:
+                clip_start, clip_end = clipped_line
+                if result[-1].isclose(clip_start):
+                    result.append(clip_end)
+                    continue
+                parts.append(result)
+            result = list(clipped_line)
     if result:
         parts.append(result)
     return parts
@@ -262,7 +264,7 @@ class ConcaveClippingPolygon2d:
                 if a.isclose(b):  # ignore zero-length segments
                     continue
                 if is_point_in_polygon_2d(a.lerp(b), self._clipping_polygon) >= 0:
-                   segments.append((a, b))
+                    segments.append((a, b))
             return segments
 
         # inside/outside rule
