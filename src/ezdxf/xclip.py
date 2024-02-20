@@ -175,9 +175,9 @@ class XClip:
             vertices, is_inverted_clip=block_clipping_path.is_inverted_clip
         )
         if block_clipping_path.is_inverted_clip:
-            inverted_clip = Vec2.tuple(m.transform_vertices(
-                block_clipping_path.inverted_clip
-            ))
+            inverted_clip = Vec2.tuple(
+                m.transform_vertices(block_clipping_path.inverted_clip)
+            )
             if len(inverted_clip) == 2:  # rectangle by diagonal corner vertices
                 inverted_clip = BoundingBox2d(inverted_clip).rect_vertices()
             wcs_clipping_path.inverted_clip = inverted_clip
@@ -279,15 +279,19 @@ class XClip:
             grow_factor = 0.1
 
         bbox = BoundingBox2d(extents)
+        bbox.extend(current_clipping_path.vertices)
         if not bbox.has_data:
             raise const.DXFValueError("extents not detectable")
 
         if grow_factor:
             bbox.grow(max(bbox.size) * grow_factor)
 
+        # inverted_clip is the regular clipping path
         inverted_clip = current_clipping_path.vertices
+        # construct an inverted clipping path
         inverted_clip_compare = _get_inverted_clip_compare_vertices(bbox, inverted_clip)
-        self.set_block_clipping_path(inverted_clip_compare)  # ???
+        # set inverted_clip_compare as regular clipping path
+        self.set_block_clipping_path(inverted_clip_compare)
         self._set_inverted_clipping_path(inverted_clip, inverted_clip_compare)
 
     def _detect_block_extents(self) -> Sequence[Vec2]:
@@ -355,67 +359,10 @@ def _rect_path(vertices: Iterable[Vec2]) -> Sequence[Vec2]:
 def _get_inverted_clip_compare_vertices(
     bbox: BoundingBox2d, hole: Sequence[Vec2]
 ) -> Sequence[Vec2]:
+    from ezdxf.math.clipping import make_inverted_clipping_polygon
+
     assert (bbox.extmax is not None) and (bbox.extmin is not None)
-
-    inverted_path = list(hole)
-    start = hole[-1]
-
-    min_x, min_y = bbox.extmin
-    max_x, max_y = bbox.extmax
-    dist_left = start.x - min_x
-    dist_right = max_x - start.x
-    dist_top = max_y - start.y
-    dist_bottom = start.y - min_y
-    min_dist = min(dist_left, dist_right, dist_bottom, dist_top)
-    if min_dist == dist_top:
-        inverted_path.extend(
-            (
-                Vec2(start.x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, max_y),
-                Vec2(start.x, max_y),
-                start,
-            )
-        )
-    elif min_dist == dist_bottom:
-        inverted_path.extend(
-            (
-                Vec2(start.x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, min_y),
-                Vec2(start.x, min_y),
-                start,
-            )
-        )
-    elif min_dist == dist_left:
-        inverted_path.extend(
-            (
-                Vec2(min_x, start.y),
-                Vec2(min_x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, start.y),
-                start,
-            )
-        )
-    elif min_dist == dist_right:
-        inverted_path.extend(
-            (
-                Vec2(max_x, start.y),
-                Vec2(max_x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, start.y),
-                start,
-            )
-        )
-    return inverted_path
+    return make_inverted_clipping_polygon(inner_polygon=list(hole), outer_bounds=bbox)
 
 
 def get_spatial_filter(entity: DXFEntity) -> SpatialFilter | None:
