@@ -300,22 +300,27 @@ cdef class FastCubicCurve:
         double[3] p3
 
     def __cinit__(self, Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3):
-        self.offset[0] = p0.x
-        self.offset[1] = p0.y
-        self.offset[2] = p0.z
+        cdef:
+            double x = p0.x
+            double y = p0.y
+            double z = p0.z
+
+        self.offset[0] = x
+        self.offset[1] = y
+        self.offset[2] = z
 
         # 1st control point (p0) is always (0, 0, 0)
-        self.p1[0] = p1.x - p0.x
-        self.p1[1] = p1.y - p0.y
-        self.p1[2] = p1.z - p0.z
+        self.p1[0] = p1.x - x
+        self.p1[1] = p1.y - y
+        self.p1[2] = p1.z - z
 
-        self.p2[0] = p2.x - p0.x
-        self.p2[1] = p2.y - p0.y
-        self.p2[2] = p2.z - p0.z
+        self.p2[0] = p2.x - x
+        self.p2[1] = p2.y - y
+        self.p2[2] = p2.z - z
 
-        self.p3[0] = p3.x - p0.x
-        self.p3[1] = p3.y - p0.y
-        self.p3[2] = p3.z - p0.z
+        self.p3[0] = p3.x - x
+        self.p3[1] = p3.y - y
+        self.p3[2] = p3.z - z
         
 
     cdef Vec3 point(self, double t):
