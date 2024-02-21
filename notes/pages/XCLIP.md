@@ -14,3 +14,14 @@
 		- 1: The clipped xref frame is displayed and plotted
 		- 2: The clipped xref frame is displayed but not plotted
 	- Init value of `XCLIPFRAME` is 2.
+-
+- ## Inverted Clipping Path
+	- The inverted clipping path is stored in a [[XRECORD]] entity linked to the [[SPATIAL_FILTER]] entity via  the [[Extension Dictionary]] by the key `ACAD_XREC_ROUNDTRIP`
+	- The structure looks like this: ![image.png](../assets/image_1708519308154_0.png)
+	- The sub section `ACAD_INVERTEDCLIP_ROUNDTRIP` contains the previous original clipping path
+	- The sub section `ACAD_INVERTEDCLIP_ROUNDTRIP_COMPARE` contains the inverted clipping path which also stored in the [[SPATIAL_FILTER]] entity as new clipping path
+	- The inverted clipping path __must__ follow some rules otherwise [[AutoCAD]] doesn't open the DXF file with the error message "Xdata wasn't read -- Invalid or incomplete DXF input -- drawing discarded."
+	- I don't understand these rules for creating inverted clipping paths yet.
+		- ... but I am happy to know what the problem is
+		- [[BricsCAD]] accepts the inverted clipping paths created by `ezdxf`
+	-

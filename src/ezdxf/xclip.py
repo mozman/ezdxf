@@ -359,6 +359,8 @@ def _rect_path(vertices: Iterable[Vec2]) -> Sequence[Vec2]:
 def _get_inverted_clip_compare_vertices(
     bbox: BoundingBox2d, hole: Sequence[Vec2]
 ) -> Sequence[Vec2]:
+    # AutoCAD does not accept this paths and from further tests it's clear that the 
+    # geometry of the inverted clipping path is the problem not the DXF structure!
     from ezdxf.math.clipping import make_inverted_clipping_polygon
 
     assert (bbox.extmax is not None) and (bbox.extmin is not None)

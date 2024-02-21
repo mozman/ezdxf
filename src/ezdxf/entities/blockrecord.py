@@ -69,6 +69,15 @@ acdb_blockrec = DefSubclass(
 )
 acdb_blockrec_group_codes = group_code_mapping(acdb_blockrec)
 
+# optional handles to existing block references in DXF2000+
+# 2: name
+# 340: explode
+# 102: "{BLKREFS"
+# 331: handle to INSERT
+# ...
+# 102: "}"
+
+
 # optional XDATA for all DXF versions
 # 1000: "ACAD"
 # 1001: "DesignCenter Data" (optional)
