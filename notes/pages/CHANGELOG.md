@@ -31,12 +31,13 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 		- moved `LUDecomposition` to module `ezdxf.math.legacy`
 	- CHANGE: `MeshData.vertices` has to be a list of `Vec3`
 	- CHANGE: renamed `ClippingPolygon2d` to `ConvexClippingPolygon2d`
+	- CHANGE: The Cython extensions have been reverted to pure Cython code and removed low-level C++ classes to make it easier to maintain, but with a small performance penalty.
 	- REMOVE: untested and incorrect implementation of `ezdxf.math.BezierSurface`
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
 	- BUGFIX: `NumpyPath2d` could contain 3d vertices
 		- {{issue 1003}}
-	- BUGFIX: `draw` command raised an unhandled exception if required dependencies were not installed
+	- BUGFIX: catch exceptions of the `draw` command raised when required dependencies are not installed
 -
 - ## Version 1.1.4 - 2023-12-24
   id:: 6568dc88-ce84-4f46-b490-43768c491a2b
