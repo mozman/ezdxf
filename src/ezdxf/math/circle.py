@@ -37,7 +37,7 @@ class ConstructionCircle:
         return f"ConstructionCircle({self.center}, {self.radius})"
 
     @staticmethod
-    def from_3p(p1: UVec, p2: UVec, p3: UVec) -> "ConstructionCircle":
+    def from_3p(p1: UVec, p2: UVec, p3: UVec) -> ConstructionCircle:
         """Creates a circle from three points, all points have to be compatible
         to :class:`Vec2` class.
         """
@@ -52,7 +52,7 @@ class ConstructionCircle:
         return ConstructionCircle(center, center.distance(_p1))
 
     @property
-    def bounding_box(self) -> "BoundingBox2d":
+    def bounding_box(self) -> BoundingBox2d:
         """2D bounding box of circle as  :class:`BoundingBox2d` object."""
         rvec = Vec2((self.radius, self.radius))
         return BoundingBox2d((self.center - rvec, self.center + rvec))

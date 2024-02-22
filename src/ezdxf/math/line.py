@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2022, Manfred Moitzi
+# Copyright (c) 2010-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Optional
@@ -108,7 +108,7 @@ class ConstructionRay:
             "angle={0.angle:.5f})".format(self)
         )
 
-    def is_parallel(self, other: "ConstructionRay") -> bool:
+    def is_parallel(self, other: ConstructionRay) -> bool:
         """Returns ``True`` if rays are parallel."""
         if self._is_vertical:
             return other._is_vertical
@@ -119,7 +119,7 @@ class ConstructionRay:
         # guards above guarantee that no slope is None
         return math.isclose(self._slope, other._slope, abs_tol=ABS_TOL)  # type: ignore
 
-    def intersect(self, other: "ConstructionRay") -> Vec2:
+    def intersect(self, other: ConstructionRay) -> Vec2:
         """Returns the intersection point as ``(x, y)`` tuple of `self` and
         `other`.
 
@@ -158,7 +158,7 @@ class ConstructionRay:
             y = ray1.yof(x)
         return Vec2((x, y))
 
-    def orthogonal(self, location: UVec) -> "ConstructionRay":
+    def orthogonal(self, location: UVec) -> ConstructionRay:
         """Returns orthogonal ray at `location`."""
         return ConstructionRay(location, angle=self.angle + HALF_PI)
 
@@ -188,7 +188,7 @@ class ConstructionRay:
         else:
             raise ArithmeticError
 
-    def bisectrix(self, other: "ConstructionRay") -> "ConstructionRay":
+    def bisectrix(self, other: ConstructionRay) -> ConstructionRay:
         """Bisectrix between `self` and `other`."""
         intersection = self.intersect(other)
         alpha = (self.angle + other.angle) / 2.0
@@ -260,7 +260,7 @@ class ConstructionLine:
         """Returns length of line."""
         return (self.end - self.start).magnitude
 
-    def midpoint(self) -> "Vec2":
+    def midpoint(self) -> Vec2:
         """Returns mid point of line."""
         return self.start.lerp(self.end)
 
@@ -279,8 +279,8 @@ class ConstructionLine:
         return self.bounding_box.inside(point)
 
     def intersect(
-        self, other: "ConstructionLine", abs_tol: float = TOLERANCE
-    ) -> Optional["Vec2"]:
+        self, other: ConstructionLine, abs_tol: float = TOLERANCE
+    ) -> Optional[Vec2]:
         """Returns the intersection point of to lines or ``None`` if they have
         no intersection point.
 
@@ -297,7 +297,7 @@ class ConstructionLine:
         )
 
     def has_intersection(
-        self, other: "ConstructionLine", abs_tol: float = TOLERANCE
+        self, other: ConstructionLine, abs_tol: float = TOLERANCE
     ) -> bool:
         """Returns ``True`` if has intersection with `other` line."""
         return self.intersect(other, abs_tol=abs_tol) is not None
