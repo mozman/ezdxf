@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional, Iterator
 import copy
 from ezdxf.math import Vec3, Matrix44
-from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -210,11 +210,16 @@ acdb_table = DefSubclass(
         #      The chunks are contained in one or more code 303 codes.
         #      If code 393 codes are used, the last group is a code 1 and is
         #      shorter than 250 characters.
+        #      --- WRONG: The text is divided into chunks of group code 2 and the last
+        #          chuck has group code 1.
         #      This value applies only to text-type cells and is repeated,
         #      1 value per cell (from AutoCAD 2007)
         # 302: Text string in a cell, in 250-character chunks; optional.
         #      This value applies only to text-type cells and is repeated,
         #      302 value per cell (from AutoCAD 2007)
+        #      --- WRONG: 302 contains all the text as a long string, tested with more
+        #          than 66000 characters
+        # BricsCAD writes long text in cells with both methods: 302 & (2, 2, 2, ..., 1)
         #
         # REMARK from Autodesk:
         # Group code 178 is a flag value for a virtual edge. A virtual edge is
@@ -433,7 +438,7 @@ def acad_table_to_block(table: DXFEntity) -> None:
 def read_acad_table_content(table: DXFTagStorage) -> list[list[str]]:
     """Returns the content of an ACAD_TABLE entity as list of table rows.
 
-    If the count of table rows or table columns is missing the complete content is 
+    If the count of table rows or table columns is missing the complete content is
     stored in the first row.
     """
     if table.dxftype() != "ACAD_TABLE":
@@ -454,5 +459,17 @@ def read_acad_table_content(table: DXFTagStorage) -> list[list[str]]:
 
 
 def _load_table_values(tags: Tags) -> list[str]:
-    # content can be split across multiple tags - not supported yet
-    return [tag.value for tag in tags.find_all(302)]
+    values: list[str] = []
+    for group in group_tags(tags, splitcode=301):
+        g_tags = Tags(group)
+        if g_tags.has_tag(302):
+            # contains all text as one long string, with more than 66000 chars tested
+            values.append(g_tags.get_first_value(302))
+        elif g_tags.has_tag(2):
+            # text is divided into chunks (2, 2, 2, ..., 1)
+            s = "".join(t.value for t in g_tags.find_all(2))
+            s += g_tags.get_first_value(1, "")
+            values.append(s)
+        else:  # unknown tag structure
+            values.append("")
+    return values
