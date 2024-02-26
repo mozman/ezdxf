@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional, Iterator
@@ -25,7 +25,12 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.document import Drawing
 
-__all__ = ["AcadTable", "AcadTableBlockContent", "acad_table_to_block"]
+__all__ = [
+    "AcadTable",
+    "AcadTableBlockContent",
+    "acad_table_to_block",
+    "read_acad_table_content",
+]
 
 
 acdb_block_reference = DefSubclass(
@@ -423,3 +428,31 @@ def acad_table_to_block(table: DXFEntity) -> None:
         dxfattribs={"layer": table.dxf.get("layer", "0")},
     )
     layout.delete_entity(table)  # type: ignore
+
+
+def read_acad_table_content(table: DXFTagStorage) -> list[list[str]]:
+    """Returns the content of an ACAD_TABLE entity as list of table rows.
+
+    If the count of table rows or table columns is missing the complete content is 
+    stored in the first row.
+    """
+    if table.dxftype() != "ACAD_TABLE":
+        raise const.DXFTypeError(f"Expected ACAD_TABLE entity, got {str(table)}")
+    acdb_table = table.xtags.get_subclass("AcDbTable")
+
+    values = [tag.value for tag in acdb_table.find_all(302)]
+    nrows = acdb_table.get_first_value(91, 0)
+    ncols = acdb_table.get_first_value(92, 0)
+    values = _load_table_values(acdb_table)
+    if nrows * ncols == 0:
+        return [values]
+    content: list[list[str]] = []
+    for index in range(nrows):
+        start = index * ncols
+        content.append(values[start : start + ncols])
+    return content
+
+
+def _load_table_values(tags: Tags) -> list[str]:
+    # content can be split across multiple tags - not supported yet
+    return [tag.value for tag in tags.find_all(302)]
