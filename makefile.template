@@ -15,8 +15,9 @@ ACC = src/ezdxf/acc
 # PYTHON3 = py
 # For Linux:
 PYTHON3 = python3
+PYPY = pypy3
 
-.PHONY: build test0 test1 clean sdist bdist packages
+.PHONY: build test0 test1 clean
 
 build:
 	$(PYTHON3) -m pip install --no-build-isolation --editable .
@@ -41,6 +42,13 @@ clean:
 	rm -f $(ACC)/mapbox_earcut.c*
 	rm -f $(ACC)/linetypes.c*
 	rm -f $(ACC)/np_support.c*
+
+build-pypy:
+	$(PYPY) -m pip install -U setuptools wheel typing_extensions pyparsing numpy fonttools Pillow
+	$(PYPY) -m pip install --no-build-isolation --editable .
+	
+test-pypy: build-pypy
+	$(PYPY) -m pytest tests integration_tests
 
 # assuming mypy and ezdxf is installed, ezdxf maybe in development mode:
 # > pip install -e .
