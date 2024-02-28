@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2011-2023 Manfred Moitzi
+# Copyright (c) 2011-2024 Manfred Moitzi
 # License: MIT License
 import os
 import sys
@@ -9,77 +9,26 @@ from setuptools import Extension
 # setuptools docs: https://setuptools.readthedocs.io/en/latest/setuptools.html
 # All Cython accelerated modules are optional:
 ext_modules = [
+    Extension("ezdxf.acc.vector", ["src/ezdxf/acc/vector.pyx"], optional=True),
+    Extension("ezdxf.acc.matrix44", ["src/ezdxf/acc/matrix44.pyx"], optional=True),
+    Extension("ezdxf.acc.bezier4p", ["src/ezdxf/acc/bezier4p.pyx"], optional=True),
+    Extension("ezdxf.acc.bezier3p", ["src/ezdxf/acc/bezier3p.pyx"], optional=True),
+    Extension("ezdxf.acc.bspline", ["src/ezdxf/acc/bspline.pyx"], optional=True),
+    Extension("ezdxf.acc.construct", ["src/ezdxf/acc/construct.pyx"], optional=True),
     Extension(
-        "ezdxf.acc.vector",
-        [
-            "src/ezdxf/acc/vector.pyx",
-        ],
-        optional=True,
+        "ezdxf.acc.mapbox_earcut", ["src/ezdxf/acc/mapbox_earcut.pyx"], optional=True
     ),
-    Extension(
-        "ezdxf.acc.matrix44",
-        [
-            "src/ezdxf/acc/matrix44.pyx",
-        ],
-        optional=True,
-    ),
-    Extension(
-        "ezdxf.acc.bezier4p",
-        [
-            "src/ezdxf/acc/bezier4p.pyx",
-        ],
-        optional=True,
-    ),
-    Extension(
-        "ezdxf.acc.bezier3p",
-        [
-            "src/ezdxf/acc/bezier3p.pyx",
-        ],
-        optional=True,
-    ),
-    Extension(
-        "ezdxf.acc.bspline",
-        [
-            "src/ezdxf/acc/bspline.pyx",
-        ],
-        optional=True,
-    ),
-    Extension(
-        "ezdxf.acc.construct",
-        [
-            "src/ezdxf/acc/construct.pyx",
-        ],
-        optional=True,
-    ),
-    Extension(
-        "ezdxf.acc.mapbox_earcut",
-        [
-            "src/ezdxf/acc/mapbox_earcut.pyx",
-        ],
-        optional=True,
-    ),
-    Extension(
-        "ezdxf.acc.linetypes",
-        [
-            "src/ezdxf/acc/linetypes.pyx",
-        ],
-        optional=True,
-    ),
-    Extension(
-        "ezdxf.acc.np_support",
-        [
-            "src/ezdxf/acc/np_support.pyx",
-        ],
-        optional=True,
-    ),
+    Extension("ezdxf.acc.linetypes", ["src/ezdxf/acc/linetypes.pyx"], optional=True),
+    Extension("ezdxf.acc.np_support", ["src/ezdxf/acc/np_support.pyx"], optional=True),
 ]
+commands = {}
+
 try:
     from Cython.Distutils import build_ext
 
-    commands = {"build_ext": build_ext}
+    commands["build_ext"] = build_ext
 except ImportError:
-    ext_modules = []
-    commands = {}
+    ext_modules.clear()
 
 
 PYPY = hasattr(sys, "pypy_version_info")
