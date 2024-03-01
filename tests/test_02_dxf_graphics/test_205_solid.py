@@ -192,7 +192,7 @@ def test_trace():
 
 def test_3dface():
     face = Face3d()
-    face.dxf.invisible = 2 + 8
+    face.dxf.invisible_edges = 2 + 8
     assert face.is_invisible_edge(0) is False
     assert face.is_invisible_edge(1) is True
     assert face.is_invisible_edge(2) is False
@@ -203,13 +203,14 @@ def test_3dface():
     face.dxf.vtx3 = (1, 2, 3)
     assert face.get_edges_visibility() == [True, False, True, False]
 
-    face.dxf.invisible = 0
+
+    face.dxf.invisible_edges = 0
     face.set_edge_visibility(3, False)
-    assert face.dxf.invisible == 8
+    assert face.dxf.invisible_edges == 8
     face.set_edge_visibility(1, False)
-    assert face.dxf.invisible == 10
+    assert face.dxf.invisible_edges == 10
     face.set_edge_visibility(3, True)
-    assert face.dxf.invisible == 2
+    assert face.dxf.invisible_edges == 2
 
     collector = TagCollector(dxfversion=DXF2000)
     face.export_dxf(collector)
