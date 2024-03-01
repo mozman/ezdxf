@@ -4,12 +4,12 @@ import pytest
 
 import ezdxf
 import json
-from ezdxf.document import export_to_json
+from ezdxf.document import export_json_tags
 
 
-def test_custom_export_to_json():
+def test_export_json_tags():
     doc = ezdxf.new()
-    result = export_to_json(doc)
+    result = export_json_tags(doc)
     data = json.loads(result)
 
     assert isinstance(data, list)

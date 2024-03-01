@@ -1432,7 +1432,7 @@ def custom_export(doc: Drawing, tagwriter: AbstractTagWriter):
     doc.export_sections(tagwriter)
 
 
-def export_to_json(doc: Drawing) -> str:
+def export_json_tags(doc: Drawing) -> str:
     """Export a DXF document as JSON formatted tags."""
     stream = io.StringIO()
     json_writer = JSONTagWriter(stream)
