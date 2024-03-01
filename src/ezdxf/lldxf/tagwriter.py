@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2022, Manfred Moitzi
+# Copyright (c) 2018-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Any, TextIO, TYPE_CHECKING, Union, Iterable, BinaryIO
@@ -259,3 +259,69 @@ def basic_tags_from_text(text: str) -> list[DXFTag]:
     collector = TagCollector()
     collector.write_tags(Tags.from_text(text))
     return collector.tags
+
+
+class JSONTagWriter(AbstractTagWriter):
+    """Writes DXF tags in JSON format into a text stream.
+
+    The DXF tags ...
+
+    .. code-block:: text
+
+        0
+        SECTION
+        2
+        HEADER
+        9
+        $ACADVER
+        1
+        AC1027
+        ...
+        0
+        EOF
+
+    ... are written as:
+
+    .. code-block:: json
+
+        [
+        [0, "SECTION"],
+        [2, "HEADER"],
+        [9, "$ACADVER"],
+        [1, "AC1027"],
+        ...
+        [0, "EOF"]
+        ]
+
+    """
+    JSON_HEADER = "[\n"
+    JSON_TAG_FORMAT = "[{0}, \"{1}\"],\n"
+    JSON_TAG_FORMAT_LAST = "[{0}, \"{1}\"]\n]\n"
+
+    def __init__(
+        self,
+        stream: TextIO,
+        dxfversion: str = LATEST_DXF_VERSION,
+        write_handles = True,
+    ):
+        self._stream = stream
+        self.dxfversion: str = dxfversion
+        self.write_handles: bool = write_handles
+        self.force_optional: bool = False
+        self._stream.write(self.JSON_HEADER)
+
+    def write_tag(self, tag: DXFTag) -> None:
+        if isinstance(tag, DXFVertex):
+            for code, value in tag.dxftags():
+                self.write_tag2(code, value)
+        else:
+            self.write_tag2(tag.code, tag.value)
+
+    def write_tag2(self, code: int, value: Any) -> None:
+        if code == 0 and value == "EOF":
+            self._stream.write('[0, "EOF"]\n]\n')  # no trailing comma!
+        else:
+            self._stream.write(self.JSON_TAG_FORMAT.format(code, value))
+
+    def write_str(self, s: str) -> None:
+        self.write_tags(Tags.from_text(s))

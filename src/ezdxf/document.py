@@ -43,7 +43,12 @@ from ezdxf.lldxf.const import (
     DXF2013,
 )
 from ezdxf.lldxf import loader
-from ezdxf.lldxf.tagwriter import TagWriter, BinaryTagWriter
+from ezdxf.lldxf.tagwriter import (
+    AbstractTagWriter,
+    TagWriter,
+    BinaryTagWriter,
+    JSONTagWriter,
+)
 from ezdxf.query import EntityQuery
 from ezdxf.render.dimension import DimensionRenderer
 from ezdxf.sections.acdsdata import AcDsDataSection, new_acds_data_section
@@ -586,12 +591,7 @@ class Drawing:
         if dxfversion > DXF12:
             self.classes.add_required_classes(dxfversion)
 
-        self._create_appids()
-        self._update_header_vars()
-        self.update_extents()
-        self.update_limits()
-        self._update_metadata()
-
+        self.update_all()
         if fmt.startswith("asc"):
             tagwriter = TagWriter(
                 stream,  # type: ignore
@@ -620,7 +620,7 @@ class Drawing:
         # Create Windows line endings and do base64 encoding:
         return base64.encodebytes(binary_data.replace(b"\n", b"\r\n"))
 
-    def export_sections(self, tagwriter: TagWriter) -> None:
+    def export_sections(self, tagwriter: AbstractTagWriter) -> None:
         """DXF export sections. (internal API)"""
         dxfversion = tagwriter.dxfversion
         self.header.export_dxf(tagwriter)
@@ -637,6 +637,15 @@ class Drawing:
             section.export_dxf(tagwriter)
 
         tagwriter.write_tag2(0, "EOF")
+
+    def update_all(self) -> None:
+        if self.dxfversion > DXF12:
+            self.classes.add_required_classes(self.dxfversion)
+        self._create_appids()
+        self._update_header_vars()
+        self.update_extents()
+        self.update_limits()
+        self._update_metadata()
 
     def update_extents(self):
         msp = self.modelspace()
@@ -1412,3 +1421,20 @@ def _get_unknown_entities(doc: Drawing) -> list[DXFEntity]:
         if isinstance(entity, (DXFTagStorage, ACADProxyEntity, OLE2Frame)):
             data.append(entity)
     return data
+
+
+def custom_export(doc: Drawing, tagwriter: AbstractTagWriter):
+    """Export a DXF document via a custom tag writer."""
+    dxfversion = doc.dxfversion
+    if dxfversion != DXF12:
+        tagwriter.write_handles = True
+    doc.update_all()
+    doc.export_sections(tagwriter)
+
+
+def export_to_json(doc: Drawing) -> str:
+    """Export a DXF document as JSON formatted tags."""
+    stream = io.StringIO()
+    json_writer = JSONTagWriter(stream)
+    custom_export(doc, json_writer)
+    return stream.getvalue()
