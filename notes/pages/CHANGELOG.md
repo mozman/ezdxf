@@ -40,6 +40,8 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 		- {{issue 997}}
 	- BUGFIX: `NumpyPath2d` could contain 3d vertices
 		- {{issue 1003}}
+	- BUGFIX: DXF attribute `invisible` wasn't exported
+		- {{issue 1040}}
 	- BUGFIX: catch exceptions of the `draw` command raised when required dependencies are not installed
 -
 - ## Version 1.1.4 - 2023-12-24

@@ -335,6 +335,7 @@ class DXFGraphic(DXFEntity):
                 "color",
                 "lineweight",
                 "ltscale",
+                "invisible",
                 "true_color",
                 "color_name",
                 "transparency",
