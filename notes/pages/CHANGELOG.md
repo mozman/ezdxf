@@ -22,6 +22,9 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- NEW: `MeshBuilder.render_3dsolid()`, create [[3DSOLID]] entities from simple polyhedrons (experimental)
 	- NEW: `Auditor` fixes non-existing linetypes in layers, replaced by `Continuous`
 		- {{discussion 1018}}
+	- NEW: export and load DXF documents as JSON encoded tags
+		- `ezdxf.document.export_json_tags()`
+		- `ezdxf.document.load_json_tags()`
 	- CHANGE: renamed `Image.boundray_path_ocs()` to `Image.pixel_boundary_path()`
 	- CHANGE: refactoring of the [[RecorderBackend]]
 	- CHANGE: replaced `ezdxf.math.linspace` by `numpy.linspace`

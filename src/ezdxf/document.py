@@ -1449,20 +1449,6 @@ def load_json_tags(data: Sequence[Any]) -> Drawing:
     an 1:1 representation of a DXF tag. The group-code has to be an integer and the 
     value has to be a string. 
 
-    It looks like this:
-
-    .. code-block:: json
-
-    [
-    [0, "SECTION"],
-    [2, "HEADER"],
-    [9, "$ACADVER"],
-    [1, "AC1027"],
-    ...
-    [0, "EOF"]
-    ]
-
-
     Args:
         data: JSON data structure as a sequence of [group-code, value] pairs
 
