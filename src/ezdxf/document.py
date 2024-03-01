@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023, Manfred Moitzi
+# Copyright (c) 2011-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -11,6 +11,8 @@ from typing import (
     Callable,
     cast,
     Optional,
+    Sequence,
+    Any
 )
 import abc
 import base64
@@ -1435,6 +1437,36 @@ def custom_export(doc: Drawing, tagwriter: AbstractTagWriter):
 def export_json_tags(doc: Drawing) -> str:
     """Export a DXF document as JSON formatted tags."""
     stream = io.StringIO()
-    json_writer = JSONTagWriter(stream)
+    json_writer = JSONTagWriter(stream, dxfversion=doc.dxfversion)
     custom_export(doc, json_writer)
     return stream.getvalue()
+
+
+def load_json_tags(data: Sequence[Any]) -> Drawing:
+    """Load DXF document from JSON formatted tags.
+    
+    The expected JSON format is a list of [group-code, value] pairs where each pair is 
+    an 1:1 representation of a DXF tag. The group-code has to be an integer and the 
+    value has to be a string. 
+
+    It looks like this:
+
+    .. code-block:: json
+
+    [
+    [0, "SECTION"],
+    [2, "HEADER"],
+    [9, "$ACADVER"],
+    [1, "AC1027"],
+    ...
+    [0, "EOF"]
+    ]
+
+
+    Args:
+        data: JSON data structure as a sequence of [group-code, value] pairs
+
+    """
+    from ezdxf.lldxf.tagger import json_tag_loader
+
+    return Drawing.load(json_tag_loader(data))

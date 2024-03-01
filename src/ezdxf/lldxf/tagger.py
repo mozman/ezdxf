@@ -1,7 +1,7 @@
 # Copyright (c) 2016-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, TextIO, Iterator, Any, Optional
+from typing import Iterable, TextIO, Iterator, Any, Optional, Sequence
 import struct
 from .types import (
     DXFTag,
@@ -348,3 +348,53 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
                         raise DXFStructureError(error_msg(x))
         except StopIteration:
             return
+
+def json_tag_loader(data: Sequence[Any], skip_comments: bool = True) -> Iterator[DXFTag]:
+    """Yields :class:``DXFTag`` objects from a JSON data structure (untrusted
+    external source) and does not optimize coordinates. Comment tags (group
+    code == 999) will be skipped if argument `skip_comments` is `True`.
+    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always an
+    unicode string without a trailing ``\n``.
+
+    The expected JSON format is a list of [group-code, value] pairs where each pair is 
+    an 1:1 representation of a DXF tag. The group-code has to be an integer and the 
+    value has to be a string. 
+
+    It looks like this:
+
+    .. code-block:: json
+
+    [
+    [0, "SECTION"],
+    [2, "HEADER"],
+    [9, "$ACADVER"],
+    [1, "AC1027"],
+    ...
+    [0, "EOF"]
+    ]
+
+
+    Args:
+        data: JSON data structure as a sequence of [group-code, value] pairs
+        skip_comments: skip comment tags (group code == 999) if `True`
+
+    Raises:
+        DXFStructureError: Found invalid group code or value type.
+
+    """
+    yield_comments = not skip_comments   
+    _DXFTag = DXFTag
+    for tag_number, (code, value) in enumerate(data):       
+        if not isinstance(code, int):
+            raise DXFStructureError(
+                f'Invalid group code "{code}" in tag number {tag_number}.'
+            )
+        if not isinstance(value, str):
+            raise DXFStructureError(
+                f'Expected a string as value, got {type(value)} in tag number {tag_number}.'
+            )
+        if code != 999 or yield_comments:
+            yield _DXFTag(code, value)
+        if code == 0 and value == "EOF":
+            return
+            
