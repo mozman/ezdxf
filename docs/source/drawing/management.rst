@@ -155,24 +155,95 @@ Example of the ezdxf marker string: ``0.16.4b1 @ 2021-06-12T07:35:34.898808+00:0
 Export/Load JSON Encoded Tags
 -----------------------------
 
-JSON encoded DXF tags look like this:
+Tag format of DXF documents:
 
-.. code-block:: json
+.. code-block:: text
+
+    0
+    SECTION
+    2
+    HEADER
+    9
+    $ACADVER
+    1
+    AC1027
+    ...
+    9
+    $LIMMIN
+    10
+    0.0
+    20
+    0.0
+    9
+    $LIMMAX
+    10
+    420.0
+    20
+    297.0
+    9
+    $ORTHOMODE
+    70
+    0
+    9
+    $REGENMODE
+    70
+    1
+    ...
+    0
+    EOF
+
+The `compact` format is a list of ``[group-code, value]`` pairs where each pair is 
+a DXF tag. The group-code has to be an integer and the value has to be a string, 
+integer, float or list of floats for vertices. 
+
+.. code-block:: text
 
     [
     [0, "SECTION"],
     [2, "HEADER"],
     [9, "$ACADVER"],
     [1, "AC1027"],
-
-    [0, "... more tags"],
-
+    ...
+    [9, "$LIMMIN"],
+    [10, [0.0,0.0]],
+    [9, "$LIMMAX"],
+    [10, [420.0,297.0]],
+    [9, "$ORTHOMODE"],
+    [70, 0],
+    [9, "$REGENMODE"],
+    [70, 1]
+    ...
     [0, "EOF"]
     ]
 
-The expected format is a list of ``[group-code, value]`` pairs where each pair is 
-an 1:1 representation of a DXF tag. The group-code has to be an integer and the 
-value has to be a string. 
+
+The `verbose` format (`compact` is ``False``) is a list of ``[group-code, value]`` 
+pairs where each pair is a 1:1 representation of a DXF tag. The group-code has to be an 
+integer and the value has to be a string. 
+
+.. code-block:: text
+
+    [
+    [0, "SECTION"],
+    [2, "HEADER"],
+    [9, "$ACADVER"],
+    [1, "AC1027"],
+    ...
+    [9, "$LIMMIN"],
+    [10, "0.0"],
+    [20, "0.0"],
+    [9, "$LIMMAX"],
+    [10, "420.0"],
+    [20, "297.0"],
+    [9, "$ORTHOMODE"],
+    [70, "0"],
+    [9, "$REGENMODE"],
+    [70, "1"],
+
+    ...
+    [0, "EOF"]
+    ]
+
 
 .. autofunction:: ezdxf.document.export_json_tags
 

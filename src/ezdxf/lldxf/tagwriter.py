@@ -35,16 +35,13 @@ class AbstractTagWriter:
 
     # Start of low level interface:
     @abc.abstractmethod
-    def write_tag(self, tag: DXFTag) -> None:
-        ...
+    def write_tag(self, tag: DXFTag) -> None: ...
 
     @abc.abstractmethod
-    def write_tag2(self, code: int, value: Any) -> None:
-        ...
+    def write_tag2(self, code: int, value: Any) -> None: ...
 
     @abc.abstractmethod
-    def write_str(self, s: str) -> None:
-        ...
+    def write_str(self, s: str) -> None: ...
 
     # End of low level interface
 
@@ -264,64 +261,56 @@ def basic_tags_from_text(text: str) -> list[DXFTag]:
 class JSONTagWriter(AbstractTagWriter):
     """Writes DXF tags in JSON format into a text stream.
 
-    The DXF tags ...
+    The `compact` format is a list of ``[group-code, value]`` pairs where each pair is 
+    a DXF tag. The group-code has to be an integer and the value has to be a string, 
+    integer, float or list of floats for vertices. 
 
-    .. code-block:: text
-
-        0
-        SECTION
-        2
-        HEADER
-        9
-        $ACADVER
-        1
-        AC1027
-        ...
-        0
-        EOF
-
-    ... are written as:
-
-    .. code-block:: json
-
-        [
-        [0, "SECTION"],
-        [2, "HEADER"],
-        [9, "$ACADVER"],
-        [1, "AC1027"],
-        ...
-        [0, "EOF"]
-        ]
+    The `verbose` format (`compact` is ``False``) is a list of ``[group-code, value]`` 
+    pairs where each pair is a 1:1 representation of a DXF tag. The group-code has to be 
+    an integer and the value has to be a string.
 
     """
+
     JSON_HEADER = "[\n"
-    JSON_TAG_FORMAT = "[{0}, \"{1}\"],\n"
-    JSON_TAG_FORMAT_LAST = "[{0}, \"{1}\"]\n]\n"
+    JSON_STRING = '[{0}, "{1}"],\n'
+    JSON_NUMBER = '[{0}, {1}],\n'
+    VERTEX_TAG_FORMAT = "[{0}, {1}],\n"
 
     def __init__(
         self,
         stream: TextIO,
         dxfversion: str = LATEST_DXF_VERSION,
-        write_handles = True,
+        write_handles=True,
+        compact=True,
     ):
         self._stream = stream
-        self.dxfversion: str = dxfversion
-        self.write_handles: bool = write_handles
-        self.force_optional: bool = False
+        self.dxfversion = str(dxfversion)
+        self.write_handles = bool(write_handles)
+        self.force_optional = False
+        self.compact = bool(compact)
         self._stream.write(self.JSON_HEADER)
 
     def write_tag(self, tag: DXFTag) -> None:
         if isinstance(tag, DXFVertex):
-            for code, value in tag.dxftags():
-                self.write_tag2(code, value)
+            if self.compact:
+                vertex = ",".join(str(value) for _, value in tag.dxftags())
+                self._stream.write(
+                    self.VERTEX_TAG_FORMAT.format(tag.code, f"[{vertex}]")
+                )
+            else:
+                for code, value in tag.dxftags():
+                    self.write_tag2(code, value)
         else:
             self.write_tag2(tag.code, tag.value)
 
     def write_tag2(self, code: int, value: Any) -> None:
         if code == 0 and value == "EOF":
             self._stream.write('[0, "EOF"]\n]\n')  # no trailing comma!
-        else:
-            self._stream.write(self.JSON_TAG_FORMAT.format(code, value))
+            return
+        if self.compact and isinstance(value, (float, int)):
+            self._stream.write(self.JSON_NUMBER.format(code, value))
+            return
+        self._stream.write(self.JSON_STRING.format(code, value))
 
     def write_str(self, s: str) -> None:
         self.write_tags(Tags.from_text(s))

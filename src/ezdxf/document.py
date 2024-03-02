@@ -1434,10 +1434,20 @@ def custom_export(doc: Drawing, tagwriter: AbstractTagWriter):
     doc.export_sections(tagwriter)
 
 
-def export_json_tags(doc: Drawing) -> str:
-    """Export a DXF document as JSON formatted tags."""
+def export_json_tags(doc: Drawing, compact=True) -> str:
+    """Export a DXF document as JSON formatted tags.
+    
+    The `compact` format is a list of ``[group-code, value]`` pairs where each pair is 
+    a DXF tag. The group-code has to be an integer and the value has to be a string, 
+    integer, float or list of floats for vertices. 
+
+    The `verbose` format (`compact` is ``False``) is a list of ``[group-code, value]`` 
+    pairs where each pair is a 1:1 representation of a DXF tag. The group-code has to be 
+    an integer and the value has to be a string.
+
+    """
     stream = io.StringIO()
-    json_writer = JSONTagWriter(stream, dxfversion=doc.dxfversion)
+    json_writer = JSONTagWriter(stream, dxfversion=doc.dxfversion, compact=compact)
     custom_export(doc, json_writer)
     return stream.getvalue()
 
@@ -1446,8 +1456,7 @@ def load_json_tags(data: Sequence[Any]) -> Drawing:
     """Load DXF document from JSON formatted tags.
     
     The expected JSON format is a list of [group-code, value] pairs where each pair is 
-    an 1:1 representation of a DXF tag. The group-code has to be an integer and the 
-    value has to be a string. 
+    a DXF tag. The `compact` and the `verbose` format is supported. 
 
     Args:
         data: JSON data structure as a sequence of [group-code, value] pairs
