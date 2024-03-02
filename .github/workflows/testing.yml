@@ -28,7 +28,7 @@ jobs:
         python -m pip install setuptools wheel pytest pyparsing fonttools numpy Pillow
     - name: Install without C-extensions
       run: |
-        python setup.py install
+        python -m pip install .
     - name: Test without C-extensions
       run: |
         python -m pytest tests integration_tests
