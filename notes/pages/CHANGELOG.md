@@ -1,5 +1,9 @@
-## Version 1.2.0 - 2024-03-02
-id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
+## Version 1.2.1 - dev
+	- moved static setup data from `setup.py` to `pyproject.toml`
+	- REMOVE: `pp` command, use `browse` command to explore DXF files
+	-
+- ## Version 1.2.0 - 2024-03-02
+  id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- ((658c0484-28db-436e-b828-8fc509ecbd29))
 	- NEW: `ezdxf` requires Python 3.9 or newer
 	- NEW: support for the [[SPATIAL_FILTER]] entity.

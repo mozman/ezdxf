@@ -8,7 +8,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-
 zip-safe = false
 provides = ["ezdxf"]
 

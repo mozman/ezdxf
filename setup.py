@@ -14,7 +14,7 @@ from setuptools import Extension
 #
 #   python setup.py bdist_wheel
 #
-# All Cython accelerated modules are optional:
+# All Cython modules are optional:
 ext_modules = [
     Extension("ezdxf.acc.vector", ["src/ezdxf/acc/vector.pyx"], optional=True),
     Extension("ezdxf.acc.matrix44", ["src/ezdxf/acc/matrix44.pyx"], optional=True),
