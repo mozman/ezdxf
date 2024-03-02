@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2023, Manfred Moitzi
+#  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 
@@ -84,64 +84,6 @@ def register(cls: Type[Command]):
     """Register a launcher sub-command."""
     _commands[cls.NAME] = cls
     return cls
-
-
-@register
-class PrettyPrint(Command):
-    """Launcher sub-command: pp"""
-
-    NAME = "pp"
-
-    @staticmethod
-    def add_parser(subparsers):
-        parser = subparsers.add_parser(
-            PrettyPrint.NAME, help="pretty print DXF files as HTML file"
-        )
-        parser.add_argument(
-            "files",
-            metavar="FILE",
-            nargs="+",
-            help="DXF files pretty print",
-        )
-        parser.add_argument(
-            "-o",
-            "--open",
-            action="store_true",
-            help="open generated HTML file by the default web browser",
-        )
-        parser.add_argument(
-            "-r",
-            "--raw",
-            action="store_true",
-            help="raw mode, no DXF structure interpretation",
-        )
-        parser.add_argument(
-            "-x",
-            "--nocompile",
-            action="store_true",
-            help="don't compile points coordinates into single tags "
-            "(only in raw mode)",
-        )
-        parser.add_argument(
-            "-l",
-            "--legacy",
-            action="store_true",
-            help="legacy mode, reorder DXF point coordinates",
-        )
-        parser.add_argument(
-            "-s",
-            "--sections",
-            action="store",
-            default="hctbeo",
-            help="choose sections to include and their order, h=HEADER, c=CLASSES, "
-            "t=TABLES, b=BLOCKS, e=ENTITIES, o=OBJECTS",
-        )
-
-    @staticmethod
-    def run(args):
-        from ezdxf.pp import run
-
-        run(args)
 
 
 @register

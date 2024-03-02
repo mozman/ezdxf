@@ -4,7 +4,6 @@ Launcher
 The command line script `ezdxf` launches various sub-commands:
 
 =============== ====================================================================
-``pp``          DXF pretty printer, replacement for the previous `dxfpp` command
 ``audit``       Audit and repair DXF files
 ``draw``        Draw and convert DXF files by the Matplotlib backend
 ``view``        PyQt DXF file viewer
@@ -28,8 +27,7 @@ The help option ``-h`` is supported by the main script and all sub-commands:
     https://pypi.org/project/ezdxf/
 
     positional arguments:
-      {pp,audit,draw,view,browse,strip}
-        pp                  pretty print DXF files as HTML file
+      {audit,draw,view,browse,strip}
         audit               audit and repair DXF files
         draw                draw and convert DXF files by Matplotlib
         view                view DXF files by the PyQt viewer
@@ -67,40 +65,6 @@ C-extensions are used.
     using C-extensions: yes
 
 :code:`ezdxf -f` rebuilds the system font cache and shows all fonts found.
-
-Pretty Printer
---------------
-
-Pretty print the DXF text content as HTML file and open the file in the
-default web browser:
-
-.. code-block:: Text
-
-    C:\> ezdxf pp -o gear.dxf
-
-
-.. image:: gfx/gear-pp.png
-   :align: center
-
-Print help:
-
-.. code-block:: Text
-
-    C:\> ezdxf pp -h
-    usage: ezdxf pp [-h] [-o] [-r] [-x] [-l] [-s SECTIONS] FILE [FILE ...]
-
-    positional arguments:
-      FILE                  DXF files pretty print
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      -o, --open            open generated HTML file by the default web browser
-      -r, --raw             raw mode, no DXF structure interpretation
-      -x, --nocompile       don't compile points coordinates into single tags (only in raw mode)
-      -l, --legacy          legacy mode, reorder DXF point coordinates
-      -s SECTIONS, --sections SECTIONS
-                            choose sections to include and their order, h=HEADER, c=CLASSES,
-                            t=TABLES, b=BLOCKS, e=ENTITIES, o=OBJECTS
 
 .. _audit_command:
 
@@ -301,10 +265,8 @@ For `gedit` on Linux use (untested):
     icon_size = 32
 
 The *browse* command opens a DXF structure browser to investigate the
-internals of a DXF file without interpreting the content. The functionality of
-the DXF browser is similar to the DXF `Pretty Printer`_ (*pp* command), but without
-the disadvantage of creating giant HTML files. The intended usage is debugging
-invalid DXF files, which can not be loaded by the :func:`ezdxf.readfile()` or
+internals of a DXF file without interpreting the content. The intended usage is 
+debugging invalid DXF files, which can not be loaded by the :func:`ezdxf.readfile()` or
 the :func:`ezdxf.recover.readfile()` functions.
 
 Line Numbers
