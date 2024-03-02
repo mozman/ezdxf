@@ -21,7 +21,7 @@ jobs:
         python -m pip install wheel mypy pyparsing numpy fonttools
     - name: Install without C-extensions
       run: |
-        python setup.py install
+        python -m pip install .
     - name: Check type annotations by mypy
       run: |
         python -m mypy --ignore-missing-imports -p ezdxf

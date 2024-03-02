@@ -10,7 +10,7 @@ jobs:
   Linux-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Build manylinux2014_aarch64 wheels
