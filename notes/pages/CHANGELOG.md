@@ -1,4 +1,4 @@
-## Version 1.2.0 - dev
+## Version 1.2.0 - 2024-03-02
 id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- ((658c0484-28db-436e-b828-8fc509ecbd29))
 	- NEW: `ezdxf` requires Python 3.9 or newer
@@ -42,7 +42,7 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 		- {{issue 1003}}
 	- BUGFIX: DXF attribute `invisible` wasn't exported
 		- {{issue 1040}}
-	- BUGFIX: catch exceptions of the `draw` command raised when required dependencies are not installed
+	- BUGFIX: catch exceptions of the `draw` command when required dependencies are not installed
 -
 - ## Version 1.1.4 - 2023-12-24
   id:: 6568dc88-ce84-4f46-b490-43768c491a2b
