@@ -54,27 +54,27 @@ classifiers=[
 
 
 [project.optional-dependencies]
-# use PyQT5 (draw5/dev5) only when PySide6 is not available
-draw = ["matplotlib", "PySide6", "PyMuPDF>=1.20.0", "Pillow"]
-draw5 = ["matplotlib", "PyQt5", "PyMuPDF>=1.20.0", "Pillow"]
+# use PyQt5 (draw5/dev5) only when PySide6 is not available
+draw = ["PySide6", "matplotlib", "PyMuPDF>=1.20.0", "Pillow"]
+draw5 = ["PyQt5", "matplotlib", "PyMuPDF>=1.20.0", "Pillow"]
 dev = [
+    "PySide6", 
     "setuptools", 
     "wheel", 
     "Cython", 
     "pytest", 
     "Pillow", 
     "matplotlib", 
-    "PySide6", 
     "PyMuPDF>=1.20.0",
 ]
 dev5 = [
+    "PyQt5", 
     "setuptools", 
     "wheel", 
     "Cython", 
     "pytest", 
     "Pillow", 
     "matplotlib", 
-    "PyQt5", 
     "PyMuPDF>=1.20.0"
 ]
 
