@@ -25,10 +25,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         # Excluding Cython to test the pure Python version.
-        python -m pip install setuptools wheel pytest pyparsing fonttools numpy Pillow
+        python -m pip install setuptools wheel
     - name: Install without C-extensions
       run: |
-        python -m pip install .
+        python -m pip install --no-build-isolation .
     - name: Test without C-extensions
       run: |
+        # install test dependencies
+        python -m pip install pytest Pillow
         python -m pytest tests integration_tests
