@@ -505,7 +505,7 @@ def geojson_ring(path: BkPath2d, is_hole: bool, max_sagitta: float) -> Ring:
 
 def geojson_polygons(path: BkPath2d, max_sagitta: float) -> list[GeoJsonPolygon]:
     """Returns a list of polygons, where each polygon is a list of an exterior path and
-    optional holes e.g. [[ext0, [hole0, hole1]], [ext1], [ext2, hole0], ...].
+    optional holes e.g. [[ext0, hole0, hole1], [ext1], [ext2, hole0], ...].
 
     """
     sub_paths: list[BkPath2d] = path.sub_paths()
