@@ -78,7 +78,7 @@ class TestCustomJSONBackend:
         self, backend: json.CustomJSONBackend, properties: BackendProperties
     ):
         backend.draw_point(Vec2(13, 17), properties)
-        result = backend.get_json_str(indent=4)
+        result = backend.get_string(indent=4)
         assert result == """[
     {
         "type": "point",

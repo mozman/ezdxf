@@ -130,7 +130,7 @@ class CustomJSONBackend(BackendInterface):
         """Returns the result as a JSON-like data structure."""
         return self._entities
 
-    def get_json_str(self, *, indent: int | str = 2) -> str:
+    def get_string(self, *, indent: int | str = 2) -> str:
         """Returns the result as a JSON string."""
         return json.dumps(self.get_json_data(), indent=indent)
 
@@ -286,6 +286,13 @@ class GeoJSONBackend(BackendInterface):
 
     GeoJSON specification: https://geojson.org/
 
+    GeoJSON uses a geographic coordinate reference system, World Geodetic
+    System 1984, and units of decimal degrees. 
+    - Latitude: -90 to +90 (South/North)
+    - Longitude: -180 to +180 (East/West)
+    
+    So most DXF files will produce invalid coordinates!
+
     """
 
     def __init__(self, properties_maker: PropertiesMaker = properties_maker) -> None:
@@ -309,7 +316,7 @@ class GeoJSONBackend(BackendInterface):
         else:
             return {"type": "GeometryCollection", "geometries": self._entities}
 
-    def get_json_str(self, *, indent: int | str = 2) -> str:
+    def get_string(self, *, indent: int | str = 2) -> str:
         """Returns the result as a JSON string."""
         return json.dumps(self.get_json_data(), indent=indent)
 
@@ -470,10 +477,15 @@ def geojson_polygons(path: BkPath2d, max_sagitta: float) -> list[GeoJsonPolygon]
             # GeoJSON has no support for nested hole structures, so the sub polygons of
             # holes (hole[1]) are ignored yet!
             holes = polygon[1]
-            if holes:
-                geojson_polygon.extend(
-                    [geojson_ring(hole[0], True, max_sagitta) for hole in holes]
-                )
-            # TODO: add sub polygons of holes as separated polygons
+            if isinstance(holes, BkPath2d):  # single hole
+                geojson_polygon.append(geojson_ring(holes, True, max_sagitta))
+                continue
+            if isinstance(holes, (tuple, list)):  # multiple holes
+                for hole in holes:
+                    if isinstance(hole, (tuple, list)):  # nested polygon
+                        # TODO: add sub polygons of holes as separated polygons
+                        hole = hole[0]  # exterior path
+                    geojson_polygon.append(geojson_ring(hole, True, max_sagitta))
+            
         geojson_polygons.append(geojson_polygon)
     return geojson_polygons
