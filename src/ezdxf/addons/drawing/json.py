@@ -15,12 +15,10 @@ from .config import Configuration
 from .properties import BackendProperties
 
 
-__all__ = ["CustomJSONBackend"]
+__all__ = ["CustomJSONBackend", "GeoJSONBackend"]
 
-SPECS = """
+CUSTOM_JSON_SPECS = """
 JSON content = [entity, entity, ...]
-
-Linetypes (DASH, DOT, ...) are resolved into solid lines.
 
 entity = {
     "type": point | lines | path | filled-paths | filled-polygon,
@@ -31,6 +29,7 @@ entity = {
     },
     "geometry": depends on "type"
 }
+DXF linetypes (DASH, DOT, ...) are resolved into solid lines.
 
 A single point:
 point = {
@@ -60,8 +59,8 @@ path = {
 
 SVG-like path structure:
 - The first path-command is always an absolute move to "M"
-- The "M" command does not appear inside a path, each path is a continuouse geometry (no 
-  multi-paths).
+- The "M" command does not appear inside a path, each path is a continuouse geometry 
+  (no multi-paths).
 
 path-command = 
     ("M", x, y) = absolute move to
@@ -77,10 +76,10 @@ path-command =
 
 Multiple filled paths:
 
-Outer paths and holes are mixed and NOT oriented (clockwise or counter-clockwise) by 
-default - PyQt and SVG have no problem with that structure but matplotlib requires 
-oriented paths.  When oriented paths are required the CustomJSONBackend can orient the 
-paths on demand.
+Exterior paths and holes are mixed and NOT oriented by default (clockwise or 
+counter-clockwise) - PyQt and SVG have no problem with that structure but matplotlib 
+requires oriented paths.  When oriented paths are required the CustomJSONBackend can 
+orient the paths on demand.
 
 filled-paths = {
     "type": "filled-paths",
@@ -114,18 +113,18 @@ CLOSE_PATH = "Z"
 
 
 class CustomJSONBackend(BackendInterface):
-    """Creates a JSON-like output with a custom JSON scheme.  This scheme supports 
-    curved shapes by a SVG-path like structure and coordinates are not limited in 
-    any way.  This backend can be used to send geometries from a web-backend to a 
+    """Creates a JSON-like output with a custom JSON scheme.  This scheme supports
+    curved shapes by a SVG-path like structure and coordinates are not limited in
+    any way.  This backend can be used to send geometries from a web-backend to a
     frontend.
 
     The JSON scheme is documented in the source code:
 
-    https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/json.py    
+    https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/json.py
 
     Args:
-        orient_paths: orient exterior and hole paths on demand, exterior paths have 
-            counter-clockwise orientation and holes have clockwise orientation. 
+        orient_paths: orient exterior and hole paths on demand, exterior paths have
+            counter-clockwise orientation and holes have clockwise orientation.
 
     .. automethod:: get_json_data
 
@@ -233,7 +232,7 @@ class CustomJSONBackend(BackendInterface):
         self.add_entity("filled-polygon", [(v.x, v.y) for v in vertices], properties)
 
     def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
-        pass  # not implemented
+        pass
 
     def set_background(self, color: Color) -> None:
         pass
@@ -301,19 +300,19 @@ def properties_maker(color: str, stroke_width: float, layer: str) -> dict[str, A
 class GeoJSONBackend(BackendInterface):
     """Creates a JSON-like output according the `GeoJSON`_ scheme.
     GeoJSON uses a geographic coordinate reference system, World Geodetic
-    System 1984, and units of decimal degrees. 
+    System 1984, and units of decimal degrees.
 
     - Latitude: -90 to +90 (South/North)
     - Longitude: -180 to +180 (East/West)
-    
-    So most DXF files will produce invalid coordinates and it is the job of the 
-    **package-user** to transform the content accordingly!  
-    The :class:`~ezdxf.addons.drawing.recorder.Recorder` and 
+
+    So most DXF files will produce invalid coordinates and it is the job of the
+    **package-user** to transform the content accordingly!
+    The :class:`~ezdxf.addons.drawing.recorder.Recorder` and
     :class:`~ezdxf.addons.drawing.recorder.Player` classes can help with this.
 
-    The GeoJSON format supports only straight lines so curved shapes are flattened to 
+    The GeoJSON format supports only straight lines so curved shapes are flattened to
     polylines and polygons.
-    
+
     Args:
         properties_maker: function to create a properties dict.
 
@@ -438,7 +437,7 @@ class GeoJSONBackend(BackendInterface):
         )
 
     def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
-        pass  # not implemented
+        pass
 
     def set_background(self, color: Color) -> None:
         pass
@@ -515,6 +514,6 @@ def geojson_polygons(path: BkPath2d, max_sagitta: float) -> list[GeoJsonPolygon]
                         # TODO: add sub polygons of holes as separated polygons
                         hole = hole[0]  # exterior path
                     geojson_polygon.append(geojson_ring(hole, True, max_sagitta))
-            
+
         geojson_polygons.append(geojson_polygon)
     return geojson_polygons
