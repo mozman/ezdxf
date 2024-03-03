@@ -126,6 +126,8 @@ class CustomJSONBackend(BackendInterface):
         orient_paths: orient exterior and hole paths on demand, exterior paths have
             counter-clockwise orientation and holes have clockwise orientation.
 
+    **Class Methods**
+
     .. automethod:: get_json_data
 
     .. automethod:: get_string
@@ -231,13 +233,13 @@ class CustomJSONBackend(BackendInterface):
             vertices.append(vertices[0])
         self.add_entity("filled-polygon", [(v.x, v.y) for v in vertices], properties)
 
+    def clear(self) -> None:
+        self._entities.clear()
+
     def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
         pass
 
     def set_background(self, color: Color) -> None:
-        pass
-
-    def clear(self) -> None:
         pass
 
     def finalize(self) -> None:
@@ -285,9 +287,15 @@ GeoJsonPolygon: TypeAlias = List[Ring]
 
 
 def properties_maker(color: str, stroke_width: float, layer: str) -> dict[str, Any]:
-    """Return a propereties dict.
+    """Returns the property dict::
 
-    Return an empty dict to prevent properties in GeoJSON output. This also avoids
+        {
+            "color": color,
+            "stroke-width": stroke_width,
+            "layer": layer,
+        }
+
+    Returning an empty dict prevents properties in the GeoJSON output and also avoids
     wraping entities into "Feature" objects.
     """
     return {
@@ -313,8 +321,19 @@ class GeoJSONBackend(BackendInterface):
     The GeoJSON format supports only straight lines so curved shapes are flattened to
     polylines and polygons.
 
+    The properties are handled as a foreign member feature and is therefore not defined 
+    in the GeoJSON specs.  It is possible to provide a custom function to create these 
+    property objects.
+
+    Default implementation:
+    
+    .. autofunction:: properties_maker
+    
+
     Args:
         properties_maker: function to create a properties dict.
+
+    **Class Methods**
 
     .. automethod:: get_json_data
 
@@ -436,13 +455,13 @@ class GeoJSONBackend(BackendInterface):
             geojson_object("Polygon", [[(v.x, v.y) for v in vertices]]), properties
         )
 
+    def clear(self) -> None:
+        self._entities.clear()
+
     def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
         pass
 
     def set_background(self, color: Color) -> None:
-        pass
-
-    def clear(self) -> None:
         pass
 
     def finalize(self) -> None:
@@ -485,8 +504,8 @@ def geojson_ring(path: BkPath2d, is_hole: bool, max_sagitta: float) -> Ring:
 
 
 def geojson_polygons(path: BkPath2d, max_sagitta: float) -> list[GeoJsonPolygon]:
-    """Returns a list of polygons, where each polygon id a list of an exterior path and
-    optional holes e.g. [[ext0, hole0, hole1], [ext1], [ext2, hole0], ...].
+    """Returns a list of polygons, where each polygon is a list of an exterior path and
+    optional holes e.g. [[ext0, [hole0, hole1]], [ext1], [ext2, hole0], ...].
 
     """
     sub_paths: list[BkPath2d] = path.sub_paths()
