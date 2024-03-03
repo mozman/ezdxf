@@ -114,7 +114,24 @@ CLOSE_PATH = "Z"
 
 
 class CustomJSONBackend(BackendInterface):
-    """Creates a JSON-like output with a custom JSON scheme."""
+    """Creates a JSON-like output with a custom JSON scheme.  This scheme supports 
+    curved shapes by a SVG-path like structure and coordinates are not limited in 
+    any way.  This backend can be used to send geometries from a web-backend to a 
+    frontend.
+
+    The JSON scheme is documented in the source code:
+
+    https://github.com/mozman/ezdxf/blob/master/src/ezdxf/addons/drawing/json.py    
+
+    Args:
+        orient_paths: orient exterior and hole paths on demand, exterior paths have 
+            counter-clockwise orientation and holes have clockwise orientation. 
+
+    .. automethod:: get_json_data
+
+    .. automethod:: get_string
+
+    """
 
     def __init__(self, orient_paths=False) -> None:
         self._entities: list[dict[str, Any]] = []
@@ -282,17 +299,29 @@ def properties_maker(color: str, stroke_width: float, layer: str) -> dict[str, A
 
 
 class GeoJSONBackend(BackendInterface):
-    """Creates a JSON-like output with the GeoJSON scheme.
-
-    GeoJSON specification: https://geojson.org/
-
+    """Creates a JSON-like output according the `GeoJSON`_ scheme.
     GeoJSON uses a geographic coordinate reference system, World Geodetic
     System 1984, and units of decimal degrees. 
+
     - Latitude: -90 to +90 (South/North)
     - Longitude: -180 to +180 (East/West)
     
-    So most DXF files will produce invalid coordinates!
+    So most DXF files will produce invalid coordinates and it is the job of the 
+    **package-user** to transform the content accordingly!  
+    The :class:`~ezdxf.addons.drawing.recorder.Recorder` and 
+    :class:`~ezdxf.addons.drawing.recorder.Player` classes can help with this.
 
+    The GeoJSON format supports only straight lines so curved shapes are flattened to 
+    polylines and polygons.
+    
+    Args:
+        properties_maker: function to create a properties dict.
+
+    .. automethod:: get_json_data
+
+    .. automethod:: get_string
+
+    .. _GeoJSON: https://geojson.org/
     """
 
     def __init__(self, properties_maker: PropertiesMaker = properties_maker) -> None:

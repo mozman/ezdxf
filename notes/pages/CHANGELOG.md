@@ -1,6 +1,8 @@
 ## Version 1.2.1 - dev
 	- moved static setup data from `setup.py` to `pyproject.toml`
 	- REMOVE: `pp` command, use `browse` command to explore DXF files
+	- NEW: `GeoJSONBackend` for the `drawing` add-on
+	- NEW: `CustomJSONBackend` for the `drawing` add-on
 	-
 - ## Version 1.2.0 - 2024-03-02
   id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de

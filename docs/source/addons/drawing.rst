@@ -339,6 +339,21 @@ Render a paperspace layout into modelspace:
 
     output_doc.saveas("layout1_in_modelspace.dxf")
 
+GeoJSONBackend
+--------------
+
+.. versionadded:: 1.2.1
+
+.. autoclass:: ezdxf.addons.drawing.json.GeoJSONBackend
+
+CustomJSONBackend
+-----------------
+
+.. versionadded:: 1.2.1
+
+.. autoclass:: ezdxf.addons.drawing.json.CustomJSONBackend
+
+
 Configuration
 -------------
 
