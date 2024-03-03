@@ -2,6 +2,7 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import Iterable, Sequence, no_type_check, Any
+import json
 
 from ezdxf.math import Vec2
 from ezdxf.path import Command
@@ -16,7 +17,7 @@ from .properties import BackendProperties
 __all__ = ["CustomJSONBackend"]
 
 SPECS = """
-JSON = [entity, entity, ...]
+JSON content = [entity, entity, ...]
 
 Linetypes (DASH, DOT, ...) are resolved into solid lines.
 
@@ -42,8 +43,8 @@ lines = {
     "type": "lines",
     "properties": {...},
     "geometry": [
-        [x0, y0, x1, y1],  # 1. line
-        [x0, y0, x1, y1],  # 2. line
+        (x0, y0, x1, y1),  # 1. line
+        (x0, y0, x1, y1),  # 2. line
         ....
     ]
 }
@@ -62,15 +63,16 @@ SVG-like path structure:
   multi-paths).
 
 path-command = 
-    ["M", x, y] = absolute move to
-    ["L", x, y] = absolute line to
-    ["Q", x0, y0, x1, y1] = absolute quadratice Bezier curve to
+    ("M", x, y) = absolute move to
+    ("L", x, y) = absolute line to
+    ("Q", x0, y0, x1, y1) = absolute quadratice Bezier curve to
     - (x0, y0) = control point
     - (x1, y1) = end point
-    ["C", x0, y0, x1, y1, x2, y2] = absolute cubic Bezier curve to
+    ("C", x0, y0, x1, y1, x2, y2) = absolute cubic Bezier curve to
     - (x0, y0) = control point 1
     - (x1, y1) = control point 2
     - (x2, y2) = end point
+    ("Z",) = close path
 
 Multiple filled paths:
 
@@ -78,8 +80,6 @@ Outer paths and holes are mixed and NOT oriented (clockwise or counter-clockwise
 default - PyQt and SVG have no problem with that structure but matplotlib requires 
 oriented paths.  When oriented paths are required the CustomJSONBackend can orient the 
 paths on demand.
-
-The paths are NOT explicit closed, so first vertex == last vertex is not guaranteed.
 
 filled-paths = {
     "type": "filled-paths",
@@ -92,14 +92,14 @@ filled-paths = {
 }
 
 A single filled polygon:
-A polygon is NOT explicit closed, so first vertex == last vertex is not guaranteed.
+A polygon is explicitly closed, so first vertex == last vertex is guaranteed.
 filled-polygon = {
     "type": "filled-polygon",
     "properties": {...},
     "geometry": [
-        [x0, y0],
-        [x1, y1],
-        [x2, y2],
+        (x0, y0),
+        (x1, y1),
+        (x2, y2),
         ...
     ]
 }
@@ -109,17 +109,39 @@ MOVE_TO_ABS = "M"
 LINE_TO_ABS = "L"
 QUAD_TO_ABS = "Q"
 CUBIC_TO_ABS = "C"
+CLOSE_PATH = "Z"
 
 
 class CustomJSONBackend(BackendInterface):
-    """Creates a custom JSON encoded output with a non-standard JSON scheme."""
+    """Creates a JSON-like output with a custom JSON scheme."""
 
     def __init__(self, orient_paths=False) -> None:
         self._entities: list[Any] = []
         self.orient_paths = orient_paths
+        self.min_lineweight = 0.05  # in mm, set by configure()
+        self.lineweight_scaling = 1.0  # set by configure()
+        # set fixed lineweight for all strokes:
+        # set Configuration.min_lineweight to the desired lineweight in 1/300 inch!
+        # set Configuration.lineweight_scaling to 0
+        self.fixed_lineweight = 0.0
 
     def get_json_data(self) -> list[Any]:
+        """Returns the result as a JSON-like data structure."""
         return self._entities
+
+    def get_json_str(self, *, indent: int|str = 2) -> str:
+        """Returns the result as a JSON encoded string."""
+        return json.dumps(self.get_json_data(), indent=indent)
+
+    def configure(self, config: Configuration) -> None:
+        if config.min_lineweight:
+            # config.min_lineweight in 1/300 inch!
+            min_lineweight_mm = config.min_lineweight * 25.4 / 300
+            self.min_lineweight = max(0.05, min_lineweight_mm)
+        self.lineweight_scaling = config.lineweight_scaling
+        if self.lineweight_scaling == 0.0:
+            # use a fixed lineweight for all strokes defined by min_lineweight
+            self.fixed_lineweight = self.min_lineweight
 
     def add_entity(
         self, entity_type: str, geometry: Sequence[Any], properties: BackendProperties
@@ -129,10 +151,23 @@ class CustomJSONBackend(BackendInterface):
         self._entities.append(
             {
                 "type": entity_type,
-                "properties": make_properties_dict(properties),
+                "properties": self.make_properties_dict(properties),
                 "geometry": geometry,
             }
         )
+
+    def make_properties_dict(self, properties: BackendProperties) -> dict[str, Any]:
+        if self.fixed_lineweight:
+            stroke_width = self.fixed_lineweight
+        else:
+            stroke_width = max(
+                self.min_lineweight, properties.lineweight * self.lineweight_scaling
+            )
+        return {
+            "color": properties.color,
+            "stroke-width": round(stroke_width, 2),
+            "layer": properties.layer,
+        }
 
     def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
         self.add_entity("point", [pos.x, pos.y], properties)
@@ -146,8 +181,7 @@ class CustomJSONBackend(BackendInterface):
         lines = list(lines)
         if len(lines) == 0:
             return
-        lines = [(s.x, s.y, e.x, e.y) for s, e in lines]
-        self.add_entity("lines", lines, properties)
+        self.add_entity("lines", [(s.x, s.y, e.x, e.y) for s, e in lines], properties)
 
     def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         self.add_entity("path", make_json_path(path), properties)
@@ -163,22 +197,22 @@ class CustomJSONBackend(BackendInterface):
         json_paths: list[Any] = []
         for path in paths:
             if len(path):
-                json_paths.append(make_json_path(path))
+                json_paths.append(make_json_path(path, close=True))
         if json_paths:
             self.add_entity("filled-paths", json_paths, properties)
 
     def draw_filled_polygon(
         self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
-        self.add_entity(
-            "filled-polygon", [[v.x, v.y] for v in points.vertices()], properties
-        )
+        vertices: list[Vec2] = points.vertices()
+        if len(vertices) < 3:
+            return
+        if not vertices[0].isclose(vertices[-1]):
+            vertices.append(vertices[0])
+        self.add_entity("filled-polygon", [(v.x, v.y) for v in vertices], properties)
 
     def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
         pass  # not implemented
-
-    def configure(self, config: Configuration) -> None:
-        pass
 
     def set_background(self, color: Color) -> None:
         pass
@@ -196,16 +230,8 @@ class CustomJSONBackend(BackendInterface):
         pass
 
 
-def make_properties_dict(properties: BackendProperties) -> dict[str, Any]:
-    return {
-        "color": properties.color,
-        "stroke-width": properties.lineweight,
-        "layer": properties.layer,
-    }
-
-
 @no_type_check
-def make_json_path(path: BkPath2d) -> list[Any]:
+def make_json_path(path: BkPath2d, close=False) -> list[Any]:
     if len(path) == 0:
         return []
     end: Vec2 = path.start
@@ -223,5 +249,6 @@ def make_json_path(path: BkPath2d) -> list[Any]:
             c1 = cmd.ctrl1
             c2 = cmd.ctrl2
             commands.append((CUBIC_TO_ABS, c1.x, c1.y, c2.x, c2.y, end.x, end.y))
-
+    if close:
+        commands.append(CLOSE_PATH)
     return commands
