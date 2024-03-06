@@ -330,7 +330,8 @@ def world_mercator_to_gps(double x, double y, double tol = 1e-6) -> tuple[float,
     used by GPS.
 
     Args:
-        location: :class:`Vec3` object, z-axis is ignored
+        x: coordinate WGS84 World Mercator
+        y: coordinate WGS84 World Mercator
         tol: accuracy for latitude calculation
 
     """
