@@ -167,12 +167,18 @@
 		-
 	- Python 3.11 in late 2025, after release of Python 3.14
 		- https://docs.python.org/3/whatsnew/3.11.html
-		- exception groups?
 		- `typing.Self`
+		- `typing.overload()` decorator
+		-
+	- Python 3.12 in late 2026, after release of Python 3.15
+		- https://docs.python.org/3/whatsnew/3.12.html
+		- `typing.override()` decorator
+		- type parameter syntax: `def max[T](args: Iterable[T]) -> T: ...`
+		- use `type` for type aliases: `type Point = tuple[float, float]`
 		-
 	- Apply minimal Python version update to
+		- pyproject.toml
 		- README.md
-		- setup.py
 		- toplevel index.rst
 		- introduction.rst
 		- setup.rst
