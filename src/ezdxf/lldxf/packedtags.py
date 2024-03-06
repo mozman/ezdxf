@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Optional
+from typing_extensions import overload
 from array import array
 from typing import Iterable, MutableSequence, Sequence, Iterator
 
@@ -75,7 +76,13 @@ class VertexArray:
         """Count of vertices."""
         return len(self.values) // self.VERTEX_SIZE
 
-    def __getitem__(self, index: int):
+    @overload
+    def __getitem__(self, index: int) -> Sequence[float]: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[Sequence[float]]: ...
+
+    def __getitem__(self, index: int | slice):
         """Get vertex at `index`, extended slicing supported."""
         if isinstance(index, slice):
             return list(self._get_points(self._slicing(index)))
@@ -89,7 +96,7 @@ class VertexArray:
         else:
             self._set_point(self._index(index), point)
 
-    def __delitem__(self, index: int) -> None:
+    def __delitem__(self, index: int | slice) -> None:
         """Delete vertex at `index`, extended slicing supported."""
         if isinstance(index, slice):
             self._del_points(self._slicing(index))
@@ -122,9 +129,7 @@ class VertexArray:
         """
         size = self.VERTEX_SIZE
         if len(point) != size:
-            raise DXFValueError(
-                "point requires exact {} components.".format(size)
-            )
+            raise DXFValueError("point requires exact {} components.".format(size))
 
         pos = self._index(pos) * size
         _insert = self.values.insert
@@ -161,7 +166,7 @@ class VertexArray:
         index = index * size
         return tuple(self.values[index : index + size])
 
-    def _get_points(self, indices) -> Iterable:
+    def _get_points(self, indices) -> Iterator[Sequence[float]]:
         for index in indices:
             yield self._get_point(index)
 
@@ -184,11 +189,7 @@ class VertexArray:
         size = self.VERTEX_SIZE
         survivors = array(
             "d",
-            (
-                v
-                for i, v in enumerate(self.values)
-                if (i // size) not in del_flags
-            ),
+            (v for i, v in enumerate(self.values) if (i // size) not in del_flags),
         )
         self.values = survivors
 
@@ -203,9 +204,7 @@ class VertexArray:
     def append(self, point: UVec) -> None:
         """Append `point`."""
         if len(point) != self.VERTEX_SIZE:
-            raise DXFValueError(
-                f"point requires exact {self.VERTEX_SIZE} components."
-            )
+            raise DXFValueError(f"point requires exact {self.VERTEX_SIZE} components.")
         self.values.extend(point)
 
     def extend(self, points: Iterable[UVec]) -> None:
