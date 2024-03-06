@@ -2,7 +2,7 @@
 # Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TYPE_CHECKING, Sequence, Optional
-from libc.math cimport fabs
+from libc.math cimport fabs, M_PI, M_PI_2, M_PI_4, M_E, sin, tan, pow, atan, log
 from .vector cimport (
     isclose, 
     Vec2, 
@@ -285,4 +285,74 @@ def is_point_in_polygon_2d(
         return 1  # inside polygon
     else:
         return -1  # outside polygon
+
+cdef double WGS84_SEMI_MAJOR_AXIS = 6378137
+cdef double WGS84_SEMI_MINOR_AXIS = 6356752.3142
+cdef double WGS84_ELLIPSOID_ECCENTRIC = 0.08181919092890624
+cdef double RADIANS = M_PI / 180.0
+cdef double DEGREES = 180.0 / M_PI
+
+
+def gps_to_world_mercator(double longitude, double latitude) -> tuple[float, float]:
+    """Transform GPS (long/lat) to World Mercator.
     
+    Transform WGS84 `EPSG:4326 <https://epsg.io/4326>`_ location given as
+    latitude and longitude in decimal degrees as used by GPS into World Mercator
+    cartesian 2D coordinates in meters `EPSG:3395 <https://epsg.io/3395>`_.
+
+    Args:
+        longitude: represents the longitude value (East-West) in decimal degrees 
+        latitude: represents the latitude value (North-South) in decimal degrees.
+
+    """
+    # From: https://epsg.io/4326
+    # EPSG:4326 WGS84 - World Geodetic System 1984, used in GPS
+    # To: https://epsg.io/3395
+    # EPSG:3395 - World Mercator
+    # Source: https://gis.stackexchange.com/questions/259121/transformation-functions-for-epsg3395-projection-vs-epsg3857
+    longitude = longitude * RADIANS  # east
+    latitude = latitude * RADIANS  # north
+    cdef double e_sin_lat = sin(latitude) * WGS84_ELLIPSOID_ECCENTRIC
+    cdef double c = pow(
+        (1.0 - e_sin_lat) / (1.0 + e_sin_lat), WGS84_ELLIPSOID_ECCENTRIC / 2.0
+    )  # 7-7 p.44
+    y = WGS84_SEMI_MAJOR_AXIS * log(tan(M_PI_4 + latitude / 2.0) * c)  # 7-7 p.44
+    x = WGS84_SEMI_MAJOR_AXIS * longitude
+    return x, y
+
+
+def world_mercator_to_gps(double x, double y, double tol = 1e-6) -> tuple[float, float]:
+    """Transform World Mercator to GPS.
+
+    Transform WGS84 World Mercator `EPSG:3395 <https://epsg.io/3395>`_
+    location given as cartesian 2D coordinates x, y in meters into WGS84 decimal
+    degrees as longitude and latitude `EPSG:4326 <https://epsg.io/4326>`_ as
+    used by GPS.
+
+    Args:
+        location: :class:`Vec3` object, z-axis is ignored
+        tol: accuracy for latitude calculation
+
+    """
+    # From: https://epsg.io/3395
+    # EPSG:3395 - World Mercator
+    # To: https://epsg.io/4326
+    # EPSG:4326 WGS84 - World Geodetic System 1984, used in GPS
+    # Source: Map Projections - A Working Manual
+    # https://pubs.usgs.gov/pp/1395/report.pdf
+    cdef double eccentric_2 = WGS84_ELLIPSOID_ECCENTRIC / 2.0
+    cdef double t = pow(M_E, (-y / WGS84_SEMI_MAJOR_AXIS))  # 7-10 p.44
+    cdef double e_sin_lat, latitude, latitude_prev
+
+    latitude_prev = M_PI_2 - 2.0 * atan(t)  # 7-11 p.45
+    while True:
+        e_sin_lat = sin(latitude_prev) * WGS84_ELLIPSOID_ECCENTRIC
+        latitude = M_PI_2 - 2.0 * atan(
+            t * pow(((1.0 - e_sin_lat) / (1.0 + e_sin_lat)), eccentric_2)
+        )  # 7-9 p.44
+        if fabs(latitude - latitude_prev) < tol:
+            break
+        latitude_prev = latitude
+
+    longitude = x / WGS84_SEMI_MAJOR_AXIS  # 7-12 p.45
+    return longitude * DEGREES, latitude * DEGREES

@@ -30,6 +30,8 @@ __all__ = [
     "arc_angle_span_deg",
     "arc_angle_span_rad",
     "is_point_in_polygon_2d",
+    "world_mercator_to_gps",
+    "gps_to_world_mercator",
 ]
 # Import of Python or Cython implementations:
 if USE_C_EXT:
@@ -59,6 +61,9 @@ if USE_C_EXT:
         arc_angle_span_deg,
         arc_angle_span_rad,
         is_point_in_polygon_2d,
+        world_mercator_to_gps,
+        gps_to_world_mercator,
+
     )
 else:
     from ._vector import (
@@ -87,6 +92,8 @@ else:
         arc_angle_span_deg,
         arc_angle_span_rad,
         is_point_in_polygon_2d,
+        world_mercator_to_gps,
+        gps_to_world_mercator,
     )
 
 # Early required type aliases

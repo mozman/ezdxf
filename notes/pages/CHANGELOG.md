@@ -3,6 +3,9 @@
 	- REMOVE: `pp` command, use `browse` command to explore DXF files
 	- NEW: `GeoJSONBackend` for the `drawing` add-on
 	- NEW: `CustomJSONBackend` for the `drawing` add-on
+	- NEW: math utility functions with pure-Python and Cython implementations
+		- `ezdxf.math.world_mercator_to_gps()`
+		- `ezdxf.math.gps_to_world_mercator()`
 	-
 - ## Version 1.2.0 - 2024-03-02
   id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
