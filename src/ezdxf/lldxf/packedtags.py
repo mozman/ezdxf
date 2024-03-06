@@ -10,7 +10,6 @@ from ezdxf.lldxf.tagwriter import AbstractTagWriter
 from ezdxf.math import Matrix44
 from ezdxf.tools.indexing import Index
 
-from .const import DXFTypeError, DXFIndexError, DXFValueError
 from .tags import Tags
 from .types import DXFTag
 
@@ -62,12 +61,11 @@ class TagArray(TagList):
 
 
 class VertexArray:
-    """Store vertices in a ``numpy.ndarray``. Vertex size is defined by class variable 
+    """Store vertices in a ``numpy.ndarray``. Vertex size is defined by class variable
     ``VERTEX_SIZE``.
     """
 
-    # Defines the vertex size
-    VERTEX_SIZE = 3  # set to 2 for 2d points
+    VERTEX_SIZE = 3
     __slots__ = ("values",)
 
     def __init__(self, data: Iterable[Sequence[float]] | None = None):
@@ -94,30 +92,24 @@ class VertexArray:
 
     def __getitem__(self, index: int | slice):
         """Get vertex at `index`, extended slicing supported."""
-        if isinstance(index, slice):
-            return list(self._get_points(self._slicing(index)))
-        else:
-            return self._get_point(self._index(index))
+        return self.values[index]
 
     def __setitem__(self, index: int, point: Sequence[float]) -> None:
         """Set vertex `point` at `index`, extended slicing not supported."""
         if isinstance(index, slice):
-            raise DXFTypeError("slicing not supported")
-        else:
-            self._set_point(self._index(index), point)
+            raise TypeError("slicing not supported")
+        self._set_point(self._index(index), point)
 
     def __delitem__(self, index: int | slice) -> None:
         """Delete vertex at `index`, extended slicing supported."""
         if isinstance(index, slice):
             self._del_points(self._slicing(index))
         else:
-            self._del_point(self._index(index))
+            self._del_points((index,))
 
     def __str__(self) -> str:
         """String representation."""
-        name = self.__class__.__name__
-        data = ",\n".join(str(p) for p in self)
-        return "{} = [\n{}\n]".format(name, data)
+        return str(self.values)
 
     def __iter__(self) -> Iterator[Sequence[float]]:
         """Returns iterable of vertices."""
@@ -133,14 +125,13 @@ class VertexArray:
         """
         size = self.VERTEX_SIZE
         if len(point) != size:
-            raise DXFValueError(f"point requires exact {size} components.")
-        
+            raise ValueError(f"point requires exact {size} components.")
+
         values = self.values
         if len(values) == 0:
             self.extend((point,))
         ins_point = np.array((point,), dtype=np.float64)
         self.values = np.concatenate((values[0:pos], ins_point, values[pos:]))
-        
 
     def clone(self) -> VertexArray:
         """Returns a deep copy."""
@@ -159,26 +150,16 @@ class VertexArray:
         return cls(data=vertices)
 
     def _index(self, item) -> int:
-        return Index(self).index(item, error=DXFIndexError)
+        return Index(self).index(item, error=IndexError)
 
     def _slicing(self, index) -> Iterable[int]:
         return Index(self).slicing(index)
 
-    def _get_point(self, index: int) -> Sequence[float]:
-        return self.values[index]
-
-    def _get_points(self, indices) -> Iterator[Sequence[float]]:
-        for index in indices:
-            yield self.values[index]
-
     def _set_point(self, index: int, point: Sequence[float]):
         size = self.VERTEX_SIZE
         if len(point) != size:
-            raise DXFValueError(f"point requires exact {size} components.")
+            raise ValueError(f"point requires exact {size} components.")
         self.values[index] = point  # type: ignore
-
-    def _del_point(self, index: int) -> None:
-        self._del_points((index,))
 
     def _del_points(self, indices: Iterable[int]) -> None:
         del_flags = set(indices)
@@ -197,14 +178,14 @@ class VertexArray:
     def append(self, point: Sequence[float]) -> None:
         """Append `point`."""
         if len(point) != self.VERTEX_SIZE:
-            raise DXFValueError(f"point requires exact {self.VERTEX_SIZE} components.")
+            raise ValueError(f"point requires exact {self.VERTEX_SIZE} components.")
         self.extend((point,))
 
     def extend(self, points: Iterable[Sequence[float]]) -> None:
         """Extend array by `points`."""
         vertices = np.array(points, np.float64)
         if vertices.shape[1] != self.VERTEX_SIZE:
-            raise DXFValueError(f"points require exact {self.VERTEX_SIZE} components.")
+            raise ValueError(f"points require exact {self.VERTEX_SIZE} components.")
         if len(self.values) == 0:
             self.values = vertices
         else:
@@ -218,11 +199,10 @@ class VertexArray:
         """Replace all vertices by `points`."""
         vertices = np.array(points, np.float64)
         if vertices.shape[1] != self.VERTEX_SIZE:
-            raise DXFValueError(f"points require exact {self.VERTEX_SIZE} components.")
+            raise ValueError(f"points require exact {self.VERTEX_SIZE} components.")
         self.values = vertices
 
     def transform(self, m: Matrix44) -> None:
         """Transform vertices inplace by transformation matrix `m`."""
         if self.VERTEX_SIZE in (2, 3):
             m.transform_array_inplace(self.values, self.VERTEX_SIZE)
-

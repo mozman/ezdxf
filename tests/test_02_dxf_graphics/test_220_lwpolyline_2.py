@@ -73,7 +73,7 @@ def test_set_point():
 def test_get_point_error():
     points = [(1, 1), (2, 2), (3, 3)]
     line = lwpolyline(points)
-    with pytest.raises(ezdxf.DXFIndexError):
+    with pytest.raises(IndexError):
         line[3]
 
 def test_insert_point():
