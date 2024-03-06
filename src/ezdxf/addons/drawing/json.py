@@ -5,9 +5,8 @@ from typing import Iterable, Sequence, no_type_check, Any, Callable, Dict, List,
 from typing_extensions import TypeAlias, override
 import abc
 import json
-import math
 
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, world_mercator_to_gps
 from ezdxf.path import Command, nesting
 from ezdxf.npshapes import orient_paths, single_paths
 
@@ -340,7 +339,7 @@ def no_transform(location: Vec2) -> tuple[float, float]:
     return (location.x, location.y)
 
 
-def make_function_wgs84_3395_to_4326(tol: float = 1e-6) -> TransformFunc:
+def make_world_mercator_to_gps_function(tol: float = 1e-6) -> TransformFunc:
     """Returns a function to transform WGS84 World Mercator `EPSG:3395 <https://epsg.io/3395>`_
     location given as cartesian 2D coordinates x, y in meters into WGS84 decimal
     degrees as longitude and latitude `EPSG:4326 <https://epsg.io/4326>`_ as
@@ -350,14 +349,10 @@ def make_function_wgs84_3395_to_4326(tol: float = 1e-6) -> TransformFunc:
         tol: accuracy for latitude calculation
 
     """
-    from ezdxf.addons.geo import wgs84_3395_to_4326
-    from ezdxf.math import Vec3
 
     def _transform(location: Vec2) -> tuple[float, float]:
         """Transforms WGS84 World Mercator EPSG:3395 coordinates to WGS84 EPSG:4326."""
-        result = wgs84_3395_to_4326(Vec3(location), tol)
-        return result.x, result.y
-
+        return world_mercator_to_gps(location.x, location.y, tol)
     return _transform
 
 
@@ -380,10 +375,10 @@ class GeoJSONBackend(_JSONBackend):
     .. autofunction:: no_transform
 
     Factory function to make a transform function from WGS84 World Mercator
-    `EPSG:3395 <https://epsg.io/3395>`_  coordinates to WGS84 `EPSG:4326 <https://epsg.io/4326>`_,
-    uses the converter function from the :mod:`ezdxf.addons.geo` add-on.
+    `EPSG:3395 <https://epsg.io/3395>`_  coordinates to WGS84 (GPS) 
+    `EPSG:4326 <https://epsg.io/4326>`_.
 
-    .. autofunction:: make_function_wgs84_3395_to_4326
+    .. autofunction:: make_world_mercator_to_gps_function
 
     The GeoJSON format supports only straight lines so curved shapes are flattened to
     polylines and polygons.
