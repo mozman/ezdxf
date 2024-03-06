@@ -13,7 +13,6 @@ from typing import (
 from typing_extensions import TypeAlias
 import array
 import copy
-from itertools import chain
 from ezdxf.audit import AuditError
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -294,7 +293,7 @@ class Spline(DXFGraphic):
     @control_points.setter
     def control_points(self, points: Iterable[UVec]) -> None:
         self._control_points: Vertices = cast(
-            Vertices, VertexArray(chain.from_iterable(Vec3.generate(points)))
+            Vertices, VertexArray(Vec3.list(points))
         )
 
     # DXF callback attribute Spline.dxf.n_control_points
@@ -313,7 +312,7 @@ class Spline(DXFGraphic):
     def fit_points(self, points: Iterable[UVec]) -> None:
         self._fit_points: Vertices = cast(
             Vertices,
-            VertexArray(chain.from_iterable(Vec3.generate(points))),
+            VertexArray(Vec3.list(points)),
         )
 
     # DXF callback attribute Spline.dxf.n_fit_points

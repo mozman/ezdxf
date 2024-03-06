@@ -1,17 +1,18 @@
 # Copyright (c) 2018-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Optional
+from typing import Iterable, MutableSequence, Sequence, Iterator, Optional
 from typing_extensions import overload
 from array import array
-from typing import Iterable, MutableSequence, Sequence, Iterator
+import numpy as np
 
-from .types import DXFTag
+from ezdxf.lldxf.tagwriter import AbstractTagWriter
+from ezdxf.math import Matrix44
+from ezdxf.tools.indexing import Index
+
 from .const import DXFTypeError, DXFIndexError, DXFValueError
 from .tags import Tags
-from ezdxf.tools.indexing import Index
-from ezdxf.lldxf.tagwriter import AbstractTagWriter
-from ezdxf.math import Matrix44, UVec
+from .types import DXFTag
 
 
 class TagList:
@@ -61,20 +62,29 @@ class TagArray(TagList):
 
 
 class VertexArray:
-    """Store vertices in an ``array.array('d')``. Vertex size is defined by
-    class variable ``VERTEX_SIZE``.
+    """Store vertices in a ``numpy.ndarray``. Vertex size is defined by class variable 
+    ``VERTEX_SIZE``.
     """
 
     # Defines the vertex size
     VERTEX_SIZE = 3  # set to 2 for 2d points
     __slots__ = ("values",)
 
-    def __init__(self, data: Optional[Iterable] = None):
-        self.values = array("d", data or [])
+    def __init__(self, data: Iterable[Sequence[float]] | None = None):
+        size = self.VERTEX_SIZE
+        if data:
+            values = np.array(data, dtype=np.float64)
+            if values.shape[1] != size:
+                raise TypeError(
+                    f"invalid data shape, expected (n, {size}), got {values.shape}"
+                )
+        else:
+            values = np.ndarray((0, size), dtype=np.float64)
+        self.values = values
 
     def __len__(self) -> int:
         """Count of vertices."""
-        return len(self.values) // self.VERTEX_SIZE
+        return len(self.values)
 
     @overload
     def __getitem__(self, index: int) -> Sequence[float]: ...
@@ -111,13 +121,7 @@ class VertexArray:
 
     def __iter__(self) -> Iterator[Sequence[float]]:
         """Returns iterable of vertices."""
-        size = self.VERTEX_SIZE
-        values = self.values
-        index = 0
-        len_array = len(values)
-        while index < len_array:
-            yield tuple(values[index : index + size])
-            index += size
+        return iter(self.values)
 
     def insert(self, pos: int, point: Sequence[float]):
         """Insert `point` in front of vertex at index `pos`.
@@ -129,12 +133,14 @@ class VertexArray:
         """
         size = self.VERTEX_SIZE
         if len(point) != size:
-            raise DXFValueError("point requires exact {} components.".format(size))
-
-        pos = self._index(pos) * size
-        _insert = self.values.insert
-        for value in reversed(point):
-            _insert(pos, value)
+            raise DXFValueError(f"point requires exact {size} components.")
+        
+        values = self.values
+        if len(values) == 0:
+            self.extend((point,))
+        ins_point = np.array((point,), dtype=np.float64)
+        self.values = np.concatenate((values[0:pos], ins_point, values[pos:]))
+        
 
     def clone(self) -> VertexArray:
         """Returns a deep copy."""
@@ -149,10 +155,7 @@ class VertexArray:
             code: group code to collect
 
         """
-        vertices = array("d")
-        for tag in tags:
-            if tag.code == code:
-                vertices.extend(tag.value)
+        vertices = [tag.value for tag in tags if tag.code == code]
         return cls(data=vertices)
 
     def _index(self, item) -> int:
@@ -162,68 +165,64 @@ class VertexArray:
         return Index(self).slicing(index)
 
     def _get_point(self, index: int) -> Sequence[float]:
-        size = self.VERTEX_SIZE
-        index = index * size
-        return tuple(self.values[index : index + size])
+        return self.values[index]
 
     def _get_points(self, indices) -> Iterator[Sequence[float]]:
         for index in indices:
-            yield self._get_point(index)
+            yield self.values[index]
 
     def _set_point(self, index: int, point: Sequence[float]):
         size = self.VERTEX_SIZE
         if len(point) != size:
             raise DXFValueError(f"point requires exact {size} components.")
-        if isinstance(point, (tuple, list)):
-            point = array("d", point)
-        index = index * size
-        self.values[index : index + size] = point  # type: ignore
+        self.values[index] = point  # type: ignore
 
     def _del_point(self, index: int) -> None:
-        size = self.VERTEX_SIZE
-        pos = index * size
-        del self.values[pos : pos + size]
+        self._del_points((index,))
 
     def _del_points(self, indices: Iterable[int]) -> None:
         del_flags = set(indices)
-        size = self.VERTEX_SIZE
-        survivors = array(
-            "d",
-            (v for i, v in enumerate(self.values) if (i // size) not in del_flags),
+        survivors = np.array(
+            [v for i, v in enumerate(self.values) if i not in del_flags], np.float64
         )
         self.values = survivors
 
     def export_dxf(self, tagwriter: AbstractTagWriter, code=10):
-        delta = 0
-        for c in self.values:
-            tagwriter.write_tag2(code + delta, c)
-            delta += 10
-            if delta > 20:
-                delta = 0
+        for vertex in self.values:
+            tagwriter.write_tag2(code, vertex[0])
+            tagwriter.write_tag2(code + 10, vertex[1])
+            if len(vertex) > 2:
+                tagwriter.write_tag2(code + 20, vertex[2])
 
-    def append(self, point: UVec) -> None:
+    def append(self, point: Sequence[float]) -> None:
         """Append `point`."""
         if len(point) != self.VERTEX_SIZE:
             raise DXFValueError(f"point requires exact {self.VERTEX_SIZE} components.")
-        self.values.extend(point)
+        self.extend((point,))
 
-    def extend(self, points: Iterable[UVec]) -> None:
+    def extend(self, points: Iterable[Sequence[float]]) -> None:
         """Extend array by `points`."""
-        for point in points:
-            self.append(point)
+        vertices = np.array(points, np.float64)
+        if vertices.shape[1] != self.VERTEX_SIZE:
+            raise DXFValueError(f"points require exact {self.VERTEX_SIZE} components.")
+        if len(self.values) == 0:
+            self.values = vertices
+        else:
+            self.values = np.concatenate((self.values, vertices))
 
     def clear(self) -> None:
         """Delete all vertices."""
-        del self.values[:]
+        self.values = np.ndarray((0, self.VERTEX_SIZE), dtype=np.float64)
 
-    def set(self, points: Iterable[UVec]) -> None:
+    def set(self, points: Iterable[Sequence[float]]) -> None:
         """Replace all vertices by `points`."""
-        self.clear()
-        self.extend(points)
+        vertices = np.array(points, np.float64)
+        if vertices.shape[1] != self.VERTEX_SIZE:
+            raise DXFValueError(f"points require exact {self.VERTEX_SIZE} components.")
+        self.values = vertices
 
     def transform(self, m: Matrix44) -> None:
-        """Transform vertices by transformation matrix `m`."""
-        values = array("d")
-        for vertex in m.transform_vertices(self):
-            values.extend(vertex)
-        self.values = values
+        """Transform vertices inplace by transformation matrix `m`."""
+        if self.VERTEX_SIZE in (2, 3):
+            m.transform_array_inplace(self.values, self.VERTEX_SIZE)
+

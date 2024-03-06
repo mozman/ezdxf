@@ -244,7 +244,7 @@ def test_mesh_transform_interface():
     mesh = Mesh()
     mesh.vertices.append(Vec3(1, 2, 3))
     mesh.transform(Matrix44.translate(1, 1, 1))
-    assert mesh.vertices[0] == (2, 3, 4)
+    assert tuple(mesh.vertices[0]) == (2, 3, 4)
 
 
 MESH2 = """  0

@@ -1,10 +1,10 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2024 Manfred Moitzi
 # License: MIT License
 import pytest
 from ezdxf.lldxf.packedtags import TagArray, VertexArray
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.tagwriter import TagCollector
-from ezdxf.math import UCS, Matrix44
+from ezdxf.math import UCS, Matrix44, Vec3
 
 
 @pytest.fixture()
@@ -41,10 +41,10 @@ def test_vertex_array_basics():
     assert len(vertices) == 7
     points = list(vertices)
     assert len(points) == 7
-    assert vertices[0] == (0.0, 0.0, 0.0)
-    assert vertices[1] == (10.0, 10.0, 10.0)
+    assert tuple(vertices[0]) == (0.0, 0.0, 0.0)
+    assert tuple(vertices[1]) == (10.0, 10.0, 10.0)
     # test negative index
-    assert vertices[-1] == (60.0, 60.0, 60.0)
+    assert tuple(vertices[-1]) == (60.0, 60.0, 60.0)
     with pytest.raises(IndexError):
         _ = vertices[-8]
     with pytest.raises(IndexError):
@@ -57,11 +57,11 @@ def test_vertex_array_advanced():
     # append()
     vertices.append((70, 70, 70))
     assert len(vertices) == 8
-    assert vertices[-1] == (70.0, 70.0, 70.0)
+    assert tuple(vertices[-1]) == (70.0, 70.0, 70.0)
 
     # set vertex
     vertices[0] = (7, 6, 5)
-    assert vertices[0] == (7, 6, 5)
+    assert tuple(vertices[0]) == (7, 6, 5)
     assert len(vertices) == 8
 
     # clear()
@@ -71,22 +71,22 @@ def test_vertex_array_advanced():
     # extend()
     vertices.extend([(0, 0, 0), (1, 2, 3), (4, 5, 6)])
     assert len(vertices) == 3
-    assert vertices[0] == (0, 0, 0)
-    assert vertices[1] == (1, 2, 3)
-    assert vertices[2] == (4, 5, 6)
+    assert tuple(vertices[0]) == (0, 0, 0)
+    assert tuple(vertices[1]) == (1, 2, 3)
+    assert tuple(vertices[2]) == (4, 5, 6)
 
 
 def test_vertex_array_delete():
     tags = ExtendedTags.from_text(SPLINE)
     vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
     assert len(vertices) == 7
-    assert vertices[0] == (0, 0, 0)
+    assert tuple(vertices[0]) == (0, 0, 0)
     del vertices[0]
-    assert vertices[0] == (10, 10, 10)
+    assert tuple(vertices[0]) == (10, 10, 10)
     assert len(vertices) == 6
 
     del vertices[1]  # (20, 20, 20)
-    assert vertices[1] == (30, 30, 30)
+    assert tuple(vertices[1]) == (30, 30, 30)
     assert len(vertices) == 5
 
 
@@ -95,25 +95,25 @@ def test_vertex_array_delete_slices():
     vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
     del vertices[:2]
     assert len(vertices) == 5
-    assert vertices[0] == (20, 20, 20)
+    assert tuple(vertices[0]) == (20, 20, 20)
 
     vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
     del vertices[::2]
     assert len(vertices) == 3
-    assert vertices[0] == (10, 10, 10)
-    assert vertices[1] == (30, 30, 30)
-    assert vertices[2] == (50, 50, 50)
+    assert tuple(vertices[0]) == (10, 10, 10)
+    assert tuple(vertices[1]) == (30, 30, 30)
+    assert tuple(vertices[2]) == (50, 50, 50)
 
 
 def test_vertex_array_insert():
     tags = ExtendedTags.from_text(SPLINE)
     vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
-    assert vertices[0] == (0, 0, 0)
-    assert vertices[1] == (10, 10, 10)
+    assert tuple(vertices[0]) == (0, 0, 0)
+    assert tuple(vertices[1]) == (10, 10, 10)
     vertices.insert(1, (-1, -2, -3))
-    assert vertices[0] == (0, 0, 0)
-    assert vertices[1] == (-1, -2, -3)
-    assert vertices[2] == (10, 10, 10)
+    assert tuple(vertices[0]) == (0, 0, 0)
+    assert tuple(vertices[1]) == (-1, -2, -3)
+    assert tuple(vertices[2]) == (10, 10, 10)
     assert len(vertices) == 8
 
 
@@ -132,9 +132,9 @@ def test_vertext_array_transform_by_ucs():
     vertices.extend([(0, 0, 0), (1, 0, 0), (1, 1, 0)])
     ucs = UCS(origin=(0, 0, 1))
     vertices.transform(ucs.matrix)
-    assert vertices[0] == (0, 0, 1)
-    assert vertices[1] == (1, 0, 1)
-    assert vertices[2] == (1, 1, 1)
+    assert Vec3(0, 0, 1).isclose(vertices[0])
+    assert Vec3(1, 0, 1).isclose(vertices[1])
+    assert Vec3(1, 1, 1).isclose(vertices[2])
 
 
 def test_vertext_transform():
@@ -142,9 +142,9 @@ def test_vertext_transform():
     vertices.extend([(0, 0, 0), (1, 0, 0), (1, 1, 0)])
     m = Matrix44.translate(0, 0, 1)
     vertices.transform(m)
-    assert vertices[0] == (0, 0, 1)
-    assert vertices[1] == (1, 0, 1)
-    assert vertices[2] == (1, 1, 1)
+    assert Vec3(0, 0, 1).isclose(vertices[0])
+    assert Vec3(1, 0, 1).isclose(vertices[1])
+    assert Vec3(1, 1, 1).isclose(vertices[2])
 
 
 ROOTDICT = """0

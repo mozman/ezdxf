@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Mapping, Optional
@@ -248,6 +248,8 @@ def _fmt_mapping(mapping: Mapping, indent: int = 0) -> Iterable[str]:
 def _fmt_list(l: Iterable, indent: int = 0) -> Iterable[str]:
     fmt = " " * indent + "{},"
     for v in l:
+        if not isinstance(v, (float, int, str)):
+            v = tuple(tuple(v))
         yield fmt.format(str(v))
 
 

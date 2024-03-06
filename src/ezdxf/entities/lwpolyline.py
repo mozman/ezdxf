@@ -444,14 +444,14 @@ class LWPolylinePoints(VertexArray):
             return point
 
         unprocessed_tags = Tags()
-        data: list[float]= []
+        vertices: list[Sequence[float]]= []
         point: list[float] | None = None
         attribs: dict[int, float]= {}
         for tag in tags:
             if tag.code in LWPOINTCODES:
                 if tag.code == 10:
                     if point is not None:
-                        data.extend(build_vertex(point))
+                        vertices.append(build_vertex(point))
                     # just use x- and  y-axis
                     point = list(tag.value[0:2])
                     attribs = {}
@@ -460,8 +460,8 @@ class LWPolylinePoints(VertexArray):
             else:
                 unprocessed_tags.append(tag)
         if point is not None:
-            data.extend(build_vertex(point))
-        return cls(data=data), unprocessed_tags
+            vertices.append(build_vertex(point))
+        return cls(data=vertices), unprocessed_tags
 
     def append(self, point: Sequence[float], format: str = DEFAULT_FORMAT) -> None:
         super().append(compile_array(point, format=format))
