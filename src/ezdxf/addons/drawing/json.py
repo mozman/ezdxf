@@ -5,6 +5,7 @@ from typing import Iterable, Sequence, no_type_check, Any, Callable, Dict, List,
 from typing_extensions import TypeAlias, override
 import abc
 import json
+import math
 
 from ezdxf.math import Vec2
 from ezdxf.path import Command, nesting
@@ -302,8 +303,9 @@ def make_json_path(path: BkPath2d, close=False) -> list[Any]:
     return commands
 
 
-# dict and list not allowed here for Python < 3.9
+# dict and list not allowed here for Python < 3.10
 PropertiesMaker: TypeAlias = Callable[[str, float, str], Dict[str, Any]]
+TransformFunc: TypeAlias = Callable[[Vec2], Tuple[float, float]]
 # GeoJSON ring
 Ring: TypeAlias = List[Tuple[float, float]]
 
@@ -331,18 +333,57 @@ def properties_maker(color: str, stroke_width: float, layer: str) -> dict[str, A
     }
 
 
+def no_transform(location: Vec2) -> tuple[float, float]:
+    """Dummy transformation function.  Does not apply any transformations and
+    just returns the input coordinates.
+    """
+    return (location.x, location.y)
+
+
+def make_function_wgs84_3395_to_4326(tol: float = 1e-6) -> TransformFunc:
+    """Returns a function to transform WGS84 World Mercator `EPSG:3395 <https://epsg.io/3395>`_
+    location given as cartesian 2D coordinates x, y in meters into WGS84 decimal
+    degrees as longitude and latitude `EPSG:4326 <https://epsg.io/4326>`_ as
+    used by GPS.
+
+    Args:
+        tol: accuracy for latitude calculation
+
+    """
+    from ezdxf.addons.geo import wgs84_3395_to_4326
+    from ezdxf.math import Vec3
+
+    def _transform(location: Vec2) -> tuple[float, float]:
+        """Transforms WGS84 World Mercator EPSG:3395 coordinates to WGS84 EPSG:4326."""
+        result = wgs84_3395_to_4326(Vec3(location), tol)
+        return result.x, result.y
+
+    return _transform
+
+
 class GeoJSONBackend(_JSONBackend):
     """Creates a JSON-like output according the `GeoJSON`_ scheme.
     GeoJSON uses a geographic coordinate reference system, World Geodetic
-    System 1984, and units of decimal degrees.
+    System 1984 `EPSG:4326 <https://epsg.io/4326>`_, and units of decimal degrees.
 
     - Latitude: -90 to +90 (South/North)
     - Longitude: -180 to +180 (East/West)
 
     So most DXF files will produce invalid coordinates and it is the job of the
-    **package-user** to transform the content accordingly!
-    The :class:`~ezdxf.addons.drawing.recorder.Recorder` and
-    :class:`~ezdxf.addons.drawing.recorder.Player` classes can help with this.
+    **package-user** to provide a function to transfrom the input coordinates to
+    EPSG:4326!  The :class:`~ezdxf.addons.drawing.recorder.Recorder` and
+    :class:`~ezdxf.addons.drawing.recorder.Player` classes can help to detect the
+    extents of the DXF content.
+
+    Default implementation:
+
+    .. autofunction:: no_transform
+
+    Factory function to make a transform function from WGS84 World Mercator
+    `EPSG:3395 <https://epsg.io/3395>`_  coordinates to WGS84 `EPSG:4326 <https://epsg.io/4326>`_,
+    uses the converter function from the :mod:`ezdxf.addons.geo` add-on.
+
+    .. autofunction:: make_function_wgs84_3395_to_4326
 
     The GeoJSON format supports only straight lines so curved shapes are flattened to
     polylines and polygons.
@@ -368,9 +409,14 @@ class GeoJSONBackend(_JSONBackend):
     .. _GeoJSON: https://geojson.org/
     """
 
-    def __init__(self, properties_maker: PropertiesMaker = properties_maker) -> None:
+    def __init__(
+        self,
+        properties_maker: PropertiesMaker = properties_maker,
+        transform_func: TransformFunc = no_transform,
+    ) -> None:
         super().__init__()
         self._properties_dict_maker = properties_maker
+        self._transform_function = transform_func
 
     @override
     def get_json_data(self) -> dict[str, Any]:
@@ -411,12 +457,15 @@ class GeoJSONBackend(_JSONBackend):
 
     @override
     def draw_point(self, pos: Vec2, properties: BackendProperties) -> None:
-        self.add_entity(geojson_object("Point", [pos.x, pos.y]), properties)
+        self.add_entity(
+            geojson_object("Point", list(self._transform_function(pos))), properties
+        )
 
     @override
     def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
+        tf = self._transform_function
         self.add_entity(
-            geojson_object("LineString", [(start.x, start.y), (end.x, end.y)]),
+            geojson_object("LineString", [tf(start), tf(end)]),
             properties,
         )
 
@@ -427,14 +476,16 @@ class GeoJSONBackend(_JSONBackend):
         lines = list(lines)
         if len(lines) == 0:
             return
-        json_lines = [((s.x, s.y), (e.x, e.y)) for s, e in lines]
+        tf = self._transform_function
+        json_lines = [(tf(s), tf(e)) for s, e in lines]
         self.add_entity(geojson_object("MultiLineString", json_lines), properties)
 
     @override
     def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         if len(path) == 0:
             return
-        vertices = [(v.x, v.y) for v in path.flattening(distance=self.max_sagitta)]
+        tf = self._transform_function
+        vertices = [tf(v) for v in path.flattening(distance=self.max_sagitta)]
         self.add_entity(geojson_object("LineString", vertices), properties)
 
     @override
@@ -448,7 +499,11 @@ class GeoJSONBackend(_JSONBackend):
         polygons: list[GeoJsonPolygon] = []
         for path in paths:
             if len(path):
-                polygons.extend(geojson_polygons(path, max_sagitta=self.max_sagitta))
+                polygons.extend(
+                    geojson_polygons(
+                        path, max_sagitta=self.max_sagitta, tf=self._transform_function
+                    )
+                )
         if polygons:
             self.add_entity(geojson_object("MultiPolygon", polygons), properties)
 
@@ -462,8 +517,9 @@ class GeoJSONBackend(_JSONBackend):
         if not vertices[0].isclose(vertices[-1]):
             vertices.append(vertices[0])
         # exterior ring, without holes
+        tf = self._transform_function
         self.add_entity(
-            geojson_object("Polygon", [[(v.x, v.y) for v in vertices]]), properties
+            geojson_object("Polygon", [[tf(v) for v in vertices]]), properties
         )
 
 
@@ -471,7 +527,9 @@ def geojson_object(name: str, coordinates: Any) -> dict[str, Any]:
     return {"type": name, "coordinates": coordinates}
 
 
-def geojson_ring(path: BkPath2d, is_hole: bool, max_sagitta: float) -> Ring:
+def geojson_ring(
+    path: BkPath2d, is_hole: bool, max_sagitta: float, tf: TransformFunc
+) -> Ring:
     """Returns a linear ring according to the GeoJSON specs.
 
     -  A linear ring is a closed LineString with four or more positions.
@@ -486,17 +544,19 @@ def geojson_ring(path: BkPath2d, is_hole: bool, max_sagitta: float) -> Ring:
     """
     if path.has_sub_paths:
         raise TypeError("multi-paths not allowed")
-    vertices: Ring = [(v.x, v.y) for v in path.flattening(max_sagitta)]
+    vertices: Ring = [tf(v) for v in path.flattening(max_sagitta)]
     if not path.is_closed:
         start = path.start
-        vertices.append((start.x, start.y))
+        vertices.append(tf(start))
     clockwise = path.has_clockwise_orientation()
     if (is_hole and not clockwise) or (not is_hole and clockwise):
         vertices.reverse()
     return vertices
 
 
-def geojson_polygons(path: BkPath2d, max_sagitta: float) -> list[GeoJsonPolygon]:
+def geojson_polygons(
+    path: BkPath2d, max_sagitta: float, tf: TransformFunc
+) -> list[GeoJsonPolygon]:
     """Returns a list of polygons, where each polygon is a list of an exterior path and
     optional holes e.g. [[ext0, hole0, hole1], [ext1], [ext2, hole0], ...].
 
@@ -505,27 +565,27 @@ def geojson_polygons(path: BkPath2d, max_sagitta: float) -> list[GeoJsonPolygon]
     if len(sub_paths) == 0:
         return []
     if len(sub_paths) == 1:
-        return [[geojson_ring(sub_paths[0], False, max_sagitta)]]
+        return [[geojson_ring(sub_paths[0], False, max_sagitta, tf)]]
 
     polygons = nesting.make_polygon_structure(sub_paths)
     geojson_polygons: list[GeoJsonPolygon] = []
     for polygon in polygons:
         geojson_polygon: GeoJsonPolygon = [
-            geojson_ring(polygon[0], False, max_sagitta)
+            geojson_ring(polygon[0], False, max_sagitta, tf)
         ]  # exterior ring
         if len(polygon) > 1:
             # GeoJSON has no support for nested hole structures, so the sub polygons of
             # holes (hole[1]) are ignored yet!
             holes = polygon[1]
             if isinstance(holes, BkPath2d):  # single hole
-                geojson_polygon.append(geojson_ring(holes, True, max_sagitta))
+                geojson_polygon.append(geojson_ring(holes, True, max_sagitta, tf))
                 continue
             if isinstance(holes, (tuple, list)):  # multiple holes
                 for hole in holes:
                     if isinstance(hole, (tuple, list)):  # nested polygon
                         # TODO: add sub polygons of holes as separated polygons
                         hole = hole[0]  # exterior path
-                    geojson_polygon.append(geojson_ring(hole, True, max_sagitta))
+                    geojson_polygon.append(geojson_ring(hole, True, max_sagitta, tf))
 
         geojson_polygons.append(geojson_polygon)
     return geojson_polygons
