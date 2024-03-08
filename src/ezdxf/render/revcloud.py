@@ -13,8 +13,8 @@ def points(
     start_width: float = 0.0,
     end_width: float = 0.0,
 ) -> list[Sequence[float]]:
-    """Returns the points for a LWPOLYLINE entity to render a revision cloud, similar to 
-    the REVCLOUD command in CAD applications.
+    """Returns the points for a :class:`~ezdxf.entities.LWPolyline` entity to render a 
+    revision cloud, similar to the REVCLOUD command in CAD applications.
 
     Args:
         points: corner points of a polygon
@@ -22,6 +22,8 @@ def points(
         bulge: LWPOLYLINE bulge value
         start_width: start width of the segment arc
         end_width: end width of the segment arc
+
+    .. versionadded:: 1.2.1
 
     """
     if segment_length < 1e-6:
