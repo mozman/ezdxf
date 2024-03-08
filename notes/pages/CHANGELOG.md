@@ -6,6 +6,7 @@
 	- NEW: math utility functions with pure-Python and Cython implementations
 		- `ezdxf.math.world_mercator_to_gps()`
 		- `ezdxf.math.gps_to_world_mercator()`
+	- NEW: `ezdxf.render.revcloud` module to render revision clouds similar to the `REVCLOUD` command in CAD applications
 	-
 - ## Version 1.2.0 - 2024-03-02
   id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
