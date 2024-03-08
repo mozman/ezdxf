@@ -301,6 +301,8 @@ def gps_to_world_mercator(longitude: float, latitude: float) -> tuple[float, flo
     Args:
         longitude: represents the longitude value (East-West) in decimal degrees 
         latitude: represents the latitude value (North-South) in decimal degrees.
+    
+    .. versionadded:: 1.2.1
 
     """
     # From: https://epsg.io/4326
@@ -331,6 +333,8 @@ def world_mercator_to_gps(x: float, y: float, tol: float = 1e-6) -> tuple[float,
         x: coordinate WGS84 World Mercator
         y: coordinate WGS84 World Mercator
         tol: accuracy for latitude calculation
+
+    .. versionadded:: 1.2.1
 
     """
     # From: https://epsg.io/3395
