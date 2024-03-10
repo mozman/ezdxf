@@ -13,7 +13,6 @@ from ezdxf.query import EntityQuery
 
 
 __all__ = [
-    "SelectionShape",
     "Window",
     "Point",
     "Circle",
@@ -136,12 +135,12 @@ class Circle(SelectionShape):
 
     @override
     def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
-        if not self._bbox.has_overlap(entity_bbox):
-            return True
         return not self.is_crossing(entity_bbox)
 
     @override
     def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
+        if not self._bbox.has_overlap(entity_bbox):
+            return False
         if any(self._is_vertex_inside(v) for v in entity_bbox.rect_vertices()):
             return True
         return self._is_vertex_inside(entity_bbox.center)
@@ -179,17 +178,24 @@ class Polygon(SelectionShape):
     def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
         if not self._bbox.has_overlap(entity_bbox):
             return False
-        # this may not work for convex selection polygons
-        return all(
-            is_point_in_polygon_2d(v, self._vertices) >= 0  # inside or on boundary
+        if any(
+            is_point_in_polygon_2d(v, self._vertices) < 0  # outside
             for v in entity_bbox.rect_vertices()
+        ):
+            return False
+
+        # Additional test for concave polygons. This may not cover all concave polygons.
+        # Is any point of the polygon (strict) inside the entity bbox?
+        min_x, min_y = entity_bbox.extmin
+        max_x, max_y = entity_bbox.extmax
+        # strict inside test: points on the boundary line do not count as inside
+        return not any(
+            (min_x < v.x < max_x) and (min_y < v.y < max_y) for v in self._vertices
         )
 
     @override
     def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
-        if not self._bbox.has_overlap(entity_bbox):
-            return True
-        return not self._has_intersection(entity_bbox.extmin, entity_bbox.extmax)
+        return not self.is_crossing(entity_bbox)
 
     @override
     def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:

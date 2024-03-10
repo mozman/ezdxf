@@ -203,6 +203,18 @@ class TestPolygon:
         selection = select.inside(msp.query("CIRCLE"), polygon)
         assert len(selection) == 0
 
+    def test_circle_is_not_inside_concave_polygon(self, msp: Modelspace):
+        """Bounding box of CIRCLE is completely inside the polygon, all edge vertices 
+        are inside the polygon but some edges do intersect with the polygon. 
+        CIRCLE is not complete inside!
+        """
+        polygon = select.Polygon([(-10, -10), (10, -10), (10, 10), (0, 0), (-10, 10)])
+        selection = select.inside(msp.query("CIRCLE"), polygon)
+        assert len(selection) == 0
+
+        selection = select.outside(msp.query("CIRCLE"), polygon)
+        assert len(selection) == 0
+
     def test_all_outside(self, msp: Modelspace):
         polygon = select.Polygon([(6, 6), (7, 6), (7, 7), (6, 7)])
         selection = select.outside(msp, polygon)
@@ -263,6 +275,24 @@ class TestPolygon:
         polygon = select.Polygon([(-1, -1), (1, -1), (1, 1), (-1, 1)])
         selection = select.crossing(msp.query("CIRCLE"), polygon)
         assert len(selection) == 1
+
+    def test_concave(self, msp: Modelspace):
+        polygon = select.Polygon(
+            [(-10, -10), (-10, -20), (20, -20), (20, 20), (10, 20), (10, -10)]
+        )
+        # ...PP
+        # .O.PP
+        # ...PP
+        # PPPPP
+        # PPPPP
+        selection = select.inside(msp.query("CIRCLE"), polygon)
+        assert len(selection) == 0
+
+        selection = select.outside(msp.query("CIRCLE"), polygon)
+        assert len(selection) == 1
+
+        selection = select.crossing(msp.query("CIRCLE"), polygon)
+        assert len(selection) == 0
 
 
 class TestFence:
