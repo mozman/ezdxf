@@ -7,7 +7,8 @@ import abc
 
 from ezdxf import bbox
 from ezdxf.entities import DXFEntity
-from ezdxf.math import UVec, Vec2, BoundingBox2d
+from ezdxf.math import UVec, Vec2, BoundingBox2d, is_point_in_polygon_2d
+from ezdxf.math.clipping import CohenSutherlandLineClipping2d
 from ezdxf.query import EntityQuery
 
 
@@ -16,6 +17,7 @@ __all__ = [
     "Window",
     "Point",
     "Circle",
+    "Polygon",
     "inside",
     "outside",
     "crossing",
@@ -28,6 +30,11 @@ __all__ = [
 # A more accurate method based on the Primitive() class of the disassemble module using
 # the path or mesh representation of DXF entities maybe added in the future.
 # These extended selection functions will be called "inside_xt", "outside_xt", "crossing_xt", ...
+#
+# TODO: 
+#   Fence: all entities crossed by a polyline
+#   Cluster: group entities by the proximity
+#   Chain: all entities directly or indirectly linked to a start entity
 
 
 class SelectionShape(abc.ABC):
@@ -142,6 +149,68 @@ class Circle(SelectionShape):
         return self._is_vertex_inside(entity_bbox.center)
 
 
+class Polygon(SelectionShape):
+    """This selection shape tests entities against an arbitrary closed polygon.
+    All entities are projected on the xy-plane. **Convex** polygons may not work as
+    expected.
+
+    The selection tests are performed on the bounding box of the entities.
+    This is a design choice: performance and simplicity over accuracy
+
+    Args:
+        vertices: corner vertices
+
+    """
+
+    def __init__(self, vertices: Iterable[UVec]):
+        v = Vec2.list(vertices)
+        if len(v) < 3:
+            raise ValueError("3 or more vertices required")
+        if v[0].isclose(v[-1]):
+            v.pop()  # open polygon
+        if len(v) < 3:
+            raise ValueError("3 or more vertices required")
+        self._vertices: list[Vec2] = v
+        self._bbox = BoundingBox2d(self._vertices)
+
+    def _has_intersection(self, extmin: Vec2, extmax: Vec2) -> bool:
+        cs = CohenSutherlandLineClipping2d(extmin, extmax)
+        vertices = self._vertices
+        for index, end in enumerate(vertices):
+            if cs.clip_line(vertices[index - 1], end):
+                return True
+        return False
+
+    @override
+    def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
+        if not self._bbox.has_overlap(entity_bbox):
+            return False
+        # this may not work for convex selection polygons
+        return all(
+            is_point_in_polygon_2d(v, self._vertices) >= 0  # inside or on boundary
+            for v in entity_bbox.rect_vertices()
+        )
+
+    @override
+    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
+        if not self._bbox.has_overlap(entity_bbox):
+            return True
+        return not self._has_intersection(entity_bbox.extmin, entity_bbox.extmax)
+
+    @override
+    def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
+        if not self._bbox.has_overlap(entity_bbox):
+            return False
+        if any(
+            is_point_in_polygon_2d(v, self._vertices) >= 0  # inside or on boundary
+            for v in entity_bbox.rect_vertices()
+        ):
+            return True
+        # special case: all bbox corners are outside the polygon but bbox edges may 
+        # intersect the polygon
+        return self._has_intersection(entity_bbox.extmin, entity_bbox.extmax)
+
+
 def inside(
     entities: Iterable[DXFEntity],
     shape: SelectionShape,
@@ -179,7 +248,13 @@ def crossing(
     shape: SelectionShape,
     cache: bbox.Cache | None = None,
 ) -> EntityQuery:
-    """Returns all entities that are overlapping the selection shape.
+    """Returns all entities that are **overlapping** the selection shape.
+
+    .. Note::
+
+        This is different from crossing selections in CAD applications - but I want to 
+        stick to familiar terms used in CAD applications, and advanced crossing functions
+        may behave like crossing selections in CAD applications in the future.
 
     Args:
         entities: iterable of DXFEntities

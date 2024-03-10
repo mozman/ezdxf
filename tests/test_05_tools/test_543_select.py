@@ -120,7 +120,7 @@ class TestCircle:
 
     def test_outside_corner_case_point(self, msp: Modelspace):
         """Bounding boxes do overlap but point is outside circle.
-        
+
         point = (0, 1)
         """
         circle = select.Circle((1, 0), 1)
@@ -157,7 +157,7 @@ class TestCircle:
         assert len(selection) == 1
 
     def test_is_crossing_line(self, msp: Modelspace):
-        """Bounding boxes do overlap but circle does not intersect line. 
+        """Bounding boxes do overlap but circle does not intersect line.
         Crossing tests are performed on the bounding box of the line!
 
         CC.
@@ -168,6 +168,100 @@ class TestCircle:
         """
         circle = select.Circle((-1, 1), 1)
         selection = select.crossing(msp.query("LINE"), circle)
+        assert len(selection) == 1
+
+
+class TestPolygon:
+    """The selection functions are testing only the bounding boxes of selection.
+
+    This is a design choice: performance and simplicity over accuracy
+    """
+
+    @pytest.mark.parametrize(
+        "vertices",
+        [
+            [],
+            [(0, 0)],
+            [(0, 0), (0, 0)],
+            [(0, 0), (0, 0), (0, 0)],
+        ],
+    )
+    def test_invalid_vertex_count(self, vertices):
+        with pytest.raises(ValueError):
+            select.Polygon(vertices)
+
+    def test_all_inside(self, msp: Modelspace):
+        polygon = select.Polygon([(-5, -5), (5, -5), (5, 5), (-5, 5)])
+        selection = select.inside(msp, polygon)
+        assert len(selection) == 4
+
+    def test_circle_not_inside(self, msp: Modelspace):
+        """Bounding boxes do overlap but all corner vertices of the CIRCLE bbox are
+        outside.
+        """
+        polygon = select.Polygon([(-2, -2), (2, -2), (2, 2), (-2, 2)])
+        selection = select.inside(msp.query("CIRCLE"), polygon)
+        assert len(selection) == 0
+
+    def test_all_outside(self, msp: Modelspace):
+        polygon = select.Polygon([(6, 6), (7, 6), (7, 7), (6, 7)])
+        selection = select.outside(msp, polygon)
+        assert len(selection) == 4
+
+    def test_point_is_outside(self, msp: Modelspace):
+        """Bounding boxes do overlap, all corner vertices of the POINT bbox are
+        outside and POINT is outside the polygon.
+
+        point: (0, 1)
+        """
+        polygon = select.Polygon([(0, 0), (1, 0), (1, 1)])
+        selection = select.outside(msp.query("POINT"), polygon)
+        assert len(selection) == 1
+
+    def test_line_is_not_outside(self, msp: Modelspace):
+        """Bounding boxes do overlap all corner vertices of the LINE bbox are
+        outside but the LINE is crossing the polygon.
+
+        line: (-2, -2) (2, 2)
+        """
+        polygon = select.Polygon([(-1, -3), (1, -3), (0, 3)])
+        selection = select.outside(msp.query("LINE"), polygon)
+        assert len(selection) == 0
+
+    def test_all_crossing(self, msp: Modelspace):
+        """All inside is also all crossing."""
+        polygon = select.Polygon([(-5, -5), (5, -5), (5, 5), (-5, 5)])
+        selection = select.crossing(msp, polygon)
+        assert len(selection) == 4
+
+    def test_point_is_not_crossing(self, msp: Modelspace):
+        """Bounding boxes do overlap, all corner vertices of the POINT bbox are
+        outside and POINT is outside the polygon.
+
+        point: (0, 1)
+        """
+        polygon = select.Polygon([(0, 0), (1, 0), (1, 1)])
+        selection = select.crossing(msp.query("POINT"), polygon)
+        assert len(selection) == 0
+
+    def test_line_is_crossing(self, msp: Modelspace):
+        """Bounding boxes do overlap, all corner vertices of the LINE bbox are
+        outside and the LINE is crossing the polygon.
+
+        line: (-2, -2) (2, 2)
+        """
+        polygon = select.Polygon([(-1, -3), (1, -3), (0, 3)])
+        selection = select.crossing(msp.query("LINE"), polygon)
+        assert len(selection) == 1
+
+    def test_circle_is_crossing(self, msp: Modelspace):
+        """All corner vertices of the CIRCLE bbox are outside and CIRCLE does overlap
+        with polygon.  This is different to crossing selection in CAD applications!
+
+        circle: (0, 0) radius=5
+        """
+        polygon = select.Polygon([(-1, -1), (1, -1), (1, 1), (-1, 1)])
+        selection = select.crossing(msp.query("CIRCLE"), polygon)
         assert len(selection) == 1
 
 
