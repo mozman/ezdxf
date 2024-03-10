@@ -11,15 +11,24 @@ from ezdxf.math import UVec, Vec2, BoundingBox2d
 from ezdxf.query import EntityQuery
 
 
-__all__ = ["SelectionShape", "Window", "Point", "inside", "outside", "crossing"]
+__all__ = [
+    "SelectionShape",
+    "Window",
+    "Point",
+    "Circle",
+    "inside",
+    "outside",
+    "crossing",
+]
 
-# The basic selection functions "inside", "outside", "crossing", ... using the bounding 
-# box of DXF entities for selection. 
+# The basic selection functions "inside", "outside", "crossing", ... using the bounding
+# box of DXF entities for selection.
 # This is a design choice: performance and simplicity over accuracy
 #
-# A more accurate method based on the Primitive() class of the disassemble module using 
-# the path or mesh representation of DXF entities maybe added in the future. 
+# A more accurate method based on the Primitive() class of the disassemble module using
+# the path or mesh representation of DXF entities maybe added in the future.
 # These extended selection functions will be called "inside_xt", "outside_xt", "crossing_xt", ...
+
 
 class SelectionShape(abc.ABC):
     """AbstractBaseClass for selection shapes.
@@ -72,7 +81,7 @@ class Point(SelectionShape):
     An entity is selected when the selection point is inside the bounding box of the entity.
     This is a design choice: performance and simplicity over accuracy
 
-    By definition, nothing can be inside a dimensionless point and therefore everything 
+    By definition, nothing can be inside a dimensionless point and therefore everything
     is outside a point.
 
     Args:
@@ -93,6 +102,44 @@ class Point(SelectionShape):
     @override
     def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
         return entity_bbox.inside(self._point)
+
+
+class Circle(SelectionShape):
+    """This selection shape tests entities against a circle.  All entities are
+    projected on the xy-plane.
+
+    The selection tests are performed on the bounding box of the entities.
+    This is a design choice: performance and simplicity over accuracy
+
+    Args:
+        center: center of the circle
+        radius: radius of the circle
+    """
+
+    def __init__(self, center: UVec, radius: float):
+        self._center = Vec2(center)
+        self._radius = float(radius)
+        r_vec = Vec2(self._radius, self._radius)
+        self._bbox = BoundingBox2d((self._center - r_vec, self._center + r_vec))
+
+    def _is_vertex_inside(self, v: Vec2) -> bool:
+        return self._center.distance(v) <= self._radius
+
+    @override
+    def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
+        return all(self._is_vertex_inside(v) for v in entity_bbox.rect_vertices())
+
+    @override
+    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
+        if not self._bbox.has_overlap(entity_bbox):
+            return True
+        return not self.is_crossing(entity_bbox)
+
+    @override
+    def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
+        if any(self._is_vertex_inside(v) for v in entity_bbox.rect_vertices()):
+            return True
+        return self._is_vertex_inside(entity_bbox.center)
 
 
 def inside(
