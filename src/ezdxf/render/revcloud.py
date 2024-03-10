@@ -23,7 +23,7 @@ def points(
         start_width: start width of the segment arc
         end_width: end width of the segment arc
 
-    .. versionadded:: 1.2.1
+    .. versionadded:: 1.3.0
 
     """
     if segment_length < 1e-6:

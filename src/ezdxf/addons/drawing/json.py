@@ -189,6 +189,8 @@ class CustomJSONBackend(_JSONBackend):
 
     .. automethod:: get_string
 
+    .. versionadded:: 1.3.0
+
     """
 
     def __init__(self, orient_paths=False) -> None:
@@ -401,6 +403,8 @@ class GeoJSONBackend(_JSONBackend):
 
     .. automethod:: get_string
 
+    .. versionadded:: 1.3.0
+    
     .. _GeoJSON: https://geojson.org/
     """
 

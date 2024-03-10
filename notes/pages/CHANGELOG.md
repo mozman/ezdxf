@@ -1,4 +1,6 @@
-## Version 1.2.1 - dev
+## Version 1.3.0 - dev
+id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- moved static setup data from `setup.py` to `pyproject.toml`
 	- REMOVE: `pp` command, use `browse` command to explore DXF files
 	- NEW: `GeoJSONBackend` for the `drawing` add-on
@@ -7,6 +9,7 @@
 		- `ezdxf.math.world_mercator_to_gps()`
 		- `ezdxf.math.gps_to_world_mercator()`
 	- NEW: `ezdxf.render.revcloud` module to render revision clouds similar to the `REVCLOUD` command in CAD applications
+	- NEW: `ezdxf.select` module for location based entity selection
 	-
 - ## Version 1.2.0 - 2024-03-02
   id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
