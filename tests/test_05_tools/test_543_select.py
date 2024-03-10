@@ -44,15 +44,15 @@ class TestWindow:
         assert entities[0].dxftype() == "POINT"
         assert entities[1].dxftype() == "LINE"
 
-    def test_outside_all(self, msp: Modelspace):
+    def test_outside_none(self, msp: Modelspace):
         window = select.Window((-5, -5), (5, 5))
         entities = select.outside(msp, window)
         assert len(entities) == 0
 
-    def test_outside_all_except_point(self, msp: Modelspace):
-        window = select.Window((-1, 0), (1, 2))
+    def test_outside_all(self, msp: Modelspace):
+        window = select.Window((6, 6), (7, 7))
         entities = select.outside(msp, window)
-        assert len(entities) == 3
+        assert len(entities) == 4
 
     def test_crossing_all(self, msp: Modelspace):
         """The window just overlaps the bounding boxes of the CIRCLE and the

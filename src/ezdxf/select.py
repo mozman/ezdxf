@@ -13,6 +13,13 @@ from ezdxf.query import EntityQuery
 
 __all__ = ["SelectionShape", "Window", "Point", "inside", "outside", "crossing"]
 
+# The basic selection functions "inside", "outside", "crossing", ... using the bounding 
+# box of DXF entities for selection. 
+# This is a design choice: performance and simplicity over accuracy
+#
+# A more accurate method based on the Primitive() class of the disassemble module using 
+# the path or mesh representation of DXF entities maybe added in the future. 
+# These extended selection functions will be called "inside_xt", "outside_xt", "crossing_xt", ...
 
 class SelectionShape(abc.ABC):
     """AbstractBaseClass for selection shapes.
@@ -23,8 +30,8 @@ class SelectionShape(abc.ABC):
     @abc.abstractmethod
     def is_inside(self, entity_bbox: BoundingBox2d) -> bool: ...
 
-    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
-        return not self.is_inside(entity_bbox)
+    @abc.abstractmethod
+    def is_outside(self, entity_bbox: BoundingBox2d) -> bool: ...
 
     @abc.abstractmethod
     def is_crossing(self, entity_bbox: BoundingBox2d) -> bool: ...
@@ -48,6 +55,10 @@ class Window(SelectionShape):
     @override
     def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
         return self._bbox.contains(entity_bbox)
+
+    @override
+    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
+        return not self._bbox.has_overlap(entity_bbox)
 
     @override
     def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
@@ -74,6 +85,10 @@ class Point(SelectionShape):
     @override
     def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
         return False
+
+    @override
+    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
+        return True
 
     @override
     def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
