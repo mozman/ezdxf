@@ -362,10 +362,10 @@ def chained(
         for entity in entities:
             if entity in selected:
                 continue
-            current_bbox = get_bbox_2d(entity)
+            entity_bbox = get_bbox_2d(entity)
             for selected_bbox in selected.values():
-                if current_bbox.has_overlap(selected_bbox):
-                    selected[entity] = current_bbox
+                if entity_bbox.has_overlap(selected_bbox):
+                    selected[entity] = entity_bbox
                     restart = True
                     break
 
