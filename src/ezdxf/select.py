@@ -18,9 +18,11 @@ __all__ = [
     "Point",
     "Circle",
     "Polygon",
+    "Fence",
     "inside",
     "outside",
     "crossing",
+    "chained",
 ]
 
 # The basic selection functions "inside", "outside", "crossing", ... using the bounding
@@ -31,9 +33,6 @@ __all__ = [
 # the path or mesh representation of DXF entities maybe added in the future.
 # These extended selection functions will be called "inside_xt", "outside_xt", "crossing_xt", ...
 #
-# TODO:
-#   Cluster: group entities by the proximity
-#   Chain: all entities directly or indirectly linked to a start entity
 
 
 class SelectionShape(abc.ABC):
@@ -214,7 +213,7 @@ class Fence(SelectionShape):
     This is a design choice: performance and simplicity over accuracy
 
     All entities can not be inside the fence by definition. All entities not crossing
-    the fence are outside by definition. Points can not be selected by a fence polyline 
+    the fence are outside by definition. Points can not be selected by a fence polyline
     by definition.
 
     """
@@ -331,3 +330,37 @@ def select_by_bbox(
         if test_func(BoundingBox2d(extents)):
             selection.append(entity)
     return EntityQuery(selection)
+
+
+def chained(
+    entities: Iterable[DXFEntity], start: DXFEntity, cache: bbox.Cache | None = None
+) -> EntityQuery:
+    """Returns all entities that are directly or indirectly linked to each other by
+    overlapping bounding boxes.
+
+    Warning: O(n²) in worst case
+
+    """
+
+    def get_bbox_2d(entity: DXFEntity) -> BoundingBox2d:
+        return BoundingBox2d(bbox.extents((entity,), fast=True, cache=cache))
+
+    if cache is None:
+        cache = bbox.Cache()
+    selected: dict[DXFEntity, BoundingBox2d] = {start: get_bbox_2d(start)}
+
+    entities = list(entities)
+    restart = True
+    while restart:
+        restart = False
+        for entity in entities:
+            if entity in selected:
+                continue
+            current_bbox = get_bbox_2d(entity)
+            for selected_bbox in selected.values():
+                if current_bbox.has_overlap(selected_bbox):
+                    selected[entity] = current_bbox
+                    restart = True
+                    break
+
+    return EntityQuery(selected.keys())

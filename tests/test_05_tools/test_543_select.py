@@ -318,5 +318,16 @@ class TestFence:
         assert len(selection) == 1
 
 
+def test_all_entities_chained():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    for x in range(10):
+        msp.add_line((x, 0), (x + 1.01, 1))
+
+    start = msp[-1]
+    selected = select.chained(msp, start)
+    assert len(selected) == 10
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
