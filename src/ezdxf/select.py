@@ -31,8 +31,7 @@ __all__ = [
 # the path or mesh representation of DXF entities maybe added in the future.
 # These extended selection functions will be called "inside_xt", "outside_xt", "crossing_xt", ...
 #
-# TODO: 
-#   Fence: all entities crossed by a polyline
+# TODO:
 #   Cluster: group entities by the proximity
 #   Chain: all entities directly or indirectly linked to a start entity
 
@@ -156,10 +155,6 @@ class Polygon(SelectionShape):
 
     The selection tests are performed on the bounding box of the entities.
     This is a design choice: performance and simplicity over accuracy
-
-    Args:
-        vertices: corner vertices
-
     """
 
     def __init__(self, vertices: Iterable[UVec]):
@@ -206,9 +201,56 @@ class Polygon(SelectionShape):
             for v in entity_bbox.rect_vertices()
         ):
             return True
-        # special case: all bbox corners are outside the polygon but bbox edges may 
+        # special case: all bbox corners are outside the polygon but bbox edges may
         # intersect the polygon
         return self._has_intersection(entity_bbox.extmin, entity_bbox.extmax)
+
+
+class Fence(SelectionShape):
+    """This selection shape tests if entities crosses an arbitrary open polyline.
+    All entities are projected on the xy-plane.
+
+    The selection tests are performed on the bounding box of the entities.
+    This is a design choice: performance and simplicity over accuracy
+
+    All entities can not be inside the fence by definition. All entities not crossing
+    the fence are outside by definition. Points can not be selected by a fence polyline 
+    by definition.
+
+    """
+
+    def __init__(self, vertices: Iterable[UVec]):
+        v = Vec2.list(vertices)
+        if len(v) < 2:
+            raise ValueError("2 or more vertices required")
+        self._vertices: list[Vec2] = v
+        self._bbox = BoundingBox2d(self._vertices)
+
+    @override
+    def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
+        return False
+
+    @override
+    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
+        return not self.is_crossing(entity_bbox)
+
+    @override
+    def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
+        if not self._bbox.has_overlap(entity_bbox):
+            return False
+        if any(entity_bbox.inside(v) for v in self._vertices):
+            return True
+        # All fence vertices are outside the entity bbox, but fence edges may
+        # intersect the entity bbox.
+        extmin = entity_bbox.extmin
+        extmax = entity_bbox.extmax
+        if extmin.isclose(extmax):  # is point
+            return False  # by definition
+        cs = CohenSutherlandLineClipping2d(extmin, extmax)
+        vertices = self._vertices
+        return any(
+            cs.clip_line(start, end) for start, end in zip(vertices, vertices[1:])
+        )
 
 
 def inside(
@@ -252,7 +294,7 @@ def crossing(
 
     .. Note::
 
-        This is different from crossing selections in CAD applications - but I want to 
+        This is different from crossing selections in CAD applications - but I want to
         stick to familiar terms used in CAD applications, and advanced crossing functions
         may behave like crossing selections in CAD applications in the future.
 

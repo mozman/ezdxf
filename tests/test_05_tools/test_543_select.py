@@ -265,5 +265,58 @@ class TestPolygon:
         assert len(selection) == 1
 
 
+class TestFence:
+    """The selection functions are testing only the bounding boxes of selection.
+
+    This is a design choice: performance and simplicity over accuracy
+    """
+
+    @pytest.mark.parametrize("vertices", [[], [(0, 0)]])
+    def test_invalid_vertex_count(self, vertices):
+        with pytest.raises(ValueError):
+            select.Fence(vertices)
+
+    def test_crossing_all_except_point(self, msp: Modelspace):
+        fence = select.Fence([(-5, 0), (5, 0)])
+        selection = select.crossing(msp, fence)
+        assert len(selection) == 3
+
+    def test_none_inside_by_definition(self, msp: Modelspace):
+        fence = select.Fence([(-5, 0), (5, 0)])
+        selection = select.inside(msp, fence)
+        assert len(selection) == 0
+
+    def test_outside_when_not_crossing(self, msp: Modelspace):
+        fence = select.Fence([(-5, 0), (5, 0)])
+        selection = select.outside(msp, fence)
+        assert len(selection) == 1
+        assert selection[0].dxftype() == "POINT"
+
+    def test_can_not_select_point(self, msp: Modelspace):
+        """Fence cannot select POINT entities by definition.
+
+        point: (0, 1)
+        """
+        fence = select.Fence([(-5, 1), (5, 1)])
+        selection = select.crossing(msp.query("POINT"), fence)
+        assert len(selection) == 0
+
+    def test_select_nothing_inside_a_closed_fence(self, msp: Modelspace):
+        """A closed fence does NOT work like a polygon selection!"""
+        fence = select.Fence([(-9, -9), (-9, 9), (9, 9), (-9, 9), (-9, -9)])
+        selection = select.crossing(msp, fence)
+        assert len(selection) == 0
+
+    def test_select_by_touching_bbox_corner(self, msp: Modelspace):
+        """CIRCLE is selected by fence touching the CIRCLE bbox at one corner point.
+        Does not cross the curve itself!
+
+        circle: (0, 0), radius = 5
+        """
+        fence = select.Fence([(0, 10), (10, 0)])
+        selection = select.crossing(msp, fence)
+        assert len(selection) == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
