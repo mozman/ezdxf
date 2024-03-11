@@ -1,4 +1,4 @@
-.. module:: ezdxf.select
+.. Tasks/Query Data
 
 Selection Tools
 ===============

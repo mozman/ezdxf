@@ -1,54 +1,29 @@
+.. Task section
 
 .. module:: ezdxf.query
+    :noindex:
+
+.. _query entities:
+
+Query Entities
+==============
+
+DXF entities can be selected from layouts or arbitrary entity-sequences based on their 
+DXF type and attributes.  Create new queries be the :func:`new` function or by the 
+:meth:`~ezdxf.layouts.BaseLayout.query` methods implemented by all layouts.
 
 .. seealso::
 
-    For usage of the query features see the tutorial: :ref:`tut_getting_data`
-
-.. _entity query string:
+    - Tutorial: :ref:`tut_getting_data`
+    - Reference: :mod:`ezdxf.query` module
 
 Entity Query String
-===================
+-------------------
 
-.. code-block::
+The query string is the combination of two queries, first the required entity query and 
+second the optional attribute query, enclosed in square brackets, append ``'i'`` after 
+the closing square bracket to ignore case for strings.
 
-    QueryString := EntityQuery ("[" AttribQuery "]" "i"?)*
-
-The query string is the combination of two queries, first the required entity
-query and second the optional attribute query, enclosed in square brackets,
-append ``'i'`` after the closing square bracket to ignore case for strings.
-
-Entity Query
-------------
-
-The entity query is a whitespace separated list of DXF entity names or the special
-name ``'*'``. Where ``'*'`` means all DXF entities, exclude some entity types by
-appending their names with a preceding ``!`` (e.g. all entities except
-LINE = ``'* !LINE'``). All DXF names have to be uppercase.
-
-Attribute Query
----------------
-
-The *optional* attribute query is a boolean expression, supported operators are:
-
-  - not (!): !term is true, if term is false
-  - and (&): term & term is true, if both terms are true
-  - or (|): term | term is true, if one term is true
-  - and arbitrary nested round brackets
-  - append (i) after the closing square bracket to ignore case for strings
-
-Attribute selection is a term: "name comparator value", where name is a DXF
-entity attribute in lowercase, value is a integer, float or double quoted string,
-valid comparators are:
-
-  - ``==`` equal "value"
-  - ``!=`` not equal "value"
-  - ``<`` lower than "value"
-  - ``<=`` lower or equal than "value"
-  - ``>`` greater than "value"
-  - ``>=`` greater or equal than "value"
-  - ``?`` match regular expression "value"
-  - ``!?`` does not match regular expression "value"
 
 .. _query result:
 
@@ -61,101 +36,40 @@ which matches one name of the entity query AND the whole attribute query.
 If a DXF entity does not have or support a required attribute, the corresponding
 attribute search term is ``False``.
 
-examples:
+Select all LINE and CIRCLE entities with layer  == "construction"::
 
-    - :code:`LINE[text ? ".*"]`: always empty, because the LINE entity has no text attribute.
-    - :code:`LINE CIRCLE[layer=="construction"]`: all LINE and CIRCLE entities with layer  == ``"construction"``
-    - :code:`*[!(layer=="construction" & color<7)]`: all entities except those with layer  == ``"construction"`` and color < ``7``
-    - :code:`*[layer=="construction"]i`, (ignore case) all entities with layer == ``"construction"`` | ``"Construction"`` | ``"ConStruction"`` ...
+    result = msp.query('LINE CIRCLE[layer=="construction"]')
 
-EntityQuery Class
-=================
+This result is always empty, because the LINE entity has no text attribute::
 
-.. class:: EntityQuery
+    result = msp.query('LINE[text ? ".*"]')
 
-    The :class:`EntityQuery` class is a result container, which is filled with
-    DXF entities matching the query string. It is possible to add entities to
-    the container (extend), remove entities from the container and to filter
-    the container. Supports the standard `Python Sequence`_ methods and protocols.
-    Does not remove automatically destroyed entities (entities deleted by
-    calling method :meth:`destroy`), the method :meth:`purge` has to be
-    called explicitly to remove the destroyed entities.
+Select all entities except those with layer  == "construction" and color < 7::
 
-    .. autoattribute:: first
+    result = msp.query('*[!(layer=="construction" & color<7)]')
 
-    .. autoattribute:: last
+Ignore case, selects all entities with layer == "construction", "Construction", "ConStruction" ...::
 
-    .. automethod:: __len__
+    result = msp.query('*[layer=="construction"]i')
 
-    .. automethod:: __getitem__
-
-    .. automethod:: __setitem__
-
-    .. automethod:: __delitem__
-
-    .. automethod:: __eq__
-
-    .. automethod:: __ne__
-
-    .. automethod:: __lt__
-
-    .. automethod:: __le__
-
-    .. automethod:: __gt__
-
-    .. automethod:: __ge__
-
-    .. automethod:: match
-
-    .. automethod:: __or__
-
-    .. automethod:: __and__
-
-    .. automethod:: __sub__
-
-    .. automethod:: __xor__
-
-    .. automethod:: __iter__
-
-    .. automethod:: purge
-
-    .. automethod:: extend
-
-    .. automethod:: remove
-
-    .. automethod:: query
-
-    .. automethod:: groupby
-
-    .. automethod:: filter
-
-    .. automethod:: union
-
-    .. automethod:: intersection
-
-    .. automethod:: difference
-
-    .. automethod:: symmetric_difference
-
-.. _extended query features:
+.. _extended entityquery features:
 
 Extended EntityQuery Features
 -----------------------------
 
-The ``[]`` operator got extended features in version 0.18, until then the
-:class:`EntityQuery` implemented the :meth:`__getitem__` interface like a
-sequence to get entities from the container:
-
-.. code-block:: Python
+The :class:`EntityQuery` container supports the full Sequence protocol::
 
     result = msp.query(...)
     first = result[0]
     last = result[-1]
-    sequence = result[1:-2]  # returns not an EntityQuery container!
 
-Now the :meth:`__getitem__` function accepts also a DXF attribute name and
-returns all entities which support this attribute, this is the base for
-supporting queries by relational operators. More on that later.
+Slices return a new :class:`EntityQuery` container::
+
+    sequence = result[1:-2]
+
+The :meth:`__getitem__` function accepts also a DXF attribute name and returns all 
+entities which support this attribute, this is the base for supporting queries by 
+relational operators. More on that later.
 
 The :meth:`__setitem__` method assigns a DXF attribute to all supported
 entities in the :class:`EntityQuery` container:
@@ -266,12 +180,12 @@ attributes such as `center` or `insert` and raise a :class:`TypeError`.
     The methods :meth:`~EntityQuery.union`, :meth:`~EntityQuery.intersection`,
     :meth:`~EntityQuery.difference` and :meth:`~EntityQuery.symmetric_difference`
     can be used to combine selection. See section `Query Set Operators`_ and
-    `Build Own Filters`_.
+    `Build Custom Filters`_.
 
 .. _regular expression selection:
 
 Regular Expression Selection
------------------------------
+----------------------------
 
 The :meth:`EntityQuery.match` method returns all entities where the selected DXF
 attribute matches the given regular expression. This methods work only on string
@@ -289,10 +203,10 @@ From here on I use only descriptors for attribute selection if possible.
     # selection is also case insensitive by default:
     assert len(lines.layer.match("^Lay.*")) == 2
 
-.. _build own filters:
+.. _build custom filters:
 
-Build Own Filters
------------------
+Build Custom Filters
+--------------------
 
 The method :class:`EntityQuery.filter` can be used to build operators for
 none-DXF attributes or for complex logic expressions.
@@ -379,12 +293,4 @@ The ``^`` operator or :meth:`EntityQuery.symmetric_difference` returns a new
     # select all entities with color > 1 or layer == "MyLayer", exclusive
     # entities with color > 1 and layer == "MyLayer"
     result = (entities.color > 1) ^ (entities.layer == "MyLayer")
-
-The new() Function
-------------------
-
-.. autofunction:: ezdxf.query.new
-
-.. _Python Sequence: http://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence
-
 

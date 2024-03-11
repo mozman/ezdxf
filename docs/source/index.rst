@@ -126,16 +126,14 @@ Contents
    setup
    usage_for_beginners
    concepts/index
-   tutorials/index
+   tasks/index
    xref
-   howto/index
-   faq
+   addons/index
    reference
    launcher
-   render/index
-   addons/index
-   dxfinternals/index
-   develop/index
+   tutorials/index
+   howto/index
+   faq
    glossary
    knowledgegraph
 
