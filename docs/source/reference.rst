@@ -93,12 +93,17 @@ Math
     math/rtree
     math/triangulation
 
+.. The borders between the "Construction" and the "Tools" section are blurry!
+
 Construction
 ------------
+
+.. Tools that alter the geometry of entities or create new entities.
 
 .. toctree::
     :maxdepth: 1
 
+    acis
     bbox
     disassemble
     math_construction_tools
@@ -127,13 +132,16 @@ Fonts
 Tools
 -----
 
+.. Tools that alter the visual appearance of entities or the DXF document itself.
+   Tools that work with entities.
+
 .. toctree::
     :maxdepth: 2
 
-    tools/acis
     tools/appsettings
     tools/comments
     tools/gfxattribs
+    tools/select
     tools/text
     tools/text_size
     tools/xclip

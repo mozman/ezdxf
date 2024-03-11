@@ -314,7 +314,7 @@ id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 	- NEW: support for layer attribute override in VIEWPORT entities
 	- NEW: mesh exchange add-on `ezdxf.addons.meshex`: STL, OFF, and OBJ mesh loader and STL, OFF, OBJ, PLY, OpenSCAD and IFC4 mesh exporter, [docs](https://ezdxf.mozman.at/docs/addons/meshex.html)
 	- NEW: `ezdxf.addons.openscad` add-on as interface to [OpenSCAD](https://openscad.org), [docs](https://ezdxf.mozman.at/docs/addons/openscad.html)
-	- NEW: `acis` module, a toolbox to handle ACIS data, [docs](https://ezdxf.mozman.at/docs/tools/acis.html)
+	- NEW: `acis` module, a toolbox to handle ACIS data, [docs](https://ezdxf.mozman.at/docs/acis.html)
 	- NEW: factory function `add_helix()` to create new `HELIX` entities
 	- NEW: precise bounding box calculation for Bezier curves
 	- NEW: module `ezdxf.math.trianglation` for polygon triangulation with hole support

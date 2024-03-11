@@ -89,7 +89,7 @@ The following images show the limitations of the :func:`mesh_from_body`
 function. The first image shows the source ``3DSOLID`` entities with
 subtraction of entities with flat and curved faces:
 
-.. image:: gfx/solids-acis.png
+.. figure:: tools/gfx/solids-acis.png
 
 Example script to extracts all flat polygonal faces as meshes:
 
@@ -114,7 +114,7 @@ Example script to extracts all flat polygonal faces as meshes:
 The second image shows the flat faces extracted from the ``3DSOLID`` entities
 and exported as :class:`~ezdxf.entities.Mesh` entities:
 
-.. image:: gfx/solids-mesh.png
+.. figure:: tools/gfx/solids-mesh.png
 
 As you can see all faces which do not have straight lines as boundaries are
 lost.

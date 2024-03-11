@@ -310,7 +310,7 @@
 		- [ezdxf.math.clustering.k_means()](https://ezdxf.mozman.at/docs/math/clustering.html#ezdxf.math.clustering.k_means)
 		-
 - ## [[ACIS]] Tools
-	- The new [ezdxf.acis](https://ezdxf.mozman.at/docs/tools/acis.html) sub-package provides some [[ACIS]] data management tools for curious and experienced users. These tools cannot replace the official ACIS SDK due to the complexity of the data structures and the absence of an ACIS kernel in `ezdxf`.
+	- The new [ezdxf.acis](https://ezdxf.mozman.at/docs/acis.html) sub-package provides some [[ACIS]] data management tools for curious and experienced users. These tools cannot replace the official ACIS SDK due to the complexity of the data structures and the absence of an ACIS kernel in `ezdxf`.
 	-
 - ## [[Launcher]]
 	- The new `info` command show info and optional stats of DXF files.
