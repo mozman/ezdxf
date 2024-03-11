@@ -91,50 +91,32 @@ Sets drawing units:
 
 For more information see section :ref:`DXF Units`.
 
-Create More Readable DXF Files (DXF Pretty Printer)
----------------------------------------------------
+Explore the DXF File Structure
+------------------------------
 
 DXF files are plain text files, you can open this files with every text editor
 which handles bigger files. But it is not really easy to get quick the
 information you want.
 
-Create a more readable HTML file (DXF Pretty Printer):
+Use the DXF structure browser:
 
 .. code-block::
 
     # Call as executable script from the command line:
-    ezdxf pp FILE [FILE ...]
+    ezdxf browse FILE
 
     # Call as module on Windows:
-    py -m ezdxf pp FILE [FILE ...]
+    py -m ezdxf browse FILE
 
     # Call as module on Linux/Mac
-    python3 -m ezdxf pp FILE [FILE ...]
+    python3 -m ezdxf browse FILE
 
-This creates a HTML file with a nicer layout than a plain text file, and
-handles are links between DXF entities, this simplifies the navigation
-between the DXF entities.
+This command requires `PySide6` or `PyQt5` to be installed. It opens a desktop window 
+with a selection panel for all DXF entities in the document, and handles int the entity 
+view are links between DXF entities, this simplifies the navigation between the DXF 
+entities. Read the docs for the :ref:`browse_command` command for more information.
 
-.. code-block:: none
-
-    usage: ezdxf pp [-h] [-o] [-r] [-x] [-l] FILE [FILE ...]
-
-    positional arguments:
-      FILE             DXF files pretty print
-
-    optional arguments:
-      -h, --help       show this help message and exit
-      -o, --open       open generated HTML file with the default web browser
-      -r, --raw        raw mode - just print tags, no DXF structure interpretation
-      -x, --nocompile  don't compile points coordinates into single tags (only in
-                       raw mode)
-      -l, --legacy     legacy mode - reorders DXF point coordinates
-
-
-.. important::
-
-    This does not render the graphical content of the DXF file to a HTML canvas
-    element.
+.. figure:: ../gfx/gear-browse.png
 
 .. _calc msp extents:
 

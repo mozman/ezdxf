@@ -79,7 +79,8 @@ Data Query
 
     query
     groupby
-
+    select
+    
 Math
 ----
 
@@ -141,7 +142,6 @@ Tools
     tools/appsettings
     tools/comments
     tools/gfxattribs
-    tools/select
     tools/text
     tools/text_size
     tools/xclip

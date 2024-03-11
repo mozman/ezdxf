@@ -213,8 +213,7 @@ Browse the internal structure of a DXF file like a file system:
     C:\> ezdxf browse gear.dxf
 
 
-.. image:: gfx/gear-browse.png
-   :align: center
+.. figure:: gfx/gear-browse.png
 
 .. code-block:: Text
 
