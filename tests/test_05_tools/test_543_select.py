@@ -20,7 +20,7 @@ def msp():
     return msp_
 
 
-class TestWindow:
+class TestBoundingBoxVsWindow:
     """The selection functions are testing only the bounding boxes of entities.
 
     This is a design choice: performance and simplicity over accuracy
@@ -28,76 +28,49 @@ class TestWindow:
 
     def test_all_inside(self, msp: Modelspace):
         window = select.Window((-5, -5), (5, 5))
-        selection = select.inside(msp, window)
+        selection = select.bbox_inside(window, msp)
         assert len(selection) == 4
 
     def test_inside_select_point(self, msp: Modelspace):
         window = select.Window((-1, 0), (1, 2))
-        selection = select.inside(msp, window)
+        selection = select.bbox_inside(window, msp)
         assert len(selection) == 1
         assert selection[0].dxftype() == "POINT"
 
     def test_inside_select_point_and_line(self, msp: Modelspace):
         window = select.Window((-1, -1), (1, 1))
-        selection = select.inside(msp, window)
+        selection = select.bbox_inside(window, msp)
         assert len(selection) == 2
         assert selection[0].dxftype() == "POINT"
         assert selection[1].dxftype() == "LINE"
 
     def test_outside_none(self, msp: Modelspace):
         window = select.Window((-5, -5), (5, 5))
-        selection = select.outside(msp, window)
+        selection = select.bbox_outside(window, msp)
         assert len(selection) == 0
 
     def test_outside_all(self, msp: Modelspace):
         window = select.Window((6, 6), (7, 7))
-        selection = select.outside(msp, window)
+        selection = select.bbox_outside(window, msp)
         assert len(selection) == 4
 
-    def test_crossing_all(self, msp: Modelspace):
+    def test_overlaps_all(self, msp: Modelspace):
         """The window just overlaps the bounding boxes of the CIRCLE and the
         LWPOLYLINE not the geometry itself.
         """
         window = select.Window((0, 0), (2, 2))
-        selection = select.crossing(msp, window)
+        selection = select.bbox_overlap(window, msp)
         assert len(selection) == 4
 
-    def test_crossing_selects_touching_entities(self, msp: Modelspace):
+    def test_overlap_selects_touching_entities(self, msp: Modelspace):
         """The window touches just the bounding box of the CIRCLE, not the curve itself."""
         window = select.Window((5, 5), (6, 6))
-        selection = select.crossing(msp, window)
+        selection = select.bbox_overlap(window, msp)
         assert len(selection) == 1
         assert selection[0].dxftype() == "CIRCLE"
 
 
-class TestPoint:
-    """The selection functions are testing only the bounding boxes of entities.
-
-    This is a design choice: performance and simplicity over accuracy
-    """
-
-    def test_none_inside(self, msp: Modelspace):
-        """By definition, nothing can be inside a dimensionless point."""
-        point = select.Point((0, 0))
-        selection = select.inside(msp, point)
-        assert len(selection) == 0
-
-    def test_all_outside(self, msp: Modelspace):
-        """By definition, nothing can be inside a dimensionless point and therefore
-        everything is outside a point.
-        """
-        point = select.Point((0, 1))
-        selection = select.outside(msp, point)
-        assert len(selection) == 4
-
-    def test_crossing_all(self, msp: Modelspace):
-        """The point is inside of all entity bounding boxes."""
-        point = select.Point((0, 1))
-        selection = select.crossing(msp, point)
-        assert len(selection) == 4
-
-
-class TestCircle:
+class TestBoundingBoxVsCircle:
     """The selection functions are testing only the bounding boxes of selection.
 
     This is a design choice: performance and simplicity over accuracy
@@ -105,17 +78,17 @@ class TestCircle:
 
     def test_all_inside(self, msp: Modelspace):
         circle = select.Circle((0, 0), 10)
-        selection = select.inside(msp, circle)
+        selection = select.bbox_inside(circle, msp)
         assert len(selection) == 4
 
     def test_all_outside(self, msp: Modelspace):
         circle = select.Circle((7, 7), 1)
-        selection = select.outside(msp, circle)
+        selection = select.bbox_outside(circle, msp)
         assert len(selection) == 4
 
     def test_none_outside(self, msp: Modelspace):
         circle = select.Circle((0, 0), 1)
-        selection = select.outside(msp, circle)
+        selection = select.bbox_outside(circle, msp)
         assert len(selection) == 0
 
     def test_outside_corner_case_point(self, msp: Modelspace):
@@ -124,7 +97,7 @@ class TestCircle:
         point = (0, 1)
         """
         circle = select.Circle((1, 0), 1)
-        selection = select.outside(msp.query("POINT"), circle)
+        selection = select.bbox_outside(circle, msp.query("POINT"))
         assert len(selection) == 1
 
     def test_outside_corner_case_polyline(self, msp: Modelspace):
@@ -138,27 +111,27 @@ class TestCircle:
         polyline corners = (-2, -2) ... (2, 2)
         """
         circle = select.Circle((0, 0), 2)
-        selection = select.outside(msp.query("LWPOLYLINE"), circle)
+        selection = select.bbox_outside(circle, msp.query("LWPOLYLINE"))
         assert len(selection) == 0
 
-    def test_crossing_all(self, msp: Modelspace):
+    def test_overlap_all(self, msp: Modelspace):
         circle = select.Circle((0, 0), 1)
-        selection = select.crossing(msp, circle)
+        selection = select.bbox_overlap(circle, msp)
         assert len(selection) == 4
 
-    def test_crossing_none(self, msp: Modelspace):
+    def test_overlap_none(self, msp: Modelspace):
         circle = select.Circle((7, 0), 1)
-        selection = select.crossing(msp, circle)
+        selection = select.bbox_overlap(circle, msp)
         assert len(selection) == 0
 
-    def test_is_crossing_point(self, msp: Modelspace):
+    def test_is_overlapping_point(self, msp: Modelspace):
         circle = select.Circle((0, 0), 1)
-        selection = select.crossing(msp.query("POINT"), circle)
+        selection = select.bbox_overlap(circle, msp.query("POINT"))
         assert len(selection) == 1
 
-    def test_is_crossing_line(self, msp: Modelspace):
+    def test_is_overlapping_line(self, msp: Modelspace):
         """Bounding boxes do overlap but circle does not intersect line.
-        Crossing tests are performed on the bounding box of the line!
+        overlap tests are performed on the bounding box of the line!
 
         CC.
         C#x
@@ -167,11 +140,11 @@ class TestCircle:
         line = (-1, -1) (1, 1)
         """
         circle = select.Circle((-1, 1), 1)
-        selection = select.crossing(msp.query("LINE"), circle)
+        selection = select.bbox_overlap(circle, msp.query("LINE"))
         assert len(selection) == 1
 
 
-class TestPolygon:
+class TestBoundingBoxVsPolygon:
     """The selection functions are testing only the bounding boxes of selection.
 
     This is a design choice: performance and simplicity over accuracy
@@ -192,7 +165,7 @@ class TestPolygon:
 
     def test_all_inside(self, msp: Modelspace):
         polygon = select.Polygon([(-5, -5), (5, -5), (5, 5), (-5, 5)])
-        selection = select.inside(msp, polygon)
+        selection = select.bbox_inside(polygon, msp)
         assert len(selection) == 4
 
     def test_circle_not_inside(self, msp: Modelspace):
@@ -200,24 +173,24 @@ class TestPolygon:
         outside.
         """
         polygon = select.Polygon([(-2, -2), (2, -2), (2, 2), (-2, 2)])
-        selection = select.inside(msp.query("CIRCLE"), polygon)
+        selection = select.bbox_inside(polygon, msp.query("CIRCLE"))
         assert len(selection) == 0
 
     def test_circle_is_not_inside_concave_polygon(self, msp: Modelspace):
-        """Bounding box of CIRCLE is completely inside the polygon, all edge vertices 
-        are inside the polygon but some edges do intersect with the polygon. 
+        """Bounding box of CIRCLE is completely inside the polygon, all edge vertices
+        are inside the polygon but some edges do intersect with the polygon.
         CIRCLE is not complete inside!
         """
         polygon = select.Polygon([(-10, -10), (10, -10), (10, 10), (0, 0), (-10, 10)])
-        selection = select.inside(msp.query("CIRCLE"), polygon)
+        selection = select.bbox_inside(polygon, msp.query("CIRCLE"))
         assert len(selection) == 0
 
-        selection = select.outside(msp.query("CIRCLE"), polygon)
+        selection = select.bbox_outside(polygon, msp.query("CIRCLE"))
         assert len(selection) == 0
 
     def test_all_outside(self, msp: Modelspace):
         polygon = select.Polygon([(6, 6), (7, 6), (7, 7), (6, 7)])
-        selection = select.outside(msp, polygon)
+        selection = select.bbox_outside(polygon, msp)
         assert len(selection) == 4
 
     def test_point_is_outside(self, msp: Modelspace):
@@ -227,53 +200,53 @@ class TestPolygon:
         point: (0, 1)
         """
         polygon = select.Polygon([(0, 0), (1, 0), (1, 1)])
-        selection = select.outside(msp.query("POINT"), polygon)
+        selection = select.bbox_outside(polygon, msp.query("POINT"))
         assert len(selection) == 1
 
     def test_line_is_not_outside(self, msp: Modelspace):
         """Bounding boxes do overlap all corner vertices of the LINE bbox are
-        outside but the LINE is crossing the polygon.
+        outside but the LINE is overlap the polygon.
 
         line: (-2, -2) (2, 2)
         """
         polygon = select.Polygon([(-1, -3), (1, -3), (0, 3)])
-        selection = select.outside(msp.query("LINE"), polygon)
+        selection = select.bbox_outside(polygon, msp.query("LINE"))
         assert len(selection) == 0
 
-    def test_all_crossing(self, msp: Modelspace):
-        """All inside is also all crossing."""
+    def test_all_overlap(self, msp: Modelspace):
+        """All inside is also all overlap."""
         polygon = select.Polygon([(-5, -5), (5, -5), (5, 5), (-5, 5)])
-        selection = select.crossing(msp, polygon)
+        selection = select.bbox_overlap(polygon, msp)
         assert len(selection) == 4
 
-    def test_point_is_not_crossing(self, msp: Modelspace):
+    def test_point_not_overlaps(self, msp: Modelspace):
         """Bounding boxes do overlap, all corner vertices of the POINT bbox are
         outside and POINT is outside the polygon.
 
         point: (0, 1)
         """
         polygon = select.Polygon([(0, 0), (1, 0), (1, 1)])
-        selection = select.crossing(msp.query("POINT"), polygon)
+        selection = select.bbox_overlap(polygon, msp.query("POINT"))
         assert len(selection) == 0
 
-    def test_line_is_crossing(self, msp: Modelspace):
+    def test_line_overlaps(self, msp: Modelspace):
         """Bounding boxes do overlap, all corner vertices of the LINE bbox are
-        outside and the LINE is crossing the polygon.
+        outside and the LINE is overlap the polygon.
 
         line: (-2, -2) (2, 2)
         """
         polygon = select.Polygon([(-1, -3), (1, -3), (0, 3)])
-        selection = select.crossing(msp.query("LINE"), polygon)
+        selection = select.bbox_overlap(polygon, msp.query("LINE"))
         assert len(selection) == 1
 
-    def test_circle_is_crossing(self, msp: Modelspace):
+    def test_circle_overlaps(self, msp: Modelspace):
         """All corner vertices of the CIRCLE bbox are outside and CIRCLE does overlap
-        with polygon.  This is different to crossing selection in CAD applications!
+        with polygon.  This is different to overlap selection in CAD applications!
 
         circle: (0, 0) radius=5
         """
         polygon = select.Polygon([(-1, -1), (1, -1), (1, 1), (-1, 1)])
-        selection = select.crossing(msp.query("CIRCLE"), polygon)
+        selection = select.bbox_overlap(polygon, msp.query("CIRCLE"))
         assert len(selection) == 1
 
     def test_concave(self, msp: Modelspace):
@@ -285,56 +258,37 @@ class TestPolygon:
         # ...PP
         # PPPPP
         # PPPPP
-        selection = select.inside(msp.query("CIRCLE"), polygon)
+        selection = select.bbox_inside(polygon, msp.query("CIRCLE"))
         assert len(selection) == 0
 
-        selection = select.outside(msp.query("CIRCLE"), polygon)
+        selection = select.bbox_outside(polygon, msp.query("CIRCLE"))
         assert len(selection) == 1
 
-        selection = select.crossing(msp.query("CIRCLE"), polygon)
+        selection = select.bbox_overlap(polygon, msp.query("CIRCLE"))
         assert len(selection) == 0
 
 
-class TestFence:
-    """The selection functions are testing only the bounding boxes of selection.
-
-    This is a design choice: performance and simplicity over accuracy
-    """
-
+class TestBoundingBoxIntersectsFence:
     @pytest.mark.parametrize("vertices", [[], [(0, 0)]])
-    def test_invalid_vertex_count(self, vertices):
+    def test_invalid_vertex_count(self, vertices, msp: Modelspace):
         with pytest.raises(ValueError):
-            select.Fence(vertices)
+            select.bbox_crosses_fence(vertices, msp)
 
-    def test_crossing_all_except_point(self, msp: Modelspace):
-        fence = select.Fence([(-5, 0), (5, 0)])
-        selection = select.crossing(msp, fence)
+    def test_overlap_all_except_point(self, msp: Modelspace):
+        selection = select.bbox_crosses_fence([(-5, 0), (5, 0)], msp)
         assert len(selection) == 3
-
-    def test_none_inside_by_definition(self, msp: Modelspace):
-        fence = select.Fence([(-5, 0), (5, 0)])
-        selection = select.inside(msp, fence)
-        assert len(selection) == 0
-
-    def test_outside_when_not_crossing(self, msp: Modelspace):
-        fence = select.Fence([(-5, 0), (5, 0)])
-        selection = select.outside(msp, fence)
-        assert len(selection) == 1
-        assert selection[0].dxftype() == "POINT"
 
     def test_can_not_select_point(self, msp: Modelspace):
         """Fence cannot select POINT entities by definition.
 
         point: (0, 1)
         """
-        fence = select.Fence([(-5, 1), (5, 1)])
-        selection = select.crossing(msp.query("POINT"), fence)
+        selection = select.bbox_crosses_fence([(-5, 1), (5, 1)], msp.query("POINT"))
         assert len(selection) == 0
 
     def test_select_nothing_inside_a_closed_fence(self, msp: Modelspace):
         """A closed fence does NOT work like a polygon selection!"""
-        fence = select.Fence([(-9, -9), (-9, 9), (9, 9), (-9, 9), (-9, -9)])
-        selection = select.crossing(msp, fence)
+        selection = select.bbox_crosses_fence([(-9, -9), (-9, 9), (9, 9), (-9, 9), (-9, -9)], msp)
         assert len(selection) == 0
 
     def test_select_by_touching_bbox_corner(self, msp: Modelspace):
@@ -343,19 +297,24 @@ class TestFence:
 
         circle: (0, 0), radius = 5
         """
-        fence = select.Fence([(0, 10), (10, 0)])
-        selection = select.crossing(msp, fence)
+        selection = select.bbox_crosses_fence([(0, 10), (10, 0)], msp)
         assert len(selection) == 1
 
 
-def test_all_entities_chained():
+def test_point_selects_all(msp: Modelspace):
+    """The point is inside of all entity bounding boxes."""
+    selection = select.point_in_bbox((0, 1), msp)
+    assert len(selection) == 4
+
+
+def test_all_entities_chained_by_bounding_boxes():
     doc = ezdxf.new()
     msp = doc.modelspace()
     for x in range(10):
         msp.add_line((x, 0), (x + 1.01, 1))
 
     start = msp[-1]
-    selected = select.chained(msp, start)
+    selected = select.bbox_chained(start, msp)
     assert len(selected) == 10
 
 

@@ -14,24 +14,15 @@ from ezdxf.query import EntityQuery
 
 __all__ = [
     "Window",
-    "Point",
     "Circle",
     "Polygon",
-    "Fence",
-    "inside",
-    "outside",
-    "crossing",
-    "chained",
+    "bbox_inside",
+    "bbox_outside",
+    "bbox_overlap",
+    "bbox_chained",
+    "bbox_crosses_fence",
+    "point_in_bbox",
 ]
-
-# The basic selection functions "inside", "outside", "crossing", ... using the bounding
-# box of DXF entities for selection.
-# This is a design choice: performance and simplicity over accuracy
-#
-# A more accurate method based on the Primitive() class of the disassemble module using
-# the path or mesh representation of DXF entities maybe added in the future.
-# These extended selection functions will be called "inside_xt", "outside_xt", "crossing_xt", ...
-#
 
 
 class SelectionShape(abc.ABC):
@@ -41,21 +32,18 @@ class SelectionShape(abc.ABC):
     """
 
     @abc.abstractmethod
-    def is_inside(self, entity_bbox: BoundingBox2d) -> bool: ...
+    def is_inside_bbox(self, entity_bbox: BoundingBox2d) -> bool: ...
 
     @abc.abstractmethod
-    def is_outside(self, entity_bbox: BoundingBox2d) -> bool: ...
+    def is_outside_bbox(self, entity_bbox: BoundingBox2d) -> bool: ...
 
     @abc.abstractmethod
-    def is_crossing(self, entity_bbox: BoundingBox2d) -> bool: ...
+    def is_overlapping_bbox(self, entity_bbox: BoundingBox2d) -> bool: ...
 
 
 class Window(SelectionShape):
     """This selection shape tests entities against a rectangular and axis-aligned 2D
     window.  All entities are projected on the xy-plane.
-
-    The selection tests are performed on the bounding box of the entities.
-    This is a design choice: performance and simplicity over accuracy
 
     Args:
         p1: first corner of the window
@@ -66,54 +54,21 @@ class Window(SelectionShape):
         self._bbox = BoundingBox2d((p1, p2))
 
     @override
-    def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
+    def is_inside_bbox(self, entity_bbox: BoundingBox2d) -> bool:
         return self._bbox.contains(entity_bbox)
 
     @override
-    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
+    def is_outside_bbox(self, entity_bbox: BoundingBox2d) -> bool:
         return not self._bbox.has_overlap(entity_bbox)
 
     @override
-    def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
+    def is_overlapping_bbox(self, entity_bbox: BoundingBox2d) -> bool:
         return self._bbox.has_overlap(entity_bbox)
-
-
-class Point(SelectionShape):
-    """This selection shape tests entities against a single point.  All entities are
-    projected on the xy-plane.
-
-    An entity is selected when the selection point is inside the bounding box of the entity.
-    This is a design choice: performance and simplicity over accuracy
-
-    By definition, nothing can be inside a dimensionless point and therefore everything
-    is outside a point.
-
-    Args:
-        point: selection point
-    """
-
-    def __init__(self, point: UVec):
-        self._point = Vec2(point)
-
-    @override
-    def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
-        return False
-
-    @override
-    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
-        return True
-
-    @override
-    def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
-        return entity_bbox.inside(self._point)
 
 
 class Circle(SelectionShape):
     """This selection shape tests entities against a circle.  All entities are
     projected on the xy-plane.
-
-    The selection tests are performed on the bounding box of the entities.
-    This is a design choice: performance and simplicity over accuracy
 
     Args:
         center: center of the circle
@@ -130,15 +85,15 @@ class Circle(SelectionShape):
         return self._center.distance(v) <= self._radius
 
     @override
-    def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
+    def is_inside_bbox(self, entity_bbox: BoundingBox2d) -> bool:
         return all(self._is_vertex_inside(v) for v in entity_bbox.rect_vertices())
 
     @override
-    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
-        return not self.is_crossing(entity_bbox)
+    def is_outside_bbox(self, entity_bbox: BoundingBox2d) -> bool:
+        return not self.is_overlapping_bbox(entity_bbox)
 
     @override
-    def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
+    def is_overlapping_bbox(self, entity_bbox: BoundingBox2d) -> bool:
         if not self._bbox.has_overlap(entity_bbox):
             return False
         if any(self._is_vertex_inside(v) for v in entity_bbox.rect_vertices()):
@@ -150,9 +105,6 @@ class Polygon(SelectionShape):
     """This selection shape tests entities against an arbitrary closed polygon.
     All entities are projected on the xy-plane. **Convex** polygons may not work as
     expected.
-
-    The selection tests are performed on the bounding box of the entities.
-    This is a design choice: performance and simplicity over accuracy
     """
 
     def __init__(self, vertices: Iterable[UVec]):
@@ -175,7 +127,7 @@ class Polygon(SelectionShape):
         return False
 
     @override
-    def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
+    def is_inside_bbox(self, entity_bbox: BoundingBox2d) -> bool:
         if not self._bbox.has_overlap(entity_bbox):
             return False
         if any(
@@ -194,11 +146,11 @@ class Polygon(SelectionShape):
         )
 
     @override
-    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
-        return not self.is_crossing(entity_bbox)
+    def is_outside_bbox(self, entity_bbox: BoundingBox2d) -> bool:
+        return not self.is_overlapping_bbox(entity_bbox)
 
     @override
-    def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
+    def is_overlapping_bbox(self, entity_bbox: BoundingBox2d) -> bool:
         if not self._bbox.has_overlap(entity_bbox):
             return False
         if any(
@@ -211,105 +163,55 @@ class Polygon(SelectionShape):
         return self._has_intersection(entity_bbox.extmin, entity_bbox.extmax)
 
 
-class Fence(SelectionShape):
-    """This selection shape tests if entities crosses an arbitrary open polyline.
-    All entities are projected on the xy-plane.
-
-    The selection tests are performed on the bounding box of the entities.
-    This is a design choice: performance and simplicity over accuracy
-
-    All entities can not be inside the fence by definition. All entities not crossing
-    the fence are outside by definition. Points can not be selected by a fence polyline
-    by definition.
-
-    """
-
-    def __init__(self, vertices: Iterable[UVec]):
-        v = Vec2.list(vertices)
-        if len(v) < 2:
-            raise ValueError("2 or more vertices required")
-        self._vertices: list[Vec2] = v
-        self._bbox = BoundingBox2d(self._vertices)
-
-    @override
-    def is_inside(self, entity_bbox: BoundingBox2d) -> bool:
-        return False
-
-    @override
-    def is_outside(self, entity_bbox: BoundingBox2d) -> bool:
-        return not self.is_crossing(entity_bbox)
-
-    @override
-    def is_crossing(self, entity_bbox: BoundingBox2d) -> bool:
-        if not self._bbox.has_overlap(entity_bbox):
-            return False
-        if any(entity_bbox.inside(v) for v in self._vertices):
-            return True
-        # All fence vertices are outside the entity bbox, but fence edges may
-        # intersect the entity bbox.
-        extmin = entity_bbox.extmin
-        extmax = entity_bbox.extmax
-        if extmin.isclose(extmax):  # is point
-            return False  # by definition
-        cs = CohenSutherlandLineClipping2d(extmin, extmax)
-        vertices = self._vertices
-        return any(
-            cs.clip_line(start, end) for start, end in zip(vertices, vertices[1:])
-        )
-
-
-def inside(
-    entities: Iterable[DXFEntity],
+def bbox_inside(
     shape: SelectionShape,
+    entities: Iterable[DXFEntity],
+    *,
     cache: bbox.Cache | None = None,
 ) -> EntityQuery:
-    """Returns all entities that are located inside the selection shape.
+    """Selects entities whose bounding box lies withing the selection shape.
 
     Args:
-        entities: iterable of DXFEntities
         shape: seclection shape
-        cache: optional bounding box cache
+        entities: iterable of DXFEntities
+        cache: optional :class:`ezdxf.bbox.Cache` instance
 
     """
-    return select_by_bbox(entities, shape.is_inside, cache)
+    return select_by_bbox(entities, shape.is_inside_bbox, cache)
 
 
-def outside(
-    entities: Iterable[DXFEntity],
+def bbox_outside(
     shape: SelectionShape,
+    entities: Iterable[DXFEntity],
+    *,
     cache: bbox.Cache | None = None,
 ) -> EntityQuery:
-    """Returns all entities that are located outside the selection shape.
+    """Selects entities whose bounding box is completely outside the selection shape.
 
     Args:
-        entities: iterable of DXFEntities
         shape: seclection shape
-        cache: optional bounding box cache
+        entities: iterable of DXFEntities
+        cache: optional :class:`ezdxf.bbox.Cache` instance
 
     """
-    return select_by_bbox(entities, shape.is_outside, cache)
+    return select_by_bbox(entities, shape.is_outside_bbox, cache)
 
 
-def crossing(
-    entities: Iterable[DXFEntity],
+def bbox_overlap(
     shape: SelectionShape,
+    entities: Iterable[DXFEntity],
+    *,
     cache: bbox.Cache | None = None,
 ) -> EntityQuery:
-    """Returns all entities that are **overlapping** the selection shape.
-
-    .. Note::
-
-        This is different from crossing selections in CAD applications - but I want to
-        stick to familiar terms used in CAD applications, and advanced crossing functions
-        may behave like crossing selections in CAD applications in the future.
+    """Selects entities whose bounding box overlaps the selection shape.
 
     Args:
-        entities: iterable of DXFEntities
         shape: seclection shape
-        cache: optional bounding box cache
+        entities: iterable of DXFEntities
+        cache: optional :class:`ezdxf.bbox.Cache` instance
 
     """
-    return select_by_bbox(entities, shape.is_crossing, cache)
+    return select_by_bbox(entities, shape.is_overlapping_bbox, cache)
 
 
 def select_by_bbox(
@@ -324,7 +226,7 @@ def select_by_bbox(
         entities: iterable of DXFEntities
         func: test function which takes the bounding box of the entity as input and
             returns ``True`` if the entity is part of the selection.
-        cache: optional bounding box cache
+        cache: optional :class:`ezdxf.bbox.Cache` instance
 
     """
     selection: list[DXFEntity] = []
@@ -338,13 +240,81 @@ def select_by_bbox(
     return EntityQuery(selection)
 
 
-def chained(
-    entities: Iterable[DXFEntity], start: DXFEntity, cache: bbox.Cache | None = None
+def bbox_crosses_fence(
+    vertices: Iterable[UVec],
+    entities: Iterable[DXFEntity],
+    *,
+    cache: bbox.Cache | None = None,
 ) -> EntityQuery:
-    """Returns all entities that are directly or indirectly linked to each other by
-    overlapping bounding boxes.
+    """Selects entities whose bounding box intersects an open polyline.
 
-    Warning: O(n²) in worst case
+    All entities are projected on the xy-plane.
+
+    A single point can not be selected by a fence polyline by definition.
+
+    Args:
+        vertices: vertices of the selection polyline
+        entities: iterable of DXFEntities
+        cache: optional :class:`ezdxf.bbox.Cache` instance
+
+    """
+
+    def is_crossing(entity_bbox: BoundingBox2d) -> bool:
+        if not _bbox.has_overlap(entity_bbox):
+            return False
+        if any(entity_bbox.inside(v) for v in _vertices):
+            return True
+        # All fence vertices are outside the entity bbox, but fence edges may
+        # intersect the entity bbox.
+        extmin = entity_bbox.extmin
+        extmax = entity_bbox.extmax
+        if extmin.isclose(extmax):  # is point
+            return False  # by definition
+        cs = CohenSutherlandLineClipping2d(extmin, extmax)
+        return any(
+            cs.clip_line(start, end) for start, end in zip(_vertices, _vertices[1:])
+        )
+
+    _vertices = Vec2.list(vertices)
+    if len(_vertices) < 2:
+        raise ValueError("2 or more vertices required")
+    _bbox = BoundingBox2d(_vertices)
+
+    return select_by_bbox(entities, is_crossing, cache)
+
+
+def point_in_bbox(
+    location: UVec, entities: Iterable[DXFEntity], *, cache: bbox.Cache | None = None
+) -> EntityQuery:
+    """Selects entities where the selection point lies within the bounding box.
+    All entities are projected on the xy-plane.
+
+    Args:
+        point: selection point
+        entities: iterable of DXFEntities
+        cache: optional :class:`ezdxf.bbox.Cache` instance
+
+    """
+
+    def is_crossing(entity_bbox: BoundingBox2d) -> bool:
+        return entity_bbox.inside(point)
+
+    point = Vec2(location)
+    return select_by_bbox(entities, is_crossing, cache)
+
+
+def bbox_chained(
+    start: DXFEntity, entities: Iterable[DXFEntity], *, cache: bbox.Cache | None = None
+) -> EntityQuery:
+    """Selects elements that are directly or indirectly connected to each other by
+    overlapping bounding boxes. The selection begins at the specified starting element.
+
+    Warning: the current implementation has a complexity of O(n²).
+
+    Args:
+        start: first entity of selection
+        entities: iterable of DXFEntities
+        cache: optional :class:`ezdxf.bbox.Cache` instance
 
     """
 
