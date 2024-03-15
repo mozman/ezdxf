@@ -2008,7 +2008,7 @@ HEADER_VAR_MAP = {
         name="$XCLIPFRAME",
         code=280,  # 2004 & 2007 = 290
         factory=partial(SingleValue, code=280),  # 2004 & 2007 = 290
-        mindxf=DXF2004,
+        mindxf=DXF2007,  # changed 2024-03-15, issue #1049
         maxdxf=DXF2018,
         priority=21400,
         default=2,
@@ -2017,7 +2017,7 @@ HEADER_VAR_MAP = {
         name="$HALOGAP",
         code=280,
         factory=partial(SingleValue, code=280),
-        mindxf=DXF2004,
+        mindxf=DXF2013,  # changed 2024-03-15, issue #1049
         maxdxf=DXF2018,
         priority=21500,
         default=0,
@@ -2026,7 +2026,7 @@ HEADER_VAR_MAP = {
         name="$OBSCOLOR",
         code=70,
         factory=partial(SingleValue, code=70),
-        mindxf=DXF2004,
+        mindxf=DXF2013,  # changed 2024-03-15, issue #1049
         maxdxf=DXF2018,
         priority=21600,
         default=257,
@@ -2035,7 +2035,7 @@ HEADER_VAR_MAP = {
         name="$OBSLTYPE",
         code=280,
         factory=partial(SingleValue, code=280),
-        mindxf=DXF2004,
+        mindxf=DXF2013,  # changed 2024-03-15, issue #1049
         maxdxf=DXF2018,
         priority=21700,
         default=0,
@@ -2044,7 +2044,7 @@ HEADER_VAR_MAP = {
         name="$INTERSECTIONDISPLAY",
         code=280,
         factory=partial(SingleValue, code=280),
-        mindxf=DXF2004,
+        mindxf=DXF2007,  # changed 2024-03-15, issue #1049
         maxdxf=DXF2018,
         priority=21800,
         default=0,
@@ -2053,7 +2053,7 @@ HEADER_VAR_MAP = {
         name="$INTERSECTIONCOLOR",
         code=70,
         factory=partial(SingleValue, code=70),
-        mindxf=DXF2004,
+        mindxf=DXF2007,  # changed 2024-03-15, issue #1049
         maxdxf=DXF2018,
         priority=21900,
         default=257,
@@ -2062,7 +2062,7 @@ HEADER_VAR_MAP = {
         name="$DIMASSOC",
         code=280,
         factory=partial(SingleValue, code=280),
-        mindxf=DXF2004,
+        mindxf=DXF2007,  # changed 2024-03-15, issue #1049
         maxdxf=DXF2018,
         priority=22000,
         default=2,
@@ -2071,7 +2071,7 @@ HEADER_VAR_MAP = {
         name="$PROJECTNAME",
         code=1,
         factory=partial(SingleValue, code=1),
-        mindxf=DXF2004,
+        mindxf=DXF2007,  # changed 2024-03-15, issue #1049
         maxdxf=DXF2018,
         priority=22100,
         default="",
