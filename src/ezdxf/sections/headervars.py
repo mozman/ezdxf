@@ -11,6 +11,7 @@ from ezdxf.lldxf.const import (
     DXF2013,
     DXF2018,
 )
+
 CONST_GUID = "{00000000-0000-0000-0000-000000000000}"
 
 HEADER_VAR_MAP = {
@@ -2375,14 +2376,15 @@ def version_specific_group_code(name: str, dxfversion: str) -> int:
         group_code = 290 if dxfversion < DXF2010 else 280
     return group_code
 
+
 VERSION_SPECIFIC_HEADER_VARS = """
 DXF Version R2004
 Name                 | BC GCode | BC Value | EZ GCode | EZ Value
 ----------------------------------------------------------------
-$XCLIPFRAME          |     *290 |       *0 |     *280 |       *2
+$XCLIPFRAME          |      290 |        0 |      280 |        1
 
 DXF Version R2007
 Name                 | BC GCode | BC Value | EZ GCode | EZ Value
 ----------------------------------------------------------------
-$XCLIPFRAME          |     *290 |       *0 |     *280 |       *2
+$XCLIPFRAME          |      290 |        0 |      280 |        1
 """
