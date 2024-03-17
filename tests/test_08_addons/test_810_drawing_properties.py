@@ -4,6 +4,8 @@
 import pytest
 import ezdxf
 from ezdxf.addons.drawing.properties import RenderContext, is_valid_color
+from ezdxf.addons.acadctb import ColorDependentPlotStyles
+from ezdxf import colors
 from ezdxf.entities import Layer, factory
 from ezdxf.lldxf import const
 
@@ -82,6 +84,14 @@ def test_load_default_ctb(doc):
     assert ctx.plot_styles[1].color == (255, 0, 0)
 
 
+def test_set_color_dependent_plot_style_as_object_instance(doc):
+    ctb = ColorDependentPlotStyles(description="my_style")
+    ctb.new_style(1).color = (22, 33, 44)
+    ctx = RenderContext(doc, ctb=ctb)
+    assert bool(ctx.plot_styles) is True
+    assert ctx.plot_styles[1].color == (22, 33, 44)
+
+
 def test_new_ctb(doc):
     ctx = RenderContext(doc)
     assert bool(ctx.plot_styles) is True
@@ -92,12 +102,8 @@ def test_resolve_entity_visibility():
     doc = ezdxf.new()
     layout = doc.modelspace()
     doc.layers.new(name="visible", dxfattribs={"color": 0})
-    doc.layers.new(
-        name="invisible", dxfattribs={"color": -1}
-    )  # color < 0 => invisible
-    doc.layers.new(
-        name="frozen", dxfattribs={"flags": Layer.FROZEN}
-    )  # also invisible
+    doc.layers.new(name="invisible", dxfattribs={"color": -1})  # color < 0 => invisible
+    doc.layers.new(name="frozen", dxfattribs={"flags": Layer.FROZEN})  # also invisible
     doc.layers.new(
         name="noplot", dxfattribs={"plot": 0}
     )  # visible in the CAD application but not when exported
@@ -105,7 +111,9 @@ def test_resolve_entity_visibility():
     for export_mode in (False, True):
         ctx = RenderContext(layout.doc, export_mode=export_mode)
 
-        text = layout.add_text("a", dxfattribs={"invisible": 0, "layer": "non_existent"})
+        text = layout.add_text(
+            "a", dxfattribs={"invisible": 0, "layer": "non_existent"}
+        )
         assert ctx.resolve_visible(text) is True
 
         text = layout.add_text("a", dxfattribs={"invisible": 0, "layer": "visible"})
@@ -138,13 +146,11 @@ def test_resolve_attrib_visibility():
     doc = ezdxf.new()
     layout = doc.modelspace()
     block = doc.blocks.new(name="block")
-    doc.layers.new(
-        name="invisible", dxfattribs={"color": -1}
-    )  # color < 0 => invisible
+    doc.layers.new(name="invisible", dxfattribs={"color": -1})  # color < 0 => invisible
 
     block.add_attdef("att1", (0, 0), "", dxfattribs={})
     block.add_attdef("att2", (0, 0), "", dxfattribs={"flags": const.ATTRIB_INVISIBLE})
-    block.add_attdef("att3", (0, 0), "",dxfattribs= {"layer": "invisible"})
+    block.add_attdef("att3", (0, 0), "", dxfattribs={"layer": "invisible"})
 
     i = layout.add_blockref("block", (0, 0))
     i.add_auto_attribs({"att1": "abc", "att2": "def", "att3": "hij"})
@@ -177,9 +183,7 @@ def test_existing_true_color_overrides_any_aci_color(doc):
     for color in range(const.BYLAYER + 1):
         line.dxf.color = color
         props = ctx.resolve_all(line)
-        assert (
-            props.color == "#ff0101"
-        ), "true_color should override any ACI color"
+        assert props.color == "#ff0101", "true_color should override any ACI color"
 
 
 def test_resolve_entity_linetype(doc):
