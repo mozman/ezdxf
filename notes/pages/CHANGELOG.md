@@ -5,7 +5,7 @@ id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 	- REMOVE: `pp` command, use `browse` command to explore DXF files
 	- NEW: `GeoJSONBackend` for the `drawing` add-on
 	- NEW: `CustomJSONBackend` for the `drawing` add-on
-	- NEW: property override functions are manged as a stack, that allows multiple override functions
+	- NEW: property override functions are managed as a stack, that allows multiple override functions
 		- `Frontend.push_property_override_function()`
 		- `Frontend.pop_property_override_function()`
 		- The `Frontend.override_properties()` method is the first function on this stack, so there is no need to adapt existing code.
@@ -14,6 +14,7 @@ id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 		- `ezdxf.math.gps_to_world_mercator()`
 	- NEW: `ezdxf.render.revcloud` module to render revision clouds similar to the `REVCLOUD` command in CAD applications
 	- NEW: `ezdxf.select` module for location based entity selection
+	- CHANGE: class `RenderContext` accepts ctb files as instances of `acadctb.ColorDependentPlotStyles`
 	-
 - ## Version 1.2.0 - 2024-03-02
   id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
