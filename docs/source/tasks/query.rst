@@ -52,7 +52,7 @@ Ignore case, selects all entities with layer == "construction", "Construction", 
 
     result = msp.query('*[layer=="construction"]i')
 
-.. _extended entityquery features:
+.. _extended query features:
 
 Extended EntityQuery Features
 -----------------------------
