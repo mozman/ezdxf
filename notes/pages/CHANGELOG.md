@@ -5,6 +5,10 @@ id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 	- REMOVE: `pp` command, use `browse` command to explore DXF files
 	- NEW: `GeoJSONBackend` for the `drawing` add-on
 	- NEW: `CustomJSONBackend` for the `drawing` add-on
+	- NEW: property override functions are manged as a stack, that allows multiple override functions
+		- `Frontend.push_property_override_function()`
+		- `Frontend.pop_property_override_function()`
+		- The `Frontend.override_properties()` method is the first function on this stack, so there is no need to adapt existing code.
 	- NEW: math utility functions with pure-Python and Cython implementations
 		- `ezdxf.math.world_mercator_to_gps()`
 		- `ezdxf.math.gps_to_world_mercator()`

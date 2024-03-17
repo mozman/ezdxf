@@ -95,8 +95,9 @@ if TYPE_CHECKING:
 
 __all__ = ["Frontend", "UniversalFrontend"]
 
+TEntityFunc: TypeAlias = Callable[[DXFGraphic, Properties], None]
+TDispatchTable: TypeAlias = Dict[str, TEntityFunc]
 
-TDispatchTable: TypeAlias = Dict[str, Callable[[DXFGraphic, Properties], None]]
 POST_ISSUE_MSG = (
     "Please post sample DXF file at https://github.com/mozman/ezdxf/issues."
 )
@@ -164,6 +165,10 @@ class UniversalFrontend:
         # time.
         self._bbox_cache = bbox_cache
 
+        # Entity property override function stack:
+        self._property_override_functions: list[TEntityFunc] = []
+        self.push_property_override_function(self.override_properties)
+
     @property
     def text_engine(self):
         return self.designer.text_engine
@@ -201,15 +206,55 @@ class UniversalFrontend:
         """Called for skipped entities - override to alter behavior."""
         self.log_message(f'skipped entity {str(entity)}. Reason: "{msg}"')
 
-    def override_properties(self, entity: DXFGraphic, properties: Properties) -> None:
-        """The :meth:`override_properties` filter can change the properties of
-        an entity independent of the DXF attributes.
+    def exec_property_override(
+        self, entity: DXFGraphic, properties: Properties
+    ) -> None:
+        """Execute entity property override functions. (internal API)"""
+        for override_fn in self._property_override_functions:
+            override_fn(entity, properties)
 
-        This filter has access to the DXF attributes by the `entity` object,
-        the current render context, and the resolved properties by the
-        `properties` object. It is recommended to modify only the `properties`
-        object in this filter.
+    def override_properties(self, entity: DXFGraphic, properties: Properties) -> None:
+        """This method can change the resolved properties of an DXF entity.
+
+        The method has access to the DXF entity attributes, the current render context
+        and the resolved properties.  It is recommended to modify only the resolved
+        `properties` in this method, because the DXF entities are not copies - except
+        for virtual entities.
+
+        .. versionchanged:: 1.3.0
+
+            This method is the first function in the stack of new property override 
+            functions.  It is possible to push additional override functions onto this 
+            stack, see also :meth:`push_property_override_function`.
+
         """
+
+    def push_property_override_function(self, override_fn: TEntityFunc) -> None:
+        """The override function can change the resolved properties of an DXF entity.
+
+        The override function has access to the DXF entity attributes and the resolved
+        properties.  It is recommended to modify only the resolved `properties` in this
+        function, because the DXF entities are not copies - except for virtual entities.
+
+        The override functions are called after resolving the DXF attributes of an entity
+        and before the :meth:`Frontend.draw_entity` method in the order from first to 
+        last.
+
+        .. versionadded:: 1.3.0
+
+        """
+        self._property_override_functions.append(override_fn)
+
+    def pop_property_override_function(self) -> None:
+        """Remove the last function from the property override stack.
+
+        Does not raise an exception if the override stack is empty.
+
+        .. versionadded:: 1.3.0
+
+        """
+        if self._property_override_functions:
+            self._property_override_functions.pop()
 
     def draw_layout(
         self,
@@ -239,7 +284,6 @@ class UniversalFrontend:
 
         """
         if layout_properties is not None:
-            # TODO: this does not work, layer properties have to be re-evaluated!
             self.ctx.current_layout_properties = layout_properties
         else:
             self.ctx.set_current_layout(layout)
@@ -968,7 +1012,7 @@ def _draw_entities(
                 frontend.skip_entity(entity, "Cannot parse DXF entity")
                 continue
         properties = ctx.resolve_all(entity)
-        frontend.override_properties(entity, properties)
+        frontend.exec_property_override(entity, properties)
         if properties.is_visible:
             frontend.draw_entity(entity, properties)
         else:

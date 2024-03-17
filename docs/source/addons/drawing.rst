@@ -48,7 +48,7 @@ Common Limitations to all Backends
     - 3D entities are projected into the xy-plane and 3D text is not supported
     - only top view rendering of the modelspace
     - VIEWPORTS are always rendered as top view
-    - no visual style support
+    - no VISUALSTYLE support
 
 - only basic support for:
 
@@ -551,6 +551,10 @@ Frontend
     .. automethod:: skip_entity
 
     .. automethod:: override_properties
+
+    .. automethod:: push_property_override_function
+
+    .. automethod:: pop_property_override_function
 
     .. automethod:: draw_layout
 
