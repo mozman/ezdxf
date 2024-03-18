@@ -7,12 +7,21 @@ This tutorial shows how to use the :mod:`ezdxf.select` module, which provides fu
 to select entities based on various shapes.  These selection functions offer a way to 
 filter entities based on their spatial location.
 
+This is the base document for this tutorial:
+
+.. figure:: gfx/select-base.png
+
 Why Bounding Boxes?
 -------------------
 
 The :mod:`~ezdxf.select` module primarily relies on bounding boxes to perform selections. 
 Bounding boxes offer a fast way to identify potential overlaps between entities and the 
 selection shape. This approach prioritizes performance over absolute accuracy.
+
+.. note::
+
+    The bounding boxes for text-based entities and entities containing curves are not 
+    accurate! For more information read the docs for the :mod:`ezdxf.bbox` module.
 
 Source of Entities
 ------------------
@@ -53,10 +62,46 @@ Bounding Box Inside Selection
 
 Selects entities which bounding boxes are completely within the selection shape.
 
+Example to select entities inside a window:
+
+.. figure:: gfx/select-inside-window.png
+
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf import select
+
+    doc = ezdxf.readfile("base.dxf")
+    msp 0 doc.modelspace()
+
+    window = select.Window((150, 105), (280, 240))
+    for entity in select.bbox_inside(window, msp):
+        print(str(entity))
+
+output::
+
+    CIRCLE(#9D)
+    LWPOLYLINE(#9E)
+
 Bounding Box Outside Selection
 ------------------------------
 
 Selects entities whose bounding box is completely outside the selection shape.
+
+.. figure:: gfx/select-outside-window.png
+
+.. code-block:: Python
+
+    window = select.Window((185, 105), (245, 240))
+    for entity in select.bbox_outside(window, msp):
+        print(str(entity))
+
+output::
+
+    TEXT(#9F)
+    SPLINE(#A0)
+    LINE(#A1)
 
 Bounding Box Overlap Selection
 ------------------------------
@@ -69,19 +114,134 @@ selection shape.  This will also select elements where all of the entity geometr
 outside the selection shape, but the bounding box overlaps the selection shape, 
 e.g. border polylines.
 
+.. figure:: gfx/select-inside-window.png
+
+.. code-block:: Python
+
+    window = select.Window((150, 105), (280, 240))
+    for entity in select.bbox_overlap(window, msp):
+        print(str(entity))
+
+output::
+
+    CIRCLE(#9D)
+    LWPOLYLINE(#9E)
+    TEXT(#9F)
+    SPLINE(#A0)
+    LINE(#A1)
+    LWPOLYLINE(#A2)
+
 Bounding Box Chained Selection
 ------------------------------
 
 Selects elements that are directly or indirectly connected to each other by overlapping 
 bounding boxes. The selection begins at the specified starting element.
 
+.. figure:: gfx/select-chained.png
+
+.. code-block:: Python
+
+    # choose entity for the beginning of the chain:
+    line = msp.query("LINE").first
+    for entity in select.bbox_chained(line, msp):
+        print(str(entity))
+
+output::
+
+    LINE(#A1)
+    CIRCLE(#9D)
+    LWPOLYLINE(#9E)
+    SPLINE(#A0)
+
 Bounding Box Crosses Fence
 --------------------------
 
 Selects entities whose bounding box intersects an open polyline.
 
+.. figure:: gfx/select-fence.png
+
+.. code-block:: Python
+
+    for entity in select.bbox_crosses_fence([(83, 101), (186, 193), (300, 107)], msp):
+        print(str(entity))
+
+output::
+
+    CIRCLE(#9D)
+    LWPOLYLINE(#9E)
+    SPLINE(#A0)
+    LINE(#A1)
+
+.. note::
+
+    The polyline does not cross the entity geometry itself!
+
 Point In Bounding Box Selection
 -------------------------------
 
 Selects entities where the selection point lies within the bounding box.
+
+.. figure:: gfx/select-point.png
+
+.. code-block:: Python
+
+    for entity in select.bbox_point((264, 140), msp):
+        print(str(entity))
+
+output::
+
+    LWPOLYLINE(#9E)
+    SPLINE(#A0)
+
+Circle Selection
+----------------
+
+For the circle shape, the selection tests are carried out on the real circlar area.
+
+This example selects all entities around the CIRCLE entity within a 60 unit radius
+whose bounding box overlaps the circle selection:
+
+.. figure:: gfx/select-by-circle.png
+
+.. code-block:: Python
+
+    entity = msp.query("CIRCLE").first
+    circle = select.Circle(entity.dxf.center, radius=60)
+    for entity in select.bbox_overlap(circle, msp):
+        print(str(entity))
+
+output::
+
+    CIRCLE(#9D)
+    LWPOLYLINE(#9E)
+    TEXT(#9F)
+    SPLINE(#A0)
+
+Polygon Selection
+-----------------
+
+As for the circle shape, the polygon selection tests are carried out on the real polygon 
+area. 
+
+.. note::
+    
+    This may not work 100% correctly if the selection polygon has a complex convex shape!
+
+This example selects all entities whose bounding box lies entirely within the selection 
+polygon:
+
+.. figure:: gfx/select-by-polygon.png
+
+.. code-block:: Python
+
+    
+    polygon = select.Polygon([(110, 168), (110, 107), (316, 107), (316, 243), (236, 243)])
+    for entity in select.bbox_inside(polygon, msp):
+        print(str(entity))
+
+output::
+
+    LWPOLYLINE(#9E)
+    SPLINE(#A0)
+    LINE(#A1)
 
