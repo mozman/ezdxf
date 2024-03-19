@@ -24,5 +24,5 @@
 #   1. bug fix release beta0: VERSION = "0.9.1b0"; version = (0, 9, 1, 'b0')
 #   2. bug fix release: VERSION = "0.9.2"; version = (0, 9, 2, 'release')
 
-version = (1, 3, 0, "a0")
-__version__ = "1.3.0a0"
+version = (1, 3, 0, "b0")
+__version__ = "1.3.0b0"
