@@ -28,13 +28,14 @@ def test_too_small_segment_length_raises_exception():
 def test_add_entity():
     doc = ezdxf.new()
     msp = doc.modelspace()
+    # counter-clockwise oriented revision cloud:
     lwp = revcloud.add_entity(msp, [(0, 0), (1, 0), (1, 1), (0, 1)], 0.1)
 
     assert doc.appids.has_entry(revcloud.REVCLOUD_PROPS)
     assert revcloud.is_revcloud(lwp) is True
 
-    # adding a second revision cloud should be ok:
-    lwp = revcloud.add_entity(msp, [(0, 0), (1, 0), (1, 1), (0, 1)], 0.1)
+    # clockwise oriented revision cloud:
+    lwp = revcloud.add_entity(msp, [(0, 0), (0, 1), (1, 1), (1, 0)], 0.1)
     assert revcloud.is_revcloud(lwp) is True
 
 

@@ -39,7 +39,15 @@ def revcloud_entity():
     revcloud.add_entity(msp, [(0, 0), (1, 0), (1, 1), (0, 1)], segment_length=0.1)
     doc.saveas(CWD / "revcloud-entity.dxf")
 
+def revcloud_reverse_entity():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+
+    revcloud.add_entity(msp, [(0, 0), (0, 1), (1, 1), (1, 0)], segment_length=0.1)
+    doc.saveas(CWD / "revcloud-reverse-entity.dxf")
+
 
 if __name__ == "__main__":
     revcloud_manually()
     revcloud_entity()
+    revcloud_reverse_entity()

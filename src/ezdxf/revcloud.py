@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import Sequence, TYPE_CHECKING, Iterable, Any
 import math
-from ezdxf.math import UVec, Vec2
+from ezdxf.math import UVec, Vec2, has_clockwise_orientation
 from ezdxf.entities import LWPolyline, DXFEntity
 
 if TYPE_CHECKING:
@@ -83,8 +83,19 @@ def add_entity(
         dxfattribs: additional DXF attributes
 
     """
+    _vertices: list[Vec2] = Vec2.list(vertices)
+    if len(_vertices) < 3:
+        raise ValueError("3 or more points required.")
+    if not _vertices[0].isclose(_vertices[-1]):
+        _vertices.append(_vertices[0])
+    if len(_vertices) < 4:
+        raise ValueError("3 or more points required.")
+    bulge = REQUIRED_BULGE
+    if has_clockwise_orientation(_vertices):
+        bulge = -bulge
+
     end_width = segment_length * 0.1 if calligraphy else 0.0
-    lw_points = points(vertices, segment_length, end_width=end_width)
+    lw_points = points(vertices, segment_length, bulge=bulge, end_width=end_width)
     lwp = layout.add_lwpolyline(lw_points, close=True, dxfattribs=dxfattribs)
     lwp.set_xdata(REVCLOUD_PROPS, [(1070, 0), (1040, segment_length)])
     doc = layout.doc
@@ -103,5 +114,6 @@ def is_revcloud(entity: DXFEntity) -> bool:
     if not lwpolyline.has_xdata(REVCLOUD_PROPS):
         return False
     return all(
-        abs(p[0] - REQUIRED_BULGE) < 0.02 for p in lwpolyline.get_points(format="b")
+        abs(REQUIRED_BULGE- abs(p[0])) < 0.02
+        for p in lwpolyline.get_points(format="b")
     )
