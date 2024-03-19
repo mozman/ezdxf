@@ -3,8 +3,14 @@
 Revision Cloud
 ==============
 
+The module :mod:`ezdxf.render.revcloud` provides functions to render revision clouds 
+similar to the REVCLOUD command in CAD applications.
+
+.. versionadded:: 1.3.0
 
 ..  autofunction:: points
+
+..  autofunction:: add_entity
 
 
 Usage:
@@ -17,14 +23,7 @@ Usage:
 
     doc = ezdxf.new()
     msp = doc.modelspace()
-    lw_points = revcloud.points(
-        [(0, 0), (1, 0), (1, 1), (0, 1)],
-        segment_length=0.1,
-        bulge=0.5,
-        start_width=0.01,
-        end_width=0,
-    )
-    msp.add_lwpolyline(lw_points)
+    revcloud.add_entity(msp, [(0, 0), (1, 0), (1, 1), (0, 1)], segment_length=0.1)
     doc.saveas("revcloud.dxf")
 
 .. figure:: gfx/revcloud.png
