@@ -9,11 +9,12 @@ from ezdxf.math import UVec, Vec2
 def points(
     points: UVec,
     segment_length: float,
-    bulge: float = 0.5,
+    *,
+    bulge: float = 0.52056705,  # required to be recognized as REVCLOUD
     start_width: float = 0.0,
     end_width: float = 0.0,
 ) -> list[Sequence[float]]:
-    """Returns the points for a :class:`~ezdxf.entities.LWPolyline` entity to render a 
+    """Returns the points for a :class:`~ezdxf.entities.LWPolyline` entity to render a
     revision cloud, similar to the REVCLOUD command in CAD applications.
 
     Args:
@@ -28,11 +29,11 @@ def points(
     """
     if segment_length < 1e-6:
         raise ValueError("segment length too small.")
-    
+
     vertices = Vec2.list(points)
     if len(vertices) < 3:
         raise ValueError("3 or more points required.")
-    
+
     if not vertices[0].isclose(vertices[-1]):
         vertices.append(vertices[0])
 
@@ -53,4 +54,4 @@ def points(
         for _ in range(count):
             s += offset
             lw_points.append((s.x, s.y, start_width, end_width, bulge))
-    return  lw_points
+    return lw_points
