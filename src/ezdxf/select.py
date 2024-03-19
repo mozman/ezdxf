@@ -103,8 +103,8 @@ class Circle(SelectionShape):
 
 class Polygon(SelectionShape):
     """This selection shape tests entities against an arbitrary closed polygon.
-    All entities are projected on the xy-plane. **Convex** polygons may not work as
-    expected.
+    All entities are projected on the xy-plane. Complex **concave** polygons may not 
+    work as expected.
     """
 
     def __init__(self, vertices: Iterable[UVec]):

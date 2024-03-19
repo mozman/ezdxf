@@ -1,74 +1,70 @@
+.. _tasks:
+
 Tasks
 =====
 
-Create New Entities
--------------------
+These topics give a short explanation how to accomplish certain tasks.
+
+Add Data
+--------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
-    entity_creation
-
-**TODO:**
-
-- add custom/extended data
+    add_dxf_entities
+    add_layouts
+    add_blocks
+    add_resources
+    add_custom_data
 
 Query Data
 ----------
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
 
     query
     groupby
     select
-
-**TODO:**
-
-- attributes of DXF entities
-- Block references
-    - attributes
-    - content as virtual entities
-- TEXT content
-- MTEXT content
-- MLEADER content
-    - MTEXT
-    - BLOCK attributes
-- DIMENSION
-    - text
-    - measurement
-- ACAD_TABLE
-    - cell content as strings
-    - block content as virtual entities
-- Extended data
-    - XDATA
-    - Extension dictionaries
+    get_entity_attributes
+    get_entity_content
+    get_extended_data
 
 Modify Data
 -----------
 
-**TODO:**
+.. toctree::
+    :maxdepth: 2
 
-- attributes and shape of DXF entities
-- transform DXF entities and layouts
-- resources (layers, text styles, linetypes, ...)
-- copy/move entities between layouts
-- block reference attributes
-- TEXT/MTEXT content
-- DIMENSION - you can, but not really
-- MLEADER - you can't
-- ACAD_TABLE - you can't
-- edit HEADER variables
-- modify extended data
+    modify_dxf_attribs
+    modify_resources
+    modify_entity_geometry
+    transform_entities_and_layouts
+    copy_move_entities
+    modify_block_references
+    modify_entity_content
+    modify_header_variables
+    modify_extended_data
 
 Delete Data
 -----------
 
-**TODO:**
+.. toctree::
+    :maxdepth: 2
 
-- attributes of DXF entities
-- DXF entities
-- resources (layers, text styles, linetypes, ...)
-- block reference attributes
-- layouts and blocks
-- custom/extended data
+    delete_entity_attributes
+    delete_dxf_entities
+    delete_resources
+    delete_layouts
+    delete_extended_data
+
+
+Explode Entities
+----------------
+
+.. toctree::
+    :maxdepth: 2
+
+    explode_entities
+    explode_blocks
+    flatten_entities

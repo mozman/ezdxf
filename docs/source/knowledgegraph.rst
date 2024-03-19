@@ -28,7 +28,7 @@ Logseq's outline structure is not ideal for all the documents I want to include,
 chose `Logseq`_ over `Obsidian.md`_ because it is open source and can publish the 
 knowledge graph as a static website, static in the sense of no server-side code execution. 
 
-his feature is important to me for hosting the content of the Knowledge Graph on the 
+This feature is important to me for hosting the content of the Knowledge Graph on the 
 `ezdxf`` website  and cannot be achieved for free with `Obsidian.md`_. 
 
 `Logseq`_ is an `Electron`_ application that runs on all platforms, with the 

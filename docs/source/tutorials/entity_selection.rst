@@ -225,7 +225,7 @@ area.
 
 .. note::
     
-    This may not work 100% correctly if the selection polygon has a complex convex shape!
+    This may not work 100% correctly if the selection polygon has a complex concave shape!
 
 This example selects all entities whose bounding box lies entirely within the selection 
 polygon:
