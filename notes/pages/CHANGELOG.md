@@ -12,7 +12,7 @@ id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 	- NEW: math utility functions with pure-Python and Cython implementations
 		- `ezdxf.math.world_mercator_to_gps()`
 		- `ezdxf.math.gps_to_world_mercator()`
-	- NEW: `ezdxf.render.revcloud` module to render revision clouds similar to the `REVCLOUD` command in CAD applications
+	- NEW: `ezdxf.revcloud` module to render revision clouds similar to the `REVCLOUD` command in CAD applications
 	- NEW: `ezdxf.select` module for location based entity selection
 	- CHANGE: class `RenderContext` accepts ctb files as instances of `acadctb.ColorDependentPlotStyles`
 	-

@@ -127,6 +127,7 @@ Tools
     tools/gfxattribs
     tasks/groupby
     tools/query
+    tools/revcloud
     tasks/select
     tools/text
     tools/text_size

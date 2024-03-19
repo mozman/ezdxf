@@ -2,7 +2,7 @@
 # License: MIT License
 from pathlib import Path
 import ezdxf
-from ezdxf.render import revcloud
+from ezdxf import revcloud
 
 CWD = Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():

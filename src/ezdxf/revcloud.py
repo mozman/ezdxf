@@ -4,20 +4,21 @@ from __future__ import annotations
 from typing import Sequence, TYPE_CHECKING, Iterable, Any
 import math
 from ezdxf.math import UVec, Vec2
+from ezdxf.entities import LWPolyline, DXFEntity
 
 if TYPE_CHECKING:
     from ezdxf.layouts import BaseLayout
-    from ezdxf.entities import LWPolyline
 
 
 REVCLOUD_PROPS = "RevcloudProps"
+REQUIRED_BULGE = 0.520567050552
 
 
 def points(
     vertices: Iterable[UVec],
     segment_length: float,
     *,
-    bulge: float = 0.520567050552,  # required to be recognized as REVCLOUD
+    bulge: float = REQUIRED_BULGE,  # required to be recognized as REVCLOUD
     start_width: float = 0.0,
     end_width: float = 0.0,
 ) -> list[Sequence[float]]:
@@ -57,7 +58,7 @@ def points(
         count = math.ceil(length / segment_length)
         _segment_length = length / count
         offset = diff.normalize(_segment_length)
-        for _ in range(count-1):
+        for _ in range(count - 1):
             s += offset
             lw_points.append((s.x, s.y, start_width, end_width, bulge))
     return lw_points
@@ -90,3 +91,17 @@ def add_entity(
     if doc is not None and not doc.appids.has_entry(REVCLOUD_PROPS):
         doc.appids.add(REVCLOUD_PROPS)
     return lwp
+
+
+def is_revcloud(entity: DXFEntity) -> bool:
+    """Returns ``True`` when the given entity represents a revision cloud."""
+    if not isinstance(entity, LWPolyline):
+        return False
+    lwpolyline: LWPolyline = entity
+    if not lwpolyline.is_closed:
+        return False
+    if not lwpolyline.has_xdata(REVCLOUD_PROPS):
+        return False
+    return all(
+        abs(p[0] - REQUIRED_BULGE) < 0.02 for p in lwpolyline.get_points(format="b")
+    )

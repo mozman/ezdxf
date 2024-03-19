@@ -1,9 +1,9 @@
-.. module:: ezdxf.render.revcloud
+.. module:: ezdxf.revcloud
 
 Revision Cloud
 ==============
 
-The module :mod:`ezdxf.render.revcloud` provides functions to render revision clouds 
+The module :mod:`ezdxf.revcloud` provides functions to render revision clouds 
 similar to the REVCLOUD command in CAD applications.
 
 .. versionadded:: 1.3.0
@@ -11,6 +11,8 @@ similar to the REVCLOUD command in CAD applications.
 ..  autofunction:: points
 
 ..  autofunction:: add_entity
+
+..  autofunction:: is_revcloud
 
 
 Usage:

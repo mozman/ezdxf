@@ -2,7 +2,8 @@
 # License: MIT License
 import pytest
 
-from ezdxf.render import revcloud
+import ezdxf
+from ezdxf import revcloud
 
 
 def test_create_revcloud():
@@ -21,7 +22,21 @@ def test_too_few_points_raises_exception(points):
 
 def test_too_small_segment_length_raises_exception():
     with pytest.raises(ValueError):
-        revcloud.points( [(0, 0), (1, 0), (1, 1), (0, 1)], segment_length=0)
+        revcloud.points([(0, 0), (1, 0), (1, 1), (0, 1)], segment_length=0)
+
+
+def test_add_entity():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    lwp = revcloud.add_entity(msp, [(0, 0), (1, 0), (1, 1), (0, 1)], 0.1)
+
+    assert doc.appids.has_entry(revcloud.REVCLOUD_PROPS)
+    assert revcloud.is_revcloud(lwp) is True
+
+    # adding a second revision cloud should be ok:
+    lwp = revcloud.add_entity(msp, [(0, 0), (1, 0), (1, 1), (0, 1)], 0.1)
+    assert revcloud.is_revcloud(lwp) is True
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
