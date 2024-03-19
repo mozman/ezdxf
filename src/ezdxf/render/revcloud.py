@@ -71,10 +71,11 @@ def add_entity(
     calligraphy=True,
     dxfattribs: Any = None,
 ) -> LWPolyline:
-    """Adds a revision cloud as a :class:`~ezdxf.entities.LWPolyline` entity to a layout,
+    """Adds a revision cloud as :class:`~ezdxf.entities.LWPolyline` entity to `layout`,
     similar to the REVCLOUD command in CAD applications.
 
     Args:
+        layout: target layout
         vertices: corner points of a polygon
         segment_length: approximate segment length
         calligraphy: ``True`` for a calligraphy effect
