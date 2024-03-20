@@ -1,3 +1,5 @@
+.. _add_dxf_entities:
+
 Add DXF Entities
 ================
 

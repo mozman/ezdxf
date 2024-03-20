@@ -29,7 +29,8 @@ Query Data
     get_entity_attributes
     get_entity_content
     get_extended_data
-
+    get_layouts
+    
 Modify Data
 -----------
 

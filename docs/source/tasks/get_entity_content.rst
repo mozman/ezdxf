@@ -1,7 +1,7 @@
 
 .. _get_entity_content:
 
-Get Content from DXF entities
+Get Content From DXF Entities
 =============================
 
 TODO

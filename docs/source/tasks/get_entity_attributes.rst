@@ -1,6 +1,6 @@
 .. _get_entity_attributes:
 
-Get DXF Attributes from Entities
+Get Attributes From DXF Entities
 ================================
 
 TODO
