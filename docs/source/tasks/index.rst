@@ -3,7 +3,10 @@
 Tasks
 =====
 
-These topics give a short explanation how to accomplish certain tasks.
+These topics provide brief overviews of how to complete specific tasks, but they're not 
+comprehensive tutorials.  For a deeper understanding, explore the beginner's guide, 
+explanations of basic concepts, in-depth tutorials, the reference guide, example code, 
+and even the source code itself.
 
 Add Data
 --------
@@ -13,7 +16,7 @@ Add Data
 
     add_dxf_entities
     add_layouts
-    add_blocks
+    add_blockrefs
     add_resources
     add_custom_data
 
@@ -30,7 +33,7 @@ Query Data
     get_entity_content
     get_extended_data
     get_layouts
-    
+
 Modify Data
 -----------
 

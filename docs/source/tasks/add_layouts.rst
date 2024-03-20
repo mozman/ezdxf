@@ -27,11 +27,12 @@ Add a new paperspace layout to a DXF document::
 
 The layout name is the name shown on the tab in CAD applications and has to be unique, 
 otherwise a :class:`DXFValueError` will be raised. 
-See also :meth:`ezdxf.layouts.Layouts.new` method.
 
 It is possible to add multiple paperspace layouts to all DXF versions, but `ezdxf` 
 exports for DXF R12 only the active paperspace layout.  Any paperspace layout can be 
 set as the active paperspace layout by the method: :meth:`ezdxf.layouts.Layouts.set_active_layout`.
+
+- :meth:`ezdxf.layouts.Layouts.new`
 
 Block Definition
 ----------------
@@ -41,7 +42,6 @@ Add a new block definition to a DXF document::
     doc.blocks.new("MyLayout")
 
 The block name has to be unique, otherwise a :class:`DXFValueError` will be raised. 
-See also :meth:`ezdxf.sections.blocks.BlocksSection.new` method.
 
 Add an anonymous block definition::
 
@@ -52,6 +52,9 @@ Add an anonymous block definition::
 Anonymous blocks are used internally and do not show up in the insert dialog for block 
 references in CAD applications.
 
+- :meth:`ezdxf.sections.blocks.BlocksSection.new`
+- :meth:`ezdxf.sections.blocks.BlocksSection.new_anonymous_block`
+
 .. seealso::
 
     **Tasks:**
@@ -61,6 +64,7 @@ references in CAD applications.
     - :ref:`add_dxf_entities`
     - :ref:`copy_or_move_entities`
     - :ref:`delete_dxf_entities`
+    - :ref:`add_blockrefs`
 
     **Tutorials:**
 
