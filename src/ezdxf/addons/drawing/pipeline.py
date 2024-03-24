@@ -151,6 +151,9 @@ class AbstractPipeline(abc.ABC):
 class RenderStage2d(abc.ABC):
     next_stage: RenderStage2d
 
+    def set_config(self, config: Configuration) -> None:
+        pass
+
     @abc.abstractmethod
     def draw_point(self, pos: Vec2, properties: Properties) -> None: ...
 
@@ -187,7 +190,6 @@ class RenderPipeline2d(AbstractPipeline):
     def __init__(self, backend: BackendInterface):
         self.backend = backend
         self.config = Configuration()
-        self.pattern_cache: dict[PatternKey, Sequence[float]] = dict()
         try:  # request default font face
             self.default_font_face = fonts.font_manager.get_font_face("")
         except fonts.FontNotFoundError:  # no default font found
@@ -203,14 +205,17 @@ class RenderPipeline2d(AbstractPipeline):
         backend_stage = BackendStage2d(
             self.backend, converter=self.get_backend_properties
         )
-        linetype_stage = LinetypeStage2d(self.config, self.pattern, backend_stage)
+        linetype_stage = LinetypeStage2d(
+            self.config,
+            get_ltype_scale=self.get_vp_ltype_scale,
+            next_stage=backend_stage,
+        )
         clipping_stage = ClippingStage2d(
-            self.clipping_portal, self.config.max_flattening_distance, linetype_stage
+            self.config, self.clipping_portal, next_stage=linetype_stage
         )
         return clipping_stage
 
-    @property
-    def vp_ltype_scale(self) -> float:
+    def get_vp_ltype_scale(self) -> float:
         """The linetype pattern should look the same in all viewports
         regardless of the viewport scale.
         """
@@ -237,7 +242,12 @@ class RenderPipeline2d(AbstractPipeline):
 
     def set_config(self, config: Configuration) -> None:
         self.config = config
-        self.backend.configure(self.config)
+        stage = self._pipeline
+        while True:
+            stage.set_config(config)
+            if not hasattr(stage, "next_stage"):  # BackendStage2d
+                return
+            stage = stage.next_stage
 
     def set_current_entity_handle(self, handle: str) -> None:
         assert handle is not None
@@ -285,35 +295,8 @@ class RenderPipeline2d(AbstractPipeline):
 
     def exit_viewport(self):
         self.clipping_portal.pop()
+        # Reset viewport scaling: viewports cannot be nested!
         self.current_vp_scale = 1.0
-
-    def pattern(self, properties: Properties) -> Sequence[float]:
-        """Get pattern - implements pattern caching."""
-        if self.config.line_policy == LinePolicy.SOLID:
-            scale = 0.0
-        else:
-            scale = properties.linetype_scale * self.vp_ltype_scale
-
-        key: PatternKey = (properties.linetype_name, scale)
-        pattern_ = self.pattern_cache.get(key)
-        if pattern_ is None:
-            pattern_ = self.create_pattern(properties, scale)
-            self.pattern_cache[key] = pattern_
-        return pattern_
-
-    def create_pattern(self, properties: Properties, scale: float) -> Sequence[float]:
-        """Returns simplified linetype tuple: on-off sequence"""
-        if len(properties.linetype_pattern) < 2:
-            # Do not return None -> None indicates: "not cached"
-            return tuple()
-        else:
-            min_dash_length = self.config.min_dash_length * self.vp_ltype_scale
-            pattern = [
-                max(e * scale, min_dash_length) for e in properties.linetype_pattern
-            ]
-            if len(pattern) % 2:
-                pattern.pop()
-            return pattern
 
     def draw_text(
         self,
@@ -426,13 +409,16 @@ class RenderPipeline2d(AbstractPipeline):
 class ClippingStage2d(RenderStage2d):
     def __init__(
         self,
+        config: Configuration,
         clipping_portal: ClippingPortal,
-        max_sagitta: float,
         next_stage: RenderStage2d,
     ):
         self.clipping_portal = clipping_portal
-        self.max_sagitta = max_sagitta
+        self.config = config
         self.next_stage = next_stage
+
+    def set_config(self, config: Configuration) -> None:
+        self.config = config
 
     def draw_point(self, pos: Vec2, properties: Properties) -> None:
         if self.clipping_portal.is_active:
@@ -466,9 +452,10 @@ class ClippingStage2d(RenderStage2d):
     def draw_path(self, path: BkPath2d, properties: Properties):
         clipping_portal = self.clipping_portal
         next_stage = self.next_stage
+        max_sagitta = self.config.max_flattening_distance
 
         if clipping_portal.is_active:
-            for clipped_path in clipping_portal.clip_paths([path], self.max_sagitta):
+            for clipped_path in clipping_portal.clip_paths([path], max_sagitta):
                 next_stage.draw_path(clipped_path, properties)
             return
         next_stage.draw_path(path, properties)
@@ -479,9 +466,10 @@ class ClippingStage2d(RenderStage2d):
         properties: Properties,
     ) -> None:
         clipping_portal = self.clipping_portal
+        max_sagitta = self.config.max_flattening_distance
 
         if clipping_portal.is_active:
-            paths = clipping_portal.clip_filled_paths(paths, self.max_sagitta)
+            paths = clipping_portal.clip_filled_paths(paths, max_sagitta)
         if len(paths) == 0:
             return
         self.next_stage.draw_filled_paths(paths, properties)
@@ -565,13 +553,45 @@ class LinetypeStage2d(RenderStage2d):
     def __init__(
         self,
         config: Configuration,
-        pattern: Callable[[Properties], Sequence[float]],
+        get_ltype_scale: Callable[[], float],
         next_stage: RenderStage2d,
     ):
-        self.solid_lines_only = config.line_policy == LinePolicy.SOLID
+        self.config = config
+        self.solid_lines_only = False
         self.next_stage = next_stage
-        self.pattern = pattern
-        self.max_sagitta = config.max_flattening_distance
+        self.get_ltype_scale = get_ltype_scale
+        self.pattern_cache: dict[PatternKey, Sequence[float]] = dict()
+        self.set_config(config)
+
+    def set_config(self, config: Configuration) -> None:
+        self.config = config
+        self.solid_lines_only = config.line_policy == LinePolicy.SOLID
+
+    def pattern(self, properties: Properties) -> Sequence[float]:
+        """Get pattern - implements pattern caching."""
+        if self.solid_lines_only:
+            scale = 0.0
+        else:
+            scale = properties.linetype_scale * self.get_ltype_scale()
+
+        key: PatternKey = (properties.linetype_name, scale)
+        pattern_ = self.pattern_cache.get(key)
+        if pattern_ is None:
+            pattern_ = self.create_pattern(properties, scale)
+            self.pattern_cache[key] = pattern_
+        return pattern_
+
+    def create_pattern(self, properties: Properties, scale: float) -> Sequence[float]:
+        """Returns simplified linetype tuple: on-off sequence"""
+        if len(properties.linetype_pattern) < 2:
+            # Do not return None -> None indicates: "not cached"
+            return tuple()
+
+        min_dash_length = self.config.min_dash_length * self.get_ltype_scale()
+        pattern = [max(e * scale, min_dash_length) for e in properties.linetype_pattern]
+        if len(pattern) % 2:
+            pattern.pop()
+        return pattern
 
     def draw_point(self, pos: Vec2, properties: Properties) -> None:
         self.next_stage.draw_point(pos, properties)
@@ -604,7 +624,7 @@ class LinetypeStage2d(RenderStage2d):
             return
 
         renderer = linetypes.LineTypeRenderer(self.pattern(properties))
-        vertices = path.flattening(self.max_sagitta, segments=16)
+        vertices = path.flattening(self.config.max_flattening_distance, segments=16)
         next_stage.draw_solid_lines(
             [(Vec2(s), Vec2(e)) for s, e in renderer.line_segments(vertices)],
             properties,
@@ -634,6 +654,7 @@ class BackendStage2d(RenderStage2d):
     ):
         self.backend = backend
         self.converter = converter
+        assert not hasattr(self, "next_stage"), "has to be the last render stage"
 
     def draw_point(self, pos: Vec2, properties: Properties) -> None:
         self.backend.draw_point(pos, self.converter(properties))
