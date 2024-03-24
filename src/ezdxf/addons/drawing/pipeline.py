@@ -568,7 +568,7 @@ class LinetypeStage2d(RenderStage2d):
         self.solid_lines_only = config.line_policy == LinePolicy.SOLID
 
     def pattern(self, properties: Properties) -> Sequence[float]:
-        """Get pattern - implements pattern caching."""
+        """Returns simplified linetype tuple: on-off sequence"""
         if self.solid_lines_only:
             scale = 0.0
         else:
@@ -577,12 +577,11 @@ class LinetypeStage2d(RenderStage2d):
         key: PatternKey = (properties.linetype_name, scale)
         pattern_ = self.pattern_cache.get(key)
         if pattern_ is None:
-            pattern_ = self.create_pattern(properties, scale)
+            pattern_ = self._create_pattern(properties, scale)
             self.pattern_cache[key] = pattern_
         return pattern_
 
-    def create_pattern(self, properties: Properties, scale: float) -> Sequence[float]:
-        """Returns simplified linetype tuple: on-off sequence"""
+    def _create_pattern(self, properties: Properties, scale: float) -> Sequence[float]:
         if len(properties.linetype_pattern) < 2:
             # Do not return None -> None indicates: "not cached"
             return tuple()
