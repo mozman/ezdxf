@@ -47,13 +47,19 @@ if TYPE_CHECKING:
 PatternKey: TypeAlias = Tuple[str, float]
 DrawEntitiesCallback: TypeAlias = Callable[[RenderContext, Iterable[DXFGraphic]], None]
 
+__all__ = ["AbstractPipeline", "RenderPipeline2d"]
 
-class Designer(abc.ABC):
-    """The designer separates the frontend from the backend and adds this features:
+
+class AbstractPipeline(abc.ABC):
+    """This drawing pipeline separates the frontend from the backend and implements
+    these features:
 
     - automatically linetype rendering
+    - font rendering
     - VIEWPORT rendering
     - foreground color mapping according Frontend.config.color_policy
+
+    The pipeline is organized as concatenated render stages.
 
     """
 
@@ -62,26 +68,21 @@ class Designer(abc.ABC):
     draw_entities: DrawEntitiesCallback
 
     @abc.abstractmethod
-    def set_draw_entities_callback(self, callback: DrawEntitiesCallback) -> None:
-        ...
+    def set_draw_entities_callback(self, callback: DrawEntitiesCallback) -> None: ...
 
     @abc.abstractmethod
-    def set_config(self, config: Configuration) -> None:
-        ...
+    def set_config(self, config: Configuration) -> None: ...
 
     @abc.abstractmethod
-    def set_current_entity_handle(self, handle: str) -> None:
-        ...
+    def set_current_entity_handle(self, handle: str) -> None: ...
 
     @abc.abstractmethod
     def push_clipping_shape(
         self, shape: ClippingShape, transform: Matrix44 | None
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abc.abstractmethod
-    def pop_clipping_shape(self) -> None:
-        ...
+    def pop_clipping_shape(self) -> None: ...
 
     @abc.abstractmethod
     def draw_viewport(
@@ -94,36 +95,30 @@ class Designer(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
-        ...
+    def draw_point(self, pos: AnyVec, properties: Properties) -> None: ...
 
     @abc.abstractmethod
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties):
-        ...
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties): ...
 
     @abc.abstractmethod
     def draw_solid_lines(
         self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abc.abstractmethod
-    def draw_path(self, path: Path, properties: Properties):
-        ...
+    def draw_path(self, path: Path, properties: Properties): ...
 
     @abc.abstractmethod
     def draw_filled_paths(
         self,
         paths: Iterable[Path],
         properties: Properties,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abc.abstractmethod
     def draw_filled_polygon(
         self, points: Iterable[AnyVec], properties: Properties
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abc.abstractmethod
     def draw_text(
@@ -133,20 +128,16 @@ class Designer(abc.ABC):
         properties: Properties,
         cap_height: float,
         dxftype: str = "TEXT",
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abc.abstractmethod
-    def draw_image(self, image_data: ImageData, properties: Properties) -> None:
-        ...
+    def draw_image(self, image_data: ImageData, properties: Properties) -> None: ...
 
     @abc.abstractmethod
-    def finalize(self) -> None:
-        ...
+    def finalize(self) -> None: ...
 
     @abc.abstractmethod
-    def set_background(self, color: Color) -> None:
-        ...
+    def set_background(self, color: Color) -> None: ...
 
     @abc.abstractmethod
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
@@ -154,12 +145,44 @@ class Designer(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def exit_entity(self, entity: DXFGraphic) -> None:
-        ...
+    def exit_entity(self, entity: DXFGraphic) -> None: ...
 
 
-class Designer2d(Designer):
-    """Designer class for 2D backends."""
+class RenderStage2d(abc.ABC):
+    next_stage: RenderStage2d
+
+    @abc.abstractmethod
+    def draw_point(self, pos: Vec2, properties: Properties) -> None: ...
+
+    @abc.abstractmethod
+    def draw_line(self, start: Vec2, end: Vec2, properties: Properties): ...
+
+    @abc.abstractmethod
+    def draw_solid_lines(
+        self, lines: list[tuple[Vec2, Vec2]], properties: Properties
+    ) -> None: ...
+
+    @abc.abstractmethod
+    def draw_path(self, path: BkPath2d, properties: Properties): ...
+
+    @abc.abstractmethod
+    def draw_filled_paths(
+        self,
+        paths: list[BkPath2d],
+        properties: Properties,
+    ) -> None: ...
+
+    @abc.abstractmethod
+    def draw_filled_polygon(
+        self, points: BkPoints2d, properties: Properties
+    ) -> None: ...
+
+    @abc.abstractmethod
+    def draw_image(self, image_data: ImageData, properties: Properties) -> None: ...
+
+
+class RenderPipeline2d(AbstractPipeline):
+    """Render pipeline for 2D backends."""
 
     def __init__(self, backend: BackendInterface):
         self.backend = backend
@@ -174,6 +197,13 @@ class Designer2d(Designer):
         self.current_vp_scale = 1.0
         self._current_entity_handle: str = ""
         self._color_mapping: dict[str, str] = dict()
+        self._pipeline = self.build_render_pipeline()
+
+    def build_render_pipeline(self) -> RenderStage2d:
+        backend_stage = BackendStage2d(
+            self.backend, converter=self.get_backend_properties
+        )
+        return AllInOneStage2d(pipeline=self, next_stage=backend_stage)
 
     @property
     def vp_ltype_scale(self) -> float:
@@ -258,105 +288,6 @@ class Designer2d(Designer):
         ), "This assumption is no longer valid!"
         self.current_vp_scale = 1.0
 
-    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
-        point = Vec2(pos)
-        if self.clipping_portal.is_active:
-            point = self.clipping_portal.clip_point(point)
-            if point is None:
-                return
-        self.backend.draw_point(point, self.get_backend_properties(properties))
-
-    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties):
-        s = Vec2(start)
-        e = Vec2(end)
-        if (
-            self.config.line_policy == LinePolicy.SOLID
-            or len(properties.linetype_pattern) < 2  # CONTINUOUS
-        ):
-            bk_properties = self.get_backend_properties(properties)
-            if self.clipping_portal.is_active:
-                for segment in self.clipping_portal.clip_line(s, e):
-                    self.backend.draw_line(segment[0], segment[1], bk_properties)
-            else:
-                self.backend.draw_line(s, e, bk_properties)
-        else:
-            renderer = linetypes.LineTypeRenderer(self.pattern(properties))
-            self.draw_solid_lines(  # includes transformation
-                ((s, e) for s, e in renderer.line_segment(s, e)),
-                properties,
-            )
-
-    def draw_solid_lines(
-        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
-    ) -> None:
-        lines2d: list[tuple[Vec2, Vec2]] = [(Vec2(s), Vec2(e)) for s, e in lines]
-        if self.clipping_portal.is_active:
-            cropped_lines: list[tuple[Vec2, Vec2]] = []
-            for start, end in lines2d:
-                cropped_lines.extend(self.clipping_portal.clip_line(start, end))
-            lines2d = cropped_lines
-        self.backend.draw_solid_lines(lines2d, self.get_backend_properties(properties))
-
-    def draw_path(self, path: Path, properties: Properties):
-        self._draw_path(BkPath2d(path), properties)
-
-    def _draw_path(self, path: BkPath2d, properties: Properties):
-        if (
-            self.config.line_policy == LinePolicy.SOLID
-            or len(properties.linetype_pattern) < 2  # CONTINUOUS
-        ):
-            if self.clipping_portal.is_active:
-                for clipped_path in self.clipping_portal.clip_paths(
-                    [path], self.config.max_flattening_distance
-                ):
-                    self.backend.draw_path(
-                        clipped_path, self.get_backend_properties(properties)
-                    )
-                return
-            self.backend.draw_path(path, self.get_backend_properties(properties))
-        else:
-            renderer = linetypes.LineTypeRenderer(self.pattern(properties))
-            vertices = path.flattening(self.config.max_flattening_distance, segments=16)
-
-            self.draw_solid_lines(
-                ((Vec2(s), Vec2(e)) for s, e in renderer.line_segments(vertices)),
-                properties,
-            )
-
-    def draw_filled_paths(
-        self,
-        paths: Iterable[Path],
-        properties: Properties,
-    ) -> None:
-        self._draw_filled_paths(map(BkPath2d, paths), properties)
-
-    def _draw_filled_paths(
-        self,
-        paths: Iterable[BkPath2d],
-        properties: Properties,
-    ) -> None:
-        if self.clipping_portal.is_active:
-            max_sagitta = self.config.max_flattening_distance
-            paths = self.clipping_portal.clip_filled_paths(paths, max_sagitta)
-        _paths = list(paths)
-        if len(_paths) == 0:
-            return
-        self.backend.draw_filled_paths(_paths, self.get_backend_properties(properties))
-
-    def draw_filled_polygon(
-        self, points: Iterable[AnyVec], properties: Properties
-    ) -> None:
-        self._draw_filled_polygon(BkPoints2d(points), properties)
-
-    def _draw_filled_polygon(self, points: BkPoints2d, properties: Properties) -> None:
-        bk_properties = self.get_backend_properties(properties)
-        if self.clipping_portal.is_active:
-            for points in self.clipping_portal.clip_polygon(points):
-                if len(points) > 0:
-                    self.backend.draw_filled_polygon(points, bk_properties)
-        elif len(points) > 0:
-            self.backend.draw_filled_polygon(points, bk_properties)
-
     def pattern(self, properties: Properties) -> Sequence[float]:
         """Get pattern - implements pattern caching."""
         if self.config.line_policy == LinePolicy.SOLID:
@@ -393,7 +324,10 @@ class Designer2d(Designer):
         cap_height: float,
         dxftype: str = "TEXT",
     ) -> None:
+        """Render text as filled paths."""
         text_policy = self.config.text_policy
+        pipeline = self._pipeline
+
         if not text.strip() or text_policy == TextPolicy.IGNORE:
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, dxftype)
@@ -419,7 +353,7 @@ class Designer2d(Designer):
             if len(points) < 2:
                 return
             rect = BkPath2d.from_vertices(BoundingBox2d(points).rect_vertices())
-            self._draw_path(rect, properties)
+            pipeline.draw_path(rect, properties)
             return
         if text_policy == TextPolicy.REPLACE_FILL:
             points = []
@@ -430,7 +364,7 @@ class Designer2d(Designer):
             polygon = BkPoints2d(BoundingBox2d(points).rect_vertices())
             if properties.filling is None:
                 properties.filling = Filling()
-            self._draw_filled_polygon(polygon, properties)
+            pipeline.draw_filled_polygon(polygon, properties)
             return
 
         if (
@@ -438,24 +372,166 @@ class Designer2d(Designer):
             or text_policy == TextPolicy.OUTLINE
         ):
             for text_path in transformed_paths:
-                self._draw_path(text_path, properties)
+                pipeline.draw_path(text_path, properties)
             return
 
         if properties.filling is None:
             properties.filling = Filling()
-        self._draw_filled_paths(transformed_paths, properties)
+        pipeline.draw_filled_paths(transformed_paths, properties)
+
+    def finalize(self) -> None:
+        self.backend.finalize()
+
+    def set_background(self, color: Color) -> None:
+        self.backend.set_background(color)
+
+    def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        self.backend.enter_entity(entity, properties)
+
+    def exit_entity(self, entity: DXFGraphic) -> None:
+        self.backend.exit_entity(entity)
+
+    # Enter render pipeline:
+    def draw_point(self, pos: AnyVec, properties: Properties) -> None:
+        self._pipeline.draw_point(Vec2(pos), properties)
+
+    def draw_line(self, start: AnyVec, end: AnyVec, properties: Properties):
+        self._pipeline.draw_line(Vec2(start), Vec2(end), properties)
+
+    def draw_solid_lines(
+        self, lines: Iterable[tuple[AnyVec, AnyVec]], properties: Properties
+    ) -> None:
+        self._pipeline.draw_solid_lines(
+            [(Vec2(s), Vec2(e)) for s, e in lines], properties
+        )
+
+    def draw_path(self, path: Path, properties: Properties):
+        self._pipeline.draw_path(BkPath2d(path), properties)
+
+    def draw_filled_paths(
+        self,
+        paths: Iterable[Path],
+        properties: Properties,
+    ) -> None:
+        self._pipeline.draw_filled_paths(list(map(BkPath2d, paths)), properties)
+
+    def draw_filled_polygon(
+        self, points: Iterable[AnyVec], properties: Properties
+    ) -> None:
+        self._pipeline.draw_filled_polygon(BkPoints2d(points), properties)
+
+    def draw_image(self, image_data: ImageData, properties: Properties) -> None:
+        self._pipeline.draw_image(image_data, properties)
+
+
+# First step to separated render stages: extract rendering into a single render stage
+class AllInOneStage2d(RenderStage2d):
+    def __init__(self, pipeline: RenderPipeline2d, next_stage: RenderStage2d):
+        self.next_stage = next_stage
+        self.pipeline = pipeline
+
+    def draw_point(self, pos: Vec2, properties: Properties) -> None:
+        if self.pipeline.clipping_portal.is_active:
+            pos = self.pipeline.clipping_portal.clip_point(pos)
+            if pos is None:
+                return
+        self.next_stage.draw_point(pos, properties)
+
+    def draw_line(self, start: Vec2, end: Vec2, properties: Properties):
+        s = Vec2(start)
+        e = Vec2(end)
+        pipeline = self.pipeline
+        next_stage = self.next_stage
+
+        if (
+            pipeline.config.line_policy == LinePolicy.SOLID
+            or len(properties.linetype_pattern) < 2  # CONTINUOUS
+        ):
+            if pipeline.clipping_portal.is_active:
+                for segment in pipeline.clipping_portal.clip_line(s, e):
+                    next_stage.draw_line(segment[0], segment[1], properties)
+            else:
+                next_stage.draw_line(s, e, properties)
+        else:
+            renderer = linetypes.LineTypeRenderer(pipeline.pattern(properties))
+            self.draw_solid_lines(
+                [(s, e) for s, e in renderer.line_segment(s, e)],
+                properties,
+            )
+
+    def draw_solid_lines(
+        self, lines: list[tuple[Vec2, Vec2]], properties: Properties
+    ) -> None:
+        clipping_portal = self.pipeline.clipping_portal
+        if clipping_portal.is_active:
+            cropped_lines: list[tuple[Vec2, Vec2]] = []
+            for start, end in lines:
+                cropped_lines.extend(clipping_portal.clip_line(start, end))
+            lines = cropped_lines
+        self.next_stage.draw_solid_lines(lines, properties)
+
+    def draw_path(self, path: BkPath2d, properties: Properties):
+        pipeline = self.pipeline
+        clipping_portal = pipeline.clipping_portal
+        next_stage = self.next_stage
+        max_flattening_distance = pipeline.config.max_flattening_distance
+
+        if (
+            pipeline.config.line_policy == LinePolicy.SOLID
+            or len(properties.linetype_pattern) < 2  # CONTINUOUS
+        ):
+            if clipping_portal.is_active:
+                for clipped_path in clipping_portal.clip_paths(
+                    [path], max_flattening_distance
+                ):
+                    next_stage.draw_path(clipped_path, properties)
+                return
+            next_stage.draw_path(path, properties)
+        else:
+            renderer = linetypes.LineTypeRenderer(pipeline.pattern(properties))
+            vertices = path.flattening(max_flattening_distance, segments=16)
+            self.draw_solid_lines(
+                [(Vec2(s), Vec2(e)) for s, e in renderer.line_segments(vertices)],
+                properties,
+            )
+
+    def draw_filled_paths(
+        self,
+        paths: list[BkPath2d],
+        properties: Properties,
+    ) -> None:
+        pipeline = self.pipeline
+        clipping_portal = pipeline.clipping_portal
+        if clipping_portal.is_active:
+            max_sagitta = pipeline.config.max_flattening_distance
+            paths = clipping_portal.clip_filled_paths(paths, max_sagitta)
+        _paths = list(paths)
+        if len(_paths) == 0:
+            return
+        self.next_stage.draw_filled_paths(_paths, properties)
+
+    def draw_filled_polygon(self, points: BkPoints2d, properties: Properties) -> None:
+        clipping_portal = self.pipeline.clipping_portal
+        next_stage = self.next_stage
+        if clipping_portal.is_active:
+            for points in clipping_portal.clip_polygon(points):
+                if len(points) > 0:
+                    next_stage.draw_filled_polygon(points, properties)
+        elif len(points) > 0:
+            next_stage.draw_filled_polygon(points, properties)
 
     def draw_image(self, image_data: ImageData, properties: Properties) -> None:
         # the outer bounds contain the visible parts of the image for the
         # clip mode "remove inside"
         outer_bounds: list[BkPoints2d] = []
+        clipping_portal = self.pipeline.clipping_portal
 
-        if self.clipping_portal.is_active:
+        if clipping_portal.is_active:
             # the pixel boundary path can be split into multiple paths
             transform = image_data.flip_matrix() * image_data.transform
             pixel_boundary_path = image_data.pixel_boundary_path
             clipping_paths = _clip_image_polygon(
-                self.clipping_portal, pixel_boundary_path, transform
+                clipping_portal, pixel_boundary_path, transform
             )
             if not image_data.remove_outside:
                 # remove inside:
@@ -466,9 +542,9 @@ class Designer2d(Designer):
                     Vec2.generate([(0, 0), (width, 0), (width, height), (0, height)])
                 )
                 outer_bounds = _clip_image_polygon(
-                    self.clipping_portal, outer_boundary, transform
+                    clipping_portal, outer_boundary, transform
                 )
-            image_data.transform = self.clipping_portal.transform_matrix(
+            image_data.transform = clipping_portal.transform_matrix(
                 image_data.transform
             )
             if len(clipping_paths) == 1:
@@ -504,19 +580,54 @@ class Designer2d(Designer):
     ) -> None:
         if image_data.use_clipping_boundary:
             _mask_image(image_data, outer_bounds)
-        self.backend.draw_image(image_data, self.get_backend_properties(properties))
+        self.next_stage.draw_image(image_data, properties)
 
-    def finalize(self) -> None:
-        self.backend.finalize()
 
-    def set_background(self, color: Color) -> None:
-        self.backend.set_background(color)
+class ClippingStage2d(RenderStage2d):
+    pass
 
-    def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
-        self.backend.enter_entity(entity, properties)
 
-    def exit_entity(self, entity: DXFGraphic) -> None:
-        self.backend.exit_entity(entity)
+class LinetypeStage2d(RenderStage2d):
+    pass
+
+
+class BackendStage2d(RenderStage2d):
+    """Send data to the output backend."""
+
+    def __init__(
+        self,
+        backend: BackendInterface,
+        converter: Callable[[Properties], BackendProperties],
+    ):
+        self.backend = backend
+        self.converter = converter
+
+    def draw_point(self, pos: Vec2, properties: Properties) -> None:
+        self.backend.draw_point(pos, self.converter(properties))
+
+    def draw_line(self, start: Vec2, end: Vec2, properties: Properties):
+        self.backend.draw_line(start, end, self.converter(properties))
+
+    def draw_solid_lines(
+        self, lines: list[tuple[Vec2, Vec2]], properties: Properties
+    ) -> None:
+        self.backend.draw_solid_lines(lines, self.converter(properties))
+
+    def draw_path(self, path: BkPath2d, properties: Properties):
+        self.backend.draw_path(path, self.converter(properties))
+
+    def draw_filled_paths(
+        self,
+        paths: list[BkPath2d],
+        properties: Properties,
+    ) -> None:
+        self.backend.draw_filled_paths(paths, self.converter(properties))
+
+    def draw_filled_polygon(self, points: BkPoints2d, properties: Properties) -> None:
+        self.backend.draw_filled_polygon(points, self.converter(properties))
+
+    def draw_image(self, image_data: ImageData, properties: Properties) -> None:
+        self.backend.draw_image(image_data, self.converter(properties))
 
 
 def _mask_image(image_data: ImageData, outer_bounds: list[BkPoints2d]) -> None:
