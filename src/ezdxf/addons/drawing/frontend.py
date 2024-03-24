@@ -133,10 +133,14 @@ class UniversalFrontend:
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
         self.ctx = ctx
-        # the designer is the connection between frontend and backend
+        
+        # the render pipeline is the connection between frontend and backend
         self.pipeline = pipeline
         pipeline.set_draw_entities_callback(self.draw_entities_callback)
+
+        # update all configs:
         self.config = ctx.update_configuration(config)
+        # backend.configure() is called in pipeline.set_config()
         pipeline.set_config(self.config)
 
         if self.config.pdsize is None or self.config.pdsize <= 0:

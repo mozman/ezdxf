@@ -241,7 +241,8 @@ class RenderPipeline2d(AbstractPipeline):
         self.draw_entities = callback
 
     def set_config(self, config: Configuration) -> None:
-        self.config = config
+        self.backend.configure(config)
+        self.config = config      
         stage = self._pipeline
         while True:
             stage.set_config(config)
