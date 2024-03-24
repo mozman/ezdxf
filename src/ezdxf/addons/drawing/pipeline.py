@@ -203,7 +203,11 @@ class RenderPipeline2d(AbstractPipeline):
         backend_stage = BackendStage2d(
             self.backend, converter=self.get_backend_properties
         )
-        return AllInOneStage2d(pipeline=self, next_stage=backend_stage)
+        linetype_stage = LinetypeStage2d(self.config, self.pattern, backend_stage)
+        clipping_stage = ClippingStage2d(
+            self.clipping_portal, self.config.max_flattening_distance, linetype_stage
+        )
+        return clipping_stage
 
     @property
     def vp_ltype_scale(self) -> float:
@@ -281,11 +285,6 @@ class RenderPipeline2d(AbstractPipeline):
 
     def exit_viewport(self):
         self.clipping_portal.pop()
-        # Current assumption and implementation:
-        # Viewports are not nested and not contained in any other structure.
-        assert (
-            self.clipping_portal.is_active is False
-        ), "This assumption is no longer valid!"
         self.current_vp_scale = 1.0
 
     def pattern(self, properties: Properties) -> Sequence[float]:
@@ -424,45 +423,39 @@ class RenderPipeline2d(AbstractPipeline):
         self._pipeline.draw_image(image_data, properties)
 
 
-# First step to separated render stages: extract rendering into a single render stage
-class AllInOneStage2d(RenderStage2d):
-    def __init__(self, pipeline: RenderPipeline2d, next_stage: RenderStage2d):
+class ClippingStage2d(RenderStage2d):
+    def __init__(
+        self,
+        clipping_portal: ClippingPortal,
+        max_sagitta: float,
+        next_stage: RenderStage2d,
+    ):
+        self.clipping_portal = clipping_portal
+        self.max_sagitta = max_sagitta
         self.next_stage = next_stage
-        self.pipeline = pipeline
 
     def draw_point(self, pos: Vec2, properties: Properties) -> None:
-        if self.pipeline.clipping_portal.is_active:
-            pos = self.pipeline.clipping_portal.clip_point(pos)
+        if self.clipping_portal.is_active:
+            pos = self.clipping_portal.clip_point(pos)
             if pos is None:
                 return
         self.next_stage.draw_point(pos, properties)
 
     def draw_line(self, start: Vec2, end: Vec2, properties: Properties):
-        s = Vec2(start)
-        e = Vec2(end)
-        pipeline = self.pipeline
         next_stage = self.next_stage
+        clipping_portal = self.clipping_portal
 
-        if (
-            pipeline.config.line_policy == LinePolicy.SOLID
-            or len(properties.linetype_pattern) < 2  # CONTINUOUS
-        ):
-            if pipeline.clipping_portal.is_active:
-                for segment in pipeline.clipping_portal.clip_line(s, e):
-                    next_stage.draw_line(segment[0], segment[1], properties)
-            else:
-                next_stage.draw_line(s, e, properties)
-        else:
-            renderer = linetypes.LineTypeRenderer(pipeline.pattern(properties))
-            self.draw_solid_lines(
-                [(s, e) for s, e in renderer.line_segment(s, e)],
-                properties,
-            )
+        if clipping_portal.is_active:
+            for segment in clipping_portal.clip_line(start, end):
+                next_stage.draw_line(segment[0], segment[1], properties)
+            return
+        next_stage.draw_line(start, end, properties)
 
     def draw_solid_lines(
         self, lines: list[tuple[Vec2, Vec2]], properties: Properties
     ) -> None:
-        clipping_portal = self.pipeline.clipping_portal
+        clipping_portal = self.clipping_portal
+
         if clipping_portal.is_active:
             cropped_lines: list[tuple[Vec2, Vec2]] = []
             for start, end in lines:
@@ -471,106 +464,91 @@ class AllInOneStage2d(RenderStage2d):
         self.next_stage.draw_solid_lines(lines, properties)
 
     def draw_path(self, path: BkPath2d, properties: Properties):
-        pipeline = self.pipeline
-        clipping_portal = pipeline.clipping_portal
+        clipping_portal = self.clipping_portal
         next_stage = self.next_stage
-        max_flattening_distance = pipeline.config.max_flattening_distance
 
-        if (
-            pipeline.config.line_policy == LinePolicy.SOLID
-            or len(properties.linetype_pattern) < 2  # CONTINUOUS
-        ):
-            if clipping_portal.is_active:
-                for clipped_path in clipping_portal.clip_paths(
-                    [path], max_flattening_distance
-                ):
-                    next_stage.draw_path(clipped_path, properties)
-                return
-            next_stage.draw_path(path, properties)
-        else:
-            renderer = linetypes.LineTypeRenderer(pipeline.pattern(properties))
-            vertices = path.flattening(max_flattening_distance, segments=16)
-            self.draw_solid_lines(
-                [(Vec2(s), Vec2(e)) for s, e in renderer.line_segments(vertices)],
-                properties,
-            )
+        if clipping_portal.is_active:
+            for clipped_path in clipping_portal.clip_paths([path], self.max_sagitta):
+                next_stage.draw_path(clipped_path, properties)
+            return
+        next_stage.draw_path(path, properties)
 
     def draw_filled_paths(
         self,
         paths: list[BkPath2d],
         properties: Properties,
     ) -> None:
-        pipeline = self.pipeline
-        clipping_portal = pipeline.clipping_portal
+        clipping_portal = self.clipping_portal
+
         if clipping_portal.is_active:
-            max_sagitta = pipeline.config.max_flattening_distance
-            paths = clipping_portal.clip_filled_paths(paths, max_sagitta)
-        _paths = list(paths)
-        if len(_paths) == 0:
+            paths = clipping_portal.clip_filled_paths(paths, self.max_sagitta)
+        if len(paths) == 0:
             return
-        self.next_stage.draw_filled_paths(_paths, properties)
+        self.next_stage.draw_filled_paths(paths, properties)
 
     def draw_filled_polygon(self, points: BkPoints2d, properties: Properties) -> None:
-        clipping_portal = self.pipeline.clipping_portal
+        clipping_portal = self.clipping_portal
         next_stage = self.next_stage
+
         if clipping_portal.is_active:
             for points in clipping_portal.clip_polygon(points):
                 if len(points) > 0:
                     next_stage.draw_filled_polygon(points, properties)
-        elif len(points) > 0:
+            return
+
+        if len(points) > 0:
             next_stage.draw_filled_polygon(points, properties)
 
     def draw_image(self, image_data: ImageData, properties: Properties) -> None:
         # the outer bounds contain the visible parts of the image for the
         # clip mode "remove inside"
         outer_bounds: list[BkPoints2d] = []
-        clipping_portal = self.pipeline.clipping_portal
+        clipping_portal = self.clipping_portal
 
-        if clipping_portal.is_active:
-            # the pixel boundary path can be split into multiple paths
-            transform = image_data.flip_matrix() * image_data.transform
-            pixel_boundary_path = image_data.pixel_boundary_path
-            clipping_paths = _clip_image_polygon(
-                clipping_portal, pixel_boundary_path, transform
-            )
-            if not image_data.remove_outside:
-                # remove inside:
-                #  detect the visible parts of the image which are not removed by
-                #  clipping through viewports or block references
-                width, height = image_data.image_size()
-                outer_boundary = BkPoints2d(
-                    Vec2.generate([(0, 0), (width, 0), (width, height), (0, height)])
-                )
-                outer_bounds = _clip_image_polygon(
-                    clipping_portal, outer_boundary, transform
-                )
-            image_data.transform = clipping_portal.transform_matrix(
-                image_data.transform
-            )
-            if len(clipping_paths) == 1:
-                new_clipping_path = clipping_paths[0]
-                if new_clipping_path is not image_data.pixel_boundary_path:
-                    image_data.pixel_boundary_path = new_clipping_path
-                    # forced clipping triggered by viewport- or block reference clipping:
-                    image_data.use_clipping_boundary = True
-                self._draw_image(image_data, outer_bounds, properties)
-            else:
-                for clipping_path in clipping_paths:
-                    # when clipping path is split into multiple parts:
-                    #  copy image for each part, not efficient but works
-                    #  this should be a rare usecase so optimization is not required
-                    self._draw_image(
-                        ImageData(
-                            image=image_data.image.copy(),
-                            transform=image_data.transform,
-                            pixel_boundary_path=clipping_path,
-                            use_clipping_boundary=True,
-                        ),
-                        outer_bounds,
-                        properties,
-                    )
-        else:
+        if not clipping_portal.is_active:
             self._draw_image(image_data, outer_bounds, properties)
+            return
+
+        # the pixel boundary path can be split into multiple paths
+        transform = image_data.flip_matrix() * image_data.transform
+        pixel_boundary_path = image_data.pixel_boundary_path
+        clipping_paths = _clip_image_polygon(
+            clipping_portal, pixel_boundary_path, transform
+        )
+        if not image_data.remove_outside:
+            # remove inside:
+            #  detect the visible parts of the image which are not removed by
+            #  clipping through viewports or block references
+            width, height = image_data.image_size()
+            outer_boundary = BkPoints2d(
+                Vec2.generate([(0, 0), (width, 0), (width, height), (0, height)])
+            )
+            outer_bounds = _clip_image_polygon(
+                clipping_portal, outer_boundary, transform
+            )
+        image_data.transform = clipping_portal.transform_matrix(image_data.transform)
+        if len(clipping_paths) == 1:
+            new_clipping_path = clipping_paths[0]
+            if new_clipping_path is not image_data.pixel_boundary_path:
+                image_data.pixel_boundary_path = new_clipping_path
+                # forced clipping triggered by viewport- or block reference clipping:
+                image_data.use_clipping_boundary = True
+            self._draw_image(image_data, outer_bounds, properties)
+        else:
+            for clipping_path in clipping_paths:
+                # when clipping path is split into multiple parts:
+                #  copy image for each part, not efficient but works
+                #  this should be a rare usecase so optimization is not required
+                self._draw_image(
+                    ImageData(
+                        image=image_data.image.copy(),
+                        transform=image_data.transform,
+                        pixel_boundary_path=clipping_path,
+                        use_clipping_boundary=True,
+                    ),
+                    outer_bounds,
+                    properties,
+                )
 
     def _draw_image(
         self,
@@ -583,12 +561,67 @@ class AllInOneStage2d(RenderStage2d):
         self.next_stage.draw_image(image_data, properties)
 
 
-class ClippingStage2d(RenderStage2d):
-    pass
-
-
 class LinetypeStage2d(RenderStage2d):
-    pass
+    def __init__(
+        self,
+        config: Configuration,
+        pattern: Callable[[Properties], Sequence[float]],
+        next_stage: RenderStage2d,
+    ):
+        self.solid_lines_only = config.line_policy == LinePolicy.SOLID
+        self.next_stage = next_stage
+        self.pattern = pattern
+        self.max_sagitta = config.max_flattening_distance
+
+    def draw_point(self, pos: Vec2, properties: Properties) -> None:
+        self.next_stage.draw_point(pos, properties)
+
+    def draw_line(self, start: Vec2, end: Vec2, properties: Properties):
+        s = Vec2(start)
+        e = Vec2(end)
+        next_stage = self.next_stage
+
+        if self.solid_lines_only or len(properties.linetype_pattern) < 2:  # CONTINUOUS
+            next_stage.draw_line(s, e, properties)
+            return
+
+        renderer = linetypes.LineTypeRenderer(self.pattern(properties))
+        next_stage.draw_solid_lines(
+            [(s, e) for s, e in renderer.line_segment(s, e)],
+            properties,
+        )
+
+    def draw_solid_lines(
+        self, lines: list[tuple[Vec2, Vec2]], properties: Properties
+    ) -> None:
+        self.next_stage.draw_solid_lines(lines, properties)
+
+    def draw_path(self, path: BkPath2d, properties: Properties):
+        next_stage = self.next_stage
+
+        if self.solid_lines_only or len(properties.linetype_pattern) < 2:  # CONTINUOUS
+            next_stage.draw_path(path, properties)
+            return
+
+        renderer = linetypes.LineTypeRenderer(self.pattern(properties))
+        vertices = path.flattening(self.max_sagitta, segments=16)
+        next_stage.draw_solid_lines(
+            [(Vec2(s), Vec2(e)) for s, e in renderer.line_segments(vertices)],
+            properties,
+        )
+
+    def draw_filled_paths(
+        self,
+        paths: list[BkPath2d],
+        properties: Properties,
+    ) -> None:
+        self.next_stage.draw_filled_paths(paths, properties)
+
+    def draw_filled_polygon(self, points: BkPoints2d, properties: Properties) -> None:
+        self.next_stage.draw_filled_polygon(points, properties)
+
+    def draw_image(self, image_data: ImageData, properties: Properties) -> None:
+        self.next_stage.draw_image(image_data, properties)
 
 
 class BackendStage2d(RenderStage2d):
