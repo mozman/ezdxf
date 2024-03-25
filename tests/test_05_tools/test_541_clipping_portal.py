@@ -3,7 +3,7 @@
 import pytest
 import math
 
-from ezdxf.tools.clipping_portal import ClippingRect, MultiClip
+from ezdxf.tools.clipping_portal import ClippingRect
 from ezdxf.math import Vec2
 from ezdxf import npshapes
 
@@ -31,54 +31,6 @@ class TestClippingRect:
         polygons = clipper.clip_polygon(polyline)
         assert len(polygons) == 1
         assert len(polygons[0]) == 4
-
-
-class TestMultiClip:
-    @pytest.fixture
-    def multi_clip(self) -> MultiClip:
-        return MultiClip(
-            [
-                ClippingRect([(0, 0), (1, 1)]),
-                ClippingRect([(2, 0), (3, 1)]),
-            ]
-        )
-
-    def test_extents(self, multi_clip: MultiClip) -> None:
-        bbox = multi_clip.bbox()
-        assert bbox.extmin.isclose((0, 0))
-        assert bbox.extmax.isclose((3, 1))
-
-    def test_remove_empty_clipping_shapes(self):
-        r0 = ClippingRect([(0.5, 0.5), (0.5, 0.5)])
-        r1 = ClippingRect([(0, 0), (3, 1)])
-        multi_clip = MultiClip([r0, r1])
-        shapes = multi_clip.shapes_in_range(multi_clip.bbox())
-        assert len(shapes) == 1
-        assert shapes[0] is r1
-
-    @pytest.mark.parametrize(
-        "point",
-        Vec2.list([(0.5, 0.5), (2.5, 0.5), (0, 0), (1, 1), (2, 0), (3, 1)]),
-    )
-    def test_point_inside(self, multi_clip: MultiClip, point: Vec2) -> None:
-        assert point.isclose(multi_clip.clip_point(point))
-
-    @pytest.mark.parametrize(
-        "point",
-        Vec2.list([(-1, 0.5), (1.5, 0.5), (3.5, 0)]),
-    )
-    def test_point_outside(self, multi_clip: MultiClip, point: Vec2) -> None:
-        assert multi_clip.clip_point(point) is None
-
-    def test_clip_line_1(self, multi_clip: MultiClip) -> None:
-        parts = list(multi_clip.clip_line(Vec2(0.5, 0.5), Vec2(2.5, 0.5)))
-        assert len(parts) == 2
-        assert math.isclose(sum(v0.distance(v1) for v0, v1 in parts), 1.0)
-
-    def test_clip_line_2(self, multi_clip: MultiClip) -> None:
-        parts = list(multi_clip.clip_line(Vec2(-0.5, 0.5), Vec2(3.5, 0.5)))
-        assert len(parts) == 2
-        assert math.isclose(sum(v0.distance(v1) for v0, v1 in parts), 2.0)
 
 
 if __name__ == "__main__":
