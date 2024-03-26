@@ -19,7 +19,7 @@
 			- useful for scenarios where the [[ODA File Converter]] is not available
 			- can not replace the [[ODA File Converter]] application, but maybe good enough for simple documents
 			- Cython will be required for the low level stuff, no pure Python implementation.
-		-
+-
 - # DXF Entities
 	- LATER [[GEODATA]] version 1 support, see mpolygon examples and DXF reference R2009
 	- LATER explode [[HATCH]] pattern into [[LINE]] entities, points are represented by zero-length [[LINE]] entities, because the [[POINT]] entity has a special meaning.
@@ -31,15 +31,7 @@
 	- LATER [[ACIS]] `copy()` method support
 		- ACIS data does not reference any DXF resources and copying is not expensive, all copies share the same immutable ACIS data.
 		- This feature allows loading ACIS entities from external references by the `xref` module.
-	- #maybe Adding a `transform_matrix` attribute to entities which do not have transformation support like [[ACIS]] entities which enables to add support for the `transform()` method.
-		- A new method `apply_transform_matrix()` has to be called to apply the `transform_matrix` to the entity itself before export or it should raise a `NotImplementedError` exception.
-		- This could be implemented for
-			- [[ACIS]] entities inherited from base class [[BODY]]
-			- [[ACAD_PROXY_ENTITY]]
-			- [[ACAD_TABLE]]
-			- [[OLE2FRAME]]
-			- all unknown entities stored as [[DXFTagStorage]]
-	-
+-
 - # Boundary Path Constructor
 	- LATER A module to create boundary paths for [[HATCH]] and [[MPOLYGON]] entities.
 	- The input data are DXF entities e.g. the result of a selection or an entity query, the module functions and classes help to detect closed path in the entity collection and returns one or more [[BoundaryPaths]] instances.
@@ -65,7 +57,7 @@
 		- by ambiguity the differnt possible paths are tracked recursively and the shortest 
 		  or longest path will be taken.
 		- A gap tolerance is given by the user to connect end points that are not coincident and the algorithm adds connection lines between these gaps.
-		-
+-
 - # Increase Minimal Required Python Version
 	- In general `numpy` defines the minimal required Python version.
 	-
