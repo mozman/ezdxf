@@ -16,6 +16,7 @@ id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 	- NEW: `ezdxf.select` module for location based entity selection
 	- CHANGE: class `RenderContext` accepts ctb files as instances of `acadctb.ColorDependentPlotStyles`
 	- CHANGE: replaced the `Designer` class of the `drawing` add-on by a render pipeline with separated render stages
+	- CHANGE: better support for viewports with curved clipping paths for the `drawing` add-on
 	- BUGFIX: clipping errors for filled paths
 		- {{issue 1055}}
 	-

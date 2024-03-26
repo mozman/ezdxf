@@ -6,7 +6,6 @@ from typing import (
     Optional,
     Iterable,
     Tuple,
-    TYPE_CHECKING,
     Iterator,
     Callable,
 )
@@ -33,16 +32,13 @@ from ezdxf.tools.clipping_portal import (
     ClippingShape,
     find_best_clipping_shape,
 )
-
+from ezdxf.layouts import Layout
 from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
 from .config import LinePolicy, TextPolicy, ColorPolicy, Configuration
 from .properties import BackendProperties, Filling
 from .properties import Properties, RenderContext
 from .type_hints import Color
 from .unified_text_renderer import UnifiedTextRenderer
-
-if TYPE_CHECKING:
-    from ezdxf.layouts import Layout
 
 PatternKey: TypeAlias = Tuple[str, float]
 DrawEntitiesCallback: TypeAlias = Callable[[RenderContext, Iterable[DXFGraphic]], None]
@@ -242,7 +238,7 @@ class RenderPipeline2d(AbstractPipeline):
 
     def set_config(self, config: Configuration) -> None:
         self.backend.configure(config)
-        self.config = config      
+        self.config = config
         stage = self._pipeline
         while True:
             stage.set_config(config)
@@ -288,8 +284,18 @@ class RenderPipeline2d(AbstractPipeline):
         m = vp.get_transformation_matrix()
         clipping_path = make_path(vp)
         if len(clipping_path):
-            # TODO: flatten clipping path! max_sagitta = ?
-            clipping_shape = find_best_clipping_shape(clipping_path.control_vertices())
+            vertices = clipping_path.control_vertices()
+            if clipping_path.has_curves:
+                layout = vp.get_layout()
+                if isinstance(layout, Layout):
+                    # plot paper units:
+                    #   0: inches, max sagitta = 1/254 = 0.1 mm
+                    #   1: millimeters, max sagitta = 0.1 mm
+                    #   2: pixels, max sagitta = 0.1 pixel
+                    units = layout.dxf.get("plot_paper_units", 1)
+                    max_sagitta = 1.0 / 254.0 if units == 0 else 0.1
+                    vertices = list(clipping_path.flattening(max_sagitta))
+            clipping_shape = find_best_clipping_shape(vertices)
             self.clipping_portal.push(clipping_shape, m)
             return True
         return False
