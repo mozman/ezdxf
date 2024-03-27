@@ -31,6 +31,10 @@
 	- LATER [[ACIS]] `copy()` method support
 		- ACIS data does not reference any DXF resources and copying is not expensive, all copies share the same immutable ACIS data.
 		- This feature allows loading ACIS entities from external references by the `xref` module.
+	- #maybe add support for [[REGION]] entities:
+		- A [[REGION]] consist of one or more flat loops that enclose a space based on [[ACIS]].
+		- The [[SAT]] and [[SAB]] representation of curved edges and faces within [[ACIS]] data needs to be reverse engineered.
+		- Explode curved faces into virtual [[LINE]], [[ARC]], [[ELLIPSE]] and [[SPLINE]] entities or a [[Path]] instance
 -
 - # Boundary Path Constructor
 	- LATER A module to create boundary paths for [[HATCH]] and [[MPOLYGON]] entities.
