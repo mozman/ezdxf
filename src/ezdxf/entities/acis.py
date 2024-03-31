@@ -1,8 +1,9 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Union, Optional, Sequence
 from typing_extensions import Self
+
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -14,17 +15,16 @@ from ezdxf.lldxf.const import (
     SUBCLASS_MARKER,
     DXF2000,
     DXF2004,
-    DXFTypeError,
     DXF2013,
     DXFStructureError,
 )
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.math import Matrix44
-from ezdxf.tools import crypt
+from ezdxf.tools import crypt, guid
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
-from .copy import default_copy, CopyNotSupported
+from .copy import default_copy
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
@@ -137,10 +137,12 @@ class Body(DXFGraphic):
         else:
             return False
 
-    def copy(self, copy_strategy=default_copy):
-        """Prevent copying. (internal interface)"""
-        # TODO: copying of ACIS data is possible
-        raise CopyNotSupported("Copying of ACIS data not supported.")
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
+        assert isinstance(entity, Body)
+        entity._sat = self._sat
+        entity._sab = self._sab
+        entity._update = True
+        entity.dxf.uid = guid()
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
@@ -381,6 +383,19 @@ class ExtrudedSurface(Surface):
         self.sweep_entity_transformation_matrix = Matrix44()
         self.path_entity_transformation_matrix = Matrix44()
 
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
+        assert isinstance(entity, ExtrudedSurface)
+        super().copy_data(entity, copy_strategy)
+        entity.transformation_matrix_extruded_entity = (
+            self.transformation_matrix_extruded_entity.copy()
+        )
+        entity.sweep_entity_transformation_matrix = (
+            self.sweep_entity_transformation_matrix.copy()
+        )
+        entity.path_entity_transformation_matrix = (
+            self.path_entity_transformation_matrix.copy()
+        )
+
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
@@ -481,6 +496,13 @@ class LoftedSurface(Surface):
         super().__init__()
         self.transformation_matrix_lofted_entity = Matrix44()
 
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
+        assert isinstance(entity, LoftedSurface)
+        super().copy_data(entity, copy_strategy)
+        entity.transformation_matrix_lofted_entity = (
+            self.transformation_matrix_lofted_entity.copy()
+        )
+
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
@@ -545,6 +567,13 @@ class RevolvedSurface(Surface):
     def __init__(self):
         super().__init__()
         self.transformation_matrix_revolved_entity = Matrix44()
+
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
+        assert isinstance(entity, RevolvedSurface)
+        super().copy_data(entity, copy_strategy)
+        entity.transformation_matrix_revolved_entity = (
+            self.transformation_matrix_revolved_entity.copy()
+        )
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
@@ -654,6 +683,22 @@ class SweptSurface(Surface):
         self.transformation_matrix_path_entity = Matrix44()
         self.sweep_entity_transformation_matrix = Matrix44()
         self.path_entity_transformation_matrix = Matrix44()
+
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
+        assert isinstance(entity, SweptSurface)
+        super().copy_data(entity, copy_strategy)
+        entity.transformation_matrix_sweep_entity = (
+            self.transformation_matrix_sweep_entity.copy()
+        )
+        entity.transformation_matrix_path_entity = (
+            self.transformation_matrix_path_entity.copy()
+        )
+        entity.sweep_entity_transformation_matrix = (
+            self.sweep_entity_transformation_matrix.copy()
+        )
+        entity.path_entity_transformation_matrix = (
+            self.path_entity_transformation_matrix.copy()
+        )
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None

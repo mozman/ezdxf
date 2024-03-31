@@ -14,6 +14,7 @@ id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 		- `ezdxf.math.gps_to_world_mercator()`
 	- NEW: `ezdxf.revcloud` module to render revision clouds similar to the `REVCLOUD` command in CAD applications
 	- NEW: `ezdxf.select` module for location based entity selection
+	- NEW: support for copying of [[ACIS]] based entities, this adds support for loading these entities by the `xref` module
 	- CHANGE: class `RenderContext` accepts ctb files as instances of `acadctb.ColorDependentPlotStyles`
 	- CHANGE: replaced the `Designer` class of the `drawing` add-on by a render pipeline with separated render stages
 	- CHANGE: better support for viewports with curved clipping paths for the `drawing` add-on
