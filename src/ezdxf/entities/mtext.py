@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -1237,7 +1237,7 @@ class MText(DXFGraphic):
             for mtext in self._columns.linked_columns:
                 mtext.register_resources(registry)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, MText)
         super().map_resources(clone, mapping)

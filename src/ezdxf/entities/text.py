@@ -1,7 +1,8 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from typing_extensions import Self
 import math
 
 from ezdxf.lldxf import validator
@@ -381,7 +382,7 @@ class Text(DXFGraphic):
         if self.dxf.hasattr("style"):
             registry.add_text_style(self.dxf.style)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         super().map_resources(clone, mapping)
         if clone.dxf.hasattr("style"):

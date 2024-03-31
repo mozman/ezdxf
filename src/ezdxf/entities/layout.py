@@ -1,7 +1,8 @@
-#  Copyright (c) 2020-2023, Manfred Moitzi
+#  Copyright (c) 2020-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from typing_extensions import Self
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.lldxf.attributes import (
@@ -255,7 +256,7 @@ class PlotSettings(DXFObject):
         super().register_resources(registry)
         registry.add_handle(self.dxf.get("shade_plot_handle"))
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         super().map_resources(clone, mapping)
         shade_plot_handle = self.dxf.get("shade_plot_handle")
         if shade_plot_handle and shade_plot_handle != "0":
@@ -381,7 +382,7 @@ class DXFLayout(PlotSettings):
         registry.add_handle(self.dxf.get("ucs_handle"))
         registry.add_handle(self.dxf.get("base_ucs_handle"))
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         super().map_resources(clone, mapping)
 
         # The content of paperspace layouts is not copied automatically and the

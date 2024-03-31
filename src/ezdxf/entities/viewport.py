@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional
@@ -542,7 +542,7 @@ class Viewport(DXFGraphic):
         registry.add_handle(self.dxf.get("shade_plot_handle"))
         registry.add_handle(self.dxf.get("sun_handle"))
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         assert isinstance(clone, Viewport)
         super().map_resources(clone, mapping)
 

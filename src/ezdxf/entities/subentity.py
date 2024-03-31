@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2023, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Callable, Optional
@@ -132,7 +132,7 @@ class LinkedEntities(DXFGraphic):
         super().register_resources(registry)
         self.process_sub_entities(lambda e: e.register_resources(registry))
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, LinkedEntities)
         super().map_resources(clone, mapping)

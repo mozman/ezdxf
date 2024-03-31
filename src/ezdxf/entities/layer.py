@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, cast, Any
+from typing_extensions import Self
 import logging
 from dataclasses import dataclass
 from ezdxf.lldxf import validator
@@ -388,7 +389,7 @@ class Layer(DXFEntity):
         registry.add_handle(self.dxf.get("material_handle"))
         # current plot style will be replaced by default plot style "Normal"
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, Layer)
         super().map_resources(clone, mapping)

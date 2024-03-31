@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -10,6 +10,7 @@ from typing import (
     Optional,
     Callable,
 )
+from typing_extensions import Self
 import math
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -234,7 +235,7 @@ class Insert(LinkedEntities):
         super().register_resources(registry)
         registry.add_block_name(self.dxf.name)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         # The attached ATTRIB entities are mapped by the parent class LinkedEntities
         super().map_resources(clone, mapping)
         clone.dxf.name = mapping.get_block_name(self.dxf.name)

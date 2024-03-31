@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2023, Manfred Moitzi
+# Copyright (c) 2018-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -376,7 +376,7 @@ class MLine(DXFGraphic):
         super().register_resources(registry)
         registry.add_handle(self.dxf.style_handle)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         super().map_resources(clone, mapping)
         style = mapping.get_reference_of_copy(self.dxf.style_handle)
@@ -941,7 +941,7 @@ class MLineStyle(DXFObject):
         for element in self.elements:
             registry.add_linetype(element.linetype)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, MLineStyle)
         super().map_resources(clone, mapping)

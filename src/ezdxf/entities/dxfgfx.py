@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Iterable, Any
@@ -647,7 +647,7 @@ class DXFGraphic(DXFEntity):
         # - visualstyle_handle
         # - plotstyle_handle
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         super().map_resources(clone, mapping)
         clone.dxf.layer = mapping.get_layer(self.dxf.layer)

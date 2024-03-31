@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Iterable, Optional
@@ -198,7 +198,7 @@ class Underlay(DXFGraphic):
         if isinstance(self._underlay_def, UnderlayDefinition):
             registry.add_handle(self._underlay_def.dxf.handle)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         assert isinstance(clone, Underlay)
         super().map_resources(clone, mapping)
         underlay_def_copy = self.map_underlay_def(clone, mapping)

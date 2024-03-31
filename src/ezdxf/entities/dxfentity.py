@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 """ :class:`DXFEntity` is the super class of all DXF entities.
 
@@ -27,7 +27,6 @@ from typing import (
 )
 from typing_extensions import Self
 
-import copy
 import logging
 import uuid
 from ezdxf import options
@@ -933,7 +932,7 @@ class DXFEntity:
                 for tag in tags.get_hard_owner_handles():
                     registry.add_handle(tag.value)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
 
         def map_xdata_resources():

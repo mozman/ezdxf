@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Optional, Union, TYPE_CHECKING, Iterator
@@ -141,7 +141,7 @@ class DXFPolygon(DXFGraphic):
         del tags[index:]
         return tags
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, DXFPolygon)
         assert clone.doc is not None

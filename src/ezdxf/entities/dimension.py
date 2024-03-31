@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Union, Iterable, Iterator
@@ -649,7 +649,7 @@ class Dimension(DXFGraphic, OverrideMixin):
             # overridden resources are referenced by name
             self.override().register_resources_r12(registry)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         super().map_resources(clone, mapping)
         clone.dxf.dimstyle = mapping.get_dim_style(self.dxf.dimstyle)
         clone.dxf.geometry = mapping.get_block_name(self.dxf.geometry)

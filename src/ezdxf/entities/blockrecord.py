@@ -1,7 +1,8 @@
-# Copyright (c) 2019-2023, Manfred Moitzi
+# Copyright (c) 2019-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from typing_extensions import Self
 import logging
 
 from ezdxf.lldxf import validator
@@ -189,7 +190,7 @@ class BlockRecord(DXFEntity):
         for e in self.entity_space:
             registry.add_entity(e, block_key=key)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, BlockRecord)
         super().map_resources(clone, mapping)

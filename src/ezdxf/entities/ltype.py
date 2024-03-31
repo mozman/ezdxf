@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Manfred Moitzi
+# Copyright (c) 2019-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -260,7 +260,7 @@ class Linetype(DXFEntity):
         if style is not None:
             registry.add_entity(style)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate registered resources from self to the copied entity."""
         assert isinstance(clone, Linetype)
         super().map_resources(clone, mapping)
