@@ -10,6 +10,7 @@ from typing import (
     Callable,
     cast,
 )
+from typing_extensions import Self
 import enum
 import math
 import logging
@@ -683,7 +684,7 @@ class MText(DXFGraphic):
     def has_columns(self) -> bool:
         return self._columns is not None
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, MText)
         entity.text = self.text
         if self.has_columns:

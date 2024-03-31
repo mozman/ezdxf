@@ -9,6 +9,7 @@ from typing import (
     Iterator,
     Optional,
 )
+from typing_extensions import Self
 import array
 import copy
 from itertools import chain
@@ -211,7 +212,7 @@ class Mesh(DXFGraphic):
         self._edges = EdgeArray()  # edge indices stored as array.array('L')
         self._creases = array.array("f")  # creases stored as array.array('f')
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy data: vertices, faces, edges, creases."""
         assert isinstance(entity, Mesh)
         entity._vertices = copy.deepcopy(self._vertices)

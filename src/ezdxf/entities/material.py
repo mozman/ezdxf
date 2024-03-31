@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from typing_extensions import Self
 from ezdxf.lldxf.const import SUBCLASS_MARKER
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -233,7 +234,7 @@ class Material(DXFObject):
         self.refraction_mapper_matrix: Optional[Matrix44] = None  # code 147
         self.normal_mapper_matrix: Optional[Matrix44] = None  # code 43 ???
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy material mapper matrices"""
 
         def copy(matrix):

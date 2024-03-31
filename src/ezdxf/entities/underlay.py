@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Iterable, Optional
+from typing_extensions import Self
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -117,7 +118,7 @@ class Underlay(DXFGraphic):
         self._boundary_path: list[UVec] = []
         self._underlay_def: Optional[UnderlayDefinition] = None
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Underlay)
         entity._boundary_path = list(self._boundary_path)
         entity._underlay_def = self._underlay_def

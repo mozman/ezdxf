@@ -25,6 +25,8 @@ from typing import (
     TypeVar,
     Callable,
 )
+from typing_extensions import Self
+
 import copy
 import logging
 import uuid
@@ -302,7 +304,7 @@ class DXFEntity:
         # Do not set copy state, this is not a real copy!
         return entity
 
-    def copy(self: T, copy_strategy=default_copy) -> T:
+    def copy(self, copy_strategy=default_copy) -> Self:
         """Internal entity copy for usage in the same document or as virtual entity.
 
         Returns a copy of `self` but without handle, owner and reactors.
@@ -315,7 +317,7 @@ class DXFEntity:
         """
         return copy_strategy.copy(self)
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy entity data like vertices or attribs to the copy of the entity.
 
         This is the second stage of the copy process, see copy() method.
@@ -973,12 +975,12 @@ class DXFTagStorage(DXFEntity):
         self.xtags = ExtendedTags()
         self.embedded_objects: Optional[list[Tags]] = None
 
-    def copy(self: T, copy_strategy=default_copy) -> T:
+    def copy(self, copy_strategy=default_copy) -> Self:
         raise CopyNotSupported(
             f"Copying of tag storage {self.dxftype()} not supported."
         )
 
-    def transform(self, m: Matrix44) -> DXFGraphic:
+    def transform(self, m: Matrix44) -> Self:
         raise NotImplementedError("cannot transform DXF tag storage")
 
     @property

@@ -10,7 +10,7 @@ from typing import (
     Iterator,
     Optional,
 )
-from typing_extensions import TypeAlias
+from typing_extensions import TypeAlias, Self
 import array
 import copy
 from ezdxf.audit import AuditError
@@ -162,7 +162,7 @@ class Spline(DXFGraphic):
         self.knots = []
         self.weights = []
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy data: control_points, fit_points, weights, knot_values."""
         assert isinstance(entity, Spline)
         entity._control_points = copy.deepcopy(self._control_points)

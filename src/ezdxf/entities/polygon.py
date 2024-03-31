@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Optional, Union, TYPE_CHECKING, Iterator
+from typing_extensions import Self
 import abc
 import copy
 
@@ -62,7 +63,7 @@ class DXFPolygon(DXFGraphic):
         self.gradient: Optional[Gradient] = None
         self.seeds: list[tuple[float, float]] = []  # not supported/exported by MPOLYGON
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy paths, pattern, gradient, seeds."""
         assert isinstance(entity, DXFPolygon)
         entity.paths = copy.deepcopy(self.paths)

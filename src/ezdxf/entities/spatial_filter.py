@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Iterable
+from typing_extensions import Self
 import logging
 
 from ezdxf.lldxf import const, validator
@@ -15,7 +16,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.math import UVec, Vec2, Matrix44, Z_AXIS, NULLVEC
 from ezdxf.entities import factory
-from .dxfentity import SubclassProcessor, base_class, DXFEntity
+from .dxfentity import SubclassProcessor, base_class
 from .dxfobj import DXFObject
 from .copy import default_copy
 
@@ -83,7 +84,7 @@ class SpatialFilter(DXFObject):
         # This matrix transforms points into the coordinate system of the clip boundary.
         self._transform_matrix = Matrix44()
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, SpatialFilter)
         # immutable data
         entity._boundary_vertices = self._boundary_vertices

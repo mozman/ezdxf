@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Callable, Optional
+from typing_extensions import Self
 
 from ezdxf.entities import factory, DXFGraphic, SeqEnd, DXFEntity
 from ezdxf.lldxf import const
@@ -31,7 +32,7 @@ class LinkedEntities(DXFGraphic):
         self._sub_entities: list[DXFGraphic] = []
         self.seqend: Optional[SeqEnd] = None
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy all sub-entities ands SEQEND. (internal API)"""
         assert isinstance(entity, LinkedEntities)
         entity._sub_entities = [

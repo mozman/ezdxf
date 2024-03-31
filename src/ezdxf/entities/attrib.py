@@ -218,7 +218,7 @@ class BaseAttrib(Text):
         self._xrecord: Optional[Tags] = None
         self._embedded_mtext: Optional[EmbeddedMText] = None
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy entity data, xrecord data and embedded MTEXT are not stored
         in the entity database.
         """

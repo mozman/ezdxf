@@ -103,7 +103,7 @@ class LWPolyline(DXFGraphic):
         super().__init__()
         self.lwpoints = LWPolylinePoints()
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy lwpoints."""
         assert isinstance(entity, LWPolyline)
         entity.lwpoints = copy.deepcopy(self.lwpoints)

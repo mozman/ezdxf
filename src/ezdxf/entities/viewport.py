@@ -2,6 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional
+from typing_extensions import Self
 import math
 from ezdxf.lldxf import validator
 from ezdxf.lldxf import const
@@ -265,7 +266,7 @@ class Viewport(DXFGraphic):
         super().__init__()
         self._frozen_layers: list[str] = []
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Viewport)
         entity._frozen_layers = list(self._frozen_layers)
 

@@ -8,6 +8,7 @@ from typing import (
     Sequence,
     Optional,
 )
+from typing_extensions import Self
 from copy import deepcopy
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -162,7 +163,7 @@ class Linetype(DXFEntity):
         super().__init__()
         self.pattern_tags = LinetypePattern(Tags())
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy pattern_tags."""
         assert isinstance(entity, Linetype)
         entity.pattern_tags = deepcopy(self.pattern_tags)

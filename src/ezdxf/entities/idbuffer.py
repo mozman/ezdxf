@@ -2,6 +2,7 @@
 # License: MIT-License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from typing_extensions import Self
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXFStructureError
 from ezdxf.lldxf.attributes import (
     DXFAttributes,
@@ -35,7 +36,7 @@ class IDBuffer(DXFObject):
         super().__init__()
         self.handles: list[str] = []
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy handles"""
         assert isinstance(entity, IDBuffer)
         entity.handles = list(self.handles)
