@@ -1,8 +1,7 @@
-#  Copyright (c) 2022, Manfred Moitzi
+#  Copyright (c) 2022-2024, Manfred Moitzi
 #  License: MIT License
 
 import pytest
-import ezdxf
 from ezdxf.acis.api import load, export_sat, export_sab, ExportError
 from ezdxf.acis import sat, sab, entities, hdr, const, mesh
 from ezdxf.math import Matrix44

@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019 Manfred Moitzi
+# Copyright (c) 2018-2024 Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.math import Matrix44
