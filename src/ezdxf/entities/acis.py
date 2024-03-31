@@ -3,6 +3,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Union, Optional, Sequence
 from typing_extensions import Self
+import logging
 
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -11,13 +12,7 @@ from ezdxf.lldxf.attributes import (
     XType,
     group_code_mapping,
 )
-from ezdxf.lldxf.const import (
-    SUBCLASS_MARKER,
-    DXF2000,
-    DXF2004,
-    DXF2013,
-    DXFStructureError,
-)
+from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.math import Matrix44
 from ezdxf.tools import crypt, guid
@@ -29,6 +24,7 @@ from .copy import default_copy
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
+    from ezdxf import xref
 
 
 __all__ = [
@@ -42,12 +38,13 @@ __all__ = [
     "SweptSurface",
 ]
 
+logger = logging.getLogger("ezdxf")
 acdb_modeler_geometry = DefSubclass(
     "AcDbModelerGeometry",
     {
         "version": DXFAttr(70, default=1),
-        "flags": DXFAttr(290, dxfversion=DXF2013),
-        "uid": DXFAttr(2, dxfversion=DXF2013),
+        "flags": DXFAttr(290, dxfversion=const.DXF2013),
+        "uid": DXFAttr(2, dxfversion=const.DXF2013),
     },
 )
 acdb_modeler_geometry_group_codes = group_code_mapping(acdb_modeler_geometry)
@@ -83,7 +80,7 @@ class Body(DXFGraphic):
 
     DXFTYPE = "BODY"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_modeler_geometry)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+    MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
 
     def __init__(self) -> None:
         super().__init__()
@@ -133,16 +130,50 @@ class Body(DXFGraphic):
         ``False`` if the entity contains :term:`SAT` data.
         """
         if self.doc:
-            return self.doc.dxfversion >= DXF2013
+            return self.doc.dxfversion >= const.DXF2013
         else:
             return False
 
     def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Body)
-        entity._sat = self._sat
-        entity._sab = self._sab
-        entity._update = True
+        entity.sat = self.sat
+        entity.sab = self.sab  # load SAB on demand
         entity.dxf.uid = guid()
+
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
+        """Translate resources from self to the copied entity."""
+        super().map_resources(clone, mapping)
+        clone.convert_acis_data()
+
+    def convert_acis_data(self) -> None:
+        if self.doc is None:
+            return
+        msg = ""
+        dxfversion = self.doc.dxfversion
+        if dxfversion < const.DXF2013:
+            if self._sab:
+                self._sab = b""
+                msg = "DXF version mismatch, can't convert ACIS data from SAB to SAT, SAB data removed."
+        else:
+            if self._sat:
+                self._sat = tuple()
+                msg = "DXF version mismatch, can't convert ACIS data from SAT to SAB, SAT data removed."
+        if msg:
+            logger.info(msg)
+
+    def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
+        msg = ""
+        if tagwriter.dxfversion < const.DXF2013:
+            valid = len(self.sat) > 0
+            if not valid:
+                msg = f"{str(self)} doesn't have SAT data, skipping DXF export"
+        else:
+            valid = len(self.sab) > 0
+            if not valid:
+                msg = f"{str(self)} doesn't have SAB data, skipping DXF export"
+        if not valid:
+            logger.info(msg)
+        return valid
 
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
@@ -165,8 +196,8 @@ class Body(DXFGraphic):
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         super().export_entity(tagwriter)
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_modeler_geometry.name)
-        if tagwriter.dxfversion >= DXF2013:
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_modeler_geometry.name)
+        if tagwriter.dxfversion >= const.DXF2013:
             # ACIS data is stored in the ACDSDATA section as SAB
             if self.doc and self._update:
                 # write back changed SAB data into AcDsDataSection or create
@@ -277,15 +308,15 @@ class Solid3d(Body):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         # AcDbModelerGeometry export is done by parent class
-        if tagwriter.dxfversion > DXF2004:
-            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_3dsolid.name)
+        if tagwriter.dxfversion > const.DXF2004:
+            tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_3dsolid.name)
             self.dxf.export_dxf_attribs(tagwriter, "history_handle")
 
 
 def load_matrix(subclass: Tags, code: int) -> Matrix44:
     values = [tag.value for tag in subclass.find_all(code)]
     if len(values) != 16:
-        raise DXFStructureError("Invalid transformation matrix.")
+        raise const.DXFStructureError("Invalid transformation matrix.")
     return Matrix44(values)
 
 
@@ -327,7 +358,7 @@ class Surface(Body):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         # AcDbModelerGeometry export is done by parent class
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_surface.name)
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_surface.name)
         self.dxf.export_dxf_attribs(tagwriter, ["u_count", "v_count"])
 
 
@@ -418,7 +449,7 @@ class ExtrudedSurface(Surface):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         # AcDbModelerGeometry export is done by parent class
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_extruded_surface.name)
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_extruded_surface.name)
         self.dxf.export_dxf_attribs(tagwriter, ["class_id", "sweep_vector"])
         export_matrix(
             tagwriter,
@@ -523,7 +554,7 @@ class LoftedSurface(Surface):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         # AcDbModelerGeometry export is done by parent class
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_lofted_surface.name)
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_lofted_surface.name)
         export_matrix(
             tagwriter, code=40, matrix=self.transformation_matrix_lofted_entity
         )
@@ -595,7 +626,7 @@ class RevolvedSurface(Surface):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         # AcDbModelerGeometry export is done by parent class
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_revolved_surface.name)
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_revolved_surface.name)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -723,7 +754,7 @@ class SweptSurface(Surface):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         # AcDbModelerGeometry export is done by parent class
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_swept_surface.name)
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_swept_surface.name)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [

@@ -12,7 +12,10 @@ from ezdxf.entities.acis import (
     RevolvedSurface,
     SweptSurface,
 )
+from ezdxf.entities import DXFEntity
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.const import DXF2010
 
 BODY = """0
 BODY
@@ -33,12 +36,22 @@ AcDbModelerGeometry
 
 class MockDoc:
     def __init__(self):
-        self.dxfversion = "AC1024"
+        self.dxfversion = DXF2010
 
 
 @pytest.fixture
 def entity():
     return Body.from_text(BODY, doc=MockDoc())
+
+
+def special_export(entity: DXFEntity, dxfversion=DXF2010):
+    """These ACIS entities do not contain any ACIS data, which the regular export method
+    does not export.
+    """
+    collector = TagCollector(dxfversion=dxfversion)
+    entity.export_base_class(collector)
+    entity.export_entity(collector)
+    return Tags(collector.tags)
 
 
 def test_registered():
@@ -98,16 +111,23 @@ def test_load_from_text(entity):
     assert entity.dxf.version == 1
 
 
+def test_regular_dxf_export_of_empty_acis_entities():
+    entity = Body.from_text(BODY, doc=MockDoc())
+    assert (
+        len(TagCollector.dxftags(entity, DXF2010)) == 0
+    ), "do not export ACIS entities without content"
+
+
 def test_body_write_dxf():
     entity = Body.from_text(BODY, doc=MockDoc())
-    result = TagCollector.dxftags(entity)
+    result = special_export(entity)
     expected = basic_tags_from_text(BODY)
     assert result == expected
 
 
 def test_region_write_dxf():
     entity = Region.from_text(REGION, doc=MockDoc())
-    result = TagCollector.dxftags(entity)
+    result = special_export(entity, dxfversion=DXF2010)
     expected = basic_tags_from_text(REGION)
     assert result == expected
 
@@ -131,7 +151,7 @@ AcDbModelerGeometry
 
 def test_3dsolid_write_dxf():
     entity = Solid3d.from_text(SOLID3D, doc=MockDoc())
-    result = TagCollector.dxftags(entity)
+    result = special_export(entity, dxfversion=DXF2010)
     expected = basic_tags_from_text(SOLID3D)
     assert result == expected
 
@@ -159,7 +179,7 @@ AcDb3dSolid
 
 def test_surface_write_dxf():
     entity = Surface.from_text(SURFACE, doc=MockDoc())
-    result = TagCollector.dxftags(entity)
+    result = special_export(entity, dxfversion=DXF2010)
     expected = basic_tags_from_text(SURFACE)
     assert result == expected
 
@@ -189,7 +209,7 @@ AcDbSurface
 
 def test_extruded_surface_write_dxf():
     entity = ExtrudedSurface.from_text(EXTRUDEDSURFACE, doc=MockDoc())
-    result = TagCollector.dxftags(entity)
+    result = special_export(entity, dxfversion=DXF2010)
     expected = basic_tags_from_text(EXTRUDEDSURFACE)
     assert result == expected
 
@@ -359,7 +379,7 @@ AcDbExtrudedSurface
 
 def test_lofted_surface_write_dxf():
     entity = LoftedSurface.from_text(LOFTEDSURFACE, doc=MockDoc())
-    result = TagCollector.dxftags(entity)
+    result = special_export(entity, dxfversion=DXF2010)
     expected = basic_tags_from_text(LOFTEDSURFACE)
     assert result == expected
 
@@ -449,7 +469,7 @@ AcDbLoftedSurface
 
 def test_revolved_surface_write_dxf():
     entity = RevolvedSurface.from_text(REVOLVEDSURFACE, doc=MockDoc())
-    result = TagCollector.dxftags(entity)
+    result = special_export(entity, dxfversion=DXF2010)
     expected = basic_tags_from_text(REVOLVEDSURFACE)
     assert result == expected
 
@@ -543,7 +563,7 @@ AcDbRevolvedSurface
 
 def test_swept_surface_write_dxf():
     entity = SweptSurface.from_text(SWEPTSURFACE, doc=MockDoc())
-    result = TagCollector.dxftags(entity)
+    result = special_export(entity, dxfversion=DXF2010)
     expected = basic_tags_from_text(SWEPTSURFACE)
     assert result == expected
 
@@ -737,3 +757,6 @@ AcDbSweptSurface
 31
 0.0
 """
+
+if __name__ == "__main__":
+    pytest.main([__file__])
