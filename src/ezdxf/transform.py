@@ -1,11 +1,19 @@
-#  Copyright (c) 2023, Manfred Moitzi
+#  Copyright (c) 2023-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Iterator, NamedTuple, Optional, Tuple, List
+from typing import (
+    Iterable,
+    Iterator,
+    NamedTuple,
+    Optional,
+    Tuple,
+    List,
+    TYPE_CHECKING,
+    Sequence,
+)
 import enum
+import logging
 
-
-from ezdxf import const
 from ezdxf.math import (
     Matrix44,
     UVec,
@@ -13,9 +21,37 @@ from ezdxf.math import (
     NonUniformScalingError,
     InsertTransformationError,
 )
-from ezdxf.entities import DXFEntity, DXFGraphic, Circle, LWPolyline, Polyline, Ellipse
+from ezdxf.entities import (
+    DXFEntity,
+    DXFGraphic,
+    Circle,
+    LWPolyline,
+    Polyline,
+    Ellipse,
+    is_graphic_entity,
+)
 from ezdxf.entities.copy import default_copy, CopyNotSupported
+
+if TYPE_CHECKING:
+    from ezdxf.layouts import BlockLayout
+
+__all__ = [
+    "Logger",
+    "Error",
+    "inplace",
+    "copies",
+    "translate",
+    "scale_uniform",
+    "scale",
+    "x_rotate",
+    "y_rotate",
+    "z_rotate",
+    "axis_rotate",
+    "transform_entity_by_blockref",
+    "transform_entities_by_blockref",
+]
 MIN_SCALING_FACTOR = 1e-12
+logger = logging.getLogger("ezdxf")
 
 
 class Error(enum.Enum):
@@ -301,3 +337,53 @@ def axis_rotate(entities: Iterable[DXFEntity], axis: UVec, angle: float) -> Logg
     if not v.is_null:
         return _inplace(entities, m=Matrix44.axis_rotate(v, a))
     return Logger()
+
+
+def transform_entity_by_blockref(entity: DXFEntity, m: Matrix44) -> bool:
+    """Apply a transformation by moving an entity into a block and replacing the entity
+    by a block reference with the applied transformation.
+    """
+    return _transform_by_blockref([entity], m) is not None
+
+
+def transform_entities_by_blockref(
+    entities: Iterable[DXFEntity], m: Matrix44
+) -> BlockLayout | None:
+    """Apply a transformation by moving entities into a block and replacing the entities
+    by a block reference with the applied transformation.
+    """
+    return _transform_by_blockref(list(entities), m)
+
+
+def _transform_by_blockref(
+    entities: Sequence[DXFEntity], m: Matrix44
+) -> BlockLayout | None:
+    if len(entities) == 0:
+        return None
+
+    first_entity = entities[0]
+    if not is_graphic_entity(first_entity):
+        return None
+
+    doc = first_entity.doc
+    if doc is None:
+        return None
+
+    layout = first_entity.get_layout()
+    if layout is None:
+        return None
+
+    block = doc.blocks.new_anonymous_block()
+    insert = layout.add_blockref(block.name, (0, 0, 0))
+    try:
+        insert.transform(m)
+    except InsertTransformationError:
+        logger.warning(f"cannot apply invalid transformation")
+        layout.delete_entity(insert)
+        doc.blocks.delete_block(block.name, safe=False)
+        return None
+
+    for e in entities:
+        if is_graphic_entity(e):
+            layout.move_to_layout(e, block)
+    return block
