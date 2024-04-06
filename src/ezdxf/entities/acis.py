@@ -89,6 +89,7 @@ class Body(DXFGraphic):
         self._sat: Sequence[str] = tuple()
         self._sab: bytes = b""
         self._update = False
+        self._temp_transform: None | Matrix44 = None
 
     @property
     def acis_data(self) -> Union[bytes, Sequence[str]]:
@@ -237,6 +238,26 @@ class Body(DXFGraphic):
 
     def transform(self, m: Matrix44) -> Self:
         raise NotImplementedError("cannot transform ACIS entities")
+
+    def get_temporary_transformation(self) -> Matrix44 | None:
+        return self._temp_transform
+
+    def add_temporary_transformation(self, m: Matrix44) -> None:
+        if self._temp_transform is not None:
+            m = self._temp_transform @ m
+        self._temp_transform = m
+
+    def apply_temporary_transformation(self) -> bool:
+        from ezdxf.transform import transform_entity_by_blockref
+
+        m = self._temp_transform
+        if m is None:
+            return False
+        
+        if transform_entity_by_blockref(self, m):
+            self._temp_transform = None
+            return True
+        return False
 
 
 def tags2textlines(tags: Iterable) -> Iterable[str]:
