@@ -93,8 +93,11 @@ class SupportsTemporaryTransformation(Protocol):
     def get_temporary_transformation(self) -> Matrix44 | None:
         """Returns the temporary transformation matrix."""
 
+    def set_temporary_transformation(self, m: Matrix44 | None) -> None:
+        """Set or remove a temporary transformation."""
+
     def add_temporary_transformation(self, m: Matrix44) -> None:
-        """add an additional temporary transformation."""
+        """Add an additional temporary transformation."""
 
     def apply_temporary_transformation(self) -> bool:
         """Apply the temporary transformation matrix."""

@@ -26,7 +26,7 @@ def test_supports_temporary_transform(body: Body):
 
 def test_add_and_get_transform(body: Body):
     m = Matrix44.translate(10, 20, 30)
-    body.add_temporary_transformation(m)
+    body.set_temporary_transformation(m)
 
     m2 = body.get_temporary_transformation()
     assert isinstance(m2, Matrix44)
@@ -37,7 +37,7 @@ def test_add_and_get_transform(body: Body):
 
 def test_apply_temp_transform(body: Body, msp: Modelspace):
     m = Matrix44.translate(10, 20, 30)
-    body.add_temporary_transformation(m)
+    body.set_temporary_transformation(m)
     done = body.apply_temporary_transformation()
     assert done is True
 

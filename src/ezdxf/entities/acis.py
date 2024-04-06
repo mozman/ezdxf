@@ -242,20 +242,24 @@ class Body(DXFGraphic):
     def get_temporary_transformation(self) -> Matrix44 | None:
         return self._temp_transform
 
-    def add_temporary_transformation(self, m: Matrix44) -> None:
-        if self._temp_transform is not None:
-            m = self._temp_transform @ m
+    def set_temporary_transformation(self, m: Matrix44 | None) -> None:
         self._temp_transform = m
+
+    def add_temporary_transformation(self, m: Matrix44) -> None:
+        transform = self.get_temporary_transformation()
+        if transform is not None:
+            m = transform @ m
+        self.set_temporary_transformation(m)
 
     def apply_temporary_transformation(self) -> bool:
         from ezdxf.transform import transform_entity_by_blockref
 
-        m = self._temp_transform
+        m = self.get_temporary_transformation()
         if m is None:
             return False
-        
+
         if transform_entity_by_blockref(self, m):
-            self._temp_transform = None
+            self.set_temporary_transformation(None)
             return True
         return False
 
