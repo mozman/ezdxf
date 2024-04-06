@@ -2,7 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Iterable, Any
-from typing_extensions import Self
+from typing_extensions import Self, TypeGuard
 
 from ezdxf.entities import factory
 from ezdxf import options
@@ -703,7 +703,7 @@ def replace_entity(source: DXFGraphic, target: DXFGraphic, layout: BaseLayout) -
         source.destroy()
 
 
-def is_graphic_entity(entity: DXFEntity) -> bool:
+def is_graphic_entity(entity: DXFEntity) -> TypeGuard[DXFGraphic]:
     """Returns ``True`` if the `entity` has a graphical representations and
     can reside in the model space, a paper space or a block layout,
     otherwise the entity is a table or class entry or a DXF object from the
