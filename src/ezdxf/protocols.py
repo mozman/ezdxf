@@ -1,8 +1,8 @@
-#  Copyright (c) 2021-2023, Manfred Moitzi
+#  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator, Iterable
-from typing_extensions import Protocol, runtime_checkable
+from typing_extensions import Protocol, runtime_checkable, TypeGuard
 from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
@@ -38,8 +38,7 @@ class SupportsVirtualEntities(Protocol):
 
     """
 
-    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
-        ...
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]: ...
 
 
 def virtual_entities(entity: SupportsVirtualEntities) -> Iterator[DXFGraphic]:
@@ -88,3 +87,14 @@ class SupportsBoundingBox(Protocol):
         """Returns the bounding box of an object."""
         ...
 
+
+@runtime_checkable
+class SupportsTemporaryTransformation(Protocol):
+    def get_temporary_transformation(self) -> Matrix44 | None:
+        """Returns the temporary transformation matrix."""
+
+    def add_temporary_transformation(self, m: Matrix44) -> None:
+        """add an additional temporary transformation."""
+
+    def apply_temporary_transformation(self) -> bool:
+        """Apply the temporary transformation matrix."""
