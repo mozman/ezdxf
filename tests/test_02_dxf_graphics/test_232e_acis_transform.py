@@ -57,5 +57,19 @@ def test_apply_temp_transform(body: Body, msp: Modelspace):
     assert block[0] is body
 
 
+def test_transform_and_copy(body: Body):
+    m = Matrix44.translate(10, 20, 30)
+    tt = body.temporary_transformation()
+    tt.set_matrix(m)
+
+    copy = body.copy()
+    tt2 = copy.temporary_transformation()
+    m2 = tt2.get_matrix()
+    assert isinstance(m2, Matrix44)
+
+    v = Vec3(1, 1, 1)
+    assert m.transform(v).isclose(m2.transform(v))
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -21,10 +21,10 @@ from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .copy import default_copy
-from .temporary_transform import TemporaryTransformation
+from .temporary_transform import TransformByBlockReference
 
 if TYPE_CHECKING:
-    from ezdxf.entities import DXFNamespace, DXFEntity
+    from ezdxf.entities import DXFNamespace
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf import xref
 
@@ -76,21 +76,6 @@ acdb_modeler_geometry_group_codes = group_code_mapping(acdb_modeler_geometry)
 # 414349532042696E61727946696C6...
 
 
-class _TransformByBlockReference(TemporaryTransformation):
-    def apply_transformation(self, entity: DXFEntity) -> bool:
-        from ezdxf.transform import transform_entity_by_blockref
-
-        m = self.get_matrix()
-        if m is None:
-            return False
-
-        assert isinstance(entity, Body)
-        if transform_entity_by_blockref(entity, m):
-            self.set_matrix(None)
-            return True
-        return False
-
-
 @register_entity
 class Body(DXFGraphic):
     """DXF BODY entity - container entity for embedded ACIS data."""
@@ -106,7 +91,7 @@ class Body(DXFGraphic):
         self._sat: Sequence[str] = tuple()
         self._sab: bytes = b""
         self._update = False
-        self._temporary_transformation = _TransformByBlockReference()
+        self._temporary_transformation = TransformByBlockReference()
 
     @property
     def acis_data(self) -> Union[bytes, Sequence[str]]:
@@ -157,6 +142,7 @@ class Body(DXFGraphic):
         entity.sat = self.sat
         entity.sab = self.sab  # load SAB on demand
         entity.dxf.uid = guid()
+        entity._temporary_transformation = self._temporary_transformation
 
     def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
@@ -259,7 +245,7 @@ class Body(DXFGraphic):
         self._temporary_transformation.add_matrix(m)
         return self
 
-    def temporary_transformation(self) -> TemporaryTransformation:
+    def temporary_transformation(self) -> TransformByBlockReference:
         return self._temporary_transformation
 
 

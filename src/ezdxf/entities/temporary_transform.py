@@ -8,6 +8,8 @@ if TYPE_CHECKING:
     from ezdxf.math import Matrix44
     from ezdxf.entities.dxfgfx import DXFEntity
 
+__all__ = ["TemporaryTransformation", "TransformByBlockReference"]
+
 
 class TemporaryTransformation:
     _matrix: Matrix44 | None = None
@@ -26,3 +28,17 @@ class TemporaryTransformation:
 
     @abc.abstractmethod
     def apply_transformation(self, entity: DXFEntity) -> bool: ...
+
+
+class TransformByBlockReference(TemporaryTransformation):
+    def apply_transformation(self, entity: DXFEntity) -> bool:
+        from ezdxf.transform import transform_entity_by_blockref
+
+        m = self.get_matrix()
+        if m is None:
+            return False
+
+        if transform_entity_by_blockref(entity, m):
+            self.set_matrix(None)
+            return True
+        return False
