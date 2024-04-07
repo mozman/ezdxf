@@ -16,10 +16,12 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.math import Matrix44
 from ezdxf.tools import crypt, guid
+
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .copy import default_copy
+from .temporary_transform import TemporaryTransformation
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFNamespace
@@ -73,6 +75,20 @@ acdb_modeler_geometry_group_codes = group_code_mapping(acdb_modeler_geometry)
 # 310
 # 414349532042696E61727946696C6...
 
+class _TempTransform(TemporaryTransformation):
+    def apply_transformation(self, entity: DXFGraphic) -> bool:
+        from ezdxf.transform import transform_entity_by_blockref
+
+        m = self.get_matrix()
+        if m is None:
+            return False
+        
+        assert isinstance(entity, Body)
+        if transform_entity_by_blockref(entity, m):
+            self.set_matrix(None)
+            return True
+        return False
+
 
 @register_entity
 class Body(DXFGraphic):
@@ -89,7 +105,7 @@ class Body(DXFGraphic):
         self._sat: Sequence[str] = tuple()
         self._sab: bytes = b""
         self._update = False
-        self._temp_transform: None | Matrix44 = None
+        self._temporary_transformation = _TempTransform()
 
     @property
     def acis_data(self) -> Union[bytes, Sequence[str]]:
@@ -239,29 +255,8 @@ class Body(DXFGraphic):
     def transform(self, m: Matrix44) -> Self:
         raise NotImplementedError("cannot transform ACIS entities")
 
-    def get_temporary_transformation(self) -> Matrix44 | None:
-        return self._temp_transform
-
-    def set_temporary_transformation(self, m: Matrix44 | None) -> None:
-        self._temp_transform = m
-
-    def add_temporary_transformation(self, m: Matrix44) -> None:
-        transform = self.get_temporary_transformation()
-        if transform is not None:
-            m = transform @ m
-        self.set_temporary_transformation(m)
-
-    def apply_temporary_transformation(self) -> bool:
-        from ezdxf.transform import transform_entity_by_blockref
-
-        m = self.get_temporary_transformation()
-        if m is None:
-            return False
-
-        if transform_entity_by_blockref(self, m):
-            self.set_temporary_transformation(None)
-            return True
-        return False
+    def temporary_transformation(self) -> TemporaryTransformation:
+        return self._temporary_transformation
 
 
 def tags2textlines(tags: Iterable) -> Iterable[str]:

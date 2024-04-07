@@ -26,9 +26,11 @@ def test_supports_temporary_transform(body: Body):
 
 def test_add_and_get_transform(body: Body):
     m = Matrix44.translate(10, 20, 30)
-    body.set_temporary_transformation(m)
+    tt = body.temporary_transformation()
+    tt.set_matrix(m)
 
-    m2 = body.get_temporary_transformation()
+    tt2 = body.temporary_transformation()
+    m2 = tt2.get_matrix()
     assert isinstance(m2, Matrix44)
 
     v = Vec3(1, 1, 1)
@@ -37,8 +39,10 @@ def test_add_and_get_transform(body: Body):
 
 def test_apply_temp_transform(body: Body, msp: Modelspace):
     m = Matrix44.translate(10, 20, 30)
-    body.set_temporary_transformation(m)
-    done = body.apply_temporary_transformation()
+    tt = body.temporary_transformation()
+    tt.set_matrix(m)
+
+    done = tt.apply_transformation(body)
     assert done is True
 
     # BODY was replaced by a block reference to an anonymous block

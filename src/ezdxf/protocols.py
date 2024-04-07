@@ -2,11 +2,12 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator, Iterable
-from typing_extensions import Protocol, runtime_checkable, TypeGuard
+from typing_extensions import Protocol, runtime_checkable
 from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFGraphic, DXFEntity
+    from ezdxf.entities.temporary_transform import TemporaryTransformation
     from ezdxf.math import Matrix44, AbstractBoundingBox
 
 
@@ -16,11 +17,12 @@ if TYPE_CHECKING:
 # - INSERT
 # - DIMENSION
 # - LEADER
+# - MLEADER
 # - MLINE
 # - ProxyGraphic
 # - DXFGraphicProxy (drawing add-on)
-#
-# TODO: MLEADER, virtual_entities() not implemented yet
+# - DXFTagStorage
+# - ACAD_TABLE (table content loader)
 
 
 @runtime_checkable
@@ -60,13 +62,11 @@ class ReferencedBlocks(Protocol):
         """Returns the handles to the BLOCK_RECORD entities for all BLOCK
         definitions used by an entity.
         """
-        ...
 
 
 class SupportsTransform(Protocol):
     def transform(self, m: Matrix44) -> DXFGraphic:
         """Raises NotImplementedError() if transformation is not supported."""
-        ...
 
 
 _EMPTY_TUPLE: tuple = tuple()
@@ -83,21 +83,9 @@ def referenced_blocks(entity: DXFEntity) -> Iterable[str]:
 
 
 class SupportsBoundingBox(Protocol):
-    def bbox(self) -> AbstractBoundingBox:
-        """Returns the bounding box of an object."""
-        ...
+    def bbox(self) -> AbstractBoundingBox: ...
 
 
 @runtime_checkable
 class SupportsTemporaryTransformation(Protocol):
-    def get_temporary_transformation(self) -> Matrix44 | None:
-        """Returns the temporary transformation matrix."""
-
-    def set_temporary_transformation(self, m: Matrix44 | None) -> None:
-        """Set or remove a temporary transformation."""
-
-    def add_temporary_transformation(self, m: Matrix44) -> None:
-        """Add an additional temporary transformation."""
-
-    def apply_temporary_transformation(self) -> bool:
-        """Apply the temporary transformation matrix."""
+    def temporary_transformation(self) -> TemporaryTransformation: ...
