@@ -31,6 +31,8 @@ from ezdxf.entities import (
     is_graphic_entity,
 )
 from ezdxf.entities.copy import default_copy, CopyNotSupported
+from ezdxf.protocols import SupportsTemporaryTransformation
+from ezdxf.document import Drawing
 
 if TYPE_CHECKING:
     from ezdxf.layouts import BlockLayout
@@ -387,3 +389,10 @@ def _transform_by_blockref(
         if is_graphic_entity(e):
             layout.move_to_layout(e, block)
     return block
+
+
+def apply_temporary_transformations(entities: Iterable[DXFEntity]) -> None:
+    for entity in entities:
+        if isinstance(entity, SupportsTemporaryTransformation):
+            tt = entity.temporary_transformation()
+            tt.apply_transformation(entity)

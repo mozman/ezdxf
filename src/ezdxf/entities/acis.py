@@ -24,7 +24,7 @@ from .copy import default_copy
 from .temporary_transform import TemporaryTransformation
 
 if TYPE_CHECKING:
-    from ezdxf.entities import DXFNamespace
+    from ezdxf.entities import DXFNamespace, DXFEntity
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf import xref
 
@@ -75,14 +75,15 @@ acdb_modeler_geometry_group_codes = group_code_mapping(acdb_modeler_geometry)
 # 310
 # 414349532042696E61727946696C6...
 
-class _TempTransform(TemporaryTransformation):
-    def apply_transformation(self, entity: DXFGraphic) -> bool:
+
+class _TransformByBlockReference(TemporaryTransformation):
+    def apply_transformation(self, entity: DXFEntity) -> bool:
         from ezdxf.transform import transform_entity_by_blockref
 
         m = self.get_matrix()
         if m is None:
             return False
-        
+
         assert isinstance(entity, Body)
         if transform_entity_by_blockref(entity, m):
             self.set_matrix(None)
@@ -105,7 +106,7 @@ class Body(DXFGraphic):
         self._sat: Sequence[str] = tuple()
         self._sab: bytes = b""
         self._update = False
-        self._temporary_transformation = _TempTransform()
+        self._temporary_transformation = _TransformByBlockReference()
 
     @property
     def acis_data(self) -> Union[bytes, Sequence[str]]:
@@ -190,6 +191,8 @@ class Body(DXFGraphic):
                 msg = f"{str(self)} doesn't have SAB data, skipping DXF export"
         if not valid:
             logger.info(msg)
+        if valid and self._temporary_transformation.get_matrix() is not None:
+            logger.warning(f"{str(self)} has unapplied temporary transformations.")
         return valid
 
     def load_dxf_attribs(
@@ -253,7 +256,8 @@ class Body(DXFGraphic):
         super().destroy()
 
     def transform(self, m: Matrix44) -> Self:
-        raise NotImplementedError("cannot transform ACIS entities")
+        self._temporary_transformation.add_matrix(m)
+        return self
 
     def temporary_transformation(self) -> TemporaryTransformation:
         return self._temporary_transformation

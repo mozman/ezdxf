@@ -15,6 +15,12 @@ id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 	- NEW: `ezdxf.revcloud` module to render revision clouds similar to the `REVCLOUD` command in CAD applications
 	- NEW: `ezdxf.select` module for location based entity selection
 	- NEW: support for copying of [[ACIS]] based entities, this adds support for loading these entities by the `xref` module
+	- NEW: support for transformation of [[ACIS]] based entities
+		- the transformation is stored as temporary transformation and has to be applied before export, otherwise a warning will be logged
+		- the applied transformation is a transformed anonymous block that contains that [[ACIS]] entity
+	- NEW: option `ezdxf.option.auto_apply_temporary_transformations` will apply temporary transformations automatically before DXF export and is ``False`` by default, because this adds processing overhead for every entitiy and is not the common usecase.
+	- NEW: method `ezdxf.document.Drawing.apply_temporary_transformations()`
+	- NEW: function `ezdxf.transform.apply_temporary_transformations()`
 	- CHANGE: class `RenderContext` accepts ctb files as instances of `acadctb.ColorDependentPlotStyles`
 	- CHANGE: replaced the `Designer` class of the `drawing` add-on by a render pipeline with separated render stages
 	- CHANGE: better support for viewports with curved clipping paths for the `drawing` add-on

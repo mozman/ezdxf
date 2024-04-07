@@ -6,7 +6,7 @@ import abc
 
 if TYPE_CHECKING:
     from ezdxf.math import Matrix44
-    from ezdxf.entities.dxfgfx import DXFGraphic
+    from ezdxf.entities.dxfgfx import DXFEntity
 
 
 class TemporaryTransformation:
@@ -25,4 +25,4 @@ class TemporaryTransformation:
         self.set_matrix(m)
 
     @abc.abstractmethod
-    def apply_transformation(self, entity: DXFGraphic) -> bool: ...
+    def apply_transformation(self, entity: DXFEntity) -> bool: ...

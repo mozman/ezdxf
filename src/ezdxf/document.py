@@ -12,7 +12,7 @@ from typing import (
     cast,
     Optional,
     Sequence,
-    Any
+    Any,
 )
 import abc
 import base64
@@ -52,6 +52,7 @@ from ezdxf.lldxf.tagwriter import (
     JSONTagWriter,
 )
 from ezdxf.query import EntityQuery
+from ezdxf.protocols import SupportsTemporaryTransformation
 from ezdxf.render.dimension import DimensionRenderer
 from ezdxf.sections.acdsdata import AcDsDataSection, new_acds_data_section
 from ezdxf.sections.blocks import BlocksSection
@@ -585,6 +586,9 @@ class Drawing:
             fmt: "asc" for ASCII DXF (default) or "bin" for binary DXF
 
         """
+        if ezdxf.options.auto_apply_temporary_transformations:
+            self.apply_temporary_transformations()
+            
         dxfversion = self.dxfversion
         if dxfversion == DXF12:
             handles = bool(self.header.get("$HANDLING", 0))
@@ -1173,6 +1177,13 @@ class Drawing:
         self.header.reset_wcs()
         return vport
 
+    def apply_temporary_transformations(self) -> None:
+        """Apply temporary transformations to all entities in this drawing."""
+        for entity in self.entitydb.values():
+            if isinstance(entity, SupportsTemporaryTransformation):
+                tt = entity.temporary_transformation()
+                tt.apply_transformation(entity)
+
 
 class MetaData(abc.ABC):
     """Manage ezdxf meta-data by dict-like interface. Values are limited to
@@ -1436,13 +1447,13 @@ def custom_export(doc: Drawing, tagwriter: AbstractTagWriter):
 
 def export_json_tags(doc: Drawing, compact=True) -> str:
     """Export a DXF document as JSON formatted tags.
-    
-    The `compact` format is a list of ``[group-code, value]`` pairs where each pair is 
-    a DXF tag. The group-code has to be an integer and the value has to be a string, 
-    integer, float or list of floats for vertices. 
 
-    The `verbose` format (`compact` is ``False``) is a list of ``[group-code, value]`` 
-    pairs where each pair is a 1:1 representation of a DXF tag. The group-code has to be 
+    The `compact` format is a list of ``[group-code, value]`` pairs where each pair is
+    a DXF tag. The group-code has to be an integer and the value has to be a string,
+    integer, float or list of floats for vertices.
+
+    The `verbose` format (`compact` is ``False``) is a list of ``[group-code, value]``
+    pairs where each pair is a 1:1 representation of a DXF tag. The group-code has to be
     an integer and the value has to be a string.
 
     """
@@ -1454,9 +1465,9 @@ def export_json_tags(doc: Drawing, compact=True) -> str:
 
 def load_json_tags(data: Sequence[Any]) -> Drawing:
     """Load DXF document from JSON formatted tags.
-    
-    The expected JSON format is a list of [group-code, value] pairs where each pair is 
-    a DXF tag. The `compact` and the `verbose` format is supported. 
+
+    The expected JSON format is a list of [group-code, value] pairs where each pair is
+    a DXF tag. The `compact` and the `verbose` format is supported.
 
     Args:
         data: JSON data structure as a sequence of [group-code, value] pairs

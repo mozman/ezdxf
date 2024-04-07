@@ -58,12 +58,21 @@ class TestInplaceMethod:
         assert log[0].error == transform.Error.TRANSFORMATION_NOT_SUPPORTED
 
     def test_acis_entities(self):
-        # ACIS entities do not have transformation support yet, but maybe in the future!
+        # new in v1.3.0: ACIS entities support a temporary transformation
+        #
+        # This way a temporary transformation of ACIS entities is stored by ezdxf.
+        # This temp. transformation has to be applied before export otherwise a warning 
+        # will be logged.
+
         msp = VirtualLayout()
-        msp.add_body()  # ACIS entity
-        m = transform.Matrix44.translate(1, 0, 0)
+        body = msp.add_body()  # ACIS entity
+        m = transform.Matrix44.translate(1, 2, 3)
         log = transform.inplace(msp, m)
-        assert log[0].error == transform.Error.TRANSFORMATION_NOT_SUPPORTED
+        assert len(log) == 0
+
+        m2 = body.temporary_transformation().get_matrix()
+        v = (3, 2, 1)
+        assert m.transform(v).isclose(m2.transform(v))
 
 
 class TestConvenientFunctions:
