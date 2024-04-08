@@ -12,7 +12,10 @@ __all__ = ["TemporaryTransformation", "TransformByBlockReference"]
 
 
 class TemporaryTransformation:
-    _matrix: Matrix44 | None = None
+    __slots__ = ("_matrix",)
+
+    def __init__(self) -> None:
+        self._matrix: Matrix44 | None = None
 
     def get_matrix(self) -> Matrix44 | None:
         return self._matrix
@@ -31,6 +34,8 @@ class TemporaryTransformation:
 
 
 class TransformByBlockReference(TemporaryTransformation):
+    __slots__ = ("_matrix",)
+
     def apply_transformation(self, entity: DXFEntity) -> bool:
         from ezdxf.transform import transform_entity_by_blockref
 
