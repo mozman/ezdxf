@@ -586,9 +586,8 @@ class Drawing:
             fmt: "asc" for ASCII DXF (default) or "bin" for binary DXF
 
         """
-        if ezdxf.options.auto_apply_temporary_transformations:
-            self.apply_temporary_transformations()
-            
+        self.commit_pending_changes()
+
         dxfversion = self.dxfversion
         if dxfversion == DXF12:
             handles = bool(self.header.get("$HANDLING", 0))
@@ -1176,6 +1175,10 @@ class Drawing:
         vport.reset_wcs()
         self.header.reset_wcs()
         return vport
+
+    def commit_pending_changes(self) -> None:
+        """Commit all pending changes."""
+        self.apply_temporary_transformations()
 
     def apply_temporary_transformations(self) -> None:
         """Apply temporary transformations to all entities in this drawing."""

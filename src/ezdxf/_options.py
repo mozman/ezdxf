@@ -27,7 +27,7 @@ ODAFC_ADDON = "odafc-addon"
 OPENSCAD_ADDON = "openscad-addon"
 DRAWING_ADDON = "drawing-addon"
 DIR_SEPARATOR = "\n"
-AUTO_APPLY_TEMPORARAY_TRANSFORMATIONS = "AUTO_APPLY_TEMPORARAY_TRANSFORMATIONS"
+
 
 def xdg_path(xdg_var: str, directory: str) -> Path:
     xdg_home = os.environ.get(xdg_var)
@@ -64,7 +64,6 @@ def default_config() -> ConfigParser:
         "FILTER_INVALID_XDATA_GROUP_CODES": "true",
         "WRITE_FIXED_META_DATA_FOR_TESTING": "false",
         "DISABLE_C_EXT": "false",
-        AUTO_APPLY_TEMPORARAY_TRANSFORMATIONS: "false",
     }
     config[BROWSE_COMMAND] = {
         "TEXT_EDITOR": r'"C:\Program Files\Notepad++\notepad++.exe" '
@@ -280,14 +279,6 @@ class Options:
     def use_c_ext(self) -> bool:
         """Returns ``True`` if the C-extensions are in use."""
         return self._use_c_ext
-    
-    @property
-    def auto_apply_temporary_transformations(self) -> bool:
-        return self.get_bool(CORE, AUTO_APPLY_TEMPORARAY_TRANSFORMATIONS)
-
-    @auto_apply_temporary_transformations.setter
-    def auto_apply_temporary_transformations(self, state:bool) -> None:
-        self.set(CORE, AUTO_APPLY_TEMPORARAY_TRANSFORMATIONS, boolstr(state))
 
     def preserve_proxy_graphics(self, state: bool = True) -> None:
         """Enable/disable proxy graphic load/store support."""
