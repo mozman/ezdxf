@@ -620,6 +620,13 @@ class DXFEntity:
         del self.doc
         del self.dxf  # check mark for is_alive
 
+    def commit_pending_changes(self) -> None:
+        """Commit all unapplied changes like temporary transformations of ACIS entities.
+
+        (internal API)
+        """
+        pass
+
     def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         """Pre requirement check and pre-processing for export.
 

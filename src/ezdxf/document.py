@@ -586,6 +586,9 @@ class Drawing:
             fmt: "asc" for ASCII DXF (default) or "bin" for binary DXF
 
         """
+        # These changes may alter the document content (create new entities, blocks ...) 
+        # and have to be done before the export and the update of internal structures 
+        # can be done.
         self.commit_pending_changes()
 
         dxfversion = self.dxfversion
@@ -642,6 +645,10 @@ class Drawing:
             section.export_dxf(tagwriter)
 
         tagwriter.write_tag2(0, "EOF")
+
+    def commit_pending_changes(self) -> None:
+        for entity in self.entitydb.values():
+            entity.commit_pending_changes()
 
     def update_all(self) -> None:
         if self.dxfversion > DXF12:
@@ -1175,17 +1182,6 @@ class Drawing:
         vport.reset_wcs()
         self.header.reset_wcs()
         return vport
-
-    def commit_pending_changes(self) -> None:
-        """Commit all pending changes."""
-        self.apply_temporary_transformations()
-
-    def apply_temporary_transformations(self) -> None:
-        """Apply temporary transformations to all entities in this drawing."""
-        for entity in self.entitydb.values():
-            if isinstance(entity, SupportsTemporaryTransformation):
-                tt = entity.temporary_transformation()
-                tt.apply_transformation(entity)
 
 
 class MetaData(abc.ABC):

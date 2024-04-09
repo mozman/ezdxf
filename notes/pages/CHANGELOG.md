@@ -18,7 +18,6 @@ id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 	- NEW: support for transformation of [[ACIS]] based entities
 		- the transformation is stored as temporary transformation and will be applied automatically before export
 		- the applied transformation is a transformed anonymous block that contains that [[ACIS]] entity
-	- NEW: method `ezdxf.document.Drawing.apply_temporary_transformations()`, called automatically before DXF export
 	- NEW: function `ezdxf.transform.apply_temporary_transformations()`
 	- CHANGE: class `RenderContext` accepts ctb files as instances of `acadctb.ColorDependentPlotStyles`
 	- CHANGE: replaced the `Designer` class of the `drawing` add-on by a render pipeline with separated render stages

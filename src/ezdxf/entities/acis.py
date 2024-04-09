@@ -165,6 +165,9 @@ class Body(DXFGraphic):
         if msg:
             logger.info(msg)
 
+    def commit_pending_changes(self) -> None:
+        self._temporary_transformation.apply_transformation(self)
+
     def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         msg = ""
         if tagwriter.dxfversion < const.DXF2013:
