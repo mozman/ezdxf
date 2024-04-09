@@ -223,7 +223,7 @@ class Drawing:
         self._create_required_dimstyles()
 
     def _set_required_layer_attributes(self):
-        for layer in self.layers:  # type: Layer
+        for layer in self.layers:
             layer.set_required_attributes()
 
     def _create_required_vports(self):
