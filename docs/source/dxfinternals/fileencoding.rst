@@ -46,4 +46,4 @@ Encoding characters in the unicode schema ``\U+nnnn`` is still functional.
 
     :ref:`String Value Encoding`
 
-.. _Unicode Table: http://unicode-table.com/en/
+.. _Unicode Table: https://symbl.cc/en/
