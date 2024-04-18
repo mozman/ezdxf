@@ -20,7 +20,7 @@ selection in CAD applications.
 
 The selection functions accept any iterable of DXF entities as input and return an 
 :class:`ezdxf.query.EntityQuery` container, that provides further selection tools 
-base on entity type and DXF attributes.
+based on entity type and DXF attributes.
 
 Usage
 -----

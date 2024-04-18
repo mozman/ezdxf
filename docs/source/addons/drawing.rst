@@ -342,14 +342,14 @@ Render a paperspace layout into modelspace:
 GeoJSONBackend
 --------------
 
-.. versionadded:: 1.2.1
+.. versionadded:: 1.3.0
 
 .. autoclass:: ezdxf.addons.drawing.json.GeoJSONBackend
 
 CustomJSONBackend
 -----------------
 
-.. versionadded:: 1.2.1
+.. versionadded:: 1.3.0
 
 .. autoclass:: ezdxf.addons.drawing.json.CustomJSONBackend
 
