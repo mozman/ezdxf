@@ -647,7 +647,8 @@ class Drawing:
         tagwriter.write_tag2(0, "EOF")
 
     def commit_pending_changes(self) -> None:
-        for entity in self.entitydb.values():
+        entities = list(self.entitydb.values())  # entitydb may change while iterating
+        for entity in entities:
             entity.commit_pending_changes()
 
     def update_all(self) -> None:
