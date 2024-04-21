@@ -29,7 +29,8 @@ Query Data
     query
     groupby
     select
-    get_entity_attributes
+    get_entity_type
+    get_dxf_attributes
     get_entity_content
     get_extended_data
     get_layouts
@@ -40,7 +41,7 @@ Modify Data
 .. toctree::
     :maxdepth: 2
 
-    modify_dxf_attribs
+    modify_dxf_attributes
     modify_resources
     modify_entity_geometry
     transform_entities_and_layouts
@@ -56,7 +57,7 @@ Delete Data
 .. toctree::
     :maxdepth: 2
 
-    delete_entity_attributes
+    delete_dxf_attributes
     delete_dxf_entities
     delete_resources
     delete_layouts
