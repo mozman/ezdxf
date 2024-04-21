@@ -47,7 +47,17 @@ DXF attribute doesn't exist:
     assert line.dxf.linetype == "BYLAYER"
 
 .. seealso::
-    
-    - :ref:`Common graphical DXF attributes`
+
+    **Tasks:**
+
+    - :ref:`Common graphical DXF attributes`    
     - :ref:`modify_dxf_attributes`
     - :ref:`delete_dxf_attributes`
+
+    **Tutorials:**
+   
+    - :ref:`tut_common_graphical_attributes`
+    - :ref:`tut_getting_data`
+
+
+

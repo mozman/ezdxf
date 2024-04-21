@@ -22,7 +22,13 @@ or isn't supported.  The :meth:`discard` method ignores these errors:
     line.dxf.discard('text')  # doesn't raise an exception
 
 .. seealso::
-    
+
+    **Tasks**
+
     - :ref:`Common graphical DXF attributes`
     - :ref:`get_dxf_attributes`
     - :ref:`modify_dxf_attributes`
+
+    **Tutorials:**
+   
+    - :ref:`tut_common_graphical_attributes`

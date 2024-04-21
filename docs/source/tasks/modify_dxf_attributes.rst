@@ -29,6 +29,12 @@ will be raised.  You can check if an DXF attribute is supported by the method
 
 .. seealso::
     
+    **Tasks**
+
     - :ref:`Common graphical DXF attributes`
     - :ref:`get_dxf_attributes`
     - :ref:`delete_dxf_attributes`
+
+    **Tutorials:**
+   
+    - :ref:`tut_common_graphical_attributes`
