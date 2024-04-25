@@ -1,8 +1,8 @@
 # Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Union, Optional, Sequence
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Iterable, Union, Optional, Sequence, Any
+from typing_extensions import Self, override
 import logging
 
 from ezdxf.lldxf.attributes import (
@@ -16,6 +16,7 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.math import Matrix44
 from ezdxf.tools import crypt, guid
+from ezdxf import msgtypes
 
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -137,6 +138,7 @@ class Body(DXFGraphic):
         else:
             return False
 
+    @override
     def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Body)
         entity.sat = self.sat
@@ -144,6 +146,7 @@ class Body(DXFGraphic):
         entity.dxf.uid = guid()
         entity._temporary_transformation = self._temporary_transformation
 
+    @override
     def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         super().map_resources(clone, mapping)
@@ -165,9 +168,12 @@ class Body(DXFGraphic):
         if msg:
             logger.info(msg)
 
-    def commit_pending_changes(self) -> None:
-        self._temporary_transformation.apply_transformation(self)
+    @override
+    def notify(self, message_type: int, data: Any = None) -> None:
+        if message_type == msgtypes.COMMIT_PENDING_CHANGES:
+            self._temporary_transformation.apply_transformation(self)
 
+    @override
     def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         msg = ""
         if tagwriter.dxfversion < const.DXF2013:
@@ -184,6 +190,7 @@ class Body(DXFGraphic):
             logger.warning(f"{str(self)} has unapplied temporary transformations.")
         return valid
 
+    @override
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
@@ -202,6 +209,7 @@ class Body(DXFGraphic):
         text_lines = tags2textlines(tag for tag in tags if tag.code in (1, 3))
         self._sat = tuple(crypt.decode(text_lines))
 
+    @override
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         super().export_entity(tagwriter)
@@ -239,11 +247,13 @@ class Body(DXFGraphic):
         else:
             return "\n".join(self.sat)
 
+    @override
     def destroy(self) -> None:
         if self.has_binary_data:
             self.doc.acdsdata.del_acis_data(self.dxf.handle)  # type: ignore
         super().destroy()
 
+    @override
     def transform(self, m: Matrix44) -> Self:
         self._temporary_transformation.add_matrix(m)
         return self
@@ -307,6 +317,7 @@ class Solid3d(Body):
         base_class, acdb_entity, acdb_modeler_geometry, acdb_3dsolid
     )
 
+    @override
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
@@ -315,6 +326,7 @@ class Solid3d(Body):
             processor.fast_load_dxfattribs(dxf, acdb_3dsolid_group_codes, 3)
         return dxf
 
+    @override
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
@@ -357,6 +369,7 @@ class Surface(Body):
         base_class, acdb_entity, acdb_modeler_geometry, acdb_surface
     )
 
+    @override
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
@@ -365,6 +378,7 @@ class Surface(Body):
             processor.fast_load_dxfattribs(dxf, acdb_surface_group_codes, 3)
         return dxf
 
+    @override
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
@@ -427,6 +441,7 @@ class ExtrudedSurface(Surface):
         self.sweep_entity_transformation_matrix = Matrix44()
         self.path_entity_transformation_matrix = Matrix44()
 
+    @override
     def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, ExtrudedSurface)
         super().copy_data(entity, copy_strategy)
@@ -440,6 +455,7 @@ class ExtrudedSurface(Surface):
             self.path_entity_transformation_matrix.copy()
         )
 
+    @override
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
@@ -456,6 +472,7 @@ class ExtrudedSurface(Surface):
         self.sweep_entity_transformation_matrix = load_matrix(tags, code=46)
         self.path_entity_transformation_matrix = load_matrix(tags, code=47)
 
+    @override
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
@@ -540,6 +557,7 @@ class LoftedSurface(Surface):
         super().__init__()
         self.transformation_matrix_lofted_entity = Matrix44()
 
+    @override
     def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, LoftedSurface)
         super().copy_data(entity, copy_strategy)
@@ -547,6 +565,7 @@ class LoftedSurface(Surface):
             self.transformation_matrix_lofted_entity.copy()
         )
 
+    @override
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
@@ -561,6 +580,7 @@ class LoftedSurface(Surface):
     def load_matrices(self, tags: Tags):
         self.transformation_matrix_lofted_entity = load_matrix(tags, code=40)
 
+    @override
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
@@ -612,6 +632,7 @@ class RevolvedSurface(Surface):
         super().__init__()
         self.transformation_matrix_revolved_entity = Matrix44()
 
+    @override
     def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, RevolvedSurface)
         super().copy_data(entity, copy_strategy)
@@ -619,6 +640,7 @@ class RevolvedSurface(Surface):
             self.transformation_matrix_revolved_entity.copy()
         )
 
+    @override
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
@@ -633,6 +655,7 @@ class RevolvedSurface(Surface):
     def load_matrices(self, tags: Tags):
         self.transformation_matrix_revolved_entity = load_matrix(tags, code=42)
 
+    @override
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class
@@ -728,6 +751,7 @@ class SweptSurface(Surface):
         self.sweep_entity_transformation_matrix = Matrix44()
         self.path_entity_transformation_matrix = Matrix44()
 
+    @override
     def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, SweptSurface)
         super().copy_data(entity, copy_strategy)
@@ -744,6 +768,7 @@ class SweptSurface(Surface):
             self.path_entity_transformation_matrix.copy()
         )
 
+    @override
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:
@@ -761,6 +786,7 @@ class SweptSurface(Surface):
         self.sweep_entity_transformation_matrix = load_matrix(tags, code=46)
         self.path_entity_transformation_matrix = load_matrix(tags, code=47)
 
+    @override
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         # base class export is done by parent class

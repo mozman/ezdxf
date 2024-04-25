@@ -1,7 +1,7 @@
 #  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterator, Iterable
+from typing import TYPE_CHECKING, Iterator, Iterable, Any
 from typing_extensions import Protocol, runtime_checkable
 from ezdxf.query import EntityQuery
 
@@ -89,3 +89,8 @@ class SupportsBoundingBox(Protocol):
 @runtime_checkable
 class SupportsTemporaryTransformation(Protocol):
     def temporary_transformation(self) -> TemporaryTransformation: ...
+
+
+class SupportsMessages(Protocol):
+    def notify(self, message_type: int, data: Any = None) -> None:
+        """Internal messaging system."""

@@ -52,7 +52,6 @@ from ezdxf.lldxf.tagwriter import (
     JSONTagWriter,
 )
 from ezdxf.query import EntityQuery
-from ezdxf.protocols import SupportsTemporaryTransformation
 from ezdxf.render.dimension import DimensionRenderer
 from ezdxf.sections.acdsdata import AcDsDataSection, new_acds_data_section
 from ezdxf.sections.blocks import BlocksSection
@@ -65,6 +64,7 @@ from ezdxf.tools import guid
 from ezdxf.tools.codepage import tocodepage, toencoding
 from ezdxf.tools.juliandate import juliandate
 from ezdxf.tools.text import safe_string, MAX_STR_LEN
+from ezdxf import messenger, msgtypes
 
 
 logger = logging.getLogger("ezdxf")
@@ -111,6 +111,7 @@ def _validate_handle_seed(seed: str) -> str:
 class Drawing:
     def __init__(self, dxfversion=DXF2013) -> None:
         self.entitydb = EntityDB()
+        self.messenger = messenger.Messenger(self)
         target_dxfversion = dxfversion.upper()
         self._dxfversion: str = const.acad_release_to_dxf_version.get(
             target_dxfversion, target_dxfversion
@@ -586,8 +587,8 @@ class Drawing:
             fmt: "asc" for ASCII DXF (default) or "bin" for binary DXF
 
         """
-        # These changes may alter the document content (create new entities, blocks ...) 
-        # and have to be done before the export and the update of internal structures 
+        # These changes may alter the document content (create new entities, blocks ...)
+        # and have to be done before the export and the update of internal structures
         # can be done.
         self.commit_pending_changes()
 
@@ -647,9 +648,7 @@ class Drawing:
         tagwriter.write_tag2(0, "EOF")
 
     def commit_pending_changes(self) -> None:
-        entities = list(self.entitydb.values())  # entitydb may change while iterating
-        for entity in entities:
-            entity.commit_pending_changes()
+        self.messenger.broadcast(msgtypes.COMMIT_PENDING_CHANGES)
 
     def update_all(self) -> None:
         if self.dxfversion > DXF12:
