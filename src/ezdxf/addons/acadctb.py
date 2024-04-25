@@ -726,7 +726,6 @@ class PlotStyleFileParser:
             else:  # it's a simple name=value line
                 value: str = line.split("=", 1)[1]
                 value = sanitized_value(value)
-                value = value.lstrip('"')  # strings look like this: name="value
                 line_index += 1
             return value
 
@@ -751,7 +750,7 @@ def sanitized_value(value: str) -> str:
     if value.startswith('"'):  # strings: <name>="string
         return value[1:]
 
-    # remove unknown appendix data like this: "0.0076200000000 (+7.Z+"8V?S_LC )"
+    # remove unknown appendix like this: "0.0076200000000 (+7.Z+"8V?S_LC )"
     # the pattern is "<float|int> (<some data>)", see issue #1069
     if value.endswith(")"):
         return value.split(" ")[0]
