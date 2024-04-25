@@ -525,7 +525,7 @@ def to_lwpolylines(
     else:
         paths = list(paths)
     if len(paths) == 0:
-        return []
+        return
     extrusion = Vec3(extrusion)
     reference_point = Vec3(paths[0].start)
     dxfattribs = dict(dxfattribs or {})
@@ -581,7 +581,7 @@ def to_polylines2d(
     else:
         paths = list(paths)
     if len(paths) == 0:
-        return []
+        return
     extrusion = Vec3(extrusion)
     reference_point = Vec3(paths[0].start)
     dxfattribs = dict(dxfattribs or {})
@@ -744,7 +744,7 @@ def _polygon_converter(
     else:
         paths = list(paths)
     if len(paths) == 0:
-        return []
+        return
 
     extrusion = Vec3(extrusion)
     reference_point = paths[0].start
