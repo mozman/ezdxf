@@ -1,5 +1,4 @@
-# Created: 24.03.2010
-# Copyright (c) 2010-2019, Manfred Moitzi
+# Copyright (c) 2010-2024, Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -150,9 +149,7 @@ class TestColorDependentPlotStyles:
     def test_set_table_lineweight_index_error(self, styles):
         index_out_of_range = len(styles.lineweights) + 7
         index = styles.set_table_lineweight(index_out_of_range, 7.77)
-        assert math.isclose(
-            styles.get_table_lineweight(index), 7.77, abs_tol=1e-6
-        )
+        assert math.isclose(styles.get_table_lineweight(index), 7.77, abs_tol=1e-6)
 
     def test_write_header(self):
         expected = (
@@ -172,9 +169,7 @@ class TestColorDependentPlotStyles:
     def test_write_aci_table(self):
         expected = (
             "aci_table{\n"
-            + "\n".join(
-                (' %s="Color_%d' % (index, index + 1) for index in range(255))
-            )
+            + "\n".join((' %s="Color_%d' % (index, index + 1) for index in range(255)))
             + "\n}\n"
         )
         styles = ColorDependentPlotStyles()
@@ -436,3 +431,28 @@ class TestFunctions:
         assert get_bool(False) is False
         assert get_bool("false") is False
         pytest.raises(ValueError, get_bool, "falsch")
+
+
+def test_parser_ignores_unknown_appendix():
+    parser = PlotStyleFileParser(
+        r"""custom_lineweight_table{
+ 0=0.0076200000000 (+7.Z+"8V?S_LC )
+ 1=0.0254
+ 6=0.17780000000   (  44F=@";"QC\\SM0)
+ 7=0.2
+ 10=0.35560000000 (44F=@";"UC_SN )
+ 11=0.4
+}
+"""
+    )
+    table = parser.get("custom_lineweight_table", {})
+    assert table["0"] == "0.0076200000000"
+    assert table["1"] == "0.0254"
+    assert table["6"] == "0.17780000000"
+    assert table["7"] == "0.2"
+    assert table["10"] == "0.35560000000"
+    assert table["11"] == "0.4"
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

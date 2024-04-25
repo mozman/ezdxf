@@ -725,6 +725,7 @@ class PlotStyleFileParser:
                 return get_mapping()
             else:  # it's a simple name=value line
                 value: str = line.split("=", 1)[1]
+                value = sanitized_value(value)
                 value = value.lstrip('"')  # strings look like this: name="value
                 line_index += 1
             return value
@@ -743,6 +744,18 @@ class PlotStyleFileParser:
 
     def get(self, name: str, default: Any) -> Any:
         return self.data.get(name, default)
+
+
+def sanitized_value(value: str) -> str:
+    value = value.strip()
+    if value.startswith('"'):  # strings: <name>="string
+        return value[1:]
+
+    # remove unknown appendix data like this: "0.0076200000000 (+7.Z+"8V?S_LC )"
+    # the pattern is "<float|int> (<some data>)", see issue #1069
+    if value.endswith(")"):
+        return value.split(" ")[0]
+    return value
 
 
 def int2color(color: int) -> tuple[int, int, int, int]:
