@@ -1,5 +1,9 @@
-## Version 1.3.0 - 2024-05-01
-id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
+## Version 1.3.1 - dev
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- NEW: `ezdxf.acis.api.vertices_from_body()` function
+	-
+- ## Version 1.3.0 - 2024-05-01
+  id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- moved static setup data from `setup.py` to `pyproject.toml`
 	- REMOVE: `pp` command, use `browse` command to explore DXF files
