@@ -333,3 +333,83 @@ def make_vertices(vertices: Iterable[Vec3]) -> Iterator[entities.Vertex]:
         vertex = entities.Vertex()
         vertex.point = point
         yield vertex
+
+
+def vertices_from_body(body: Body) -> list[Vec3]:
+    """Returns all stored vertices in the given :class:`Body` entity.
+    The result is not optimized, meaning the vertices are in no particular order and
+    there are duplicates.
+
+    This function can be useful to determining the approximate bounding box of an 
+    :term:`ACIS` entity.  The result is exact for polyhedra with flat faces with 
+    straight edges, but not for bodies with curved edges and faces.
+
+    Args:
+        body: ACIS entity of type :class:`Body`
+
+    Raises:
+        TypeError: given `body` entity has invalid type
+
+    """
+
+    if not isinstance(body, Body):
+        raise TypeError(f"expected a body entity, got: {type(body)}")
+    lump = body.lump
+    transform = body.transform
+    vertices: list[Vec3] = []
+
+    m: Optional[Matrix44] = None
+    if not transform.is_none:
+        m = transform.matrix
+    while not lump.is_none:
+        vertices.extend(vertices_from_lump(lump, m))
+        lump = lump.next_lump
+    return vertices
+
+
+def vertices_from_lump(lump: Lump, m: Matrix44 | None = None) -> list[Vec3]:
+    """Returns all stored vertices from a given :class:`Lump` entity. 
+    Applies the transformation :class:`~ezdxf.math.Matrix44` `m` to all vertices if not 
+    ``None``.
+
+    Args:
+        lump: :class:`Lump` entity
+        m: optional transformation matrix
+
+    Raises:
+        TypeError: `lump` has invalid ACIS type
+
+    """
+    if not isinstance(lump, Lump):
+        raise TypeError(f"expected a lump entity, got: {type(lump)}")
+
+    vertices: list[Vec3] = []
+    shell = lump.shell
+    if shell.is_none:
+        return vertices  # not a shell
+
+    face = shell.face
+    while not face.is_none:
+        first_coedge = NONE_REF
+        try:
+            first_coedge = face.loop.coedge
+        except AttributeError:  # loop is a none-entity
+            pass
+        coedge = first_coedge
+        while not coedge.is_none:  # invalid coedge or face is not closed
+            # the edge entity contains the vertices and the curve type
+            edge = coedge.edge
+            try:
+                vertices.append(edge.start_vertex.point.location)
+                vertices.append(edge.end_vertex.point.location)
+            except AttributeError:
+                # one of the involved entities is a none-entity or an
+                # incompatible entity type -> ignore this face!
+                break
+            coedge = coedge.next_coedge
+            if coedge is first_coedge:  # a valid closed face
+                break
+        face = face.next_face
+    if m is not None:
+        return list(m.transform_vertices(vertices))
+    return vertices

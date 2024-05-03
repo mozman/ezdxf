@@ -121,6 +121,8 @@ lost.
 
 .. autofunction:: body_from_mesh
 
+.. autofunction:: vertices_from_body
+    
 Exceptions
 ~~~~~~~~~~
 
