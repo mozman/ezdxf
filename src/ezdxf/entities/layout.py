@@ -30,7 +30,9 @@ acdb_plot_settings = DefSubclass(
     {
         # acdb_plot_settings is also part of LAYOUT and LAYOUT has a 'name' attribute
         "page_setup_name": DXFAttr(1, default=""),
-        "plot_configuration_file": DXFAttr(2, default="Adobe PDF"),
+
+        # An optional empty string selects the default printer/plotter
+        "plot_configuration_file": DXFAttr(2, default="", optional=True),
         "paper_size": DXFAttr(4, default="A3"),
         "plot_view_name": DXFAttr(6, default=""),
         "left_margin": DXFAttr(40, default=7.5),  # in mm
