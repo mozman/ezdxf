@@ -1,12 +1,13 @@
 #  Copyright (c) 2022-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Union, Callable, Type, Any, Sequence, Iterator
+from typing import Callable, Type, Any, Sequence, Iterator
 import abc
 
 from . import sab, sat, const, hdr
 from .const import Features
 from .abstract import DataLoader, AbstractEntity, DataExporter
+from .typehints import EncodedData
 from ezdxf.math import Matrix44, Vec3, NULLVEC
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
@@ -15,7 +16,7 @@ ENTITY_TYPES: dict[str, Type[AcisEntity]] = {}
 INF = float("inf")
 
 
-def load(data: Union[str, Sequence[str], bytes, bytearray]) -> list[Body]:
+def load(data: EncodedData) -> list[Body]:
     """Returns a list of :class:`Body` entities from :term:`SAT` or :term:`SAB`
     data. Accepts :term:`SAT` data as a single string or a sequence of strings
     and :term:`SAB` data as bytes or bytearray.
@@ -733,7 +734,7 @@ class Point(SupportsPattern):
 
 
 class FileLoader(abc.ABC):
-    records: Sequence[Union[sat.SatEntity, sab.SabEntity]]
+    records: Sequence[sat.SatEntity | sab.SabEntity]
 
     def __init__(self, version: int):
         self.entities: dict[int, AcisEntity] = {}
@@ -770,7 +771,7 @@ class FileLoader(abc.ABC):
 
 
 class SabLoader(FileLoader):
-    def __init__(self, data: Union[bytes, bytearray]):
+    def __init__(self, data: bytes | bytearray):
         builder = sab.parse_sab(data)
         super().__init__(builder.header.version)
         self.records = builder.entities
@@ -779,14 +780,14 @@ class SabLoader(FileLoader):
         return sab.SabDataLoader(data, self.version)
 
     @classmethod
-    def load(cls, data: Union[bytes, bytearray]) -> list[Body]:
+    def load(cls, data: bytes | bytearray) -> list[Body]:
         loader = cls(data)
         loader.load_entities()
         return loader.bodies()
 
 
 class SatLoader(FileLoader):
-    def __init__(self, data: Union[str, Sequence[str]]):
+    def __init__(self, data: str | Sequence[str]):
         builder = sat.parse_sat(data)
         super().__init__(builder.header.version)
         self.records = builder.entities
@@ -795,7 +796,7 @@ class SatLoader(FileLoader):
         return sat.SatDataLoader(data, self.version)
 
     @classmethod
-    def load(cls, data: Union[str, Sequence[str]]) -> list[Body]:
+    def load(cls, data: str | Sequence[str]) -> list[Body]:
         loader = cls(data)
         loader.load_entities()
         return loader.bodies()
