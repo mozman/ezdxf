@@ -2,6 +2,7 @@
 # License: MIT License
 import pytest
 
+import ezdxf
 from ezdxf.acis import api as acis
 
 
@@ -49,7 +50,10 @@ hash_data = acis.AcisCache.hash_data
 
 class TestHashData:
     def test_empty_string(self):
-        assert hash_data("") == 0
+        if ezdxf.PYPY:
+            assert hash_data("") != 0
+        else:
+            assert hash_data("") == 0
 
     def test_string(self):
         h = hash_data("abc")
@@ -76,7 +80,10 @@ class TestHashData:
         assert id(tuple()) == id(tuple())
 
     def test_empty_bytes(self):
-        assert hash_data(b"") == 0
+        if ezdxf.PYPY:
+            assert hash_data(b"") != 0
+        else:
+            assert hash_data(b"") == 0
 
     def test_bytes(self):
         data = b"\x07\x08\x09"
