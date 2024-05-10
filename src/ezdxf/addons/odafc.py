@@ -131,7 +131,10 @@ def readfile(
     infile = Path(filename).absolute()
     if not infile.is_file():
         raise FileNotFoundError(f"No such file: '{infile}'")
-    version = _detect_version(filename) if version is None else version
+    if isinstance(version, str):
+        version = map_version(version)
+    else:
+        version = _detect_version(filename)
 
     with tempfile.TemporaryDirectory(prefix="odafc_") as tmp_dir:
         args = _odafc_arguments(
