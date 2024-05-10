@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 from .entities import Body, load
-from .typehints import EncodedData
+from .type_hints import EncodedData
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity

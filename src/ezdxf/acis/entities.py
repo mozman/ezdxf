@@ -7,7 +7,7 @@ import abc
 from . import sab, sat, const, hdr
 from .const import Features
 from .abstract import DataLoader, AbstractEntity, DataExporter
-from .typehints import EncodedData
+from .type_hints import EncodedData
 from ezdxf.math import Matrix44, Vec3, NULLVEC
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
