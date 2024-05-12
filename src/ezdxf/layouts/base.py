@@ -185,9 +185,15 @@ class BaseLayout(_AbstractLayout):
 
     def add_entity(self, entity: DXFGraphic) -> None:
         """Add an existing :class:`DXFGraphic` entity to a layout, but be sure
-        to unlink (:meth:`~BaseLayout.unlink_entity`) entity from the previous
-        owner layout. Adding entities from a different DXF drawing is not
+        to unlink (:meth:`~BaseLayout.unlink_entity`) `entity` from the previous
+        owner layout.  Adding entities from a different DXF drawing is not
         supported.
+
+        .. warning:: 
+        
+            This is a low-level tool - use it with caution and make sure you understand 
+            what you are doing! If used improperly, the DXF document may be damaged.
+
         """
         # bind virtual entities to the DXF document:
         doc = self.doc
