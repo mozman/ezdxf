@@ -3,6 +3,9 @@
 	- NEW: `ezdxf.acis.api.vertices_from_body()` function
 	- CHANGE: optional empty string as default value of the `plotter_configuration_file` attribute for modelspace and paperspace layouts
 		- CAD applications will use the default printer/plotter when the `plotter_configuration_file` attribute is missing.
+	- BUGFIX: fixed rendering of collinear polyline segments for polylines with a "width"
+		- {{issue 1078}}
+	-
 - ## Version 1.3.0 - 2024-05-01
   id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
