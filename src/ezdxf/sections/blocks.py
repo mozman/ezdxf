@@ -121,9 +121,7 @@ class BlocksSection:
             block_entities: list[DXFEntity],
         ) -> BlockRecord:
             try:
-                block_record = cast(
-                    "BlockRecord", block_records.get(block.dxf.name)
-                )
+                block_record = cast("BlockRecord", block_records.get(block.dxf.name))
             # Special case DXF R12 - has no BLOCK_RECORD table
             except DXFTableEntryError:
                 block_record = cast(
@@ -150,12 +148,11 @@ class BlocksSection:
 
         block_records = self.block_records
         section_head = cast("DXFTagStorage", entities[0])
-        if section_head.dxftype() != "SECTION" or section_head.base_class[
-            1
-        ] != (2, "BLOCKS"):
-            raise DXFStructureError(
-                "Critical structure error in BLOCKS section."
-            )
+        if section_head.dxftype() != "SECTION" or section_head.base_class[1] != (
+            2,
+            "BLOCKS",
+        ):
+            raise DXFStructureError("Critical structure error in BLOCKS section.")
         # Remove SECTION entity
         del entities[0]
         content: list["DXFEntity"] = []
@@ -222,10 +219,7 @@ class BlocksSection:
 
     def __iter__(self) -> Iterator[BlockLayout]:
         """Iterable of all :class:`~ezdxf.layouts.BlockLayout` objects."""
-        return (
-            block_record.block_layout
-            for block_record in self.block_records
-        )
+        return (block_record.block_layout for block_record in self.block_records)
 
     def __contains__(self, name: str) -> bool:
         """Returns ``True`` if :class:`~ezdxf.layouts.BlockLayout` `name`
@@ -265,9 +259,7 @@ class BlocksSection:
         except DXFKeyError:
             return default
 
-    def get_block_layout_by_handle(
-        self, block_record_handle: str
-    ) -> BlockLayout:
+    def get_block_layout_by_handle(self, block_record_handle: str) -> BlockLayout:
         """Returns a block layout by block record handle. (internal API)"""
         return self.doc.entitydb[block_record_handle].block_layout  # type: ignore
 
@@ -372,9 +364,7 @@ class BlocksSection:
                     f'Special block "{name}" maybe used without explicit INSERT entity.'
                 )
             assert self.doc is not None
-            block_refs = self.doc.query(
-                f"INSERT[name=='{name}']i"
-            )  # ignore case
+            block_refs = self.doc.query(f"INSERT[name=='{name}']i")  # ignore case
             if len(block_refs):
                 raise DXFBlockInUseError(f'Block "{name}" is still in use.')
         self.__delitem__(name)
@@ -428,7 +418,11 @@ class BlocksSection:
 
         for block_record in self.block_records:
             assert isinstance(block_record, BlockRecord)
-            for entity in block_record.entity_space:
+
+            block_record_handle: str = block_record.dxf.handle
+            unlink_entities: list[DXFEntity] = []
+            es = block_record.entity_space
+            for entity in es:
                 if not is_graphic_entity(entity):
                     auditor.fixed_error(
                         code=AuditError.REMOVED_INVALID_GRAPHIC_ENTITY,
@@ -445,3 +439,23 @@ class BlocksSection:
                         f" BLOCK '{block_record.dxf.name}'.",
                     )
                     auditor.trash(entity)
+
+                if not entity.is_alive:
+                    continue
+
+                if entity.dxf.owner != block_record_handle:
+                    auditor.fixed_error(
+                        code=AuditError.REMOVED_ENTITY_WITH_INVALID_OWNER_HANDLE,
+                        message=f"Removed DXF entity {str(entity)} with invalid owner "
+                        f"handle (#{entity.dxf.owner} != #{block_record_handle}) "
+                        f"from BLOCK '{block_record.dxf.name}'.",
+                    )
+                    # do not destroy the entity, it's maybe owned to another block
+                    unlink_entities.append(entity)
+
+            for entity in unlink_entities:
+                if entity.is_alive:
+                    try:
+                        es.remove(entity)
+                    except ValueError:
+                        pass

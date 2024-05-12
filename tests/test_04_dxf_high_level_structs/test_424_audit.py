@@ -227,3 +227,24 @@ def test_fix_invalid_transparency():
     line.audit(auditor)
     assert line.dxf.hasattr("transparency") is False
     assert len(auditor.fixes) == 1
+
+
+def test_fix_entities_with_invalid_owner_handle():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    line = msp.add_line((0, 0), (1, 0))
+
+    block = doc.blocks.new("TEST")
+    block.add_entity(line)
+
+    result = doc.audit()
+    fix = result.fixes[0]
+    assert fix.code == AuditError.REMOVED_ENTITY_WITH_INVALID_OWNER_HANDLE
+
+    assert len(block) == 1
+    assert len(msp) == 0
+    assert line.dxf.owner == block.dxf.handle
+
+
+if __name__ == '__main__':
+    pytest.main([__file__])
