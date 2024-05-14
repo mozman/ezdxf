@@ -181,5 +181,41 @@ def test_edge_to_polyline_paths():
     assert len(path.vertices) == 5
 
 
+class TestValidatingBoundaryPaths:
+    def test_spline_edge_has_valid_knot_count(self):
+        paths = BoundaryPaths()
+        edge_path = paths.add_edge_path()
+        spline = edge_path.add_spline(
+            control_points=[(0, 0), (1, 1), (2, 0), (3, 1)],
+            knot_values=[1, 2, 3, 4, 5, 6, 7, 8],
+        )
+        assert spline.is_valid() is True, "expected degree + count + 1 values"
+
+        spline.knot_values = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        assert spline.is_valid() is False, "too many knot value"
+        spline.knot_values = [0, 0, 0, 0]
+        assert spline.is_valid() is False, "too few knot value"
+        
+        assert paths.is_valid() is False, "invalid state should be propagated"
+
+    def test_spline_edge_has_enough_control_points(self):
+        paths = BoundaryPaths()
+        edge_path = paths.add_edge_path()
+        spline = edge_path.add_spline(
+            control_points=[(0, 0), (1, 1), (2, 0)],
+            knot_values=[1, 2, 3, 4, 5, 6, 7],  # correct degree + count + 1!
+        )
+        assert spline.is_valid() is False, "too few control points"
+
+    def test_spline_edge_has_enough_fir_points(self):
+        paths = BoundaryPaths()
+        edge_path = paths.add_edge_path()
+        spline = edge_path.add_spline(
+            fit_points=[(0, 0), (1, 1), (2, 0)],
+        )
+        assert spline.is_valid() is True, "expected 2 or more points"
+        spline.fit_points = [(0, 0)]
+        assert spline.is_valid() is False, "too few fit points"
+
 if __name__ == "__main__":
     pytest.main([__file__])

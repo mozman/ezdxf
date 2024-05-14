@@ -6,6 +6,7 @@ from typing_extensions import Self
 import abc
 import copy
 
+from ezdxf.audit import Auditor, AuditError
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
 from ezdxf import colors
@@ -449,3 +450,14 @@ class DXFPolygon(DXFGraphic):
     @abc.abstractmethod
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: Optional[RGB] = None):
         ...
+    
+    def audit(self, auditor: Auditor) -> None:
+        super().audit(auditor)
+        if not self.is_alive:
+            return
+        if not self.paths.is_valid():
+            auditor.fixed_error(
+                code=AuditError.INVALID_HATCH_BOUNDARY_PATH,
+                message=f"Deleted entity {str(self)} containing invalid boundary paths."
+            )
+            auditor.trash(self)

@@ -416,17 +416,12 @@ def from_hatch_edge_path(
         )
 
     def from_control_points(edge: SplineEdge, control_points):
-        try:
-            return BSpline(
-                control_points=control_points,
-                order=edge.degree + 1,
-                knots=edge.knot_values,
-                weights=edge.weights if edge.weights else None,
-            )
-        except ValueError as e:
-            raise const.DXFStructureError(
-                "invalid B-spline definition in HATCH entity"
-            ) from e
+        return BSpline(
+            control_points=control_points,
+            order=edge.degree + 1,
+            knots=edge.knot_values,
+            weights=edge.weights if edge.weights else None,
+        )
 
     def wcs(vertex: UVec) -> Vec3:
         return _wcs(Vec3(vertex[0], vertex[1], elevation))
