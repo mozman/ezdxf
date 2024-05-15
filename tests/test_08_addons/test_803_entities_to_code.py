@@ -1,5 +1,6 @@
 # Copyright (c) 2019 Manfred Moitzi
 # License: MIT License
+import pytest
 import ezdxf
 from ezdxf.addons.dxf2code import (
     entities_to_code,
@@ -13,6 +14,7 @@ from ezdxf.addons.dxf2code import (
     _fmt_dxf_tags,
 )
 
+import ezdxf.entities
 from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import Tags  # required by exec() or eval()
 from ezdxf.entities.ltype import LinetypePattern  # required by exec() or eval()
@@ -450,3 +452,22 @@ def test_block_to_code():
     new_block = doc.blocks.get("TestBlock")
     assert new_block.block.dxf.description == block.block.dxf.description
     assert new_block[0].dxftype() == block[0].dxftype()
+
+
+def test_hatch_to_code():
+    from ezdxf.entities import Hatch
+
+    hatch = Hatch()
+    hatch.set_pattern_fill(name="ANGLE")
+    hatch.paths.add_polyline_path(
+        [(0, 0), (100, 0), (100, 100), (0, 100)], is_closed=True
+    )
+
+    new_hatch = translate_to_code_and_execute(hatch)
+    assert isinstance(new_hatch, Hatch)
+    assert new_hatch.has_pattern_fill
+    assert len(new_hatch.pattern.lines) == len(hatch.pattern.lines)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

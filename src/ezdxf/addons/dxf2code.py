@@ -762,7 +762,7 @@ class _SourceCodeGenerator:
             add_line(f"e.set_seed_points({entity.seeds})")
         if entity.pattern:
             self.add_list_source_code(
-                entity.pattern.lines,
+                map(str, entity.pattern.lines),
                 prolog="e.set_pattern_definition([",
                 epilog="])",
             )

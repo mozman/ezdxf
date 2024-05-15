@@ -7,7 +7,9 @@
 		- {{issue 1078}}
 	- BUGFIX: added `audit()` support for the  `HATCH` entities
 		- {{issue 1081}}
-	-
+	- BUGIX: `dxf2code` add-on failed to write `HATCH` patterns
+		- {{issue 1082}}
+		-
 - ## Version 1.3.0 - 2024-05-01
   id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
@@ -34,8 +36,6 @@
 	- CHANGE: better support for viewports with curved clipping paths for the `drawing` add-on
 	- BUGFIX: clipping errors for filled paths
 		- {{issue 1055}}
-	-
-	-
 	-
 - ## Version 1.2.0 - 2024-03-02
   id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
