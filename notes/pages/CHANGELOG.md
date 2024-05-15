@@ -5,7 +5,7 @@
 		- CAD applications will use the default printer/plotter when the `plotter_configuration_file` attribute is missing.
 	- BUGFIX: fixed rendering of collinear polyline segments for polylines with a "width"
 		- {{issue 1078}}
-	- BUGFIX: added `audit()` support for the  `HATCH` entities
+	- BUGFIX: added `audit()` support for the  `HATCH` entity
 		- {{issue 1081}}
 	- BUGIX: `dxf2code` add-on failed to write `HATCH` patterns
 		- {{issue 1082}}
