@@ -81,16 +81,36 @@ def is_closed_entity(entity: DXFEntity) -> bool:
 
 
 class Edge:
-    __slots__ = ("start", "end", "reverse", "length", "payload")
+    __slots__ = ("id", "start", "end", "reverse", "length", "payload")
+    _next_id = 1
 
     def __init__(
         self, start: Vec2, end: Vec2, length: float, payload: Any = None
     ) -> None:
+        self.id = Edge._next_id  # edge identifier shared across all (reversed) copies
+        Edge._next_id += 1
         self.start: Vec2 = start
         self.end: Vec2 = end
         self.reverse: bool = False
         self.length = length
         self.payload = payload
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Edge):
+            return self.id == other.id
+        return False
+
+    def copy(self) -> Edge:
+        edge = Edge(self.start, self.end, self.length, self.payload)
+        edge.reverse = self.reverse
+        edge.id = self.id  # copies represent the same edge
+        return edge
+
+    def reversed(self) -> Edge:
+        edge = Edge(self.end, self.start, self.length, self.payload)
+        edge.reverse = not self.reverse
+        edge.id = self.id  # reversed copies represent the same edge
+        return edge
 
 
 def edge_from_entity(entity: DXFEntity) -> Edge | None:

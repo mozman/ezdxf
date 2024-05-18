@@ -5,7 +5,7 @@ import pytest
 import math
 from ezdxf import loopfinder
 from ezdxf.entities import Circle, Arc, Ellipse, LWPolyline, Spline
-from ezdxf.math import fit_points_to_cad_cv
+from ezdxf.math import fit_points_to_cad_cv, Vec2
 
 
 def test_circle_is_a_closed_entity():
@@ -116,6 +116,46 @@ def test_empty_spline():
     spline = Spline()
 
     assert loopfinder.is_closed_entity(spline) is False
+
+
+class TestEdge:
+    def test_init(self):
+        edge = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        assert edge.start == Vec2(0, 0)
+        assert edge.end == Vec2(1, 0)
+        assert edge.length == 1.0
+        assert edge.reverse is False
+        assert edge.payload is None
+
+    def test_identity(self):
+        edge0 = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        edge1 = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        assert edge0 == edge0
+        assert edge0 != edge1, "each edge should have an unique identity"
+        assert edge0 == edge0.copy(), "copies represent the same edge"
+        assert edge0 == edge0.reversed(), "reversed copies represent the same edge"
+
+    def test_copy(self):
+        edge = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        clone = edge.copy()
+        assert edge == clone
+        assert edge.id == clone.id
+        assert edge.start == clone.start
+        assert edge.end == clone.end
+        assert edge.length == clone.length
+        assert edge.reverse is clone.reverse
+        assert edge.payload is clone.payload
+
+    def test_reversed_copy(self):
+        edge = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        clone = edge.reversed()
+        assert edge == clone
+        assert edge.id == clone.id
+        assert edge.start == clone.end
+        assert edge.end == clone.start
+        assert edge.length == clone.length
+        assert edge.reverse is (not clone.reverse)
+        assert edge.payload is clone.payload
 
 
 if __name__ == "__main__":
