@@ -25,7 +25,7 @@ jobs:
       run: |
         pypy -m pip install --upgrade pip
         # Excluding Cython to test the pure Python version.
-        pypy -m pip install setuptools wheel
+        pypy -m pip install "setuptools>69.0.0" wheel
     - name: Install without C-extensions
       run: |
         pypy -m pip install --no-build-isolation .
