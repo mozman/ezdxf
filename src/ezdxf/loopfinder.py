@@ -196,22 +196,12 @@ def find_all_loops(edges: Sequence[Edge]) -> Sequence[Sequence[Edge]]:
     _edges = list(edges)
     for _ in range(len(edges)):
         available = tuple(_edges)
-        while len(available) > 1:
-            finder.search(available[0], available[1:])
-            ids: set[int] = set()
-            for solution in finder:
-                ids.update(e.id for e in solution)
-            # Remove the first edge (search edge), it is either an used edge or maybe
-            # it isn't connected to any edge.
-            available = available[1:]
-            # Remove all used edges from the available edges.
-            available = tuple(e for e in available if e.id not in ids)
-            # The remaining edges are not connected to the found loops, therefore there must
-            # be 2 or more edges to find new closed loops.
-
-        # rotate the edges and start the search again to get an exhaustive result
+        finder.search(available[0], available[1:])
+        # Rotate the edges and start the search again to get an exhaustive result.
         first = _edges.pop(0)
         _edges.append(first)
+        # It's not required to search for disconnected loops - by rotating and restarting, 
+        # every possible loop is taken into account.
     return tuple(finder)
 
 
