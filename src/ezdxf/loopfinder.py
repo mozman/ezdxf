@@ -1,7 +1,7 @@
 # Copyright (c) 2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Any, Sequence
+from typing import Any, Sequence, Iterator
 import math
 
 from ezdxf.entities import (
@@ -16,7 +16,16 @@ from ezdxf.entities import (
 )
 from ezdxf.math import arc_angle_span_deg, ellipse_param_span, Vec2, Vec3
 
-__all__ = ["is_closed_entity", "edge_from_entity"]
+__all__ = [
+    "find_all_loops",
+    "find_first_loop",
+    "find_shortest_loop",
+    "find_longest_loop",
+    "is_closed_entity",
+    "edge_from_entity",
+    "loop_length",
+    "Edge",
+]
 
 ABS_TOL = 1e-12
 
@@ -80,39 +89,6 @@ def is_closed_entity(entity: DXFEntity) -> bool:
     return False
 
 
-class Edge:
-    __slots__ = ("id", "start", "end", "reverse", "length", "payload")
-    _next_id = 1
-
-    def __init__(
-        self, start: Vec2, end: Vec2, length: float, payload: Any = None
-    ) -> None:
-        self.id = Edge._next_id  # edge identifier shared across all (reversed) copies
-        Edge._next_id += 1
-        self.start: Vec2 = start
-        self.end: Vec2 = end
-        self.reverse: bool = False
-        self.length = length
-        self.payload = payload
-
-    def __eq__(self, other) -> bool:
-        if isinstance(other, Edge):
-            return self.id == other.id
-        return False
-
-    def copy(self) -> Edge:
-        edge = Edge(self.start, self.end, self.length, self.payload)
-        edge.reverse = self.reverse
-        edge.id = self.id  # copies represent the same edge
-        return edge
-
-    def reversed(self) -> Edge:
-        edge = Edge(self.end, self.start, self.length, self.payload)
-        edge.reverse = not self.reverse
-        edge.id = self.id  # reversed copies represent the same edge
-        return edge
-
-
 def edge_from_entity(entity: DXFEntity) -> Edge | None:
     """Makes an :class:`Edge` instance for the DXF entity types LINE, ARC, ELLIPSE and
     SPLINE if the entity is an open linear curve.  Returns ``None`` if the entity
@@ -168,21 +144,181 @@ def edge_from_entity(entity: DXFEntity) -> Edge | None:
     return edge
 
 
-def shortest_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
+def loop_length(edges: Sequence[Edge]) -> float:
+    """Returns the length of a sequence of edges."""
+    return sum(e.length for e in edges)
+
+
+def find_shortest_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
     """Returns the shortest closed loop found."""
+    solutions = sorted(find_all_loops(edges), key=loop_length)
+    if solutions:
+        return solutions[0]
     return []
 
 
-def longest_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
+def find_longest_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
     """Returns the longest closed loop found."""
+    solutions = sorted(find_all_loops(edges), key=loop_length)
+    if solutions:
+        return solutions[-1]
     return []
 
 
-def first_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
+def find_first_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
     """Returns the first closed loop found."""
+    finder = LoopFinder(first=True)
+    available = tuple(edges)
+    if len(available) < 2:
+        return []
+    finder.search(available[0], available[1:])
+    solutions = list(finder)
+    if solutions:
+        return solutions[0]
     return []
 
 
-def all_loops(edges: Sequence[Edge]) -> Sequence[Sequence[Edge]]:
-    """Returns all possible closed loops."""
-    return []
+def find_all_loops(edges: Sequence[Edge]) -> Sequence[Sequence[Edge]]:
+    """Returns all unique closed loops and doesn't include reversed solutions.""" 
+    finder = LoopFinder(discard_reverse=True)
+    _edges = list(edges)
+    for _ in range(len(edges)):
+        available = tuple(_edges)
+        while len(available) > 1:
+            finder.search(available[0], available[1:])
+            ids: set[int] = set()
+            for solution in finder:
+                ids.update(e.id for e in solution)
+            # Remove the first edge (search edge), it is either an used edge or maybe
+            # it isn't connected to any edge.
+            available = available[1:]
+            # Remove all used edges from the available edges.
+            available = tuple(e for e in available if e.id not in ids)
+            # The remaining edges are not connected to the found loops, therefore there must
+            # be 2 or more edges to find new closed loops.
+
+        # rotate edges and restart the search for an exhaustive result
+        first = _edges.pop(0)
+        _edges.append(first)
+    return tuple(finder)
+
+
+class Edge:
+    __slots__ = ("id", "start", "end", "reverse", "length", "payload")
+    _next_id = 1
+
+    def __init__(
+        self, start: Vec2, end: Vec2, length: float = 1.0, payload: Any = None
+    ) -> None:
+        self.id = Edge._next_id  # edge identifier shared across all (reversed) copies
+        Edge._next_id += 1
+        self.start: Vec2 = start
+        self.end: Vec2 = end
+        self.reverse: bool = False
+        self.length = length
+        self.payload = payload
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Edge):
+            return self.id == other.id
+        return False
+
+    def copy(self) -> Edge:
+        edge = Edge(self.start, self.end, self.length, self.payload)
+        edge.reverse = self.reverse
+        edge.id = self.id  # copies represent the same edge
+        return edge
+
+    def reversed(self) -> Edge:
+        edge = Edge(self.end, self.start, self.length, self.payload)
+        edge.reverse = not self.reverse
+        edge.id = self.id  # reversed copies represent the same edge
+        return edge
+
+
+class Loop:
+    def __init__(self, edges: tuple[Edge, ...]) -> None:
+        self.edges: tuple[Edge, ...] = edges
+
+    def is_connected(self, edge: Edge) -> bool:
+        if self.edges:
+            return self.edges[-1].end.isclose(edge.start, abs_tol=ABS_TOL)
+        return False
+
+    def is_closed_loop(self) -> bool:
+        if len(self.edges) > 1:
+            return self.edges[0].start.isclose(self.edges[-1].end, abs_tol=ABS_TOL)
+        return False
+
+    def connect(self, edge: Edge) -> Loop:
+        return Loop(self.edges + (edge,))
+
+    def key(self, reverse=False) -> tuple[int, ...]:
+        """Returns a normalized key: the key starts with the smallest edge id."""
+        if len(self.edges) < 2:
+            raise ValueError("too few edges")
+        if reverse:
+            ids = tuple(edge.id for edge in reversed(self.edges))
+        else:
+            ids = tuple(edge.id for edge in self.edges)
+        index = ids.index(min(ids))
+        if index:
+            ids = ids[index:] + ids[:index]
+        return ids
+
+
+class LoopFinder:
+    """Warning: Recursive Backtracking with time complexity of O(n!)"""
+
+    def __init__(self, first=False, discard_reverse=True) -> None:
+        self._solutions: dict[tuple[int, ...], tuple[Edge, ...]] = {}
+        self._stop_at_first_solution = first
+        self._discard_reverse_solutions = discard_reverse
+
+    def __iter__(self) -> Iterator[tuple[Edge, ...]]:
+        return iter(self._solutions.values())
+
+    def search(self, start: Edge, available: Sequence[Edge]):
+        ids = [e.id for e in available]
+        unique_ids = set(ids)
+        if len(ids) != len(unique_ids):
+            raise ValueError("expected unique availabale edges")
+        if start.id in unique_ids:
+            raise ValueError("start edge must not in available edges")
+        self._search(Loop((start,)), available)
+
+    def _search(self, loop: Loop, available: Sequence[Edge]):
+        if len(available) == 0:
+            return
+        if self._stop_at_first_solution and self._solutions:
+            return
+
+        for next_edge in tuple(available):
+            edge = next_edge
+            loop_ext: Loop | None = None
+            if loop.is_connected(edge):
+                loop_ext = loop.connect(edge)
+            else:
+                edge = next_edge.reversed()
+                if loop.is_connected(edge):
+                    loop_ext = loop.connect(edge)
+
+            if loop_ext is None:
+                continue
+
+            if loop_ext.is_closed_loop():
+                self.append_solution(loop_ext)
+            else:  # depth search
+                _id = edge.id
+                self._search(loop_ext, tuple(e for e in available if e.id != _id))
+
+    def append_solution(self, loop: Loop) -> None:
+        key = loop.key()
+        if key in self._solutions:
+            return
+        if (
+            self._discard_reverse_solutions
+            and loop.key(reverse=True) in self._solutions
+        ):
+            return
+        self._solutions[key] = loop.edges
