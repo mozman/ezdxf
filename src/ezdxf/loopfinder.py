@@ -150,7 +150,10 @@ def loop_length(edges: Sequence[Edge]) -> float:
 
 
 def find_shortest_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
-    """Returns the shortest closed loop found."""
+    """Returns the shortest closed loop found.
+
+    Note: Recursive backtracking algorithm with time complexity of O(n!).
+    """
     solutions = sorted(find_all_loops(edges), key=loop_length)
     if solutions:
         return solutions[0]
@@ -158,7 +161,10 @@ def find_shortest_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
 
 
 def find_longest_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
-    """Returns the longest closed loop found."""
+    """Returns the longest closed loop found.
+
+    Note: Recursive backtracking algorithm with time complexity of O(n!).
+    """
     solutions = sorted(find_all_loops(edges), key=loop_length)
     if solutions:
         return solutions[-1]
@@ -166,7 +172,10 @@ def find_longest_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
 
 
 def find_first_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
-    """Returns the first closed loop found."""
+    """Returns the first closed loop found.
+
+    Note: Recursive backtracking algorithm with time complexity of O(n!).
+    """
     finder = LoopFinder(first=True)
     available = tuple(edges)
     if len(available) < 2:
@@ -179,7 +188,10 @@ def find_first_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
 
 
 def find_all_loops(edges: Sequence[Edge]) -> Sequence[Sequence[Edge]]:
-    """Returns all unique closed loops and doesn't include reversed solutions.""" 
+    """Returns all unique closed loops and doesn't include reversed solutions.
+
+    Note: Recursive backtracking algorithm with time complexity of O(n!).
+    """ 
     finder = LoopFinder(discard_reverse=True)
     _edges = list(edges)
     for _ in range(len(edges)):
@@ -197,7 +209,7 @@ def find_all_loops(edges: Sequence[Edge]) -> Sequence[Sequence[Edge]]:
             # The remaining edges are not connected to the found loops, therefore there must
             # be 2 or more edges to find new closed loops.
 
-        # rotate edges and restart the search for an exhaustive result
+        # rotate the edges and start the search again to get an exhaustive result
         first = _edges.pop(0)
         _edges.append(first)
     return tuple(finder)
@@ -268,7 +280,7 @@ class Loop:
 
 
 class LoopFinder:
-    """Warning: Recursive Backtracking with time complexity of O(n!)"""
+    """Recursive backtracking algorithm with time complexity of O(n!)."""
 
     def __init__(self, first=False, discard_reverse=True) -> None:
         self._solutions: dict[tuple[int, ...], tuple[Edge, ...]] = {}
