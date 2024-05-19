@@ -1,10 +1,6 @@
 name: Test pypy without C-extensions
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
   workflow_dispatch:
 
 jobs:
