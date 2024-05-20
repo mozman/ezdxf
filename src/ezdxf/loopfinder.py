@@ -28,6 +28,7 @@ __all__ = [
 ]
 
 ABS_TOL = 1e-12
+GAP_TOL = 1e-12  # maximum distance to consider two points as coincident
 
 
 def is_closed_entity(entity: DXFEntity) -> bool:
@@ -149,34 +150,46 @@ def loop_length(edges: Sequence[Edge]) -> float:
     return sum(e.length for e in edges)
 
 
-def find_shortest_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
+def find_shortest_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
     """Returns the shortest closed loop found.
 
     Note: Recursive backtracking algorithm with time complexity of O(n!).
+
+    Args:
+        edges: edges to be examined
+        gap_tol: maximum vertex distance to consider two edges as connected
     """
-    solutions = sorted(find_all_loops(edges), key=loop_length)
+    solutions = sorted(find_all_loops(edges, gap_tol=gap_tol), key=loop_length)
     if solutions:
         return solutions[0]
     return []
 
 
-def find_longest_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
+def find_longest_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
     """Returns the longest closed loop found.
 
     Note: Recursive backtracking algorithm with time complexity of O(n!).
+
+    Args:
+        edges: edges to be examined
+        gap_tol: maximum vertex distance to consider two edges as connected
     """
-    solutions = sorted(find_all_loops(edges), key=loop_length)
+    solutions = sorted(find_all_loops(edges, gap_tol=gap_tol), key=loop_length)
     if solutions:
         return solutions[-1]
     return []
 
 
-def find_first_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
+def find_first_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
     """Returns the first closed loop found.
 
     Note: Recursive backtracking algorithm with time complexity of O(n!).
+
+    Args:
+        edges: edges to be examined
+        gap_tol: maximum vertex distance to consider two edges as connected
     """
-    finder = LoopFinder(first=True)
+    finder = LoopFinder(first=True, gap_tol=gap_tol)
     available = tuple(edges)
     if len(available) < 2:
         return []
@@ -187,12 +200,16 @@ def find_first_loop(edges: Sequence[Edge]) -> Sequence[Edge]:
     return []
 
 
-def find_all_loops(edges: Sequence[Edge]) -> Sequence[Sequence[Edge]]:
+def find_all_loops(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[Edge]]:
     """Returns all unique closed loops and doesn't include reversed solutions.
 
     Note: Recursive backtracking algorithm with time complexity of O(n!).
-    """ 
-    finder = LoopFinder(discard_reverse=True)
+
+    Args:
+        edges: edges to be examined
+        gap_tol: maximum vertex distance to consider two edges as connected
+    """
+    finder = LoopFinder(discard_reverse=True, gap_tol=gap_tol)
     _edges = list(edges)
     for _ in range(len(edges)):
         available = tuple(_edges)
@@ -200,38 +217,59 @@ def find_all_loops(edges: Sequence[Edge]) -> Sequence[Sequence[Edge]]:
         # Rotate the edges and start the search again to get an exhaustive result.
         first = _edges.pop(0)
         _edges.append(first)
-        # It's not required to search for disconnected loops - by rotating and restarting, 
+        # It's not required to search for disconnected loops - by rotating and restarting,
         # every possible loop is taken into account.
     return tuple(finder)
 
 
 class Edge:
+    """Represents an edge. 
+    
+    The edge can represent any linear curve (line, arc, spline,...). 
+    Therefore, the length of the edge must be specified if the length calculation for 
+    loops is to be possible.
+
+    Attributes:
+        id: unique id as int
+        start: start vertex as Vec2
+        end: end vertex as Vec2
+        reverse: flag to indicate that the edge is reversed compared to its initial state
+        length: length of the edge, default is the distance between start- and end vertex
+        payload: arbitrary data associated to the edge
+
+    """
+
     __slots__ = ("id", "start", "end", "reverse", "length", "payload")
     _next_id = 1
 
     def __init__(
-        self, start: Vec2, end: Vec2, length: float = 1.0, payload: Any = None
+        self, start: Vec2, end: Vec2, length: float = -1.0, payload: Any = None
     ) -> None:
-        self.id = Edge._next_id  # edge identifier shared across all (reversed) copies
+        self.id = Edge._next_id  # unique id but (reversed) copies have the same id
         Edge._next_id += 1
         self.start: Vec2 = start
         self.end: Vec2 = end
         self.reverse: bool = False
+        if length < 0.0:
+            length = start.distance(end)
         self.length = length
         self.payload = payload
 
     def __eq__(self, other) -> bool:
+        """Return ``True`` if the ids of the edges are equal."""
         if isinstance(other, Edge):
             return self.id == other.id
         return False
 
     def copy(self) -> Edge:
+        """Returns a copy."""
         edge = Edge(self.start, self.end, self.length, self.payload)
         edge.reverse = self.reverse
         edge.id = self.id  # copies represent the same edge
         return edge
 
     def reversed(self) -> Edge:
+        """Returns a reversed copy."""
         edge = Edge(self.end, self.start, self.length, self.payload)
         edge.reverse = not self.reverse
         edge.id = self.id  # reversed copies represent the same edge
@@ -239,24 +277,50 @@ class Edge:
 
 
 class Loop:
+    """Represents connected edges.
+
+    Each end vertex of an edge is connected to the start vertex of the following edge.
+    It is a closed loop when the first edge is connected to the last edge.
+
+    (internal helper class)
+    """
+
     def __init__(self, edges: tuple[Edge, ...]) -> None:
         self.edges: tuple[Edge, ...] = edges
 
-    def is_connected(self, edge: Edge) -> bool:
+    def is_connected(self, edge: Edge, gap_tol=GAP_TOL) -> bool:
+        """Returns ``True`` if the last edge of the loop is connected to the given edge.
+
+        Args:
+            edge: edge to be examined
+            gap_tol: maximum vertex distance to consider two edges as connected
+        """
         if self.edges:
-            return self.edges[-1].end.isclose(edge.start, abs_tol=ABS_TOL)
+            return self.edges[-1].end.distance(edge.start) < gap_tol
         return False
 
-    def is_closed_loop(self) -> bool:
+    def is_closed_loop(self, gap_tol=GAP_TOL) -> bool:
+        """Returns ``True`` if the first edge is connected to the last edge.
+
+        Args:
+            gap_tol: maximum vertex distance to consider two edges as connected
+        """
+
         if len(self.edges) > 1:
-            return self.edges[0].start.isclose(self.edges[-1].end, abs_tol=ABS_TOL)
+            return self.edges[0].start.distance(self.edges[-1].end) < gap_tol
         return False
 
     def connect(self, edge: Edge) -> Loop:
+        """Appends the edge to the loop. The edge must be connected to the last edge
+        in the loop.  That is not checked here!
+        """
         return Loop(self.edges + (edge,))
 
     def key(self, reverse=False) -> tuple[int, ...]:
-        """Returns a normalized key: the key starts with the smallest edge id."""
+        """Returns a normalized key.
+
+        The key is rotated to begin with the smallest edge id.
+        """
         if len(self.edges) < 2:
             raise ValueError("too few edges")
         if reverse:
@@ -270,26 +334,50 @@ class Loop:
 
 
 class LoopFinder:
-    """Recursive backtracking algorithm with time complexity of O(n!)."""
+    """Recursive backtracking algorithm with time complexity of O(n!).
 
-    def __init__(self, first=False, discard_reverse=True) -> None:
+    Args:
+        first: flag to stop the search at the first loop found
+        discard_reverse: discard loops that are identical to found loops but in reverse order
+        gap_tol: maximum vertex distance to consider two edges as connected
+
+    """
+
+    def __init__(self, first=False, discard_reverse=True, gap_tol=GAP_TOL) -> None:
         self._solutions: dict[tuple[int, ...], tuple[Edge, ...]] = {}
         self._stop_at_first_solution = first
         self._discard_reverse_solutions = discard_reverse
+        self._gap_tol = gap_tol
 
     def __iter__(self) -> Iterator[tuple[Edge, ...]]:
+        """Yields all found loops as sequences of edges."""
         return iter(self._solutions.values())
 
     def search(self, start: Edge, available: Sequence[Edge]):
+        """Searches for closed loops in the available edges, starting from the given
+        start edge.
+
+        The starting edge cannot exist in the available edges and the
+        avalibale edges cannot have duplicate edges.
+
+        Args:
+            start: staring edge
+            available: available edges
+
+        Raises:
+            ValueError: duplicate edges or starting edge in available edges
+
+        """
         ids = [e.id for e in available]
         unique_ids = set(ids)
         if len(ids) != len(unique_ids):
-            raise ValueError("expected unique availabale edges")
+            raise ValueError("available edges cannot have duplicate edges")
         if start.id in unique_ids:
-            raise ValueError("start edge must not in available edges")
+            raise ValueError("starting edge cannot exist in available edges")
         self._search(Loop((start,)), available)
 
     def _search(self, loop: Loop, available: Sequence[Edge]):
+        """Recursive backtracking with a time complexity of O(n!)."""
         if len(available) == 0:
             return
         if self._stop_at_first_solution and self._solutions:
@@ -298,23 +386,24 @@ class LoopFinder:
         for next_edge in tuple(available):
             edge = next_edge
             loop_ext: Loop | None = None
-            if loop.is_connected(edge):
+            if loop.is_connected(edge, self._gap_tol):
                 loop_ext = loop.connect(edge)
             else:
                 edge = next_edge.reversed()
-                if loop.is_connected(edge):
+                if loop.is_connected(edge, self._gap_tol):
                     loop_ext = loop.connect(edge)
 
             if loop_ext is None:
                 continue
 
-            if loop_ext.is_closed_loop():
-                self.append_solution(loop_ext)
+            if loop_ext.is_closed_loop(gap_tol=GAP_TOL):
+                self._append_solution(loop_ext)
             else:  # depth search
                 _id = edge.id
                 self._search(loop_ext, tuple(e for e in available if e.id != _id))
 
-    def append_solution(self, loop: Loop) -> None:
+    def _append_solution(self, loop: Loop) -> None:
+        """Add loop to solutions."""
         key = loop.key()
         if key in self._solutions:
             return
