@@ -87,13 +87,6 @@ class TestLoop:
         loop = loopfinder.Loop((self.A, self.B))
         assert loop.is_closed_loop() is False
 
-    def test_connect_edge(self):
-        loop = loopfinder.Loop((self.A,))
-        loop2 = loop.connect(self.B)
-        assert loop is not loop2
-        assert loop.edges is not loop2.edges
-        assert len(loop2.edges) == 2
-
     def test_key(self):
         loop1 = loopfinder.Loop((self.A, self.B, self.C))
         loop2 = loopfinder.Loop((self.B, self.C, self.A))  # rotated edges, same loop

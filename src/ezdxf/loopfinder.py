@@ -64,7 +64,7 @@ def edge_from_entity(entity: DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
         span = ellipse_param_span(ct1.start_param, ct1.end_param)
         num = max(3, round(span / 0.1745))  #  resolution of ~1 deg
         # length of elliptic arc is an approximation:
-        points = list(ct1.vertices(ct1.params(num)))  
+        points = list(ct1.vertices(ct1.params(num)))
         length = sum(a.distance(b) for a, b in zip(points, points[1:]))
         edge = Edge(Vec2(points[0]), Vec2(points[-1]), length, entity)
     elif isinstance(entity, Spline):
@@ -74,7 +74,7 @@ def edge_from_entity(entity: DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
             return None
         start = Vec2(ct2.control_points[0])
         end = Vec2(ct2.control_points[-1])
-        points = list(ct2.control_points)  
+        points = list(ct2.control_points)
         # length of B-spline is a very rough approximation:
         length = sum(a.distance(b) for a, b in zip(points, points[1:]))
         edge = Edge(start, end, length, entity)
@@ -261,13 +261,6 @@ class Loop:
             return self.edges[0].start.distance(self.edges[-1].end) < gap_tol
         return False
 
-    def connect(self, edge: Edge) -> Loop:
-        """Returns a new loop with `edge` appended. 
-        
-        The edge must be connected to the last edge in the loop. That is not checked here!
-        """
-        return Loop(self.edges + (edge,))
-
     def key(self, reverse=False) -> tuple[int, ...]:
         """Returns a normalized key.
 
@@ -327,24 +320,22 @@ class LoopFinder:
         if start.id in unique_ids:
             raise ValueError("starting edge cannot exist in available edges")
 
-        self._search(Loop((start,)), available)
+        self._search(Loop((start,)), tuple(available))
 
-    def _search(self, loop: Loop, available: Sequence[Edge]):
+    def _search(self, loop: Loop, available: tuple[Edge, ...]):
         """Recursive backtracking with a time complexity of O(n!)."""
         if len(available) == 0:
             return
-        if self._stop_at_first_solution and self._solutions:
-            return
 
-        for next_edge in tuple(available):
+        for next_edge in available:
             edge = next_edge
             extended_loop: Loop | None = None
             if loop.is_connected(edge, self._gap_tol):
-                extended_loop = loop.connect(edge)
+                extended_loop = Loop(loop.edges + (edge,))
             else:
                 edge = next_edge.reversed()
                 if loop.is_connected(edge, self._gap_tol):
-                    extended_loop = loop.connect(edge)
+                    extended_loop = Loop(loop.edges + (edge,))
 
             if extended_loop is None:
                 continue
@@ -354,6 +345,10 @@ class LoopFinder:
             else:  # depth search
                 _id = edge.id
                 self._search(extended_loop, tuple(e for e in available if e.id != _id))
+
+            if self._stop_at_first_solution and self._solutions:
+                return
+
 
     def _append_solution(self, loop: Loop) -> None:
         """Add loop to solutions."""
