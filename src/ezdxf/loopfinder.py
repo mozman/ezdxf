@@ -1,96 +1,36 @@
 # Copyright (c) 2024, Manfred Moitzi
 # License: MIT License
+"""
+Loop Finder
+===========
+
+A module for detecting closed loops.
+
+.. versionadded:: 1.4
+
+"""
 from __future__ import annotations
-from typing import Any, Sequence, Iterator
+from typing import Any, Sequence, Iterator, Iterable
 import math
 
-from ezdxf.entities import (
-    DXFEntity,
-    Circle,
-    Arc,
-    Ellipse,
-    Spline,
-    LWPolyline,
-    Polyline,
-    Line,
-)
-from ezdxf.math import arc_angle_span_deg, ellipse_param_span, Vec2, Vec3
+from ezdxf.entities import DXFEntity, Arc, Ellipse, Spline, Line
+from ezdxf.math import arc_angle_span_deg, ellipse_param_span, Vec2
 
 __all__ = [
     "find_all_loops",
     "find_first_loop",
     "find_shortest_loop",
     "find_longest_loop",
-    "is_closed_entity",
     "edge_from_entity",
     "loop_length",
+    "filter_short_edges",
     "Edge",
 ]
-
 ABS_TOL = 1e-12
-GAP_TOL = 1e-12  # maximum distance to consider two points as coincident
+GAP_TOL = 1e-12
 
 
-def is_closed_entity(entity: DXFEntity) -> bool:
-    """Returns ``True`` if the given entity represents a closed loop."""
-    if isinstance(entity, Arc):  # Arc inherits from Circle!
-        radius = abs(entity.dxf.radius)
-        start_angle = entity.dxf.start_angle
-        end_angle = entity.dxf.end_angle
-        angle_span = arc_angle_span_deg(start_angle, end_angle)
-        return abs(radius) > ABS_TOL and math.isclose(
-            angle_span, 360.0, abs_tol=ABS_TOL
-        )
-    if isinstance(entity, Circle):
-        return abs(entity.dxf.radius) > ABS_TOL
-
-    if isinstance(entity, Ellipse):
-        start_param = entity.dxf.start_param
-        end_param = entity.dxf.end_param
-        span = ellipse_param_span(start_param, end_param)
-        if not math.isclose(span, math.tau, abs_tol=ABS_TOL):
-            return False
-        return True
-
-    if isinstance(entity, Spline):
-        try:
-            bspline = entity.construction_tool()
-        except ValueError:
-            return False
-        control_points = bspline.control_points
-        if len(control_points) < 3:
-            return False
-        start = control_points[0]
-        end = control_points[-1]
-        return start.isclose(end, abs_tol=ABS_TOL)
-
-    if isinstance(entity, LWPolyline):
-        if len(entity) < 1:
-            return False
-        if entity.closed is True:
-            return True
-        start = Vec2(entity.lwpoints[0][:2])
-        end = Vec2(entity.lwpoints[-1][:2])
-        return start.isclose(end, abs_tol=ABS_TOL)
-
-    if isinstance(entity, Polyline):
-        if entity.is_2d_polyline or entity.is_3d_polyline:
-            # Note: does not check if all vertices of a 3D polyline are placed on a
-            # common plane.
-            vertices = entity.vertices
-            if len(vertices) < 2:
-                return False
-            if entity.is_closed:
-                return True
-            p0: Vec3 = vertices[0].dxf.location  # type: ignore
-            p1: Vec3 = vertices[-1].dxf.location  # type: ignore
-            if p0.isclose(p1, abs_tol=ABS_TOL):
-                return True
-        return False
-    return False
-
-
-def edge_from_entity(entity: DXFEntity) -> Edge | None:
+def edge_from_entity(entity: DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
     """Makes an :class:`Edge` instance for the DXF entity types LINE, ARC, ELLIPSE and
     SPLINE if the entity is an open linear curve.  Returns ``None`` if the entity
     is a closed curve or cannot represent an edge.
@@ -103,7 +43,7 @@ def edge_from_entity(entity: DXFEntity) -> Edge | None:
         end = Vec2(entity.dxf.end)
         length = start.distance(end)
         edge = Edge(start, end, length, entity)
-    elif isinstance(entity, Arc) and not is_closed_entity(entity):
+    elif isinstance(entity, Arc):
         try:
             ct0 = entity.construction_tool()
         except ValueError:
@@ -114,7 +54,7 @@ def edge_from_entity(entity: DXFEntity) -> Edge | None:
         span_deg = arc_angle_span_deg(ct0.start_angle, ct0.end_angle)
         length = radius * span_deg / 180.0 * math.pi
         edge = Edge(ct0.start_point, ct0.end_point, length, entity)
-    elif isinstance(entity, Ellipse) and not is_closed_entity(entity):
+    elif isinstance(entity, Ellipse):
         try:
             ct1 = entity.construction_tool()
         except ValueError:
@@ -123,24 +63,26 @@ def edge_from_entity(entity: DXFEntity) -> Edge | None:
             return None
         span = ellipse_param_span(ct1.start_param, ct1.end_param)
         num = max(3, round(span / 0.1745))  #  resolution of ~1 deg
-        points = list(ct1.vertices(ct1.params(num)))  # approximation
+        # length of elliptic arc is an approximation:
+        points = list(ct1.vertices(ct1.params(num)))  
         length = sum(a.distance(b) for a, b in zip(points, points[1:]))
         edge = Edge(Vec2(points[0]), Vec2(points[-1]), length, entity)
-    elif isinstance(entity, Spline) and not is_closed_entity(entity):
+    elif isinstance(entity, Spline):
         try:
             ct2 = entity.construction_tool()
         except ValueError:
             return None
         start = Vec2(ct2.control_points[0])
         end = Vec2(ct2.control_points[-1])
-        points = list(ct2.control_points)  # rough approximation
+        points = list(ct2.control_points)  
+        # length of B-spline is a very rough approximation:
         length = sum(a.distance(b) for a, b in zip(points, points[1:]))
         edge = Edge(start, end, length, entity)
 
     if isinstance(edge, Edge):
-        if edge.start.isclose(edge.end, abs_tol=ABS_TOL):
+        if edge.start.distance(edge.end) < gap_tol:
             return None
-        if edge.length < ABS_TOL:
+        if edge.length < gap_tol:
             return None
     return edge
 
@@ -223,10 +165,10 @@ def find_all_loops(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[
 
 
 class Edge:
-    """Represents an edge. 
-    
-    The edge can represent any linear curve (line, arc, spline,...). 
-    Therefore, the length of the edge must be specified if the length calculation for 
+    """Represents an edge.
+
+    The edge can represent any linear curve (line, arc, spline,...).
+    Therefore, the length of the edge must be specified if the length calculation for
     loops is to be possible.
 
     Attributes:
@@ -276,6 +218,15 @@ class Edge:
         return edge
 
 
+def filter_short_edges(edges: Iterable[Edge], gap_tol=GAP_TOL) -> tuple[Edge, ...]:
+    """Removes all edges where the start vertex is very close to the end vertex.
+
+    These edges represent very short curves or maybe closed curves like circles and
+    ellipses.
+    """
+    return tuple(e for e in edges if e.start.distance(e.end) >= gap_tol)
+
+
 class Loop:
     """Represents connected edges.
 
@@ -311,8 +262,9 @@ class Loop:
         return False
 
     def connect(self, edge: Edge) -> Loop:
-        """Appends the edge to the loop. The edge must be connected to the last edge
-        in the loop.  That is not checked here!
+        """Returns a new loop with `edge` appended. 
+        
+        The edge must be connected to the last edge in the loop. That is not checked here!
         """
         return Loop(self.edges + (edge,))
 
@@ -374,6 +326,7 @@ class LoopFinder:
             raise ValueError("available edges cannot have duplicate edges")
         if start.id in unique_ids:
             raise ValueError("starting edge cannot exist in available edges")
+
         self._search(Loop((start,)), available)
 
     def _search(self, loop: Loop, available: Sequence[Edge]):
@@ -385,22 +338,22 @@ class LoopFinder:
 
         for next_edge in tuple(available):
             edge = next_edge
-            loop_ext: Loop | None = None
+            extended_loop: Loop | None = None
             if loop.is_connected(edge, self._gap_tol):
-                loop_ext = loop.connect(edge)
+                extended_loop = loop.connect(edge)
             else:
                 edge = next_edge.reversed()
                 if loop.is_connected(edge, self._gap_tol):
-                    loop_ext = loop.connect(edge)
+                    extended_loop = loop.connect(edge)
 
-            if loop_ext is None:
+            if extended_loop is None:
                 continue
 
-            if loop_ext.is_closed_loop(gap_tol=GAP_TOL):
-                self._append_solution(loop_ext)
+            if extended_loop.is_closed_loop(self._gap_tol):
+                self._append_solution(extended_loop)
             else:  # depth search
                 _id = edge.id
-                self._search(loop_ext, tuple(e for e in available if e.id != _id))
+                self._search(extended_loop, tuple(e for e in available if e.id != _id))
 
     def _append_solution(self, loop: Loop) -> None:
         """Add loop to solutions."""
