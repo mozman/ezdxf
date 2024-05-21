@@ -4,13 +4,13 @@ from __future__ import annotations
 from typing import Sequence
 import pytest
 
-from ezdxf import loopfinder
+from ezdxf import edgeminer as em
 from ezdxf.math import Vec2
 
 
 class TestEdge:
     def test_init(self):
-        edge = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        edge = em.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
         assert edge.start == Vec2(0, 0)
         assert edge.end == Vec2(1, 0)
         assert edge.length == 1.0
@@ -18,15 +18,15 @@ class TestEdge:
         assert edge.payload is None
 
     def test_identity(self):
-        edge0 = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
-        edge1 = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        edge0 = em.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        edge1 = em.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
         assert edge0 == edge0
         assert edge0 != edge1, "each edge should have an unique identity"
         assert edge0 == edge0.copy(), "copies represent the same edge"
         assert edge0 == edge0.reversed(), "reversed copies represent the same edge"
 
     def test_copy(self):
-        edge = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        edge = em.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
         clone = edge.copy()
         assert edge == clone
         assert edge.id == clone.id
@@ -37,7 +37,7 @@ class TestEdge:
         assert edge.payload is clone.payload
 
     def test_reversed_copy(self):
-        edge = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        edge = em.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
         clone = edge.reversed()
         assert edge == clone
         assert edge.id == clone.id
@@ -49,9 +49,9 @@ class TestEdge:
 
 
 def test_filter_short_edges():
-    A = loopfinder.Edge(Vec2(0, 0), Vec2(0, 0))
-    B = loopfinder.Edge(Vec2(1, 0), Vec2(1, 1))
-    result = loopfinder.filter_short_edges([A, B])
+    A = em.Edge(Vec2(0, 0), Vec2(0, 0))
+    B = em.Edge(Vec2(1, 0), Vec2(1, 1))
+    result = em.filter_short_edges([A, B])
     assert len(result) == 1
     assert result[0] is B
 
@@ -63,38 +63,38 @@ class TestLoop:
     # |   |
     # +-A-+
 
-    A = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0))
-    B = loopfinder.Edge(Vec2(1, 0), Vec2(1, 1))
-    C = loopfinder.Edge(Vec2(1, 1), Vec2(0, 1))
-    D = loopfinder.Edge(Vec2(0, 1), Vec2(0, 0))
+    A = em.Edge(Vec2(0, 0), Vec2(1, 0))
+    B = em.Edge(Vec2(1, 0), Vec2(1, 1))
+    C = em.Edge(Vec2(1, 1), Vec2(0, 1))
+    D = em.Edge(Vec2(0, 1), Vec2(0, 0))
 
     def test_is_connected(self):
-        loop = loopfinder.Loop((self.A,))
+        loop = em.Loop((self.A,))
         assert loop.is_connected(self.B) is True
 
     def test_is_not_connected(self):
-        loop = loopfinder.Loop((self.A,))
+        loop = em.Loop((self.A,))
         assert loop.is_connected(self.C) is False
         assert (
             loop.is_connected(self.D) is False
         ), "should not check reverse connected edges"
 
     def test_is_closed_loop(self):
-        loop = loopfinder.Loop((self.A, self.B, self.C, self.D))
+        loop = em.Loop((self.A, self.B, self.C, self.D))
         assert loop.is_closed_loop() is True
 
     def test_is_not_closed_loop(self):
-        loop = loopfinder.Loop((self.A, self.B))
+        loop = em.Loop((self.A, self.B))
         assert loop.is_closed_loop() is False
 
     def test_key(self):
-        loop1 = loopfinder.Loop((self.A, self.B, self.C))
-        loop2 = loopfinder.Loop((self.B, self.C, self.A))  # rotated edges, same loop
+        loop1 = em.Loop((self.A, self.B, self.C))
+        loop2 = em.Loop((self.B, self.C, self.A))  # rotated edges, same loop
 
         assert loop1.key() == loop2.key()
 
 
-def collect_payload(edges: Sequence[loopfinder.Edge]) -> str:
+def collect_payload(edges: Sequence[em.Edge]) -> str:
     return ",".join([e.payload for e in edges])
 
 
@@ -106,42 +106,42 @@ class SimpleLoops:
     #   |   |   |
     # 0 +-A-+-E-+
 
-    A = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), payload="A")
-    B = loopfinder.Edge(Vec2(1, 0), Vec2(1, 1), payload="B")
-    C = loopfinder.Edge(Vec2(1, 1), Vec2(0, 1), payload="C")
-    D = loopfinder.Edge(Vec2(0, 1), Vec2(0, 0), payload="D")
-    E = loopfinder.Edge(Vec2(1, 0), Vec2(2, 0), payload="E")
-    F = loopfinder.Edge(Vec2(2, 0), Vec2(2, 1), payload="F")
-    G = loopfinder.Edge(Vec2(2, 1), Vec2(1, 1), payload="G")
+    A = em.Edge(Vec2(0, 0), Vec2(1, 0), payload="A")
+    B = em.Edge(Vec2(1, 0), Vec2(1, 1), payload="B")
+    C = em.Edge(Vec2(1, 1), Vec2(0, 1), payload="C")
+    D = em.Edge(Vec2(0, 1), Vec2(0, 0), payload="D")
+    E = em.Edge(Vec2(1, 0), Vec2(2, 0), payload="E")
+    F = em.Edge(Vec2(2, 0), Vec2(2, 1), payload="F")
+    G = em.Edge(Vec2(2, 1), Vec2(1, 1), payload="G")
 
 
 class TestLoopFinderSimple(SimpleLoops):
     def test_unique_available_edges_required(self):
-        finder = loopfinder.LoopFinder()
+        finder = em.LoopFinder()
         with pytest.raises(ValueError):
             finder.search(self.A, available=(self.B, self.B, self.B))
 
     def test_start_edge_not_in_available_edges(self):
-        finder = loopfinder.LoopFinder()
+        finder = em.LoopFinder()
         with pytest.raises(ValueError):
             finder.search(self.A, available=(self.A, self.C, self.D))
 
     def test_loop_A_B_C_D(self):
-        finder = loopfinder.LoopFinder()
+        finder = em.LoopFinder()
         finder.search(self.A, (self.B, self.C, self.D))
         solutions = list(finder)
         assert len(solutions) == 1
         assert collect_payload(solutions[0]) == "A,B,C,D"
 
     def test_loop_D_A_B_C(self):
-        finder = loopfinder.LoopFinder()
+        finder = em.LoopFinder()
         finder.search(self.D, (self.A, self.B, self.C))
         solutions = list(finder)
         assert len(solutions) == 1
         assert collect_payload(solutions[0]) == "D,A,B,C"
 
     def test_loop_A_to_D_unique_solutions(self):
-        finder = loopfinder.LoopFinder()
+        finder = em.LoopFinder()
         finder.search(self.A, (self.B, self.C, self.D))
         # rotated edges, same loop
         finder.search(self.D, (self.A, self.B, self.C))
@@ -149,7 +149,7 @@ class TestLoopFinderSimple(SimpleLoops):
         assert len(solutions) == 1
 
     def test_loops_A_to_G(self):
-        finder = loopfinder.LoopFinder()
+        finder = em.LoopFinder()
         finder.search(self.A, (self.B, self.C, self.D, self.E, self.F, self.G))
         solutions = list(finder)
         assert len(solutions) == 2
@@ -157,7 +157,7 @@ class TestLoopFinderSimple(SimpleLoops):
         assert collect_payload(solutions[1]) == "A,E,F,G,C,D"
 
     def test_stop_at_first_solution(self):
-        finder = loopfinder.LoopFinder(first=True)
+        finder = em.LoopFinder(first=True)
         finder.search(self.A, (self.B, self.C, self.D, self.E, self.F, self.G))
         solutions = list(finder)
         assert len(solutions) == 1
@@ -165,7 +165,7 @@ class TestLoopFinderSimple(SimpleLoops):
 
 class TestAPIFunction(SimpleLoops):
     def test_find_all_loop(self):
-        solutions = loopfinder.find_all_loops(
+        solutions = em.find_all_loops(
             (self.A, self.B, self.C, self.D, self.E, self.F, self.G)
         )
         assert len(solutions) == 3
@@ -175,20 +175,20 @@ class TestAPIFunction(SimpleLoops):
         assert "A,E,F,G,C,D" in solution_strings
 
     def test_find_first_loop(self):
-        solution = loopfinder.find_first_loop(
+        solution = em.find_first_loop(
             (self.A, self.B, self.C, self.D, self.E, self.F, self.G)
         )
         assert len(solution) >= 4  # any loop is a valid solution
 
     def test_find_shortest_loop(self):
-        solution = loopfinder.find_shortest_loop(
+        solution = em.find_shortest_loop(
             (self.A, self.B, self.C, self.D, self.E, self.F, self.G)
         )
         assert len(solution) == 4
         assert collect_payload(solution) == "A,B,C,D"
 
     def test_find_longest_loop(self):
-        solution = loopfinder.find_longest_loop(
+        solution = em.find_longest_loop(
             (self.A, self.B, self.C, self.D, self.E, self.F, self.G)
         )
         assert len(solution) == 6
@@ -203,17 +203,17 @@ class TestFindAllDisconnectedLoops:
     #   |   |   |   |
     # 0 +-A-+   +-E-+
 
-    A = loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), payload="A")
-    B = loopfinder.Edge(Vec2(1, 0), Vec2(1, 1), payload="B")
-    C = loopfinder.Edge(Vec2(1, 1), Vec2(0, 1), payload="C")
-    D = loopfinder.Edge(Vec2(0, 1), Vec2(0, 0), payload="D")
-    E = loopfinder.Edge(Vec2(2, 0), Vec2(3, 0), payload="E")
-    F = loopfinder.Edge(Vec2(3, 0), Vec2(3, 1), payload="F")
-    G = loopfinder.Edge(Vec2(3, 1), Vec2(2, 1), payload="G")
-    H = loopfinder.Edge(Vec2(2, 1), Vec2(2, 0), payload="H")
+    A = em.Edge(Vec2(0, 0), Vec2(1, 0), payload="A")
+    B = em.Edge(Vec2(1, 0), Vec2(1, 1), payload="B")
+    C = em.Edge(Vec2(1, 1), Vec2(0, 1), payload="C")
+    D = em.Edge(Vec2(0, 1), Vec2(0, 0), payload="D")
+    E = em.Edge(Vec2(2, 0), Vec2(3, 0), payload="E")
+    F = em.Edge(Vec2(3, 0), Vec2(3, 1), payload="F")
+    G = em.Edge(Vec2(3, 1), Vec2(2, 1), payload="G")
+    H = em.Edge(Vec2(2, 1), Vec2(2, 0), payload="H")
 
     def test_find_all_loops(self):
-        solutions = loopfinder.find_all_loops(
+        solutions = em.find_all_loops(
             (self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.H)
         )
         assert len(solutions) == 2
@@ -222,7 +222,7 @@ class TestFindAllDisconnectedLoops:
         assert "E,F,G,H" in solution_strings
 
     def test_find_all_shuffled_loops(self):
-        solutions = loopfinder.find_all_loops(
+        solutions = em.find_all_loops(
             (self.H, self.B, self.F, self.D, self.E, self.C, self.G, self.A)
         )
         assert len(solutions) == 2

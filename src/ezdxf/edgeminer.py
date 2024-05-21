@@ -1,10 +1,10 @@
 # Copyright (c) 2024, Manfred Moitzi
 # License: MIT License
 """
-Loop Finder
-===========
+EdgeMiner
+=========
 
-A module for detecting closed loops.
+A module for detecting shapes build of linked edges.
 
 .. versionadded:: 1.4
 

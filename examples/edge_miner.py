@@ -6,7 +6,7 @@ from typing import Sequence
 from pathlib import Path
 
 import ezdxf
-from ezdxf import loopfinder
+from ezdxf import edgeminer as em
 from ezdxf.math import Vec2, Matrix44
 
 CWD = Path("~/Desktop/Outbox").expanduser()
@@ -25,27 +25,27 @@ if not CWD.exists():
     # 0 +-A-+-B-+
 
 EDGES = [
-    loopfinder.Edge(Vec2(0, 0), Vec2(1, 0), 1, payload="A"),
-    loopfinder.Edge(Vec2(1, 0), Vec2(3, 0), 2, payload="B"),
-    loopfinder.Edge(Vec2(0, 0), Vec2(0, 1), 1, payload="C"),
-    loopfinder.Edge(Vec2(1, 0), Vec2(1, 1), 1, payload="D"),
-    loopfinder.Edge(Vec2(3, 0), Vec2(3, 1), 1, payload="E"),
-    loopfinder.Edge(Vec2(0, 1), Vec2(1, 1), 1, payload="F"),
-    loopfinder.Edge(Vec2(1, 1), Vec2(3, 1), 2, payload="G"),
-    loopfinder.Edge(Vec2(0, 1), Vec2(0, 4), 3, payload="H"),
-    loopfinder.Edge(Vec2(1, 1), Vec2(1, 4), 3, payload="I"),
-    loopfinder.Edge(Vec2(3, 1), Vec2(3, 4), 3, payload="J"),
-    loopfinder.Edge(Vec2(0, 4), Vec2(1, 4), 1, payload="K"),
-    loopfinder.Edge(Vec2(1, 4), Vec2(3, 4), 2, payload="L"),
+    em.Edge(Vec2(0, 0), Vec2(1, 0), 1, payload="A"),
+    em.Edge(Vec2(1, 0), Vec2(3, 0), 2, payload="B"),
+    em.Edge(Vec2(0, 0), Vec2(0, 1), 1, payload="C"),
+    em.Edge(Vec2(1, 0), Vec2(1, 1), 1, payload="D"),
+    em.Edge(Vec2(3, 0), Vec2(3, 1), 1, payload="E"),
+    em.Edge(Vec2(0, 1), Vec2(1, 1), 1, payload="F"),
+    em.Edge(Vec2(1, 1), Vec2(3, 1), 2, payload="G"),
+    em.Edge(Vec2(0, 1), Vec2(0, 4), 3, payload="H"),
+    em.Edge(Vec2(1, 1), Vec2(1, 4), 3, payload="I"),
+    em.Edge(Vec2(3, 1), Vec2(3, 4), 3, payload="J"),
+    em.Edge(Vec2(0, 4), Vec2(1, 4), 1, payload="K"),
+    em.Edge(Vec2(1, 4), Vec2(3, 4), 2, payload="L"),
 ]
 COLUMNS = 5
 
 
-def vertices(edges: Sequence[loopfinder.Edge]) -> Sequence[Vec2]:
+def vertices(edges: Sequence[em.Edge]) -> Sequence[Vec2]:
     return [edge.start for edge in edges]
 
 
-def collect_payload(edges: Sequence[loopfinder.Edge]) -> str:
+def collect_payload(edges: Sequence[em.Edge]) -> str:
     return ",".join([e.payload for e in edges])
 
 
@@ -55,7 +55,7 @@ def main() -> None:
     msp = doc.modelspace()
     text_attribs = {"char_height": 0.1, "style": "ARIAL"}
 
-    solutions = loopfinder.find_all_loops(EDGES)
+    solutions = em.find_all_loops(EDGES)
     print(f"found {len(solutions)} solutions")
     for index, edges in enumerate(solutions):
         x = index % COLUMNS * 5
@@ -63,7 +63,7 @@ def main() -> None:
         m = Matrix44.translate(x, y, 0)
         polyline = msp.add_lwpolyline(vertices(edges), close=True)
         polyline.transform(m)
-        signature = collect_payload(edges) + f" length={loopfinder.loop_length(edges)}"
+        signature = collect_payload(edges) + f" length={em.loop_length(edges)}"
         msp.add_mtext(signature, dxfattribs=text_attribs).set_location((x, y - 0.05))
     doc.saveas(CWD / "loops.dxf")
 
