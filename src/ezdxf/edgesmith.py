@@ -1,10 +1,12 @@
 # Copyright (c) 2024, Manfred Moitzi
 # License: MIT License
 """
-Loop Generator
-==============
+EdgeSmith
+=========
 
-A module for generating linear structures like polylines and hatch boundary paths.
+A module for creating entities like polylines and hatch boundary paths from linked edges.
+
+The complementary module to ezdxf.edgeminer.
 
 .. versionadded:: 1.4
 

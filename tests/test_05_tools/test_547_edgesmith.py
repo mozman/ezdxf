@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 import math
-from ezdxf import loopgen
+from ezdxf import edgesmith
 from ezdxf.entities import Circle, Arc, Ellipse, LWPolyline, Spline
 from ezdxf.math import fit_points_to_cad_cv
 
@@ -13,14 +13,14 @@ def test_circle_is_a_closed_entity():
     circle = Circle()
     circle.dxf.radius = 1
 
-    assert loopgen.is_closed_entity(circle) is True
+    assert edgesmith.is_closed_entity(circle) is True
 
 
 def test_circle_of_radius_0_is_not_a_closed_entity():
     circle = Circle()
     circle.dxf.radius = 0
 
-    assert loopgen.is_closed_entity(circle) is False
+    assert edgesmith.is_closed_entity(circle) is False
 
 
 @pytest.mark.parametrize("start,end", [(0, 180), (0, 0), (180, 180), (360, 360)])
@@ -30,7 +30,7 @@ def test_open_arc_is_not_a_closed_entity(start, end):
     arc.dxf.start_angle = start
     arc.dxf.end_angle = end
 
-    assert loopgen.is_closed_entity(arc) is False
+    assert edgesmith.is_closed_entity(arc) is False
 
 
 @pytest.mark.parametrize("start,end", [(0, 360), (360, 0), (180, -180)])
@@ -40,7 +40,7 @@ def test_closed_arc_is_a_closed_entity(start, end):
     arc.dxf.start_angle = start
     arc.dxf.end_angle = end
 
-    assert loopgen.is_closed_entity(arc) is True
+    assert edgesmith.is_closed_entity(arc) is True
 
 
 @pytest.mark.parametrize(
@@ -53,7 +53,7 @@ def test_open_ellipse_is_not_a_closed_entity(start, end):
     ellipse.dxf.start_param = start
     ellipse.dxf.end_param = end
 
-    assert loopgen.is_closed_entity(ellipse) is False
+    assert edgesmith.is_closed_entity(ellipse) is False
 
 
 @pytest.mark.parametrize(
@@ -66,7 +66,7 @@ def test_closed_ellipse_is_a_closed_entity(start, end):
     ellipse.dxf.start_param = start
     ellipse.dxf.end_param = end
 
-    assert loopgen.is_closed_entity(ellipse) is True
+    assert edgesmith.is_closed_entity(ellipse) is True
 
 
 # Note: Ellipses with major_axis == (0, 0, 0) are not valid.
@@ -78,7 +78,7 @@ def test_closed_lwpolyline_is_a_closed_entity():
     polyline.closed = True
     polyline.append_points([(0, 0), (10, 0), (10, 10)])
 
-    assert loopgen.is_closed_entity(polyline) is True
+    assert edgesmith.is_closed_entity(polyline) is True
 
 
 def test_open_lwpolyline_is_not_a_closed_entity():
@@ -86,7 +86,7 @@ def test_open_lwpolyline_is_not_a_closed_entity():
     polyline.closed = False
     polyline.append_points([(0, 0), (10, 0), (10, 10)])
 
-    assert loopgen.is_closed_entity(polyline) is False
+    assert edgesmith.is_closed_entity(polyline) is False
 
 
 def test_explicit_closed_lwpolyline_is_a_closed_entity():
@@ -94,7 +94,7 @@ def test_explicit_closed_lwpolyline_is_a_closed_entity():
     polyline.closed = False
     polyline.append_points([(0, 0), (10, 0), (10, 10), (0, 0)])
 
-    assert loopgen.is_closed_entity(polyline) is True
+    assert edgesmith.is_closed_entity(polyline) is True
 
 
 def test_closed_spline():
@@ -102,7 +102,7 @@ def test_closed_spline():
     spline = Spline()
     spline.apply_construction_tool(ct)
 
-    assert loopgen.is_closed_entity(spline) is True
+    assert edgesmith.is_closed_entity(spline) is True
 
 
 def test_open_spline():
@@ -110,13 +110,13 @@ def test_open_spline():
     spline = Spline()
     spline.apply_construction_tool(ct)
 
-    assert loopgen.is_closed_entity(spline) is False
+    assert edgesmith.is_closed_entity(spline) is False
 
 
 def test_empty_spline():
     spline = Spline()
 
-    assert loopgen.is_closed_entity(spline) is False
+    assert edgesmith.is_closed_entity(spline) is False
 
 
 if __name__ == "__main__":

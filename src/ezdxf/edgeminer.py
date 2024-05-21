@@ -6,6 +6,9 @@ EdgeMiner
 
 A module for detecting shapes build of linked edges.
 
+The complementary module ezdxf.edgesmith can create entities from the output of this 
+module.
+
 .. versionadded:: 1.4
 
 """
