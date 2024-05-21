@@ -239,19 +239,19 @@ class TestEdgeDeposit(SimpleLoops):
     #   |   |   |
     # 0 +-A-+-E-+
 
-    def test_find_direct_linked_edges_A_D(self):
+    def test_find_edges_linked_to_vertex_A_D(self):
         deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
-        edges = deposit.direct_linked_edges(self.A.start)
+        edges = deposit.edges_linked_to(self.A.start)
         ids = set(e.id for e in edges)
         assert len(ids) == 2
         assert self.A.id in ids
         assert self.D.id in ids
 
-    def test_find_direct_linked_edges_A_G(self):
+    def test_find_edges_linked_to_vertex_A_G(self):
         deposit = em.EdgeDeposit(
             [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
         )
-        edges = deposit.direct_linked_edges(self.B.end)
+        edges = deposit.edges_linked_to(self.B.end)
         ids = set(e.id for e in edges)
         assert len(ids) == 3
         assert self.B.id in ids
@@ -263,19 +263,29 @@ class TestEdgeDeposit(SimpleLoops):
         edge = deposit.find_nearest_edge((0.5, 0.6))
         assert edge is self.C
 
-    def test_find_all_linked_edge_A_D(self):
+    def test_build_network_A_D(self):
         deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
-        edges = deposit.find_all_linked_edges(self.A)
-        ids = set(e.id for e in edges)
-        assert len(ids) == 4
+        # network of all edges connected directly or indirectly to A
+        network = deposit.build_network(self.A)
+        assert len(network) == 4
+        assert self.B in network
+        assert self.C in network
+        assert self.D in network
+        
+        # all edges connected directly to A
+        edges = network.edges_linked_to(self.A)
+        assert len(edges) == 2
 
-    def test_find_all_linked_edge_A_G(self):
+    def test_build_network_A_G(self):
         deposit = em.EdgeDeposit(
             [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
         )
-        edges = deposit.find_all_linked_edges(self.A)
-        ids = set(e.id for e in edges)
-        assert len(ids) == 7
+        # network of all edges connected directly or indirectly to B
+        network = deposit.build_network(self.B)
+        assert len(network) == 7
+        # all edges connected directly to B
+        edges = network.edges_linked_to(self.B)
+        assert len(edges) == 4
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ module.
 """
 from __future__ import annotations
 from typing import Any, Sequence, Iterator, Iterable
+from collections import defaultdict
 import math
 
 from ezdxf.entities import DXFEntity, Arc, Ellipse, Spline, Line
@@ -420,19 +421,21 @@ class SearchIndex:
 
 
 def discard_edges(edges: Iterable[Edge], discard: Iterable[Edge]) -> Sequence[Edge]:
-    ids = set(e.id for e in discard)
+    return discard_ids(edges, ids=set(e.id for e in discard))
+
+
+def discard_ids(edges: Iterable[Edge], ids: set[int]) -> Sequence[Edge]:
     return tuple(e for e in edges if e.id not in ids)
 
 
 class EdgeDeposit:
-    def __init__(self, edges: Iterable[Edge], gap_tol=GAP_TOL) -> None:
-        self.edges = tuple(edges)
+    def __init__(self, edges: Sequence[Edge], gap_tol=GAP_TOL) -> None:
         self.gap_tol = gap_tol
-        self.edge_index = EdgeVertexIndex(self.edges)
-        self.search_index = SearchIndex(self.edges)
+        self.edge_index = EdgeVertexIndex(edges)
+        self.search_index = SearchIndex(edges)
 
-    def direct_linked_edges(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
-        """Returns all edges directly linked to `vertex` in range of `radius`.
+    def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
+        """Returns all edges linked to `vertex` in range of `radius`.
 
         Default radius is :attr:`self.gap_tol`.
         """
@@ -440,43 +443,74 @@ class EdgeDeposit:
             radius = self.gap_tol
         vertices = self.search_index.vertices_in_circle(Vec2(vertex), radius)
         if not vertices:
-            return []
+            return tuple()
         return self.edge_index.find_edges(vertices)
 
-    def find_nearest_edge(self, location: UVec) -> Edge | None:
-        """Return the nearest edge to the given location.
+    def find_nearest_edge(self, vertex: UVec) -> Edge | None:
+        """Return the nearest edge to the given vertex.
 
         The distance is measured to the connection line from start to end of the edge.
         This is not correct for edges that represent arcs or splines.
         """
 
         def distance(edge: Edge) -> float:
-            return distance_point_line_2d(location, edge.start, edge.end)
-        
+            return distance_point_line_2d(vertex, edge.start, edge.end)
+
+        vertex = Vec2(vertex)
         si = self.search_index
-        nearest_vertex = si.nearest_vertex(Vec2(location))
-        edges = self.direct_linked_edges(nearest_vertex)
-        if not edges:
-            return None
-        return min(edges, key=distance)
+        nearest_vertex = si.nearest_vertex(vertex)
+        edges = self.edges_linked_to(nearest_vertex)
+        if edges:
+            return min(edges, key=distance)
+        return None
 
-    def find_all_linked_edges(self, edge: Edge) -> Sequence[Edge]:
-        """Returns all edges directly and indirectly linked to `edge`.
-
-        The edges are in no particular order.
+    def build_network(self, edge: Edge) -> Network:
+        """Returns the network of all edges that are directly and indirectly linked to
+        `edge`.
         """
 
         def process(vertex: Vec2) -> None:
-            linked_edges = self.direct_linked_edges(vertex)
-            linked_edges = discard_edges(linked_edges, discard=found)
-            found.extend(linked_edges)
-            todo.extend(linked_edges)
+            linked_edges = self.edges_linked_to(vertex)
+            linked_edges = discard_ids(linked_edges, ids=found)
+            if linked_edges:
+                found.update(e.id for e in linked_edges)
+                network.add_connections(edge, linked_edges)
+                todo.extend(linked_edges)
 
-        found: list[Edge] = [edge]
+        network = Network()
+        found = set([edge.id])
         todo: list[Edge] = [edge]
 
         while todo:
-            edge = todo.pop(0)
+            edge = todo.pop()
             process(edge.start)
             process(edge.end)
-        return tuple(found)
+        return network
+
+
+class Network:
+    def __init__(self) -> None:
+        self._edges: dict[int, Edge] = {}
+        self._connections: dict[int, set[int]] = defaultdict(set)
+
+    def __len__(self) -> int:
+        return len(self._edges)
+
+    def __iter__(self) -> Iterator[Edge]:
+        return iter(self._edges.values())
+
+    def __contains__(self, edge: Edge) -> bool:
+        return edge.id in self._edges
+
+    def add_connection(self, base: Edge, target: Edge) -> None:
+        self._edges[base.id] = base
+        self._edges[target.id] = target
+        self._connections[base.id].add(target.id)
+        self._connections[target.id].add(base.id)
+
+    def add_connections(self, base: Edge, targets: Iterable[Edge]) -> None:
+        for target in targets:
+            self.add_connection(base, target)
+
+    def edges_linked_to(self, edge: Edge) -> Sequence[Edge]:
+        return tuple(self._edges[eid] for eid in self._connections[edge.id])
