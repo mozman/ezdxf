@@ -143,7 +143,7 @@ def find_first_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
         gap_tol: maximum vertex distance to consider two edges as connected
     """
     finder = LoopFinder(first=True, gap_tol=gap_tol)
-    available = tuple(edges)
+    available = tuple(type_check(edges))
     if len(available) < 2:
         return []
     finder.search(available[0], available[1:])
@@ -163,7 +163,7 @@ def find_all_loops(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[
         gap_tol: maximum vertex distance to consider two edges as connected
     """
     finder = LoopFinder(discard_reverse=True, gap_tol=gap_tol)
-    _edges = list(edges)
+    _edges = list(type_check(edges))
     for _ in range(len(edges)):
         available = tuple(_edges)
         finder.search(available[0], available[1:])
@@ -227,6 +227,13 @@ class Edge:
         edge.reverse = not self.reverse
         edge.id = self.id  # reversed copies represent the same edge
         return edge
+
+
+def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
+    for edge in edges:
+        if not isinstance(edge, Edge):
+            raise TypeError(f"expected type <Edge>, got {str(type(edge))}")
+    return edges
 
 
 def filter_short_edges(edges: Iterable[Edge], gap_tol=GAP_TOL) -> tuple[Edge, ...]:
