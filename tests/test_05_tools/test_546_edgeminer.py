@@ -231,5 +231,52 @@ class TestFindAllDisconnectedLoops:
         assert "H,E,F,G" in solution_strings
 
 
+class TestEdgeDeposit(SimpleLoops):
+    #   0   1   2
+    # 1 +-C-+-G-+
+    #   |   |   |
+    #   D   B   F
+    #   |   |   |
+    # 0 +-A-+-E-+
+
+    def test_find_direct_linked_edges_A_D(self):
+        deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
+        edges = deposit.direct_linked_edges(self.A.start)
+        ids = set(e.id for e in edges)
+        assert len(ids) == 2
+        assert self.A.id in ids
+        assert self.D.id in ids
+
+    def test_find_direct_linked_edges_A_G(self):
+        deposit = em.EdgeDeposit(
+            [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
+        )
+        edges = deposit.direct_linked_edges(self.B.end)
+        ids = set(e.id for e in edges)
+        assert len(ids) == 3
+        assert self.B.id in ids
+        assert self.C.id in ids
+        assert self.G.id in ids
+
+    def test_find_nearest_edge(self):
+        deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
+        edge = deposit.find_nearest_edge((0.5, 0.6))
+        assert edge is self.C
+
+    def test_find_all_linked_edge_A_D(self):
+        deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
+        edges = deposit.find_all_linked_edges(self.A)
+        ids = set(e.id for e in edges)
+        assert len(ids) == 4
+
+    def test_find_all_linked_edge_A_G(self):
+        deposit = em.EdgeDeposit(
+            [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
+        )
+        edges = deposit.find_all_linked_edges(self.A)
+        ids = set(e.id for e in edges)
+        assert len(ids) == 7
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

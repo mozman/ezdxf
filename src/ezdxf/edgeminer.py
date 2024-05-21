@@ -17,7 +17,14 @@ from typing import Any, Sequence, Iterator, Iterable
 import math
 
 from ezdxf.entities import DXFEntity, Arc, Ellipse, Spline, Line
-from ezdxf.math import arc_angle_span_deg, ellipse_param_span, Vec2
+from ezdxf.math import (
+    UVec,
+    Vec2,
+    arc_angle_span_deg,
+    ellipse_param_span,
+    distance_point_line_2d,
+)
+from ezdxf.math import rtree
 
 __all__ = [
     "find_all_loops",
@@ -25,7 +32,7 @@ __all__ = [
     "find_shortest_loop",
     "find_longest_loop",
     "edge_from_entity",
-    "loop_length",
+    "length",
     "filter_short_edges",
     "Edge",
 ]
@@ -90,7 +97,7 @@ def edge_from_entity(entity: DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
     return edge
 
 
-def loop_length(edges: Sequence[Edge]) -> float:
+def length(edges: Sequence[Edge]) -> float:
     """Returns the length of a sequence of edges."""
     return sum(e.length for e in edges)
 
@@ -104,7 +111,7 @@ def find_shortest_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]
         edges: edges to be examined
         gap_tol: maximum vertex distance to consider two edges as connected
     """
-    solutions = sorted(find_all_loops(edges, gap_tol=gap_tol), key=loop_length)
+    solutions = sorted(find_all_loops(edges, gap_tol=gap_tol), key=length)
     if solutions:
         return solutions[0]
     return []
@@ -119,7 +126,7 @@ def find_longest_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
         edges: edges to be examined
         gap_tol: maximum vertex distance to consider two edges as connected
     """
-    solutions = sorted(find_all_loops(edges, gap_tol=gap_tol), key=loop_length)
+    solutions = sorted(find_all_loops(edges, gap_tol=gap_tol), key=length)
     if solutions:
         return solutions[-1]
     return []
@@ -352,7 +359,6 @@ class LoopFinder:
             if self._stop_at_first_solution and self._solutions:
                 return
 
-
     def _append_solution(self, loop: Loop) -> None:
         """Add loop to solutions."""
         key = loop.key()
@@ -364,3 +370,113 @@ class LoopFinder:
         ):
             return
         self._solutions[key] = loop.edges
+
+
+class EdgeVertexIndex:
+    """Index of edges referenced by the id of their start- and end vertices.
+
+    .. important::
+
+        The id of the vertices is indexed not the location!
+
+    """
+
+    def __init__(self, edges: Sequence[Edge]) -> None:
+        index: dict[int, Edge] = {}
+        for edge in edges:
+            index[id(edge.start)] = edge
+            index[id(edge.end)] = edge
+        self._index = index
+
+    def find_edges(self, vertices: Iterable[Vec2]) -> Sequence[Edge]:
+        """Returns all edges referenced by the id of given vertices."""
+        index = self._index
+        edges: list[Edge] = []
+        for vertex in vertices:
+            edge = index.get(id(vertex))
+            if edge:
+                edges.append(edge)
+        return edges
+
+
+class SearchIndex:
+    """Spatial search index of all edge vertices."""
+
+    def __init__(self, edges: Sequence[Edge]) -> None:
+        vertices: list[Edge] = []
+        for edge in edges:
+            vertices.append(edge.start)
+            vertices.append(edge.end)
+        self._search_tree = rtree.RTree(vertices)
+
+    def vertices_in_circle(self, center: Vec2, radius: float) -> Sequence[Vec2]:
+        """Returns all vertices located around center with a max. distance of `radius`."""
+        return tuple(self._search_tree.points_in_sphere(center, radius))  # type: ignore
+
+    def nearest_vertex(self, location: Vec2) -> Vec2:
+        """Returns the nearest vertex to the given location."""
+        vertex, _ = self._search_tree.nearest_neighbor(location)
+        return vertex  # type: ignore
+
+
+def discard_edges(edges: Iterable[Edge], discard: Iterable[Edge]) -> Sequence[Edge]:
+    ids = set(e.id for e in discard)
+    return tuple(e for e in edges if e.id not in ids)
+
+
+class EdgeDeposit:
+    def __init__(self, edges: Iterable[Edge], gap_tol=GAP_TOL) -> None:
+        self.edges = tuple(edges)
+        self.gap_tol = gap_tol
+        self.edge_index = EdgeVertexIndex(self.edges)
+        self.search_index = SearchIndex(self.edges)
+
+    def direct_linked_edges(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
+        """Returns all edges directly linked to `vertex` in range of `radius`.
+
+        Default radius is :attr:`self.gap_tol`.
+        """
+        if radius < 0:
+            radius = self.gap_tol
+        vertices = self.search_index.vertices_in_circle(Vec2(vertex), radius)
+        if not vertices:
+            return []
+        return self.edge_index.find_edges(vertices)
+
+    def find_nearest_edge(self, location: UVec) -> Edge | None:
+        """Return the nearest edge to the given location.
+
+        The distance is measured to the connection line from start to end of the edge.
+        This is not correct for edges that represent arcs or splines.
+        """
+
+        def distance(edge: Edge) -> float:
+            return distance_point_line_2d(location, edge.start, edge.end)
+        
+        si = self.search_index
+        nearest_vertex = si.nearest_vertex(Vec2(location))
+        edges = self.direct_linked_edges(nearest_vertex)
+        if not edges:
+            return None
+        return min(edges, key=distance)
+
+    def find_all_linked_edges(self, edge: Edge) -> Sequence[Edge]:
+        """Returns all edges directly and indirectly linked to `edge`.
+
+        The edges are in no particular order.
+        """
+
+        def process(vertex: Vec2) -> None:
+            linked_edges = self.direct_linked_edges(vertex)
+            linked_edges = discard_edges(linked_edges, discard=found)
+            found.extend(linked_edges)
+            todo.extend(linked_edges)
+
+        found: list[Edge] = [edge]
+        todo: list[Edge] = [edge]
+
+        while todo:
+            edge = todo.pop(0)
+            process(edge.start)
+            process(edge.end)
+        return tuple(found)

@@ -63,7 +63,7 @@ def main() -> None:
         m = Matrix44.translate(x, y, 0)
         polyline = msp.add_lwpolyline(vertices(edges), close=True)
         polyline.transform(m)
-        signature = collect_payload(edges) + f" length={em.loop_length(edges)}"
+        signature = collect_payload(edges) + f" length={em.length(edges)}"
         msp.add_mtext(signature, dxfattribs=text_attribs).set_location((x, y - 0.05))
     doc.saveas(CWD / "loops.dxf")
 
