@@ -286,9 +286,11 @@ def is_sphere_intersecting_bbox(
 
 
 def find_closest_child(children: Sequence[Node], point: AnyVec) -> Node:
+    def distance(child: Node) -> float:
+        return point.distance(child.bbox.center)
+   
     assert len(children) > 0
-    _, node = min((point.distance(child.bbox.center), child) for child in children)
-    return node
+    return min(children, key=distance)
 
 
 def grow_box(box: BoundingBox, dist: float) -> BoundingBox:
