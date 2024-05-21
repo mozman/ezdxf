@@ -404,7 +404,7 @@ class SearchIndex:
     """Spatial search index of all edge vertices."""
 
     def __init__(self, edges: Sequence[Edge]) -> None:
-        vertices: list[Edge] = []
+        vertices: list[Vec2] = []
         for edge in edges:
             vertices.append(edge.start)
             vertices.append(edge.end)
