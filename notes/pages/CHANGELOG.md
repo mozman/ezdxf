@@ -9,6 +9,8 @@
 		- {{issue 1081}}
 	- BUGIX: `dxf2code` add-on failed to write `HATCH` patterns
 		- {{issue 1082}}
+	- BUGFIX: add reactors to entities in `GROUP`
+		- {{issue 1085}}
 		-
 - ## Version 1.3.0 - 2024-05-01
   id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51

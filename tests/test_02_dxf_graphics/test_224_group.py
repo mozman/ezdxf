@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2019, Manfred Moitzi
+# Copyright (c) 2015-2024, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -64,11 +64,41 @@ def test_add_entities():
         e.append(line)
         e.append(msp.add_circle((0, 0), radius=2))
 
-    assert 2 == len(group)
+    assert len(group) == 2
     assert line in group
 
-    ungrouped_line = msp.add_line((0, 1), (3, 1))
-    assert ungrouped_line not in group
+    group_handle = group.dxf.handle
+    for entity in group:
+        assert (
+            group_handle in entity.reactors
+        ), "expected group handle as reactor in entity"
 
     group.clear()
-    assert 0 == len(group)
+    assert len(group) == 0
+    assert (
+        group_handle not in line.reactors
+    ), "group handle has to be removed from reactors"
+
+
+def test_extend_group():
+    dwg = ezdxf.new("R2000")
+    group = dwg.groups.new()
+    group_handle = group.dxf.handle
+    # the group itself is not an entity space, DXF entities has to be placed in model space, paper space
+    # or in a block
+    msp = dwg.modelspace()
+    line = msp.add_line((0, 0), (3, 0))
+    group.set_data([line])
+    assert len(group) == 1
+
+    line2 = msp.add_line((0, 0), (3, 0))
+    group.extend([line2])
+    assert len(group) == 2
+    assert group_handle in line2.reactors, "expected group handle as reactor in entity"
+
+    group.extend([line])
+    assert len(group) == 2, "cannot add same entity a second time"
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
