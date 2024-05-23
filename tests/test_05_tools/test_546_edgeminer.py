@@ -117,31 +117,31 @@ class SimpleLoops:
 
 class TestLoopFinderSimple(SimpleLoops):
     def test_unique_available_edges_required(self):
-        finder = em.LoopFinder()
-        with pytest.raises(ValueError):
+        finder = em.LoopFinderRBT()
+        with pytest.raises(em.DuplicateEdgesError):
             finder.search(self.A, available=(self.B, self.B, self.B))
 
     def test_start_edge_not_in_available_edges(self):
-        finder = em.LoopFinder()
-        with pytest.raises(ValueError):
+        finder = em.LoopFinderRBT()
+        with pytest.raises(em.DuplicateEdgesError):
             finder.search(self.A, available=(self.A, self.C, self.D))
 
     def test_loop_A_B_C_D(self):
-        finder = em.LoopFinder()
+        finder = em.LoopFinderRBT()
         finder.search(self.A, (self.B, self.C, self.D))
         solutions = list(finder)
         assert len(solutions) == 1
         assert collect_payload(solutions[0]) == "A,B,C,D"
 
     def test_loop_D_A_B_C(self):
-        finder = em.LoopFinder()
+        finder = em.LoopFinderRBT()
         finder.search(self.D, (self.A, self.B, self.C))
         solutions = list(finder)
         assert len(solutions) == 1
         assert collect_payload(solutions[0]) == "D,A,B,C"
 
     def test_loop_A_to_D_unique_solutions(self):
-        finder = em.LoopFinder()
+        finder = em.LoopFinderRBT()
         finder.search(self.A, (self.B, self.C, self.D))
         # rotated edges, same loop
         finder.search(self.D, (self.A, self.B, self.C))
@@ -149,7 +149,7 @@ class TestLoopFinderSimple(SimpleLoops):
         assert len(solutions) == 1
 
     def test_loops_A_to_G(self):
-        finder = em.LoopFinder()
+        finder = em.LoopFinderRBT()
         finder.search(self.A, (self.B, self.C, self.D, self.E, self.F, self.G))
         solutions = list(finder)
         assert len(solutions) == 2
@@ -157,7 +157,7 @@ class TestLoopFinderSimple(SimpleLoops):
         assert collect_payload(solutions[1]) == "A,E,F,G,C,D"
 
     def test_stop_at_first_solution(self):
-        finder = em.LoopFinder(first=True)
+        finder = em.LoopFinderRBT(first=True)
         finder.search(self.A, (self.B, self.C, self.D, self.E, self.F, self.G))
         solutions = list(finder)
         assert len(solutions) == 1

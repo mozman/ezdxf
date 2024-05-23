@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import Any, Sequence, Iterator, Iterable
 from collections import defaultdict
 import math
+import time
 
 from ezdxf.entities import DXFEntity, Arc, Ellipse, Spline, Line
 from ezdxf.math import (
@@ -39,6 +40,36 @@ __all__ = [
 ]
 ABS_TOL = 1e-12
 GAP_TOL = 1e-12
+TIMEOUT = 60.0  # in seconds
+
+
+class EdgeMinerException(Exception):
+    pass
+
+
+class TimeoutError(EdgeMinerException):
+    pass
+
+
+class DuplicateEdgesError(EdgeMinerException):
+    pass
+
+
+class Watchdog:
+    def __init__(self, timeout=TIMEOUT) -> None:
+        self.timeout: float = timeout
+        self.start_time: float = time.perf_counter()
+
+    def start(self, timeout: float):
+        self.timeout = timeout
+        self.start_time = time.perf_counter()
+
+    def has_timed_out(self) -> bool:
+        return time.perf_counter() - self.start_time > self.timeout
+
+    def check_timeout(self, msg: str) -> None:
+        if self.has_timed_out():
+            raise TimeoutError(msg)
 
 
 def edge_from_entity(entity: DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
@@ -142,7 +173,7 @@ def find_first_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
         edges: edges to be examined
         gap_tol: maximum vertex distance to consider two edges as connected
     """
-    finder = LoopFinder(first=True, gap_tol=gap_tol)
+    finder = LoopFinderRBT(first=True, gap_tol=gap_tol)
     available = tuple(type_check(edges))
     if len(available) < 2:
         return []
@@ -162,7 +193,7 @@ def find_all_loops(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[
         edges: edges to be examined
         gap_tol: maximum vertex distance to consider two edges as connected
     """
-    finder = LoopFinder(discard_reverse=True, gap_tol=gap_tol)
+    finder = LoopFinderRBT(discard_reverse=True, gap_tol=gap_tol)
     _edges = list(type_check(edges))
     for _ in range(len(edges)):
         available = tuple(_edges)
@@ -296,7 +327,7 @@ class Loop:
         return ids
 
 
-class LoopFinder:
+class LoopFinderRBT:
     """Recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
@@ -311,12 +342,13 @@ class LoopFinder:
         self._stop_at_first_solution = first
         self._discard_reverse_solutions = discard_reverse
         self._gap_tol = gap_tol
+        self.watchdog = Watchdog()
 
     def __iter__(self) -> Iterator[tuple[Edge, ...]]:
         """Yields all found loops as sequences of edges."""
         return iter(self._solutions.values())
 
-    def search(self, start: Edge, available: Sequence[Edge]):
+    def search(self, start: Edge, available: Sequence[Edge], timeout=TIMEOUT):
         """Searches for closed loops in the available edges, starting from the given
         start edge.
 
@@ -328,24 +360,30 @@ class LoopFinder:
             available: available edges
 
         Raises:
-            ValueError: duplicate edges or starting edge in available edges
+            DuplicateEdgesError: duplicate edges or starting edge in available edges
+            TimeoutError: search process has timed out
 
         """
         ids = [e.id for e in available]
         unique_ids = set(ids)
         if len(ids) != len(unique_ids):
-            raise ValueError("available edges cannot have duplicate edges")
+            raise DuplicateEdgesError("available edges cannot have duplicate edges")
         if start.id in unique_ids:
-            raise ValueError("starting edge cannot exist in available edges")
-
+            raise DuplicateEdgesError("starting edge cannot exist in available edges")
+        self.watchdog.start(timeout)
         self._search(Loop((start,)), tuple(available))
 
     def _search(self, loop: Loop, available: tuple[Edge, ...]):
-        """Recursive backtracking with a time complexity of O(n!)."""
+        """Recursive backtracking with a time complexity of O(n!).
+
+        Raises:
+            TimeoutError: search process has timed out
+        """
         if len(available) == 0:
             return
 
         for next_edge in available:
+            self.watchdog.check_timeout("search process has timed out")
             edge = next_edge
             extended_loop: Loop | None = None
             if loop.is_connected(edge, self._gap_tol):
@@ -471,9 +509,12 @@ class EdgeDeposit:
             return min(edges, key=distance)
         return None
 
-    def build_network(self, edge: Edge) -> Network:
+    def build_network(self, edge: Edge, timeout=TIMEOUT) -> Network:
         """Returns the network of all edges that are directly and indirectly linked to
         `edge`.
+
+        Raises:
+            TimeoutError: build process has timed out
         """
 
         def process(vertex: Vec2) -> None:
@@ -487,11 +528,14 @@ class EdgeDeposit:
         network = Network()
         found = set([edge.id])
         todo: list[Edge] = [edge]
+        watchdog = Watchdog(timeout)
 
         while todo:
+            watchdog.check_timeout("build process has timed out")
             edge = todo.pop()
             process(edge.start)
             process(edge.end)
+
         return network
 
 
