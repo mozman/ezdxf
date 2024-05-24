@@ -106,12 +106,9 @@ class Watchdog:
         self.timeout = timeout
         self.start_time = time.perf_counter()
 
+    @property
     def has_timed_out(self) -> bool:
         return time.perf_counter() - self.start_time > self.timeout
-
-    def check_timeout(self, msg: str) -> None:
-        if self.has_timed_out():
-            raise TimeoutError(msg)
 
 
 def length(edges: Sequence[Edge]) -> float:
@@ -312,8 +309,8 @@ class LoopFinderRBT:
 
     def _search(self, loop: Loop, available: tuple[Edge, ...]):
         for next_edge in available:
-            # raises TimeoutError:
-            self.watchdog.check_timeout("search process has timed out")  
+            if self.watchdog.has_timed_out:
+                raise TimeoutError("search process has timed out")  
             edge = next_edge
             extended_loop: Loop | None = None
             if loop.is_connected(edge, self._gap_tol):
@@ -459,7 +456,8 @@ class EdgeDeposit:
         watchdog = Watchdog(timeout)
 
         while todo:
-            watchdog.check_timeout("build process has timed out")
+            if watchdog.has_timed_out:
+                raise TimeoutError("build process has timed out")
             edge = todo.pop()
             process(edge.start)
             process(edge.end)
