@@ -21,10 +21,10 @@ import time
 from ezdxf.entities import DXFEntity, Arc, Ellipse, Spline, Line
 from ezdxf.math import (
     UVec,
-    Vec2,
+    Vec3,
     arc_angle_span_deg,
     ellipse_param_span,
-    distance_point_line_2d,
+    distance_point_line_3d,
 )
 from ezdxf.math import rtree
 
@@ -81,8 +81,8 @@ def edge_from_entity(entity: DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
     edge: Edge | None = None
 
     if isinstance(entity, Line):
-        start = Vec2(entity.dxf.start)
-        end = Vec2(entity.dxf.end)
+        start = Vec3(entity.dxf.start)
+        end = Vec3(entity.dxf.end)
         length = start.distance(end)
         edge = Edge(start, end, length, entity)
     elif isinstance(entity, Arc):
@@ -108,14 +108,14 @@ def edge_from_entity(entity: DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
         # length of elliptic arc is an approximation:
         points = list(ct1.vertices(ct1.params(num)))
         length = sum(a.distance(b) for a, b in zip(points, points[1:]))
-        edge = Edge(Vec2(points[0]), Vec2(points[-1]), length, entity)
+        edge = Edge(Vec3(points[0]), Vec3(points[-1]), length, entity)
     elif isinstance(entity, Spline):
         try:
             ct2 = entity.construction_tool()
         except ValueError:
             return None
-        start = Vec2(ct2.control_points[0])
-        end = Vec2(ct2.control_points[-1])
+        start = Vec3(ct2.control_points[0])
+        end = Vec3(ct2.control_points[-1])
         points = list(ct2.control_points)
         # length of B-spline is a very rough approximation:
         length = sum(a.distance(b) for a, b in zip(points, points[1:]))
@@ -215,8 +215,8 @@ class Edge:
 
     Attributes:
         id: unique id as int
-        start: start vertex as Vec2
-        end: end vertex as Vec2
+        start: start vertex as Vec3
+        end: end vertex as Vec3
         reverse: flag to indicate that the edge is reversed compared to its initial state
         length: length of the edge, default is the distance between start- and end vertex
         payload: arbitrary data associated to the edge
@@ -227,15 +227,15 @@ class Edge:
     _next_id = 1
 
     def __init__(
-        self, start: Vec2, end: Vec2, length: float = -1.0, payload: Any = None
+        self, start: UVec, end: UVec, length: float = -1.0, payload: Any = None
     ) -> None:
         self.id = Edge._next_id  # unique id but (reversed) copies have the same id
         Edge._next_id += 1
-        self.start: Vec2 = start
-        self.end: Vec2 = end
+        self.start = Vec3(start)
+        self.end = Vec3(end)
         self.reverse: bool = False
         if length < 0.0:
-            length = start.distance(end)
+            length = self.start.distance(self.end)
         self.length = length
         self.payload = payload
 
@@ -434,7 +434,7 @@ class EdgeVertexIndex:
             index[id(edge.end)] = edge
         self._index = index
 
-    def find_edges(self, vertices: Iterable[Vec2]) -> Sequence[Edge]:
+    def find_edges(self, vertices: Iterable[Vec3]) -> Sequence[Edge]:
         """Returns all edges referenced by the id of given vertices."""
         index = self._index
         edges: list[Edge] = []
@@ -449,17 +449,17 @@ class SearchIndex:
     """Spatial search index of all edge vertices."""
 
     def __init__(self, edges: Sequence[Edge]) -> None:
-        vertices: list[Vec2] = []
+        vertices: list[Vec3] = []
         for edge in edges:
             vertices.append(edge.start)
             vertices.append(edge.end)
         self._search_tree = rtree.RTree(vertices)
 
-    def vertices_in_circle(self, center: Vec2, radius: float) -> Sequence[Vec2]:
-        """Returns all vertices located around center with a max. distance of `radius`."""
+    def vertices_in_sphere(self, center: Vec3, radius: float) -> Sequence[Vec3]:
+        """Returns all vertices located around `center` with a max. distance of `radius`."""
         return tuple(self._search_tree.points_in_sphere(center, radius))  # type: ignore
 
-    def nearest_vertex(self, location: Vec2) -> Vec2:
+    def nearest_vertex(self, location: Vec3) -> Vec3:
         """Returns the nearest vertex to the given location."""
         vertex, _ = self._search_tree.nearest_neighbor(location)
         return vertex  # type: ignore
@@ -486,7 +486,7 @@ class EdgeDeposit:
         """
         if radius < 0:
             radius = self.gap_tol
-        vertices = self.search_index.vertices_in_circle(Vec2(vertex), radius)
+        vertices = self.search_index.vertices_in_sphere(Vec3(vertex), radius)
         if not vertices:
             return tuple()
         return self.edge_index.find_edges(vertices)
@@ -499,9 +499,9 @@ class EdgeDeposit:
         """
 
         def distance(edge: Edge) -> float:
-            return distance_point_line_2d(vertex, edge.start, edge.end)
+            return distance_point_line_3d(vertex, edge.start, edge.end)
 
-        vertex = Vec2(vertex)
+        vertex = Vec3(vertex)
         si = self.search_index
         nearest_vertex = si.nearest_vertex(vertex)
         edges = self.edges_linked_to(nearest_vertex)
@@ -517,7 +517,7 @@ class EdgeDeposit:
             TimeoutError: build process has timed out
         """
 
-        def process(vertex: Vec2) -> None:
+        def process(vertex: Vec3) -> None:
             linked_edges = self.edges_linked_to(vertex)
             linked_edges = discard_ids(linked_edges, ids=found)
             if linked_edges:

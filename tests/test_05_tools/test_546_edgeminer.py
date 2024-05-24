@@ -5,28 +5,28 @@ from typing import Sequence
 import pytest
 
 from ezdxf import edgeminer as em
-from ezdxf.math import Vec2
+from ezdxf.math import Vec3
 
 
 class TestEdge:
     def test_init(self):
-        edge = em.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
-        assert edge.start == Vec2(0, 0)
-        assert edge.end == Vec2(1, 0)
+        edge = em.Edge((0, 0), (1, 0), 1.0)
+        assert edge.start == Vec3(0, 0)
+        assert edge.end == Vec3(1, 0)
         assert edge.length == 1.0
         assert edge.reverse is False
         assert edge.payload is None
 
     def test_identity(self):
-        edge0 = em.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
-        edge1 = em.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        edge0 = em.Edge((0, 0), (1, 0), 1.0)
+        edge1 = em.Edge((0, 0), (1, 0), 1.0)
         assert edge0 == edge0
         assert edge0 != edge1, "each edge should have an unique identity"
         assert edge0 == edge0.copy(), "copies represent the same edge"
         assert edge0 == edge0.reversed(), "reversed copies represent the same edge"
 
     def test_copy(self):
-        edge = em.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        edge = em.Edge((0, 0), (1, 0), 1.0)
         clone = edge.copy()
         assert edge == clone
         assert edge.id == clone.id
@@ -37,7 +37,7 @@ class TestEdge:
         assert edge.payload is clone.payload
 
     def test_reversed_copy(self):
-        edge = em.Edge(Vec2(0, 0), Vec2(1, 0), 1.0)
+        edge = em.Edge((0, 0), (1, 0), 1.0)
         clone = edge.reversed()
         assert edge == clone
         assert edge.id == clone.id
@@ -49,8 +49,8 @@ class TestEdge:
 
 
 def test_filter_short_edges():
-    A = em.Edge(Vec2(0, 0), Vec2(0, 0))
-    B = em.Edge(Vec2(1, 0), Vec2(1, 1))
+    A = em.Edge((0, 0), (0, 0))
+    B = em.Edge((1, 0), (1, 1))
     result = em.filter_short_edges([A, B])
     assert len(result) == 1
     assert result[0] is B
@@ -63,10 +63,10 @@ class TestLoop:
     # |   |
     # +-A-+
 
-    A = em.Edge(Vec2(0, 0), Vec2(1, 0))
-    B = em.Edge(Vec2(1, 0), Vec2(1, 1))
-    C = em.Edge(Vec2(1, 1), Vec2(0, 1))
-    D = em.Edge(Vec2(0, 1), Vec2(0, 0))
+    A = em.Edge((0, 0), (1, 0))
+    B = em.Edge((1, 0), (1, 1))
+    C = em.Edge((1, 1), (0, 1))
+    D = em.Edge((0, 1), (0, 0))
 
     def test_is_connected(self):
         loop = em.Loop((self.A,))
@@ -106,13 +106,13 @@ class SimpleLoops:
     #   |   |   |
     # 0 +-A-+-E-+
 
-    A = em.Edge(Vec2(0, 0), Vec2(1, 0), payload="A")
-    B = em.Edge(Vec2(1, 0), Vec2(1, 1), payload="B")
-    C = em.Edge(Vec2(1, 1), Vec2(0, 1), payload="C")
-    D = em.Edge(Vec2(0, 1), Vec2(0, 0), payload="D")
-    E = em.Edge(Vec2(1, 0), Vec2(2, 0), payload="E")
-    F = em.Edge(Vec2(2, 0), Vec2(2, 1), payload="F")
-    G = em.Edge(Vec2(2, 1), Vec2(1, 1), payload="G")
+    A = em.Edge((0, 0), (1, 0), payload="A")
+    B = em.Edge((1, 0), (1, 1), payload="B")
+    C = em.Edge((1, 1), (0, 1), payload="C")
+    D = em.Edge((0, 1), (0, 0), payload="D")
+    E = em.Edge((1, 0), (2, 0), payload="E")
+    F = em.Edge((2, 0), (2, 1), payload="F")
+    G = em.Edge((2, 1), (1, 1), payload="G")
 
 
 class TestLoopFinderSimple(SimpleLoops):
@@ -203,14 +203,14 @@ class TestFindAllDisconnectedLoops:
     #   |   |   |   |
     # 0 +-A-+   +-E-+
 
-    A = em.Edge(Vec2(0, 0), Vec2(1, 0), payload="A")
-    B = em.Edge(Vec2(1, 0), Vec2(1, 1), payload="B")
-    C = em.Edge(Vec2(1, 1), Vec2(0, 1), payload="C")
-    D = em.Edge(Vec2(0, 1), Vec2(0, 0), payload="D")
-    E = em.Edge(Vec2(2, 0), Vec2(3, 0), payload="E")
-    F = em.Edge(Vec2(3, 0), Vec2(3, 1), payload="F")
-    G = em.Edge(Vec2(3, 1), Vec2(2, 1), payload="G")
-    H = em.Edge(Vec2(2, 1), Vec2(2, 0), payload="H")
+    A = em.Edge((0, 0), (1, 0), payload="A")
+    B = em.Edge((1, 0), (1, 1), payload="B")
+    C = em.Edge((1, 1), (0, 1), payload="C")
+    D = em.Edge((0, 1), (0, 0), payload="D")
+    E = em.Edge((2, 0), (3, 0), payload="E")
+    F = em.Edge((3, 0), (3, 1), payload="F")
+    G = em.Edge((3, 1), (2, 1), payload="G")
+    H = em.Edge((2, 1), (2, 0), payload="H")
 
     def test_find_all_loops(self):
         solutions = em.find_all_loops(
