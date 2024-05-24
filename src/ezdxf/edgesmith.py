@@ -14,8 +14,10 @@ The complementary module to ezdxf.edgeminer.
 from __future__ import annotations
 import math
 
+from ezdxf.edgeminer import Edge, GAP_TOL, ABS_TOL
 from ezdxf.entities import (
     DXFEntity,
+    Line,
     Circle,
     Arc,
     Ellipse,
@@ -26,7 +28,6 @@ from ezdxf.entities import (
 from ezdxf.math import arc_angle_span_deg, ellipse_param_span, Vec2, Vec3
 
 __all__ = ["is_closed_entity"]
-ABS_TOL = 1e-12
 
 
 def is_closed_entity(entity: DXFEntity) -> bool:
@@ -86,3 +87,58 @@ def is_closed_entity(entity: DXFEntity) -> bool:
                 return True
         return False
     return False
+
+def edge_from_entity(entity: DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
+    """Makes an :class:`Edge` instance for the DXF entity types LINE, ARC, ELLIPSE and
+    SPLINE if the entity is an open linear curve.  Returns ``None`` if the entity
+    is a closed curve or cannot represent an edge.
+    """
+    edge: Edge | None = None
+
+    if isinstance(entity, Line):
+        start = Vec3(entity.dxf.start)
+        end = Vec3(entity.dxf.end)
+        length = start.distance(end)
+        edge = Edge(start, end, length, entity)
+    elif isinstance(entity, Arc):
+        try:
+            ct0 = entity.construction_tool()
+        except ValueError:
+            return None
+        radius = abs(ct0.radius)
+        if radius < ABS_TOL:
+            return None
+        span_deg = arc_angle_span_deg(ct0.start_angle, ct0.end_angle)
+        length = radius * span_deg / 180.0 * math.pi
+        edge = Edge(ct0.start_point, ct0.end_point, length, entity)
+    elif isinstance(entity, Ellipse):
+        try:
+            ct1 = entity.construction_tool()
+        except ValueError:
+            return None
+        if ct1.major_axis.magnitude < ABS_TOL or ct1.minor_axis.magnitude < ABS_TOL:
+            return None
+        span = ellipse_param_span(ct1.start_param, ct1.end_param)
+        num = max(3, round(span / 0.1745))  #  resolution of ~1 deg
+        # length of elliptic arc is an approximation:
+        points = list(ct1.vertices(ct1.params(num)))
+        length = sum(a.distance(b) for a, b in zip(points, points[1:]))
+        edge = Edge(Vec3(points[0]), Vec3(points[-1]), length, entity)
+    elif isinstance(entity, Spline):
+        try:
+            ct2 = entity.construction_tool()
+        except ValueError:
+            return None
+        start = Vec3(ct2.control_points[0])
+        end = Vec3(ct2.control_points[-1])
+        points = list(ct2.control_points)
+        # length of B-spline is a very rough approximation:
+        length = sum(a.distance(b) for a, b in zip(points, points[1:]))
+        edge = Edge(start, end, length, entity)
+
+    if isinstance(edge, Edge):
+        if edge.start.distance(edge.end) < gap_tol:
+            return None
+        if edge.length < gap_tol:
+            return None
+    return edge

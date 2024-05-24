@@ -15,17 +15,9 @@ module.
 from __future__ import annotations
 from typing import Any, Sequence, Iterator, Iterable
 from collections import defaultdict
-import math
 import time
 
-from ezdxf.entities import DXFEntity, Arc, Ellipse, Spline, Line
-from ezdxf.math import (
-    UVec,
-    Vec3,
-    arc_angle_span_deg,
-    ellipse_param_span,
-    distance_point_line_3d,
-)
+from ezdxf.math import UVec, Vec3, distance_point_line_3d
 from ezdxf.math import rtree
 
 __all__ = [
@@ -33,7 +25,6 @@ __all__ = [
     "find_first_loop",
     "find_shortest_loop",
     "find_longest_loop",
-    "edge_from_entity",
     "length",
     "filter_short_edges",
     "Edge",
@@ -70,63 +61,6 @@ class Watchdog:
     def check_timeout(self, msg: str) -> None:
         if self.has_timed_out():
             raise TimeoutError(msg)
-
-
-def edge_from_entity(entity: DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
-    """Makes an :class:`Edge` instance for the DXF entity types LINE, ARC, ELLIPSE and
-    SPLINE if the entity is an open linear curve.  Returns ``None`` if the entity
-    is a closed curve or cannot represent an edge.
-    """
-    # TODO: for now I assume all entities are located in the xy-plane of then WCS
-    edge: Edge | None = None
-
-    if isinstance(entity, Line):
-        start = Vec3(entity.dxf.start)
-        end = Vec3(entity.dxf.end)
-        length = start.distance(end)
-        edge = Edge(start, end, length, entity)
-    elif isinstance(entity, Arc):
-        try:
-            ct0 = entity.construction_tool()
-        except ValueError:
-            return None
-        radius = abs(ct0.radius)
-        if radius < ABS_TOL:
-            return None
-        span_deg = arc_angle_span_deg(ct0.start_angle, ct0.end_angle)
-        length = radius * span_deg / 180.0 * math.pi
-        edge = Edge(ct0.start_point, ct0.end_point, length, entity)
-    elif isinstance(entity, Ellipse):
-        try:
-            ct1 = entity.construction_tool()
-        except ValueError:
-            return None
-        if ct1.major_axis.magnitude < ABS_TOL or ct1.minor_axis.magnitude < ABS_TOL:
-            return None
-        span = ellipse_param_span(ct1.start_param, ct1.end_param)
-        num = max(3, round(span / 0.1745))  #  resolution of ~1 deg
-        # length of elliptic arc is an approximation:
-        points = list(ct1.vertices(ct1.params(num)))
-        length = sum(a.distance(b) for a, b in zip(points, points[1:]))
-        edge = Edge(Vec3(points[0]), Vec3(points[-1]), length, entity)
-    elif isinstance(entity, Spline):
-        try:
-            ct2 = entity.construction_tool()
-        except ValueError:
-            return None
-        start = Vec3(ct2.control_points[0])
-        end = Vec3(ct2.control_points[-1])
-        points = list(ct2.control_points)
-        # length of B-spline is a very rough approximation:
-        length = sum(a.distance(b) for a, b in zip(points, points[1:]))
-        edge = Edge(start, end, length, entity)
-
-    if isinstance(edge, Edge):
-        if edge.start.distance(edge.end) < gap_tol:
-            return None
-        if edge.length < gap_tol:
-            return None
-    return edge
 
 
 def length(edges: Sequence[Edge]) -> float:
