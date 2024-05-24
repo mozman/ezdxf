@@ -22,19 +22,7 @@ class TestEdge:
         edge1 = em.Edge((0, 0), (1, 0), 1.0)
         assert edge0 == edge0
         assert edge0 != edge1, "each edge should have an unique identity"
-        assert edge0 == edge0.copy(), "copies represent the same edge"
         assert edge0 == edge0.reversed(), "reversed copies represent the same edge"
-
-    def test_copy(self):
-        edge = em.Edge((0, 0), (1, 0), 1.0)
-        clone = edge.copy()
-        assert edge == clone
-        assert edge.id == clone.id
-        assert edge.start == clone.start
-        assert edge.end == clone.end
-        assert edge.length == clone.length
-        assert edge.reverse is clone.reverse
-        assert edge.payload is clone.payload
 
     def test_reversed_copy(self):
         edge = em.Edge((0, 0), (1, 0), 1.0)
@@ -271,7 +259,7 @@ class TestEdgeDeposit(SimpleLoops):
         assert self.B in network
         assert self.C in network
         assert self.D in network
-        
+
         # all edges connected directly to A
         edges = network.edges_linked_to(self.A)
         assert len(edges) == 2

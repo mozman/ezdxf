@@ -14,6 +14,7 @@ module.
 """
 from __future__ import annotations
 from typing import Any, Sequence, Iterator, Iterable
+from typing_extensions import Self
 from collections import defaultdict
 import time
 
@@ -44,6 +45,53 @@ class TimeoutError(EdgeMinerException):
 
 class DuplicateEdgesError(EdgeMinerException):
     pass
+
+
+class Edge:
+    """Represents an edge.
+
+    The edge can represent any linear curve (line, arc, spline,...).
+    Therefore, the length of the edge must be specified if the length calculation for
+    a sequence of edges is to be possible.
+
+    Attributes:
+        id: unique id as int
+        start: start vertex as Vec3
+        end: end vertex as Vec3
+        reverse: flag to indicate that the edge is reversed compared to its initial state
+        length: length of the edge, default is the distance between start- and end vertex
+        payload: arbitrary data associated to the edge
+
+    """
+
+    __slots__ = ("id", "start", "end", "reverse", "length", "payload")
+    _next_id = 1
+
+    def __init__(
+        self, start: UVec, end: UVec, length: float = -1.0, payload: Any = None
+    ) -> None:
+        self.id = Edge._next_id  # unique id but reversed copies have the same id
+        Edge._next_id += 1
+        self.start = Vec3(start)
+        self.end = Vec3(end)
+        self.reverse: bool = False
+        if length < 0.0:
+            length = self.start.distance(self.end)
+        self.length = length
+        self.payload = payload
+
+    def __eq__(self, other) -> bool:
+        """Return ``True`` if the ids of the edges are equal."""
+        if isinstance(other, Edge):
+            return self.id == other.id
+        return False
+    
+    def reversed(self) -> Self:
+        """Returns a reversed copy."""
+        edge = self.__class__(self.end, self.start, self.length, self.payload)
+        edge.reverse = not self.reverse
+        edge.id = self.id  # reversed copies represent the same edge
+        return edge
 
 
 class Watchdog:
@@ -138,60 +186,6 @@ def find_all_loops(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[
         # It's not required to search for disconnected loops - by rotating and restarting,
         # every possible loop is taken into account.
     return tuple(finder)
-
-
-class Edge:
-    """Represents an edge.
-
-    The edge can represent any linear curve (line, arc, spline,...).
-    Therefore, the length of the edge must be specified if the length calculation for
-    loops is to be possible.
-
-    Attributes:
-        id: unique id as int
-        start: start vertex as Vec3
-        end: end vertex as Vec3
-        reverse: flag to indicate that the edge is reversed compared to its initial state
-        length: length of the edge, default is the distance between start- and end vertex
-        payload: arbitrary data associated to the edge
-
-    """
-
-    __slots__ = ("id", "start", "end", "reverse", "length", "payload")
-    _next_id = 1
-
-    def __init__(
-        self, start: UVec, end: UVec, length: float = -1.0, payload: Any = None
-    ) -> None:
-        self.id = Edge._next_id  # unique id but (reversed) copies have the same id
-        Edge._next_id += 1
-        self.start = Vec3(start)
-        self.end = Vec3(end)
-        self.reverse: bool = False
-        if length < 0.0:
-            length = self.start.distance(self.end)
-        self.length = length
-        self.payload = payload
-
-    def __eq__(self, other) -> bool:
-        """Return ``True`` if the ids of the edges are equal."""
-        if isinstance(other, Edge):
-            return self.id == other.id
-        return False
-
-    def copy(self) -> Edge:
-        """Returns a copy."""
-        edge = Edge(self.start, self.end, self.length, self.payload)
-        edge.reverse = self.reverse
-        edge.id = self.id  # copies represent the same edge
-        return edge
-
-    def reversed(self) -> Edge:
-        """Returns a reversed copy."""
-        edge = Edge(self.end, self.start, self.length, self.payload)
-        edge.reverse = not self.reverse
-        edge.id = self.id  # reversed copies represent the same edge
-        return edge
 
 
 def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
