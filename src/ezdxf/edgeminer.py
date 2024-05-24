@@ -47,6 +47,10 @@ class DuplicateEdgesError(EdgeMinerException):
     pass
 
 
+class StopSearchException(EdgeMinerException):
+    pass
+
+
 class Edge:
     """Represents an edge.
 
@@ -255,7 +259,7 @@ class Loop:
 
 
 class LoopFinderRBT:
-    """Recursive backtracking algorithm with time complexity of O(n!).
+    """Recursive backtracking algorithm to find closed loops with time complexity of O(n!).
 
     Args:
         first: flag to stop the search at the first loop found
@@ -271,8 +275,12 @@ class LoopFinderRBT:
         self.watchdog = Watchdog()
 
     def __iter__(self) -> Iterator[tuple[Edge, ...]]:
-        """Yields all found loops as sequences of edges."""
+        """Yields all loops found as sequences of edges."""
         return iter(self._solutions.values())
+
+    def __len__(self) -> int:
+        """Returns the count of loops found."""
+        return len(self._solutions)
 
     def search(self, start: Edge, available: Sequence[Edge], timeout=TIMEOUT):
         """Searches for closed loops in the available edges, starting from the given
@@ -297,20 +305,15 @@ class LoopFinderRBT:
         if start.id in unique_ids:
             raise DuplicateEdgesError("starting edge cannot exist in available edges")
         self.watchdog.start(timeout)
-        self._search(Loop((start,)), tuple(available))
+        try:
+            self._search(Loop((start,)), tuple(available))
+        except StopSearchException:
+            pass
 
     def _search(self, loop: Loop, available: tuple[Edge, ...]):
-        """Recursive backtracking with a time complexity of O(n!).
-
-        Raises:
-            TimeoutError: search process has timed out
-            RecursionError: search exceeded Python's recursion limit
-        """
-        if len(available) == 0:
-            return
-
         for next_edge in available:
-            self.watchdog.check_timeout("search process has timed out")
+            # raises TimeoutError:
+            self.watchdog.check_timeout("search process has timed out")  
             edge = next_edge
             extended_loop: Loop | None = None
             if loop.is_connected(edge, self._gap_tol):
@@ -325,15 +328,13 @@ class LoopFinderRBT:
 
             if extended_loop.is_closed_loop(self._gap_tol):
                 self._append_solution(extended_loop)
-            else:  # depth search
+                if self._stop_at_first_solution:
+                    raise StopSearchException
+            else:  # depth search, may raise RecursionError
                 _id = edge.id
                 self._search(extended_loop, tuple(e for e in available if e.id != _id))
 
-            if self._stop_at_first_solution and self._solutions:
-                return
-
     def _append_solution(self, loop: Loop) -> None:
-        """Add loop to solutions."""
         key = loop.key()
         if key in self._solutions:
             return
