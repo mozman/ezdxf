@@ -61,7 +61,6 @@ class Edge:
         reverse: flag to indicate that the edge is reversed compared to its initial state
         length: length of the edge, default is the distance between start- and end vertex
         payload: arbitrary data associated to the edge
-
     """
 
     __slots__ = ("id", "start", "end", "reverse", "length", "payload")
@@ -85,7 +84,7 @@ class Edge:
         if isinstance(other, Edge):
             return self.id == other.id
         return False
-    
+
     def reversed(self) -> Self:
         """Returns a reversed copy."""
         edge = self.__class__(self.end, self.start, self.length, self.payload)
@@ -262,7 +261,6 @@ class LoopFinderRBT:
         first: flag to stop the search at the first loop found
         discard_reverse: discard loops that are identical to found loops but in reverse order
         gap_tol: maximum vertex distance to consider two edges as connected
-
     """
 
     def __init__(self, first=False, discard_reverse=True, gap_tol=GAP_TOL) -> None:
@@ -290,7 +288,7 @@ class LoopFinderRBT:
         Raises:
             DuplicateEdgesError: duplicate edges or starting edge in available edges
             TimeoutError: search process has timed out
-
+            RecursionError: search exceeded Python's recursion limit
         """
         ids = [e.id for e in available]
         unique_ids = set(ids)
@@ -306,6 +304,7 @@ class LoopFinderRBT:
 
         Raises:
             TimeoutError: search process has timed out
+            RecursionError: search exceeded Python's recursion limit
         """
         if len(available) == 0:
             return
