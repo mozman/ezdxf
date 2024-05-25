@@ -35,6 +35,17 @@ class TestEdge:
         assert edge.reverse is (not clone.reverse)
         assert edge.payload is clone.payload
 
+    def test_edge_can_be_used_in_sets(self):
+        A = em.Edge((0, 0), (1, 0))
+        B = em.Edge((1, 0), (1, 1))
+        C = em.Edge((1, 1), (0, 1))
+
+        s1 = set([A, B])
+        s2 = set([C, B])
+        result = s1.intersection(s2)
+        assert len(result) == 1
+        assert B in result
+
 
 def test_filter_short_edges():
     A = em.Edge((0, 0), (0, 0))
@@ -103,7 +114,7 @@ class SimpleLoops:
     G = em.Edge((2, 1), (1, 1), payload="G")
 
 
-class TestLoopFinderSimple(SimpleLoops):
+class TestLoopFinderRBTSimple(SimpleLoops):
     def test_unique_available_edges_required(self):
         finder = em.LoopFinderRBT()
         with pytest.raises(em.DuplicateEdgesError):
@@ -149,6 +160,57 @@ class TestLoopFinderSimple(SimpleLoops):
         finder.search(self.A, (self.B, self.C, self.D, self.E, self.F, self.G))
         solutions = list(finder)
         assert len(solutions) == 1
+
+
+class TestLoopFinderNetSimple(SimpleLoops):
+
+    @pytest.fixture(scope="class")
+    def netAD(self):
+        deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
+        return deposit.build_network(self.A)
+
+    @pytest.fixture(scope="class")
+    def netAG(self):
+        deposit = em.EdgeDeposit(
+            [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
+        )
+        return deposit.build_network(self.A)
+
+    def test_find_any_loop(self, netAG):
+        finder = em.LoopFinderNet(netAG)
+        loop = finder.find_any_loop(start=self.A)
+        assert len(loop) > 3
+
+    def test_loop_A_B_C_D(self, netAD):
+        finder = em.LoopFinderNet(netAD)
+        finder.search(self.A)
+        solutions = list(finder)
+        assert len(solutions) == 1
+        assert collect_payload(solutions[0]) == "A,B,C,D"
+
+    def test_loop_D_A_B_C(self, netAD):
+        finder = em.LoopFinderNet(netAD)
+        finder.search(self.D)
+        solutions = list(finder)
+        assert len(solutions) == 1
+        assert collect_payload(solutions[0]) == "D,A,B,C"
+
+    def test_loop_A_to_D_unique_solutions(self, netAD):
+        finder = em.LoopFinderNet(netAD)
+        finder.search(self.A)
+        # rotated edges, same loop
+        finder.search(self.D)
+        solutions = list(finder)
+        assert len(solutions) == 1
+
+    def test_loops_A_to_G(self, netAG):
+        finder = em.LoopFinderNet(netAG, timeout=10)
+        finder.search(self.A)
+        solutions = list(finder)
+        assert len(solutions) == 2
+        expected = {"A,B,C,D", "A,E,F,G,C,D"}
+        assert collect_payload(solutions[0]) in expected
+        assert collect_payload(solutions[1]) in expected
 
 
 class TestAPIFunction(SimpleLoops):
@@ -271,9 +333,28 @@ class TestEdgeDeposit(SimpleLoops):
         # network of all edges connected directly or indirectly to B
         network = deposit.build_network(self.B)
         assert len(network) == 7
-        # all edges connected directly to B
+
+        # all edges connected directly to A
+        edges = network.edges_linked_to(self.A)
+        assert len(edges) == 3
+
         edges = network.edges_linked_to(self.B)
         assert len(edges) == 4
+
+        edges = network.edges_linked_to(self.C)
+        assert len(edges) == 3
+
+        edges = network.edges_linked_to(self.D)
+        assert len(edges) == 2
+
+        edges = network.edges_linked_to(self.E)
+        assert len(edges) == 3
+
+        edges = network.edges_linked_to(self.F)
+        assert len(edges) == 2
+
+        edges = network.edges_linked_to(self.G)
+        assert len(edges) == 3
 
 
 if __name__ == "__main__":
