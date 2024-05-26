@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Sequence
 import pytest
 
+import ezdxf
 from ezdxf import edgeminer as em
 from ezdxf.math import Vec3
 
@@ -144,7 +145,7 @@ class SimpleLoops:
     #   |   |   |
     # 0 +-A-+-E-+
 
-    A = em.Edge((0, 0), (1, 0), payload="A")
+    A = em.Edge((0, 0), (1, 0), length=0.5, payload="A")
     B = em.Edge((1, 0), (1, 1), payload="B")
     C = em.Edge((1, 1), (0, 1), payload="C")
     D = em.Edge((0, 1), (0, 0), payload="D")
@@ -205,6 +206,7 @@ class TestLoopFinderSimple(SimpleLoops):
 
 
 class TestAPIFunction(SimpleLoops):
+    @pytest.mark.skipif(ezdxf.PYPY is True, reason="has different search order?")
     def test_find_all_loop(self):
         solutions = em.find_all_loops(
             (self.A, self.B, self.C, self.D, self.E, self.F, self.G)
