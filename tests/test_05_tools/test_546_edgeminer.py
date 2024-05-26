@@ -326,6 +326,11 @@ class TestEdgeDeposit(SimpleLoops):
         edges = network.edges_linked_to(self.A)
         assert len(edges) == 2
 
+    def test_solitary_edge_is_not_a_network(self):
+        deposit = em.EdgeDeposit([self.A, self.C])
+        network = deposit.build_network(self.A)
+        assert len(network) == 0
+
     def test_build_network_A_G(self):
         deposit = em.EdgeDeposit(
             [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
@@ -355,6 +360,31 @@ class TestEdgeDeposit(SimpleLoops):
 
         edges = network.edges_linked_to(self.G)
         assert len(edges) == 3
+
+    def test_build_all_networks(self):
+        deposit = em.EdgeDeposit(
+            [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
+        )
+        assert len(deposit.build_all_networks()) == 1
+
+    def test_build_all_disconnected_networks(self):
+        #   0   1   2   3
+        # 1 +-C-+   +-G-+
+        #   |   |   |   |
+        #   D   B   H   F
+        #   |   |   |   |
+        # 0 +-A-+   +-E-+
+        E = em.Edge((2, 0), (3, 0), payload="E")
+        F = em.Edge((3, 0), (3, 1), payload="F")
+        G = em.Edge((3, 1), (2, 1), payload="G")
+        H = em.Edge((2, 1), (2, 0), payload="H")
+
+        deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D, E, F, G, H])
+        assert len(deposit.build_all_networks()) == 2
+
+    def test_build_all_networks_solitary_edges(self):
+        deposit = em.EdgeDeposit([self.A, self.C, self.F])
+        assert len(deposit.build_all_networks()) == 0
 
 
 if __name__ == "__main__":

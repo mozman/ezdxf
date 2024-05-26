@@ -240,6 +240,53 @@ def find_all_loops(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[
     return tuple(finder)
 
 
+def find_all_loops_net(
+    edges: Sequence[Edge], gap_tol=GAP_TOL, timeout=TIMEOUT
+) -> Sequence[Sequence[Edge]]:
+    """Returns all unique closed loops and doesn't include reversed solutions.
+
+    Note: Recursive backtracking algorithm with time complexity of O(n!).
+
+    Args:
+        edges: edges to be examined
+        gap_tol: maximum vertex distance to consider two edges as connected
+        timeout: timeout in seconds
+
+    Raises:
+        TimeoutError: search process has timed out
+        TypeError: invalid data in sequence `edges`
+    """
+    deposit = EdgeDeposit(edges, gap_tol=gap_tol)
+    if len(deposit.edges) < 2:
+        return tuple()
+    return find_all_loops_in_deposit(deposit, timeout=timeout)
+
+
+def find_all_loops_in_deposit(
+    deposit: EdgeDeposit, timeout=TIMEOUT
+) -> Sequence[Sequence[Edge]]:
+    """Returns all unique closed loops in found in the edge deposit and doesn't include
+    reversed solutions.
+
+    Note: Recursive backtracking algorithm with time complexity of O(n!).
+
+    Args:
+        deposit: edge deposit
+        timeout: timeout in seconds
+
+    Raises:
+        TimeoutError: search process has timed out
+    """
+    gap_tol = deposit.gap_tol
+    solutions: list[Sequence[Edge]] = []
+    for network in deposit.build_all_networks(timeout=timeout):
+        finder = LoopFinderNet(network, gap_tol=gap_tol, timeout=timeout)
+        for edge in network:
+            finder.search(edge)
+        solutions.extend(finder)
+    return solutions
+
+
 def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
     for edge in edges:
         if not isinstance(edge, Edge):
@@ -456,8 +503,9 @@ class EdgeDeposit:
 
     def __init__(self, edges: Sequence[Edge], gap_tol=GAP_TOL) -> None:
         self.gap_tol = gap_tol
-        self.edge_index = EdgeVertexIndex(edges)
-        self.search_index = SpatialSearchIndex(edges)
+        self.edges = type_check(tuple(edges))
+        self.edge_index = EdgeVertexIndex(self.edges)
+        self.search_index = SpatialSearchIndex(self.edges)
 
     def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
         """Returns all edges linked to `vertex` in range of `radius`.
@@ -519,6 +567,27 @@ class EdgeDeposit:
 
         return network
 
+    def build_all_networks(self, timeout=TIMEOUT) -> Sequence[Network]:
+        """Returns all separated networks in this deposit.
+
+        Raises:
+            TimeoutError: build process has timed out
+        """
+        watchdog = Watchdog(timeout)
+        edges = set(self.edges)
+        networks: list[Network] = []
+        while edges:
+            if watchdog.has_timed_out:
+                raise TimeoutError("search process has timed out")
+            edge = edges.pop()
+            network = self.build_network(edge, timeout=timeout)
+            if len(network):
+                networks.append(network)
+                edges -= set(network)
+            else:  # solitary edge
+                edges.discard(edge)
+        return networks
+
 
 class Network:
     """The all edges in a network are reachable from every other edge."""
@@ -555,6 +624,7 @@ class Network:
     def edges_linked_to(self, edge: Edge) -> Sequence[Edge]:
         return tuple(self._edges[eid] for eid in self._connections[edge.id])
 
+
 class LoopFinderNet:
     def __init__(
         self, network: Network, discard_reverse=True, gap_tol=GAP_TOL, timeout=TIMEOUT
@@ -574,7 +644,7 @@ class LoopFinderNet:
         return len(self._solutions)
 
     def find_any_loop(self, start: Edge | None = None) -> Sequence[Edge]:
-        """Returns the first loop found beginning with the given start edge or an 
+        """Returns the first loop found beginning with the given start edge or an
         arbitrary edge if `start` is None.
         """
         if start is None:
