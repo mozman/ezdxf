@@ -292,6 +292,15 @@ class Vec3:
             and abs(self._z) <= ABS_TOL
         )
 
+    @property
+    def is_axial(self) -> bool:
+        """``True`` if the vector is directed along one of the axes"""
+        return (
+            (abs(self._x) <= ABS_TOL and abs(self._z) <= ABS_TOL)
+            or (abs(self._y) <= ABS_TOL and abs(self._z) <= ABS_TOL)
+            or (abs(self._x) <= ABS_TOL and abs(self._y) <= ABS_TOL)
+        )
+
     def is_parallel(
         self, other: Vec3, *, rel_tol: float = 1e-9, abs_tol: float = 1e-12
     ) -> bool:
@@ -670,6 +679,11 @@ class Vec2:
     @property
     def is_null(self) -> bool:
         return abs(self.x) <= ABS_TOL and abs(self.y) <= ABS_TOL
+        
+    @property
+    def is_axial(self) -> bool:
+        """``True`` if the vector is directed along one of the axes"""
+        return abs(self.x) <= ABS_TOL or abs(self.y) <= ABS_TOL
 
     @property
     def angle(self) -> float:
