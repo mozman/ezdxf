@@ -94,7 +94,13 @@ class TestLoop:
 
 
 def collect_payload(edges: Sequence[em.Edge]) -> str:
-    return ",".join([e.payload for e in edges])
+    """Returns the payload as strings in key order.
+
+    Key order:
+        Loop starts with the edge with the smallest id.
+    """
+    loop = em.Loop(edges)  # type: ignore
+    return ",".join([e.payload for e in loop.ordered()])
 
 
 class SimpleLoops:
@@ -114,55 +120,7 @@ class SimpleLoops:
     G = em.Edge((2, 1), (1, 1), payload="G")
 
 
-class TestLoopFinderRBTSimple(SimpleLoops):
-    def test_unique_available_edges_required(self):
-        finder = em.LoopFinderRBT()
-        with pytest.raises(em.DuplicateEdgesError):
-            finder.search(self.A, available=(self.B, self.B, self.B))
-
-    def test_start_edge_not_in_available_edges(self):
-        finder = em.LoopFinderRBT()
-        with pytest.raises(em.DuplicateEdgesError):
-            finder.search(self.A, available=(self.A, self.C, self.D))
-
-    def test_loop_A_B_C_D(self):
-        finder = em.LoopFinderRBT()
-        finder.search(self.A, (self.B, self.C, self.D))
-        solutions = list(finder)
-        assert len(solutions) == 1
-        assert collect_payload(solutions[0]) == "A,B,C,D"
-
-    def test_loop_D_A_B_C(self):
-        finder = em.LoopFinderRBT()
-        finder.search(self.D, (self.A, self.B, self.C))
-        solutions = list(finder)
-        assert len(solutions) == 1
-        assert collect_payload(solutions[0]) == "D,A,B,C"
-
-    def test_loop_A_to_D_unique_solutions(self):
-        finder = em.LoopFinderRBT()
-        finder.search(self.A, (self.B, self.C, self.D))
-        # rotated edges, same loop
-        finder.search(self.D, (self.A, self.B, self.C))
-        solutions = list(finder)
-        assert len(solutions) == 1
-
-    def test_loops_A_to_G(self):
-        finder = em.LoopFinderRBT()
-        finder.search(self.A, (self.B, self.C, self.D, self.E, self.F, self.G))
-        solutions = list(finder)
-        assert len(solutions) == 2
-        assert collect_payload(solutions[0]) == "A,B,C,D"
-        assert collect_payload(solutions[1]) == "A,E,F,G,C,D"
-
-    def test_stop_at_first_solution(self):
-        finder = em.LoopFinderRBT(first=True)
-        finder.search(self.A, (self.B, self.C, self.D, self.E, self.F, self.G))
-        solutions = list(finder)
-        assert len(solutions) == 1
-
-
-class TestLoopFinderNetSimple(SimpleLoops):
+class TestLoopFinderSimple(SimpleLoops):
 
     @pytest.fixture(scope="class")
     def netAD(self):
@@ -177,26 +135,26 @@ class TestLoopFinderNetSimple(SimpleLoops):
         return deposit.build_network(self.A)
 
     def test_find_any_loop(self, netAG):
-        finder = em.LoopFinderNet(netAG)
+        finder = em.LoopFinder(netAG)
         loop = finder.find_any_loop(start=self.A)
         assert len(loop) > 3
 
     def test_loop_A_B_C_D(self, netAD):
-        finder = em.LoopFinderNet(netAD)
+        finder = em.LoopFinder(netAD)
         finder.search(self.A)
         solutions = list(finder)
         assert len(solutions) == 1
         assert collect_payload(solutions[0]) == "A,B,C,D"
 
     def test_loop_D_A_B_C(self, netAD):
-        finder = em.LoopFinderNet(netAD)
+        finder = em.LoopFinder(netAD)
         finder.search(self.D)
         solutions = list(finder)
         assert len(solutions) == 1
-        assert collect_payload(solutions[0]) == "D,A,B,C"
+        assert collect_payload(solutions[0]) == "A,B,C,D"
 
     def test_loop_A_to_D_unique_solutions(self, netAD):
-        finder = em.LoopFinderNet(netAD)
+        finder = em.LoopFinder(netAD)
         finder.search(self.A)
         # rotated edges, same loop
         finder.search(self.D)
@@ -204,7 +162,7 @@ class TestLoopFinderNetSimple(SimpleLoops):
         assert len(solutions) == 1
 
     def test_loops_A_to_G(self, netAG):
-        finder = em.LoopFinderNet(netAG, timeout=10)
+        finder = em.LoopFinder(netAG, timeout=10)
         finder.search(self.A)
         solutions = list(finder)
         assert len(solutions) == 2
@@ -268,6 +226,7 @@ class TestFindAllDisconnectedLoops:
         )
         assert len(solutions) == 2
         solution_strings = [collect_payload(s) for s in solutions]
+
         assert "A,B,C,D" in solution_strings
         assert "E,F,G,H" in solution_strings
 
@@ -277,8 +236,8 @@ class TestFindAllDisconnectedLoops:
         )
         assert len(solutions) == 2
         solution_strings = [collect_payload(s) for s in solutions]
-        assert "B,C,D,A" in solution_strings
-        assert "H,E,F,G" in solution_strings
+        assert "A,B,C,D" in solution_strings
+        assert "E,F,G,H" in solution_strings
 
 
 class TestEdgeDeposit(SimpleLoops):
