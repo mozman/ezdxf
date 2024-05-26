@@ -103,7 +103,40 @@ def collect_payload(edges: Sequence[em.Edge]) -> str:
     return ",".join([e.payload for e in loop.ordered()])
 
 
+class TestSequentialSearch:
+    #   0   1   2
+    # 1 +-E-+-D-+
+    #   |       |
+    #   F       C
+    #   |       |
+    # 0 +-A-+-B-+
+
+    A = em.Edge((0, 0), (1, 0), payload="A")
+    B = em.Edge((1, 0), (2, 0), payload="B")
+    C = em.Edge((2, 0), (2, 1), payload="C")
+    D = em.Edge((2, 1), (1, 1), payload="D")
+    E = em.Edge((1, 1), (0, 1), payload="E")
+    F = em.Edge((0, 1), (0, 0), payload="F")
+
+    def test_is_forward_connected(self):
+        assert em.is_forward_connected(self.A, self.B) is True
+        assert em.is_forward_connected(self.A, self.F) is False
+
+    def test_is_backwards_connected(self):
+        assert em.is_backwards_connected(self.A, self.F) is True
+        assert em.is_backwards_connected(self.A, self.B) is False
+        assert em.is_backwards_connected(self.D, self.F) is False
+
+    def test_sequential_forward_search(self):
+        edges = [self.A, self.B, self.C, self.D, self.E, self.F]
+        result = em.sequential_search(edges)
+        assert len(result) == 6
+        assert result[0] is self.A
+        assert result[-1] is self.F
+
+
 class SimpleLoops:
+
     #   0   1   2
     # 1 +-C-+-G-+
     #   |   |   |

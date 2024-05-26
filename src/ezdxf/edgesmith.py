@@ -12,6 +12,7 @@ The complementary module to ezdxf.edgeminer.
 
 """
 from __future__ import annotations
+from typing import Iterator, Iterable
 import math
 
 from ezdxf.edgeminer import Edge, GAP_TOL, ABS_TOL
@@ -134,3 +135,16 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
         if edge.length < gap_tol:
             return None
     return edge
+
+
+def edges_from_entities(
+    entities: Iterable[et.DXFEntity], gap_tol=GAP_TOL
+) -> Iterator[Edge]:
+    """Yields all DXF entities as edges. 
+    
+    Skips all entities which can not be represented as edge.
+    """
+    for entity in entities:
+        edge = edge_from_entity(entity, gap_tol)
+        if edge is not None:
+            yield edge

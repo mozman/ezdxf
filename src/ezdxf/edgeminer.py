@@ -13,7 +13,7 @@ module.
 
 """
 from __future__ import annotations
-from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple
+from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple, Callable
 from typing_extensions import Self, TypeAlias
 from collections import defaultdict
 import time
@@ -27,6 +27,7 @@ __all__ = [
     "find_first_loop",
     "find_shortest_loop",
     "find_longest_loop",
+    "sequential_search",
     "length",
     "filter_short_edges",
     "Edge",
@@ -111,11 +112,51 @@ class Edge:
         return edge
 
 
-def isclose(a: Vec3, b: Vec3, gap_tol: float = GAP_TOL) -> bool:
+def isclose(a: Vec3, b: Vec3, gap_tol=GAP_TOL) -> bool:
     """This function should be used to test whether two vertices are close to each other
     to get consistent results.
     """
     return a.distance(b) < gap_tol
+
+
+def is_forward_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
+    """Returns ``True`` if the edges have a forward connection."""
+    return isclose(a.end, b.start, gap_tol)
+
+
+def is_backwards_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
+    """Returns ``True`` if the edges have a backward connection."""
+    return isclose(a.start, b.end, gap_tol)
+
+
+def is_loop(edges: Sequence[Edge], gap_tol=GAP_TOL, full=True) -> bool:
+    if full:
+        if not all(
+            is_forward_connected(a, b, gap_tol) for a, b in zip(edges, edges[1:])
+        ):
+            return False
+    return is_forward_connected(edges[-1], edges[0])
+
+
+def sequential_search(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
+    """Returns all consecutive connected edges starting from the first edge.
+
+    The search stops at the first edge without a connection.
+    """
+    if len(edges) < 2:
+        return edges
+    chain = [edges[0]]
+    for edge in edges[1:]:
+        last = chain[-1]
+        if is_forward_connected(last, edge, gap_tol):
+            chain.append(edge)
+            continue
+        reversed_edge = edge.reversed()
+        if is_forward_connected(last, reversed_edge, gap_tol):
+            chain.append(reversed_edge)
+            continue
+        break
+    return chain
 
 
 class Watchdog:
