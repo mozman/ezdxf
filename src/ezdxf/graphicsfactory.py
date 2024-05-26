@@ -24,7 +24,7 @@ from ezdxf.math import (
     NULLVEC,
 )
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import factory, Point, Spline, Body, Surface, Line
+from ezdxf.entities import factory, Point, Spline, Body, Surface, Line, Circle
 from ezdxf.entities.mtext_columns import *
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
@@ -38,7 +38,6 @@ if TYPE_CHECKING:
     from ezdxf.entities import (
         Arc,
         AttDef,
-        Circle,
         Dimension,
         ArcDimension,
         DXFGraphic,
