@@ -375,74 +375,6 @@ def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
     return edges
 
 
-class Loop:
-    """Represents connected edges.
-
-    Each end vertex of an edge is connected to the start vertex of the following edge.
-    It is a closed loop when the first edge is connected to the last edge.
-
-    (internal class)
-    """
-
-    __slots__ = ("edges",)
-
-    def __init__(self, edges: tuple[Edge, ...]) -> None:
-        self.edges: tuple[Edge, ...] = edges
-
-    def __repr__(self) -> str:
-        content = ",".join(str(e) for e in self.edges)
-        return f"Loop([{content}])"
-
-    def __len__(self) -> int:
-        return len(self.edges)
-
-    def is_connected(self, edge: Edge, gap_tol=GAP_TOL) -> bool:
-        """Returns ``True`` if the last edge of the loop is connected to the given edge.
-
-        Args:
-            edge: edge to be tested
-            gap_tol: maximum vertex distance to consider two edges as connected
-        """
-        if self.edges:
-            return isclose(self.edges[-1].end, edge.start, gap_tol)
-        return False
-
-    def is_closed_loop(self, gap_tol=GAP_TOL) -> bool:
-        """Returns ``True`` if the first edge is connected to the last edge.
-
-        Args:
-            gap_tol: maximum vertex distance to consider two edges as connected
-        """
-
-        if len(self.edges) > 1:
-            return isclose(self.edges[0].start, self.edges[-1].end, gap_tol)
-        return False
-
-    def key(self, reverse=False) -> tuple[int, ...]:
-        """Returns a normalized key.
-
-        The key is rotated to begin with the smallest edge id.
-        """
-        if len(self.edges) < 2:
-            raise ValueError("too few edges")
-        if reverse:
-            ids = tuple(edge.id for edge in reversed(self.edges))
-        else:
-            ids = tuple(edge.id for edge in self.edges)
-        index = ids.index(min(ids))
-        if index:
-            ids = ids[index:] + ids[:index]
-        return ids
-
-    def ordered(self, reverse=False) -> Iterator[Edge]:
-        """Returns the loop edges in key order."""
-        edges = {e.id: e for e in self.edges}
-        return (edges[eid] for eid in self.key(reverse))
-
-
-SearchSolutions: TypeAlias = Dict[Tuple[int, ...], Tuple[Edge, ...]]
-
-
 class EdgeVertexIndex:
     """Index of edges referenced by the id of their start- and end vertices.
 
@@ -632,6 +564,9 @@ class Network:
         return tuple(self._edges[eid] for eid in self._connections[edge.id])
 
 
+SearchSolutions: TypeAlias = Dict[Tuple[int, ...], Sequence[Edge]]
+
+
 class LoopFinder:
     """Find closed loops in a network by a recursive backtracking algorithm.
 
@@ -677,42 +612,54 @@ class LoopFinder:
             raise ValueError("start edge not in network")
         network = self._network
         gap_tol = self._gap_tol
-        solutions = self._solutions
 
         watchdog = Watchdog(self._timeout)
-        todo: list[Loop] = [Loop((start,))]  # "unlimited" recursion stack
+        todo: list[tuple[Edge, ...]] = [(start,)]  # "unlimited" recursion stack
         while todo:
             if watchdog.has_timed_out:
                 raise TimeoutError("search process has timed out")
-            loop = todo.pop()
-            linked_edges = network.edges_linked_to(loop.edges[-1])
+            chain = todo.pop()
+            last_edge = chain[-1]
+            end_point = last_edge.end
+            candidates = network.edges_linked_to(last_edge)
             # edges must be unique in a loop
-            for edge in set(linked_edges) - set(loop.edges):
-                extended_loop: Loop | None = None
-                if loop.is_connected(edge):
-                    extended_loop = Loop(loop.edges + (edge,))
+            for edge in set(candidates) - set(chain):
+                if isclose(end_point, edge.start, gap_tol):
+                    extended_chain = chain + (edge,)
+                elif isclose(end_point, edge.end, gap_tol):
+                    extended_chain = chain + (edge.reversed(),)
                 else:
-                    reversed_edge = edge.reversed()
-                    if loop.is_connected(reversed_edge):
-                        extended_loop = Loop(loop.edges + (reversed_edge,))
-                if extended_loop is None:
                     continue
-                if extended_loop.is_closed_loop(gap_tol):
-                    add_search_solution(
-                        solutions, extended_loop, self._discard_reverse_solutions
-                    )
+                if is_forward_connected(extended_chain[-1], start, gap_tol):
+                    self.add_solution(extended_chain)
                     if stop_at_first_loop:
                         return
                 else:
-                    todo.append(extended_loop)
+                    todo.append(extended_chain)
+
+    def add_solution(self, loop: Sequence[Edge]) -> None:
+        solutions = self._solutions
+        key = loop_key(loop)
+        if key in solutions:
+            return
+        if (
+            self._discard_reverse_solutions
+            and loop_key(loop, reverse=True) in solutions
+        ):
+            return
+        solutions[key] = loop
 
 
-def add_search_solution(
-    solutions: SearchSolutions, loop: Loop, discard_reversed_loops: bool
-) -> None:
-    key = loop.key()
-    if key in solutions:
-        return
-    if discard_reversed_loops and loop.key(reverse=True) in solutions:
-        return
-    solutions[key] = loop.edges
+def loop_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
+    """Returns a normalized key.
+
+    The key is rotated to begin with the smallest edge id.
+    """
+    if reverse:
+        ids = tuple(edge.id for edge in reversed(edges))
+    else:
+        ids = tuple(edge.id for edge in edges)
+    index = ids.index(min(ids))
+    if index:
+        ids = ids[index:] + ids[:index]
+    return ids

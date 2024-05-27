@@ -60,30 +60,17 @@ class TestLoop:
     C = em.Edge((1, 1), (0, 1))
     D = em.Edge((0, 1), (0, 0))
 
-    def test_is_connected(self):
-        loop = em.Loop((self.A,))
-        assert loop.is_connected(self.B) is True
+    def test_loop_key(self):
+        loop1 = (self.A, self.B, self.C)
+        loop2 = (self.B, self.C, self.A)  # rotated edges, same loop
 
-    def test_is_not_connected(self):
-        loop = em.Loop((self.A,))
-        assert loop.is_connected(self.C) is False
-        assert (
-            loop.is_connected(self.D) is False
-        ), "should not check reverse connected edges"
+        assert em.loop_key(loop1) == em.loop_key(loop2)
 
-    def test_is_closed_loop(self):
-        loop = em.Loop((self.A, self.B, self.C, self.D))
-        assert loop.is_closed_loop() is True
 
-    def test_is_not_closed_loop(self):
-        loop = em.Loop((self.A, self.B))
-        assert loop.is_closed_loop() is False
-
-    def test_key(self):
-        loop1 = em.Loop((self.A, self.B, self.C))
-        loop2 = em.Loop((self.B, self.C, self.A))  # rotated edges, same loop
-
-        assert loop1.key() == loop2.key()
+def ordered_edges(edges: Sequence[em.Edge], reverse=False):
+    """Returns the loop edges in key order."""
+    edge_dict = {e.id: e for e in edges}
+    return (edge_dict[eid] for eid in em.loop_key(edges, reverse))
 
 
 def collect_payload(edges: Sequence[em.Edge]) -> str:
@@ -96,8 +83,7 @@ def collect_payload(edges: Sequence[em.Edge]) -> str:
         return ""
     elif len(edges) == 1:
         return edges[0].payload  # type: ignore
-    loop = em.Loop(edges)  # type: ignore
-    return ",".join([e.payload for e in loop.ordered()])
+    return ",".join([e.payload for e in ordered_edges(edges)])
 
 
 class TestFindSequential:
