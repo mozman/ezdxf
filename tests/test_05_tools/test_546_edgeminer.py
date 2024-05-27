@@ -100,7 +100,7 @@ def collect_payload(edges: Sequence[em.Edge]) -> str:
     return ",".join([e.payload for e in loop.ordered()])
 
 
-class TestSequentialSearch:
+class TestFindSequential:
     #   0   1   2
     # 1 +-E-+-D-+
     #   |       |
@@ -124,15 +124,15 @@ class TestSequentialSearch:
         assert em.is_backwards_connected(self.A, self.B) is False
         assert em.is_backwards_connected(self.D, self.F) is False
 
-    def test_sequential_forward_search(self):
+    def test_find_sequential(self):
         edges = [self.A, self.B, self.C, self.D, self.E, self.F]
-        result = em.sequential_search(edges)
+        result = em.find_sequential(edges)
         assert len(result) == 6
         assert result[0] is self.A
         assert result[-1] is self.F
 
 
-def test_sequential_search_all():
+def test_find_all_sequential():
     #   0   1   2   3
     # 1 +-C-+-I-+-G-+
     #   |   |   |   |
@@ -152,7 +152,7 @@ def test_sequential_search_all():
     J = em.Edge((1, 0), (2, 0), payload="J")
 
     edges = [A, B, C, D, E, F, G, H, I, J]
-    result = list(em.sequential_search_all(edges))
+    result = list(em.find_all_sequential(edges))
     assert len(result) == 4
     assert collect_payload(result[0]) == "A,B,C,D"
     assert collect_payload(result[1]) == "E,F,G,H"
