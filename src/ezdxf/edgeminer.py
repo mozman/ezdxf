@@ -384,6 +384,8 @@ class Loop:
     (internal class)
     """
 
+    __slots__ = ("edges",)
+
     def __init__(self, edges: tuple[Edge, ...]) -> None:
         self.edges: tuple[Edge, ...] = edges
 
