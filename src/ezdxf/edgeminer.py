@@ -13,7 +13,7 @@ module.
 
 """
 from __future__ import annotations
-from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple, Callable
+from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple
 from typing_extensions import Self, TypeAlias
 from collections import defaultdict
 import time
@@ -23,14 +23,22 @@ from ezdxf.math import rtree
 
 
 __all__ = [
-    "find_all_loops",
-    "find_first_loop",
-    "find_shortest_loop",
-    "find_longest_loop",
-    "sequential_search",
-    "length",
-    "filter_short_edges",
     "Edge",
+    "EdgeDeposit",
+    "find_all_loops_in_deposit",
+    "find_all_loops",
+    "find_first_loop_in_deposit",
+    "find_first_loop",
+    "is_backwards_connected",
+    "is_chain",
+    "is_forward_connected",
+    "is_loop",
+    "length",
+    "longest_chain",
+    "sequential_search_all",
+    "sequential_search",
+    "shortest_chain",
+    "TimeoutError",
 ]
 ABS_TOL = 1e-12
 GAP_TOL = 1e-12
@@ -44,13 +52,6 @@ class EdgeMinerException(Exception):
 class TimeoutError(EdgeMinerException):
     pass
 
-
-class DuplicateEdgesError(EdgeMinerException):
-    pass
-
-
-class StopSearchException(EdgeMinerException):
-    pass
 
 
 class Edge:
@@ -116,33 +117,109 @@ def isclose(a: Vec3, b: Vec3, gap_tol=GAP_TOL) -> bool:
     """This function should be used to test whether two vertices are close to each other
     to get consistent results.
     """
-    return a.distance(b) < gap_tol
+    return a.distance(b) <= gap_tol
 
 
 def is_forward_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
-    """Returns ``True`` if the edges have a forward connection."""
+    """Returns ``True`` if the edges have a forward connection.
+    
+    Forward connection: a.end is connected to b.start
+
+    Args:
+        a: first edge
+        b: second edge
+        gap_tol: maximum vertex distance to consider two edges as connected
+    """
     return isclose(a.end, b.start, gap_tol)
 
 
 def is_backwards_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
-    """Returns ``True`` if the edges have a backward connection."""
+    """Returns ``True`` if the edges have a backward connection.
+    
+    Backwards connection: a.start is connected to b.end
+
+    Args:
+        a: first edge
+        b: second edge
+        gap_tol: maximum vertex distance to consider two edges as connected
+    """
     return isclose(a.start, b.end, gap_tol)
 
 
+def is_chain(edges: Sequence[Edge], gap_tol=GAP_TOL) -> bool:
+    """Returns ``True`` if all edges are connected forward.
+    
+    Forward connection: edge[n].end is connected to edge[n+1].start
+
+    Args:
+        edges: sequence of edges
+        gap_tol: maximum vertex distance to consider two edges as connected
+    """
+    return all(is_forward_connected(a, b, gap_tol) for a, b in zip(edges, edges[1:]))
+
+
 def is_loop(edges: Sequence[Edge], gap_tol=GAP_TOL, full=True) -> bool:
-    if full:
-        if not all(
-            is_forward_connected(a, b, gap_tol) for a, b in zip(edges, edges[1:])
-        ):
-            return False
+    """Return ``True`` if the sequence of edges is a closed forward loop.
+
+    Forward connection: edge[n].end is connected to edge[n+1].start
+
+    Args:
+        edges: sequence of edges
+        gap_tol: maximum vertex distance to consider two edges as connected
+        full: does a full check if all edges are connected if ``True``, otherwise checks 
+            only if the last edge is connected to the first edge.
+    """
+    if full and not is_chain(edges, gap_tol):
+        return False
     return is_forward_connected(edges[-1], edges[0])
+
+
+def length(edges: Sequence[Edge]) -> float:
+    """Returns the length of a sequence of edges."""
+    return sum(e.length for e in edges)
+
+
+def shortest_chain(chains: Iterable[Sequence[Edge]]) -> Sequence[Edge]:
+    """Returns the shortest chain of connected edges.
+
+    .. Note::
+
+        This function does not verify if the input sequences are connected edges!
+
+    """
+    sorted_chains = sorted(chains, key=length)
+    if sorted_chains:
+        return sorted_chains[0]
+    return tuple()
+
+
+def longest_chain(chains: Iterable[Sequence[Edge]]) -> Sequence[Edge]:
+    """Returns the longest chain of connected edges.
+
+    .. Note::
+
+        This function does not verify if the input sequences are connected edges!
+
+    """
+    sorted_chains = sorted(chains, key=length)
+    if sorted_chains:
+        return sorted_chains[-1]
+    return tuple()
 
 
 def sequential_search(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
     """Returns all consecutive connected edges starting from the first edge.
 
     The search stops at the first edge without a connection.
+
+    Args:
+        edges: edges to be examined
+        gap_tol: maximum vertex distance to consider two edges as connected
+
+    Raises:
+        TypeError: invalid data in sequence `edges`
     """
+    edges = type_check(edges)
     if len(edges) < 2:
         return edges
     chain = [edges[0]]
@@ -159,6 +236,26 @@ def sequential_search(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
     return chain
 
 
+def sequential_search_all(
+    edges: Sequence[Edge], gap_tol=GAP_TOL
+) -> Iterator[Sequence[Edge]]:
+    """Yields all edge strings with consecutive connected edges starting from the first
+    edge.  This search starts a new sequence at every edge without a connection to
+    the previous sequence.  Each sequence has one or more edges, yields no empty sequences.
+
+    Args:
+        edges: edges to be examined
+        gap_tol: maximum vertex distance to consider two edges as connected
+
+    Raises:
+        TypeError: invalid data in sequence `edges`
+    """
+    while edges:
+        chain = sequential_search(edges, gap_tol)
+        edges = edges[len(chain) :]
+        yield chain
+
+
 class Watchdog:
     def __init__(self, timeout=TIMEOUT) -> None:
         self.timeout: float = timeout
@@ -173,45 +270,14 @@ class Watchdog:
         return time.perf_counter() - self.start_time > self.timeout
 
 
-def length(edges: Sequence[Edge]) -> float:
-    """Returns the length of a sequence of edges."""
-    return sum(e.length for e in edges)
-
-
-def find_shortest_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
-    """Returns the shortest closed loop found.
-
-    Note: Recursive backtracking algorithm with time complexity of O(n!).
-
-    Args:
-        edges: edges to be examined
-        gap_tol: maximum vertex distance to consider two edges as connected
-    """
-    solutions = sorted(find_all_loops(edges, gap_tol=gap_tol), key=length)
-    if solutions:
-        return solutions[0]
-    return tuple()
-
-
-def find_longest_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
-    """Returns the longest closed loop found.
-
-    Note: Recursive backtracking algorithm with time complexity of O(n!).
-
-    Args:
-        edges: edges to be examined
-        gap_tol: maximum vertex distance to consider two edges as connected
-    """
-    solutions = sorted(find_all_loops(edges, gap_tol=gap_tol), key=length)
-    if solutions:
-        return solutions[-1]
-    return tuple()
-
-
 def find_first_loop(
     edges: Sequence[Edge], gap_tol=GAP_TOL, timeout=TIMEOUT
 ) -> Sequence[Edge]:
     """Returns the first closed loop found in `edges`.
+
+    .. Note:: 
+    
+        Recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
         edges: edges to be examined
@@ -230,6 +296,10 @@ def find_first_loop(
 
 def find_first_loop_in_deposit(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Edge]:
     """Returns the first closed loop found in edge `deposit`.
+
+    .. Note:: 
+    
+        Recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
         deposit: edge deposit
@@ -255,7 +325,9 @@ def find_all_loops(
 ) -> Sequence[Sequence[Edge]]:
     """Returns all unique closed loops and doesn't include reversed solutions.
 
-    Note: Recursive backtracking algorithm with time complexity of O(n!).
+    .. Note:: 
+    
+        Recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
         edges: edges to be examined
@@ -278,7 +350,9 @@ def find_all_loops_in_deposit(
     """Returns all unique closed loops in found in the edge `deposit` and doesn't
     include reversed solutions.
 
-    Note: Recursive backtracking algorithm with time complexity of O(n!).
+    .. Note:: 
+    
+        Recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
         deposit: edge deposit
@@ -302,15 +376,6 @@ def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
         if not isinstance(edge, Edge):
             raise TypeError(f"expected type <Edge>, got {str(type(edge))}")
     return edges
-
-
-def filter_short_edges(edges: Iterable[Edge], gap_tol=GAP_TOL) -> tuple[Edge, ...]:
-    """Removes all edges where the start vertex is very close to the end vertex.
-
-    These edges represent very short curves or maybe closed curves like circles and
-    ellipses.
-    """
-    return tuple(e for e in edges if not isclose(e.start, e.end, gap_tol))
 
 
 class Loop:

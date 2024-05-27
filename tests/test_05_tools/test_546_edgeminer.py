@@ -48,14 +48,6 @@ class TestEdge:
         assert B in result
 
 
-def test_filter_short_edges():
-    A = em.Edge((0, 0), (0, 0))
-    B = em.Edge((1, 0), (1, 1))
-    result = em.filter_short_edges([A, B])
-    assert len(result) == 1
-    assert result[0] is B
-
-
 class TestLoop:
     # +-C-+
     # |   |
@@ -100,6 +92,10 @@ def collect_payload(edges: Sequence[em.Edge]) -> str:
     Key order:
         Loop starts with the edge with the smallest id.
     """
+    if len(edges) == 0:
+        return ""
+    elif len(edges) == 1:
+        return edges[0].payload  # type: ignore
     loop = em.Loop(edges)  # type: ignore
     return ",".join([e.payload for e in loop.ordered()])
 
@@ -134,6 +130,34 @@ class TestSequentialSearch:
         assert len(result) == 6
         assert result[0] is self.A
         assert result[-1] is self.F
+
+
+def test_sequential_search_all():
+    #   0   1   2   3
+    # 1 +-C-+-I-+-G-+
+    #   |   |   |   |
+    #   D   B   H   F
+    #   |   |   |   |
+    # 0 +-A-+-J-+-E-+
+
+    A = em.Edge((0, 0), (1, 0), payload="A")
+    B = em.Edge((1, 0), (1, 1), payload="B")
+    C = em.Edge((1, 1), (0, 1), payload="C")
+    D = em.Edge((0, 1), (0, 0), payload="D")
+    E = em.Edge((2, 0), (3, 0), payload="E")
+    F = em.Edge((3, 0), (3, 1), payload="F")
+    G = em.Edge((3, 1), (2, 1), payload="G")
+    H = em.Edge((2, 1), (2, 0), payload="H")
+    I = em.Edge((1, 1), (2, 1), payload="I")
+    J = em.Edge((1, 0), (2, 0), payload="J")
+
+    edges = [A, B, C, D, E, F, G, H, I, J]
+    result = list(em.sequential_search_all(edges))
+    assert len(result) == 4
+    assert collect_payload(result[0]) == "A,B,C,D"
+    assert collect_payload(result[1]) == "E,F,G,H"
+    assert collect_payload(result[2]) == "I"
+    assert collect_payload(result[3]) == "J"
 
 
 class SimpleLoops:
@@ -224,15 +248,15 @@ class TestAPIFunction(SimpleLoops):
         assert len(solution) >= 4  # any loop is a valid solution
 
     def test_find_shortest_loop(self):
-        solution = em.find_shortest_loop(
-            (self.A, self.B, self.C, self.D, self.E, self.F, self.G)
+        solution = em.shortest_chain(
+            em.find_all_loops((self.A, self.B, self.C, self.D, self.E, self.F, self.G))
         )
         assert len(solution) == 4
         assert collect_payload(solution) == "A,B,C,D"
 
     def test_find_longest_loop(self):
-        solution = em.find_longest_loop(
-            (self.A, self.B, self.C, self.D, self.E, self.F, self.G)
+        solution = em.longest_chain(
+            em.find_all_loops((self.A, self.B, self.C, self.D, self.E, self.F, self.G))
         )
         assert len(solution) == 6
         assert collect_payload(solution) == "A,E,F,G,C,D"
