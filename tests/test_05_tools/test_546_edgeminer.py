@@ -391,5 +391,40 @@ class TestEdgeDeposit(SimpleLoops):
         assert len(deposit.build_all_networks()) == 0
 
 
+class TestChainFinder:
+    #    0   1   2   3   4   5
+    #  2         G
+    #  1         F
+    #  0 +-A-+-B-+-C-+-D-+-E-+
+    # -1         I
+    # -2         J
+
+    A = em.Edge((0, 0), (1, 0), payload="A")
+    B = em.Edge((1, 0), (2, 0), payload="B")
+    C = em.Edge((2, 0), (3, 0), payload="C")
+    D = em.Edge((3, 0), (4, 0), payload="D")
+    E = em.Edge((4, 0), (5, 0), payload="E")
+
+    F = em.Edge((2, 0), (2, 1), payload="F")
+    G = em.Edge((2, 1), (2, 2), payload="G")
+    I = em.Edge((2, 0), (2, -1), payload="I")
+    J = em.Edge((2, -1), (2, -2), payload="J")
+
+    def test_find_any_chain(self):
+        edges = [self.A, self.B, self.C, self.D, self.E]
+        deposit = em.EdgeDeposit(edges)
+        finder = em.ChainFinder(deposit)
+        for edge in edges:
+            result = finder.find_any_chain(edge)
+            assert collect_payload(result) == "A,B,C,D,E"
+
+    def test_search_all(self):
+        edges = [self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.I, self.J]
+        deposit = em.EdgeDeposit(edges)
+        finder = em.ChainFinder(deposit)
+        result = finder.search()
+        assert len(result) == 4
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

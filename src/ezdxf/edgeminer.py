@@ -206,8 +206,8 @@ def find_sequential(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
     """Returns all consecutive connected edges starting from the first edge.
 
     The search stops at the first edge without a forward connection from the previous
-    edge. Edges are reversed if necessary to create a forward connection. This means 
-    that the :attr:`Edge.reverse` flag is ``True`` ad start and end vertices are swapped, 
+    edge. Edges are reversed if necessary to create a forward connection. This means
+    that the :attr:`Edge.reverse` flag is ``True`` ad start and end vertices are swapped,
     the attached payload is not changed.
 
     Args:
@@ -367,6 +367,34 @@ def find_all_loops_in_deposit(
             finder.search(edge)
         solutions.extend(finder)
     return solutions
+
+
+def find_all_chains(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[Edge]]:
+    """Returns all sequences of connected edges and doesn't include reversed solutions.
+    The chains are broken at junctions, which means that all sequences have a linear progression without ambiguities.
+
+    Args:
+        edges: sequence of edges
+        gap_tol: maximum vertex distance to consider two edges as connected
+
+    Raises:
+        TypeError: invalid data in sequence `edges`
+    """
+    deposit = EdgeDeposit(edges, gap_tol=gap_tol)
+    if len(deposit.edges) < 1:
+        return tuple()
+    return find_all_chains_in_deposit(deposit)
+
+
+def find_all_chains_in_deposit(deposit: EdgeDeposit) -> Sequence[Sequence[Edge]]:
+    """Returns all sequences of connected edges in the edge `deposit` and doesn't
+    include reversed solutions.  The chains are broken at junctions, which means that
+    all sequences have a linear progression without ambiguities.
+    """
+    if len(deposit.edges) < 1:
+        return tuple()
+    finder = ChainFinder(deposit)
+    return finder.search()
 
 
 def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
@@ -664,3 +692,74 @@ def loop_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
     if index:
         ids = ids[index:] + ids[:index]
     return ids
+
+
+class ChainFinder:
+    """Find sequences of connected edges (chains) in a deposit of edges.
+
+    All results are linear chains without junctions.
+
+    (internal class)
+    """
+
+    def __init__(self, deposit: EdgeDeposit, gap_tol=GAP_TOL) -> None:
+        if len(deposit.edges) < 1:
+            raise ValueError("one or more edges required")
+        self._deposit = deposit
+        self._gap_tol = gap_tol
+
+    def find_any_chain(self, start: Edge | None = None) -> Sequence[Edge]:
+        deposit = self._deposit
+        gap_tol = self._gap_tol
+
+        if start is None:
+            start = deposit.edges[0]
+
+        chain = [start]
+        prev_length = 0
+        while len(chain) > prev_length:
+            prev_length = len(chain)
+            # 1. extend tail
+            last = chain[-1]
+            candidates = [
+                edge
+                for edge in deposit.edges_linked_to(last.end, gap_tol)
+                if edge is not last
+            ]
+            if len(candidates) == 1:  # ignore junctions!
+                edge = candidates[0]
+                if isclose(last.end, edge.start):
+                    chain.append(edge)
+                elif isclose(last.end, edge.end):
+                    chain.append(edge.reversed())
+
+            # 2. extend head
+            first = chain[0]
+            candidates = [
+                edge
+                for edge in deposit.edges_linked_to(first.start, gap_tol)
+                if edge is not first
+            ]
+            if len(candidates) == 1:  # ignore junctions!
+                edge = candidates[0]
+                if isclose(first.start, edge.end):
+                    chain.insert(0, edge)
+                elif isclose(first.start, edge.start):
+                    chain.insert(0, edge.reversed())
+        return tuple(chain)
+
+    def search(self) -> Sequence[Sequence[Edge]]:
+        def add_solution(edges: Sequence[Edge]) -> None:
+            key = tuple(e.id for e in edges)
+            reverse_key = tuple(reversed(key))
+            if key in solutions or reverse_key in solutions:
+                return
+            solutions[key] = edges
+
+        solutions: SearchSolutions = {}
+        edges = set(self._deposit.edges)
+        while edges:
+            chain = self.find_any_chain(edges.pop())
+            add_solution(chain)
+            edges -= set(chain)
+        return tuple(solutions.values())
