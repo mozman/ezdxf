@@ -41,8 +41,7 @@ __all__ = [
     "shortest_chain",
     "TimeoutError",
 ]
-ABS_TOL = 1e-12
-GAP_TOL = 1e-12
+GAP_TOL = 1e-9
 TIMEOUT = 60.0  # in seconds
 
 
