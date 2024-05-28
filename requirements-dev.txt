@@ -5,10 +5,12 @@ typing_extensions>=4.6.0
 numpy
 fonttools
 pytest
+mypy
 cython
 matplotlib
 pyside6
 Pillow
+PyMuPDF
 sphinx
 sphinx-rtd-theme
 sphinxcontrib-jquery
