@@ -17,7 +17,7 @@ jobs:
           python-version: pypy-3.9
       - name: create pure Python wheel
         run: |
-          pypy -m pip install setuptools wheel
+          pypy -m pip install "setuptools>69.0.0" wheel
           pypy setup.py bdist_wheel
       - name: Upload pure Python wheel to PyPI
         env:
