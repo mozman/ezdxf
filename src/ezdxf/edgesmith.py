@@ -15,12 +15,12 @@ from __future__ import annotations
 from typing import Iterator, Iterable
 import math
 
-from ezdxf.edgeminer import Edge, GAP_TOL, ABS_TOL
+from ezdxf.edgeminer import Edge, GAP_TOL
 from ezdxf import entities as et
 from ezdxf.math import arc_angle_span_deg, ellipse_param_span, Vec2, Vec3
 
 __all__ = ["is_closed_entity", "edge_from_entity"]
-
+ABS_TOL = 1e-12
 
 def is_closed_entity(entity: et.DXFEntity) -> bool:
     """Returns ``True`` if the given entity represents a closed loop."""
@@ -94,16 +94,15 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
         length = start.distance(end)
         edge = Edge(start, end, length, entity)
     elif isinstance(entity, et.Arc):
-        try:
-            ct0 = entity.construction_tool()
-        except ValueError:
-            return None
-        radius = abs(ct0.radius)
+        radius = abs(entity.dxf.radius)
         if radius < ABS_TOL:
             return None
-        span_deg = arc_angle_span_deg(ct0.start_angle, ct0.end_angle)
+        start_angle = entity.dxf.start_angle
+        end_angle = entity.dxf.end_angle
+        span_deg = arc_angle_span_deg(start_angle, end_angle)
         length = radius * span_deg / 180.0 * math.pi
-        edge = Edge(ct0.start_point, ct0.end_point, length, entity)
+        sp, ep = entity.vertices((start_angle, end_angle))
+        edge = Edge(sp, ep, length, entity)
     elif isinstance(entity, et.Ellipse):
         try:
             ct1 = entity.construction_tool()
