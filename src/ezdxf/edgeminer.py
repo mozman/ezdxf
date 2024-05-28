@@ -206,8 +206,10 @@ def longest_chain(chains: Iterable[Sequence[Edge]]) -> Sequence[Edge]:
 def find_sequential(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
     """Returns all consecutive connected edges starting from the first edge.
 
-    The search stops at the first edge without a froward connection from the previous
-    edge.
+    The search stops at the first edge without a forward connection from the previous
+    edge. Edges are reversed if necessary to create a forward connection. This means 
+    that the :attr:`Edge.reverse` flag is ``True`` ad start and end vertices are swapped, 
+    the attached payload is not changed.
 
     Args:
         edges: edges to be examined
