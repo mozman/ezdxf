@@ -410,20 +410,35 @@ class TestChainFinder:
     I = em.Edge((2, 0), (2, -1), payload="I")
     J = em.Edge((2, -1), (2, -2), payload="J")
 
-    def test_find_any_chain(self):
+    def test_find_chain(self):
         edges = [self.A, self.B, self.C, self.D, self.E]
         deposit = em.EdgeDeposit(edges)
         finder = em.ChainFinder(deposit)
         for edge in edges:
-            result = finder.find_any_chain(edge)
+            result = finder.find_chain(edge)
             assert collect_payload(result) == "A,B,C,D,E"
 
-    def test_search_all(self):
+    def test_find_all(self):
         edges = [self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.I, self.J]
-        deposit = em.EdgeDeposit(edges)
-        finder = em.ChainFinder(deposit)
-        result = finder.search()
+        finder = em.ChainFinder(em.EdgeDeposit(edges))
+        result = finder.find_all()
         assert len(result) == 4
+
+    def test_closed_loop(self):
+        # 1 +-C-+
+        #   |   |
+        #   D   B
+        #   |   |
+        # 0 +-A-+
+        A = em.Edge((0, 0), (1, 0), payload="A")
+        B = em.Edge((1, 0), (1, 1), payload="B")
+        C = em.Edge((1, 1), (0, 1), payload="C")
+        D = em.Edge((0, 1), (0, 0), payload="D")
+        deposit = em.EdgeDeposit([A, B, C, D])
+        finder = em.ChainFinder(deposit)
+        for edge in [A, B, C, D]:
+            result = finder.find_chain(edge)
+            assert collect_payload(result) == "A,B,C,D"
 
 
 if __name__ == "__main__":

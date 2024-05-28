@@ -166,7 +166,7 @@ def is_loop(edges: Sequence[Edge], gap_tol=GAP_TOL, full=True) -> bool:
     """
     if full and not is_chain(edges, gap_tol):
         return False
-    return is_forward_connected(edges[-1], edges[0])
+    return isclose(edges[-1].end, edges[0].start, gap_tol)
 
 
 def length(edges: Sequence[Edge]) -> float:
@@ -394,7 +394,7 @@ def find_all_chains_in_deposit(deposit: EdgeDeposit) -> Sequence[Sequence[Edge]]
     if len(deposit.edges) < 1:
         return tuple()
     finder = ChainFinder(deposit)
-    return finder.search()
+    return finder.find_all()
 
 
 def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
@@ -708,58 +708,44 @@ class ChainFinder:
         self._deposit = deposit
         self._gap_tol = gap_tol
 
-    def find_any_chain(self, start: Edge | None = None) -> Sequence[Edge]:
+    def _find_forward_chain(self, edge: Edge) -> list[Edge]:
         deposit = self._deposit
         gap_tol = self._gap_tol
-
-        if start is None:
-            start = deposit.edges[0]
-
-        chain = [start]
-        prev_length = 0
-        while len(chain) > prev_length:
-            prev_length = len(chain)
-            # 1. extend tail
+        chain = [edge]
+        while True:
             last = chain[-1]
-            candidates = [
-                edge
-                for edge in deposit.edges_linked_to(last.end, gap_tol)
-                if edge is not last
-            ]
-            if len(candidates) == 1:  # ignore junctions!
-                edge = candidates[0]
-                if isclose(last.end, edge.start):
-                    chain.append(edge)
-                elif isclose(last.end, edge.end):
-                    chain.append(edge.reversed())
+            linked = deposit.edges_linked_to(last.end, gap_tol)
+            if len(linked) != 2:  # no junctions allowed!
+                return chain
+            if linked[0] == last:
+                edge = linked[1]
+            else:
+                edge = linked[0]
+            if isclose(last.end, edge.start, gap_tol):
+                chain.append(edge)
+            else:
+                chain.append(edge.reversed())
+            if is_loop(chain, gap_tol, full=False):
+                return chain
 
-            # 2. extend head
-            first = chain[0]
-            candidates = [
-                edge
-                for edge in deposit.edges_linked_to(first.start, gap_tol)
-                if edge is not first
-            ]
-            if len(candidates) == 1:  # ignore junctions!
-                edge = candidates[0]
-                if isclose(first.start, edge.end):
-                    chain.insert(0, edge)
-                elif isclose(first.start, edge.start):
-                    chain.insert(0, edge.reversed())
-        return tuple(chain)
+    def find_chain(self, start: Edge) -> Sequence[Edge]:
+        """Returns the chain containing the `start` edge."""
+        forward_chain = self._find_forward_chain(start)
+        if is_loop(forward_chain, self._gap_tol, full=False):
+            return forward_chain
+        backwards_chain = self._find_forward_chain(start.reversed())
+        if len(backwards_chain) == 1:
+            return forward_chain
+        backwards_chain.reverse()
+        backwards_chain.pop()  # reversed start
+        return [edge.reversed() for edge in backwards_chain] + forward_chain
 
-    def search(self) -> Sequence[Sequence[Edge]]:
-        def add_solution(edges: Sequence[Edge]) -> None:
-            key = tuple(e.id for e in edges)
-            reverse_key = tuple(reversed(key))
-            if key in solutions or reverse_key in solutions:
-                return
-            solutions[key] = edges
-
-        solutions: SearchSolutions = {}
+    def find_all(self) -> Sequence[Sequence[Edge]]:
+        """Returns all chains in the edge deposit."""
+        solutions: list[Sequence[Edge]] = []
         edges = set(self._deposit.edges)
         while edges:
-            chain = self.find_any_chain(edges.pop())
-            add_solution(chain)
+            chain = self.find_chain(edges.pop())
+            solutions.append(chain)
             edges -= set(chain)
-        return tuple(solutions.values())
+        return solutions
