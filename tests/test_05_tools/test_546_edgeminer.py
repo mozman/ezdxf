@@ -224,7 +224,7 @@ class TestAPIFunction(SimpleLoops):
         assert "A,E,F,G,C,D" in solution_strings
 
     def test_find_first_loop(self):
-        solution = em.find_first_loop(
+        solution = em.find_loop(
             (self.A, self.B, self.C, self.D, self.E, self.F, self.G)
         )
         assert len(solution) >= 4  # any loop is a valid solution

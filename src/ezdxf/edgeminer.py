@@ -15,7 +15,6 @@ module.
 from __future__ import annotations
 from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple
 from typing_extensions import Self, TypeAlias
-from collections import defaultdict
 import time
 
 from ezdxf.math import UVec, Vec3, distance_point_line_3d
@@ -31,8 +30,8 @@ __all__ = [
     "find_all_loops",
     "find_all_sequential",
     "find_chain_in_deposit",
-    "find_first_loop_in_deposit",
-    "find_first_loop",
+    "find_loop_in_deposit",
+    "find_loop",
     "find_sequential",
     "is_backwards_connected",
     "is_chain",
@@ -270,7 +269,7 @@ class Watchdog:
         return time.perf_counter() - self.start_time > self.timeout
 
 
-def find_first_loop(
+def find_loop(
     edges: Sequence[Edge], gap_tol=GAP_TOL, timeout=TIMEOUT
 ) -> Sequence[Edge]:
     """Returns the first closed loop found in `edges`.
@@ -291,10 +290,10 @@ def find_first_loop(
     deposit = EdgeDeposit(edges, gap_tol=gap_tol)
     if len(deposit.edges) < 2:
         return tuple()
-    return find_first_loop_in_deposit(deposit, timeout=timeout)
+    return find_loop_in_deposit(deposit, timeout=timeout)
 
 
-def find_first_loop_in_deposit(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Edge]:
+def find_loop_in_deposit(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Edge]:
     """Returns the first closed loop found in edge `deposit`.
 
     .. note::
@@ -490,14 +489,14 @@ SearchSolutions: TypeAlias = Dict[Tuple[int, ...], Sequence[Edge]]
 
 
 class LoopFinder:
-    """Find closed loops in a network by a recursive backtracking algorithm.
+    """Find closed loops in an EdgeDeposit by a recursive backtracking algorithm.
 
     (internal class)
     """
 
     def __init__(self, deposit: EdgeDeposit, timeout=TIMEOUT) -> None:
         if len(deposit.edges) < 2:
-            raise ValueError("two or more network nodes required")
+            raise ValueError("two or more edges required")
         self._deposit = deposit
         self._timeout = timeout
         self._solutions: SearchSolutions = {}
@@ -528,7 +527,7 @@ class LoopFinder:
     def search(self, start: Edge, stop_at_first_loop: bool = False) -> None:
         """Searches for all loops that begin at the given start edge.
 
-        These are not all possible loops in a network!
+        These are not all possible loops in the edge deposit!
         """
         deposit = self._deposit
         gap_tol = self.gap_tol
