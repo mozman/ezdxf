@@ -383,15 +383,13 @@ class TestChainFinder:
     def test_find_chain(self):
         edges = [self.A, self.B, self.C, self.D, self.E]
         deposit = em.EdgeDeposit(edges)
-        finder = em.ChainFinder(deposit)
         for edge in edges:
-            result = finder.find_chain(edge)
+            result = em.find_chain_in_deposit(deposit, edge)
             assert collect_payload(result) == "A,B,C,D,E"
 
     def test_find_all(self):
         edges = [self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.I, self.J]
-        finder = em.ChainFinder(em.EdgeDeposit(edges))
-        result = finder.find_all()
+        result = em.find_all_chains_in_deposit(em.EdgeDeposit(edges))
         assert len(result) == 4
 
     def test_closed_loop(self):
@@ -405,9 +403,8 @@ class TestChainFinder:
         C = em.Edge((1, 1), (0, 1), payload="C")
         D = em.Edge((0, 1), (0, 0), payload="D")
         deposit = em.EdgeDeposit([A, B, C, D])
-        finder = em.ChainFinder(deposit)
         for edge in [A, B, C, D]:
-            result = finder.find_chain(edge)
+            result = em.find_chain_in_deposit(deposit, edge)
             assert collect_payload(result) == "A,B,C,D"
 
 

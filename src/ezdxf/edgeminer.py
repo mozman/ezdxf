@@ -22,12 +22,15 @@ from ezdxf.math import UVec, Vec3, distance_point_line_3d
 from ezdxf.math import rtree
 
 
-__all__ = [
+__all__ = [    
     "Edge",
     "EdgeDeposit",
+    "find_all_chains_in_deposit",
+    "find_all_chains",
     "find_all_loops_in_deposit",
     "find_all_loops",
     "find_all_sequential",
+    "find_chain_in_deposit",
     "find_first_loop_in_deposit",
     "find_first_loop",
     "find_sequential",
@@ -365,35 +368,6 @@ def find_all_loops_in_deposit(
     return solutions
 
 
-def find_all_chains(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[Edge]]:
-    """Returns all sequences of connected edges and doesn't include reversed solutions.
-    The chains are broken at junctions, which means that all sequences have a linear
-    progression without ambiguities.
-
-    Args:
-        edges: sequence of edges
-        gap_tol: maximum vertex distance to consider two edges as connected
-
-    Raises:
-        TypeError: invalid data in sequence `edges`
-    """
-    deposit = EdgeDeposit(edges, gap_tol=gap_tol)
-    if len(deposit.edges) < 1:
-        return tuple()
-    return find_all_chains_in_deposit(deposit)
-
-
-def find_all_chains_in_deposit(deposit: EdgeDeposit) -> Sequence[Sequence[Edge]]:
-    """Returns all sequences of connected edges in the edge `deposit` and doesn't
-    include reversed solutions.  The chains are broken at junctions, which means that
-    all sequences have a linear progression without ambiguities.
-    """
-    if len(deposit.edges) < 1:
-        return tuple()
-    finder = ChainFinder(deposit)
-    return finder.find_all()
-
-
 def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
     for edge in edges:
         if not isinstance(edge, Edge):
@@ -606,57 +580,68 @@ def loop_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
     return ids
 
 
-class ChainFinder:
-    """Find sequences of connected edges (chains) in a deposit of edges.
+def find_all_chains(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[Edge]]:
+    """Returns all sequences of connected edges and doesn't include reversed solutions.
+    The chains are broken at junctions, which means that all sequences have a linear
+    progression without ambiguities.
 
-    All results are linear chains without junctions.
+    Args:
+        edges: sequence of edges
+        gap_tol: maximum vertex distance to consider two edges as connected
 
-    (internal class)
+    Raises:
+        TypeError: invalid data in sequence `edges`
     """
+    deposit = EdgeDeposit(edges, gap_tol=gap_tol)
+    if len(deposit.edges) < 1:
+        return tuple()
+    return find_all_chains_in_deposit(deposit)
 
-    def __init__(self, deposit: EdgeDeposit) -> None:
-        if len(deposit.edges) < 1:
-            raise ValueError("one or more edges required")
-        self._deposit = deposit
 
-    def _find_forward_chain(self, edge: Edge) -> list[Edge]:
-        deposit = self._deposit
-        gap_tol = deposit.gap_tol
-        chain = [edge]
-        while True:
-            last = chain[-1]
-            linked = deposit.edges_linked_to(last.end, gap_tol)
-            if len(linked) != 2:  # no junctions allowed!
-                return chain
-            if linked[0] == last:
-                edge = linked[1]
-            else:
-                edge = linked[0]
-            if isclose(last.end, edge.start, gap_tol):
-                chain.append(edge)
-            else:
-                chain.append(edge.reversed())
-            if is_loop(chain, gap_tol, full=False):
-                return chain
+def find_all_chains_in_deposit(deposit: EdgeDeposit) -> Sequence[Sequence[Edge]]:
+    """Returns all sequences of connected edges in the edge `deposit` and doesn't
+    include reversed solutions.  The chains are broken at junctions, which means that
+    all sequences have a linear progression without ambiguities.
+    """
+    if len(deposit.edges) < 1:
+        return tuple()
+    solutions: list[Sequence[Edge]] = []
+    edges = set(deposit.edges)
+    while edges:
+        chain = find_chain_in_deposit(deposit, edges.pop())
+        solutions.append(chain)
+        edges -= set(chain)
+    return solutions
 
-    def find_chain(self, start: Edge) -> Sequence[Edge]:
-        """Returns the chain containing the `start` edge."""
-        forward_chain = self._find_forward_chain(start)
-        if is_loop(forward_chain, self._deposit.gap_tol, full=False):
-            return forward_chain
-        backwards_chain = self._find_forward_chain(start.reversed())
-        if len(backwards_chain) == 1:
-            return forward_chain
-        backwards_chain.reverse()
-        backwards_chain.pop()  # reversed start
-        return [edge.reversed() for edge in backwards_chain] + forward_chain
 
-    def find_all(self) -> Sequence[Sequence[Edge]]:
-        """Returns all chains in the edge deposit."""
-        solutions: list[Sequence[Edge]] = []
-        edges = set(self._deposit.edges)
-        while edges:
-            chain = self.find_chain(edges.pop())
-            solutions.append(chain)
-            edges -= set(chain)
-        return solutions
+def find_chain_in_deposit(deposit: EdgeDeposit, start: Edge) -> Sequence[Edge]:
+    """Returns the chain containing the `start` edge."""
+    forward_chain = _find_forward_chain(deposit, start)
+    if is_loop(forward_chain, deposit.gap_tol, full=False):
+        return forward_chain
+    backwards_chain = _find_forward_chain(deposit, start.reversed())
+    if len(backwards_chain) == 1:
+        return forward_chain
+    backwards_chain.reverse()
+    backwards_chain.pop()  # reversed start
+    return [edge.reversed() for edge in backwards_chain] + forward_chain
+
+
+def _find_forward_chain(deposit: EdgeDeposit, edge: Edge) -> list[Edge]:
+    gap_tol = deposit.gap_tol
+    chain = [edge]
+    while True:
+        last = chain[-1]
+        linked = deposit.edges_linked_to(last.end, gap_tol)
+        if len(linked) != 2:  # no junctions allowed!
+            return chain
+        if linked[0] == last:
+            edge = linked[1]
+        else:
+            edge = linked[0]
+        if isclose(last.end, edge.start, gap_tol):
+            chain.append(edge)
+        else:
+            chain.append(edge.reversed())
+        if is_loop(chain, gap_tol, full=False):
+            return chain
