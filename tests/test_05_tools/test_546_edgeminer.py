@@ -168,15 +168,11 @@ class TestLoopFinderSimple(SimpleLoops):
 
     @pytest.fixture(scope="class")
     def netAD(self):
-        deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
-        return deposit.build_network(self.A)
+        return em.EdgeDeposit([self.A, self.B, self.C, self.D])
 
     @pytest.fixture(scope="class")
     def netAG(self):
-        deposit = em.EdgeDeposit(
-            [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
-        )
-        return deposit.build_network(self.A)
+        return em.EdgeDeposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
 
     def test_find_any_loop(self, netAG):
         finder = em.LoopFinder(netAG)
@@ -320,19 +316,15 @@ class TestEdgeDeposit(SimpleLoops):
     def test_build_network_A_D(self):
         deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
         # network of all edges connected directly or indirectly to A
-        network = deposit.build_network(self.A)
+        network = deposit.find_network(self.A)
         assert len(network) == 4
         assert self.B in network
         assert self.C in network
         assert self.D in network
 
-        # all edges connected directly to A
-        edges = network.edges_linked_to(self.A)
-        assert len(edges) == 2
-
-    def test_solitary_edge_is_not_a_network(self):
+    def test_solitary_edge_is_a_network(self):
         deposit = em.EdgeDeposit([self.A, self.C])
-        network = deposit.build_network(self.A)
+        network = deposit.find_network(self.A)
         assert len(network) == 0
 
     def test_build_network_A_G(self):
@@ -340,36 +332,14 @@ class TestEdgeDeposit(SimpleLoops):
             [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
         )
         # network of all edges connected directly or indirectly to B
-        network = deposit.build_network(self.B)
+        network = deposit.find_network(self.B)
         assert len(network) == 7
-
-        # all edges connected directly to A
-        edges = network.edges_linked_to(self.A)
-        assert len(edges) == 3
-
-        edges = network.edges_linked_to(self.B)
-        assert len(edges) == 4
-
-        edges = network.edges_linked_to(self.C)
-        assert len(edges) == 3
-
-        edges = network.edges_linked_to(self.D)
-        assert len(edges) == 2
-
-        edges = network.edges_linked_to(self.E)
-        assert len(edges) == 3
-
-        edges = network.edges_linked_to(self.F)
-        assert len(edges) == 2
-
-        edges = network.edges_linked_to(self.G)
-        assert len(edges) == 3
 
     def test_build_all_networks(self):
         deposit = em.EdgeDeposit(
             [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
         )
-        assert len(deposit.build_all_networks()) == 1
+        assert len(deposit.find_all_networks()) == 1
 
     def test_build_all_disconnected_networks(self):
         #   0   1   2   3
@@ -384,11 +354,11 @@ class TestEdgeDeposit(SimpleLoops):
         H = em.Edge((2, 1), (2, 0), payload="H")
 
         deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D, E, F, G, H])
-        assert len(deposit.build_all_networks()) == 2
+        assert len(deposit.find_all_networks()) == 2
 
     def test_build_all_networks_solitary_edges(self):
         deposit = em.EdgeDeposit([self.A, self.C, self.F])
-        assert len(deposit.build_all_networks()) == 0
+        assert len(deposit.find_all_networks()) == 0, "a single edge is not a network"
 
 
 class TestChainFinder:

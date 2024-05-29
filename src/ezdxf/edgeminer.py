@@ -37,7 +37,6 @@ __all__ = [
     "is_loop",
     "length",
     "longest_chain",
-    "Network",
     "shortest_chain",
     "TimeoutError",
 ]
@@ -309,12 +308,11 @@ def find_first_loop_in_deposit(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequenc
 
     if len(deposit.edges) < 2:
         return tuple()
-    networks = list(deposit.build_all_networks(timeout=timeout))
-    for network in networks:
-        finder = LoopFinder(network, timeout=timeout)
-        loop = finder.find_any_loop()
-        if loop:
-            return loop
+
+    finder = LoopFinder(deposit, timeout=timeout)
+    loop = finder.find_any_loop()
+    if loop:
+        return loop
     return tuple()
 
 
@@ -359,19 +357,18 @@ def find_all_loops_in_deposit(
     Raises:
         TimeoutError: search process has timed out
     """
-    gap_tol = deposit.gap_tol
     solutions: list[Sequence[Edge]] = []
-    for network in deposit.build_all_networks(timeout=timeout):
-        finder = LoopFinder(network, gap_tol=gap_tol, timeout=timeout)
-        for edge in network:
-            finder.search(edge)
-        solutions.extend(finder)
+    finder = LoopFinder(deposit, timeout=timeout)
+    for edge in deposit.edges:
+        finder.search(edge)
+    solutions.extend(finder)
     return solutions
 
 
 def find_all_chains(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[Edge]]:
     """Returns all sequences of connected edges and doesn't include reversed solutions.
-    The chains are broken at junctions, which means that all sequences have a linear progression without ambiguities.
+    The chains are broken at junctions, which means that all sequences have a linear
+    progression without ambiguities.
 
     Args:
         edges: sequence of edges
@@ -439,14 +436,6 @@ class SpatialSearchIndex:
         return vertex
 
 
-def discard_edges(edges: Iterable[Edge], discard: Iterable[Edge]) -> Sequence[Edge]:
-    return discard_ids(edges, ids=set(e.id for e in discard))
-
-
-def discard_ids(edges: Iterable[Edge], ids: set[int]) -> Sequence[Edge]:
-    return tuple(e for e in edges if e.id not in ids)
-
-
 class EdgeDeposit:
     """The edge deposit stores all available edges for further searches."""
 
@@ -483,95 +472,44 @@ class EdgeDeposit:
             return min(edges, key=distance)
         return None
 
-    def build_network(self, edge: Edge, timeout=TIMEOUT) -> Network:
+    def find_network(self, edge: Edge) -> set[Edge]:
         """Returns the network of all edges that are directly and indirectly linked to
-        `edge`.
-
-        Raises:
-            TimeoutError: build process has timed out
+        `edge`.  A network has two or more edges, a solitary edge is not a network.
         """
 
         def process(vertex: Vec3) -> None:
-            linked_edges = self.edges_linked_to(vertex)
-            linked_edges = discard_ids(linked_edges, ids=done)
+            linked_edges = set(self.edges_linked_to(vertex)) - network
             if linked_edges:
-                network.add_connections(edge, linked_edges)
+                network.update(linked_edges)
                 todo.extend(linked_edges)
 
-        network = Network()
-        done: set[int] = set()
         todo: list[Edge] = [edge]
-        watchdog = Watchdog(timeout)
-
+        network: set[Edge] = set(todo)
         while todo:
-            if watchdog.has_timed_out:
-                raise TimeoutError("build process has timed out")
             edge = todo.pop()
-            done.add(edge.id)
             process(edge.start)
             process(edge.end)
+        if len(network) > 1:  # a network requires two or more edges
+            return network
+        return set()
 
-        return network
-
-    def build_all_networks(self, timeout=TIMEOUT) -> Sequence[Network]:
+    def find_all_networks(self) -> Sequence[set[Edge]]:
         """Returns all separated networks in this deposit in ascending order of edge
         count.
-
-        Raises:
-            TimeoutError: build process has timed out
         """
-        watchdog = Watchdog(timeout)
         edges = set(self.edges)
-        networks: list[Network] = []
+        networks: list[set[Edge]] = []
         while edges:
-            if watchdog.has_timed_out:
-                raise TimeoutError("search process has timed out")
             edge = edges.pop()
-            network = self.build_network(edge, timeout=timeout)
+            network = self.find_network(edge)
             if len(network):
                 networks.append(network)
-                edges -= set(network)
+                edges -= network
             else:  # solitary edge
                 edges.discard(edge)
 
         networks.sort(key=lambda n: len(n))
         return networks
-
-
-class Network:
-    """The all edges in a network are reachable from every other edge."""
-
-    def __init__(self) -> None:
-        self._edges: dict[int, Edge] = {}
-        self._connections: dict[int, set[int]] = defaultdict(set)
-
-    def __repr__(self) -> str:
-        content = ",".join(str(e) for e in self)
-        return f"Network([{content}])"
-
-    def __len__(self) -> int:
-        return len(self._edges)
-
-    def __iter__(self) -> Iterator[Edge]:
-        return iter(self._edges.values())
-
-    def __contains__(self, edge: Edge) -> bool:
-        return edge.id in self._edges
-
-    def add_connection(self, base: Edge, target: Edge) -> None:
-        if base.id == target.id:
-            return
-        self._edges[base.id] = base
-        self._edges[target.id] = target
-        self._connections[base.id].add(target.id)
-        self._connections[target.id].add(base.id)
-
-    def add_connections(self, base: Edge, targets: Iterable[Edge]) -> None:
-        for target in targets:
-            self.add_connection(base, target)
-
-    def edges_linked_to(self, edge: Edge) -> Sequence[Edge]:
-        return tuple(self._edges[eid] for eid in self._connections[edge.id])
 
 
 SearchSolutions: TypeAlias = Dict[Tuple[int, ...], Sequence[Edge]]
@@ -583,13 +521,16 @@ class LoopFinder:
     (internal class)
     """
 
-    def __init__(self, network: Network, gap_tol=GAP_TOL, timeout=TIMEOUT) -> None:
-        if len(network) < 2:
+    def __init__(self, deposit: EdgeDeposit, timeout=TIMEOUT) -> None:
+        if len(deposit.edges) < 2:
             raise ValueError("two or more network nodes required")
-        self._network = network
-        self._gap_tol = gap_tol
+        self._deposit = deposit
         self._timeout = timeout
         self._solutions: SearchSolutions = {}
+
+    @property
+    def gap_tol(self) -> float:
+        return self._deposit.gap_tol
 
     def __iter__(self) -> Iterator[Sequence[Edge]]:
         return iter(self._solutions.values())
@@ -602,7 +543,7 @@ class LoopFinder:
         arbitrary edge if `start` is None.
         """
         if start is None:
-            start = next(iter(self._network))
+            start = self._deposit.edges[0]
 
         self.search(start, stop_at_first_loop=True)
         try:
@@ -615,10 +556,8 @@ class LoopFinder:
 
         These are not all possible loops in a network!
         """
-        if start not in self._network:
-            raise ValueError("start edge not in network")
-        network = self._network
-        gap_tol = self._gap_tol
+        deposit = self._deposit
+        gap_tol = self.gap_tol
         start_point = start.start
         watchdog = Watchdog(self._timeout)
         todo: list[tuple[Edge, ...]] = [(start,)]  # "unlimited" recursion stack
@@ -628,15 +567,14 @@ class LoopFinder:
             chain = todo.pop()
             last_edge = chain[-1]
             end_point = last_edge.end
-            candidates = network.edges_linked_to(last_edge)
+            candidates = deposit.edges_linked_to(end_point, radius=gap_tol)
             # edges must be unique in a loop
-            for edge in set(candidates) - set(chain):
+            survivers = set(candidates) - set(chain)
+            for edge in survivers:
                 if isclose(end_point, edge.start, gap_tol):
                     last_edge = edge
-                elif isclose(end_point, edge.end, gap_tol):
-                    last_edge = edge.reversed()
                 else:
-                    continue
+                    last_edge = edge.reversed()
                 extended_chain = chain + (last_edge,)
                 if isclose(last_edge.end, start_point, gap_tol):
                     self.add_solution(extended_chain)
@@ -676,15 +614,14 @@ class ChainFinder:
     (internal class)
     """
 
-    def __init__(self, deposit: EdgeDeposit, gap_tol=GAP_TOL) -> None:
+    def __init__(self, deposit: EdgeDeposit) -> None:
         if len(deposit.edges) < 1:
             raise ValueError("one or more edges required")
         self._deposit = deposit
-        self._gap_tol = gap_tol
 
     def _find_forward_chain(self, edge: Edge) -> list[Edge]:
         deposit = self._deposit
-        gap_tol = self._gap_tol
+        gap_tol = deposit.gap_tol
         chain = [edge]
         while True:
             last = chain[-1]
@@ -705,7 +642,7 @@ class ChainFinder:
     def find_chain(self, start: Edge) -> Sequence[Edge]:
         """Returns the chain containing the `start` edge."""
         forward_chain = self._find_forward_chain(start)
-        if is_loop(forward_chain, self._gap_tol, full=False):
+        if is_loop(forward_chain, self._deposit.gap_tol, full=False):
             return forward_chain
         backwards_chain = self._find_forward_chain(start.reversed())
         if len(backwards_chain) == 1:
