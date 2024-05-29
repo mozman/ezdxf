@@ -404,32 +404,16 @@ def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
     return edges
 
 
-class EdgeVertexIndex:
-    """Index of edges referenced by the id of their start- and end vertices.
+class EdgeVertex(Vec3):
+    # for unknown reasons super().__init__(location) doesn't work, therefor no
+    # EdgeVertex.__init__(self, location: Vec3, edge: Edge) constructor
+    edge: Edge
 
-    .. important::
 
-        The id of the vertices is indexed not the location!
-
-    (internal class)
-    """
-
-    def __init__(self, edges: Sequence[Edge]) -> None:
-        index: dict[int, Edge] = {}
-        for edge in edges:
-            index[id(edge.start)] = edge
-            index[id(edge.end)] = edge
-        self._index = index
-
-    def find_edges(self, vertices: Iterable[Vec3]) -> Sequence[Edge]:
-        """Returns all edges referenced by the id of given vertices."""
-        index = self._index
-        edges: list[Edge] = []
-        for vertex in vertices:
-            edge = index.get(id(vertex))
-            if edge:
-                edges.append(edge)
-        return edges
+def make_edge_vertex(location: Vec3, edge: Edge) -> EdgeVertex:
+    edge_vertex = EdgeVertex(location)
+    edge_vertex.edge = edge
+    return edge_vertex
 
 
 class SpatialSearchIndex:
@@ -439,20 +423,20 @@ class SpatialSearchIndex:
     """
 
     def __init__(self, edges: Sequence[Edge]) -> None:
-        vertices: list[Vec3] = []
+        vertices: list[EdgeVertex] = []
         for edge in edges:
-            vertices.append(edge.start)
-            vertices.append(edge.end)
+            vertices.append(make_edge_vertex(edge.start, edge))
+            vertices.append(make_edge_vertex(edge.end, edge))
         self._search_tree = rtree.RTree(vertices)
 
-    def vertices_in_sphere(self, center: Vec3, radius: float) -> Sequence[Vec3]:
+    def vertices_in_sphere(self, center: Vec3, radius: float) -> Sequence[EdgeVertex]:
         """Returns all vertices located around `center` with a max. distance of `radius`."""
-        return tuple(self._search_tree.points_in_sphere(center, radius))  # type: ignore
+        return tuple(self._search_tree.points_in_sphere(center, radius))
 
-    def nearest_vertex(self, location: Vec3) -> Vec3:
+    def nearest_vertex(self, location: Vec3) -> EdgeVertex:
         """Returns the nearest vertex to the given location."""
         vertex, _ = self._search_tree.nearest_neighbor(location)
-        return vertex  # type: ignore
+        return vertex
 
 
 def discard_edges(edges: Iterable[Edge], discard: Iterable[Edge]) -> Sequence[Edge]:
@@ -469,7 +453,6 @@ class EdgeDeposit:
     def __init__(self, edges: Sequence[Edge], gap_tol=GAP_TOL) -> None:
         self.gap_tol = gap_tol
         self.edges = type_check(tuple(edges))
-        self.edge_index = EdgeVertexIndex(self.edges)
         self.search_index = SpatialSearchIndex(self.edges)
 
     def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
@@ -480,9 +463,7 @@ class EdgeDeposit:
         if radius < 0:
             radius = self.gap_tol
         vertices = self.search_index.vertices_in_sphere(Vec3(vertex), radius)
-        if not vertices:
-            return tuple()
-        return self.edge_index.find_edges(vertices)
+        return tuple(v.edge for v in vertices)
 
     def find_nearest_edge(self, vertex: UVec) -> Edge | None:
         """Return the nearest edge to the given vertex.
