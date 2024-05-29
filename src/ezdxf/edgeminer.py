@@ -602,13 +602,10 @@ class LoopFinder:
     (internal class)
     """
 
-    def __init__(
-        self, network: Network, discard_reverse=True, gap_tol=GAP_TOL, timeout=TIMEOUT
-    ) -> None:
+    def __init__(self, network: Network, gap_tol=GAP_TOL, timeout=TIMEOUT) -> None:
         if len(network) < 2:
             raise ValueError("two or more network nodes required")
         self._network = network
-        self._discard_reverse_solutions = discard_reverse
         self._gap_tol = gap_tol
         self._timeout = timeout
         self._solutions: SearchSolutions = {}
@@ -641,7 +638,7 @@ class LoopFinder:
             raise ValueError("start edge not in network")
         network = self._network
         gap_tol = self._gap_tol
-
+        start_point = start.start
         watchdog = Watchdog(self._timeout)
         todo: list[tuple[Edge, ...]] = [(start,)]  # "unlimited" recursion stack
         while todo:
@@ -654,12 +651,13 @@ class LoopFinder:
             # edges must be unique in a loop
             for edge in set(candidates) - set(chain):
                 if isclose(end_point, edge.start, gap_tol):
-                    extended_chain = chain + (edge,)
+                    last_edge = edge
                 elif isclose(end_point, edge.end, gap_tol):
-                    extended_chain = chain + (edge.reversed(),)
+                    last_edge = edge.reversed()
                 else:
                     continue
-                if is_forward_connected(extended_chain[-1], start, gap_tol):
+                extended_chain = chain + (last_edge,)
+                if isclose(last_edge.end, start_point, gap_tol):
                     self.add_solution(extended_chain)
                     if stop_at_first_loop:
                         return
@@ -669,12 +667,7 @@ class LoopFinder:
     def add_solution(self, loop: Sequence[Edge]) -> None:
         solutions = self._solutions
         key = loop_key(loop)
-        if key in solutions:
-            return
-        if (
-            self._discard_reverse_solutions
-            and loop_key(loop, reverse=True) in solutions
-        ):
+        if key in solutions or loop_key(loop, reverse=True) in solutions:
             return
         solutions[key] = loop
 
