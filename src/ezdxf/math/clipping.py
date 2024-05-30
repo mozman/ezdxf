@@ -703,16 +703,16 @@ def line_intersection(
     den = (c2.y - c1.y) * (s2.x - s1.x) - (c2.x - c1.x) * (s2.y - s1.y)
     if abs(den) < tol:
         return _ERROR
-
     us = ((c2.x - c1.x) * (s1.y - c1.y) - (c2.y - c1.y) * (s1.x - c1.x)) / den
-    uc = ((s2.x - s1.x) * (s1.y - c1.y) - (s2.y - s1.y) * (s1.x - c1.x)) / den
-
     lwr = 0.0 + tol
     upr = 1.0 - tol
     # Line end points are excluded as intersection points:
     # us =~ 0.0; us =~ 1.0
+    if not (lwr < us < upr):
+        return _ERROR
     # uc =~ 0.0; uc =~ 1.0
-    if (lwr < us < upr) and (lwr < uc < upr):
+    uc = ((s2.x - s1.x) * (s1.y - c1.y) - (s2.y - s1.y) * (s1.x - c1.x)) / den
+    if lwr < uc < upr:
         return (
             Vec2(s1.x + us * (s2.x - s1.x), s1.y + us * (s2.y - s1.y)),
             us,
