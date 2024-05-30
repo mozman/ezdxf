@@ -683,30 +683,8 @@ def next_vertex_node(v: _Node) -> _Node:
 
 
 def is_inside_polygon(vertex: Vec2, polygon: GHPolygon) -> bool:
-    """Returns ``True`` if  `vertex` is inside `polygon` (odd-even rule).
-
-    This function calculates the "winding" number for a point, which
-    represents the number of times a ray emitted from the point to
-    infinity intersects any edge of the polygon.
-
-    An even winding number means the point lies OUTSIDE the polygon;
-    an odd number means it lies INSIDE it.
-    """
-    winding_number: int = 0
-    infinity = Vec2(polygon.max_x * 2, vertex.y)
-    for node in polygon:
-        if not node.intersect:
-            if (
-                line_intersection(
-                    vertex,
-                    infinity,
-                    node.vtx,
-                    next_vertex_node(node.next).vtx,
-                )[0]
-                is not None
-            ):
-                winding_number += 1
-    return bool(winding_number % 2)
+    """Returns ``True`` if  `vertex` is inside `polygon`."""
+    return is_point_in_polygon_2d(vertex, polygon.points, abs_tol=TOLERANCE) >= 0
 
 
 _ERROR = None, 0, 0
