@@ -851,6 +851,8 @@ class UniversalFrontend:
                 entity, segments=self.config.circle_approximation_count // 2
             )
             for polygon in trace.polygons():  # polygon is a sequence of Vec2()
+                if len(polygon) < 3:
+                    continue
                 if transform:
                     points = ocs.points_to_wcs(
                         Vec3(v.x, v.y, elevation) for v in polygon
@@ -861,8 +863,9 @@ class UniversalFrontend:
                 properties.filling = Filling()
                 self.pipeline.draw_filled_polygon(points, properties)
             return
-
-        self.pipeline.draw_path(make_path(entity), properties)
+        polyline_path = make_path(entity)
+        if len(polyline_path):
+            self.pipeline.draw_path(polyline_path, properties)
 
     def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         def draw_insert(insert: Insert):
