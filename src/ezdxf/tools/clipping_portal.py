@@ -247,6 +247,8 @@ class ClippingPolygon(ClippingShape):
 
     def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         clipper = self.clipper
+        if len(points) == 0:
+            return tuple()
         polyline_bbox = BoundingBox2d(points.extents())
         if self.is_completely_outside(polyline_bbox):
             return tuple()
@@ -260,6 +262,8 @@ class ClippingPolygon(ClippingShape):
 
     def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         clipper = self.clipper
+        if len(points) < 2:
+            return tuple()
         polygon_bbox = BoundingBox2d(points.extents())
         if self.is_completely_outside(polygon_bbox):
             return tuple()
@@ -278,6 +282,8 @@ class ClippingPolygon(ClippingShape):
         for path in paths:
             for sub_path in path.sub_paths():
                 path_bbox = BoundingBox2d(sub_path.control_vertices())
+                if not path_bbox.has_data:
+                    continue
                 if self.is_completely_inside(path_bbox):
                     yield sub_path
                     continue
