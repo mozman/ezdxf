@@ -684,6 +684,8 @@ def next_vertex_node(v: _Node) -> _Node:
 
 def is_inside_polygon(vertex: Vec2, polygon: GHPolygon) -> bool:
     """Returns ``True`` if  `vertex` is inside `polygon`."""
+    # Possible issue: are points on the boundary inside or outside the polygon?
+    #  this version: inside
     return is_point_in_polygon_2d(vertex, polygon.points, abs_tol=TOLERANCE) >= 0
 
 
