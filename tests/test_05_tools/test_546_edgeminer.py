@@ -408,5 +408,71 @@ class TestChainFinder:
             assert collect_payload(result) == "A,B,C,D"
 
 
+class TestWrappingChains:
+    #    0   1   2   3   4   5
+    #  0 +-A-+-B-+-C-+-D-+-E-+
+    A = em.Edge((0, 0), (1, 0))
+    B = em.Edge((1, 0), (2, 0))
+    C = em.Edge((2, 0), (3, 0))
+    D = em.Edge((3, 0), (4, 0))
+    E = em.Edge((4, 0), (5, 0))
+
+    @pytest.fixture(scope="class")
+    def edges(self):
+        return (self.A, self.B, self.C, self.D, self.E)
+
+    def test_wrap_chain(self, edges: list[em.Edge]):
+        wrapped_chain = em.wrap_chain(edges)
+        wrapper = wrapped_chain.payload
+        assert isinstance(wrapper, em.EdgeWrapper)
+        assert wrapper.edges == edges
+
+    def test_is_wrapped_chain(self, edges: list[em.Edge]):
+        wrapped_chain = em.wrap_chain(edges)
+        assert em.is_wrapped_chain(wrapped_chain) is True
+        assert em.is_wrapped_chain(self.A) is False
+
+    def test_wrapping_empty_chain_raises_exception(self):
+        with pytest.raises(ValueError):
+            em.wrap_chain([])
+
+    def test_wrapping_single_edge_raises_exception(self):
+        with pytest.raises(ValueError):
+            em.wrap_chain([self.A])
+
+    def test_wrapping_unlinked_edges_raises_exception(self):
+        with pytest.raises(ValueError):
+            em.wrap_chain([self.A, self.C])
+
+    def test_wrapping_loop_raises_exception(self):
+        with pytest.raises(ValueError):
+            em.wrap_chain([self.A, self.A.reversed()])
+
+    def test_unwrap_chain(self, edges: list[em.Edge]):
+        wrapped_chain = em.wrap_chain(edges)
+        chain = em.unwrap_chain(wrapped_chain)
+        assert len(chain) == 5
+        assert chain == edges
+
+    def test_unwrap_reversed_chain(self, edges: list[em.Edge]):
+        wrapped_chain = em.wrap_chain(edges)
+        reversed_edge  = wrapped_chain.reversed()
+        chain = em.unwrap_chain(reversed_edge)
+        assert len(chain) == 5
+        assert chain[0].start == reversed_edge.start
+        assert chain[-1].end == reversed_edge.end
+
+        assert chain[0] == edges[-1]
+        assert chain[0].reverse is not edges[-1].reverse
+        assert chain[-1] == edges[0]
+        assert chain[-1].reverse is not edges[0].reverse
+
+    def test_unwrapping_single_edge(self):
+        edges = em.unwrap_chain(self.A)
+        assert len(edges) == 1
+        assert edges[0] == self.A
+
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

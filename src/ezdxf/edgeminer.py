@@ -21,7 +21,7 @@ from ezdxf.math import UVec, Vec3, distance_point_line_3d
 from ezdxf.math import rtree
 
 
-__all__ = [    
+__all__ = [
     "Edge",
     "EdgeDeposit",
     "find_all_chains_in_deposit",
@@ -37,10 +37,13 @@ __all__ = [
     "is_chain",
     "is_forward_connected",
     "is_loop",
+    "is_wrapped_chain",
     "length",
     "longest_chain",
     "shortest_chain",
     "TimeoutError",
+    "unwrap_chain",
+    "wrap_chain",
 ]
 GAP_TOL = 1e-9
 TIMEOUT = 60.0  # in seconds
@@ -644,3 +647,58 @@ def _find_forward_chain(deposit: EdgeDeposit, edge: Edge) -> list[Edge]:
             chain.append(edge.reversed())
         if is_loop(chain, gap_tol, full=False):
             return chain
+
+
+def is_wrapped_chain(edge: Edge) -> bool:
+    """Returns ``True`` if `edge` is a wrapper for linked edges."""
+    return isinstance(edge.payload, EdgeWrapper)
+
+
+def wrap_chain(chain: Sequence[Edge], gap_tol=GAP_TOL) -> Edge:
+    """Wraps a sequence of linked edges into a single edge.
+
+    Two or more linked edges required. Closed loops cannot be wrapped into a single
+    edge.
+
+    Raises:
+        ValueError: less than two edges; not a chain; chain is a closed loop
+
+    """
+    if len(chain) < 2:
+        raise ValueError("two or more linked edges required")
+    if is_chain(chain, gap_tol):
+        if is_loop(chain, gap_tol, full=False):
+            raise ValueError("closed loop cannot be wrapped into a single edge")
+        return _wrap_chain(chain)
+    raise ValueError("edges are not connected")
+
+
+def unwrap_chain(edge: Edge) -> Sequence[Edge]:
+    """Unwraps linked edges which are wrapped into a single edge."""
+    if isinstance(edge.payload, EdgeWrapper):
+        return _unwrap_chain(edge)
+    return (edge,)
+
+
+class EdgeWrapper:
+    """Internal class to wrap a sequence of linked edges."""
+
+    __slots__ = ("edges",)
+
+    def __init__(self, edges: Sequence[Edge]) -> None:
+        self.edges: Sequence[Edge] = tuple(edges)
+
+
+def _wrap_chain(edges: Sequence[Edge]) -> Edge:
+    return Edge(
+        edges[0].start, edges[-1].end, length(edges), payload=EdgeWrapper(edges)
+    )
+
+
+def _unwrap_chain(edge: Edge) -> Sequence[Edge]:
+    wrapper = edge.payload
+    assert isinstance(wrapper, EdgeWrapper)
+    if edge.reverse:
+        return tuple(e.reversed() for e in reversed(wrapper.edges))
+    else:
+        return wrapper.edges
