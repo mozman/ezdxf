@@ -55,7 +55,9 @@ class EdgeMinerException(Exception):
 
 
 class TimeoutError(EdgeMinerException):
-    pass
+    def __init__(self, msg: str, data: Any = None) -> None:
+        super().__init__(msg)
+        self.data = data
 
 
 class Edge:
@@ -368,7 +370,7 @@ def find_all_loops(
         if len(chain) > 1:
             if is_loop_fast(chain, gap_tol):
                 # these loops have no ambiguities (junctions)
-                solutions.append(chain)  
+                solutions.append(chain)
             else:
                 packed_edges.append(_wrap_chain(chain))
         else:
@@ -380,8 +382,14 @@ def find_all_loops(
     deposit = EdgeDeposit(packed_edges, gap_tol)
     if len(deposit.edges) < 2:
         return tuple()
-
-    solutions.extend(find_all_loops_in_deposit(deposit, timeout=timeout))
+    try:
+        result = find_all_loops_in_deposit(deposit, timeout=timeout)
+    except TimeoutError as err:
+        if err.data is not None:
+            solutions.extend(err.data)
+            err.data = solutions
+        raise
+    solutions.extend(result)
     return _unwrap_chains(solutions)
 
 
@@ -571,6 +579,11 @@ class LoopFinder:
         """Searches for all loops that begin at the given start edge.
 
         These are not all possible loops in the edge deposit!
+        
+        Raises:
+            TimeoutError: search process has timed out, intermediate results are attached 
+                TimeoutError.data
+
         """
         deposit = self._deposit
         gap_tol = self.gap_tol
@@ -579,7 +592,9 @@ class LoopFinder:
         todo: list[tuple[Edge, ...]] = [(start,)]  # "unlimited" recursion stack
         while todo:
             if watchdog.has_timed_out:
-                raise TimeoutError("search process has timed out")
+                raise TimeoutError(
+                    "search process has timed out", data=list(self._solutions.values())
+                )
             chain = todo.pop()
             last_edge = chain[-1]
             end_point = last_edge.end
