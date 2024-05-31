@@ -358,10 +358,31 @@ def find_all_loops(
         TimeoutError: search process has timed out
         TypeError: invalid data in sequence `edges`
     """
-    deposit = EdgeDeposit(edges, gap_tol=gap_tol)
+    chains = find_all_chains(edges, gap_tol)
+    if not chains:
+        return tuple()
+
+    solutions: list[Sequence[Edge]] = []
+    packed_edges: list[Edge] = []
+    for chain in chains:
+        if len(chain) > 1:
+            if is_loop_fast(chain, gap_tol):
+                # these loops have no ambiguities (junctions)
+                solutions.append(chain)  
+            else:
+                packed_edges.append(_wrap_chain(chain))
+        else:
+            packed_edges.append(chain[0])
+
+    if not packed_edges:
+        return solutions
+
+    deposit = EdgeDeposit(packed_edges, gap_tol)
     if len(deposit.edges) < 2:
         return tuple()
-    return find_all_loops_in_deposit(deposit, timeout=timeout)
+
+    solutions.extend(find_all_loops_in_deposit(deposit, timeout=timeout))
+    return _unwrap_chains(solutions)
 
 
 def find_all_loops_in_deposit(
@@ -721,6 +742,10 @@ def _unwrap_chain(edge: Edge) -> Sequence[Edge]:
         return tuple(e.reversed() for e in reversed(wrapper.edges))
     else:
         return wrapper.edges
+
+
+def _unwrap_chains(chains: Iterable[Iterable[Edge]]) -> Sequence[Sequence[Edge]]:
+    return tuple(tuple(flatten(chain)) for chain in chains)
 
 
 def flatten(edges: Edge | Iterable[Edge]) -> Iterator[Edge]:
