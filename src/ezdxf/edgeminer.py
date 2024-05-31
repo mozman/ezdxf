@@ -33,6 +33,7 @@ __all__ = [
     "find_loop_in_deposit",
     "find_loop",
     "find_sequential",
+    "flatten",
     "is_backwards_connected",
     "is_chain",
     "is_forward_connected",
@@ -98,10 +99,13 @@ class Edge:
         return False
 
     def __repr__(self) -> str:
-        if self.payload is None:
+        payload = self.payload
+        if payload is None:
             content = str(self.id)
+        elif isinstance(payload, EdgeWrapper):
+            content = "[" + (",".join(repr(e) for e in payload.edges)) + "]"
         else:
-            content = str(self.payload)
+            content = str(payload)
         return f"Edge({content})"
 
     def __hash__(self) -> int:
@@ -702,3 +706,17 @@ def _unwrap_chain(edge: Edge) -> Sequence[Edge]:
         return tuple(e.reversed() for e in reversed(wrapper.edges))
     else:
         return wrapper.edges
+
+
+def flatten(edges: Edge | Iterable[Edge]) -> Iterator[Edge]:
+    """Yields all edges from any nested structure of edges as a flat stream of edges."""
+    edge: Edge
+    if not isinstance(edges, Edge):
+        for edge in edges:
+            yield from flatten(edge)
+    else:
+        edge = edges
+        if is_wrapped_chain(edge):
+            yield from flatten(_unwrap_chain(edge))
+        else:
+            yield edge

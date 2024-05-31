@@ -411,11 +411,11 @@ class TestChainFinder:
 class TestWrappingChains:
     #    0   1   2   3   4   5
     #  0 +-A-+-B-+-C-+-D-+-E-+
-    A = em.Edge((0, 0), (1, 0))
-    B = em.Edge((1, 0), (2, 0))
-    C = em.Edge((2, 0), (3, 0))
-    D = em.Edge((3, 0), (4, 0))
-    E = em.Edge((4, 0), (5, 0))
+    A = em.Edge((0, 0), (1, 0), payload="A")
+    B = em.Edge((1, 0), (2, 0), payload="B")
+    C = em.Edge((2, 0), (3, 0), payload="C")
+    D = em.Edge((3, 0), (4, 0), payload="D")
+    E = em.Edge((4, 0), (5, 0), payload="E")
 
     @pytest.fixture(scope="class")
     def edges(self):
@@ -456,7 +456,7 @@ class TestWrappingChains:
 
     def test_unwrap_reversed_chain(self, edges: list[em.Edge]):
         wrapped_chain = em.wrap_chain(edges)
-        reversed_edge  = wrapped_chain.reversed()
+        reversed_edge = wrapped_chain.reversed()
         chain = em.unwrap_chain(reversed_edge)
         assert len(chain) == 5
         assert chain[0].start == reversed_edge.start
@@ -472,6 +472,12 @@ class TestWrappingChains:
         assert len(edges) == 1
         assert edges[0] == self.A
 
+    def test_flatten_nested_edges(self):
+        de = em.wrap_chain([self.D, self.E])
+        ab = em.wrap_chain([self.A, self.B])
+        cde = em.wrap_chain([self.C, de])
+        abcde = em.wrap_chain([ab, cde])
+        assert collect_payload(list(em.flatten(abcde))) == "A,B,C,D,E"
 
 
 if __name__ == "__main__":
