@@ -479,6 +479,9 @@ class TestWrappingChains:
         abcde = em.wrap_chain([ab, cde])
         assert collect_payload(list(em.flatten(abcde))) == "A,B,C,D,E"
 
+    def test_flatten_empty_sequence(self):
+        assert len(list(em.flatten([]))) == 0
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

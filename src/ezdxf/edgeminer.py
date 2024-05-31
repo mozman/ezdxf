@@ -163,17 +163,20 @@ def is_chain(edges: Sequence[Edge], gap_tol=GAP_TOL) -> bool:
     return all(is_forward_connected(a, b, gap_tol) for a, b in zip(edges, edges[1:]))
 
 
-def is_loop(edges: Sequence[Edge], gap_tol=GAP_TOL, full=True) -> bool:
+def is_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> bool:
     """Return ``True`` if the sequence of edges is a closed loop.
 
     Args:
         edges: sequence of edges
         gap_tol: maximum vertex distance to consider two edges as connected
-        full: does a full check if all edges have a forward connection if ``True``,
-            otherwise checks only if the last edge is connected to the first edge.
     """
-    if full and not is_chain(edges, gap_tol):
+    if not is_chain(edges, gap_tol):
         return False
+    return isclose(edges[-1].end, edges[0].start, gap_tol)
+
+
+def is_loop_fast(edges: Sequence[Edge], gap_tol=GAP_TOL) -> bool:
+    """Internal fast loop check."""
     return isclose(edges[-1].end, edges[0].start, gap_tol)
 
 
@@ -294,10 +297,22 @@ def find_loop(
         TimeoutError: search process has timed out
         TypeError: invalid data in sequence `edges`
     """
-    deposit = EdgeDeposit(edges, gap_tol=gap_tol)
+    chains = find_all_chains(edges, gap_tol)
+    if not chains:
+        return tuple()
+
+    packed_edges: list[Edge] = []
+    for chain in chains:
+        if len(chain) > 1:
+            if is_loop_fast(chain, gap_tol):
+                return chain
+            packed_edges.append(_wrap_chain(chain))
+        else:
+            packed_edges.append(chain[0])
+    deposit = EdgeDeposit(packed_edges, gap_tol)
     if len(deposit.edges) < 2:
         return tuple()
-    return find_loop_in_deposit(deposit, timeout=timeout)
+    return tuple(flatten(find_loop_in_deposit(deposit, timeout=timeout)))
 
 
 def find_loop_in_deposit(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Edge]:
@@ -623,7 +638,7 @@ def find_all_chains_in_deposit(deposit: EdgeDeposit) -> Sequence[Sequence[Edge]]
 def find_chain_in_deposit(deposit: EdgeDeposit, start: Edge) -> Sequence[Edge]:
     """Returns the chain containing the `start` edge."""
     forward_chain = _find_forward_chain(deposit, start)
-    if is_loop(forward_chain, deposit.gap_tol, full=False):
+    if is_loop_fast(forward_chain, deposit.gap_tol):
         return forward_chain
     backwards_chain = _find_forward_chain(deposit, start.reversed())
     if len(backwards_chain) == 1:
@@ -649,7 +664,7 @@ def _find_forward_chain(deposit: EdgeDeposit, edge: Edge) -> list[Edge]:
             chain.append(edge)
         else:
             chain.append(edge.reversed())
-        if is_loop(chain, gap_tol, full=False):
+        if is_loop_fast(chain, gap_tol):
             return chain
 
 
@@ -671,7 +686,7 @@ def wrap_chain(chain: Sequence[Edge], gap_tol=GAP_TOL) -> Edge:
     if len(chain) < 2:
         raise ValueError("two or more linked edges required")
     if is_chain(chain, gap_tol):
-        if is_loop(chain, gap_tol, full=False):
+        if is_loop_fast(chain, gap_tol):
             raise ValueError("closed loop cannot be wrapped into a single edge")
         return _wrap_chain(chain)
     raise ValueError("edges are not connected")
