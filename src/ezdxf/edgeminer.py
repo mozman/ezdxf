@@ -590,7 +590,7 @@ class EdgeDeposit:
         return networks
 
     def find_loose_ends(self) -> Iterator[Edge]:
-        """Yields all edges that have at least one end point without connection to other 
+        """Yields all edges that have at least one end point without connection to other
         edges.
         """
         for edge in self.edges:
@@ -864,9 +864,7 @@ def find_open_chains(
         TypeError: invalid data in sequence `edges`
         TimeoutError: search process has timed out
     """
-    return find_open_chains_in_deposit(
-        EdgeDeposit(edges, gap_tol=gap_tol), timeout
-    )
+    return find_open_chains_in_deposit(EdgeDeposit(edges, gap_tol=gap_tol), timeout)
 
 
 def chain_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
@@ -900,8 +898,7 @@ def find_open_chains_in_deposit(
 
     finder = OpenChainFinder(deposit, timeout)
     for edge in deposit.find_loose_ends():
-        forward_chains = finder.forward_search(edge)
-        finder.reverse_search(forward_chains)
+        finder.search(edge)
     solutions = finder.solutions
     solutions.sort(key=lambda x: len(x))
     return solutions
@@ -914,17 +911,9 @@ class OpenChainFinder:
         self.solutions: list[Sequence[Edge]] = []
         self.watchdog = Watchdog(timeout)
 
-    def add_solution(self, solution: Sequence[Edge]) -> None:
-        keys = self.solution_keys
-        key = chain_key(solution)
-        if key in keys:
-            return
-        keys.add(key)
-        key = chain_key(solution, reverse=True)
-        if key in keys:
-            return
-        keys.add(key)
-        self.solutions.append(solution)
+    def search(self, edge: Edge) -> None:
+        forward_chains = self.forward_search(edge)
+        self.reverse_search(forward_chains)
 
     def forward_search(self, edge: Edge) -> list[tuple[Edge, ...]]:
         deposit = self.deposit
@@ -935,7 +924,7 @@ class OpenChainFinder:
         todo: list[tuple[Edge, ...]] = [(edge,)]
         while todo:
             if watchdog.has_timed_out:
-                raise TimeoutError("search has timed out", solutions=self.solutions)
+                raise TimeoutError("search has timed out")
             chain = todo.pop()
             start_point = chain[-1].end
             candidates = deposit.edges_linked_to(start_point)
@@ -968,3 +957,15 @@ class OpenChainFinder:
                     todo.append((edge,) + chain)
             else:
                 self.add_solution(chain)
+
+    def add_solution(self, solution: Sequence[Edge]) -> None:
+        keys = self.solution_keys
+        key = chain_key(solution)
+        if key in keys:
+            return
+        keys.add(key)
+        key = chain_key(solution, reverse=True)
+        if key in keys:
+            return
+        keys.add(key)
+        self.solutions.append(solution)
