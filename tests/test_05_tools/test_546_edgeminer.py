@@ -4,7 +4,6 @@ from __future__ import annotations
 from typing import Sequence
 import pytest
 
-import ezdxf
 from ezdxf import edgeminer as em
 from ezdxf.math import Vec3
 
@@ -212,16 +211,21 @@ class TestLoopFinderSimple(SimpleLoops):
 
 
 class TestAPIFunction(SimpleLoops):
-    @pytest.mark.skipif(ezdxf.PYPY is True, reason="has different search order?")
     def test_find_all_loop(self):
         solutions = em.find_all_loops(
             (self.A, self.B, self.C, self.D, self.E, self.F, self.G)
         )
         assert len(solutions) == 3
-        solution_strings = [collect_payload(s) for s in solutions]
-        assert "A,B,C,D" in solution_strings
-        assert "B,G,F,E" in solution_strings
-        assert "A,E,F,G,C,D" in solution_strings
+        solution_strings = set(collect_payload(s) for s in solutions)
+        valid_solutions = {
+            "A,B,C,D",  # forward
+            "A,D,C,B",  # reverse
+            "B,E,F,G",  # forward
+            "B,G,F,E",  # reverse
+            "A,E,F,G,C,D",  # forward
+            "A,D,C,G,F,E",  # reverse
+        }
+        assert len(solution_strings.intersection(valid_solutions)) == 3
 
     def test_find_first_loop(self):
         solution = em.find_loop(
@@ -360,6 +364,22 @@ class TestEdgeDeposit(SimpleLoops):
         deposit = em.EdgeDeposit([self.A, self.C, self.F])
         assert len(deposit.find_all_networks()) == 0, "a single edge is not a network"
 
+    def test_find_loose_ends(self):
+        deposit = em.EdgeDeposit([self.A, self.E, self.B, self.C, self.G])
+        edges = set(deposit.find_loose_ends())
+        assert len(edges) == 4
+        assert self.B not in edges
+
+    def test_single_edge_is_a_loose_ends(self):
+        deposit = em.EdgeDeposit([self.A])
+        edges = list(deposit.find_loose_ends())
+        assert len(edges) == 1
+
+    def test_loops_do_not_have_loose_ends(self):
+        deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
+        edges = set(deposit.find_loose_ends())
+        assert len(edges) == 0
+
 
 class TestChainFinder:
     #    0   1   2   3   4   5
@@ -481,6 +501,75 @@ class TestWrappingChains:
 
     def test_flatten_empty_sequence(self):
         assert len(list(em.flatten([]))) == 0
+
+
+class TestOpenChainFinder:
+    def test_find_all_open_chains(self):
+        def collect(edges):
+            return ",".join(e.payload for e in edges)
+
+        #   0   1   2   3   4
+        # 3 +---+---+-E-+-F-+
+        #   |   |   D   |   |
+        # 2 +-A-+-B-+-C-+---+
+        #   |   G   |   |   |
+        # 1 +---+-H-+---+---+
+        #   |   |   I   |   |
+        # 0 +---+---+---+---+
+        # all end to end connections:
+        # - 3 ABC or CBA
+        # - 4 AGHI
+        # - 4 C..F
+        # - 5 A...F
+        # - 5 C...I
+        # - 7 I.....F
+
+        A = em.Edge((0, 2), (1, 2), payload="A")
+        B = em.Edge((1, 2), (2, 2), payload="B")
+        C = em.Edge((2, 2), (3, 2), payload="C")
+        D = em.Edge((2, 2), (2, 3), payload="D")
+        E = em.Edge((2, 3), (3, 3), payload="E")
+        F = em.Edge((3, 3), (4, 3), payload="F")
+        G = em.Edge((1, 2), (1, 1), payload="G")
+        H = em.Edge((1, 1), (2, 1), payload="H")
+        I = em.Edge((2, 1), (2, 0), payload="I")
+        edges = (H, C, E, D, B, G, F, A, I)
+        combinations = em.find_open_chains(edges)
+        assert len(combinations) == 6
+        assert len(combinations[0]) == 3
+        assert collect(combinations[0]) in ("A,B,C", "C,B,A")
+        assert len(combinations[-1]) == 7
+        assert collect(combinations[-1]) in ("I,H,G,B,D,E,F", "F,E,D,B,G,H,I")
+
+    def test_does_not_detect_isolated_loops(self):
+        # 1 +-C-+
+        #   |   |
+        #   D   B
+        #   |   |
+        # 0 +-A-+
+        A = em.Edge((0, 0), (1, 0))
+        B = em.Edge((1, 0), (1, 1))
+        C = em.Edge((1, 1), (0, 1))
+        D = em.Edge((0, 1), (0, 0))
+        assert len(em.find_open_chains([A, B, C, D])) == 0
+
+    def test_does_detect_extended_loops(self):
+        def collect(edges):
+            return ",".join(e.payload for e in edges)
+
+        # 1 +-C-+
+        #   |   |
+        #   D   B
+        #   |   |
+        # 0 +-A-+-E-+
+        A = em.Edge((0, 0), (1, 0), payload="A")
+        B = em.Edge((1, 0), (1, 1), payload="B")
+        C = em.Edge((1, 1), (0, 1), payload="C")
+        D = em.Edge((0, 1), (0, 0), payload="D")
+        E = em.Edge((1, 0), (2, 0), payload="E")
+        results = set(collect(s) for s in em.find_open_chains([A, B, C, D, E]))
+        assert "A,D,C,B,E" in results
+        assert "B,C,D,A,E" in results
 
 
 if __name__ == "__main__":
