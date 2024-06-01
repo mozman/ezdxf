@@ -12,15 +12,22 @@ The complementary module to ezdxf.edgeminer.
 
 """
 from __future__ import annotations
-from typing import Iterator, Iterable
+from typing import Iterator, Iterable, Sequence, Any
 import math
 
-from ezdxf.edgeminer import Edge, GAP_TOL
+from ezdxf import edgeminer as em
 from ezdxf import entities as et
-from ezdxf.math import arc_angle_span_deg, ellipse_param_span, Vec2, Vec3
+from ezdxf.math import (
+    Vec2,
+    Vec3,
+    arc_angle_span_deg,
+    ellipse_param_span,
+    bulge_from_radius_and_chord,
+)
 
 __all__ = ["is_closed_entity", "edge_from_entity"]
 ABS_TOL = 1e-12
+
 
 def is_closed_entity(entity: et.DXFEntity) -> bool:
     """Returns ``True`` if the given entity represents a closed loop."""
@@ -81,18 +88,18 @@ def is_closed_entity(entity: et.DXFEntity) -> bool:
     return False
 
 
-def edge_from_entity(entity: et.DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
+def edge_from_entity(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None:
     """Makes an :class:`Edge` instance for the DXF entity types LINE, ARC, ELLIPSE and
     SPLINE if the entity is an open linear curve.  Returns ``None`` if the entity
     is a closed curve or cannot represent an edge.
     """
-    edge: Edge | None = None
+    edge: em.Edge | None = None
 
     if isinstance(entity, et.Line):
         start = Vec3(entity.dxf.start)
         end = Vec3(entity.dxf.end)
         length = start.distance(end)
-        edge = Edge(start, end, length, entity)
+        edge = em.Edge(start, end, length, entity)
     elif isinstance(entity, et.Arc):
         radius = abs(entity.dxf.radius)
         if radius < ABS_TOL:
@@ -102,7 +109,7 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
         span_deg = arc_angle_span_deg(start_angle, end_angle)
         length = radius * span_deg / 180.0 * math.pi
         sp, ep = entity.vertices((start_angle, end_angle))
-        edge = Edge(sp, ep, length, entity)
+        edge = em.Edge(sp, ep, length, entity)
     elif isinstance(entity, et.Ellipse):
         try:
             ct1 = entity.construction_tool()
@@ -115,7 +122,7 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
         # length of elliptic arc is an approximation:
         points = list(ct1.vertices(ct1.params(num)))
         length = sum(a.distance(b) for a, b in zip(points, points[1:]))
-        edge = Edge(Vec3(points[0]), Vec3(points[-1]), length, entity)
+        edge = em.Edge(Vec3(points[0]), Vec3(points[-1]), length, entity)
     elif isinstance(entity, et.Spline):
         try:
             ct2 = entity.construction_tool()
@@ -126,9 +133,9 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
         points = list(ct2.control_points)
         # length of B-spline is a very rough approximation:
         length = sum(a.distance(b) for a, b in zip(points, points[1:]))
-        edge = Edge(start, end, length, entity)
+        edge = em.Edge(start, end, length, entity)
 
-    if isinstance(edge, Edge):
+    if isinstance(edge, em.Edge):
         if edge.start.distance(edge.end) < gap_tol:
             return None
         if edge.length < gap_tol:
@@ -137,13 +144,79 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=GAP_TOL) -> Edge | None:
 
 
 def edges_from_entities(
-    entities: Iterable[et.DXFEntity], gap_tol=GAP_TOL
-) -> Iterator[Edge]:
-    """Yields all DXF entities as edges. 
-    
+    entities: Iterable[et.DXFEntity], gap_tol=em.GAP_TOL
+) -> Iterator[em.Edge]:
+    """Yields all DXF entities as edges.
+
     Skips all entities which can not be represented as edge.
     """
     for entity in entities:
         edge = edge_from_entity(entity, gap_tol)
         if edge is not None:
             yield edge
+
+
+def chain_vertices(edges: Sequence[em.Edge], gap_tol=em.GAP_TOL) -> Sequence[Vec3]:
+    """Returns all vertices from a sequence of connected edges.
+
+    Adds line segments between edges when the gap is bigger than `gap_tol`.
+    """
+    if not edges:
+        return tuple()
+    vertices: list[Vec3] = [edges[0].start]
+    for edge in edges:
+        if not em.isclose(vertices[-1], edge.start, gap_tol):
+            vertices.append(edge.start)
+        vertices.append(edge.end)
+    return vertices
+
+
+def polyline_from_chain(
+    edges: Sequence[em.Edge], dxfattribs: Any = None
+) -> et.LWPolyline:
+    """Returns a new virtual :class:`LWPolyline` entity.
+
+    This function assumes the building blocks as simple DXF entities attached as payload
+    to the edges.  The edges are processed in order of the input sequence.
+
+        - LINE entities are added as line segments
+        - ARC entities are added as bulges
+        - ELLIPSE entities with a ratio of 1.0 are added as bulges
+        - Everything else will be added as line segment from Edge.start to Edge.end
+        - Gaps between edges are connected by line segments.
+
+    """
+    # bulge value is stored in the start vertex of the curved segment
+    polyline = et.LWPolyline.new(dxfattribs=dxfattribs)
+    if len(edges) == 0:
+        return polyline
+    points: list[Vec3] = [edges[0].start]
+    bulges: list[float] = [0.0]
+    for edge in edges:
+        current_end = points[-1]
+        if not edge.start.isclose(current_end):
+            current_end = edge.start
+            points.append(current_end)
+            bulges.append(0.0)
+
+        entity = edge.payload
+        if isinstance(entity, et.Arc):
+            chord = edge.start.distance(edge.end)
+            radius = abs(entity.dxf.radius)
+            if radius > 1e-9:
+                if edge.reverse:
+                    radius = -radius
+                bulges[-1] = bulge_from_radius_and_chord(radius, chord)
+        elif isinstance(entity, et.Ellipse):
+            ratio = abs(entity.dxf.ratio)
+            radius = Vec3(entity.dxf.majoraxis).magnitude
+            if math.isclose(ratio, 1.0) and radius > 1e-9:
+                chord = edge.start.distance(edge.end)
+                if edge.reverse:
+                    radius = -radius
+                bulges[-1] = bulge_from_radius_and_chord(radius, chord)
+        points.append(edge.end)
+        bulges.append(0.0)
+    polyline = et.LWPolyline.new(dxfattribs=dxfattribs)
+    polyline.set_points(zip(points, bulges), format="vb")  # type: ignore
+    return polyline
