@@ -55,9 +55,9 @@ class EdgeMinerException(Exception):
 
 
 class TimeoutError(EdgeMinerException):
-    def __init__(self, msg: str, data: Any = None) -> None:
+    def __init__(self, msg: str, solutions: Sequence[Sequence[Edge]] = tuple()) -> None:
         super().__init__(msg)
-        self.data = data
+        self.solutions = solutions
 
 
 class Edge:
@@ -385,9 +385,9 @@ def find_all_loops(
     try:
         result = find_all_loops_in_deposit(deposit, timeout=timeout)
     except TimeoutError as err:
-        if err.data is not None:
-            solutions.extend(err.data)
-            err.data = solutions
+        if err.solutions:
+            solutions.extend(err.solutions)
+            err.solutions = solutions
         raise
     solutions.extend(result)
     return _unwrap_chains(solutions)
@@ -579,9 +579,9 @@ class LoopFinder:
         """Searches for all loops that begin at the given start edge.
 
         These are not all possible loops in the edge deposit!
-        
+
         Raises:
-            TimeoutError: search process has timed out, intermediate results are attached 
+            TimeoutError: search process has timed out, intermediate results are attached
                 TimeoutError.data
 
         """
@@ -593,7 +593,8 @@ class LoopFinder:
         while todo:
             if watchdog.has_timed_out:
                 raise TimeoutError(
-                    "search process has timed out", data=list(self._solutions.values())
+                    "search process has timed out",
+                    solutions=tuple(self._solutions.values()),
                 )
             chain = todo.pop()
             last_edge = chain[-1]
@@ -775,3 +776,26 @@ def flatten(edges: Edge | Iterable[Edge]) -> Iterator[Edge]:
             yield from flatten(_unwrap_chain(edge))
         else:
             yield edge
+
+
+def all_chain_combinations(
+    edges: Sequence[Edge], timeout=TIMEOUT
+) -> Sequence[Sequence[Edge]]:
+    """Returns all end to end combinations of edges.
+
+    The end of a chain is an edge with only a single connection. A loop is a special
+    case.
+
+    .. note::
+
+        Recursive backtracking algorithm with time complexity of O(n!).
+
+    Args:
+        edges: sequence of edges
+        timeout: timeout in seconds
+
+    Raises:
+        TimeoutError: search process has timed out
+
+    """
+    return tuple()
