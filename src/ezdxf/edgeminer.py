@@ -96,6 +96,7 @@ from ezdxf.math import rtree
 
 
 __all__ = [
+    "count_degrees",
     "Edge",
     "EdgeDeposit",
     "find_all_chains",
@@ -562,7 +563,7 @@ class EdgeDeposit:
         self.edges = type_check(tuple(edges))
         self.search_index = SpatialSearchIndex(self.edges)
 
-    def degree_counter(self) -> Counter[int]:
+    def count_degrees(self) -> Counter[int]:
         """Returns a degree counter for all vertices."""
         counter: Counter[int] = Counter()
         search = self.search_index.vertices_in_sphere
@@ -573,8 +574,8 @@ class EdgeDeposit:
         return Counter({k: v // k for k, v in counter.items()})
 
     def max_degree(self) -> int:
-        """Returns the max. degree of all vertices."""
-        return max(self.degree_counter().keys())
+        """Returns the maximum degree of all vertices."""
+        return max(self.count_degrees().keys())
 
     def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
         """Returns all edges linked to `vertex` in range of `radius`.
@@ -652,6 +653,11 @@ class EdgeDeposit:
                 yield edge
             elif len(self.edges_linked_to(edge.end)) == 1:
                 yield edge
+
+
+def count_degrees(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Counter[int]:
+    """Returns a degree counter for all edge vertices."""
+    return EdgeDeposit(edges, gap_tol).count_degrees()
 
 
 SearchSolutions: TypeAlias = Dict[Tuple[int, ...], Sequence[Edge]]

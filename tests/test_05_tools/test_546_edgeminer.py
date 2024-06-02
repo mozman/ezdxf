@@ -365,7 +365,7 @@ class TestEdgeDeposit(SimpleLoops):
         deposit = em.EdgeDeposit(
             [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
         )
-        counter = deposit.degree_counter()
+        counter = deposit.count_degrees()
         assert counter[1] == 0
         assert counter[2] == 4
         assert counter[3] == 2
