@@ -74,15 +74,10 @@ from ezdxf.math import rtree
 __all__ = [
     "Edge",
     "EdgeDeposit",
-    "find_all_chains_in_deposit",
     "find_all_chains",
-    "find_all_loops_in_deposit",
     "find_all_loops",
     "find_all_sequential",
-    "find_chain_in_deposit",
-    "find_loop_in_deposit",
     "find_loop",
-    "find_open_chains_in_deposit",
     "find_open_chains",
     "find_sequential",
     "flatten",
@@ -95,6 +90,7 @@ __all__ = [
     "longest_chain",
     "shortest_chain",
     "TimeoutError",
+    "unique_chains",
     "unwrap_chain",
     "wrap_chain",
 ]
@@ -400,6 +396,7 @@ def find_all_loops(
     edges: Sequence[Edge], gap_tol=GAP_TOL, timeout=TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
     """Returns all unique closed loops and doesn't include reversed solutions.
+    Includes solutions with the same set of edges but with different order.
 
     .. note::
 
@@ -471,6 +468,18 @@ def find_all_loops_in_deposit(
     solutions.extend(finder)
     return solutions
 
+def unique_chains(chains: Sequence[Sequence[Edge]]) -> Iterator[Sequence[Edge]]:
+    """Filter duplicate chains and yields only unique chains.
+    
+    Yields the first chain for chains which have the same set of edges. The order of the 
+    edges is not important.
+    """
+    seen: set[frozenset[int]] = set()
+    for chain in chains:
+        key = frozenset(edge.id for edge in chain)
+        if not key in seen:
+            yield chain
+            seen.add(key)
 
 def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
     for edge in edges:
@@ -969,3 +978,34 @@ class OpenChainFinder:
             return
         keys.add(key)
         self.solutions.append(solution)
+
+
+def find_closest_loop(
+    edges: Sequence[Edge], pick: UVec, gap_tol=GAP_TOL, timeout=TIMEOUT
+) -> Sequence[Edge]:
+    """Returns the first loop found closest to the pick point."""
+    return find_closest_loop_in_deposit(EdgeDeposit(edges, gap_tol), pick, timeout)
+
+
+def find_closest_loop_in_deposit(
+    deposit: EdgeDeposit, pick: UVec, timeout=TIMEOUT
+) -> Sequence[Edge]:
+    """Returns the first loop found closest to the pick point."""
+    if len(deposit.edges) < 2:
+        return tuple()
+
+    gap_tol = deposit.gap_tol
+    start = deposit.find_nearest_edge(pick)
+    start_point = start.start
+    loop = (start,)
+    watchdog = Watchdog(timeout)
+    while True:
+        if watchdog.has_timed_out:
+            raise TimeoutError("search has timed out")
+        last_edge = loop[-1]
+        end_point = last_edge.end
+        if isclose(start_point, end_point, gap_tol):
+            return loop
+        candidates = set(deposit.edges_linked_to(end_point))
+        for edge in candidates - set(loop):
+            pass
