@@ -12,41 +12,62 @@ module.
 Terminology
 -----------
 
+I try to use the terminology of `Graph Theory`_ but there are differences where I think
+a different term is better suited for this module like loop for cycle.
+
 Edge
     An edge has:
         - unique id
-        - 3D start point
-        - 3D end point
+        - 3D start point (vertex)
+        - 3D end point (vertex)
         - optional length
         - optional payload (arbitrary data)
 
     The geometry of an edge is not known.
     Intersection points of edges are not known.
 
+Vertex
+    A connection point of two or more edges. 
+    The degree of a vertex is the number of connected edges.
+    A leaf or pendent vertex, a vertex of degree 1
+
 Chain
     A chain has sequential connected edges. 
     The end point of an edge is connected to the start point of the following edge. 
-    A chain has unique edges, each edge appears only once in the chain. 
+    A chain has unique edges, each edge appears only once in the chain.
+    A loop can contain vertices with a degree > 2.
     A solitary edge is also a chain.
     Chains are represented as Sequence[Edge].
 
 Open Chain
-    An open chain is a chain with at least one loose end. 
+    An open chain is a chain with at least one loose end (leaf). 
     A loose end is an edge point without a connection to other edges. 
     A solitary edge is also an open chain.
 
 Loop
     A loop is a chain with two or more edges.
     The end point of the last edge is connected to the start point of the first edge.
+    A loop can contain vertices with a degree > 2 like the number 8.
     A solitary edge is not a loop.
+
+    .. Note:: 
+    
+        In `Graph Theory`_ this loop would be a cycle and a loop in Graph Theory is 
+        something different.
 
 Network
     A network has two or more edges that are directly and indirectly connected. 
     The edges in a network have no order.
-    A network can have junction points with two or more connected edges.
+    A network can contain vertices with a degree > 2, these are crossings with two or 
+    more connected edges. (multiple adjacency)
     A solitary edge is not a network. 
     A chain with two or more edges is a network. 
     Networks are represented as Sequence[Edge].
+
+    .. Note::
+        
+        In `Graph Theory`_   this is a multigraph and network in Graph Theory 
+        is something different.
 
 Gap Tolerance
     Maximum vertex distance to consider two edges as connected
@@ -60,6 +81,8 @@ Backwards Connection
     end point of the previous edge.
 
 .. versionadded:: 1.4
+
+.. _Graph Theory: https://en.wikipedia.org/wiki/Glossary_of_graph_theory
 
 """
 from __future__ import annotations
