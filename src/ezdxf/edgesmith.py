@@ -25,7 +25,13 @@ from ezdxf.math import (
     bulge_from_radius_and_chord,
 )
 
-__all__ = ["is_closed_entity", "edge_from_entity"]
+__all__ = [   
+    "chain_vertices",
+    "edge_from_entity",
+    "edges_from_entities",
+    "is_closed_entity",
+    "polyline_from_chain",
+]
 ABS_TOL = 1e-12
 
 
@@ -204,7 +210,7 @@ def polyline_from_chain(
             chord = edge.start.distance(edge.end)
             radius = abs(entity.dxf.radius)
             if radius > 1e-9:
-                if edge.reverse:
+                if edge.is_reverse:
                     radius = -radius
                 bulges[-1] = bulge_from_radius_and_chord(radius, chord)
         elif isinstance(entity, et.Ellipse):
@@ -212,7 +218,7 @@ def polyline_from_chain(
             radius = Vec3(entity.dxf.majoraxis).magnitude
             if math.isclose(ratio, 1.0) and radius > 1e-9:
                 chord = edge.start.distance(edge.end)
-                if edge.reverse:
+                if edge.is_reverse:
                     radius = -radius
                 bulges[-1] = bulge_from_radius_and_chord(radius, chord)
         points.append(edge.end)
