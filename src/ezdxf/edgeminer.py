@@ -123,12 +123,12 @@ class Edge:
         id: unique id as int
         start: start vertex as Vec3
         end: end vertex as Vec3
-        reverse: flag to indicate that the edge is reversed compared to its initial state
+        is_reverse: flag to indicate that the edge is reversed compared to its initial state
         length: length of the edge, default is the distance between start- and end vertex
         payload: arbitrary data associated to the edge
     """
 
-    __slots__ = ("id", "start", "end", "reverse", "length", "payload")
+    __slots__ = ("id", "start", "end", "is_reverse", "length", "payload")
     _next_id = 1
 
     def __init__(
@@ -138,7 +138,7 @@ class Edge:
         Edge._next_id += 1
         self.start = Vec3(start)
         self.end = Vec3(end)
-        self.reverse: bool = False
+        self.is_reverse: bool = False
         if length < 0.0:
             length = self.start.distance(self.end)
         self.length = length
@@ -167,7 +167,7 @@ class Edge:
     def reversed(self) -> Self:
         """Returns a reversed copy."""
         edge = self.__class__(self.end, self.start, self.length, self.payload)
-        edge.reverse = not self.reverse
+        edge.is_reverse = not self.is_reverse
         edge.id = self.id  # reversed copies represent the same edge
         return edge
 
@@ -827,7 +827,7 @@ def _wrap_chain(edges: Sequence[Edge]) -> Edge:
 def _unwrap_chain(edge: Edge) -> Sequence[Edge]:
     wrapper = edge.payload
     assert isinstance(wrapper, EdgeWrapper)
-    if edge.reverse:
+    if edge.is_reverse:
         return tuple(e.reversed() for e in reversed(wrapper.edges))
     else:
         return wrapper.edges

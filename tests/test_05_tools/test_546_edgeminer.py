@@ -14,7 +14,7 @@ class TestEdge:
         assert edge.start == Vec3(0, 0)
         assert edge.end == Vec3(1, 0)
         assert edge.length == 1.0
-        assert edge.reverse is False
+        assert edge.is_reverse is False
         assert edge.payload is None
 
     def test_identity(self):
@@ -32,7 +32,7 @@ class TestEdge:
         assert edge.start == clone.end
         assert edge.end == clone.start
         assert edge.length == clone.length
-        assert edge.reverse is (not clone.reverse)
+        assert edge.is_reverse is (not clone.is_reverse)
         assert edge.payload is clone.payload
 
     def test_edge_can_be_used_in_sets(self):
@@ -551,9 +551,9 @@ class TestWrappingChains:
         assert chain[-1].end == reversed_edge.end
 
         assert chain[0] == edges[-1]
-        assert chain[0].reverse is not edges[-1].reverse
+        assert chain[0].is_reverse is not edges[-1].is_reverse
         assert chain[-1] == edges[0]
-        assert chain[-1].reverse is not edges[0].reverse
+        assert chain[-1].is_reverse is not edges[0].is_reverse
 
     def test_unwrapping_single_edge(self):
         edges = em.unwrap_chain(self.A)
