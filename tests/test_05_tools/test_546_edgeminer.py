@@ -66,23 +66,27 @@ class TestLoop:
         assert em.loop_key(loop1) == em.loop_key(loop2)
 
 
+def collect(chain: Sequence[em.Edge]):
+    return ",".join(e.payload for e in chain)
+
+
 def ordered_edges(edges: Sequence[em.Edge], reverse=False):
     """Returns the loop edges in key order."""
     edge_dict = {e.id: e for e in edges}
     return (edge_dict[eid] for eid in em.loop_key(edges, reverse))
 
 
-def collect_payload(edges: Sequence[em.Edge]) -> str:
+def collect_ordered(chain: Sequence[em.Edge]) -> str:
     """Returns the payload as strings in key order.
 
     Key order:
         Loop starts with the edge with the smallest id.
     """
-    if len(edges) == 0:
+    if len(chain) == 0:
         return ""
-    elif len(edges) == 1:
-        return edges[0].payload  # type: ignore
-    return ",".join([e.payload for e in ordered_edges(edges)])
+    elif len(chain) == 1:
+        return chain[0].payload  # type: ignore
+    return ",".join([e.payload for e in ordered_edges(chain)])
 
 
 class TestFindSequential:
@@ -138,11 +142,12 @@ def test_find_all_sequential():
 
     edges = [A, B, C, D, E, F, G, H, I, J]
     result = list(em.find_all_sequential(edges))
+
     assert len(result) == 4
-    assert collect_payload(result[0]) == "A,B,C,D"
-    assert collect_payload(result[1]) == "E,F,G,H"
-    assert collect_payload(result[2]) == "I"
-    assert collect_payload(result[3]) == "J"
+    assert collect_ordered(result[0]) == "A,B,C,D"
+    assert collect_ordered(result[1]) == "E,F,G,H"
+    assert collect_ordered(result[2]) == "I"
+    assert collect_ordered(result[3]) == "J"
 
 
 class SimpleLoops:
@@ -183,14 +188,14 @@ class TestLoopFinderSimple(SimpleLoops):
         finder.search(self.A)
         solutions = list(finder)
         assert len(solutions) == 1
-        assert collect_payload(solutions[0]) == "A,B,C,D"
+        assert collect_ordered(solutions[0]) == "A,B,C,D"
 
     def test_loop_D_A_B_C(self, netAD):
         finder = em.LoopFinder(netAD)
         finder.search(self.D)
         solutions = list(finder)
         assert len(solutions) == 1
-        assert collect_payload(solutions[0]) == "A,B,C,D"
+        assert collect_ordered(solutions[0]) == "A,B,C,D"
 
     def test_loop_A_to_D_unique_solutions(self, netAD):
         finder = em.LoopFinder(netAD)
@@ -206,8 +211,8 @@ class TestLoopFinderSimple(SimpleLoops):
         solutions = list(finder)
         assert len(solutions) == 2
         expected = {"A,B,C,D", "A,E,F,G,C,D"}
-        assert collect_payload(solutions[0]) in expected
-        assert collect_payload(solutions[1]) in expected
+        assert collect_ordered(solutions[0]) in expected
+        assert collect_ordered(solutions[1]) in expected
 
 
 class TestAPIFunction(SimpleLoops):
@@ -216,7 +221,7 @@ class TestAPIFunction(SimpleLoops):
             (self.A, self.B, self.C, self.D, self.E, self.F, self.G)
         )
         assert len(solutions) == 3
-        solution_strings = set(collect_payload(s) for s in solutions)
+        solution_strings = set(collect_ordered(s) for s in solutions)
         valid_solutions = {
             "A,B,C,D",  # forward
             "A,D,C,B",  # reverse
@@ -238,14 +243,14 @@ class TestAPIFunction(SimpleLoops):
             em.find_all_loops((self.A, self.B, self.C, self.D, self.E, self.F, self.G))
         )
         assert len(solution) == 4
-        assert collect_payload(solution) == "A,B,C,D"
+        assert collect_ordered(solution) == "A,B,C,D"
 
     def test_find_longest_loop(self):
         solution = em.longest_chain(
             em.find_all_loops((self.A, self.B, self.C, self.D, self.E, self.F, self.G))
         )
         assert len(solution) == 6
-        assert collect_payload(solution) == "A,E,F,G,C,D"
+        assert collect_ordered(solution) == "A,E,F,G,C,D"
 
 
 class TestFindAllDisconnectedLoops:
@@ -270,7 +275,7 @@ class TestFindAllDisconnectedLoops:
             (self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.H)
         )
         assert len(solutions) == 2
-        solution_strings = [collect_payload(s) for s in solutions]
+        solution_strings = [collect_ordered(s) for s in solutions]
 
         assert "A,B,C,D" in solution_strings
         assert "E,F,G,H" in solution_strings
@@ -280,7 +285,7 @@ class TestFindAllDisconnectedLoops:
             (self.H, self.B, self.F, self.D, self.E, self.C, self.G, self.A)
         )
         assert len(solutions) == 2
-        solution_strings = [collect_payload(s) for s in solutions]
+        solution_strings = [collect_ordered(s) for s in solutions]
         assert "A,B,C,D" in solution_strings
         assert "E,F,G,H" in solution_strings
 
@@ -405,7 +410,7 @@ class TestChainFinder:
         deposit = em.EdgeDeposit(edges)
         for edge in edges:
             result = em.find_chain_in_deposit(deposit, edge)
-            assert collect_payload(result) == "A,B,C,D,E"
+            assert collect_ordered(result) == "A,B,C,D,E"
 
     def test_find_all(self):
         edges = [self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.I, self.J]
@@ -425,7 +430,7 @@ class TestChainFinder:
         deposit = em.EdgeDeposit([A, B, C, D])
         for edge in [A, B, C, D]:
             result = em.find_chain_in_deposit(deposit, edge)
-            assert collect_payload(result) == "A,B,C,D"
+            assert collect_ordered(result) == "A,B,C,D"
 
 
 class TestWrappingChains:
@@ -497,17 +502,15 @@ class TestWrappingChains:
         ab = em.wrap_chain([self.A, self.B])
         cde = em.wrap_chain([self.C, de])
         abcde = em.wrap_chain([ab, cde])
-        assert collect_payload(list(em.flatten(abcde))) == "A,B,C,D,E"
+        assert collect_ordered(list(em.flatten(abcde))) == "A,B,C,D,E"
 
     def test_flatten_empty_sequence(self):
         assert len(list(em.flatten([]))) == 0
 
 
 class TestOpenChainFinder:
-    def test_find_all_open_chains(self):
-        def collect(edges):
-            return ",".join(e.payload for e in edges)
 
+    def test_find_all_open_chains(self):
         #   0   1   2   3   4
         # 3 +---+---+-E-+-F-+
         #   |   |   D   |   |
@@ -554,9 +557,6 @@ class TestOpenChainFinder:
         assert len(em.find_open_chains([A, B, C, D])) == 0
 
     def test_does_detect_extended_loops(self):
-        def collect(edges):
-            return ",".join(e.payload for e in edges)
-
         # 1 +-C-+
         #   |   |
         #   D   B
@@ -570,6 +570,49 @@ class TestOpenChainFinder:
         results = set(collect(s) for s in em.find_open_chains([A, B, C, D, E]))
         assert "A,D,C,B,E" in results
         assert "B,C,D,A,E" in results
+
+
+class FindClosestLoop:
+    #   0   1   2
+    # 2 +-F-+-E-+
+    #   G   J   D
+    # 1 +-K-+-L-+
+    #   H   I   C
+    # 0 +-A-+-B-+
+
+    A = em.Edge((0, 0), (1, 0), payload="A")
+    B = em.Edge((1, 0), (2, 0), payload="B")
+    C = em.Edge((2, 0), (2, 1), payload="C")
+    D = em.Edge((2, 1), (2, 2), payload="D")
+    E = em.Edge((2, 2), (1, 2), payload="E")
+    F = em.Edge((1, 2), (0, 2), payload="F")
+    G = em.Edge((0, 2), (0, 1), payload="G")
+    H = em.Edge((0, 1), (0, 0), payload="H")
+    I = em.Edge((1, 0), (1, 1), payload="I")
+    J = em.Edge((1, 1), (1, 2), payload="J")
+    K = em.Edge((0, 1), (1, 1), payload="K")
+    L = em.Edge((1, 1), (2, 1), payload="L")
+
+    def edges(self):
+        return (
+            self.A,
+            self.B,
+            self.C,
+            self.D,
+            self.E,
+            self.F,
+            self.G,
+            self.H,
+            self.I,
+            self.J,
+            self.K,
+            self.L,
+        )
+
+    def _est_closest_loop(self, edges: Sequence[em.Edge]):
+        loop = em.find_closest_loop(edges, pick=(0.5, 0.5))
+
+        assert collect(loop) in {"A,I,K,H", "H,K,I,A"}
 
 
 if __name__ == "__main__":
