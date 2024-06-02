@@ -147,7 +147,7 @@ class TestLoopFinderSimple(SimpleLoops):
     @pytest.fixture(scope="class")
     def netAG(self):
         return em.EdgeDeposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
-
+    
     def test_find_any_loop(self, netAG):
         finder = em.LoopFinder(netAG)
         loop = finder.find_any_loop(start=self.A)
@@ -274,10 +274,10 @@ def test_find_all_complex_loops():
     # 0 +-A-+-B-+
     edges = grid()
     result = em.find_all_loops(edges)
-    assert len(result) == 17
+    assert len(result) == 13
 
     unique_loops = list(em.unique_chains(result))
-    assert len(unique_loops) == 15
+    assert len(unique_loops) == 13
 
 
 class TestAPIFunction:
@@ -360,6 +360,16 @@ class TestEdgeDeposit(SimpleLoops):
     #   D   B   F
     #   |   |   |
     # 0 +-A-+-E-+
+
+    def test_degree_counter(self):
+        deposit = em.EdgeDeposit(
+            [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
+        )
+        counter = deposit.degree_counter()
+        assert counter[1] == 0
+        assert counter[2] == 4
+        assert counter[3] == 2
+        assert deposit.max_degree() == 3
 
     def test_find_edges_linked_to_vertex_A_D(self):
         deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])

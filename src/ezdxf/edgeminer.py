@@ -88,6 +88,7 @@ Backwards Connection
 from __future__ import annotations
 from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple
 from typing_extensions import Self, TypeAlias
+from collections import Counter
 import time
 
 from ezdxf.math import UVec, Vec3, distance_point_line_3d
@@ -359,6 +360,8 @@ def find_loop(
 ) -> Sequence[Edge]:
     """Returns the first closed loop found in `edges`.
 
+    Returns only simple loops, where all vertices have only two adjacent edges.
+
     .. note::
 
         Recursive backtracking algorithm with time complexity of O(n!).
@@ -393,6 +396,8 @@ def find_loop(
 def find_loop_in_deposit(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Edge]:
     """Returns the first closed loop found in edge `deposit`.
 
+    Returns only simple loops, where all vertices have only two adjacent edges.
+
     .. note::
 
         Recursive backtracking algorithm with time complexity of O(n!).
@@ -418,8 +423,9 @@ def find_loop_in_deposit(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Edge
 def find_all_loops(
     edges: Sequence[Edge], gap_tol=GAP_TOL, timeout=TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
-    """Returns all unique closed loops and doesn't include reversed solutions.
-    Includes solutions with the same set of edges but with different order.
+    """Returns all closed loops and doesn't include reversed solutions.
+
+    Returns only simple loops, where all vertices have only two adjacent edges.
 
     .. note::
 
@@ -491,10 +497,11 @@ def find_all_loops_in_deposit(
     solutions.extend(finder)
     return solutions
 
+
 def unique_chains(chains: Sequence[Sequence[Edge]]) -> Iterator[Sequence[Edge]]:
     """Filter duplicate chains and yields only unique chains.
-    
-    Yields the first chain for chains which have the same set of edges. The order of the 
+
+    Yields the first chain for chains which have the same set of edges. The order of the
     edges is not important.
     """
     seen: set[frozenset[int]] = set()
@@ -503,6 +510,7 @@ def unique_chains(chains: Sequence[Sequence[Edge]]) -> Iterator[Sequence[Edge]]:
         if not key in seen:
             yield chain
             seen.add(key)
+
 
 def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
     for edge in edges:
@@ -553,6 +561,20 @@ class EdgeDeposit:
         self.gap_tol = gap_tol
         self.edges = type_check(tuple(edges))
         self.search_index = SpatialSearchIndex(self.edges)
+
+    def degree_counter(self) -> Counter[int]:
+        """Returns a degree counter for all vertices."""
+        counter: Counter[int] = Counter()
+        search = self.search_index.vertices_in_sphere
+        gap_tol = self.gap_tol
+        for edge in self.edges:
+            counter[len(search(edge.start, gap_tol))] += 1
+            counter[len(search(edge.end, gap_tol))] += 1
+        return Counter({k: v // k for k, v in counter.items()})
+
+    def max_degree(self) -> int:
+        """Returns the max. degree of all vertices."""
+        return max(self.degree_counter().keys())
 
     def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
         """Returns all edges linked to `vertex` in range of `radius`.
@@ -638,6 +660,8 @@ SearchSolutions: TypeAlias = Dict[Tuple[int, ...], Sequence[Edge]]
 class LoopFinder:
     """Find closed loops in an EdgeDeposit by a recursive backtracking algorithm.
 
+    Finds only simple loops, where all vertices have only two adjacent edges.
+
     (internal class)
     """
 
@@ -700,16 +724,17 @@ class LoopFinder:
             survivers = set(candidates) - set(chain)
             for edge in survivers:
                 if isclose(end_point, edge.start, gap_tol):
-                    last_edge = edge
+                    next_edge = edge
                 else:
-                    last_edge = edge.reversed()
-                extended_chain = chain + (last_edge,)
-                if isclose(last_edge.end, start_point, gap_tol):
-                    self.add_solution(extended_chain)
+                    next_edge = edge.reversed()
+                last_point = next_edge.end
+                if isclose(last_point, start_point, gap_tol):
+                    self.add_solution(chain + (next_edge,))
                     if stop_at_first_loop:
                         return
-                else:
-                    todo.append(extended_chain)
+                elif not any(isclose(last_point, e.end, gap_tol) for e in chain):
+                    # just loops, where all vertices have only two adjacent edges
+                    todo.append(chain + (next_edge,))
 
     def add_solution(self, loop: Sequence[Edge]) -> None:
         solutions = self._solutions
@@ -736,8 +761,9 @@ def loop_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
 
 def find_all_chains(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[Edge]]:
     """Returns all sequences of connected edges and doesn't include reversed solutions.
-    The chains are broken at junctions, which means that all sequences have a linear
-    progression without ambiguities.
+
+    The chains are broken at junctions (vetices with more than 2 edges), which means
+    that all sequences have a linear progression without ambiguities.
 
     Args:
         edges: sequence of edges
@@ -754,8 +780,10 @@ def find_all_chains(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence
 
 def find_all_chains_in_deposit(deposit: EdgeDeposit) -> Sequence[Sequence[Edge]]:
     """Returns all sequences of connected edges in the edge `deposit` and doesn't
-    include reversed solutions.  The chains are broken at junctions, which means that
-    all sequences have a linear progression without ambiguities.
+    include reversed solutions.
+
+    The chains are broken at junctions (vetices with more than 2 edges), which means
+    that all sequences have a linear progression without ambiguities.
     """
     if len(deposit.edges) < 1:
         return tuple()
@@ -1019,6 +1047,7 @@ def find_closest_loop_in_deposit(
 
     gap_tol = deposit.gap_tol
     start = deposit.find_nearest_edge(pick)
+    assert start is not None
     start_point = start.start
     loop = (start,)
     watchdog = Watchdog(timeout)
