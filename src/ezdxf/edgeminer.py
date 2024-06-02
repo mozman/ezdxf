@@ -738,8 +738,10 @@ class LoopFinder:
                     self.add_solution(chain + (next_edge,))
                     if stop_at_first_loop:
                         return
-                elif not any(isclose(last_point, e.end, gap_tol) for e in chain):
-                    # just loops, where all vertices have only two adjacent edges
+                # Add only chains to the stack that have vertices of max degree 2.
+                # If the new end point is in the chain, a vertex of degree 3 would be 
+                # created. (loop check is done)
+                elif not any(last_point.distance(e.end) < gap_tol for e in chain):
                     todo.append(chain + (next_edge,))
 
     def add_solution(self, loop: Sequence[Edge]) -> None:
