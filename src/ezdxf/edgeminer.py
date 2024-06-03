@@ -119,30 +119,19 @@ __all__ = [
     "find_open_chains",
     "find_sequential",
     "flatten",
-    "is_backwards_connected",
     "is_chain",
-    "is_forward_connected",
     "is_loop",
-    "is_wrapped_chain",
     "length",
     "longest_chain",
     "shortest_chain",
     "TimeoutError",
     "unique_chains",
-    "unwrap_chain",
-    "wrap_chain",
 ]
 GAP_TOL = 1e-9
 TIMEOUT = 60.0  # in seconds
 
 
-class EdgeMinerException(Exception): ...
-
-
-class InternalError(EdgeMinerException): ...
-
-
-class TimeoutError(EdgeMinerException):
+class TimeoutError(Exception):
     def __init__(self, msg: str, solutions: Sequence[Sequence[Edge]] = tuple()) -> None:
         super().__init__(msg)
         self.solutions = solutions
@@ -252,19 +241,6 @@ def is_forward_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
         gap_tol: maximum vertex distance to consider two edges as connected
     """
     return isclose(a.end, b.start, gap_tol)
-
-
-def is_backwards_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
-    """Returns ``True`` if the edges have a backwards connection.
-
-    Backwards connection: distance from b.end to a.start <= gap_tol
-
-    Args:
-        a: first edge
-        b: second edge
-        gap_tol: maximum vertex distance to consider two edges as connected
-    """
-    return isclose(a.start, b.end, gap_tol)
 
 
 def is_chain(edges: Sequence[Edge], gap_tol=GAP_TOL) -> bool:

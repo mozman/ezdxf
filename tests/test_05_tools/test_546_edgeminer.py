@@ -113,11 +113,6 @@ class TestFindSequential:
         assert em.is_forward_connected(self.A, self.B) is True
         assert em.is_forward_connected(self.A, self.F) is False
 
-    def test_is_backwards_connected(self):
-        assert em.is_backwards_connected(self.A, self.F) is True
-        assert em.is_backwards_connected(self.A, self.B) is False
-        assert em.is_backwards_connected(self.D, self.F) is False
-
     def test_find_sequential(self):
         edges = [self.A, self.B, self.C, self.D, self.E, self.F]
         result = em.find_sequential(edges)
