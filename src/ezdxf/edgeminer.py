@@ -110,8 +110,8 @@ from ezdxf.math import rtree
 
 
 __all__ = [
+    "Deposit",
     "Edge",
-    "EdgeDeposit",
     "find_all_basic_chains",
     "find_all_loops",
     "find_all_sequential",
@@ -393,7 +393,7 @@ class Watchdog:
         return time.perf_counter() - self.start_time > self.timeout
 
 
-def find_loop(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Edge]:
+def find_loop(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
     """Returns the first closed loop found in edge `deposit`.
 
     Returns only simple loops, where all vertices have only two adjacent edges.
@@ -422,13 +422,13 @@ def find_loop(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Edge]:
             packed_edges.append(_wrap_chain(chain))
         else:
             packed_edges.append(chain[0])
-    deposit = EdgeDeposit(packed_edges, gap_tol)
+    deposit = Deposit(packed_edges, gap_tol)
     if len(deposit.edges) < 2:
         return tuple()
     return tuple(flatten(_find_loop_in_deposit(deposit, timeout=timeout)))
 
 
-def _find_loop_in_deposit(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Edge]:
+def _find_loop_in_deposit(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
     if len(deposit.edges) < 2:
         return tuple()
 
@@ -439,7 +439,7 @@ def _find_loop_in_deposit(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Edg
     return tuple()
 
 
-def find_all_loops(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
+def find_all_loops(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
     """Returns all closed loops in found in the edge `deposit` and doesn't include
     reversed solutions.
 
@@ -477,7 +477,7 @@ def find_all_loops(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Sequence[E
     if not packed_edges:
         return solutions
 
-    deposit = EdgeDeposit(packed_edges, gap_tol)
+    deposit = Deposit(packed_edges, gap_tol)
     if len(deposit.edges) < 2:
         return tuple()
     try:
@@ -492,7 +492,7 @@ def find_all_loops(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Sequence[E
 
 
 def _find_all_loops_in_deposit(
-    deposit: EdgeDeposit, timeout=TIMEOUT
+    deposit: Deposit, timeout=TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
     solutions: list[Sequence[Edge]] = []
     finder = LoopFinder(deposit, timeout=timeout)
@@ -523,85 +523,89 @@ def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
     return edges
 
 
-class EdgeVertex(Vec3):
+class _Vertex(Vec3):
     # for unknown reasons super().__init__(location) doesn't work, therefor no
-    # EdgeVertex.__init__(self, location: Vec3, edge: Edge) constructor
+    # _Vertex.__init__(self, location: Vec3, edge: Edge) constructor
     edge: Edge
 
 
-def make_edge_vertex(location: Vec3, edge: Edge) -> EdgeVertex:
-    edge_vertex = EdgeVertex(location)
-    edge_vertex.edge = edge
-    return edge_vertex
+def make_edge_vertex(location: Vec3, edge: Edge) -> _Vertex:
+    vertex = _Vertex(location)
+    vertex.edge = edge
+    return vertex
 
 
-class SpatialSearchIndex:
+class _SpatialSearchIndex:
     """Spatial search index of all edge vertices.
 
     (internal class)
     """
 
     def __init__(self, edges: Sequence[Edge]) -> None:
-        vertices: list[EdgeVertex] = []
+        vertices: list[_Vertex] = []
         for edge in edges:
             vertices.append(make_edge_vertex(edge.start, edge))
             vertices.append(make_edge_vertex(edge.end, edge))
         self._search_tree = rtree.RTree(vertices)
 
-    def vertices_in_sphere(self, center: Vec3, radius: float) -> Sequence[EdgeVertex]:
+    def vertices_in_sphere(self, center: Vec3, radius: float) -> Sequence[_Vertex]:
         """Returns all vertices located around `center` with a max. distance of `radius`."""
         return tuple(self._search_tree.points_in_sphere(center, radius))
 
-    def nearest_vertex(self, location: Vec3) -> EdgeVertex:
+    def nearest_vertex(self, location: Vec3) -> _Vertex:
         """Returns the nearest vertex to the given location."""
         vertex, _ = self._search_tree.nearest_neighbor(location)
         return vertex
 
 
-class EdgeDeposit:
+class Deposit:
     """The edge deposit stores all available edges for further searches.
-    
-    The edges and the search index are immutable after instantiation. 
+
+    The edges and the search index are immutable after instantiation.
     The gap_tol value is mutable.
 
     """
 
     def __init__(self, edges: Sequence[Edge], gap_tol=GAP_TOL) -> None:
-        self.gap_tol = gap_tol
-        self._edges = type_check(tuple(edges))
-        self._search_index = SpatialSearchIndex(self.edges)
-        self._counter: Counter[int] = Counter()
-    
+        self.gap_tol: float = gap_tol
+        self._edges: Sequence[Edge] = type_check(edges)
+        self._search_index = _SpatialSearchIndex(self._edges)
+
     @property
     def edges(self) -> Sequence[Edge]:
         return self._edges
 
-    @property
-    def search_index(self) -> SpatialSearchIndex:
-        return self._search_index
-   
-    @property
     def degree_counter(self) -> Counter[int]:
-        """Returns a degree counter for all vertices."""
-        if not self._counter:
-            counter: Counter[int] = Counter()
-            search = self._search_index.vertices_in_sphere
-            gap_tol = self.gap_tol
-            for edge in self.edges:
-                counter[len(search(edge.start, gap_tol))] += 1
-                counter[len(search(edge.end, gap_tol))] += 1
-            self._counter = Counter({k: v // k for k, v in counter.items()})
-        return self._counter
+        """Returns a :class:`Counter` for the degree of all vertices.
+
+        - Counter[degree] returns the count of vertices of this degree.
+        - Counter.keys() returns all existing degrees in this deposit
+
+        A new counter will be created for every method call!
+        Different gap tolerances may yield different results.
+
+        """
+        # no caching: result depends on gap_tol, which is muteable
+        counter: Counter[int] = Counter()
+        search = self._search_index.vertices_in_sphere
+        gap_tol = self.gap_tol
+        for edge in self.edges:
+            counter[len(search(edge.start, gap_tol))] += 1
+            counter[len(search(edge.end, gap_tol))] += 1
+        return Counter({k: v // k for k, v in counter.items()})
 
     @property
     def max_degree(self) -> int:
         """Returns the maximum degree of all vertices."""
-        return max(self.degree_counter.keys())
+        return max(self.degree_counter().keys())
 
     def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
         """Returns all edges linked to `vertex` in range of `radius`.
 
-        Default radius is :attr:`self.gap_tol`.
+        Args:
+            vertex: 3D search location
+            radius: search range, default radius is :attr:`Deposit.gap_tol`
+
         """
         if radius < 0:
             radius = self.gap_tol
@@ -616,7 +620,10 @@ class EdgeDeposit:
         """
 
         def distance(edge: Edge) -> float:
-            return distance_point_line_3d(vertex, edge.start, edge.end)
+            try:
+                return distance_point_line_3d(vertex, edge.start, edge.end)
+            except ZeroDivisionError:
+                return edge.start.distance(vertex)
 
         vertex = Vec3(vertex)
         si = self._search_index
@@ -687,7 +694,7 @@ class LoopFinder:
     (internal class)
     """
 
-    def __init__(self, deposit: EdgeDeposit, timeout=TIMEOUT) -> None:
+    def __init__(self, deposit: Deposit, timeout=TIMEOUT) -> None:
         if len(deposit.edges) < 2:
             raise ValueError("two or more edges required")
         self._deposit = deposit
@@ -784,7 +791,7 @@ def loop_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
     return ids
 
 
-def find_all_basic_chains(deposit: EdgeDeposit) -> Sequence[Sequence[Edge]]:
+def find_all_basic_chains(deposit: Deposit) -> Sequence[Sequence[Edge]]:
     """Returns all sequences of connected edges in the edge `deposit` and doesn't
     include reversed solutions.
 
@@ -802,7 +809,7 @@ def find_all_basic_chains(deposit: EdgeDeposit) -> Sequence[Sequence[Edge]]:
     return solutions
 
 
-def find_chain(deposit: EdgeDeposit, start: Edge) -> Sequence[Edge]:
+def find_chain(deposit: Deposit, start: Edge) -> Sequence[Edge]:
     """Returns the chain containing the `start` edge."""
     forward_chain = _find_forward_chain(deposit, start)
     if is_loop_fast(forward_chain, deposit.gap_tol):
@@ -815,7 +822,7 @@ def find_chain(deposit: EdgeDeposit, start: Edge) -> Sequence[Edge]:
     return [edge.reversed() for edge in backwards_chain] + forward_chain
 
 
-def _find_forward_chain(deposit: EdgeDeposit, edge: Edge) -> list[Edge]:
+def _find_forward_chain(deposit: Deposit, edge: Edge) -> list[Edge]:
     gap_tol = deposit.gap_tol
     chain = [edge]
     while True:
@@ -916,7 +923,7 @@ def chain_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
         return tuple(edge.id for edge in edges)
 
 
-def find_open_chains(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
+def find_open_chains(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
     """Returns all combinations of edges in `deposit` which create open chains with at
     least one loose end (leafs).  Returns only simple chains, where all vertices have
     only two or less adjacent edges (degree <= 2).
@@ -945,7 +952,7 @@ def find_open_chains(deposit: EdgeDeposit, timeout=TIMEOUT) -> Sequence[Sequence
 
 
 class OpenChainFinder:
-    def __init__(self, deposit: EdgeDeposit, timeout=TIMEOUT):
+    def __init__(self, deposit: Deposit, timeout=TIMEOUT):
         self.deposit = deposit
         self.solution_keys: set[tuple[int, ...]] = set()
         self.solutions: list[Sequence[Edge]] = []
@@ -1028,11 +1035,11 @@ def find_closest_loop(
     edges: Sequence[Edge], pick: UVec, gap_tol=GAP_TOL, timeout=TIMEOUT
 ) -> Sequence[Edge]:
     """Returns the first loop found closest to the pick point."""
-    return find_closest_loop_in_deposit(EdgeDeposit(edges, gap_tol), pick, timeout)
+    return find_closest_loop_in_deposit(Deposit(edges, gap_tol), pick, timeout)
 
 
 def find_closest_loop_in_deposit(
-    deposit: EdgeDeposit, pick: UVec, timeout=TIMEOUT
+    deposit: Deposit, pick: UVec, timeout=TIMEOUT
 ) -> Sequence[Edge]:
     """Returns the first loop found closest to the pick point."""
     if len(deposit.edges) < 2:
