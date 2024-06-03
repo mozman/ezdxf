@@ -444,18 +444,18 @@ class TestEdgeDeposit(SimpleLoops):
 
     def test_find_loose_ends(self):
         deposit = em.EdgeDeposit([self.A, self.E, self.B, self.C, self.G])
-        edges = set(deposit.find_loose_ends())
+        edges = set(deposit.find_leafs())
         assert len(edges) == 4
         assert self.B not in edges
 
     def test_single_edge_is_a_loose_ends(self):
         deposit = em.EdgeDeposit([self.A])
-        edges = list(deposit.find_loose_ends())
+        edges = list(deposit.find_leafs())
         assert len(edges) == 1
 
     def test_loops_do_not_have_loose_ends(self):
         deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
-        edges = set(deposit.find_loose_ends())
+        edges = set(deposit.find_leafs())
         assert len(edges) == 0
 
 
@@ -487,7 +487,7 @@ class TestChainFinder:
 
     def test_find_all(self):
         edges = [self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.I, self.J]
-        result = em.find_all_chains_in_deposit(em.EdgeDeposit(edges))
+        result = em.find_all_basic_chains_in_deposit(em.EdgeDeposit(edges))
         assert len(result) == 4
 
     def test_closed_loop(self):
@@ -617,7 +617,7 @@ class TestOpenChainFinder:
         assert len(combinations[-1]) == 7
         assert collect(combinations[-1]) in ("I,H,G,B,D,E,F", "F,E,D,B,G,H,I")
 
-    def test_does_not_detect_isolated_loops(self):
+    def test_does_not_detect_closed_loops(self):
         # 1 +-C-+
         #   |   |
         #   D   B
@@ -629,7 +629,7 @@ class TestOpenChainFinder:
         D = em.Edge((0, 1), (0, 0))
         assert len(em.find_open_chains([A, B, C, D])) == 0
 
-    def test_does_detect_extended_loops(self):
+    def test_not_does_detect_indirect_loops(self):
         # 1 +-C-+
         #   |   |
         #   D   B
@@ -640,9 +640,8 @@ class TestOpenChainFinder:
         C = em.Edge((1, 1), (0, 1), payload="C")
         D = em.Edge((0, 1), (0, 0), payload="D")
         E = em.Edge((1, 0), (2, 0), payload="E")
-        results = set(collect(s) for s in em.find_open_chains([A, B, C, D, E]))
-        assert "A,D,C,B,E" in results
-        assert "B,C,D,A,E" in results
+        result = set(collect(s) for s in em.find_open_chains([A, B, C, D, E]))
+        assert len(result) == 0
 
 
 def xest_closest_loop():

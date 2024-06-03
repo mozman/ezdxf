@@ -15,7 +15,7 @@ Terminology
 I try to use the terminology of `Graph Theory`_ but there are differences where I think
 a different term is better suited for this module like loop for cycle.
 
-Edge
+Edge (in this module)
     An edge has:
         - unique id
         - 3D start point (vertex)
@@ -24,12 +24,20 @@ Edge
         - optional payload (arbitrary data)
 
     The geometry of an edge is not known.
-    Intersection points of edges are not known.
+    Intersection points of edges are not known and cannot be calculated.
 
 Vertex
     A connection point of two or more edges. 
     The degree of a vertex is the number of connected edges.
-    A leaf or pendent vertex, a vertex of degree 1
+
+Leaf
+    A leaf is a vertex of degree 1.
+    A leaf is a loose end of an edge, which is not connected to other edges.
+
+Junction
+    A junction is a vertex of degree > 2.
+    A junction has more than two adjacent edges.
+    A junction is an ambiguity when seaarching for open chains or closed loops.
 
 Chain
     A chain has sequential connected edges. 
@@ -38,6 +46,12 @@ Chain
     A loop can contain vertices with a degree > 2.
     A solitary edge is also a chain.
     Chains are represented as Sequence[Edge].
+
+Basic Chain
+    A basic chain is a chain. 
+    A basic chain contains only vertices of degree <= 2, but the end vertices may have 
+    a higher degree.  These are the connected edges between vertices of degree != 2, 
+    vertices with more than two adjacent edges or leafs.
 
 Open Chain
     An open chain is a chain with at least one loose end (leaf). 
@@ -66,7 +80,7 @@ Network
 
     .. Note::
         
-        In `Graph Theory`_   this is a multigraph and network in Graph Theory 
+        In `Graph Theory`_   this is a multigraph, a network in Graph Theory 
         is something different.
 
 Gap Tolerance
@@ -99,7 +113,7 @@ __all__ = [
     "count_degrees",
     "Edge",
     "EdgeDeposit",
-    "find_all_chains",
+    "find_all_basic_chains",
     "find_all_loops",
     "find_all_sequential",
     "find_loop",
@@ -376,7 +390,7 @@ def find_loop(
         TimeoutError: search process has timed out
         TypeError: invalid data in sequence `edges`
     """
-    chains = find_all_chains(edges, gap_tol)
+    chains = find_all_basic_chains(edges, gap_tol)
     if not chains:
         return tuple()
 
@@ -426,7 +440,8 @@ def find_all_loops(
 ) -> Sequence[Sequence[Edge]]:
     """Returns all closed loops and doesn't include reversed solutions.
 
-    Returns only simple loops, where all vertices have only two adjacent edges.
+    Returns only simple loops, where all vertices have only two adjacent edges. 
+    All vertices have a degree of 2.
 
     .. note::
 
@@ -441,7 +456,7 @@ def find_all_loops(
         TimeoutError: search process has timed out
         TypeError: invalid data in sequence `edges`
     """
-    chains = find_all_chains(edges, gap_tol)
+    chains = find_all_basic_chains(edges, gap_tol)
     if not chains:
         return tuple()
 
@@ -477,8 +492,11 @@ def find_all_loops(
 def find_all_loops_in_deposit(
     deposit: EdgeDeposit, timeout=TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
-    """Returns all unique closed loops in found in the edge `deposit` and doesn't
-    include reversed solutions.
+    """Returns all closed loops in found in the edge `deposit` and doesn't include 
+    reversed solutions.
+
+    Returns only simple loops, where all vertices have only two adjacent edges. 
+    All vertices have a degree of 2.
 
     .. note::
 
@@ -644,7 +662,7 @@ class EdgeDeposit:
         networks.sort(key=lambda n: len(n))
         return networks
 
-    def find_loose_ends(self) -> Iterator[Edge]:
+    def find_leafs(self) -> Iterator[Edge]:
         """Yields all edges that have at least one end point without connection to other
         edges.
         """
@@ -702,7 +720,8 @@ class LoopFinder:
             return tuple()
 
     def search(self, start: Edge, stop_at_first_loop: bool = False) -> None:
-        """Searches for all loops that begin at the given start edge.
+        """Searches for all loops that begin at the given start edge and contain
+        only vertices of degree 2.
 
         These are not all possible loops in the edge deposit!
 
@@ -739,7 +758,7 @@ class LoopFinder:
                     if stop_at_first_loop:
                         return
                 # Add only chains to the stack that have vertices of max degree 2.
-                # If the new end point is in the chain, a vertex of degree 3 would be 
+                # If the new end point is in the chain, a vertex of degree 3 would be
                 # created. (loop check is done)
                 elif not any(last_point.distance(e.end) < gap_tol for e in chain):
                     todo.append(chain + (next_edge,))
@@ -767,11 +786,13 @@ def loop_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
     return ids
 
 
-def find_all_chains(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence[Edge]]:
-    """Returns all sequences of connected edges and doesn't include reversed solutions.
+def find_all_basic_chains(
+    edges: Sequence[Edge], gap_tol=GAP_TOL
+) -> Sequence[Sequence[Edge]]:
+    """Returns all basic chains and doesn't include reversed solutions.
 
-    The chains are broken at junctions (vetices with more than 2 edges), which means
-    that all sequences have a linear progression without ambiguities.
+    Basic chains are broken at junctions (vertices with more than 2 edges, degree > 2), 
+    which means that all sequences have a linear progression without ambiguities.
 
     Args:
         edges: sequence of edges
@@ -783,15 +804,15 @@ def find_all_chains(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Sequence
     deposit = EdgeDeposit(edges, gap_tol=gap_tol)
     if len(deposit.edges) < 1:
         return tuple()
-    return find_all_chains_in_deposit(deposit)
+    return find_all_basic_chains_in_deposit(deposit)
 
 
-def find_all_chains_in_deposit(deposit: EdgeDeposit) -> Sequence[Sequence[Edge]]:
+def find_all_basic_chains_in_deposit(deposit: EdgeDeposit) -> Sequence[Sequence[Edge]]:
     """Returns all sequences of connected edges in the edge `deposit` and doesn't
     include reversed solutions.
 
-    The chains are broken at junctions (vetices with more than 2 edges), which means
-    that all sequences have a linear progression without ambiguities.
+    The chains are broken at junctions (vertices with more than 2 edges, degree > 2), 
+    which means that all sequences have a linear progression without ambiguities.
     """
     if len(deposit.edges) < 1:
         return tuple()
@@ -914,10 +935,11 @@ def find_open_chains(
     edges: Sequence[Edge], gap_tol=GAP_TOL, timeout=TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
     """Returns all combinations of edges which create open chains with at least one
-    loose end.
+    loose end (leafs).  Returns only simple chains, where all vertices have only two or 
+    less adjacent edges (degree <= 2).
 
-    A loose end is an edge end-point without further connections.  The result does not
-    include reversed solutions and closed loops.
+    A loose end (leaf) is an edge end-point without further connections.  
+    The result does not include reversed solutions and closed loops.
 
     .. note::
 
@@ -947,10 +969,11 @@ def find_open_chains_in_deposit(
     deposit: EdgeDeposit, timeout=TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
     """Returns all combinations of edges in deposit which create open chains with at
-    least one loose end.
+    least one loose end (leafs).  Returns only simple chains, where all vertices have 
+    only two or less adjacent edges (degree <= 2).
 
-    A loose end is an edge end-point without further connections.  The result does not
-    include reversed solutions and closed loops
+    A loose end (leaf) is an edge end-point without further connections.  
+    The result does not include reversed solutions and closed loops.
 
     .. note::
 
@@ -965,7 +988,7 @@ def find_open_chains_in_deposit(
     """
 
     finder = OpenChainFinder(deposit, timeout)
-    for edge in deposit.find_loose_ends():
+    for edge in deposit.find_leafs():
         finder.search(edge)
     solutions = finder.solutions
     solutions.sort(key=lambda x: len(x))
@@ -1001,7 +1024,13 @@ class OpenChainFinder:
                 for edge in backwards_edges:
                     if not isclose(start_point, edge.start, gap_tol):
                         edge = edge.reversed()
-                    todo.append(chain + (edge,))
+                    # Add only chains to the stack that have vertices of max degree 2.
+                    # If the new end point is in the chain, a vertex of degree 3 would be
+                    # created. (loop check is done)
+                    last_point = edge.end
+                    if not any(last_point.distance(e.end) < gap_tol for e in chain):
+                        todo.append(chain + (edge,))
+
             else:
                 forward_chains.append(chain)
         return forward_chains
@@ -1022,7 +1051,14 @@ class OpenChainFinder:
                 for edge in backwards_edges:
                     if not isclose(start_point, edge.end, gap_tol):
                         edge = edge.reversed()
-                    todo.append((edge,) + chain)
+                    # Add only chains to the stack that have vertices of max degree 2.
+                    # If the new end point is in the chain, a vertex of degree 3 would be
+                    # created.
+                    new_start_point = edge.start
+                    if not any(
+                        new_start_point.distance(e.end) < gap_tol for e in chain
+                    ):
+                        todo.append((edge,) + chain)
             else:
                 self.add_solution(chain)
 
