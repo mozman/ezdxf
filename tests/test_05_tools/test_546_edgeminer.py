@@ -10,22 +10,27 @@ from ezdxf.math import Vec3
 
 class TestEdge:
     def test_init(self):
-        edge = em.Edge((0, 0), (1, 0), 1.0)
+        edge = em.make_edge((0, 0), (1, 0))
         assert edge.start == Vec3(0, 0)
         assert edge.end == Vec3(1, 0)
         assert edge.length == 1.0
         assert edge.is_reverse is False
         assert edge.payload is None
 
+    def test_edge_is_immutable(self):
+        edge = em.make_edge((0, 0), (1, 0))
+        with pytest.raises(AttributeError):
+            edge.id = 0
+
     def test_identity(self):
-        edge0 = em.Edge((0, 0), (1, 0), 1.0)
-        edge1 = em.Edge((0, 0), (1, 0), 1.0)
+        edge0 = em.make_edge((0, 0), (1, 0))
+        edge1 = em.make_edge((0, 0), (1, 0))
         assert edge0 == edge0
         assert edge0 != edge1, "each edge should have an unique identity"
         assert edge0 == edge0.reversed(), "reversed copies represent the same edge"
 
     def test_reversed_copy(self):
-        edge = em.Edge((0, 0), (1, 0), 1.0)
+        edge = em.make_edge((0, 0), (1, 0))
         clone = edge.reversed()
         assert edge == clone
         assert edge.id == clone.id
@@ -36,9 +41,9 @@ class TestEdge:
         assert edge.payload is clone.payload
 
     def test_edge_can_be_used_in_sets(self):
-        A = em.Edge((0, 0), (1, 0))
-        B = em.Edge((1, 0), (1, 1))
-        C = em.Edge((1, 1), (0, 1))
+        A = em.make_edge((0, 0), (1, 0))
+        B = em.make_edge((1, 0), (1, 1))
+        C = em.make_edge((1, 1), (0, 1))
 
         s1 = set([A, B])
         s2 = set([C, B])
@@ -54,10 +59,10 @@ class TestLoop:
     # |   |
     # +-A-+
 
-    A = em.Edge((0, 0), (1, 0))
-    B = em.Edge((1, 0), (1, 1))
-    C = em.Edge((1, 1), (0, 1))
-    D = em.Edge((0, 1), (0, 0))
+    A = em.make_edge((0, 0), (1, 0))
+    B = em.make_edge((1, 0), (1, 1))
+    C = em.make_edge((1, 1), (0, 1))
+    D = em.make_edge((0, 1), (0, 0))
 
     def test_loop_key(self):
         loop1 = (self.A, self.B, self.C)
@@ -97,12 +102,12 @@ class TestFindSequential:
     #   |       |
     # 0 +-A-+-B-+
 
-    A = em.Edge((0, 0), (1, 0), payload="A")
-    B = em.Edge((1, 0), (2, 0), payload="B")
-    C = em.Edge((2, 0), (2, 1), payload="C")
-    D = em.Edge((2, 1), (1, 1), payload="D")
-    E = em.Edge((1, 1), (0, 1), payload="E")
-    F = em.Edge((0, 1), (0, 0), payload="F")
+    A = em.make_edge((0, 0), (1, 0), payload="A")
+    B = em.make_edge((1, 0), (2, 0), payload="B")
+    C = em.make_edge((2, 0), (2, 1), payload="C")
+    D = em.make_edge((2, 1), (1, 1), payload="D")
+    E = em.make_edge((1, 1), (0, 1), payload="E")
+    F = em.make_edge((0, 1), (0, 0), payload="F")
 
     def test_is_forward_connected(self):
         assert em.is_forward_connected(self.A, self.B) is True
@@ -129,13 +134,13 @@ class SimpleLoops:
     #   |   |   |
     # 0 +-A-+-E-+
 
-    A = em.Edge((0, 0), (1, 0), length=0.5, payload="A")
-    B = em.Edge((1, 0), (1, 1), payload="B")
-    C = em.Edge((1, 1), (0, 1), payload="C")
-    D = em.Edge((0, 1), (0, 0), payload="D")
-    E = em.Edge((1, 0), (2, 0), payload="E")
-    F = em.Edge((2, 0), (2, 1), payload="F")
-    G = em.Edge((2, 1), (1, 1), payload="G")
+    A = em.make_edge((0, 0), (1, 0), length=0.5, payload="A")
+    B = em.make_edge((1, 0), (1, 1), payload="B")
+    C = em.make_edge((1, 1), (0, 1), payload="C")
+    D = em.make_edge((0, 1), (0, 0), payload="D")
+    E = em.make_edge((1, 0), (2, 0), payload="E")
+    F = em.make_edge((2, 0), (2, 1), payload="F")
+    G = em.make_edge((2, 1), (1, 1), payload="G")
 
 
 class TestLoopFinderSimple(SimpleLoops):
@@ -147,7 +152,7 @@ class TestLoopFinderSimple(SimpleLoops):
     @pytest.fixture(scope="class")
     def netAG(self):
         return em.EdgeDeposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
-    
+
     def test_find_any_loop(self, netAG):
         finder = em.LoopFinder(netAG)
         loop = finder.find_any_loop(start=self.A)
@@ -193,13 +198,13 @@ def simple_loops() -> Sequence[em.Edge]:
     #   |   |   |
     # 0 +-A-+-E-+
     return [
-        em.Edge((0, 0), (1, 0), length=0.5, payload="A"),
-        em.Edge((1, 0), (1, 1), payload="B"),
-        em.Edge((1, 1), (0, 1), payload="C"),
-        em.Edge((0, 1), (0, 0), payload="D"),
-        em.Edge((1, 0), (2, 0), payload="E"),
-        em.Edge((2, 0), (2, 1), payload="F"),
-        em.Edge((2, 1), (1, 1), payload="G"),
+        em.make_edge((0, 0), (1, 0), length=0.5, payload="A"),
+        em.make_edge((1, 0), (1, 1), payload="B"),
+        em.make_edge((1, 1), (0, 1), payload="C"),
+        em.make_edge((0, 1), (0, 0), payload="D"),
+        em.make_edge((1, 0), (2, 0), payload="E"),
+        em.make_edge((2, 0), (2, 1), payload="F"),
+        em.make_edge((2, 1), (1, 1), payload="G"),
     ]
 
 
@@ -212,16 +217,16 @@ def complex_loops() -> Sequence[em.Edge]:
     # 0 +-A-+-J-+-E-+
 
     return [
-        em.Edge((0, 0), (1, 0), payload="A"),
-        em.Edge((1, 0), (1, 1), payload="B"),
-        em.Edge((1, 1), (0, 1), payload="C"),
-        em.Edge((0, 1), (0, 0), payload="D"),
-        em.Edge((2, 0), (3, 0), payload="E"),
-        em.Edge((3, 0), (3, 1), payload="F"),
-        em.Edge((3, 1), (2, 1), payload="G"),
-        em.Edge((2, 1), (2, 0), payload="H"),
-        em.Edge((1, 1), (2, 1), payload="I"),
-        em.Edge((1, 0), (2, 0), payload="J"),
+        em.make_edge((0, 0), (1, 0), payload="A"),
+        em.make_edge((1, 0), (1, 1), payload="B"),
+        em.make_edge((1, 1), (0, 1), payload="C"),
+        em.make_edge((0, 1), (0, 0), payload="D"),
+        em.make_edge((2, 0), (3, 0), payload="E"),
+        em.make_edge((3, 0), (3, 1), payload="F"),
+        em.make_edge((3, 1), (2, 1), payload="G"),
+        em.make_edge((2, 1), (2, 0), payload="H"),
+        em.make_edge((1, 1), (2, 1), payload="I"),
+        em.make_edge((1, 0), (2, 0), payload="J"),
     ]
 
 
@@ -250,18 +255,18 @@ def grid() -> Sequence[em.Edge]:
     #   H   I   C
     # 0 +-A-+-B-+
     return [
-        em.Edge((0, 0), (1, 0), payload="A"),
-        em.Edge((1, 0), (2, 0), payload="B"),
-        em.Edge((2, 0), (2, 1), payload="C"),
-        em.Edge((2, 1), (2, 2), payload="D"),
-        em.Edge((2, 2), (1, 2), payload="E"),
-        em.Edge((1, 2), (0, 2), payload="F"),
-        em.Edge((0, 2), (0, 1), payload="G"),
-        em.Edge((0, 1), (0, 0), payload="H"),
-        em.Edge((1, 0), (1, 1), payload="I"),
-        em.Edge((1, 1), (1, 2), payload="J"),
-        em.Edge((0, 1), (1, 1), payload="K"),
-        em.Edge((1, 1), (2, 1), payload="L"),
+        em.make_edge((0, 0), (1, 0), payload="A"),
+        em.make_edge((1, 0), (2, 0), payload="B"),
+        em.make_edge((2, 0), (2, 1), payload="C"),
+        em.make_edge((2, 1), (2, 2), payload="D"),
+        em.make_edge((2, 2), (1, 2), payload="E"),
+        em.make_edge((1, 2), (0, 2), payload="F"),
+        em.make_edge((0, 2), (0, 1), payload="G"),
+        em.make_edge((0, 1), (0, 0), payload="H"),
+        em.make_edge((1, 0), (1, 1), payload="I"),
+        em.make_edge((1, 1), (1, 2), payload="J"),
+        em.make_edge((0, 1), (1, 1), payload="K"),
+        em.make_edge((1, 1), (2, 1), payload="L"),
     ]
 
 
@@ -324,14 +329,14 @@ class TestFindAllDisconnectedLoops:
     #   |   |   |   |
     # 0 +-A-+   +-E-+
 
-    A = em.Edge((0, 0), (1, 0), payload="A")
-    B = em.Edge((1, 0), (1, 1), payload="B")
-    C = em.Edge((1, 1), (0, 1), payload="C")
-    D = em.Edge((0, 1), (0, 0), payload="D")
-    E = em.Edge((2, 0), (3, 0), payload="E")
-    F = em.Edge((3, 0), (3, 1), payload="F")
-    G = em.Edge((3, 1), (2, 1), payload="G")
-    H = em.Edge((2, 1), (2, 0), payload="H")
+    A = em.make_edge((0, 0), (1, 0), payload="A")
+    B = em.make_edge((1, 0), (1, 1), payload="B")
+    C = em.make_edge((1, 1), (0, 1), payload="C")
+    D = em.make_edge((0, 1), (0, 0), payload="D")
+    E = em.make_edge((2, 0), (3, 0), payload="E")
+    F = em.make_edge((3, 0), (3, 1), payload="F")
+    G = em.make_edge((3, 1), (2, 1), payload="G")
+    H = em.make_edge((2, 1), (2, 0), payload="H")
 
     def test_find_all_loops(self):
         solutions = em.find_all_loops(
@@ -430,10 +435,10 @@ class TestEdgeDeposit(SimpleLoops):
         #   D   B   H   F
         #   |   |   |   |
         # 0 +-A-+   +-E-+
-        E = em.Edge((2, 0), (3, 0), payload="E")
-        F = em.Edge((3, 0), (3, 1), payload="F")
-        G = em.Edge((3, 1), (2, 1), payload="G")
-        H = em.Edge((2, 1), (2, 0), payload="H")
+        E = em.make_edge((2, 0), (3, 0), payload="E")
+        F = em.make_edge((3, 0), (3, 1), payload="F")
+        G = em.make_edge((3, 1), (2, 1), payload="G")
+        H = em.make_edge((2, 1), (2, 0), payload="H")
 
         deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D, E, F, G, H])
         assert len(deposit.find_all_networks()) == 2
@@ -467,16 +472,16 @@ class TestChainFinder:
     # -1         I
     # -2         J
 
-    A = em.Edge((0, 0), (1, 0), payload="A")
-    B = em.Edge((1, 0), (2, 0), payload="B")
-    C = em.Edge((2, 0), (3, 0), payload="C")
-    D = em.Edge((3, 0), (4, 0), payload="D")
-    E = em.Edge((4, 0), (5, 0), payload="E")
+    A = em.make_edge((0, 0), (1, 0), payload="A")
+    B = em.make_edge((1, 0), (2, 0), payload="B")
+    C = em.make_edge((2, 0), (3, 0), payload="C")
+    D = em.make_edge((3, 0), (4, 0), payload="D")
+    E = em.make_edge((4, 0), (5, 0), payload="E")
 
-    F = em.Edge((2, 0), (2, 1), payload="F")
-    G = em.Edge((2, 1), (2, 2), payload="G")
-    I = em.Edge((2, 0), (2, -1), payload="I")
-    J = em.Edge((2, -1), (2, -2), payload="J")
+    F = em.make_edge((2, 0), (2, 1), payload="F")
+    G = em.make_edge((2, 1), (2, 2), payload="G")
+    I = em.make_edge((2, 0), (2, -1), payload="I")
+    J = em.make_edge((2, -1), (2, -2), payload="J")
 
     def test_find_chain(self):
         edges = [self.A, self.B, self.C, self.D, self.E]
@@ -496,10 +501,10 @@ class TestChainFinder:
         #   D   B
         #   |   |
         # 0 +-A-+
-        A = em.Edge((0, 0), (1, 0), payload="A")
-        B = em.Edge((1, 0), (1, 1), payload="B")
-        C = em.Edge((1, 1), (0, 1), payload="C")
-        D = em.Edge((0, 1), (0, 0), payload="D")
+        A = em.make_edge((0, 0), (1, 0), payload="A")
+        B = em.make_edge((1, 0), (1, 1), payload="B")
+        C = em.make_edge((1, 1), (0, 1), payload="C")
+        D = em.make_edge((0, 1), (0, 0), payload="D")
         deposit = em.EdgeDeposit([A, B, C, D])
         for edge in [A, B, C, D]:
             result = em.find_chain_in_deposit(deposit, edge)
@@ -509,11 +514,11 @@ class TestChainFinder:
 class TestWrappingChains:
     #    0   1   2   3   4   5
     #  0 +-A-+-B-+-C-+-D-+-E-+
-    A = em.Edge((0, 0), (1, 0), payload="A")
-    B = em.Edge((1, 0), (2, 0), payload="B")
-    C = em.Edge((2, 0), (3, 0), payload="C")
-    D = em.Edge((3, 0), (4, 0), payload="D")
-    E = em.Edge((4, 0), (5, 0), payload="E")
+    A = em.make_edge((0, 0), (1, 0), payload="A")
+    B = em.make_edge((1, 0), (2, 0), payload="B")
+    C = em.make_edge((2, 0), (3, 0), payload="C")
+    D = em.make_edge((3, 0), (4, 0), payload="D")
+    E = em.make_edge((4, 0), (5, 0), payload="E")
 
     @pytest.fixture(scope="class")
     def edges(self):
@@ -600,15 +605,15 @@ class TestOpenChainFinder:
         # - 5 C...I
         # - 7 I.....F
 
-        A = em.Edge((0, 2), (1, 2), payload="A")
-        B = em.Edge((1, 2), (2, 2), payload="B")
-        C = em.Edge((2, 2), (3, 2), payload="C")
-        D = em.Edge((2, 2), (2, 3), payload="D")
-        E = em.Edge((2, 3), (3, 3), payload="E")
-        F = em.Edge((3, 3), (4, 3), payload="F")
-        G = em.Edge((1, 2), (1, 1), payload="G")
-        H = em.Edge((1, 1), (2, 1), payload="H")
-        I = em.Edge((2, 1), (2, 0), payload="I")
+        A = em.make_edge((0, 2), (1, 2), payload="A")
+        B = em.make_edge((1, 2), (2, 2), payload="B")
+        C = em.make_edge((2, 2), (3, 2), payload="C")
+        D = em.make_edge((2, 2), (2, 3), payload="D")
+        E = em.make_edge((2, 3), (3, 3), payload="E")
+        F = em.make_edge((3, 3), (4, 3), payload="F")
+        G = em.make_edge((1, 2), (1, 1), payload="G")
+        H = em.make_edge((1, 1), (2, 1), payload="H")
+        I = em.make_edge((2, 1), (2, 0), payload="I")
         edges = (H, C, E, D, B, G, F, A, I)
         combinations = em.find_open_chains(edges)
         assert len(combinations) == 6
@@ -623,10 +628,10 @@ class TestOpenChainFinder:
         #   D   B
         #   |   |
         # 0 +-A-+
-        A = em.Edge((0, 0), (1, 0))
-        B = em.Edge((1, 0), (1, 1))
-        C = em.Edge((1, 1), (0, 1))
-        D = em.Edge((0, 1), (0, 0))
+        A = em.make_edge((0, 0), (1, 0))
+        B = em.make_edge((1, 0), (1, 1))
+        C = em.make_edge((1, 1), (0, 1))
+        D = em.make_edge((0, 1), (0, 0))
         assert len(em.find_open_chains([A, B, C, D])) == 0
 
     def test_not_does_detect_indirect_loops(self):
@@ -635,11 +640,11 @@ class TestOpenChainFinder:
         #   D   B
         #   |   |
         # 0 +-A-+-E-+
-        A = em.Edge((0, 0), (1, 0), payload="A")
-        B = em.Edge((1, 0), (1, 1), payload="B")
-        C = em.Edge((1, 1), (0, 1), payload="C")
-        D = em.Edge((0, 1), (0, 0), payload="D")
-        E = em.Edge((1, 0), (2, 0), payload="E")
+        A = em.make_edge((0, 0), (1, 0), payload="A")
+        B = em.make_edge((1, 0), (1, 1), payload="B")
+        C = em.make_edge((1, 1), (0, 1), payload="C")
+        D = em.make_edge((0, 1), (0, 0), payload="D")
+        E = em.make_edge((1, 0), (2, 0), payload="E")
         result = set(collect(s) for s in em.find_open_chains([A, B, C, D, E]))
         assert len(result) == 0
 

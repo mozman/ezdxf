@@ -25,7 +25,7 @@ from ezdxf.math import (
     bulge_from_radius_and_chord,
 )
 
-__all__ = [   
+__all__ = [
     "chain_vertices",
     "edge_from_entity",
     "edges_from_entities",
@@ -105,7 +105,7 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None
         start = Vec3(entity.dxf.start)
         end = Vec3(entity.dxf.end)
         length = start.distance(end)
-        edge = em.Edge(start, end, length, entity)
+        edge = em.make_edge(start, end, length, payload=entity)
     elif isinstance(entity, et.Arc):
         radius = abs(entity.dxf.radius)
         if radius < ABS_TOL:
@@ -115,7 +115,7 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None
         span_deg = arc_angle_span_deg(start_angle, end_angle)
         length = radius * span_deg / 180.0 * math.pi
         sp, ep = entity.vertices((start_angle, end_angle))
-        edge = em.Edge(sp, ep, length, entity)
+        edge = em.make_edge(sp, ep, length, payload=entity)
     elif isinstance(entity, et.Ellipse):
         try:
             ct1 = entity.construction_tool()
@@ -128,7 +128,7 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None
         # length of elliptic arc is an approximation:
         points = list(ct1.vertices(ct1.params(num)))
         length = sum(a.distance(b) for a, b in zip(points, points[1:]))
-        edge = em.Edge(Vec3(points[0]), Vec3(points[-1]), length, entity)
+        edge = em.make_edge(Vec3(points[0]), Vec3(points[-1]), length, payload=entity)
     elif isinstance(entity, et.Spline):
         try:
             ct2 = entity.construction_tool()
@@ -139,7 +139,7 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None
         points = list(ct2.control_points)
         # length of B-spline is a very rough approximation:
         length = sum(a.distance(b) for a, b in zip(points, points[1:]))
-        edge = em.Edge(start, end, length, entity)
+        edge = em.make_edge(start, end, length, payload=entity)
 
     if isinstance(edge, em.Edge):
         if edge.start.distance(edge.end) < gap_tol:

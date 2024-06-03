@@ -16,7 +16,7 @@ I try to use the terminology of `Graph Theory`_ but there are differences where 
 a different term is better suited for this module like loop for cycle.
 
 Edge (in this module)
-    An edge has:
+    Edge is an immutable class:
         - unique id
         - 3D start point (vertex)
         - 3D end point (vertex)
@@ -100,7 +100,7 @@ Backwards Connection
 
 """
 from __future__ import annotations
-from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple
+from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple, NamedTuple, Callable
 from typing_extensions import Self, TypeAlias
 from collections import Counter
 import time
@@ -149,14 +149,18 @@ class TimeoutError(EdgeMinerException):
         self.solutions = solutions
 
 
-class Edge:
-    """Represents an edge.
+class Edge(NamedTuple):
+    """Represents an immutable edge.
 
     The edge can represent any linear curve (line, arc, spline,...).
     Therefore, the length of the edge must be specified if the length calculation for
     a sequence of edges is to be possible.
 
-    This class is immutable by design!
+    Intersection points between edges are not known and cannot be calculated
+
+    .. Important::
+
+        Use only the :func:`make_edge` function to create new edges to get unique ids!
 
     Attributes:
         id: unique id as int
@@ -167,21 +171,12 @@ class Edge:
         payload: arbitrary data associated to the edge
     """
 
-    __slots__ = ("id", "start", "end", "is_reverse", "length", "payload")
-    _next_id = 1
-
-    def __init__(
-        self, start: UVec, end: UVec, length: float = -1.0, payload: Any = None
-    ) -> None:
-        self.id = Edge._next_id  # unique id but reversed copies have the same id
-        Edge._next_id += 1
-        self.start = Vec3(start)
-        self.end = Vec3(end)
-        self.is_reverse: bool = False
-        if length < 0.0:
-            length = self.start.distance(self.end)
-        self.length = length
-        self.payload = payload
+    id: int
+    start: Vec3
+    end: Vec3
+    is_reverse: bool = False
+    length: float = 1.0
+    payload: Any = None
 
     def __eq__(self, other) -> bool:
         """Return ``True`` if the ids of the edges are equal."""
@@ -200,15 +195,44 @@ class Edge:
         return f"Edge({content})"
 
     def __hash__(self) -> int:
-        # edges can be used in sets and set-operations
+        # edge and its reversed edge must have the same hash value!
         return self.id
 
     def reversed(self) -> Self:
         """Returns a reversed copy."""
-        edge = self.__class__(self.end, self.start, self.length, self.payload)
-        edge.is_reverse = not self.is_reverse
-        edge.id = self.id  # reversed copies represent the same edge
-        return edge
+        return self.__class__(
+            self.id,  # edge and its reversed edge must have the same id!
+            self.end,
+            self.start,
+            not self.is_reverse,
+            self.length,
+            self.payload,
+        )
+
+
+def make_id_generator(start=0) -> Callable[[], int]:
+    next_edge_id = start
+
+    def next_id() -> int:
+        nonlocal next_edge_id
+        next_edge_id += 1
+        return next_edge_id
+
+    return next_id
+
+
+id_generator = make_id_generator()
+
+
+def make_edge(
+    start: UVec, end: UVec, length: float = -1.0, *, payload: Any = None
+) -> Edge:
+    """Creates a new :class:`Edge` with an unique id."""
+    start = Vec3(start)
+    end = Vec3(end)
+    if length < 0.0:
+        length = start.distance(end)
+    return Edge(id_generator(), start, end, False, length, payload)
 
 
 def isclose(a: Vec3, b: Vec3, gap_tol=GAP_TOL) -> bool:
@@ -440,7 +464,7 @@ def find_all_loops(
 ) -> Sequence[Sequence[Edge]]:
     """Returns all closed loops and doesn't include reversed solutions.
 
-    Returns only simple loops, where all vertices have only two adjacent edges. 
+    Returns only simple loops, where all vertices have only two adjacent edges.
     All vertices have a degree of 2.
 
     .. note::
@@ -492,10 +516,10 @@ def find_all_loops(
 def find_all_loops_in_deposit(
     deposit: EdgeDeposit, timeout=TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
-    """Returns all closed loops in found in the edge `deposit` and doesn't include 
+    """Returns all closed loops in found in the edge `deposit` and doesn't include
     reversed solutions.
 
-    Returns only simple loops, where all vertices have only two adjacent edges. 
+    Returns only simple loops, where all vertices have only two adjacent edges.
     All vertices have a degree of 2.
 
     .. note::
@@ -791,7 +815,7 @@ def find_all_basic_chains(
 ) -> Sequence[Sequence[Edge]]:
     """Returns all basic chains and doesn't include reversed solutions.
 
-    Basic chains are broken at junctions (vertices with more than 2 edges, degree > 2), 
+    Basic chains are broken at junctions (vertices with more than 2 edges, degree > 2),
     which means that all sequences have a linear progression without ambiguities.
 
     Args:
@@ -811,7 +835,7 @@ def find_all_basic_chains_in_deposit(deposit: EdgeDeposit) -> Sequence[Sequence[
     """Returns all sequences of connected edges in the edge `deposit` and doesn't
     include reversed solutions.
 
-    The chains are broken at junctions (vertices with more than 2 edges, degree > 2), 
+    The chains are broken at junctions (vertices with more than 2 edges, degree > 2),
     which means that all sequences have a linear progression without ambiguities.
     """
     if len(deposit.edges) < 1:
@@ -899,7 +923,7 @@ class EdgeWrapper:
 
 
 def _wrap_chain(edges: Sequence[Edge]) -> Edge:
-    return Edge(
+    return make_edge(
         edges[0].start, edges[-1].end, length(edges), payload=EdgeWrapper(edges)
     )
 
@@ -935,10 +959,10 @@ def find_open_chains(
     edges: Sequence[Edge], gap_tol=GAP_TOL, timeout=TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
     """Returns all combinations of edges which create open chains with at least one
-    loose end (leafs).  Returns only simple chains, where all vertices have only two or 
+    loose end (leafs).  Returns only simple chains, where all vertices have only two or
     less adjacent edges (degree <= 2).
 
-    A loose end (leaf) is an edge end-point without further connections.  
+    A loose end (leaf) is an edge end-point without further connections.
     The result does not include reversed solutions and closed loops.
 
     .. note::
@@ -969,10 +993,10 @@ def find_open_chains_in_deposit(
     deposit: EdgeDeposit, timeout=TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
     """Returns all combinations of edges in deposit which create open chains with at
-    least one loose end (leafs).  Returns only simple chains, where all vertices have 
+    least one loose end (leafs).  Returns only simple chains, where all vertices have
     only two or less adjacent edges (degree <= 2).
 
-    A loose end (leaf) is an edge end-point without further connections.  
+    A loose end (leaf) is an edge end-point without further connections.
     The result does not include reversed solutions and closed loops.
 
     .. note::
