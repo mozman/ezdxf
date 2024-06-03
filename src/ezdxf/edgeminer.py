@@ -35,53 +35,44 @@ Leaf
     A leaf is a loose end of an edge, which is not connected to other edges.
 
 Junction
-    A junction is a vertex of degree > 2.
+    A junction is a vertex of degree greater 2.
     A junction has more than two adjacent edges.
     A junction is an ambiguity when seaarching for open chains or closed loops.
+    Graph Theory: multiple adjacency
 
 Chain
     A chain has sequential connected edges. 
     The end point of an edge is connected to the start point of the following edge. 
     A chain has unique edges, each edge appears only once in the chain.
-    A loop can contain vertices with a degree > 2.
+    A chain can contain vertices of degree greater 2.
     A solitary edge is also a chain.
     Chains are represented as Sequence[Edge].
+    Graph Theory: Trail - no edge is repeated, vertex is repeated
 
-Basic Chain
-    A basic chain is a chain. 
-    A basic chain contains only vertices of degree <= 2, but the end vertices may have 
-    a higher degree.  These are the connected edges between vertices of degree != 2, 
-    vertices with more than two adjacent edges or leafs.
-
+Simple Chain (special to this module)
+    A simple chain contains only vertices of degree 2, except the start- and end vertex.
+    The start- and end vertices are leafs (degree of 1) or junctions (degree greater 2).
+    
 Open Chain
-    An open chain is a chain with at least one loose end (leaf). 
-    A loose end is an edge point without a connection to other edges. 
+    An open chain is a chain which starts and ends at leaf. 
     A solitary edge is also an open chain.
+    Graph Theory: Path - no edge is repeated, no vertex is repeated, endings not connected
 
 Loop
-    A loop is a chain with two or more edges.
-    The end point of the last edge is connected to the start point of the first edge.
-    A loop can contain vertices with a degree > 2 like the number 8.
-    A solitary edge is not a loop.
-
-    .. Note:: 
-    
-        In `Graph Theory`_ this loop would be a cycle and a loop in Graph Theory is 
-        something different.
+    A loop is a simple chain with connected start- and end vertices.
+    A loop has two or more edges.
+    A loop contains only vertices of degree 2.
+    Graph Theory: Cycle - no edge is repeated, no vertex is repeated, endings connected; 
+    a loop in Graph Theory is something different
 
 Network
     A network has two or more edges that are directly and indirectly connected. 
     The edges in a network have no order.
-    A network can contain vertices with a degree > 2, these are crossings with two or 
-    more connected edges. (multiple adjacency)
+    A network can contain vertices of degree greater 2 (junctions).
     A solitary edge is not a network. 
     A chain with two or more edges is a network. 
     Networks are represented as Sequence[Edge].
-
-    .. Note::
-        
-        In `Graph Theory`_   this is a multigraph, a network in Graph Theory 
-        is something different.
+    Graph Theory: multigraph; a network in Graph Theory is something different
 
 Gap Tolerance
     Maximum vertex distance to consider two edges as connected
@@ -90,13 +81,10 @@ Forward Connection
     An edge is forward connected when the end point of the edge is connected to the 
     start point of the following edge.
 
-Backwards Connection
-    An edge is backwards connected when the start point of the edge is connected to the 
-    end point of the previous edge.
-
 .. versionadded:: 1.4
 
 .. _Graph Theory: https://en.wikipedia.org/wiki/Glossary_of_graph_theory
+.. _GeeksforGeeks: https://www.geeksforgeeks.org/graph-data-structure-and-algorithms/?ref=shm
 
 """
 from __future__ import annotations
@@ -112,12 +100,12 @@ from ezdxf.math import rtree
 __all__ = [
     "Deposit",
     "Edge",
-    "find_all_basic_chains",
     "find_all_loops",
-    "find_all_sequential",
+    "find_all_open_chains",
+    "find_all_sequential_chains",
+    "find_all_simple_chains",
     "find_loop",
-    "find_open_chains",
-    "find_sequential",
+    "find_sequential_chain",
     "flatten",
     "is_chain",
     "is_loop",
@@ -303,13 +291,11 @@ def longest_chain(chains: Iterable[Sequence[Edge]]) -> Sequence[Edge]:
     return tuple()
 
 
-def find_sequential(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
-    """Returns all consecutive connected edges starting from the first edge.
+def find_sequential_chain(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
+    """Returns a simple chain beginning at the first edge.
 
     The search stops at the first edge without a forward connection from the previous
-    edge. Edges are reversed if necessary to create a forward connection. This means
-    that the :attr:`Edge.reverse` flag is ``True`` ad start and end vertices are swapped,
-    the attached payload is not changed.
+    edge.  Edges will be reversed if required to create connection.
 
     Args:
         edges: edges to be examined
@@ -335,12 +321,15 @@ def find_sequential(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
     return chain
 
 
-def find_all_sequential(
+def find_all_sequential_chains(
     edges: Sequence[Edge], gap_tol=GAP_TOL
 ) -> Iterator[Sequence[Edge]]:
-    """Yields all edge chains with consecutive connected edges starting from the first
-    edge. This search starts a new sequence at every edge without a forward connection
-    from the previous sequence. Each sequence has always one or more edges.
+    """Yields all simple chains from sequence `edges`.
+    
+    The search progresses strictly in order of the input sequence. The search starts a 
+    new chain at every edge without a forward connection from the previous edge.  
+    Edges will be reversed if required to create connection.  
+    Each chain has one or more edges.
 
     Args:
         edges: sequence of edges
@@ -350,7 +339,7 @@ def find_all_sequential(
         TypeError: invalid data in sequence `edges`
     """
     while edges:
-        chain = find_sequential(edges, gap_tol)
+        chain = find_sequential_chain(edges, gap_tol)
         edges = edges[len(chain) :]
         yield chain
 
@@ -385,7 +374,7 @@ def find_loop(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
     Raises:
         TimeoutError: search process has timed out
     """
-    chains = find_all_basic_chains(deposit)
+    chains = find_all_simple_chains(deposit)
     if not chains:
         return tuple()
 
@@ -395,7 +384,7 @@ def find_loop(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
         if len(chain) > 1:
             if is_loop_fast(chain, gap_tol):
                 return chain
-            packed_edges.append(_wrap_chain(chain))
+            packed_edges.append(_wrap_simple_chain(chain))
         else:
             packed_edges.append(chain[0])
     deposit = Deposit(packed_edges, gap_tol)
@@ -416,11 +405,10 @@ def _find_loop_in_deposit(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
 
 
 def find_all_loops(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
-    """Returns all closed loops in found in the edge `deposit` and doesn't include
-    reversed solutions.
+    """Returns all closed loops from `deposit`.
 
-    Returns only simple loops, where all vertices have only two adjacent edges.
-    All vertices have a degree of 2.
+    Returns only simple loops, where all vertices have a degree of 2 (only two adjacent 
+    edges).  The result does not include reversed solutions.
 
     .. note::
 
@@ -433,7 +421,7 @@ def find_all_loops(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]
     Raises:
         TimeoutError: search process has timed out
     """
-    chains = find_all_basic_chains(deposit)
+    chains = find_all_simple_chains(deposit)
     if not chains:
         return tuple()
 
@@ -446,7 +434,7 @@ def find_all_loops(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]
                 # these loops have no ambiguities (junctions)
                 solutions.append(chain)
             else:
-                packed_edges.append(_wrap_chain(chain))
+                packed_edges.append(_wrap_simple_chain(chain))
         else:
             packed_edges.append(chain[0])
 
@@ -464,7 +452,7 @@ def find_all_loops(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]
             err.solutions = solutions
         raise
     solutions.extend(result)
-    return _unwrap_chains(solutions)
+    return _unwrap_simple_chains(solutions)
 
 
 def _find_all_loops_in_deposit(
@@ -767,30 +755,36 @@ def loop_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
     return ids
 
 
-def find_all_basic_chains(deposit: Deposit) -> Sequence[Sequence[Edge]]:
-    """Returns all sequences of connected edges in the edge `deposit` and doesn't
-    include reversed solutions.
+def find_all_simple_chains(deposit: Deposit) -> Sequence[Sequence[Edge]]:
+    """Returns all simple chains from `deposit`.
 
-    The chains are broken at junctions (vertices with more than 2 edges, degree > 2),
-    which means that all sequences have a linear progression without ambiguities.
+    Each chains starts and ends at a leaf (degree of 1) or a junction (degree greater 2).
+    All vertices between the start- and end vertex have a degree of 2.  
+    The result doesn't include reversed solutions.
     """
     if len(deposit.edges) < 1:
         return tuple()
     solutions: list[Sequence[Edge]] = []
     edges = set(deposit.edges)
     while edges:
-        chain = find_chain(deposit, edges.pop())
+        chain = find_simple_chain(deposit, edges.pop())
         solutions.append(chain)
         edges -= set(chain)
     return solutions
 
 
-def find_chain(deposit: Deposit, start: Edge) -> Sequence[Edge]:
-    """Returns the chain containing the `start` edge."""
-    forward_chain = _find_forward_chain(deposit, start)
+def find_simple_chain(deposit: Deposit, start: Edge) -> Sequence[Edge]:
+    """Returns a simple chain containing `start` edge.
+
+    A simple chain start and ends at a leaf or a junction.
+
+    All connected edges have vertices of degree 2, except the first and last vertex.
+    The first and the last vertex have a degree of 1 (leaf) or greater 2 (junction).
+    """
+    forward_chain = _simple_forward_chain(deposit, start)
     if is_loop_fast(forward_chain, deposit.gap_tol):
         return forward_chain
-    backwards_chain = _find_forward_chain(deposit, start.reversed())
+    backwards_chain = _simple_forward_chain(deposit, start.reversed())
     if len(backwards_chain) == 1:
         return forward_chain
     backwards_chain.reverse()
@@ -798,7 +792,12 @@ def find_chain(deposit: Deposit, start: Edge) -> Sequence[Edge]:
     return [edge.reversed() for edge in backwards_chain] + forward_chain
 
 
-def _find_forward_chain(deposit: Deposit, edge: Edge) -> list[Edge]:
+def _simple_forward_chain(deposit: Deposit, edge: Edge) -> list[Edge]:
+    """Returns a simple chain beginning with `edge`.
+
+    All connected edges have vertices of degree 2, expect for the last edge.
+    The last edge has an end-vertex of degree 1 (leaf) or greater 2 (junction).
+    """
     gap_tol = deposit.gap_tol
     chain = [edge]
     while True:
@@ -823,8 +822,8 @@ def is_wrapped_chain(edge: Edge) -> bool:
     return isinstance(edge.payload, EdgeWrapper)
 
 
-def wrap_chain(chain: Sequence[Edge], gap_tol=GAP_TOL) -> Edge:
-    """Wraps a sequence of linked edges into a single edge.
+def wrap_simple_chain(chain: Sequence[Edge], gap_tol=GAP_TOL) -> Edge:
+    """Wraps a sequence of linked edges (simple chain) into a single edge.
 
     Two or more linked edges required. Closed loops cannot be wrapped into a single
     edge.
@@ -838,14 +837,14 @@ def wrap_chain(chain: Sequence[Edge], gap_tol=GAP_TOL) -> Edge:
     if is_chain(chain, gap_tol):
         if is_loop_fast(chain, gap_tol):
             raise ValueError("closed loop cannot be wrapped into a single edge")
-        return _wrap_chain(chain)
+        return _wrap_simple_chain(chain)
     raise ValueError("edges are not connected")
 
 
-def unwrap_chain(edge: Edge) -> Sequence[Edge]:
-    """Unwraps linked edges which are wrapped into a single edge."""
+def unwrap_simple_chain(edge: Edge) -> Sequence[Edge]:
+    """Unwraps a simple chain which is wrapped into a single edge."""
     if isinstance(edge.payload, EdgeWrapper):
-        return _unwrap_chain(edge)
+        return _unwrap_simple_chain(edge)
     return (edge,)
 
 
@@ -858,13 +857,13 @@ class EdgeWrapper:
         self.edges: Sequence[Edge] = tuple(edges)
 
 
-def _wrap_chain(edges: Sequence[Edge]) -> Edge:
+def _wrap_simple_chain(edges: Sequence[Edge]) -> Edge:
     return make_edge(
         edges[0].start, edges[-1].end, length(edges), payload=EdgeWrapper(edges)
     )
 
 
-def _unwrap_chain(edge: Edge) -> Sequence[Edge]:
+def _unwrap_simple_chain(edge: Edge) -> Sequence[Edge]:
     wrapper = edge.payload
     assert isinstance(wrapper, EdgeWrapper)
     if edge.is_reverse:
@@ -873,7 +872,7 @@ def _unwrap_chain(edge: Edge) -> Sequence[Edge]:
         return wrapper.edges
 
 
-def _unwrap_chains(chains: Iterable[Iterable[Edge]]) -> Sequence[Sequence[Edge]]:
+def _unwrap_simple_chains(chains: Iterable[Iterable[Edge]]) -> Sequence[Sequence[Edge]]:
     return tuple(tuple(flatten(chain)) for chain in chains)
 
 
@@ -886,7 +885,7 @@ def flatten(edges: Edge | Iterable[Edge]) -> Iterator[Edge]:
     else:
         edge = edges
         if is_wrapped_chain(edge):
-            yield from flatten(_unwrap_chain(edge))
+            yield from flatten(_unwrap_simple_chain(edge))
         else:
             yield edge
 
@@ -899,13 +898,13 @@ def chain_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
         return tuple(edge.id for edge in edges)
 
 
-def find_open_chains(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
-    """Returns all combinations of edges in `deposit` which create open chains with at
-    least one loose end (leafs).  Returns only simple chains, where all vertices have
-    only two or less adjacent edges (degree <= 2).
-
-    A loose end (leaf) is an edge end-point without further connections.
-    The result does not include reversed solutions and closed loops.
+def find_all_open_chains(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
+    """Returns all open chains from `deposit`.
+    
+    Returns only simple chains ending on both sides with a leaf. 
+    A leaf is an vertex of degree 1 without further connections.
+    All vertices have a degree of 2 except for the leafs at the start and end.
+    The result does not include reversed solutions or closed loops.
 
     .. note::
 
@@ -962,7 +961,6 @@ class OpenChainFinder:
                     last_point = edge.end
                     if not any(last_point.distance(e.end) < gap_tol for e in chain):
                         todo.append(chain + (edge,))
-
             else:
                 forward_chains.append(chain)
         return forward_chains
@@ -1007,16 +1005,7 @@ class OpenChainFinder:
         self.solutions.append(solution)
 
 
-def find_closest_loop(
-    edges: Sequence[Edge], pick: UVec, gap_tol=GAP_TOL, timeout=TIMEOUT
-) -> Sequence[Edge]:
-    """Returns the first loop found closest to the pick point."""
-    return find_closest_loop_in_deposit(Deposit(edges, gap_tol), pick, timeout)
-
-
-def find_closest_loop_in_deposit(
-    deposit: Deposit, pick: UVec, timeout=TIMEOUT
-) -> Sequence[Edge]:
+def find_closest_loop(deposit: Deposit, pick: UVec, timeout=TIMEOUT) -> Sequence[Edge]:
     """Returns the first loop found closest to the pick point."""
     if len(deposit.edges) < 2:
         return tuple()

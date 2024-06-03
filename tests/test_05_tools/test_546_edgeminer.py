@@ -115,7 +115,7 @@ class TestFindSequential:
 
     def test_find_sequential(self):
         edges = [self.A, self.B, self.C, self.D, self.E, self.F]
-        result = em.find_sequential(edges)
+        result = em.find_sequential_chain(edges)
         assert len(result) == 6
         assert result[0] is self.A
         assert result[-1] is self.F
@@ -235,7 +235,7 @@ def test_find_all_sequential():
     #   |   |   |   |
     # 0 +-A-+-J-+-E-+
     edges = complex_loops()
-    result = list(em.find_all_sequential(edges))
+    result = list(em.find_all_sequential_chains(edges))
 
     assert len(result) == 4
     assert collect_ordered(result[0]) == "A,B,C,D"
@@ -484,16 +484,16 @@ class TestChainFinder:
     I = em.make_edge((2, 0), (2, -1), payload="I")
     J = em.make_edge((2, -1), (2, -2), payload="J")
 
-    def test_find_chain(self):
+    def test_find_simple_chain(self):
         edges = [self.A, self.B, self.C, self.D, self.E]
         deposit = em.Deposit(edges)
         for edge in edges:
-            result = em.find_chain(deposit, edge)
+            result = em.find_simple_chain(deposit, edge)
             assert collect_ordered(result) == "A,B,C,D,E"
 
-    def test_find_all(self):
+    def test_find_all_simple_chains(self):
         edges = [self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.I, self.J]
-        result = em.find_all_basic_chains(em.Deposit(edges))
+        result = em.find_all_simple_chains(em.Deposit(edges))
         assert len(result) == 4
 
     def test_closed_loop(self):
@@ -508,7 +508,7 @@ class TestChainFinder:
         D = em.make_edge((0, 1), (0, 0), payload="D")
         deposit = em.Deposit([A, B, C, D])
         for edge in [A, B, C, D]:
-            result = em.find_chain(deposit, edge)
+            result = em.find_simple_chain(deposit, edge)
             assert collect_ordered(result) == "A,B,C,D"
 
 
@@ -526,42 +526,42 @@ class TestWrappingChains:
         return (self.A, self.B, self.C, self.D, self.E)
 
     def test_wrap_chain(self, edges: list[em.Edge]):
-        wrapped_chain = em.wrap_chain(edges)
+        wrapped_chain = em.wrap_simple_chain(edges)
         wrapper = wrapped_chain.payload
         assert isinstance(wrapper, em.EdgeWrapper)
         assert wrapper.edges == edges
 
     def test_is_wrapped_chain(self, edges: list[em.Edge]):
-        wrapped_chain = em.wrap_chain(edges)
+        wrapped_chain = em.wrap_simple_chain(edges)
         assert em.is_wrapped_chain(wrapped_chain) is True
         assert em.is_wrapped_chain(self.A) is False
 
     def test_wrapping_empty_chain_raises_exception(self):
         with pytest.raises(ValueError):
-            em.wrap_chain([])
+            em.wrap_simple_chain([])
 
     def test_wrapping_single_edge_raises_exception(self):
         with pytest.raises(ValueError):
-            em.wrap_chain([self.A])
+            em.wrap_simple_chain([self.A])
 
     def test_wrapping_unlinked_edges_raises_exception(self):
         with pytest.raises(ValueError):
-            em.wrap_chain([self.A, self.C])
+            em.wrap_simple_chain([self.A, self.C])
 
     def test_wrapping_loop_raises_exception(self):
         with pytest.raises(ValueError):
-            em.wrap_chain([self.A, self.A.reversed()])
+            em.wrap_simple_chain([self.A, self.A.reversed()])
 
     def test_unwrap_chain(self, edges: list[em.Edge]):
-        wrapped_chain = em.wrap_chain(edges)
-        chain = em.unwrap_chain(wrapped_chain)
+        wrapped_chain = em.wrap_simple_chain(edges)
+        chain = em.unwrap_simple_chain(wrapped_chain)
         assert len(chain) == 5
         assert chain == edges
 
     def test_unwrap_reversed_chain(self, edges: list[em.Edge]):
-        wrapped_chain = em.wrap_chain(edges)
+        wrapped_chain = em.wrap_simple_chain(edges)
         reversed_edge = wrapped_chain.reversed()
-        chain = em.unwrap_chain(reversed_edge)
+        chain = em.unwrap_simple_chain(reversed_edge)
         assert len(chain) == 5
         assert chain[0].start == reversed_edge.start
         assert chain[-1].end == reversed_edge.end
@@ -572,15 +572,15 @@ class TestWrappingChains:
         assert chain[-1].is_reverse is not edges[0].is_reverse
 
     def test_unwrapping_single_edge(self):
-        edges = em.unwrap_chain(self.A)
+        edges = em.unwrap_simple_chain(self.A)
         assert len(edges) == 1
         assert edges[0] == self.A
 
     def test_flatten_nested_edges(self):
-        de = em.wrap_chain([self.D, self.E])
-        ab = em.wrap_chain([self.A, self.B])
-        cde = em.wrap_chain([self.C, de])
-        abcde = em.wrap_chain([ab, cde])
+        de = em.wrap_simple_chain([self.D, self.E])
+        ab = em.wrap_simple_chain([self.A, self.B])
+        cde = em.wrap_simple_chain([self.C, de])
+        abcde = em.wrap_simple_chain([ab, cde])
         assert collect_ordered(list(em.flatten(abcde))) == "A,B,C,D,E"
 
     def test_flatten_empty_sequence(self):
@@ -616,7 +616,7 @@ class TestOpenChainFinder:
         H = em.make_edge((1, 1), (2, 1), payload="H")
         I = em.make_edge((2, 1), (2, 0), payload="I")
         edges = (H, C, E, D, B, G, F, A, I)
-        combinations = em.find_open_chains(em.Deposit(edges))
+        combinations = em.find_all_open_chains(em.Deposit(edges))
         assert len(combinations) == 6
         assert len(combinations[0]) == 3
         assert collect(combinations[0]) in ("A,B,C", "C,B,A")
@@ -634,7 +634,7 @@ class TestOpenChainFinder:
         C = em.make_edge((1, 1), (0, 1))
         D = em.make_edge((0, 1), (0, 0))
         deposit = em.Deposit([A, B, C, D])
-        assert len(em.find_open_chains(deposit)) == 0
+        assert len(em.find_all_open_chains(deposit)) == 0
 
     def test_not_does_detect_indirect_loops(self):
         # 1 +-C-+
@@ -648,7 +648,7 @@ class TestOpenChainFinder:
         D = em.make_edge((0, 1), (0, 0), payload="D")
         E = em.make_edge((1, 0), (2, 0), payload="E")
         deposit = em.Deposit([A, B, C, D, E])
-        result = set(collect(s) for s in em.find_open_chains(deposit))
+        result = set(collect(s) for s in em.find_all_open_chains(deposit))
         assert len(result) == 0
 
 
