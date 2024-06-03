@@ -190,22 +190,24 @@ class TestLoopFinderSimple(SimpleLoops):
         assert collect_ordered(solutions[1]) in expected
 
 
-def simple_loops() -> Sequence[em.Edge]:
+def simple_loops() -> em.EdgeDeposit:
     #   0   1   2
     # 1 +-C-+-G-+
     #   |   |   |
     #   D   B   F
     #   |   |   |
     # 0 +-A-+-E-+
-    return [
-        em.make_edge((0, 0), (1, 0), length=0.5, payload="A"),
-        em.make_edge((1, 0), (1, 1), payload="B"),
-        em.make_edge((1, 1), (0, 1), payload="C"),
-        em.make_edge((0, 1), (0, 0), payload="D"),
-        em.make_edge((1, 0), (2, 0), payload="E"),
-        em.make_edge((2, 0), (2, 1), payload="F"),
-        em.make_edge((2, 1), (1, 1), payload="G"),
-    ]
+    return em.EdgeDeposit(
+        [
+            em.make_edge((0, 0), (1, 0), length=0.5, payload="A"),
+            em.make_edge((1, 0), (1, 1), payload="B"),
+            em.make_edge((1, 1), (0, 1), payload="C"),
+            em.make_edge((0, 1), (0, 0), payload="D"),
+            em.make_edge((1, 0), (2, 0), payload="E"),
+            em.make_edge((2, 0), (2, 1), payload="F"),
+            em.make_edge((2, 1), (1, 1), payload="G"),
+        ]
+    )
 
 
 def complex_loops() -> Sequence[em.Edge]:
@@ -278,7 +280,7 @@ def test_find_all_complex_loops():
     #   H   I   C
     # 0 +-A-+-B-+
     edges = grid()
-    result = em.find_all_loops(edges)
+    result = em.find_all_loops(em.EdgeDeposit(edges))
     assert len(result) == 13
 
     unique_loops = list(em.unique_chains(result))
@@ -340,7 +342,9 @@ class TestFindAllDisconnectedLoops:
 
     def test_find_all_loops(self):
         solutions = em.find_all_loops(
-            (self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.H)
+            em.EdgeDeposit(
+                (self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.H)
+            )
         )
         assert len(solutions) == 2
         solution_strings = [collect_ordered(s) for s in solutions]
@@ -350,7 +354,9 @@ class TestFindAllDisconnectedLoops:
 
     def test_find_all_shuffled_loops(self):
         solutions = em.find_all_loops(
-            (self.H, self.B, self.F, self.D, self.E, self.C, self.G, self.A)
+            em.EdgeDeposit(
+                (self.H, self.B, self.F, self.D, self.E, self.C, self.G, self.A)
+            )
         )
         assert len(solutions) == 2
         solution_strings = [collect_ordered(s) for s in solutions]
@@ -370,11 +376,11 @@ class TestEdgeDeposit(SimpleLoops):
         deposit = em.EdgeDeposit(
             [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
         )
-        counter = deposit.count_degrees()
+        counter = deposit.degree_counter
         assert counter[1] == 0
         assert counter[2] == 4
         assert counter[3] == 2
-        assert deposit.max_degree() == 3
+        assert deposit.max_degree == 3
 
     def test_find_edges_linked_to_vertex_A_D(self):
         deposit = em.EdgeDeposit([self.A, self.B, self.C, self.D])
@@ -487,12 +493,12 @@ class TestChainFinder:
         edges = [self.A, self.B, self.C, self.D, self.E]
         deposit = em.EdgeDeposit(edges)
         for edge in edges:
-            result = em.find_chain_in_deposit(deposit, edge)
+            result = em.find_chain(deposit, edge)
             assert collect_ordered(result) == "A,B,C,D,E"
 
     def test_find_all(self):
         edges = [self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.I, self.J]
-        result = em.find_all_basic_chains_in_deposit(em.EdgeDeposit(edges))
+        result = em.find_all_basic_chains(em.EdgeDeposit(edges))
         assert len(result) == 4
 
     def test_closed_loop(self):
@@ -507,7 +513,7 @@ class TestChainFinder:
         D = em.make_edge((0, 1), (0, 0), payload="D")
         deposit = em.EdgeDeposit([A, B, C, D])
         for edge in [A, B, C, D]:
-            result = em.find_chain_in_deposit(deposit, edge)
+            result = em.find_chain(deposit, edge)
             assert collect_ordered(result) == "A,B,C,D"
 
 
@@ -615,7 +621,7 @@ class TestOpenChainFinder:
         H = em.make_edge((1, 1), (2, 1), payload="H")
         I = em.make_edge((2, 1), (2, 0), payload="I")
         edges = (H, C, E, D, B, G, F, A, I)
-        combinations = em.find_open_chains(edges)
+        combinations = em.find_open_chains(em.EdgeDeposit(edges))
         assert len(combinations) == 6
         assert len(combinations[0]) == 3
         assert collect(combinations[0]) in ("A,B,C", "C,B,A")
@@ -632,7 +638,8 @@ class TestOpenChainFinder:
         B = em.make_edge((1, 0), (1, 1))
         C = em.make_edge((1, 1), (0, 1))
         D = em.make_edge((0, 1), (0, 0))
-        assert len(em.find_open_chains([A, B, C, D])) == 0
+        deposit = em.EdgeDeposit([A, B, C, D])
+        assert len(em.find_open_chains(deposit)) == 0
 
     def test_not_does_detect_indirect_loops(self):
         # 1 +-C-+
@@ -645,7 +652,8 @@ class TestOpenChainFinder:
         C = em.make_edge((1, 1), (0, 1), payload="C")
         D = em.make_edge((0, 1), (0, 0), payload="D")
         E = em.make_edge((1, 0), (2, 0), payload="E")
-        result = set(collect(s) for s in em.find_open_chains([A, B, C, D, E]))
+        deposit = em.EdgeDeposit([A, B, C, D, E])
+        result = set(collect(s) for s in em.find_open_chains(deposit))
         assert len(result) == 0
 
 
