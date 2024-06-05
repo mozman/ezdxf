@@ -92,6 +92,7 @@ from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple, NamedTuple, C
 from typing_extensions import Self, TypeAlias
 from collections import Counter, deque
 import time
+import math
 
 from ezdxf.math import UVec, Vec3, distance_point_line_3d
 from ezdxf.math import rtree
@@ -1024,12 +1025,18 @@ def find_loops_nearby(
     """Returns the first loop found near the pick point."""
     if len(deposit.edges) < 2:
         return tuple()
-    
 
-    def sort_edges(edges: Iterable[Edge], end_point: Vec3) -> list[Edge]:
+    def sort_edges(edges: Iterable[Edge], last_edge: Edge) -> list[Edge]:
+        end_point = last_edge.end
         oriented_edges = [
             e if isclose(e.start, end_point, gap_tol) else e.reversed() for e in edges
         ]
+        if len(oriented_edges) > 2:
+            # find next edges in clockwise and counter-clockwise orientation
+            edge_angles = [(end_point - e.end).angle for e in oriented_edges]
+            phi = (end_point - last_edge.start).angle
+            left, right = index_of_adjacent_angles(phi, edge_angles)
+            oriented_edges = [oriented_edges[left], oriented_edges[right]]
         oriented_edges.sort(key=lambda e: pick_point.distance(e.end))  # type: ignore
         return oriented_edges
 
@@ -1039,7 +1046,7 @@ def find_loops_nearby(
             return
         solutions.append(edges)
         solutions_keys.add(key)
-        
+
     pick_point = Vec3(pick_point)
     solutions: list[Sequence[Edge]] = []
     solutions_keys: set[frozenset[int]] = set()
@@ -1048,7 +1055,7 @@ def find_loops_nearby(
     assert start is not None
     start_point = start.start
     watchdog = Watchdog(timeout)
-    todo : deque[tuple[Edge, ...]] = deque([(start,)])
+    todo: deque[tuple[Edge, ...]] = deque([(start,)])
     while todo:
         if watchdog.has_timed_out:
             raise TimeoutError("search process has timed out", solutions)
@@ -1058,7 +1065,7 @@ def find_loops_nearby(
         candidates = deposit.edges_linked_to(end_point, radius=gap_tol)
         # edges must be unique in a loop
         survivers = set(candidates) - set(chain)
-        for next_edge in sort_edges(survivers, end_point):
+        for next_edge in sort_edges(survivers, last_edge):
             last_point = next_edge.end
             if isclose(last_point, start_point, gap_tol):
                 loop = chain + (next_edge,)
@@ -1103,3 +1110,20 @@ def filter_congruent_edges(
             if eq_fn(edge, candidate):
                 edges.discard(candidate)
     return unique_edges
+
+
+def index_of_adjacent_angles(phi: float, angles: Sequence[float]) -> tuple[int, int]:
+    normalized_angles = [(angle % math.tau, angle) for angle in angles]
+    key = (phi % math.tau, phi)
+    normalized_angles.append(key)
+    normalized_angles.sort()
+    length = len(normalized_angles)
+
+    index = normalized_angles.index(key)
+    left = (index - 1) % length
+    right = (index + 1) % length
+
+    left = angles.index(normalized_angles[left][1])
+    right = angles.index(normalized_angles[right][1])
+    # left == right if both angles are equal
+    return (left, right)
