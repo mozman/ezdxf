@@ -337,9 +337,7 @@ class TestFindAllDisconnectedLoops:
 
     def test_find_all_loops(self):
         solutions = em.find_all_loops(
-            em.Deposit(
-                (self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.H)
-            )
+            em.Deposit((self.A, self.B, self.C, self.D, self.E, self.F, self.G, self.H))
         )
         assert len(solutions) == 2
         solution_strings = [collect_ordered(s) for s in solutions]
@@ -349,9 +347,7 @@ class TestFindAllDisconnectedLoops:
 
     def test_find_all_shuffled_loops(self):
         solutions = em.find_all_loops(
-            em.Deposit(
-                (self.H, self.B, self.F, self.D, self.E, self.C, self.G, self.A)
-            )
+            em.Deposit((self.H, self.B, self.F, self.D, self.E, self.C, self.G, self.A))
         )
         assert len(solutions) == 2
         solution_strings = [collect_ordered(s) for s in solutions]
@@ -368,9 +364,7 @@ class TestEdgeDeposit(SimpleLoops):
     # 0 +-A-+-E-+
 
     def test_degree_counter(self):
-        deposit = em.Deposit(
-            [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
-        )
+        deposit = em.Deposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
         counter = deposit.degree_counter()
         assert counter[1] == 0
         assert counter[2] == 4
@@ -386,9 +380,7 @@ class TestEdgeDeposit(SimpleLoops):
         assert self.D.id in ids
 
     def test_find_edges_linked_to_vertex_A_G(self):
-        deposit = em.Deposit(
-            [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
-        )
+        deposit = em.Deposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
         edges = deposit.edges_linked_to(self.B.end)
         ids = set(e.id for e in edges)
         assert len(ids) == 3
@@ -416,17 +408,13 @@ class TestEdgeDeposit(SimpleLoops):
         assert len(network) == 0
 
     def test_build_network_A_G(self):
-        deposit = em.Deposit(
-            [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
-        )
+        deposit = em.Deposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
         # network of all edges connected directly or indirectly to B
         network = deposit.find_network(self.B)
         assert len(network) == 7
 
     def test_build_all_networks(self):
-        deposit = em.Deposit(
-            [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
-        )
+        deposit = em.Deposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
         assert len(deposit.find_all_networks()) == 1
 
     def test_build_all_disconnected_networks(self):
@@ -652,16 +640,24 @@ class TestOpenChainFinder:
         assert len(result) == 0
 
 
-def xest_closest_loop():
+def test_find_loop_nearby():
     #   0   1   2
     # 2 +-F-+-E-+
     #   G   J   D
     # 1 +-K-+-L-+
     #   H   I   C
     # 0 +-A-+-B-+
-    loop = em.find_closest_loop(grid(), pick=(0.5, 0.5), timeout=1)
+    loops = em.find_loops_nearby(
+        em.Deposit(grid()), pick_point=(0.5, 0.5), max_count=1, timeout=1
+    )
+    assert len(loops) == 1
+    assert collect(loops[0]) in {"A,I,K,H", "H,K,I,A"}
 
-    assert collect(loop) in {"A,I,K,H", "H,K,I,A"}
+
+def test_filter_congruent_edges():
+    edges = list(grid())
+    edges.extend(grid())  # 2x the same edges
+    assert len(em.filter_congruent_edges(em.Deposit(edges))) == 12
 
 
 if __name__ == "__main__":

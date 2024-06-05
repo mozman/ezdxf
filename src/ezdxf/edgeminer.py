@@ -90,7 +90,7 @@ Forward Connection
 from __future__ import annotations
 from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple, NamedTuple, Callable
 from typing_extensions import Self, TypeAlias
-from collections import Counter
+from collections import Counter, deque
 import time
 
 from ezdxf.math import UVec, Vec3, distance_point_line_3d
@@ -116,6 +116,7 @@ __all__ = [
     "unique_chains",
 ]
 GAP_TOL = 1e-9
+ABS_TOl = 1e-9
 TIMEOUT = 60.0  # in seconds
 
 
@@ -325,10 +326,10 @@ def find_all_sequential_chains(
     edges: Sequence[Edge], gap_tol=GAP_TOL
 ) -> Iterator[Sequence[Edge]]:
     """Yields all simple chains from sequence `edges`.
-    
-    The search progresses strictly in order of the input sequence. The search starts a 
-    new chain at every edge without a forward connection from the previous edge.  
-    Edges will be reversed if required to create connection.  
+
+    The search progresses strictly in order of the input sequence. The search starts a
+    new chain at every edge without a forward connection from the previous edge.
+    Edges will be reversed if required to create connection.
     Each chain has one or more edges.
 
     Args:
@@ -407,7 +408,7 @@ def _find_loop_in_deposit(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
 def find_all_loops(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
     """Returns all closed loops from `deposit`.
 
-    Returns only simple loops, where all vertices have a degree of 2 (only two adjacent 
+    Returns only simple loops, where all vertices have a degree of 2 (only two adjacent
     edges).  The result does not include reversed solutions.
 
     .. note::
@@ -759,7 +760,7 @@ def find_all_simple_chains(deposit: Deposit) -> Sequence[Sequence[Edge]]:
     """Returns all simple chains from `deposit`.
 
     Each chains starts and ends at a leaf (degree of 1) or a junction (degree greater 2).
-    All vertices between the start- and end vertex have a degree of 2.  
+    All vertices between the start- and end vertex have a degree of 2.
     The result doesn't include reversed solutions.
     """
     if len(deposit.edges) < 1:
@@ -900,8 +901,8 @@ def chain_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
 
 def find_all_open_chains(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
     """Returns all open chains from `deposit`.
-    
-    Returns only simple chains ending on both sides with a leaf. 
+
+    Returns only simple chains ending on both sides with a leaf.
     A leaf is an vertex of degree 1 without further connections.
     All vertices have a degree of 2 except for the leafs at the start and end.
     The result does not include reversed solutions or closed loops.
@@ -1005,24 +1006,100 @@ class OpenChainFinder:
         self.solutions.append(solution)
 
 
-def find_closest_loop(deposit: Deposit, pick: UVec, timeout=TIMEOUT) -> Sequence[Edge]:
-    """Returns the first loop found closest to the pick point."""
+def count_checker(count: int):
+    def has_min_edge_count(edges: Sequence[Edge]) -> bool:
+        return len(edges) >= count
+
+    return has_min_edge_count
+
+
+def find_loops_nearby(
+    deposit: Deposit,
+    pick_point: UVec,
+    *,
+    max_count=0,
+    check_fn: Callable[[Sequence[Edge]], bool] = count_checker(3),
+    timeout=TIMEOUT,
+) -> Sequence[Sequence[Edge]]:
+    """Returns the first loop found near the pick point."""
     if len(deposit.edges) < 2:
         return tuple()
+    
 
+    def sort_edges(edges: Iterable[Edge], end_point: Vec3) -> list[Edge]:
+        oriented_edges = [
+            e if isclose(e.start, end_point, gap_tol) else e.reversed() for e in edges
+        ]
+        oriented_edges.sort(key=lambda e: pick_point.distance(e.end))  # type: ignore
+        return oriented_edges
+
+    def add_solution(edges: Sequence[Edge]) -> None:
+        key = frozenset(e.id for e in edges)
+        if key in solutions_keys:
+            return
+        solutions.append(edges)
+        solutions_keys.add(key)
+        
+    pick_point = Vec3(pick_point)
+    solutions: list[Sequence[Edge]] = []
+    solutions_keys: set[frozenset[int]] = set()
     gap_tol = deposit.gap_tol
-    start = deposit.find_nearest_edge(pick)
+    start = deposit.find_nearest_edge(pick_point)
     assert start is not None
     start_point = start.start
-    loop = (start,)
     watchdog = Watchdog(timeout)
-    while True:
+    todo : deque[tuple[Edge, ...]] = deque([(start,)])
+    while todo:
         if watchdog.has_timed_out:
-            raise TimeoutError("search has timed out")
-        last_edge = loop[-1]
+            raise TimeoutError("search process has timed out", solutions)
+        chain = todo.pop()
+        last_edge = chain[-1]
         end_point = last_edge.end
-        if isclose(start_point, end_point, gap_tol):
-            return loop
-        candidates = set(deposit.edges_linked_to(end_point))
-        for edge in candidates - set(loop):
-            pass
+        candidates = deposit.edges_linked_to(end_point, radius=gap_tol)
+        # edges must be unique in a loop
+        survivers = set(candidates) - set(chain)
+        for next_edge in sort_edges(survivers, end_point):
+            last_point = next_edge.end
+            if isclose(last_point, start_point, gap_tol):
+                loop = chain + (next_edge,)
+                if not check_fn(loop):
+                    continue
+                add_solution(loop)
+                if max_count and len(solutions) == max_count:
+                    return solutions
+            # Add only chains to the deque that have vertices of max degree 2.
+            # If the new end point is in the chain, a vertex of degree 3 would be
+            # created.
+            elif not any(last_point.distance(e.end) < gap_tol for e in chain):
+                todo.appendleft(chain + (next_edge,))
+    return solutions
+
+
+def line_checker(abs_tol=ABS_TOl):
+    def is_congruent_line(a: Edge, b: Edge) -> bool:
+        return (
+            a.start.isclose(b.start, abs_tol=abs_tol)
+            and a.end.isclose(b.end, abs_tol=abs_tol)
+        ) or (
+            a.start.isclose(b.end, abs_tol=abs_tol)
+            and a.end.isclose(b.start, abs_tol=abs_tol)
+        )
+
+    return is_congruent_line
+
+
+def filter_congruent_edges(
+    deposit: Deposit, eq_fn: Callable[[Edge, Edge], bool] = line_checker()
+) -> Sequence[Edge]:
+    edges = set(deposit.edges)
+    unique_edges: list[Edge] = []
+    while edges:
+        edge = edges.pop()
+        unique_edges.append(edge)
+        candidates = set(deposit.edges_linked_to(edge.start))
+        candidates.update(deposit.edges_linked_to(edge.end))
+        candidates.discard(edge)
+        for candidate in candidates:
+            if eq_fn(edge, candidate):
+                edges.discard(candidate)
+    return unique_edges
