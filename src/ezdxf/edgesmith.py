@@ -8,7 +8,10 @@ A module for creating entities like polylines and hatch boundary paths from link
 
 The complementary module to ezdxf.edgeminer.
 
-.. versionadded:: 1.4
+.. important::
+    
+    THIS MODULE IS WORK IN PROGRESS (ALPHA VERSION), EVERYTHING CAN CHANGE UNTIL 
+    THE RELEASE IN EZDXF V1.4.
 
 """
 from __future__ import annotations

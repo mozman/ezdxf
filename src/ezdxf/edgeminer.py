@@ -81,7 +81,10 @@ Forward Connection
     An edge is forward connected when the end point of the edge is connected to the 
     start point of the following edge.
 
-.. versionadded:: 1.4
+.. important::
+    
+    THIS MODULE IS WORK IN PROGRESS (ALPHA VERSION), EVERYTHING CAN CHANGE UNTIL 
+    THE RELEASE IN EZDXF V1.4.
 
 .. _Graph Theory: https://en.wikipedia.org/wiki/Glossary_of_graph_theory
 .. _GeeksforGeeks: https://www.geeksforgeeks.org/graph-data-structure-and-algorithms/?ref=shm
