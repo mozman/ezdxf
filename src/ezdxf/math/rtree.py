@@ -140,14 +140,15 @@ class RTree(Generic[T]):
 
     The search tree is buildup once at initialization and immutable afterwards,
     because rebuilding the tree after inserting or deleting nodes is very costly
-    and also keeps the implementation very simple. Without the ability to
-    alter the content the restrictions which forces the tree balance at growing
-    and shrinking of the original `R-trees`_, could be ignored, like the fixed
-    minimum and maximum node size.
+    and makes the implementation very complex.  
+    
+    Without the ability to alter the content the restrictions which forces the tree 
+    balance at growing and shrinking of the original `R-trees`_, are ignored, like the 
+    fixed minimum and maximum node size.
 
     This class uses internally only 3D bounding boxes, but also supports
     :class:`Vec2` as well as :class:`Vec3` objects as input data, but point
-    types should not be mixed in a single search tree.
+    types should not be mixed in a search tree.
 
     The point objects keep their type and identity and the returned points of
     queries can be compared by the ``is`` operator for identity to the input
