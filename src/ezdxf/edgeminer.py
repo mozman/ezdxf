@@ -570,12 +570,12 @@ class Deposit:
         return max(self.degree_counter().keys())
 
     def unique_vertices(self) -> set[Vec3]:
-        """Returns all unique vertices from this deposit. 
-        
-        Ignores vertices that are close to another vertex (within the range of gap_tol).  
-        It is not determined which of the close vertices is returned. 
-        
-        e.g. if the vertices a, b are close together, you don't know if you get a or b 
+        """Returns all unique vertices from this deposit.
+
+        Ignores vertices that are close to another vertex (within the range of gap_tol).
+        It is not determined which of the close vertices is returned.
+
+        e.g. if the vertices a, b are close together, you don't know if you get a or b
         but it's guaranteed that you only get one of them
         """
         return filter_close_vertices(self._search_index.rtree, self.gap_tol)
@@ -746,7 +746,7 @@ class LoopFinder:
                 # Add only chains to the stack that have vertices of max degree 2.
                 # If the new end point is in the chain, a vertex of degree 3 would be
                 # created. (loop check is done)
-                elif not any(last_point.distance(e.end) < gap_tol for e in chain):
+                elif not any(isclose(last_point, e.end, gap_tol) for e in chain):
                     todo.append(chain + (next_edge,))
 
     def add_solution(self, loop: Sequence[Edge]) -> None:
@@ -976,7 +976,7 @@ class OpenChainFinder:
                     # If the new end point is in the chain, a vertex of degree 3 would be
                     # created. (loop check is done)
                     last_point = edge.end
-                    if not any(last_point.distance(e.end) < gap_tol for e in chain):
+                    if not any(isclose(last_point, e.end, gap_tol) for e in chain):
                         todo.append(chain + (edge,))
             else:
                 forward_chains.append(chain)
@@ -1002,9 +1002,7 @@ class OpenChainFinder:
                     # If the new end point is in the chain, a vertex of degree 3 would be
                     # created.
                     new_start_point = edge.start
-                    if not any(
-                        new_start_point.distance(e.end) < gap_tol for e in chain
-                    ):
+                    if not any(isclose(new_start_point, e.end, gap_tol) for e in chain):
                         todo.append((edge,) + chain)
             else:
                 self.add_solution(chain)
@@ -1093,7 +1091,7 @@ def find_loops_nearby(
             # Add only chains to the deque that have vertices of max degree 2.
             # If the new end point is in the chain, a vertex of degree 3 would be
             # created.
-            elif not any(last_point.distance(e.end) < gap_tol for e in chain):
+            elif not any(isclose(last_point, e.end, gap_tol) for e in chain):
                 todo.appendleft(chain + (next_edge,))
     return solutions
 
@@ -1145,21 +1143,21 @@ def index_of_adjacent_angles(phi: float, angles: Sequence[float]) -> tuple[int, 
     return (left, right)
 
 
-def filter_close_vertices(rt: rtree.RTree[Vec3], radius: float) -> set[Vec3]:
+def filter_close_vertices(rt: rtree.RTree[Vec3], gap_tol: float) -> set[Vec3]:
     """Returns all vertices from a :class:`RTree` and filters vertices that are closer
-    than radius to another vertex.
+    than radius `gap_tol` to another vertex.
 
     Vertice that are close to another vertex are filtered out, so none of the returned
-    vertices has another vertex within the range of `radius`.  It is not determined
+    vertices has another vertex within the range of `gap_tol`.  It is not determined
     which of close vertices is returned.
     """
     # RTree cannot be empty!
     todo = set(rt)
     merged: set[Vec3] = set([todo.pop()])
     for vertex in todo:
-        for candidate in set(rt.points_in_sphere(vertex, radius)):
+        for candidate in rt.points_in_sphere(vertex, gap_tol):
             if candidate in merged:
                 continue
-            if not any(candidate.distance(v) <= radius for v in merged):
+            if not any(isclose(candidate, v, gap_tol) for v in merged):
                 merged.add(candidate)
     return merged

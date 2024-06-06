@@ -686,7 +686,7 @@ class TestFilterCloseVertices:
     def test_chain_of_close_vertices(self):
         vertices = Vec3.list([(0, 0), (1, 0), (2, 0), (3, 0)])
         rt = rtree.RTree(vertices)
-        result = em.filter_close_vertices(rt, radius=1)
+        result = em.filter_close_vertices(rt, gap_tol=1)
         # You don't know which vertices were removed!
         assert len(result) == 2
 
@@ -700,7 +700,7 @@ class TestFilterCloseVertices:
         ])
         # fmt: on
         rt = rtree.RTree(vertices)
-        result = em.filter_close_vertices(rt, radius=1)
+        result = em.filter_close_vertices(rt, gap_tol=1)
         # You don't know which vertices were removed!
         assert len(result) == 8
 
