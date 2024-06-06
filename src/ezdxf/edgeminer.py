@@ -514,6 +514,10 @@ class _SpatialSearchIndex:
             vertices.append(make_edge_vertex(edge.end, edge))
         self._search_tree = rtree.RTree(vertices)
 
+    @property
+    def rtree(self) -> rtree.RTree[Vec3]:
+        return self._search_tree
+
     def vertices_in_sphere(self, center: Vec3, radius: float) -> Sequence[_Vertex]:
         """Returns all vertices located around `center` with a max. distance of `radius`."""
         return tuple(self._search_tree.points_in_sphere(center, radius))
@@ -564,6 +568,17 @@ class Deposit:
     def max_degree(self) -> int:
         """Returns the maximum degree of all vertices."""
         return max(self.degree_counter().keys())
+
+    def unique_vertices(self) -> set[Vec3]:
+        """Returns all unique vertices from this deposit. 
+        
+        Ignores vertices that are close to another vertex (within the range of gap_tol).  
+        It is not determined which of the close vertices is returned. 
+        
+        e.g. if the vertices a, b are close together, you don't know if you get a or b 
+        but it's guaranteed that you only get one of them
+        """
+        return filter_close_vertices(self._search_index.rtree, self.gap_tol)
 
     def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
         """Returns all edges linked to `vertex` in range of `radius`.
@@ -1023,6 +1038,7 @@ def find_loops_nearby(
     timeout=TIMEOUT,
 ) -> Sequence[Sequence[Edge]]:
     """Returns the first loop found near the pick point."""
+    # search term: Enumerating All Circuits of a Graph
     if len(deposit.edges) < 2:
         return tuple()
 
@@ -1127,3 +1143,23 @@ def index_of_adjacent_angles(phi: float, angles: Sequence[float]) -> tuple[int, 
     right = angles.index(normalized_angles[right][1])
     # left == right if both angles are equal
     return (left, right)
+
+
+def filter_close_vertices(rt: rtree.RTree[Vec3], radius: float) -> set[Vec3]:
+    """Returns all vertices from a :class:`RTree` and filters vertices that are closer
+    than radius to another vertex.
+
+    Vertice that are close to another vertex are filtered out, so none of the returned
+    vertices has another vertex within the range of `radius`.  It is not determined
+    which of close vertices is returned.
+    """
+    # RTree cannot be empty!
+    todo = set(rt)
+    merged: set[Vec3] = set([todo.pop()])
+    for vertex in todo:
+        for candidate in set(rt.points_in_sphere(vertex, radius)):
+            if candidate in merged:
+                continue
+            if not any(candidate.distance(v) <= radius for v in merged):
+                merged.add(candidate)
+    return merged

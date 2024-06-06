@@ -5,7 +5,7 @@ from typing import Sequence
 import pytest
 
 from ezdxf import edgeminer as em
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, rtree
 
 
 class TestEdge:
@@ -673,6 +673,36 @@ def test_adjacent_angles():
     assert em.index_of_adjacent_angles(1.0, [1.0, 1.0, 0.0]) == (2, 0)
     # 1.0, 1.0, 1.0, 1.0
     assert em.index_of_adjacent_angles(1.0, [1.0, 1.0, 1.0]) == (0, 0)
+
+
+class TestFilterCloseVertices:
+    def test_coincident_vertices(self):
+        vertices = Vec3.list([(0, 0), (0, 0), (1, 1), (1, 1)])
+        rt = rtree.RTree(vertices)
+        result = em.filter_close_vertices(rt, 1e-9)
+        # You don't know which vertices were removed!
+        assert len(result) == 2
+
+    def test_chain_of_close_vertices(self):
+        vertices = Vec3.list([(0, 0), (1, 0), (2, 0), (3, 0)])
+        rt = rtree.RTree(vertices)
+        result = em.filter_close_vertices(rt, radius=1)
+        # You don't know which vertices were removed!
+        assert len(result) == 2
+
+    def test_grid_of_close_vertices(self):
+        # fmt: off
+        vertices = Vec3.list([
+            (0, 0), (1, 0), (2, 0), (3, 0),
+            (0, 1), (1, 1), (2, 1), (3, 1),
+            (0, 2), (1, 2), (2, 2), (3, 2),
+            (0, 3), (1, 3), (2, 3), (3, 3)
+        ])
+        # fmt: on
+        rt = rtree.RTree(vertices)
+        result = em.filter_close_vertices(rt, radius=1)
+        # You don't know which vertices were removed!
+        assert len(result) == 8
 
 
 if __name__ == "__main__":
