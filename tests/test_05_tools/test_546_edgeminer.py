@@ -8,6 +8,46 @@ from ezdxf import edgeminer as em
 from ezdxf.math import Vec3, rtree
 
 
+class TestBasicRequirements:
+    @pytest.fixture(params=[Vec3, em._Vertex], scope="class")
+    def abc(self, request):
+        cls = request.param
+        a = cls((1, 2, 3))
+        b = cls((1, 2, 3))
+        c = cls((1, 2, 3))
+        return a, b, c
+
+    def test_vec3_requirements(self, abc):
+        a, b, c = abc
+
+        # Same locations have unique identities.
+        # Maybe future me decides to return the same instance for same locations as
+        # optimization, because Vec3 is immutable!
+        assert a is not b
+        assert a is not c
+        assert b is not c
+
+        # equality is EXACT same location and vice versa
+        # floating point equality on bit-level!
+        assert a == b
+        assert a == c
+        assert b == c
+
+        # EXACT same location has same hash
+        assert hash(a) == hash(b)
+        assert hash(a) == hash(c)
+        assert hash(b) == hash(c)
+
+    def test_rtree_requirements(self, abc):
+        rt = rtree.RTree(abc)
+        assert len(rt) == 3, "expected multiple entries for the same location"
+        result = list(rt.points_in_sphere(Vec3(1, 2, 3), radius=0.1))
+        assert len(result) == 3, "expected multiple entries for the same location"
+        assert set([id(v) for v in abc]) == set(
+            [id(v) for v in result]
+        ), "expected the identical instances"
+
+
 class TestEdge:
     def test_init(self):
         edge = em.make_edge((0, 0), (1, 0))
