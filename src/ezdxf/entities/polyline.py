@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -359,7 +359,7 @@ class Polyline(LinkedEntities):
 
     def append_formatted_vertices(
         self,
-        points: Iterable[UVec],
+        points: Iterable[Sequence],
         format: str = "xy",
         dxfattribs=None,
     ) -> None:
@@ -1097,7 +1097,7 @@ class DXFVertex(DXFGraphic):
         return tuple(vars[code] for code in format.lower())
 
 
-def vertex_attribs(data: Sequence[float], format="xyseb") -> dict:
+def vertex_attribs(data: Sequence, format="xyseb") -> dict:
     """Create VERTEX attributes from input data.
 
     Format codes:
