@@ -1074,12 +1074,6 @@ def find_loops_nearby(
         oriented_edges = [
             e if isclose(e.start, end_point, gap_tol) else e.reversed() for e in edges
         ]
-        if len(oriented_edges) > 2:
-            # find next edges in clockwise and counter-clockwise orientation
-            edge_angles = [(end_point - e.end).angle for e in oriented_edges]
-            phi = (end_point - last_edge.start).angle
-            left, right = index_of_adjacent_angles(phi, edge_angles)
-            oriented_edges = [oriented_edges[left], oriented_edges[right]]
         oriented_edges.sort(key=lambda e: pick_point.distance(e.end))  # type: ignore
         return oriented_edges
 
@@ -1153,23 +1147,6 @@ def filter_coincident_edges(
             if eq_fn(edge, candidate):
                 edges.discard(candidate)
     return unique_edges
-
-
-def index_of_adjacent_angles(phi: float, angles: Sequence[float]) -> tuple[int, int]:
-    normalized_angles = [(angle % math.tau, angle) for angle in angles]
-    key = (phi % math.tau, phi)
-    normalized_angles.append(key)
-    normalized_angles.sort()
-    length = len(normalized_angles)
-
-    index = normalized_angles.index(key)
-    left = (index - 1) % length
-    right = (index + 1) % length
-
-    left = angles.index(normalized_angles[left][1])
-    right = angles.index(normalized_angles[right][1])
-    # left == right if both angles are equal
-    return (left, right)
 
 
 def filter_close_vertices(rt: rtree.RTree[Vec3], gap_tol: float) -> set[Vec3]:

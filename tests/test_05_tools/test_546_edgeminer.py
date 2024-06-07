@@ -718,21 +718,6 @@ def test_filter_coincident_edges():
     assert len(em.filter_coincident_edges(em.Deposit(edges))) == 12
 
 
-def test_adjacent_angles():
-    #   2    -    0    1
-    # -1.5, 0.0, 1.5, 3.0
-    # left       right
-    assert em.index_of_adjacent_angles(0.0, [1.5, 3.0, -1.5]) == (2, 0)
-    # -1.5, -1.0, -0.5, 3.0
-    assert em.index_of_adjacent_angles(-1.0, [-0.5, 3.0, -1.5]) == (2, 0)
-    # 0.0, 1.0, 2.0, 4.0
-    assert em.index_of_adjacent_angles(2.0, [4.0, 1.0, 0.0]) == (1, 0)
-    # 0.0, 1.0, 1.0, 1.0
-    assert em.index_of_adjacent_angles(1.0, [1.0, 1.0, 0.0]) == (2, 0)
-    # 1.0, 1.0, 1.0, 1.0
-    assert em.index_of_adjacent_angles(1.0, [1.0, 1.0, 1.0]) == (0, 0)
-
-
 class TestFilterCloseVertices:
     def test_coincident_vertices(self):
         vertices = Vec3.list([(0, 0), (0, 0), (1, 1), (1, 1)])
