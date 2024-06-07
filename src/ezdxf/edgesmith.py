@@ -26,6 +26,7 @@ from ezdxf.math import (
     arc_angle_span_deg,
     ellipse_param_span,
     bulge_from_radius_and_chord,
+    bulge_from_arc_angle,
 )
 
 __all__ = [
@@ -35,7 +36,10 @@ __all__ = [
     "is_closed_entity",
     "polyline_from_chain",
 ]
-ABS_TOL = 1e-12
+# Tolerances
+LEN_TOL = 1e-9  # length and distance
+DEG_TOL = 1e-9  # angles in degree
+RAD_TOL = 1e-9  # angles in radians
 
 
 def is_closed_entity(entity: et.DXFEntity) -> bool:
@@ -45,17 +49,17 @@ def is_closed_entity(entity: et.DXFEntity) -> bool:
         start_angle = entity.dxf.start_angle
         end_angle = entity.dxf.end_angle
         angle_span = arc_angle_span_deg(start_angle, end_angle)
-        return abs(radius) > ABS_TOL and math.isclose(
-            angle_span, 360.0, abs_tol=ABS_TOL
+        return abs(radius) > LEN_TOL and math.isclose(
+            angle_span, 360.0, abs_tol=LEN_TOL
         )
     if isinstance(entity, et.Circle):
-        return abs(entity.dxf.radius) > ABS_TOL
+        return abs(entity.dxf.radius) > LEN_TOL
 
     if isinstance(entity, et.Ellipse):
         start_param = entity.dxf.start_param
         end_param = entity.dxf.end_param
         span = ellipse_param_span(start_param, end_param)
-        if not math.isclose(span, math.tau, abs_tol=ABS_TOL):
+        if not math.isclose(span, math.tau, abs_tol=RAD_TOL):
             return False
         return True
 
@@ -69,7 +73,7 @@ def is_closed_entity(entity: et.DXFEntity) -> bool:
             return False
         start = control_points[0]
         end = control_points[-1]
-        return start.isclose(end, abs_tol=ABS_TOL)
+        return start.isclose(end, abs_tol=LEN_TOL)
 
     if isinstance(entity, et.LWPolyline):
         if len(entity) < 1:
@@ -78,7 +82,7 @@ def is_closed_entity(entity: et.DXFEntity) -> bool:
             return True
         start = Vec2(entity.lwpoints[0][:2])
         end = Vec2(entity.lwpoints[-1][:2])
-        return start.isclose(end, abs_tol=ABS_TOL)
+        return start.isclose(end, abs_tol=LEN_TOL)
 
     if isinstance(entity, et.Polyline):
         if entity.is_2d_polyline or entity.is_3d_polyline:
@@ -91,7 +95,7 @@ def is_closed_entity(entity: et.DXFEntity) -> bool:
                 return True
             p0: Vec3 = vertices[0].dxf.location  # type: ignore
             p1: Vec3 = vertices[-1].dxf.location  # type: ignore
-            if p0.isclose(p1, abs_tol=ABS_TOL):
+            if p0.isclose(p1, abs_tol=LEN_TOL):
                 return True
         return False
     return False
@@ -111,7 +115,7 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None
         edge = em.make_edge(start, end, length, payload=entity)
     elif isinstance(entity, et.Arc):
         radius = abs(entity.dxf.radius)
-        if radius < ABS_TOL:
+        if radius < LEN_TOL:
             return None
         start_angle = entity.dxf.start_angle
         end_angle = entity.dxf.end_angle
@@ -124,7 +128,7 @@ def edge_from_entity(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None
             ct1 = entity.construction_tool()
         except ValueError:
             return None
-        if ct1.major_axis.magnitude < ABS_TOL or ct1.minor_axis.magnitude < ABS_TOL:
+        if ct1.major_axis.magnitude < LEN_TOL or ct1.minor_axis.magnitude < LEN_TOL:
             return None
         span = ellipse_param_span(ct1.start_param, ct1.end_param)
         num = max(3, round(span / 0.1745))  #  resolution of ~1 deg
@@ -207,23 +211,18 @@ def polyline_from_chain(
             current_end = edge.start
             points.append(current_end)
             bulges.append(0.0)
-
         entity = edge.payload
         if isinstance(entity, et.Arc):
-            chord = edge.start.distance(edge.end)
-            radius = abs(entity.dxf.radius)
-            if radius > 1e-9:
-                if edge.is_reverse:
-                    radius = -radius
-                bulges[-1] = bulge_from_radius_and_chord(radius, chord)
+            span = arc_angle_span_deg(entity.dxf.start_angle, entity.dxf.end_angle)
+            if span > DEG_TOL:
+                bulge = bulge_from_arc_angle(math.radians(span))
+                bulges[-1] = -bulge if edge.is_reverse else bulge         
         elif isinstance(entity, et.Ellipse):
             ratio = abs(entity.dxf.ratio)
-            radius = Vec3(entity.dxf.majoraxis).magnitude
-            if math.isclose(ratio, 1.0) and radius > 1e-9:
-                chord = edge.start.distance(edge.end)
-                if edge.is_reverse:
-                    radius = -radius
-                bulges[-1] = bulge_from_radius_and_chord(radius, chord)
+            span = ellipse_param_span(entity.dxf.start_param, entity.dxf.end_param)
+            if math.isclose(ratio, 1.0) and span > RAD_TOL:
+                bulge = bulge_from_arc_angle(span)
+                bulges[-1] = -bulge if edge.is_reverse else bulge 
         points.append(edge.end)
         bulges.append(0.0)
     polyline = et.LWPolyline.new(dxfattribs=dxfattribs)
