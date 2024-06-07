@@ -116,14 +116,32 @@ class TestEdgeDeposit(SimpleLoops):
     #   D   B   F
     #   |   |   |
     # 0 +-A-+-E-+
+    @pytest.fixture
+    def edges(self):
+        return [self.A, self.B, self.C, self.D, self.E, self.F, self.G]
 
-    def test_degree_counter(self):
-        deposit = em.Deposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
+    def test_get_degree_of_vertex(self, edges: list[em.Edge]):
+        deposit = em.Deposit(edges)
+        assert deposit.degree((0, 0)) == 2
+        assert deposit.degree((1, 0)) == 3
+        assert deposit.degree((-1, -1)) == 0, "not in deposit"
+
+    def test_get_degree_of_vertices(self, edges: list[em.Edge]):
+        deposit = em.Deposit(edges)
+        assert deposit.degrees([(0, 0), (1, 0), (-1, -1)]) == (2, 3, 0)
+        assert deposit.degrees([]) == ()
+
+    def test_degree_counter(self, edges: list[em.Edge]):
+        deposit = em.Deposit(edges)
         counter = deposit.degree_counter()
         assert counter[1] == 0
         assert counter[2] == 4
         assert counter[3] == 2
         assert deposit.max_degree == 3
+
+    def test_unique_vertices(self, edges: list[em.Edge]):
+        deposit = em.Deposit(edges)
+        assert len(deposit.unique_vertices()) == 6
 
     def test_find_edges_linked_to_vertex_A_D(self):
         deposit = em.Deposit([self.A, self.B, self.C, self.D])
@@ -133,10 +151,10 @@ class TestEdgeDeposit(SimpleLoops):
         assert self.A.id in ids
         assert self.D.id in ids
 
-    def test_find_edges_linked_to_vertex_A_G(self):
-        deposit = em.Deposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
-        edges = deposit.edges_linked_to(self.B.end)
-        ids = set(e.id for e in edges)
+    def test_find_edges_linked_to_vertex_A_G(self, edges: list[em.Edge]):
+        deposit = em.Deposit(edges)
+        linked_edges = deposit.edges_linked_to(self.B.end)
+        ids = set(e.id for e in linked_edges)
         assert len(ids) == 3
         assert self.B.id in ids
         assert self.C.id in ids
@@ -161,14 +179,14 @@ class TestEdgeDeposit(SimpleLoops):
         network = deposit.find_network(self.A)
         assert len(network) == 0
 
-    def test_build_network_A_G(self):
-        deposit = em.Deposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
+    def test_build_network_A_G(self, edges: list[em.Edge]):
+        deposit = em.Deposit(edges)
         # network of all edges connected directly or indirectly to B
         network = deposit.find_network(self.B)
         assert len(network) == 7
 
-    def test_build_all_networks(self):
-        deposit = em.Deposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
+    def test_build_all_networks(self, edges: list[em.Edge]):
+        deposit = em.Deposit(edges)
         assert len(deposit.find_all_networks()) == 1
 
     def test_build_all_disconnected_networks(self):

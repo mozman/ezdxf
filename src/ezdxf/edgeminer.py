@@ -94,6 +94,7 @@ from __future__ import annotations
 from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple, NamedTuple, Callable
 from typing_extensions import Self, TypeAlias
 from collections import Counter, deque
+import functools
 import time
 import math
 
@@ -266,17 +267,41 @@ class Deposit:
         """
         # no caching: result depends on gap_tol, which is muteable
         counter: Counter[int] = Counter()
-        search = self._search_index.vertices_in_sphere
-        gap_tol = self.gap_tol
+        search = functools.partial(
+            self._search_index.vertices_in_sphere, radius=self.gap_tol
+        )
         for edge in self.edges:
-            counter[len(search(edge.start, gap_tol))] += 1
-            counter[len(search(edge.end, gap_tol))] += 1
+            counter[len(search(edge.start))] += 1
+            counter[len(search(edge.end))] += 1
+        # remove duplicate counts:
         return Counter({k: v // k for k, v in counter.items()})
 
     @property
     def max_degree(self) -> int:
         """Returns the maximum degree of all vertices."""
         return max(self.degree_counter().keys())
+
+    def degree(self, vertex: UVec) -> int:
+        """Returns the degree of the given vertex.
+
+        - degree of 0: not in this deposit
+        - degree of 1: one edge is connected to this vertex
+        - degree of 2: two edges are connected to this vertex
+        - degree of 3: three edges ... and so on
+
+
+        Check if a vertex exist in a deposit::
+
+            if deposit.degree(vertex): ...
+        """
+        return len(self._search_index.vertices_in_sphere(Vec3(vertex), self.gap_tol))
+
+    def degrees(self, vertices: Iterable[UVec]) -> Sequence[int]:
+        """Returns the degree of the given vertices."""
+        search = functools.partial(
+            self._search_index.vertices_in_sphere, radius=self.gap_tol
+        )
+        return tuple(len(search(vertex)) for vertex in Vec3.generate(vertices))
 
     def unique_vertices(self) -> set[Vec3]:
         """Returns all unique vertices from this deposit.
