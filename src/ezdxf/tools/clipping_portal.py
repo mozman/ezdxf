@@ -417,6 +417,10 @@ class InvertedClippingPolygon(ClippingPolygon):
     """Represents an arbitrary inverted clipping polygon.  Removes the geometry
     inside the clipping polygon.
 
+    .. Important:: 
+    
+        The `outer_bounds` must be larger than the content to clip to work correctly.
+
     """
 
     def __init__(self, vertices: Iterable[UVec], outer_bounds: BoundingBox2d) -> None:

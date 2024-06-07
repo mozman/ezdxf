@@ -381,6 +381,11 @@ class InvertedClippingPolygon2d(ConcaveClippingPolygon2d):
     """This class represents an inverted clipping path.  Everything between the inner
     polygon and the outer extents is considered as inside.  The inner clipping path is
     an arbitrary 2D polygon.
+
+    .. Important:: 
+    
+        The `outer_bounds` must be larger than the content to clip to work correctly.
+
     """
 
     def __init__(self, inner_polygon: Iterable[Vec2], outer_bounds: BoundingBox2d):
