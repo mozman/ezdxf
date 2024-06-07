@@ -17,6 +17,7 @@ The complementary module to ezdxf.edgeminer.
 from __future__ import annotations
 from typing import Iterator, Iterable, Sequence, Any
 import math
+import functools
 
 from ezdxf import edgeminer as em
 from ezdxf import entities as et
@@ -25,7 +26,6 @@ from ezdxf.math import (
     Vec3,
     arc_angle_span_deg,
     ellipse_param_span,
-    bulge_from_radius_and_chord,
     bulge_from_arc_angle,
 )
 
@@ -34,7 +34,8 @@ __all__ = [
     "edge_from_entity",
     "edges_from_entities",
     "is_closed_entity",
-    "polyline_from_chain",
+    "lwpolyline_from_chain",
+    "polyline2d_from_chain",
 ]
 # Tolerances
 LEN_TOL = 1e-9  # length and distance
@@ -101,59 +102,83 @@ def is_closed_entity(entity: et.DXFEntity) -> bool:
     return False
 
 
-def edge_from_entity(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None:
-    """Makes an :class:`Edge` instance for the DXF entity types LINE, ARC, ELLIPSE and
-    SPLINE if the entity is an open linear curve.  Returns ``None`` if the entity
-    is a closed curve or cannot represent an edge.
-    """
-    edge: em.Edge | None = None
-
-    if isinstance(entity, et.Line):
-        start = Vec3(entity.dxf.start)
-        end = Vec3(entity.dxf.end)
-        length = start.distance(end)
-        edge = em.make_edge(start, end, length, payload=entity)
-    elif isinstance(entity, et.Arc):
-        radius = abs(entity.dxf.radius)
-        if radius < LEN_TOL:
-            return None
-        start_angle = entity.dxf.start_angle
-        end_angle = entity.dxf.end_angle
-        span_deg = arc_angle_span_deg(start_angle, end_angle)
-        length = radius * span_deg / 180.0 * math.pi
-        sp, ep = entity.vertices((start_angle, end_angle))
-        edge = em.make_edge(sp, ep, length, payload=entity)
-    elif isinstance(entity, et.Ellipse):
-        try:
-            ct1 = entity.construction_tool()
-        except ValueError:
-            return None
-        if ct1.major_axis.magnitude < LEN_TOL or ct1.minor_axis.magnitude < LEN_TOL:
-            return None
-        span = ellipse_param_span(ct1.start_param, ct1.end_param)
-        num = max(3, round(span / 0.1745))  #  resolution of ~1 deg
-        # length of elliptic arc is an approximation:
-        points = list(ct1.vertices(ct1.params(num)))
-        length = sum(a.distance(b) for a, b in zip(points, points[1:]))
-        edge = em.make_edge(Vec3(points[0]), Vec3(points[-1]), length, payload=entity)
-    elif isinstance(entity, et.Spline):
-        try:
-            ct2 = entity.construction_tool()
-        except ValueError:
-            return None
-        start = Vec3(ct2.control_points[0])
-        end = Vec3(ct2.control_points[-1])
-        points = list(ct2.control_points)
-        # length of B-spline is a very rough approximation:
-        length = sum(a.distance(b) for a, b in zip(points, points[1:]))
-        edge = em.make_edge(start, end, length, payload=entity)
-
-    if isinstance(edge, em.Edge):
-        if edge.start.distance(edge.end) < gap_tol:
-            return None
-        if edge.length < gap_tol:
-            return None
+def _validate_edge(edge: em.Edge, gap_tol: float) -> em.Edge | None:
+    if edge.start.distance(edge.end) < gap_tol:
+        return None
+    if edge.length < gap_tol:
+        return None
     return edge
+
+
+@functools.singledispatch
+def make_edge(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None:
+    """Makes an :class:`Edge` instance from the following DXF entity types:
+
+        - LINE
+        - ARC
+        - ELLIPSE
+        - SPLINE
+        - LWPOLYLINE
+        - 2D POLYLINE
+
+    if the entity is an open linear curve.
+
+    Returns ``None`` if the entity is a closed curve or cannot represent an edge.
+    """
+    return None
+
+
+@make_edge.register(et.Line)
+def _edge_from_line(entity: et.Line, gap_tol=em.GAP_TOL) -> em.Edge | None:
+    start = Vec3(entity.dxf.start)
+    end = Vec3(entity.dxf.end)
+    length = start.distance(end)
+    return _validate_edge(em.make_edge(start, end, length, payload=entity), gap_tol)
+
+
+@make_edge.register(et.Arc)
+def _edge_from_arc(entity: et.Arc, gap_tol=em.GAP_TOL) -> em.Edge | None:
+    radius = abs(entity.dxf.radius)
+    if radius < LEN_TOL:
+        return None
+    start_angle = entity.dxf.start_angle
+    end_angle = entity.dxf.end_angle
+    span_deg = arc_angle_span_deg(start_angle, end_angle)
+    length = radius * span_deg / 180.0 * math.pi
+    sp, ep = entity.vertices((start_angle, end_angle))
+    return _validate_edge(em.make_edge(sp, ep, length, payload=entity), gap_tol)
+
+
+@make_edge.register(et.Ellipse)
+def _edge_from_ellipse(entity: et.Ellipse, gap_tol=em.GAP_TOL) -> em.Edge | None:
+    try:
+        ct1 = entity.construction_tool()
+    except ValueError:
+        return None
+    if ct1.major_axis.magnitude < LEN_TOL or ct1.minor_axis.magnitude < LEN_TOL:
+        return None
+    span = ellipse_param_span(ct1.start_param, ct1.end_param)
+    num = max(3, round(span / 0.1745))  #  resolution of ~1 deg
+    # length of elliptic arc is an approximation:
+    points = list(ct1.vertices(ct1.params(num)))
+    length = sum(a.distance(b) for a, b in zip(points, points[1:]))
+    return _validate_edge(
+        em.make_edge(Vec3(points[0]), Vec3(points[-1]), length, payload=entity), gap_tol
+    )
+
+
+@make_edge.register(et.Spline)
+def _edge_from_spline(entity: et.Spline, gap_tol=em.GAP_TOL) -> em.Edge | None:
+    try:
+        ct2 = entity.construction_tool()
+    except ValueError:
+        return None
+    start = Vec3(ct2.control_points[0])
+    end = Vec3(ct2.control_points[-1])
+    points = list(ct2.control_points)
+    # length of B-spline is a very rough approximation:
+    length = sum(a.distance(b) for a, b in zip(points, points[1:]))
+    return _validate_edge(em.make_edge(start, end, length, payload=entity), gap_tol)
 
 
 def edges_from_entities(
@@ -164,7 +189,7 @@ def edges_from_entities(
     Skips all entities which can not be represented as edge.
     """
     for entity in entities:
-        edge = edge_from_entity(entity, gap_tol)
+        edge = make_edge(entity, gap_tol)
         if edge is not None:
             yield edge
 
@@ -184,7 +209,7 @@ def chain_vertices(edges: Sequence[em.Edge], gap_tol=em.GAP_TOL) -> Sequence[Vec
     return vertices
 
 
-def polyline_from_chain(
+def lwpolyline_from_chain(
     edges: Sequence[em.Edge], dxfattribs: Any = None
 ) -> et.LWPolyline:
     """Returns a new virtual :class:`LWPolyline` entity.
@@ -199,10 +224,46 @@ def polyline_from_chain(
         - Gaps between edges are connected by line segments.
 
     """
-    # bulge value is stored in the start vertex of the curved segment
     polyline = et.LWPolyline.new(dxfattribs=dxfattribs)
     if len(edges) == 0:
         return polyline
+    polyline.set_points(polyline_points(edges), format="vb")  # type: ignore
+    return polyline
+
+
+def polyline2d_from_chain(
+    edges: Sequence[em.Edge], dxfattribs: Any = None
+) -> et.Polyline:
+    """Returns a new virtual :class:`Polyline` entity.
+
+    This function assumes the building blocks as simple DXF entities attached as payload
+    to the edges.  The edges are processed in order of the input sequence.
+
+        - LINE entities are added as line segments
+        - ARC entities are added as bulges
+        - ELLIPSE entities with a ratio of 1.0 are added as bulges
+        - Everything else will be added as line segment from Edge.start to Edge.end
+        - Gaps between edges are connected by line segments.
+
+    """
+    polyline = et.Polyline.new(dxfattribs=dxfattribs)
+    if len(edges) == 0:
+        return polyline
+    polyline.append_formatted_vertices(polyline_points(edges), format="vb")  # type: ignore
+    return polyline
+
+
+def polyline_points(edges: Sequence[em.Edge]) -> Iterable[tuple[Vec2, float]]:
+    """Returns the polyline points to create a :class:`LWPolyline` or a
+    2D :class.`Polyline` entity.
+    """
+
+    def extend(pts: Iterable[tuple[Vec2, float]]) -> None:
+        for pnt, bulge in pts:
+            points.append(pnt)
+            bulges.append(bulge)
+
+    # bulge value is stored in the start vertex of the curved segment
     points: list[Vec3] = [edges[0].start]
     bulges: list[float] = [0.0]
     for edge in edges:
@@ -216,15 +277,26 @@ def polyline_from_chain(
             span = arc_angle_span_deg(entity.dxf.start_angle, entity.dxf.end_angle)
             if span > DEG_TOL:
                 bulge = bulge_from_arc_angle(math.radians(span))
-                bulges[-1] = -bulge if edge.is_reverse else bulge         
+                bulges[-1] = -bulge if edge.is_reverse else bulge
         elif isinstance(entity, et.Ellipse):
             ratio = abs(entity.dxf.ratio)
             span = ellipse_param_span(entity.dxf.start_param, entity.dxf.end_param)
             if math.isclose(ratio, 1.0) and span > RAD_TOL:
                 bulge = bulge_from_arc_angle(span)
-                bulges[-1] = -bulge if edge.is_reverse else bulge 
+                bulges[-1] = -bulge if edge.is_reverse else bulge
+        elif isinstance(entity, et.LWPolyline):
+            points = list(entity.get_points(format="vb"))
+            if edge.is_reverse:
+                points.reverse()
+            extend(points)
+            continue
+        elif isinstance(entity, et.Polyline) and entity.is_2d_polyline:
+            points = [(Vec2(v.dxf.location), v.dxf.bulge) for v in entity.vertices]
+            if edge.is_reverse:
+                points.reverse()
+            extend(points)
+            continue
+
         points.append(edge.end)
         bulges.append(0.0)
-    polyline = et.LWPolyline.new(dxfattribs=dxfattribs)
-    polyline.set_points(zip(points, bulges), format="vb")  # type: ignore
-    return polyline
+    return zip(points, bulges)
