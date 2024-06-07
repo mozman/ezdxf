@@ -130,6 +130,20 @@ class TimeoutError(Exception):
         self.solutions = solutions
 
 
+class Watchdog:
+    def __init__(self, timeout=TIMEOUT) -> None:
+        self.timeout: float = timeout
+        self.start_time: float = time.perf_counter()
+
+    def start(self, timeout: float):
+        self.timeout = timeout
+        self.start_time = time.perf_counter()
+
+    @property
+    def has_timed_out(self) -> bool:
+        return time.perf_counter() - self.start_time > self.timeout
+
+
 class Edge(NamedTuple):
     """Represents an immutable edge.
 
@@ -221,6 +235,142 @@ def isclose(a: Vec3, b: Vec3, gap_tol=GAP_TOL) -> bool:
     to get consistent results.
     """
     return a.distance(b) <= gap_tol
+
+
+class Deposit:
+    """The edge deposit stores all available edges for further searches.
+
+    The edges and the search index are immutable after instantiation.
+    The gap_tol value is mutable.
+
+    """
+
+    def __init__(self, edges: Sequence[Edge], gap_tol=GAP_TOL) -> None:
+        self.gap_tol: float = gap_tol
+        self._edges: Sequence[Edge] = type_check(edges)
+        self._search_index = _SpatialSearchIndex(self._edges)
+
+    @property
+    def edges(self) -> Sequence[Edge]:
+        return self._edges
+
+    def degree_counter(self) -> Counter[int]:
+        """Returns a :class:`Counter` for the degree of all vertices.
+
+        - Counter[degree] returns the count of vertices of this degree.
+        - Counter.keys() returns all existing degrees in this deposit
+
+        A new counter will be created for every method call!
+        Different gap tolerances may yield different results.
+
+        """
+        # no caching: result depends on gap_tol, which is muteable
+        counter: Counter[int] = Counter()
+        search = self._search_index.vertices_in_sphere
+        gap_tol = self.gap_tol
+        for edge in self.edges:
+            counter[len(search(edge.start, gap_tol))] += 1
+            counter[len(search(edge.end, gap_tol))] += 1
+        return Counter({k: v // k for k, v in counter.items()})
+
+    @property
+    def max_degree(self) -> int:
+        """Returns the maximum degree of all vertices."""
+        return max(self.degree_counter().keys())
+
+    def unique_vertices(self) -> set[Vec3]:
+        """Returns all unique vertices from this deposit.
+
+        Ignores vertices that are close to another vertex (within the range of gap_tol).
+        It is not determined which of the close vertices is returned.
+
+        e.g. if the vertices a, b are close together, you don't know if you get a or b
+        but it's guaranteed that you only get one of them
+        """
+        return filter_close_vertices(self._search_index.rtree, self.gap_tol)
+
+    def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
+        """Returns all edges linked to `vertex` in range of `radius`.
+
+        Args:
+            vertex: 3D search location
+            radius: search range, default radius is :attr:`Deposit.gap_tol`
+
+        """
+        if radius < 0:
+            radius = self.gap_tol
+        vertices = self._search_index.vertices_in_sphere(Vec3(vertex), radius)
+        return tuple(v.edge for v in vertices)
+
+    def find_nearest_edge(self, vertex: UVec) -> Edge | None:
+        """Return the nearest edge to the given vertex.
+
+        The distance is measured to the connection line from start to end of the edge.
+        This is not correct for edges that represent arcs or splines.
+        """
+
+        def distance(edge: Edge) -> float:
+            try:
+                return distance_point_line_3d(vertex, edge.start, edge.end)
+            except ZeroDivisionError:
+                return edge.start.distance(vertex)
+
+        vertex = Vec3(vertex)
+        si = self._search_index
+        nearest_vertex = si.nearest_vertex(vertex)
+        edges = self.edges_linked_to(nearest_vertex)
+        if edges:
+            return min(edges, key=distance)
+        return None
+
+    def find_network(self, edge: Edge) -> set[Edge]:
+        """Returns the network of all edges that are directly and indirectly linked to
+        `edge`.  A network has two or more edges, a solitary edge is not a network.
+        """
+
+        def process(vertex: Vec3) -> None:
+            linked_edges = set(self.edges_linked_to(vertex)) - network
+            if linked_edges:
+                network.update(linked_edges)
+                todo.extend(linked_edges)
+
+        todo: list[Edge] = [edge]
+        network: set[Edge] = set(todo)
+        while todo:
+            edge = todo.pop()
+            process(edge.start)
+            process(edge.end)
+        if len(network) > 1:  # a network requires two or more edges
+            return network
+        return set()
+
+    def find_all_networks(self) -> Sequence[set[Edge]]:
+        """Returns all separated networks in this deposit in ascending order of edge
+        count.
+        """
+        edges = set(self.edges)
+        networks: list[set[Edge]] = []
+        while edges:
+            edge = edges.pop()
+            network = self.find_network(edge)
+            if len(network):
+                networks.append(network)
+                edges -= network
+            else:  # solitary edge
+                edges.discard(edge)
+
+        networks.sort(key=lambda n: len(n))
+        return networks
+
+    def find_leafs(self) -> Iterator[Edge]:
+        """Yields all edges that have at least one end point without connection to other
+        edges.
+        """
+        for edge in self.edges:
+            if len(self.edges_linked_to(edge.start)) == 1:
+                yield edge
+            elif len(self.edges_linked_to(edge.end)) == 1:
+                yield edge
 
 
 def is_forward_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
@@ -347,20 +497,6 @@ def find_all_sequential_chains(
         chain = find_sequential_chain(edges, gap_tol)
         edges = edges[len(chain) :]
         yield chain
-
-
-class Watchdog:
-    def __init__(self, timeout=TIMEOUT) -> None:
-        self.timeout: float = timeout
-        self.start_time: float = time.perf_counter()
-
-    def start(self, timeout: float):
-        self.timeout = timeout
-        self.start_time = time.perf_counter()
-
-    @property
-    def has_timed_out(self) -> bool:
-        return time.perf_counter() - self.start_time > self.timeout
 
 
 def find_loop(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
@@ -529,142 +665,6 @@ class _SpatialSearchIndex:
         """Returns the nearest vertex to the given location."""
         vertex, _ = self._search_tree.nearest_neighbor(location)
         return vertex
-
-
-class Deposit:
-    """The edge deposit stores all available edges for further searches.
-
-    The edges and the search index are immutable after instantiation.
-    The gap_tol value is mutable.
-
-    """
-
-    def __init__(self, edges: Sequence[Edge], gap_tol=GAP_TOL) -> None:
-        self.gap_tol: float = gap_tol
-        self._edges: Sequence[Edge] = type_check(edges)
-        self._search_index = _SpatialSearchIndex(self._edges)
-
-    @property
-    def edges(self) -> Sequence[Edge]:
-        return self._edges
-
-    def degree_counter(self) -> Counter[int]:
-        """Returns a :class:`Counter` for the degree of all vertices.
-
-        - Counter[degree] returns the count of vertices of this degree.
-        - Counter.keys() returns all existing degrees in this deposit
-
-        A new counter will be created for every method call!
-        Different gap tolerances may yield different results.
-
-        """
-        # no caching: result depends on gap_tol, which is muteable
-        counter: Counter[int] = Counter()
-        search = self._search_index.vertices_in_sphere
-        gap_tol = self.gap_tol
-        for edge in self.edges:
-            counter[len(search(edge.start, gap_tol))] += 1
-            counter[len(search(edge.end, gap_tol))] += 1
-        return Counter({k: v // k for k, v in counter.items()})
-
-    @property
-    def max_degree(self) -> int:
-        """Returns the maximum degree of all vertices."""
-        return max(self.degree_counter().keys())
-
-    def unique_vertices(self) -> set[Vec3]:
-        """Returns all unique vertices from this deposit.
-
-        Ignores vertices that are close to another vertex (within the range of gap_tol).
-        It is not determined which of the close vertices is returned.
-
-        e.g. if the vertices a, b are close together, you don't know if you get a or b
-        but it's guaranteed that you only get one of them
-        """
-        return filter_close_vertices(self._search_index.rtree, self.gap_tol)
-
-    def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
-        """Returns all edges linked to `vertex` in range of `radius`.
-
-        Args:
-            vertex: 3D search location
-            radius: search range, default radius is :attr:`Deposit.gap_tol`
-
-        """
-        if radius < 0:
-            radius = self.gap_tol
-        vertices = self._search_index.vertices_in_sphere(Vec3(vertex), radius)
-        return tuple(v.edge for v in vertices)
-
-    def find_nearest_edge(self, vertex: UVec) -> Edge | None:
-        """Return the nearest edge to the given vertex.
-
-        The distance is measured to the connection line from start to end of the edge.
-        This is not correct for edges that represent arcs or splines.
-        """
-
-        def distance(edge: Edge) -> float:
-            try:
-                return distance_point_line_3d(vertex, edge.start, edge.end)
-            except ZeroDivisionError:
-                return edge.start.distance(vertex)
-
-        vertex = Vec3(vertex)
-        si = self._search_index
-        nearest_vertex = si.nearest_vertex(vertex)
-        edges = self.edges_linked_to(nearest_vertex)
-        if edges:
-            return min(edges, key=distance)
-        return None
-
-    def find_network(self, edge: Edge) -> set[Edge]:
-        """Returns the network of all edges that are directly and indirectly linked to
-        `edge`.  A network has two or more edges, a solitary edge is not a network.
-        """
-
-        def process(vertex: Vec3) -> None:
-            linked_edges = set(self.edges_linked_to(vertex)) - network
-            if linked_edges:
-                network.update(linked_edges)
-                todo.extend(linked_edges)
-
-        todo: list[Edge] = [edge]
-        network: set[Edge] = set(todo)
-        while todo:
-            edge = todo.pop()
-            process(edge.start)
-            process(edge.end)
-        if len(network) > 1:  # a network requires two or more edges
-            return network
-        return set()
-
-    def find_all_networks(self) -> Sequence[set[Edge]]:
-        """Returns all separated networks in this deposit in ascending order of edge
-        count.
-        """
-        edges = set(self.edges)
-        networks: list[set[Edge]] = []
-        while edges:
-            edge = edges.pop()
-            network = self.find_network(edge)
-            if len(network):
-                networks.append(network)
-                edges -= network
-            else:  # solitary edge
-                edges.discard(edge)
-
-        networks.sort(key=lambda n: len(n))
-        return networks
-
-    def find_leafs(self) -> Iterator[Edge]:
-        """Yields all edges that have at least one end point without connection to other
-        edges.
-        """
-        for edge in self.edges:
-            if len(self.edges_linked_to(edge.start)) == 1:
-                yield edge
-            elif len(self.edges_linked_to(edge.end)) == 1:
-                yield edge
 
 
 SearchSolutions: TypeAlias = Dict[Tuple[int, ...], Sequence[Edge]]
@@ -1112,7 +1112,7 @@ def line_checker(abs_tol=ABS_TOl):
     return is_congruent_line
 
 
-def filter_congruent_edges(
+def filter_coincident_edges(
     deposit: Deposit, eq_fn: Callable[[Edge, Edge], bool] = line_checker()
 ) -> Sequence[Edge]:
     edges = set(deposit.edges)
