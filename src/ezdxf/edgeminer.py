@@ -654,6 +654,7 @@ def type_check(edges: Sequence[Edge]) -> Sequence[Edge]:
 
 
 class _Vertex(Vec3):
+    __slots__ = ("edge",)
     # for unknown reasons super().__init__(location) doesn't work, therefor no
     # _Vertex.__init__(self, location: Vec3, edge: Edge) constructor
     edge: Edge
