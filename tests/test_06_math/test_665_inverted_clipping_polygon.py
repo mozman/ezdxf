@@ -236,8 +236,8 @@ class TestPolygonClipping:
         )
         assert len(result) == 1
         clipped_polygon = result[0]
-        # The clipped polygon doesn't have to be closed, future implementation may 
-        # change and the results of the Greiner-Horman algorithm for "edge-cases" are 
+        # The clipped polygon doesn't have to be closed, future implementation may
+        # change and the results of the Greiner-Horman algorithm for "edge-cases" are
         # not consistent!
         assert len(clipped_polygon) in (4, 5)
         if len(clipped_polygon) == 5:
@@ -245,6 +245,27 @@ class TestPolygonClipping:
         bbox = BoundingBox2d(clipped_polygon)
         assert bbox.extmin.isclose((3, 1))  # lower-left clipped vertex
         assert bbox.extmax.isclose((6, 2))  # vertex c
+
+
+@pytest.mark.parametrize(
+    "p1,p2",
+    [
+        [(500, 10), (500, 990)],  # crosses inner square
+        [(700, 10), (700, 990)],  # crosses diagonal connection line - fails
+    ],
+)
+@pytest.mark.xfail(reason="work in progress")
+def test_issue_1101(p1: Vec2, p2: Vec2):
+    """Clipping on diagonal connection does not work.
+
+    #1101: <https://github.com/mozman/ezdxf/issues/1101>
+    """
+    poly = Vec2.list([(400, 400), (400, 600), (600, 600), (600, 400), (400, 400)])
+    box = BoundingBox2d([(-10, -10), (1000, 1000)])
+    inv_clipping = ICP(poly, box)
+
+    segments = inv_clipping.clip_line(Vec2(p1), Vec2(p2))
+    assert len(segments) == 2
 
 
 if __name__ == "__main__":
