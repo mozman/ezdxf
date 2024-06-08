@@ -373,7 +373,11 @@ def polygon_line_intersections_2d(
                 continue
         intersection_points.append(ip)
         prev_ip = ip
-    intersection_points.sort(reverse=start > end)
+
+    if start > end:
+        intersection_points.sort(key=lambda ip: ip.distance(end), reverse=True)
+    else:
+        intersection_points.sort(key=lambda ip: ip.distance(start))
     return intersection_points
 
 
