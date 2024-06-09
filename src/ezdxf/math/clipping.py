@@ -253,6 +253,16 @@ class ConcaveClippingPolygon2d:
             # first inside-segment begins at start
             intersections.insert(0, start)
 
+        # REMOVE duplicate intersection points at the beginning and the end -
+        # these are caused by clipping at the connection point of two edges.
+        # KEEP duplicate intersection points in between - these are caused by the
+        # coincident edges of inverted clipping polygons.  These intersections points
+        # are required for the inside/outside rule to work properly!
+        if len(intersections) > 1 and intersections[0].isclose(intersections[1]):
+            intersections.pop(0)
+        if len(intersections) > 1 and intersections[-1].isclose(intersections[-2]):
+            intersections.pop()
+
         if has_colinear_edge(self._clipping_polygon, start, end):
             # slow detection: doesn't work with inside/outside rule!
             # test if mid-point of intersection-segment is inside the polygon.
@@ -342,21 +352,23 @@ def polygon_line_intersections_2d(
     All intersections points are ordered from start to end of line.
     Start and end points are not included if not explicit intersection points.
 
+    .. Note::
+
+        Returns duplicate intersections points when the line intersects at
+        the connection point of two polygon edges!
+
     """
     intersection_points: list[Vec2] = []
     start, end = line
     size = len(polygon)
-    prev_ip: Vec2 | None = None
     for index in range(size):
         a = polygon[index - 1]
         b = polygon[index]
         ip = intersection_line_line_2d((a, b), line, virtual=False)
         if ip is None:
             continue
-        if prev_ip is not None and ip.isclose(prev_ip):
-            # every intersection point counts only once!
-            continue
-        # edge case: line intersects "exact" in point a
+        # Note: do not remove duplicate vertices, because inverted clipping polygons
+        # have coincident clipping edges inside the clipping polygon! #1101
         if ip.isclose(a):
             a_prev = polygon[index - 2]
             rel_prev = point_to_line_relation(a_prev, start, end)
@@ -371,7 +383,6 @@ def polygon_line_intersections_2d(
             if rel_prev == rel_next:
                 continue
         intersection_points.append(ip)
-        prev_ip = ip
 
     intersection_points.sort(key=lambda ip: ip.distance(start))
     return intersection_points
@@ -382,8 +393,8 @@ class InvertedClippingPolygon2d(ConcaveClippingPolygon2d):
     polygon and the outer extents is considered as inside.  The inner clipping path is
     an arbitrary 2D polygon.
 
-    .. Important:: 
-    
+    .. Important::
+
         The `outer_bounds` must be larger than the content to clip to work correctly.
 
     """

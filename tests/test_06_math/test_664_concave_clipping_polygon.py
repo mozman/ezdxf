@@ -236,7 +236,7 @@ class TestLineClipping:
         assert s1.isclose((4, 5))
         assert e1.isclose((4, 7))
 
-    def test_line_intersection_at_vertex(self, polygon_c: CCP):
+    def test_line_intersection_at_vertex_outside_inside(self, polygon_c: CCP):
         # 4 .|.|...
         # 3 .|.+-+.
         # 2 .|b..|.
@@ -249,7 +249,7 @@ class TestLineClipping:
         assert s.isclose((1, 1))
         assert e.isclose((2, 2))
 
-    def test_line_touches_at_vertex(self, polygon_c: CCP):
+    def test_line_touches_vertex_outside_outside(self, polygon_c: CCP):
         # 4 .|.|...
         # 3 .|.3-2.
         # 2 a|...|.
@@ -258,6 +258,20 @@ class TestLineClipping:
         #   0123456
         result = polygon_c.clip_line(Vec2(0, 2), Vec2(2, 0))
         assert len(result) == 0
+
+    def test_line_touches_vertex_inside_inside(self, polygon_c: CCP):
+        # 4 .|a|...
+        # 3 .|.3-2.
+        # 2 .|..b|.
+        # 1 .x---1.
+        # 0 .......
+        #   0123456
+        result = polygon_c.clip_line(Vec2(2, 4), Vec2(4, 2))
+
+        assert len(result) == 1
+        s, e = result[0]
+        assert s.isclose((2, 4))
+        assert e.isclose((4, 2))
 
     def test_line_is_colinear_to_outer_edge(self, polygon_c: CCP):
         # 4 .|.|...

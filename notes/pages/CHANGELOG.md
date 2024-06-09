@@ -1,5 +1,10 @@
-## Version 1.3.1 - 2024-06-06
-id:: 6634bed7-9a8c-4136-9a0c-96ce3078c948
+## Version 1.3.2 - dev
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- BUGFIX: line clipping  of inverted clipping polygons
+		- {{issue 1101}}
+		-
+- ## Version 1.3.1 - 2024-06-06
+  id:: 6634bed7-9a8c-4136-9a0c-96ce3078c948
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: `ezdxf.acis.api.vertices_from_body()` function
 	- CHANGE: optional empty string as default value of the `plotter_configuration_file` attribute for modelspace and paperspace layouts
