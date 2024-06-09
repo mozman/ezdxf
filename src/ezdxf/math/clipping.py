@@ -343,7 +343,6 @@ def polygon_line_intersections_2d(
     Start and end points are not included if not explicit intersection points.
 
     """
-    # pylint: disable=C0200
     intersection_points: list[Vec2] = []
     start, end = line
     size = len(polygon)
@@ -374,10 +373,7 @@ def polygon_line_intersections_2d(
         intersection_points.append(ip)
         prev_ip = ip
 
-    if start > end:
-        intersection_points.sort(key=lambda ip: ip.distance(end), reverse=True)
-    else:
-        intersection_points.sort(key=lambda ip: ip.distance(start))
+    intersection_points.sort(key=lambda ip: ip.distance(start))
     return intersection_points
 
 
