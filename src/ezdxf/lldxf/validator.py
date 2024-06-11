@@ -383,7 +383,7 @@ def is_valid_table_name(name: str) -> bool:
 def make_table_key(name: str) -> str:
     """Make unified table entry key."""
     if not isinstance(name, str):
-        raise DXFTypeError("name has to be a string.")
+        raise DXFTypeError(f"name has to be a string, got {type(name)}")
     return name.lower()
 
 
