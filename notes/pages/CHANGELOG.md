@@ -1,5 +1,7 @@
 ## Version 1.3.2 - dev
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- NEW: `recover` module can load DXF R12 files with subclass markers in table entries
+		- {{discussion 1106}}
 	- BUGFIX: line clipping  of inverted clipping polygons
 		- {{issue 1101}}
 		-
