@@ -93,12 +93,12 @@ Forward Connection
 from __future__ import annotations
 from typing import Any, Sequence, Iterator, Iterable, Dict, Tuple, NamedTuple, Callable
 from typing_extensions import Self, TypeAlias
-from collections import Counter, deque
+from collections import Counter
 import functools
 import time
 import math
 
-from ezdxf.math import UVec, Vec3, distance_point_line_3d
+from ezdxf.math import UVec, Vec2, Vec3, distance_point_line_3d
 from ezdxf.math import rtree
 
 
@@ -110,6 +110,7 @@ __all__ = [
     "find_all_sequential_chains",
     "find_all_simple_chains",
     "find_loop",
+    "find_loop_by_edge",
     "find_sequential_chain",
     "flatten",
     "is_chain",
@@ -1056,69 +1057,6 @@ def count_checker(count: int):
     return has_min_edge_count
 
 
-def find_loops_nearby(
-    deposit: Deposit,
-    pick_point: UVec,
-    *,
-    max_count=0,
-    check_fn: Callable[[Sequence[Edge]], bool] = count_checker(3),
-    timeout=TIMEOUT,
-) -> Sequence[Sequence[Edge]]:
-    """Returns the first loop found near the pick point."""
-    # search term: Enumerating All Circuits of a Graph
-    if len(deposit.edges) < 2:
-        return tuple()
-
-    def sort_edges(edges: Iterable[Edge], last_edge: Edge) -> list[Edge]:
-        end_point = last_edge.end
-        oriented_edges = [
-            e if isclose(e.start, end_point, gap_tol) else e.reversed() for e in edges
-        ]
-        oriented_edges.sort(key=lambda e: pick_point.distance(e.end))  # type: ignore
-        return oriented_edges
-
-    def add_solution(edges: Sequence[Edge]) -> None:
-        key = frozenset(e.id for e in edges)
-        if key in solutions_keys:
-            return
-        solutions.append(edges)
-        solutions_keys.add(key)
-
-    pick_point = Vec3(pick_point)
-    solutions: list[Sequence[Edge]] = []
-    solutions_keys: set[frozenset[int]] = set()
-    gap_tol = deposit.gap_tol
-    start = deposit.find_nearest_edge(pick_point)
-    assert start is not None
-    start_point = start.start
-    watchdog = Watchdog(timeout)
-    todo: deque[tuple[Edge, ...]] = deque([(start,)])
-    while todo:
-        if watchdog.has_timed_out:
-            raise TimeoutError("search process has timed out", solutions)
-        chain = todo.pop()
-        last_edge = chain[-1]
-        end_point = last_edge.end
-        candidates = deposit.edges_linked_to(end_point, radius=gap_tol)
-        # edges must be unique in a loop
-        survivers = set(candidates) - set(chain)
-        for next_edge in sort_edges(survivers, last_edge):
-            last_point = next_edge.end
-            if isclose(last_point, start_point, gap_tol):
-                loop = chain + (next_edge,)
-                if not check_fn(loop):
-                    continue
-                add_solution(loop)
-                if max_count and len(solutions) == max_count:
-                    return solutions
-            # Add only chains to the deque that have vertices of max degree 2.
-            # If the new end point is in the chain, a vertex of degree 3 would be
-            # created.
-            elif not any(isclose(last_point, e.end, gap_tol) for e in chain):
-                todo.appendleft(chain + (next_edge,))
-    return solutions
-
-
 def line_checker(abs_tol=ABS_TOl):
     def is_congruent_line(a: Edge, b: Edge) -> bool:
         return (
@@ -1167,3 +1105,76 @@ def filter_close_vertices(rt: rtree.RTree[Vec3], gap_tol: float) -> set[Vec3]:
             if not any(isclose(candidate, v, gap_tol) for v in merged):
                 merged.add(candidate)
     return merged
+
+
+def sort_edges_to_base(
+    edges: Iterable[Edge], base: Edge, gap_tol=GAP_TOL
+) -> list[Edge]:
+    """Returns a list of `edges` sorted in counter-clockwise order in relation to the
+    `base` edge.
+
+    The `base` edge represents zero radians.
+    All edges have to be connected to end-vertex of the `base` edge.
+    This is a pure 2D algorithm and ignores all z-axis values.
+
+    Args:
+        edges: list of edges to sort
+        base: base edge for sorting, represents 0-radians
+
+    Raises:
+        ValueError: edge is not connected to center
+
+    """
+
+    def angle(edge: Edge) -> float:
+        s = Vec2(edge.start)
+        e = Vec2(edge.end)
+        if connection_point.distance(s) <= gap_tol:
+            edge_angle = (e - s).angle
+        elif connection_point.distance(e) <= gap_tol:
+            edge_angle = (s - e).angle
+        else:
+            raise ValueError(f"edge {edge!s} not connected to center")
+        return (edge_angle - base_angle) % math.tau
+
+    connection_point = Vec2(base.end)
+    base_angle = (Vec2(base.start) - connection_point).angle
+    return sorted(edges, key=angle)
+
+
+def find_loop_by_edge(deposit: Deposit, start: Edge, clockwise=True) -> Sequence[Edge]:
+    """Returns the first loop found including the given edge.
+
+    Returns an empty sequence if no loop was found.
+
+    """
+    if len(deposit.edges) < 2:
+        return tuple()
+    gap_tol = deposit.gap_tol
+    chain = [start]
+    chain_set = set(chain)
+    start_point = start.start
+
+    while True:
+        last_edge = chain[-1]
+        end_point = last_edge.end
+        candidates = deposit.edges_linked_to(end_point, radius=gap_tol)
+        # edges must be unique in a loop
+        survivers = set(candidates) - chain_set
+        count = len(survivers)
+        if count == 0:
+            return tuple()  # dead end
+        if count > 1:
+            sorted_edges = sort_edges_to_base(survivers, last_edge, gap_tol)
+            if clockwise:
+                next_edge = sorted_edges[-1]  # first clockwise edge
+            else:
+                next_edge = sorted_edges[0]  # first counter-clockwise edge
+        else:
+            next_edge = survivers.pop()
+        if not isclose(next_edge.start, end_point, gap_tol):
+            next_edge = next_edge.reversed()
+        chain.append(next_edge)
+        if isclose(next_edge.end, start_point, gap_tol):
+            return chain  # found a closed loop
+        chain_set.add(next_edge)

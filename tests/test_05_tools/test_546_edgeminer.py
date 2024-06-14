@@ -5,7 +5,7 @@ from typing import Sequence
 import pytest
 
 from ezdxf import edgeminer as em
-from ezdxf.math import Vec3, rtree
+from ezdxf.math import Vec2, Vec3, rtree
 
 
 class TestBasicRequirements:
@@ -698,18 +698,34 @@ class TestOpenChainFinder:
         assert len(result) == 0
 
 
-def test_find_loop_nearby():
+class TestFindLoopByEdge:
     #   0   1   2
     # 2 +-F-+-E-+
     #   G   J   D
     # 1 +-K-+-L-+
     #   H   I   C
     # 0 +-A-+-B-+
-    loops = em.find_loops_nearby(
-        em.Deposit(grid()), pick_point=(0.5, 0.5), max_count=1, timeout=1
-    )
-    assert len(loops) == 1
-    assert collect(loops[0]) in {"A,I,K,H", "H,K,I,A"}
+    edges = grid()
+
+    def edge(self, payload: str):
+        for edge in self.edges:
+            if edge.payload == payload:
+                return edge
+        raise ValueError(f"edge {payload} does not exist")
+
+    def test_search_continuation_clockwise(self):
+        loop = em.find_loop_by_edge(
+            em.Deposit(self.edges), self.edge("A"), clockwise=True
+        )
+        assert len(loop) == 4
+        assert collect(loop) == "A,I,K,H"
+
+    def test_search_continuation_counter_clockwise(self):
+        loop = em.find_loop_by_edge(
+            em.Deposit(self.edges), self.edge("A"), clockwise=False
+        )
+        assert len(loop) == 8
+        assert collect(loop) == "A,B,C,D,E,F,G,H"
 
 
 def test_filter_coincident_edges():
@@ -746,6 +762,69 @@ class TestFilterCloseVertices:
         result = em.filter_close_vertices(rt, gap_tol=1)
         # You don't know which vertices were removed!
         assert len(result) == 8
+
+
+class TestSortEdgesByAngle:
+    #   0   1   2
+    # 2 +---+---+
+    #   |\  |  /|
+    #   | D C B |
+    #   |  \|/  |
+    # 1 +-E-+-A-+
+    #   |  /|\  |
+    #   | F G H |
+    #   |/  |  \|
+    # 0 +---+---+
+    A = em.make_edge((1, 1), (2, 1), payload="A")
+    B = em.make_edge((1, 1), (2, 2), payload="B")
+    C = em.make_edge((1, 1), (1, 2), payload="C")
+    D = em.make_edge((1, 1), (0, 2), payload="D")
+    E = em.make_edge((1, 1), (0, 1), payload="E")
+    F = em.make_edge((1, 1), (0, 0), payload="F")
+    G = em.make_edge((1, 1), (1, 0), payload="G")
+    H = em.make_edge((1, 1), (2, 0), payload="H")
+
+    def test_edges_B_C_base_A(self):
+        edges = [self.C, self.B]
+        base = self.A.reversed()
+        result = em.sort_edges_to_base(edges, base)
+        assert result[0] is self.B
+        assert result[1] is self.C
+
+    def test_edges_G_H_base_A(self):
+        edges = [self.G, self.H]
+        base = self.A.reversed()
+        result = em.sort_edges_to_base(edges, base)
+        assert result[0] is self.G
+        assert result[1] is self.H
+
+    def test_edges_B_H_base_A(self):
+        edges = [self.H, self.B]
+        base = self.A.reversed()
+        result = em.sort_edges_to_base(edges, base)
+        assert result[0] is self.B
+        assert result[1] is self.H
+
+    def test_edges_A_B_base_C(self):
+        edges = [self.A, self.B]
+        base = self.C.reversed()
+        result = em.sort_edges_to_base(edges, base)
+        assert result[0] is self.A
+        assert result[1] is self.B
+
+    def test_edges_D_E_base_C(self):
+        edges = [self.D, self.E]
+        base = self.C.reversed()
+        result = em.sort_edges_to_base(edges, base)
+        assert result[0] is self.D
+        assert result[1] is self.E
+
+    def test_edges_B_D_base_C(self):
+        edges = [self.B, self.D]
+        base = self.C.reversed()
+        result = em.sort_edges_to_base(edges, base)
+        assert result[0] is self.D
+        assert result[1] is self.B
 
 
 if __name__ == "__main__":
