@@ -32,6 +32,7 @@
 		- A [[REGION]] consist of one or more flat loops that enclose a space based on [[ACIS]].
 		- The [[SAT]] and [[SAB]] representation of curved edges and faces within [[ACIS]] data needs to be reverse engineered.
 		- Explode curved faces into virtual [[LINE]], [[ARC]], [[ELLIPSE]] and [[SPLINE]] entities or a [[Path]] instance
+	- #maybe associative arrays, [ARRAY](https://help.bricsys.com/document/_commandreference--CMD_-array/V23/EN_US?id=165079036414) command in CAD applications
 -
 - # Boundary Path Constructor
 	- LATER A module to create boundary paths for [[HATCH]] and [[MPOLYGON]] entities.
