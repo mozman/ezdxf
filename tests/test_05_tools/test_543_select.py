@@ -288,7 +288,9 @@ class TestBoundingBoxIntersectsFence:
 
     def test_select_nothing_inside_a_closed_fence(self, msp: Modelspace):
         """A closed fence does NOT work like a polygon selection!"""
-        selection = select.bbox_crosses_fence([(-9, -9), (-9, 9), (9, 9), (-9, 9), (-9, -9)], msp)
+        selection = select.bbox_crosses_fence(
+            [(-9, -9), (-9, 9), (9, 9), (-9, 9), (-9, -9)], msp
+        )
         assert len(selection) == 0
 
     def test_select_by_touching_bbox_corner(self, msp: Modelspace):
@@ -316,6 +318,32 @@ def test_all_entities_chained_by_bounding_boxes():
     start = msp[-1]
     selected = select.bbox_chained(start, msp)
     assert len(selected) == 10
+
+
+class TestPlanarSearchIndex:
+    def test_circle_select_radius_1(self, msp: Modelspace):
+        spi = select.PlanarSearchIndex(msp)
+        result = spi.bbox_vertex_in_circle((0, 0), 1)
+        assert len(result) == 1
+        assert result[0].dxftype() == "POINT"
+        # CIRCLE is not selected because, none of the bounding box vertices of the
+        # CIRCLE is inside the section circle
+
+    def test_circle_select_radius_2(self, msp: Modelspace):
+        spi = select.PlanarSearchIndex(msp)
+        result = spi.bbox_vertex_in_circle((0, 0), 2)
+        assert len(result) == 2
+        types = {e.dxftype() for e in result}
+        assert "POINT" in types
+        assert "LINE" in types
+
+    def test_rect_select(self, msp: Modelspace):
+        spi = select.PlanarSearchIndex(msp)
+        result = spi.bbox_vertex_in_rect((-1, -1), (1, 1))
+        assert len(result) == 2
+        types = {e.dxftype() for e in result}
+        assert "POINT" in types
+        assert "LINE" in types
 
 
 if __name__ == "__main__":

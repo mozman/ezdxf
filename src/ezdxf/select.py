@@ -1,27 +1,29 @@
 # Copyright (c) 2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, Callable
+from typing import Iterable, Callable, Sequence
 from typing_extensions import override
 import abc
 
 from ezdxf import bbox
 from ezdxf.entities import DXFEntity
-from ezdxf.math import UVec, Vec2, BoundingBox2d, is_point_in_polygon_2d
+from ezdxf.math import UVec, Vec2, Vec3, BoundingBox2d, is_point_in_polygon_2d
 from ezdxf.math.clipping import CohenSutherlandLineClipping2d
+from ezdxf.math import rtree, BoundingBox
 from ezdxf.query import EntityQuery
 
 
 __all__ = [
-    "Window",
-    "Circle",
-    "Polygon",
+    "bbox_chained",
+    "bbox_crosses_fence",
     "bbox_inside",
     "bbox_outside",
     "bbox_overlap",
-    "bbox_chained",
-    "bbox_crosses_fence",
+    "Circle",
+    "PlanarSearchIndex",
     "point_in_bbox",
+    "Polygon",
+    "Window",
 ]
 
 
@@ -103,7 +105,7 @@ class Circle(SelectionShape):
 
 class Polygon(SelectionShape):
     """This selection shape tests entities against an arbitrary closed polygon.
-    All entities are projected on the xy-plane. Complex **concave** polygons may not 
+    All entities are projected on the xy-plane. Complex **concave** polygons may not
     work as expected.
     """
 
@@ -340,3 +342,72 @@ def bbox_chained(
                     break
 
     return EntityQuery(selected.keys())
+
+
+class _BoxVertex(Vec3):
+    __slots__ = "uid"
+    uid: int
+
+
+class PlanarSearchIndex:
+    """**Spatial Search Index for DXF Entities**
+
+    This class implements a spatial search index for DXF entities based on their bounding 
+    boxes. It operates strictly within the two-dimensional (2D) space of the xy-plane. 
+    The index is built once and cannot be extended afterward. 
+    
+    The index can be used to pre-select DXF entities from a certain area to reduce the 
+    search space for other selection tools of this module.
+
+    **Functionality**
+
+    - The index relies on the bounding boxes of DXF entities, and only the corner 
+      vertices of these bounding boxes are indexed.
+    - It can only find DXF entities that have at least one bounding box vertex located 
+      within the search area. Entities whose bounding boxes overlap the search area but 
+      have no vertices inside it will not be found (e.g., a circle whose center point 
+      is inside the search area but none of its bounding box vertices will not be 
+      included).
+
+    **Recommendations**
+
+    Since this index is intended to be used in conjunction with other selection tools 
+    within this module, it's recommended to maintain a bounding box cache to avoid 
+    the computational cost of recalculating them frequently. This class creates a new 
+    bounding box cache if none is specified. This cache can be accessed through the 
+    public attribute :attr:`cache`.       
+
+    """
+
+    def __init__(self, entities: Iterable[DXFEntity], cache: bbox.Cache | None = None):
+        self.cache = cache or bbox.Cache()
+        self._entities: dict[int, DXFEntity] = {}
+        vertices: list[_BoxVertex] = []
+        for entity in entities:
+            box2d = BoundingBox2d(bbox.extents((entity,), fast=True, cache=self.cache))
+            if not box2d.has_data:
+                continue
+            uid = id(entity)
+            self._entities[uid] = entity
+            for location in box2d.rect_vertices():
+                vertex = _BoxVertex(location)
+                vertex.uid = uid
+                vertices.append(vertex)
+        self._search_tree = rtree.RTree(vertices)
+
+    def bbox_vertex_in_circle(self, center: UVec, radius: float) -> Sequence[DXFEntity]:
+        """Returns all DXF entities that have at least one bounding box vertex located
+        around `center` with a max. distance of `radius`.
+        """
+        center = Vec3(Vec2(center))  # z-axis must be 0
+        box_vertices = self._search_tree.points_in_sphere(center, radius)
+        return [self._entities[uid] for uid in set([v.uid for v in box_vertices])]
+
+    def bbox_vertex_in_rect(self, p1: UVec, p2: UVec) -> Sequence[DXFEntity]:
+        """Returns all DXF entities that have at least one bounding box vertex located
+        inside or at the border of the rectangle defined by the two given corner points.
+        """
+        box_vertices = self._search_tree.points_in_bbox(
+            BoundingBox([Vec2(p1), Vec2(p2)])
+        )
+        return [self._entities[uid] for uid in set([v.uid for v in box_vertices])]

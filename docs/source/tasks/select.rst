@@ -90,3 +90,14 @@ The following selection shapes are implemented:
 .. autoclass:: Circle
 
 .. autoclass:: Polygon
+
+Planar Search Index
+-------------------
+
+.. versionadded:: 1.4
+    
+.. autoclass:: PlanarSearchIndex
+
+    .. automethod:: bbox_vertex_in_circle
+
+    .. automethod:: bbox_vertex_in_rect
