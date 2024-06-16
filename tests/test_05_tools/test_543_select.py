@@ -322,28 +322,38 @@ def test_all_entities_chained_by_bounding_boxes():
 
 class TestPlanarSearchIndex:
     def test_circle_select_radius_1(self, msp: Modelspace):
-        spi = select.PlanarSearchIndex(msp)
-        result = spi.bbox_vertex_in_circle((0, 0), 1)
+        psi = select.PlanarSearchIndex(msp)
+        result = psi.detection_point_in_circle((0, 0), 1)
         assert len(result) == 1
         assert result[0].dxftype() == "POINT"
         # CIRCLE is not selected because, none of the bounding box vertices of the
         # CIRCLE is inside the section circle
 
     def test_circle_select_radius_2(self, msp: Modelspace):
-        spi = select.PlanarSearchIndex(msp)
-        result = spi.bbox_vertex_in_circle((0, 0), 2)
+        psi = select.PlanarSearchIndex(msp)
+        result = psi.detection_point_in_circle((0, 0), 2)
         assert len(result) == 2
         types = {e.dxftype() for e in result}
         assert "POINT" in types
         assert "LINE" in types
 
+    def test_circle_select_all(self, msp: Modelspace):
+        psi = select.PlanarSearchIndex(msp)
+        result = psi.detection_point_in_circle((0, 0), 8)
+        assert len(result) == 4
+
     def test_rect_select(self, msp: Modelspace):
-        spi = select.PlanarSearchIndex(msp)
-        result = spi.bbox_vertex_in_rect((-1, -1), (1, 1))
+        psi = select.PlanarSearchIndex(msp)
+        result = psi.detection_point_in_rect((-1, -1), (1, 1))
         assert len(result) == 2
         types = {e.dxftype() for e in result}
         assert "POINT" in types
         assert "LINE" in types
+
+    def test_rect_select_all(self, msp: Modelspace):
+        psi = select.PlanarSearchIndex(msp)
+        result = psi.detection_point_in_rect((-5, -5), (5, 5))
+        assert len(result) == 4
 
 
 if __name__ == "__main__":

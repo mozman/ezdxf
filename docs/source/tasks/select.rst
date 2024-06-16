@@ -98,6 +98,8 @@ Planar Search Index
     
 .. autoclass:: PlanarSearchIndex
 
-    .. automethod:: bbox_vertex_in_circle
+    .. automethod:: detection_point_in_circle
 
-    .. automethod:: bbox_vertex_in_rect
+    .. automethod:: detection_point_in_rect
+
+    .. automethod:: detection_points
