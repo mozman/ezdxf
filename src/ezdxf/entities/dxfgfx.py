@@ -186,6 +186,11 @@ class DXFGraphic(DXFEntity):
     DEFAULT_ATTRIBS: dict[str, Any] = {"layer": "0"}
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)
 
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
+        if hasattr(self, "dxf"):
+            self.dxf.rewire(self)
+
     def load_dxf_attribs(
         self, processor: Optional[SubclassProcessor] = None
     ) -> DXFNamespace:

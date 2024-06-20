@@ -112,6 +112,14 @@ class DXFNamespace:
         if owner is not None:
             self.__dict__["owner"] = owner
 
+    def __getstate__(self) -> dict:
+        state = self.__dict__.copy()
+        state["_entity"] = None
+        return state
+    
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
+
     def __getattr__(self, key: str) -> Any:
         """Called if DXF attribute `key` does not exist, returns the DXF
         default value or ``None``.

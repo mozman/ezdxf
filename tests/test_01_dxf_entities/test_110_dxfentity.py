@@ -185,6 +185,23 @@ def test_delete_missing_source_block_reference_without_exception():
     e.del_source_block_reference()
     assert True is True
 
+def test_pickle():
+    import pickle
+    from io import StringIO
+    from ezdxf.lldxf.tagwriter import TagWriter
+    
+    e0 = DXFEntity()
+    e1 = pickle.loads(pickle.dumps(e0))
+
+    s0 = StringIO()
+    t0 = TagWriter(s0)
+    e0.export_dxf(t0)
+
+    s1 = StringIO()
+    t1 = TagWriter(s1)
+    e1.export_dxf(t1)
+
+    assert s0.getvalue() == s1.getvalue()
 
 LINE_DATA = """  0
 LINE
