@@ -93,7 +93,16 @@ def run(script: str, exec_path: Optional[str] = None) -> MeshTransformer:
 
 def str_matrix44(m: Matrix44) -> str:
     # OpenSCAD uses column major order!
-    s = ", ".join([str(list(c)) for c in m.columns()])
+    import numpy as np
+    
+    def cleanup(values: Iterable) -> Iterable:
+        for value in values:
+            if isinstance(value, np.float64):
+                yield float(value)
+            else:
+                yield value
+
+    s = ", ".join([str(list(cleanup(c))) for c in m.columns()])
     return f"[{s}]"
 
 
