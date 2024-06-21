@@ -7,6 +7,7 @@ import json
 from ezdxf.sections.tables import TABLENAMES
 from ezdxf.lldxf.tags import Tags
 from ezdxf.entities import BoundaryPathType, EdgeType
+import numpy as np
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.types import DXFTag
@@ -246,10 +247,17 @@ def _fmt_mapping(mapping: Mapping, indent: int = 0) -> Iterable[str]:
 
 
 def _fmt_list(l: Iterable, indent: int = 0) -> Iterable[str]:
+    def cleanup(values: Iterable) -> Iterable:
+        for value in values:
+            if isinstance(value, np.float64):
+                yield float(value)
+            else:
+                yield value
+
     fmt = " " * indent + "{},"
     for v in l:
         if not isinstance(v, (float, int, str)):
-            v = tuple(tuple(v))
+            v = tuple(cleanup(v))
         yield fmt.format(str(v))
 
 

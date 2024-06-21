@@ -14,6 +14,7 @@ from ezdxf.addons.dxf2code import (
     _fmt_dxf_tags,
 )
 
+
 import ezdxf.entities
 from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import Tags  # required by exec() or eval()
