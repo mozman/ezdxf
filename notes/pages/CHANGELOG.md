@@ -2,9 +2,10 @@
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: `recover` module can load DXF R12 files with subclass markers in table entries
 		- {{discussion 1106}}
-	- BUGFIX: `numpy` v2.0 adaptation, `str(value)` function returns `"np.float64(...)"` for numpy floats
-		- `ezdxf.addons.dxf2code`
-		- `ezdxf.addons.openscad`
+	- BUGFIX: `numpy` v2.0 adaptation, `str()` function returns `"np.float64(...)"` for numpy floats
+		- This affects the following add-on modules:
+			- `ezdxf.addons.dxf2code`
+			- `ezdxf.addons.openscad`
 	- BUGFIX: line clipping  of inverted clipping polygons
 		- {{issue 1101}}
 		-
