@@ -126,14 +126,15 @@ class ConvexClippingPolygon2d:
         """Returns the parts of the clipped polygon. A polygon is a closed polyline."""
 
         def is_inside(point: Vec2) -> bool:
-            # is point left of line:
+            # is point left of line (0.0 is used as tolerance for the check):
             return (clip_end.x - clip_start.x) * (point.y - clip_start.y) - (
                 clip_end.y - clip_start.y
             ) * (point.x - clip_start.x) > 0.0
 
         def edge_intersection() -> Vec2:
+            # use consistent tolerance for `is_inside()` and `edge_intersection()`
             return intersection_line_line_2d(
-                (edge_start, edge_end), (clip_start, clip_end)
+                (edge_start, edge_end), (clip_start, clip_end), abs_tol=0.0
             )
 
         # The clipping polygon is always treated as a closed polyline!
