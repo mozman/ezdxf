@@ -112,10 +112,12 @@ class DXFNamespace:
         if owner is not None:
             self.__dict__["owner"] = owner
 
+    ## ADDED BY JEREMY
     def __getstate__(self) -> dict:
         state = self.__dict__.copy()
         state["_entity"] = None
         return state
+    ## ADDED BY JEREMY
     
     def __setstate__(self, state: dict) -> None:
         self.__dict__.update(state)

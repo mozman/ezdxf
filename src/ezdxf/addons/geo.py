@@ -817,6 +817,17 @@ def _hatch_as_polygon(
             polygons = []
             for exterior, holes in _boundaries_to_polygons(boundaries, ocs, elevation):
                 points = path_to_vertices(exterior)
+
+                ## ADDED BY JEREMY
+                xs, ys, zs = 0, 0, 0
+                for p in points:
+                    xs += p.x
+                    ys += p.y
+                    zs += p.z
+                if (xs==0) and (ys==0) and (zs==0):
+                    continue
+                ## ADDED BY JEREMY
+
                 polygons.append(
                     polygon_mapping(points, [path_to_vertices(hole) for hole in holes])
                 )

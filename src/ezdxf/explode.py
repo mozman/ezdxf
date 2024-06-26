@@ -131,12 +131,12 @@ def explode_block_reference(
     else:
         _explode_single_block_ref(block_ref)
 
-    source_layout = block_ref.get_layout()
-    if source_layout is not None:
-        # Remove and destroy exploded INSERT if assigned to a layout
-        source_layout.delete_entity(block_ref)
-    else:
-        entitydb.delete_entity(block_ref)
+    # source_layout = block_ref.get_layout()
+    # if source_layout is not None:
+    #     # Remove and destroy exploded INSERT if assigned to a layout
+    #     source_layout.delete_entity(block_ref)
+    # else:
+    #     entitydb.delete_entity(block_ref)
     return EntityQuery(entities)
 
 
