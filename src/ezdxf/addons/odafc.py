@@ -149,7 +149,7 @@ def readfile(
         out_file = Path(tmp_dir) / infile.with_suffix(".dxf").name
         if out_file.exists():
             doc = ezdxf.readfile(str(out_file))
-            doc.filename = infile.with_suffix(".dxf")
+            doc.filename = str(infile.with_suffix(".dxf"))
             return doc
     raise UnknownODAFCError("Failed to convert file: Unknown Error")
 
