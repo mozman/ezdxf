@@ -238,8 +238,22 @@ class DXFGraphic(DXFEntity):
 
     @rgb.setter
     def rgb(self, rgb: clr.RGB) -> None:
-        """Set RGB true color as (r, g , b) tuple e.g. (12, 34, 56)."""
-        self.dxf.set("true_color", clr.rgb2int(rgb))
+        """
+        Set RGB true color as (r, g , b) tuple e.g. (12, 34, 56).
+        Also allows setting/resetting rgb to None.
+        """
+        if rgb is None:
+            del self.rgb
+        else:
+            self.dxf.set("true_color", clr.rgb2int(rgb))
+
+    @rgb.deleter
+    def rgb(self) -> None:
+        """
+        Safely delete rgb property
+        """
+        if self.dxf.hasattr("true_color"):
+            self.dxf.__delattr__("true_color")
 
     @property
     def transparency(self) -> float:
