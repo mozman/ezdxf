@@ -179,7 +179,6 @@ class DXFGraphic(DXFEntity):
     """Common base class for all graphic entities, a subclass of
     :class:`~ezdxf.entities.dxfentity.DXFEntity`. These entities resides in
     entity spaces like modelspace, paperspace or block.
-
     """
 
     DXFTYPE = "DXFGFX"
@@ -217,7 +216,8 @@ class DXFGraphic(DXFEntity):
         return dxf
 
     def post_new_hook(self) -> None:
-        """Post-processing and integrity validation after entity creation
+        """Post-processing and integrity validation after entity creation.
+
         (internal API)
         """
         if self.doc:
@@ -228,16 +228,18 @@ class DXFGraphic(DXFEntity):
 
     @property
     def rgb(self) -> tuple[int, int, int] | None:
-        """Returns RGB true color as (r, g, b) tuple or None if true_color is
-        not set.
-        """
+        """Returns RGB true color as (r, g, b) tuple or None if true_color is not set."""
         if self.dxf.hasattr("true_color"):
             return clr.int2rgb(self.dxf.get("true_color"))
         return None
 
     @rgb.setter
     def rgb(self, rgb: clr.RGB | tuple[int, int, int]) -> None:
-        """Set RGB true color as (r, g , b) tuple e.g. (12, 34, 56)."""
+        """Set RGB true color as (r, g , b) tuple e.g. (12, 34, 56).
+
+        Raises:
+            TypeError: input value `rgb` has invalid type
+        """
         self.dxf.set("true_color", clr.rgb2int(rgb))
 
     @rgb.deleter
@@ -278,7 +280,6 @@ class DXFGraphic(DXFEntity):
     def graphic_properties(self) -> dict:
         """Returns the important common properties layer, color, linetype,
         lineweight, ltscale, true_color and color_name as `dxfattribs` dict.
-
         """
         attribs = dict()
         for key in GRAPHIC_PROPERTIES:
@@ -290,7 +291,6 @@ class DXFGraphic(DXFEntity):
         """Returns object coordinate system (:ref:`ocs`) for 2D entities like
         :class:`Text` or :class:`Circle`, returns a pass-through OCS for
         entities without OCS support.
-
         """
         # extrusion is only defined for 2D entities like Text, Circle, ...
         if self.dxf.is_supported("extrusion"):
@@ -381,7 +381,6 @@ class DXFGraphic(DXFEntity):
         It is more efficient to call the
         :meth:`~ezdxf.layouts.BaseLayout.unlink_entity` method of the associated
         layout, especially if you have to unlink more than one entity.
-
         """
         if not self.is_alive:
             raise TypeError("Can not unlink destroyed entity.")
@@ -410,7 +409,6 @@ class DXFGraphic(DXFEntity):
 
         Raises:
             DXFStructureError: for moving between different DXF drawings
-
         """
         if source is None:
             source = self.get_layout()
@@ -429,7 +427,6 @@ class DXFGraphic(DXFEntity):
 
         Raises:
             DXFStructureError: for copying between different DXF drawings
-
         """
         if self.doc != layout.doc:
             raise const.DXFStructureError(
@@ -451,7 +448,6 @@ class DXFGraphic(DXFEntity):
                 auditor.trash(entity)
 
             to delete invalid entities after auditing automatically.
-
         """
         assert self.doc is auditor.doc, "Auditor for different DXF document."
         if not self.is_alive:
@@ -478,7 +474,6 @@ class DXFGraphic(DXFEntity):
 
         Args:
              m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
-
         """
         raise NotImplementedError()
 
@@ -498,21 +493,18 @@ class DXFGraphic(DXFEntity):
 
         Basic implementation uses the :meth:`transform` interface, subclasses
         may have faster implementations.
-
         """
         return self.transform(Matrix44.translate(dx, dy, dz))
 
     def scale(self, sx: float, sy: float, sz: float) -> Self:
         """Scale entity inplace about `dx` in x-axis, `dy` in y-axis and `dz`
         in z-axis, returns `self` (floating interface).
-
         """
         return self.transform(Matrix44.scale(sx, sy, sz))
 
     def scale_uniform(self, s: float) -> Self:
         """Scale entity inplace uniform about `s` in x-axis, y-axis and z-axis,
         returns `self` (floating interface).
-
         """
         return self.transform(Matrix44.scale(s))
 
@@ -523,7 +515,6 @@ class DXFGraphic(DXFEntity):
         Args:
             axis: rotation axis as tuple or :class:`Vec3`
             angle: rotation angle in radians
-
         """
         return self.transform(Matrix44.axis_rotate(axis, angle))
 
@@ -533,7 +524,6 @@ class DXFGraphic(DXFEntity):
 
         Args:
             angle: rotation angle in radians
-
         """
         return self.transform(Matrix44.x_rotate(angle))
 
@@ -543,7 +533,6 @@ class DXFGraphic(DXFEntity):
 
         Args:
             angle: rotation angle in radians
-
         """
         return self.transform(Matrix44.y_rotate(angle))
 
@@ -553,7 +542,6 @@ class DXFGraphic(DXFEntity):
 
         Args:
             angle: rotation angle in radians
-
         """
         return self.transform(Matrix44.z_rotate(angle))
 
@@ -693,7 +681,6 @@ def add_entity(entity: DXFGraphic, layout: BaseLayout) -> None:
 def replace_entity(source: DXFGraphic, target: DXFGraphic, layout: BaseLayout) -> None:
     """Add `target` entity to the entity database and to the given `layout`
     and replace the `source` entity by the `target` entity.
-
     """
     assert target.dxf.handle is None
     assert layout is not None
