@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Sequence, Optional
 import abc
 from ezdxf.lldxf import const
+from ezdxf import colors
 from ezdxf.entities.mtext import MText, MTextColumns
 from ezdxf.enums import (
     MTextParagraphAlignment,
@@ -198,7 +199,7 @@ class AbstractMTextRenderer(abc.ABC):
         ctx.aci = mtext.dxf.color
         rgb = mtext.rgb
         if rgb is not None:
-            ctx.rgb = rgb
+            ctx.rgb = colors.RGB(*rgb)
         return ctx
 
     def get_font(self, ctx: MTextContext) -> fonts.AbstractFont:

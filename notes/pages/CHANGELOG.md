@@ -2,6 +2,8 @@
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: `recover` module can load DXF R12 files with subclass markers in table entries
 		- {{discussion 1106}}
+	- NEW: `DXFGraphic.rgb` deleter
+		- {{pr 1113}}
 	- BUGFIX: `numpy` v2.0 adaptation, `str()` function returns `"np.float64(...)"` for numpy floats
 		- This affects the following add-on modules:
 			- `ezdxf.addons.dxf2code`

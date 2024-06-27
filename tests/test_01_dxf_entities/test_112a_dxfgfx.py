@@ -8,6 +8,7 @@ from ezdxf.math import Matrix44
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.entities.dxfns import recover_graphic_attributes
 from ezdxf.lldxf.const import DXFValueError
+from ezdxf import colors
 
 
 @pytest.fixture
@@ -41,9 +42,7 @@ def test_color_name(entity):
 
 
 def test_transparency(entity):
-    entity.dxf.transparency = (
-        0x020000FF  # 0xFF = opaque; 0x00 = 100% transparent
-    )
+    entity.dxf.transparency = 0x020000FF  # 0xFF = opaque; 0x00 = 100% transparent
     assert 0x020000FF == entity.dxf.transparency
     # recommend usage: helper property ModernGraphicEntity.transparency
     assert 0.0 == entity.transparency  # 0. =  opaque; 1. = 100% transparent
@@ -195,6 +194,39 @@ def test_recover_acdb_entity_tags_ignores_unknown_tags():
     assert len(unprocessed_tags) == 1
     assert unprocessed_tags[0] == (99, "Unknown")
 
+
+class TestRrbAttribute:
+    def test_set_rgb_from_tuple(self, entity: DXFGraphic):
+        entity.rgb = (1, 2, 3)
+        assert entity.dxf.true_color == 66051
+
+    def test_set_rgb_from_rgb(self, entity: DXFGraphic):
+        entity.rgb = colors.RGB(1, 2, 3)
+        assert entity.rgb == (1, 2, 3)
+
+    def test_setting_none_raises_type_error(self, entity: DXFGraphic):
+        with pytest.raises(TypeError):
+            entity.rgb = None
+
+    def test_get_rgb(self, entity: DXFGraphic):
+        entity.rgb = (1, 2, 3)
+        assert entity.rgb == (1, 2, 3)
+
+    def test_get_rgb_unset_true_color(self, entity: DXFGraphic):
+        assert entity.rgb is None
+
+    def test_delete_rgb(self, entity: DXFGraphic):
+        entity.rgb = (1, 2, 3)
+        del entity.rgb
+        assert entity.dxf.hasattr("true_color") is False
+
+    def test_deleting_unset_value_does_not_raise_exception(self, entity: DXFGraphic):
+        del entity.rgb
+        assert entity.dxf.hasattr("true_color") is False
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
 
 LINE = """0
 LINE
