@@ -227,14 +227,13 @@ class DXFGraphic(DXFEntity):
                 )
 
     @property
-    def rgb(self) -> Optional[clr.RGB | tuple[int, int, int]]:
+    def rgb(self) -> tuple[int, int, int] | None:
         """Returns RGB true color as (r, g, b) tuple or None if true_color is
         not set.
         """
         if self.dxf.hasattr("true_color"):
             return clr.int2rgb(self.dxf.get("true_color"))
-        else:
-            return None
+        return None
 
     @rgb.setter
     def rgb(self, rgb: clr.RGB | tuple[int, int, int]) -> None:
