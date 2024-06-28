@@ -285,10 +285,10 @@ class ConcaveClippingPolygon2d:
         ):
             intersections.pop()
 
-        if has_colinear_edge(self._clipping_polygon, start, end):
+        if has_collinear_edge(self._clipping_polygon, start, end):
             # slow detection: doesn't work with inside/outside rule!
             # test if mid-point of intersection-segment is inside the polygon.
-            # intersection-segment colinear with a polygon edge is inside!
+            # intersection-segment collinear with a polygon edge is inside!
             segments: list[tuple[Vec2, Vec2]] = []
             for a, b in pairwise(intersections):
                 if a.isclose(b, abs_tol=abs_tol):  # ignore zero-length segments
@@ -362,8 +362,8 @@ def clip_arbitrary_polygons(
     return gh_clipper.intersection(gh_subject)
 
 
-def has_colinear_edge(polygon: list[Vec2], start: Vec2, end: Vec2) -> bool:
-    """Returns ``True`` if `polygon` has any colinear edge to line `start->end`."""
+def has_collinear_edge(polygon: list[Vec2], start: Vec2, end: Vec2) -> bool:
+    """Returns ``True`` if `polygon` has any collinear edge to line `start->end`."""
     a = polygon[-1]
     rel_a = point_to_line_relation(a, start, end)
     for b in polygon:
