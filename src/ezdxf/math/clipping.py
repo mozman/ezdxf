@@ -49,6 +49,7 @@ class Clipping(Protocol):
 def _clip_polyline(
     polyline: Sequence[Vec2],
     line_clipper: Callable[[Vec2, Vec2], Sequence[tuple[Vec2, Vec2]]],
+    abs_tol: float,
 ) -> Sequence[Sequence[Vec2]]:
     """Returns the parts of the clipped polyline."""
     if len(polyline) < 2:
@@ -64,7 +65,7 @@ def _clip_polyline(
                 continue
             if result:
                 clip_start, clip_end = clipped_line
-                if result[-1].isclose(clip_start):
+                if result[-1].isclose(clip_start, abs_tol=abs_tol):
                     result.append(clip_end)
                     continue
                 parts.append(result)
@@ -77,10 +78,11 @@ def _clip_polyline(
 class ConvexClippingPolygon2d:
     """The clipping path is an arbitrary convex 2D polygon."""
 
-    def __init__(self, vertices: Iterable[Vec2], ccw_check=True):
+    def __init__(self, vertices: Iterable[Vec2], ccw_check=True, abs_tol=TOLERANCE):
+        self.abs_tol = abs_tol
         clip = list(vertices)
         if len(clip) > 1:
-            if clip[0].isclose(clip[-1]):
+            if clip[0].isclose(clip[-1], abs_tol=self.abs_tol):
                 clip.pop()
         if len(clip) < 3:
             raise ValueError("more than 3 vertices as clipping polygon required")
@@ -90,7 +92,7 @@ class ConvexClippingPolygon2d:
 
     def clip_polyline(self, polyline: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
-        return _clip_polyline(polyline, self.clip_line)
+        return _clip_polyline(polyline, self.clip_line, abs_tol=self.abs_tol)
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         """Returns the parts of the clipped line."""
@@ -103,7 +105,7 @@ class ConvexClippingPolygon2d:
 
         def edge_intersection(default: Vec2) -> Vec2:
             ip = intersection_line_line_2d(
-                (edge_start, edge_end), (clip_start, clip_end)
+                (edge_start, edge_end), (clip_start, clip_end), abs_tol=self.abs_tol
             )
             if ip is None:
                 return default
@@ -136,7 +138,7 @@ class ConvexClippingPolygon2d:
 
         def edge_intersection() -> None:
             ip = intersection_line_line_2d(
-                (edge_start, edge_end), (clip_start, clip_end)
+                (edge_start, edge_end), (clip_start, clip_end), abs_tol=self.abs_tol
             )
             if ip is not None:
                 clipped.append(ip)
@@ -150,7 +152,9 @@ class ConvexClippingPolygon2d:
                 break
 
             vertices = clipped.copy()
-            if len(vertices) > 1 and vertices[0].isclose(vertices[-1]):
+            if len(vertices) > 1 and vertices[0].isclose(
+                vertices[-1], abs_tol=self.abs_tol
+            ):
                 vertices.pop()
 
             clipped.clear()
@@ -177,7 +181,8 @@ class ClippingRect2d:
     the x- and y-axis.
     """
 
-    def __init__(self, bottom_left: Vec2, top_right: Vec2):
+    def __init__(self, bottom_left: Vec2, top_right: Vec2, abs_tol=TOLERANCE):
+        self.abs_tol = abs_tol
         self._bbox = BoundingBox2d((bottom_left, top_right))
         bottom_left = self._bbox.extmin
         top_right = self._bbox.extmax
@@ -189,6 +194,7 @@ class ClippingRect2d:
                 Vec2(bottom_left.x, top_right.y),
             ],
             ccw_check=False,
+            abs_tol=self.abs_tol,
         )
         self._line_clipper = CohenSutherlandLineClipping2d(
             self._bbox.extmin, self._bbox.extmax
@@ -200,7 +206,7 @@ class ClippingRect2d:
 
     def clip_polyline(self, polyline: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
-        return _clip_polyline(polyline, self.clip_line)
+        return _clip_polyline(polyline, self.clip_line, self.abs_tol)
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         """Returns the clipped line."""
@@ -221,10 +227,11 @@ class ClippingRect2d:
 class ConcaveClippingPolygon2d:
     """The clipping path is an arbitrary concave 2D polygon."""
 
-    def __init__(self, vertices: Iterable[Vec2]):
+    def __init__(self, vertices: Iterable[Vec2], abs_tol=TOLERANCE):
+        self.abs_tol = abs_tol
         clip = list(vertices)
         if len(clip) > 1:
-            if clip[0].isclose(clip[-1]):
+            if clip[0].isclose(clip[-1], abs_tol=self.abs_tol):
                 clip.pop()
         if len(clip) < 3:
             raise ValueError("more than 3 vertices as clipping polygon required")
@@ -236,10 +243,14 @@ class ConcaveClippingPolygon2d:
         """Returns ``True`` if `point` is inside the clipping polygon."""
         if not self._bbox.inside(point):
             return False
-        return is_point_in_polygon_2d(point, self._clipping_polygon) >= 0
+        return (
+            is_point_in_polygon_2d(point, self._clipping_polygon, abs_tol=self.abs_tol)
+            >= 0
+        )
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         """Returns the clipped line."""
+        abs_tol = self.abs_tol
         line = (start, end)
         if not self._bbox.has_overlap(BoundingBox2d(line)):
             return tuple()
@@ -250,11 +261,13 @@ class ConcaveClippingPolygon2d:
             if start_is_inside:
                 return (line,)
             return tuple()
-        end_is_inside = is_point_in_polygon_2d(end, self._clipping_polygon) >= 0
-        if end_is_inside and not intersections[-1].isclose(end):
+        end_is_inside = (
+            is_point_in_polygon_2d(end, self._clipping_polygon, abs_tol=abs_tol) >= 0
+        )
+        if end_is_inside and not intersections[-1].isclose(end, abs_tol=abs_tol):
             # last inside-segment ends at end
             intersections.append(end)
-        if start_is_inside and not intersections[0].isclose(start):
+        if start_is_inside and not intersections[0].isclose(start, abs_tol=abs_tol):
             # first inside-segment begins at start
             intersections.insert(0, start)
 
@@ -263,9 +276,13 @@ class ConcaveClippingPolygon2d:
         # KEEP duplicate intersection points in between - these are caused by the
         # coincident edges of inverted clipping polygons.  These intersections points
         # are required for the inside/outside rule to work properly!
-        if len(intersections) > 1 and intersections[0].isclose(intersections[1]):
+        if len(intersections) > 1 and intersections[0].isclose(
+            intersections[1], abs_tol=abs_tol
+        ):
             intersections.pop(0)
-        if len(intersections) > 1 and intersections[-1].isclose(intersections[-2]):
+        if len(intersections) > 1 and intersections[-1].isclose(
+            intersections[-2], abs_tol=abs_tol
+        ):
             intersections.pop()
 
         if has_colinear_edge(self._clipping_polygon, start, end):
@@ -274,9 +291,14 @@ class ConcaveClippingPolygon2d:
             # intersection-segment colinear with a polygon edge is inside!
             segments: list[tuple[Vec2, Vec2]] = []
             for a, b in pairwise(intersections):
-                if a.isclose(b):  # ignore zero-length segments
+                if a.isclose(b, abs_tol=abs_tol):  # ignore zero-length segments
                     continue
-                if is_point_in_polygon_2d(a.lerp(b), self._clipping_polygon) >= 0:
+                if (
+                    is_point_in_polygon_2d(
+                        a.lerp(b), self._clipping_polygon, abs_tol=abs_tol
+                    )
+                    >= 0
+                ):
                     segments.append((a, b))
             return segments
 
@@ -287,12 +309,13 @@ class ConcaveClippingPolygon2d:
 
     def clip_polyline(self, polyline: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
+        abs_tol = self.abs_tol
         segments: list[list[Vec2]] = []
         for start, end in pairwise(polyline):
             for a, b in self.clip_line(start, end):
                 if segments:
                     last_seg = segments[-1]
-                    if last_seg[-1].isclose(a):
+                    if last_seg[-1].isclose(a, abs_tol=abs_tol):
                         last_seg.append(b)
                         continue
                 segments.append([a, b])
@@ -301,8 +324,9 @@ class ConcaveClippingPolygon2d:
     def clip_polygon(self, polygon: Sequence[Vec2]) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polygon. A polygon is a closed polyline."""
         vertices = list(polygon)
+        abs_tol = self.abs_tol
         if len(vertices) > 1:
-            if vertices[0].isclose(vertices[-1]):
+            if vertices[0].isclose(vertices[-1], abs_tol=abs_tol):
                 vertices.pop()
         if len(vertices) < 3:
             return tuple()
@@ -312,7 +336,8 @@ class ConcaveClippingPolygon2d:
         result = clip_arbitrary_polygons(self._clipping_polygon, vertices)
         if len(result) == 0:
             is_outside = any(
-                is_point_in_polygon_2d(v, self._clipping_polygon) < 0 for v in vertices
+                is_point_in_polygon_2d(v, self._clipping_polygon, abs_tol=abs_tol) < 0
+                for v in vertices
             )
             if is_outside:
                 return tuple()
@@ -351,7 +376,7 @@ def has_colinear_edge(polygon: list[Vec2], start: Vec2, end: Vec2) -> bool:
 
 
 def polygon_line_intersections_2d(
-    polygon: list[Vec2], line: tuple[Vec2, Vec2]
+    polygon: list[Vec2], line: tuple[Vec2, Vec2], abs_tol: float = TOLERANCE
 ) -> list[Vec2]:
     """Returns all intersections of polygon with line.
     All intersections points are ordered from start to end of line.
@@ -369,22 +394,22 @@ def polygon_line_intersections_2d(
     for index in range(size):
         a = polygon[index - 1]
         b = polygon[index]
-        ip = intersection_line_line_2d((a, b), line, virtual=False)
+        ip = intersection_line_line_2d((a, b), line, virtual=False, abs_tol=abs_tol)
         if ip is None:
             continue
         # Note: do not remove duplicate vertices, because inverted clipping polygons
         # have coincident clipping edges inside the clipping polygon! #1101
-        if ip.isclose(a):
+        if ip.isclose(a, abs_tol=abs_tol):
             a_prev = polygon[index - 2]
-            rel_prev = point_to_line_relation(a_prev, start, end)
-            rel_next = point_to_line_relation(b, start, end)
+            rel_prev = point_to_line_relation(a_prev, start, end, abs_tol=abs_tol)
+            rel_next = point_to_line_relation(b, start, end, abs_tol=abs_tol)
             if rel_prev == rel_next:
                 continue
         # edge case: line intersects "exact" in point b
-        elif ip.isclose(b):
+        elif ip.isclose(b, abs_tol=abs_tol):
             b_next = polygon[(index + 1) % size]
-            rel_prev = point_to_line_relation(a, start, end)
-            rel_next = point_to_line_relation(b_next, start, end)
+            rel_prev = point_to_line_relation(a, start, end, abs_tol=abs_tol)
+            rel_next = point_to_line_relation(b_next, start, end, abs_tol=abs_tol)
             if rel_prev == rel_next:
                 continue
         intersection_points.append(ip)
@@ -404,11 +429,16 @@ class InvertedClippingPolygon2d(ConcaveClippingPolygon2d):
 
     """
 
-    def __init__(self, inner_polygon: Iterable[Vec2], outer_bounds: BoundingBox2d):
-        # pylint: disable=super-init-not-called
+    def __init__(
+        self,
+        inner_polygon: Iterable[Vec2],
+        outer_bounds: BoundingBox2d,
+        abs_tol=TOLERANCE,
+    ):
+        self.abs_tol = abs_tol
         clip = list(inner_polygon)
         if len(clip) > 1:
-            if not clip[0].isclose(clip[-1]):  # close inner_polygon
+            if not clip[0].isclose(clip[-1], abs_tol=abs_tol):  # close inner_polygon
                 clip.append(clip[0])
         if len(clip) < 4:
             raise ValueError("more than 3 vertices as clipping polygon required")
@@ -416,19 +446,21 @@ class InvertedClippingPolygon2d(ConcaveClippingPolygon2d):
         # arbitrary polygon (convex or concave)
         # closed polygon (first vertex == last vertex)
         # clockwise or counter-clockwise oriented vertices
-        self._clipping_polygon = make_inverted_clipping_polygon(clip, outer_bounds)
+        self._clipping_polygon = make_inverted_clipping_polygon(
+            clip, outer_bounds, abs_tol
+        )
         self._bbox = outer_bounds
 
 
 def make_inverted_clipping_polygon(
-    inner_polygon: list[Vec2], outer_bounds: BoundingBox2d
+    inner_polygon: list[Vec2], outer_bounds: BoundingBox2d, abs_tol=TOLERANCE
 ) -> list[Vec2]:
     """Creates a closed inverted clipping polygon by connecting the inner polygon with
     the surrounding rectangle at their closest vertices.
     """
     assert outer_bounds.has_data is True
     inner_polygon = inner_polygon.copy()
-    if inner_polygon[0].isclose(inner_polygon[-1]):
+    if inner_polygon[0].isclose(inner_polygon[-1], abs_tol=abs_tol):
         inner_polygon.pop()
     assert len(inner_polygon) > 2
     outer_rect = list(outer_bounds.rect_vertices())  # counter-clockwise
