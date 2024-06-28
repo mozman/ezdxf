@@ -37,7 +37,7 @@ Leaf
 Junction
     A junction is a vertex of degree greater 2.
     A junction has more than two adjacent edges.
-    A junction is an ambiguity when seaarching for open chains or closed loops.
+    A junction is an ambiguity when searching for open chains or closed loops.
     Graph Theory: multiple adjacency
 
 Chain
@@ -87,7 +87,7 @@ Forward Connection
     THE RELEASE IN EZDXF V1.4.
 
 .. _Graph Theory: https://en.wikipedia.org/wiki/Glossary_of_graph_theory
-.. _GeeksforGeeks: https://www.geeksforgeeks.org/graph-data-structure-and-algorithms/?ref=shm
+.. _GeeksForGeeks: https://www.geeksforgeeks.org/graph-data-structure-and-algorithms/?ref=shm
 
 """
 from __future__ import annotations
@@ -126,7 +126,7 @@ ABS_TOl = 1e-9
 TIMEOUT = 60.0  # in seconds
 
 
-class TimeoutError(Exception):
+class TimeoutError(Exception):  # noqa
     def __init__(self, msg: str, solutions: Sequence[Sequence[Edge]] = tuple()) -> None:
         super().__init__(msg)
         self.solutions = solutions
@@ -197,7 +197,7 @@ class Edge(NamedTuple):
 
     def reversed(self) -> Self:
         """Returns a reversed copy."""
-        return self.__class__(
+        return self.__class__(  # noqa
             self.id,  # edge and its reversed edge must have the same id!
             self.end,
             self.start,
@@ -224,7 +224,7 @@ id_generator = make_id_generator()
 def make_edge(
     start: UVec, end: UVec, length: float = -1.0, *, payload: Any = None
 ) -> Edge:
-    """Creates a new :class:`Edge` with an unique id."""
+    """Creates a new :class:`Edge` with a unique id."""
     start = Vec3(start)
     end = Vec3(end)
     if length < 0.0:
@@ -266,7 +266,7 @@ class Deposit:
         Different gap tolerances may yield different results.
 
         """
-        # no caching: result depends on gap_tol, which is muteable
+        # no caching: result depends on gap_tol, which is mutable
         counter: Counter[int] = Counter()
         search = functools.partial(
             self._search_index.vertices_in_sphere, radius=self.gap_tol
@@ -310,7 +310,7 @@ class Deposit:
         Ignores vertices that are close to another vertex (within the range of gap_tol).
         It is not determined which of the close vertices is returned.
 
-        e.g. if the vertices a, b are close together, you don't know if you get a or b
+        e.g. if the vertices a, b are close together, you don't know if you get a or b,
         but it's guaranteed that you only get one of them
         """
         return filter_close_vertices(self._search_index.rtree, self.gap_tol)
@@ -642,7 +642,7 @@ def unique_chains(chains: Sequence[Sequence[Edge]]) -> Iterator[Sequence[Edge]]:
     seen: set[frozenset[int]] = set()
     for chain in chains:
         key = frozenset(edge.id for edge in chain)
-        if not key in seen:
+        if key not in seen:
             yield chain
             seen.add(key)
 
@@ -755,15 +755,15 @@ class LoopFinder:
             if watchdog.has_timed_out:
                 raise TimeoutError(
                     "search process has timed out",
-                    solutions=tuple(self._solutions.values()),
+                    solutions=tuple(self._solutions.values()),  # noqa
                 )
             chain = todo.pop()
             last_edge = chain[-1]
             end_point = last_edge.end
             candidates = deposit.edges_linked_to(end_point, radius=gap_tol)
             # edges must be unique in a loop
-            survivers = set(candidates) - set(chain)
-            for edge in survivers:
+            survivors = set(candidates) - set(chain)
+            for edge in survivors:
                 if isclose(end_point, edge.start, gap_tol):
                     next_edge = edge
                 else:
@@ -949,7 +949,7 @@ def find_all_open_chains(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence
     """Returns all open chains from `deposit`.
 
     Returns only simple chains ending on both sides with a leaf.
-    A leaf is an vertex of degree 1 without further connections.
+    A leaf is a vertex of degree 1 without further connections.
     All vertices have a degree of 2 except for the leafs at the start and end.
     The result does not include reversed solutions or closed loops.
 
@@ -958,7 +958,7 @@ def find_all_open_chains(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence
         Recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
-        edosit: EdgeDeposit
+        deposit: EdgeDeposit
         timeout: timeout in seconds
 
     Raises:
@@ -1119,7 +1119,8 @@ def sort_edges_to_base(
 
     Args:
         edges: list of edges to sort
-        base: base edge for sorting, represents 0-radians
+        base: base edge for sorting, represents 0-radian
+        gap_tol: maximum vertex distance to consider two edges as connected
 
     Raises:
         ValueError: edge is not connected to center
@@ -1160,18 +1161,18 @@ def find_loop_by_edge(deposit: Deposit, start: Edge, clockwise=True) -> Sequence
         end_point = last_edge.end
         candidates = deposit.edges_linked_to(end_point, radius=gap_tol)
         # edges must be unique in a loop
-        survivers = set(candidates) - chain_set
-        count = len(survivers)
+        survivors = set(candidates) - chain_set
+        count = len(survivors)
         if count == 0:
             return tuple()  # dead end
         if count > 1:
-            sorted_edges = sort_edges_to_base(survivers, last_edge, gap_tol)
+            sorted_edges = sort_edges_to_base(survivors, last_edge, gap_tol)
             if clockwise:
                 next_edge = sorted_edges[-1]  # first clockwise edge
             else:
                 next_edge = sorted_edges[0]  # first counter-clockwise edge
         else:
-            next_edge = survivers.pop()
+            next_edge = survivors.pop()
         if not isclose(next_edge.start, end_point, gap_tol):
             next_edge = next_edge.reversed()
         chain.append(next_edge)
