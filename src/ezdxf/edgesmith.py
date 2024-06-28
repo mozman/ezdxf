@@ -32,10 +32,10 @@ from ezdxf.math import (
 
 __all__ = [
     "chain_vertices",
-    "edge_from_entity",
     "edges_from_entities",
     "is_closed_entity",
     "lwpolyline_from_chain",
+    "make_edge",
     "polyline2d_from_chain",
 ]
 # Tolerances
@@ -44,6 +44,7 @@ DEG_TOL = 1e-9  # angles in degree
 RAD_TOL = 1e-9  # angles in radians
 
 
+# noinspection PyUnusedLocal
 @functools.singledispatch
 def is_closed_entity(entity: et.DXFEntity) -> bool:
     """Returns ``True`` if the given entity represents a closed loop."""
@@ -124,6 +125,7 @@ def _validate_edge(edge: em.Edge, gap_tol: float) -> em.Edge | None:
     return edge
 
 
+# noinspection PyUnusedLocal
 @functools.singledispatch
 def make_edge(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None:
     """Makes an :class:`Edge` instance from the following DXF entity types:
@@ -172,7 +174,7 @@ def _edge_from_ellipse(entity: et.Ellipse, gap_tol=em.GAP_TOL) -> em.Edge | None
     if ct1.major_axis.magnitude < LEN_TOL or ct1.minor_axis.magnitude < LEN_TOL:
         return None
     span = ellipse_param_span(ct1.start_param, ct1.end_param)
-    num = max(3, round(span / 0.1745))  #  resolution of ~1 deg
+    num = max(3, round(span / 0.1745))  # resolution of ~1 deg
     # length of elliptic arc is an approximation:
     points = list(ct1.vertices(ct1.params(num)))
     length = sum(a.distance(b) for a, b in zip(points, points[1:]))
@@ -302,13 +304,13 @@ def polyline_points(edges: Sequence[em.Edge]) -> BulgePoints:
         return pts
 
     # bulge value is stored in the start vertex of the curved segment
-    points: list[Vec3] = [edges[0].start]
+    points: list[Vec2] = [Vec2(edges[0].start)]
     bulges: list[float] = [0.0]
     for edge in edges:
         current_end = points[-1]
         if edge.start.distance(current_end) < LEN_TOL:
             current_end = edge.start
-            points.append(current_end)
+            points.append(Vec2(current_end))
             bulges.append(0.0)
         entity = edge.payload
         if isinstance(entity, et.Arc):
@@ -334,6 +336,6 @@ def polyline_points(edges: Sequence[em.Edge]) -> BulgePoints:
                 vertices = reverse(vertices)
             extend(vertices)
             continue
-        points.append(edge.end)
+        points.append(Vec2(edge.end))
         bulges.append(0.0)
     return list(zip(points, bulges))
