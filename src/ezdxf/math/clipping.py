@@ -101,10 +101,13 @@ class ConvexClippingPolygon2d:
                 clip_end.y - clip_start.y
             ) * (point.x - clip_start.x) >= 0.0
 
-        def edge_intersection() -> Vec2:
-            return intersection_line_line_2d(
+        def edge_intersection(default: Vec2) -> Vec2:
+            ip = intersection_line_line_2d(
                 (edge_start, edge_end), (clip_start, clip_end)
             )
+            if ip is None:
+                return default
+            return ip
 
         # The clipping polygon is always treated as a closed polyline!
         clip_start = self._clipping_polygon[-1]
@@ -113,10 +116,10 @@ class ConvexClippingPolygon2d:
         for clip_end in self._clipping_polygon:
             if is_inside(edge_start):
                 if not is_inside(edge_end):
-                    edge_end = edge_intersection()
+                    edge_end = edge_intersection(edge_end)
             elif is_inside(edge_end):
                 if not is_inside(edge_start):
-                    edge_start = edge_intersection()
+                    edge_start = edge_intersection(edge_start)
             else:
                 return tuple()
             clip_start = clip_end
@@ -131,10 +134,12 @@ class ConvexClippingPolygon2d:
                 clip_end.y - clip_start.y
             ) * (point.x - clip_start.x) > 0.0
 
-        def edge_intersection() -> Vec2:
-            return intersection_line_line_2d(
+        def edge_intersection() -> None:
+            ip = intersection_line_line_2d(
                 (edge_start, edge_end), (clip_start, clip_end)
             )
+            if ip is not None:
+                clipped.append(ip)
 
         # The clipping polygon is always treated as a closed polyline!
         clip_start = self._clipping_polygon[-1]
@@ -154,10 +159,10 @@ class ConvexClippingPolygon2d:
                 # next polygon edge to test: edge_start -> edge_end
                 if is_inside(edge_end):
                     if not is_inside(edge_start):
-                        clipped.append(edge_intersection())
+                        edge_intersection()
                     clipped.append(edge_end)
                 elif is_inside(edge_start):
-                    clipped.append(edge_intersection())
+                    edge_intersection()
                 edge_start = edge_end
             clip_start = clip_end
         return (clipped,)

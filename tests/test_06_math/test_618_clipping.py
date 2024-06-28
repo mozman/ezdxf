@@ -203,5 +203,26 @@ class TestClipPolygonAtConvexBoundary:
             assert any(r.isclose(v) for r in result) is True
 
 
+def test_imprecisions_in_edge_intersection():
+    clipper = ConvexClippingPolygon2d(
+        [
+            Vec2(8.000000000000455, 9.000000000000165),
+            Vec2(15.000000000000887, 9.000000000000165),
+            Vec2(15.000000000000887, 11.000000000000834),
+            Vec2(8.000000000000455, 11.000000000000834),
+        ]
+    )
+    polygon = [
+        Vec2(8.000000000000435, 9.000000000000169),
+        Vec2(15.000000000000874, 9.000000000000169),
+        Vec2(15.000000000000895, 11.00000000000084),
+        Vec2(8.000000000000464, 11.00000000000084),
+        Vec2(8.000000000000435, 9.000000000000377),
+        Vec2(8.000000000000435, 9.000000000000169),
+    ]
+    result = clipper.clip_polygon(polygon)
+    assert len(result) > 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
