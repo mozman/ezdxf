@@ -109,7 +109,7 @@ def map_version(version: str) -> str:
 
 def readfile(
     filename: str | os.PathLike, version: Optional[str] = None, *, audit: bool = False
-) -> Optional[Drawing]:
+) -> Drawing:
     """Uses an installed `ODA File Converter`_ to convert a DWG/DXB/DXF file
     into a temporary DXF file and load this file by `ezdxf`.
 
