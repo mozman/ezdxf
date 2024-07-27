@@ -202,7 +202,7 @@ def unit_name(enum: int) -> str:
     """Returns the name of the unit enum."""
     try:
         return InsertUnits(enum).name
-    except (ValueError, IndexError):
+    except ValueError:
         return "unitless"
 
 
