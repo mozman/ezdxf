@@ -1,5 +1,10 @@
-## Version 1.3.2 - 2024-07-12
-id:: 66657380-1ad7-45c3-a552-e9e4b1a3069d
+## Version 1.3.3 - dev
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- BUGFIX: `ezdxf.units.unit_name`  always returns  `unitless`  in some environment
+		- contributed by #privet-kitty
+		- {{issue 1131}}
+- ## Version 1.3.2 - 2024-07-12
+  id:: 66657380-1ad7-45c3-a552-e9e4b1a3069d
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: `recover` module can load DXF R12 files with subclass markers in table entries
 		- {{discussion 1106}}
