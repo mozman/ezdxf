@@ -18,7 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install wheel mypy pyparsing numpy fonttools
+        python -m pip install wheel "mypy>=1.11" pyparsing numpy fonttools
     - name: Install without C-extensions
       run: |
         python -m pip install .
