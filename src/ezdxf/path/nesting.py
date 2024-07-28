@@ -176,7 +176,7 @@ def flatten_polygons(polygons: Polygon) -> Iterator[T]:
         if isinstance(polygon, Sequence):
             yield from flatten_polygons(polygon)  # type: ignore
         else:
-            yield polygon  # T
+            yield polygon  # type: ignore  # T
 
 
 def group_paths(paths: Iterable[T]) -> list[list[T]]:

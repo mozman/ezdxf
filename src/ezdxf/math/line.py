@@ -43,11 +43,11 @@ class ConstructionRay:
         self._is_horizontal: bool
 
         if p2 is not None:
-            p2 = Vec2(p2)
-            if self._location.x < p2.x:
-                self._direction = (p2 - self._location).normalize()
+            p2_ = Vec2(p2)
+            if self._location.x < p2_.x:
+                self._direction = (p2_ - self._location).normalize()
             else:
-                self._direction = (self._location - p2).normalize()
+                self._direction = (self._location - p2_).normalize()
             self._angle = self._direction.angle
         elif angle is not None:
             self._angle = angle

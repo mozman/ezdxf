@@ -733,8 +733,7 @@ class UniversalFrontend:
                     color = RGB.from_hex(
                         self.ctx.current_layout_properties.background_color
                     )
-                    loaded_image = _blend_image_towards(loaded_image, amount, color)
-
+                    loaded_image = _blend_image_towards(loaded_image, amount, color)  # type: ignore
                 if image.dxf.brightness != 50:
                     # note: this is only an approximation.
                     # Unclear what the exact operation AutoCAD uses
@@ -744,14 +743,14 @@ class UniversalFrontend:
                     else:
                         color = RGBA(0, 0, 0, 255)
                         amount = -amount
-                    loaded_image = _blend_image_towards(loaded_image, amount, color)
+                    loaded_image = _blend_image_towards(loaded_image, amount, color)  # type: ignore
 
                 if not image.dxf.flags & Image.USE_TRANSPARENCY:
-                    loaded_image.putalpha(255)
+                    loaded_image.putalpha(255)  # type: ignore
 
                 if image.transparency != 0.0:
                     loaded_image = _multiply_alpha(
-                        loaded_image, 1.0 - image.transparency
+                        loaded_image, 1.0 - image.transparency  # type: ignore
                     )
                 image_data = ImageData(
                     image=np.array(loaded_image),
