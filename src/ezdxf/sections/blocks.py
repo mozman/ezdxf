@@ -19,6 +19,7 @@ from ezdxf.lldxf.const import (
     DXFKeyError,
     DXFStructureError,
     DXFTableEntryError,
+    DXFTypeError,
 )
 from ezdxf.entities import (
     Attrib,
@@ -128,7 +129,10 @@ class BlocksSection:
                     "BlockRecord",
                     block_records.new(block.dxf.name, dxfattribs={"scale": 0}),
                 )
-
+            except DXFTypeError:
+                raise DXFStructureError(
+                    f"Invalid or missing name of BLOCK #{block.dxf.handle}"
+                )
             # The BLOCK_RECORD is the central object which stores all the
             # information about a BLOCK and also owns all the entities of
             # this block definition.
