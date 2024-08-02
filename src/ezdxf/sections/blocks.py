@@ -71,6 +71,23 @@ def is_anonymous_block(name: str) -> bool:
     return len(name) > 1 and name[0] == "*" and name[1] in "UEXDAT"
 
 
+def recover_block_name(block: Block) -> str:
+    name = block.dxf.get("name", "")
+    if name:
+        return name
+    owner = block.dxf.get("owner", "")
+    if not owner:
+        return ""
+    doc = block.doc
+    # The owner of BLOCK is BLOCK_RECORD which also stores the block name
+    # as group code 2; DXF attribute name is "name"
+    if doc is not None and doc.entitydb is not None:
+        block_record = doc.entitydb.get(owner)
+        if isinstance(block_record, BlockRecord):
+            return block_record.dxf.get("name", "")
+    return ""
+
+
 _MISSING_BLOCK_ = Block()
 
 
@@ -120,7 +137,7 @@ class BlocksSection:
             block: Block,
             endblk: EndBlk,
             block_entities: list[DXFEntity],
-        ) -> BlockRecord:
+        ) -> BlockRecord | None:
             try:
                 block_record = cast("BlockRecord", block_records.get(block.dxf.name))
             # Special case DXF R12 - has no BLOCK_RECORD table
@@ -159,7 +176,7 @@ class BlocksSection:
             raise DXFStructureError("Critical structure error in BLOCKS section.")
         # Remove SECTION entity
         del entities[0]
-        content: list["DXFEntity"] = []
+        content: list[DXFEntity] = []
         block: Block = _MISSING_BLOCK_
         for entity in link_entities():
             if isinstance(entity, Block):
@@ -173,8 +190,15 @@ class BlocksSection:
                         "Found ENDBLK without a preceding BLOCK, ignoring content."
                     )
                 else:
+                    block_name = block.dxf.get("name", "")
+                    if not block_name:
+                        block.dxf.name = recover_block_name(block)
                     block_record = load_block_record(block, entity, content)
-                    self.add(block_record)
+                    if isinstance(block_record, BlockRecord):
+                        self.add(block_record)
+                    else:
+                        handle = block.dxf.get("handle", "<undefined>")
+                        logger.warning(f"Ignoring invalid BLOCK definition #{handle}.")
                     block = _MISSING_BLOCK_
                 content.clear()
             else:

@@ -1,5 +1,7 @@
 ## Version 1.3.3 - dev
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- NEW: improve block section loading procedure
+		- {{issue 1136}}
 	- BUGFIX: `ezdxf.units.unit_name`  always returns  `unitless`  in some environment
 		- contributed by #privet-kitty
 		- {{issue 1131}}
