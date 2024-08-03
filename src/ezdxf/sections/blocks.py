@@ -191,14 +191,24 @@ class BlocksSection:
                     )
                 else:
                     block_name = block.dxf.get("name", "")
+                    handle = block.dxf.get("handle", "<undefined>")
                     if not block_name:
-                        block.dxf.name = recover_block_name(block)
-                    block_record = load_block_record(block, entity, content)
-                    if isinstance(block_record, BlockRecord):
-                        self.add(block_record)
+                        block_name = recover_block_name(block)
+                        if block_name:
+                            logger.info(
+                                f'Recovered block name "{block_name}" for block #{handle}.'
+                            )
+                            block.dxf.name = block_name
+                    if block_name:
+                        block_record = load_block_record(block, entity, content)
+                        if isinstance(block_record, BlockRecord):
+                            self.add(block_record)
+                        else:
+                            logger.warning(
+                                f"Ignoring invalid BLOCK definition #{handle}."
+                            )
                     else:
-                        handle = block.dxf.get("handle", "<undefined>")
-                        logger.warning(f"Ignoring invalid BLOCK definition #{handle}.")
+                        logger.warning(f"Ignoring BLOCK without name #{handle}.")
                     block = _MISSING_BLOCK_
                 content.clear()
             else:

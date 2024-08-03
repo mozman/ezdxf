@@ -127,6 +127,8 @@ class Block(DXFEntity):
             return dxf
         processor.simple_dxfattribs_loader(dxf, merged_block_begin_group_codes)
         if processor.r12:
+            if dxf.name is None:
+                dxf.name = ""
             name = dxf.name.lower()
             if name == MODEL_SPACE_R12_LOWER:
                 dxf.name = MODEL_SPACE_R2000
