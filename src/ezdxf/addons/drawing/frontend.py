@@ -133,7 +133,7 @@ class UniversalFrontend:
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
         self.ctx = ctx
-        
+
         # the render pipeline is the connection between frontend and backend
         self.pipeline = pipeline
         pipeline.set_draw_entities_callback(self.draw_entities_callback)
@@ -227,8 +227,8 @@ class UniversalFrontend:
 
         .. versionchanged:: 1.3.0
 
-            This method is the first function in the stack of new property override 
-            functions.  It is possible to push additional override functions onto this 
+            This method is the first function in the stack of new property override
+            functions.  It is possible to push additional override functions onto this
             stack, see also :meth:`push_property_override_function`.
 
         """
@@ -241,7 +241,7 @@ class UniversalFrontend:
         function, because the DXF entities are not copies - except for virtual entities.
 
         The override functions are called after resolving the DXF attributes of an entity
-        and before the :meth:`Frontend.draw_entity` method in the order from first to 
+        and before the :meth:`Frontend.draw_entity` method in the order from first to
         last.
 
         .. versionadded:: 1.3.0
@@ -566,8 +566,9 @@ class UniversalFrontend:
                 line_pattern = baseline.pattern_renderer(line.distance)
                 for s, e in line_pattern.render(line.start, line.end):
                     if ocs.transform:
-                        s, e = ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
-                            (e.x, e.y, elevation)
+                        s, e = (
+                            ocs.to_wcs((s.x, s.y, elevation)),
+                            ocs.to_wcs((e.x, e.y, elevation)),
                         )
                     lines.append((s, e))
         self.pipeline.draw_solid_lines(lines, properties)
@@ -750,7 +751,8 @@ class UniversalFrontend:
 
                 if image.transparency != 0.0:
                     loaded_image = _multiply_alpha(
-                        loaded_image, 1.0 - image.transparency  # type: ignore
+                        loaded_image,
+                        1.0 - image.transparency,  # type: ignore
                     )
                 image_data = ImageData(
                     image=np.array(loaded_image),

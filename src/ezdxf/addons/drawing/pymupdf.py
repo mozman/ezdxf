@@ -3,16 +3,17 @@
 from __future__ import annotations
 
 import math
-from typing import Iterable, no_type_check
+from typing import Iterable, no_type_check, Any
 import copy
 
 import PIL.Image
 import numpy as np
 
-from ezdxf.math import Vec2, BoundingBox2d, Matrix44
+from ezdxf.math import Vec2, BoundingBox2d
 from ezdxf.colors import RGB
 from ezdxf.path import Command
 from ezdxf.version import __version__
+from ezdxf.lldxf.validator import make_table_key as layer_key
 
 from .type_hints import Color
 from .backend import BackendInterface, BkPath2d, BkPoints2d, ImageData
@@ -21,13 +22,13 @@ from .properties import BackendProperties
 from . import layout, recorder
 
 is_pymupdf_installed = True
+pymupdf: Any = None
 try:
-    import fitz
+    import pymupdf  # type: ignore[import-untyped, no-redef]
 except ImportError:
     print(
         "Python module PyMuPDF (AGPL!) is required: https://pypi.org/project/PyMuPDF/"
     )
-    fitz = None
     is_pymupdf_installed = False
 # PyMuPDF docs: https://pymupdf.readthedocs.io/en/latest/
 
@@ -194,16 +195,17 @@ class PyMuPdfRenderBackend(BackendInterface):
         assert (
             is_pymupdf_installed
         ), "Python module PyMuPDF is required: https://pypi.org/project/PyMuPDF/"
-        self.doc = fitz.open()
+        self.doc = pymupdf.open()
         self.doc.set_metadata(
             {
-                "producer": f"PyMuPDF {fitz.version[0]}",
+                "producer": f"PyMuPDF {pymupdf.version[0]}",
                 "creator": f"ezdxf {__version__}",
             }
         )
         self.settings = settings
-        self._stroke_width_cache: dict[float, float] = dict()
-        self._color_cache: dict[str, tuple[float, float, float]] = dict()
+        self._optional_content_groups: dict[str, int] = {}
+        self._stroke_width_cache: dict[float, float] = {}
+        self._color_cache: dict[str, tuple[float, float, float]] = {}
         self.page_width_in_pt = int(page.width_in_mm * MM_TO_POINTS)
         self.page_height_in_pt = int(page.height_in_mm * MM_TO_POINTS)
         # LineweightPolicy.ABSOLUTE:
@@ -255,6 +257,18 @@ class PyMuPdfRenderBackend(BackendInterface):
     def new_shape(self):
         return self.page.new_shape()
 
+    def get_optional_content_group(self, layer_name: str) -> int:
+        if not self.settings.output_layers:
+            return 0  # the default value of `oc` when not provided
+        layer_name = layer_key(layer_name)
+        if layer_name not in self._optional_content_groups:
+            self._optional_content_groups[layer_name] = self.doc.add_ocg(
+                name=layer_name,
+                config=-1,
+                on=True,
+            )
+        return self._optional_content_groups[layer_name]
+
     def finish_line(self, shape, properties: BackendProperties, close: bool) -> None:
         color = self.resolve_color(properties.color)
         width = self.resolve_stroke_width(properties.lineweight)
@@ -266,6 +280,7 @@ class PyMuPdfRenderBackend(BackendInterface):
             lineCap=1,
             stroke_opacity=alpha_to_opacity(properties.color[7:9]),
             closePath=close,
+            oc=self.get_optional_content_group(properties.layer),
         )
 
     def finish_filling(self, shape, properties: BackendProperties) -> None:
@@ -278,6 +293,7 @@ class PyMuPdfRenderBackend(BackendInterface):
             lineCap=1,
             closePath=True,
             even_odd=True,
+            oc=self.get_optional_content_group(properties.layer),
         )
 
     def resolve_color(self, color: Color) -> tuple[float, float, float]:
@@ -373,7 +389,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         )
         xs = [p.x for p in corners]
         ys = [p.y for p in corners]
-        r = fitz.Rect((min(xs), min(ys)), (max(xs), max(ys)))
+        r = pymupdf.Rect((min(xs), min(ys)), (max(xs), max(ys)))
 
         # translation and non-uniform scale are handled by having the image stretch to fill the given rect.
         angle = (corners[1] - corners[0]).angle_deg
@@ -396,12 +412,17 @@ class PyMuPdfRenderBackend(BackendInterface):
             image = np.asarray(pil_image)
             height, width, depth = image.shape
 
-        pixmap = fitz.Pixmap(
-            fitz.Colorspace(fitz.CS_RGB), width, height, bytes(image.data), True
+        pixmap = pymupdf.Pixmap(
+            pymupdf.Colorspace(pymupdf.CS_RGB), width, height, bytes(image.data), True
         )
         # TODO: could improve by caching and re-using xrefs. If a document contains many
         #  identical images redundant copies will be stored for each one
-        self.page.insert_image(r, keep_proportion=False, pixmap=pixmap)
+        self.page.insert_image(
+            r,
+            keep_proportion=False,
+            pixmap=pixmap,
+            oc=self.get_optional_content_group(properties.layer),
+        )
 
     def configure(self, config: Configuration) -> None:
         self.lineweight_policy = config.lineweight_policy

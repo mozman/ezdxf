@@ -298,6 +298,7 @@ class Settings:
             e.g. 0.15 is 15% of :attr:`max_stroke_width`
         output_coordinate_space: expert feature to map the DXF coordinates to the
             output coordinate system [0, output_coordinate_space]
+        output_layers: For supported backends, separate the entities into 'layers' in the output
 
     """
 
@@ -321,6 +322,7 @@ class Settings:
     # dimension - aspect ratio is always preserved - these are CAD drawings!
     # The SVGBackend uses this feature to map all coordinates to integer values:
     output_coordinate_space: float = 1_000_000  # e.g. for SVGBackend
+    output_layers: bool = True
 
     def __post_init__(self) -> None:
         if self.content_rotation not in (0, 90, 180, 270):
