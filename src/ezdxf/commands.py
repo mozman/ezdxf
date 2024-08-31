@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pathlib
 import tempfile
-from typing import Callable, Optional, TYPE_CHECKING, Type
+from typing import Callable, Optional, TYPE_CHECKING, Type, Sequence
 import abc
 import sys
 import os
@@ -30,7 +30,7 @@ from ezdxf.dwginfo import dwg_file_info
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFGraphic
-    from ezdxf.addons.drawing.properties import Properties
+    from ezdxf.addons.drawing.properties import Properties, LayerProperties
 
 __all__ = ["get", "add_parsers"]
 
@@ -331,12 +331,12 @@ class Draw(Command):
             print(str(e))
             sys.exit(1)
 
-        if args.backend == "matplotlib":               
+        if args.backend == "matplotlib":
             try:
                 file_output = MatplotlibFileOutput(args.dpi)
             except ImportError as e:
                 print(str(e))
-                sys.exit(1)               
+                sys.exit(1)
         elif args.backend == "qt":
             try:
                 file_output = PyQtFileOutput(args.dpi)
@@ -356,6 +356,8 @@ class Draw(Command):
             raise ValueError(args.backend)
 
         verbose = args.verbose
+        if verbose:
+            logging.basicConfig(level=logging.INFO)
 
         if args.formats:
             print(f"formats supported by {args.backend}:")
@@ -388,20 +390,18 @@ class Draw(Command):
         out = file_output.backend()
 
         if args.all_layers_visible:
-            for layer_properties in ctx.layers.values():
-                layer_properties.is_visible = True
-
-        if args.all_entities_visible:
-
-            class AllVisibleFrontend(Frontend):
-                def override_properties(
-                    self, entity: DXFGraphic, properties: Properties
-                ) -> None:
+            def override_layer_properties(layer_properties: Sequence[LayerProperties]) -> None:
+                for properties in layer_properties:
                     properties.is_visible = True
 
-            frontend = AllVisibleFrontend(ctx, out, config=config)
-        else:
-            frontend = Frontend(ctx, out, config=config)
+            ctx.set_layer_properties_override(override_layer_properties)
+
+        frontend = Frontend(ctx, out, config=config)
+
+        if args.all_entities_visible:
+            def override_entity_properties(entity: DXFGraphic, properties: Properties) -> None:
+                properties.is_visible = True
+            frontend.push_property_override_function(override_entity_properties)
 
         t0 = time.perf_counter()
         if verbose:

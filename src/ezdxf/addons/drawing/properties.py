@@ -302,16 +302,16 @@ LayerPropsOverride = Callable[[Sequence[LayerProperties]], None]
 
 
 class RenderContext:
-    """The render context for the given DXF document. The :class:`RenderContext` 
-    resolves the properties of DXF entities from the context they reside in to actual 
+    """The render context for the given DXF document. The :class:`RenderContext`
+    resolves the properties of DXF entities from the context they reside in to actual
     values like RGB colors, transparency, linewidth and so on.
 
-    A given `ctb` file (plot style file) overrides the default properties for all 
+    A given `ctb` file (plot style file) overrides the default properties for all
     layouts, which means the plot style table stored in the layout is always ignored.
 
     Args:
         doc: DXF document
-        ctb: path to a plot style table or a :class:`~ezdxf.addons.acadctb.ColorDependentPlotStyles` 
+        ctb: path to a plot style table or a :class:`~ezdxf.addons.acadctb.ColorDependentPlotStyles`
             instance
         export_mode: Whether to render the document as it would look when
             exported (plotted) by a CAD application to a file such as pdf,
@@ -389,10 +389,10 @@ class RenderContext:
 
     def set_current_layout(self, layout: Layout, ctb: str | CTB = ""):
         """Set the current layout and update layout specific properties.
-        
+
         Args:
             layout: modelspace or a paperspace layout
-            ctb: path to a plot style table or a :class:`~ezdxf.addons.acadctb.ColorDependentPlotStyles` 
+            ctb: path to a plot style table or a :class:`~ezdxf.addons.acadctb.ColorDependentPlotStyles`
                 instance
 
         """
@@ -405,7 +405,9 @@ class RenderContext:
                 # last is the ctb stored in the layout
                 ctb = layout.get_plot_style_filename()
         elif not isinstance(ctb, CTB):
-            raise TypeError(f"expected argument ctb of type str or {CTB.__name__}, got {type(ctb)}")
+            raise TypeError(
+                f"expected argument ctb of type str or {CTB.__name__}, got {type(ctb)}"
+            )
         self.current_layout_properties = LayoutProperties.from_layout(layout)
         self.plot_styles = self._load_plot_style_table(ctb)
         self.layers = dict()
