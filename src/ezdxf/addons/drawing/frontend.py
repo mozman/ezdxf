@@ -751,8 +751,8 @@ class UniversalFrontend:
 
                 if image.transparency != 0.0:
                     loaded_image = _multiply_alpha(
-                        loaded_image,
-                        1.0 - image.transparency,  # type: ignore
+                        loaded_image,  # type: ignore
+                        1.0 - image.transparency,
                     )
                 image_data = ImageData(
                     image=np.array(loaded_image),
