@@ -334,26 +334,33 @@ class RenderPipeline2d(AbstractPipeline):
             p.transform_inplace(transform)
         transformed_paths: list[BkPath2d] = glyph_paths
 
-        points: list[Vec2]
         if text_policy == TextPolicy.REPLACE_RECT:
-            points = []
-            for p in transformed_paths:
-                points.extend(p.extents())
-            if len(points) < 2:
+            bbox = self._text_bbox(transformed_paths)
+            if bbox is None:
                 return
-            rect = BkPath2d.from_vertices(BoundingBox2d(points).rect_vertices())
-            pipeline.draw_path(rect, properties)
+            pipeline.draw_path(BkPath2d.from_vertices(bbox.rect_vertices()), properties)
             return
         if text_policy == TextPolicy.REPLACE_FILL:
-            points = []
-            for p in transformed_paths:
-                points.extend(p.extents())
-            if len(points) < 2:
+            bbox = self._text_bbox(transformed_paths)
+            if bbox is None:
                 return
-            polygon = BkPoints2d(BoundingBox2d(points).rect_vertices())
             if properties.filling is None:
                 properties.filling = Filling()
-            pipeline.draw_filled_polygon(polygon, properties)
+            pipeline.draw_filled_polygon(BkPoints2d(bbox.rect_vertices()), properties)
+            return
+        if text_policy == TextPolicy.NATIVE:
+            bbox = self._text_bbox(transformed_paths)
+            if bbox is None:
+                return
+            abstract_font = self.text_engine.get_font(font_face)
+            self.backend.draw_text(
+                text,
+                bbox,
+                transform,
+                self.get_backend_properties(properties),
+                abstract_font,
+                cap_height,
+            )
             return
 
         if (
@@ -367,6 +374,14 @@ class RenderPipeline2d(AbstractPipeline):
         if properties.filling is None:
             properties.filling = Filling()
         pipeline.draw_filled_paths(transformed_paths, properties)
+
+    def _text_bbox(self, path: list[BkPath2d]) -> BoundingBox2d | None:
+        points: list[Vec2] = []
+        for p in path:
+            points.extend(p.extents())
+        if len(points) < 2:
+            return None
+        return BoundingBox2d(points)
 
     def finalize(self) -> None:
         self.backend.finalize()

@@ -8,8 +8,10 @@ import copy
 
 import PIL.Image
 import numpy as np
+import logging
 
-from ezdxf.math import Vec2, BoundingBox2d
+from ezdxf.fonts.fonts import AbstractFont, font_manager
+from ezdxf.math import Vec2, BoundingBox2d, Matrix44
 from ezdxf.colors import RGB
 from ezdxf.path import Command
 from ezdxf.version import __version__
@@ -38,6 +40,8 @@ __all__ = ["PyMuPdfBackend", "is_pymupdf_installed"]
 MM_TO_POINTS = 72.0 / 25.4  # 25.4 mm = 1 inch / 72
 # psd does not work in PyMuPDF v1.22.3
 SUPPORTED_IMAGE_FORMATS = ("png", "ppm", "pbm")
+
+logger = logging.getLogger("ezdxf")
 
 
 class PyMuPdfBackend(recorder.Recorder):
@@ -204,6 +208,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         )
         self.settings = settings
         self._optional_content_groups: dict[str, int] = {}
+        self._fonts: dict[str, int] = {}
         self._stroke_width_cache: dict[float, float] = {}
         self._color_cache: dict[str, tuple[float, float, float]] = {}
         self.page_width_in_pt = int(page.width_in_mm * MM_TO_POINTS)
@@ -421,6 +426,46 @@ class PyMuPdfRenderBackend(BackendInterface):
             r,
             keep_proportion=False,
             pixmap=pixmap,
+            oc=self.get_optional_content_group(properties.layer),
+        )
+
+    def register_font(self, font: AbstractFont) -> int:
+        if font.name not in self._fonts:
+            logger.info("registering font %s", font.name)
+            path = font_manager.get_font_path(font.name)
+            self._fonts[font.name] = self.page.insert_font(
+                fontname=font.name, fontfile=path
+            )
+        return self._fonts[font.name]
+
+    def draw_text(
+        self,
+        text: str,
+        bbox: BoundingBox2d,
+        transform: Matrix44,
+        properties: BackendProperties,
+        font: AbstractFont,
+        cap_height: float,
+    ) -> None:
+        self.register_font(font)
+        origin = transform.origin
+        transform = copy.deepcopy(transform)
+        transform *= Matrix44.translate(-origin.x, -origin.y, -origin.z)
+        transform *= Matrix44.scale(1, -1, 1)
+        (a, b, _, c, d, _, _, _, _) = transform.get_2d_transformation()
+        # last two entries must be 0 as translation is not allowed
+        m = pymupdf.Matrix(a, b, c, d, 0, 0)
+        p = pymupdf.Point(origin.x, origin.y)
+        self.page.insert_text(
+            origin.vec2,
+            text,
+            fontname=font.name,
+            # scaling factor is empirically derived by rendering with this method
+            # as well as the frontend at the same time.
+            fontsize=cap_height * 1.375,
+            render_mode=0,
+            morph=(p, m),
+            color=self.resolve_color(properties.color),
             oc=self.get_optional_content_group(properties.layer),
         )
 

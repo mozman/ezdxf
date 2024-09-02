@@ -13,6 +13,7 @@ from typing_extensions import Self, TypeAlias
 import copy
 import abc
 
+from ezdxf.fonts.fonts import AbstractFont
 from ezdxf.math import BoundingBox2d, Matrix44, Vec2, UVec
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d, EmptyShapeError
 from ezdxf.tools import take2
@@ -30,12 +31,10 @@ class DataRecord(abc.ABC):
         self.handle: str = ""
 
     @abc.abstractmethod
-    def bbox(self) -> BoundingBox2d:
-        ...
+    def bbox(self) -> BoundingBox2d: ...
 
     @abc.abstractmethod
-    def transform_inplace(self, m: Matrix44) -> None:
-        ...
+    def transform_inplace(self, m: Matrix44) -> None: ...
 
 
 class PointsRecord(DataRecord):
@@ -122,6 +121,30 @@ class ImageRecord(DataRecord):
         self.image_data.transform @= m
 
 
+class TextRecord(DataRecord):
+    def __init__(
+        self,
+        text: str,
+        bbox: BoundingBox2d,
+        transform: Matrix44,
+        font: AbstractFont,
+        cap_height: float,
+    ) -> None:
+        super().__init__()
+        self.text = text
+        self._bbox = bbox
+        self.transform = transform
+        self.font = font
+        self.cap_height = cap_height
+
+    def bbox(self) -> BoundingBox2d:
+        return self._bbox
+
+    def transform_inplace(self, m: Matrix44) -> None:
+        self._bbox = BoundingBox2d(m.transform_vertices(self._bbox.rect_vertices()))
+        self.transform *= m
+
+
 class Recorder(BackendInterface):
     """Records the output of the Frontend class."""
 
@@ -202,6 +225,17 @@ class Recorder(BackendInterface):
         boundary = copy.deepcopy(image_data.pixel_boundary_path)
         boundary.transform_inplace(image_data.transform)
         self.store(ImageRecord(boundary, image_data), properties)
+
+    def draw_text(
+        self,
+        text: str,
+        rect: BoundingBox2d,
+        transform: Matrix44,
+        properties: BackendProperties,
+        font: AbstractFont,
+        cap_height: float,
+    ) -> None:
+        self.store(TextRecord(text, rect, transform, font, cap_height), properties)
 
     def enter_entity(self, entity, properties) -> None:
         pass
@@ -304,6 +338,17 @@ class Player:
                 backend.draw_filled_paths(record.paths, properties)
             elif isinstance(record, ImageRecord):
                 backend.draw_image(record.image_data, properties)
+            elif isinstance(record, TextRecord):
+                backend.draw_text(
+                    record.text,
+                    record.bbox(),
+                    record.transform,
+                    properties,
+                    record.font,
+                    record.cap_height,
+                )
+            else:
+                raise TypeError(f"unknown record type {type(record).__name__}")
         backend.finalize()
 
     def transform(self, m: Matrix44) -> None:

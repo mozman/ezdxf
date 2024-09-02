@@ -362,6 +362,10 @@ class FontManager:
         self._loaded_lff_glyph_caches[font_name] = glyph_cache
         return glyph_cache
 
+    def get_font_path(self, font_name: str) -> Path:
+        cache_entry = self._font_cache.get(font_name, self.fallback_font_name())
+        return cache_entry.file_path
+
     def get_font_face(self, font_name: str) -> FontFace:
         cache_entry = self._font_cache.get(font_name, self.fallback_font_name())
         return cache_entry.font_face
