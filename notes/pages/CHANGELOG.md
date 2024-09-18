@@ -3,7 +3,9 @@
 	- NEW: support of layers for the PyMuPDF drawing-backend
 		- contributed by #mbway
 		- {{discussion 1154}}
-		-
+	- BUGFIX: `ezdxf.render.mline.virtual_entities()` function crashes
+		- {{issue 1167}}
+		- contributed by #Kaapp
 - ## Version 1.3.3 - 2024-08-13
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: improve block section loading procedure
