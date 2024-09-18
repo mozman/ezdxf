@@ -11,6 +11,7 @@ from ezdxf.lldxf.const import (
     DXF2013,
     DXF2018,
 )
+
 CONST_GUID = "{00000000-0000-0000-0000-000000000000}"
 
 HEADER_VAR_MAP = {
@@ -2011,7 +2012,10 @@ HEADER_VAR_MAP = {
         mindxf=DXF2004,
         maxdxf=DXF2018,
         priority=21400,
-        default=2,
+        # 0 = Clipping boundary is not visible
+        # 1 = Clipping boundary is visible
+        # default for 2004 & 2007 is 0; R2010+ is 2?
+        default=1,  # changed 2014-03-16 issue #1049 - from 2 to 1
     ),
     "$HALOGAP": HeaderVarDef(
         name="$HALOGAP",
@@ -2371,3 +2375,16 @@ def version_specific_group_code(name: str, dxfversion: str) -> int:
     elif name == "$XCLIPFRAME":
         group_code = 290 if dxfversion < DXF2010 else 280
     return group_code
+
+
+VERSION_SPECIFIC_HEADER_VARS = """
+DXF Version R2004
+Name                 | BC GCode | BC Value | EZ GCode | EZ Value
+----------------------------------------------------------------
+$XCLIPFRAME          |      290 |        0 |      280 |        1
+
+DXF Version R2007
+Name                 | BC GCode | BC Value | EZ GCode | EZ Value
+----------------------------------------------------------------
+$XCLIPFRAME          |      290 |        0 |      280 |        1
+"""

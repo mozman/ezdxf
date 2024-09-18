@@ -9,6 +9,7 @@ from typing import (
     Iterator,
     Optional,
 )
+from typing_extensions import Self
 import array
 import copy
 from itertools import chain
@@ -149,7 +150,7 @@ def face_to_array(face: Sequence[int]) -> array.array:
 
 def create_vertex_array(tags: Tags, start_index: int) -> VertexArray:
     vertex_tags = tags.collect_consecutive_tags(codes=(10,), start=start_index)
-    return VertexArray(data=chain.from_iterable(t.value for t in vertex_tags))
+    return VertexArray(data=[t.value for t in vertex_tags])
 
 
 def create_face_list(tags: Tags, start_index: int) -> FaceList:
@@ -211,7 +212,7 @@ class Mesh(DXFGraphic):
         self._edges = EdgeArray()  # edge indices stored as array.array('L')
         self._creases = array.array("f")  # creases stored as array.array('f')
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy data: vertices, faces, edges, creases."""
         assert isinstance(entity, Mesh)
         entity._vertices = copy.deepcopy(self._vertices)
@@ -345,7 +346,7 @@ class Mesh(DXFGraphic):
 
     @vertices.setter
     def vertices(self, points: Iterable[UVec]) -> None:
-        self._vertices = VertexArray(chain.from_iterable(points))
+        self._vertices = VertexArray(points)
 
     @property
     def edges(self):

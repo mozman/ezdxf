@@ -99,7 +99,6 @@ class ACADProxyEntity(DXFGraphic):
             for e in ProxyGraphic(self.proxy_graphic, doc=self.doc).virtual_entities():
                 e.set_source_of_copy(self)
                 yield e
-        return []
 
     def virtual_entities(self) -> Iterator[DXFGraphic]:
         """Yields proxy graphic as "virtual" entities."""

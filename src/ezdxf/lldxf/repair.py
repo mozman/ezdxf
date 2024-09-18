@@ -36,7 +36,7 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterator[DXFTag]:
             if collector is not None:
                 # stop collecting if inside a supported entity
                 entity = _s(collector[0].value)
-                yield from COORDINATE_FIXING_TOOLBOX[entity](collector)
+                yield from COORDINATE_FIXING_TOOLBOX[entity](collector)  # type: ignore
                 collector = None
 
             if _s(tag.value) in COORDINATE_FIXING_TOOLBOX:

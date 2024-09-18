@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2023, Manfred Moitzi
+# Copyright (c) 2011-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -11,6 +11,8 @@ from typing import (
     Callable,
     cast,
     Optional,
+    Sequence,
+    Any,
 )
 import abc
 import base64
@@ -43,7 +45,12 @@ from ezdxf.lldxf.const import (
     DXF2013,
 )
 from ezdxf.lldxf import loader
-from ezdxf.lldxf.tagwriter import TagWriter, BinaryTagWriter
+from ezdxf.lldxf.tagwriter import (
+    AbstractTagWriter,
+    TagWriter,
+    BinaryTagWriter,
+    JSONTagWriter,
+)
 from ezdxf.query import EntityQuery
 from ezdxf.render.dimension import DimensionRenderer
 from ezdxf.sections.acdsdata import AcDsDataSection, new_acds_data_section
@@ -57,6 +64,7 @@ from ezdxf.tools import guid
 from ezdxf.tools.codepage import tocodepage, toencoding
 from ezdxf.tools.juliandate import juliandate
 from ezdxf.tools.text import safe_string, MAX_STR_LEN
+from ezdxf import messenger, msgtypes
 
 
 logger = logging.getLogger("ezdxf")
@@ -103,6 +111,7 @@ def _validate_handle_seed(seed: str) -> str:
 class Drawing:
     def __init__(self, dxfversion=DXF2013) -> None:
         self.entitydb = EntityDB()
+        self.messenger = messenger.Messenger(self)
         target_dxfversion = dxfversion.upper()
         self._dxfversion: str = const.acad_release_to_dxf_version.get(
             target_dxfversion, target_dxfversion
@@ -215,7 +224,7 @@ class Drawing:
         self._create_required_dimstyles()
 
     def _set_required_layer_attributes(self):
-        for layer in self.layers:  # type: Layer
+        for layer in self.layers:
             layer.set_required_attributes()
 
     def _create_required_vports(self):
@@ -578,6 +587,11 @@ class Drawing:
             fmt: "asc" for ASCII DXF (default) or "bin" for binary DXF
 
         """
+        # These changes may alter the document content (create new entities, blocks ...)
+        # and have to be done before the export and the update of internal structures
+        # can be done.
+        self.commit_pending_changes()
+
         dxfversion = self.dxfversion
         if dxfversion == DXF12:
             handles = bool(self.header.get("$HANDLING", 0))
@@ -586,12 +600,7 @@ class Drawing:
         if dxfversion > DXF12:
             self.classes.add_required_classes(dxfversion)
 
-        self._create_appids()
-        self._update_header_vars()
-        self.update_extents()
-        self.update_limits()
-        self._update_metadata()
-
+        self.update_all()
         if fmt.startswith("asc"):
             tagwriter = TagWriter(
                 stream,  # type: ignore
@@ -620,7 +629,7 @@ class Drawing:
         # Create Windows line endings and do base64 encoding:
         return base64.encodebytes(binary_data.replace(b"\n", b"\r\n"))
 
-    def export_sections(self, tagwriter: TagWriter) -> None:
+    def export_sections(self, tagwriter: AbstractTagWriter) -> None:
         """DXF export sections. (internal API)"""
         dxfversion = tagwriter.dxfversion
         self.header.export_dxf(tagwriter)
@@ -637,6 +646,18 @@ class Drawing:
             section.export_dxf(tagwriter)
 
         tagwriter.write_tag2(0, "EOF")
+
+    def commit_pending_changes(self) -> None:
+        self.messenger.broadcast(msgtypes.COMMIT_PENDING_CHANGES)
+
+    def update_all(self) -> None:
+        if self.dxfversion > DXF12:
+            self.classes.add_required_classes(self.dxfversion)
+        self._create_appids()
+        self._update_header_vars()
+        self.update_extents()
+        self.update_limits()
+        self._update_metadata()
 
     def update_extents(self):
         msp = self.modelspace()
@@ -1412,3 +1433,45 @@ def _get_unknown_entities(doc: Drawing) -> list[DXFEntity]:
         if isinstance(entity, (DXFTagStorage, ACADProxyEntity, OLE2Frame)):
             data.append(entity)
     return data
+
+
+def custom_export(doc: Drawing, tagwriter: AbstractTagWriter):
+    """Export a DXF document via a custom tag writer."""
+    dxfversion = doc.dxfversion
+    if dxfversion != DXF12:
+        tagwriter.write_handles = True
+    doc.update_all()
+    doc.export_sections(tagwriter)
+
+
+def export_json_tags(doc: Drawing, compact=True) -> str:
+    """Export a DXF document as JSON formatted tags.
+
+    The `compact` format is a list of ``[group-code, value]`` pairs where each pair is
+    a DXF tag. The group-code has to be an integer and the value has to be a string,
+    integer, float or list of floats for vertices.
+
+    The `verbose` format (`compact` is ``False``) is a list of ``[group-code, value]``
+    pairs where each pair is a 1:1 representation of a DXF tag. The group-code has to be
+    an integer and the value has to be a string.
+
+    """
+    stream = io.StringIO()
+    json_writer = JSONTagWriter(stream, dxfversion=doc.dxfversion, compact=compact)
+    custom_export(doc, json_writer)
+    return stream.getvalue()
+
+
+def load_json_tags(data: Sequence[Any]) -> Drawing:
+    """Load DXF document from JSON formatted tags.
+
+    The expected JSON format is a list of [group-code, value] pairs where each pair is
+    a DXF tag. The `compact` and the `verbose` format is supported.
+
+    Args:
+        data: JSON data structure as a sequence of [group-code, value] pairs
+
+    """
+    from ezdxf.lldxf.tagger import json_tag_loader
+
+    return Drawing.load(json_tag_loader(data))

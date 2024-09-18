@@ -314,4 +314,7 @@ entities.
 Further Information
 -------------------
 
+- :ref:`basic concepts`: what is the meaning or purpose of ...
+- :ref:`tasks`: how to accomplish certain tasks
 - :ref:`reference`
+

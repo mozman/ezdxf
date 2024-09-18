@@ -201,19 +201,21 @@ def test_weights(spline):
 def test_control_points(spline, points):
     spline.control_points = points
     assert spline.dxf.n_control_points == 4
-    assert points == list(spline.control_points)
+    assert cmp_vertices(spline.control_points, points) is True
 
 
 def test_fit_points(spline, points):
     spline.fit_points = points
     assert spline.dxf.n_fit_points == 4
-    assert points == list(spline.fit_points)
+    assert cmp_vertices(spline.fit_points, points) is True
 
+def cmp_vertices(a, b):
+    return all(Vec3(v0).isclose(v1) for v0, v1 in zip(a, b))
 
 def test_set_open_uniform(spline, points):
     spline.set_open_uniform(points, degree=3)
     assert spline.dxf.degree == 3
-    assert list(spline.control_points) == points
+    assert cmp_vertices(spline.control_points, points) is True
     assert spline.dxf.n_control_points == len(points)
     assert (
         spline.dxf.n_knots == len(points) + spline.dxf.degree + 1
@@ -224,7 +226,7 @@ def test_set_open_uniform(spline, points):
 def test_set_uniform(spline, points):
     spline.set_uniform(points, degree=3)
     assert spline.dxf.degree == 3
-    assert list(spline.control_points) == points
+    assert cmp_vertices(spline.control_points, points) is True
     assert spline.dxf.n_control_points == len(points)
     assert (
         spline.dxf.n_knots == len(points) + spline.dxf.degree + 1
@@ -247,7 +249,7 @@ def test_set_closed(spline, points):
 def test_set_open_rational(spline, points, weights):
     spline.set_open_rational(points, weights, degree=3)
     assert spline.dxf.degree == 3
-    assert list(spline.control_points) == points
+    assert cmp_vertices(spline.control_points, points) is True
     assert list(spline.weights) == weights
     assert spline.dxf.n_control_points == len(points)
     assert len(spline.weights) == len(points)
@@ -260,7 +262,7 @@ def test_set_open_rational(spline, points, weights):
 def test_set_uniform_rational(spline, points, weights):
     spline.set_uniform_rational(points, weights, degree=3)
     assert spline.dxf.degree == 3
-    assert list(spline.control_points) == points
+    assert cmp_vertices(spline.control_points, points) is True
     assert list(spline.weights) == weights
     assert spline.dxf.n_control_points == len(points)
     assert len(spline.weights) == len(points)
@@ -292,7 +294,7 @@ def msp():
 def test_open_spline(msp, points):
     spline = msp.add_open_spline(points, degree=3)
     assert spline.dxf.degree == 3
-    assert list(spline.control_points) == points
+    assert cmp_vertices(spline.control_points, points) is True
     assert spline.dxf.n_control_points == len(points)
     assert (
         spline.dxf.n_knots == len(points) + spline.dxf.degree + 1
@@ -303,7 +305,7 @@ def test_open_spline(msp, points):
 def test_open_rational_spline(msp, points, weights):
     spline = msp.add_rational_spline(points, weights, degree=3)
     assert spline.dxf.degree == 3
-    assert list(spline.control_points) == points
+    assert cmp_vertices(spline.control_points, points) is True
     assert list(spline.weights) == weights
     assert spline.dxf.n_control_points == len(points)
     assert len(spline.weights) == len(points)
@@ -320,7 +322,7 @@ def test_spline_transform_interface():
     spline.dxf.end_tangent = Vec3(2, 0, 0)
     spline.dxf.extrusion = Vec3(3, 0, 0)
     spline.transform(Matrix44.translate(1, 2, 3))
-    assert spline.control_points[0] == (2, 2, 3)
+    assert tuple(spline.control_points[0]) == (2, 2, 3)
     # direction vectors are not transformed by translation
     assert spline.dxf.start_tangent == (1, 0, 0)
     assert spline.dxf.end_tangent == (2, 0, 0)

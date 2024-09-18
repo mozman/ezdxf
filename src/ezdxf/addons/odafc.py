@@ -109,7 +109,7 @@ def map_version(version: str) -> str:
 
 def readfile(
     filename: str | os.PathLike, version: Optional[str] = None, *, audit: bool = False
-) -> Optional[Drawing]:
+) -> Drawing:
     """Uses an installed `ODA File Converter`_ to convert a DWG/DXB/DXF file
     into a temporary DXF file and load this file by `ezdxf`.
 
@@ -131,7 +131,10 @@ def readfile(
     infile = Path(filename).absolute()
     if not infile.is_file():
         raise FileNotFoundError(f"No such file: '{infile}'")
-    version = _detect_version(filename) if version is None else version
+    if isinstance(version, str):
+        version = map_version(version)
+    else:
+        version = _detect_version(filename)
 
     with tempfile.TemporaryDirectory(prefix="odafc_") as tmp_dir:
         args = _odafc_arguments(
@@ -146,7 +149,7 @@ def readfile(
         out_file = Path(tmp_dir) / infile.with_suffix(".dxf").name
         if out_file.exists():
             doc = ezdxf.readfile(str(out_file))
-            doc.filename = infile.with_suffix(".dxf")
+            doc.filename = str(infile.with_suffix(".dxf"))
             return doc
     raise UnknownODAFCError("Failed to convert file: Unknown Error")
 

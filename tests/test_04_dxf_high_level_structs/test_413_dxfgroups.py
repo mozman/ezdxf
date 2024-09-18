@@ -72,7 +72,8 @@ def test_audit_filters_invalid_entities(doc):
     point2.destroy()  # ... but destroyed
     layer = doc.layers.get("0")  # invalid table entry
 
-    group.extend([point1, point2, layer])
+    # hack, hack, hack - but since 2024-05-23 group.extend() validates the input data!
+    group._data.extend([point1, point2, layer])
     auditor = Auditor(doc)
     group.audit(auditor)
     assert len(group) == 0

@@ -1,8 +1,6 @@
 # cython: language_level=3
-# distutils: language = c++
 # Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
-# type: ignore -- pylance sucks at type-checking cython files
 from .vector cimport Vec3
 
 cdef class Matrix44:

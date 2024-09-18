@@ -1,5 +1,6 @@
-# Copyright (c) 2021-2023, Manfred Moitzi
+# Copyright (c) 2021-2024, Manfred Moitzi
 # License: MIT License
+# pylint: disable=consider-using-in
 """
 Tools in this module should be as independent of DXF entities as possible!
 """
@@ -224,7 +225,7 @@ class TextLine:
 def _shift_x(total_width: float, halign: int) -> float:
     if halign == CENTER:
         return -total_width / 2.0
-    elif halign == RIGHT:
+    if halign == RIGHT:
         return -total_width
     return 0.0  # LEFT
 
@@ -232,11 +233,11 @@ def _shift_x(total_width: float, halign: int) -> float:
 def _shift_y(fm: fonts.FontMeasurements, valign: int) -> float:
     if valign == BASELINE:
         return fm.baseline
-    elif valign == MIDDLE:
+    if valign == MIDDLE:
         return -fm.cap_top + fm.cap_height / 2
-    elif valign == X_MIDDLE:
+    if valign == X_MIDDLE:
         return -fm.cap_top + fm.total_height / 2
-    elif valign == TOP:
+    if valign == TOP:
         return -fm.cap_top
     return -fm.bottom
 
@@ -265,10 +266,9 @@ def unified_alignment(entity: Union[Text, MText]) -> tuple[int, int]:
             halign = CENTER
             valign = X_MIDDLE
         return halign, valign
-    elif dxftype == "MTEXT":
+    if dxftype == "MTEXT":
         return MAP_MTEXT_ALIGN_TO_FLAGS.get(entity.dxf.attachment_point, (LEFT, TOP))
-    else:
-        raise TypeError(f"invalid DXF {dxftype}")
+    raise TypeError(f"invalid DXF {dxftype}")
 
 
 def plain_text(text: str) -> str:
@@ -290,7 +290,7 @@ def plain_text(text: str) -> str:
                     scanner.consume(3)  # %%?
                     result += letter
                     continue
-                elif code in "kou":
+                if code in "kou":
                     # formatting codes (%%k, %%o, %%u) will be ignored in
                     # TEXT, ATTRIB and ATTDEF:
                     scanner.consume(3)
@@ -414,6 +414,7 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # - Paragraphs do overflow into the next column if required.
 
 
+# pylint: disable-next=too-many-branches
 def fast_plain_mtext(text: str, split=False) -> Union[list[str], str]:
     """Returns the plain MTEXT content as a single string or  a list of
     strings if `split` is ``True``. Replaces ``\\P`` by ``\\n`` and removes
@@ -437,7 +438,8 @@ def fast_plain_mtext(text: str, split=False) -> Union[list[str], str]:
     chars = []
     # split text into chars, in reversed order for efficient pop()
     raw_chars = list(reversed(caret_decode(text)))
-    while len(raw_chars):
+    # pylint: disable=too-many-nested-blocks
+    while raw_chars:
         char = raw_chars.pop()
         if char == "\\":  # is a formatting command
             try:
@@ -493,7 +495,7 @@ def fast_plain_mtext(text: str, split=False) -> Union[list[str], str]:
 
 def caret_decode(text: str) -> str:
     """DXF stores some special characters using caret notation. This function
-    decodes this notation to normalise the representation of special characters
+    decodes this notation to normalize the representation of special characters
     in the string.
 
     see: https://en.wikipedia.org/wiki/Caret_notation
@@ -562,6 +564,7 @@ def plain_mtext(
     ) = iter(TokenType)
     tab_replacement = " " * tabsize
 
+    # pylint: disable=consider-using-in
     for token in MTextParser(text):
         t = token.type
         if t == word:
@@ -581,8 +584,7 @@ def plain_mtext(
         content.append("".join(paragraph))
     if split:
         return content
-    else:
-        return "\n".join(content)
+    return "\n".join(content)
 
 
 def escape_dxf_line_endings(text: str) -> str:
@@ -678,11 +680,10 @@ COMMA = ","
 DIGITS = "01234567890"
 
 
-def rstrip0(s):
+def rstrip0(s: str) -> str:
     if isinstance(s, (int, float)):
         return f"{s:g}"
-    else:
-        return s
+    return s
 
 
 class ParagraphProperties(NamedTuple):
@@ -746,8 +747,7 @@ class ParagraphProperties(NamedTuple):
                 args.pop()
             # exporting always "x" as second letter seems to be safe
             return "\\px" + "".join(args) + ";"
-        else:
-            return ""
+        return ""
 
 
 # IMPORTANT for parsing MTEXT inline codes: "\\H0.1\\A1\\C1rot"
@@ -894,8 +894,7 @@ class MTextEditor:
         """Set the text color by :ref:`ACI` in range [0, 256]."""
         if 0 <= aci <= 256:
             return self.append(rf"\C{aci};")
-        else:
-            raise ValueError("aci not in range [0, 256]")
+        raise ValueError("aci not in range [0, 256]")
 
     def rgb(self, rgb: RGB) -> MTextEditor:
         """Set the text color as RGB value."""
@@ -1177,7 +1176,7 @@ class TextScanner:
                 scanner.consume(2)
                 continue
             if c == char:
-                return self._index + scanner._index
+                return self._index + scanner._index  # pylint: disable=w0212
             scanner.consume(1)
         return -1
 
@@ -1273,6 +1272,7 @@ class MTextParser:
             self.ctx = self._ctx_stack.pop()
 
     def parse(self) -> Iterator[MTextToken]:
+        # pylint: disable=too-many-statements
         # localize method calls
         scanner = self.scanner
         consume = scanner.fast_consume
@@ -1287,10 +1287,10 @@ class MTextParser:
             if word:
                 followup_token = token
                 return word_token, word
-            else:
-                return token, None
+            return token, None
 
         def next_token() -> tuple[TokenType, Any]:
+            # pylint: disable=too-many-return-statements,too-many-branches,too-many-nested-blocks
             word: str = ""
             while scanner.has_data:
                 escape = False
@@ -1339,10 +1339,10 @@ class MTextParser:
                 if letter < " ":
                     if letter == "\t":
                         return word_and_token(word, TokenType.TABULATOR)
-                    elif letter == "\n":  # LF
+                    if letter == "\n":  # LF
                         return word_and_token(word, TokenType.NEW_PARAGRAPH)
-                    else:  # replace other control chars by a space
-                        letter = " "
+                    # replace other control chars by a space
+                    letter = " "
                 elif letter == "%" and peek(1) == "%":
                     code = peek(2).lower()
                     special_char = const.SPECIAL_CHAR_ENCODING.get(code)
@@ -1437,6 +1437,7 @@ class MTextParser:
         return TokenType.STACK, (numerator, denominator, stacking_type)
 
     def parse_properties(self, cmd: str) -> None:
+        # pylint: disable=too-many-branches
         # Treat the existing context as immutable, create a new one:
         new_ctx = self.ctx.copy()
         if cmd == "L":

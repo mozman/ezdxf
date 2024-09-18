@@ -1,12 +1,13 @@
-#  Copyright (c) 2021-2023, Manfred Moitzi
+#  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterator, Iterable
+from typing import TYPE_CHECKING, Iterator, Iterable, Any
 from typing_extensions import Protocol, runtime_checkable
 from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFGraphic, DXFEntity
+    from ezdxf.entities.temporary_transform import TemporaryTransformation
     from ezdxf.math import Matrix44, AbstractBoundingBox
 
 
@@ -16,11 +17,12 @@ if TYPE_CHECKING:
 # - INSERT
 # - DIMENSION
 # - LEADER
+# - MLEADER
 # - MLINE
 # - ProxyGraphic
 # - DXFGraphicProxy (drawing add-on)
-#
-# TODO: MLEADER, virtual_entities() not implemented yet
+# - DXFTagStorage
+# - ACAD_TABLE (table content loader)
 
 
 @runtime_checkable
@@ -38,8 +40,7 @@ class SupportsVirtualEntities(Protocol):
 
     """
 
-    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
-        ...
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]: ...
 
 
 def virtual_entities(entity: SupportsVirtualEntities) -> Iterator[DXFGraphic]:
@@ -61,13 +62,11 @@ class ReferencedBlocks(Protocol):
         """Returns the handles to the BLOCK_RECORD entities for all BLOCK
         definitions used by an entity.
         """
-        ...
 
 
 class SupportsTransform(Protocol):
     def transform(self, m: Matrix44) -> DXFGraphic:
         """Raises NotImplementedError() if transformation is not supported."""
-        ...
 
 
 _EMPTY_TUPLE: tuple = tuple()
@@ -84,7 +83,14 @@ def referenced_blocks(entity: DXFEntity) -> Iterable[str]:
 
 
 class SupportsBoundingBox(Protocol):
-    def bbox(self) -> AbstractBoundingBox:
-        """Returns the bounding box of an object."""
-        ...
+    def bbox(self) -> AbstractBoundingBox: ...
 
+
+@runtime_checkable
+class SupportsTemporaryTransformation(Protocol):
+    def temporary_transformation(self) -> TemporaryTransformation: ...
+
+
+class SupportsMessages(Protocol):
+    def notify(self, message_type: int, data: Any = None) -> None:
+        """Internal messaging system."""

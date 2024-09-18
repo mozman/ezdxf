@@ -8,7 +8,7 @@ RTree
 
 RTree module: :mod:`ezdxf.math.rtree`
 
-.. autoclass:: RTree(points: Iterable[AnyVec], max_node_size: int = 5)
+.. autoclass:: RTree
 
     .. automethod:: __len__
 

@@ -30,6 +30,8 @@ Utility Functions
     required_knot_values
     uniform_knot_vector
     xround
+    gps_to_world_mercator
+    world_mercator_to_gps
 
 .. autofunction:: closest_point
 
@@ -56,6 +58,10 @@ Utility Functions
 .. autofunction:: has_matrix_2d_stretching
 
 .. autofunction:: has_matrix_3d_stretching
+
+.. autofunction:: gps_to_world_mercator
+
+.. autofunction:: world_mercator_to_gps
 
 .. _bulge_related_functions:
 

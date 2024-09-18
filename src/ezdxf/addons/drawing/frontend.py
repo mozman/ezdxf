@@ -91,12 +91,13 @@ from ezdxf import xclip
 from .type_hints import Color
 
 if TYPE_CHECKING:
-    from .designer import Designer
+    from .pipeline import AbstractPipeline
 
 __all__ = ["Frontend", "UniversalFrontend"]
 
+TEntityFunc: TypeAlias = Callable[[DXFGraphic, Properties], None]
+TDispatchTable: TypeAlias = Dict[str, TEntityFunc]
 
-TDispatchTable: TypeAlias = Dict[str, Callable[[DXFGraphic, Properties], None]]
 POST_ISSUE_MSG = (
     "Please post sample DXF file at https://github.com/mozman/ezdxf/issues."
 )
@@ -125,18 +126,22 @@ class UniversalFrontend:
     def __init__(
         self,
         ctx: RenderContext,
-        designer: Designer,
+        pipeline: AbstractPipeline,
         config: Configuration = Configuration(),
         bbox_cache: Optional[ezdxf.bbox.Cache] = None,
     ):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
         self.ctx = ctx
-        # the designer is the connection between frontend and backend
-        self.designer = designer
-        designer.set_draw_entities_callback(self.draw_entities_callback)
+
+        # the render pipeline is the connection between frontend and backend
+        self.pipeline = pipeline
+        pipeline.set_draw_entities_callback(self.draw_entities_callback)
+
+        # update all configs:
         self.config = ctx.update_configuration(config)
-        designer.set_config(self.config)
+        # backend.configure() is called in pipeline.set_config()
+        pipeline.set_config(self.config)
 
         if self.config.pdsize is None or self.config.pdsize <= 0:
             self.log_message("relative point size is not supported")
@@ -164,9 +169,13 @@ class UniversalFrontend:
         # time.
         self._bbox_cache = bbox_cache
 
+        # Entity property override function stack:
+        self._property_override_functions: list[TEntityFunc] = []
+        self.push_property_override_function(self.override_properties)
+
     @property
     def text_engine(self):
-        return self.designer.text_engine
+        return self.pipeline.text_engine
 
     def _build_dispatch_table(self) -> TDispatchTable:
         dispatch_table: TDispatchTable = {
@@ -201,15 +210,55 @@ class UniversalFrontend:
         """Called for skipped entities - override to alter behavior."""
         self.log_message(f'skipped entity {str(entity)}. Reason: "{msg}"')
 
-    def override_properties(self, entity: DXFGraphic, properties: Properties) -> None:
-        """The :meth:`override_properties` filter can change the properties of
-        an entity independent of the DXF attributes.
+    def exec_property_override(
+        self, entity: DXFGraphic, properties: Properties
+    ) -> None:
+        """Execute entity property override functions. (internal API)"""
+        for override_fn in self._property_override_functions:
+            override_fn(entity, properties)
 
-        This filter has access to the DXF attributes by the `entity` object,
-        the current render context, and the resolved properties by the
-        `properties` object. It is recommended to modify only the `properties`
-        object in this filter.
+    def override_properties(self, entity: DXFGraphic, properties: Properties) -> None:
+        """This method can change the resolved properties of an DXF entity.
+
+        The method has access to the DXF entity attributes, the current render context
+        and the resolved properties.  It is recommended to modify only the resolved
+        `properties` in this method, because the DXF entities are not copies - except
+        for virtual entities.
+
+        .. versionchanged:: 1.3.0
+
+            This method is the first function in the stack of new property override
+            functions.  It is possible to push additional override functions onto this
+            stack, see also :meth:`push_property_override_function`.
+
         """
+
+    def push_property_override_function(self, override_fn: TEntityFunc) -> None:
+        """The override function can change the resolved properties of an DXF entity.
+
+        The override function has access to the DXF entity attributes and the resolved
+        properties.  It is recommended to modify only the resolved `properties` in this
+        function, because the DXF entities are not copies - except for virtual entities.
+
+        The override functions are called after resolving the DXF attributes of an entity
+        and before the :meth:`Frontend.draw_entity` method in the order from first to
+        last.
+
+        .. versionadded:: 1.3.0
+
+        """
+        self._property_override_functions.append(override_fn)
+
+    def pop_property_override_function(self) -> None:
+        """Remove the last function from the property override stack.
+
+        Does not raise an exception if the override stack is empty.
+
+        .. versionadded:: 1.3.0
+
+        """
+        if self._property_override_functions:
+            self._property_override_functions.pop()
 
     def draw_layout(
         self,
@@ -239,7 +288,6 @@ class UniversalFrontend:
 
         """
         if layout_properties is not None:
-            # TODO: this does not work, layer properties have to be re-evaluated!
             self.ctx.current_layout_properties = layout_properties
         else:
             self.ctx.set_current_layout(layout)
@@ -258,7 +306,7 @@ class UniversalFrontend:
                 filter_func=filter_func,
             )
         if finalize:
-            self.designer.finalize()
+            self.pipeline.finalize()
 
     def set_background(self, color: Color) -> None:
         policy = self.config.background_policy
@@ -279,7 +327,7 @@ class UniversalFrontend:
             color = self.config.custom_bg_color
         if override:
             self.ctx.current_layout_properties.set_colors(color)
-        self.designer.set_background(color)
+        self.pipeline.set_background(color)
 
     def draw_entities(
         self,
@@ -306,10 +354,10 @@ class UniversalFrontend:
             properties: resolved entity properties
 
         """
-        self.designer.enter_entity(entity, properties)
+        self.pipeline.enter_entity(entity, properties)
         if not entity.is_virtual:
             # top level entity
-            self.designer.set_current_entity_handle(entity.dxf.handle)
+            self.pipeline.set_current_entity_handle(entity.dxf.handle)
         if (
             entity.proxy_graphic
             and self.config.proxy_graphic_policy == ProxyGraphicPolicy.PREFER
@@ -340,22 +388,22 @@ class UniversalFrontend:
             else:
                 self.skip_entity(entity, "unsupported")
 
-        self.designer.exit_entity(entity)
+        self.pipeline.exit_entity(entity)
 
     def draw_line_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
         if dxftype == "LINE":
-            self.designer.draw_line(d.start, d.end, properties)
+            self.pipeline.draw_line(d.start, d.end, properties)
 
         elif dxftype in ("XLINE", "RAY"):
             start = d.start
             delta = d.unit_vector * self.config.infinite_line_length
             if dxftype == "XLINE":
-                self.designer.draw_line(
+                self.pipeline.draw_line(
                     start - delta / 2, start + delta / 2, properties
                 )
             elif dxftype == "RAY":
-                self.designer.draw_line(start, start + delta, properties)
+                self.pipeline.draw_line(start, start + delta, properties)
         else:
             raise TypeError(dxftype)
 
@@ -373,7 +421,7 @@ class UniversalFrontend:
     def get_font_face(self, properties: Properties) -> fonts.FontFace:
         font_face = properties.font
         if font_face is None:
-            return self.designer.default_font_face
+            return self.pipeline.default_font_face
         return font_face
 
     def draw_text_entity_2d(self, entity: DXFGraphic, properties: Properties) -> None:
@@ -381,7 +429,7 @@ class UniversalFrontend:
             for line, transform, cap_height in simplified_text_chunks(
                 entity, self.text_engine, font_face=self.get_font_face(properties)
             ):
-                self.designer.draw_text(
+                self.pipeline.draw_text(
                     line, transform, properties, cap_height, entity.dxftype()
                 )
         else:
@@ -410,20 +458,20 @@ class UniversalFrontend:
         for line, transform, cap_height in simplified_text_chunks(
             mtext, self.text_engine, font_face=self.get_font_face(properties)
         ):
-            self.designer.draw_text(
+            self.pipeline.draw_text(
                 line, transform, properties, cap_height, mtext.dxftype()
             )
 
     def draw_complex_mtext(self, mtext: MText, properties: Properties) -> None:
         """Draw the content of a MTEXT entity including inline formatting codes."""
-        complex_mtext_renderer(self.ctx, self.designer, mtext, properties)
+        complex_mtext_renderer(self.ctx, self.pipeline, mtext, properties)
 
     def draw_curve_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         try:
             path = make_path(entity)
         except AttributeError:  # API usage error
             raise TypeError(f"Unsupported DXF type {entity.dxftype()}")
-        self.designer.draw_path(path, properties)
+        self.pipeline.draw_path(path, properties)
 
     def draw_point_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         point = cast(Point, entity)
@@ -440,7 +488,7 @@ class UniversalFrontend:
                 pdmode = 0
 
         if pdmode == 0:
-            self.designer.draw_point(entity.dxf.location, properties)
+            self.pipeline.draw_point(entity.dxf.location, properties)
         else:
             for entity in point.virtual_entities(pdsize, pdmode):
                 dxftype = entity.dxftype()
@@ -448,9 +496,9 @@ class UniversalFrontend:
                     start = entity.dxf.start
                     end = entity.dxf.end
                     if start.isclose(end):
-                        self.designer.draw_point(start, properties)
+                        self.pipeline.draw_point(start, properties)
                     else:  # direct draw by backend is OK!
-                        self.designer.draw_line(start, end, properties)
+                        self.pipeline.draw_line(start, end, properties)
                     pass
                 elif dxftype == "CIRCLE":
                     self.draw_curve_entity(entity, properties)
@@ -473,16 +521,16 @@ class UniversalFrontend:
                 return
             edge_visibility = entity.get_edges_visibility()
             if all(edge_visibility):
-                self.designer.draw_path(from_vertices(points), properties)
+                self.pipeline.draw_path(from_vertices(points), properties)
             else:
                 for a, b, visible in zip(points, points[1:], edge_visibility):
                     if visible:
-                        self.designer.draw_line(a, b, properties)
+                        self.pipeline.draw_line(a, b, properties)
 
         elif isinstance(entity, Solid):
             # set solid fill type for SOLID and TRACE
             properties.filling = Filling()
-            self.designer.draw_filled_polygon(
+            self.pipeline.draw_filled_polygon(
                 entity.wcs_vertices(close=False), properties
             )
         else:
@@ -518,11 +566,12 @@ class UniversalFrontend:
                 line_pattern = baseline.pattern_renderer(line.distance)
                 for s, e in line_pattern.render(line.start, line.end):
                     if ocs.transform:
-                        s, e = ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
-                            (e.x, e.y, elevation)
+                        s, e = (
+                            ocs.to_wcs((s.x, s.y, elevation)),
+                            ocs.to_wcs((e.x, e.y, elevation)),
                         )
                     lines.append((s, e))
-        self.designer.draw_solid_lines(lines, properties)
+        self.pipeline.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(
         self,
@@ -572,10 +621,10 @@ class UniversalFrontend:
             paths = closed_loops(boundary_paths, ocs, elevation)
         if show_only_outline:
             for p in ignore_text_boxes(paths):
-                self.designer.draw_path(p, properties)
+                self.pipeline.draw_path(p, properties)
             return
         if paths:
-            self.designer.draw_filled_paths(ignore_text_boxes(paths), properties)
+            self.pipeline.draw_filled_paths(ignore_text_boxes(paths), properties)
 
     def draw_mpolygon_entity(self, entity: DXFGraphic, properties: Properties):
         def resolve_fill_color() -> str:
@@ -610,14 +659,14 @@ class UniversalFrontend:
         properties.color = line_color
         # draw boundary paths as lines
         for loop in loops:
-            self.designer.draw_path(loop, properties)
+            self.pipeline.draw_path(loop, properties)
 
     def draw_wipeout_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         wipeout = cast(Wipeout, entity)
         properties.filling = Filling()
         properties.color = self.ctx.current_layout_properties.background_color
         clipping_polygon = wipeout.boundary_path_wcs()
-        self.designer.draw_filled_polygon(clipping_polygon, properties)
+        self.pipeline.draw_filled_polygon(clipping_polygon, properties)
 
     def draw_viewport(self, vp: Viewport) -> None:
         # the "active" viewport and invisible viewports should be filtered at this
@@ -628,7 +677,7 @@ class UniversalFrontend:
         if not vp.is_top_view:
             self.log_message("Cannot render non top-view viewports")
             return
-        self.designer.draw_viewport(vp, self.ctx, self._bbox_cache)
+        self.pipeline.draw_viewport(vp, self.ctx, self._bbox_cache)
 
     def draw_ole2frame_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         ole2frame = cast(OLE2Frame, entity)
@@ -685,8 +734,7 @@ class UniversalFrontend:
                     color = RGB.from_hex(
                         self.ctx.current_layout_properties.background_color
                     )
-                    loaded_image = _blend_image_towards(loaded_image, amount, color)
-
+                    loaded_image = _blend_image_towards(loaded_image, amount, color)  # type: ignore
                 if image.dxf.brightness != 50:
                     # note: this is only an approximation.
                     # Unclear what the exact operation AutoCAD uses
@@ -696,14 +744,15 @@ class UniversalFrontend:
                     else:
                         color = RGBA(0, 0, 0, 255)
                         amount = -amount
-                    loaded_image = _blend_image_towards(loaded_image, amount, color)
+                    loaded_image = _blend_image_towards(loaded_image, amount, color)  # type: ignore
 
                 if not image.dxf.flags & Image.USE_TRANSPARENCY:
-                    loaded_image.putalpha(255)
+                    loaded_image.putalpha(255)  # type: ignore
 
                 if image.transparency != 0.0:
                     loaded_image = _multiply_alpha(
-                        loaded_image, 1.0 - image.transparency
+                        loaded_image,  # type: ignore
+                        1.0 - image.transparency,
                     )
                 image_data = ImageData(
                     image=np.array(loaded_image),
@@ -712,12 +761,12 @@ class UniversalFrontend:
                     use_clipping_boundary=image.dxf.flags & Image.USE_CLIPPING_BOUNDARY,
                     remove_outside=image.dxf.clip_mode == 0,
                 )
-                self.designer.draw_image(image_data, properties)
+                self.pipeline.draw_image(image_data, properties)
 
             elif show_filename_if_missing:
                 default_cap_height = 20
                 text = image_def.dxf.filename
-                font = self.designer.text_engine.get_font(
+                font = self.pipeline.text_engine.get_font(
                     self.get_font_face(properties)
                 )
                 text_width = font.text_width_ex(text, default_cap_height)
@@ -732,7 +781,7 @@ class UniversalFrontend:
                 transform = (
                     Matrix44.scale(scale) @ translate @ image.get_wcs_transform()
                 )
-                self.designer.draw_text(
+                self.pipeline.draw_text(
                     text,
                     transform,
                     properties,
@@ -740,7 +789,7 @@ class UniversalFrontend:
                 )
 
             points = [v.vec2 for v in image.boundary_path_wcs()]
-            self.designer.draw_solid_lines(list(zip(points, points[1:])), properties)
+            self.pipeline.draw_solid_lines(list(zip(points, points[1:])), properties)
 
         elif self.config.image_policy == ImagePolicy.PROXY:
             self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
@@ -760,7 +809,7 @@ class UniversalFrontend:
         props.color = color
         # default SOLID filling
         props.filling = Filling()
-        self.designer.draw_filled_polygon(points, props)
+        self.pipeline.draw_filled_polygon(points, props)
 
     def draw_mesh_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         builder = MeshBuilder.from_mesh(entity)  # type: ignore
@@ -770,7 +819,7 @@ class UniversalFrontend:
         self, builder: MeshBuilder, properties: Properties
     ) -> None:
         for face in builder.faces_as_vertices():
-            self.designer.draw_path(
+            self.pipeline.draw_path(
                 from_vertices(face, close=True), properties=properties
             )
 
@@ -803,6 +852,8 @@ class UniversalFrontend:
                 entity, segments=self.config.circle_approximation_count // 2
             )
             for polygon in trace.polygons():  # polygon is a sequence of Vec2()
+                if len(polygon) < 3:
+                    continue
                 if transform:
                     points = ocs.points_to_wcs(
                         Vec3(v.x, v.y, elevation) for v in polygon
@@ -811,10 +862,11 @@ class UniversalFrontend:
                     points = polygon  # type: ignore
                 # Set default SOLID filling for LWPOLYLINE
                 properties.filling = Filling()
-                self.designer.draw_filled_polygon(points, properties)
+                self.pipeline.draw_filled_polygon(points, properties)
             return
-
-        self.designer.draw_path(make_path(entity), properties)
+        polyline_path = make_path(entity)
+        if len(polyline_path):
+            self.pipeline.draw_path(polyline_path, properties)
 
     def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         def draw_insert(insert: Insert):
@@ -831,10 +883,10 @@ class UniversalFrontend:
                     )
                 else:  # inverted clipping path
                     clipping_shape = clipping_portal.make_inverted_clipping_shape(
-                        boundary_path.vertices,
-                        extents=xclip.clipping_path_extents(boundary_path),
+                        boundary_path.inner_polygon(),
+                        outer_bounds=boundary_path.outer_bounds(),
                     )
-                self.designer.push_clipping_shape(clipping_shape, None)
+                self.pipeline.push_clipping_shape(clipping_shape, None)
 
             # draw_entities() includes the visibility check:
             self.draw_entities(
@@ -845,11 +897,11 @@ class UniversalFrontend:
             )
 
             if is_clipping_active and clip.get_xclip_frame_policy():
-                self.designer.draw_path(
-                    path=from_vertices(boundary_path.vertices, close=True),
+                self.pipeline.draw_path(
+                    path=from_vertices(boundary_path.inner_polygon(), close=True),
                     properties=properties,
                 )
-                self.designer.pop_clipping_shape()
+                self.pipeline.pop_clipping_shape()
 
         if isinstance(entity, Insert):
             self.ctx.push_state(properties)
@@ -905,9 +957,9 @@ class Frontend(UniversalFrontend):
         config: Configuration = Configuration(),
         bbox_cache: Optional[ezdxf.bbox.Cache] = None,
     ):
-        from .designer import Designer2d
+        from .pipeline import RenderPipeline2d
 
-        super().__init__(ctx, Designer2d(out), config, bbox_cache)
+        super().__init__(ctx, RenderPipeline2d(out), config, bbox_cache)
 
 
 def is_spatial_text(extrusion: Vec3) -> bool:
@@ -968,7 +1020,7 @@ def _draw_entities(
                 frontend.skip_entity(entity, "Cannot parse DXF entity")
                 continue
         properties = ctx.resolve_all(entity)
-        frontend.override_properties(entity, properties)
+        frontend.exec_property_override(entity, properties)
         if properties.is_visible:
             frontend.draw_entity(entity, properties)
         else:

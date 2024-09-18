@@ -30,3 +30,7 @@
 -
 - ## Rendering Support for Clipped Block References
 	- The clipping of block references is supported by the [[drawing add-on]]
+	- Modelspace: ![image.png](../assets/image_1708499032794_0.png){:height 729, :width 749}
+		-
+	- Paperspace: ![image.png](../assets/image_1708499052455_0.png)
+		-

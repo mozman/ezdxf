@@ -88,13 +88,17 @@ The current implementation supports only copyable and transformable DXF entities
 these are all basic entity types as LINE, CIRCLE, ... and block references and their
 associated required table entries and objects from the OBJECTS section.
 
-Unsupported are all ACIS based entities, the ACAD_TABLE entity, preserved unknown entities
-wrapped in a :class:`DXFTagStorage` class, proxy entities and objects.
+Unsupported is the ACAD_TABLE entity and preserved unknown entities wrapped in a 
+:class:`DXFTagStorage` class like proxy entities and objects.
 Support for these entities may be added in a later version of `ezdxf`.
 Unsupported entities are ignored and do not raise exceptions.
 
 Most document features stored in the HEADER and OBJECTS sections are not supported by
 this module like GROUPS, LAYER_FILTER, GEODATA, SUN.
+
+.. versionadded:: 1.3.0
+
+    Support for ACIS based entities was added.
 
 Importing Data and Resources
 ----------------------------

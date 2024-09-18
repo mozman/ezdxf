@@ -47,13 +47,13 @@ DXF Structures
     blkrefs
     const
 
-DXF Entity Creation
--------------------
+Colors
+------
 
 .. toctree::
     :maxdepth: 1
 
-    entity_creation
+    colors
 
 Enums
 -----
@@ -63,22 +63,6 @@ Enums
 
     enums
 
-Colors
-------
-
-.. toctree::
-    :maxdepth: 1
-
-    colors
-
-Data Query
-----------
-
-.. toctree::
-    :maxdepth: 1
-
-    query
-    groupby
 
 Math
 ----
@@ -93,12 +77,17 @@ Math
     math/rtree
     math/triangulation
 
+.. The borders between the "Construction" and the "Tools" section are blurry!
+
 Construction
 ------------
+
+.. Tools that alter the geometry of entities or create new entities.
 
 .. toctree::
     :maxdepth: 1
 
+    acis
     bbox
     disassemble
     math_construction_tools
@@ -127,17 +116,30 @@ Fonts
 Tools
 -----
 
+.. Tools that alter the visual appearance of entities or the DXF document itself.
+   Tools that work with entities.
+
 .. toctree::
     :maxdepth: 2
 
-    tools/acis
     tools/appsettings
     tools/comments
     tools/gfxattribs
+    tasks/groupby
+    tools/query
+    tools/revcloud
+    tasks/select
     tools/text
     tools/text_size
     tools/xclip
-    tools/zoom   
+    tools/zoom
+    render/index
+
+**TODO:**
+
+- ACAD_TABLE helper tools
+- Dynamic Block helper tools
+
 
 Global Options
 --------------
@@ -147,16 +149,17 @@ Global Options
 
     options
 
-
-Low Level Tools
----------------
+For Developers
+--------------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
+    dxfinternals/index
     low_level_tools/functions
     low_level_tools/dxf_unicode_decoder
     low_level_tools/sat_crypt
+    develop/index
 
 
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301

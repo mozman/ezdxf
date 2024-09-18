@@ -1,15 +1,16 @@
-# Copyright (c) 2020-2023, Manfred Moitzi
+# Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 
 import pytest
 import ezdxf
 from ezdxf.math import Vec2
 from ezdxf.addons.drawing import RenderContext, Frontend
-from ezdxf.addons.drawing.properties import BackendProperties
+from ezdxf.addons.drawing.properties import BackendProperties, Properties
 
 from ezdxf.addons.drawing.backend import Backend, BkPath2d
 from ezdxf.addons.drawing.debug_backend import BasicBackend, PathBackend
 from ezdxf.entities import DXFGraphic
+from ezdxf.layouts import Modelspace
 from ezdxf.render.forms import cube
 
 
@@ -305,7 +306,9 @@ def test_mtext(msp, basic):
     msp.add_mtext("line1\nline2", dxfattribs={"style": "DEJAVU"})
     basic.draw_entities(msp)
     result = get_result(basic)
-    assert len(result) == 10  # each character is now one multi-path: changed in v1.1.0b4
+    assert (
+        len(result) == 10
+    )  # each character is now one multi-path: changed in v1.1.0b4
     assert result[0][0] == "filled_polygon"
 
 
@@ -348,59 +351,87 @@ def test_polyface(msp, basic):
     assert entities == {"line"}
 
 
-def test_override_filter(msp, ctx):
-    class FrontendWithOverride(MyTestFrontend):
-        def __init__(self, ctx: RenderContext, out: Backend):
-            super().__init__(ctx, out)
-            self.override_enabled = True
+class FrontendWithOverride(MyTestFrontend):
+    def __init__(self, ctx: RenderContext, out: Backend):
+        super().__init__(ctx, out)
+        self.override_enabled = True
 
-        def override_properties(
-            self, entity: DXFGraphic, properties: BackendProperties
-        ) -> None:
-            if not self.override_enabled:
-                return
-            if properties.layer == "T1":
-                properties.layer = "Tx"
-            properties.color = "#000000"
-            if entity.dxf.text == "T2":
-                properties.is_visible = False
+    def override_properties(self, entity: DXFGraphic, properties: Properties) -> None:
+        if not self.override_enabled:
+            return
+        if properties.layer == "T1":
+            properties.layer = "Tx"
+        properties.color = "#000000"
+        if entity.dxf.text == "T2":
+            properties.is_visible = False
 
-    backend = BasicBackend()
-    frontend = FrontendWithOverride(ctx, backend)
 
+def make_override_content(msp: Modelspace):
     msp.delete_all_entities()
     msp.add_text("T0", dxfattribs={"layer": "T0", "color": 7, "style": "DEJAVU"})
     msp.add_text("T1", dxfattribs={"layer": "T1", "color": 6, "style": "DEJAVU"})
     msp.add_text("T2", dxfattribs={"layer": "T2", "color": 5, "style": "DEJAVU"})
+
+
+def use_override_method(msp: Modelspace, ctx: RenderContext) -> list:
+    backend = BasicBackend()
+    frontend = FrontendWithOverride(ctx, backend)
+    make_override_content(msp)
     frontend.draw_entities(msp)
     frontend.override_enabled = False
     frontend.draw_entities(msp)
+    return backend.collector
+
+
+def override_property_function(entity: DXFGraphic, properties: Properties) -> None:
+    if properties.layer == "T1":
+        properties.layer = "Tx"
+    properties.color = "#000000"
+    if entity.dxf.text == "T2":
+        properties.is_visible = False
+
+
+def use_override_function(msp: Modelspace, ctx: RenderContext) -> list:
+    backend = BasicBackend()
+    frontend = Frontend(ctx, backend)
+    make_override_content(msp)
+
+    frontend.push_property_override_function(override_property_function)
+    frontend.draw_entities(msp)
+    frontend.pop_property_override_function()
+    frontend.draw_entities(msp)
+    return backend.collector
+
+
+@pytest.mark.parametrize("override", [use_override_method, use_override_function])
+def test_property_override_method(msp: Modelspace, ctx: RenderContext, override):
+    collector = override(msp, ctx)
 
     # since v1.0.4 the frontend does the text rendering and passes only filled
     # polygons to the backend
-    assert len(backend.collector) == 10
+    assert len(collector) == 10
 
     # can modify color property
-    result = backend.collector[0]
+    result = collector[0]
     assert result[0] == "filled_polygon"
     assert result[2].color == "#000000"
 
     # can modify layer property
-    result = backend.collector[2]
+    result = collector[2]
     assert result[0] == "filled_polygon"
     assert result[2].layer == "Tx"
 
     # with override disabled
 
-    result = backend.collector[4]
+    result = collector[4]
     assert result[0] == "filled_polygon"
     assert result[2].color == "#ffffff"
 
-    result = backend.collector[6]
+    result = collector[6]
     assert result[0] == "filled_polygon"
     assert result[2].layer == "T1"
 
-    result = backend.collector[8]
+    result = collector[8]
     assert result[0] == "filled_polygon"
     assert result[2].layer == "T2"
 

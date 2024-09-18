@@ -146,6 +146,8 @@ class _PyQtBackend(Backend):
                 add_line(item, properties.handle)
 
     def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
+        if len(path) == 0:
+            return
         item = qw.QGraphicsPathItem(to_qpainter_path([path]))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._no_fill)
@@ -156,7 +158,10 @@ class _PyQtBackend(Backend):
     ) -> None:
         # Default fill rule is OddEvenFill! Detecting the path orientation is not
         # necessary!
-        item = _CosmeticPath(to_qpainter_path(paths))
+        _paths = list(paths)
+        if len(_paths) == 0:
+            return
+        item = _CosmeticPath(to_qpainter_path(_paths))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._get_fill_brush(properties.color))
         self._add_item(item, properties.handle)

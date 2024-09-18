@@ -1,7 +1,8 @@
-# Copyright (c) 2018-2023, Manfred Moitzi
+# Copyright (c) 2018-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Optional, Iterable, Any, Iterator
+from typing_extensions import Self
 import copy
 import logging
 import math
@@ -541,7 +542,7 @@ class MultiLeader(DXFGraphic):
         # block attdef entities are included in the block definition!
         self.context.register_resources(registry)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, MultiLeader)
         super().map_resources(clone, mapping)
@@ -1351,7 +1352,7 @@ class MLeaderStyle(DXFObject):
         for attrib_name in MLEADER_STYLE_HANDLE_ATTRIBS:
             registry.add_handle(dxf.get(attrib_name, "0"))
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         super().map_resources(clone, mapping)
         dxf = self.dxf
         for attrib_name in MLEADER_STYLE_HANDLE_ATTRIBS:

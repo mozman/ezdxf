@@ -44,12 +44,24 @@ class ClippingPath:
     inverted_clip_compare: Sequence[Vec2] = tuple()
     is_inverted_clip: bool = False
 
+    def inner_polygon(self) -> Sequence[Vec2]:
+        """Returns the inner clipping polygon as sequence of Vec2."""
+        # The exact data structure of inverted clippings polygons is still not
+        # clear to me, so use the smallest polygon as inner clipping polygon.
+        if not self.is_inverted_clip:
+            return self.vertices
+        inner_polygon = self.vertices
+        if bbox_area(self.inverted_clip) < bbox_area(inner_polygon):
+            inner_polygon = self.inverted_clip
+        return inner_polygon
 
-def clipping_path_extents(cp: ClippingPath) -> BoundingBox2d:
-    """Returns the extents of the clipping path."""
-    if cp.is_inverted_clip:
-        return BoundingBox2d(cp.inverted_clip_compare)  # best guess so far
-    return BoundingBox2d(cp.vertices)
+    def outer_bounds(self) -> BoundingBox2d:
+        """Returns the maximum extents as BoundingBox2d."""
+        if not self.is_inverted_clip:
+            return BoundingBox2d(self.vertices)
+        # The exact data structure of inverted clippings polygons is still not
+        # clear to me, this is my best guess:
+        return BoundingBox2d(self.inverted_clip_compare)
 
 
 class XClip:
@@ -157,13 +169,18 @@ class XClip:
         block_clipping_path = self.get_block_clipping_path()
         m = self._insert.matrix44()
         vertices = Vec2.tuple(m.transform_vertices(block_clipping_path.vertices))
+        if len(vertices) == 2:  # rectangle by diagonal corner vertices
+            vertices = BoundingBox2d(vertices).rect_vertices()
         wcs_clipping_path = ClippingPath(
             vertices, is_inverted_clip=block_clipping_path.is_inverted_clip
         )
         if block_clipping_path.is_inverted_clip:
-            wcs_clipping_path.inverted_clip = Vec2.tuple(
+            inverted_clip = Vec2.tuple(
                 m.transform_vertices(block_clipping_path.inverted_clip)
             )
+            if len(inverted_clip) == 2:  # rectangle by diagonal corner vertices
+                inverted_clip = BoundingBox2d(inverted_clip).rect_vertices()
+            wcs_clipping_path.inverted_clip = inverted_clip
             wcs_clipping_path.inverted_clip_compare = Vec2.tuple(
                 m.transform_vertices(block_clipping_path.inverted_clip_compare)
             )
@@ -262,15 +279,19 @@ class XClip:
             grow_factor = 0.1
 
         bbox = BoundingBox2d(extents)
+        bbox.extend(current_clipping_path.vertices)
         if not bbox.has_data:
             raise const.DXFValueError("extents not detectable")
 
         if grow_factor:
             bbox.grow(max(bbox.size) * grow_factor)
 
+        # inverted_clip is the regular clipping path
         inverted_clip = current_clipping_path.vertices
+        # construct an inverted clipping path
         inverted_clip_compare = _get_inverted_clip_compare_vertices(bbox, inverted_clip)
-        self.set_block_clipping_path(inverted_clip_compare)  # ???
+        # set inverted_clip_compare as regular clipping path
+        self.set_block_clipping_path(inverted_clip_compare)
         self._set_inverted_clipping_path(inverted_clip, inverted_clip_compare)
 
     def _detect_block_extents(self) -> Sequence[Vec2]:
@@ -338,67 +359,12 @@ def _rect_path(vertices: Iterable[Vec2]) -> Sequence[Vec2]:
 def _get_inverted_clip_compare_vertices(
     bbox: BoundingBox2d, hole: Sequence[Vec2]
 ) -> Sequence[Vec2]:
+    # AutoCAD does not accept this paths and from further tests it's clear that the 
+    # geometry of the inverted clipping path is the problem not the DXF structure!
+    from ezdxf.math.clipping import make_inverted_clipping_polygon
+
     assert (bbox.extmax is not None) and (bbox.extmin is not None)
-
-    inverted_path = list(hole)
-    start = hole[-1]
-
-    min_x, min_y = bbox.extmin
-    max_x, max_y = bbox.extmax
-    dist_left = start.x - min_x
-    dist_right = max_x - start.x
-    dist_top = max_y - start.y
-    dist_bottom = start.y - min_y
-    min_dist = min(dist_left, dist_right, dist_bottom, dist_top)
-    if min_dist == dist_top:
-        inverted_path.extend(
-            (
-                Vec2(start.x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, max_y),
-                Vec2(start.x, max_y),
-                start,
-            )
-        )
-    elif min_dist == dist_bottom:
-        inverted_path.extend(
-            (
-                Vec2(start.x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, min_y),
-                Vec2(start.x, min_y),
-                start,
-            )
-        )
-    elif min_dist == dist_left:
-        inverted_path.extend(
-            (
-                Vec2(min_x, start.y),
-                Vec2(min_x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, start.y),
-                start,
-            )
-        )
-    elif min_dist == dist_right:
-        inverted_path.extend(
-            (
-                Vec2(max_x, start.y),
-                Vec2(max_x, min_y),
-                Vec2(min_x, min_y),
-                Vec2(min_x, max_y),
-                Vec2(max_x, max_y),
-                Vec2(max_x, start.y),
-                start,
-            )
-        )
-    return inverted_path
+    return make_inverted_clipping_polygon(inner_polygon=list(hole), outer_bounds=bbox)
 
 
 def get_spatial_filter(entity: DXFEntity) -> SpatialFilter | None:
@@ -474,3 +440,11 @@ def get_roundtrip_vertices(
     tags = xrec.get_section(section_name)
     vertices = m.transform_vertices(Vec3(t.value) for t in tags)
     return Vec2.tuple(vertices)
+
+
+def bbox_area(vertice: Sequence[Vec2]) -> float:
+    bbox = BoundingBox2d(vertice)
+    if bbox.has_data:
+        size = bbox.size
+        return size.x * size.y
+    return 0.0

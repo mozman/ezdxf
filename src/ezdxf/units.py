@@ -201,8 +201,8 @@ def conversion_factor(
 def unit_name(enum: int) -> str:
     """Returns the name of the unit enum."""
     try:
-        return str(InsertUnits(enum)).split(".")[1]
-    except (ValueError, IndexError):
+        return InsertUnits(enum).name
+    except ValueError:
         return "unitless"
 
 

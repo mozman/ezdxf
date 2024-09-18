@@ -5,29 +5,34 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', 'pypy-3.9']
+        # doesn't work with CPython 3.9
+        python-version: ['3.10', '3.11', '3.12', 'pypy-3.9']
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         # Excluding Cython to test the pure Python version.
-        python -m pip install setuptools wheel pytest pyparsing fonttools numpy Pillow
+        python -m pip install "setuptools>69.0.0" wheel
     - name: Install without C-extensions
       run: |
-        python setup.py install
+        python -m pip install --no-build-isolation .
     - name: Test without C-extensions
       run: |
+        # install test dependencies
+        python -m pip install pytest Pillow
         python -m pytest tests integration_tests

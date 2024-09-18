@@ -1,15 +1,10 @@
 # cython: language_level=3
-# distutils: language = c++
-# Copyright (c) 2021-2023, Manfred Moitzi
+# Copyright (c) 2021-2024, Manfred Moitzi
 # License: MIT License
-# Cython implementation of the B-spline basis function.
-# type: ignore -- pylance sucks at type-checking cython files
-
-from typing import List, Iterable, Sequence, Tuple
+from typing import Iterable, Sequence, Iterator
 import cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from .vector cimport Vec3, isclose, v3_mul, v3_sub, v3_from_cpp_vec3
-from ._cpp_vec3 cimport CppVec3
+from .vector cimport Vec3, isclose, v3_mul, v3_sub
 
 __all__ = ['Basis', 'Evaluator']
 
@@ -41,7 +36,7 @@ cdef double binomial_coefficient(int k, int i):
     return k_fact / (k_i_fact * i_fact)
 
 @cython.boundscheck(False)
-cdef int bisect_right(double*a, double x, int lo, int hi):
+cdef int bisect_right(double *a, double x, int lo, int hi):
     cdef int mid
     while lo < hi:
         mid = (lo + hi) // 2
@@ -51,7 +46,7 @@ cdef int bisect_right(double*a, double x, int lo, int hi):
             lo = mid + 1
     return lo
 
-cdef reset_double_array(double *a, int count, double value=0.0):
+cdef reset_double_array(double *a, int count, double value):
     cdef int i
     for i in range(count):
         a[i] = value
@@ -64,11 +59,15 @@ cdef class Basis:
     cdef readonly double max_t
     cdef tuple weights_  # public attribute for Cython Evaluator
     # private:
-    cdef double*_knots
+    cdef double *_knots
     cdef int knot_count
 
-    def __cinit__(self, knots: Iterable[float], int order, int count,
-                  weights: Sequence[float] = None):
+    def __cinit__(
+            self, knots: Iterable[float], 
+            int order, 
+            int count,
+            weights: Sequence[float] = None
+        ):
         if order < 2 or order >= MAX_SPLINE_ORDER:
             raise ValueError('invalid order')
         self.order = order
@@ -99,11 +98,11 @@ cdef class Basis:
         return self.order - 1
 
     @property
-    def knots(self) -> Tuple[float, ...]:
+    def knots(self) -> tuple[float, ...]:
         return tuple(x for x in self._knots[:self.knot_count])
 
     @property
-    def weights(self) -> Tuple[float, ...]:
+    def weights(self) -> tuple[float, ...]:
         return self.weights_
 
     @property
@@ -132,7 +131,7 @@ cdef class Basis:
         """ Determine the knot span index. """
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
-        cdef double*knots = self._knots
+        cdef double *knots = self._knots
         cdef int count = self.count  # text book: n+1
         cdef int p = self.order - 1
         cdef int span
@@ -155,12 +154,12 @@ cdef class Basis:
     cpdef list basis_funcs(self, int span, double u):
         # Source: The NURBS Book: Algorithm A2.2
         cdef int order = self.order
-        cdef double*knots = self._knots
+        cdef double *knots = self._knots
         cdef double[MAX_SPLINE_ORDER] N, left, right
         cdef list result
-        reset_double_array(N, order)
-        reset_double_array(left, order)
-        reset_double_array(right, order)
+        reset_double_array(N, order, 0.0)
+        reset_double_array(left, order, 0.0)
+        reset_double_array(right, order, 0.0)
 
         cdef int j, r, i1
         cdef double temp, saved, temp_r, temp_l
@@ -185,7 +184,7 @@ cdef class Basis:
         else:
             return result
 
-    cpdef list span_weighting(self, nbasis: List[float], int span):
+    cpdef list span_weighting(self, nbasis: list[float], int span):
         cdef list products = [
             nb * w for nb, w in zip(
                 nbasis,
@@ -199,17 +198,23 @@ cdef class Basis:
             return NULL_LIST * len(nbasis)
 
     cpdef list basis_funcs_derivatives(self, int span, double u, int n = 1):
+        # pyright: reportUndefinedVariable=false
+        # pyright flags Cython multi-arrays incorrect: 
+        # cdef double[4][4] a  # this is a valid array definition in Cython!
+        # https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html#c-arrays
         # Source: The NURBS Book: Algorithm A2.3
         cdef int order = self.order
         cdef int p = order - 1
         if n > p:
             n = p
-        cdef double*knots = self._knots
+        cdef double *knots = self._knots
         cdef double[MAX_SPLINE_ORDER] left, right
         reset_double_array(left, order, 1.0)
         reset_double_array(right, order, 1.0)
 
-        cdef list ndu = [ONE_LIST * order for _ in range(order)]
+        cdef double[MAX_SPLINE_ORDER][MAX_SPLINE_ORDER] ndu  # pyright: ignore
+        reset_double_array(<double *> ndu, MAX_SPLINE_ORDER*MAX_SPLINE_ORDER, 1.0)
+
         cdef int j, r, i1
         cdef double temp, saved, tmp_r, tmp_l
         for j in range(1, order):
@@ -231,12 +236,17 @@ cdef class Basis:
             ndu[j][j] = saved
 
         # load the basis_vector functions
-        cdef list derivatives = [NULL_LIST * order for _ in range(order)]
+        cdef double[MAX_SPLINE_ORDER][MAX_SPLINE_ORDER] derivatives  # pyright: ignore
+        reset_double_array(
+            <double *> derivatives, MAX_SPLINE_ORDER*MAX_SPLINE_ORDER, 0.0
+        )
         for j in range(order):
             derivatives[0][j] = ndu[j][p]
 
         # loop over function index
-        cdef list a = [ONE_LIST * order, ONE_LIST * order]
+        cdef double[2][MAX_SPLINE_ORDER] a  # pyright: ignore
+        reset_double_array(<double *> a, 2*MAX_SPLINE_ORDER, 1.0)
+
         cdef int s1, s2, k, rk, pk, j1, j2, t
         cdef double d
         for r in range(order):
@@ -280,7 +290,15 @@ cdef class Basis:
             for j in range(order):
                 derivatives[k][j] *= rr
             rr *= (p - k)
-        return derivatives[:n + 1]
+
+        # return result as Python lists
+        cdef list result = [], row
+        for k in range(0, n + 1):
+            row = []
+            result.append(row)
+            for j in range(order):
+                row.append(derivatives[k][j])
+        return result
 
 cdef class Evaluator:
     """ B-spline curve point and curve derivative evaluator. """
@@ -291,27 +309,29 @@ cdef class Evaluator:
         self._basis = basis
         self._control_points = Vec3.tuple(control_points)
 
-    cdef CppVec3 control_point(self, int index):
-        cdef Vec3 v3 = <Vec3> self._control_points[index]
-        return v3.to_cpp_vec3()
-
     cpdef Vec3 point(self, double u):
         # Source: The NURBS Book: Algorithm A3.1
         cdef Basis basis = self._basis
-        cdef int p = basis.order - 1
         if isclose(u, basis.max_t, REL_TOL, ABS_TOL):
             u = basis.max_t
-
-        cdef int span = basis.find_span(u)
-        cdef list N = basis.basis_funcs(span, u)
-        cdef int i
-        cdef CppVec3 sum_ = CppVec3(), cpoint
+        cdef:
+            int p = basis.order - 1
+            int span = basis.find_span(u)
+            list N = basis.basis_funcs(span, u)
+            int i
+            Vec3 cpoint, v3_sum = Vec3()
+            tuple control_points = self._control_points
+            double factor
+            
         for i in range(p + 1):
-            cpoint = self.control_point(span - p + i)
-            sum_ = sum_ + (cpoint * <double> N[i])
-        return v3_from_cpp_vec3(sum_)
+            factor = <double> N[i]
+            cpoint = <Vec3> control_points[span - p + i]
+            v3_sum.x += cpoint.x * factor
+            v3_sum.y += cpoint.y * factor
+            v3_sum.z += cpoint.z * factor
+        return v3_sum
 
-    def points(self, t: Iterable[float]) -> Iterable[Vec3]:
+    def points(self, t: Iterable[float]) -> Iterator[Vec3]:
         cdef double u
         for u in t:
             yield self.point(u)
@@ -319,56 +339,62 @@ cdef class Evaluator:
     cpdef list derivative(self, double u, int n = 1):
         """ Return point and derivatives up to n <= degree for parameter u. """
         # Source: The NURBS Book: Algorithm A3.2
-        cdef Vec3 vec3sum
-        cdef CppVec3 cppsum
-        cdef list CK = [], CKw = [], wders = []
-        cdef tuple weights
+        
         cdef Basis basis = self._basis
         if isclose(u, basis.max_t, REL_TOL, ABS_TOL):
             u = basis.max_t
+        cdef:
+            list CK = [], CKw = [], wders = []
+            tuple control_points = self._control_points
+            tuple weights
+            Vec3 cpoint, v3_sum
+            double wder, bas_func_weight, bas_func
+            int k, j, i, p = basis.degree
+            int span = basis.find_span(u)
+            list basis_funcs_ders = basis.basis_funcs_derivatives(span, u, n)
 
-        cdef int p = basis.degree
-        cdef int span = basis.find_span(u)
-        cdef list basis_funcs_ders = basis.basis_funcs_derivatives(span, u, n)
-        cdef int k, j, i
-        cdef double wder, bas_func_weight, bas_func
         if basis.is_rational:
             # Homogeneous point representation required:
             # (x*w, y*w, z*w, w)
             weights = basis.weights_
             for k in range(n + 1):
-                cppsum = CppVec3()
+                v3_sum = Vec3()
                 wder = 0.0
                 for j in range(p + 1):
                     i = span - p + j
                     bas_func_weight = basis_funcs_ders[k][j] * weights[i]
                     # control_point * weight * bas_func_der = (x*w, y*w, z*w) * bas_func_der
-                    cppsum = cppsum + (self.control_point(i) * bas_func_weight)
+                    cpoint = <Vec3> control_points[i]
+                    v3_sum.x += cpoint.x * bas_func_weight
+                    v3_sum.y += cpoint.y * bas_func_weight
+                    v3_sum.z += cpoint.z * bas_func_weight
                     wder += bas_func_weight
-                CKw.append(v3_from_cpp_vec3(cppsum))
+                CKw.append(v3_sum)
                 wders.append(wder)
 
             # Source: The NURBS Book: Algorithm A4.2
             for k in range(n + 1):
-                vec3sum = CKw[k]
+                v3_sum = CKw[k]
                 for j in range(1, k + 1):
                     bas_func_weight = binomial_coefficient(k, j) * wders[j]
-                    vec3sum = v3_sub(vec3sum,
-                                     v3_mul(CK[k - j], bas_func_weight))
-                CK.append(vec3sum / wders[0])
+                    v3_sum = v3_sub(
+                        v3_sum,
+                        v3_mul(CK[k - j], bas_func_weight)
+                    )
+                CK.append(v3_sum / wders[0])
         else:
             for k in range(n + 1):
-                cppsum = CppVec3()
+                v3_sum = Vec3()
                 for j in range(p + 1):
                     bas_func = basis_funcs_ders[k][j]
-                    cppsum = cppsum + (
-                            self.control_point(span - p + j) * bas_func
-                    )
-                CK.append(v3_from_cpp_vec3(cppsum))
+                    cpoint = <Vec3> control_points[span - p + j] 
+                    v3_sum.x += cpoint.x * bas_func
+                    v3_sum.y += cpoint.y * bas_func
+                    v3_sum.z += cpoint.z * bas_func
+                CK.append(v3_sum)
         return CK
 
-    def derivatives(
-            self, t: Iterable[float], int n = 1) -> Iterable[List[Vec3]]:
+    def derivatives(self, t: Iterable[float], int n = 1) -> Iterator[list[Vec3]]:
         cdef double u
         for u in t:
             yield self.derivative(u, n)

@@ -40,8 +40,8 @@ def test_new_line():
 def test_get_point():
     points = [(1, 1), (2, 2), (3, 3)]
     line = lwpolyline(points)
-    assert (1, 1, 0, 0, 0) == line[0]
-    assert (3, 3, 0, 0, 0) == line[-1]
+    assert (1, 1, 0, 0, 0) == tuple(line[0])
+    assert (3, 3, 0, 0, 0) == tuple(line[-1])
 
 
 def test_slicing():
@@ -54,9 +54,9 @@ def test_slicing():
     assert len(line[1:-1]) == 1
     result = line[::-1]
     assert len(result) == 3
-    assert result[0] == (3, 3, 0, 0, 0)
-    assert result[1] == (2, 2, 0, 0, 0)
-    assert result[2] == (1, 1, 0, 0, 0)
+    assert tuple(result[0]) == (3, 3, 0, 0, 0)
+    assert tuple(result[1]) == (2, 2, 0, 0, 0)
+    assert tuple(result[2]) == (1, 1, 0, 0, 0)
 
 
 def test_set_point():
@@ -64,18 +64,17 @@ def test_set_point():
     line = lwpolyline(points)
 
     line[0] = (4, 4)
-    assert (4, 4, 0, 0, 0) == line[0]
+    assert (4, 4, 0, 0, 0) == tuple(line[0])
 
     line[-1] = (4, 4)
-    assert (4, 4, 0, 0, 0) == line[-1]
+    assert (4, 4, 0, 0, 0) == tuple(line[-1])
 
 
 def test_get_point_error():
     points = [(1, 1), (2, 2), (3, 3)]
     line = lwpolyline(points)
-    with pytest.raises(ezdxf.DXFIndexError):
+    with pytest.raises(IndexError):
         line[3]
-
 
 def test_insert_point():
     points = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]
@@ -84,16 +83,16 @@ def test_insert_point():
 
     line.insert(0, (7, 8))
     assert len(line) == 6
-    assert line[0] == (7, 8, 0, 0, 0)
-    assert line[1] == (1, 1, 0, 0, 0)
-    assert line[-1] == (5, 5, 0, 0, 0)
+    assert tuple(line[0]) == (7, 8, 0, 0, 0)
+    assert tuple(line[1]) == (1, 1, 0, 0, 0)
+    assert tuple(line[-1]) == (5, 5, 0, 0, 0)
 
     line.insert(1, (1, 9, 4), format="bxy")
     assert len(line) == 7
-    assert line[0] == (7, 8, 0, 0, 0)
-    assert line[1] == (9, 4, 0, 0, 1)
-    assert line[2] == (1, 1, 0, 0, 0)
-    assert line[-1] == (5, 5, 0, 0, 0)
+    assert tuple(line[0]) == (7, 8, 0, 0, 0)
+    assert tuple(line[1]) == (9, 4, 0, 0, 1)
+    assert tuple(line[2]) == (1, 1, 0, 0, 0)
+    assert tuple(line[-1]) == (5, 5, 0, 0, 0)
 
 
 def test_del_points():
@@ -103,20 +102,20 @@ def test_del_points():
 
     del line[0]
     assert len(line) == 4
-    assert line[0] == (2, 2, 0, 0, 0)
-    assert line[-1] == (5, 5, 0, 0, 0)
+    assert tuple(line[0]) == (2, 2, 0, 0, 0)
+    assert tuple(line[-1]) == (5, 5, 0, 0, 0)
 
     del line[:2]
     assert len(line) == 2
-    assert line[0] == (4, 4, 0, 0, 0)
-    assert line[-1] == (5, 5, 0, 0, 0)
+    assert tuple(line[0]) == (4, 4, 0, 0, 0)
+    assert tuple(line[-1]) == (5, 5, 0, 0, 0)
 
 
 def test_append_points():
     points = [(1, 1), (2, 2), (3, 3)]
     line = lwpolyline(points)
     line.append_points([(4, 4), (5, 5)])
-    assert (4, 4, 0, 0, 0) == line[-2]
+    assert (4, 4, 0, 0, 0) == tuple(line[-2])
 
 
 def test_context_manager():
@@ -124,7 +123,7 @@ def test_context_manager():
     line = lwpolyline(points)
     with line.points() as p:
         p.extend([(4, 4), (5, 5)])
-    assert (4, 4, 0, 0, 0) == line[-2]
+    assert (4, 4, 0, 0, 0) == tuple(line[-2])
 
 
 def test_clear():
@@ -176,10 +175,10 @@ def test_packed_points_basics():
     assert len(packed_points) == 2
     points = list(packed_points)
     assert len(points) == 2
-    assert packed_points[0] == (-0.5, -0.5, 0, 0, 0)
-    assert packed_points[1] == (0.5, 0.5, 0, 0, 0)
+    assert tuple(packed_points[0]) == (-0.5, -0.5, 0, 0, 0)
+    assert tuple(packed_points[1]) == (0.5, 0.5, 0, 0, 0)
     # test negative index
-    assert packed_points[-1] == (0.5, 0.5, 0, 0, 0)
+    assert tuple(packed_points[-1]) == (0.5, 0.5, 0, 0, 0)
     with pytest.raises(IndexError):
         packed_points[-3]
     with pytest.raises(IndexError):
@@ -190,9 +189,9 @@ def test_packed_points_advanced():
     packed_points, _ = LWPolylinePoints.from_tags(lwtags(LWPOLYLINE1))
     packed_points.append((5, 5, 1, 2, 3))
     assert len(packed_points) == 3
-    assert packed_points[-1] == (5, 5, 1, 2, 3)
+    assert tuple(packed_points[-1]) == (5, 5, 1, 2, 3)
     packed_points[0] = (7, 7, 0, 0, 0)
-    assert packed_points[0] == (7, 7, 0, 0, 0)
+    assert tuple(packed_points[0]) == (7, 7, 0, 0, 0)
     assert len(packed_points) == 3
     packed_points.clear()
     assert len(packed_points) == 0

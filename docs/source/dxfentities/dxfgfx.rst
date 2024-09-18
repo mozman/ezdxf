@@ -29,15 +29,16 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
 
     .. attribute:: rgb
 
-        Get/set DXF attribute :attr:`dxf.true_color` as (r, g, b) tuple, returns
+        Get/set/delete DXF attribute :attr:`dxf.true_color` as (r, g, b) tuple, returns
         ``None`` if attribute :attr:`dxf.true_color` is not set.
 
         .. code-block:: python
 
-            entity.rgb = (30, 40, 50)
-            r, g, b = entity.rgb
+            entity.rgb = (30, 40, 50)  # set as tuple[int, int, int] or color.RGB
+            r, g, b = entity.rgb  # returns tuple[int, int, int] or None
+            del entity.rgb  # discard true color value, no exception if not exist
 
-        This is the recommend method to get/set RGB values, when ever possible
+        This is the recommend method to get/set/delete RGB values, when ever possible
         do not use the DXF low level attribute :attr:`dxf.true_color`.
 
 

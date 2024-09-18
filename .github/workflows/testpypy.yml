@@ -1,0 +1,32 @@
+name: Test pypy without C-extensions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['pypy-3.9']
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        pypy -m pip install --upgrade pip
+        # Excluding Cython to test the pure Python version.
+        pypy -m pip install "setuptools>69.0.0" wheel
+    - name: Install without C-extensions
+      run: |
+        pypy -m pip install --no-build-isolation .
+    - name: Test pypy without C-extensions
+      run: |
+        # install test dependencies
+        pypy -m pip install pytest Pillow
+        pypy -m pytest tests integration_tests

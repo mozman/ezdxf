@@ -10,10 +10,9 @@ from typing import (
     Iterator,
     Optional,
 )
-from typing_extensions import TypeAlias
+from typing_extensions import TypeAlias, Self
 import array
 import copy
-from itertools import chain
 from ezdxf.audit import AuditError
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -163,7 +162,7 @@ class Spline(DXFGraphic):
         self.knots = []
         self.weights = []
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy data: control_points, fit_points, weights, knot_values."""
         assert isinstance(entity, Spline)
         entity._control_points = copy.deepcopy(self._control_points)
@@ -294,7 +293,7 @@ class Spline(DXFGraphic):
     @control_points.setter
     def control_points(self, points: Iterable[UVec]) -> None:
         self._control_points: Vertices = cast(
-            Vertices, VertexArray(chain.from_iterable(Vec3.generate(points)))
+            Vertices, VertexArray(Vec3.list(points))
         )
 
     # DXF callback attribute Spline.dxf.n_control_points
@@ -313,7 +312,7 @@ class Spline(DXFGraphic):
     def fit_points(self, points: Iterable[UVec]) -> None:
         self._fit_points: Vertices = cast(
             Vertices,
-            VertexArray(chain.from_iterable(Vec3.generate(points))),
+            VertexArray(Vec3.list(points)),
         )
 
     # DXF callback attribute Spline.dxf.n_fit_points

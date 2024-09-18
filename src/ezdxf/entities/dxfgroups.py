@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Manfred Moitzi
+# Copyright (c) 2019-2024, Manfred Moitzi
 # License: MIT-License
 from __future__ import annotations
 from typing import (
@@ -192,13 +192,7 @@ class DXFGroup(DXFObject):
         yield data
         self.set_data(data)
 
-    def set_data(self, entities: Iterable[DXFEntity]) -> None:
-        """Set `entities` as new group content, entities should be an iterable
-        :class:`DXFGraphic` or inherited (LINE, CIRCLE, ...).
-        Raises :class:`DXFValueError` if not all entities be on the same layout
-        (modelspace or any paperspace layout but not block)
-
-        """
+    def _validate_entities(self, entities: Iterable[DXFEntity]) -> list[DXFEntity]:
         assert self.doc is not None
         entities = list(entities)
         valid_entities = filter_invalid_entities(entities, self.doc, str(self))
@@ -209,23 +203,55 @@ class DXFGroup(DXFObject):
                 "All entities have to be in the same layout and are not allowed"
                 " to be in a block layout."
             )
+        return valid_entities
+
+    def set_data(self, entities: Iterable[DXFEntity]) -> None:
+        """Set `entities` as new group content, entities should be an iterable of
+        :class:`DXFGraphic` (LINE, CIRCLE, ...).
+
+        Raises:
+            DXFValueError: not all entities are located on the same layout (modelspace
+                or any paperspace layout but not block)
+
+        """
+        valid_entities = self._validate_entities(entities)
         self.clear()
+        self._add_group_reactor(valid_entities)
         self._data = valid_entities
 
     def extend(self, entities: Iterable[DXFEntity]) -> None:
-        """Add `entities` to :class:`DXFGroup` without immediate verification!
+        """Add `entities` to :class:`DXFGroup`, entities should be an iterable of
+        :class:`DXFGraphic` (LINE, CIRCLE, ...).
 
-        Validation at DXF export may raise a :class:`DXFStructureError`!
+        Raises:
+            DXFValueError: not all entities are located on the same layout (modelspace
+                or any paperspace layout but not block)
 
         """
-        self._data.extend(entities)
+        valid_entities = self._validate_entities(entities)
+        handles = set(self.handles())
+        valid_entities = [e for e in valid_entities if e.dxf.handle not in handles]
+        self._add_group_reactor(valid_entities)
+        self._data.extend(valid_entities)
 
     def clear(self) -> None:
         """Remove all entities from :class:`DXFGroup`, does not delete any
         drawing entities referenced by this group.
 
         """
+        # TODO: remove handle of GROUP entity from reactors of entities #1085
+        self._remove_group_reactor(self._data)
         self._data = []
+
+    def _add_group_reactor(self, entities: list[DXFEntity]) -> None:
+        group_handle = self.dxf.handle
+        for entity in entities:
+            entity.append_reactor_handle(group_handle)
+
+    def _remove_group_reactor(self, entities: list[DXFEntity]) -> None:
+        group_handle = self.dxf.handle
+        for entity in entities:
+            entity.discard_reactor_handle(group_handle)
 
     def audit(self, auditor: Auditor) -> None:
         """Remove invalid entities from :class:`DXFGroup`.

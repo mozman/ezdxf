@@ -1,7 +1,8 @@
-# Copyright (c) 2019-2022 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from typing_extensions import Self
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -126,6 +127,8 @@ class Block(DXFEntity):
             return dxf
         processor.simple_dxfattribs_loader(dxf, merged_block_begin_group_codes)
         if processor.r12:
+            if dxf.name is None:
+                dxf.name = ""
             name = dxf.name.lower()
             if name == MODEL_SPACE_R12_LOWER:
                 dxf.name = MODEL_SPACE_R2000
@@ -200,7 +203,7 @@ class Block(DXFEntity):
                 f"{str(self)} name '{block_name}' and {str(owner)} name '{owner_name}' mismatch",
             )
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, Block)
         super().map_resources(clone, mapping)

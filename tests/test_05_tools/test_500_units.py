@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.units import DrawingUnits, PaperSpaceUnits, conversion_factor
+from ezdxf.units import DrawingUnits, PaperSpaceUnits, conversion_factor, unit_name
 from math import isclose
 
 
@@ -159,3 +159,12 @@ def test_conversion_type_error(source, target):
 def test_conversion_invalid_units():
     with pytest.raises(ValueError):
         conversion_factor(25, 6)
+
+
+def test_unit_name_valid_input():
+    assert unit_name(0) == "Unitless"
+    assert unit_name(1) == "Inches"
+
+
+def test_unit_name_invalid_input():
+    assert unit_name(-1) == "unitless"

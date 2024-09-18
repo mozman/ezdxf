@@ -1,8 +1,6 @@
 # cython: language_level=3
-# distutils: language = c++
-#  Copyright (c) 2023, Manfred Moitzi
-#  License: MIT License
-# type: ignore  -- pylance sucks at type-checking cython files
+# Copyright (c) 2023-2024, Manfred Moitzi
+# License: MIT License
 from typing_extensions import TypeAlias
 import numpy as np
 import numpy.typing as npt

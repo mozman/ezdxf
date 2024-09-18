@@ -3,7 +3,7 @@
 from typing import cast
 import pytest
 import math
-from ezdxf.acis.api import mesh_from_body, load, body_from_mesh
+from ezdxf.acis.api import mesh_from_body, load, body_from_mesh, vertices_from_body
 from ezdxf.acis.mesh import PolyhedronFaceBuilder
 from ezdxf.acis import entities, dbg
 from ezdxf.render import forms
@@ -47,10 +47,7 @@ class TestPolyhedronFaceBuilder:
         planes = {id(face.surface) for face in builder.acis_faces()}
         assert len(planes) == 6
         assert (
-            all(
-                face.surface.type == "plane-surface"
-                for face in builder.acis_faces()
-            )
+            all(face.surface.type == "plane-surface" for face in builder.acis_faces())
             is True
         )
 
@@ -208,6 +205,17 @@ def test_body_from_menger_sponge_is_manifold():
     body = body_from_mesh(sponge)
     debugger = dbg.AcisDebugger(body)
     assert debugger.is_manifold() is True
+
+
+def test_vertices_from_body():
+    cube = forms.cube()
+    body = body_from_mesh(cube)
+    vertices = vertices_from_body(body)
+    extents = BoundingBox(vertices)
+
+    assert extents.extmin.isclose((-0.5, -0.5, -0.5))
+    assert extents.extmax.isclose((0.5, 0.5, 0.5))
+    assert len(vertices) == 6 * 4 * 2  # 6 faces x 4 edges x 2 vertices
 
 
 if __name__ == "__main__":

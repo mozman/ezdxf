@@ -195,10 +195,12 @@ class Recover:
             recover_tool.recover_rootdict()
             recover_tool.fix_broken_layout_links()
         section_dict = recover_tool.section_dict
+
+        is_r12 = recover_tool.dxfversion <= "AC1009"
         for name, entities in section_dict.items():
             if name in {"TABLES", "BLOCKS", "OBJECTS", "ENTITIES"}:
                 section_dict[name] = list(
-                    recover_tool.check_entities(entities)  # type: ignore
+                    recover_tool.check_entities(entities, is_r12)  # type: ignore
                 )
 
         return recover_tool
@@ -417,14 +419,20 @@ class Recover:
                 header.append(tag)
                 var_name = None
 
-    def check_entities(self, entities: list[Tags]) -> Iterator[Tags]:
+    def check_entities(self, entities: list[Tags], is_r12: bool) -> Iterator[Tags]:
+        subclass_markers = (100,)
         for entity in entities:
             _, dxftype = entity[0]
             if dxftype in EXCLUDE_STRUCTURE_CHECK:
                 yield entity
             else:
                 # raises DXFStructureError() for invalid entities
-                yield Tags(entity_structure_validator(entity))
+                tags = Tags(entity_structure_validator(entity))
+                if is_r12:
+                    # subclass markers (100, ...) in DXF R12 files confuses the 
+                    # ezdxf parser #1106
+                    tags.remove_tags(subclass_markers)
+                yield tags
 
     def recover_rootdict(self):
         objects = self.section_dict.get("OBJECTS")
@@ -450,7 +458,7 @@ class Recover:
             )
 
     def fix_broken_layout_links(self):
-        """Fixes broke links (block_record_handle) between LAYOUT and BLOCK_RECORD 
+        """Fixes broke links (block_record_handle) between LAYOUT and BLOCK_RECORD
         entities. See issue #997 for more information.
         """
         pass

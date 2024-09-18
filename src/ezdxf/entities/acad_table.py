@@ -1,10 +1,11 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional, Iterator
+from typing_extensions import Self
 import copy
 from ezdxf.math import Vec3, Matrix44
-from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -25,7 +26,12 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.document import Drawing
 
-__all__ = ["AcadTable", "AcadTableBlockContent", "acad_table_to_block"]
+__all__ = [
+    "AcadTable",
+    "AcadTableBlockContent",
+    "acad_table_to_block",
+    "read_acad_table_content",
+]
 
 
 acdb_block_reference = DefSubclass(
@@ -205,11 +211,16 @@ acdb_table = DefSubclass(
         #      The chunks are contained in one or more code 303 codes.
         #      If code 393 codes are used, the last group is a code 1 and is
         #      shorter than 250 characters.
+        #      --- WRONG: The text is divided into chunks of group code 2 and the last
+        #          chuck has group code 1.
         #      This value applies only to text-type cells and is repeated,
         #      1 value per cell (from AutoCAD 2007)
         # 302: Text string in a cell, in 250-character chunks; optional.
         #      This value applies only to text-type cells and is repeated,
         #      302 value per cell (from AutoCAD 2007)
+        #      --- WRONG: 302 contains all the text as a long string, tested with more
+        #          than 66000 characters
+        # BricsCAD writes long text in cells with both methods: 302 & (2, 2, 2, ..., 1)
         #
         # REMARK from Autodesk:
         # Group code 178 is a flag value for a virtual edge. A virtual edge is
@@ -239,7 +250,7 @@ class AcadTable(DXFGraphic):
         super().__init__()
         self.data = None
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy data."""
         assert isinstance(entity, AcadTable)
         entity.data = copy.deepcopy(self.data)
@@ -423,3 +434,44 @@ def acad_table_to_block(table: DXFEntity) -> None:
         dxfattribs={"layer": table.dxf.get("layer", "0")},
     )
     layout.delete_entity(table)  # type: ignore
+
+
+def read_acad_table_content(table: DXFTagStorage) -> list[list[str]]:
+    """Returns the content of an ACAD_TABLE entity as list of table rows.
+
+    If the count of table rows or table columns is missing the complete content is
+    stored in the first row.
+    """
+    if table.dxftype() != "ACAD_TABLE":
+        raise const.DXFTypeError(f"Expected ACAD_TABLE entity, got {str(table)}")
+    acdb_table = table.xtags.get_subclass("AcDbTable")
+
+    nrows = acdb_table.get_first_value(91, 0)
+    ncols = acdb_table.get_first_value(92, 0)
+    split_code = 171  # DXF R2004
+    if acdb_table.has_tag(302):
+        split_code = 301  # DXF R2007 and later
+    values = _load_table_values(acdb_table, split_code)
+    if nrows * ncols == 0:
+        return [values]
+    content: list[list[str]] = []
+    for index in range(nrows):
+        start = index * ncols
+        content.append(values[start : start + ncols])
+    return content
+
+
+def _load_table_values(tags: Tags, split_code: int) -> list[str]:
+    values: list[str] = []
+    for group in group_tags(tags, splitcode=split_code):
+        g_tags = Tags(group)
+        if g_tags.has_tag(302):  # DXF R2007 and later
+            # contains all text as one long string, with more than 66000 chars tested
+            values.append(g_tags.get_first_value(302))
+        else:  
+            # DXF R2004
+            # Text is divided into chunks (2, 2, 2, ..., 1) or (3, 3, 3, ..., 1)
+            # DXF reference says group code 2, BricsCAD writes group code 3
+            s = "".join(tag.value for tag in g_tags if 1 <= tag.code <= 3)
+            values.append(s)
+    return values

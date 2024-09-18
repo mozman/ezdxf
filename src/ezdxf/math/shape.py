@@ -68,11 +68,11 @@ class Shape2d:
         """Rotate shape around rotation `center` about `angle` in radians."""
         m = Matrix44.z_rotate(angle)
         if center is not None:
-            center = Vec2(center)
+            p = Vec2(center)
             m = (
-                Matrix44.translate(-center.x, -center.y, 0)
+                Matrix44.translate(-p.x, -p.y, 0)
                 @ m
-                @ Matrix44.translate(center.x, center.y, 0)
+                @ Matrix44.translate(p.x, p.y, 0)
             )
         self.np_vertices.transform_inplace(m)
 

@@ -13,6 +13,8 @@ from typing import (
 )
 from typing_extensions import TypeAlias
 from functools import singledispatch, partial
+import logging
+
 from ezdxf.math import (
     ABS_TOL,
     Vec2,
@@ -85,6 +87,7 @@ MIN_SEGMENTS = 4
 G1_TOL = 1e-4
 TPolygon = TypeVar("TPolygon", Hatch, MPolygon)
 BoundaryFactory = Callable[[BoundaryPaths, Path, int], None]
+logger = logging.getLogger("ezdxf")
 
 
 @singledispatch
@@ -246,10 +249,15 @@ def _from_hatch(hatch: Hatch, **kwargs) -> Path:
     offset = NULLVEC
     if isinstance(hatch, MPolygon):
         offset = hatch.dxf.get("offset_vector", NULLVEC)
-    paths = [
-        from_hatch_boundary_path(boundary, ocs, elevation, offset=offset)
-        for boundary in hatch.paths
-    ]
+    try:
+        paths = [
+            from_hatch_boundary_path(boundary, ocs, elevation, offset=offset)
+            for boundary in hatch.paths
+        ]
+    except const.DXFStructureError:  
+        # TODO: fix problems beforehand in audit process? see issue #1081
+        logger.warning(f"invalid data in {str(hatch)}")
+        return Path()
     # looses the boundary path state:
     return tools.to_multi_path(paths)
 
@@ -525,7 +533,7 @@ def to_lwpolylines(
     else:
         paths = list(paths)
     if len(paths) == 0:
-        return []
+        return
     extrusion = Vec3(extrusion)
     reference_point = Vec3(paths[0].start)
     dxfattribs = dict(dxfattribs or {})
@@ -581,7 +589,7 @@ def to_polylines2d(
     else:
         paths = list(paths)
     if len(paths) == 0:
-        return []
+        return
     extrusion = Vec3(extrusion)
     reference_point = Vec3(paths[0].start)
     dxfattribs = dict(dxfattribs or {})
@@ -645,9 +653,7 @@ def to_hatches(
             build_poly_path, distance=distance, segments=segments
         )
 
-    yield from _polygon_converter(
-        Hatch, paths, boundary_factory, extrusion, dxfattribs
-    )
+    yield from _polygon_converter(Hatch, paths, boundary_factory, extrusion, dxfattribs)
 
 
 def to_mpolygons(
@@ -744,7 +750,7 @@ def _polygon_converter(
     else:
         paths = list(paths)
     if len(paths) == 0:
-        return []
+        return
 
     extrusion = Vec3(extrusion)
     reference_point = paths[0].start

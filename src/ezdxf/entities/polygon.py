@@ -1,10 +1,12 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Optional, Union, TYPE_CHECKING, Iterator
+from typing_extensions import Self
 import abc
 import copy
 
+from ezdxf.audit import Auditor, AuditError
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
 from ezdxf import colors
@@ -62,7 +64,7 @@ class DXFPolygon(DXFGraphic):
         self.gradient: Optional[Gradient] = None
         self.seeds: list[tuple[float, float]] = []  # not supported/exported by MPOLYGON
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy paths, pattern, gradient, seeds."""
         assert isinstance(entity, DXFPolygon)
         entity.paths = copy.deepcopy(self.paths)
@@ -140,7 +142,7 @@ class DXFPolygon(DXFGraphic):
         del tags[index:]
         return tags
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, DXFPolygon)
         assert clone.doc is not None
@@ -448,3 +450,14 @@ class DXFPolygon(DXFGraphic):
     @abc.abstractmethod
     def set_solid_fill(self, color: int = 7, style: int = 1, rgb: Optional[RGB] = None):
         ...
+    
+    def audit(self, auditor: Auditor) -> None:
+        super().audit(auditor)
+        if not self.is_alive:
+            return
+        if not self.paths.is_valid():
+            auditor.fixed_error(
+                code=AuditError.INVALID_HATCH_BOUNDARY_PATH,
+                message=f"Deleted entity {str(self)} containing invalid boundary paths."
+            )
+            auditor.trash(self)

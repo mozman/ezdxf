@@ -51,7 +51,7 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Location of 4. vertex (3D Point in :ref:`WCS`)
 
-    .. attribute:: dxf.invisible_edge
+    .. attribute:: dxf.invisible_edges
 
         invisible edge flag (int, default=0)
 

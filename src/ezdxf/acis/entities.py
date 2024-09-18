@@ -1,12 +1,13 @@
 #  Copyright (c) 2022-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Union, Callable, Type, Any, Sequence, Iterator
+from typing import Callable, Type, Any, Sequence, Iterator
 import abc
 
 from . import sab, sat, const, hdr
 from .const import Features
 from .abstract import DataLoader, AbstractEntity, DataExporter
+from .type_hints import EncodedData
 from ezdxf.math import Matrix44, Vec3, NULLVEC
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
@@ -15,7 +16,7 @@ ENTITY_TYPES: dict[str, Type[AcisEntity]] = {}
 INF = float("inf")
 
 
-def load(data: Union[str, Sequence[str], bytes, bytearray]) -> list[Body]:
+def load(data: EncodedData) -> list[Body]:
     """Returns a list of :class:`Body` entities from :term:`SAT` or :term:`SAB`
     data. Accepts :term:`SAT` data as a single string or a sequence of strings
     and :term:`SAB` data as bytes or bytearray.
@@ -119,9 +120,7 @@ class AcisEntity(NoneEntity):
         self.restore_common(loader, entity_factory)
         self.restore_data(loader)
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         """Load the common part of an ACIS entity."""
         pass
 
@@ -149,7 +148,7 @@ class AcisEntity(NoneEntity):
         pass
 
     def entities(self) -> Iterator[AcisEntity]:
-        """Yield all attributes of this entity of type AcisEntity. """
+        """Yield all attributes of this entity of type AcisEntity."""
         for e in vars(self).values():
             if isinstance(e, AcisEntity):
                 yield e
@@ -210,9 +209,7 @@ class AsmHeader(AcisEntity):
     def __init__(self, version: str = ""):
         self.version = version
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         self.version = loader.read_str()
 
     def write_common(self, exporter: DataExporter) -> None:
@@ -222,9 +219,7 @@ class AsmHeader(AcisEntity):
 class SupportsPattern(AcisEntity):
     pattern: Pattern = NONE_REF
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         if loader.version >= Features.PATTERN:
             self.pattern = restore_entity("pattern", loader, entity_factory)
 
@@ -238,11 +233,9 @@ class Body(SupportsPattern):
     pattern: Pattern = NONE_REF
     lump: Lump = NONE_REF
     wire: Wire = NONE_REF
-    transform: "Transform" = NONE_REF
+    transform: Transform = NONE_REF
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         super().restore_common(loader, entity_factory)
         self.lump = restore_entity("lump", loader, entity_factory)
         self.wire = restore_entity("wire", loader, entity_factory)
@@ -292,9 +285,7 @@ class Lump(SupportsPattern):
     shell: Shell = NONE_REF
     body: Body = NONE_REF
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         super().restore_common(loader, entity_factory)
         self.next_lump = restore_entity("lump", loader, entity_factory)
         self.shell = restore_entity("shell", loader, entity_factory)
@@ -336,9 +327,7 @@ class Shell(SupportsPattern):
     wire: Wire = NONE_REF
     lump: Lump = NONE_REF
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         super().restore_common(loader, entity_factory)
         self.next_shell = restore_entity("next_shell", loader, entity_factory)
         self.subshell = restore_entity("subshell", loader, entity_factory)
@@ -390,14 +379,10 @@ class Face(SupportsPattern):
     surface: Surface = NONE_REF
     # sense: face normal with respect to the surface
     sense = False  # True = reversed; False = forward
-    double_sided = (
-        False  # True = double (hollow body); False = single (solid body)
-    )
+    double_sided = False  # True = double (hollow body); False = single (solid body)
     containment = False  # if double_sided: True = in, False = out
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         super().restore_common(loader, entity_factory)
         self.next_face = restore_entity("face", loader, entity_factory)
         self.loop = restore_entity("loop", loader, entity_factory)
@@ -479,9 +464,7 @@ class Plane(Surface):
     # False: "forward_v" - the normal vector follows right-hand rule
     reverse_v = False
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         super().restore_common(loader, entity_factory)
         self.origin = Vec3(loader.read_vec3())
         self.normal = Vec3(loader.read_vec3())
@@ -514,9 +497,7 @@ class Loop(SupportsPattern):
     coedge: Coedge = NONE_REF
     face: Face = NONE_REF  # parent/owner
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         super().restore_common(loader, entity_factory)
         self.next_loop = restore_entity("loop", loader, entity_factory)
         self.coedge = restore_entity("coedge", loader, entity_factory)
@@ -577,9 +558,7 @@ class Coedge(SupportsPattern):
     unknown: int = 0  # only in SAB file!?
     pcurve: PCurve = NONE_REF
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         super().restore_common(loader, entity_factory)
         self.next_coedge = restore_entity("coedge", loader, entity_factory)
         self.prev_coedge = restore_entity("coedge", loader, entity_factory)
@@ -618,7 +597,7 @@ class Coedge(SupportsPattern):
         pass
 
     def partner_coedges(self) -> list[Coedge]:
-        """Returns all partner coedges of this coedge without `self`. """
+        """Returns all partner coedges of this coedge without `self`."""
         coedges: list[Coedge] = []
         partner_coedge = self.partner_coedge
         if partner_coedge.is_none:
@@ -649,9 +628,7 @@ class Edge(SupportsPattern):
     sense: bool = False
     convexity: str = "unknown"
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         super().restore_common(loader, entity_factory)
         self.start_vertex = restore_entity("vertex", loader, entity_factory)
         if loader.version >= Features.TOL_MODELING:
@@ -690,9 +667,7 @@ class Vertex(SupportsPattern):
     ref_count: int = 0  # only in SAB files
     point: Point = NONE_REF
 
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
+    def restore_common(self, loader: DataLoader, entity_factory: Factory) -> None:
         super().restore_common(loader, entity_factory)
         self.edge = restore_entity("edge", loader, entity_factory)
         self.ref_count = loader.read_int(skip_sat=0)
@@ -759,7 +734,7 @@ class Point(SupportsPattern):
 
 
 class FileLoader(abc.ABC):
-    records: Sequence[Union[sat.SatEntity, sab.SabEntity]]
+    records: Sequence[sat.SatEntity | sab.SabEntity]
 
     def __init__(self, version: int):
         self.entities: dict[int, AcisEntity] = {}
@@ -796,7 +771,7 @@ class FileLoader(abc.ABC):
 
 
 class SabLoader(FileLoader):
-    def __init__(self, data: Union[bytes, bytearray]):
+    def __init__(self, data: bytes | bytearray):
         builder = sab.parse_sab(data)
         super().__init__(builder.header.version)
         self.records = builder.entities
@@ -805,14 +780,14 @@ class SabLoader(FileLoader):
         return sab.SabDataLoader(data, self.version)
 
     @classmethod
-    def load(cls, data: Union[bytes, bytearray]) -> list[Body]:
+    def load(cls, data: bytes | bytearray) -> list[Body]:
         loader = cls(data)
         loader.load_entities()
         return loader.bodies()
 
 
 class SatLoader(FileLoader):
-    def __init__(self, data: Union[str, Sequence[str]]):
+    def __init__(self, data: str | Sequence[str]):
         builder = sat.parse_sat(data)
         super().__init__(builder.header.version)
         self.records = builder.entities
@@ -821,7 +796,7 @@ class SatLoader(FileLoader):
         return sat.SatDataLoader(data, self.version)
 
     @classmethod
-    def load(cls, data: Union[str, Sequence[str]]) -> list[Body]:
+    def load(cls, data: str | Sequence[str]) -> list[Body]:
         loader = cls(data)
         loader.load_entities()
         return loader.bodies()

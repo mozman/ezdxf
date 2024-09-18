@@ -1,7 +1,8 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from typing_extensions import Self
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -14,7 +15,7 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from ezdxf.math import NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
-from .dxfentity import base_class, SubclassProcessor, DXFEntity
+from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
@@ -91,7 +92,7 @@ class Tolerance(DXFGraphic):
         super().register_resources(registry)
         registry.add_dim_style(self.dxf.dimstyle)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         super().map_resources(clone, mapping)
         clone.dxf.dimstyle = mapping.get_dim_style(self.dxf.dimstyle)
 

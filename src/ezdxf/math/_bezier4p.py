@@ -10,7 +10,6 @@ from typing import (
     Generic,
 )
 import math
-from functools import lru_cache
 
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec3, Vec2
@@ -31,41 +30,13 @@ __all__ = [
 T = TypeVar("T", Vec2, Vec3)
 
 
-# Optimization:
-# cubic P(t) = (1-t)^3*P0 + 3*(1-t)^2*t*P1 + 3*(1-t)*t^2*P2 + t^3*P3
-# cubic P(t) = a*P0 + b*P1 + c*P2 + d*P3
-# a, b, c, d = bernstein3(t) ... cached
-@lru_cache(maxsize=300)
-def bernstein3(t: float) -> Sequence[float]:
-    """Bernstein polynom of 3rd degree."""
-    t2 = t * t
-    _1_minus_t = 1.0 - t
-    _1_minus_t_square = _1_minus_t * _1_minus_t
-    a = _1_minus_t_square * _1_minus_t
-    b = 3.0 * _1_minus_t_square * t
-    c = 3.0 * _1_minus_t * t2
-    d = t2 * t
-    return a, b, c, d
-
-
-@lru_cache(maxsize=300)
-def bernstein3_d1(t: float) -> Sequence[float]:
-    """First derivative of Bernstein polynom of 3rd degree."""
-    t2 = t * t
-    a = -3.0 * (1.0 - t) ** 2
-    b = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
-    c = 3.0 * t * (2.0 - 3.0 * t)
-    d = 3.0 * t2
-    return a, b, c, d
-
-
 class Bezier4P(Generic[T]):
     """Implements an optimized cubic `Bézier curve`_ for exact 4 control points.
 
     A `Bézier curve`_ is a parametric curve, parameter `t` goes from 0 to 1,
     where 0 is the first control point and 1 is the fourth control point.
 
-    The class supports points of type :class:`Vec2` and :class:`Vec3` as input, the 
+    The class supports points of type :class:`Vec2` and :class:`Vec3` as input, the
     class instances are immutable.
 
     Args:
@@ -91,8 +62,7 @@ class Bezier4P(Generic[T]):
 
     @property
     def control_points(self) -> Sequence[T]:
-        """Control points as tuple of :class:`Vec3` or :class:`Vec2` objects.
-        """
+        """Control points as tuple of :class:`Vec3` or :class:`Vec2` objects."""
         # ezdxf optimization: p0 is always (0, 0, 0)
         p0, p1, p2, p3 = self._control_points
         offset = self._offset
@@ -152,25 +122,7 @@ class Bezier4P(Generic[T]):
             segments: minimum segment count
 
         """
-
-        def subdiv(
-            start_point: T,
-            end_point: T,
-            start_t: float,
-            end_t: float,
-        ) -> Iterator[T]:
-            mid_t: float = (start_t + end_t) * 0.5
-            mid_point: T = self._get_curve_point(mid_t)
-            chk_point: T = start_point.lerp(end_point)
-            # center point is faster than projecting the mid-point on
-            # the vector start -> end:
-            d = chk_point.distance(mid_point)
-            if d < distance:
-                yield end_point
-            else:
-                yield from subdiv(start_point, mid_point, start_t, mid_t)
-                yield from subdiv(mid_point, end_point, mid_t, end_t)
-
+        stack: list[tuple[float, T]] = []
         dt: float = 1.0 / segments
         t0: float = 0.0
         t1: float
@@ -186,25 +138,50 @@ class Bezier4P(Generic[T]):
                 t1 = 1.0
             else:
                 end_point = self._get_curve_point(t1)
-            yield from subdiv(start_point, end_point, t0, t1)
-            t0 = t1
-            start_point = end_point
+
+            while True:
+                mid_t: float = (t0 + t1) * 0.5
+                mid_point: T = self._get_curve_point(mid_t)
+                chk_point: T = start_point.lerp(end_point)
+
+                d = chk_point.distance(mid_point)
+                if d < distance:
+                    yield end_point
+                    t0 = t1
+                    start_point = end_point
+                    if stack:
+                        t1, end_point = stack.pop()
+                    else:
+                        break
+                else:
+                    stack.append((t1, end_point))
+                    t1 = mid_t
+                    end_point = mid_point
 
     def _get_curve_point(self, t: float) -> T:
-        b1, b2, b3, b4 = self._control_points
-        a, b, c, d = bernstein3(t)
-        # 1st control point (b1) is always (0, 0, 0)
-        # => b1 * a is always (0, 0, 0)
+        # 1st control point (p0) is always (0, 0, 0)
+        # => p0 * a is always (0, 0, 0)
         # add offset at last - it is maybe very large
-        return b2 * b + b3 * c + b4 * d + self._offset
+        _, p1, p2, p3 = self._control_points
+        t2 = t * t
+        _1_minus_t = 1.0 - t
+        # a = _1_minus_t_square * _1_minus_t
+        b = 3.0 * _1_minus_t * _1_minus_t * t
+        c = 3.0 * _1_minus_t * t2
+        d = t2 * t
+        return p1 * b + p2 * c + p3 * d + self._offset
 
     def _get_curve_tangent(self, t: float) -> T:
         # tangent vector is independent from offset location!
-        b1, b2, b3, b4 = self._control_points
-        a, b, c, d = bernstein3_d1(t)
-        # 1st control point (b1) is always (0, 0, 0)
-        # => b1 * a is always (0, 0, 0)
-        return b2 * b + b3 * c + b4 * d
+        # 1st control point (p0) is always (0, 0, 0)
+        # => p0 * a is always (0, 0, 0)
+        _, p1, p2, p3 = self._control_points
+        t2 = t * t
+        # a = -3.0 * (1.0 - t) ** 2
+        b = 3.0 * (1.0 - 4.0 * t + 3.0 * t2)
+        c = 3.0 * t * (2.0 - 3.0 * t)
+        d = 3.0 * t2
+        return p1 * b + p2 * c + p3 * d
 
     def approximated_length(self, segments: int = 128) -> float:
         """Returns estimated length of Bèzier-curve as approximation by line

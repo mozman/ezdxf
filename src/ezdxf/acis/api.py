@@ -1,5 +1,5 @@
-#  Copyright (c) 2022-2024, Manfred Moitzi
-#  License: MIT License
+# Copyright (c) 2022-2024, Manfred Moitzi
+# License: MIT License
 # Public API module (interface)
 """
 The main goals of this ACIS support library is:
@@ -24,7 +24,8 @@ from .const import (
     InvalidLinkStructure,
     ExportError,
 )
-from .mesh import mesh_from_body, body_from_mesh
+from .mesh import mesh_from_body, body_from_mesh, vertices_from_body
 from .entities import load, export_sat, export_sab, Body
 from .dbg import AcisDebugger, dump_sab_as_text
 from .dxf import export_dxf, load_dxf
+from .cache import AcisCache

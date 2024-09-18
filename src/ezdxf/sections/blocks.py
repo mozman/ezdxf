@@ -19,6 +19,7 @@ from ezdxf.lldxf.const import (
     DXFKeyError,
     DXFStructureError,
     DXFTableEntryError,
+    DXFTypeError,
 )
 from ezdxf.entities import (
     Attrib,
@@ -70,6 +71,23 @@ def is_anonymous_block(name: str) -> bool:
     return len(name) > 1 and name[0] == "*" and name[1] in "UEXDAT"
 
 
+def recover_block_name(block: Block) -> str:
+    name = block.dxf.get("name", "")
+    if name:
+        return name
+    owner = block.dxf.get("owner", "")
+    if not owner:
+        return ""
+    doc = block.doc
+    # The owner of BLOCK is BLOCK_RECORD which also stores the block name
+    # as group code 2; DXF attribute name is "name"
+    if doc is not None and doc.entitydb is not None:
+        block_record = doc.entitydb.get(owner)
+        if isinstance(block_record, BlockRecord):
+            return block_record.dxf.get("name", "")
+    return ""
+
+
 _MISSING_BLOCK_ = Block()
 
 
@@ -119,18 +137,19 @@ class BlocksSection:
             block: Block,
             endblk: EndBlk,
             block_entities: list[DXFEntity],
-        ) -> BlockRecord:
+        ) -> BlockRecord | None:
             try:
-                block_record = cast(
-                    "BlockRecord", block_records.get(block.dxf.name)
-                )
+                block_record = cast("BlockRecord", block_records.get(block.dxf.name))
             # Special case DXF R12 - has no BLOCK_RECORD table
             except DXFTableEntryError:
                 block_record = cast(
                     "BlockRecord",
                     block_records.new(block.dxf.name, dxfattribs={"scale": 0}),
                 )
-
+            except DXFTypeError:
+                raise DXFStructureError(
+                    f"Invalid or missing name of BLOCK #{block.dxf.handle}"
+                )
             # The BLOCK_RECORD is the central object which stores all the
             # information about a BLOCK and also owns all the entities of
             # this block definition.
@@ -150,15 +169,14 @@ class BlocksSection:
 
         block_records = self.block_records
         section_head = cast("DXFTagStorage", entities[0])
-        if section_head.dxftype() != "SECTION" or section_head.base_class[
-            1
-        ] != (2, "BLOCKS"):
-            raise DXFStructureError(
-                "Critical structure error in BLOCKS section."
-            )
+        if section_head.dxftype() != "SECTION" or section_head.base_class[1] != (
+            2,
+            "BLOCKS",
+        ):
+            raise DXFStructureError("Critical structure error in BLOCKS section.")
         # Remove SECTION entity
         del entities[0]
-        content: list["DXFEntity"] = []
+        content: list[DXFEntity] = []
         block: Block = _MISSING_BLOCK_
         for entity in link_entities():
             if isinstance(entity, Block):
@@ -172,8 +190,25 @@ class BlocksSection:
                         "Found ENDBLK without a preceding BLOCK, ignoring content."
                     )
                 else:
-                    block_record = load_block_record(block, entity, content)
-                    self.add(block_record)
+                    block_name = block.dxf.get("name", "")
+                    handle = block.dxf.get("handle", "<undefined>")
+                    if not block_name:
+                        block_name = recover_block_name(block)
+                        if block_name:
+                            logger.info(
+                                f'Recovered block name "{block_name}" for block #{handle}.'
+                            )
+                            block.dxf.name = block_name
+                    if block_name:
+                        block_record = load_block_record(block, entity, content)
+                        if isinstance(block_record, BlockRecord):
+                            self.add(block_record)
+                        else:
+                            logger.warning(
+                                f"Ignoring invalid BLOCK definition #{handle}."
+                            )
+                    else:
+                        logger.warning(f"Ignoring BLOCK without name #{handle}.")
                     block = _MISSING_BLOCK_
                 content.clear()
             else:
@@ -222,10 +257,7 @@ class BlocksSection:
 
     def __iter__(self) -> Iterator[BlockLayout]:
         """Iterable of all :class:`~ezdxf.layouts.BlockLayout` objects."""
-        return (
-            block_record.block_layout
-            for block_record in self.block_records
-        )
+        return (block_record.block_layout for block_record in self.block_records)
 
     def __contains__(self, name: str) -> bool:
         """Returns ``True`` if :class:`~ezdxf.layouts.BlockLayout` `name`
@@ -265,9 +297,7 @@ class BlocksSection:
         except DXFKeyError:
             return default
 
-    def get_block_layout_by_handle(
-        self, block_record_handle: str
-    ) -> BlockLayout:
+    def get_block_layout_by_handle(self, block_record_handle: str) -> BlockLayout:
         """Returns a block layout by block record handle. (internal API)"""
         return self.doc.entitydb[block_record_handle].block_layout  # type: ignore
 
@@ -372,9 +402,7 @@ class BlocksSection:
                     f'Special block "{name}" maybe used without explicit INSERT entity.'
                 )
             assert self.doc is not None
-            block_refs = self.doc.query(
-                f"INSERT[name=='{name}']i"
-            )  # ignore case
+            block_refs = self.doc.query(f"INSERT[name=='{name}']i")  # ignore case
             if len(block_refs):
                 raise DXFBlockInUseError(f'Block "{name}" is still in use.')
         self.__delitem__(name)
@@ -428,7 +456,11 @@ class BlocksSection:
 
         for block_record in self.block_records:
             assert isinstance(block_record, BlockRecord)
-            for entity in block_record.entity_space:
+
+            block_record_handle: str = block_record.dxf.handle
+            unlink_entities: list[DXFEntity] = []
+            es = block_record.entity_space
+            for entity in es:
                 if not is_graphic_entity(entity):
                     auditor.fixed_error(
                         code=AuditError.REMOVED_INVALID_GRAPHIC_ENTITY,
@@ -445,3 +477,23 @@ class BlocksSection:
                         f" BLOCK '{block_record.dxf.name}'.",
                     )
                     auditor.trash(entity)
+
+                if not entity.is_alive:
+                    continue
+
+                if entity.dxf.owner != block_record_handle:
+                    auditor.fixed_error(
+                        code=AuditError.REMOVED_ENTITY_WITH_INVALID_OWNER_HANDLE,
+                        message=f"Removed DXF entity {str(entity)} with invalid owner "
+                        f"handle (#{entity.dxf.owner} != #{block_record_handle}) "
+                        f"from BLOCK '{block_record.dxf.name}'.",
+                    )
+                    # do not destroy the entity, it's maybe owned to another block
+                    unlink_entities.append(entity)
+
+            for entity in unlink_entities:
+                if entity.is_alive:
+                    try:
+                        es.remove(entity)
+                    except ValueError:
+                        pass

@@ -2,6 +2,7 @@
 # License: MIT-License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
+from typing_extensions import Self
 import copy
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFStructureError
@@ -151,7 +152,7 @@ class VisualStyle(DXFObject):
         super().__init__()
         self.acad_xdata = None  # to preserve AutoCAD xdata
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy acad internal data."""
         assert isinstance(entity, VisualStyle)
         entity.acad_xdata = copy.deepcopy(self.acad_xdata)

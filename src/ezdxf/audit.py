@@ -41,6 +41,7 @@ class AuditError(IntEnum):
     REMOVED_STANDALONE_ATTRIB_ENTITY = 13
     MISPLACED_ROOT_DICT = 14
     ROOT_DICT_NOT_FOUND = 15
+    REMOVED_ENTITY_WITH_INVALID_OWNER_HANDLE = 16
 
     UNDEFINED_LINETYPE = 100
     UNDEFINED_DIMENSION_STYLE = 101
@@ -89,6 +90,7 @@ class AuditError(IntEnum):
     INVALID_TRANSPARENCY = 223
     INVALID_CREASE_VALUE_COUNT = 224
     INVALID_ELLIPSE_RATIO = 225
+    INVALID_HATCH_BOUNDARY_PATH = 226
 
 
 REQUIRED_ROOT_DICT_ENTRIES = ("ACAD_GROUP", "ACAD_PLOTSTYLENAME")
@@ -107,7 +109,7 @@ class ErrorEntry:
         self.message: str = message  # error message
         self.data: Any = data  # additional data as an arbitrary object
 
-
+# pylint: disable=too-many-public-methods
 class Auditor:
     def __init__(self, doc: Drawing) -> None:
         assert doc is not None and doc.rootdict is not None and doc.entitydb is not None
@@ -491,7 +493,7 @@ class BlockCycleDetector:
         self.blocks = self._build_block_ledger(doc.blocks)
 
     def _build_block_ledger(self, blocks: BlocksSection) -> dict[str, set[str]]:
-        ledger = dict()
+        ledger = {}
         for block in blocks:
             inserts = {
                 self.key(insert.dxf.get("name", "")) for insert in block.query("INSERT")

@@ -1,7 +1,7 @@
 # Copyright (c) 2016-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, TextIO, Iterator, Any, Optional
+from typing import Iterable, TextIO, Iterator, Any, Optional, Sequence
 import struct
 from .types import (
     DXFTag,
@@ -15,6 +15,7 @@ from .types import (
     POINT_CODES,
     TYPE_TABLE,
     BINARY_DATA,
+    is_point_code,
 )
 from .const import DXFStructureError
 from ezdxf.tools.codepage import toencoding
@@ -84,9 +85,7 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
 # I assume the runtime overhead for calling Python functions is the reason.
 
 
-def ascii_tags_loader(
-    stream: TextIO, skip_comments: bool = True
-) -> Iterator[DXFTag]:
+def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterator[DXFTag]:
     """Yields :class:``DXFTag`` objects from a text `stream` (untrusted
     external source) and does not optimize coordinates. Comment tags (group
     code == 999) will be skipped if argument `skip_comments` is `True`.
@@ -116,9 +115,7 @@ def ascii_tags_loader(
             try:
                 group_code = int(code)
             except ValueError:
-                raise DXFStructureError(
-                    f'Invalid group code "{code}" at line {line}.'
-                )
+                raise DXFStructureError(f'Invalid group code "{code}" at line {line}.')
         else:
             return
 
@@ -171,7 +168,7 @@ def binary_tags_loader(
         else:
             if data[start] != 65:  # not 'A' = 2-byte group code
                 start += 1
-            dxfversion = data[start: start + 6].decode()
+            dxfversion = data[start : start + 6].decode()
 
         if dxfversion >= "AC1021":
             encoding = "utf8"
@@ -217,7 +214,7 @@ def binary_tags_loader(
         if code in BINARY_DATA:
             length = data[index]
             index += 1
-            value = data[index: index + length]
+            value = data[index : index + length]
             index += length
             yield DXFBinaryTag(code, value)
         else:
@@ -275,8 +272,7 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
 
     def error_msg(tag):
         return (
-            f'Invalid tag (code={tag.code}, value="{tag.value}") '
-            f"near line: {line}."
+            f'Invalid tag (code={tag.code}, value="{tag.value}") ' f"near line: {line}."
         )
 
     undo_tag: Optional[DXFTag] = None
@@ -347,4 +343,42 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
                     else:
                         raise DXFStructureError(error_msg(x))
         except StopIteration:
+            return
+
+
+def json_tag_loader(
+    data: Sequence[Any], skip_comments: bool = True
+) -> Iterator[DXFTag]:
+    """Yields :class:``DXFTag`` objects from a JSON data structure (untrusted
+    external source) and does not optimize coordinates. Comment tags (group
+    code == 999) will be skipped if argument `skip_comments` is `True`.
+    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always an
+    unicode string without a trailing ``\n``.
+
+    The expected JSON format is a list of [group-code, value] pairs where each pair is
+    a DXF tag. The `compact` and the `verbose` format is supported. 
+
+    Args:
+        data: JSON data structure as a sequence of [group-code, value] pairs
+        skip_comments: skip comment tags (group code == 999) if `True`
+
+    Raises:
+        DXFStructureError: Found invalid group code or value type.
+
+    """
+    yield_comments = not skip_comments
+    _DXFTag = DXFTag
+    for tag_number, (code, value) in enumerate(data):
+        if not isinstance(code, int):
+            raise DXFStructureError(
+                f'Invalid group code "{code}" in tag number {tag_number}.'
+            )
+        if is_point_code(code) and isinstance(value, (list, tuple)):
+            # yield coordinates as single tags
+            for index, coordinate in enumerate(value):
+                yield _DXFTag(code + index * 10, coordinate)
+            continue
+        if code != 999 or yield_comments:
+            yield _DXFTag(code, value)
+        if code == 0 and value == "EOF":
             return

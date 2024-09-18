@@ -64,43 +64,40 @@ class AbstractBoundaryPath(abc.ABC):
     source_boundary_objects: list[str]
 
     @abc.abstractmethod
-    def clear(self) -> None:
-        ...
+    def clear(self) -> None: ...
 
     @classmethod
     @abc.abstractmethod
-    def load_tags(cls, tags: Tags) -> AbstractBoundaryPath:
-        ...
+    def load_tags(cls, tags: Tags) -> AbstractBoundaryPath: ...
 
     @abc.abstractmethod
-    def export_dxf(self, tagwriter: AbstractTagWriter, dxftype: str) -> None:
-        ...
+    def export_dxf(self, tagwriter: AbstractTagWriter, dxftype: str) -> None: ...
 
     @abc.abstractmethod
-    def transform(self, ocs: OCSTransform, elevation: float) -> None:
-        ...
+    def transform(self, ocs: OCSTransform, elevation: float) -> None: ...
 
+    @abc.abstractmethod
+    def is_valid(self) -> bool: ...
 
 class AbstractEdge(abc.ABC):
     type: EdgeType
 
     @property
     @abc.abstractmethod
-    def start_point(self) -> Vec2:
-        ...
+    def start_point(self) -> Vec2: ...
 
     @property
     @abc.abstractmethod
-    def end_point(self) -> Vec2:
-        ...
+    def end_point(self) -> Vec2: ...
 
     @abc.abstractmethod
-    def export_dxf(self, tagwriter: AbstractTagWriter) -> None:
-        ...
+    def export_dxf(self, tagwriter: AbstractTagWriter) -> None: ...
 
     @abc.abstractmethod
-    def transform(self, ocs: OCSTransform, elevation: float) -> None:
-        ...
+    def transform(self, ocs: OCSTransform, elevation: float) -> None: ...
+
+    @abc.abstractmethod
+    def is_valid(self) -> bool: ...
 
 
 class BoundaryPaths:
@@ -115,6 +112,9 @@ class BoundaryPaths:
 
     def __iter__(self):
         return iter(self.paths)
+    
+    def is_valid(self) -> bool:
+        return  all(p.is_valid() for p in self.paths)
 
     @classmethod
     def load_tags(cls, tags: Tags) -> BoundaryPaths:
@@ -569,6 +569,9 @@ class PolylinePath(AbstractBoundaryPath):
         # the source object!
         self.source_boundary_objects: list[str] = []  # (330, handle) tags
 
+    def is_valid(self) -> bool:
+        return True
+    
     @classmethod
     def from_vertices(
         cls,
@@ -701,6 +704,9 @@ class EdgePath(AbstractBoundaryPath):
 
     def __iter__(self):
         return iter(self.edges)
+
+    def is_valid(self) -> bool:
+        return all(e.is_valid() for e in self.edges)
 
     @classmethod
     def load_tags(cls, tags: Tags) -> EdgePath:
@@ -928,6 +934,9 @@ class LineEdge(AbstractEdge):
         self.start = Vec2(0, 0)  # OCS!
         self.end = Vec2(0, 0)  # OCS!
 
+    def is_valid(self) -> bool:
+        return True
+    
     @property
     def start_point(self) -> Vec2:
         return self.start
@@ -975,6 +984,9 @@ class ArcEdge(AbstractEdge):
         self.end_angle: float = 360.0
         # Flag to preserve the required orientation for DXF export:
         self.ccw: bool = True
+
+    def is_valid(self) -> bool:
+        return True
 
     @property
     def start_point(self) -> Vec2:
@@ -1080,6 +1092,9 @@ class EllipseEdge(AbstractEdge):
         self.end_angle: float = 360.0  # end param, not a real angle
         # Flag to preserve the required orientation for DXF export:
         self.ccw: bool = True
+
+    def is_valid(self) -> bool:
+        return True
 
     @property
     def start_point(self) -> Vec2:
@@ -1229,6 +1244,19 @@ class SplineEdge(AbstractEdge):
         # do not set tangents by default to (0, 0)
         self.start_tangent: Optional[Vec2] = None
         self.end_tangent: Optional[Vec2] = None
+
+    def is_valid(self) -> bool:
+        if len(self.control_points):
+            order = self.degree + 1
+            count = len(self.control_points)
+            if order > count:
+                return False
+            required_knot_count = count + order
+            if len(self.knot_values) != required_knot_count:
+                return False
+        elif len(self.fit_points) < 2:
+            return False
+        return True
 
     @property
     def start_point(self) -> Vec2:

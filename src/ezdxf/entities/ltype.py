@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023, Manfred Moitzi
+# Copyright (c) 2019-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -8,6 +8,7 @@ from typing import (
     Sequence,
     Optional,
 )
+from typing_extensions import Self
 from copy import deepcopy
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -162,7 +163,7 @@ class Linetype(DXFEntity):
         super().__init__()
         self.pattern_tags = LinetypePattern(Tags())
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy pattern_tags."""
         assert isinstance(entity, Linetype)
         entity.pattern_tags = deepcopy(self.pattern_tags)
@@ -259,7 +260,7 @@ class Linetype(DXFEntity):
         if style is not None:
             registry.add_entity(style)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate registered resources from self to the copied entity."""
         assert isinstance(clone, Linetype)
         super().map_resources(clone, mapping)

@@ -1,5 +1,83 @@
-## Version 1.2.0 - dev
-id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
+## Version 1.3.4 - dev
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- NEW: support of layers for the PyMuPDF drawing-backend
+		- contributed by #mbway
+		- {{discussion 1154}}
+		-
+- ## Version 1.3.3 - 2024-08-13
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- NEW: improve block section loading procedure
+		- {{issue 1136}}
+	- BUGFIX: `ezdxf.units.unit_name`  always returns  `unitless`  in some environment
+		- contributed by #privet-kitty
+		- {{issue 1131}}
+		-
+- ## Version 1.3.2 - 2024-07-12
+  id:: 66657380-1ad7-45c3-a552-e9e4b1a3069d
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- NEW: `recover` module can load DXF R12 files with subclass markers in table entries
+		- {{discussion 1106}}
+	- NEW: `DXFGraphic.rgb` deleter
+		- {{pr 1113}}
+	- BUGFIX: `numpy` v2.0 adaptation, `str()` function returns `"np.float64(...)"` for numpy floats
+		- This affects the following add-on modules:
+			- `ezdxf.addons.dxf2code`
+			- `ezdxf.addons.openscad`
+	- BUGFIX: line clipping  of inverted clipping polygons
+		- {{issue 1101}}
+	- BUGFIX: `Drawing.filename` has to be `str|None`
+		- {{issue 1114}}
+	- BUGFIX: clipping function returned `None` values
+		- {{issue 1113}}
+		-
+- ## Version 1.3.1 - 2024-06-06
+  id:: 6634bed7-9a8c-4136-9a0c-96ce3078c948
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- NEW: `ezdxf.acis.api.vertices_from_body()` function
+	- CHANGE: optional empty string as default value of the `plotter_configuration_file` attribute for modelspace and paperspace layouts
+		- CAD applications will use the default printer/plotter when the `plotter_configuration_file` attribute is missing.
+	- BUGFIX: fixed rendering of collinear polyline segments for polylines with a "width"
+		- {{issue 1078}}
+	- BUGFIX: added `audit()` support for the  `HATCH` entity
+		- {{issue 1081}}
+	- BUGIX: `dxf2code` add-on failed to write `HATCH` patterns
+		- {{issue 1082}}
+	- BUGFIX: add reactors to entities in `GROUP`
+		- {{issue 1085}}
+	- BUGFIX: `clipping.is_inside_polygon()` function was incorrect
+		- {{issue 1094}}
+	- BUGFIX: `ClippingPolygon` raises exception clipping empty data
+		- {{issue 1096}}
+		-
+- ## Version 1.3.0 - 2024-05-01
+  id:: 65e30c28-021e-4c24-ab6e-a9e9fa7c6a51
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- moved static setup data from `setup.py` to `pyproject.toml`
+	- REMOVE: `pp` command, use `browse` command to explore DXF files
+	- NEW: `GeoJSONBackend` for the `drawing` add-on
+	- NEW: `CustomJSONBackend` for the `drawing` add-on
+	- NEW: property override functions are managed as a stack, that allows multiple override functions
+		- `Frontend.push_property_override_function()`
+		- `Frontend.pop_property_override_function()`
+		- The `Frontend.override_properties()` method is the first function on this stack, so there is no need to adapt existing code.
+	- NEW: math utility functions with pure-Python and Cython implementations
+		- `ezdxf.math.world_mercator_to_gps()`
+		- `ezdxf.math.gps_to_world_mercator()`
+	- NEW: `ezdxf.revcloud` module to render revision clouds similar to the `REVCLOUD` command in CAD applications
+	- NEW: `ezdxf.select` module for location based entity selection
+	- NEW: support for copying of [[ACIS]] based entities, this adds support for loading these entities by the `xref` module
+	- NEW: support for transformation of [[ACIS]] based entities
+		- the transformation is stored as temporary transformation and will be applied automatically before export
+		- the applied transformation is a transformed anonymous block that contains that [[ACIS]] entity
+	- NEW: function `ezdxf.transform.apply_temporary_transformations()`
+	- CHANGE: class `RenderContext` accepts ctb files as instances of `acadctb.ColorDependentPlotStyles`
+	- CHANGE: replaced the `Designer` class of the `drawing` add-on by a render pipeline with separated render stages
+	- CHANGE: better support for viewports with curved clipping paths for the `drawing` add-on
+	- BUGFIX: clipping errors for filled paths
+		- {{issue 1055}}
+	-
+- ## Version 1.2.0 - 2024-03-02
+  id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- ((658c0484-28db-436e-b828-8fc509ecbd29))
 	- NEW: `ezdxf` requires Python 3.9 or newer
 	- NEW: support for the [[SPATIAL_FILTER]] entity.
@@ -22,6 +100,9 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- NEW: `MeshBuilder.render_3dsolid()`, create [[3DSOLID]] entities from simple polyhedrons (experimental)
 	- NEW: `Auditor` fixes non-existing linetypes in layers, replaced by `Continuous`
 		- {{discussion 1018}}
+	- NEW: export and load DXF documents as JSON encoded tags
+		- `ezdxf.document.export_json_tags()`
+		- `ezdxf.document.load_json_tags()`
 	- CHANGE: renamed `Image.boundray_path_ocs()` to `Image.pixel_boundary_path()`
 	- CHANGE: refactoring of the [[RecorderBackend]]
 	- CHANGE: replaced `ezdxf.math.linspace` by `numpy.linspace`
@@ -31,11 +112,15 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 		- moved `LUDecomposition` to module `ezdxf.math.legacy`
 	- CHANGE: `MeshData.vertices` has to be a list of `Vec3`
 	- CHANGE: renamed `ClippingPolygon2d` to `ConvexClippingPolygon2d`
+	- CHANGE: The Cython extensions have been reverted to pure Cython code and removed low-level C++ classes to make it easier to maintain, but with a small performance penalty.
 	- REMOVE: untested and incorrect implementation of `ezdxf.math.BezierSurface`
 	- BUGFIX: Restore lost links between `LAYOUT` and `BLOCK_RECORD` entities
 		- {{issue 997}}
-	- BUGFIX: `NumpyPath2d` could contain a 3d vertex
+	- BUGFIX: `NumpyPath2d` could contain 3d vertices
 		- {{issue 1003}}
+	- BUGFIX: DXF attribute `invisible` wasn't exported
+		- {{issue 1040}}
+	- BUGFIX: catch exceptions of the `draw` command when required dependencies are not installed
 -
 - ## Version 1.1.4 - 2023-12-24
   id:: 6568dc88-ce84-4f46-b490-43768c491a2b
@@ -294,7 +379,7 @@ id:: 6588217b-c1d3-44c1-a0d7-e5ee465cc6de
 	- NEW: support for layer attribute override in VIEWPORT entities
 	- NEW: mesh exchange add-on `ezdxf.addons.meshex`: STL, OFF, and OBJ mesh loader and STL, OFF, OBJ, PLY, OpenSCAD and IFC4 mesh exporter, [docs](https://ezdxf.mozman.at/docs/addons/meshex.html)
 	- NEW: `ezdxf.addons.openscad` add-on as interface to [OpenSCAD](https://openscad.org), [docs](https://ezdxf.mozman.at/docs/addons/openscad.html)
-	- NEW: `acis` module, a toolbox to handle ACIS data, [docs](https://ezdxf.mozman.at/docs/tools/acis.html)
+	- NEW: `acis` module, a toolbox to handle ACIS data, [docs](https://ezdxf.mozman.at/docs/acis.html)
 	- NEW: factory function `add_helix()` to create new `HELIX` entities
 	- NEW: precise bounding box calculation for Bezier curves
 	- NEW: module `ezdxf.math.trianglation` for polygon triangulation with hole support

@@ -188,7 +188,7 @@ acdb_face = DefSubclass(
         # 2 = Second edge is invisible
         # 4 = Third edge is invisible
         # 8 = Fourth edge is invisible
-        "invisible": DXFAttr(70, default=0, optional=True),
+        "invisible_edges": DXFAttr(70, default=0, optional=True),
     },
 )
 acdb_face_group_codes = group_code_mapping(acdb_face)
@@ -211,7 +211,7 @@ class Face3d(_Base):
         """Returns True if edge `num` is an invisible edge."""
         if num < 0 or num > 4:
             raise ValueError(f"invalid edge: {num}")
-        return bool(self.dxf.invisible & (1 << num))
+        return bool(self.dxf.invisible_edges & (1 << num))
 
     def set_edge_visibility(self, num: int, visible: bool = False) -> None:
         """Set visibility of edge `num`, status `True` for visible, status
@@ -220,9 +220,9 @@ class Face3d(_Base):
         if num < 0 or num >= 4:
             raise ValueError(f"invalid edge: {num}")
         if not visible:
-            self.dxf.invisible = self.dxf.invisible | (1 << num)
+            self.dxf.invisible_edges = self.dxf.invisible_edges | (1 << num)
         else:
-            self.dxf.invisible = self.dxf.invisible & ~(1 << num)
+            self.dxf.invisible_edges = self.dxf.invisible_edges & ~(1 << num)
 
     def get_edges_visibility(self) -> list[bool]:
         # if the face is a triangle, a fourth visibility flag
@@ -246,7 +246,7 @@ class Face3d(_Base):
         if not self.dxf.hasattr("vtx3"):
             self.dxf.vtx3 = self.dxf.vtx2
         self.dxf.export_dxf_attribs(
-            tagwriter, ["vtx0", "vtx1", "vtx2", "vtx3", "invisible"]
+            tagwriter, ["vtx0", "vtx1", "vtx2", "vtx3", "invisible_edges"]
         )
 
     def transform(self, m: Matrix44) -> Face3d:

@@ -1,13 +1,16 @@
 setuptools
+wheel
 pyparsing>=2.0.1
 typing_extensions>=4.6.0
 numpy
 fonttools
 pytest
+mypy>=1.11
 cython
 matplotlib
 pyside6
 Pillow
+PyMuPDF
 sphinx
 sphinx-rtd-theme
 sphinxcontrib-jquery

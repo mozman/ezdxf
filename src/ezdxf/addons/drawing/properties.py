@@ -2,9 +2,6 @@
 # Copyright (c) 2020-2023, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-
-import os
-import pathlib
 from typing import (
     TYPE_CHECKING,
     Optional,
@@ -15,10 +12,12 @@ from typing import (
     Iterable,
     NamedTuple,
 )
+from typing_extensions import TypeAlias
+import os
+import pathlib
 import re
 import copy
 import logging
-import sys
 
 from ezdxf import options
 from ezdxf.colors import RGB
@@ -75,6 +74,7 @@ PAPER_SPACE_BG_COLOR = "#ffffff"
 VIEWPORT_COLOR = "#aaaaaa"  # arbitrary choice
 OLE2FRAME_COLOR = "#89adba"  # arbitrary choice
 logger = logging.getLogger("ezdxf")
+CTB: TypeAlias = acadctb.ColorDependentPlotStyles
 
 
 def is_dark_color(color: Color, dark: float = 0.2) -> bool:
@@ -302,18 +302,17 @@ LayerPropsOverride = Callable[[Sequence[LayerProperties]], None]
 
 
 class RenderContext:
-    """The render context for the given DXF document. The
-    :class:`RenderContext` resolves the properties of DXF entities from the
-    context they reside in to actual values like RGB colors, transparency,
-    linewidth and so on.
+    """The render context for the given DXF document. The :class:`RenderContext`
+    resolves the properties of DXF entities from the context they reside in to actual
+    values like RGB colors, transparency, linewidth and so on.
 
-    A given `ctb` file (plot style file) overrides the default properties for
-    all layouts, which means the plot style table stored in the layout is
-    always ignored.
+    A given `ctb` file (plot style file) overrides the default properties for all
+    layouts, which means the plot style table stored in the layout is always ignored.
 
     Args:
         doc: DXF document
-        ctb: path to a plot style table
+        ctb: path to a plot style table or a :class:`~ezdxf.addons.acadctb.ColorDependentPlotStyles`
+            instance
         export_mode: Whether to render the document as it would look when
             exported (plotted) by a CAD application to a file such as pdf,
             or whether to render the document as it would appear inside a
@@ -324,7 +323,7 @@ class RenderContext:
         self,
         doc: Optional[Drawing] = None,
         *,
-        ctb: str = "",
+        ctb: str | CTB = "",
         export_mode: bool = False,
     ):
         self._saved_states: list[Properties] = []
@@ -357,9 +356,10 @@ class RenderContext:
             self.pdsize = doc.header.get("$PDSIZE", 1.0)
             self.pdmode = doc.header.get("$PDMODE", 0)
             if doc.filename is not None:
-                self.document_dir = pathlib.Path(
-                    doc.filename.replace("\\", os.path.sep)
-                ).parent.resolve()
+                filename = doc.filename
+                if isinstance(filename, str):
+                    filename = filename.replace("\\", os.path.sep)
+                self.document_dir = pathlib.Path(filename).parent.resolve()
             self._setup_text_styles(doc)
             try:
                 self.units = InsertUnits(doc.header.get("$INSUNITS", 0))
@@ -387,15 +387,27 @@ class RenderContext:
         if self._layer_properties_override:
             self._layer_properties_override(layers)
 
-    def set_current_layout(self, layout: Layout, ctb: str = ""):
-        """Set the current layout and update layout specific properties."""
+    def set_current_layout(self, layout: Layout, ctb: str | CTB = ""):
+        """Set the current layout and update layout specific properties.
+
+        Args:
+            layout: modelspace or a paperspace layout
+            ctb: path to a plot style table or a :class:`~ezdxf.addons.acadctb.ColorDependentPlotStyles`
+                instance
+
+        """
         # the given ctb has the highest priority
-        if ctb == "":
-            # next is the override ctb
-            ctb = self.override_ctb
-        if ctb == "":
-            # last is the ctb stored in the layout
-            ctb = layout.get_plot_style_filename()
+        if isinstance(ctb, str):
+            if ctb == "":
+                # next is the override ctb
+                ctb = self.override_ctb
+            if ctb == "":
+                # last is the ctb stored in the layout
+                ctb = layout.get_plot_style_filename()
+        elif not isinstance(ctb, CTB):
+            raise TypeError(
+                f"expected argument ctb of type str or {CTB.__name__}, got {type(ctb)}"
+            )
         self.current_layout_properties = LayoutProperties.from_layout(layout)
         self.plot_styles = self._load_plot_style_table(ctb)
         self.layers = dict()
@@ -549,15 +561,18 @@ class RenderContext:
             return float(lineweight) / 100.0
 
     @staticmethod
-    def _load_plot_style_table(filename: str):
+    def _load_plot_style_table(filename: str | CTB):
         # Each layout can have a different plot style table stored in
         # Layout.dxf.current_style_sheet.
         # HEADER var $STYLESHEET stores the default ctb-file name.
-        filename = find_support_file(filename, options.support_dirs)
-        try:
-            ctb = acadctb.load(filename)
-        except IOError:
-            ctb = acadctb.new_ctb()
+        if isinstance(filename, str):
+            filename = find_support_file(filename, options.support_dirs)
+            try:
+                ctb = acadctb.load(filename)
+            except IOError:
+                ctb = acadctb.new_ctb()
+        else:
+            ctb = filename
 
         # Colors in CTB files can be RGB colors but don't have to,
         # therefore initialize color without RGB values by the

@@ -48,7 +48,7 @@ Common Limitations to all Backends
     - 3D entities are projected into the xy-plane and 3D text is not supported
     - only top view rendering of the modelspace
     - VIEWPORTS are always rendered as top view
-    - no visual style support
+    - no VISUALSTYLE support
 
 - only basic support for:
 
@@ -182,6 +182,10 @@ The :class:`Layout` class uses following classes and enums for configuration:
     .. autoproperty:: is_landscape
 
     .. autoproperty:: is_portrait
+
+    .. automethod:: from_dxf_layout
+
+    .. automethod:: get_margin_rect
 
     .. automethod:: to_landscape
 
@@ -334,6 +338,21 @@ Render a paperspace layout into modelspace:
     Frontend(RenderContext(doc), backend).draw_layout(layout1)
 
     output_doc.saveas("layout1_in_modelspace.dxf")
+
+GeoJSONBackend
+--------------
+
+.. versionadded:: 1.3.0
+
+.. autoclass:: ezdxf.addons.drawing.json.GeoJSONBackend
+
+CustomJSONBackend
+-----------------
+
+.. versionadded:: 1.3.0
+
+.. autoclass:: ezdxf.addons.drawing.json.CustomJSONBackend
+
 
 Configuration
 -------------
@@ -532,6 +551,10 @@ Frontend
     .. automethod:: skip_entity
 
     .. automethod:: override_properties
+
+    .. automethod:: push_property_override_function
+
+    .. automethod:: pop_property_override_function
 
     .. automethod:: draw_layout
 

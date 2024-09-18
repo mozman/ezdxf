@@ -1,7 +1,15 @@
 #  Copyright (c) 2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Optional, Iterable, Iterator, Sequence, NamedTuple, Callable
+from typing import (
+    Optional,
+    Iterable,
+    Iterator,
+    Sequence,
+    NamedTuple,
+    Callable,
+    TYPE_CHECKING,
+)
 import abc
 
 from ezdxf.math import (
@@ -14,11 +22,15 @@ from ezdxf.math import (
 )
 from ezdxf.npshapes import NumpyPath2d, NumpyPoints2d
 
+if TYPE_CHECKING:
+    from ezdxf.math.clipping import Clipping
+
 __all__ = [
     "ClippingShape",
     "ClippingPortal",
     "ClippingRect",
     "ConvexClippingPolygon",
+    "InvertedClippingPolygon",
     "MultiClip",
     "find_best_clipping_shape",
     "make_inverted_clipping_shape",
@@ -55,6 +67,14 @@ class ClippingShape(abc.ABC):
 
     @abc.abstractmethod
     def bbox(self) -> BoundingBox2d: ...
+
+    @abc.abstractmethod
+    def is_completely_inside(self, other: BoundingBox2d) -> bool: ...
+
+    # returning False means: I don't know!
+
+    @abc.abstractmethod
+    def is_completely_outside(self, other: BoundingBox2d) -> bool: ...
 
     @abc.abstractmethod
     def clip_point(self, point: Vec2) -> Optional[Vec2]: ...
@@ -201,7 +221,101 @@ class ClippingPortal:
         return m
 
 
-class ClippingRect(ClippingShape):
+class ClippingPolygon(ClippingShape):
+    """Represents an arbitrary polygon as clipping shape.  Removes the geometry
+    outside the clipping polygon.
+
+    """
+
+    def __init__(self, bbox: BoundingBox2d, clipper: Clipping) -> None:
+        if not bbox.has_data:
+            raise ValueError("clipping box not detectable")
+        self._bbox = bbox
+        self.clipper = clipper
+
+    def bbox(self) -> BoundingBox2d:
+        return self._bbox
+
+    def clip_point(self, point: Vec2) -> Optional[Vec2]:
+        is_inside = self.clipper.is_inside(Vec2(point))
+        if not is_inside:
+            return None
+        return point
+
+    def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
+        return self.clipper.clip_line(start, end)
+
+    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+        clipper = self.clipper
+        if len(points) == 0:
+            return tuple()
+        polyline_bbox = BoundingBox2d(points.extents())
+        if self.is_completely_outside(polyline_bbox):
+            return tuple()
+        if self.is_completely_inside(polyline_bbox):
+            return (points,)
+        return [
+            NumpyPoints2d(part)
+            for part in clipper.clip_polyline(points.vertices())
+            if len(part) > 0
+        ]
+
+    def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
+        clipper = self.clipper
+        if len(points) < 2:
+            return tuple()
+        polygon_bbox = BoundingBox2d(points.extents())
+        if self.is_completely_outside(polygon_bbox):
+            return tuple()
+        if self.is_completely_inside(polygon_bbox):
+            return (points,)
+        return [
+            NumpyPoints2d(part)
+            for part in clipper.clip_polygon(points.vertices())
+            if len(part) > 0
+        ]
+
+    def clip_paths(
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
+        clipper = self.clipper
+        for path in paths:
+            for sub_path in path.sub_paths():
+                path_bbox = BoundingBox2d(sub_path.control_vertices())
+                if not path_bbox.has_data:
+                    continue
+                if self.is_completely_inside(path_bbox):
+                    yield sub_path
+                    continue
+                if self.is_completely_outside(path_bbox):
+                    continue
+                polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=4))
+                for part in clipper.clip_polyline(polyline):
+                    if len(part) > 0:
+                        yield NumpyPath2d.from_vertices(part, close=False)
+
+    def clip_filled_paths(
+        self, paths: Iterable[NumpyPath2d], max_sagitta: float
+    ) -> Iterator[NumpyPath2d]:
+        clipper = self.clipper
+        for path in paths:
+            for sub_path in path.sub_paths():
+                if len(sub_path) < 2:
+                    continue
+                path_bbox = BoundingBox2d(sub_path.control_vertices())
+                if self.is_completely_inside(path_bbox):
+                    yield sub_path
+                    continue
+                if self.is_completely_outside(path_bbox):
+                    continue
+                for part in clipper.clip_polygon(
+                    Vec2.list(sub_path.flattening(max_sagitta, segments=4))
+                ):
+                    if len(part) > 0:
+                        yield NumpyPath2d.from_vertices(part, close=True)
+
+
+class ClippingRect(ClippingPolygon):
     """Represents a rectangle as clipping shape where the edges are parallel to
     the x- and  y-axis of the coordinate system.  Removes the geometry outside the
     clipping rectangle.
@@ -211,104 +325,57 @@ class ClippingRect(ClippingShape):
     def __init__(self, vertices: Iterable[UVec]) -> None:
         from ezdxf.math.clipping import ClippingRect2d
 
-        self.remove_all = False
-        bbox = BoundingBox2d(vertices)
+        polygon = Vec2.list(vertices)
+        bbox = BoundingBox2d(polygon)
         if not bbox.has_data:
             raise ValueError("clipping box not detectable")
         size: Vec2 = bbox.size
-        if size.x * size.y < 1e-9:
-            self.remove_all = True
-        self._bbox = bbox
-        self.clipper = ClippingRect2d(bbox.extmin, bbox.extmax)
+        self.remove_all = size.x * size.y < 1e-9
 
-    def bbox(self) -> BoundingBox2d:
-        return self._bbox
+        super().__init__(bbox, ClippingRect2d(bbox.extmin, bbox.extmax))
+
+    def is_completely_inside(self, other: BoundingBox2d) -> bool:
+        return self._bbox.contains(other)
+
+    def is_completely_outside(self, other: BoundingBox2d) -> bool:
+        return not self._bbox.has_intersection(other)
 
     def clip_point(self, point: Vec2) -> Optional[Vec2]:
         if self.remove_all:
             return None
-        is_inside = self.clipper.is_inside(Vec2(point))
-        if not is_inside:
-            return None
-        return point
+        return super().clip_point(point)
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
         if self.remove_all:
             return tuple()
-
-        # rectangular clipping box returns always a single line segment or an empty tuple
         return self.clipper.clip_line(start, end)
 
     def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         if self.remove_all:
             return (NumpyPoints2d(tuple()),)
-
-        clipper = self.clipper
-        extmin, extmax = points.extents()
-        if not clipper.is_inside(extmin) or not clipper.is_inside(extmax):
-            return [
-                NumpyPoints2d(part) for part in clipper.clip_polyline(points.vertices())
-            ]
-        return (points,)
+        return super().clip_polyline(points)
 
     def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
         if self.remove_all:
             return (NumpyPoints2d(tuple()),)
-
-        clipper = self.clipper
-        extmin, extmax = points.extents()
-        if not clipper.is_inside(extmin) or not clipper.is_inside(extmax):
-            # ClippingRect2d handles only convex clipping paths and returns always a
-            # single polygon:
-            return [
-                NumpyPoints2d(part) for part in clipper.clip_polygon(points.vertices())
-            ]
-        else:
-            return (points,)
+        return super().clip_polygon(points)
 
     def clip_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
     ) -> Iterator[NumpyPath2d]:
         if self.remove_all:
-            return tuple()
-
-        clipper = self.clipper
-        for path in paths:
-            box = BoundingBox2d(path.control_vertices())
-            if clipper.is_inside(box.extmin) and clipper.is_inside(box.extmax):
-                yield path
-            for sub_path in path.sub_paths():
-                polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=4))
-                for part in clipper.clip_polyline(polyline):
-                    yield NumpyPath2d.from_vertices(part, close=False)
+            return iter(tuple())
+        return super().clip_paths(paths, max_sagitta)
 
     def clip_filled_paths(
         self, paths: Iterable[NumpyPath2d], max_sagitta: float
     ) -> Iterator[NumpyPath2d]:
         if self.remove_all:
-            return tuple()
-
-        clipper = self.clipper
-        for path in paths:
-            box = path.bbox()
-            if not clipper.has_intersection(box):
-                # path is complete outside the view
-                continue
-            if clipper.is_inside(box.extmin) and clipper.is_inside(box.extmax):
-                # path is complete inside the view, no clipping required
-                yield path
-            else:
-                # clipping is required, but only clipping of polygons is supported
-                if path.has_sub_paths:
-                    yield from self.clip_filled_paths(path.sub_paths(), max_sagitta)
-                else:
-                    for part in clipper.clip_polygon(
-                        Vec2.list(path.flattening(max_sagitta, segments=4))
-                    ):
-                        yield NumpyPath2d.from_vertices(part, close=True)
+            return iter(tuple())
+        return super().clip_filled_paths(paths, max_sagitta)
 
 
-class ConvexClippingPolygon(ClippingShape):
+class ConvexClippingPolygon(ClippingPolygon):
     """Represents an arbitrary convex polygon as clipping shape.  Removes the geometry
     outside the clipping polygon.
 
@@ -317,136 +384,57 @@ class ConvexClippingPolygon(ClippingShape):
     def __init__(self, vertices: Iterable[UVec]) -> None:
         from ezdxf.math.clipping import ConvexClippingPolygon2d
 
-        bbox = BoundingBox2d(vertices)
-        if not bbox.has_data:
-            raise ValueError("clipping box not detectable")
-        self._bbox = bbox
-        self.clipper = ConvexClippingPolygon2d(Vec2.generate(vertices))
+        polygon = Vec2.list(vertices)
+        super().__init__(BoundingBox2d(polygon), ConvexClippingPolygon2d(polygon))
 
-    def bbox(self) -> BoundingBox2d:
-        return self._bbox
+    def is_completely_inside(self, other: BoundingBox2d) -> bool:
+        return False  # I don't know!
 
-    def clip_point(self, point: Vec2) -> Optional[Vec2]:
-        is_inside = self.clipper.is_inside(Vec2(point))
-        if not is_inside:
-            return None
-        return point
-
-    def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
-        return self.clipper.clip_line(start, end)
-
-    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
-        clipper = self.clipper
-        polyline_bbox = BoundingBox2d(points.extents())
-        if not polyline_bbox.has_intersection(self._bbox):
-            # polyline is complete outside
-            return tuple()
-        return [
-            NumpyPoints2d(part) for part in clipper.clip_polyline(points.vertices())
-        ]
-
-    def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
-        clipper = self.clipper
-        polygon_bbox = BoundingBox2d(points.extents())
-        if not polygon_bbox.has_intersection(self._bbox):
-            # polygon is complete outside
-            return tuple()
-        return [NumpyPoints2d(part) for part in clipper.clip_polygon(points.vertices())]
-
-    def clip_paths(
-        self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        clipper = self.clipper
-        for path in paths:
-            for sub_path in path.sub_paths():
-                path_bbox = BoundingBox2d(sub_path.control_vertices())
-                if not path_bbox.has_intersection(self._bbox):
-                    # path is complete outside
-                    continue
-                polyline = Vec2.list(sub_path.flattening(max_sagitta, segments=4))
-                for part in clipper.clip_polyline(polyline):
-                    yield NumpyPath2d.from_vertices(part, close=False)
-
-    def clip_filled_paths(
-        self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        clipper = self.clipper
-        for path in paths:
-            for sub_path in path.sub_paths():
-                path_bbox = BoundingBox2d(sub_path.control_vertices())
-                if not path_bbox.has_intersection(self._bbox):
-                    # path is complete outside
-                    continue
-                for part in clipper.clip_polygon(
-                    Vec2.list(path.flattening(max_sagitta, segments=4))
-                ):
-                    yield NumpyPath2d.from_vertices(part, close=True)
+    def is_completely_outside(self, other: BoundingBox2d) -> bool:
+        return not self._bbox.has_intersection(other)
 
 
-class MultiClip(ClippingShape):
-    """The MultiClip combines multiple clipping shapes into a single clipping shape.
-
-    Overlapping clipping shapes will yield strange results but are not actively
-    prevented.
+class ConcaveClippingPolygon(ClippingPolygon):
+    """Represents an arbitrary concave polygon as clipping shape.  Removes the geometry
+    outside the clipping polygon.
 
     """
 
-    def __init__(self, shapes: Iterable[ClippingShape]) -> None:
-        self._clipping_ranges: list[tuple[ClippingShape, BoundingBox2d]] = [
-            (shape, shape.bbox()) for shape in shapes if not shape.bbox().is_empty
-        ]
+    def __init__(self, vertices: Iterable[UVec]) -> None:
+        from ezdxf.math.clipping import ConcaveClippingPolygon2d
 
-    def bbox(self) -> BoundingBox2d:
-        bbox = BoundingBox2d()
-        for _, extents in self._clipping_ranges:
-            bbox.extend(extents)
-        return bbox
+        polygon = Vec2.list(vertices)
+        super().__init__(BoundingBox2d(polygon), ConcaveClippingPolygon2d(polygon))
 
-    def shapes_in_range(self, bbox: BoundingBox2d) -> list[ClippingShape]:
-        return [
-            shape
-            for shape, extents in self._clipping_ranges
-            if bbox.has_intersection(extents)
-        ]
+    def is_completely_inside(self, other: BoundingBox2d) -> bool:
+        return False  # I don't know!
 
-    def clip_point(self, point: Vec2) -> Optional[Vec2]:
-        for shape, _ in self._clipping_ranges:
-            clipped_point = shape.clip_point(point)
-            if clipped_point is not None:
-                return clipped_point
-        return None
+    def is_completely_outside(self, other: BoundingBox2d) -> bool:
+        return not self._bbox.has_intersection(other)
 
-    def clip_line(self, start: Vec2, end: Vec2) -> Sequence[tuple[Vec2, Vec2]]:
-        result: list[tuple[Vec2, Vec2]] = []
-        for clipper in self.shapes_in_range(BoundingBox2d((start, end))):
-            result.extend(clipper.clip_line(start, end))
-        return result
 
-    def clip_polyline(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
-        result: list[NumpyPoints2d] = []
-        for shape in self.shapes_in_range(points.bbox()):
-            result.extend(shape.clip_polyline(points))
-        return result
+class InvertedClippingPolygon(ClippingPolygon):
+    """Represents an arbitrary inverted clipping polygon.  Removes the geometry
+    inside the clipping polygon.
 
-    def clip_polygon(self, points: NumpyPoints2d) -> Sequence[NumpyPoints2d]:
-        result: list[NumpyPoints2d] = []
-        for shape in self.shapes_in_range(points.bbox()):
-            result.extend(shape.clip_polygon(points))
-        return result
+    .. Important:: 
+    
+        The `outer_bounds` must be larger than the content to clip to work correctly.
 
-    def clip_paths(
-        self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        for path in paths:
-            for shape in self.shapes_in_range(path.bbox()):
-                yield from shape.clip_paths((path,), max_sagitta)
+    """
 
-    def clip_filled_paths(
-        self, paths: Iterable[NumpyPath2d], max_sagitta: float
-    ) -> Iterator[NumpyPath2d]:
-        for path in paths:
-            for shape in self.shapes_in_range(path.bbox()):
-                yield from shape.clip_filled_paths((path,), max_sagitta)
+    def __init__(self, vertices: Iterable[UVec], outer_bounds: BoundingBox2d) -> None:
+        from ezdxf.math.clipping import InvertedClippingPolygon2d
+
+        polygon = Vec2.list(vertices)
+        super().__init__(outer_bounds, InvertedClippingPolygon2d(polygon, outer_bounds))
+
+    def is_completely_inside(self, other: BoundingBox2d) -> bool:
+        # returning False means: I don't know!
+        return False  # not easy to detect
+
+    def is_completely_outside(self, other: BoundingBox2d) -> bool:
+        return not self._bbox.has_intersection(other)
 
 
 def find_best_clipping_shape(polygon: Iterable[UVec]) -> ClippingShape:
@@ -464,25 +452,19 @@ def find_best_clipping_shape(polygon: Iterable[UVec]) -> ClippingShape:
         return ClippingRect(points)
     elif is_convex_polygon_2d(points, strict=False):
         return ConvexClippingPolygon(points)
-    # concave clipping shape does not exist yet
-    return ConvexClippingPolygon(points)
+    return ConcaveClippingPolygon(points)
 
 
 def make_inverted_clipping_shape(
-    polygon: Iterable[UVec], extents: BoundingBox2d
+    polygon: Iterable[UVec], outer_bounds: BoundingBox2d
 ) -> ClippingShape:
-    """Returns an inverted clipping shape that removes the geometry outside the clipping
-    polygon but inside the given extents.
-
-    .. note::
-
-        Not implemented yet!
+    """Returns an inverted clipping shape that removes the geometry inside the clipping
+    polygon and beyond the outer bounds.
 
     Args:
         polygon: clipping polygon as iterable vertices
-        extends: outer bounds of the clipping shape
+        outer_bounds: outer bounds of the clipping shape
 
     """
 
-    # not supported/implemented yet and function signature may change!
-    return find_best_clipping_shape(polygon)
+    return InvertedClippingPolygon(polygon, outer_bounds)

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 
@@ -67,7 +67,7 @@ class ImageBase(DXFGraphic):
         # see also WCS coordinate calculation
         self._boundary_path: list[Vec2] = []
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, ImageBase)
         entity._boundary_path = list(self._boundary_path)
 
@@ -350,7 +350,7 @@ class Image(ImageBase):
         image.image_def = image_def
         return image
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, Image)
         super().copy_data(entity, copy_strategy=copy_strategy)
         # Each IMAGE has its own ImageDefReactor object, which will be created by
@@ -419,7 +419,7 @@ class Image(ImageBase):
         if isinstance(self.image_def, ImageDef):
             registry.add_handle(self.image_def.dxf.handle)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, Image)
         super().map_resources(clone, mapping)

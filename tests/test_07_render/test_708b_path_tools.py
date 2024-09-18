@@ -409,8 +409,8 @@ class TestToEntityConverter:
         assert len(polylines) == 1
         p0 = polylines[0]
         assert p0.dxftype() == "LWPOLYLINE"
-        assert p0[0] == (0, 0, 0, 0, 0)  # x, y, swidth, ewidth, bulge
-        assert p0[-1] == (0, 0, 0, 0, 0)
+        assert tuple(p0[0]) == (0, 0, 0, 0, 0)  # x, y, swidth, ewidth, bulge
+        assert tuple(p0[-1]) == (0, 0, 0, 0, 0)
 
     def test_to_lwpolylines_with_wcs_elevation(self, path1):
         polylines = list(to_lwpolylines(path1))

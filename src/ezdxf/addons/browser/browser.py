@@ -25,7 +25,7 @@ import ezdxf
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, is_pointer_code
 from ezdxf.lldxf.tags import Tags
-from ezdxf.pp.reflinks import get_reference_link
+from ezdxf.addons.browser.reflinks import get_reference_link
 
 from .model import (
     DXFStructureModel,

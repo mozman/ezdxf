@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 """ :class:`DXFEntity` is the super class of all DXF entities.
 
@@ -25,7 +25,8 @@ from typing import (
     TypeVar,
     Callable,
 )
-import copy
+from typing_extensions import Self
+
 import logging
 import uuid
 from ezdxf import options
@@ -302,7 +303,7 @@ class DXFEntity:
         # Do not set copy state, this is not a real copy!
         return entity
 
-    def copy(self: T, copy_strategy=default_copy) -> T:
+    def copy(self, copy_strategy=default_copy) -> Self:
         """Internal entity copy for usage in the same document or as virtual entity.
 
         Returns a copy of `self` but without handle, owner and reactors.
@@ -315,7 +316,7 @@ class DXFEntity:
         """
         return copy_strategy.copy(self)
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         """Copy entity data like vertices or attribs to the copy of the entity.
 
         This is the second stage of the copy process, see copy() method.
@@ -618,6 +619,10 @@ class DXFEntity:
         del self.xdata
         del self.doc
         del self.dxf  # check mark for is_alive
+
+    def notify(self, message_type: int, data: Any = None) -> None:
+        """Internal messaging system.  (internal API)"""
+        pass
 
     def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
         """Pre requirement check and pre-processing for export.
@@ -931,7 +936,7 @@ class DXFEntity:
                 for tag in tags.get_hard_owner_handles():
                     registry.add_handle(tag.value)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
 
         def map_xdata_resources():
@@ -973,12 +978,12 @@ class DXFTagStorage(DXFEntity):
         self.xtags = ExtendedTags()
         self.embedded_objects: Optional[list[Tags]] = None
 
-    def copy(self: T, copy_strategy=default_copy) -> T:
+    def copy(self, copy_strategy=default_copy) -> Self:
         raise CopyNotSupported(
             f"Copying of tag storage {self.dxftype()} not supported."
         )
 
-    def transform(self, m: Matrix44) -> DXFGraphic:
+    def transform(self, m: Matrix44) -> Self:
         raise NotImplementedError("cannot transform DXF tag storage")
 
     @property
@@ -1077,7 +1082,6 @@ class DXFTagStorage(DXFEntity):
             for e in ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities():
                 e.set_source_of_copy(self)
                 yield e
-        return []
 
     def virtual_entities(self) -> Iterator[DXFGraphic]:
         """Yields proxy graphic as "virtual" entities."""

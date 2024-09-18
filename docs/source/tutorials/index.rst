@@ -13,6 +13,7 @@ Tutorials
     layers
     linetypes
     dxf_primitives
+    entity_selection
     blocks
     lwpolyline
     text

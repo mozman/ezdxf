@@ -1,10 +1,11 @@
-# Copyright (c) 2015-2022 Manfred Moitzi
+# Copyright (c) 2015-2024 Manfred Moitzi
 # License: MIT License
 import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.lldxf import const
 from ezdxf.math import Vec2
+from ezdxf.tools import pattern
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
@@ -23,9 +24,7 @@ def create_solid_polyline_hatch():
     msp = doc.modelspace()  # we are working in model space
     hatch = msp.add_hatch(color=2)  # by default a SOLID fill
     # if only 1 path - flags = 1 (external) by default
-    hatch.paths.add_polyline_path(
-        [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
-    )
+    hatch.paths.add_polyline_path([(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)])
     zoom.extents(msp)
     doc.saveas(CWD / "hatch_solid_polyline.dxf")  # save DXF drawing
 
@@ -36,9 +35,7 @@ def create_pattern_fill_polyline_hatch():
     hatch = msp.add_hatch()  # by default a SOLID fill
     hatch.set_pattern_fill("ANSI33", color=7, scale=0.01)
     # if only 1 path - flags = 1 (external) by default
-    hatch.paths.add_polyline_path(
-        [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
-    )
+    hatch.paths.add_polyline_path([(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)])
     zoom.extents(msp)
     doc.saveas(CWD / "hatch_pattern_fill_polyline.dxf")
 
@@ -47,7 +44,7 @@ def create_user_pattern_fill():
     doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     hatch = msp.add_hatch()  # by default a SOLID fill
-    offset = Vec2.from_deg_angle(45+90, length=0.7)
+    offset = Vec2.from_deg_angle(45 + 90, length=0.7)
     hatch.set_pattern_fill(
         "MyPattern",
         color=7,
@@ -67,15 +64,60 @@ def create_user_pattern_fill():
     doc.saveas(CWD / "hatch_user_pattern_fill.dxf")
 
 
+EXAMPLE = """; a pattern file
+
+*SOLID, Solid fill
+45, 0,0, 0,.125
+*ANSI31, ANSI Iron, Brick, Stone masonry
+45, 0,0, 0,.125
+*ANSI32, ANSI Steel
+45, 0,0, 0,.375
+45, .176776695,0, 0,.375
+*ANSI33, ANSI Bronze, Brass, Copper
+45, 0,0, 0,.25
+45, .176776695,0, 0,.25, .125,-.0625
+*ANSI34, ANSI Plastic, Rubber
+45, 0,0, 0,.75
+45, .176776695,0, 0,.75
+45, .353553391,0, 0,.75
+45, .530330086,0, 0,.75
+"""
+
+
+def load_pattern_from_file():
+
+    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
+    msp = doc.modelspace()  # we are working in model space
+    hatch = msp.add_hatch()  # by default a SOLID fill
+    # load your pattern file fro file system as string:
+    # with open("pattern_file.pat", "rt") as fp:
+    #      EXAMPLE = fp.read()
+    patterns = pattern.parse(EXAMPLE)
+
+    hatch.set_pattern_fill(
+        "MyPattern",
+        color=7,
+        angle=0,
+        scale=1.0,
+        style=0,
+        pattern_type=0,
+        # pattern name without the preceding asterisk
+        definition=patterns["ANSI34"],
+    )
+    points = [(0, 0), (10, 0), (10, 10), (0, 10)]
+    hatch.paths.add_polyline_path(points)
+    msp.add_lwpolyline(points, close=True, dxfattribs={"color": 1})
+    zoom.extents(msp)
+    doc.saveas(CWD / "loaded_pattern_from_file.dxf")
+
+
 def create_pattern_fill_hatch_with_bgcolor():
     doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     hatch = msp.add_hatch()  # by default a SOLID fill
     hatch.set_pattern_fill("ANSI33", color=7, scale=0.01)
     # if only 1 path - flags = 1 (external) by default
-    hatch.paths.add_polyline_path(
-        [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
-    )
+    hatch.paths.add_polyline_path([(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)])
     hatch.bgcolor = (100, 200, 100)
     zoom.extents(msp)
     doc.saveas(CWD / "hatch_pattern_fill_with_bgcolor.dxf")
@@ -87,9 +129,7 @@ def using_hatch_style():
             return x + point[0], y + point[1]
 
         # outer loop - flags = 1 (external) default value
-        hatch.paths.add_polyline_path(
-            map(shift, [(0, 0), (8, 0), (8, 8), (0, 8)])
-        )
+        hatch.paths.add_polyline_path(map(shift, [(0, 0), (8, 0), (8, 8), (0, 8)]))
         # first inner loop - flags = 16 (outermost)
         hatch.paths.add_polyline_path(
             map(shift, [(2, 2), (7, 2), (7, 7), (2, 7)]),
@@ -106,9 +146,7 @@ def using_hatch_style():
             return x + point[0], y + point[1]
 
         # outer loop - flags = 1 (external) default value
-        hatch.paths.add_polyline_path(
-            map(shift, [(0, 0), (8, 0), (8, 8), (0, 8)])
-        )
+        hatch.paths.add_polyline_path(map(shift, [(0, 0), (8, 0), (8, 8), (0, 8)]))
         # partly 1. inner loop - flags = 16 (outermost)
         hatch.paths.add_polyline_path(
             map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]),
@@ -248,3 +286,4 @@ if __name__ == "__main__":
     using_hatch_style()
     using_hatch_style_with_edge_path()
     using_hatch_with_spline_edge()
+    load_pattern_from_file()

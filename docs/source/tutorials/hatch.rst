@@ -115,6 +115,54 @@ Use predefined hatch pattern by name:
 .. image:: gfx/hatch-predefined-pattern.png
     :align: center
 
+Load Hatch Patterns From File
+-----------------------------
+
+CAD applications store the hatch patterns in pattern files with the file extension 
+``.pat``. The following script shows how to load and use these pattern files:
+
+.. code-block:: Python
+
+    EXAMPLE = """; a pattern file
+
+    *SOLID, Solid fill
+    45, 0,0, 0,.125
+    *ANSI31, ANSI Iron, Brick, Stone masonry
+    45, 0,0, 0,.125
+    *ANSI32, ANSI Steel
+    45, 0,0, 0,.375
+    45, .176776695,0, 0,.375
+    *ANSI33, ANSI Bronze, Brass, Copper
+    45, 0,0, 0,.25
+    45, .176776695,0, 0,.25, .125,-.0625
+    *ANSI34, ANSI Plastic, Rubber
+    45, 0,0, 0,.75
+    45, .176776695,0, 0,.75
+    45, .353553391,0, 0,.75
+    45, .530330086,0, 0,.75
+    """
+
+    hatch = msp.add_hatch()
+    # load your pattern file from the file system as string:
+    # with open("pattern_file.pat", "rt") as fp:
+    #      EXAMPLE = fp.read()
+    patterns = pattern.parse(EXAMPLE)
+
+    hatch.set_pattern_fill(
+        "MyPattern",
+        color=7,
+        angle=0,  # the overall rotation of the pattern in degrees
+        scale=1.0,  # overall scaling of the pattern
+        style=0,  # normal hatching style
+        pattern_type=0,  # user-defined
+        # pattern name without the preceding asterisk
+        definition=patterns["ANSI34"],  
+    )
+    points = [(0, 0), (10, 0), (10, 10), (0, 10)]
+    hatch.paths.add_polyline_path(points)
+    msp.add_lwpolyline(points, close=True, dxfattribs={"color": 1})
+
+
 .. seealso::
 
     :ref:`tut_hatch_pattern`

@@ -2,7 +2,7 @@
 #  License: MIT License
 from __future__ import annotations
 import pytest
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, BoundingBox2d
 from ezdxf.math.clipping import (
     ConvexClippingPolygon2d,
     ClippingRect2d,
@@ -87,6 +87,33 @@ class TestClipPolylineAtConvexBoundary:
         assert p0[1].isclose((3, 2))
         assert p1[0].isclose((5, 2))
         assert p1[1].isclose((7, 0))
+
+    def test_closed_rectangle(self):
+        # 9  ...+--f...
+        # 8  .d-x==x-c.
+        # 7  .|.|..|.|.
+        # 6  .|.|..|.|.
+        # 5  .|.|..|.|.
+        # 4  .|.|..|.|.
+        # 3  .|.|..|.|.
+        # 2  .|.|..|.|.
+        # 1  .a-x==x-b.
+        # 0  ...e--+...
+        #    0123456789
+        #                  a       b       c       d       a
+        rect = Vec2.list([(1, 1), (8, 1), (8, 8), (1, 8), (1, 1)])
+        #                             e           f
+        clipper = ClippingRect2d(Vec2(3, 0), Vec2(6, 9))
+        result = clipper.clip_polyline(rect)
+        assert len(result) == 2
+
+        bbox = BoundingBox2d(result[0])
+        assert bbox.extmin.isclose((3, 1))
+        assert bbox.extmax.isclose((6, 1))
+
+        bbox = BoundingBox2d(result[1])
+        assert bbox.extmin.isclose((3, 8))
+        assert bbox.extmax.isclose((6, 8))
 
 
 class TestClipPolygonAtConvexBoundary:
@@ -174,6 +201,27 @@ class TestClipPolygonAtConvexBoundary:
         assert len(result) == 4
         for v in rect:
             assert any(r.isclose(v) for r in result) is True
+
+
+def test_imprecisions_in_edge_intersection():
+    clipper = ConvexClippingPolygon2d(
+        [
+            Vec2(8.000000000000455, 9.000000000000165),
+            Vec2(15.000000000000887, 9.000000000000165),
+            Vec2(15.000000000000887, 11.000000000000834),
+            Vec2(8.000000000000455, 11.000000000000834),
+        ]
+    )
+    polygon = [
+        Vec2(8.000000000000435, 9.000000000000169),
+        Vec2(15.000000000000874, 9.000000000000169),
+        Vec2(15.000000000000895, 11.00000000000084),
+        Vec2(8.000000000000464, 11.00000000000084),
+        Vec2(8.000000000000435, 9.000000000000377),
+        Vec2(8.000000000000435, 9.000000000000169),
+    ]
+    result = clipper.clip_polygon(polygon)
+    assert len(result) > 0
 
 
 if __name__ == "__main__":

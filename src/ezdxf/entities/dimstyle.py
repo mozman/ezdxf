@@ -1,7 +1,8 @@
-# Copyright (c) 2019-2022, Manfred Moitzi
+# Copyright (c) 2019-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional
+from typing_extensions import Self
 import logging
 from ezdxf.enums import MTextLineAlignment
 from ezdxf.lldxf.attributes import (
@@ -508,7 +509,7 @@ class DimStyle(DXFEntity):
                 # user defined arrow head block
                 registry.add_block_name(arrow_name)
 
-    def map_resources(self, clone: DXFEntity, mapping: xref.ResourceMapper) -> None:
+    def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
         """Translate resources from self to the copied entity."""
         assert isinstance(clone, DimStyle)
         super().map_resources(clone, mapping)

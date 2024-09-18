@@ -1,4 +1,4 @@
-#  Copyright (c) 2023, Manfred Moitzi
+#  Copyright (c) 2023-2024, Manfred Moitzi
 #  License: MIT License
 """ Resource management module for transferring DXF resources between documents.
 """

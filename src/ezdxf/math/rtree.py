@@ -9,88 +9,84 @@
 #   http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
 from __future__ import annotations
 import statistics
-from typing import Iterator, Callable, Sequence, Iterable
+from typing import Iterator, Callable, Sequence, Iterable, TypeVar, Generic
 import abc
 import math
 
-from ezdxf.math import BoundingBox, AnyVec, Vec3, spherical_envelope
+from ezdxf.math import BoundingBox, Vec2, Vec3, spherical_envelope
 
 __all__ = ["RTree"]
 
 INF = float("inf")
 
+T = TypeVar("T", Vec2, Vec3)
 
-class Node(abc.ABC):
+
+class Node(abc.ABC, Generic[T]):
     __slots__ = ("bbox",)
 
     def __init__(self, bbox: BoundingBox):
         self.bbox: BoundingBox = bbox
 
     @abc.abstractmethod
-    def __len__(self) -> int:
-        ...
+    def __len__(self) -> int: ...
 
     @abc.abstractmethod
-    def __iter__(self) -> Iterator[AnyVec]:
-        ...
+    def __iter__(self) -> Iterator[T]: ...
 
     @abc.abstractmethod
-    def contains(self, point: AnyVec) -> bool:
-        ...
+    def contains(self, point: T) -> bool: ...
 
     @abc.abstractmethod
     def _nearest_neighbor(
-        self, target: AnyVec, nn: AnyVec = None, nn_dist: float = INF
-    ) -> tuple[AnyVec, float]:
-        ...
+        self, target: T, nn: T = None, nn_dist: float = INF
+    ) -> tuple[T, float]: ...
 
     @abc.abstractmethod
-    def points_in_sphere(self, center: AnyVec, radius: float) -> Iterator[AnyVec]:
-        ...
+    def points_in_sphere(self, center: T, radius: float) -> Iterator[T]: ...
 
     @abc.abstractmethod
-    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[AnyVec]:
-        ...
+    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[T]: ...
 
-    def nearest_neighbor(self, target: AnyVec) -> tuple[AnyVec, float]:
+    def nearest_neighbor(self, target: T) -> tuple[T, float]:
         return self._nearest_neighbor(target)
 
 
-class LeafNode(Node):
+class LeafNode(Node[T]):
     __slots__ = ("points", "bbox")
 
-    def __init__(self, points: list[AnyVec]):
+    def __init__(self, points: list[T]):
         self.points = tuple(points)
         super().__init__(BoundingBox(self.points))
 
     def __len__(self):
         return len(self.points)
 
-    def __iter__(self) -> Iterator[AnyVec]:
+    def __iter__(self) -> Iterator[T]:
         return iter(self.points)
 
-    def contains(self, point: AnyVec) -> bool:
+    def contains(self, point: T) -> bool:
         return any(point.isclose(p) for p in self.points)
 
     def _nearest_neighbor(
-        self, target: AnyVec, nn: AnyVec = None, nn_dist: float = INF
-    ) -> tuple[AnyVec, float]:
+        self, target: T, nn: T = None, nn_dist: float = INF
+    ) -> tuple[T, float]:
         distance, point = min((target.distance(p), p) for p in self.points)
         if distance < nn_dist:
             nn, nn_dist = point, distance
         return nn, nn_dist
 
-    def points_in_sphere(self, center: AnyVec, radius: float) -> Iterator[AnyVec]:
+    def points_in_sphere(self, center: T, radius: float) -> Iterator[T]:
         return (p for p in self.points if center.distance(p) <= radius)
 
-    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[AnyVec]:
+    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[T]:
         return (p for p in self.points if bbox.inside(p))
 
 
-class InnerNode(Node):
+class InnerNode(Node[T]):
     __slots__ = ("children", "bbox")
 
-    def __init__(self, children: Sequence[Node]):
+    def __init__(self, children: Sequence[Node[T]]):
         super().__init__(BoundingBox())
         self.children = tuple(children)
         for child in self.children:
@@ -100,19 +96,19 @@ class InnerNode(Node):
     def __len__(self) -> int:
         return sum(len(c) for c in self.children)
 
-    def __iter__(self) -> Iterator[AnyVec]:
+    def __iter__(self) -> Iterator[T]:
         for child in self.children:
             yield from iter(child)
 
-    def contains(self, point: AnyVec) -> bool:
+    def contains(self, point: T) -> bool:
         for child in self.children:
             if child.bbox.inside(point) and child.contains(point):
                 return True
         return False
 
     def _nearest_neighbor(
-        self, target: AnyVec, nn: AnyVec = None, nn_dist: float = INF
-    ) -> tuple[AnyVec, float]:
+        self, target: T, nn: T = None, nn_dist: float = INF
+    ) -> tuple[T, float]:
         closest_child = find_closest_child(self.children, target)
         nn, nn_dist = closest_child._nearest_neighbor(target, nn, nn_dist)
         for child in self.children:
@@ -126,32 +122,33 @@ class InnerNode(Node):
                     nn_dist = distance
         return nn, nn_dist
 
-    def points_in_sphere(self, center: AnyVec, radius: float) -> Iterator[AnyVec]:
+    def points_in_sphere(self, center: T, radius: float) -> Iterator[T]:
         for child in self.children:
             if is_sphere_intersecting_bbox(
                 Vec3(center), radius, child.bbox.center, child.bbox.size
             ):
                 yield from child.points_in_sphere(center, radius)
 
-    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[AnyVec]:
+    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[T]:
         for child in self.children:
             if bbox.has_overlap(child.bbox):
                 yield from child.points_in_bbox(bbox)
 
 
-class RTree:
+class RTree(Generic[T]):
     """Immutable spatial search tree loosely based on `R-trees`_.
 
     The search tree is buildup once at initialization and immutable afterwards,
     because rebuilding the tree after inserting or deleting nodes is very costly
-    and also keeps the implementation very simple. Without the ability to
-    alter the content the restrictions which forces the tree balance at growing
-    and shrinking of the original `R-trees`_, could be ignored, like the fixed
-    minimum and maximum node size.
+    and makes the implementation very complex.  
+    
+    Without the ability to alter the content the restrictions which forces the tree 
+    balance at growing and shrinking of the original `R-trees`_, are ignored, like the 
+    fixed minimum and maximum node size.
 
     This class uses internally only 3D bounding boxes, but also supports
     :class:`Vec2` as well as :class:`Vec3` objects as input data, but point
-    types should not be mixed in a single search tree.
+    types should not be mixed in a search tree.
 
     The point objects keep their type and identity and the returned points of
     queries can be compared by the ``is`` operator for identity to the input
@@ -169,7 +166,7 @@ class RTree:
 
     __slots__ = ("_root",)
 
-    def __init__(self, points: Iterable[AnyVec], max_node_size: int = 5):
+    def __init__(self, points: Iterable[T], max_node_size: int = 5):
         if max_node_size < 2:
             raise ValueError("max node size must be > 1")
         _points = list(points)
@@ -181,29 +178,29 @@ class RTree:
         """Returns the count of points in the search tree."""
         return len(self._root)
 
-    def __iter__(self) -> Iterator[AnyVec]:
+    def __iter__(self) -> Iterator[T]:
         """Yields all points in the search tree."""
         yield from iter(self._root)
 
-    def contains(self, point: AnyVec) -> bool:
+    def contains(self, point: T) -> bool:
         """Returns ``True`` if `point` exists, the comparison is done by the
         :meth:`isclose` method and not by the identity operator ``is``.
         """
         return self._root.contains(point)
 
-    def nearest_neighbor(self, target: AnyVec) -> tuple[AnyVec, float]:
+    def nearest_neighbor(self, target: T) -> tuple[T, float]:
         """Returns the closest point to the `target` point and the distance
         between these points.
         """
         return self._root.nearest_neighbor(target)
 
-    def points_in_sphere(self, center: AnyVec, radius: float) -> Iterator[AnyVec]:
+    def points_in_sphere(self, center: T, radius: float) -> Iterator[T]:
         """Returns all points in the range of the given sphere including the
         points at the boundary.
         """
         return self._root.points_in_sphere(center, radius)
 
-    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[AnyVec]:
+    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[T]:
         """Returns all points in the range of the given bounding box including
         the points at the boundary.
         """
@@ -249,17 +246,17 @@ class RTree:
 
 
 def make_node(
-    points: list[AnyVec],
+    points: list[T],
     max_size: int,
-    split_strategy: Callable[[list[AnyVec], int], Sequence[Node]],
-) -> Node:
+    split_strategy: Callable[[list[T], int], Sequence[Node]],
+) -> Node[T]:
     if len(points) > max_size:
         return InnerNode(split_strategy(points, max_size))
     else:
         return LeafNode(points)
 
 
-def box_split(points: list[AnyVec], max_size: int) -> Sequence[Node]:
+def box_split(points: list[T], max_size: int) -> Sequence[Node[T]]:
     n = len(points)
     size: tuple[float, float, float] = BoundingBox(points).size.xyz
     dim = size.index(max(size))
@@ -285,10 +282,12 @@ def is_sphere_intersecting_bbox(
     return True
 
 
-def find_closest_child(children: Sequence[Node], point: AnyVec) -> Node:
+def find_closest_child(children: Sequence[Node[T]], point: T) -> Node[T]:
+    def distance(child: Node) -> float:
+        return point.distance(child.bbox.center)
+
     assert len(children) > 0
-    _, node = min((point.distance(child.bbox.center), child) for child in children)
-    return node
+    return min(children, key=distance)
 
 
 def grow_box(box: BoundingBox, dist: float) -> BoundingBox:
@@ -309,7 +308,7 @@ def average_exclusive_outliers(values: list[float], spread: float) -> float:
     return 0.0
 
 
-def collect_leafs(node: Node) -> Iterable[LeafNode]:
+def collect_leafs(node: Node[T]) -> Iterable[LeafNode[T]]:
     """Yields all leaf nodes below the given node."""
     if isinstance(node, LeafNode):
         yield node
@@ -318,7 +317,7 @@ def collect_leafs(node: Node) -> Iterable[LeafNode]:
             yield from collect_leafs(child)
 
 
-def nearest_neighbor_distances(points: Sequence[AnyVec]) -> list[float]:
+def nearest_neighbor_distances(points: Sequence[T]) -> list[float]:
     """Brute force calculation of nearest neighbor distances with a
     complexity of O(n!).
     """

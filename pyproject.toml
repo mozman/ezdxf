@@ -1,0 +1,91 @@
+# Documentation:
+# https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
+# https://setuptools.pypa.io/en/latest/index.html
+
+[build-system]
+requires = ["setuptools", "wheel", "cython"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+zip-safe = false
+provides = ["ezdxf"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
+
+[project]
+name = "ezdxf"
+dynamic = ["version"]
+description = "A Python package to create/manipulate DXF drawings."
+authors = [
+    {name = "Manfred Moitzi", email = "me@mozman.at"},
+]
+
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">= 3.9"
+dependencies=[
+    "pyparsing>=2.0.1",
+    "typing_extensions>=4.6.0",
+    "numpy",
+    "fonttools",
+]
+
+keywords = ["DXF", "CAD"]
+license = {file = "LICENCE"}
+
+# full list of classifiers: https://pypi.org/classifiers/
+classifiers=[
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+
+
+[project.optional-dependencies]
+# use PyQt5 (draw5/dev5) only when PySide6 is not available
+draw = ["PySide6", "matplotlib", "PyMuPDF>=1.20.0", "Pillow"]
+draw5 = ["PyQt5", "matplotlib", "PyMuPDF>=1.20.0", "Pillow"]
+dev = [
+    "PySide6", 
+    "setuptools", 
+    "wheel", 
+    "Cython", 
+    "pytest", 
+    "Pillow", 
+    "matplotlib", 
+    "PyMuPDF>=1.20.0",
+]
+dev5 = [
+    "PyQt5", 
+    "setuptools", 
+    "wheel", 
+    "Cython", 
+    "pytest", 
+    "Pillow", 
+    "matplotlib", 
+    "PyMuPDF>=1.20.0"
+]
+
+[project.scripts]
+ezdxf = "ezdxf.__main__:main"
+
+[project.urls]
+Repository = "https://github.com/mozman/ezdxf"
+Documentation = "https://ezdxf.readthedocs.io"
+Changelog = "https://ezdxf.mozman.at/notes/#/page/changelog"
+Forum = "https://github.com/mozman/ezdxf/discussions"
+Issues = "https://github.com/mozman/ezdxf/issues"
+Website = "https://ezdxf.mozman.at"
+Download = "https://pypi.org/project/ezdxf"

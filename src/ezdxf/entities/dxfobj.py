@@ -1,7 +1,8 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Union, Any, Optional
+from typing_extensions import Self, TypeGuard
 import logging
 import array
 from ezdxf.lldxf import validator
@@ -86,7 +87,7 @@ class XRecord(DXFObject):
         super().__init__()
         self.tags = Tags()
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, XRecord)
         entity.tags = Tags(self.tags)
 
@@ -161,7 +162,7 @@ class VBAProject(DXFObject):
         super().__init__()
         self.data = b""
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, VBAProject)
         entity.data = entity.data
 
@@ -244,7 +245,7 @@ class SortEntsTable(DXFObject):
         super().__init__()
         self.table: dict[str, str] = dict()
 
-    def copy_data(self, entity: DXFEntity, copy_strategy=default_copy) -> None:
+    def copy_data(self, entity: Self, copy_strategy=default_copy) -> None:
         assert isinstance(entity, SortEntsTable)
         entity.table = dict(entity.table)
 
@@ -387,7 +388,7 @@ class Field(DXFObject):
     DXFATTRIBS = DXFAttributes(base_class, acdb_field)
 
 
-def is_dxf_object(entity: DXFEntity) -> bool:
+def is_dxf_object(entity: DXFEntity) -> TypeGuard[DXFObject]:
     """Returns ``True`` if the `entity` is a DXF object from the OBJECTS section,
     otherwise the entity is a table or class entry or a graphic entity which can
     not reside in the OBJECTS section.
