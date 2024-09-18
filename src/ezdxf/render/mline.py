@@ -39,7 +39,7 @@ def virtual_entities(mline: MLine) -> list[DXFGraphic]:
         attribs = _dxfattribs(mline)
         attribs["color"] = style.dxf.fill_color
         attribs["elevation"] = Vec3(ocs.from_wcs(bottom_border[0])).replace(
-            x=0, y=0
+            x=0.0, y=0.0
         )
         attribs["extrusion"] = mline.dxf.extrusion
         hatch = cast("Hatch", factory.new("HATCH", dxfattribs=attribs, doc=doc))
