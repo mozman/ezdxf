@@ -217,7 +217,7 @@ class SVGRenderBackend(BackendInterface):
             height=f"{page.height_in_mm:g}mm",
             viewBox=f"0 0 {view_box_width} {view_box_height}",
         )
-        self.styles = Styles(ET.SubElement(self.root, "def"))
+        self.styles = Styles(ET.SubElement(self.root, "defs"))
         self.background = ET.SubElement(
             self.root,
             "rect",

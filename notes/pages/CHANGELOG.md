@@ -6,6 +6,8 @@
 	- BUGFIX: `ezdxf.render.mline.virtual_entities()` function crashes
 		- {{issue 1167}}
 		- contributed by #Kaapp
+	- BUGFIX: replace invalid SVG tag `<def>` by `<defs>`
+		- {{issue 1171}}
 - ## Version 1.3.3 - 2024-08-13
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: improve block section loading procedure
