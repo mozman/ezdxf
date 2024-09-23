@@ -9,11 +9,13 @@ from typing import (
     Iterable,
     Iterator,
     TYPE_CHECKING,
+    Literal,
     Union,
     Optional,
     Callable,
     NamedTuple,
     Any,
+    overload,
 )
 import enum
 import re
@@ -414,8 +416,18 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # - Paragraphs do overflow into the next column if required.
 
 
+@overload
+def fast_plain_mtext(text: str, split: Literal[True]) -> list[str]:
+    ...
+
+
+@overload
+def fast_plain_mtext(text: str, split: Literal[False] = False) -> str:
+    ...
+
+
 # pylint: disable-next=too-many-branches
-def fast_plain_mtext(text: str, split=False) -> Union[list[str], str]:
+def fast_plain_mtext(text: str, split: bool = False) -> Union[list[str], str]:
     """Returns the plain MTEXT content as a single string or  a list of
     strings if `split` is ``True``. Replaces ``\\P`` by ``\\n`` and removes
     other controls chars and inline codes.
