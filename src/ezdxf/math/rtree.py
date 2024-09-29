@@ -8,6 +8,7 @@
 # - Research paper of Antonin Guttman:
 #   http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
 from __future__ import annotations
+from operator import itemgetter
 import statistics
 from typing import Iterator, Callable, Sequence, Iterable, TypeVar, Generic
 import abc
@@ -260,7 +261,7 @@ def box_split(points: list[T], max_size: int) -> Sequence[Node[T]]:
     n = len(points)
     size: tuple[float, float, float] = BoundingBox(points).size.xyz
     dim = size.index(max(size))
-    points.sort(key=lambda vec: vec[dim])
+    points.sort(key=itemgetter(dim))
     k = math.ceil(n / max_size)
     return tuple(
         make_node(points[i : i + k], max_size, box_split) for i in range(0, n, k)
