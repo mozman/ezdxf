@@ -21,13 +21,13 @@ jobs:
       with:
         python-version: 3.x
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.16
+      uses: pypa/cibuildwheel@v2.21
       env:
         CIBW_BEFORE_BUILD: "pip install setuptools wheel cython"
         CIBW_ARCHS_WINDOWS: "AMD64"
         CIBW_ARCHS_MACOS: "x86_64 arm64 universal2"
         # Does not fail at unsupported Python versions!
-        CIBW_BUILD: cp39-* cp310-* cp311-* cp312-*
+        CIBW_BUILD: cp39-* cp310-* cp311-* cp312-* cp313-*
     - name: Upload wheels
       env:
         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
