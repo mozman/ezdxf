@@ -538,8 +538,8 @@ def _search_int(s: Union[str, bytes]) -> int:
     an exception. e.g. "42xyz" is a valid integer 42
 
     """
-    res = re.search(  # type: ignore
-        INT_PATTERN_S if isinstance(s, str) else INT_PATTERN_B, s
+    res = re.search(
+        INT_PATTERN_S if isinstance(s, str) else INT_PATTERN_B, s  # type: ignore
     )
     if res:
         s = res.group()
@@ -556,8 +556,8 @@ def _search_float(s: Union[str, bytes]) -> float:
     an exception. e.g. "47.11xyz" is a valid double 47.11
 
     """
-    res = re.search(  # type: ignore
-        FLOAT_PATTERN_S if isinstance(s, str) else FLOAT_PATTERN_B, s
+    res = re.search(
+        FLOAT_PATTERN_S if isinstance(s, str) else FLOAT_PATTERN_B, s  # type: ignore
     )
     if res:
         s = res.group()
