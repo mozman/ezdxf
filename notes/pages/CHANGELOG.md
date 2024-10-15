@@ -1,4 +1,5 @@
-## Version 1.3.4 - dev
+## Version 1.3.4 - 2024-10-15
+id:: 66d2bce8-c48a-461d-8e5b-534fe26d1f5b
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: support of layers for the PyMuPDF drawing-backend
 		- contributed by #mbway
@@ -9,6 +10,7 @@
 	- BUGFIX: replace invalid SVG tag `<def>` by `<defs>`
 		- {{issue 1171}}
 - ## Version 1.3.3 - 2024-08-13
+  id:: 66a5e7ea-fdad-42a1-bf3f-75d22ed5088f
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: improve block section loading procedure
 		- {{issue 1136}}

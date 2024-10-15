@@ -41,3 +41,9 @@ id:: 65ed4f87-230f-468a-a7d4-78e841752d87
 - # Release v1.3.2
 	- Changelog: ((66657380-1ad7-45c3-a552-e9e4b1a3069d))
 	- Bugfix release
+- # Release v1.3.3
+	- Changelog: ((66a5e7ea-fdad-42a1-bf3f-75d22ed5088f))
+	- Bugfix release
+- # Release v1.3.4
+	- Changelog: ((66d2bce8-c48a-461d-8e5b-534fe26d1f5b))
+	- Bugfix release
