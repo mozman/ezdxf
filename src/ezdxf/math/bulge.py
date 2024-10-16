@@ -89,6 +89,12 @@ def bulge_to_arc(
     and 2D :class:`~ezdxf.entities.Polyline` entities start at the vertex which
     includes the bulge value and ends at the following vertex.
 
+    .. important::
+
+        The return values always describe a counter-clockwise oriented arc, so for
+        clockwise arcs (negative bulge values) the start and end angles are swapped and
+        the arc starts at the `end_point` and ends at the `start_point`.
+
     Based on Bulge to Arc by `Lee Mac`_.
 
     Args:
