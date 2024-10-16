@@ -5,6 +5,14 @@
 Importer
 ========
 
+.. note::
+
+    This module exists for compatibility reasons only and is superseded by the newer and
+    more robust core module :mod:`ezdxf.xref`. For information on how to use it, see the
+    :ref:`xref_importing_data` section.
+
+    **This add-on is no longer maintained and will not receive updates or bug fixes.**
+
 This add-on is meant to import graphical entities from another DXF drawing and their required table entries like LAYER,
 LTYPE or STYLE.
 

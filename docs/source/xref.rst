@@ -100,6 +100,8 @@ this module like GROUPS, LAYER_FILTER, GEODATA, SUN.
 
     Support for ACIS based entities was added.
 
+.. _xref_importing_data:
+
 Importing Data and Resources
 ----------------------------
 
