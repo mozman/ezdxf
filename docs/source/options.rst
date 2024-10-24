@@ -15,8 +15,8 @@ Recommended usage of the global :attr:`options` object::
 
 .. important::
 
-    Most options are only read at startup (support dirs, paths to executables),
-    changing these values has no effect at runtime. To change options, you must
+    Most options are only read at startup (support folders, paths to executables),
+    changing these values has no effect at runtime. To change these options, you must
     create a configuration file, see section :ref:`config_files`.
 
 The :attr:`options` object uses the Standard Python class :class:`ConfigParser`
