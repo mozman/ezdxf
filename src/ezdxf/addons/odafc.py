@@ -23,8 +23,6 @@ from ezdxf.lldxf.validator import (
 )
 
 logger = logging.getLogger("ezdxf")
-win_exec_path = ezdxf.options.get("odafc-addon", "win_exec_path").strip('"')
-unix_exec_path = ezdxf.options.get("odafc-addon", "unix_exec_path").strip('"')
 
 
 class ODAFCError(IOError):
@@ -93,14 +91,23 @@ LINUX = "Linux"
 DARWIN = "Darwin"
 
 
+def get_win_exec_path() -> str:
+    return ezdxf.options.get("odafc-addon", "win_exec_path").strip('"')
+
+
+def get_unix_exec_path() -> str:
+    return ezdxf.options.get("odafc-addon", "unix_exec_path").strip('"')
+
+
 def is_installed() -> bool:
     """Returns ``True`` if the ODAFileConverter is installed."""
     if platform.system() in (LINUX, DARWIN):
+        unix_exec_path = get_unix_exec_path()
         if unix_exec_path and Path(unix_exec_path).is_file():
             return True
         return shutil.which("ODAFileConverter") is not None
     # Windows:
-    return os.path.exists(win_exec_path)
+    return os.path.exists(get_win_exec_path())
 
 
 def map_version(version: str) -> str:
@@ -371,6 +378,8 @@ def _get_odafc_path(system: str) -> str:
     # return this path as exec path.
     # This may help if the "which" command can not find the "ODAFileConverter"
     # command and also adds support for AppImages provided by ODA.
+    unix_exec_path = get_unix_exec_path()
+
     if system != WINDOWS and unix_exec_path:
         if Path(unix_exec_path).is_file():
             return unix_exec_path
@@ -381,7 +390,7 @@ def _get_odafc_path(system: str) -> str:
 
     path = shutil.which("ODAFileConverter")
     if not path and system == WINDOWS:
-        path = win_exec_path
+        path = get_win_exec_path()
         if not Path(path).is_file():
             path = None
 
@@ -434,7 +443,9 @@ def _run_with_no_gui(
         with _linux_dummy_display() as display:
             env = os.environ.copy()
             env["DISPLAY"] = display
-            proc = subprocess.run([command] + arguments, text=True, capture_output=True, env=env)
+            proc = subprocess.run(
+                [command] + arguments, text=True, capture_output=True, env=env
+            )
 
     elif system == DARWIN:
         # TODO: unknown how to prevent the GUI from appearing on macOS

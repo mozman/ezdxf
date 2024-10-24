@@ -1,5 +1,8 @@
-## Version 1.3.4 - 2024-10-15
-id:: 66d2bce8-c48a-461d-8e5b-534fe26d1f5b
+## Version 1.3.5 - dev
+	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
+	- CHANGE: load `ODAFC` path dynamically from options
+- ## Version 1.3.4 - 2024-10-15
+  id:: 66d2bce8-c48a-461d-8e5b-534fe26d1f5b
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: support of layers for the PyMuPDF drawing-backend
 		- contributed by #mbway
