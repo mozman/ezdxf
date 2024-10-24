@@ -16,18 +16,13 @@ from ezdxf.render import MeshBuilder, MeshTransformer
 from ezdxf.addons import meshex
 
 
-DEFAULT_WIN_OPENSCAD_PATH = ezdxf.options.get(
-    "openscad-addon", "win_exec_path"
-).strip('"')
-CMD = "openscad"
-
-
 class Operation(enum.Enum):
     union = 0
     difference = 1
     intersection = 2
 
 
+CMD = "openscad"
 UNION = Operation.union
 DIFFERENCE = Operation.difference
 INTERSECTION = Operation.intersection
@@ -37,16 +32,21 @@ def get_openscad_path() -> str:
     if platform.system() in ("Linux", "Darwin"):
         return CMD
     else:
-        return DEFAULT_WIN_OPENSCAD_PATH
+        return ezdxf.options.get("openscad-addon", "win_exec_path").strip('"')
 
 
 def is_installed() -> bool:
-    r"""Returns ``True`` if OpenSCAD is installed. On Windows only the
-    default install path 'C:\\Program Files\\OpenSCAD\\openscad.exe' is checked.
+    """Returns ``True`` if OpenSCAD is installed.
+
+    Searches on Windows the path stored in the options as "win_exec_path" in section
+    "[openscad-addon]" which is "C:\\Program Files\\OpenSCAD\\openscad.exe" by default.
+
+    Searches the "openscad" command on Linux and macOS.
+
     """
     if platform.system() in ("Linux", "Darwin"):
         return shutil.which(CMD) is not None
-    return Path(DEFAULT_WIN_OPENSCAD_PATH).exists()
+    return Path(get_openscad_path()).exists()
 
 
 def run(script: str, exec_path: Optional[str] = None) -> MeshTransformer:
@@ -94,7 +94,7 @@ def run(script: str, exec_path: Optional[str] = None) -> MeshTransformer:
 def str_matrix44(m: Matrix44) -> str:
     # OpenSCAD uses column major order!
     import numpy as np
-    
+
     def cleanup(values: Iterable) -> Iterable:
         for value in values:
             if isinstance(value, np.float64):
@@ -295,9 +295,7 @@ class Script:
         return "\n".join(self.data)
 
 
-def boolean_operation(
-    op: Operation, mesh1: MeshBuilder, mesh2: MeshBuilder
-) -> str:
+def boolean_operation(op: Operation, mesh1: MeshBuilder, mesh2: MeshBuilder) -> str:
     """Returns an `OpenSCAD`_ script to apply the given boolean operation to the
     given meshes.
 
