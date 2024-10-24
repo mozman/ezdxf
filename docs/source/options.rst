@@ -13,6 +13,12 @@ Recommended usage of the global :attr:`options` object::
 
     value = ezdxf.options.attribute
 
+.. important::
+
+    Most options are only read at startup (support dirs, paths to executables),
+    changing these values has no effect at runtime. To change options, you must
+    create a configuration file, see section :ref:`config_files`.
+
 The :attr:`options` object uses the Standard Python class :class:`ConfigParser`
 to manage the configuration. Shortcut attributes like :attr:`test_files` are
 simple properties and most shortcuts are read only marked by (Read only),
