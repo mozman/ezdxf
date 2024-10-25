@@ -1,9 +1,9 @@
-# Copyright (c) 2011-2022, Manfred Moitzi
+# Copyright (c) 2011-2024, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator, cast, Optional
 import logging
-from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
+from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFStructureError
 from ezdxf.lldxf.const import (
     MODEL_SPACE_R2000,
     PAPER_SPACE_R2000,
@@ -338,7 +338,7 @@ class Layouts:
         for layout in self:
             if layout.is_active_paperspace:
                 return cast(Paperspace, layout)
-        raise DXFInternalEzdxfError("No active paperspace layout found.")
+        raise DXFStructureError("No active paperspace layout found.")
 
     def audit(self, auditor: Auditor):
         from ezdxf.audit import AuditError
