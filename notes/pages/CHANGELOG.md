@@ -3,6 +3,7 @@
 	- CHANGE: load `ODAFC` path dynamically from options
 	- CHANGE: load `OpenSCAD` path dynamically from options
 	- CHANGE: `BlocksSection.delete_block()` will not delete layout blocks in safe mode.
+	- NEW: `Auditor` checks if modelspace and active paperspace exists
 - ## Version 1.3.4 - 2024-10-15
   id:: 66d2bce8-c48a-461d-8e5b-534fe26d1f5b
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))

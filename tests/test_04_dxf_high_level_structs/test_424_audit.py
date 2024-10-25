@@ -64,6 +64,7 @@ def test_for_valid_layer_name(entity, auditor):
     assert len(auditor) == 1
     assert auditor.errors[0].code == AuditError.INVALID_LAYER_NAME
 
+
 def test_if_layer_linetype_exist():
     doc = ezdxf.new()
     doc.layers.add("Layer0", linetype="DoesNotExist")
@@ -71,6 +72,7 @@ def test_if_layer_linetype_exist():
     assert len(auditor.fixes) == 1
     fix = auditor.fixes[0]
     assert fix.code == AuditError.UNDEFINED_LINETYPE
+
 
 def test_for_existing_owner(entity, auditor):
     entity.dxf.owner = "FFFFFF"
@@ -107,9 +109,7 @@ def test_block_cycle_detector_setup():
 
     auditor = Auditor(doc)
     auditor.check_block_reference_cycles()
-    assert (
-        len(auditor.errors) == 3
-    ), "one entry for each involved block: 'a', 'b', 'c'"
+    assert len(auditor.errors) == 3, "one entry for each involved block: 'a', 'b', 'c'"
     assert auditor.errors[0].code == AuditError.INVALID_BLOCK_REFERENCE_CYCLE
     assert auditor.errors[1].code == AuditError.INVALID_BLOCK_REFERENCE_CYCLE
     assert auditor.errors[2].code == AuditError.INVALID_BLOCK_REFERENCE_CYCLE
@@ -246,5 +246,39 @@ def test_fix_entities_with_invalid_owner_handle():
     assert line.dxf.owner == block.dxf.handle
 
 
-if __name__ == '__main__':
+def test_destroyed_modelspace():
+    """User destroyed modelspace layout?"""
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    # You can shoot yourself in the foot if you want:
+    msp.block_record.destroy()
+
+    result = doc.audit()
+    assert result.has_errors is True, "non-recoverable error expected"
+    assert (
+        any(error.code == AuditError.MODELSPACE_NOT_FOUND for error in result.errors)
+        is True
+    )
+
+
+def test_destroyed_active_paperspace():
+    """User destroyed paperspace layouts?"""
+    doc = ezdxf.new()
+    # You can shoot yourself in the foot if you want:
+    for block in doc.blocks:
+        if block.is_any_paperspace:
+            block.block_record.destroy()
+
+    result = doc.audit()
+    assert result.has_errors is True, "non-recoverable error expected"
+    assert (
+        any(
+            error.code == AuditError.ACTIVE_PAPERSPACE_LAYOUT_NOT_FOUND
+            for error in result.errors
+        )
+        is True
+    )
+
+
+if __name__ == "__main__":
     pytest.main([__file__])

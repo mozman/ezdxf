@@ -281,7 +281,8 @@ class Table(Generic[T]):
     def update_owner_handles(self) -> None:
         owner_handle = self._head.dxf.handle
         for entry in self.entries.values():
-            entry.dxf.owner = owner_handle
+            if entry.is_alive:
+                entry.dxf.owner = owner_handle
 
     def set_handle(self, handle: str):
         """Set new `handle` for table, updates also :attr:`owner` tag of table

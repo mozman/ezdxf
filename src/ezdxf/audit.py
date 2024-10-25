@@ -42,6 +42,8 @@ class AuditError(IntEnum):
     MISPLACED_ROOT_DICT = 14
     ROOT_DICT_NOT_FOUND = 15
     REMOVED_ENTITY_WITH_INVALID_OWNER_HANDLE = 16
+    MODELSPACE_NOT_FOUND = 17
+    ACTIVE_PAPERSPACE_LAYOUT_NOT_FOUND = 18
 
     UNDEFINED_LINETYPE = 100
     UNDEFINED_DIMENSION_STYLE = 101
@@ -237,6 +239,8 @@ class Auditor:
             return self.errors
         self.doc.entitydb.audit(self)
         self.check_root_dict_entries()
+        self.check_modelspace_exist()
+        self.check_active_layout_exist()
         self.check_tables()
         self.doc.objects.audit(self)
         self.doc.blocks.audit(self)
@@ -295,6 +299,26 @@ class Auditor:
                     message=f"Missing rootdict entry: {name}",
                     dxf_entity=rootdict,
                 )
+
+    def check_modelspace_exist(self) -> None:
+        msp = self.doc.modelspace()
+        if not msp.is_alive:
+            self.add_error(
+                code=AuditError.MODELSPACE_NOT_FOUND,
+                message=f"Required modelspace layout not found.",
+            )
+
+    def check_active_layout_exist(self) -> None:
+        try:
+            layout = self.doc.active_layout()
+        except const.DXFStructureError:
+            layout = None  # type: ignore
+
+        if layout is None or layout.is_alive is False:
+            self.add_error(
+                code=AuditError.ACTIVE_PAPERSPACE_LAYOUT_NOT_FOUND,
+                message=f"Required active paperspace layout not found.",
+            )
 
     def check_tables(self) -> None:
         table_section = self.doc.tables
