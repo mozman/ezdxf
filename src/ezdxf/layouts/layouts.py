@@ -22,8 +22,7 @@ logger = logging.getLogger("ezdxf")
 
 
 def key(name: str) -> str:
-    """AutoCAD uses case insensitive layout names, but stores the name case
-    sensitive."""
+    """AutoCAD uses case-insensitive layout names, but stores the name case-sensitive."""
     return name.upper()
 
 
@@ -205,12 +204,11 @@ class Layouts:
         return cast(Modelspace, self.get("Model"))
 
     def names(self) -> list[str]:
-        """Returns a list of all layout names, all names in original case
-        sensitive form."""
+        """Returns a list of all layout names, all names in original case-sensitive form."""
         return [layout.name for layout in self._layouts.values()]
 
     def get(self, name: Optional[str]) -> Layout:
-        """Returns :class:`~ezdxf.layouts.Layout` by `name`, case insensitive
+        """Returns :class:`~ezdxf.layouts.Layout` by `name`, case-insensitive
         "Model" == "MODEL".
 
         Args:
@@ -226,8 +224,8 @@ class Layouts:
         not exist.
 
         Args:
-            old_name: actual layout name, case insensitive
-            new_name: new layout name, case insensitive
+            old_name: actual layout name, case-insensitive
+            new_name: new layout name, case-insensitive
 
         Raises:
             DXFValueError: try to rename ``'Model'``
@@ -245,7 +243,6 @@ class Layouts:
 
         layout = self.get(old_name)
         self._discard(layout)
-        layout.rename(new_name)
         self._add_layout(new_name, layout)
 
     def names_in_taborder(self) -> list[str]:
@@ -311,7 +308,7 @@ class Layouts:
             name (str): layout name as shown in tabs
 
         Raises:
-            DXFKeyError: if layout `name` do not exists
+            DXFKeyError: if layout `name` do not exist
             DXFValueError: deleting modelspace layout is not possible
             DXFValueError: deleting last paperspace layout is not possible
 
