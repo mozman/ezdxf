@@ -10,7 +10,7 @@ from typing import (
     Optional,
 )
 import logging
-
+from pyparsing import ParseException
 from ezdxf.audit import Auditor, AuditError
 from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.lldxf import const, validator
@@ -415,7 +415,13 @@ class BlocksSection:
                 raise DXFBlockInUseError(
                     f'Special block "{name}" maybe used without explicit INSERT entity.'
                 )
-            block_refs = self.doc.query(f"INSERT[name=='{name}']i")  # ignore case
+            query_string = f'INSERT[name=="{name}"]i'
+            try:
+                block_refs = self.doc.query(query_string)  # ignore case
+            except ParseException:
+                logger.error(f'Parsing error in query string: "{query_string}"')
+                return
+
             if len(block_refs):
                 raise DXFBlockInUseError(f'Block "{name}" is still in use.')
         self.__delitem__(name)
