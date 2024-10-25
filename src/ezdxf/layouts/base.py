@@ -134,7 +134,9 @@ class BaseLayout(_AbstractLayout):
     @property
     def is_active_paperspace(self) -> bool:
         """``True`` if is active layout."""
-        return self.block_record.is_active_paperspace
+        if self.block_record.is_alive:
+            return self.block_record.is_active_paperspace
+        return False
 
     @property
     def is_any_paperspace(self) -> bool:
