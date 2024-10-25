@@ -51,9 +51,6 @@ class _AbstractLayout(CreatorInterface):
         """Returns drawing entity database. (internal API)"""
         return self.doc.entitydb
 
-    def rename(self, name) -> None:
-        pass
-
     def __len__(self) -> int:
         """Returns count of entities owned by the layout."""
         return len(self.entity_space)
