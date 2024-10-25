@@ -282,7 +282,7 @@ class BlocksSection:
         if name in self:
             self.block_records.remove(name)
         else:
-            raise DXFKeyError(name)
+            raise DXFKeyError(f'Block "{name}" does not exist.')
 
     def block_names(self) -> list[str]:
         """Returns a list of all block names."""
@@ -383,25 +383,38 @@ class BlocksSection:
         self.add(block_record)
 
     def delete_block(self, name: str, safe: bool = True) -> None:
-        """
-        Delete block. Checks if the block is still referenced if `safe` is ``True``.
+        """Delete block.
+
+        Applies some safety checks when `safe` is ``True``.
+        A :class:`DXFBlockInUseError` will be raised for:
+
+            - blocks with active references
+            - blocks representing existing layouts
+            - special blocks used internally
 
         Args:
-            name: block name (case insensitive)
-            safe: check if the block is still referenced or a special block without
-                  explicit references
+            name: block name (case-insensitive)
+            safe: apply safety checks
 
         Raises:
             DXFKeyError: if block not exists
-            DXFBlockInUseError: if block is still referenced, and safe is ``True``
-
+            DXFBlockInUseError: when safe is ``True`` and block is in use
         """
         if safe:
+            assert self.doc is not None, "valid DXF document required"
+            block = self.doc.blocks.get(name)
+            if block is None:
+                raise DXFKeyError(f'Block "{name}" does not exist.')
+            if not block.is_alive:
+                return  # block is already destroyed
+            if block.is_any_layout:
+                raise DXFBlockInUseError(
+                    f'Block "{name}" represents an existing layout.'
+                )
             if is_special_block(name):
                 raise DXFBlockInUseError(
                     f'Special block "{name}" maybe used without explicit INSERT entity.'
                 )
-            assert self.doc is not None
             block_refs = self.doc.query(f"INSERT[name=='{name}']i")  # ignore case
             if len(block_refs):
                 raise DXFBlockInUseError(f'Block "{name}" is still in use.')

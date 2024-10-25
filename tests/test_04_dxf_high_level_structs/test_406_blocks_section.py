@@ -147,13 +147,21 @@ def test_delete_block(bounded_blocks, dxf12):
         assert entity.is_alive is False
 
 
-def test_safe_delete_block(blocks, dxf12):
-    # block names are case insensitive
+@pytest.mark.parametrize(
+    "name",
+    [
+        "*Model_Space",
+        "*Paper_Space",
+        "_ARCHTICK",
+        "_OPEN30",
+    ],
+)
+def test_do_not_delete_layouts_and_special_arrow_blocks_in_safe_mode(doc, name):
     with pytest.raises(ezdxf.DXFBlockInUseError):
-        blocks.delete_block("_ArchTick", safe=True)
+        doc.blocks.delete_block(name, safe=True)
 
 
-def test_do_not_delete_layouts_and_special_arrow_blocks(doc):
+def test_delete_all_except_layouts_and_special_arrow_blocks(doc):
     doc.blocks.delete_all_blocks()
     assert len(doc.blocks) == 4
     block_names = set(block.name for block in doc.blocks)

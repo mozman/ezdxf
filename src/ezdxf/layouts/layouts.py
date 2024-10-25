@@ -377,7 +377,7 @@ class Layouts:
                     message=f'Removed orphaned layout {str(br)} "{name}"',
                 )
                 if name in doc.blocks:
-                    doc.blocks.delete_block(name)
+                    doc.blocks.delete_block(name, safe=False)
                 else:
                     doc.block_records.remove(name)
         # Does not check the LAYOUT content this is done in the BlockSection,
