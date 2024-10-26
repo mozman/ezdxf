@@ -1,6 +1,6 @@
 .. _add_layouts:
 
-Add Layouts And Blocks
+Add Layouts and Blocks
 ======================
 
 Layouts are containers for DXF entities like LINE or CIRCLE. 

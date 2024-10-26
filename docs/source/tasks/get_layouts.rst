@@ -29,11 +29,6 @@ class returns the :class:`~ezdxf.layouts.Modelspace` object.
 
     msp = doc.modelspace()
 
-- :ref:`modelspace_concept` Concept
-- :class:`ezdxf.layouts.Modelspace`
-- :class:`ezdxf.document.Drawing`
-
-
 Paperspace Layouts
 ------------------
 
@@ -53,12 +48,6 @@ Get a paperspace layout by name:
     psp = doc.paperspace("Layout0")
 
 The `name` argument is the name shown in the tabs of CAD applications.
-
-
-- :ref:`paperspace_concept` Concept
-- :class:`ezdxf.layouts.Paperspace`
-- :class:`ezdxf.document.Drawing`
-
 
 Block Layouts
 -------------
@@ -108,9 +97,35 @@ Find unused (unreferenced) block definitions:
     for name in blkrefs.find_unreferenced_blocks(doc)
         block = doc.blocks.get(name)
 
+.. seealso::
 
-- :ref:`block_concept` Concept
-- :class:`ezdxf.layouts.BlockLayout`
-- :class:`ezdxf.sections.blocks.BlocksSection`
-- :class:`ezdxf.document.Drawing`
-- :mod:`ezdxf.blkrefs`
+    **Tasks:**
+
+    - :ref:`add_layouts`
+    - :ref:`delete_layouts`
+    - :ref:`add_blockrefs`
+    - :ref:`delete_dxf_entities`
+
+    **Tutorials:**
+
+    - :ref:`tut_blocks`
+
+    **Basics:**
+
+    - :ref:`layout`
+    - :ref:`modelspace_concept`
+    - :ref:`paperspace_concept`
+    - :ref:`block_concept`
+
+    **Classes:**
+
+    - :class:`ezdxf.layouts.Modelspace`
+    - :class:`ezdxf.layouts.Paperspace`
+    - :class:`ezdxf.layouts.BlockLayout`
+    - :class:`ezdxf.sections.blocks.BlocksSection`
+    - :class:`ezdxf.document.Drawing`
+
+    **Modules:**
+
+    - :mod:`ezdxf.blkrefs`
+
