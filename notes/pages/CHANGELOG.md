@@ -1,10 +1,11 @@
 ## Version 1.3.5 - dev
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
-	- CHANGE: load `ODAFC` path dynamically from options
-	- CHANGE: load `OpenSCAD` path dynamically from options
-	- CHANGE: `BlocksSection.delete_block()` will not delete layout blocks in safe mode.
-	- REMOVE: `_AbstractLayout.rename()`, unused method without implementation nor documentation
+	- NEW: `ezdxf.blkrefs.find_unreferenced_blocks()` function returns the names of unused block definitions
 	- NEW: `Auditor` checks if modelspace and active paperspace exists
+	- CHANGE: load `ODAFC` path dynamically from `ezdxf.options`
+	- CHANGE: load `OpenSCAD` path dynamically from `ezdxf.options`
+	- REMOVE: `_AbstractLayout.rename()`, unused method without implementation and documentation
+	- BUGFIX: `BlocksSection.delete_block()` will not delete layout blocks in safe mode.
 - ## Version 1.3.4 - 2024-10-15
   id:: 66d2bce8-c48a-461d-8e5b-534fe26d1f5b
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))

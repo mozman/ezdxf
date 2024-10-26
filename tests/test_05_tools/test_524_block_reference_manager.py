@@ -4,18 +4,14 @@
 import pytest
 
 import ezdxf
-from ezdxf.blkrefs import BlockReferenceCounter
+from ezdxf.blkrefs import BlockReferenceCounter, find_unreferenced_blocks
 
 
 def test_non_exiting_handles_return_0():
     doc = ezdxf.new()
     ref_counter = BlockReferenceCounter(doc)
-    assert (
-        ref_counter.by_handle("xyz") == 0
-    ), "not existing handles should return 0"
-    assert (
-        ref_counter.by_name("xyz") == 0
-    ), "not existing block name should return 0"
+    assert ref_counter.by_handle("xyz") == 0, "not existing handles should return 0"
+    assert ref_counter.by_name("xyz") == 0, "not existing block name should return 0"
 
 
 def test_access_interface():
@@ -53,9 +49,7 @@ def test_count_nested_block_references():
         msp.add_blockref("First", (0, 0))
     ref_counter = BlockReferenceCounter(doc)
     assert ref_counter.by_name("First") == 10
-    assert (
-        ref_counter.by_name("Second") == 1
-    ), "referenced only once in block First"
+    assert ref_counter.by_name("Second") == 1, "referenced only once in block First"
 
 
 def test_count_references_used_in_xdata():
@@ -162,6 +156,30 @@ def test_count_references_in_mleader_style():
     ref_counter = BlockReferenceCounter(doc)
     assert ref_counter.by_handle(arrow_handle) == 1
     assert ref_counter.by_handle(block_handle) == 1
+
+
+class TestFindUnreferencedBlocks:
+    def test_empty_document_has_no_unreferenced_blocks(self):
+        doc = ezdxf.new()
+
+        assert len(find_unreferenced_blocks(doc)) == 0
+
+    def test_add_unreferenced_block(self):
+        doc = ezdxf.new()
+        doc.blocks.new("DUMMY")
+
+        names = find_unreferenced_blocks(doc)
+        assert len(names) == 1, "one unreferenced block expected"
+        assert "DUMMY" in names, "name of unreferenced block expected"
+
+    def test_add_referenced_block(self):
+        doc = ezdxf.new()
+        doc.blocks.new("DUMMY")
+        msp = doc.modelspace()
+        msp.add_blockref("DUMMY", (0, 0))
+
+        names = find_unreferenced_blocks(doc)
+        assert len(names) == 0, "no unreferenced block expected"
 
 
 if __name__ == "__main__":

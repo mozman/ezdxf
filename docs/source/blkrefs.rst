@@ -14,8 +14,16 @@ the document content is changed. This is not very efficient, but it is safe.
 
 .. warning::
 
-    And even with all this careful approach, it is always possible to destroy a
-    DXF document by deleting an absolutely necessary block definition.
+    The DXF reference does not document all uses of blocks. The INSERT entity is
+    just one explicit use case, but there are also many indirect block references
+    and the customizability of DXF allows you to store block names and handles in
+    many places.
+
+    There are some rules for storing names and handles and this module checks all of
+    these known rules, but there is no guarantee that everyone follows these rules.
+
+    Therefore, it is still possible to destroy a DXF document by deleting an
+    absolutely necessary block definition.
 
 Always remember that `ezdxf` is not intended or suitable as a basis for a CAD
 application!
@@ -42,3 +50,5 @@ application!
     .. automethod:: by_handle
 
     .. automethod:: by_name
+
+.. autofunction:: find_unreferenced_blocks

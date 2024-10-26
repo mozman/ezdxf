@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional, Iterator
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tags import Tags
     from ezdxf.entities import DXFEntity, BlockRecord
 
-__all__ = ["BlockDefinitionIndex", "BlockReferenceCounter"]
+__all__ = ["BlockDefinitionIndex", "BlockReferenceCounter", "find_unreferenced_blocks"]
 
 """ 
 Where are block references located:
@@ -207,3 +207,32 @@ def header_section_handles(doc: "Drawing") -> Iterable[str]:
             block = doc.blocks.get(blk_name, None)
             if block is not None:
                 yield block.block_record.dxf.handle
+
+
+def find_unreferenced_blocks(doc: Drawing) -> set[str]:
+    """Returns the names of all block definitions without references.
+
+    .. warning::
+
+        The DXF reference does not document all uses of blocks. The INSERT entity is
+        just one explicit use case, but there are also many indirect block references
+        and the customizability of DXF allows you to store block names and handles in
+        many places.
+
+        There are some rules for storing names and handles and this module checks all of
+        these known rules, but there is no guarantee that everyone follows these rules.
+
+        Therefore, it is still possible to destroy a DXF document by deleting an
+        absolutely necessary block definition.
+
+    """
+    ref_counter = BlockReferenceCounter(doc)
+    unreferenced_blocks: set[str] = set()
+
+    for block in doc.blocks:
+        if not block.is_alive or block.is_any_layout:
+            continue
+        count = ref_counter.by_name(block.name)
+        if count == 0:
+            unreferenced_blocks.add(block.name)
+    return unreferenced_blocks
