@@ -225,6 +225,8 @@ def find_unreferenced_blocks(doc: Drawing) -> set[str]:
         Therefore, it is still possible to destroy a DXF document by deleting an
         absolutely necessary block definition.
 
+    .. versionadded:: 1.3.5
+
     """
     ref_counter = BlockReferenceCounter(doc)
     unreferenced_blocks: set[str] = set()
