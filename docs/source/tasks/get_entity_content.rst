@@ -124,22 +124,104 @@ DIMENSION Entity
 
 TODO
 
+.. seealso::
+
+    **Tutorials:**
+
+    - :ref:`tut_linear_dimension`
+
+    **Classes:**
+
+    - :class:`ezdxf.entities.Dimension`
+
 ACAD_TABLE Entity
 -----------------
 
-TODO
+The helper function :func:`read_acad_table_content` returns the content of an ACAD_TABLE
+entity as list of table rows. If the count of table rows or table columns is missing the
+complete content is stored in the first row. All cells contain strings.
+
+.. code-block:: Python
+
+    from ezdxf.entities.acad_table import read_acad_table_content
+
+    ...
+
+    for acad_table in msp.query("ACAD_TABLE"):
+        content = read_acad_table_content(acad_table)
+        for n, row in enumerate(content):
+            for m, value in enumerate(row):
+                print(f"cell [{n}, {m}] = '{value}'")
+
+.. important::
+
+    The ACAD_TABLE entity has only limited support to preserve the entity. There is no
+    support for adding a new ACAD_TABLE entity or modifying it's content.
 
 INSERT Entity - Block References
 --------------------------------
 
-TODO
-
-Get Attribute Content
-~~~~~~~~~~~~~~~~~~~~~
-
-TODO
-
-Get Virtual Entities
+Get Block Attributes
 ~~~~~~~~~~~~~~~~~~~~
 
-TODO
+Get a block attribute by tag:
+
+.. code-block:: Python
+
+    diameter = insert.get_attrib('diameter')
+    if diameter is not None:
+        print(f"diameter = {diameter.dxf.text}")
+
+Iterate over all block attributes:
+
+.. code-block:: Python
+
+    for attrib in insert.attribs:
+        print(f"{attrib.dxf.tag} = {attrib.dxf.text}")
+
+.. important::
+
+    Do not confuse block attributes and DXF entity attributes, these are different
+    concepts!
+
+Get Block Entities
+~~~~~~~~~~~~~~~~~~
+
+Get block entities as virtual DXF entities from an :class:`~ezdxf.entities.Insert` entity:
+
+.. code-block:: Python
+
+    for insert in msp.query("INSERT"):
+        for entity in insert.virtual_entities():
+            print(str(entity))
+
+Get Transformation Matrix
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: Python
+
+    m = insert.matrix44()
+
+This transformation matrix transforms the virtual block entities from the block reference
+coordinate system into the :ref:`WCS`.
+
+.. seealso::
+
+    **Tasks:**
+
+    - :ref:`add_blockrefs`
+
+    **Tutorials:**
+
+    - :ref:`tut_blocks`
+
+    **Basics:**
+
+    - :ref:`block_concept`
+
+    **Classes:**
+
+    - :class:`ezdxf.entities.Insert`
+    - :class:`ezdxf.entities.Attrib`
+    - :class:`ezdxf.entities.AttDef`
+    - :class:`ezdxf.math.Matrix44`

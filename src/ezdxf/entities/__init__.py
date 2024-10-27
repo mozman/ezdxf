@@ -100,7 +100,11 @@ from .mleader import MLeader, MLeaderStyle, MLeaderStyleCollection, MultiLeader
 # register graphical entities R2007
 
 from .light import Light
-from .acad_table import AcadTableBlockContent, acad_table_to_block
+from .acad_table import (
+    AcadTableBlockContent,
+    acad_table_to_block,
+    read_acad_table_content,
+)
 
 # register graphical entities R2010
 
