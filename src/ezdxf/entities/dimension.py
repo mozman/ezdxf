@@ -414,7 +414,7 @@ class OverrideMixin:
 
         # transform block record handles into block names
         for attrib_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
-            blkrec_handle = data.pop(attrib_name + "_handle", None)
+            blkrec_handle = data.pop(attrib_name + "_handle", "")
             if blkrec_handle:
                 set_arrow_name(attrib_name, blkrec_handle)
 
@@ -433,7 +433,7 @@ class OverrideMixin:
 
         # transform linetype handles into LTYPE entry names
         for attrib_name in ("dimltype", "dimltex1", "dimltex2"):
-            handle = data.pop(attrib_name + "_handle", None)
+            handle = data.pop(attrib_name + "_handle", "")
             if handle:
                 set_ltype_name(attrib_name, handle)
         return data
@@ -487,7 +487,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         self.virtual_block_content: Optional[EntitySpace] = None
 
     def copy(self, copy_strategy=default_copy) -> Dimension:
-        virtual_copy = super().copy(copy_strategy=copy_strategy)
+        virtual_copy: Dimension = super().copy(copy_strategy=copy_strategy)  # type: ignore
         # The new virtual copy can not reference the same geometry block as the
         # original dimension entity:
         virtual_copy.dxf.discard("geometry")
@@ -804,10 +804,9 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         ocs = self.ocs()
         dim_elevation = self.dxf.text_midpoint.z
-        transform = False
+        m: Matrix44 | None = None
         insert = self.dxf.get("insert", None)
         if insert:
-            transform = True
             insert = Vec3(ocs.to_wcs(insert))
             m = Matrix44.translate(insert.x, insert.y, insert.z)
 
@@ -823,7 +822,7 @@ class Dimension(DXFGraphic, OverrideMixin):
                 # POINT:
                 ocs_to_wcs(copy, dim_elevation)
 
-            if transform:
+            if m is not None:
                 copy.transform(m)
             yield copy
 
