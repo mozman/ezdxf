@@ -122,7 +122,58 @@ as :class:`~ezdxf.entities.AttribData`.
 DIMENSION Entity
 ----------------
 
-TODO
+Get real measurement determined by definition points:
+
+.. code-block:: Python
+
+    for dimension in msp.query("DIMENSION"):
+        print(str(dimension))
+        print(f"Dimension Type: {dimension.dimtype}")
+        print(f"Measurement: {dimension.get_measurement()}")
+
+==== ============================== ===
+Type Dimension Type                 Measurement
+==== ============================== ===
+0    Linear and Rotated Dimension   length in drawing units
+1    Aligned Dimension              length in drawing units
+2    Angular Dimension              angle in degree
+3    Diameter Dimension             length in drawing units
+4    Radius Dimension               length in drawing units
+5    Angular 3P Dimension           angle in degree
+6    Ordinate Dimension             feature location as :class:`~ezdxf.math.Vec3`
+==== ============================== ===
+
+Get measurement text. This is how the measurement text was rendered into the associated
+geometry block by the CAD application as the DIMENSION entity was created:
+
+.. code-block:: Python
+
+    for dimension in msp.query("DIMENSION"):
+        print(str(dimension))
+        print(f"Measurement Text: {dimension.dxf.text}")
+
+======== ===
+Text     Measurement text rendered by CAD application
+======== ===
+``"<>"`` actual measurement
+``""``   (empty string) actual measurement
+``" "``  (space) measurement text is suppressed
+other    measurement text entered by the CAD user
+======== ===
+
+Get measurement text from text entities in the associated geometry block. This is the
+actual measurement text displayed by CAD applications:
+
+.. code-block:: Python
+
+    for dimension in msp.query("DIMENSION"):
+        print(str(dimension))
+        block = dimension.get_geometry_block()
+        if block is None:
+            print("Geometry block not found.")
+            continue
+        for entity in block.query("TEXT MTEXT"):
+            print(f"{str(entity)}: {entity.dxf.text}")
 
 .. seealso::
 
@@ -210,6 +261,7 @@ coordinate system into the :ref:`WCS`.
     **Tasks:**
 
     - :ref:`add_blockrefs`
+    - :ref:`explode_block_references`
 
     **Tutorials:**
 
