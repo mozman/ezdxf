@@ -30,7 +30,7 @@ This is the common prolog for all Python code examples shown in this tutorial:
 Retrieving User Data
 --------------------
 
-Retrieving the is a simple task by `ezdxf`, but often not possible in CAD
+Retrieving the custom data is a simple task by `ezdxf`, but often not possible in CAD
 applications without using the scripting features (AutoLISP) or even the SDK.
 
 AutoLISP Resources
