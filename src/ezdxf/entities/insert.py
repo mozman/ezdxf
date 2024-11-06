@@ -730,6 +730,10 @@ class Insert(LinkedEntities):
                 dxfattribs = attdef.dxfattribs(drop={"prompt", "handle"})
                 tag, text, location = unpack(dxfattribs)
                 attrib = self.add_attrib(tag, text, location, dxfattribs)
+                if attdef.has_embedded_mtext_entity:
+                    mtext = attdef.virtual_mtext_entity()
+                    mtext.text = text
+                    attrib.embed_mtext(mtext)
                 attrib.transform(m)
 
         block_layout = self.block()
