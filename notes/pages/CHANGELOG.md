@@ -2,6 +2,8 @@
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: `ezdxf.blkrefs.find_unreferenced_blocks()` function returns the names of unused block definitions
 	- NEW: `Auditor` checks if modelspace and active paperspace exists
+	- NEW: support for multi-line attributes for `Insert.add_auto_attribs()` method
+		- contributed by #gswifort
 	- CHANGE: load `ODAFC` path dynamically from `ezdxf.options`
 	- CHANGE: load `OpenSCAD` path dynamically from `ezdxf.options`
 	- REMOVE: `_AbstractLayout.rename()`, unused method without implementation and documentation

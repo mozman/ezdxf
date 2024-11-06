@@ -26,8 +26,6 @@
 	- LATER [[HATCH]] - move hatch pattern origin
 		- examples/entities/hatch_pattern_modify_origin.py
 		- {{discussion 769}}
-	- LATER add support for multi-line [[ATTRIB]] entities in `Insert.add_auto_attribs()`
-	  id:: 65508de8-19be-495f-b83c-94600d9556bc
 	- #maybe add support for [[REGION]] entities:
 		- A [[REGION]] consist of one or more flat loops that enclose a space based on [[ACIS]].
 		- The [[SAT]] and [[SAB]] representation of curved edges and faces within [[ACIS]] data needs to be reverse engineered.
