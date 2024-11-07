@@ -93,7 +93,7 @@ class BlockLayout(BaseLayout):
         """
         return self.get_attdef(tag) is not None
 
-    def get_attdef(self, tag: str) -> Optional[DXFGraphic]:
+    def get_attdef(self, tag: str) -> Optional[AttDef]:
         """Returns attached :class:`~ezdxf.entities.attrib.Attdef` entity by
         `tag` name.
         """
