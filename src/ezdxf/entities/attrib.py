@@ -118,7 +118,7 @@ attrib_fields = {
     # 4 = multiline ATTDEF
     "attribute_type": DXFAttr(
         71,
-        default=1,
+        default=const.ATTRIB_TYPE_SINGLE_LINE,
         dxfversion=const.DXF2018,
         optional=True,
         validator=validator.is_one_of({1, 2, 4}),
@@ -345,6 +345,14 @@ class BaseAttrib(Text):
         self._embedded_mtext.set_mtext(mtext)
         _update_content_from_mtext(self, mtext)
         _update_location_from_mtext(self, mtext)
+
+        # set attribute type:
+        if isinstance(self, Attrib):
+            attribute_type = const.ATTRIB_TYPE_MULTI_LINE
+        else:
+            attribute_type = const.ATTDEF_TYPE_MULTI_LINE
+        self.dxf.attribute_type = attribute_type
+
         # misc properties
         self.dxf.style = mtext.dxf.style
         self.dxf.height = mtext.dxf.char_height
@@ -457,7 +465,6 @@ class AttDef(BaseAttrib):
         self.export_acdb_text(tagwriter)
         self.export_acdb_attdef(tagwriter)
         if tagwriter.dxfversion >= const.DXF2018:
-            self.dxf.attribute_type = 4 if self.has_embedded_mtext_entity else 1
             self.export_dxf_r2018_features(tagwriter)
 
     def export_acdb_attdef(self, tagwriter: AbstractTagWriter) -> None:
@@ -508,7 +515,6 @@ class Attrib(BaseAttrib):
         self.export_acdb_attrib_text(tagwriter)
         self.export_acdb_attrib(tagwriter)
         if tagwriter.dxfversion >= const.DXF2018:
-            self.dxf.attribute_type = 2 if self.has_embedded_mtext_entity else 1
             self.export_dxf_r2018_features(tagwriter)
 
     def export_acdb_attrib_text(self, tagwriter: AbstractTagWriter) -> None:
