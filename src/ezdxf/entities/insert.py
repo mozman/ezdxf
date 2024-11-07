@@ -12,6 +12,8 @@ from typing import (
 )
 from typing_extensions import Self
 import math
+import logging
+
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -69,6 +71,7 @@ if TYPE_CHECKING:
 
 __all__ = ["Insert"]
 
+logger = logging.getLogger("ezdxf")
 ABS_TOL = 1e-9
 
 # DXF files as XREF:
@@ -628,8 +631,8 @@ class Insert(LinkedEntities):
         if the property :attr:`Insert.mcount` > 1, use the :meth:`Insert.multi_insert`
         method to resolve the MINSERT entity into multiple INSERT entities.
 
-        This method does not apply the clipping path created by the XCLIP command. 
-        The method returns all entities and ignores the clipping path polygon and no 
+        This method does not apply the clipping path created by the XCLIP command.
+        The method returns all entities and ignores the clipping path polygon and no
         entity is clipped.
 
         The `skipped_entity_callback()` will be called for all entities which are not
@@ -718,18 +721,33 @@ class Insert(LinkedEntities):
                 pairs
 
         """
-
         def unpack(dxfattribs) -> tuple[str, str, UVec]:
             tag = dxfattribs.pop("tag")
             text = values.get(tag, None)
-            if text is None:  # get default value
-                text = dxfattribs.pop("text")
+            if text is None:  # get default value from ATTDEF
+                text = dxfattribs.get("text", "")
             location = dxfattribs.pop("insert")
             return tag, text, location
 
         def autofill() -> None:
             for attdef in block_layout.attdefs():  # type: ignore
                 dxfattribs = attdef.dxfattribs(drop={"prompt", "handle"})
+
+                # Caution! Some mandatory values may not exist!
+                # These are DXF structure errors, but loaded DXF files may have errors!
+                if "tag" not in dxfattribs:
+                    # ATTRIB without "tag" makes no sense!
+                    logger.warning(
+                        f"Skipping {str(attdef)}: missing mandatory 'tag' attribute"
+                    )
+                    continue
+                if "insert" not in dxfattribs:
+                    # Don't know where to place the ATTRIB entity.
+                    logger.warning(
+                        f"Skipping {str(attdef)}: missing mandatory 'insert' attribute"
+                    )
+                    continue
+
                 tag, text, location = unpack(dxfattribs)
                 attrib = self.add_attrib(tag, text, location, dxfattribs)
                 if attdef.has_embedded_mtext_entity:

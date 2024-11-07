@@ -13,8 +13,8 @@ def doc():
 @pytest.fixture
 def block(doc):
     block = doc.blocks.new("TEST")
-    block.add_attdef("TAG1", (0, 0))
-    block.add_attdef("TAG2", (0, 5))
+    block.add_attdef("TAG1", (0, 0), text="default text1")
+    block.add_attdef("TAG2", (0, 5), text="default text2")
     return block
 
 
@@ -49,6 +49,36 @@ def test_blockref_with_attribs(doc, block):
     assert attrib2.dxftype() == "ATTRIB"
     assert attrib2.dxf.tag == "TAG2"
     assert attrib2.dxf.text == "text2"
+
+
+def test_auto_blockref_with_default_text(doc, block):
+    msp = doc.modelspace()
+    blockref = msp.add_blockref("TEST", (0, 0)).add_auto_attribs({})
+    attrib1, attrib2 = blockref.attribs
+    assert attrib1.dxf.text == "default text1"
+    assert attrib2.dxf.text == "default text2"
+
+
+def test_add_auto_attribs_with_missing_tag():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    block = doc.blocks.new("TEST")
+    attdef = block.add_attdef("TAG1", (0, 0))
+    attdef.dxf.discard("tag")  # simulate erroneous DXF input
+
+    blockref = msp.add_blockref("TEST", (0, 0)).add_auto_attribs({"TAG1": "Test"})
+    assert blockref.has_attrib("TAG1") is False
+
+
+def test_add_auto_attribs_with_missing_location():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    block = doc.blocks.new("TEST")
+    attdef = block.add_attdef("TAG1", (0, 0))
+    attdef.dxf.discard("insert")  # simulate erroneous DXF input
+
+    blockref = msp.add_blockref("TEST", (0, 0)).add_auto_attribs({"TAG1": "Test"})
+    assert blockref.has_attrib("TAG1") is False
 
 
 def test_has_attdef(block):
