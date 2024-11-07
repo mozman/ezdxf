@@ -721,7 +721,9 @@ class Insert(LinkedEntities):
 
         def unpack(dxfattribs) -> tuple[str, str, UVec]:
             tag = dxfattribs.pop("tag")
-            text = values.get(tag, "")
+            text = values.get(tag, None)
+            if text is None:  # get default value
+                text = dxfattribs.pop("text")
             location = dxfattribs.pop("insert")
             return tag, text, location
 
