@@ -366,7 +366,7 @@ class BaseAttrib(Text):
 
     def embed_mtext(self, mtext: MText, graphic_properties=True) -> None:
         """Set multi-line properties from a :class:`MText` entity and destroy the
-        source entity afterwards.
+        source entity afterward.
 
         The multi-line ATTRIB/ATTDEF entity requires DXF R2018, otherwise an
         ordinary single line ATTRIB/ATTDEF entity will be exported.
@@ -379,6 +379,15 @@ class BaseAttrib(Text):
         """
         self.set_mtext(mtext, graphic_properties)
         mtext.destroy()
+
+    def discard_mtext(self) -> None:
+        """Discard multi-line feature.
+
+        The embedded MTEXT will be removed and the ATTRIB/ATTDEF will be converted to a
+        single-line attribute.
+        """
+        self._embedded_mtext = None
+        self.dxf.attribute_type = const.ATTRIB_TYPE_SINGLE_LINE
 
     def register_resources(self, registry: xref.Registry) -> None:
         """Register required resources to the resource registry."""

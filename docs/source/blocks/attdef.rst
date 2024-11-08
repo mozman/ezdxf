@@ -60,4 +60,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: embed_mtext
 
+    .. automethod:: discard_mtext
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F0EA099B-6F88-4BCC-BEC7-247BA64838A4

@@ -6,7 +6,7 @@ import math
 import ezdxf
 from ezdxf.entities import Attrib, MText
 from ezdxf.entities.attrib import EmbeddedMText, EmbeddedMTextNS
-from ezdxf.lldxf.const import DXF12, DXF2000
+from ezdxf.lldxf import const
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Matrix44
 from ezdxf.audit import Auditor
@@ -159,7 +159,9 @@ def test_load_from_text(entity):
     assert entity.dxf.insert == (0, 0, 0)
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize(
+    "txt,ver", [(ENTITY_R2000, const.DXF2000), (ENTITY_R12, const.DXF12)]
+)
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     attdef = TEST_CLASS.from_text(txt)
@@ -236,6 +238,11 @@ class TestEmbeddedMTextSupport:
         mtext.text = "LINE1\nLINE2"
         attrib.set_mtext(mtext)
         assert attrib.has_embedded_mtext_entity is True
+
+    def test_discard_mtext(self, attrib):
+        attrib.discard_mtext()
+        assert attrib.has_embedded_mtext_entity is False
+        assert attrib.dxf.attribute_type == const.ATTRIB_TYPE_SINGLE_LINE
 
     def test_transformation_of_embedded_mtext(self):
         attrib = Attrib.new(dxfattribs={"color": 3, "text": "TEST"})
