@@ -93,6 +93,7 @@ class AuditError(IntEnum):
     INVALID_CREASE_VALUE_COUNT = 224
     INVALID_ELLIPSE_RATIO = 225
     INVALID_HATCH_BOUNDARY_PATH = 226
+    TAG_ATTRIBUTE_MISSING = 227
 
 
 REQUIRED_ROOT_DICT_ENTRIES = ("ACAD_GROUP", "ACAD_PLOTSTYLENAME")
@@ -111,7 +112,7 @@ class ErrorEntry:
         self.message: str = message  # error message
         self.data: Any = data  # additional data as an arbitrary object
 
-# pylint: disable=too-many-public-methods
+
 class Auditor:
     def __init__(self, doc: Drawing) -> None:
         assert doc is not None and doc.rootdict is not None and doc.entitydb is not None

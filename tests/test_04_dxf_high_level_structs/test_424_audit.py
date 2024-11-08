@@ -211,7 +211,8 @@ def test_remove_standalone_attrib_entities_from_blocks():
     # The model space is just a BLOCK!
     doc = ezdxf.new()
     msp = doc.modelspace()
-    msp.add_entity(Attrib())
+    # Missing tag is a different issue!
+    msp.add_entity(Attrib.new(dxfattribs={"tag": "test"}))
     auditor = doc.audit()
     assert len(list(msp)) == 0
     assert len(auditor.fixes) == 1

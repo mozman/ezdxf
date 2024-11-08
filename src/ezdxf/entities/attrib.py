@@ -4,6 +4,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 from typing_extensions import Self
 import copy
+
+from ezdxf.audit import Auditor, AuditError
 from ezdxf.lldxf import validator
 from ezdxf.math import NULLVEC, Vec3, Z_AXIS, OCS, Matrix44
 from ezdxf.lldxf.attributes import (
@@ -40,7 +42,6 @@ from .copy import default_copy
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.lldxf.tags import Tags
-    from ezdxf.entities import DXFEntity
     from ezdxf import xref
 
 
@@ -81,6 +82,7 @@ attrib_fields = {
     # ezdxf stores the last group code 280 as "lock_position" attribute and does
     # not export a version tag for any DXF version.
     # Tag string (cannot contain spaces):
+    # Mandatory by AutoCAD!
     "tag": DXFAttr(
         2,
         default="",
@@ -401,6 +403,16 @@ class BaseAttrib(Text):
             self.set_mtext(mtext, graphic_properties=False)
             self.post_transform(m)
         return self
+
+    def audit(self, auditor: Auditor) -> None:
+        """Validity check."""
+        super().audit(auditor)
+        if not self.dxf.hasattr("tag"):
+            auditor.fixed_error(
+                code=AuditError.TAG_ATTRIBUTE_MISSING,
+                message=f'Missing mandatory "tag" attribute, entity {str(self)} deleted.',
+            )
+            auditor.trash(self)
 
 
 def _update_content_from_mtext(text: Text, mtext: MText) -> None:

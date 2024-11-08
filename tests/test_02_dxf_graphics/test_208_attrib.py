@@ -9,6 +9,7 @@ from ezdxf.entities.attrib import EmbeddedMText, EmbeddedMTextNS
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Matrix44
+from ezdxf.audit import Auditor
 
 TEST_CLASS = Attrib
 TEST_TYPE = "ATTRIB"
@@ -293,6 +294,19 @@ def test_version_without_lock_position():
     """
     attrib = Attrib.from_text(VERSION_WITHOUT_LOCK_POSITION)
     assert attrib.dxf.lock_position == 7
+
+
+def test_audit_destroys_attrib_without_tag_attribute(doc):
+    # Unbound entities cannot be audited!
+    attrib = Attrib.new()
+    doc.modelspace().add_entity(attrib)
+
+    auditor = Auditor(doc)
+    attrib.audit(auditor)
+    auditor.empty_trashcan()
+
+    assert len(auditor.fixes) == 1
+    assert attrib.is_alive is False
 
 
 LOCK_POSITION_AND_VERSION = """0
