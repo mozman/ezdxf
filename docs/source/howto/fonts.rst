@@ -14,12 +14,24 @@ is hard coded in the source code file: `fonts.py`_
 Since `ezdxf` v1.1 is the rendering of SHX fonts supported if the path to these fonts 
 is added to the ``support_dirs`` in the :ref:`config_files`.
 
+Adding New Font Directories
+---------------------------
+
+When you add new directories to the ``support_dirs`` in your config file, you have to
+rebuild the font cache to use these fonts with `ezdxf`, see section `Rebuild Font Manager Cache`_
+
+
+Adding New Fonts
+----------------
+
+When you add new fonts to any of the support directories, you have to rebuild the font
+cache to use these fonts with `ezdxf`, see section `Rebuild Font Manager Cache`_
 
 Rebuild Font Manager Cache
 --------------------------
 
-If you wanna use new installed fonts which are not included in the current
-cache file of `ezdxf` you have to rebuild the cache file:
+If you want to use new installed fonts or fonts from a new added font directory which is
+not included in the current cache file of `ezdxf` you have to rebuild the cache file:
 
 .. code-block:: Python
 

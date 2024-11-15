@@ -292,6 +292,12 @@ Search directories for support files:
 - plot style tables, the .ctb or .stb pen assignment files
 - shape font files of type .shx or .shp or .lff
 
+.. important::
+
+    When you add new font directories to ``support_dirs`` or new fonts to one of the
+    support directories, you have to rebuild the font cache to use these fonts,
+    see section :ref:`Rebuilding the Font Cache` for more information.
+
 Config file key: ``support_dirs``
 
 Shortcut attribute:

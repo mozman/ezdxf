@@ -79,13 +79,23 @@ The .shx fonts can be found on the internet but be aware that they are not free 
 websites claim. The LibreCAD font files (.llf) can be downloaded from their github
 repository: https://github.com/LibreCAD/LibreCAD/tree/master/librecad/support/fonts
 
+.. important::
+
+    When you add new font directories to ``support_dirs`` or new fonts to one of the
+    support directories, you have to rebuild the font cache to use these fonts,
+    see section :ref:`Rebuilding the Font Cache` for more information.
+
 Font Caching
 ------------
 
 The fonts available on a system are cached automatically, the cache has to be rebuild
-to recognize new installed fonts by :func:`build_system_font_cache`. The cache is stored
-in the users home directory "~/.cache/ezdxf" or the directory specified by the
-environment variable "XDG_CACHE_HOME".
+by the :func:`build_system_font_cache` function to recognize new installed fonts or when
+you add new font directories to the config file.
+
+The cache is stored in the users home directory "~/.cache/ezdxf" or the directory
+specified by the environment variable "XDG_CACHE_HOME".
+
+.. _Rebuilding the Font Cache:
 
 Rebuilding the Font Cache
 -------------------------
