@@ -48,7 +48,7 @@ acdb_dictionary = DefSubclass(
         "hard_owned": DXFAttr(
             280,
             default=1,
-            optional=True,
+            optional=False,  # 2024-11-18: changed to False because of issue #1203
             validator=validator.is_integer_bool,
             fixer=RETURN_DEFAULT,
         ),
