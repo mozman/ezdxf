@@ -8,6 +8,8 @@
 	- CHANGE: load `OpenSCAD` path dynamically from `ezdxf.options`
 	- REMOVE: `_AbstractLayout.rename()`, unused method without implementation and documentation
 	- BUGFIX: `BlocksSection.delete_block()` will not delete layout blocks in safe mode.
+	- BUGFIX: copying dynamic blocks via clipboard removes dynamic features
+		- {{issue 1203}}
 - ## Version 1.3.4 - 2024-10-15
   id:: 66d2bce8-c48a-461d-8e5b-534fe26d1f5b
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
