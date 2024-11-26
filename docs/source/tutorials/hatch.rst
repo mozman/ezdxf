@@ -123,6 +123,8 @@ CAD applications store the hatch patterns in pattern files with the file extensi
 
 .. code-block:: Python
 
+    from ezdxf.tools import pattern
+
     EXAMPLE = """; a pattern file
 
     *SOLID, Solid fill
