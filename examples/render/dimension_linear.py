@@ -145,6 +145,50 @@ def example_background_fill(dxfversion=DXFVERSION):
     doc.saveas(CWD / f"background_fill_example_{dxfversion}.dxf")
 
 
+def example_text_override(dxfversion=DXFVERSION):
+    """This example shows how to override the measurement text."""
+    doc = ezdxf.new(dxfversion, setup=True)
+    msp = doc.modelspace()
+
+    # custom text
+    dim = msp.add_linear_dim(
+        base=(0, 2),
+        p1=(0, 0),
+        p2=(3, 0),
+    )
+    dim.set_text("=<>= <>")  # the first "<>" will be replaced by the measurement text
+    dim.render()
+
+    # suppress text
+    dim = msp.add_linear_dim(
+        base=(5, 2),
+        p1=(5, 0),
+        p2=(8, 0),
+    )
+    dim.set_text(" ")
+    dim.render()
+
+    # regular measurement text
+    dim = msp.add_linear_dim(
+        base=(10, 2),
+        p1=(10, 0),
+        p2=(13, 0),
+    )
+    dim.set_text("")
+    dim.render()
+
+    # regular measurement text
+    dim = msp.add_linear_dim(
+        base=(15, 2),
+        p1=(15, 0),
+        p2=(18, 0),
+    )
+    dim.set_text("<>")
+    dim.render()
+
+    doc.saveas(CWD / f"text_override_example_{dxfversion}.dxf")
+
+
 def example_for_all_text_placings_R12():
     doc = ezdxf.new("R12", setup=True)
     example_for_all_text_placings(doc, "dim_linear_text_placing_R12.dxf")
@@ -788,15 +832,10 @@ def linear_EZ_MM(fmt):
     doc.saveas(CWD / f"dim_linear_R12_{fmt}.dxf")
 
 
-ALL = True
+ALL = False
 
 if __name__ == "__main__":
-    example_for_all_text_placings_ucs_R12()
-    # todo: TEXT entities transformed into 3D space do not work as expected
-    #  for DXF R12!
-    example_for_all_text_placings_in_space_R12()
-    example_for_all_text_placings_ucs_R2007()
-    example_for_all_text_placings_in_space_R2007()
+    example_text_override("R2007")
 
     if ALL:
         linear_tutorial("R2007")
@@ -809,6 +848,8 @@ if __name__ == "__main__":
         linear_tutorial("R2007")
         linear_tutorial("R12")
         example_background_fill("R2007")
+        example_text_override("R2007")
+
         example_for_all_text_placings_R12()
         example_for_all_text_placings_R2007()
 

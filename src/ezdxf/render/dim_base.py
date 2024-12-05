@@ -451,7 +451,7 @@ class Measurement:
         text_style = get_text_style(doc, style_name)
         self.text_height: float = get_char_height(dim_style, text_style) * scale
         self.text_width_factor: float = text_style.get_dxf_attrib("width", 1.0)
-        self.stored_dim_text = dimension.dxf.text
+        self.stored_dim_text: str = dimension.dxf.text
 
         # text_gap: gap between dimension line an dimension text
         self.text_gap: float = get("dimgap", 0.625) * scale
@@ -655,10 +655,11 @@ class Measurement:
         text = self.stored_dim_text
         if text == " ":  # suppresses text
             return ""
-        elif text == "" or text == "<>":  # measured distance
-            return self.format_text(measurement)
-        else:  # user override
-            return text
+        formatted_measurement = self.format_text(measurement)
+        if text:
+            # only replace the first "<>", like BricsCAD
+            return text.replace("<>", formatted_measurement, 1)
+        return formatted_measurement
 
     def location_override(self, location: UVec, leader=False, relative=False) -> None:
         """Set user defined dimension text location. ezdxf defines a user
