@@ -27,8 +27,8 @@ class RadiusMeasurement(LengthMeasurement):
         super().__init__(dim_style, color, scale)
         self.text_prefix = prefix
 
-    def text_override(self, measurement: float) -> str:
-        text = super().text_override(measurement)
+    def format_text(self, value: float) -> str:
+        text = super().format_text(value)
         if text and text[0] != self.text_prefix:
             text = self.text_prefix + text
         return text
