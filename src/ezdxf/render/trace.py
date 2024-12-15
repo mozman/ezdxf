@@ -338,7 +338,7 @@ class CurvedTrace(AbstractTrace):
             spline.derivatives(t, n=1), np.linspace(start_width, end_width, count)
         ):
             normal = Vec2(derivative).orthogonal(True)
-            curve_trace._append(Vec2(point), normal, width)
+            curve_trace._append(Vec2(point), normal, width)  # type: ignore
         return curve_trace
 
     @classmethod
@@ -373,7 +373,7 @@ class CurvedTrace(AbstractTrace):
             arc.vertices(arc.angles(count)),
             np.linspace(start_width, end_width, count),
         ):
-            curve_trace._append(point, point - center, width)
+            curve_trace._append(point, point - center, width)  # type: ignore
         return curve_trace
 
     def _append(self, point: Vec2, normal: Vec2, width: float) -> None:

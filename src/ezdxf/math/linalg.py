@@ -311,7 +311,7 @@ class Matrix:
         if isinstance(other, Matrix):
             return Matrix(matrix=np.matmul(self.matrix, other.matrix))
         else:
-            matrix = Matrix(matrix=self.matrix * float(other))
+            matrix = Matrix(matrix=self.matrix * float(other))  # type: ignore
         return matrix
 
     __imul__ = __mul__
@@ -319,9 +319,9 @@ class Matrix:
     def __add__(self, other: Matrix | float) -> Matrix:
         """Matrix addition by another matrix or a float, returns a new matrix."""
         if isinstance(other, Matrix):
-            return Matrix(matrix=self.matrix + other.matrix)
+            return Matrix(matrix=self.matrix + other.matrix)  # type: ignore
         else:
-            return Matrix(matrix=self.matrix + float(other))
+            return Matrix(matrix=self.matrix + float(other))  # type: ignore
 
     __iadd__ = __add__
 
@@ -331,9 +331,9 @@ class Matrix:
 
         """
         if isinstance(other, Matrix):
-            return Matrix(matrix=self.matrix - other.matrix)
+            return Matrix(matrix=self.matrix - other.matrix)  # type: ignore
         else:
-            return Matrix(matrix=self.matrix - float(other))
+            return Matrix(matrix=self.matrix - float(other))  # type: ignore
 
     __isub__ = __sub__
 
@@ -346,7 +346,7 @@ class Matrix:
         if self.nrows != self.ncols:
             raise TypeError("Inverse of non-square matrix not supported.")
         try:
-            return Matrix(matrix=np.linalg.inv(self.matrix))
+            return Matrix(matrix=np.linalg.inv(self.matrix))  # type: ignore
         except np.linalg.LinAlgError:
             raise ZeroDivisionError
 
@@ -445,7 +445,7 @@ def numpy_matrix_solver(A: MatrixData | NDArray, B: MatrixData | NDArray) -> Mat
     """
     mat_A = np.array(A, dtype=np.float64)
     mat_B = np.array(B, dtype=np.float64)
-    return Matrix(matrix=np.linalg.solve(mat_A, mat_B))
+    return Matrix(matrix=np.linalg.solve(mat_A, mat_B))  # type: ignore
 
 
 def numpy_vector_solver(A: MatrixData | NDArray, B: Iterable[float]) -> list[float]:
@@ -486,7 +486,7 @@ class NumpySolver(Solver):
 
         """
         mat_B = np.array(B, dtype=np.float64)
-        return Matrix(matrix=np.linalg.solve(self.mat_A, mat_B))
+        return Matrix(matrix=np.linalg.solve(self.mat_A, mat_B))  # type: ignore
 
     def solve_vector(self, B: Iterable[float]) -> list[float]:
         """Solves the linear equation system given by the nxn Matrix

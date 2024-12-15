@@ -113,7 +113,7 @@ class NumpyShape2d(abc.ABC):
         """Returns the shape vertices as list of lists 
         e.g. [[1, 2], [3, 4], ...]
         """
-        return self._vertices.tolist()
+        return self._vertices.tolist()  # type: ignore
     
     def bbox(self) -> BoundingBox2d:
         """Returns the bounding box of all vertices."""
