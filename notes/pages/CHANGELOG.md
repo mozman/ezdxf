@@ -1,4 +1,4 @@
-## Version 1.3.5 - dev
+## Version 1.3.5 - 2024-12-15
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: `ezdxf.blkrefs.find_unreferenced_blocks()` function returns the names of unused block definitions
 	- NEW: `Auditor` checks if modelspace and active paperspace exists
