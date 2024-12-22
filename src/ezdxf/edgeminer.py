@@ -118,6 +118,7 @@ __all__ = [
     "length",
     "longest_chain",
     "shortest_chain",
+    "subtract_edges",
     "TimeoutError",
     "unique_chains",
 ]
@@ -1179,3 +1180,11 @@ def find_loop_by_edge(deposit: Deposit, start: Edge, clockwise=True) -> Sequence
         if isclose(next_edge.end, start_point, gap_tol):
             return chain  # found a closed loop
         chain_set.add(next_edge)
+
+
+def subtract_edges(base: Iterable[Edge], edges: Iterable[Edge]) -> list[Edge]:
+    """Returns all edges from the iterable `base` that do not exist in the iterable
+    `edges`.
+    """
+    edge_ids = set(edge.id for edge in edges)
+    return [edge for edge in base if edge.id not in edge_ids]
