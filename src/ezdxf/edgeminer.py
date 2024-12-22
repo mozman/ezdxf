@@ -54,7 +54,7 @@ Simple Chain (special to this module)
     The start- and end vertices are leafs (degree of 1) or junctions (degree greater 2).
     
 Open Chain
-    An open chain is a chain which starts and ends at leaf. 
+    An open chain is a chain which starts and ends with at leaf.
     A solitary edge is also an open chain.
     Graph Theory: Path - no edge is repeated, no vertex is repeated, endings not connected
 
@@ -207,7 +207,7 @@ class Edge(NamedTuple):
         )
 
 
-def make_id_generator(start=0) -> Callable[[], int]:
+def make_id_generator(start: int = 0) -> Callable[[], int]:
     next_edge_id = start
 
     def next_id() -> int:
