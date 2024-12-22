@@ -1052,6 +1052,9 @@ class OpenChainFinder:
 
 
 def count_checker(count: int):
+    """Returns a function that checks if a given sequence of edges has at least `count`
+    vertices.
+    """
     def has_min_edge_count(edges: Sequence[Edge]) -> bool:
         return len(edges) >= count
 
@@ -1059,6 +1062,7 @@ def count_checker(count: int):
 
 
 def line_checker(abs_tol=ABS_TOl):
+    """Returns a function that checks if two input edges are congruent."""
     def is_congruent_line(a: Edge, b: Edge) -> bool:
         return (
             a.start.isclose(b.start, abs_tol=abs_tol)
@@ -1074,6 +1078,9 @@ def line_checker(abs_tol=ABS_TOl):
 def filter_coincident_edges(
     deposit: Deposit, eq_fn: Callable[[Edge, Edge], bool] = line_checker()
 ) -> Sequence[Edge]:
+    """Returns all edges from deposit that are not coincident to any other edge in the
+    deposit. Coincident edges are detected by the given `eq_fn` function.
+    """
     edges = set(deposit.edges)
     unique_edges: list[Edge] = []
     while edges:
