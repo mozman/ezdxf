@@ -699,7 +699,7 @@ SearchSolutions: TypeAlias = Dict[Tuple[int, ...], Sequence[Edge]]
 
 
 class LoopFinder:
-    """Find closed loops in an EdgeDeposit by a recursive backtracking algorithm.
+    """Find closed loops in an Deposit by a recursive backtracking algorithm.
 
     Finds only simple loops, where all vertices have only two adjacent edges.
 
@@ -959,7 +959,7 @@ def find_all_open_chains(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence
         Recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
-        deposit: EdgeDeposit
+        deposit: Deposit
         timeout: timeout in seconds
 
     Raises:
