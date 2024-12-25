@@ -1,0 +1,4 @@
+EdgeSmith
+=========
+
+.. module:: ezdxf.edgesmith
