@@ -123,11 +123,17 @@ __all__ = [
     "unique_chains",
 ]
 GAP_TOL = 1e-9
-ABS_TOl = 1e-9
+ABS_TOL = 1e-9
 TIMEOUT = 60.0  # in seconds
 
 
 class TimeoutError(Exception):  # noqa
+    """
+    Attributes:
+        solutions: solutions found until time out occur
+
+    """
+
     def __init__(self, msg: str, solutions: Sequence[Sequence[Edge]] = tuple()) -> None:
         super().__init__(msg)
         self.solutions = solutions
@@ -150,9 +156,9 @@ class Watchdog:
 class Edge(NamedTuple):
     """Represents an immutable edge.
 
-    The edge can represent any linear curve (line, arc, spline,...).
+    An edge can represent any linear curve (line, elliptic arc, spline,...).
     Therefore, the length of the edge must be specified if the length calculation for
-    a sequence of edges is to be possible.
+    a sequence of edges should be possible.
 
     Intersection points between edges are not known and cannot be calculated
 
@@ -161,12 +167,13 @@ class Edge(NamedTuple):
         Use only the :func:`make_edge` function to create new edges to get unique ids!
 
     Attributes:
-        id: unique id as int
-        start: start vertex as Vec3
-        end: end vertex as Vec3
+        id: unique id
+        start (Vec3): start vertex
+        end (Vec3): end vertex
         is_reverse: flag to indicate that the edge is reversed compared to its initial state
-        length: length of the edge, default is the distance between start- and end vertex
-        payload: arbitrary data associated to the edge
+        length: length of the edge, default is 1.0
+        payload: arbitrary data attached to the edge, default is ``None``
+
     """
 
     id: int
@@ -177,7 +184,13 @@ class Edge(NamedTuple):
     payload: Any = None
 
     def __eq__(self, other) -> bool:
-        """Return ``True`` if the ids of the edges are equal."""
+        """Return ``True`` if the ids of the edges are equal.
+
+        .. important::
+
+            An edge is equal to its reversed copy!
+
+        """
         if isinstance(other, Edge):
             return self.id == other.id
         return False
@@ -197,7 +210,11 @@ class Edge(NamedTuple):
         return self.id
 
     def reversed(self) -> Self:
-        """Returns a reversed copy."""
+        """Returns a reversed copy.
+
+        The reversed edge has the same :attr:`id` as the source edge, because they
+        represent the same edge.
+        """
         return self.__class__(  # noqa
             self.id,  # edge and its reversed edge must have the same id!
             self.end,
@@ -225,7 +242,15 @@ id_generator = make_id_generator()
 def make_edge(
     start: UVec, end: UVec, length: float = -1.0, *, payload: Any = None
 ) -> Edge:
-    """Creates a new :class:`Edge` with a unique id."""
+    """Creates a new :class:`Edge` with a unique id.
+
+    Args:
+        start: start point
+        end: end point
+        length: default is the distance between start and end
+        payload: arbitrary data attached to the edge
+
+    """
     start = Vec3(start)
     end = Vec3(end)
     if length < 0.0:
@@ -244,7 +269,14 @@ class Deposit:
     """The edge deposit stores all available edges for further searches.
 
     The edges and the search index are immutable after instantiation.
-    The gap_tol value is mutable.
+    The :attr:`gap_tol` attribute is mutable.
+
+    Args:
+        edges: sequence of :class:`Edge`
+        gap_tol: maximum vertex distance to consider two edges as connected
+
+    Attributes:
+        gap_tol: maximum vertex distance to consider two edges as connected (mutable)
 
     """
 
@@ -255,16 +287,17 @@ class Deposit:
 
     @property
     def edges(self) -> Sequence[Edge]:
+        """Sequence of edges stored in this deposit."""
         return self._edges
 
     def degree_counter(self) -> Counter[int]:
         """Returns a :class:`Counter` for the degree of all vertices.
 
-        - Counter[degree] returns the count of vertices of this degree.
-        - Counter.keys() returns all existing degrees in this deposit
+        - :code:`Counter[degree]` returns the count of vertices of this degree.
+        - :code:`Counter.keys()` returns all existing degrees in this deposit
 
-        A new counter will be created for every method call!
-        Different gap tolerances may yield different results.
+        A new counter will be created for every method call! The :attr:`gap_tol`
+        attribute is mutable and different gap tolerances may yield different results.
 
         """
         # no caching: result depends on gap_tol, which is mutable
@@ -280,7 +313,7 @@ class Deposit:
 
     @property
     def max_degree(self) -> int:
-        """Returns the maximum degree of all vertices."""
+        """Returns the maximum degree of all vertices in this deposit."""
         return max(self.degree_counter().keys())
 
     def degree(self, vertex: UVec) -> int:
@@ -353,6 +386,7 @@ class Deposit:
     def find_network(self, edge: Edge) -> set[Edge]:
         """Returns the network of all edges that are directly and indirectly linked to
         `edge`.  A network has two or more edges, a solitary edge is not a network.
+
         """
 
         def process(vertex: Vec3) -> None:
@@ -374,6 +408,7 @@ class Deposit:
     def find_all_networks(self) -> Sequence[set[Edge]]:
         """Returns all separated networks in this deposit in ascending order of edge
         count.
+
         """
         edges = set(self.edges)
         networks: list[set[Edge]] = []
@@ -403,7 +438,7 @@ class Deposit:
 def is_forward_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
     """Returns ``True`` if the edges have a forward connection.
 
-    Forward connection: distance from a.end to b.start <= gap_tol
+    Forward connection: distance from :attr:`a.end` to :attr:`b.start` <= gap_tol
 
     Args:
         a: first edge
@@ -414,7 +449,7 @@ def is_forward_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
 
 
 def is_chain(edges: Sequence[Edge], gap_tol=GAP_TOL) -> bool:
-    """Returns ``True`` if all edges have a forward connection.
+    """Returns ``True`` if all edges in the sequence have a forward connection.
 
     Args:
         edges: sequence of edges
@@ -526,18 +561,19 @@ def find_all_sequential_chains(
         yield chain
 
 
-def find_loop(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
-    """Returns the first closed loop found in edge `deposit`.
+def find_loop(deposit: Deposit, timeout: int = TIMEOUT) -> Sequence[Edge]:
+    """Returns the first closed loop in `deposit`.
 
-    Returns only simple loops, where all vertices have only two adjacent edges.
+    Returns only simple loops, where all vertices have a degree of 2 (only two adjacent
+    edges).
 
     .. note::
 
-        Recursive backtracking algorithm with time complexity of O(n!).
+        This is a recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
-        deposit: edge deposit
-        timeout: timeout in seconds
+        deposit (Deposit): edge deposit
+        timeout (int): timeout in seconds
 
     Raises:
         TimeoutError: search process has timed out
@@ -572,7 +608,9 @@ def _find_loop_in_deposit(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
     return tuple()
 
 
-def find_all_loops(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
+def find_all_loops(
+    deposit: Deposit, timeout: int = TIMEOUT
+) -> Sequence[Sequence[Edge]]:
     """Returns all closed loops from `deposit`.
 
     Returns only simple loops, where all vertices have a degree of 2 (only two adjacent
@@ -580,7 +618,7 @@ def find_all_loops(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]
 
     .. note::
 
-        Recursive backtracking algorithm with time complexity of O(n!).
+        This is a recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
         deposit: edge deposit
@@ -699,7 +737,7 @@ SearchSolutions: TypeAlias = Dict[Tuple[int, ...], Sequence[Edge]]
 
 
 class LoopFinder:
-    """Find closed loops in an Deposit by a recursive backtracking algorithm.
+    """Find closed loops in a :class:`Deposit` by a recursive backtracking algorithm.
 
     Finds only simple loops, where all vertices have only two adjacent edges.
 
@@ -946,7 +984,9 @@ def chain_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
         return tuple(edge.id for edge in edges)
 
 
-def find_all_open_chains(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence[Edge]]:
+def find_all_open_chains(
+    deposit: Deposit, timeout: int = TIMEOUT
+) -> Sequence[Sequence[Edge]]:
     """Returns all open chains from `deposit`.
 
     Returns only simple chains ending on both sides with a leaf.
@@ -956,11 +996,11 @@ def find_all_open_chains(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Sequence
 
     .. note::
 
-        Recursive backtracking algorithm with time complexity of O(n!).
+        This is a recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
-        deposit: Deposit
-        timeout: timeout in seconds
+        deposit (Deposit): edge deposit
+        timeout (int): timeout in seconds
 
     Raises:
         TimeoutError: search process has timed out
@@ -1055,14 +1095,16 @@ def count_checker(count: int):
     """Returns a function that checks if a given sequence of edges has at least `count`
     vertices.
     """
+
     def has_min_edge_count(edges: Sequence[Edge]) -> bool:
         return len(edges) >= count
 
     return has_min_edge_count
 
 
-def line_checker(abs_tol=ABS_TOl):
+def line_checker(abs_tol=ABS_TOL):
     """Returns a function that checks if two input edges are congruent."""
+
     def is_congruent_line(a: Edge, b: Edge) -> bool:
         return (
             a.start.isclose(b.start, abs_tol=abs_tol)
@@ -1152,9 +1194,14 @@ def sort_edges_to_base(
 
 
 def find_loop_by_edge(deposit: Deposit, start: Edge, clockwise=True) -> Sequence[Edge]:
-    """Returns the first loop found including the given edge.
+    """Returns the first loop found including the given `start` edge.
 
     Returns an empty sequence if no loop was found.
+
+    Args:
+        deposit (Deposit): edge deposit
+        start (Edge): starting edge of the search
+        clockwise (bool): search orientation, counter-clockwise when ``False``
 
     """
     if len(deposit.edges) < 2:
@@ -1191,7 +1238,7 @@ def find_loop_by_edge(deposit: Deposit, start: Edge, clockwise=True) -> Sequence
 
 def subtract_edges(base: Iterable[Edge], edges: Iterable[Edge]) -> list[Edge]:
     """Returns all edges from the iterable `base` that do not exist in the iterable
-    `edges`.
+    `edges` e.g. remove solutions from the search space.
     """
     edge_ids = set(edge.id for edge in edges)
     return [edge for edge in base if edge.id not in edge_ids]

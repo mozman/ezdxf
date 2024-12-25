@@ -3,6 +3,8 @@ EdgeMiner
 
 .. module:: ezdxf.edgeminer
 
+.. versionadded:: 1.4
+
 Purpose of this Module
 ----------------------
 
@@ -111,6 +113,100 @@ Gap Tolerance
 Forward Connection
     An edge is forward connected when the end point of the edge is connected to the
     start point of the following edge.
+
+.. seealso::
+
+    - :ref:`tut_edges`
+
+.. important::
+
+    This is the reference documentation and not a tutorial how to use this module.
+
+High Level Functions
+--------------------
+
+.. autofunction:: find_sequential_chain
+
+.. autofunction:: find_all_sequential_chains
+
+.. autofunction:: find_simple_chain
+
+.. autofunction:: find_all_simple_chains
+
+.. autofunction:: find_all_open_chains
+
+.. autofunction:: find_loop
+
+.. autofunction:: find_loop_by_edge
+
+.. autofunction:: find_all_loops
+
+
+Low Level Functions
+-------------------
+
+.. autofunction:: flatten
+
+.. autofunction:: is_chain
+
+.. autofunction:: is_forward_connected
+
+.. autofunction:: is_loop
+
+.. autofunction:: is_wrapped_chain
+
+.. autofunction:: isclose
+
+.. autofunction:: length
+
+.. autofunction:: longest_chain
+
+.. autofunction:: make_edge
+
+.. autofunction:: shortest_chain
+
+.. autofunction:: subtract_edges
+
+.. autofunction:: unwrap_simple_chain
+
+.. autofunction:: wrap_simple_chain
+
+Classes
+-------
+
+.. autoclass:: Edge
+
+    .. automethod:: __eq__
+
+    .. automethod:: reversed
+
+.. autoclass:: Deposit
+
+    .. autoproperty:: edges
+
+    .. autoproperty:: max_degree
+
+    .. automethod:: degree_counter
+
+    .. automethod:: degree
+
+    .. automethod:: degrees
+
+    .. automethod:: edges_linked_to
+
+    .. automethod:: find_all_networks
+
+    .. automethod:: find_leafs
+
+    .. automethod:: find_nearest_edge
+
+    .. automethod:: find_network
+
+    .. automethod:: unique_vertices
+
+
+.. autoclass:: TimeoutError
+
 
 .. _Graph Theory: https://en.wikipedia.org/wiki/Glossary_of_graph_theory
 .. _GeeksForGeeks: https://www.geeksforgeeks.org/graph-data-structure-and-algorithms/?ref=shm
