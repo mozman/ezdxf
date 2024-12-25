@@ -83,11 +83,12 @@ def test_load_from_text(entity):
     assert entity.dxf.subdivision_levels == 0
 
 
-def test_write_dxf():
+def test_export_without_vertices_or_faces():
+    # MESH without vertices creates an invalid DXF file for AutoCAD and BricsCAD.
+    # MESH without faces creates an invalid DXF file for AutoCAD and BricsCAD.
     entity = Mesh.from_text(MESH)
     result = TagCollector.dxftags(entity)
-    expected = basic_tags_from_text(MESH)
-    assert result == expected
+    assert len(result) == 0
 
 
 @pytest.fixture(scope="module")
@@ -198,6 +199,18 @@ def test_auditor_fixes_invalid_crease_count(msp: Modelspace):
     mesh.audit(auditor)
     assert len(auditor.fixes) == 1
     assert list(mesh.creases) == [0.0]
+
+
+def test_auditor_destroys_invalid_meshes_without_vertices_or_faces():
+    # new document required
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    # add a mesh without vertices or faces
+    mesh = msp.add_mesh()
+
+    auditor = msp.doc.audit()
+    assert len(auditor.fixes) == 1
+    assert mesh.is_alive is False
 
 
 def test_vertex_format(msp: Modelspace):

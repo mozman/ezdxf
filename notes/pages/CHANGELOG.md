@@ -1,4 +1,8 @@
-## Version 1.3.5 - 2024-12-15
+## Version 1.3.6 - dev
+	- NEW: `Mesh.audit()` removes `MESH` entities without vertices or faces
+	- BUGFIX: Exported `MESH` entities  without vertices or faces create invalid DXF files
+		- {{issue 1219}}
+- ## Version 1.3.5 - 2024-12-15
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: `ezdxf.blkrefs.find_unreferenced_blocks()` function returns the names of unused block definitions
 	- NEW: `Auditor` checks if modelspace and active paperspace exists
