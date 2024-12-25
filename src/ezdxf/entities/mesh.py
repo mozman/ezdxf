@@ -292,6 +292,20 @@ class Mesh(DXFGraphic):
         self._edges = process_edges()
         self._creases = process_creases()
 
+    def preprocess_export(self, tagwriter: AbstractTagWriter) -> bool:
+        """Pre requirement check and pre-processing for export.
+
+        Returns ``False``  if entity should not be exported at all.
+
+            - MESH without vertices creates an invalid DXF file for AutoCAD and BricsCAD.
+            - MESH without faces creates an invalid DXF file for AutoCAD and BricsCAD.
+
+        (internal API)
+        """
+        if len(self.vertices) == 0 or len(self.faces) == 0:
+            return False
+        return True
+
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
@@ -410,6 +424,14 @@ class Mesh(DXFGraphic):
                 message=f"fixed invalid count of crease values in {str(self)}",
                 dxf_entity=self,
             )
+        if len(self.vertices) == 0 or len(self.faces) == 0:
+            # A MESH without vertices or vertices creates an invalid DXF file for
+            # AutoCAD and BricsCAD
+            auditor.fixed_error(
+                code=AuditError.INVALID_VERTEX_COUNT,
+                message=f"removed {str(self)} without vertices or faces",
+            )
+            auditor.trash(self)
 
 
 class MeshData:
