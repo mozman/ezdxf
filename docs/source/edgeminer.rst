@@ -117,6 +117,7 @@ Forward Connection
 .. seealso::
 
     - :ref:`tut_edges`
+    - :mod:`ezdxf.edgesmith` module
 
 .. important::
 

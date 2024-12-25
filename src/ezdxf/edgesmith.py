@@ -22,6 +22,9 @@ import functools
 
 from ezdxf import edgeminer as em
 from ezdxf import entities as et
+from ezdxf import path
+from ezdxf.entities import boundary_paths as bp
+
 from ezdxf.math import (
     Vec2,
     Vec3,
@@ -137,9 +140,8 @@ def make_edge(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None:
         - LWPOLYLINE
         - 2D POLYLINE
 
-    if the entity is an open linear curve.
-
-    Returns ``None`` if the entity is a closed curve or cannot represent an edge.
+    Returns ``None`` if the entity has a closed shape or cannot be represented as an
+    edge.
     """
     return None
 
@@ -233,11 +235,12 @@ def lwpolyline_from_chain(
     This function assumes the building blocks as simple DXF entities attached as payload
     to the edges.  The edges are processed in order of the input sequence.
 
-        - LINE entities are added as line segments
-        - ARC entities are added as bulges
-        - ELLIPSE entities with a ratio of 1.0 are added as bulges
+        - LINE as line segment
+        - ARC as bulges
+        - ELLIPSE with ratio of 1.0 are added as bulges, others as flattened line segments
         - LWPOLYLINE will be merged
         - 2D POLYLINE will be merged
+        - SPLINE as as flattened line segments
         - Everything else will be added as line segment from Edge.start to Edge.end
         - Gaps between edges are connected by line segments.
 
@@ -257,11 +260,12 @@ def polyline2d_from_chain(
     This function assumes the building blocks as simple DXF entities attached as payload
     to the edges.  The edges are processed in order of the input sequence.
 
-        - LINE entities are added as line segments
-        - ARC entities are added as bulges
-        - ELLIPSE entities with a ratio of 1.0 are added as bulges
+        - LINE as line segment
+        - ARC as bulges
+        - ELLIPSE with ratio of 1.0 are added as bulges, others as flattened line segments
         - LWPOLYLINE will be merged
         - 2D POLYLINE will be merged
+        - SPLINE as as flattened line segments
         - Everything else will be added as line segment from Edge.start to Edge.end
         - Gaps between edges are connected by line segments.
 
@@ -339,3 +343,63 @@ def polyline_points(edges: Sequence[em.Edge]) -> BulgePoints:
         points.append(Vec2(edge.end))
         bulges.append(0.0)
     return list(zip(points, bulges))
+
+
+def path_from_chain(edges: Sequence[em.Edge]) -> path.Path:
+    """Returns a new :class:`ezdxf.path.Path` entity.
+
+    This function assumes the building blocks as simple DXF entities attached as payload
+    to the edges.  The edges are processed in order of the input sequence.
+
+        - LINE as line segment
+        - ARC as cubic Bezier curves
+        - ELLIPSE as cubic Bezier curves
+        - SPLINE cubic Bezier curves
+        - LWPOLYLINE as line segments and cubic Bezier curves
+        - 2D POLYLINE as line segments and cubic Bezier curves
+        - Everything else will be added as line segment from Edge.start to Edge.end
+        - Gaps between edges are connected by line segments.
+
+    """
+    # TODO
+    return path.Path()
+
+
+def edge_path_from_chain(edges: Sequence[em.Edge]) -> bp.EdgePath:
+    """Returns a new :class:`~ezdxf.entities.EdgePath` for :class:`~ezdxf.entities.Hatch`
+    entities.
+
+    This function assumes the building blocks as simple DXF entities attached as payload
+    to the edges.  The edges are processed in order of the input sequence.
+
+        - LINE as :class:`~ezdxf.entities.LineEdge`
+        - ARC as :class:`~ezdxf.entities.ArcEdge`
+        - ELLIPSE as :class:`~ezdxf.entities.EllipseEdge`
+        - SPLINE as :class:`~ezdxf.entities.SplineEdge`
+        - LWPOLYLINE and 2D POLYLINE as :class:`~ezdxf.entities.LineEdge`
+          and :class:`~ezdxf.entities.ArcEdge`
+        - Everything else will be added as line segment from Edge.start to Edge.end
+        - Gaps between edges are connected by line segments.
+
+    """
+    # TODO
+    return bp.EdgePath()
+
+
+def polyline_path_from_chain(edges: Sequence[em.Edge]) -> bp.PolylinePath:
+    """Returns a new :class:`~ezdxf.entities.PolylinePath` for :class:`~ezdxf.entities.Hatch`
+    entities.
+
+    This function assumes the building blocks as simple DXF entities attached as payload
+    to the edges.  The edges are processed in order of the input sequence.
+
+        - LINE as line segment
+        - ARC as flattened line segments
+        - ELLIPSE as flattened line segments
+        - LWPOLYLINE and 2D POLYLINE as flattened line segments
+        - Everything else will be added as line segment from Edge.start to Edge.end
+        - Gaps between edges are connected by line segments.
+
+    """
+    # TODO
+    return bp.PolylinePath()
