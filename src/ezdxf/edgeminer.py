@@ -561,7 +561,7 @@ def find_all_sequential_chains(
         yield chain
 
 
-def find_loop(deposit: Deposit, timeout: int = TIMEOUT) -> Sequence[Edge]:
+def find_loop(deposit: Deposit, timeout: float = TIMEOUT) -> Sequence[Edge]:
     """Returns the first closed loop in `deposit`.
 
     Returns only simple loops, where all vertices have a degree of 2 (only two adjacent
@@ -573,7 +573,7 @@ def find_loop(deposit: Deposit, timeout: int = TIMEOUT) -> Sequence[Edge]:
 
     Args:
         deposit (Deposit): edge deposit
-        timeout (int): timeout in seconds
+        timeout (float): timeout in seconds
 
     Raises:
         TimeoutError: search process has timed out
@@ -609,7 +609,7 @@ def _find_loop_in_deposit(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
 
 
 def find_all_loops(
-    deposit: Deposit, timeout: int = TIMEOUT
+    deposit: Deposit, timeout: float = TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
     """Returns all closed loops from `deposit`.
 
@@ -621,8 +621,8 @@ def find_all_loops(
         This is a recursive backtracking algorithm with time complexity of O(n!).
 
     Args:
-        deposit: edge deposit
-        timeout: timeout in seconds
+        deposit (Deposit): edge deposit
+        timeout (float): timeout in seconds
 
     Raises:
         TimeoutError: search process has timed out
@@ -985,7 +985,7 @@ def chain_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
 
 
 def find_all_open_chains(
-    deposit: Deposit, timeout: int = TIMEOUT
+    deposit: Deposit, timeout: float = TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
     """Returns all open chains from `deposit`.
 
@@ -1000,7 +1000,7 @@ def find_all_open_chains(
 
     Args:
         deposit (Deposit): edge deposit
-        timeout (int): timeout in seconds
+        timeout (float): timeout in seconds
 
     Raises:
         TimeoutError: search process has timed out

@@ -208,6 +208,15 @@ Classes
 
 .. autoclass:: TimeoutError
 
+Global Constants
+----------------
+
+.. code-block:: Python
+
+    GAP_TOL = 1e-9
+    ABS_TOL = 1e-9
+    TIMEOUT = 60.0  # in seconds
+
 
 .. _Graph Theory: https://en.wikipedia.org/wiki/Glossary_of_graph_theory
 .. _GeeksForGeeks: https://www.geeksforgeeks.org/graph-data-structure-and-algorithms/?ref=shm

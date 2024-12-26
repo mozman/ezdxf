@@ -31,20 +31,22 @@ from ezdxf.math import (
     arc_angle_span_deg,
     ellipse_param_span,
     bulge_from_arc_angle,
+    Z_AXIS,
 )
 
 __all__ = [
     "chain_vertices",
-    "edges_from_entities",
+    "edges_from_entities_2d",
     "is_closed_entity",
     "lwpolyline_from_chain",
-    "make_edge",
     "polyline2d_from_chain",
+    "make_edge_2d",
 ]
 # Tolerances
 LEN_TOL = 1e-9  # length and distance
 DEG_TOL = 1e-9  # angles in degree
-RAD_TOL = 1e-9  # angles in radians
+RAD_TOL = 1e-7  # angles in radians
+GAP_TOL = em.GAP_TOL
 
 
 # noinspection PyUnusedLocal
@@ -130,32 +132,36 @@ def _validate_edge(edge: em.Edge, gap_tol: float) -> em.Edge | None:
 
 # noinspection PyUnusedLocal
 @functools.singledispatch
-def make_edge(entity: et.DXFEntity, gap_tol=em.GAP_TOL) -> em.Edge | None:
+def make_edge_2d(entity: et.DXFEntity, gap_tol=GAP_TOL) -> em.Edge | None:
     """Makes an :class:`Edge` instance from the following DXF entity types:
 
-        - LINE
-        - ARC
-        - ELLIPSE
-        - SPLINE
-        - LWPOLYLINE
-        - 2D POLYLINE
+        - :class:`~ezdxf.entities.Line` (length accurate)
+        - :class:`~ezdxf.entities.Arc` (length accurate)
+        - :class:`~ezdxf.entities.Ellipse` (length approximated)
+        - :class:`~ezdxf.entities.Spline` (length approximated as straight lines between
+          control points)
+        - :class:`~ezdxf.entities.LWPolyline` (length of bulges as straight line from
+          start- to end point)
+        - :class:`~ezdxf.entities.Polyline` (length of bulges as straight line from
+          start- to end point)
 
-    Returns ``None`` if the entity has a closed shape or cannot be represented as an
-    edge.
+    The start- and end points of the edge is projected onto the xy-plane. Returns
+    ``None`` if the entity has a closed shape or cannot be represented as an edge.
     """
     return None
 
 
-@make_edge.register(et.Line)
-def _edge_from_line(entity: et.Line, gap_tol=em.GAP_TOL) -> em.Edge | None:
-    start = Vec3(entity.dxf.start)
-    end = Vec3(entity.dxf.end)
+@make_edge_2d.register(et.Line)
+def _edge_from_line(entity: et.Line, gap_tol=GAP_TOL) -> em.Edge | None:
+    # line projected onto the xy-plane
+    start = Vec2(entity.dxf.start)
+    end = Vec2(entity.dxf.end)
     length = start.distance(end)
     return _validate_edge(em.make_edge(start, end, length, payload=entity), gap_tol)
 
 
-@make_edge.register(et.Arc)
-def _edge_from_arc(entity: et.Arc, gap_tol=em.GAP_TOL) -> em.Edge | None:
+@make_edge_2d.register(et.Arc)
+def _edge_from_arc(entity: et.Arc, gap_tol=GAP_TOL) -> em.Edge | None:
     radius = abs(entity.dxf.radius)
     if radius < LEN_TOL:
         return None
@@ -164,11 +170,15 @@ def _edge_from_arc(entity: et.Arc, gap_tol=em.GAP_TOL) -> em.Edge | None:
     span_deg = arc_angle_span_deg(start_angle, end_angle)
     length = radius * span_deg / 180.0 * math.pi
     sp, ep = entity.vertices((start_angle, end_angle))
-    return _validate_edge(em.make_edge(sp, ep, length, payload=entity), gap_tol)
+    return _validate_edge(
+        # arc projected onto the xy-plane
+        em.make_edge(Vec2(sp), Vec2(ep), length, payload=entity),
+        gap_tol,
+    )
 
 
-@make_edge.register(et.Ellipse)
-def _edge_from_ellipse(entity: et.Ellipse, gap_tol=em.GAP_TOL) -> em.Edge | None:
+@make_edge_2d.register(et.Ellipse)
+def _edge_from_ellipse(entity: et.Ellipse, gap_tol=GAP_TOL) -> em.Edge | None:
     try:
         ct1 = entity.construction_tool()
     except ValueError:
@@ -178,41 +188,76 @@ def _edge_from_ellipse(entity: et.Ellipse, gap_tol=em.GAP_TOL) -> em.Edge | None
     span = ellipse_param_span(ct1.start_param, ct1.end_param)
     num = max(3, round(span / 0.1745))  # resolution of ~1 deg
     # length of elliptic arc is an approximation:
-    points = list(ct1.vertices(ct1.params(num)))
+    # ellipse projected onto the xy-plane
+    points = Vec2.list(ct1.vertices(ct1.params(num)))
     length = sum(a.distance(b) for a, b in zip(points, points[1:]))
     return _validate_edge(
-        em.make_edge(Vec3(points[0]), Vec3(points[-1]), length, payload=entity), gap_tol
+        em.make_edge(points[0], points[-1], length, payload=entity), gap_tol
     )
 
 
-@make_edge.register(et.Spline)
-def _edge_from_spline(entity: et.Spline, gap_tol=em.GAP_TOL) -> em.Edge | None:
+@make_edge_2d.register(et.Spline)
+def _edge_from_spline(entity: et.Spline, gap_tol=GAP_TOL) -> em.Edge | None:
     try:
         ct2 = entity.construction_tool()
     except ValueError:
         return None
-    start = Vec3(ct2.control_points[0])
-    end = Vec3(ct2.control_points[-1])
-    points = list(ct2.control_points)
+    # spline projected onto the xy-plane
+    start = Vec2(ct2.control_points[0])
+    end = Vec2(ct2.control_points[-1])
+    points = Vec2.list(ct2.control_points)
     # length of B-spline is a very rough approximation:
     length = sum(a.distance(b) for a, b in zip(points, points[1:]))
     return _validate_edge(em.make_edge(start, end, length, payload=entity), gap_tol)
 
 
-def edges_from_entities(
-    entities: Iterable[et.DXFEntity], gap_tol=em.GAP_TOL
-) -> Iterator[em.Edge]:
-    """Yields all DXF entities as edges.
+@make_edge_2d.register(et.LWPolyline)
+def _edge_from_lwpolyline(entity: et.LWPolyline, gap_tol=GAP_TOL) -> em.Edge | None:
+    if _is_closed_lwpolyline(entity):
+        return None
+    # polyline projected onto the xy-plane
+    points = Vec2.list(entity.vertices_in_wcs())
+    if len(points) < 2:
+        return None
+    start = points[0]
+    end = points[-1]
+    # length of LWPolyline does not include bulge length:
+    length = sum(a.distance(b) for a, b in zip(points, points[1:]))
+    return _validate_edge(em.make_edge(start, end, length, payload=entity), gap_tol)
 
-    Skips all entities which can not be represented as edge.
+
+@make_edge_2d.register(et.Polyline)
+def _edge_from_polyline(entity: et.Polyline, gap_tol=GAP_TOL) -> em.Edge | None:
+    if not (entity.is_2d_polyline or entity.is_3d_polyline):
+        return None
+    if _is_closed_polyline2d(entity):
+        return None
+    # polyline projected onto the xy-plane
+    points = Vec2.list(entity.points_in_wcs())
+    if len(points) < 2:
+        return None
+
+    start = points[0]
+    end = points[-1]
+    # length of Polyline does not include bulge length:
+    length = sum(a.distance(b) for a, b in zip(points, points[1:]))
+    return _validate_edge(em.make_edge(start, end, length, payload=entity), gap_tol)
+
+
+def edges_from_entities_2d(
+    entities: Iterable[et.DXFEntity], gap_tol=GAP_TOL
+) -> Iterator[em.Edge]:
+    """Yields all DXF entities as 2D edges in the xy-plane.
+
+    Skips all entities that have a closed shape or can not be represented as edge.
     """
     for entity in entities:
-        edge = make_edge(entity, gap_tol)
+        edge = make_edge_2d(entity, gap_tol)
         if edge is not None:
             yield edge
 
 
-def chain_vertices(edges: Sequence[em.Edge], gap_tol=em.GAP_TOL) -> Sequence[Vec3]:
+def chain_vertices(edges: Sequence[em.Edge], gap_tol=GAP_TOL) -> Sequence[Vec3]:
     """Returns all vertices from a sequence of connected edges.
 
     Adds line segments between edges when the gap is bigger than `gap_tol`.
@@ -228,178 +273,301 @@ def chain_vertices(edges: Sequence[em.Edge], gap_tol=em.GAP_TOL) -> Sequence[Vec
 
 
 def lwpolyline_from_chain(
-    edges: Sequence[em.Edge], dxfattribs: Any = None
+    edges: Sequence[em.Edge],
+    dxfattribs: Any = None,
+    max_sagitta: float = -1,
 ) -> et.LWPolyline:
-    """Returns a new virtual :class:`LWPolyline` entity.
+    """Returns a new virtual :class:`~ezdxf.entities.LWPolyline` entity.
 
     This function assumes the building blocks as simple DXF entities attached as payload
-    to the edges.  The edges are processed in order of the input sequence.
+    to the edges. The edges are processed in order of the input sequence. The output
+    polyline is projected onto the xy-plane.
 
-        - LINE as line segment
-        - ARC as bulges
-        - ELLIPSE with ratio of 1.0 are added as bulges, others as flattened line segments
-        - LWPOLYLINE will be merged
-        - 2D POLYLINE will be merged
-        - SPLINE as as flattened line segments
-        - Everything else will be added as line segment from Edge.start to Edge.end
+        - :class:`~ezdxf.entities.Line` as line segment
+        - :class:`~ezdxf.entities.Arc` as bulge
+        - :class:`~ezdxf.entities.Ellipse` as bulge or as flattened line segments
+        - :class:`~ezdxf.entities.Spline` as flattened line segments
+        - :class:`~ezdxf.entities.LWPolyline` and :class:`~ezdxf.entities.Polyline`
+          will be merged
+        - Everything else will be added as line segment from :attr:`Edge.start` to
+          :attr:`Edge.end`
         - Gaps between edges are connected by line segments.
 
     """
     polyline = et.LWPolyline.new(dxfattribs=dxfattribs)
     if len(edges) == 0:
         return polyline
-    polyline.set_points(polyline_points(edges), format="vb")  # type: ignore
+    polyline.set_points(_make_polyline_points(edges, max_sagitta), format="vb")  # type: ignore
     return polyline
 
 
 def polyline2d_from_chain(
-    edges: Sequence[em.Edge], dxfattribs: Any = None
+    edges: Sequence[em.Edge], dxfattribs: Any = None, max_sagitta: float = -1
 ) -> et.Polyline:
     """Returns a new virtual :class:`Polyline` entity.
 
     This function assumes the building blocks as simple DXF entities attached as payload
-    to the edges.  The edges are processed in order of the input sequence.
+    to the edges. The edges are processed in order of the input sequence. The output
+    polyline is projected onto the xy-plane.
 
-        - LINE as line segment
-        - ARC as bulges
-        - ELLIPSE with ratio of 1.0 are added as bulges, others as flattened line segments
-        - LWPOLYLINE will be merged
-        - 2D POLYLINE will be merged
-        - SPLINE as as flattened line segments
-        - Everything else will be added as line segment from Edge.start to Edge.end
+        - :class:`~ezdxf.entities.Line` as line segment
+        - :class:`~ezdxf.entities.Arc` as bulge
+        - :class:`~ezdxf.entities.Ellipse` as bulge or as flattened line segments
+        - :class:`~ezdxf.entities.Spline` as flattened line segments
+        - :class:`~ezdxf.entities.LWPolyline` and :class:`~ezdxf.entities.Polyline`
+          will be merged
+        - Everything else will be added as line segment from :attr:`Edge.start` to
+          :attr:`Edge.end`
         - Gaps between edges are connected by line segments.
 
     """
     polyline = et.Polyline.new(dxfattribs=dxfattribs)
     if len(edges) == 0:
         return polyline
-    polyline.append_formatted_vertices(polyline_points(edges), format="vb")
+    polyline.append_formatted_vertices(
+        _make_polyline_points(edges, max_sagitta), format="vb"
+    )
     return polyline
 
 
 BulgePoints: TypeAlias = list[tuple[Vec2, float]]
 
 
-def polyline_points(edges: Sequence[em.Edge]) -> BulgePoints:
-    """Returns the polyline points to create a :class:`LWPolyline` or a
-    2D :class.`Polyline` entity.
-    """
+def _adjust_max_sagitta(max_sagitta: float, length: float) -> float:
+    if max_sagitta < 0:
+        max_sagitta = length / 100.0
+    return max_sagitta
 
-    def extend(pts: BulgePoints) -> None:
-        if len(pts) < 2:
-            return
-        # ignore first vertex
-        first = pts[0]
-        bulges[-1] = first[1]
-        for pnt, bulge in pts[1:]:
-            points.append(pnt)
-            bulges.append(bulge)
 
-    def reverse(pts: BulgePoints) -> BulgePoints:
-        if len(pts) < 2:
-            return pts
-        pts.reverse()
-        bulges = [pnt[1] for pnt in pts]
-        if any(bulges):
-            # shift bulge values to previous vertex
-            first = bulges.pop(0)
-            bulges.append(first)
-            return list(zip((pnt[0] for pnt in pts), bulges))
+def _flatten_3d_entity(
+    entity, length: float, max_sagitta: float, is_reverse: bool
+) -> BulgePoints:
+    points: BulgePoints = []
+    try:
+        entity_path = path.make_path(entity)
+    except TypeError:
+        return points
+    max_sagitta = _adjust_max_sagitta(max_sagitta, length)
+    if max_sagitta > LEN_TOL:
+        points.extend((p, 0.0) for p in Vec2.list(entity_path.flattening(max_sagitta)))
+    if is_reverse:
+        # edge.start and edge.end are in correct order
+        # start and end of the attached entity are NOT in correct order
+        points.reverse()
+    return points
+
+
+def _arc_to_bulge_points(edge: em.Edge, max_sagitta: float) -> BulgePoints:
+    arc: et.Arc = edge.payload
+    if Z_AXIS.isclose(arc.dxf.extrusion):
+        span = arc_angle_span_deg(arc.dxf.start_angle, arc.dxf.end_angle)
+        bulge: float = 0.0
+        if span > DEG_TOL:
+            bulge = bulge_from_arc_angle(math.radians(span))
+            if edge.is_reverse:
+                bulge = -bulge
+        return [
+            (Vec2(edge.start), bulge),
+            (Vec2(edge.end), 0.0),
+        ]
+    # flatten arc and project onto xy-plane
+    return _flatten_3d_entity(arc, edge.length, max_sagitta, edge.is_reverse)
+
+
+def _ellipse_to_bulge_points(edge: em.Edge, max_sagitta: float) -> BulgePoints:
+    ellipse: et.Ellipse = edge.payload
+    ratio = abs(ellipse.dxf.ratio)
+    span = ellipse_param_span(ellipse.dxf.start_param, ellipse.dxf.end_param)
+    if math.isclose(ratio, 1.0) and Z_AXIS.isclose(ellipse.dxf.extrusion):
+        bulge = 0.0
+        if span > RAD_TOL:
+            bulge = bulge_from_arc_angle(span)
+            if edge.is_reverse:
+                bulge = -bulge
+        return [
+            (Vec2(edge.start), bulge),
+            (Vec2(edge.end), 0.0),
+        ]
+    # flatten ellipse and project onto xy-plane
+    return _flatten_3d_entity(ellipse, edge.length, max_sagitta, edge.is_reverse)
+
+
+def _sum_distances(vertices: Sequence[Vec3]) -> float:
+    if len(vertices) < 2:
+        return 0.0
+    return sum(p0.distance(p1) for p0, p1 in zip(vertices, vertices[1:]))
+
+
+def _max_sagitta_spline(max_sagitta: float, control_points: Sequence[Vec3]):
+    if max_sagitta > 0:
+        return max_sagitta
+    return _sum_distances(control_points) / 100.0
+
+
+def _spline_to_bulge_points(edge: em.Edge, max_sagitta: float) -> BulgePoints:
+    spline: et.Spline = edge.payload
+    points: BulgePoints = []
+    try:
+        ct = spline.construction_tool()
+    except ValueError:
+        return points
+
+    max_sagitta = _max_sagitta_spline(max_sagitta, ct.control_points)
+    if max_sagitta > LEN_TOL:
+        points.extend((Vec2(p), 0.0) for p in ct.flattening(max_sagitta))
+    if edge.is_reverse:
+        # edge.start and edge.end are in correct order
+        # start and end of the attached entity are NOT in correct order
+        points.reverse()
+    return points
+
+
+def _lwpolyline_to_bulge_points(edge: em.Edge, max_sagitta: float) -> BulgePoints:
+    pl: et.LWPolyline = edge.payload
+    if Z_AXIS.isclose(pl.dxf.extrusion):
+        points = [(Vec2(x, y), b) for x, y, b in pl.get_points(format="xyb")]
+        if edge.is_reverse:
+            return _revert_bulge_points(points)
+        return points
+    return _flatten_3d_entity(pl, edge.length, max_sagitta, edge.is_reverse)
+
+
+def _polyline2d_to_bulge_points(edge: em.Edge, max_sagitta: float) -> BulgePoints:
+    pl: et.Polyline = edge.payload
+
+    if pl.is_2d_polyline and Z_AXIS.isclose(pl.dxf.extrusion):
+        points = [(Vec2(v.dxf.location), v.dxf.bulge) for v in pl.vertices]
+        if edge.is_reverse:
+            return _revert_bulge_points(points)
+        return points
+    return _flatten_3d_entity(pl, edge.length, max_sagitta, edge.is_reverse)
+
+
+def _revert_bulge_points(pts: BulgePoints) -> BulgePoints:
+    if len(pts) < 2:
         return pts
+    pts.reverse()
+    bulges = [pnt[1] for pnt in pts]
+    if any(bulges):
+        # shift bulge values to previous vertex
+        first = bulges.pop(0)
+        bulges.append(first)
+        return list(zip((pnt[0] for pnt in pts), bulges))
+    return pts
 
-    # bulge value is stored in the start vertex of the curved segment
-    points: list[Vec2] = [Vec2(edges[0].start)]
-    bulges: list[float] = [0.0]
+
+def _extend_bulge_points(points: BulgePoints, extension: BulgePoints) -> BulgePoints:
+    if len(extension) < 2:
+        return points
+    try:
+        current_end, _ = points[-1]
+    except IndexError:
+        points.extend(extension)
+        return points
+
+    connection_point, _ = extension[0]
+    if current_end.distance(connection_point) < LEN_TOL:
+        points.pop()
+    points.extend(extension)
+    return points
+
+
+POLYLINE_CONVERTERS = {
+    et.Arc: _arc_to_bulge_points,
+    et.Ellipse: _ellipse_to_bulge_points,
+    et.Spline: _spline_to_bulge_points,
+    et.LWPolyline: _lwpolyline_to_bulge_points,
+    et.Polyline: _polyline2d_to_bulge_points,
+}
+
+
+def _make_polyline_points(edges: Sequence[em.Edge], max_sagitta: float) -> BulgePoints:
+    """Returns the polyline points to create a LWPolyline or a 2D Polyline entity."""
+    points: BulgePoints = []
+    extension: BulgePoints = []
     for edge in edges:
-        current_end = points[-1]
-        if edge.start.distance(current_end) < LEN_TOL:
-            current_end = edge.start
-            points.append(Vec2(current_end))
-            bulges.append(0.0)
-        entity = edge.payload
-        if isinstance(entity, et.Arc):
-            span = arc_angle_span_deg(entity.dxf.start_angle, entity.dxf.end_angle)
-            if span > DEG_TOL:
-                bulge = bulge_from_arc_angle(math.radians(span))
-                bulges[-1] = -bulge if edge.is_reverse else bulge
-        elif isinstance(entity, et.Ellipse):
-            ratio = abs(entity.dxf.ratio)
-            span = ellipse_param_span(entity.dxf.start_param, entity.dxf.end_param)
-            if math.isclose(ratio, 1.0) and span > RAD_TOL:
-                bulge = bulge_from_arc_angle(span)
-                bulges[-1] = -bulge if edge.is_reverse else bulge
-        elif isinstance(entity, et.LWPolyline):
-            vertices: BulgePoints = list(entity.get_points(format="vb"))  # type: ignore
-            if edge.is_reverse:
-                vertices = reverse(vertices)
-            extend(vertices)
-            continue
-        elif isinstance(entity, et.Polyline) and entity.is_2d_polyline:
-            vertices = [(Vec2(v.dxf.location), v.dxf.bulge) for v in entity.vertices]
-            if edge.is_reverse:
-                vertices = reverse(vertices)
-            extend(vertices)
-            continue
-        points.append(Vec2(edge.end))
-        bulges.append(0.0)
-    return list(zip(points, bulges))
+        extension.clear()
+        converter = POLYLINE_CONVERTERS.get(type(edge.payload))
+        if converter:
+            extension = converter(edge, max_sagitta)
+        if len(extension) < 2:
+            extension = [
+                (Vec2(edge.start), 0.0),
+                (Vec2(edge.end), 0.0),
+            ]
+        points = _extend_bulge_points(points, extension)
+    return points
 
 
-def path_from_chain(edges: Sequence[em.Edge]) -> path.Path:
-    """Returns a new :class:`ezdxf.path.Path` entity.
-
-    This function assumes the building blocks as simple DXF entities attached as payload
-    to the edges.  The edges are processed in order of the input sequence.
-
-        - LINE as line segment
-        - ARC as cubic Bezier curves
-        - ELLIPSE as cubic Bezier curves
-        - SPLINE cubic Bezier curves
-        - LWPOLYLINE as line segments and cubic Bezier curves
-        - 2D POLYLINE as line segments and cubic Bezier curves
-        - Everything else will be added as line segment from Edge.start to Edge.end
-        - Gaps between edges are connected by line segments.
-
-    """
-    # TODO
-    return path.Path()
-
-
-def edge_path_from_chain(edges: Sequence[em.Edge]) -> bp.EdgePath:
-    """Returns a new :class:`~ezdxf.entities.EdgePath` for :class:`~ezdxf.entities.Hatch`
-    entities.
-
-    This function assumes the building blocks as simple DXF entities attached as payload
-    to the edges.  The edges are processed in order of the input sequence.
-
-        - LINE as :class:`~ezdxf.entities.LineEdge`
-        - ARC as :class:`~ezdxf.entities.ArcEdge`
-        - ELLIPSE as :class:`~ezdxf.entities.EllipseEdge`
-        - SPLINE as :class:`~ezdxf.entities.SplineEdge`
-        - LWPOLYLINE and 2D POLYLINE as :class:`~ezdxf.entities.LineEdge`
-          and :class:`~ezdxf.entities.ArcEdge`
-        - Everything else will be added as line segment from Edge.start to Edge.end
-        - Gaps between edges are connected by line segments.
-
-    """
-    # TODO
-    return bp.EdgePath()
-
-
-def polyline_path_from_chain(edges: Sequence[em.Edge]) -> bp.PolylinePath:
+def polyline_path_from_chain(
+    edges: Sequence[em.Edge], max_sagitta: float = -1
+) -> bp.PolylinePath:
     """Returns a new :class:`~ezdxf.entities.PolylinePath` for :class:`~ezdxf.entities.Hatch`
     entities.
 
     This function assumes the building blocks as simple DXF entities attached as payload
-    to the edges.  The edges are processed in order of the input sequence.
+    to the edges. The edges are processed in order of the input sequence. The output
+    path is projected onto the xy-plane.
 
-        - LINE as line segment
-        - ARC as flattened line segments
-        - ELLIPSE as flattened line segments
-        - LWPOLYLINE and 2D POLYLINE as flattened line segments
-        - Everything else will be added as line segment from Edge.start to Edge.end
+        - :class:`~ezdxf.entities.Line` as line segment
+        - :class:`~ezdxf.entities.Arc` as bulge
+        - :class:`~ezdxf.entities.Ellipse` as bulge or flattened line segments
+        - :class:`~ezdxf.entities.Spline` as flattened line segments
+        - :class:`~ezdxf.entities.LWPolyline` and :class:`~ezdxf.entities.Polyline` are
+          merged
+        - Everything else will be added as line segment from :attr:`Edge.start` to
+          :attr:`Edge.end`
         - Gaps between edges are connected by line segments.
 
     """
-    # TODO
-    return bp.PolylinePath()
+    polyline_path = bp.PolylinePath()
+    if len(edges) == 0:
+        return polyline_path
+    bulge_points = _make_polyline_points(edges, max_sagitta)
+    polyline_path.set_vertices([(p.x, p.y, b) for p, b in bulge_points])
+    return polyline_path
+
+
+def edge_path_from_chain(
+    edges: Sequence[em.Edge], max_sagitta: float = -1
+) -> bp.EdgePath:
+    """Returns a new :class:`~ezdxf.entities.EdgePath` for :class:`~ezdxf.entities.Hatch`
+    entities.
+
+    This function assumes the building blocks as simple DXF entities attached as payload
+    to the edges.  The edges are processed in order of the input sequence. The output
+    path is projected onto the xy-plane.
+
+        - :class:`~ezdxf.entities.Line` as :class:`~ezdxf.entities.LineEdge`
+        - :class:`~ezdxf.entities.Arc` as :class:`~ezdxf.entities.ArcEdge`
+        - :class:`~ezdxf.entities.Ellipse` as :class:`~ezdxf.entities.EllipseEdge`
+        - :class:`~ezdxf.entities.Spline` as :class:`~ezdxf.entities.SplineEdge`
+        - :class:`~ezdxf.entities.LWPolyline` and :class:`~ezdxf.entities.Polyline` as
+          :class:`~ezdxf.entities.LineEdge` and :class:`~ezdxf.entities.ArcEdge`
+        - Everything else will be added as line segment from :attr:`Edge.start` to
+          :attr:`Edge.end`
+        - Gaps between edges are connected by line segments.
+
+    """
+    raise NotImplementedError()
+
+
+def path_from_chain(edges: Sequence[em.Edge], max_sagitta: float = -1) -> path.Path:
+    """Returns a new :class:`ezdxf.path.Path` entity.
+
+    This function assumes the building blocks as simple DXF entities attached as payload
+    to the edges.  The edges are processed in order of the input sequence.  The output
+    is real 3d path.
+
+        - :class:`~ezdxf.entities.Line` as line segment
+        - :class:`~ezdxf.entities.Arc` as cubic Bézier curves
+        - :class:`~ezdxf.entities.Ellipse` as cubic Bézier curves
+        - :class:`~ezdxf.entities.Spine` cubic Bézier curves
+        - :class:`~ezdxf.entities.LWPolyline` and :class:`~ezdxf.entities.Polyline`
+          as line segments and cubic Bézier curves
+        - Everything else will be added as line segment from :attr:`Edge.start` to
+          :attr:`Edge.end`
+        - Gaps between edges are connected by line segments.
+
+    """
+    raise NotImplementedError()
