@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2024, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -91,6 +91,29 @@ def test_points(layout):
     points = [(0, 0), (1, 1), (2, 2), (3, 3)]
     polyline = layout.add_polyline2d(points)
     assert points == list(polyline.points())
+
+
+def test_points_in_wcs(layout):
+    points = [(0, 0), (1, 1), (2, 2), (3, 3)]
+    polyline = layout.add_polyline2d(points)
+    assert points == list(polyline.points_in_wcs())
+
+
+def test_points_in_wcs_with_elevation(layout):
+    points = [(0, 0), (1, 1), (2, 2), (3, 3)]
+    polyline = layout.add_polyline2d(points)
+    polyline.dxf.elevation = (0, 0, 2)
+    expected = [(p[0], p[1], 2) for p in points]
+    assert expected == list(polyline.points_in_wcs())
+
+
+def test_points_in_wcs_with_ocs(layout):
+    points = [(0, 0), (1, 1), (2, 2), (3, 3)]
+    polyline = layout.add_polyline2d(points)
+    polyline.dxf.elevation = (0, 0, 7)
+    polyline.dxf.extrusion = (0, 0, -1)
+    expected = [(0, 0, -7), (-1, 1, -7), (-2, 2, -7), (-3, 3, -7)]
+    assert expected == list(polyline.points_in_wcs())
 
 
 def test_point_slicing(layout):
@@ -325,9 +348,7 @@ def test_add_virtual_polyline_to_layout(doc, layout):
     polyline = Polyline()
     polyline.append_vertex((0, 0))
     layout.add_entity(polyline)
-    assert (
-        factory.is_bound(polyline, doc) is True
-    ), "POLYLINE must be bound to document"
+    assert factory.is_bound(polyline, doc) is True, "POLYLINE must be bound to document"
     assert (
         factory.is_bound(polyline.seqend, doc) is True
     ), "SEQEND must be bound to document"

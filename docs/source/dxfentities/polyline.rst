@@ -149,6 +149,8 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: points
 
+    .. automethod:: points_in_wcs
+
     .. automethod:: append_vertex
 
     .. automethod:: append_vertices
