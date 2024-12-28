@@ -81,11 +81,11 @@ All flattened curves will be projected onto the xy-plane.
 
 .. autofunction:: polyline2d_from_chain
 
-.. autofunction:: path_from_chain
-
 .. autofunction:: edge_path_from_chain
 
 .. autofunction:: polyline_path_from_chain
+
+.. autofunction:: path2d_from_chain
 
 Global Constants
 ----------------

@@ -32,15 +32,19 @@ from ezdxf.math import (
     ellipse_param_span,
     bulge_from_arc_angle,
     Z_AXIS,
+    Matrix44,
 )
 
 __all__ = [
     "chain_vertices",
+    "edge_path_from_chain",
     "edges_from_entities_2d",
     "is_closed_entity",
     "lwpolyline_from_chain",
-    "polyline2d_from_chain",
     "make_edge_2d",
+    "path2d_from_chain",
+    "polyline2d_from_chain",
+    "polyline_path_from_chain",
 ]
 # Tolerances
 LEN_TOL = 1e-9  # length and distance
@@ -552,12 +556,12 @@ def edge_path_from_chain(
     raise NotImplementedError()
 
 
-def path_from_chain(edges: Sequence[em.Edge], max_sagitta: float = -1) -> path.Path:
+def path2d_from_chain(edges: Sequence[em.Edge]) -> path.Path:
     """Returns a new :class:`ezdxf.path.Path` entity.
 
     This function assumes the building blocks as simple DXF entities attached as payload
     to the edges.  The edges are processed in order of the input sequence.  The output
-    is real 3d path.
+    is a 2D path projected onto the xy-plane.
 
         - :class:`~ezdxf.entities.Line` as line segment
         - :class:`~ezdxf.entities.Arc` as cubic Bézier curves
@@ -570,4 +574,19 @@ def path_from_chain(edges: Sequence[em.Edge], max_sagitta: float = -1) -> path.P
         - Gaps between edges are connected by line segments.
 
     """
-    raise NotImplementedError()
+    main_path = path.Path()
+    if len(edges) == 0:
+        return main_path
+
+    # project vertices onto the xy-plane by multiplying the z-axis by 0
+    m = Matrix44.scale(1.0, 1.0, 0.0)
+    for edge in edges:
+        try:
+            sub_path = path.make_path(edge.payload)
+        except (ValueError, TypeError):
+            continue
+        sub_path = sub_path.transform(m)
+        if edge.is_reverse:
+            sub_path = sub_path.reversed()
+        main_path.append_path(sub_path)
+    return main_path
