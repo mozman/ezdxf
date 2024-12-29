@@ -51,7 +51,7 @@ Path manager: :class:`BoundaryPaths`
 
 - :class:`Pattern`
 - :class:`PatternLine`
-- :class:`Gradien`
+- :class:`Gradient`
 
 .. class:: Hatch
 
@@ -347,6 +347,8 @@ Hatch Boundary Classes
     .. automethod:: add_ellipse
 
     .. automethod:: add_spline
+
+    .. automethod:: close_gaps
 
 
 .. class:: EdgeType
