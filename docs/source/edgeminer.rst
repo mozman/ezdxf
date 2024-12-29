@@ -164,6 +164,8 @@ Low Level Functions
 
 .. autofunction:: make_edge
 
+.. autofunction:: reverse_chain
+
 .. autofunction:: shortest_chain
 
 .. autofunction:: subtract_edges

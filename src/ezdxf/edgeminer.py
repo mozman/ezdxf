@@ -105,6 +105,7 @@ from ezdxf.math import rtree
 __all__ = [
     "Deposit",
     "Edge",
+    "TimeoutError",
     "find_all_loops",
     "find_all_open_chains",
     "find_all_sequential_chains",
@@ -117,9 +118,9 @@ __all__ = [
     "is_loop",
     "length",
     "longest_chain",
+    "reverse_chain",
     "shortest_chain",
     "subtract_edges",
-    "TimeoutError",
     "unique_chains",
 ]
 GAP_TOL = 1e-9
@@ -506,6 +507,17 @@ def longest_chain(chains: Iterable[Sequence[Edge]]) -> Sequence[Edge]:
     if sorted_chains:
         return sorted_chains[-1]
     return tuple()
+
+
+def reverse_chain(chain: Sequence[Edge]) -> list[Edge]:
+    """Returns the reversed chain.
+
+    The sequence order of the edges will be reversed as well as the start- and end
+    points of the edges.
+    """
+    edges = list(chain)
+    edges.reverse()
+    return [edge.reversed() for edge in edges]
 
 
 def find_sequential_chain(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
