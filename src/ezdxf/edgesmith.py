@@ -8,11 +8,6 @@ A module for creating entities like polylines and hatch boundary paths from link
 
 The complementary module to ezdxf.edgeminer.
 
-.. important::
-    
-    THIS MODULE IS WORK IN PROGRESS (ALPHA VERSION), EVERYTHING CAN CHANGE UNTIL 
-    THE RELEASE IN EZDXF V1.4.
-
 """
 from __future__ import annotations
 from typing import Iterator, Iterable, Sequence, Any
@@ -24,6 +19,7 @@ from ezdxf import edgeminer as em
 from ezdxf import entities as et
 from ezdxf import path
 from ezdxf.entities import boundary_paths as bp
+from ezdxf.upright import upright_all
 
 from ezdxf.math import (
     Vec2,
@@ -504,7 +500,7 @@ def _make_polyline_points(edges: Sequence[em.Edge], max_sagitta: float) -> Bulge
 
 
 def polyline_path_from_chain(
-    edges: Sequence[em.Edge], max_sagitta: float = -1
+    edges: Sequence[em.Edge], max_sagitta: float = -1, is_closed=True, flags: int = 1
 ) -> bp.PolylinePath:
     """Returns a new :class:`~ezdxf.entities.PolylinePath` for :class:`~ezdxf.entities.Hatch`
     entities.
@@ -523,17 +519,27 @@ def polyline_path_from_chain(
           :attr:`Edge.end`
         - Gaps between edges are connected by line segments.
 
+    Args:
+        edges: Sequence of :class:`~ezdxf.edgeminer.Edge` instances with DXF primitives
+            attached as payload
+        max_sagitta (float): curve flattening parameter
+        is_closed (bool): ``True`` if path is implicit closed
+        flags (int): default(0), external(1), derived(4), textbox(8) or outermost(16)
+
     """
     polyline_path = bp.PolylinePath()
+    polyline_path.is_closed = bool(is_closed)
+    polyline_path.path_type_flags |= flags
     if len(edges) == 0:
         return polyline_path
     bulge_points = _make_polyline_points(edges, max_sagitta)
     polyline_path.set_vertices([(p.x, p.y, b) for p, b in bulge_points])
+    polyline_path.is_closed = True
     return polyline_path
 
 
 def edge_path_from_chain(
-    edges: Sequence[em.Edge], max_sagitta: float = -1
+    edges: Sequence[em.Edge], max_sagitta: float = -1, flags:int=1
 ) -> bp.EdgePath:
     """Returns a new :class:`~ezdxf.entities.EdgePath` for :class:`~ezdxf.entities.Hatch`
     entities.
@@ -546,14 +552,154 @@ def edge_path_from_chain(
         - :class:`~ezdxf.entities.Arc` as :class:`~ezdxf.entities.ArcEdge`
         - :class:`~ezdxf.entities.Ellipse` as :class:`~ezdxf.entities.EllipseEdge`
         - :class:`~ezdxf.entities.Spline` as :class:`~ezdxf.entities.SplineEdge`
-        - :class:`~ezdxf.entities.LWPolyline` and :class:`~ezdxf.entities.Polyline` as
-          :class:`~ezdxf.entities.LineEdge` and :class:`~ezdxf.entities.ArcEdge`
+        - :class:`~ezdxf.entities.LWPolyline` and :class:`~ezdxf.entities.Polyline` will
+          be exploded and added as :class:`~ezdxf.entities.LineEdge` and
+          :class:`~ezdxf.entities.ArcEdge`
         - Everything else will be added as line segment from :attr:`Edge.start` to
           :attr:`Edge.end`
         - Gaps between edges are connected by line segments.
 
+    Args:
+        edges: Sequence of :class:`~ezdxf.edgeminer.Edge` instances with DXF primitives
+            attached as payload
+        max_sagitta (float): curve flattening parameter
+        flags (int): default(0), external(1), derived(4), textbox(8) or outermost(16)
+
     """
-    raise NotImplementedError()
+    edge_path = bp.EdgePath()
+    edge_path.path_type_flags |= flags
+    if len(edges) == 0:
+        return edge_path
+
+    for edge in edges:
+        entity = edge.payload
+        distance = _adjust_max_sagitta(max_sagitta, edge.length)
+        reverse = edge.is_reverse
+        if isinstance(entity, et.Line):
+            _add_line_to_edge_path_2d(edge_path, entity, reverse)
+        elif isinstance(entity, et.Arc):
+            _add_arc_to_edge_path_2d(edge_path, entity, reverse, distance)
+        elif isinstance(entity, et.Ellipse):
+            _add_ellipse_to_edge_path_2d(edge_path, entity, reverse, distance)
+        elif isinstance(entity, et.Spline):
+            _add_spline_to_edge_path_2d(edge_path, entity, reverse)
+        elif isinstance(entity, et.Polyline) and (
+            entity.is_2d_polyline or entity.is_3d_polyline
+        ):
+            _add_polyline_parts_to_edge_path(
+                edge_path, list(entity.virtual_entities()), reverse, max_sagitta
+            )
+        elif isinstance(entity, et.LWPolyline):
+            _add_polyline_parts_to_edge_path(
+                edge_path, list(entity.virtual_entities()), reverse, max_sagitta
+            )
+        else:
+            edge_path.add_line(edge.start, edge.end)
+    edge_path.close_gaps(LEN_TOL)
+    return edge_path
+
+
+def _add_line_to_edge_path_2d(
+    edge_path: bp.EdgePath, line: et.Line, reverse: bool
+) -> None:
+    start = Vec2(line.dxf.start)
+    end = Vec2(line.dxf.end)
+    if reverse:
+        start, end = end, start
+    edge_path.add_line(start, end)
+
+
+def _add_arc_to_edge_path_2d(
+    edge_path: bp.EdgePath, arc: et.Arc, reverse: bool, max_sagitta: float
+) -> None:
+    if Z_AXIS.isclose(arc.dxf.extrusion):
+        edge_path.add_arc(
+            center=Vec2(arc.dxf.center),
+            radius=arc.dxf.radius,
+            start_angle=arc.dxf.start_angle,
+            end_angle=arc.dxf.end_angle,
+            ccw=not reverse,
+        )
+    else:
+        vertices = Vec2.list(arc.flattening(max_sagitta))
+        if reverse:
+            vertices.reverse()
+        _add_vertices_to_edge_path_2d(edge_path, vertices)
+
+
+def _add_ellipse_to_edge_path_2d(
+    edge_path: bp.EdgePath, ellipse: et.Ellipse, reverse: bool, max_sagitta: float
+) -> None:
+    if Z_AXIS.isclose(ellipse.dxf.extrusion):
+        try:
+            ct = ellipse.construction_tool()
+        except ValueError:
+            return
+        edge_path.add_ellipse(
+            center=Vec2(ct.center),
+            major_axis=Vec2(ct.major_axis),
+            ratio=ct.ratio,
+            start_angle=math.degrees(ct.start_param),
+            end_angle=math.degrees(ct.end_param),
+            ccw=not reverse,
+        )
+    else:
+        vertices = Vec2.list(ellipse.flattening(max_sagitta))
+        if reverse:
+            vertices.reverse()
+        _add_vertices_to_edge_path_2d(edge_path, vertices)
+
+
+def _add_spline_to_edge_path_2d(
+    edge_path: bp.EdgePath, spline: et.Spline, reverse: bool
+) -> None:
+    try:
+        ct = spline.construction_tool()
+    except ValueError:
+        return
+    control_points = Vec2.list(ct.control_points)
+    knots = list(ct.knots())
+    weights = list(ct.weights())
+    if reverse:
+        control_points.reverse()
+        knots.reverse()
+        weights.reverse()
+
+    edge_path.add_spline(
+        control_points=control_points,
+        knot_values=knots,
+        weights=weights if weights else None,
+        degree=ct.degree,
+    )
+
+
+def _add_vertices_to_edge_path_2d(edge_path: bp.EdgePath, vertices: list[Vec2]) -> None:
+    for start, end in zip(vertices, vertices[1:]):
+        edge_path.add_line(start, end)
+
+
+def _add_polyline_parts_to_edge_path(
+    edge_path: bp.EdgePath,
+    entities: list[et.DXFGraphic],
+    reverse: bool,
+    max_sagitta: float,
+) -> None:
+    # reverse inverted extrusion vectors of ARC entities, this may reverse ARCs
+    upright_all(entities)
+
+    # re-connect reversed ARCs
+    edges = list(edges_from_entities_2d(entities))
+    edges = em.find_sequential_chain(edges)
+    if reverse:
+        edges = em.reverse_chain(edges)
+
+    for edge in edges:
+        entity = edge.payload
+        if isinstance(entity, et.Line):
+            _add_line_to_edge_path_2d(edge_path, entity, edge.is_reverse)
+        elif isinstance(entity, et.Arc):
+            distance = _adjust_max_sagitta(max_sagitta, edge.length)
+            _add_arc_to_edge_path_2d(edge_path, entity, edge.is_reverse, distance)
 
 
 def path2d_from_chain(edges: Sequence[em.Edge]) -> path.Path:

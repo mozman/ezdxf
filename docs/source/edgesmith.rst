@@ -36,8 +36,8 @@ This is a companion module to the :mod:`ezdxf.edgeminer` module:
 
     This is the reference documentation and not a tutorial how to use this module.
 
-Convert To Edges
-----------------
+Make Edges
+----------
 
 This functions convert open shapes into 2D edges, closed shapes as circles, closed
 arcs, closed ellipses, closed splines and closed polylines are ignored or return
@@ -47,8 +47,8 @@ arcs, closed ellipses, closed splines and closed polylines are ignored or return
 
 .. autofunction:: edges_from_entities_2d
 
-Convert From Edges
-------------------
+Build From Edges
+----------------
 
 ARC, LWPOLYLINE, POLYLINE and ELLIPSE entities must have an extrusion vector
 of (0, 0, 1) (WCS Z-Axis). Entities with an inverted extrusion vector (0, 0, -1) will be
