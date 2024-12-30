@@ -43,7 +43,22 @@ This functions convert open shapes into 2D edges, closed shapes as circles, clos
 arcs, closed ellipses, closed splines and closed polylines are ignored or return
 ``None``.
 
-.. autofunction:: make_edge_2d
+.. function:: make_edge_2d
+
+    Makes an :class:`Edge` instance from the following DXF entity types:
+
+    - :class:`~ezdxf.entities.Line` (length accurate)
+    - :class:`~ezdxf.entities.Arc` (length accurate)
+    - :class:`~ezdxf.entities.Ellipse` (length approximated)
+    - :class:`~ezdxf.entities.Spline` (length approximated as straight lines between
+      control points)
+    - :class:`~ezdxf.entities.LWPolyline` (length of bulges as straight line from
+      start- to end point)
+    - :class:`~ezdxf.entities.Polyline` (length of bulges as straight line from
+      start- to end point)
+
+    The start- and end points of the edge is projected onto the xy-plane. Returns
+    ``None`` if the entity has a closed shape or cannot be represented as an edge.
 
 .. autofunction:: edges_from_entities_2d
 
@@ -75,7 +90,7 @@ not known at the time of processing the data. E.g. for a printer/plotter a
 The convertion from output units to drawing units depends on the scale and is the task
 of the package user.
 
-All flattened curves will be projected onto the xy-plane.
+All flattened curves will be projected onto the xy-plane of the :ref:`WCS`.
 
 .. autofunction:: lwpolyline_from_chain
 
@@ -90,11 +105,56 @@ All flattened curves will be projected onto the xy-plane.
 Helper Functions
 ----------------
 
-.. autofunction:: is_closed_entity
+.. function:: is_closed_entity(entity: DXFEntity) -> bool
 
-.. autofunction:: is_spatial_entity
+    Returns ``True`` if the given entity represents a closed loop.
 
-.. autofunction:: filter_spatial_entities
+    Tests the following DXF entities:
+
+        - CIRCLE
+        - ARC
+        - ELLIPSE
+        - SPLINE
+        - LWPOLYLINE
+        - POLYLINE
+        - HATCH
+        - SOLID
+        - TRACE
+
+    Returns ``False`` for all other DXF entities.
+
+.. function:: is_pure_2d_entity(entity: DXFEntity) -> bool
+
+    Returns ``True`` if the given entity represents a pure 2D entity in the
+    xy-plane of the :ref:`WCS`.
+
+    - All vertices must be in the xy-plane of the :ref:`WCS`.
+    - Thickness must be 0.
+    - The extrusion vector must be (0, 0, 1).
+    - Entities with inverted extrusions vectors (0, 0, -1) are **not** pure 2D entities.
+      The :mod:`ezdxf.upright` module can be used to revert inverted extrusion vectors
+      back to (0, 0, 1).
+
+    Tests the following DXF entities:
+
+        - LINE
+        - CIRCLE
+        - ARC
+        - ELLIPSE
+        - SPLINE
+        - LWPOLYLINE
+        - POLYLINE
+        - HATCH
+        - SOLID
+        - TRACE
+
+    Returns ``False`` for all other DXF entities.
+
+.. autofunction:: filter_edge_entities
+
+.. autofunction:: filter_2d_entities
+
+.. autofunction:: filter_open_edges
 
 
 Global Constants

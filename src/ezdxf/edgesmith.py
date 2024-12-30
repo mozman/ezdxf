@@ -35,7 +35,11 @@ __all__ = [
     "chain_vertices",
     "edge_path_from_chain",
     "edges_from_entities_2d",
+    "filter_2d_entities",
+    "filter_edge_entities",
+    "filter_open_edges",
     "is_closed_entity",
+    "is_pure_2d_entity",
     "lwpolyline_from_chain",
     "make_edge_2d",
     "path2d_from_chain",
@@ -52,7 +56,22 @@ GAP_TOL = em.GAP_TOL
 # noinspection PyUnusedLocal
 @functools.singledispatch
 def is_closed_entity(entity: et.DXFEntity) -> bool:
-    """Returns ``True`` if the given entity represents a closed loop."""
+    """Returns ``True`` if the given entity represents a closed loop.
+
+    Tests the following DXF entities:
+
+        - CIRCLE (radius > 0)
+        - ARC
+        - ELLIPSE
+        - SPLINE
+        - LWPOLYLINE
+        - POLYLINE
+        - HATCH
+        - SOLID
+        - TRACE
+
+    Returns ``False`` for all other DXF entities.
+    """
     return False
 
 
@@ -122,11 +141,29 @@ def _is_closed_polyline2d(entity: et.Polyline) -> bool:
     return False
 
 
+@is_closed_entity.register(et.Hatch)
+def _is_closed_hatch(entity: et.Hatch) -> bool:
+    return bool(len(entity.paths))
+
+
+@is_closed_entity.register(et.Trace)
+@is_closed_entity.register(et.Solid)
+def _is_closed_solid(entity: et.Solid | et.Trace) -> bool:
+    return True
+
+
 # noinspection PyUnusedLocal
 @functools.singledispatch
-def is_spatial_entity(entity: et.DXFEntity) -> bool:
-    """Returns ``True`` if the given entity is placed outside or extend beyond the
-    xy-plane.
+def is_pure_2d_entity(entity: et.DXFEntity) -> bool:
+    """Returns ``True`` if the given entity represents a pure 2D entity in the
+    xy-plane of the WCS.
+
+    - All vertices must be in the xy-plane of the WCS.
+    - Thickness must be 0.
+    - The extrusion vector must be (0, 0, 1).
+    - Entities with inverted extrusions vectors (0, 0, -1) are **not** pure 2D entities.
+      The ezdxf.upright module can be used to revert inverted extrusion vectors
+      back to (0, 0, 1).
 
     Tests the following DXF entities:
 
@@ -137,85 +174,171 @@ def is_spatial_entity(entity: et.DXFEntity) -> bool:
         - SPLINE
         - LWPOLYLINE
         - POLYLINE
+        - HATCH
+        - SOLID
+        - TRACE
 
     Returns ``False`` for all other DXF entities.
+
     """
     return False
 
 
-@is_spatial_entity.register(et.Line)
-def _is_spatial_line(entity: et.Line) -> bool:
+@is_pure_2d_entity.register(et.Line)
+def _is_pure_2d_entity(entity: et.Line) -> bool:
     if not Z_AXIS.isclose(entity.dxf.extrusion):
-        return True
+        return False
     if abs(entity.dxf.thickness) > LEN_TOL:
-        return True
+        return False
     if abs(Vec3(entity.dxf.start).z) > LEN_TOL:
-        return True
+        return False
     if abs(Vec3(entity.dxf.end).z) > LEN_TOL:
-        return True
+        return False
+    return True
 
 
-@is_spatial_entity.register(et.Circle)
-@is_spatial_entity.register(et.Arc)
-def _is_spatial_arc(entity: et.Circle | et.Arc) -> bool:
+@is_pure_2d_entity.register(et.Circle)
+@is_pure_2d_entity.register(et.Arc)
+def _is_pure_2d_arc(entity: et.Circle | et.Arc) -> bool:
     if not Z_AXIS.isclose(entity.dxf.extrusion):
-        return True
+        return False
     if abs(Vec3(entity.dxf.center).z) > LEN_TOL:
-        return True
+        return False
     if abs(entity.dxf.elevation) > LEN_TOL:
-        return True
+        return False
     if abs(entity.dxf.thickness) > LEN_TOL:
-        return True
-    return False
+        return False
+    return True
 
 
-@is_spatial_entity.register(et.Ellipse)
-def _is_spatial_ellipse(entity: et.Ellipse) -> bool:
+@is_pure_2d_entity.register(et.Ellipse)
+def _is_pure_2d_ellipse(entity: et.Ellipse) -> bool:
     if not Z_AXIS.isclose(entity.dxf.extrusion):
-        return True
+        return False
     if abs(Vec3(entity.dxf.center).z) > LEN_TOL:
-        return True
-    return False
+        return False
+    return True
 
 
-@is_spatial_entity.register(et.Spline)
-def _is_spatial_spline(entity: et.Spline) -> bool:
+@is_pure_2d_entity.register(et.Spline)
+def _is_pure_2d_spline(entity: et.Spline) -> bool:
     if not Z_AXIS.isclose(entity.dxf.extrusion):
-        return True
+        return False
     try:
         ct = entity.construction_tool()
     except ValueError:
-        return True  # ???
+        return False
     if any(abs(v.z) > LEN_TOL for v in ct.control_points):
-        return True
-    return False
+        return False
+    return True
 
 
-@is_spatial_entity.register(et.LWPolyline)
-def _is_spatial_lwpolyline(entity: et.LWPolyline) -> bool:
+@is_pure_2d_entity.register(et.LWPolyline)
+def _is_pure_2d_lwpolyline(entity: et.LWPolyline) -> bool:
     if not Z_AXIS.isclose(entity.dxf.extrusion):
-        return True
+        return False
     if abs(entity.dxf.elevation) > LEN_TOL:
-        return True
+        return False
     if abs(entity.dxf.thickness) > LEN_TOL:
-        return True
-    return False
+        return False
+    return True
 
 
-@is_spatial_entity.register(et.Polyline)
-def _is_spatial_polyline(entity: et.Polyline) -> bool:
+@is_pure_2d_entity.register(et.Polyline)
+def _is_pure_2d_polyline(entity: et.Polyline) -> bool:
     if entity.is_polygon_mesh or entity.is_poly_face_mesh:
-        return True
+        return False
     if any(abs(v.z) > LEN_TOL for v in entity.points_in_wcs()):
-        return True
+        return False
     if abs(entity.dxf.thickness) > LEN_TOL:
-        return True
-    return False
+        return False
+    return True
 
 
-def filter_spatial_entities(entities: Iterable[et.DXFEntity]) -> Iterator[et.DXFEntity]:
-    """Removes all entities placed outside or extending beyond the xy-plane."""
-    return (e for e in entities if not is_spatial_entity(e))
+@is_pure_2d_entity.register(et.Hatch)
+def _is_pure_2d_hatch(entity: et.Hatch) -> bool:
+    if not Z_AXIS.isclose(entity.dxf.extrusion):
+        return False
+    if abs(Vec3(entity.dxf.elevation).z) > LEN_TOL:
+        return False
+    return True
+
+
+@is_pure_2d_entity.register(et.Trace)
+@is_pure_2d_entity.register(et.Solid)
+def _is_pure_2d_solid(entity: et.Solid | et.Trace) -> bool:
+    if not Z_AXIS.isclose(entity.dxf.extrusion):
+        return False
+    if abs(entity.dxf.elevation) > LEN_TOL:
+        return False
+    if abs(entity.dxf.thickness) > LEN_TOL:
+        return False
+    if any(abs(v.z) > LEN_TOL for v in entity.wcs_vertices()):
+        return False
+    return True
+
+
+def filter_edge_entities(entities: Iterable[et.DXFEntity]) -> Iterator[et.DXFEntity]:
+    """Returns all entities that can be used to build edges in the context of
+    :mod:`ezdxf.edgeminer`.
+
+    Returns the following DXF entities:
+
+        - LINE
+        - ARC
+        - ELLIPSE
+        - SPLINE
+        - LWPOLYLINE
+        - POLYLINE
+
+    .. note::
+
+        - CIRCLE, TRACE and SOLID are closed shapes by definition and cannot be used as
+          edge in the context of :mod:`ezdxf.edgeminer` or :mod:`ezdxf.edgesmith`.
+        - This filter is not limited to pure 2D entities!
+        - Does not test if the entity is a closed loop!
+
+    """
+    return (
+        entity
+        for entity in entities
+        if isinstance(
+            entity,
+            (
+                et.Line,
+                et.Arc,
+                et.Ellipse,
+                et.Spline,
+                et.LWPolyline,
+                et.Polyline,
+            ),
+        )
+    )
+
+
+def filter_2d_entities(entities: Iterable[et.DXFEntity]) -> Iterator[et.DXFEntity]:
+    """Returns all pure 2D entities, ignores all entities placed outside or extending
+    beyond the xy-plane of the :ref:`WCS`. See :func:`is_pure_2d_entity` for more
+    information.
+
+    """
+    return (e for e in entities if not is_pure_2d_entity(e))
+
+
+def filter_open_edges(entities: Iterable[et.DXFEntity]) -> Iterator[et.DXFEntity]:
+    """Returns all open linear entities usable as edges in the context of
+    :mod:`ezdxf.edgeminer` or :mod:`ezdxf.edgesmith`.
+
+    Ignores all entities that represent closed loops like circles, closed arcs, closed
+    ellipses, closed splines and closed polylines.
+
+    .. note::
+
+        This filter is not limited to pure 2D entities!
+
+    """
+    edges = filter_edge_entities(entities)
+    return (e for e in edges if not is_closed_entity(e))
 
 
 def _validate_edge(edge: em.Edge, gap_tol: float) -> em.Edge | None:
@@ -229,17 +352,14 @@ def _validate_edge(edge: em.Edge, gap_tol: float) -> em.Edge | None:
 # noinspection PyUnusedLocal
 @functools.singledispatch
 def make_edge_2d(entity: et.DXFEntity, gap_tol=GAP_TOL) -> em.Edge | None:
-    """Makes an :class:`Edge` instance from the following DXF entity types:
+    """Makes an Edge instance from the following DXF entity types:
 
-        - :class:`~ezdxf.entities.Line` (length accurate)
-        - :class:`~ezdxf.entities.Arc` (length accurate)
-        - :class:`~ezdxf.entities.Ellipse` (length approximated)
-        - :class:`~ezdxf.entities.Spline` (length approximated as straight lines between
-          control points)
-        - :class:`~ezdxf.entities.LWPolyline` (length of bulges as straight line from
-          start- to end point)
-        - :class:`~ezdxf.entities.Polyline` (length of bulges as straight line from
-          start- to end point)
+        - LINE (length accurate)
+        - ARC (length accurate)
+        - ELLIPSE (length approximated)
+        - SPLINE (length approximated as straight lines between control points)
+        - LWPOLYLINE (length of bulges as straight line from start- to end point)
+        - POLYLINE (length of bulges as straight line from start- to end point)
 
     The start- and end points of the edge is projected onto the xy-plane. Returns
     ``None`` if the entity has a closed shape or cannot be represented as an edge.
@@ -343,7 +463,7 @@ def _edge_from_polyline(entity: et.Polyline, gap_tol=GAP_TOL) -> em.Edge | None:
 def edges_from_entities_2d(
     entities: Iterable[et.DXFEntity], gap_tol=GAP_TOL
 ) -> Iterator[em.Edge]:
-    """Yields all DXF entities as 2D edges in the xy-plane.
+    """Yields all DXF entities as 2D edges in the xy-plane of the :ref:`WCS`.
 
     Skips all entities that have a closed shape or can not be represented as edge.
     """
@@ -377,7 +497,7 @@ def lwpolyline_from_chain(
 
     This function assumes the building blocks as simple DXF entities attached as payload
     to the edges. The edges are processed in order of the input sequence. The output
-    polyline is projected onto the xy-plane.
+    polyline is projected onto the xy-plane of the :ref:`WCS`.
 
         - :class:`~ezdxf.entities.Line` as line segment
         - :class:`~ezdxf.entities.Arc` as bulge
@@ -404,7 +524,7 @@ def polyline2d_from_chain(
 
     This function assumes the building blocks as simple DXF entities attached as payload
     to the edges. The edges are processed in order of the input sequence. The output
-    polyline is projected onto the xy-plane.
+    polyline is projected onto the xy-plane of the :ref:`WCS`.
 
         - :class:`~ezdxf.entities.Line` as line segment
         - :class:`~ezdxf.entities.Arc` as bulge
@@ -603,7 +723,7 @@ def polyline_path_from_chain(
 
     This function assumes the building blocks as simple DXF entities attached as payload
     to the edges. The edges are processed in order of the input sequence. The output
-    path is projected onto the xy-plane.
+    path is projected onto the xy-plane of the :ref:`WCS`.
 
         - :class:`~ezdxf.entities.Line` as line segment
         - :class:`~ezdxf.entities.Arc` as bulge
@@ -642,7 +762,7 @@ def edge_path_from_chain(
 
     This function assumes the building blocks as simple DXF entities attached as payload
     to the edges.  The edges are processed in order of the input sequence. The output
-    path is projected onto the xy-plane.
+    path is projected onto the xy-plane of the :ref:`WCS`.
 
         - :class:`~ezdxf.entities.Line` as :class:`~ezdxf.entities.LineEdge`
         - :class:`~ezdxf.entities.Arc` as :class:`~ezdxf.entities.ArcEdge`
@@ -785,7 +905,7 @@ def _add_polyline_parts_to_edge_path(
 
     # re-connect reversed ARCs
     edges = list(edges_from_entities_2d(entities))
-    edges = em.find_sequential_chain(edges)
+    edges = list(em.find_sequential_chain(edges))
     if reverse:
         edges = em.reverse_chain(edges)
 
@@ -803,7 +923,7 @@ def path2d_from_chain(edges: Sequence[em.Edge]) -> path.Path:
 
     This function assumes the building blocks as simple DXF entities attached as payload
     to the edges.  The edges are processed in order of the input sequence.  The output
-    is a 2D path projected onto the xy-plane.
+    is a 2D path projected onto the xy-plane of the :ref:`WCS`.
 
         - :class:`~ezdxf.entities.Line` as line segment
         - :class:`~ezdxf.entities.Arc` as cubic Bézier curves
