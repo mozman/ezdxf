@@ -496,8 +496,9 @@ def lwpolyline_from_chain(
     """Returns a new virtual :class:`~ezdxf.entities.LWPolyline` entity.
 
     This function assumes the building blocks as simple DXF entities attached as payload
-    to the edges. The edges are processed in order of the input sequence. The output
-    polyline is projected onto the xy-plane of the :ref:`WCS`.
+    to the edges. The edges are processed in order of the input sequence and the start-
+    and end points of the edges should be connected. The output polyline is projected
+    onto the xy-plane of the :ref:`WCS`.
 
         - :class:`~ezdxf.entities.Line` as line segment
         - :class:`~ezdxf.entities.Arc` as bulge
@@ -523,8 +524,9 @@ def polyline2d_from_chain(
     """Returns a new virtual :class:`Polyline` entity.
 
     This function assumes the building blocks as simple DXF entities attached as payload
-    to the edges. The edges are processed in order of the input sequence. The output
-    polyline is projected onto the xy-plane of the :ref:`WCS`.
+    to the edges. The edges are processed in order of the input sequence and the start-
+    and end points of the edges should be connected. The output polyline is projected
+    onto the xy-plane of the :ref:`WCS`.
 
         - :class:`~ezdxf.entities.Line` as line segment
         - :class:`~ezdxf.entities.Arc` as bulge
@@ -722,8 +724,9 @@ def polyline_path_from_chain(
     entities.
 
     This function assumes the building blocks as simple DXF entities attached as payload
-    to the edges. The edges are processed in order of the input sequence. The output
-    path is projected onto the xy-plane of the :ref:`WCS`.
+    to the edges. The edges are processed in order of the input sequence and the start-
+    and end points of the edges should be connected. The output path is projected onto
+    the xy-plane of the :ref:`WCS`.
 
         - :class:`~ezdxf.entities.Line` as line segment
         - :class:`~ezdxf.entities.Arc` as bulge
@@ -761,8 +764,9 @@ def edge_path_from_chain(
     entities.
 
     This function assumes the building blocks as simple DXF entities attached as payload
-    to the edges.  The edges are processed in order of the input sequence. The output
-    path is projected onto the xy-plane of the :ref:`WCS`.
+    to the edges. The edges are processed in order of the input sequence and the start-
+    and end points of the edges should be connected. The output path is projected onto
+    the xy-plane of the :ref:`WCS`.
 
         - :class:`~ezdxf.entities.Line` as :class:`~ezdxf.entities.LineEdge`
         - :class:`~ezdxf.entities.Arc` as :class:`~ezdxf.entities.ArcEdge`
@@ -922,8 +926,9 @@ def path2d_from_chain(edges: Sequence[em.Edge]) -> path.Path:
     """Returns a new :class:`ezdxf.path.Path` entity.
 
     This function assumes the building blocks as simple DXF entities attached as payload
-    to the edges.  The edges are processed in order of the input sequence.  The output
-    is a 2D path projected onto the xy-plane of the :ref:`WCS`.
+    to the edges. The edges are processed in order of the input sequence and the start-
+    and end points of the edges should be connected. The output is a 2D path projected
+    onto the xy-plane of the :ref:`WCS`.
 
         - :class:`~ezdxf.entities.Line` as line segment
         - :class:`~ezdxf.entities.Arc` as cubic Bézier curves

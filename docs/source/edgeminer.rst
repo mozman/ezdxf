@@ -88,7 +88,7 @@ Simple Chain (special to this module)
 .. image:: gfx/em-simple-chains.png
 
 Open Chain
-    An open chain is a chain which starts and ends with at leaf.
+    An open chain is a chain which starts and ends with a leaf.
     A solitary edge is also an open chain.
     Graph Theory: Path - no edge is repeated, no vertex is repeated, endings not connected
 
