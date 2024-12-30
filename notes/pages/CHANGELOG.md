@@ -1,5 +1,9 @@
-## Version 1.3.6 - dev
+## Version 1.4.0 - dev
+	- NEW: `ezdxf.edgeminer` module to find connected edges
+	- NEW: `ezdxf.edgesmith` module, a companion module for `edgeminer` to create edges from DXF entities and convert connected edges back to DXF entities
 	- NEW: `Mesh.audit()` removes `MESH` entities without vertices or faces
+	- NEW: `Polyline.points_in_wcs()` method
+	- NEW: `EdgePath.close_gaps()` method
 	- BUGFIX: Exported `MESH` entities  without vertices or faces create invalid DXF files
 		- {{issue 1219}}
 - ## Version 1.3.5 - 2024-12-15
