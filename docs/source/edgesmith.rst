@@ -60,7 +60,7 @@ Curve Approximation
 
 For some target entities curves have to be approximated by polylines.
 This process is also called flattening and is controlled by the parameter
-:attr:`max_sagitta`.
+:attr:`max_sagitta`. (`Wikipedia <https://en.wikipedia.org/wiki/Sagitta_(geometry)>`_)
 
 The :attr:`max_sagitta` argument defines the maximum distance from the center of the
 curve segment to the center of the line segment between two approximation points to
@@ -86,6 +86,16 @@ All flattened curves will be projected onto the xy-plane.
 .. autofunction:: polyline_path_from_chain
 
 .. autofunction:: path2d_from_chain
+
+Helper Functions
+----------------
+
+.. autofunction:: is_closed_entity
+
+.. autofunction:: is_spatial_entity
+
+.. autofunction:: filter_spatial_entities
+
 
 Global Constants
 ----------------

@@ -122,6 +122,102 @@ def _is_closed_polyline2d(entity: et.Polyline) -> bool:
     return False
 
 
+# noinspection PyUnusedLocal
+@functools.singledispatch
+def is_spatial_entity(entity: et.DXFEntity) -> bool:
+    """Returns ``True`` if the given entity is placed outside or extend beyond the
+    xy-plane.
+
+    Tests the following DXF entities:
+
+        - LINE
+        - CIRCLE
+        - ARC
+        - ELLIPSE
+        - SPLINE
+        - LWPOLYLINE
+        - POLYLINE
+
+    Returns ``False`` for all other DXF entities.
+    """
+    return False
+
+
+@is_spatial_entity.register(et.Line)
+def _is_spatial_line(entity: et.Line) -> bool:
+    if not Z_AXIS.isclose(entity.dxf.extrusion):
+        return True
+    if abs(entity.dxf.thickness) > LEN_TOL:
+        return True
+    if abs(Vec3(entity.dxf.start).z) > LEN_TOL:
+        return True
+    if abs(Vec3(entity.dxf.end).z) > LEN_TOL:
+        return True
+
+
+@is_spatial_entity.register(et.Circle)
+@is_spatial_entity.register(et.Arc)
+def _is_spatial_arc(entity: et.Circle | et.Arc) -> bool:
+    if not Z_AXIS.isclose(entity.dxf.extrusion):
+        return True
+    if abs(Vec3(entity.dxf.center).z) > LEN_TOL:
+        return True
+    if abs(entity.dxf.elevation) > LEN_TOL:
+        return True
+    if abs(entity.dxf.thickness) > LEN_TOL:
+        return True
+    return False
+
+
+@is_spatial_entity.register(et.Ellipse)
+def _is_spatial_ellipse(entity: et.Ellipse) -> bool:
+    if not Z_AXIS.isclose(entity.dxf.extrusion):
+        return True
+    if abs(Vec3(entity.dxf.center).z) > LEN_TOL:
+        return True
+    return False
+
+
+@is_spatial_entity.register(et.Spline)
+def _is_spatial_spline(entity: et.Spline) -> bool:
+    if not Z_AXIS.isclose(entity.dxf.extrusion):
+        return True
+    try:
+        ct = entity.construction_tool()
+    except ValueError:
+        return True  # ???
+    if any(abs(v.z) > LEN_TOL for v in ct.control_points):
+        return True
+    return False
+
+
+@is_spatial_entity.register(et.LWPolyline)
+def _is_spatial_lwpolyline(entity: et.LWPolyline) -> bool:
+    if not Z_AXIS.isclose(entity.dxf.extrusion):
+        return True
+    if abs(entity.dxf.elevation) > LEN_TOL:
+        return True
+    if abs(entity.dxf.thickness) > LEN_TOL:
+        return True
+    return False
+
+
+@is_spatial_entity.register(et.Polyline)
+def _is_spatial_polyline(entity: et.Polyline) -> bool:
+    if entity.is_polygon_mesh or entity.is_poly_face_mesh:
+        return True
+    if any(abs(v.z) > LEN_TOL for v in entity.points_in_wcs()):
+        return True
+    if abs(entity.dxf.thickness) > LEN_TOL:
+        return True
+    return False
+
+
+def filter_spatial_entities(entities: Iterable[et.DXFEntity]) -> Iterator[et.DXFEntity]:
+    """Removes all entities placed outside or extending beyond the xy-plane."""
+    return (e for e in entities if not is_spatial_entity(e))
+
+
 def _validate_edge(edge: em.Edge, gap_tol: float) -> em.Edge | None:
     if edge.start.distance(edge.end) < gap_tol:
         return None
@@ -539,7 +635,7 @@ def polyline_path_from_chain(
 
 
 def edge_path_from_chain(
-    edges: Sequence[em.Edge], max_sagitta: float = -1, flags:int=1
+    edges: Sequence[em.Edge], max_sagitta: float = -1, flags: int = 1
 ) -> bp.EdgePath:
     """Returns a new :class:`~ezdxf.entities.EdgePath` for :class:`~ezdxf.entities.Hatch`
     entities.
