@@ -200,6 +200,15 @@ class BoundaryPaths:
             ignore = 2
         return (p for path_type, _, p in paths if path_type < ignore)
 
+    def append(self, path: AbstractBoundaryPath) -> None:
+        """Append a new boundary path.
+
+        .. versionadded:: 1.4
+        """
+        if not isinstance(path, AbstractBoundaryPath):
+            raise TypeError(f"invalid path type: {type(path)}")
+        self.paths.append(path)
+
     def add_polyline_path(
         self,
         path_vertices: Iterable[tuple[float, ...]],
@@ -212,23 +221,23 @@ class BoundaryPaths:
             path_vertices: iterable of polyline vertices as (x, y) or
                 (x, y, bulge)-tuples.
             is_closed: 1 for a closed polyline else 0
-            flags: external(1) or outermost(16) or default (0)
+            flags: default(0), external(1), derived(4), textbox(8) or outermost(16)
 
         """
         new_path = PolylinePath.from_vertices(path_vertices, is_closed, flags)
-        self.paths.append(new_path)
+        self.append(new_path)
         return new_path
 
     def add_edge_path(self, flags: int = 1) -> EdgePath:
         """Create and add a new :class:`EdgePath` object.
 
         Args:
-            flags: external(1) or outermost(16) or default (0)
+            flags: default(0), external(1), derived(4), textbox(8) or outermost(16)
 
         """
         new_path = EdgePath()
         new_path.path_type_flags = flags
-        self.paths.append(new_path)
+        self.append(new_path)
         return new_path
 
     def export_dxf(self, tagwriter: AbstractTagWriter, dxftype: str) -> None:
@@ -587,10 +596,9 @@ class PolylinePath(AbstractBoundaryPath):
             path_vertices: iterable of polyline vertices as (x, y) or
                 (x, y, bulge)-tuples.
             is_closed: 1 for a closed polyline else 0
-            flags: external(1) or outermost(16) or default (0)
+            flags: default(0), external(1), derived(4), textbox(8) or outermost(16)
 
         """
-
         new_path = PolylinePath()
         new_path.set_vertices(path_vertices, is_closed)
         new_path.path_type_flags = flags | const.BOUNDARY_PATH_POLYLINE
