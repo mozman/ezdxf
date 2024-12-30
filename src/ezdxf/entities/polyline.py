@@ -332,15 +332,40 @@ class Polyline(LinkedEntities):
         return len(self.vertices)
 
     def __getitem__(self, pos) -> DXFVertex:
-        """Get :class:`Vertex` entity at position `pos`, supports list-like slicing.
-        """
+        """Get :class:`Vertex` entity at position `pos`, supports list-like slicing."""
         return self.vertices[pos]
 
     def points(self) -> Iterator[Vec3]:
-        """Returns iterable of all polyline vertices as (x, y, z) tuples,
-        not as :class:`Vertex` objects.
+        """Returns all polyline points in :ref:`OCS` or :ref:`WCS` coordinates as
+        :class:`~ezdxf.math.Vec3`.
+
+        These are the raw location coordinates stored in the :class:`Vertex` entities.
+        A separately stored elevation value will not be applied. The points of
+        2D polylines are :ref:`OCS` coordinates other polyline types return :ref:`WCS`
+        coordinates.
         """
         return (vertex.dxf.location for vertex in self.vertices)
+
+    def points_in_wcs(self) -> Iterator[Vec3]:
+        """Returns all polyline points in :ref:`WCS` coordinates as
+        :class:`~ezdxf.math.Vec3`.
+
+        .. versionadded:: 1.4
+
+        """
+        points = self.points()
+        if not self.is_2d_polyline:
+            return points
+
+        elevation: float = self.dxf.elevation.z
+        if elevation:
+            points = (p.replace(z=elevation) for p in points)
+
+        if Z_AXIS.isclose(self.dxf.extrusion):  # OCS == WCS
+            return points
+
+        ocs = self.ocs()
+        return ocs.points_to_wcs(points)
 
     def _append_vertex(self, vertex: DXFVertex) -> None:
         self.vertices.append(vertex)

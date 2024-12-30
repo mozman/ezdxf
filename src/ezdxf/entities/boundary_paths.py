@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2023, Manfred Moitzi
+#  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
 from typing import Union, Iterable, Sequence, Optional, TYPE_CHECKING
@@ -79,6 +79,7 @@ class AbstractBoundaryPath(abc.ABC):
     @abc.abstractmethod
     def is_valid(self) -> bool: ...
 
+
 class AbstractEdge(abc.ABC):
     type: EdgeType
 
@@ -99,6 +100,14 @@ class AbstractEdge(abc.ABC):
     @abc.abstractmethod
     def is_valid(self) -> bool: ...
 
+    @property
+    def real_start_point(self) -> Vec2:
+        return self.start_point
+
+    @property
+    def real_end_point(self) -> Vec2:
+        return self.end_point
+
 
 class BoundaryPaths:
     def __init__(self, paths: Optional[list[AbstractBoundaryPath]] = None):
@@ -112,9 +121,9 @@ class BoundaryPaths:
 
     def __iter__(self):
         return iter(self.paths)
-    
+
     def is_valid(self) -> bool:
-        return  all(p.is_valid() for p in self.paths)
+        return all(p.is_valid() for p in self.paths)
 
     @classmethod
     def load_tags(cls, tags: Tags) -> BoundaryPaths:
@@ -155,9 +164,7 @@ class BoundaryPaths:
 
     def default_paths(self) -> Iterable[AbstractBoundaryPath]:
         """Iterable of default paths, could be empty."""
-        not_default = (
-            const.BOUNDARY_PATH_OUTERMOST + const.BOUNDARY_PATH_EXTERNAL
-        )
+        not_default = const.BOUNDARY_PATH_OUTERMOST + const.BOUNDARY_PATH_EXTERNAL
         for b in self.paths:
             if bool(b.path_type_flags & not_default) is False:
                 yield b
@@ -184,8 +191,7 @@ class BoundaryPaths:
             return 2
 
         paths = sorted(
-            (path_type_enum(p.path_type_flags), i, p)
-            for i, p in enumerate(self.paths)
+            (path_type_enum(p.path_type_flags), i, p) for i, p in enumerate(self.paths)
         )
         ignore = 1  # EXTERNAL only
         if hatch_style == const.HATCH_STYLE_NESTED:
@@ -193,6 +199,15 @@ class BoundaryPaths:
         elif hatch_style == const.HATCH_STYLE_OUTERMOST:
             ignore = 2
         return (p for path_type, _, p in paths if path_type < ignore)
+
+    def append(self, path: AbstractBoundaryPath) -> None:
+        """Append a new boundary path.
+
+        .. versionadded:: 1.4
+        """
+        if not isinstance(path, AbstractBoundaryPath):
+            raise TypeError(f"invalid path type: {type(path)}")
+        self.paths.append(path)
 
     def add_polyline_path(
         self,
@@ -206,23 +221,23 @@ class BoundaryPaths:
             path_vertices: iterable of polyline vertices as (x, y) or
                 (x, y, bulge)-tuples.
             is_closed: 1 for a closed polyline else 0
-            flags: external(1) or outermost(16) or default (0)
+            flags: default(0), external(1), derived(4), textbox(8) or outermost(16)
 
         """
         new_path = PolylinePath.from_vertices(path_vertices, is_closed, flags)
-        self.paths.append(new_path)
+        self.append(new_path)
         return new_path
 
     def add_edge_path(self, flags: int = 1) -> EdgePath:
         """Create and add a new :class:`EdgePath` object.
 
         Args:
-            flags: external(1) or outermost(16) or default (0)
+            flags: default(0), external(1), derived(4), textbox(8) or outermost(16)
 
         """
         new_path = EdgePath()
         new_path.path_type_flags = flags
-        self.paths.append(new_path)
+        self.append(new_path)
         return new_path
 
     def export_dxf(self, tagwriter: AbstractTagWriter, dxftype: str) -> None:
@@ -272,15 +287,13 @@ class BoundaryPaths:
                         end_angle,
                         arc.radius,
                     ) = bulge_to_arc(prev_point, point, prev_bulge)
-                    chk_point = arc.center + Vec2.from_angle(
-                        start_angle, arc.radius
-                    )
+                    chk_point = arc.center + Vec2.from_angle(start_angle, arc.radius)
                     arc.ccw = chk_point.isclose(prev_point, abs_tol=1e-9)
                     arc.start_angle = math.degrees(start_angle) % 360.0
                     arc.end_angle = math.degrees(end_angle) % 360.0
-                    if math.isclose(
-                        arc.start_angle, arc.end_angle
-                    ) and math.isclose(arc.start_angle, 0):
+                    if math.isclose(arc.start_angle, arc.end_angle) and math.isclose(
+                        arc.start_angle, 0
+                    ):
                         arc.end_angle = 360.0
                     yield arc
                 else:
@@ -444,9 +457,7 @@ class BoundaryPaths:
                 start_param=edge.start_param,
                 end_param=edge.end_param,
             )
-            segment_count = max(
-                int(float(num) * ellipse.param_span / math.tau), 3
-            )
+            segment_count = max(int(float(num) * ellipse.param_span / math.tau), 3)
             params = ellipse.params(segment_count + 1)
 
             # Reverse path if necessary!
@@ -571,7 +582,7 @@ class PolylinePath(AbstractBoundaryPath):
 
     def is_valid(self) -> bool:
         return True
-    
+
     @classmethod
     def from_vertices(
         cls,
@@ -585,10 +596,9 @@ class PolylinePath(AbstractBoundaryPath):
             path_vertices: iterable of polyline vertices as (x, y) or
                 (x, y, bulge)-tuples.
             is_closed: 1 for a closed polyline else 0
-            flags: external(1) or outermost(16) or default (0)
+            flags: default(0), external(1), derived(4), textbox(8) or outermost(16)
 
         """
-
         new_path = PolylinePath()
         new_path.set_vertices(path_vertices, is_closed)
         new_path.path_type_flags = flags | const.BOUNDARY_PATH_POLYLINE
@@ -670,9 +680,7 @@ class PolylinePath(AbstractBoundaryPath):
                 write_tag(42, float(bulge))
 
         if dxftype == "HATCH":
-            export_source_boundary_objects(
-                tagwriter, self.source_boundary_objects
-            )
+            export_source_boundary_objects(tagwriter, self.source_boundary_objects)
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         """Transform polyline path."""
@@ -711,9 +719,7 @@ class EdgePath(AbstractBoundaryPath):
     @classmethod
     def load_tags(cls, tags: Tags) -> EdgePath:
         edge_path = cls()
-        edge_path.source_boundary_objects = pop_source_boundary_objects_tags(
-            tags
-        )
+        edge_path.source_boundary_objects = pop_source_boundary_objects_tags(tags)
         for edge_tags in group_tags(tags, splitcode=72):
             if len(edge_tags) == 0:
                 continue
@@ -925,6 +931,33 @@ class EdgePath(AbstractBoundaryPath):
             edge.export_dxf(tagwriter)
         export_source_boundary_objects(tagwriter, self.source_boundary_objects)
 
+    def close_gaps(self, len_tol: float) -> None:
+        """Insert line-edges between the existing edges if the gap between these edges
+        are bigger than `len_tol`.
+
+        .. versionadded:: 1.4
+
+        """
+        if len(self.edges) < 2:
+            return
+        current_edges = list(self.edges)
+        first_edge = current_edges.pop(0)
+        current_edges.append(first_edge)
+
+        new_edges: list[AbstractEdge] = [first_edge]
+        end_point = first_edge.real_end_point
+        for edge in current_edges:
+            start_point = edge.real_start_point
+            if end_point.distance(start_point) > len_tol:
+                line_edge = LineEdge()
+                line_edge.start = end_point
+                line_edge.end = start_point
+                new_edges.append(line_edge)
+            if edge is not first_edge:
+                new_edges.append(edge)
+            end_point = edge.real_end_point
+        self.edges = new_edges
+
 
 class LineEdge(AbstractEdge):
     EDGE_TYPE = "LineEdge"  # 2021-05-31: deprecated use type
@@ -936,7 +969,7 @@ class LineEdge(AbstractEdge):
 
     def is_valid(self) -> bool:
         return True
-    
+
     @property
     def start_point(self) -> Vec2:
         return self.start
@@ -993,8 +1026,20 @@ class ArcEdge(AbstractEdge):
         return self.construction_tool().start_point
 
     @property
+    def real_start_point(self) -> Vec2:
+        if self.ccw:
+            return self.start_point
+        return self.end_point
+
+    @property
     def end_point(self) -> Vec2:
         return self.construction_tool().end_point
+
+    @property
+    def real_end_point(self) -> Vec2:
+        if self.ccw:
+            return self.end_point
+        return self.start_point
 
     @classmethod
     def load_tags(cls, tags: Tags) -> ArcEdge:
@@ -1103,6 +1148,18 @@ class EllipseEdge(AbstractEdge):
     @property
     def end_point(self) -> Vec2:
         return self.construction_tool().end_point.vec2
+
+    @property
+    def real_start_point(self) -> Vec2:
+        if self.ccw:
+            return self.start_point
+        return self.end_point
+
+    @property
+    def real_end_point(self) -> Vec2:
+        if self.ccw:
+            return self.end_point
+        return self.start_point
 
     @property
     def start_param(self) -> float:
@@ -1323,9 +1380,7 @@ class SplineEdge(AbstractEdge):
             for value in self.knot_values:
                 write_tag(40, float(value))
         else:
-            raise const.DXFValueError(
-                "SplineEdge: missing required knot values"
-            )
+            raise const.DXFValueError("SplineEdge: missing required knot values")
 
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes

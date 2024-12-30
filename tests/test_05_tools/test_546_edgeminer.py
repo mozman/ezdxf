@@ -827,5 +827,32 @@ class TestSortEdgesByAngle:
         assert result[1] is self.B
 
 
+class TestSubtractEdges:
+    def test_subtract_nothing(self):
+        edges = list(grid())
+        result = em.subtract_edges(edges, [])
+        assert len(result) == len(edges)
+
+    def test_subtract_from_nothing(self):
+        edges = list(grid())
+        result = em.subtract_edges([], edges)
+        assert len(result) == 0
+
+    def test_subtract_one_edge(self):
+        edges = list(grid())
+        first = edges[0]
+        result = em.subtract_edges(edges, [first])
+        assert len(result) == len(edges) - 1
+        assert first not in result
+
+    def test_subtract_two_edges(self):
+        edges = list(grid())
+        two = edges[:2]
+        result = em.subtract_edges(edges, two)
+        assert len(result) == len(edges) - 2
+        assert two[0] not in result
+        assert two[1] not in result
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

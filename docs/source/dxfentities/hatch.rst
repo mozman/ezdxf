@@ -51,7 +51,7 @@ Path manager: :class:`BoundaryPaths`
 
 - :class:`Pattern`
 - :class:`PatternLine`
-- :class:`Gradien`
+- :class:`Gradient`
 
 .. class:: Hatch
 
@@ -213,6 +213,8 @@ Hatch Boundary Classes
 
     .. automethod:: rendering_paths
 
+    .. automethod:: append
+
     .. automethod:: add_polyline_path
 
     .. automethod:: add_edge_path
@@ -261,6 +263,8 @@ Hatch Boundary Classes
         0   default
         1   external
         2   polyline, will be set by `ezdxf`
+        4   derived (?)
+        8   textbox
         16  outermost
         === ====================================
 
@@ -347,6 +351,8 @@ Hatch Boundary Classes
     .. automethod:: add_ellipse
 
     .. automethod:: add_spline
+
+    .. automethod:: close_gaps
 
 
 .. class:: EdgeType

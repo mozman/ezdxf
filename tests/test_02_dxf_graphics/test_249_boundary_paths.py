@@ -1,9 +1,13 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2024, Manfred Moitzi
 #  License: MIT License
 
 import pytest
 from ezdxf.math import Vec3
-from ezdxf.entities import BoundaryPaths, BoundaryPathType, EdgeType
+from ezdxf.entities import (
+    BoundaryPaths,
+    BoundaryPathType,
+    EdgeType,
+)
 
 
 def test_add_polyline_path():
@@ -195,7 +199,7 @@ class TestValidatingBoundaryPaths:
         assert spline.is_valid() is False, "too many knot value"
         spline.knot_values = [0, 0, 0, 0]
         assert spline.is_valid() is False, "too few knot value"
-        
+
         assert paths.is_valid() is False, "invalid state should be propagated"
 
     def test_spline_edge_has_enough_control_points(self):
@@ -216,6 +220,115 @@ class TestValidatingBoundaryPaths:
         assert spline.is_valid() is True, "expected 2 or more points"
         spline.fit_points = [(0, 0)]
         assert spline.is_valid() is False, "too few fit points"
+
+
+def test_real_start_point_of_arc_edge():
+    paths = BoundaryPaths()
+    edge_path = paths.add_edge_path()
+    arc_edge = edge_path.add_arc(
+        (1, 0), radius=1, start_angle=0, end_angle=180, ccw=True
+    )
+    assert arc_edge.real_start_point.isclose((2, 0))
+    arc_edge = edge_path.add_arc(
+        (1, 0), radius=1, start_angle=0, end_angle=180, ccw=False
+    )
+    assert arc_edge.real_start_point.isclose((0, 0))
+
+
+def test_real_start_point_of_ellipse_edge():
+    paths = BoundaryPaths()
+    edge_path = paths.add_edge_path()
+    arc_edge = edge_path.add_ellipse(
+        (1, 0), major_axis=(1, 0), ratio=1, start_angle=0, end_angle=180, ccw=True
+    )
+    assert arc_edge.real_start_point.isclose((2, 0))
+    arc_edge = edge_path.add_ellipse(
+        (1, 0), major_axis=(1, 0), ratio=1, start_angle=0, end_angle=180, ccw=False
+    )
+    assert arc_edge.real_start_point.isclose((0, 0))
+
+
+def test_real_end_point_of_arc_edge():
+    paths = BoundaryPaths()
+    edge_path = paths.add_edge_path()
+    arc_edge = edge_path.add_arc(
+        (1, 0), radius=1, start_angle=0, end_angle=180, ccw=True
+    )
+    assert arc_edge.real_end_point.isclose((0, 0))
+    arc_edge = edge_path.add_arc(
+        (1, 0), radius=1, start_angle=0, end_angle=180, ccw=False
+    )
+    assert arc_edge.real_end_point.isclose((2, 0))
+
+
+def test_real_end_point_of_ellipse_edge():
+    paths = BoundaryPaths()
+    edge_path = paths.add_edge_path()
+    arc_edge = edge_path.add_ellipse(
+        (1, 0), major_axis=(1, 0), ratio=1, start_angle=0, end_angle=180, ccw=True
+    )
+    assert arc_edge.real_end_point.isclose((0, 0))
+    arc_edge = edge_path.add_ellipse(
+        (1, 0), major_axis=(1, 0), ratio=1, start_angle=0, end_angle=180, ccw=False
+    )
+    assert arc_edge.real_end_point.isclose((2, 0))
+
+
+class TestCloseGapsOfEdgePaths:
+    def test_gap_between_line_edges(self):
+        paths = BoundaryPaths()
+        edge_path = paths.add_edge_path()
+        edge_path.add_line((0, 0), (1, 0))
+        edge_path.add_line((1.1, 0), (1, 1))
+        edge_path.add_line((1, 1), (0, 0))
+        edge_path.close_gaps(0.01)
+        assert len(edge_path.edges) == 4
+
+    def test_gap_between_last_and_first_line(self):
+        paths = BoundaryPaths()
+        edge_path = paths.add_edge_path()
+        edge_path.add_line((0, 0), (1, 0))
+        edge_path.add_line((1, 0), (1, 1))
+        edge_path.add_line((1, 1), (0, 0.1))
+        edge_path.close_gaps(0.01)
+        assert len(edge_path.edges) == 4
+
+    def test_gap_between_arc_and_line_ccw(self):
+        paths = BoundaryPaths()
+        edge_path = paths.add_edge_path()
+        edge_path.add_arc((1, 0), radius=1, start_angle=0, end_angle=180)
+        edge_path.add_line((0, 0), (1.9, 0))
+        edge_path.close_gaps(0.01)
+        assert len(edge_path.edges) == 3
+
+    def test_gap_between_arc_and_line_cw(self):
+        paths = BoundaryPaths()
+        edge_path = paths.add_edge_path()
+        edge_path.add_arc((1, 0), radius=1, start_angle=0, end_angle=180, ccw=False)
+        edge_path.add_line((1.9, 0), (0, 0))
+        edge_path.close_gaps(0.01)
+        assert len(edge_path.edges) == 3
+
+    def test_gap_between_ellipse_and_line_ccw(self):
+        paths = BoundaryPaths()
+        edge_path = paths.add_edge_path()
+        edge_path.add_ellipse(
+            (1, 0), major_axis=(1, 0), ratio=1, start_angle=0, end_angle=180
+        )
+        edge_path.add_line((0, 0), (1.9, 0))
+        edge_path.close_gaps(0.01)
+        assert len(edge_path.edges) == 3
+
+    def test_gap_between_ellipse_and_line_cw(self):
+        paths = BoundaryPaths()
+        edge_path = paths.add_edge_path()
+        edge_path.add_ellipse(
+            (1, 0), major_axis=(1, 0), ratio=1, start_angle=0, end_angle=180, ccw=False
+        )
+        edge_path.add_line((1.9, 0), (0, 0))
+        edge_path.close_gaps(0.01)
+        assert len(edge_path.edges) == 3
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

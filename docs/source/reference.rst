@@ -90,6 +90,8 @@ Construction
     acis
     bbox
     disassemble
+    edgeminer
+    edgesmith
     math_construction_tools
     path
     reorder
