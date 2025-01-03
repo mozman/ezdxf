@@ -280,11 +280,133 @@ To process only 2D entities us the :func:`~ezdxf.edgesmith.filter_2d_entities`
 function that returns only pure 2D entities and ignores all entities placed outside or
 extending beyond the xy-plane.
 
+Junctions
+---------
+
+A junction is a vertex with a degree of 3 or more and adds complexity to the task of
+finding geometry. There is not a single solution that fits all needs and some goals are
+not achievable by the :mod:`ezdxf.edgeminer` module.
+
+This is the starting point for the following examples, each red circle marks a junction:
+
+.. image:: gfx/edges_05_lines.png
+
+You can check the complexity of your problem by printing the degree-counter:
+
+.. code-block:: Python
+
+    print(deposit.degree_counter())
+
+Output::
+
+    Counter({2: 15, 3: 4})
+
+There a 15 vertices of degree 2 (good) and 4 vertices of degree 3 (bad).
+
+Find All Simple Chains
+~~~~~~~~~~~~~~~~~~~~~~
+
+A simple chain starts and ends with a leaf or a junction, hence there are no decisions
+to make and and finding them is also fast by using a spatial search index.
+
+.. code-block:: Python
+
+    # load data
+    doc = ezdxf.readfile("junctions.dxf")
+    msp = doc.modelspace()
+    lines = msp.query("LINE")
+
+    # create edges and search index
+    edges = list(edgesmith.edges_from_entities_2d(lines))
+    deposit = edgeminer.Deposit(edges)
+
+    # find chains
+    chains = edgeminer.find_all_simple_chains(deposit)
+
+    # create a new output document
+    out = ezdxf.new()
+    msp = out.modelspace()
+    color = 1
+    for chain in chains:
+        polyline = edgesmith.lwpolyline_from_chain(
+            chain, dxfattribs={"color": color}
+        )
+        msp.add_entity(polyline)
+        color += 1
+    out.saveas("simple_chains.dxf")
+
+
+Each color represents a separated LWPOLYLINE:
+
+.. image:: gfx/edges_05_simple_chains.png
+
+Find All Loops
+~~~~~~~~~~~~~~
+
+This task is harder and an edge can be part of multiple solutions:
+
+.. code-block:: Python
+
+    # same code as in the previous example til here
+    # find chains
+    loops = edgeminer.find_all_loops(deposit)
+
+    # create a new output document
+    out = ezdxf.new()
+    msp = out.modelspace()
+    color = 1
+    for loop in loops:
+        layer = f"LOOP_{color}"
+        polyline = edgesmith.lwpolyline_from_chain(
+            loop, dxfattribs={"color": color, "layer": layer}
+        )
+        msp.add_entity(polyline)
+        color += 1
+    out.saveas("loops.dxf")
+
+
+These are 6 of the 7 solutions, the 7th solution is the dashed line:
+
+.. image:: gfx/edges_05_loops.png
+
+The :func:`~ezdxf.edgeminer.find_all_loops` function is a recursive backtracking
+algorithm and has a complexity of O(n!), therefore all recursive search functions
+have a timeout argument to end the task before the universe ends.
+
+These helper functions may help you to choose a solution, but the default length
+calculation for edges is not precise!
+
+- :func:`ezdxf.edgeminer.longest_chain`
+- :func:`ezdxf.edgeminer.shortest_chain`
+
+Find One Loop For a Given Edge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :func:`~ezdxf.edgeminer.find_loop_by_edge` function starts at a given edge and has a
+preferred `clockwise` or `counter-clockwise` search order. The algorithm chooses the
+next edge at a junction in `clockwise` order if the argument :attr:`clockwise` is ``True``
+otherwise the first `counter-clockwise` edge. This is a fast non-recursive algorithm.
+
+.. code-block:: Python
+
+    edges = list(edgesmith.edges_from_entities_2d(lines))
+    deposit = edgeminer.Deposit(edges)
+
+    # choose an edge to start with
+    start = edges[0]
+    loop1 = edgeminer.find_loop_by_edge(deposit, start, clockwise=True)
+    loop2 = edgeminer.find_loop_by_edge(deposit, start, clockwise=False)
+
+.. image:: gfx/edges_05_choose_order.png
+
+Red is the `clockwise` solution and yellow is the `counter-clockwise` solution:
+
+.. image:: gfx/edges_05_find_loop_by_edge.png
+
 
 TODO
 ----
 
-    - Junctions
     - Coincident edges
     - Gaps and drawing imprecision
 

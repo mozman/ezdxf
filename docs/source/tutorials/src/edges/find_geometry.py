@@ -17,22 +17,6 @@ def new_doc():
     return doc, doc.modelspace()
 
 
-def flatten_3d_entities():
-    doc = ezdxf.readfile(CWD / "edges_3d.dxf")
-    msp = doc.modelspace()
-
-    # create edges and search index
-    edges = list(edgesmith.edges_from_entities_2d(msp))
-    deposit = edgeminer.Deposit(edges)
-    # find a chain
-    chain = edgeminer.find_simple_chain(deposit, edges[0])
-    # add a hatch and add the boundary path
-    hatch = msp.add_hatch(color=colors.BLUE)
-    boundary_path = edgesmith.polyline_path_from_chain(chain, max_sagitta=0.01)
-    hatch.paths.append(boundary_path)
-    doc.saveas(OUTBOX/"flattened_hatch.dxf")
-
-
 def basics():
     # create a new doc
     doc, msp = new_doc()
@@ -83,6 +67,88 @@ def basics():
     doc.saveas(OUTBOX / "hatch1.dxf")
 
 
+def flatten_3d_entities():
+    doc = ezdxf.readfile(CWD / "edges_3d.dxf")
+    msp = doc.modelspace()
+
+    # create edges and search index
+    edges = list(edgesmith.edges_from_entities_2d(msp))
+    deposit = edgeminer.Deposit(edges)
+    # find a chain
+    chain = edgeminer.find_simple_chain(deposit, edges[0])
+    # add a hatch and add the boundary path
+    hatch = msp.add_hatch(color=colors.BLUE)
+    boundary_path = edgesmith.polyline_path_from_chain(chain, max_sagitta=0.01)
+    hatch.paths.append(boundary_path)
+    doc.saveas(OUTBOX / "flattened_hatch.dxf")
+
+
+def find_all_simple_chains():
+    doc = ezdxf.readfile(CWD / "junctions.dxf")
+    msp = doc.modelspace()
+    lines = msp.query("LINE")
+    edges = list(edgesmith.edges_from_entities_2d(lines))
+    deposit = edgeminer.Deposit(edges)
+    chains = edgeminer.find_all_simple_chains(deposit)
+
+    out = ezdxf.new()
+    msp = out.modelspace()
+    color = 1
+    for chain in chains:
+        polyline = edgesmith.lwpolyline_from_chain(chain, dxfattribs={"color": color})
+        msp.add_entity(polyline)
+        color += 1
+    out.saveas(OUTBOX / "simple_chains.dxf")
+
+
+def find_all_loops():
+    doc = ezdxf.readfile(CWD / "junctions.dxf")
+    msp = doc.modelspace()
+    lines = msp.query("LINE")
+    edges = list(edgesmith.edges_from_entities_2d(lines))
+    deposit = edgeminer.Deposit(edges)
+    print(deposit.degree_counter())
+    loops = edgeminer.find_all_loops(deposit)
+    print(f"Found {len(loops)} loops.")
+    out = ezdxf.new()
+    msp = out.modelspace()
+    color = 1
+    for loop in loops:
+        layer = f"LOOP_{color}"
+        polyline = edgesmith.lwpolyline_from_chain(
+            loop, dxfattribs={"color": color, "layer": layer}
+        )
+        msp.add_entity(polyline)
+        color += 1
+    out.saveas(OUTBOX / "loops.dxf")
+
+
+def find_loop_by_edge():
+    doc = ezdxf.readfile(CWD / "junctions.dxf")
+    msp = doc.modelspace()
+    lines = msp.query("LINE")
+    edges = list(edgesmith.edges_from_entities_2d(lines))
+    deposit = edgeminer.Deposit(edges)
+
+    start = edges[0]
+    loop1 = edgeminer.find_loop_by_edge(deposit, start, clockwise=True)
+    loop2 = edgeminer.find_loop_by_edge(deposit, start, clockwise=False)
+    out = ezdxf.new()
+    msp = out.modelspace()
+    color = 1
+    for loop in [loop1, loop2]:
+        layer = f"LOOP_{color}"
+        polyline = edgesmith.lwpolyline_from_chain(
+            loop, dxfattribs={"color": color, "layer": layer}
+        )
+        msp.add_entity(polyline)
+        color += 1
+    out.saveas(OUTBOX / "find_loop_by_edge.dxf")
+
+
 if __name__ == "__main__":
     # basics()
-    flatten_3d_entities()
+    # flatten_3d_entities()
+    # find_all_simple_chains()
+    # find_all_loops()
+    find_loop_by_edge()
