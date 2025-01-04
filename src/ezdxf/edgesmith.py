@@ -35,6 +35,7 @@ from ezdxf.math import (
     intersection_line_line_2d,
     is_point_in_polygon_2d,
     BoundingBox2d,
+    area,
 )
 
 __all__ = [
@@ -49,6 +50,7 @@ __all__ = [
     "is_closed_entity",
     "is_inside_polygon_2d",
     "is_pure_2d_entity",
+    "loop_area",
     "lwpolyline_from_chain",
     "make_edge_2d",
     "path2d_from_chain",
@@ -1037,3 +1039,15 @@ def is_inside_polygon_2d(
     polygon = Vec2.list(e.start for e in edges)
     # The function uses an open polygon for testing, no need to close the polygon.
     return is_point_in_polygon_2d(Vec2(point), polygon) >= 0.0
+
+
+def loop_area(edges: Sequence[em.Edge], gap_tol=GAP_TOL) -> float:
+    """Returns the area of a closed loop.
+
+    Raises:
+        ValueError: edges are not a closed loop
+
+    """
+    if not em.is_loop(edges, gap_tol=gap_tol):
+        raise ValueError("edges are not a closed loop")
+    return area(e.start for e in edges)

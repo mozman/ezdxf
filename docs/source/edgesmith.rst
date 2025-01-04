@@ -158,6 +158,8 @@ Helper Functions
 
 .. autofunction:: bounding_box_2d
 
+.. autofunction:: loop_area
+
 .. autofunction:: is_inside_polygon_2d
 
 .. autofunction:: intersecting_edges_2d
