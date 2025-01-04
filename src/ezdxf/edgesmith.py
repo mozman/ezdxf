@@ -10,10 +10,12 @@ The complementary module to ezdxf.edgeminer.
 
 """
 from __future__ import annotations
-from typing import Iterator, Iterable, Sequence, Any
+
+from typing import Iterator, Iterable, Sequence, Any, NamedTuple
 from typing_extensions import TypeAlias
 import math
 import functools
+from operator import itemgetter
 
 from ezdxf import edgeminer as em
 from ezdxf import entities as et
@@ -22,6 +24,7 @@ from ezdxf.entities import boundary_paths as bp
 from ezdxf.upright import upright_all
 
 from ezdxf.math import (
+    UVec,
     Vec2,
     Vec3,
     arc_angle_span_deg,
@@ -29,16 +32,22 @@ from ezdxf.math import (
     bulge_from_arc_angle,
     Z_AXIS,
     Matrix44,
+    intersection_line_line_2d,
+    is_point_in_polygon_2d,
+    BoundingBox2d,
 )
 
 __all__ = [
+    "bounding_box_2d",
     "chain_vertices",
     "edge_path_from_chain",
     "edges_from_entities_2d",
     "filter_2d_entities",
     "filter_edge_entities",
     "filter_open_edges",
+    "intersecting_edges_2d",
     "is_closed_entity",
+    "is_inside_polygon_2d",
     "is_pure_2d_entity",
     "lwpolyline_from_chain",
     "make_edge_2d",
@@ -46,6 +55,7 @@ __all__ = [
     "polyline2d_from_chain",
     "polyline_path_from_chain",
 ]
+
 # Tolerances
 LEN_TOL = 1e-9  # length and distance
 DEG_TOL = 1e-9  # angles in degree
@@ -957,3 +967,73 @@ def path2d_from_chain(edges: Sequence[em.Edge]) -> path.Path:
             sub_path = sub_path.reversed()
         main_path.append_path(sub_path)
     return main_path
+
+
+class IntersectingEdge(NamedTuple):
+    edge: em.Edge
+    distance: float
+
+
+def bounding_box_2d(edges: Sequence[em.Edge]) -> BoundingBox2d:
+    """Returns the :class:`~ezdxf.math.BoundingBox2d` of all start- and end vertices."""
+    bbox = BoundingBox2d(e.start for e in edges)
+    bbox.extend(e.end for e in edges)
+    return bbox
+
+
+def intersecting_edges_2d(
+    edges: Sequence[em.Edge], p1: UVec, p2: UVec | None = None
+) -> list[IntersectingEdge]:
+    """Returns all edges that intersect a line from point `p1` to point `p2`.
+
+    If `p2` is ``None`` an arbitrary point outside the bounding box of all start- and
+    end vertices beyond extmax.x will be chosen.
+    The edges are handled as straight lines from start- to end vertex, projected onto
+    the xy-plane of the :ref:`WCS`. The result is sorted by the distance from
+    intersection point to point `p1`.
+    """
+    intersections: list[IntersectingEdge] = []
+    if len(edges) == 0:
+        return intersections
+
+    inner_point = Vec2(p1)
+    if p2 is None:
+        bbox = bounding_box_2d(edges)
+        outer_point = Vec2(bbox.extmax.x + 1.0, inner_point.y)
+    else:
+        outer_point = Vec2(p2)
+
+    test_line = (inner_point, outer_point)
+    for edge in edges:
+        start = Vec2(edge.start)
+        end = Vec2(edge.end)
+        ip = intersection_line_line_2d(test_line, (start, end), virtual=False)
+        if ip is not None:
+            intersections.append(IntersectingEdge(edge, inner_point.distance(ip)))
+    intersections.sort(key=itemgetter(1))
+    return intersections
+
+
+def is_inside_polygon_2d(
+    edges: Sequence[em.Edge], point: UVec, gap_tol=GAP_TOL
+) -> bool:
+    """Returns ``True`` when `point` is inside the polygon.
+
+    The edges must be a closed loop. The polygon is build from edges as straight lines
+    from start- to end vertex, independently whatever the edges really represent.
+    A point at a boundary line is inside the polygon.
+
+    Args:
+        edges: sequence of :class:`~ezdxf.edgeminer.Edge` representing a closed loop
+        point: point to test
+        gap_tol: maximum vertex distance to consider two edges as connected
+
+    Raises:
+        ValueError: edges are not a closed loop
+
+    """
+    if not em.is_loop(edges, gap_tol=gap_tol):
+        raise ValueError("edges are not a closed loop")
+    polygon = Vec2.list(e.start for e in edges)
+    # The function uses an open polygon for testing, no need to close the polygon.
+    return is_point_in_polygon_2d(Vec2(point), polygon) >= 0.0

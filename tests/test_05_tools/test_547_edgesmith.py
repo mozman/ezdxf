@@ -8,7 +8,7 @@ import math
 from ezdxf import edgesmith as es
 from ezdxf import edgeminer as em
 from ezdxf.entities import Circle, Arc, Ellipse, LWPolyline, Spline
-from ezdxf.math import fit_points_to_cad_cv
+from ezdxf.math import fit_points_to_cad_cv, Vec3
 from ezdxf.layouts import VirtualLayout
 
 
@@ -175,6 +175,83 @@ class TestLineAndArcToPolyline:
         assert path.is_closed is True
         assert path.has_curves is True
         assert path.has_lines is True
+
+
+class TestBoundingBox:
+    def test_empty_sequence(self):
+        bbox = es.bounding_box_2d([])
+        assert bbox.has_data is False
+
+    def test_one_edge(self):
+        edge = em.make_edge((0, 0), (1, 1))
+        bbox = es.bounding_box_2d([edge])
+        assert bbox.extmin.isclose((0, 0))
+        assert bbox.extmax.isclose((1, 1))
+
+    def test_more_edges(self):
+        edge1 = em.make_edge((0, 0), (3, 4))
+        edge2 = em.make_edge((-1, -2), (0, 0))
+        bbox = es.bounding_box_2d([edge1, edge2])
+        assert bbox.extmin.isclose((-1, -2))
+        assert bbox.extmax.isclose((3, 4))
+
+
+class TestIsInsidePolygon:
+    @pytest.fixture
+    def edges(self):
+        return [
+            em.make_edge((0, 0), (1, 0)),
+            em.make_edge((1, 0), (1, 1)),
+            em.make_edge((1, 1), (0, 1)),
+            em.make_edge((0, 1), (0, 0)),
+        ]
+
+    def test_is_inside_polygon(self, edges):
+        assert es.is_inside_polygon_2d(edges, (0.5, 0.5)) is True
+
+    def test_on_border_is_inside_polygon(self, edges):
+        assert es.is_inside_polygon_2d(edges, (0.5, 1.0)) is True
+
+    def test_is_outside_polygon(self, edges):
+        assert es.is_inside_polygon_2d(edges, (0.5, 1.5)) is False
+
+    def test_raise_exception_if_not_a_loop(self, edges):
+        with pytest.raises(ValueError):
+            es.is_inside_polygon_2d(edges[:-1], (0.5, 0.5))
+
+
+class TestIntersectingEdges:
+    @pytest.fixture
+    def edges(self):
+        return [
+            em.make_edge((0, -1), (0, 1)),
+            em.make_edge((1, -1), (1, 1)),
+            em.make_edge((2, -1), (2, 1)),
+            em.make_edge((3, -1), (3, 1)),
+        ]
+
+    def test_empty_sequence(self, edges):
+        assert len(es.intersecting_edges_2d([], (-1, 0.5))) == 0
+
+    def test_no_intersection(self, edges):
+        assert len(es.intersecting_edges_2d(edges, (-2, 0), (-1, 0))) == 0
+
+    def test_first_intersection(self, edges):
+        result = es.intersecting_edges_2d(edges, (-2, 0), (0.5, 0))
+        assert result[0].edge.id == edges[0].id
+        assert math.isclose(result[0].distance, 2) is True
+
+    def test_all_intersections(self, edges):
+        result = es.intersecting_edges_2d(edges, (-2, 0), (4, 0))
+        assert len(result) == len(edges)
+
+    def test_arbitrary_p2_v1(self, edges):
+        result = es.intersecting_edges_2d(edges, (-2, 0))
+        assert len(result) == len(edges)
+
+    def test_arbitrary_p2_v2(self, edges):
+        result = es.intersecting_edges_2d(edges, (4, 0))
+        assert len(result) == 0
 
 
 if __name__ == "__main__":

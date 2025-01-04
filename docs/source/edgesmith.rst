@@ -156,6 +156,24 @@ Helper Functions
 
 .. autofunction:: filter_open_edges
 
+.. autofunction:: bounding_box_2d
+
+.. autofunction:: is_inside_polygon_2d
+
+.. autofunction:: intersecting_edges_2d
+
+.. class:: IntersectingEdge
+
+    NamedTuple as return type of :func:`intersecting_edges_2d`.
+
+    .. attribute:: edge
+
+        Intersecting edge as :class:`~ezdxf.edgeminer.Edge`; alias for field 0.
+
+    .. attribute:: distance
+
+        Distance from intersection point to point `p1` as float; alias for field 1.
+
 
 Global Constants
 ----------------
