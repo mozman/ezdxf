@@ -146,9 +146,49 @@ def find_loop_by_edge():
     out.saveas(OUTBOX / "find_loop_by_edge.dxf")
 
 
+def find_loop_by_pick_point():
+    doc = ezdxf.readfile(CWD / "junctions.dxf")
+    msp = doc.modelspace()
+    lines = msp.query("LINE")
+    edges = list(edgesmith.edges_from_entities_2d(lines))
+    pick_point = (110, 50)
+
+    # 1. find a starting edge near the pick-point
+    intersecting_edges = edgesmith.intersecting_edges_2d(edges, pick_point)
+    if not len(intersecting_edges):
+        print("no intersection found")
+        return
+
+    hatch = msp.add_hatch(color=2)
+    msp.add_circle(pick_point, radius=0.5, dxfattribs={"color": 6})
+
+    # take the closest edge as starting edge.
+    start = intersecting_edges[0].edge
+
+    # 2. find the best candidates
+    deposit = edgeminer.Deposit(edges)
+    candidates = [
+        edgeminer.find_loop_by_edge(deposit, start, clockwise=True),
+        edgeminer.find_loop_by_edge(deposit, start, clockwise=False),
+    ]
+
+    # 3. sort candidates by area
+    candidates.sort(key=edgesmith.loop_area)
+    for loop in candidates:
+        # 4. take the smallest loop which contains the pick-point
+        if edgesmith.is_inside_polygon_2d(loop, pick_point):
+            hatch.paths.append(edgesmith.polyline_path_from_chain(loop))
+            break
+    else:
+        print("no loop found")
+        return
+    doc.saveas(OUTBOX / "find_loop_by_pick_point.dxf")
+
+
 if __name__ == "__main__":
     # basics()
     # flatten_3d_entities()
     # find_all_simple_chains()
     # find_all_loops()
-    find_loop_by_edge()
+    # find_loop_by_edge()
+    find_loop_by_pick_point()

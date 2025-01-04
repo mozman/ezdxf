@@ -371,7 +371,7 @@ These are 6 of the 7 solutions, the 7th solution is the dashed line:
 
 The :func:`~ezdxf.edgeminer.find_all_loops` function is a recursive backtracking
 algorithm and has a complexity of O(n!), therefore all recursive search functions
-have a timeout argument to end the task before the universe ends.
+have a timeout argument to finish the task before the universe ends.
 
 These helper functions may help you to choose a solution, but the default length
 calculation for edges is not precise!
@@ -403,6 +403,64 @@ Red is the `clockwise` solution and yellow is the `counter-clockwise` solution:
 
 .. image:: gfx/edges_05_find_loop_by_edge.png
 
+Find Loop by Pick-Point
+-----------------------
+
+The CAD functionality to select a HATCH boundary path by picking a point inside the
+boundary is a bit tricky, but can be achieved by combining some tools.
+
+    1. find a starting edge near the pick-point
+    2. find candidates by the :func:`find_loop_by_edge` function for both search orders
+    3. sort candidates by area
+    4. take the smallest loop which contains the pick-point
+
+.. image:: gfx/edges_06_loop_by_pick_point.png
+
+The function :func:`~ezdxf.edgesmith.intersecting_edges_2d` tests all edges for an
+intersection with a line starting at the pick-point and ending outside the bounding box
+of all vertices. Any loop containing the pick-point has at least one edge that
+intersects this line.
+
+.. code-block:: Python
+
+    doc = ezdxf.readfile("junctions.dxf")
+    msp = doc.modelspace()
+    lines = msp.query("LINE")
+    edges = list(edgesmith.edges_from_entities_2d(lines))
+    pick_point = (110, 50)
+
+    # 1. find a starting edge near the pick-point
+    intersecting_edges = edgesmith.intersecting_edges_2d(edges, pick_point)
+    if not len(intersecting_edges):
+        print("no intersection found")
+        return
+    hatch = msp.add_hatch(color=2)
+
+    # The intersecting edges are sorted by ascending distance to the pick-point
+    # take the closest edge as starting edge:
+    start = intersecting_edges[0].edge
+
+    # 2. find the best loop candidates
+    deposit = edgeminer.Deposit(edges)
+    candidates = [
+        edgeminer.find_loop_by_edge(deposit, start, clockwise=True),
+        edgeminer.find_loop_by_edge(deposit, start, clockwise=False),
+    ]
+
+    # 3. sort candidates by area
+    candidates.sort(key=edgesmith.loop_area)
+    for loop in candidates:
+        # 4. take the smallest loop which contains the pick-point
+        if edgesmith.is_inside_polygon_2d(loop, pick_point):
+            hatch.paths.append(edgesmith.polyline_path_from_chain(loop))
+            break
+    else:  # for loop ended without break
+        print("no loop found")
+        return
+    doc.saveas("find_loop_by_pick_point.dxf")
+
+I am not convinced that this is the best solution or that this solution works for all
+use cases, therefore this is not (yet) a helper function in the :mod:`edgesmith` module.
 
 TODO
 ----
