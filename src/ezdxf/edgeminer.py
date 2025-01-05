@@ -207,7 +207,11 @@ class Edge(NamedTuple):
         return f"Edge({content})"
 
     def __hash__(self) -> int:
-        # edge and its reversed edge must have the same hash value!
+        """The edge :attr:`id` is used as hash value.
+
+        An Edge and its reversed edge have the same hash value and cannot both
+        exist in the same :class:`set`.
+        """
         return self.id
 
     def reversed(self) -> Self:

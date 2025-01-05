@@ -146,6 +146,8 @@ High Level Functions
 Low Level Functions
 -------------------
 
+.. autofunction:: filter_coincident_edges
+
 .. autofunction:: flatten
 
 .. autofunction:: is_chain
@@ -180,6 +182,8 @@ Classes
 .. autoclass:: Edge
 
     .. automethod:: __eq__
+
+    .. automethod:: __hash__
 
     .. automethod:: reversed
 

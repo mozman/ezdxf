@@ -1,7 +1,12 @@
 .. _tut_edges:
 
-Tutorial for Finding Geometries
-===============================
+Tutorial for Finding Chains and Loops
+=====================================
+
+.. versionadded:: 1.4
+
+This tutorial shows how to find connected structures like open or closed polylines
+by the :mod:`ezdxf.edgeminer` and the :mod:`ezdxf.edgesmith` modules.
 
 Introduction
 ------------
@@ -462,9 +467,61 @@ intersects this line.
 I am not convinced that this is the best solution or that this solution works for all
 use cases, therefore this is not (yet) a helper function in the :mod:`edgesmith` module.
 
-TODO
-----
+Gaps and Design Inaccuracies
+----------------------------
 
-    - Coincident edges
-    - Gaps and drawing imprecision
+Most real-world DXF drawings have design inaccuracies, that means, there are gaps between
+the endpoints of entities.
 
+All search and test functions have an optional argument :attr:`gap_tol` or the gap
+tolerance is stored in the :class:`Deposit` class.
+The gap tolerance is the maximum distance between two edge vertices to consider them
+as connected. It is important to use the same tolerance throughout a task, from creating
+the edges til building new DXF entities from chains and loops.
+
+Specialty Edge Paths
+~~~~~~~~~~~~~~~~~~~~
+
+AutoCAD is very picky about edge paths in HATCH entities when it comes to considering
+them as closed. Therefore the :func:`edge_path_from_chain` function adds additional line
+segments between edges when the gap is larger than ``LEN_TOL``, ``LEN_TOL`` is a constant
+value of 1e-9.
+
+Coincident Edges
+----------------
+
+Coincident edges in the context of :mod:`edgeminer` are edges where the start- and the end vertex
+are coincident, remember: the shape of the edge is not known. This is the reason why such
+edges are not removed automatically, e.g. two arcs can create a closed loop as coincident
+edges:
+
+.. image:: gfx/edges_07_loop_from_arcs.png
+
+Coincident edges are a major nuisance and should be avoided at all costs. They create
+ambiguity and can be the reason why the expected results are not found.
+
+The :func:`~ezdxf.edgeminer.filter_coincident_edges` function removes coincident edges.
+It takes a function to test if two edges are coincident and the default function tests
+only if the end points are coincident, but you can pass a more sophisticated function.
+
+
+Set Operations
+--------------
+
+The :class:`ezdxf.edgeminer.Edge` class implements the :meth:`__hash__` method and can be
+used in sets, this allows set operations like subtracting a found loop from the source
+edges:
+
+.. code-block:: Python
+
+    edges = list(edgesmith.edges_from_entities_2d(lines))
+    deposit = edgeminer.Deposit(edges)
+
+    # returns the first loop found
+    first_loop = edgeminer.find_loop(deposit)
+    edges = list(set(edges) - set(first_loop))
+
+    # or use this helper function:
+    edges = edgeminer.subtract_edges(edges, first_loop)
+
+The :class:`Deposit` has to be recreated for the new list of edges!
