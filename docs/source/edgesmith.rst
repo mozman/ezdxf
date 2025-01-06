@@ -45,7 +45,7 @@ arcs, closed ellipses, closed splines and closed polylines are ignored or return
 
 .. function:: make_edge_2d(entity: DXFEntity, *, gap_tol=GAP_TOL) -> ezdxf.edgeminer.Edge | None
 
-    Makes an :class:`Edge` instance from the following DXF entity types:
+    Makes an :class:`~ezdxf.edgeminer.Edge` instance from the following DXF entity types:
 
     - :class:`~ezdxf.entities.Line` (length accurate)
     - :class:`~ezdxf.entities.Arc` (length accurate)
