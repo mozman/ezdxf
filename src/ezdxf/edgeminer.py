@@ -263,7 +263,7 @@ def make_edge(
     return Edge(id_generator(), start, end, False, length, payload)
 
 
-def isclose(a: Vec3, b: Vec3, gap_tol=GAP_TOL) -> bool:
+def isclose(a: Vec3, b: Vec3, *, gap_tol=GAP_TOL) -> bool:
     """This function should be used to test whether two vertices are close to each other
     to get consistent results.
     """
@@ -285,7 +285,7 @@ class Deposit:
 
     """
 
-    def __init__(self, edges: Sequence[Edge], gap_tol=GAP_TOL) -> None:
+    def __init__(self, edges: Sequence[Edge], *, gap_tol=GAP_TOL) -> None:
         self.gap_tol: float = gap_tol
         self._edges: Sequence[Edge] = type_check(edges)
         self._search_index = _SpatialSearchIndex(self._edges)
@@ -352,7 +352,7 @@ class Deposit:
         e.g. if the vertices a, b are close together, you don't know if you get a or b,
         but it's guaranteed that you only get one of them
         """
-        return filter_close_vertices(self._search_index.rtree, self.gap_tol)
+        return filter_close_vertices(self._search_index.rtree, gap_tol=self.gap_tol)
 
     def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
         """Returns all edges linked to `vertex` in range of `radius`.
@@ -440,7 +440,7 @@ class Deposit:
                 yield edge
 
 
-def is_forward_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
+def is_forward_connected(a: Edge, b: Edge, *, gap_tol=GAP_TOL) -> bool:
     """Returns ``True`` if the edges have a forward connection.
 
     Forward connection: distance from :attr:`a.end` to :attr:`b.start` <= gap_tol
@@ -450,34 +450,36 @@ def is_forward_connected(a: Edge, b: Edge, gap_tol=GAP_TOL) -> bool:
         b: second edge
         gap_tol: maximum vertex distance to consider two edges as connected
     """
-    return isclose(a.end, b.start, gap_tol)
+    return isclose(a.end, b.start, gap_tol=gap_tol)
 
 
-def is_chain(edges: Sequence[Edge], gap_tol=GAP_TOL) -> bool:
+def is_chain(edges: Sequence[Edge], *, gap_tol=GAP_TOL) -> bool:
     """Returns ``True`` if all edges in the sequence have a forward connection.
 
     Args:
         edges: sequence of edges
         gap_tol: maximum vertex distance to consider two edges as connected
     """
-    return all(is_forward_connected(a, b, gap_tol) for a, b in zip(edges, edges[1:]))
+    return all(
+        is_forward_connected(a, b, gap_tol=gap_tol) for a, b in zip(edges, edges[1:])
+    )
 
 
-def is_loop(edges: Sequence[Edge], gap_tol=GAP_TOL) -> bool:
+def is_loop(edges: Sequence[Edge], *, gap_tol=GAP_TOL) -> bool:
     """Return ``True`` if the sequence of edges is a closed loop.
 
     Args:
         edges: sequence of edges
         gap_tol: maximum vertex distance to consider two edges as connected
     """
-    if not is_chain(edges, gap_tol):
+    if not is_chain(edges, gap_tol=gap_tol):
         return False
-    return isclose(edges[-1].end, edges[0].start, gap_tol)
+    return isclose(edges[-1].end, edges[0].start, gap_tol=gap_tol)
 
 
-def is_loop_fast(edges: Sequence[Edge], gap_tol=GAP_TOL) -> bool:
+def is_loop_fast(edges: Sequence[Edge], *, gap_tol=GAP_TOL) -> bool:
     """Internal fast loop check."""
-    return isclose(edges[-1].end, edges[0].start, gap_tol)
+    return isclose(edges[-1].end, edges[0].start, gap_tol=gap_tol)
 
 
 def length(edges: Sequence[Edge]) -> float:
@@ -524,7 +526,7 @@ def reverse_chain(chain: Sequence[Edge]) -> list[Edge]:
     return [edge.reversed() for edge in edges]
 
 
-def find_sequential_chain(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Edge]:
+def find_sequential_chain(edges: Sequence[Edge], *, gap_tol=GAP_TOL) -> Sequence[Edge]:
     """Returns a simple chain beginning at the first edge.
 
     The search stops at the first edge without a forward connection from the previous
@@ -543,11 +545,11 @@ def find_sequential_chain(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Ed
     chain = [edges[0]]
     for edge in edges[1:]:
         last = chain[-1]
-        if is_forward_connected(last, edge, gap_tol):
+        if is_forward_connected(last, edge, gap_tol=gap_tol):
             chain.append(edge)
             continue
         reversed_edge = edge.reversed()
-        if is_forward_connected(last, reversed_edge, gap_tol):
+        if is_forward_connected(last, reversed_edge, gap_tol=gap_tol):
             chain.append(reversed_edge)
             continue
         break
@@ -555,7 +557,7 @@ def find_sequential_chain(edges: Sequence[Edge], gap_tol=GAP_TOL) -> Sequence[Ed
 
 
 def find_all_sequential_chains(
-    edges: Sequence[Edge], gap_tol=GAP_TOL
+    edges: Sequence[Edge], *, gap_tol=GAP_TOL
 ) -> Iterator[Sequence[Edge]]:
     """Yields all simple chains from sequence `edges`.
 
@@ -572,12 +574,12 @@ def find_all_sequential_chains(
         TypeError: invalid data in sequence `edges`
     """
     while edges:
-        chain = find_sequential_chain(edges, gap_tol)
+        chain = find_sequential_chain(edges, gap_tol=gap_tol)
         edges = edges[len(chain) :]
         yield chain
 
 
-def find_loop(deposit: Deposit, timeout: float = TIMEOUT) -> Sequence[Edge]:
+def find_loop(deposit: Deposit, *, timeout: float = TIMEOUT) -> Sequence[Edge]:
     """Returns the first closed loop in `deposit`.
 
     Returns only simple loops, where all vertices have a degree of 2 (only two adjacent
@@ -602,18 +604,18 @@ def find_loop(deposit: Deposit, timeout: float = TIMEOUT) -> Sequence[Edge]:
     packed_edges: list[Edge] = []
     for chain in chains:
         if len(chain) > 1:
-            if is_loop_fast(chain, gap_tol):
+            if is_loop_fast(chain, gap_tol=gap_tol):
                 return chain
             packed_edges.append(_wrap_simple_chain(chain))
         else:
             packed_edges.append(chain[0])
-    deposit = Deposit(packed_edges, gap_tol)
+    deposit = Deposit(packed_edges, gap_tol=gap_tol)
     if len(deposit.edges) < 2:
         return tuple()
     return tuple(flatten(_find_loop_in_deposit(deposit, timeout=timeout)))
 
 
-def _find_loop_in_deposit(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
+def _find_loop_in_deposit(deposit: Deposit, *, timeout=TIMEOUT) -> Sequence[Edge]:
     if len(deposit.edges) < 2:
         return tuple()
 
@@ -625,7 +627,7 @@ def _find_loop_in_deposit(deposit: Deposit, timeout=TIMEOUT) -> Sequence[Edge]:
 
 
 def find_all_loops(
-    deposit: Deposit, timeout: float = TIMEOUT
+    deposit: Deposit, *, timeout: float = TIMEOUT
 ) -> Sequence[Sequence[Edge]]:
     """Returns all closed loops from `deposit`.
 
@@ -652,7 +654,7 @@ def find_all_loops(
     packed_edges: list[Edge] = []
     for chain in chains:
         if len(chain) > 1:
-            if is_loop_fast(chain, gap_tol):
+            if is_loop_fast(chain, gap_tol=gap_tol):
                 # these loops have no ambiguities (junctions)
                 solutions.append(chain)
             else:
@@ -663,7 +665,7 @@ def find_all_loops(
     if not packed_edges:
         return solutions
 
-    deposit = Deposit(packed_edges, gap_tol)
+    deposit = Deposit(packed_edges, gap_tol=gap_tol)
     if len(deposit.edges) < 2:
         return tuple()
     try:
@@ -760,7 +762,7 @@ class LoopFinder:
     (internal class)
     """
 
-    def __init__(self, deposit: Deposit, timeout=TIMEOUT) -> None:
+    def __init__(self, deposit: Deposit, *, timeout=TIMEOUT) -> None:
         if len(deposit.edges) < 2:
             raise ValueError("two or more edges required")
         self._deposit = deposit
@@ -819,19 +821,21 @@ class LoopFinder:
             # edges must be unique in a loop
             survivors = set(candidates) - set(chain)
             for edge in survivors:
-                if isclose(end_point, edge.start, gap_tol):
+                if isclose(end_point, edge.start, gap_tol=gap_tol):
                     next_edge = edge
                 else:
                     next_edge = edge.reversed()
                 last_point = next_edge.end
-                if isclose(last_point, start_point, gap_tol):
+                if isclose(last_point, start_point, gap_tol=gap_tol):
                     self.add_solution(chain + (next_edge,))
                     if stop_at_first_loop:
                         return
                 # Add only chains to the stack that have vertices of max degree 2.
                 # If the new end point is in the chain, a vertex of degree 3 would be
                 # created. (loop check is done)
-                elif not any(isclose(last_point, e.end, gap_tol) for e in chain):
+                elif not any(
+                    isclose(last_point, e.end, gap_tol=gap_tol) for e in chain
+                ):
                     todo.append(chain + (next_edge,))
 
     def add_solution(self, loop: Sequence[Edge]) -> None:
@@ -842,7 +846,7 @@ class LoopFinder:
         solutions[key] = loop
 
 
-def loop_key(edges: Sequence[Edge], reverse=False) -> tuple[int, ...]:
+def loop_key(edges: Sequence[Edge], *, reverse=False) -> tuple[int, ...]:
     """Returns a normalized key.
 
     The key is rotated to begin with the smallest edge id.
@@ -884,7 +888,7 @@ def find_simple_chain(deposit: Deposit, start: Edge) -> Sequence[Edge]:
     The first and the last vertex have a degree of 1 (leaf) or greater 2 (junction).
     """
     forward_chain = _simple_forward_chain(deposit, start)
-    if is_loop_fast(forward_chain, deposit.gap_tol):
+    if is_loop_fast(forward_chain, gap_tol=deposit.gap_tol):
         return forward_chain
     backwards_chain = _simple_forward_chain(deposit, start.reversed())
     if len(backwards_chain) == 1:
@@ -911,11 +915,11 @@ def _simple_forward_chain(deposit: Deposit, edge: Edge) -> list[Edge]:
             edge = linked[1]
         else:
             edge = linked[0]
-        if isclose(last.end, edge.start, gap_tol):
+        if isclose(last.end, edge.start, gap_tol=gap_tol):
             chain.append(edge)
         else:
             chain.append(edge.reversed())
-        if is_loop_fast(chain, gap_tol):
+        if is_loop_fast(chain, gap_tol=gap_tol):
             return chain
 
 
@@ -924,7 +928,7 @@ def is_wrapped_chain(edge: Edge) -> bool:
     return isinstance(edge.payload, EdgeWrapper)
 
 
-def wrap_simple_chain(chain: Sequence[Edge], gap_tol=GAP_TOL) -> Edge:
+def wrap_simple_chain(chain: Sequence[Edge], *, gap_tol=GAP_TOL) -> Edge:
     """Wraps a sequence of linked edges (simple chain) into a single edge.
 
     Two or more linked edges required. Closed loops cannot be wrapped into a single
@@ -936,8 +940,8 @@ def wrap_simple_chain(chain: Sequence[Edge], gap_tol=GAP_TOL) -> Edge:
     """
     if len(chain) < 2:
         raise ValueError("two or more linked edges required")
-    if is_chain(chain, gap_tol):
-        if is_loop_fast(chain, gap_tol):
+    if is_chain(chain, gap_tol=gap_tol):
+        if is_loop_fast(chain, gap_tol=gap_tol):
             raise ValueError("closed loop cannot be wrapped into a single edge")
         return _wrap_simple_chain(chain)
     raise ValueError("edges are not connected")
@@ -1057,13 +1061,15 @@ class OpenChainFinder:
             backwards_edges = set(candidates) - set(chain)
             if backwards_edges:
                 for edge in backwards_edges:
-                    if not isclose(start_point, edge.start, gap_tol):
+                    if not isclose(start_point, edge.start, gap_tol=gap_tol):
                         edge = edge.reversed()
                     # Add only chains to the stack that have vertices of max degree 2.
                     # If the new end point is in the chain, a vertex of degree 3 would be
                     # created. (loop check is done)
                     last_point = edge.end
-                    if not any(isclose(last_point, e.end, gap_tol) for e in chain):
+                    if not any(
+                        isclose(last_point, e.end, gap_tol=gap_tol) for e in chain
+                    ):
                         todo.append(chain + (edge,))
             else:
                 forward_chains.append(chain)
@@ -1083,13 +1089,15 @@ class OpenChainFinder:
             backwards_edges = set(candidates) - set(chain)
             if backwards_edges:
                 for edge in backwards_edges:
-                    if not isclose(start_point, edge.end, gap_tol):
+                    if not isclose(start_point, edge.end, gap_tol=gap_tol):
                         edge = edge.reversed()
                     # Add only chains to the stack that have vertices of max degree 2.
                     # If the new end point is in the chain, a vertex of degree 3 would be
                     # created.
                     new_start_point = edge.start
-                    if not any(isclose(new_start_point, e.end, gap_tol) for e in chain):
+                    if not any(
+                        isclose(new_start_point, e.end, gap_tol=gap_tol) for e in chain
+                    ):
                         todo.append((edge,) + chain)
             else:
                 self.add_solution(chain)
@@ -1153,11 +1161,11 @@ def filter_coincident_edges(
     return unique_edges
 
 
-def filter_close_vertices(rt: rtree.RTree[Vec3], gap_tol: float) -> set[Vec3]:
+def filter_close_vertices(rt: rtree.RTree[Vec3], *, gap_tol: float) -> set[Vec3]:
     """Returns all vertices from a :class:`RTree` and filters vertices that are closer
     than radius `gap_tol` to another vertex.
 
-    Vertice that are close to another vertex are filtered out, so none of the returned
+    Vertices that are close to another vertex are filtered out, so none of the returned
     vertices has another vertex within the range of `gap_tol`.  It is not determined
     which of close vertices is returned.
     """
@@ -1168,13 +1176,13 @@ def filter_close_vertices(rt: rtree.RTree[Vec3], gap_tol: float) -> set[Vec3]:
         for candidate in rt.points_in_sphere(vertex, gap_tol):
             if candidate in merged:
                 continue
-            if not any(isclose(candidate, v, gap_tol) for v in merged):
+            if not any(isclose(candidate, v, gap_tol=gap_tol) for v in merged):
                 merged.add(candidate)
     return merged
 
 
 def sort_edges_to_base(
-    edges: Iterable[Edge], base: Edge, gap_tol=GAP_TOL
+    edges: Iterable[Edge], base: Edge, *, gap_tol=GAP_TOL
 ) -> list[Edge]:
     """Returns a list of `edges` sorted in counter-clockwise order in relation to the
     `base` edge.
@@ -1237,17 +1245,17 @@ def find_loop_by_edge(deposit: Deposit, start: Edge, clockwise=True) -> Sequence
         if count == 0:
             return tuple()  # dead end
         if count > 1:
-            sorted_edges = sort_edges_to_base(survivors, last_edge, gap_tol)
+            sorted_edges = sort_edges_to_base(survivors, last_edge, gap_tol=gap_tol)
             if clockwise:
                 next_edge = sorted_edges[-1]  # first clockwise edge
             else:
                 next_edge = sorted_edges[0]  # first counter-clockwise edge
         else:
             next_edge = survivors.pop()
-        if not isclose(next_edge.start, end_point, gap_tol):
+        if not isclose(next_edge.start, end_point, gap_tol=gap_tol):
             next_edge = next_edge.reversed()
         chain.append(next_edge)
-        if isclose(next_edge.end, start_point, gap_tol):
+        if isclose(next_edge.end, start_point, gap_tol=gap_tol):
             return chain  # found a closed loop
         chain_set.add(next_edge)
 

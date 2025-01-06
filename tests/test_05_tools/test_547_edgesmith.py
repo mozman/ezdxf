@@ -8,7 +8,7 @@ import math
 from ezdxf import edgesmith as es
 from ezdxf import edgeminer as em
 from ezdxf.entities import Circle, Arc, Ellipse, LWPolyline, Spline
-from ezdxf.math import fit_points_to_cad_cv, Vec3
+from ezdxf.math import fit_points_to_cad_cv
 from ezdxf.layouts import VirtualLayout
 
 

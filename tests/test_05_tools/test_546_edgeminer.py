@@ -5,7 +5,7 @@ from typing import Sequence
 import pytest
 
 from ezdxf import edgeminer as em
-from ezdxf.math import Vec2, Vec3, rtree
+from ezdxf.math import Vec3, rtree
 
 
 class TestBasicRequirements:
@@ -251,7 +251,7 @@ def collect(chain: Sequence[em.Edge]):
 def ordered_edges(edges: Sequence[em.Edge], reverse=False):
     """Returns the loop edges in key order."""
     edge_dict = {e.id: e for e in edges}
-    return (edge_dict[eid] for eid in em.loop_key(edges, reverse))
+    return (edge_dict[eid] for eid in em.loop_key(edges, reverse=reverse))
 
 
 def collect_ordered(chain: Sequence[em.Edge]) -> str:
@@ -738,7 +738,7 @@ class TestFilterCloseVertices:
     def test_coincident_vertices(self):
         vertices = Vec3.list([(0, 0), (0, 0), (1, 1), (1, 1)])
         rt = rtree.RTree(vertices)
-        result = em.filter_close_vertices(rt, 1e-9)
+        result = em.filter_close_vertices(rt, gap_tol=1e-9)
         # You don't know which vertices were removed!
         assert len(result) == 2
 

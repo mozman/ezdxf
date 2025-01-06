@@ -363,7 +363,7 @@ def _validate_edge(edge: em.Edge, gap_tol: float) -> em.Edge | None:
 
 # noinspection PyUnusedLocal
 @functools.singledispatch
-def make_edge_2d(entity: et.DXFEntity, gap_tol=GAP_TOL) -> em.Edge | None:
+def make_edge_2d(entity: et.DXFEntity, *, gap_tol=GAP_TOL) -> em.Edge | None:
     """Makes an Edge instance from the following DXF entity types:
 
         - LINE (length accurate)
@@ -380,7 +380,7 @@ def make_edge_2d(entity: et.DXFEntity, gap_tol=GAP_TOL) -> em.Edge | None:
 
 
 @make_edge_2d.register(et.Line)
-def _edge_from_line(entity: et.Line, gap_tol=GAP_TOL) -> em.Edge | None:
+def _edge_from_line(entity: et.Line, *, gap_tol=GAP_TOL) -> em.Edge | None:
     # line projected onto the xy-plane
     start = Vec2(entity.dxf.start)
     end = Vec2(entity.dxf.end)
@@ -389,7 +389,7 @@ def _edge_from_line(entity: et.Line, gap_tol=GAP_TOL) -> em.Edge | None:
 
 
 @make_edge_2d.register(et.Arc)
-def _edge_from_arc(entity: et.Arc, gap_tol=GAP_TOL) -> em.Edge | None:
+def _edge_from_arc(entity: et.Arc, *, gap_tol=GAP_TOL) -> em.Edge | None:
     radius = abs(entity.dxf.radius)
     if radius < LEN_TOL:
         return None
@@ -406,7 +406,7 @@ def _edge_from_arc(entity: et.Arc, gap_tol=GAP_TOL) -> em.Edge | None:
 
 
 @make_edge_2d.register(et.Ellipse)
-def _edge_from_ellipse(entity: et.Ellipse, gap_tol=GAP_TOL) -> em.Edge | None:
+def _edge_from_ellipse(entity: et.Ellipse, *, gap_tol=GAP_TOL) -> em.Edge | None:
     try:
         ct1 = entity.construction_tool()
     except ValueError:
@@ -425,7 +425,7 @@ def _edge_from_ellipse(entity: et.Ellipse, gap_tol=GAP_TOL) -> em.Edge | None:
 
 
 @make_edge_2d.register(et.Spline)
-def _edge_from_spline(entity: et.Spline, gap_tol=GAP_TOL) -> em.Edge | None:
+def _edge_from_spline(entity: et.Spline, *, gap_tol=GAP_TOL) -> em.Edge | None:
     try:
         ct2 = entity.construction_tool()
     except ValueError:
@@ -440,7 +440,7 @@ def _edge_from_spline(entity: et.Spline, gap_tol=GAP_TOL) -> em.Edge | None:
 
 
 @make_edge_2d.register(et.LWPolyline)
-def _edge_from_lwpolyline(entity: et.LWPolyline, gap_tol=GAP_TOL) -> em.Edge | None:
+def _edge_from_lwpolyline(entity: et.LWPolyline, *, gap_tol=GAP_TOL) -> em.Edge | None:
     if _is_closed_lwpolyline(entity):
         return None
     # polyline projected onto the xy-plane
@@ -455,7 +455,7 @@ def _edge_from_lwpolyline(entity: et.LWPolyline, gap_tol=GAP_TOL) -> em.Edge | N
 
 
 @make_edge_2d.register(et.Polyline)
-def _edge_from_polyline(entity: et.Polyline, gap_tol=GAP_TOL) -> em.Edge | None:
+def _edge_from_polyline(entity: et.Polyline, *, gap_tol=GAP_TOL) -> em.Edge | None:
     if not (entity.is_2d_polyline or entity.is_3d_polyline):
         return None
     if _is_closed_polyline2d(entity):
@@ -473,19 +473,19 @@ def _edge_from_polyline(entity: et.Polyline, gap_tol=GAP_TOL) -> em.Edge | None:
 
 
 def edges_from_entities_2d(
-    entities: Iterable[et.DXFEntity], gap_tol=GAP_TOL
+    entities: Iterable[et.DXFEntity], *, gap_tol=GAP_TOL
 ) -> Iterator[em.Edge]:
     """Yields all DXF entities as 2D edges in the xy-plane of the :ref:`WCS`.
 
     Skips all entities that have a closed shape or can not be represented as edge.
     """
     for entity in entities:
-        edge = make_edge_2d(entity, gap_tol)
+        edge = make_edge_2d(entity, gap_tol=gap_tol)
         if edge is not None:
             yield edge
 
 
-def chain_vertices(edges: Sequence[em.Edge], gap_tol=GAP_TOL) -> Sequence[Vec3]:
+def chain_vertices(edges: Sequence[em.Edge], *, gap_tol=GAP_TOL) -> Sequence[Vec3]:
     """Returns all vertices from a sequence of connected edges.
 
     Adds line segments between edges when the gap is bigger than `gap_tol`.
@@ -494,7 +494,7 @@ def chain_vertices(edges: Sequence[em.Edge], gap_tol=GAP_TOL) -> Sequence[Vec3]:
         return tuple()
     vertices: list[Vec3] = [edges[0].start]
     for edge in edges:
-        if not em.isclose(vertices[-1], edge.start, gap_tol):
+        if not em.isclose(vertices[-1], edge.start, gap_tol=gap_tol):
             vertices.append(edge.start)
         vertices.append(edge.end)
     return vertices
@@ -502,6 +502,7 @@ def chain_vertices(edges: Sequence[em.Edge], gap_tol=GAP_TOL) -> Sequence[Vec3]:
 
 def lwpolyline_from_chain(
     edges: Sequence[em.Edge],
+    *,
     dxfattribs: Any = None,
     max_sagitta: float = -1,
 ) -> et.LWPolyline:
@@ -531,7 +532,7 @@ def lwpolyline_from_chain(
 
 
 def polyline2d_from_chain(
-    edges: Sequence[em.Edge], dxfattribs: Any = None, max_sagitta: float = -1
+    edges: Sequence[em.Edge], *, dxfattribs: Any = None, max_sagitta: float = -1
 ) -> et.Polyline:
     """Returns a new virtual :class:`Polyline` entity.
 
@@ -730,7 +731,7 @@ def _make_polyline_points(edges: Sequence[em.Edge], max_sagitta: float) -> Bulge
 
 
 def polyline_path_from_chain(
-    edges: Sequence[em.Edge], max_sagitta: float = -1, is_closed=True, flags: int = 1
+    edges: Sequence[em.Edge], *, max_sagitta: float = -1, is_closed=True, flags: int = 1
 ) -> bp.PolylinePath:
     """Returns a new :class:`~ezdxf.entities.PolylinePath` for :class:`~ezdxf.entities.Hatch`
     entities.
@@ -770,7 +771,7 @@ def polyline_path_from_chain(
 
 
 def edge_path_from_chain(
-    edges: Sequence[em.Edge], max_sagitta: float = -1, flags: int = 1
+    edges: Sequence[em.Edge], *, max_sagitta: float = -1, flags: int = 1
 ) -> bp.EdgePath:
     """Returns a new :class:`~ezdxf.entities.EdgePath` for :class:`~ezdxf.entities.Hatch`
     entities.
@@ -1017,7 +1018,7 @@ def intersecting_edges_2d(
 
 
 def is_inside_polygon_2d(
-    edges: Sequence[em.Edge], point: UVec, gap_tol=GAP_TOL
+    edges: Sequence[em.Edge], point: UVec, *, gap_tol=GAP_TOL
 ) -> bool:
     """Returns ``True`` when `point` is inside the polygon.
 
@@ -1041,7 +1042,7 @@ def is_inside_polygon_2d(
     return is_point_in_polygon_2d(Vec2(point), polygon) >= 0.0
 
 
-def loop_area(edges: Sequence[em.Edge], gap_tol=GAP_TOL) -> float:
+def loop_area(edges: Sequence[em.Edge], *, gap_tol=GAP_TOL) -> float:
     """Returns the area of a closed loop.
 
     Raises:
