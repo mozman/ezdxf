@@ -155,7 +155,7 @@ cdef class Basis:
         # Source: The NURBS Book: Algorithm A2.2
         cdef int order = self.order
         cdef double *knots = self._knots
-        cdef double[MAX_SPLINE_ORDER] N, left, right
+        cdef double[MAX_SPLINE_ORDER] N, left, right  # pyright: ignore
         cdef list result
         reset_double_array(N, order, 0.0)
         reset_double_array(left, order, 0.0)
@@ -208,7 +208,7 @@ cdef class Basis:
         if n > p:
             n = p
         cdef double *knots = self._knots
-        cdef double[MAX_SPLINE_ORDER] left, right
+        cdef double[MAX_SPLINE_ORDER] left, right  # pyright: ignore
         reset_double_array(left, order, 1.0)
         reset_double_array(right, order, 1.0)
 
