@@ -27,7 +27,17 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
         return spline
 
     p = spline.degree
-    Pw = np.array(spline.control_points)
+    if spline.is_rational:
+        dim = 4
+        # rational splines: (x, y, z, w)
+        Pw = np.array(
+            [v.x, v.y, v.z, w] for v, w in zip(spline.control_points, spline.weights())
+        )
+    else:
+        dim = 3
+        # non-rational splines: (x, y, z)
+        Pw = np.array(spline.control_points)
+
     U = np.array(spline.knots())
     n = len(Pw) - 1  # text book n+1 == count of control points!
     m = n + p + 1
@@ -35,7 +45,7 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
     ph2 = ph // 2
 
     # control points of the elevated B-spline
-    Qw = np.zeros(shape=(n * (2 + t), 3))  # size not known yet???
+    Qw = np.zeros(shape=((n + 1) * (2 + t), dim))  # size not known yet???
 
     # knot vector of the elevated B-spline
     Uh = np.zeros(m * (2 + t))  # size not known yet???
@@ -45,13 +55,13 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
 
     # This algorithm run for each axis: x, y, z
     # Bezier control points of the current segment
-    bpts = np.zeros(shape=(p + 1, 3))
+    bpts = np.zeros(shape=(p + 1, dim))
 
     # (p+t)th-degree Bezier control points of the current segment
-    ebpts = np.zeros(shape=(p + t + 1, 3))
+    ebpts = np.zeros(shape=(p + t + 1, dim))
 
     # leftmost control points of the next Bezier segment
-    Nextbpts = np.zeros(shape=(p - 1, 3))
+    Nextbpts = np.zeros(shape=(p - 1, dim))
 
     # knot insertion alphas
     alfs = np.zeros(p - 1)
@@ -173,9 +183,15 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
 
     nh = mh - ph - 1
     count_cpts = nh + 1  # text book n+1 == count of control points
-    # TODO: weights?
     order = ph + 1
-    return BSpline(Qw[:count_cpts], order=order, knots=Uh[: count_cpts + order])
+
+    weights = []
+    cpoints = Qw[:count_cpts, :3]
+    if dim == 4:
+        weights = Qw[:count_cpts, 3]
+    return BSpline(
+        cpoints, order=order, weights=weights, knots=Uh[: count_cpts + order]
+    )
 
 
 def test_algorithm_runs():
@@ -202,4 +218,3 @@ def export_splines():
 
 if __name__ == "__main__":
     export_splines()
-
