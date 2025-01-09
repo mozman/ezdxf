@@ -95,7 +95,7 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
     while b < m:  # big loop thru knot vector
         i = b
         while (b < m) and (math.isclose(U[b], U[b + 1])):
-            b = b + 1
+            b += 1
         mul = b - i + 1
         mh = mh + mul + t
         ub = U[b]
@@ -152,11 +152,11 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
                             ebpts[kj] = gam * ebpts[kj] + (1.0 - gam) * ebpts[kj + 1]
                         else:
                             ebpts[kj] = bet * ebpts[kj] + (1.0 - bet) * ebpts[kj + 1]
-                    i = i + 1
-                    j = j - 1
-                    kj = kj - 1
-                first = first - 1
-                last = last + 1
+                    i += 1
+                    j -= 1
+                    kj -= 1
+                first -= 1
+                last += 1
             # end of removing knot, u=U[a]
         if a != p:
             # load the knot ua
@@ -169,15 +169,18 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
             cind = cind + 1
         if b < m:
             # set up for next pass thru loop
+            # np: bpts[:r] = Nextbpts[:r]
             for j in range(0, r):
                 bpts[j] = Nextbpts[j]
-            # Index Error here:
+
+            # np: bpts[r : p+1] = Pw[b-p+r : b+1]
             for j in range(r, p + 1):
                 bpts[j] = Pw[b - p + j]
             a = b
-            b = b + 1
+            b += 1
             ua = ub
         else:  # end knot
+            # np: Uh[kind : kind+ph+1] = ub
             for i in range(0, ph + 1):
                 Uh[kind + i] = ub
 
