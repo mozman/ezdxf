@@ -29,9 +29,8 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
     p = spline.degree
     Pw = np.array(spline.control_points)
     U = np.array(spline.knots())
-    n = len(Pw)
+    n = len(Pw) - 1  # text book n+1 == count of control points!
     m = n + p + 1
-    assert m == len(U)
     ph = p + t
     ph2 = ph // 2
 
@@ -85,8 +84,7 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
 
     while b < m:  # big loop thru knot vector
         i = b
-        # Index Error here for: while (b < m) and ...
-        while (b < m - 1) and (math.isclose(U[b], U[b + 1])):
+        while (b < m) and (math.isclose(U[b], U[b + 1])):
             b = b + 1
         mul = b - i + 1
         mh = mh + mul + t
@@ -129,7 +127,7 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
             den = ub - ua
             bet = (ub - Uh[kind - 1]) / den
             for tr in range(1, oldr):
-                # knoit removal loop
+                # knot removal loop
                 i = first
                 j = last
                 kj = j - kind + 1
@@ -138,7 +136,7 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
                     if i < cind:
                         alf = (ub - Uh[i]) / (ua - Uh[i])
                         Qw[i] = alf * Qw[i] + (1.0 - alf) * Qw[i - 1]
-                    if j > lbz:
+                    if j >= lbz:
                         if j - tr <= kind - ph + oldr:
                             gam = (ub - Uh[j - tr]) / den
                             ebpts[kj] = gam * ebpts[kj] + (1.0 - gam) * ebpts[kj + 1]
@@ -147,6 +145,8 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
                     i = i + 1
                     j = j - 1
                     kj = kj - 1
+                first = first - 1
+                last = last + 1
             # end of removing knot, u=U[a]
         if a != p:
             # load the knot ua
@@ -171,10 +171,11 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
             for i in range(0, ph + 1):
                 Uh[kind + i] = ub
 
-    # nh ... new count of control points
     nh = mh - ph - 1
+    count_cpts = nh + 1  # text book n+1 == count of control points
     # TODO: weights?
-    return BSpline(Qw[:nh], order=ph + 1, knots=Uh[: mh + ph + 1])
+    order = ph + 1
+    return BSpline(Qw[:count_cpts], order=order, knots=Uh[: count_cpts + order])
 
 
 def test_algorithm_runs():
@@ -182,12 +183,13 @@ def test_algorithm_runs():
     result = degree_elevation(spline, 1)
 
     assert result.degree == 4
+    assert spline.control_points[0].isclose(result.control_points[0])
+    assert spline.control_points[-1].isclose(result.control_points[-1])
 
 
 def export_splines():
     spline = BSpline(CONTROL_POINTS)
-    # result = degree_elevation(spline, 1)
-    result = spline
+    result = degree_elevation(spline, 1)
 
     doc = ezdxf.new()
     msp = doc.modelspace()
