@@ -86,11 +86,15 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
     cind = 1
     ua = U[0]
     Qw[0] = Pw[0]
-    for i in range(0, ph + 1):
-        Uh[i] = ua
 
-    for i in range(0, p + 1):
-        bpts[i] = Pw[i]  # initialize first Bezier segment
+    # for i in range(0, ph + 1):
+    #     Uh[i] = ua
+    Uh[: ph + 1] = ua
+
+    # for i in range(0, p + 1):
+    #     bpts[i] = Pw[i]
+    # initialize first Bezier segment
+    bpts[: p + 1] = Pw[: p + 1]
 
     while b < m:  # big loop thru knot vector
         i = b
@@ -160,29 +164,30 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
             # end of removing knot, u=U[a]
         if a != p:
             # load the knot ua
-            for i in range(0, ph - oldr):
-                Uh[kind] = ua
-                kind = kind + 1
+            # for i in range(0, ph - oldr):
+            #     Uh[kind] = ua
+            i = ph - oldr
+            Uh[kind : kind + i] = ua
+            kind += i
         for j in range(lbz, rbz + 1):
             # load control points into Qw
             Qw[cind] = ebpts[j]
-            cind = cind + 1
+            cind += 1
         if b < m:
             # set up for next pass thru loop
-            # np: bpts[:r] = Nextbpts[:r]
-            for j in range(0, r):
-                bpts[j] = Nextbpts[j]
-
-            # np: bpts[r : p+1] = Pw[b-p+r : b+1]
-            for j in range(r, p + 1):
-                bpts[j] = Pw[b - p + j]
+            # for j in range(0, r):
+            #     bpts[j] = Nextbpts[j]
+            bpts[:r] = Nextbpts[:r]
+            # for j in range(r, p + 1):
+            #     bpts[j] = Pw[b - p + j]
+            bpts[r : p + 1] = Pw[b - p + r : b + 1]
             a = b
             b += 1
             ua = ub
         else:  # end knot
-            # np: Uh[kind : kind+ph+1] = ub
-            for i in range(0, ph + 1):
-                Uh[kind + i] = ub
+            # for i in range(0, ph + 1):
+            #     Uh[kind + i] = ub
+            Uh[kind : kind + ph + 1] = ub
 
     nh = mh - ph - 1
     count_cpts = nh + 1  # text book n+1 == count of control points
