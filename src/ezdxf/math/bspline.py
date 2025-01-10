@@ -23,6 +23,7 @@ from typing import (
     Sequence,
     TYPE_CHECKING,
     Optional,
+    no_type_check,
 )
 import math
 import numpy as np
@@ -545,16 +546,16 @@ def double_knots(n: int, p: int, t: Sequence[float]) -> list[float]:
     return u
 
 
-def _get_best_solver(matrix: list| linalg.Matrix, degree: int) -> linalg.Solver:
-    """Returns best suited linear equation solver depending on matrix configuration and 
+def _get_best_solver(matrix: list | linalg.Matrix, degree: int) -> linalg.Solver:
+    """Returns best suited linear equation solver depending on matrix configuration and
     python interpreter.
     """
     # v1.2: added NumpySolver
-    #   Acceleration of banded diagonal matrix solver is still a thing but only for 
+    #   Acceleration of banded diagonal matrix solver is still a thing but only for
     #   really big matrices N > 30 in pure Python and N > 20 for C-extension np_support
     # PyPy has no advantages when using the NumpySolver
     if not isinstance(matrix, linalg.Matrix):
-        matrix =linalg.Matrix(matrix)
+        matrix = linalg.Matrix(matrix)
 
     if matrix.nrows < 20:  # use default equation solver
         return linalg.NumpySolver(matrix.matrix)
@@ -1565,3 +1566,202 @@ def bspline_basis_vector(
     if math.isclose(u, knots[-1]):
         basis[-1] = 1.0
     return basis
+
+
+@no_type_check
+def degree_elevation(spline: BSpline, t: int) -> BSpline:
+    """Returns a new :class:`BSpline` with a t-times elevated degree.
+
+    Degree elevation increases the degree of a curve without changing the shape of the
+    curve. This function implements the algorithm A5.9 of the "The NURBS Book" by
+    Piegl & Tiller.
+
+    """
+    # Naming and structure have been retained to facilitate comparison with the original
+    # algorithm during debugging.
+    t = int(t)
+    if t < 1:
+        return spline
+    p = spline.degree  # degree of spline
+    # Pw: control points
+    if spline.is_rational:
+        #   rational: homogeneous point representation (x*w, y*w, z*w, w)
+        dim = 4
+        Pw = np.array(
+            [
+                (v.x*w, v.y*w, v.z*w, w)
+                for v, w in zip(spline.control_points, spline.weights())
+            ]
+        )
+    else:
+        # non-rational splines: (x, y, z)
+        dim = 3
+        Pw = np.array(spline.control_points)
+
+    # knot vector:
+    U = np.array(spline.knots())
+
+    # n + 1: count of control points (text book definition)
+    n = len(Pw) - 1
+    m = n + p + 1
+    ph = p + t
+    ph2 = ph // 2
+
+    # control points of the elevated B-spline
+    Qw = np.zeros(shape=(len(Pw) * (2 + t), dim))  # size not known yet???
+
+    # knot vector of the elevated B-spline
+    Uh = np.zeros(m * (2 + t))  # size not known yet???
+
+    # coefficients for degree elevating the Bezier segments
+    bezalfs = np.zeros(shape=(p + t + 1, p + 1))
+
+    # Bezier control points of the current segment
+    bpts = np.zeros(shape=(p + 1, dim))
+
+    # (p+t)th-degree Bezier control points of the current segment
+    ebpts = np.zeros(shape=(p + t + 1, dim))
+
+    # leftmost control points of the next Bezier segment
+    Nextbpts = np.zeros(shape=(p - 1, dim))
+
+    # knot insertion alphas
+    alfs = np.zeros(p - 1)
+    bezalfs[0, 0] = 1.0
+    bezalfs[ph, p] = 1.0
+    binom = linalg.binomial_coefficient
+    for i in range(1, ph2 + 1):
+        inv = 1.0 / binom(ph, i)
+        mpi = min(p, i)
+        for j in range(max(0, i - t), mpi + 1):
+            bezalfs[i, j] = inv * binom(p, j) * binom(t, i - j)
+    for i in range(ph2 + 1, ph):
+        mpi = min(p, i)
+        for j in range(max(0, i - t), mpi + 1):
+            bezalfs[i, j] = bezalfs[ph - i, p - j]
+    mh = ph
+    kind = ph + 1
+    r = -1
+    a = p
+    b = p + 1
+    cind = 1
+    ua = U[0]
+    Qw[0] = Pw[0]
+
+    # for i in range(0, ph + 1):
+    #     Uh[i] = ua
+    Uh[: ph + 1] = ua
+
+    # for i in range(0, p + 1):
+    #     bpts[i] = Pw[i]
+    # initialize first Bezier segment
+    bpts[: p + 1] = Pw[: p + 1]
+
+    while b < m:  # big loop thru knot vector
+        i = b
+        while (b < m) and (math.isclose(U[b], U[b + 1])):
+            b += 1
+        mul = b - i + 1
+        mh = mh + mul + t
+        ub = U[b]
+        oldr = r
+        r = p - mul
+        # insert knot u(b) r-times
+        if oldr > 0:
+            lbz = (oldr + 2) // 2
+        else:
+            lbz = 1
+        if r > 0:
+            rbz = ph - (r + 1) // 2
+        else:
+            rbz = ph
+        if r > 0:
+            # insert knot to get Bezier segment
+            numer = ub - ua
+            for k in range(p, mul, -1):
+                alfs[k - mul - 1] = numer / (U[a + k] - ua)
+            for j in range(1, r + 1):
+                save = r - j
+                s = mul + j
+                for k in range(p, s - 1, -1):
+                    bpts[k] = alfs[k - s] * bpts[k] + (1.0 - alfs[k - s]) * bpts[k - 1]
+                Nextbpts[save] = bpts[p]
+            # end of insert knot
+        for i in range(lbz, ph + 1):
+            # degree elevate bezier
+            # only points lbz, .. ,ph are used below
+            ebpts[i] = 0.0
+            mpi = min(p, i)
+            for j in range(max(0, i - t), mpi + 1):
+                ebpts[i] = ebpts[i] + bezalfs[i, j] * bpts[j]
+            # end degree elevate bezier
+        if oldr > 1:
+            # must remove knot u=U[a] oldr times
+            first = kind - 2
+            last = kind
+            den = ub - ua
+            bet = (ub - Uh[kind - 1]) / den
+            for tr in range(1, oldr):
+                # knot removal loop
+                i = first
+                j = last
+                kj = j - kind + 1
+                while j - i > tr:
+                    # loop and compute new control points for one removal step
+                    if i < cind:
+                        alf = (ub - Uh[i]) / (ua - Uh[i])
+                        Qw[i] = alf * Qw[i] + (1.0 - alf) * Qw[i - 1]
+                    if j >= lbz:
+                        if j - tr <= kind - ph + oldr:
+                            gam = (ub - Uh[j - tr]) / den
+                            ebpts[kj] = gam * ebpts[kj] + (1.0 - gam) * ebpts[kj + 1]
+                        else:
+                            ebpts[kj] = bet * ebpts[kj] + (1.0 - bet) * ebpts[kj + 1]
+                    i += 1
+                    j -= 1
+                    kj -= 1
+                first -= 1
+                last += 1
+            # end of removing knot, u=U[a]
+        if a != p:
+            # load the knot ua
+            # for i in range(0, ph - oldr):
+            #     Uh[kind] = ua
+            i = ph - oldr
+            Uh[kind : kind + i] = ua
+            kind += i
+        for j in range(lbz, rbz + 1):
+            # load control points into Qw
+            Qw[cind] = ebpts[j]
+            cind += 1
+        if b < m:
+            # set up for next pass thru loop
+            # for j in range(0, r):
+            #     bpts[j] = Nextbpts[j]
+            bpts[:r] = Nextbpts[:r]
+            # for j in range(r, p + 1):
+            #     bpts[j] = Pw[b - p + j]
+            bpts[r : p + 1] = Pw[b - p + r : b + 1]
+            a = b
+            b += 1
+            ua = ub
+        else:  # end knot
+            # for i in range(0, ph + 1):
+            #     Uh[kind + i] = ub
+            Uh[kind : kind + ph + 1] = ub
+
+    nh = mh - ph - 1
+    count_cpts = nh + 1  # text book n+1 == count of control points
+    order = ph + 1
+
+    weights = None
+    cpoints = Qw[:count_cpts, :3]
+    if dim == 4:
+        # homogeneous point representation (x*w, y*w, z*w, w)
+        weights = Qw[:count_cpts, 3]
+        cpoints = [p / w for p, w in zip(cpoints, weights)]
+        # if weights: ... not supported for numpy arrays
+        weights = weights.tolist()
+    return BSpline(
+        cpoints, order=order, weights=weights, knots=Uh[: count_cpts + order]
+    )

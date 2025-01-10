@@ -13,6 +13,7 @@ if not OUTBOX.exists():
     OUTBOX = Path(".")
 
 CONTROL_POINTS = [(0, 0), (1, -1), (2, 0), (3, 2), (4, 0), (5, -2)]
+WEIGHTS = [1, 2, 3, 3, 2, 1]
 
 
 def degree_elevation(spline: BSpline, times: int) -> BSpline:
@@ -27,15 +28,19 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
         return spline
 
     p = spline.degree
+    # Pw: control points
     if spline.is_rational:
+        #   rational: homogeneous point representation (x*w, y*w, z*w, w)
         dim = 4
-        # rational splines: (x, y, z, w)
         Pw = np.array(
-            [v.x, v.y, v.z, w] for v, w in zip(spline.control_points, spline.weights())
+            [
+                (v.x*w, v.y*w, v.z*w, w)
+                for v, w in zip(spline.control_points, spline.weights())
+            ]
         )
     else:
-        dim = 3
         # non-rational splines: (x, y, z)
+        dim = 3
         Pw = np.array(spline.control_points)
 
     U = np.array(spline.knots())
@@ -193,10 +198,14 @@ def degree_elevation(spline: BSpline, times: int) -> BSpline:
     count_cpts = nh + 1  # text book n+1 == count of control points
     order = ph + 1
 
-    weights = []
+    weights = None
     cpoints = Qw[:count_cpts, :3]
     if dim == 4:
+        # homogeneous point representation (x*w, y*w, z*w, w)
         weights = Qw[:count_cpts, 3]
+        cpoints = [p / w for p, w in zip(cpoints, weights)]
+        # if weights: ... not supported for numpy arrays
+        weights = weights.tolist()
     return BSpline(
         cpoints, order=order, weights=weights, knots=Uh[: count_cpts + order]
     )
@@ -211,8 +220,8 @@ def test_algorithm_runs():
     assert spline.control_points[-1].isclose(result.control_points[-1])
 
 
-def export_splines():
-    spline = BSpline(CONTROL_POINTS)
+def export_splines(filename: str, weights=[]):
+    spline = BSpline(CONTROL_POINTS, weights=weights)
     result = degree_elevation(spline, 1)
 
     doc = ezdxf.new()
@@ -221,8 +230,9 @@ def export_splines():
     s2 = msp.add_spline(dxfattribs={"layer": "elevated", "color": 2})
     s1.apply_construction_tool(spline)
     s2.apply_construction_tool(result)
-    doc.saveas(OUTBOX / "degree_elevation.dxf")
+    doc.saveas(OUTBOX / filename)
 
 
 if __name__ == "__main__":
-    export_splines()
+    export_splines("degree_elevation.dxf")
+    export_splines("degree_elevation_rational.dxf", weights=WEIGHTS)
