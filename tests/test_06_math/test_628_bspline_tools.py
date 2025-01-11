@@ -4,6 +4,7 @@ import pytest
 
 import math
 from ezdxf.math import BSpline
+from ezdxf.math.bspline import to_homogeneous_points, from_homogeneous_points
 
 
 CONTROL_POINTS = [(0, 0), (1, -1), (2, 0), (3, 2), (4, 0), (5, -2)]
@@ -117,6 +118,31 @@ class TestRationalBSpline:
             all(math.isclose(w, e) for w, e in zip(result.weights(), EXPECTED_WEIGHTS))
             is True
         )
+
+
+class TestHomogeneousPoints:
+    def test_to_hg_points(self):
+        bsp = BSpline(CONTROL_POINTS, weights=WEIGHTS)
+        hp = to_homogeneous_points(bsp)
+        assert len(hp) == len(CONTROL_POINTS)
+        assert len(hp[0]) == 4
+        assert tuple(hp[1]) == (2, -2, 0, 2)
+
+    def test_to_hg_points_non_rational(self):
+        bsp = BSpline(CONTROL_POINTS)
+        hp = to_homogeneous_points(bsp)
+        assert len(hp) == len(CONTROL_POINTS)
+        assert len(hp[0]) == 4
+        assert tuple(hp[1]) == (1, -1, 0, 1)
+
+    def test_revert_hg_points(self):
+        bsp = BSpline(CONTROL_POINTS, weights=WEIGHTS)
+        hp = to_homogeneous_points(bsp)
+        points, weights = from_homogeneous_points(hp)
+        assert len(points) == len(CONTROL_POINTS)
+        assert len(weights) == len(WEIGHTS)
+        assert all(v.isclose(e) for v, e in zip(points, CONTROL_POINTS)) is True
+        assert all(math.isclose(w, e) for w, e in zip(weights, WEIGHTS)) is True
 
 
 if __name__ == "__main__":

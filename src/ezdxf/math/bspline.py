@@ -1163,7 +1163,7 @@ class BSpline:
 
         """
         if self._basis.is_rational:
-            raise TypeError("Rational B-splines not supported.")
+            return self._insert_knot_rational(t)
 
         knots = list(self._basis.knots)
         cpoints = list(self._control_points)
@@ -1183,6 +1183,35 @@ class BSpline:
         cpoints[k - p + 1 : k] = [new_point(i) for i in range(k - p + 1, k + 1)]
         knots.insert(k + 1, t)  # knot[k] <= t < knot[k+1]
         return BSpline(cpoints, self.order, knots)
+
+    @no_type_check
+    def _insert_knot_rational(self, t: float) -> BSpline:
+        """Knot insertion for rational B-splines."""
+        if not self._basis.is_rational:
+            raise TypeError("Requires a rational B-splines.")
+
+        knots = list(self._basis.knots)
+        # homogeneous point representation
+        hg_points = to_homogeneous_points(self)
+        p = self.degree
+
+        def new_point(index: int):
+            a = (t - knots[index]) / (knots[index + p] - knots[index])
+            return hg_points[index - 1] * (1 - a) + hg_points[index] * a
+
+        if t <= 0.0 or t >= self.max_t:
+            raise DXFValueError("Invalid position t")
+
+        k = self._basis.find_span(t)
+        if k < p:
+            raise DXFValueError("Invalid position t")
+        new_points = hg_points.tolist()
+        new_points[k - p + 1 : k] = [new_point(i) for i in range(k - p + 1, k + 1)]
+
+        weights = [p[3] for p in new_points]
+        points = Vec3.list(p[:3] / p[3] for p in new_points)
+        knots.insert(k + 1, t)  # knot[k] <= t < knot[k+1]
+        return BSpline(points, self.order, knots=knots, weights=weights)
 
     def knot_refinement(self, u: Iterable[float]) -> BSpline:
         """Insert multiple knots, without altering the shape of the curve.
@@ -1599,14 +1628,9 @@ def degree_elevation(spline: BSpline, t: int) -> BSpline:
     p = spline.degree  # degree of spline
     # Pw: control points
     if spline.is_rational:
-        #   rational: homogeneous point representation (x*w, y*w, z*w, w)
+        # homogeneous point representation (x*w, y*w, z*w, w)
         dim = 4
-        Pw = np.array(
-            [
-                (v.x*w, v.y*w, v.z*w, w)
-                for v, w in zip(spline.control_points, spline.weights())
-            ]
-        )
+        Pw = to_homogeneous_points(spline)
     else:
         # non-rational splines: (x, y, z)
         dim = 3
@@ -1779,3 +1803,28 @@ def degree_elevation(spline: BSpline, t: int) -> BSpline:
     return BSpline(
         cpoints, order=order, weights=weights, knots=Uh[: count_cpts + order]
     )
+
+
+def to_homogeneous_points(spline: BSpline) -> np.typing.NDArray:
+    weights = np.array(spline.weights(), dtype=np.float64)
+    if not len(weights):
+        weights = np.ones(spline.count)
+
+    return np.array(
+        [
+            (v.x * w, v.y * w, v.z * w, w)
+            for v, w in zip(spline.control_points, weights)
+        ]
+    )
+
+
+def from_homogeneous_points(
+    hg_points: Iterable[Sequence[float]],
+) -> tuple[Sequence[Vec3], Sequence[float]]:
+    points: list[Vec3] = []
+    weights: list[float] = []
+    for point in hg_points:
+        w = float(point[3])
+        points.append(Vec3(point[:3]) / w)
+        weights.append(w)
+    return points, weights
