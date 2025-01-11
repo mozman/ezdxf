@@ -1141,6 +1141,8 @@ BSpline
 
     .. automethod:: cubic_bezier_approximation
 
+    .. automethod:: degree_elevation
+
 
 Bezier
 ------

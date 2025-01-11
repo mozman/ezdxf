@@ -1323,6 +1323,18 @@ class BSpline:
             params = list(subdivide_params(params))
         return params
 
+    def degree_elevation(self, t: int) -> BSpline:
+        """Returns a new :class:`BSpline` with a t-times elevated degree.
+
+        Degree elevation increases the degree of a curve without changing the shape of the
+        curve. This method implements the algorithm A5.9 of the "The NURBS Book" by
+        Piegl & Tiller.
+
+        .. versionadded:: 1.4
+
+        """
+        return degree_elevation(self, t)
+
 
 def subdivide_params(p: list[float]) -> Iterable[float]:
     for i in range(len(p) - 1):
@@ -1575,6 +1587,8 @@ def degree_elevation(spline: BSpline, t: int) -> BSpline:
     Degree elevation increases the degree of a curve without changing the shape of the
     curve. This function implements the algorithm A5.9 of the "The NURBS Book" by
     Piegl & Tiller.
+
+    .. versionadded:: 1.4
 
     """
     # Naming and structure have been retained to facilitate comparison with the original

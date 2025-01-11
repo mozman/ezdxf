@@ -4,7 +4,7 @@
 	- NEW: `Mesh.audit()` removes `MESH` entities without vertices or faces
 	- NEW: `Polyline.points_in_wcs()` method
 	- NEW: `EdgePath.close_gaps()` method
-	- NEW: `ezdxf.math.bspline.degree_elevation()` function
+	- NEW: `BSpline.degree_elevation()` method
 	- BUGFIX: Exported `MESH` entities  without vertices or faces create invalid DXF files
 		- {{issue 1219}}
 - ## Version 1.3.5 - 2024-12-15

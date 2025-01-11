@@ -3,7 +3,7 @@
 import pytest
 
 import math
-from ezdxf.math import bspline
+from ezdxf.math import BSpline
 
 
 CONTROL_POINTS = [(0, 0), (1, -1), (2, 0), (3, 2), (4, 0), (5, -2)]
@@ -56,48 +56,48 @@ EXPECTED_WEIGHTS = [1.0, 1.75, 2.25, 2.875, 3.0, 2.8749999999999996, 2.25, 1.75,
 class TestNonRationalBSpline:
     @pytest.fixture(scope="class")
     def result(self):
-        spline = bspline.BSpline(CONTROL_POINTS)
-        return bspline.degree_elevation(spline, 1)
+        spline = BSpline(CONTROL_POINTS)
+        return spline.degree_elevation(1)
 
-    def test_degree_is_elevated(self, result: bspline.BSpline):
+    def test_degree_is_elevated(self, result: BSpline):
         assert result.degree == 4
 
-    def test_clamped_start_and_end_points_are_preserved(self, result: bspline.BSpline):
+    def test_clamped_start_and_end_points_are_preserved(self, result: BSpline):
         assert result.control_points[0].isclose(CONTROL_POINTS[0])
         assert result.control_points[-1].isclose(CONTROL_POINTS[-1])
 
-    def test_expected_control_points(self, result: bspline.BSpline):
+    def test_expected_control_points(self, result: BSpline):
         assert (
             all(cp.isclose(e) for cp, e in zip(result.control_points, EXPECTED_POINTS))
             is True
         )
 
-    def test_expected_knot_values(self, result: bspline.BSpline):
+    def test_expected_knot_values(self, result: BSpline):
         assert (
             all(math.isclose(k, e) for k, e in zip(result.knots(), EXPECTED_KNOTS))
             is True
         )
 
     def test_elevation_0_times(self):
-        spline = bspline.BSpline(CONTROL_POINTS)
-        assert bspline.degree_elevation(spline, 0) is spline
-        assert bspline.degree_elevation(spline, -1) is spline
+        spline = BSpline(CONTROL_POINTS)
+        assert spline.degree_elevation(0) is spline
+        assert spline.degree_elevation(-1) is spline
 
 
 class TestRationalBSpline:
     @pytest.fixture(scope="class")
     def result(self):
-        spline = bspline.BSpline(CONTROL_POINTS, weights=WEIGHTS)
-        return bspline.degree_elevation(spline, 1)
+        spline = BSpline(CONTROL_POINTS, weights=WEIGHTS)
+        return spline.degree_elevation(1)
 
-    def test_degree_is_elevated(self, result: bspline.BSpline):
+    def test_degree_is_elevated(self, result: BSpline):
         assert result.degree == 4
 
-    def test_clamped_start_and_end_points_are_preserved(self, result: bspline.BSpline):
+    def test_clamped_start_and_end_points_are_preserved(self, result: BSpline):
         assert result.control_points[0].isclose(CONTROL_POINTS[0])
         assert result.control_points[-1].isclose(CONTROL_POINTS[-1])
 
-    def test_expected_control_points(self, result: bspline.BSpline):
+    def test_expected_control_points(self, result: BSpline):
         assert (
             all(
                 cp.isclose(e)
@@ -106,13 +106,13 @@ class TestRationalBSpline:
             is True
         )
 
-    def test_expected_knot_values(self, result: bspline.BSpline):
+    def test_expected_knot_values(self, result: BSpline):
         assert (
             all(math.isclose(k, e) for k, e in zip(result.knots(), EXPECTED_KNOTS))
             is True
         )
 
-    def test_expected_weights(self, result: bspline.BSpline):
+    def test_expected_weights(self, result: BSpline):
         assert (
             all(math.isclose(w, e) for w, e in zip(result.weights(), EXPECTED_WEIGHTS))
             is True
