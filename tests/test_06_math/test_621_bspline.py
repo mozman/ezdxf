@@ -1,5 +1,7 @@
 # Copyright (c) 2012-2024 Manfred Moitzi
 # License: MIT License
+import math
+
 import pytest
 import numpy as np
 from ezdxf.math import Vec3, BSpline, close_vectors
@@ -106,6 +108,36 @@ def test_bspline_insert_knot():
     assert len(bspline.control_points) == 8
     bspline2 = bspline.insert_knot(t)
     assert len(bspline2.control_points) == 9
+    assert (
+        all(
+            math.isclose(k, e)
+            for k, e in zip(
+                bspline2.knots(),
+                (0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0, 1.0, 1.0, 1.0),
+            )
+        )
+        is True
+    )
+    assert (
+        all(
+            p.isclose(e)
+            for p, e in zip(
+                bspline2.control_points,
+                (
+                    (0.0, 0.0, 0.0),
+                    (10.0, 20.0, 0.0),
+                    (30.0, 10.0, 0.0),
+                    (38.333333333333336, 10.0, 0.0),
+                    (45.0, 5.000000000000001, 0.0),
+                    (51.66666666666667, 3.3333333333333326, 0.0),
+                    (60.0, 20.0, 0.0),
+                    (70.0, 50.0, 0.0),
+                    (80.0, 70.0, 0.0),
+                ),
+            )
+        )
+        is True
+    )
 
 
 def test_transform_interface():
@@ -334,9 +366,7 @@ def test_flattening():
     bspline = BSpline.from_fit_points(fitpoints)
     assert all(
         a.isclose(b)
-        for a, b in zip(
-            bspline.flattening(0.01, segments=4), EXPECTED_FLATTENING
-        )
+        for a, b in zip(bspline.flattening(0.01, segments=4), EXPECTED_FLATTENING)
     )
 
 
@@ -530,9 +560,7 @@ def test_bspline_point_calculation_to_pre_calculated_results(order, results):
 
 def test_bspline_derivative_calculation_to_pre_calculated_results():
     spline = BSpline(DEFPOINTS, order=4)
-    for points, expected in zip(
-        spline.derivatives(PARAMS, n=2), DERIVATIVES_ORDER_4
-    ):
+    for points, expected in zip(spline.derivatives(PARAMS, n=2), DERIVATIVES_ORDER_4):
         for p, e in zip(points, expected):
             assert p.isclose(e)
 
