@@ -23,6 +23,7 @@ from typing import (
     Sequence,
     TYPE_CHECKING,
     Optional,
+    Any,
     no_type_check,
 )
 import math
@@ -1184,32 +1185,30 @@ class BSpline:
         knots.insert(k + 1, t)  # knot[k] <= t < knot[k+1]
         return BSpline(cpoints, self.order, knots)
 
-    @no_type_check
     def _insert_knot_rational(self, t: float) -> BSpline:
         """Knot insertion for rational B-splines."""
         if not self._basis.is_rational:
             raise TypeError("Requires a rational B-splines.")
 
-        knots = list(self._basis.knots)
+        knots: list[float] = list(self._basis.knots)
         # homogeneous point representation
-        hg_points = to_homogeneous_points(self)
-        p = self.degree
+        hg_points: np.typing.NDArray = to_homogeneous_points(self)
+        p: int = self.degree
 
-        def new_point(index: int):
-            a = (t - knots[index]) / (knots[index + p] - knots[index])
+        def new_point(index: int) -> np.typing.NDArray:
+            a: float = (t - knots[index]) / (knots[index + p] - knots[index])
             return hg_points[index - 1] * (1 - a) + hg_points[index] * a
 
         if t <= 0.0 or t >= self.max_t:
             raise DXFValueError("Invalid position t")
 
-        k = self._basis.find_span(t)
+        k: int = self._basis.find_span(t)
         if k < p:
             raise DXFValueError("Invalid position t")
-        new_points = hg_points.tolist()
+        new_points: Any = hg_points.tolist()
         new_points[k - p + 1 : k] = [new_point(i) for i in range(k - p + 1, k + 1)]
 
-        weights = [p[3] for p in new_points]
-        points = Vec3.list(p[:3] / p[3] for p in new_points)
+        points, weights = from_homogeneous_points(new_points)
         knots.insert(k + 1, t)  # knot[k] <= t < knot[k+1]
         return BSpline(points, self.order, knots=knots, weights=weights)
 
@@ -1811,16 +1810,13 @@ def to_homogeneous_points(spline: BSpline) -> np.typing.NDArray:
         weights = np.ones(spline.count)
 
     return np.array(
-        [
-            (v.x * w, v.y * w, v.z * w, w)
-            for v, w in zip(spline.control_points, weights)
-        ]
+        [(v.x * w, v.y * w, v.z * w, w) for v, w in zip(spline.control_points, weights)]
     )
 
 
 def from_homogeneous_points(
     hg_points: Iterable[Sequence[float]],
-) -> tuple[Sequence[Vec3], Sequence[float]]:
+) -> tuple[list[Vec3], list[float]]:
     points: list[Vec3] = []
     weights: list[float] = []
     for point in hg_points:

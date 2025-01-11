@@ -91,53 +91,111 @@ def test_normalize_knots_if_needed():
     assert k[0] == 0.0
 
 
-def test_bspline_insert_knot():
-    bspline = BSpline(
-        [
-            (0, 0),
-            (10, 20),
-            (30, 10),
-            (40, 10),
-            (50, 0),
-            (60, 20),
-            (70, 50),
-            (80, 70),
-        ]
-    )
-    t = bspline.max_t / 2
-    assert len(bspline.control_points) == 8
-    bspline2 = bspline.insert_knot(t)
-    assert len(bspline2.control_points) == 9
-    assert (
-        all(
-            math.isclose(k, e)
-            for k, e in zip(
-                bspline2.knots(),
-                (0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0, 1.0, 1.0, 1.0),
-            )
+class TestInsertKnotNonRational:
+    @pytest.fixture
+    def spline(self):
+        s = BSpline(
+            [
+                (0, 0),
+                (10, 20),
+                (30, 10),
+                (40, 10),
+                (50, 0),
+                (60, 20),
+                (70, 50),
+                (80, 70),
+            ]
         )
-        is True
-    )
-    assert (
-        all(
-            p.isclose(e)
-            for p, e in zip(
-                bspline2.control_points,
-                (
-                    (0.0, 0.0, 0.0),
-                    (10.0, 20.0, 0.0),
-                    (30.0, 10.0, 0.0),
-                    (38.333333333333336, 10.0, 0.0),
-                    (45.0, 5.000000000000001, 0.0),
-                    (51.66666666666667, 3.3333333333333326, 0.0),
-                    (60.0, 20.0, 0.0),
-                    (70.0, 50.0, 0.0),
-                    (80.0, 70.0, 0.0),
-                ),
+        t = s.max_t / 2
+        return s.insert_knot(t)
+
+    def test_knots(self, spline):
+        assert (
+            all(
+                math.isclose(k, e)
+                for k, e in zip(
+                    spline.knots(),
+                    (0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0, 1.0, 1.0, 1.0),
+                )
             )
+            is True
         )
-        is True
-    )
+
+    def test_control_points(self, spline):
+        assert (
+            all(
+                p.isclose(e)
+                for p, e in zip(
+                    spline.control_points,
+                    (
+                        (0.0, 0.0, 0.0),
+                        (10.0, 20.0, 0.0),
+                        (30.0, 10.0, 0.0),
+                        (38.333333333333336, 10.0, 0.0),
+                        (45.0, 5.000000000000001, 0.0),
+                        (51.66666666666667, 3.3333333333333326, 0.0),
+                        (60.0, 20.0, 0.0),
+                        (70.0, 50.0, 0.0),
+                        (80.0, 70.0, 0.0),
+                    ),
+                )
+            )
+            is True
+        )
+
+
+class TestInsertKnotRational:
+    @pytest.fixture
+    def spline(self):
+        s = BSpline(
+            [(0, 0), (0, 1), (1, 1)],
+            weights=[1, 1 / math.sqrt(2), 1],
+            order=3,
+        )
+
+        t = s.max_t / 2
+        return s.insert_knot(t)
+
+    def test_knots(self, spline):
+        assert (
+            all(
+                math.isclose(k, e)
+                for k, e in zip(
+                    spline.knots(),
+                    (0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0),
+                )
+            )
+            is True
+        )
+
+    def test_control_points(self, spline):
+        assert (
+            all(
+                p.isclose(e)
+                for p, e in zip(
+                    spline.control_points,
+                    (
+                        (0.0, 0.0, 0.0),
+                        (0.0, 0.41421356237309503, 0.0),
+                        (0.585786437626905, 1.0, 0.0),
+                        (1.0, 1.0, 0.0),
+                    ),
+                )
+            )
+            is True
+        )
+
+    def test_weights(self, spline):
+        assert (
+            all(
+                math.isclose(w, e)
+                for w, e in zip(
+                    spline.weights(),
+                    (1.0, 0.8535533905932737, 0.8535533905932737, 1.0),
+                )
+            )
+            is True
+        )
 
 
 def test_transform_interface():
