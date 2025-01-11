@@ -1363,6 +1363,28 @@ class BSpline:
         """
         return degree_elevation(self, t)
 
+    def point_inversion(
+        self, point: UVec, *, epsilon=1e-8, max_iterations=100, init=8
+    ) -> float:
+        """Returns the parameter t for a point on the curve that is closest to the input
+        point.
+
+        This is an iterative search using Newton's method, so there is no guarantee
+        of success, especially for splines with many turns.
+
+        Args:
+            point(UVec): point on the curve or near the curve
+            epsilon(float): desired precision (distance input point to point on curve)
+            max_iterations(int): max iterations for Newton's method
+            init(int): number of points to calculate in the initialization phase
+
+        .. versionadded:: 1.4
+
+        """
+        return point_inversion(
+            self, Vec3(point), epsilon=epsilon, max_iterations=max_iterations, init=init
+        )
+
 
 def subdivide_params(p: list[float]) -> Iterable[float]:
     for i in range(len(p) - 1):
@@ -1824,3 +1846,66 @@ def from_homogeneous_points(
         points.append(Vec3(point[:3]) / w)
         weights.append(w)
     return points, weights
+
+
+def point_inversion(
+    spline: BSpline, point: Vec3, *, epsilon=1e-8, max_iterations=100, init=8
+) -> float:
+    """Returns the parameter t for a point on the curve that is closest to the input
+    point.
+
+    This is an iterative search using Newton's method, so there is no guarantee
+    of success, especially for splines with many turns.
+
+    Args:
+        spline(BSpline): curve
+        point(Vec3): point on the curve or near the curve
+        epsilon(float): desired precision (distance input point to point on curve)
+        max_iterations(int): max iterations for Newton's method
+        init(int): number of points to calculate in the initialization phase
+
+    .. versionadded:: 1.4
+
+    """
+    max_t = spline.max_t
+    prev_distance = float("inf")
+    u = max_t / 2
+
+    # Initialization phase
+    t = np.linspace(0, max_t, init, endpoint=True)
+    chk_points = list(spline.points(t))
+    for u1, p in zip(t, chk_points):
+        distance = point.distance(p)
+        if distance < prev_distance:
+            u = float(u1)
+            prev_distance = distance
+
+    no_progress_counter: int = 0
+    for iteration in range(max_iterations):
+        # Evaluate the B-spline curve at the current parameter value
+        p, dpdu = spline.derivative(u, n=1)
+
+        # Calculate the difference between the current point and the target point
+        diff = p - point
+
+        # Check if the difference is within the desired epsilon
+        distance = diff.magnitude
+        if distance < epsilon:
+            break  # goal reached
+        if math.isclose(prev_distance, distance):
+            no_progress_counter += 1
+            if no_progress_counter > 2:
+                break
+        else:
+            no_progress_counter = 0
+        prev_distance = distance
+
+        # Update the parameter value using Newton's method
+        u -= diff.dot(dpdu) / dpdu.dot(dpdu)
+
+        # Clamp the parameter value within the valid range
+        if u < 0.0:
+            u = 0.0
+        elif u > max_t:
+            u = max_t
+    return u

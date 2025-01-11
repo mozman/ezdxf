@@ -5,6 +5,7 @@
 	- NEW: `Polyline.points_in_wcs()` method
 	- NEW: `EdgePath.close_gaps()` method
 	- NEW: `BSpline.degree_elevation()` method
+	- NEW: `BSpline.point_inversion()` method
 	- NEW: `BSpline.insert_knot()` and `BSpline.knot_refinement()` supports rational splines
 	- BUGFIX: Exported `MESH` entities  without vertices or faces create invalid DXF files
 		- {{issue 1219}}

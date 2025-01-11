@@ -1143,6 +1143,8 @@ BSpline
 
     .. automethod:: degree_elevation
 
+    .. automethod:: point_inversion
+
 
 Bezier
 ------

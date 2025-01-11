@@ -5,7 +5,7 @@ import pytest
 import math
 from ezdxf.math import BSpline
 from ezdxf.math.bspline import to_homogeneous_points, from_homogeneous_points
-
+import numpy as np
 
 CONTROL_POINTS = [(0, 0), (1, -1), (2, 0), (3, 2), (4, 0), (5, -2)]
 WEIGHTS = [1, 2, 3, 3, 2, 1]
@@ -54,7 +54,7 @@ EXPECTED_POINTS_RATIONAL = [
 EXPECTED_WEIGHTS = [1.0, 1.75, 2.25, 2.875, 3.0, 2.8749999999999996, 2.25, 1.75, 1.0]
 
 
-class TestNonRationalBSpline:
+class TestDegreeElevationNonRationalBSpline:
     @pytest.fixture(scope="class")
     def result(self):
         spline = BSpline(CONTROL_POINTS)
@@ -85,7 +85,7 @@ class TestNonRationalBSpline:
         assert spline.degree_elevation(-1) is spline
 
 
-class TestRationalBSpline:
+class TestDegreeElevationRationalBSpline:
     @pytest.fixture(scope="class")
     def result(self):
         spline = BSpline(CONTROL_POINTS, weights=WEIGHTS)
@@ -143,6 +143,26 @@ class TestHomogeneousPoints:
         assert len(weights) == len(WEIGHTS)
         assert all(v.isclose(e) for v, e in zip(points, CONTROL_POINTS)) is True
         assert all(math.isclose(w, e) for w, e in zip(weights, WEIGHTS)) is True
+
+
+class TestPointInversion:
+    @pytest.fixture(scope="class")
+    def spline(self):
+        return BSpline(CONTROL_POINTS)
+
+    def test_start_point(self, spline):
+        assert math.isclose(0, spline.point_inversion((0, 0)))
+
+    def test_end_point(self, spline):
+        result = spline.point_inversion(CONTROL_POINTS[-1])
+        assert math.isclose(spline.max_t, result)
+
+    def test_many_points(self, spline):
+        t = np.linspace(0, spline.max_t, 13)
+        points = spline.points(t)
+        assert all(
+            math.isclose(spline.point_inversion(p), u) for p, u in zip(points, t)
+        )
 
 
 if __name__ == "__main__":
