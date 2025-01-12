@@ -1191,7 +1191,7 @@ class BSpline:
             raise TypeError("Requires a rational B-splines.")
 
         knots: list[float] = list(self._basis.knots)
-        # homogeneous point representation
+        # homogeneous point representation: (x*w, y*w, z*w, w)
         hg_points: np.typing.NDArray = to_homogeneous_points(self)
         p: int = self.degree
 
