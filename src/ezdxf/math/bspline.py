@@ -1083,23 +1083,16 @@ class BSpline:
                 yield from subdiv(m, e, mid_t, end_t)
 
         evaluator = self.evaluator
-        knots: list[float] = self.knots()  # type: ignore
-        if self.is_clamped:
-            lower_bound = 0.0
-        else:
-            lower_bound = knots[self.order - 1]
-            knots = knots[: self.count + 1]
-
-        knots = list(set(knots))
-        knots.sort()
-        t = lower_bound
+        knots = np.unique(np.array(self.knots()))
+        seg_f64 = np.float64(segments)
+        t = knots[0]
         start_point = evaluator.point(t)
         yield start_point
         for t1 in knots[1:]:
-            delta = (t1 - t) / segments
+            delta = (t1 - t) / seg_f64
             while t < t1:
                 next_t = t + delta
-                if math.isclose(next_t, t1):
+                if np.isclose(next_t, t1):
                     next_t = t1
                 end_point = evaluator.point(next_t)
                 yield from subdiv(start_point, end_point, t, next_t)
