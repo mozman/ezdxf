@@ -25,7 +25,9 @@ from typing import (
     Optional,
     Any,
     no_type_check,
+    NamedTuple,
 )
+import bisect
 import math
 import numpy as np
 
@@ -40,9 +42,9 @@ from ezdxf.math import (
     distance_point_line_3d,
     arc_angle_span_deg,
 )
+from .bbox import BoundingBox
 from ezdxf.math import linalg
 from ezdxf.lldxf.const import DXFValueError
-
 
 if TYPE_CHECKING:
     from ezdxf.math import (
@@ -1283,7 +1285,7 @@ class BSpline:
             if b < m:
                 # for i in range(p - mult, p + 1):
                 #     next_bezier_points[i] = control_points[b - p + i]
-                next_bezier_points[p - mult: p + 1] = control_points[b - mult: b + 1]
+                next_bezier_points[p - mult : p + 1] = control_points[b - mult : b + 1]
                 a = b
                 b += 1
                 bezier_points = next_bezier_points
@@ -1379,6 +1381,19 @@ class BSpline:
         return point_inversion(
             self, Vec3(point), epsilon=epsilon, max_iterations=max_iterations, init=init
         )
+
+    def measure(self, segments: int = 100) -> Measurement:
+        """Returns a B-spline measurement tool.
+
+        All measurements are based on the approximated curve.
+
+        Args:
+            segments: count of segments for B-spline approximation.
+
+        .. versionadded:: 1.4
+
+        """
+        return Measurement(self, segments)
 
 
 def subdivide_params(p: list[float]) -> Iterable[float]:
@@ -1904,3 +1919,105 @@ def point_inversion(
         elif u > max_t:
             u = max_t
     return u
+
+
+class MeasurementPoint(NamedTuple):
+    param: float  # B-spline parameter t
+    distance: float  # distance to previous point
+    length: float  # length along the curve from start
+
+
+class Measurement:
+    """B-spline measurement tool.
+
+    All measurements are based on the approximated curve.
+
+    .. versionadded:: 1.4
+
+    """
+
+    def __init__(self, spline: BSpline, segments: int) -> None:
+        if not isinstance(spline, BSpline):
+            raise TypeError(f"BSpline instance expected, got {type(spline)}")
+        segments = int(segments)
+        if segments < 1:
+            raise ValueError(f"invalid segment count: {segments}")
+        self._spline = spline
+        self._mpoints: list[MeasurementPoint] = []
+        self.extmin: Vec3 = NULLVEC
+        self.extmax: Vec3 = NULLVEC
+        self._measure_spline(segments)
+
+    @property
+    def length(self) -> float:
+        """Returns the approximated length of the B-spline."""
+        return float(self._mpoints[-1].length)
+
+    def distance(self, t: float) -> float:
+        """Returns the distance along the curve from the start point for then given
+        parameter t.
+        """
+        if t <= 0.0:
+            return 0.0
+        if t >= self._spline.max_t:
+            return self.length
+        points = self._mpoints
+        index = bisect.bisect_right(points, t, key=lambda p: p.param)
+        t1 = points[index].param
+        t2 = points[index + 1].param
+        offset = points[index + 1].distance * (t - t1) / (t2 - t1)
+        return float(points[index].length + offset)
+
+    def param_at(self, distance: float) -> float:
+        """Returns the parameter t for a given distance along the curve from the
+        start point.
+        """
+        points = self._mpoints
+        index = bisect.bisect_right(points, distance, key=lambda p: p.length)
+        if index <= 0:
+            return 0.0
+        if index >= len(points):
+            return self._spline.max_t
+        prev_point = points[index - 1]
+        next_point = points[index]
+        offset = distance - prev_point.length
+        t1 = prev_point.param
+        t2 = next_point.param
+        return float(t1 + (t2 - t1) * (offset / next_point.distance))
+
+    def divide(self, count: int) -> Iterator[float]:
+        """Returns the interpolated B-spline parameters for dividing the curve into
+        `count` segments of equal length.
+
+        The first (0.0) and last parameter (max_t) are included e.g. dividing a B-spline
+        by 2 yields 3 parameters [0.0, t, max_t], parameter t divides the B-spline into
+        2 parts of equal length.
+
+        """
+        if count < 1:
+            raise ValueError(f"invalid count: {count}")
+        total_length: float = self.length
+        seg_length = total_length / count
+        offset = 0.0
+        while offset <= total_length:
+            yield self.param_at(offset)
+            offset += seg_length
+
+    def _measure_spline(self, segments: int) -> None:
+        spline = self._spline
+        params: list[float] = list(
+            np.linspace(0.0, spline.max_t, segments + 1, endpoint=True)
+        )
+        points: list[Vec3] = list(spline.points(params))
+        bbox = BoundingBox(points)
+        self.extmin = bbox.extmin
+        self.extmax = bbox.extmax
+        prev: Vec3 = points[0]
+        length: float = 0.0
+        mpoints: list[MeasurementPoint] = []
+        for param, point in zip(params, points):
+            distance = point.distance(prev)
+            length += distance
+            mpoints.append(MeasurementPoint(param, distance, length))
+            prev = point
+        self._mpoints = mpoints

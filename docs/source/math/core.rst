@@ -1145,6 +1145,28 @@ BSpline
 
     .. automethod:: point_inversion
 
+    .. automethod:: measure
+
+
+.. autoclass:: ezdxf.math.bspline.Measurement
+
+    .. attribute:: extmin
+
+        minimum extents of the approximated curve as :class:`~ezdxf.math.Vec3`
+
+    .. attribute:: extmax
+
+        maximum extents of the approximated curve as :class:`~ezdxf.math.Vec3`
+
+    .. autoproperty:: length
+
+    .. automethod:: distance
+
+    .. automethod:: param_at
+
+    .. automethod:: divide
+
+
 
 Bezier
 ------

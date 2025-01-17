@@ -165,5 +165,59 @@ class TestPointInversion:
         )
 
 
+class TestSplineMeasurement:
+    # measurements done in BricsCAD v25
+    total_length = 7.7842
+    mid_length = total_length / 2
+    mid_param = 0.6251460418169124
+
+    @pytest.fixture(scope="class")
+    def spline(self):
+        return BSpline(CONTROL_POINTS)
+
+    def test_measure_length(self, spline):
+        mtool = spline.measure(100)
+        # measurement diverges less than 1%
+        assert mtool.length / self.total_length > 0.99
+
+    def test_measure_length_by_0_segments(self, spline):
+        with pytest.raises(ValueError):
+            spline.measure(0)
+
+    def test_get_param_for_mid_point(self, spline):
+        mtool = spline.measure(100)
+        t = mtool.param_at(self.mid_length)
+        # measurement diverges less than 1%
+        assert 0.99 < t / self.mid_param <= 1.0
+
+    def test_params_out_of_range(self, spline):
+        mtool = spline.measure(100)
+        assert mtool.param_at(-1) == 0.0
+        assert mtool.param_at(100) == spline.max_t
+
+    def test_distance_from_start(self, spline):
+        mtool = spline.measure(100)
+        ratio = mtool.distance(self.mid_param) / self.mid_length
+        # measurement diverges less than 1%
+        assert 0.99 < ratio <= 1.00
+
+    def test_distance_out_of_range(self, spline):
+        mtool = spline.measure(100)
+        assert mtool.distance(-1) == 0.0
+        assert mtool.distance(100) == mtool.length
+
+    def test_divide(self, spline):
+        mtool = spline.measure(100)
+        params = list(mtool.divide(7))
+        assert len(params) == 8
+        assert params[0] == 0.0
+        assert params[-1] == spline.max_t
+
+    def test_extents(self, spline):
+        mtool = spline.measure()
+        assert mtool.extmin.isclose((0, -2))
+        assert mtool.extmax.isclose((5, 1.19263675))
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
