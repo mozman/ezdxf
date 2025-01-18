@@ -208,10 +208,10 @@ class TestSplineMeasurement:
 
     def test_divide(self, spline):
         mtool = spline.measure(100)
-        params = list(mtool.divide(7))
-        assert len(params) == 8
-        assert params[0] == 0.0
-        assert params[-1] == spline.max_t
+        params = mtool.divide(7)
+        assert len(params) == 6
+        assert params[0] != 0.0
+        assert params[-1] != spline.max_t
 
     def test_extents(self, spline):
         mtool = spline.measure()
@@ -221,7 +221,7 @@ class TestSplineMeasurement:
 
 def test_split_spline():
     spline = BSpline(CONTROL_POINTS)
-    _, mid_t, _ = spline.measure().divide(2)
+    mid_t = spline.measure().divide(2)[0]
     sp1, sp2 = spline.split(mid_t)
     l1 = sp1.measure().length
     l2 = sp2.measure().length

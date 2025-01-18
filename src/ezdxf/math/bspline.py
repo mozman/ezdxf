@@ -1997,23 +1997,28 @@ class Measurement:
         t2 = next_point.param
         return float(t1 + (t2 - t1) * (offset / next_point.distance))
 
-    def divide(self, count: int) -> Iterator[float]:
+    def divide(self, count: int) -> list[float]:
         """Returns the interpolated B-spline parameters for dividing the curve into
         `count` segments of equal length.
 
-        The first (0.0) and last parameter (max_t) are included e.g. dividing a B-spline
-        by 2 yields 3 parameters [0.0, t, max_t], parameter t divides the B-spline into
-        2 parts of equal length.
+        The method yields only the dividing parameters, the first (0.0) and last parameter
+        (max_t) are not included e.g. dividing a B-spline by 3 yields two parameters
+        [t1, t2] that divides the B-spline into 3 parts of equal length.
 
         """
         if count < 1:
             raise ValueError(f"invalid count: {count}")
         total_length: float = self.length
         seg_length = total_length / count
-        offset = 0.0
-        while offset <= total_length:
-            yield self.param_at(offset)
-            offset += seg_length
+        distance = seg_length
+        max_t = self._spline.max_t
+        result: list[float] = []
+        while distance < total_length:
+            t = self.param_at(distance)
+            if not math.isclose(max_t, t):
+                result.append(t)
+            distance += seg_length
+        return result
 
     def _measure_spline(self, segments: int) -> None:
         spline = self._spline
