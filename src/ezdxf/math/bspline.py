@@ -41,6 +41,7 @@ from ezdxf.math import (
     estimate_end_tangent_magnitude,
     distance_point_line_3d,
     arc_angle_span_deg,
+    ABS_TOL,
 )
 from .bbox import BoundingBox
 from ezdxf.math import linalg
@@ -2021,3 +2022,43 @@ class Measurement:
             mpoints.append(MeasurementPoint(param, distance, length))
             prev = point
         self._mpoints = mpoints
+
+
+def split_bspline(spline: BSpline, t: float) -> tuple[BSpline, BSpline]:
+    """Splits a B-spline at a specified parameter value."""
+    if t < ABS_TOL:
+        raise ValueError("t must be greater than 0")
+    if t > spline.max_t - ABS_TOL:
+        raise ValueError("t must be smaller than max_t")
+    order = spline.order
+
+    # Clamp spline at parameter t
+    u = np.full(order, t)
+    spline = spline.knot_refinement(u)
+
+    knots = np.array(spline.knots(), dtype=np.float64)
+    # Determine the knot span
+    span = np.searchsorted(knots, t, side="right")
+
+    # Calculate the new knot vector
+    knots1 = knots[:span]
+    knots2 = knots[span:]
+
+    # Append the desired parameter value to the knot vector
+    knots2 = np.concatenate((u, knots2))
+
+    # Split control points
+    points = spline.control_points
+    split_index = len(knots1) - order
+    points1 = points[:split_index]
+    points2 = points[split_index:]
+    weights1: Sequence[float] = []
+    weights2: Sequence[float] = []
+    weights = spline.weights()
+    if len(weights):
+        weights1 = weights[:split_index]
+        weights2 = weights[split_index:]
+    return (
+        BSpline(points1, order, knots=knots1, weights=weights1),
+        BSpline(points2, order, knots=knots2, weights=weights2),
+    )
