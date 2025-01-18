@@ -25,9 +25,7 @@ from typing import (
     Optional,
     Any,
     no_type_check,
-    NamedTuple,
 )
-import bisect
 import math
 import numpy as np
 
@@ -1933,12 +1931,6 @@ def point_inversion(
     return u
 
 
-class MeasurementPoint(NamedTuple):
-    param: float  # B-spline parameter t
-    distance: float  # distance to previous point
-    length: float  # length along the curve from start
-
-
 class Measurement:
     """B-spline measurement tool.
 
@@ -1955,15 +1947,27 @@ class Measurement:
         if segments < 1:
             raise ValueError(f"invalid segment count: {segments}")
         self._spline = spline
-        self._mpoints: list[MeasurementPoint] = []
-        self.extmin: Vec3 = NULLVEC
-        self.extmax: Vec3 = NULLVEC
-        self._measure_spline(segments)
+        self._parameters = np.linspace(0.0, spline.max_t, segments + 1, endpoint=True)
+        points = list(self._spline.points(self._parameters))
+        bbox = BoundingBox(points)
+        self.extmin = bbox.extmin
+        self.extmax = bbox.extmax
+        self._distances = self._measure(points)  # distance between points
+        self._offsets = np.cumsum(self._distances)  # distance along curve from start
+
+    @staticmethod
+    def _measure(points: list[Vec3]) -> np.typing.NDArray:
+        prev = points[0]
+        distances = np.zeros(len(points), dtype=np.float64)
+        for index, point in enumerate(points):
+            distances[index] = prev.distance(point)
+            prev = point
+        return distances
 
     @property
     def length(self) -> float:
         """Returns the approximated length of the B-spline."""
-        return float(self._mpoints[-1].length)
+        return float(self._offsets[-1])
 
     def distance(self, t: float) -> float:
         """Returns the distance along the curve from the start point for then given
@@ -1973,29 +1977,28 @@ class Measurement:
             return 0.0
         if t >= self._spline.max_t:
             return self.length
-        points = self._mpoints
-        index = bisect.bisect_right(points, t, key=lambda p: p.param)
-        t1 = points[index].param
-        t2 = points[index + 1].param
-        offset = points[index + 1].distance * (t - t1) / (t2 - t1)
-        return float(points[index].length + offset)
+        params = self._parameters
+        index = np.searchsorted(params, t, side="right")
+        t1 = params[index]
+        t2 = params[index + 1]
+        distance = self._distances[index + 1] * (t - t1) / (t2 - t1)
+        return float(self._offsets[index] + distance)
 
     def param_at(self, distance: float) -> float:
         """Returns the parameter t for a given distance along the curve from the
         start point.
         """
-        points = self._mpoints
-        index = bisect.bisect_right(points, distance, key=lambda p: p.length)
+        index = np.searchsorted(self._offsets, distance, side="right")
         if index <= 0:
             return 0.0
-        if index >= len(points):
+        params = self._parameters
+        if index >= len(params):
             return self._spline.max_t
-        prev_point = points[index - 1]
-        next_point = points[index]
-        offset = distance - prev_point.length
-        t1 = prev_point.param
-        t2 = next_point.param
-        return float(t1 + (t2 - t1) * (offset / next_point.distance))
+        prev = index - 1
+        prev_distance = distance - self._offsets[prev]
+        t1 = params[prev]
+        t2 = params[index]
+        return float(t1 + (t2 - t1) * (prev_distance / self._distances[index]))
 
     def divide(self, count: int) -> list[float]:
         """Returns the interpolated B-spline parameters for dividing the curve into
@@ -2019,25 +2022,6 @@ class Measurement:
                 result.append(t)
             distance += seg_length
         return result
-
-    def _measure_spline(self, segments: int) -> None:
-        spline = self._spline
-        params: list[float] = list(
-            np.linspace(0.0, spline.max_t, segments + 1, endpoint=True)
-        )
-        points: list[Vec3] = list(spline.points(params))
-        bbox = BoundingBox(points)
-        self.extmin = bbox.extmin
-        self.extmax = bbox.extmax
-        prev: Vec3 = points[0]
-        length: float = 0.0
-        mpoints: list[MeasurementPoint] = []
-        for param, point in zip(params, points):
-            distance = point.distance(prev)
-            length += distance
-            mpoints.append(MeasurementPoint(param, distance, length))
-            prev = point
-        self._mpoints = mpoints
 
 
 def split_bspline(spline: BSpline, t: float) -> tuple[BSpline, BSpline]:
