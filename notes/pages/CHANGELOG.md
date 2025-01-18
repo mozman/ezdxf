@@ -7,6 +7,7 @@
 	- NEW: `BSpline.degree_elevation()` method
 	- NEW: `BSpline.point_inversion()` method
 	- NEW: `BSpline.measure()` method
+	- NEW: `BSpline.split()` method
 	- NEW: `BSpline.insert_knot()` and `BSpline.knot_refinement()` supports rational splines
 	- BUGFIX: Exported `MESH` entities  without vertices or faces create invalid DXF files
 		- {{issue 1219}}

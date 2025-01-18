@@ -219,5 +219,14 @@ class TestSplineMeasurement:
         assert mtool.extmax.isclose((5, 1.19263675))
 
 
+def test_split_spline():
+    spline = BSpline(CONTROL_POINTS)
+    _, mid_t, _ = spline.measure().divide(2)
+    sp1, sp2 = spline.split(mid_t)
+    l1 = sp1.measure().length
+    l2 = sp2.measure().length
+    assert abs(l1 - l2) < 0.01
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

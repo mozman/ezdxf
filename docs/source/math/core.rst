@@ -1147,6 +1147,8 @@ BSpline
 
     .. automethod:: measure
 
+    .. automethod:: split
+
 
 .. autoclass:: ezdxf.math.bspline.Measurement
 

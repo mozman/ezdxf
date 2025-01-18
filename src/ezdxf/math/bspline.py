@@ -41,7 +41,6 @@ from ezdxf.math import (
     estimate_end_tangent_magnitude,
     distance_point_line_3d,
     arc_angle_span_deg,
-    ABS_TOL,
 )
 from .bbox import BoundingBox
 from ezdxf.math import linalg
@@ -1396,6 +1395,18 @@ class BSpline:
         """
         return Measurement(self, segments)
 
+    def split(self, t: float) -> tuple[BSpline, BSpline]:
+        """Splits the B-spline at parameter `t` and returns two new B-splines.
+
+        Raises:
+            ValuerError: t out of range 0 < t < max_t
+
+        .. versionadded:: 1.4
+
+        """
+
+        return split_bspline(self, t)
+
 
 def subdivide_params(p: list[float]) -> Iterable[float]:
     for i in range(len(p) - 1):
@@ -2025,10 +2036,18 @@ class Measurement:
 
 
 def split_bspline(spline: BSpline, t: float) -> tuple[BSpline, BSpline]:
-    """Splits a B-spline at a specified parameter value."""
-    if t < ABS_TOL:
+    """Splits a B-spline at a parameter t.
+
+    Raises:
+        ValuerError: t out of range 0 < t < max_t
+
+    .. versionadded:: 1.4
+
+    """
+    tol = 1e-12
+    if t < tol:
         raise ValueError("t must be greater than 0")
-    if t > spline.max_t - ABS_TOL:
+    if t > spline.max_t - tol:
         raise ValueError("t must be smaller than max_t")
     order = spline.order
 
