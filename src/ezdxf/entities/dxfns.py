@@ -86,6 +86,15 @@ class DXFNamespace:
     def __deepcopy__(self, memodict: Optional[dict] = None):
         return self.copy(self._entity)
 
+    def __getstate__(self) -> object:
+        return self.__dict__
+
+    def __setstate__(self, state: object) -> None:
+        if not isinstance(state, dict):
+            raise TypeError(f"invalid state: {type(state).__name__}")
+        # bypass __setattr__
+        object.__setattr__(self, "__dict__", state)
+
     def reset_handles(self):
         """Reset handle and owner to None."""
         self.__dict__["handle"] = None
