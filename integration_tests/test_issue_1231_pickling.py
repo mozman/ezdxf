@@ -11,7 +11,7 @@ import pytest
 import ezdxf
 from ezdxf.document import Drawing
 
-EXAMPLES = Path(__file__).parent.parent.parent / "examples_dxf"
+EXAMPLES = Path(__file__).parent.parent / "examples_dxf"
 
 
 def example_dxfs() -> Iterator[Path]:
