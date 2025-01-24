@@ -1,3 +1,6 @@
+# Copyright (c) 2025, Matt Broadway
+# License: MIT License
+from __future__ import annotations
 import io
 import pickle
 from collections.abc import Iterator
