@@ -14,7 +14,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Build manylinux2014_aarch64 wheels
-        uses: pypa/cibuildwheel@v2.21
+        uses: pypa/cibuildwheel@v2.22
         env:
           CIBW_BEFORE_BUILD: "pip install setuptools wheel cython"
           CIBW_ARCHS_LINUX: "aarch64"
@@ -26,5 +26,5 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
           ls -l ./wheelhouse
-          pip install twine
+          pip install -U packaging twine
           twine upload --skip-existing ./wheelhouse/*.whl
