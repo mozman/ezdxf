@@ -15,7 +15,9 @@ jobs:
       - name: Build manylinux2010_x86_64 wheels
         uses: pypa/cibuildwheel@v2.16
         env:
-          CIBW_BEFORE_BUILD: "pip install wheel cython"
+          CIBW_BEFORE_BUILD:
+            pip install wheel cython
+            pip install -U packaging
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
           # cp310 is deployed for manylinux2014
