@@ -13,13 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build manylinux2014_x86_64 wheels
-        uses: pypa/cibuildwheel@v2.21
+        uses: pypa/cibuildwheel@v2.22
         env:
           CIBW_BEFORE_BUILD: "pip install -U setuptools wheel cython packaging"
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           # cp39 are deployed for manylinux2010
-          CIBW_BUILD: cp310-* cp311-* cp312-* cp313-*
+          CIBW_BUILD: cp310-* # cp311-* cp312-* cp313-*
       - name: Upload manylinux2014_x86_64 wheels to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
