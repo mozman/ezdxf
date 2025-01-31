@@ -87,12 +87,12 @@ def print_config(verbose: bool = False, stream: Optional[TextIO] = None) -> None
 
     if stream is None:
         stream = sys.stdout
-    stream.writelines(
-        [
-            f"ezdxf {__version__} from {Path(__file__).parent}\n",
-            f"Python version: {sys.version}\n",
+    stream.write(
+        "\n".join([
+            f"ezdxf {__version__} from {Path(__file__).parent}",
+            f"Python version: {sys.version}",
             f"using C-extensions: {YES_NO[options.use_c_ext]}\n",
-        ]
+        ])
     )
     if verbose:
         stream.write("\nConfiguration:\n")
