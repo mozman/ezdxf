@@ -1,4 +1,4 @@
-#  Copyright (c) 2021-2023, Manfred Moitzi
+#  Copyright (c) 2021-2025, Manfred Moitzi
 #  License: MIT License
 
 import pytest
@@ -77,7 +77,7 @@ def test_measurement_of_plain_text(msp, s):
 def test_support_for_text_size():
     test_string = "TestString"
     doc = ezdxf.new()
-    doc.styles.add("OpenSans", font="OpenSans.ttf")
+    doc.styles.add("OpenSans", font="OpenSans-Regular.ttf")
     text = doc.modelspace().add_text(
         test_string,
         dxfattribs={
@@ -87,8 +87,7 @@ def test_support_for_text_size():
     )
     length = len(test_string)
     size = text_size(text)
-    # Do not check exact measurements, "arial.ttf" is not available at all
-    # platforms by default!
+    # Do not check exact measurements!
     assert length * 1.0 < size.width < length * 2.0
     assert 1.95 < size.cap_height < 2.05
     assert size.total_height > size.cap_height
