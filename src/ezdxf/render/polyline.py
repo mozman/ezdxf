@@ -116,7 +116,7 @@ def _virtual_polyline_entities(
         attribs = dict(dxfattribs)
         if prev_bulge != 0:
             center, start_angle, end_angle, radius = bulge_to_arc(
-                prev_point, point, prev_bulge
+                prev_point, point, prev_bulge  # type: ignore
             )
             if radius > 0:
                 attribs["center"] = Vec3(center.x, center.y, elevation)
@@ -125,11 +125,11 @@ def _virtual_polyline_entities(
                 attribs["end_angle"] = math.degrees(end_angle)
                 if extrusion:
                     attribs["extrusion"] = extrusion
-                yield factory.new(dxftype="ARC", dxfattribs=attribs, doc=doc)
+                yield factory.new(dxftype="ARC", dxfattribs=attribs, doc=doc)  # type: ignore
         else:
             attribs["start"] = ocs.to_wcs(prev_point)
             attribs["end"] = ocs.to_wcs(point)
-            yield factory.new(dxftype="LINE", dxfattribs=attribs, doc=doc)
+            yield factory.new(dxftype="LINE", dxfattribs=attribs, doc=doc)  # type: ignore
         prev_point = point
         prev_bulge = bulge
 

@@ -286,7 +286,7 @@ class BoundaryPaths:
                         start_angle,
                         end_angle,
                         arc.radius,
-                    ) = bulge_to_arc(prev_point, point, prev_bulge)
+                    ) = bulge_to_arc(prev_point, point, prev_bulge)  # type: ignore
                     chk_point = arc.center + Vec2.from_angle(start_angle, arc.radius)
                     arc.ccw = chk_point.isclose(prev_point, abs_tol=1e-9)
                     arc.start_angle = math.degrees(start_angle) % 360.0

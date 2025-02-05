@@ -583,7 +583,7 @@ class TraceBuilder(Sequence):
                     else:
                         ew = store_end_width
                         sw = store_start_width
-                    trace.append(CurvedTrace.from_arc(arc, sw, ew, segments))
+                    trace.append(CurvedTrace.from_arc(arc, sw, ew, segments))  # type: ignore
                 store_bulge = None
 
             if bulge != 0:  # arc from prev_point to point

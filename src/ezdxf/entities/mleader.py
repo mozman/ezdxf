@@ -758,7 +758,7 @@ class MLeaderContext:
                 ctx.mtext = content
             elif code == 296 and value == 1:
                 content = BlockData()  # type: ignore
-                ctx.block = content
+                ctx.block = content  # type: ignore
             else:
                 name = MLeaderContext.ATTRIBS.get(code)
                 if name:
