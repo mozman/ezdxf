@@ -558,14 +558,14 @@ class TraceBuilder(Sequence):
             points.append(points[0])
 
         trace = cls()
-        store_bulge = None
-        store_start_width = None
-        store_end_width = None
-        store_point = None
+        store_bulge = 0.0
+        store_start_width = 0.0
+        store_end_width = 0.0
+        store_point: UVec | None = None
 
         linear_trace = LinearTrace()
         for point, start_width, end_width, bulge in points:
-            if store_bulge:
+            if store_bulge != 0.0:
                 center, start_angle, end_angle, radius = bulge_to_arc(
                     store_point, point, store_bulge
                 )
@@ -583,10 +583,10 @@ class TraceBuilder(Sequence):
                     else:
                         ew = store_end_width
                         sw = store_start_width
-                    trace.append(CurvedTrace.from_arc(arc, sw, ew, segments))  # type: ignore
-                store_bulge = None
+                    trace.append(CurvedTrace.from_arc(arc, sw, ew, segments))
+                store_bulge = 0.0
 
-            if bulge != 0:  # arc from prev_point to point
+            if bulge != 0.0:  # arc from prev_point to point
                 if linear_trace.is_started:
                     linear_trace.add_station(point, start_width, end_width)
                     trace.append(linear_trace)
