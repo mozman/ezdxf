@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2025, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Union
@@ -84,8 +84,7 @@ def virtual_polyline2d_entities(
         return
 
     points = [
-        (v.dxf.location.x, v.dxf.location.y, v.dxf.bulge)
-        for v in polyline.vertices
+        (v.dxf.location.x, v.dxf.location.y, v.dxf.bulge) for v in polyline.vertices
     ]
     if polyline.is_closed:
         points.append(points[0])
@@ -103,8 +102,8 @@ def _virtual_polyline_entities(
     points, elevation: float, extrusion: Vec3, dxfattribs: dict, doc
 ) -> Iterable[Union[Line, Arc]]:
     ocs = OCS(extrusion) if extrusion else OCS()
-    prev_point = None
-    prev_bulge = None
+    prev_point: Vec3 | None = None
+    prev_bulge: float = 0.0
 
     for x, y, bulge in points:
         point = Vec3(x, y, elevation)
@@ -114,9 +113,9 @@ def _virtual_polyline_entities(
             continue
 
         attribs = dict(dxfattribs)
-        if prev_bulge != 0:
+        if prev_bulge != 0.0:
             center, start_angle, end_angle, radius = bulge_to_arc(
-                prev_point, point, prev_bulge  # type: ignore
+                prev_point, point, prev_bulge
             )
             if radius > 0:
                 attribs["center"] = Vec3(center.x, center.y, elevation)
@@ -225,9 +224,7 @@ def virtual_polyface_entities(polyline: Polyline) -> Iterable[Face3d]:
         invisible = 0
         pos = 1
         indices = (
-            (face.dxf.get(name), name)
-            for name in VERTEXNAMES
-            if face.dxf.hasattr(name)
+            (face.dxf.get(name), name) for name in VERTEXNAMES if face.dxf.hasattr(name)
         )
         for index, name in indices:
             # vertex indices are 1-based, negative indices indicate invisible edges
