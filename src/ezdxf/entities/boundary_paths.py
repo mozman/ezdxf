@@ -268,8 +268,8 @@ class BoundaryPaths:
         """
 
         def _edges(points) -> Iterable[Union[LineEdge, ArcEdge]]:
-            prev_point = None
-            prev_bulge = None
+            prev_point: Vec3 | None = None
+            prev_bulge: float = 0.0
             for x, y, bulge in points:
                 point = Vec3(x, y)
                 if prev_point is None:
@@ -277,7 +277,7 @@ class BoundaryPaths:
                     prev_bulge = bulge
                     continue
 
-                if prev_bulge != 0:
+                if prev_bulge != 0.0:
                     arc = ArcEdge()
                     # bulge_to_arc returns always counter-clockwise oriented
                     # start- and end angles:
@@ -286,7 +286,7 @@ class BoundaryPaths:
                         start_angle,
                         end_angle,
                         arc.radius,
-                    ) = bulge_to_arc(prev_point, point, prev_bulge)  # type: ignore
+                    ) = bulge_to_arc(prev_point, point, prev_bulge)
                     chk_point = arc.center + Vec2.from_angle(start_angle, arc.radius)
                     arc.ccw = chk_point.isclose(prev_point, abs_tol=1e-9)
                     arc.start_angle = math.degrees(start_angle) % 360.0
