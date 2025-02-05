@@ -67,8 +67,7 @@ def text_size(text: Text) -> TextSize:
     cap_height: float = text.dxf.get_default("height")
     font: fonts.AbstractFont = fonts.MonospaceFont(cap_height, width_factor)
     if text.doc is not None:
-        style = text.doc.styles.get(text.dxf.get_default("style"))
-        font_name = get_font_name(style)
+        font_name = get_font_name(text)
         font = fonts.make_font(font_name, cap_height, width_factor)
 
     total_height = font.measurements.total_height
