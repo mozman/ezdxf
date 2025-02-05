@@ -717,13 +717,13 @@ class UniversalFrontend:
 
             if loaded_image is not None:
                 color: RGB | RGBA
-                loaded_image = loaded_image.convert("RGBA")
+                loaded_image = loaded_image.convert("RGBA")  # type: ignore
 
                 if image.dxf.contrast != 50:
                     # note: this is only an approximation.
                     # Unclear what the exact operation AutoCAD uses
                     amount = image.dxf.contrast / 50
-                    loaded_image = PIL.ImageEnhance.Contrast(loaded_image).enhance(
+                    loaded_image = PIL.ImageEnhance.Contrast(loaded_image).enhance(  # type: ignore
                         amount
                     )
 

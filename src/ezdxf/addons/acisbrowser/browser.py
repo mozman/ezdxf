@@ -174,7 +174,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             self.statusbar.showMessage(self.make_loading_message())
         else:
             msg = f"DXF file '{path}' contains no ACIS data"
-            QMessageBox.information(self, "Loading Error", msg)
+            QMessageBox.information(self, "Loading Error", msg)  # type: ignore
 
     def make_loading_message(self) -> str:
         assert self.doc is not None
