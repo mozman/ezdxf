@@ -740,7 +740,7 @@ class MLeaderContext:
     def load(cls, context: list[Union[DXFTag, list]]) -> MLeaderContext:
         assert context[0] == (START_CONTEXT_DATA, CONTEXT_STR)
         ctx = cls()
-        content = None
+        content: None | MTextData | BlockData = None
         for tag in context:
             if isinstance(tag, list):  # Leader()
                 ctx.leaders.append(LeaderData.load(tag))
@@ -757,8 +757,8 @@ class MLeaderContext:
                 content = MTextData()
                 ctx.mtext = content
             elif code == 296 and value == 1:
-                content = BlockData()  # type: ignore
-                ctx.block = content  # type: ignore
+                content = BlockData()
+                ctx.block = content
             else:
                 name = MLeaderContext.ATTRIBS.get(code)
                 if name:
@@ -989,9 +989,7 @@ class MTextData:
         self.column_width *= scale
         self.column_gutter_width *= scale
         self.column_sizes = [size * scale for size in self.column_sizes]
-        self.default_content = scale_mtext_inline_commands(
-            self.default_content, scale
-        )
+        self.default_content = scale_mtext_inline_commands(self.default_content, scale)
 
     def apply_conversion_factor(self, conversion_factor: float):
         # conversion_factor: convert from an old scaling to a new scaling
