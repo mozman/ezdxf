@@ -1,7 +1,7 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 import pytest
-
+import math
 from ezdxf.math import (
     is_planar_face,
     Vec3,
@@ -21,15 +21,14 @@ from ezdxf.math import (
     Matrix44,
     BarycentricCoordinates,
     linear_vertex_spacing,
+    is_vertex_order_ccw_3d,
 )
 
 from ezdxf.render.forms import square, circle
 
 REGULAR_FACE = Vec3.list([(0, 0, 0), (1, 0, 1), (1, 1, 1), (0, 1, 0)])
 IRREGULAR_FACE = Vec3.list([(0, 0, 0), (1, 0, 1), (1, 1, 0), (0, 1, 0)])
-REGULAR_FACE_WRONG_ORDER = Vec3.list(
-    [(0, 0, 0), (1, 1, 1), (1, 0, 1), (0, 1, 0)]
-)
+REGULAR_FACE_WRONG_ORDER = Vec3.list([(0, 0, 0), (1, 1, 1), (1, 0, 1), (0, 1, 0)])
 ONLY_COLINEAR_EDGES = Vec3.list([(0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 0)])
 REGULAR_FACE_WITH_COLINEAR_EDGE = Vec3.list(
     [(0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 0), (1.5, 2.0, 0)]
@@ -115,9 +114,7 @@ class TestIntersectionRayRay3d:
         assert bool(result) is True
         assert result == (Vec3(0, 0, 0),)
 
-    def test_not_intersecting_and_not_parallel_rays_return_two_tuple(
-        self, ray1, ray2
-    ):
+    def test_not_intersecting_and_not_parallel_rays_return_two_tuple(self, ray1, ray2):
         line3 = (Vec3(0, 0, 1), Vec3(0, 1, 1))
         result = intersection_ray_ray_3d(ray1, line3)
         assert len(result) == 2
@@ -161,22 +158,16 @@ class TestIntersectingLines3d:
         return Vec3(2, -1, 0), Vec3(2, 1, 0)
 
     def test_real_intersecting_lines(self, line1, line2):
-        assert intersection_line_line_3d(line1, line2, virtual=False).isclose(
-            (1, 0, 0)
-        )
+        assert intersection_line_line_3d(line1, line2, virtual=False).isclose((1, 0, 0))
 
     def test_virtual_intersecting_lines(self, line1, line3):
-        assert intersection_line_line_3d(line1, line3, virtual=True).isclose(
-            (3, 0, 0)
-        )
+        assert intersection_line_line_3d(line1, line3, virtual=True).isclose((3, 0, 0))
 
     def test_not_intersecting_lines(self, line1, line3):
         assert intersection_line_line_3d(line1, line3, virtual=False) is None
 
     def test_touching_lines_do_intersect(self, line1, line4):
-        assert intersection_line_line_3d(line1, line4, virtual=False).isclose(
-            (2, 0, 0)
-        )
+        assert intersection_line_line_3d(line1, line4, virtual=False).isclose((2, 0, 0))
 
     @pytest.mark.parametrize(
         "p2", [(4, 0), (0, 4), (4, 4)], ids=["horiz", "vert", "diag"]
@@ -334,6 +325,57 @@ class TestLinearVertexSpacing:
         assert len(vertices) == count
         for x in range(count):
             assert vertices[x].isclose((-x, -x, -x))
+
+
+I_BEAM = Vec3.list(
+    [
+        (0, 0),
+        (3, 0),
+        (3, 1),
+        (2, 1),
+        (2, 2),
+        (3, 2),
+        (3, 3),
+        (0, 3),
+        (0, 2),
+        (1, 2),
+        (1, 1),
+        (0, 1),
+    ]
+)
+
+
+class TestIsVertexOrderCCW:
+    def test_xy_plane(self):
+        assert is_vertex_order_ccw_3d(I_BEAM, Vec3(0, 0, 1)) is True
+
+    def test_xy_plane_inv(self):
+        assert is_vertex_order_ccw_3d(I_BEAM, Vec3(0, 0, -1)) is False
+
+    def test_yz_plane_up(self):
+        m = Matrix44.x_rotate(math.pi / 2)
+        vertices = list(m.transform_vertices(I_BEAM))
+        assert is_vertex_order_ccw_3d(vertices, Vec3(0, 1, 0)) is True
+
+    def test_yz_plane_inv(self):
+        m = Matrix44.x_rotate(math.pi / 2)
+        vertices = list(m.transform_vertices(I_BEAM))
+        assert is_vertex_order_ccw_3d(vertices, Vec3(0, -1, 0)) is False
+
+    def test_xz_plane_up(self):
+        m = Matrix44.y_rotate(math.pi / 2)
+        vertices = list(m.transform_vertices(I_BEAM))
+        assert is_vertex_order_ccw_3d(vertices, Vec3(1, 0, 0)) is True
+
+    def test_xz_plane_inv(self):
+        m = Matrix44.y_rotate(math.pi / 2)
+        vertices = list(m.transform_vertices(I_BEAM))
+        assert is_vertex_order_ccw_3d(vertices, Vec3(-1, 0, 0)) is False
+
+    def test_square_xy_plane(self):
+        square = Vec3.list([(0, 0), (1, 0), (1, 1), (0, 1)])
+        assert is_vertex_order_ccw_3d(square, Vec3(0, 0, 1)) is True
+        assert is_vertex_order_ccw_3d(square, Vec3(0, 0, -1)) is False
 
 
 if __name__ == "__main__":

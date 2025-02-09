@@ -1,9 +1,11 @@
-# Copyright (c) 2020-2024, Manfred Moitzi
+# Copyright (c) 2020-2025, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Iterable, Optional, Iterator
 from enum import IntEnum
 import math
+import numpy as np
+
 from ezdxf.math import (
     Vec3,
     Vec2,
@@ -11,7 +13,6 @@ from ezdxf.math import (
     X_AXIS,
     Y_AXIS,
     Z_AXIS,
-    AnyVec,
     UVec,
 )
 
@@ -38,6 +39,7 @@ __all__ = [
     "bending_angle",
     "split_polygon_by_plane",
     "is_face_normal_pointing_outwards",
+    "is_vertex_order_ccw_3d",
 ]
 PI2 = math.pi / 2.0
 
@@ -82,7 +84,7 @@ def subdivide_face(
     """
     if len(face) < 3:
         raise ValueError("3 or more vertices required.")
-    
+
     len_face: int = len(face)
     mid_pos = Vec3.sum(face) / len_face
     subdiv_location: list[Vec3] = [
@@ -91,9 +93,7 @@ def subdivide_face(
 
     for index, vertex in enumerate(face):
         if quads:
-            yield vertex, subdiv_location[index], mid_pos, subdiv_location[
-                index - 1
-            ]
+            yield vertex, subdiv_location[index], mid_pos, subdiv_location[index - 1]
         else:
             yield subdiv_location[index - 1], vertex, mid_pos
             yield vertex, subdiv_location[index], mid_pos
@@ -378,9 +378,7 @@ class Plane:
         """
         n = self.normal
         try:
-            weight = (self.distance_from_origin - n.dot(origin)) / n.dot(
-                direction
-            )
+            weight = (self.distance_from_origin - n.dot(origin)) / n.dot(direction)
         except ZeroDivisionError:
             return None
         return origin + (direction * weight)
@@ -646,9 +644,9 @@ def has_matrix_3d_stretching(m: Matrix44) -> bool:
     ux_mag_sqr = m.transform_direction(X_AXIS).magnitude_square
     uy = m.transform_direction(Y_AXIS)
     uz = m.transform_direction(Z_AXIS)
-    return not math.isclose(
-        ux_mag_sqr, uy.magnitude_square
-    ) or not math.isclose(ux_mag_sqr, uz.magnitude_square)
+    return not math.isclose(ux_mag_sqr, uy.magnitude_square) or not math.isclose(
+        ux_mag_sqr, uz.magnitude_square
+    )
 
 
 def spherical_envelope(points: Sequence[UVec]) -> tuple[Vec3, float]:
@@ -665,9 +663,7 @@ def spherical_envelope(points: Sequence[UVec]) -> tuple[Vec3, float]:
     return centroid, radius
 
 
-def inscribe_circle_tangent_length(
-    dir1: Vec3, dir2: Vec3, radius: float
-) -> float:
+def inscribe_circle_tangent_length(dir1: Vec3, dir2: Vec3, radius: float) -> float:
     """Returns the tangent length of an inscribe-circle of the given `radius`.
     The direction `dir1` and `dir2` define two intersection tangents,
     The tangent length is the distance from the intersection point of the
@@ -698,10 +694,10 @@ def bending_angle(dir1: Vec3, dir2: Vec3, normal=Z_AXIS) -> float:
 
 
 def any_vertex_inside_face(vertices: Sequence[Vec3]) -> Vec3:
-    """Returns a vertex from the "inside" of  the given face.
-    """
+    """Returns a vertex from the "inside" of  the given face."""
     # Triangulation is for concave shapes important!
     from ezdxf.math.triangulation import mapbox_earcut_3d
+
     it = mapbox_earcut_3d(vertices)
     return Vec3.sum(next(it)) / 3.0
 
@@ -718,12 +714,11 @@ def front_faces_intersect_face_normal(
     A counter-clockwise vertex order is assumed!
 
     """
+
     def is_face_in_front_of_detector(vertices: Sequence[Vec3]) -> bool:
         if len(vertices) < 3:
             return False
-        return any(
-            detector_plane.signed_distance_to(v) > abs_tol for v in vertices
-        )
+        return any(detector_plane.signed_distance_to(v) > abs_tol for v in vertices)
 
     # face-normal for counter-clockwise vertex order
     face_normal = safe_normal_vector(face)
@@ -764,6 +759,46 @@ def is_face_normal_pointing_outwards(
     This function does not check if the `faces` are a closed surface.
 
     """
-    return (
-        front_faces_intersect_face_normal(faces, face, abs_tol=abs_tol) % 2 == 0
-    )
+    return front_faces_intersect_face_normal(faces, face, abs_tol=abs_tol) % 2 == 0
+
+
+def is_vertex_order_ccw_3d(vertices: list[Vec3], normal: Vec3) -> bool:
+    """Returns ``True`` when the given 3D vertices have a counter-clockwise order around
+    the given normal vector.
+
+    Works for convex and concave shapes. Does not check or care if all vertices are
+    located in a flat plane or if the normal vector is really perpendicular to the
+    shape, but the result may be incorrect in that cases.
+
+    Args:
+        vertices (list): corner vertices of a flat shape (polygon)
+        normal (Vec3): normal vector of the shape
+
+    Raises:
+        ValueError: input has less than 3 vertices
+
+    """
+    if len(vertices) < 3:
+        raise ValueError("3 or more vertices required")
+
+    def signed_area() -> float:
+        # using the shoelace formula.
+        polygon = np.array(vertices)
+        if dom == 0:  # dominant X, use YZ plane
+            x, y = polygon[:, 1], polygon[:, 2]
+        elif dom == 1:  # dominant Y, use XZ plane
+            x, y = polygon[:, 0], polygon[:, 2]
+        else:  # dominant Z, use XY plane
+            x, y = polygon[:, 0], polygon[:, 1]
+        # returns twice the area, but only the sign is relevant for this use case
+        return np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1))
+
+    # The polygon is maybe concave, direct cross-product checks between
+    # adjacent edges are unreliable. Instead, use a projected signed area method.
+    # Find dominant axis:
+    abs_axis = abs(normal.x), abs(normal.y), abs(normal.z)
+    dom = abs_axis.index(max(abs_axis))
+
+    ccw = signed_area() > 0
+    dom_axis = normal[dom]
+    return dom_axis > 0 if ccw else dom_axis < 0

@@ -9,6 +9,7 @@
 	- NEW: `BSpline.measure()` method
 	- NEW: `BSpline.split()` method
 	- NEW: `BSpline.insert_knot()` and `BSpline.knot_refinement()` supports rational splines
+	- NEW: function `ezdxf.math.is_vertex_order_ccw_3d()`
 	- BUGFIX: Exported `MESH` entities  without vertices or faces create invalid DXF files
 		- {{issue 1219}}
 	- BUGFIX: `pickle` support added by #mbway

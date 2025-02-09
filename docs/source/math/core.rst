@@ -185,6 +185,7 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
     intersection_ray_polygon_3d
     intersection_ray_ray_3d
     is_planar_face
+    is_vertex_order_ccw_3d
     linear_vertex_spacing
     local_cubic_bspline_interpolation
     normal_vector_3p
@@ -250,6 +251,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 .. autofunction:: intersection_ray_ray_3d
 
 .. autofunction:: is_planar_face
+
+.. autofunction:: is_vertex_order_ccw_3d
 
 .. autofunction:: linear_vertex_spacing
 
