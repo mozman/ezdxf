@@ -16,6 +16,7 @@
 		- {{issue 1231}}
 	- BUGFIX: fix font name resolution in `ezdxf.tools.text_size()` function
 		- {{issue 1236}}
+	- BUGFIX: do not write `None` handles
 - ## Version 1.3.5 - 2024-12-15
 	- ((65ed4f6c-edc8-4390-880c-c604a3fa5ec0))
 	- NEW: `ezdxf.blkrefs.find_unreferenced_blocks()` function returns the names of unused block definitions

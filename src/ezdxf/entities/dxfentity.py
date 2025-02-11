@@ -674,7 +674,7 @@ class DXFEntity:
                 self.extension_dict.export_dxf(tagwriter)  # type: ignore
             if self.reactors:
                 self.reactors.export_dxf(tagwriter)
-            tagwriter.write_tag2(const.OWNER_CODE, self.dxf.owner)
+            tagwriter.write_tag2(const.OWNER_CODE, self.dxf.get("owner", "0"))
         else:  # DXF R12
             if tagwriter.write_handles:
                 tagwriter.write_tag2(_handle_code, self.dxf.handle)
