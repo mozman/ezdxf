@@ -709,6 +709,14 @@ class _Sanitizer:
         current_db_size = len(auditor.entitydb)
 
         for entity in self.objects:
+            if not entity.dxf.hasattr("owner"):
+                # check_owner_exist() ignores entities without owner handle
+                auditor.fixed_error(
+                    code=AuditError.INVALID_OWNER_HANDLE,
+                    message=f"Deleted {str(entity)} entity without owner handle.",
+                )
+                auditor.trash(entity)
+                continue
             auditor.check_owner_exist(entity)
             entity.audit(auditor)
 
