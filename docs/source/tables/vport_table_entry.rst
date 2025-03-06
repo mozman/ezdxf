@@ -69,7 +69,7 @@ Factory function         :meth:`Drawing.viewports.new`
 
         Grid spacing X and Y
 
-    .. attribute:: dxf.direction_point
+    .. attribute:: dxf.direction
 
         View direction from target point (in :ref:`WCS`)
 
