@@ -157,11 +157,11 @@ class Watchdog:
 class Edge(NamedTuple):
     """Represents an immutable edge.
 
-    An edge can represent any linear curve (line, elliptic arc, spline,...).
-    Therefore, the length of the edge must be specified if the length calculation for
-    a sequence of edges should be possible.
-
-    Intersection points between edges are not known and cannot be calculated
+    An edge can represent any linear curve (line, elliptical arc, spline, ...), but it
+    does not know this shape; only the start and end vertices are stored, not the shape
+    itself.  Therefore, the length of the edge must be specified if the length
+    calculation for a sequence of edges should be possible.  Intersection points between
+    edges are not known and cannot be calculated.
 
     .. Important::
 

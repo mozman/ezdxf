@@ -1,4 +1,5 @@
-## Version 1.4.0 - dev
+## Version 1.4.0 - 2025-03-08
+id:: 676bc8de-2863-4635-945c-4ef79a74d93e
 	- NEW: `ezdxf.edgeminer` module to find connected edges
 	- NEW: `ezdxf.edgesmith` module, a companion module for `edgeminer` to create edges from DXF entities and convert connected edges back to DXF entities
 	- NEW: `Mesh.audit()` removes `MESH` entities without vertices or faces
