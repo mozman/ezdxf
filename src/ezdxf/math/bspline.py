@@ -1247,24 +1247,23 @@ class BSpline:
 
         n = self.count - 1
         p = self.degree
-        knots = np.array(self._basis.knots)  # U
-        control_points = np.array(self._control_points)  # Pw
-        alphas = np.zeros(len(knots))
+        knots = self._basis.knots  # U
+        control_points = self._control_points  # Pw
+        alphas = [0.0] * len(knots)
 
         m = n + p + 1
         a = p
         b = p + 1
-        bezier_points = control_points[0 : p + 1]  # Qw
+        bezier_points = list(control_points[0 : p + 1])  # Qw
 
         while b < m:
-            next_bezier_points = np.zeros(shape=(p + 1, 3))
-
+            next_bezier_points = [NULLVEC] * (p + 1)
             i = b
-            while b < m and np.isclose(knots[b + 1], knots[b]):
+            while b < m and math.isclose(knots[b + 1], knots[b]):
                 b += 1
             mult = b - i + 1
             if mult < p:
-                numer: float = knots[b] - knots[a]
+                numer = knots[b] - knots[a]
                 for j in range(p, mult, -1):
                     alphas[j - mult - 1] = numer / (knots[a + j] - knots[a])
                 r = p - mult
@@ -1278,12 +1277,11 @@ class BSpline:
                         ] * (1.0 - alpha)
                     if b < m:
                         next_bezier_points[save] = bezier_points[p]
-            yield Vec3.list(bezier_points)
+            yield bezier_points
 
             if b < m:
-                # for i in range(p - mult, p + 1):
-                #     next_bezier_points[i] = control_points[b - p + i]
-                next_bezier_points[p - mult : p + 1] = control_points[b - mult : b + 1]
+                for i in range(p - mult, p + 1):
+                    next_bezier_points[i] = control_points[b - p + i]
                 a = b
                 b += 1
                 bezier_points = next_bezier_points
