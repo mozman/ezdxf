@@ -124,4 +124,15 @@ to tell a "headless" system what exactly to do, so it's very likely that not man
 would ever use these features, despite the fact that a lot of time and effort would have
 to be spent on development, testing and long-term support.
 
+Recognize New Installed Fonts
+-----------------------------
+
+    - `Knowledge Graph <https://ezdxf.mozman.at/notes/#/page/recognize%20new%20installed%20fonts>`_
+
+Why are ARC coordinates wrong?
+------------------------------
+
+    - `Knowledge Graph <https://ezdxf.mozman.at/notes/#/page/why%20are%20arc%20coordinates%20wrong%3F>`_
+    - `Github FAQ #1266 <https://github.com/mozman/ezdxf/discussions/1266>`_
+
 .. _OLE: https://en.wikipedia.org/wiki/Object_Linking_and_Embedding
