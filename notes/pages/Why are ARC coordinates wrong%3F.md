@@ -5,7 +5,15 @@ tags:: faq
 - The ``OCS`` is used to place 2D entities in 3D space.
 - A description of the ``OCS`` can be found [here](https://ezdxf.mozman.at/docs/concepts/ocs.html).
 - The ``OCS`` is defined by the extrusion vector and an elevation value.
-- The default ``OCS`` is defined by an extrusion vector of (0, 0, 1), that means the extrusion vector is aligned to the ``WCS`` z-axis and the ``OCS`` is coincident to the ``WCS``, in simpler words: ``OCS`` coordinates are ``WCS`` coordinates.
+- The default ``OCS`` is defined by an extrusion vector of (0, 0, 1), that means the extrusion vector is aligned to the ``WCS`` z-axis and the ``OCS`` is coincident with the ``WCS``, in simpler words: ``OCS`` coordinates are ``WCS`` coordinates.
+- Always compare 3D vectors by the ``isclose()`` method of the ``Vec3`` class:
+	- ```Python
+	  from ezdxf.math import Z_AXIS
+	  
+	  if not Z_AXIS.isclose(arc.dxf.extrusion):
+	    # this entity has not WCS coordinates
+	    ...
+	  ```
 -
 - ## When should you care about OCS coordinates?
 - When the extrusion vector ``Arc.dxf.extrusion`` is (0, 0, -1) you are dealing with an inverted ``OCS``.
@@ -38,9 +46,22 @@ tags:: faq
 	  ocs = arc.ocs()
 	  wcs_point = ocs.to_wcs(ocs_point)
 	  ```
+- ## Using a Path object
+- A different solution is to convert linear entities (``Line``, ``ARC``, ``LWPOLYLINE``, ...) to a [``Path``](https://ezdxf.mozman.at/docs/path.html) Class object:
+	- ```Python
+	  from ezdxf import path
+	  
+	  p = path.make_path(arc)
+	  ```
+	- ``ARC`` and ``ELLIPSE`` entities are approximated by multiple cubic Bézier-curves, which
+	  are close enough for display rendering.
+	- A ``Path`` has ``WCS`` coordinates and can be flattened into points (vertices).
+	-
 - ## Documentation
 	- [Object Coordinate System](https://ezdxf.mozman.at/docs/concepts/ocs.html)
 		- [DXF Reference](https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-D99F1509-E4E4-47A3-8691-92EA07DC88F5)
 		- [Arbitrary Axis Algorithm](https://ezdxf.mozman.at/docs/concepts/ocs.html#arbitrary-axis-algorithm)
 	- [Tutorial for OCS/UCS Usage](https://ezdxf.mozman.at/docs/tutorials/ocs_usage.html)
 	- [OCS](https://ezdxf.mozman.at/docs/math/core.html#ocs-class) Class
+	- [Path](https://ezdxf.mozman.at/docs/path.html) Class
+	- [Vec3](https://ezdxf.mozman.at/docs/math/core.html#ezdxf.math.Vec3) Class
