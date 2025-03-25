@@ -695,6 +695,7 @@ def _rebuild(geo_mapping: GeoMapping, places: int = 6) -> GeoMapping:
         coordinates = []
         for line in geo_interface[COORDINATES]:
             coordinates.append([pnt(v) for v in line])
+        geo_interface[COORDINATES] = coordinates
     elif type_ == POLYGON:
         geo_interface[COORDINATES] = _polygon(*geo_interface[COORDINATES])
     elif type_ == MULTI_POLYGON:
