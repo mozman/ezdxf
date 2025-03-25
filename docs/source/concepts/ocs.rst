@@ -127,6 +127,12 @@ OCS to WCS
         z = px * Wz.x + py * Wz.y + pz * Wz.z
         return Vec3(x, y, z)
 
+.. seealso::
+
+    - :class:`ezdxf.math.OCS` management class
+    - The :meth:`ezdxf.entities.DXFGraphic.ocs` method returns the :class:`~ezdxf.math.OCS`
+      of a graphical DXF entity.
+    - :ref:`tut_ocs`
 
 .. _DXF Reference for OCS: https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-D99F1509-E4E4-47A3-8691-92EA07DC88F5
 
