@@ -61,5 +61,21 @@ def test_valid_hatch():
     assert p.root != {}
 
 
+def test_proxy_given_hatch_when_force_line_string_generates_valid_multi_line_string() -> None:
+    hatch = factory.new("HATCH")
+    paths = hatch.paths
+    paths.add_polyline_path(square(10), flags=const.BOUNDARY_PATH_EXTERNAL)
+    paths.add_polyline_path(
+        translate(square(3), (1, 1)), flags=const.BOUNDARY_PATH_DEFAULT
+    )
+    p = geo.proxy(hatch, force_line_string=True)
+    feature = p.__geo_interface__
+    assert feature["type"] == "MultiLineString"
+
+    # According to the __geo_interface__ specification:
+    # https://gist.github.com/sgillies/2217756
+    assert isinstance(feature["coordinates"][0][0], tuple)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
