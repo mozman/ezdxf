@@ -12,6 +12,7 @@ from ezdxf.math import (
     Vec3,
     Vec2,
     arc_segment_count,
+    arc_chord_length,
 )
 from math import isclose
 
@@ -20,9 +21,7 @@ def test_arc_from_2p_angle_complex():
     p1 = (-15.73335, 10.98719)
     p2 = (-12.67722, 8.76554)
     angle = 55.247230
-    arc = ConstructionArc.from_2p_angle(
-        start_point=p1, end_point=p2, angle=angle
-    )
+    arc = ConstructionArc.from_2p_angle(start_point=p1, end_point=p2, angle=angle)
 
     arc_result = ConstructionArc(
         center=(-12.08260, 12.79635),
@@ -42,17 +41,13 @@ def test_arc_from_2p_angle_simple():
     p2 = (0, 3)
     angle = 90
 
-    arc = ConstructionArc.from_2p_angle(
-        start_point=p1, end_point=p2, angle=angle
-    )
+    arc = ConstructionArc.from_2p_angle(start_point=p1, end_point=p2, angle=angle)
     assert arc.center.isclose((0, 1))
     assert isclose(arc.radius, 2)
     assert isclose(arc.start_angle, 0, abs_tol=1e-12)
     assert isclose(arc.end_angle, 90)
 
-    arc = ConstructionArc.from_2p_angle(
-        start_point=p2, end_point=p1, angle=angle
-    )
+    arc = ConstructionArc.from_2p_angle(start_point=p2, end_point=p1, angle=angle)
     assert arc.center.isclose((2, 3))
     assert isclose(arc.radius, 2)
     assert isclose(arc.start_angle, 180)
@@ -64,17 +59,13 @@ def test_arc_from_2p_radius():
     p2 = (0, 3)
     radius = 2
 
-    arc = ConstructionArc.from_2p_radius(
-        start_point=p1, end_point=p2, radius=radius
-    )
+    arc = ConstructionArc.from_2p_radius(start_point=p1, end_point=p2, radius=radius)
     assert arc.center.isclose((0, 1))
     assert isclose(arc.radius, radius)
     assert isclose(arc.start_angle, 0)
     assert isclose(arc.end_angle, 90)
 
-    arc = ConstructionArc.from_2p_radius(
-        start_point=p2, end_point=p1, radius=radius
-    )
+    arc = ConstructionArc.from_2p_radius(start_point=p2, end_point=p1, radius=radius)
     assert arc.center.isclose((2, 3))
     assert isclose(arc.radius, radius)
     assert isclose(arc.start_angle, 180)
@@ -217,8 +208,21 @@ def test_arc_segment_count():
     assert arc_segment_count(radius, math.tau, max_sagitta) == 16
     alpha = math.tau / 16
     l2 = math.sin(alpha / 2) * radius
-    sagitta = radius - math.sqrt(radius ** 2 - l2 ** 2)
+    sagitta = radius - math.sqrt(radius**2 - l2**2)
     assert max_sagitta / 2 < sagitta < max_sagitta
+
+
+class TestArcSegmentCountErrors:
+    def test_radius_zero(self):
+        assert arc_segment_count(radius=0, angle=math.tau, sagitta=1) == 1
+
+    def test_sagitta_gt_radius(self):
+        assert arc_segment_count(radius=1, angle=math.tau, sagitta=2) == 1
+
+
+def test_arc_chord_length_domain_error():
+    radius = 0.1
+    assert arc_chord_length(radius, radius * 4) == 0.0
 
 
 @pytest.mark.parametrize(

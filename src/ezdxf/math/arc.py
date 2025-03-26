@@ -213,9 +213,7 @@ class ConstructionArc:
         start_point = Vec2(start_point)
         end_point = Vec2(end_point)
         if start_point == end_point:
-            raise ValueError(
-                "Start- and end point have to be different points."
-            )
+            raise ValueError("Start- and end point have to be different points.")
         return start_point, end_point
 
     @classmethod
@@ -304,7 +302,7 @@ class ConstructionArc:
         mid_point: Vec2 = _end_point.lerp(_start_point, factor=0.5)
         distance: float = _end_point.distance(_start_point)
         distance2: float = distance / 2.0
-        height: float = math.sqrt(radius ** 2 - distance2 ** 2)
+        height: float = math.sqrt(radius**2 - distance2**2)
         center: Vec2 = mid_point + (_end_point - _start_point).orthogonal(
             ccw=center_is_left
         ).normalize(height)
@@ -342,9 +340,7 @@ class ConstructionArc:
         )
         def_point = Vec2(def_point)
         if def_point == start_point or def_point == end_point:
-            raise ValueError(
-                "def_point has to be different to start- and end point"
-            )
+            raise ValueError("def_point has to be different to start- and end point")
 
         circle = ConstructionCircle.from_3p(start_point, end_point, def_point)
         center = Vec2(circle.center)
@@ -518,7 +514,10 @@ def arc_chord_length(radius: float, sagitta: float) -> float:
         sagitta: distance from the center of the arc to the center of its base
 
     """
-    return 2.0 * math.sqrt(2.0 * radius * sagitta - sagitta * sagitta)
+    try:
+        return 2.0 * math.sqrt(2.0 * radius * sagitta - sagitta * sagitta)
+    except ValueError:
+        return 0.0
 
 
 def arc_segment_count(radius: float, angle: float, sagitta: float) -> int:
@@ -532,6 +531,9 @@ def arc_segment_count(radius: float, angle: float, sagitta: float) -> int:
             center of its chord
 
     """
-    chord_length: float = arc_chord_length(radius, sagitta)
-    alpha: float = math.asin(chord_length / 2.0 / radius) * 2.0
-    return math.ceil(angle / alpha)
+    try:
+        chord_length: float = arc_chord_length(radius, sagitta)
+        alpha: float = math.asin(chord_length / 2.0 / radius) * 2.0
+        return math.ceil(angle / alpha)
+    except (ValueError, ZeroDivisionError):
+        return 1

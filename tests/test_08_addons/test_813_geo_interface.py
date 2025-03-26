@@ -1,8 +1,9 @@
-#  Copyright (c) 2020-2021, Manfred Moitzi
+#  Copyright (c) 2020-2024, Manfred Moitzi
 #  License: MIT License
 from typing import cast
 import pytest
 import copy
+import ezdxf
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.entities import (
     factory,
@@ -465,6 +466,27 @@ def test_three_polygons_from_one_hatch():
     mapping = geo.proxy(hatch).__geo_interface__
     assert mapping["type"] == "MultiPolygon"
     assert len(mapping["coordinates"]) == 3
+
+
+@pytest.mark.parametrize(
+    "radius",
+    [
+        pytest.param(0.04999999, id="less-than-half-of-flattening-distance"),
+        pytest.param(0.05, id="half-of-flattening-distance"),
+        pytest.param(0.05000001, id="more-than-half-of-flattening-distance"),
+    ],
+)
+def test_from_dxf_entities_given_arc_returns_linestring(radius: float) -> None:
+    drawing = ezdxf.new()
+    msp = drawing.modelspace()
+    arc = msp.add_arc(
+        center=(0, 0, 0),
+        radius=radius,
+        start_angle=0,
+        end_angle=90,
+    )
+    proxy = geo.GeoProxy.from_dxf_entities(arc, distance=geo.MAX_FLATTENING_DISTANCE)
+    assert proxy.__geo_interface__["type"] == "LineString"
 
 
 if __name__ == "__main__":
