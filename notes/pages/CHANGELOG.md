@@ -4,6 +4,9 @@
 	- BUGFIX: fix ``__geo_interface__`` mapping of ``MultiLineString`` in the ``geo`` add-on
 		- {{pr 1267}}
 		- contributed by #rdesparbes
+	- BUGFIX: fix X11 crash due to a screen use conflict - ``odafc`` add-on
+		- {{issue 1235}}
+		- contributed by #jsimomaa
 - ## Version 1.4.0 - 2025-03-08
   id:: 676bc8de-2863-4635-945c-4ef79a74d93e
 	- NEW: `ezdxf.edgeminer` module to find connected edges
