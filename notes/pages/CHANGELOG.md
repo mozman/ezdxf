@@ -1,6 +1,9 @@
 ## Version 1.4.1 - dev
 	- BUGFIX: revert invalid spline decomposition into Bèzier curves added in commit fe284766
 		- {{issue 1261}}
+	- BUGFIX: fix ``__geo_interface__`` mapping of ``MultiLineString`` in the ``geo`` add-on
+		- {{pr 1267}}
+		- contributed by #rdesparbes
 - ## Version 1.4.0 - 2025-03-08
   id:: 676bc8de-2863-4635-945c-4ef79a74d93e
 	- NEW: `ezdxf.edgeminer` module to find connected edges
