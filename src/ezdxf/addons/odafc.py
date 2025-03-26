@@ -406,7 +406,7 @@ def _get_odafc_path(system: str) -> str:
 def _linux_dummy_display():
     """See xvbfwrapper library for a more feature complete xvfb interface."""
     if shutil.which("Xvfb"):
-        display = ":123"  # arbitrary choice
+        display = f":{os.getpid()}"  # Each process has its own screen id
         proc = subprocess.Popen(
             ["Xvfb", display, "-screen", "0", "800x600x24"],
             stdout=subprocess.DEVNULL,
