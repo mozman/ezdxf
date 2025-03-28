@@ -33,10 +33,7 @@ LINUX_FONT_DIRS = [
     "~/.local/share/fonts",
     "~/.local/share/texmf/fonts",
 ]
-MACOS_FONT_DIRS = [
-    "/Library/Fonts/",
-    "/System/Library/Fonts/"
-]
+MACOS_FONT_DIRS = ["/Library/Fonts/", "/System/Library/Fonts/"]
 FONT_DIRECTORIES = {
     WINDOWS: WIN_FONT_DIRS,
     LINUX: LINUX_FONT_DIRS,
@@ -338,8 +335,11 @@ class FontManager:
         except IOError:
             raise FontNotFoundError(f"shape file '{file_path}' not found")
         except shapefile.UnsupportedShapeFile as e:
-            raise UnsupportedFont(f"unsupported font'{file_path}': {str(e)}")
-        glyph_cache = shapefile.GlyphCache(file)
+            raise UnsupportedFont(f"unsupported font '{file_path}': {str(e)}")
+        try:
+            glyph_cache = shapefile.GlyphCache(file)
+        except Exception:
+            raise UnsupportedFont(f"can't create glyph-cache for font '{file_path}'.")
         self._loaded_shape_file_glyph_caches[font_name] = glyph_cache
         return glyph_cache
 
@@ -358,7 +358,11 @@ class FontManager:
             font = lff.loads(s)
         except IOError:
             raise FontNotFoundError(f"LibreCAD font file '{file_path}' not found")
-        glyph_cache = lff.GlyphCache(font)
+        try:
+            glyph_cache = lff.GlyphCache(font)
+        except Exception:
+            raise UnsupportedFont(f"can't create glyph-cache for font '{file_path}'.")
+
         self._loaded_lff_glyph_caches[font_name] = glyph_cache
         return glyph_cache
 
