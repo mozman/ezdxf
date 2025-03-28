@@ -1488,8 +1488,7 @@ class LeftLine(AbstractLine):
         right_pos = pos + width
         tab_stop = self._next_tab_stop(left_pos, center_pos, right_pos)
         if tab_stop is None:  # no tab stop found
-            self.append(tab.to_space())  # replace tabulator by space
-            return self.append(cell)
+            return self._append_unlocked_tab(tab, cell)
         else:
             if tab_stop.kind == TabStopType.LEFT:
                 return self._append_left(cell, tab_stop.pos)
@@ -1497,6 +1496,19 @@ class LeftLine(AbstractLine):
                 return self._append_center(cell, tab_stop.pos)
             else:
                 return self._append_right(cell, tab_stop.pos)
+
+    def _append_unlocked_tab(self, tab, cell) -> AppendType:
+        pos0 = self._current_offset
+        space = tab.to_space()  # replace tabulator by space
+        pos1 = pos0 + space.total_width
+        width = cell.total_width
+        if pos1 + width <= self.line_width:
+            # The following cell is not locked and requires a space in front of it.
+            self._append_line_cell(space, pos0)
+            self._append_line_cell(cell, pos1)
+            self._current_offset = pos1 + width
+            return AppendType.SUCCESS
+        return AppendType.FAIL
 
     def _append_left(self, cell, pos) -> AppendType:
         width = cell.total_width
