@@ -924,7 +924,7 @@ class GlyphCache(Glyphs):
         self.font: ShapeFile = font
         self._glyph_cache: dict[int, GlyphPath] = dict()
         self._advance_width_cache: dict[int, float] = dict()
-        self.space_width: float = self.detect_space_width()
+        self.space_width: float = self.detect_space_width(default_width=font.cap_height)
         self.empty_box: GlyphPath = self.get_empty_box()
         self.font_measurements: FontMeasurements = self._get_font_measurements()
 
@@ -934,24 +934,43 @@ class GlyphCache(Glyphs):
         except ZeroDivisionError:
             return 1.0
 
-    def detect_space_width(self) -> float:
-        if 32 not in self.font.shapes:
+    def detect_space_width(self, default_width: float) -> float:
+        # space (32) or "A" (65) may not present!
+        if 32 in self.font.shapes:
+            return self.get_shape(32).end.x  # width of space
+        if 65 in self.font.shapes:
             return self.get_shape(65).end.x  # width of "A"
-        space = self.get_shape(32)
-        return space.end.x
+        return default_width
 
-    def get_empty_box(self) -> GlyphPath:
-        glyph_A = self.get_shape(65)
-        box = BoundingBox2d(glyph_A.control_vertices())
-        height = box.size.y
-        width = box.size.x
-        start = glyph_A.start
+    def get_empty_box(self, char: int = 65) -> GlyphPath:
+        """Returns the empty box (tofu) representation based on the size of the given
+        character index.
+
+        The given index may not exist and a default box based on cap-height and space
+        width will be created.
+        """
+        # default box parameters
+        font = self.font
+        height = font.cap_height
+        width = self.space_width
+        start = Vec2(0, 0)
+        end = Vec2(width, 0)
+
+        if char in font.shapes:
+            # box parameters based on the glyph size
+            glyph = self.get_shape(char)
+            box = BoundingBox2d(glyph.control_vertices())
+            height = box.size.y
+            width = box.size.x
+            start = glyph.start
+            end = glyph.end
+
         p = path.Path(start)
         p.line_to(start + Vec2(width, 0))
         p.line_to(start + Vec2(width, height))
         p.line_to(start + Vec2(0, height))
         p.close()
-        p.move_to(glyph_A.end)
+        p.move_to(end)
         return GlyphPath(p)
 
     def _render_shape(self, shape_number) -> GlyphPath:
