@@ -938,7 +938,7 @@ class MultiLeaderBuilder(abc.ABC):
             multileader.dxf.dogleg_length = dogleg_length * scale
         else:
             multileader.dxf.has_dogleg = 0
-        multileader.context.landing_gap_size * landing_gap * scale
+        multileader.context.landing_gap_size = landing_gap * scale
 
     def set_connection_types(
         self,
