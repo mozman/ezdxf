@@ -9,6 +9,8 @@
 		- contributed by #jsimomaa
 	- BUGFIX: set landing gap size in method `MultiLeaderBuilder.set_connection_properties()`
 		- {{issue 1278}}
+	- BUGFIX: revert fix for issue 1203
+		- {{issue 1279}}
 - ## Version 1.4.0 - 2025-03-08
   id:: 676bc8de-2863-4635-945c-4ef79a74d93e
 	- NEW: `ezdxf.edgeminer` module to find connected edges
