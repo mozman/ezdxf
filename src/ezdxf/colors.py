@@ -279,10 +279,13 @@ def luminance(color: Sequence[float]) -> float:
 # different plot styles may choose different colors for the same code
 # from ftp://ftp.ecn.purdue.edu/jshan/86/help/html/import_export/dxf_colortable.htm
 # alternative color tables can be found at:
-#  - http://www.temblast.com/songview/color3.htm
-#  - http://gohtx.com/acadcolors.php
+#  - https://www.temblast.com/songview/color3.htm
+#  - https://gohtx.com/acadcolors.php
 
 # modelspace color palette for AutoCAD 2020
+#  - DXF_DEFAULT_COLORS values change depending on Uniform background
+#    color setting in options, these values correspond the default
+#    2D model space Uniform background RGB color for AutoCAD 2020: 33,40,48
 DXF_DEFAULT_COLORS = [
     0x000000,  # dummy value for index [0]
     0xFF0000,
@@ -544,6 +547,9 @@ DXF_DEFAULT_COLORS = [
 
 
 # paperspace color palette for AutoCAD 2020
+#  - DXF_DEFAULT_PAPERSPACE_COLORS values change depending on Uniform background
+#    color setting in options, these values correspond the default
+#    Sheet/layout Uniform background color for AutoCAD 2020: White (RGB 255,255,255)
 DXF_DEFAULT_PAPERSPACE_COLORS = [
     0x000000,  # dummy value for index [0]
     0xFF0000,
