@@ -335,8 +335,9 @@ class DXFNamespace:
     def _export_dxf_attribute_optional(
         self, tagwriter: AbstractTagWriter, name: str
     ) -> None:
-        """Exports DXF attribute `name` by `tagwriter`. Optional tags are only
-        written if different to default value.
+        """Exports DXF attribute `name` by `tagwriter`.
+
+        Optional tags are only written if they differ from the default value.
 
         Args:
             tagwriter: tag writer object
@@ -356,10 +357,8 @@ class DXFNamespace:
                 # Default value could be None
                 value = default
 
-                # Do not export None values
-            if (value is not None) and (
-                export_dxf_version >= attrib.dxfversion
-            ):
+            # Do not export None values
+            if (value is not None) and (export_dxf_version >= attrib.dxfversion):
                 # Do not write explicit optional attribs if equal to default
                 # value
                 if (
@@ -369,7 +368,7 @@ class DXFNamespace:
                     and default == value
                 ):
                     return
-                    # Just export x, y for 2D points, if value is a 3D point
+                # Just export x, y for 2D points, if value is a 3D point
                 if attrib.xtype == XType.point2d and len(value) > 2:
                     try:  # Vec3
                         value = (value.x, value.y)
@@ -405,9 +404,7 @@ class SubclassProcessor:
         # AcDbEntity.
         # Exception: CLASS has also only one subclass and no subclass marker,
         # handled as DXF R12 entity
-        self.r12: bool = (dxfversion == const.DXF12) or (
-            len(self.subclasses) == 1
-        )
+        self.r12: bool = (dxfversion == const.DXF12) or (len(self.subclasses) == 1)
         self.name: str = tags.dxftype()
         self.handle: str
         try:
@@ -430,9 +427,7 @@ class SubclassProcessor:
                 entity = ""
                 if handle:
                     entity = f" in entity #{handle}"
-                logger.info(
-                    f"ignored {repr(tag)} in subclass {subclass}" + entity
-                )
+                logger.info(f"ignored {repr(tag)} in subclass {subclass}" + entity)
 
     def find_subclass(self, name: str) -> Optional[Tags]:
         for subclass in self.subclasses:
@@ -542,9 +537,7 @@ class SubclassProcessor:
         if len(unprocessed_tags) and log:
             # First tag is the subclass specifier (100, "AcDb...")
             name = tags[0].value
-            self.log_unprocessed_tags(
-                tags, subclass=name, handle=dxf.get("handle")
-            )
+            self.log_unprocessed_tags(tags, subclass=name, handle=dxf.get("handle"))
         return unprocessed_tags
 
     def append_base_class_to_acdb_entity(self) -> None:
@@ -563,9 +556,7 @@ class SubclassProcessor:
         acdb_entity_tags = self.subclasses[1]
         if acdb_entity_tags[0] == (100, "AcDbEntity"):
             acdb_entity_tags.extend(
-                tag
-                for tag in self.subclasses[0]
-                if tag.code not in BASE_CLASS_CODES
+                tag for tag in self.subclasses[0] if tag.code not in BASE_CLASS_CODES
             )
 
     def simple_dxfattribs_loader(
@@ -618,9 +609,7 @@ class SubclassProcessor:
         for tag in tags:
             name = get_attrib_name(tag.code)
             if isinstance(name, str) and not name.startswith("*"):
-                unprotected_set_attrib(
-                    name, cast_value(tag.code, tag.value)
-                )
+                unprotected_set_attrib(name, cast_value(tag.code, tag.value))
 
 
 GRAPHIC_ATTRIBUTES_TO_RECOVER = {
