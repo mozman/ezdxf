@@ -339,51 +339,90 @@ class DXFNamespace:
 
         Optional tags are only written if they differ from the default value.
 
-        Args:
-            tagwriter: tag writer object
-            name: DXF attribute name
-
         """
-        export_dxf_version = tagwriter.dxfversion
-        not_force_optional = not tagwriter.force_optional
         attrib: Optional[DXFAttr] = self.dxfattribs.get(name)
-
-        if attrib:
-            optional = attrib.optional
-            default = attrib.default
-            value = self.get(name, None)
-            # Force default value e.g. layer
-            if value is None and not optional:
-                # Default value could be None
-                value = default
-
-            # Do not export None values
-            if (value is not None) and (export_dxf_version >= attrib.dxfversion):
-                # Do not write explicit optional attribs if equal to default
-                # value
-                if (
-                    optional
-                    and not_force_optional
-                    and default is not None
-                    and default == value
-                ):
-                    return
-                # Just export x, y for 2D points, if value is a 3D point
-                if attrib.xtype == XType.point2d and len(value) > 2:
-                    try:  # Vec3
-                        value = (value.x, value.y)
-                    except AttributeError:
-                        value = value[:2]
-
-                if isinstance(value, str):
-                    assert "\n" not in value, "line break '\\n' not allowed"
-                    assert "\r" not in value, "line break '\\r' not allowed"
-                tag = dxftag(attrib.code, value)
-                tagwriter.write_tag(tag)
-        else:
+        if attrib is None:
             raise const.DXFAttributeError(
                 ERR_INVALID_DXF_ATTRIB.format(name, self.dxftype)
             )
+
+        optional = attrib.optional
+        default = attrib.default
+        value = self.get(name, None)
+
+        # Force default value e.g. layer
+        if value is None and not optional:
+            # default value can be None!
+            value = default
+
+        if value is None:
+            logger.debug(
+                f"DXF attribute '{name}' not written because its a None value."
+            )
+            return
+
+        # Do not write explicit optional attribs if equal to the default value
+        if (
+            optional
+            and (not tagwriter.force_optional)
+            and default is not None
+            and default == value
+        ):
+            return
+        _export_group_codes(tagwriter, attrib, value)
+
+    def export_dxf_attribute_if_exists(
+        self, tagwriter: AbstractTagWriter, name: str
+    ) -> None:
+        """Exports DXF attribute `name` by `tagwriter` if exists.
+
+        If the attribute exists, and it's not None it will be written, the optional-flag
+        is ignored.
+
+        No default value will be written if the attribute doesn't exist!
+        This method can not be used for attributes that are required (e.g. layer)!
+
+        """
+        if not self.hasattr(name):
+            return
+
+        attrib: Optional[DXFAttr] = self.dxfattribs.get(name)
+        assert (
+            attrib is not None
+        ), f"existing DXF attribute '{name}' has no definition class - internal error"
+
+        value = self.get(name)
+        if value is None:
+            logger.debug(
+                f"DXF attribute '{name}' not written because its a None value."
+            )
+            return
+        _export_group_codes(tagwriter, attrib, value)
+
+
+def _export_group_codes(
+    tagwriter: AbstractTagWriter, attrib: DXFAttr, value: Any
+) -> None:
+    assert attrib is not None
+    assert value is not None
+
+    # Do write the attribute if the export DXF version is lower than the minimal
+    # required DXF version for the attribute.
+    if tagwriter.dxfversion < attrib.dxfversion:
+        return
+
+    # For explicit 2D points export only x- and y-coordinates.
+    if attrib.xtype == XType.point2d and len(value) > 2:
+        try:  # Vec3, Vec2
+            value = (value.x, value.y)
+        except AttributeError:
+            value = value[:2]
+
+    if isinstance(value, str):
+        assert "\n" not in value, "line break '\\n' not allowed"
+        assert "\r" not in value, "line break '\\r' not allowed"
+    tag = dxftag(attrib.code, value)
+    tagwriter.write_tag(tag)
 
 
 BASE_CLASS_CODES = {0, 5, 102, 330}
