@@ -26,3 +26,6 @@
 	- `BSpline.split()` [docs](https://ezdxf.mozman.at/docs/math/core.html#ezdxf.math.BSpline.split)
 	- `BSpline.insert_knot()` and `BSpline.knot_refinement()` supports rational splines [docs](https://ezdxf.mozman.at/docs/math/core.html#ezdxf.math.BSpline.insert_knot)
 - The v1.4.x releases are the last with Python 3.9 support because Python 3.9 reaches [End of Life](https://devguide.python.org/versions/) in 2025-10.
+- # Relase v1.4.1
+	- Changelog: ((67d7c218-9aca-4788-bdc7-58b33915832c))
+	- Bugfix release

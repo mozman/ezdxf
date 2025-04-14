@@ -1,4 +1,5 @@
-## Version 1.4.1 - dev
+## Version 1.4.1 - 2025-04-14
+id:: 67d7c218-9aca-4788-bdc7-58b33915832c
 	- BUGFIX: revert invalid spline decomposition into Bèzier curves added in commit fe284766
 		- {{issue 1261}}
 	- BUGFIX: fix ``__geo_interface__`` mapping of ``MultiLineString`` in the ``geo`` add-on
