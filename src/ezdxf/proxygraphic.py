@@ -315,11 +315,14 @@ class ProxyGraphic:
         index = self._index
         buffer = self._buffer
         while index < len(buffer):
-            size, type_ = struct.unpack_from("<2L", self._buffer, offset=index)
+            size, type_ = struct.unpack_from("<2L", buffer, offset=index)
             try:
                 name = ProxyGraphicTypes(type_).name.lower()
             except ValueError:
                 logger.debug(f"Unsupported Type Code: {type_}")
+                if size == 0:
+                    logger.debug(f"Failed Reading Buffer")
+                    size = len(buffer) - index #jumping to end of buffer
                 index += size
                 continue
             method = getattr(self, name, None)
