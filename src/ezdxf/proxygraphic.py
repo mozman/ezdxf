@@ -315,7 +315,9 @@ class ProxyGraphic:
         index = self._index
         buffer = self._buffer
         while index < len(buffer):
-            size, type_ = struct.unpack_from("<2L", self._buffer, offset=index)
+            size, type_ = struct.unpack_from("<2L", buffer, offset=index)
+            if size < 1:
+                raise ValueError("parsing error: chunk size < 1")
             try:
                 name = ProxyGraphicTypes(type_).name.lower()
             except ValueError:
