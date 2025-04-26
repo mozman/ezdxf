@@ -191,11 +191,13 @@ cdef class Basis:
                 self.weights_[span - self.order + 1: span + 1]
             )
         ]
+        if len(products) != len(nbasis):
+            return nbasis
         s = sum(products)
         if s != 0:
             return [p / s for p in products]
         else:
-            return NULL_LIST * len(nbasis)
+            return nbasis
 
     cpdef list basis_funcs_derivatives(self, int span, double u, int n = 1):
         # pyright: reportUndefinedVariable=false

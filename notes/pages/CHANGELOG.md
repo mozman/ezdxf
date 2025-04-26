@@ -1,6 +1,8 @@
 ## Version 1.4.2 - dev
 	- BUGFIX: proxy graphic parsing
 		- {{issue 1286}}
+	- BUGFIX: Not really a bugfix, but it's closer to the expected result. The imprecision issue of loaded B-spline knots is still not fixed.
+		- {{discussion 1284}}
 - ## Version 1.4.1 - 2025-04-14
   id:: 67d7c218-9aca-4788-bdc7-58b33915832c
 	- BUGFIX: revert invalid spline decomposition into Bèzier curves added in commit fe284766

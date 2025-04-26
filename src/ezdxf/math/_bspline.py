@@ -118,9 +118,12 @@ class Basis:
     def span_weighting(self, nbasis: list[float], span: int) -> list[float]:
         size = len(nbasis)
         weights = self._weights[span - self._order + 1 : span + 1]
+        if len(weights) != size:
+            return nbasis
+
         products = [nb * w for nb, w in zip(nbasis, weights)]
         s = sum(products)
-        return [0.0] * size if s == 0.0 else [p / s for p in products]
+        return nbasis if s == 0.0 else [p / s for p in products]
 
     def basis_funcs_derivatives(self, span: int, u: float, n: int = 1):
         # Source: The NURBS Book: Algorithm A2.3
