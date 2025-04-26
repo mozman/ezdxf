@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2024, Manfred Moitzi
+# Copyright (c) 2012-2025, Manfred Moitzi
 # License: MIT License
 """
 B-Splines
@@ -84,6 +84,7 @@ __all__ = [
     "open_uniform_knot_vector",
     "required_fit_points",
     "required_control_points",
+    "round_knots",
 ]
 
 
@@ -2068,3 +2069,18 @@ def split_bspline(spline: BSpline, t: float) -> tuple[BSpline, BSpline]:
         BSpline(points1, order, knots=knots1, weights=weights1),
         BSpline(points2, order, knots=knots2, weights=weights2),
     )
+
+
+def round_knots(knots: list[float], tolerance: float) -> list[float]:
+    """Returns rounded knot-values.
+
+    The `tolerance` defines the minimal difference between two knot values like 1e-9.
+
+    """
+    try:
+        ndigits = -int(math.log10(tolerance))  # e.g. log10(0.0001) = -4.0
+    except ValueError:
+        return knots
+    if ndigits <= 0:
+        return knots
+    return [round(k, ndigits=ndigits) for k in knots]

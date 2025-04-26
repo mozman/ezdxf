@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2023 Manfred Moitzi
+# Copyright (c) 2019-2025 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -45,8 +45,9 @@ from ezdxf.math import (
     required_fit_points,
     required_control_points,
     fit_points_to_cad_cv,
+    round_knots,
 )
-from .dxfentity import base_class, SubclassProcessor, DXFEntity
+from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 from .copy import default_copy
@@ -292,9 +293,7 @@ class Spline(DXFGraphic):
 
     @control_points.setter
     def control_points(self, points: Iterable[UVec]) -> None:
-        self._control_points: Vertices = cast(
-            Vertices, VertexArray(Vec3.list(points))
-        )
+        self._control_points: Vertices = cast(Vertices, VertexArray(Vec3.list(points)))
 
     # DXF callback attribute Spline.dxf.n_control_points
     def control_point_count(self) -> int:
@@ -324,7 +323,11 @@ class Spline(DXFGraphic):
         """Returns the construction tool :class:`ezdxf.math.BSpline`."""
         if self.control_point_count():
             weights = self.weights if len(self.weights) else None
-            knots = self.knots if len(self.knots) else None
+
+            if len(self.knots):
+                knots = round_knots(self.knots, self.dxf.knot_tolerance)
+            else:
+                knots = None
             return BSpline(
                 control_points=self.control_points,
                 order=self.dxf.degree + 1,

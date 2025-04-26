@@ -1,7 +1,10 @@
 ## Version 1.4.2 - dev
+	- CHANGE: The construction tool for the `SPLINE` entity uses rounded knot-values according the DXF attribute `knot_tolerance`.
+		- {{discussion 1284}}
 	- BUGFIX: proxy graphic parsing
 		- {{issue 1286}}
-	- BUGFIX: Not really a bugfix, but it's closer to the expected result. The imprecision issue of loaded B-spline knots is still not fixed.
+	- BUGFIX: fix weighted basis vector for rational splines
+		- Returns the original basis vector, when the weights cannot be applied.
 		- {{discussion 1284}}
 - ## Version 1.4.1 - 2025-04-14
   id:: 67d7c218-9aca-4788-bdc7-58b33915832c

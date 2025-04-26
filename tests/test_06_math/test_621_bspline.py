@@ -5,7 +5,7 @@ import math
 import pytest
 import numpy as np
 from ezdxf.math import Vec3, BSpline, close_vectors
-from ezdxf.math.bspline import normalize_knots, subdivide_params
+from ezdxf.math.bspline import normalize_knots, subdivide_params, round_knots
 
 DEFPOINTS = [
     (0.0, 0.0, 0.0),
@@ -682,3 +682,36 @@ def test_bezier_decomposition_issue_1261():
     for bez_res, bez_exp in zip(result, expected):
         for vec3_res, vec3_exp in zip(bez_res, bez_exp):
             assert vec3_res.isclose(vec3_exp)
+
+
+def test_round_knots():
+    """Based on example spline in discussion #1284."""
+    knots = [
+        0.5,
+        0.5,
+        0.5000000000000006,
+        0.541666666666667,
+        0.541666666666667,
+        0.5833333333333331,
+        0.5833333333333331,
+        0.625,
+        0.625,
+        0.666666666666667,
+        0.666666666666667,
+        0.7083333333333331,
+        0.7083333333333331,
+        0.75,
+        0.75,
+        0.775274290106482,
+        0.775274290106482,
+        0.775274290106482,
+    ]
+    knots2 = round_knots(knots, 1e-9)
+    assert knots2[0] == knots2[2]
+
+
+@pytest.mark.parametrize("t", [0, -1, 1])
+def test_round_knots_errors(t):
+    knots = [1, 2, 3]
+    knots2 = round_knots(knots, t)
+    assert knots2 is knots
