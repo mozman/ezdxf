@@ -1,6 +1,15 @@
 ## Version 1.4.2 - dev
 	- CHANGE: The construction tool for the `SPLINE` entity uses rounded knot-values according the DXF attribute `knot_tolerance`.
 		- {{discussion 1284}}
+	- CHANGE/BUGFIX: `DICTIONARY` - set the default value of the `hard_owned` flag to 0
+		- {{issue 1203}}
+			- copy/paste of INSERT with dynamic features works in BricsCAD
+		- {{issue 1276}}
+			- copy/paste in general works in BricsCAD
+		- {{issue 1279}}
+			- not fixed - repair of the example file by the `Auditor` is not possible
+		- {{issue 1285}}
+			- not fixed - copy/paste clipped INSERT: clipping is still lost
 	- BUGFIX: proxy graphic parsing
 		- {{issue 1286}}
 	- BUGFIX: fix weighted basis vector for rational splines

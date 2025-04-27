@@ -86,6 +86,7 @@ Related issues:
     - #1203: Copying dynamic blocks via clipboard removes dynamic features
     - #1276: Copy to clipboard failed issue found from version 1.3.5 (no example file)
     - #1279: ezdxf audit does not repair the drawing (crash on ctrl+c)
+    - #1285: Copying clipped blocks via clipboard removes clipping
 
 Tests:
 ------
@@ -99,14 +100,15 @@ Tests:
         - DWG TrueView cannot audit DXF files
     - new DXF file - copy/paste of entities works in BricsCAD: YES
         - tested R2000, R2004, R2007, R2010, R2013, R2018
-    - new DXF file - copy/paste of clipped INSERT works in BricsCAD: YES/NO
-        - copy/paste works, but clipping is removed
     - copy/paste #1203 works in BricsCAD: YES
         - copy/paste works and dynamic feature L1 is preserved
     - copy/paste #1279 works in BricsCAD: NO
         - BricsCAD crashes
-    - auditor fixes #1279: NO
+    - auditor repairs #1279: NO
         - BricsCAD crashes on copy/paste
+    - copy/paste #1285 - copy/paste of clipped INSERT works in BricsCAD: NO
+        - copy/paste works, but clipping is removed
+
 """
 
 
