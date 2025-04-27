@@ -1,21 +1,22 @@
 ## Version 1.4.2 - dev
 	- CHANGE: The construction tool for the `SPLINE` entity uses rounded knot-values according the DXF attribute `knot_tolerance`.
 		- {{discussion 1284}}
-	- CHANGE/BUGFIX: `DICTIONARY` - set the default value of the `hard_owned` flag to 0
+	- BUGFIX: `DICTIONARY` - set the default value of the `hard_owned` flag to 0
 		- {{issue 1203}}
 			- copy/paste of INSERT with dynamic features works in BricsCAD
 		- {{issue 1276}}
 			- copy/paste in general works in BricsCAD
 		- {{issue 1279}}
 			- not fixed - repair of the example file by the `Auditor` is not possible
+	- BUGFIX: The `ACAD_FILTER` dict in the extension dict of the `INSERT` entity is the hard owner of it's entries.
 		- {{issue 1285}}
-			- The `ACAD_FILTER` dict in the extension dict of the `INSERT` entity is the hard owner of it's entries.
-			- copy/paste of INSERT preserves the clipping path
+		- copy/paste of `INSERT` preserves the clipping path
 	- BUGFIX: proxy graphic parsing
 		- {{issue 1286}}
 	- BUGFIX: fix weighted basis vector for rational splines
 		- Returns the original basis vector, when the weights cannot be applied.
 		- {{discussion 1284}}
+	- BUGFIX: `FIELDLIST` load and export error
 - ## Version 1.4.1 - 2025-04-14
   id:: 67d7c218-9aca-4788-bdc7-58b33915832c
 	- BUGFIX: revert invalid spline decomposition into Bèzier curves added in commit fe284766
