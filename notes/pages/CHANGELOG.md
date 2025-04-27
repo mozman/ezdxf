@@ -9,7 +9,8 @@
 		- {{issue 1279}}
 			- not fixed - repair of the example file by the `Auditor` is not possible
 		- {{issue 1285}}
-			- not fixed - copy/paste clipped INSERT: clipping is still lost
+			- The `ACAD_FILTER` dict in the extension dict of the `INSERT` entity is the hard owner of it's entries.
+			- copy/paste of INSERT preserves the clipping path
 	- BUGFIX: proxy graphic parsing
 		- {{issue 1286}}
 	- BUGFIX: fix weighted basis vector for rational splines

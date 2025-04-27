@@ -395,7 +395,7 @@ def new_spatial_filter(entity: DXFEntity) -> SpatialFilter:
         xdict = entity.get_extension_dict()
     except AttributeError:
         xdict = entity.new_extension_dict()
-    acad_filter_dict = xdict.dictionary.get_required_dict(ACAD_FILTER)
+    acad_filter_dict = xdict.dictionary.get_required_dict(ACAD_FILTER, hard_owned=True)
     spatial_filter = acad_filter_dict.get(SPATIAL)
     if not isinstance(spatial_filter, SpatialFilter):
         spatial_filter = doc.objects.add_dxf_object_with_reactor(

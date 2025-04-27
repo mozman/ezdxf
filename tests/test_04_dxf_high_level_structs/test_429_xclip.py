@@ -38,6 +38,8 @@ def test_new_clipping_path_dxf_structure(doc: Drawing):
 
     acad_filter_dict = doc.entitydb.get(spatial_filter.dxf.owner)
     assert isinstance(acad_filter_dict, Dictionary)
+    assert acad_filter_dict.dxf.hard_owned == 1
+
     assert acad_filter_dict.get("SPATIAL") is spatial_filter
 
     assert spatial_filter.reactors is not None

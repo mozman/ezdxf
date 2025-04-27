@@ -107,8 +107,8 @@ Tests:
         - BricsCAD crashes
     - auditor repairs #1279: NO
         - BricsCAD crashes on copy/paste
-    - copy/paste #1285 - copy/paste of clipped INSERT works in BricsCAD: NO
-        - copy/paste works, but clipping is removed
+    - copy/paste #1285 - copy/paste of clipped INSERT works in BricsCAD: YES
+        - clipping path is preserved
 
 """
 
@@ -175,4 +175,4 @@ def new_doc():
 
 if __name__ == "__main__":
     # new_doc()
-    main(EX1)
+    main(ISSUE_1285)
