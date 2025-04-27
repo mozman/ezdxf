@@ -19,7 +19,7 @@ def is_ext_dict(d: Dictionary, owner: DXFEntity) -> bool:
 
 def main(filename: str, recover_file: str):
     try:
-        doc, auditor = recover.readfile(filename)
+        doc, _ = recover.readfile(filename)
     except DXFStructureError as e:
         print(f"{e} in file {filename}.")
         return
@@ -28,7 +28,7 @@ def main(filename: str, recover_file: str):
         return
 
     entitydb = doc.entitydb
-    for d in doc.entitydb.query("DICTIONARY"):
+    for d in entitydb.query("DICTIONARY"):
         owner = entitydb.get(d.dxf.owner)
         d.dxf.hard_owned = 1 if is_ext_dict(d, owner) else 0
 
