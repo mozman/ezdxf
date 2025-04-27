@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Manfred Moitzi
+# Copyright (c) 2020-2025, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Any, Optional, Union, Iterable, TYPE_CHECKING, Set
@@ -576,7 +576,9 @@ class SubclassProcessor:
         if len(unprocessed_tags) and log:
             # First tag is the subclass specifier (100, "AcDb...")
             name = tags[0].value
-            self.log_unprocessed_tags(tags, subclass=name, handle=dxf.get("handle"))
+            self.log_unprocessed_tags(
+                unprocessed_tags, subclass=name, handle=dxf.get("handle")
+            )
         return unprocessed_tags
 
     def append_base_class_to_acdb_entity(self) -> None:
