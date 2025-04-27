@@ -9,6 +9,7 @@ EX1 = r"C:\Source\dxftest\ACAD_R2010.dxf"
 EX2 = r"C:\Source\dxftest\AutodeskSamples\title_block-iso.dxf"
 ISSUE_1203 = r"C:\Users\mozman\Desktop\Now\ezdxf\1203\dynblock.dxf"
 ISSUE_1279 = r"C:\Users\mozman\Desktop\Now\ezdxf\1279\1279_orig.dxf"
+ISSUE_1285 = r"C:\Users\mozman\Desktop\Now\ezdxf\1285\add_clipping_path_in_block_coordinates.dxf"
 
 """
 Analyze DICTIONARY
@@ -111,6 +112,14 @@ Tests:
 
 """
 
+CLONING = {
+    0: "not applicable",
+    1: "keep existing",
+    2: "use clone",
+    3: "<xref>$0$<name>",
+    4: "$0$<name>",
+    5: "Unmangle name",
+}
 
 def is_ext_dict(d: Dictionary, owner: DXFEntity) -> bool:
     if owner and owner.has_extension_dict:
@@ -128,16 +137,18 @@ def get_dict_name(d: Dictionary, owner: DXFEntity) -> str:
 def print_dict_info(d: Dictionary) -> None:
     entitydb = d.doc.entitydb
     owner = entitydb.get(d.dxf.owner)
-
-    state = "unknown"
     has_hard_owner_flag = d.dxf.hasattr("hard_owned")
-    if has_hard_owner_flag:
-        state = str(d.dxf.hard_owned)
-    print(f"{d}: has-hard-owned-flag: {has_hard_owner_flag}; state: {state}")
-    print(f"    owner: {owner}; is-extension-dict: {is_ext_dict(d, owner)}")
-    key_name = get_dict_name(d, owner)
-    if key_name:
-        print(f"    owner-dict-key: {key_name}")
+    has_cloning_flag = d.dxf.hasattr("cloning")
+    state = d.dxf.hard_owned
+    cloning = d.dxf.cloning
+    print(f"\n{d}")
+    print(f"    owner: {owner}")
+    print(f"    is extension-dict: {is_ext_dict(d, owner)}")
+    print(f"    owner dict-key: {get_dict_name(d, owner)}")
+    print(f"    has hard-owned flag: {has_hard_owner_flag}")
+    print(f"        state: {state}")
+    print(f"    has cloning flag: {has_cloning_flag}")
+    print(f"        state: {cloning} - {CLONING.get(cloning)}")
 
 
 def main(filename: str):
@@ -146,7 +157,7 @@ def main(filename: str):
     for d in dicts:
         print_dict_info(d)
 
-    print(f"found {len(dicts)} DICTIONARY entities.")
+    print(f"\nfound {len(dicts)} DICTIONARY entities.")
 
 
 def new_doc():
@@ -164,4 +175,4 @@ def new_doc():
 
 if __name__ == "__main__":
     # new_doc()
-    main(ISSUE_1203)
+    main(EX1)
