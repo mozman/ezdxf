@@ -39,6 +39,10 @@ logger = logging.getLogger("ezdxf")
 acdb_dictionary = DefSubclass(
     "AcDbDictionary",
     {
+        # DXF Reference: 280 - Hard-owner flag.
+        # If set to 1, indicates that elements of the dictionary are to be treated as
+        # hard-owned
+        #
         # If hard_owned is set to 1 the entries are owned by the DICTIONARY.
         # The 1 state seems to be the default value, but is not documented by
         # the DXF reference.
