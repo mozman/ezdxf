@@ -89,11 +89,12 @@ def test_set_get_field_list(doc):
 def test_dxf_tags(doc):
     buffer = cast(FieldList, doc.objects.new_entity("FIELDLIST", {}))
     buffer.handles = ["FF", "EE", "DD", "CC"]
-    tags = TagCollector.dxftags(buffer)[-4:]
+    tags = TagCollector.dxftags(buffer)
 
-    assert len(tags) == 4
-    assert tags[0] == (330, "FF")
-    assert tags[-1] == (330, "CC")
+    assert len(tags) == 10
+    assert tags[5] == (330, "FF")
+    assert tags[8] == (330, "CC")
+    assert tags[-1] == (100, "AcDbFieldList")
 
 
 def test_clone(doc):

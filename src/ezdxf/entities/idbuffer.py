@@ -95,7 +95,7 @@ class FieldList(IDBuffer):
                 )
             processor.fast_load_dxfattribs(dxf, acdb_id_set_group_codes, 1)
             # Load field list:
-            self.load_handles(processor.subclasses[2])
+            self.load_handles(processor.subclasses[1])
         return dxf
 
     def export_entity(self, tagwriter: AbstractTagWriter) -> None:
@@ -103,8 +103,8 @@ class FieldList(IDBuffer):
         super(DXFObject, self).export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_id_set.name)
         self.dxf.export_dxf_attribs(tagwriter, "flags")
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_field_list.name)
         self.export_handles(tagwriter)
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_field_list.name)
 
 
 acdb_filter = DefSubclass("AcDbFilter", {})
