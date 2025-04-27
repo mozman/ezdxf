@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024, Manfred Moitzi
+# Copyright (c) 2019-2025, Manfred Moitzi
 # License: MIT-License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Optional
@@ -42,17 +42,18 @@ acdb_dictionary = DefSubclass(
         # DXF Reference: 280 - Hard-owner flag.
         # If set to 1, indicates that elements of the dictionary are to be treated as
         # hard-owned
+        # No definition of the default state in the DXF reference!
         #
-        # If hard_owned is set to 1 the entries are owned by the DICTIONARY.
-        # The 1 state seems to be the default value, but is not documented by
-        # the DXF reference.
-        # BricsCAD creates the root DICTIONARY and the top level DICTIONARY entries
-        # without group code 280 tags, and they are all definitely hard owner of their
-        # entries, because their entries have the DICTIONARY handle as owner handle.
+        # 2025-04-27:
+        #   AutoCAD creates the root DICTIONARY and the top level DICTIONARY entries
+        #   without group code 280 tags.
+        #   Extension dicts are created with the hard_owned flag set to 1.
+        #   See exploration/dict-analyzer.py
+        #   Conclusion: default state is 0
         "hard_owned": DXFAttr(
             280,
-            default=1,
-
+            # 2025-04-27: changed to 0
+            default=0,
             # 2024-11-18: changed to False because of issue #1203
             # 2025-04-09: changed back to True because of issue #1279
             optional=True,
