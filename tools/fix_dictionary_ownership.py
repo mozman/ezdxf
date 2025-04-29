@@ -4,17 +4,24 @@
 # Fixes ownership issues of DICTIONARY entities like in #1279.
 #
 from ezdxf import recover, DXFStructureError
-from ezdxf.entities import Dictionary, DXFEntity
+from ezdxf.version import version
+from ezdxf.entities import Dictionary
 
 DXF_FILE = "your.dxf"
 RECOVER_FILE = "recover.dxf"
 
 
-def is_ext_dict(d: Dictionary, owner: DXFEntity) -> bool:
-    if owner and owner.has_extension_dict:
-        ext_dict = owner.extension_dict
-        return ext_dict.dictionary is d
-    return False
+def patch_dictionary_hard_owned_flag():
+    hard_owned = Dictionary.DXFATTRIBS.get("hard_owned")
+    hard_owned.default = 0
+
+
+def set_ownership_recursive(d: Dictionary, *, flag: int) -> None:
+    assert isinstance(d, Dictionary) is True
+    d.dxf.hard_owned = flag
+    for _, entity in d.items():
+        if isinstance(entity, Dictionary):
+            set_ownership_recursive(entity, flag=flag)
 
 
 def main(filename: str, recover_file: str):
@@ -27,10 +34,18 @@ def main(filename: str, recover_file: str):
         print(str(e))
         return
 
-    entitydb = doc.entitydb
-    for d in entitydb.query("DICTIONARY"):
-        owner = entitydb.get(d.dxf.owner)
-        d.dxf.hard_owned = 1 if is_ext_dict(d, owner) else 0
+    if version[:3] < (1, 4, 2):  # patch older versions of ezdxf
+        patch_dictionary_hard_owned_flag()
+
+    # set hard-owned-flag of the rootdict to 0
+    set_ownership_recursive(doc.rootdict, flag=0)
+
+    # set hard-owned-flag of extension dicts to 1
+    for entity in doc.modelspace():
+        if not entity.has_extension_dict:
+            continue
+        xdict = entity.get_extension_dict()
+        set_ownership_recursive(xdict.dictionary, flag=1)
 
     doc.saveas(recover_file)
 
