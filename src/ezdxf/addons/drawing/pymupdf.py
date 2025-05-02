@@ -234,7 +234,8 @@ class PyMuPdfRenderBackend(BackendInterface):
             int(self.max_stroke_width * settings.fixed_stroke_width),
         )
         self.page = self.doc.new_page(-1, self.page_width_in_pt, self.page_height_in_pt)
-
+        self._shape = None
+        
     def get_pdf_bytes(self) -> bytes:
         return self.doc.tobytes()
 
@@ -249,13 +250,15 @@ class PyMuPdfRenderBackend(BackendInterface):
         opacity = alpha_to_opacity(color[7:9])
         if color == (1.0, 1.0, 1.0) or opacity == 0.0:
             return
-        shape = self.new_shape()
+        shape = self.page.new_shape()
         shape.draw_rect([0, 0, self.page_width_in_pt, self.page_height_in_pt])
         shape.finish(width=None, color=None, fill=rgb, fill_opacity=opacity)
         shape.commit()
 
     def new_shape(self):
-        return self.page.new_shape()
+        if self._shape is None:
+            self._shape = self.page.new_shape()
+        return self._shape
 
     def get_optional_content_group(self, layer_name: str) -> int:
         if not self.settings.output_layers:
@@ -329,13 +332,11 @@ class PyMuPdfRenderBackend(BackendInterface):
         pos = Vec2(pos)
         shape.draw_line(pos, pos)
         self.finish_line(shape, properties, close=False)
-        shape.commit()
 
     def draw_line(self, start: Vec2, end: Vec2, properties: BackendProperties) -> None:
         shape = self.new_shape()
         shape.draw_line(Vec2(start), Vec2(end))
         self.finish_line(shape, properties, close=False)
-        shape.commit()
 
     def draw_solid_lines(
         self, lines: Iterable[tuple[Vec2, Vec2]], properties: BackendProperties
@@ -344,7 +345,6 @@ class PyMuPdfRenderBackend(BackendInterface):
         for start, end in lines:
             shape.draw_line(start, end)
         self.finish_line(shape, properties, close=False)
-        shape.commit()
 
     def draw_path(self, path: BkPath2d, properties: BackendProperties) -> None:
         if len(path) == 0:
@@ -352,7 +352,6 @@ class PyMuPdfRenderBackend(BackendInterface):
         shape = self.new_shape()
         add_path_to_shape(shape, path, close=False)
         self.finish_line(shape, properties, close=False)
-        shape.commit()
 
     def draw_filled_paths(
         self, paths: Iterable[BkPath2d], properties: BackendProperties
@@ -361,7 +360,6 @@ class PyMuPdfRenderBackend(BackendInterface):
         for p in paths:
             add_path_to_shape(shape, p, close=True)
         self.finish_filling(shape, properties)
-        shape.commit()
 
     def draw_filled_polygon(
         self, points: BkPoints2d, properties: BackendProperties
@@ -374,7 +372,6 @@ class PyMuPdfRenderBackend(BackendInterface):
         shape = self.new_shape()
         shape.draw_polyline(vertices)
         self.finish_filling(shape, properties)
-        shape.commit()
 
     def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:
         transform = image_data.transform
@@ -436,7 +433,7 @@ class PyMuPdfRenderBackend(BackendInterface):
         pass
 
     def finalize(self) -> None:
-        pass
+        self._shape.commit()
 
     def enter_entity(self, entity, properties) -> None:
         pass
