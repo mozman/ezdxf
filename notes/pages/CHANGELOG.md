@@ -1,4 +1,7 @@
 ## Version 1.4.2 - dev
+	- CHANGE: faster PDF generation by the `PyMuPDF` backend
+		- contributed by #leonardopbatista
+		- {{pr 1292}}
 	- CHANGE: The construction tool for the `SPLINE` entity uses rounded knot-values according the DXF attribute `knot_tolerance`.
 		- {{discussion 1284}}
 	- BUGFIX: `DICTIONARY` - set the default value of the `hard_owned` flag to 0
