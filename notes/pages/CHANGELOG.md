@@ -1,5 +1,8 @@
 ## Version 1.4.2 - dev
-	- CHANGE: faster PDF generation by the `PyMuPDF` backend
+	- CHANGE: faster and smaller PDF export by the `PyMuPDF` backend
+		- Test with 19 CADKIT samples:
+			- the export of PDF is in average 38x faster
+			- the PDFs are in average 2.5x smaller
 		- contributed by #leonardopbatista
 		- {{pr 1292}}
 	- CHANGE: The construction tool for the `SPLINE` entity uses rounded knot-values according the DXF attribute `knot_tolerance`.
