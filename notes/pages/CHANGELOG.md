@@ -1,4 +1,4 @@
-## Version 1.4.2 - dev
+## Version 1.4.2 - 2025-05-18
 	- CHANGE: faster and smaller PDF export by the `PyMuPDF` backend
 		- Test with 19 CADKIT samples:
 			- the export of PDF is in average 38x faster
