@@ -72,7 +72,8 @@ def load(tags: ExtendedTags, doc: Optional[Drawing] = None) -> DXFEntity:
 
 def cls(dxftype: str) -> DXFEntity:
     """Returns registered class for `dxftype`."""
-    return ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
+    # DEFAULT_CLASS is not None at runtime!
+    return ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)  # type: ignore
 
 
 def bind(entity: DXFEntity, doc: Drawing) -> None:
