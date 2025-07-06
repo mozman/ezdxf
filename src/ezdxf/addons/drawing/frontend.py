@@ -766,27 +766,28 @@ class UniversalFrontend:
             elif show_filename_if_missing:
                 default_cap_height = 20
                 text = image_def.dxf.filename
-                font = self.pipeline.text_engine.get_font(
-                    self.get_font_face(properties)
-                )
-                text_width = font.text_width_ex(text, default_cap_height)
-                image_size = image.dxf.image_size
-                desired_width = image_size.x * 0.75
-                scale = desired_width / text_width
-                translate = Matrix44.translate(
-                    (image_size.x - desired_width) / 2,
-                    (image_size.y - default_cap_height * scale) / 2,
-                    0,
-                )
-                transform = (
-                    Matrix44.scale(scale) @ translate @ image.get_wcs_transform()
-                )
-                self.pipeline.draw_text(
-                    text,
-                    transform,
-                    properties,
-                    default_cap_height,
-                )
+                if text.strip():
+                    font = self.pipeline.text_engine.get_font(
+                        self.get_font_face(properties)
+                    )
+                    text_width = font.text_width_ex(text, default_cap_height)
+                    image_size = image.dxf.image_size
+                    desired_width = image_size.x * 0.75
+                    scale = desired_width / text_width
+                    translate = Matrix44.translate(
+                        (image_size.x - desired_width) / 2,
+                        (image_size.y - default_cap_height * scale) / 2,
+                        0,
+                    )
+                    transform = (
+                        Matrix44.scale(scale) @ translate @ image.get_wcs_transform()
+                    )
+                    self.pipeline.draw_text(
+                        text,
+                        transform,
+                        properties,
+                        default_cap_height,
+                    )
 
             points = [v.vec2 for v in image.boundary_path_wcs()]
             self.pipeline.draw_solid_lines(list(zip(points, points[1:])), properties)

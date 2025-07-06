@@ -138,15 +138,14 @@ class TTFontRenderer(Glyphs):
 
     def get_glyph_width(self, char: str) -> float:
         """Returns the raw glyph width, without any scaling applied."""
-        try:
-            return self._glyph_width_cache[char]
-        except KeyError:
-            pass
-        width = 0.0
-        try:
-            width = self.get_generic_glyph(char).width
-        except KeyError:
-            pass
+        width = self._glyph_width_cache.get(char , 0.0)
+        if width:
+            return width
+        glyph = self._glyph_width_cache.get(char,None)
+        if glyph:
+            width = width.width
+        else:
+            width = 0.0
         self._glyph_width_cache[char] = width
         return width
 
