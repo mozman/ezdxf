@@ -766,6 +766,8 @@ class UniversalFrontend:
             elif show_filename_if_missing:
                 default_cap_height = 20
                 text = image_def.dxf.filename
+                if not text.strip():
+                    text = "<no filename>"
                 font = self.pipeline.text_engine.get_font(
                     self.get_font_face(properties)
                 )
