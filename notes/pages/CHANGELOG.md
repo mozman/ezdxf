@@ -1,4 +1,8 @@
-## Version 1.4.2 - 2025-05-18
+## Version 1.4.3 - dev
+	- BUGFIX: Filter polyline vertices for rendering based on vertex flags
+		- {{issue 1317}}
+		- contributed by #PaulLampe
+- ## Version 1.4.2 - 2025-05-18
 	- CHANGE: faster and smaller PDF export by the `PyMuPDF` backend
 		- Test with 19 CADKIT samples:
 			- the export of PDF is in average 38x faster
