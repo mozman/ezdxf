@@ -411,6 +411,37 @@ class CurvedTrace(AbstractTrace):
             vtx1 = vtx2
 
 
+def should_include_vertex_for_rendering(vertex_flags: int) -> bool:
+    """Determine if a vertex should be included in rendering based on its flags.
+
+    According to the DXF specification:
+    - Flag 0: Straight-segment vertex (include)
+    - Flag 1: Extra curve-fit vertex (exclude - auto-generated)
+    - Flag 2: Curve-fit tangent vertex (include - carries tangent info)
+    - Flag 8: Spline-vertex (fit-point) for 2D spline (include)
+    - Flag 16: Spline-frame control point (exclude - internal calculation only)
+
+    Args:
+        vertex_flags: The vertex flags value (group code 70)
+
+    Returns:
+        True if the vertex should be included in rendering, False otherwise
+    """
+    # Exclude extra vertices created by curve-fitting (flag 1)
+    if vertex_flags & VTX_EXTRA_VERTEX_CREATED:
+        return False
+
+    # Exclude spline frame control points (flag 16)
+    if vertex_flags & VTX_SPLINE_FRAME_CONTROL_POINT:
+        return False
+
+    # Include all other vertex types:
+    # - Flag 0: Regular straight-segment vertices
+    # - Flag 2: Curve-fit tangent vertices (carry tangent direction)
+    # - Flag 8: Spline fit-points
+    return True
+
+
 class TraceBuilder(Sequence):
     """Sequence of 2D banded lines like polylines with start- and end width or
     curves with start- and end width.
@@ -541,7 +572,7 @@ class TraceBuilder(Sequence):
 
             filtered_vertices = [
                 vertex for vertex in polyline.vertices
-                if cls.should_include_vertex_for_rendering(vertex.dxf.get("flags", 0))
+                if should_include_vertex_for_rendering(vertex.dxf.get("flags", 0))
             ]
 
             points = []
@@ -613,33 +644,3 @@ class TraceBuilder(Sequence):
             # miter at the closing point. (only linear to linear trace).
             trace.close()
         return trace
-
-    def should_include_vertex_for_rendering(vertex_flags: int) -> bool:
-        """Determine if a vertex should be included in rendering based on its flags.
-
-        According to the DXF specification:
-        - Flag 0: Straight-segment vertex (include)
-        - Flag 1: Extra curve-fit vertex (exclude - auto-generated)
-        - Flag 2: Curve-fit tangent vertex (include - carries tangent info)
-        - Flag 8: Spline-vertex (fit-point) for 2D spline (include)
-        - Flag 16: Spline-frame control point (exclude - internal calculation only)
-
-        Args:
-            vertex_flags: The vertex flags value (group code 70)
-
-        Returns:
-            True if the vertex should be included in rendering, False otherwise
-        """
-        # Exclude extra vertices created by curve-fitting (flag 1)
-        if vertex_flags & VTX_EXTRA_VERTEX_CREATED:
-            return False
-
-        # Exclude spline frame control points (flag 16)
-        if vertex_flags & VTX_SPLINE_FRAME_CONTROL_POINT:
-            return False
-
-        # Include all other vertex types:
-        # - Flag 0: Regular straight-segment vertices
-        # - Flag 2: Curve-fit tangent vertices (carry tangent direction)
-        # - Flag 8: Spline fit-points
-        return True
