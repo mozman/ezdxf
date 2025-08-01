@@ -632,21 +632,24 @@ class Viewport(DXFGraphic):
     def get_view_center_point(self) -> Vec3:
         # TODO: Is there a flag or attribute that determines which of these points is
         #  the center point?
-        center_point = Vec3(self.dxf.view_center_point)
-        if center_point.is_null:
-            center_point = Vec3(self.dxf.view_target_point)
-        return center_point
+        return Vec3(self.dxf.view_center_point)
 
     def get_transformation_matrix(self) -> Matrix44:
         """Returns the transformation matrix from modelspace to paperspace coordinates."""
         # supports only top-view viewports!
         scale = self.get_scale()
         rotation_angle: float = self.dxf.view_twist_angle
-        msp_center_point: Vec3 = self.get_view_center_point()
+        msp_center_point: Vec3 = Vec3(self.dxf.view_center_point)
         offset: Vec3 = self.dxf.center - (msp_center_point * scale)
-        m = Matrix44.scale(scale)
+        base_point = Vec3(self.dxf.view_target_point)
+
+        # took account base point before rotate, because rotated views will broken 
+        m = Matrix44.translate(-base_point.x, -base_point.y, -base_point.z)
+        m @= Matrix44.scale(scale)
+
         if rotation_angle:
             m @= Matrix44.z_rotate(math.radians(rotation_angle))
+
         return m @ Matrix44.translate(offset.x, offset.y, 0)
 
     def get_aspect_ratio(self) -> float:
