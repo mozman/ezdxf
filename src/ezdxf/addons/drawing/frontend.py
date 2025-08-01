@@ -668,11 +668,15 @@ class UniversalFrontend:
         clipping_polygon = wipeout.boundary_path_wcs()
         self.pipeline.draw_filled_polygon(clipping_polygon, properties)
 
-    def draw_viewport(self, vp: Viewport) -> None:
+    def draw_viewport(self, vp: Viewport, properties: Properties) -> None:
         # the "active" viewport and invisible viewports should be filtered at this
         # stage, see function _draw_viewports()
         if vp.dxf.status < 1:
             return
+        
+        # draw viewport outline
+        outline = make_path(vp)
+        self.pipeline.draw_path(outline, properties)
 
         if not vp.is_top_view:
             self.log_message("Cannot render non top-view viewports")
@@ -1012,9 +1016,6 @@ def _draw_entities(
         entities = filter(filter_func, entities)
     viewports: list[Viewport] = []
     for entity in entities:
-        if isinstance(entity, Viewport):
-            viewports.append(entity)
-            continue
         if not isinstance(entity, DXFGraphic):
             if frontend.config.proxy_graphic_policy != ProxyGraphicPolicy.IGNORE:
                 entity = DXFGraphicProxy(entity)
@@ -1024,13 +1025,16 @@ def _draw_entities(
         properties = ctx.resolve_all(entity)
         frontend.exec_property_override(entity, properties)
         if properties.is_visible:
+            # we should draw viewport in valid order, some other entity can render over it
+            if isinstance(entity, Viewport):
+                _draw_viewports(frontend, entity, properties)
+                continue
             frontend.draw_entity(entity, properties)
         else:
             frontend.skip_entity(entity, "invisible")
-    _draw_viewports(frontend, viewports)
 
 
-def _draw_viewports(frontend: UniversalFrontend, viewports: list[Viewport]) -> None:
+def _draw_viewports(frontend: UniversalFrontend, vp: Viewport, properties: Properties ) -> None:
     # The VIEWPORT attributes "id" and "status" are very unreliable, maybe because of
     # the "great" documentation by Autodesk.
     # Viewport status field: (according to the DXF Reference)
@@ -1040,22 +1044,17 @@ def _draw_viewports(frontend: UniversalFrontend, viewports: list[Viewport]) -> N
     # <positive value> = On and active. The value indicates the order of
     # stacking for the viewports, where 1 is the "active" viewport, 2 is the
     # next, and so on.
-    viewports.sort(key=lambda e: e.dxf.status)
-    # Remove all invisible viewports:
-    viewports = [vp for vp in viewports if vp.dxf.status > 0]
-    if not viewports:
-        return
     # The "active" viewport determines how the paperspace layout is presented as a
     # whole (location & zoom state).
     # Maybe there are more than one "active" viewports, just remove the first one,
     # or there is no "active" viewport at all - in this case the "status" attribute
     # is not reliable at all - but what else is there to do?  The "active" layout should
     # have the id "1", but this information is also not reliable.
-    if viewports[0].dxf.get("status", 1) == 1:
-        viewports.pop(0)
-    # Draw viewports in order of "status"
-    for viewport in viewports:
-        frontend.draw_viewport(viewport)
+    if vp.dxf.status <= 1:
+        return
+    
+    # draw viwport content
+    frontend.draw_viewport(vp, properties)
 
 
 def _blend_image_towards(
