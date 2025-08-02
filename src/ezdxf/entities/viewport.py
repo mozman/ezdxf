@@ -693,7 +693,7 @@ class Viewport(DXFGraphic):
         matrix.inverse()
         c = self.dxf.center
         w2 = self.dxf.width / 2
-        h2 =  self.dxf.width / 2
+        h2 =  self.dxf.height / 2
 
         frame = Vec2.list((
             (-w2 + c.x, -h2 + c.y), 
