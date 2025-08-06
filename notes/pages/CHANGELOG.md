@@ -2,6 +2,9 @@
 	- BUGFIX: Filter polyline vertices for rendering based on vertex flags
 		- {{issue 1317}}
 		- contributed by #PaulLampe
+	- BUGFIX: draw `ATTRIB` entities of block references at last
+		- {{issue 1321}}
+		- contributed by #eXponenta
 - ## Version 1.4.2 - 2025-05-18
 	- CHANGE: faster and smaller PDF export by the `PyMuPDF` backend
 		- Test with 19 CADKIT samples:

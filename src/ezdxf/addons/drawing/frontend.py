@@ -872,8 +872,6 @@ class UniversalFrontend:
 
     def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         def draw_insert(insert: Insert):
-            # Block reference attributes are located __outside__ the block reference!
-            self.draw_entities(insert.attribs)
             clip = xclip.XClip(insert)
             is_clipping_active = clip.has_clipping_path and clip.is_clipping_enabled
 
@@ -904,6 +902,10 @@ class UniversalFrontend:
                     properties=properties,
                 )
                 self.pipeline.pop_clipping_shape()
+
+            # Draw ATTRIB entities at last, see #1321
+            # Block reference attributes are located __outside__ the block reference!
+            self.draw_entities(insert.attribs)
 
         if isinstance(entity, Insert):
             self.ctx.push_state(properties)
