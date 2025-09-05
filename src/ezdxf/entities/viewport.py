@@ -630,8 +630,7 @@ class Viewport(DXFGraphic):
         return view_direction.is_null or view_direction.isclose(Z_AXIS)
 
     def get_view_center_point(self) -> Vec3:
-        # TODO: Is there a flag or attribute that determines which of these points is
-        #  the center point?
+        """Returns the center of the VIEWPORT in modelspace."""
         return Vec3(self.dxf.view_center_point)
 
     def get_transformation_matrix(self) -> Matrix44:
@@ -643,7 +642,7 @@ class Viewport(DXFGraphic):
         offset: Vec3 = self.dxf.center - (msp_center_point * scale)
         base_point = Vec3(self.dxf.view_target_point)
 
-        # took account base point before rotate, because rotated views will broken 
+        # Take base point into account before applying the view twist-angle:
         m = Matrix44.translate(-base_point.x, -base_point.y, -base_point.z)
         m @= Matrix44.scale(scale)
 
