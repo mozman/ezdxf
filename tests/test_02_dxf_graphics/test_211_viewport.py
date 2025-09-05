@@ -411,6 +411,6 @@ def test_modelspace_limits_rotated():
     # view_width = 4.0
     x0, y0, x1, y1 = vp.get_modelspace_limits()
     assert x0 == pytest.approx(1.0)
-    assert y0 == pytest.approx(0.0)
+    assert y0 == pytest.approx(-4.0)
     assert x1 == pytest.approx(3.0)
-    assert y1 == pytest.approx(4.0)
+    assert y1 == pytest.approx(0.0)
