@@ -1,4 +1,7 @@
 ## Version 1.4.3 - dev
+	- BUGFIX: fix `target_point` usage in the `VIEWPORT` transformation matrix
+		- {{pr 1319}}
+		- contributed by #eXponenta
 	- BUGFIX: Filter polyline vertices for rendering based on vertex flags
 		- {{issue 1317}}
 		- contributed by #PaulLampe
