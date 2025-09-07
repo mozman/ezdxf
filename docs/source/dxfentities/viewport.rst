@@ -256,5 +256,7 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: get_transformation_matrix
 
+    .. automethod:: get_view_direction
+
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-2602B0FB-02E4-4B9A-B03C-B1D904753D34
