@@ -623,11 +623,17 @@ class Viewport(DXFGraphic):
         vp_height = self.dxf.height
         return vp_height / msp_height
 
+    def get_view_direction(self) -> Vec3:
+        """Returns the normalized view direction vector."""
+        try:
+            return Vec3(self.dxf.view_direction_vector).normalize()
+        except ZeroDivisionError:
+            return Z_AXIS
+
     @property
     def is_top_view(self) -> bool:
         """Returns ``True`` if the viewport is a top view."""
-        view_direction: Vec3 = self.dxf.view_direction_vector
-        return view_direction.is_null or view_direction.normalize().isclose(Z_AXIS)
+        return self.get_view_direction().isclose(Z_AXIS)
 
     def get_view_center_point(self) -> Vec3:
         """Returns the center of the VIEWPORT in modelspace."""
@@ -703,4 +709,3 @@ class Viewport(DXFGraphic):
 
         bbox = BoundingBox2d( matrix.fast_2d_transform(frame) )
         return bbox.extmin.x, bbox.extmin.y, bbox.extmax.x, bbox.extmax.y
-

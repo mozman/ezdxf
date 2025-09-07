@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2025 Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -7,6 +7,7 @@ from ezdxf.entities.viewport import Viewport
 from ezdxf.lldxf.extendedtags import ExtendedTags, DXFTag
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.math import Z_AXIS
 
 TEST_CLASS = Viewport
 TEST_TYPE = "VIEWPORT"
@@ -253,6 +254,16 @@ def test_default_new():
     assert entity.dxf.snap_spacing == (10, 10)
     assert entity.dxf.grid_spacing == (10, 10)
     assert len(list(entity.frozen_layers)) == 0
+
+
+def test_get_view_direction_vector_defaults_to_z_axis():
+    vp = TEST_CLASS.new(dxfattribs={"view_direction_vector": (0, 0, 0)})
+    assert vp.get_view_direction().isclose(Z_AXIS)
+
+
+def test_get_view_direction_vector_is_normalized():
+    vp = TEST_CLASS.new(dxfattribs={"view_direction_vector": (0, 0, 100)})
+    assert vp.get_view_direction().isclose(Z_AXIS)
 
 
 def test_load_from_text(entity):
