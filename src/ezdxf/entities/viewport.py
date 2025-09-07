@@ -627,7 +627,7 @@ class Viewport(DXFGraphic):
     def is_top_view(self) -> bool:
         """Returns ``True`` if the viewport is a top view."""
         view_direction: Vec3 = self.dxf.view_direction_vector
-        return view_direction.is_null or view_direction.isclose(Z_AXIS)
+        return view_direction.is_null or view_direction.normalize().isclose(Z_AXIS)
 
     def get_view_center_point(self) -> Vec3:
         """Returns the center of the VIEWPORT in modelspace."""
