@@ -11,6 +11,7 @@ https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-DE941DB5-7044-433C-AA68-
 Using bytes for strings because no encoding is defined in shape-files.
 
 """
+
 from __future__ import annotations
 from typing import (
     Sequence,
@@ -129,6 +130,7 @@ def format_shape_data_string(data: Sequence[int]) -> list[bytes]:
 
 class ShapeFile:
     """Low level representation of a SHX/SHP file."""
+
     def __init__(
         self,
         name: bytes,
@@ -503,14 +505,14 @@ SINGLE_CODES = {1, 2, 5, 6, 14}
 
 def parse_shape_codes(reader: DataReader, unifont=False) -> Sequence[int]:
     codes: list[int] = []
-    while True:
+    while reader.has_data:
         code = reader.u8()
         codes.append(code)
         if code == 0:
-            return tuple(codes)
-        elif code in SINGLE_CODES or code > 14:
+            break
+        if code in SINGLE_CODES or code > 14:
             continue
-        elif code == 3 or code == 4:  # size control
+        if code == 3 or code == 4:  # size control
             codes.append(reader.u8())
         elif code == 7:  # sub shape
             if unifont:
@@ -549,6 +551,7 @@ def parse_shape_codes(reader: DataReader, unifont=False) -> Sequence[int]:
                 codes.append(y)
                 if x or y:
                     codes.append(reader.i8())
+    return tuple(codes)
 
 
 def filter_noise(lines: Iterable[bytes]) -> Iterator[bytes]:
@@ -641,6 +644,7 @@ VEC_Y = [0, 0.5, 1, 1, 1, 1, 1, 0.5, 0, -0.5, -1, -1, -1, -1, -1, -0.5]
 
 class ShapeRenderer:
     """Low level glyph renderer for SHX/SHP fonts."""
+
     def __init__(
         self,
         p: path.Path,
