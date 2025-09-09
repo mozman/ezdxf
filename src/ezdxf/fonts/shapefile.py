@@ -240,10 +240,20 @@ class ShapeFile:
                 raise FileStructureError(f"file structure error at symbol <{s}>")
 
     def get_codes(self, number: int) -> Sequence[int]:
-        symbol = self.shapes.get(number)
+        symbol = self.shapes.get(number) or self._cp1255_fallback_get_codes(number)
         if symbol is None:
             raise UnsupportedShapeNumber(number)
         return symbol.data
+
+    def _cp1255_fallback_get_codes(self, number: int) -> Symbol | None:
+        cp1255_char: str = (
+            chr(number)
+            .encode(encoding="cp1255", errors="ignore")
+            .decode(encoding="latin1", errors="ignore")
+        )
+        if cp1255_char == "":
+            return None
+        return self.shapes.get(ord(cp1255_char))
 
     def render_shape(self, number: int, stacked=False) -> GlyphPath:
         return render_shapes([number], self.get_codes, stacked=stacked)
