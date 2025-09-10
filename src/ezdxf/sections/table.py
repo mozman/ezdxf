@@ -11,6 +11,7 @@ from typing import (
     Union,
     cast,
     Sequence,
+    override,
 )
 from collections import OrderedDict
 import logging
@@ -491,6 +492,14 @@ class TextstyleTable(Table[Textstyle]):
         owner_handle = self._head.dxf.handle
         for entry in self.shx_files.values():
             entry.dxf.owner = owner_handle
+
+    @override
+    def get(self, name: str) -> Textstyle:
+        entry = self.entries.get(self.key(name)) or self.entries.get(name.lower())
+        if entry:
+            return entry
+        else:
+            raise const.DXFTableEntryError(name)
 
     def add(self, name: str, *, font: str, dxfattribs=None) -> Textstyle:
         """Add a new text style entry for TTF fonts. The entry must not yet
