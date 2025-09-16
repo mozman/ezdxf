@@ -1180,13 +1180,11 @@ class LeaderData:
         m = wcs.m
         self.last_leader_point = m.transform(self.last_leader_point)
         try:
-            dog_leg = m.transform_direction(
-                self.dogleg_vector.normalize(self.dogleg_length)
-            )
+            normalized_dogleg = self.dogleg_vector.normalize(self.dogleg_length)
         except ZeroDivisionError:  # dogleg_vector is NULL
-            dog_leg = m.transform_direction(Vec3(self.dogleg_length, 0, 0))
-        self.dogleg_vector = dog_leg.normalize()
-        self.dogleg_length = dog_leg.magnitude
+            normalized_dogleg = Vec3(self.dogleg_length, 0, 0)
+        self.dogleg_vector = m.transform_direction(normalized_dogleg, normalize=True)
+        self.dogleg_length = self.dogleg_vector.magnitude * self.dogleg_length
         self.breaks = list(m.transform_vertices(self.breaks))
         for leader_line in self.lines:
             leader_line.transform(wcs)
