@@ -1180,7 +1180,7 @@ class LeaderData:
         m = wcs.m
         self.last_leader_point = m.transform(self.last_leader_point)
         # Handle zero vectors safely
-        if self.dogleg_vector.magnitude_squared == 0:
+        if self.dogleg_vector.magnitude_square == 0:
             # Use a default horizontal vector when dogleg is zero
             if self.dogleg_length != 0:
                 normalized_dogleg = Vec3(self.dogleg_length, 0, 0)
@@ -1188,10 +1188,10 @@ class LeaderData:
                 normalized_dogleg = Vec3(1, 0, 0)  # Default unit vector
         else:
             normalized_dogleg = self.dogleg_vector.normalize(self.dogleg_length)
-        
+
         # Transform the vector, check if result is zero before normalizing
         transformed_dogleg = m.transform_direction(normalized_dogleg)
-        if transformed_dogleg.magnitude_squared == 0:
+        if transformed_dogleg.magnitude_square == 0:
             # If transformation resulted in zero vector, use a default
             self.dogleg_vector = Vec3(1, 0, 0)
             self.dogleg_length = abs(self.dogleg_length)
