@@ -947,6 +947,10 @@ def polygon_mapping(points: list[Vec3], holes: list[list[Vec3]]) -> GeoMapping:
         }
     """
 
+    # Handle degenerate cases with insufficient vertices for a polygon
+    if len(points) < 3:
+        return line_string_mapping(points)
+    
     exterior = linear_ring(points, ccw=True)
     if holes:
         holes = [linear_ring(hole, ccw=False) for hole in holes]
