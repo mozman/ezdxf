@@ -1179,12 +1179,25 @@ class LeaderData:
     def transform(self, wcs: WCSTransform) -> None:
         m = wcs.m
         self.last_leader_point = m.transform(self.last_leader_point)
-        try:
+        # Handle zero vectors safely
+        if self.dogleg_vector.magnitude_squared == 0:
+            # Use a default horizontal vector when dogleg is zero
+            if self.dogleg_length != 0:
+                normalized_dogleg = Vec3(self.dogleg_length, 0, 0)
+            else:
+                normalized_dogleg = Vec3(1, 0, 0)  # Default unit vector
+        else:
             normalized_dogleg = self.dogleg_vector.normalize(self.dogleg_length)
-        except ZeroDivisionError:  # dogleg_vector is NULL
-            normalized_dogleg = Vec3(self.dogleg_length, 0, 0)
-        self.dogleg_vector = m.transform_direction(normalized_dogleg, normalize=True)
-        self.dogleg_length = self.dogleg_vector.magnitude * self.dogleg_length
+        
+        # Transform the vector, check if result is zero before normalizing
+        transformed_dogleg = m.transform_direction(normalized_dogleg)
+        if transformed_dogleg.magnitude_squared == 0:
+            # If transformation resulted in zero vector, use a default
+            self.dogleg_vector = Vec3(1, 0, 0)
+            self.dogleg_length = abs(self.dogleg_length)
+        else:
+            self.dogleg_vector = transformed_dogleg.normalize()
+            self.dogleg_length = transformed_dogleg.magnitude
         self.breaks = list(m.transform_vertices(self.breaks))
         for leader_line in self.lines:
             leader_line.transform(wcs)
