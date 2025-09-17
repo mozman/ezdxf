@@ -17,21 +17,33 @@ from ezdxf.addons import geo
 from ezdxf.render.forms import square, translate
 
 EXTERIOR = [(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)]
+EXTERIOR_Z = [(0, 0, 1), (10, 0, 1), (10, 10, 1), (0, 10, 1), (0, 0, 1)]
 HOLE1 = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 1)]
 HOLE2 = [(3, 3), (3, 4), (4, 4), (4, 3), (3, 3)]
 
 POINT = {"type": "Point", "coordinates": (0, 0)}
+POINT_Z = {"type": "Point", "coordinates": (0, 0, 1)}
 LINE_STRING = {"type": "LineString", "coordinates": EXTERIOR}
+LINE_STRING_Z = {"type": "LineString", "coordinates": EXTERIOR_Z}
 POLYGON_0 = {"type": "Polygon", "coordinates": [EXTERIOR]}
+POLYGON_0_Z = {"type": "Polygon", "coordinates": [EXTERIOR_Z]}
 POLYGON_1 = {"type": "Polygon", "coordinates": [EXTERIOR, HOLE1]}
 POLYGON_2 = {"type": "Polygon", "coordinates": [EXTERIOR, HOLE1, HOLE2]}
 MULTI_POINT = {
     "type": "MultiPoint",
     "coordinates": EXTERIOR,
 }
+MULTI_POINT_Z = {
+    "type": "MultiPoint",
+    "coordinates": EXTERIOR_Z,
+}
 MULTI_LINE_STRING = {
     "type": "MultiLineString",
     "coordinates": [EXTERIOR, HOLE1, HOLE2],
+}
+MULTI_LINE_STRING_Z = {
+    "type": "MultiLineString",
+    "coordinates": [EXTERIOR_Z],
 }
 MULTI_POLYGON = {
     "type": "MultiPolygon",
@@ -40,6 +52,10 @@ MULTI_POLYGON = {
         [EXTERIOR, HOLE1],
         [EXTERIOR, HOLE1, HOLE2],
     ],
+}
+MULTI_POLYGON_Z = {
+    "type": "MultiPolygon",
+    "coordinates": [[EXTERIOR_Z]],
 }
 
 GEOMETRY_COLLECTION = {
@@ -280,16 +296,22 @@ def test_iter_feature_with_geometry_collection():
     "entity",
     [
         POINT,
+        POINT_Z,
         LINE_STRING,
+        LINE_STRING_Z,
         POLYGON_0,
+        POLYGON_0_Z,
         POLYGON_1,
         POLYGON_2,
         GEOMETRY_COLLECTION,
         FEATURE_1,
         FEATURE_COLLECTION,
         MULTI_POINT,
+        MULTI_POINT_Z,
         MULTI_LINE_STRING,
+        MULTI_LINE_STRING_Z,
         MULTI_POLYGON,
+        MULTI_POLYGON_Z,
     ],
 )
 def test_geo_interface_builder(entity):
