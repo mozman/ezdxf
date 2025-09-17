@@ -669,7 +669,9 @@ def _rebuild(geo_mapping: GeoMapping, places: int = 6) -> GeoMapping:
 
     """
 
-    def pnt(v: Vec3) -> tuple[float, float]:
+    def pnt(v: Vec3) -> tuple[float, float] | tuple[float, float, float]:
+        if v.z:
+            return round(v.x, places), round(v.y, places), round(v.z, places)
         return round(v.x, places), round(v.y, places)
 
     def _polygon(exterior, holes):
