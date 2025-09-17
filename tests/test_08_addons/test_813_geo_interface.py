@@ -318,6 +318,43 @@ def test_geo_interface_builder(entity):
     assert geo.GeoProxy.parse(entity).__geo_interface__ == entity
 
 
+@pytest.mark.parametrize(
+    "entity, expected_coords",
+    [
+        (
+            {"type": "MultiPoint", "coordinates": [(0, 0), (0, 1, 1)]},
+            [(0, 0, 0), (0, 1, 1)],
+        ),
+        (
+            {"type": "LineString", "coordinates": [(0, 0), (0, 1, 1)]},
+            [(0, 0, 0), (0, 1, 1)],
+        ),
+        (
+            {"type": "MultiLineString", "coordinates": [[(0, 0), (0, 1, 1)]]},
+            [[(0, 0, 0), (0, 1, 1)]],
+        ),
+        (
+            {"type": "Polygon", "coordinates": [[(0, 0), (0, 1, 1)]]},
+            [[(0, 0, 0), (0, 1, 1)]],
+        ),
+        (
+            {"type": "MultiPolygon", "coordinates": [[[(0, 0), (0, 1, 1)]]]},
+            [[[(0, 0, 0), (0, 1, 1)]]],
+        ),
+    ],
+)
+def test_geo_interface_builder_given_heterogeneous_z_returns_3d_geometry(
+    entity, expected_coords
+) -> None:
+    """This test verifies that if a geometry contains at least one non-zero Z component,
+    it is processed as a 3D geometry. The Z components that were not specified are
+    set to 0.
+    """
+    assert (
+        geo.GeoProxy.parse(entity).__geo_interface__["coordinates"] == expected_coords
+    )
+
+
 def test_point_to_dxf_entity():
     point = list(geo.dxf_entities(POINT))[0]
     assert point.dxftype() == "POINT"
