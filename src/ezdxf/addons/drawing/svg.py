@@ -39,10 +39,6 @@ class SVGBackend(recorder.Recorder):
     ) -> ET.Element:
         top_origin = True
         settings = copy.copy(settings)
-        # DXF coordinates are mapped to integer viewBox coordinates in the first
-        # quadrant, producing compact SVG files. The larger the coordinate range, the
-        # more precise and the lager the files.
-        settings.output_coordinate_space = 1_000_000
 
         # This player changes the original recordings!
         player = self.player()

@@ -321,7 +321,7 @@ class Settings:
     # mapped, the range is [0, output_coordinate_space] for the larger page
     # dimension - aspect ratio is always preserved - these are CAD drawings!
     # The SVGBackend uses this feature to map all coordinates to integer values:
-    output_coordinate_space: float = 1_000_000  # e.g. for SVGBackend
+    output_coordinate_space: float = 1_000_000  # recommended value for the SVGBackend
     output_layers: bool = True
 
     def __post_init__(self) -> None:
