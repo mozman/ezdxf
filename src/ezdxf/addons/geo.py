@@ -669,23 +669,23 @@ def _rebuild(geo_mapping: GeoMapping, places: int = 6) -> GeoMapping:
 
     """
 
-    def pnt(v: Vec3) -> tuple[float, float]:
+    def vertex_2d(v: Vec3) -> tuple[float, float]:
         return round(v.x, places), round(v.y, places)
 
-    def pnt_3d(v: Vec3) -> tuple[float, float, float]:
+    def vertex_3d(v: Vec3) -> tuple[float, float, float]:
         return round(v.x, places), round(v.y, places), round(v.z, places)
 
-    def _build_coords(
+    def vertices(
         coords: Sequence[Vec3],
     ) -> list[tuple[float, float] | tuple[float, float, float]]:
         if any(v.z for v in coords):
-            return [pnt_3d(v) for v in coords]
-        return [pnt(v) for v in coords]
+            return [vertex_3d(v) for v in coords]
+        return [vertex_2d(v) for v in coords]
 
     def _polygon(exterior, holes):
         # For type "Polygon", the "coordinates" member MUST be an array of
         # linear ring coordinate arrays.
-        return [_build_coords(ring) for ring in [exterior] + holes]
+        return [vertices(ring) for ring in [exterior] + holes]
 
     geo_interface = dict(geo_mapping)
     type_ = geo_interface[TYPE]
@@ -697,14 +697,14 @@ def _rebuild(geo_mapping: GeoMapping, places: int = 6) -> GeoMapping:
         geo_interface[GEOMETRY] = _rebuild(geo_interface[GEOMETRY])
     elif type_ == POINT:
         v = geo_interface[COORDINATES]
-        geo_interface[COORDINATES] = pnt_3d(v) if v.z else pnt(v)
+        geo_interface[COORDINATES] = vertex_3d(v) if v.z else vertex_2d(v)
     elif type_ in (LINE_STRING, MULTI_POINT):
         coordinates = geo_interface[COORDINATES]
-        geo_interface[COORDINATES] = _build_coords(coordinates)
+        geo_interface[COORDINATES] = vertices(coordinates)
     elif type_ == MULTI_LINE_STRING:
         coordinates = []
         for line in geo_interface[COORDINATES]:
-            coordinates.append(_build_coords(line))
+            coordinates.append(vertices(line))
         geo_interface[COORDINATES] = coordinates
     elif type_ == POLYGON:
         geo_interface[COORDINATES] = _polygon(*geo_interface[COORDINATES])
