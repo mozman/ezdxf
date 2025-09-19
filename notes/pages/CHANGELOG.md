@@ -1,4 +1,6 @@
 ## Version 1.4.3 - dev
+	- CHANGE: removed the forced override of `Settings.output_coordinate_space` in the `SVGBacked`
+		- {{issue 1330}}
 	- NEW: Support for exporting elevations by the `geo` add-on
 		- {{pr 1329}}
 		- contributed by #rdesparbes
