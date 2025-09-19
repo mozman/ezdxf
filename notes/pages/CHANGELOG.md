@@ -1,4 +1,7 @@
 ## Version 1.4.3 - dev
+	- NEW: Support for exporting elevations by the `geo` add-on
+		- {{pr 1329}}
+		- contributed by #rdesparbes
 	- BUGFIX: fix `target_point` usage in the `VIEWPORT` transformation matrix
 		- {{pr 1319}}
 		- contributed by #eXponenta
