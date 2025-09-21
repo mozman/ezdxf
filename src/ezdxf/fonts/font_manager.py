@@ -2,8 +2,9 @@
 #  License: MIT License
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 import pathlib
-from typing import Iterable, NamedTuple, Optional, Sequence
+from typing import NamedTuple, Self
 import os
 import platform
 import json
@@ -13,6 +14,7 @@ from pathlib import Path
 from fontTools.ttLib import TTFont, TTLibError
 from .font_face import FontFace
 from . import shapefile, lff
+from .exceptions import FontNotFoundError, UnsupportedFont
 
 logger = logging.getLogger("ezdxf")
 WINDOWS = "Windows"
@@ -102,7 +104,7 @@ class FontCache:
             else:  # no fallback font available
                 raise FontNotFoundError("no fonts available, not even fallback fonts")
 
-    def find_best_match(self, font_face: FontFace) -> Optional[FontFace]:
+    def find_best_match(self, font_face: FontFace) -> FontFace | None:
         entry = self._cache.get(self.key(font_face.filename), None)
         if entry:
             return entry.font_face
@@ -120,8 +122,8 @@ class FontCache:
         style: str = "Regular",
         weight: int = 400,
         width: int = 5,
-        italic: Optional[bool] = False,
-    ) -> Optional[FontFace]:
+        italic: bool | None = False,
+    ) -> FontFace | None:
         # italic == None ... ignore italic flag
         family = GENERIC_FONT_FAMILY.get(family, family)
         entries = filter_family(family, self._cache.values())
@@ -211,12 +213,14 @@ class FontCache:
         print(f"\nfound {len(self._cache)} fonts")
 
 
-def filter_family(family: str, entries: Iterable[CacheEntry]) -> list[CacheEntry]:
+def filter_family(
+    family: str, entries: Iterable[CacheEntry]
+) -> list[CacheEntry | None]:
     key = str(family).lower()
     return [e for e in entries if e.font_face.family.lower().startswith(key)]
 
 
-def filter_style(style: str, entries: Iterable[CacheEntry]) -> list[CacheEntry]:
+def filter_style(style: str, entries: Iterable[CacheEntry]) -> list[CacheEntry | None]:
     key = str(style).lower()
     return [e for e in entries if key in e.font_face.style.lower()]
 
@@ -231,22 +235,16 @@ FALLBACK_SHAPE_FILES = ["txt.shx", "txt.shp", "iso.shx", "iso.shp"]
 FALLBACK_LFF = ["standard.lff", "iso.lff", "simplex.lff"]
 
 
-class FontNotFoundError(Exception):
-    pass
-
-
-class UnsupportedFont(Exception):
-    pass
-
-
 class FontManager:
     def __init__(self) -> None:
         self.platform = platform.system()
         self._font_cache: FontCache = FontCache()
-        self._match_cache: dict[int, Optional[FontFace]] = dict()
+        self._match_cache: dict[int, FontFace | None] = dict()
         self._loaded_ttf_fonts: dict[str, TTFont] = dict()
         self._loaded_shape_file_glyph_caches: dict[str, shapefile.GlyphCache] = dict()
         self._loaded_lff_glyph_caches: dict[str, lff.GlyphCache] = dict()
+        # Cache parsed shapefiles to avoid re-reading during glyph cache creation
+        self._parsed_shapefiles: dict[str, shapefile.ShapeFile] = dict()
         self._fallback_font_name = ""
         self._fallback_shape_file = ""
         self._fallback_lff = ""
@@ -260,6 +258,7 @@ class FontManager:
     def clear(self) -> None:
         self._font_cache = FontCache()
         self._loaded_ttf_fonts.clear()
+        self._parsed_shapefiles.clear()  # Clear cached parsed shapefiles
         self._fallback_font_name = ""
 
     def fallback_font_name(self) -> str:
@@ -330,16 +329,34 @@ class FontManager:
             file_path = self._font_cache.get(font_name, fallback_name).file_path
         except KeyError:
             raise FontNotFoundError(f"shape font '{font_name}' not found")
-        try:
-            file = shapefile.readfile(str(file_path))
-        except IOError:
-            raise FontNotFoundError(f"shape file '{file_path}' not found")
-        except shapefile.UnsupportedShapeFile as e:
-            raise UnsupportedFont(f"unsupported font '{file_path}': {str(e)}")
-        try:
-            glyph_cache = shapefile.GlyphCache(file)
-        except Exception:
-            raise UnsupportedFont(f"can't create glyph-cache for font '{file_path}'.")
+
+        # Try to use cached shapefile first
+        cache_key = str(file_path).lower()
+        cached_shapefile = self._parsed_shapefiles.get(cache_key)
+
+        if cached_shapefile is not None:
+            # Use the cached, already-validated shapefile
+            try:
+                glyph_cache = shapefile.GlyphCache(cached_shapefile)
+            except Exception:
+                raise UnsupportedFont(
+                    f"can't create glyph-cache for font '{file_path}'."
+                )
+        else:
+            # Fallback: read from disk (this shouldn't happen for fonts discovered during scanning)
+            try:
+                file = shapefile.readfile(str(file_path))
+            except IOError:
+                raise FontNotFoundError(f"shape file '{file_path}' not found")
+            except shapefile.UnsupportedShapeFile as e:
+                raise UnsupportedFont(f"unsupported font '{file_path}': {str(e)}")
+            try:
+                glyph_cache = shapefile.GlyphCache(file)
+            except Exception:
+                raise UnsupportedFont(
+                    f"can't create glyph-cache for font '{file_path}'."
+                )
+
         self._loaded_shape_file_glyph_caches[font_name] = glyph_cache
         return glyph_cache
 
@@ -376,8 +393,8 @@ class FontManager:
         style: str = "Regular",
         weight=400,
         width=5,
-        italic: Optional[bool] = False,
-    ) -> Optional[FontFace]:
+        italic: bool | None = False,
+    ) -> FontFace | None:
         key = hash((family, style, weight, width, italic))
         try:
             return self._match_cache[key]
@@ -393,14 +410,10 @@ class FontManager:
         """Returns the font file name of the font without parent directories
         e.g. "LiberationSans-Regular.ttf".
         """
-        font_face = self._font_cache.find_best_match(font_face)  # type: ignore
-        if font_face is None:
-            font_face = self.get_font_face(self.fallback_font_name())
-            return font_face.filename
-        else:
-            return font_face.filename
+        font_face = self._font_cache.find_best_match(font_face)
+        return font_face.filename
 
-    def build(self, folders: Optional[Sequence[str]] = None, support_dirs=True) -> None:
+    def build(self, folders: Sequence[str] | None = None, support_dirs=True) -> None:
         """Adds all supported font types located in the given `folders` to the font
         manager. If no directories are specified, the known font folders for Windows,
         Linux and macOS are searched by default, except `support_dirs` is ``False``.
@@ -423,7 +436,7 @@ class FontManager:
     def add_synonyms(self, synonyms: dict[str, str], reverse=True) -> None:
         font_cache = self._font_cache
         for font_name, synonym in synonyms.items():
-            if not font_name in font_cache:
+            if font_name not in font_cache:
                 continue
             if synonym in font_cache:
                 continue
@@ -443,6 +456,59 @@ class FontManager:
                 print(str(e))
                 continue
 
+    def _get_shape_file_font_face(self: Self, font_path: Path) -> FontFace:
+        ext = font_path.suffix.lower()
+        # Note: the width property is not defined in shapefiles and is used to
+        # prioritize the shapefile types for find_best_match():
+        # 1st .shx; 2nd: .shp; 3rd: .lff
+
+        width = 5
+        if ext == ".shp":
+            width = 6
+        if ext == ".lff":
+            width = 7
+
+        # Validate and cache shapefile during scanning (for .shx/.shp only)
+        if ext in {".shx", ".shp"}:
+            cache_key = str(font_path).lower()
+
+            # Check if already cached (shouldn't happen during scanning, but safety check)
+            if cache_key not in self._parsed_shapefiles:
+                try:
+                    # Read and validate the shapefile (single read operation)
+                    parsed_shapefile = shapefile.readfile(str(font_path))
+                    # Cache the successfully parsed shapefile
+                    self._parsed_shapefiles[cache_key] = parsed_shapefile
+                    logger.debug(
+                        f"Successfully validated and cached shapefile: {font_path}"
+                    )
+                except ValueError as e:
+                    # Handle the "8 is not a valid FontMode" error
+                    if "is not a valid FontMode" in str(e):
+                        logger.warning(
+                            f"Skipping shapefile '{font_path}' with invalid font mode: {e}"
+                        )
+                        raise shapefile.UnsupportedShapeFile(
+                            f"invalid font mode in {font_path}: {e}"
+                        )
+                    else:
+                        # Re-raise other ValueError instances
+                        raise
+                except Exception as e:
+                    # Handle other potential shapefile loading errors
+                    logger.warning(f"Skipping invalid shapefile '{font_path}': {e}")
+                    raise shapefile.UnsupportedShapeFile(
+                        f"cannot load shapefile {font_path}: {e}"
+                    )
+
+        return FontFace(
+            filename=font_path.name,  # "txt.shx", "simplex.shx", ...
+            family=font_path.stem.lower(),  # "txt", "simplex", ...
+            style=font_path.suffix.lower(),  # ".shx", ".shp" or ".lff"
+            width=width,
+            weight=400,
+        )
+
     def scan_folder(self, folder: Path):
         if not folder.exists():
             return
@@ -459,8 +525,21 @@ class FontManager:
                 else:
                     self._font_cache.add_entry(file, font_face)
             elif ext in SUPPORTED_SHAPE_FILES:
-                font_face = get_shape_file_font_face(file)
-                self._font_cache.add_entry(file, font_face)
+                try:
+                    # Pass self to enable validation and caching of parsed shapefiles
+                    font_face = self._get_shape_file_font_face(file)
+                except shapefile.UnsupportedShapeFile as e:
+                    # Handle invalid shapefiles gracefully during scanning
+                    logger.warning(f"skipping unsupported shapefile '{file}': {str(e)}")
+                    continue
+                except Exception as e:
+                    # Handle unexpected errors
+                    logger.warning(
+                        f"unexpected error processing shapefile '{file}': {str(e)}"
+                    )
+                    continue
+                else:
+                    self._font_cache.add_entry(file, font_face)
 
     def dumps(self) -> str:
         return self._font_cache.dumps()
@@ -506,25 +585,4 @@ def get_ttf_font_face(font_path: Path) -> FontFace:
         style=normalize_style(style),
         width=width,
         weight=weight,
-    )
-
-
-def get_shape_file_font_face(font_path: Path) -> FontFace:
-    ext = font_path.suffix.lower()
-    # Note: the width property is not defined in shapefiles and is used to
-    # prioritize the shapefile types for find_best_match():
-    # 1st .shx; 2nd: .shp; 3rd: .lff
-
-    width = 5
-    if ext == ".shp":
-        width = 6
-    if ext == ".lff":
-        width = 7
-
-    return FontFace(
-        filename=font_path.name,  # "txt.shx", "simplex.shx", ...
-        family=font_path.stem.lower(),  # "txt", "simplex", ...
-        style=font_path.suffix.lower(),  # ".shx", ".shp" or ".lff"
-        width=width,
-        weight=400,
     )
