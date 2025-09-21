@@ -18,8 +18,7 @@ class AbstractBoundingBox(Generic[T], abc.ABC):
     extmax: T
 
     @abc.abstractmethod
-    def __init__(self, vertices: Optional[Iterable[UVec]] = None):
-        ...
+    def __init__(self, vertices: Optional[Iterable[UVec]] = None): ...
 
     def copy(self):
         box = self.__class__()
@@ -43,29 +42,23 @@ class AbstractBoundingBox(Generic[T], abc.ABC):
             yield self.extmax
 
     @abc.abstractmethod
-    def extend(self, vertices: Iterable[UVec]) -> None:
-        ...
+    def extend(self, vertices: Iterable[UVec]) -> None: ...
 
     @property
     @abc.abstractmethod
-    def is_empty(self) -> bool:
-        ...
+    def is_empty(self) -> bool: ...
 
     @abc.abstractmethod
-    def inside(self, vertex: UVec) -> bool:
-        ...
+    def inside(self, vertex: UVec) -> bool: ...
 
     @abc.abstractmethod
-    def has_intersection(self, other: AbstractBoundingBox[T]) -> bool:
-        ...
+    def has_intersection(self, other: AbstractBoundingBox[T]) -> bool: ...
 
     @abc.abstractmethod
-    def has_overlap(self, other: AbstractBoundingBox[T]) -> bool:
-        ...
+    def has_overlap(self, other: AbstractBoundingBox[T]) -> bool: ...
 
     @abc.abstractmethod
-    def intersection(self, other: AbstractBoundingBox[T]) -> AbstractBoundingBox[T]:
-        ...
+    def intersection(self, other: AbstractBoundingBox[T]) -> AbstractBoundingBox[T]: ...
 
     def contains(self, other: AbstractBoundingBox[T]) -> bool:
         """Returns ``True`` if the `other` bounding box is completely inside
@@ -450,8 +443,26 @@ def extents3d(vertices: Iterable[UVec]) -> tuple[Vec3, Vec3]:
 
 def extents2d(vertices: Iterable[UVec]) -> tuple[Vec2, Vec2]:
     """Returns the extents of the bounding box as tuple (extmin, extmax)."""
-    vertices = np.array([(x, y) for x, y, *_ in vertices], dtype=np.float64)
-    if len(vertices):
-        return Vec2(vertices.min(0)), Vec2(vertices.max(0))
-    else:
+    vertex_iter = iter(vertices)
+
+    # Initialize with first vertex
+    try:
+        first = Vec2(next(vertex_iter))
+        min_x = max_x = first.x
+        min_y = max_y = first.y
+    except StopIteration:
         raise ValueError("no vertices given")
+
+    # Process remaining vertices
+    for v in vertex_iter:
+        vec2 = Vec2(v)
+        if vec2.x < min_x:
+            min_x = vec2.x
+        elif vec2.x > max_x:
+            max_x = vec2.x
+        if vec2.y < min_y:
+            min_y = vec2.y
+        elif vec2.y > max_y:
+            max_y = vec2.y
+
+    return Vec2(min_x, min_y), Vec2(max_x, max_y)
