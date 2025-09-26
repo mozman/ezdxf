@@ -59,20 +59,20 @@
 		- A gap tolerance is given by the user to connect end points that are not coincident and the algorithm adds connection lines between these gaps.
 -
 - # Increase Minimal Required Python Version
-	- In general `numpy` defines the minimal required Python version.
+	- Deprecating Python support for EOL versions:  https://devguide.python.org/versions/
 	-
-	- Python 3.10 in late 2024, after release of Python 3.13
+	- Python 3.10 (EOL Python 3.9 in 2025-10) in late 2025, after release of Python 3.14
 		- https://docs.python.org/3/whatsnew/3.10.html
-		- structural pattern matching?
+		- structural pattern matching
 		- typing: union operator `|`, outside of annotations (type aliases)
 		- dataclasses: `__slots__`
 		-
-	- Python 3.11 in late 2025, after release of Python 3.14
+	- Python 3.11  (EOL Python 3.10 in 2026-10) in late 2026, after release of Python 3.15
 		- https://docs.python.org/3/whatsnew/3.11.html
 		- `typing.Self`
 		- `typing.overload()` decorator
 		-
-	- Python 3.12 in late 2026, after release of Python 3.15
+	- Python 3.12  (EOL Python 3.11 in 2027-10) in late 2027, after release of Python 3.16
 		- https://docs.python.org/3/whatsnew/3.12.html
 		- `typing.override()` decorator
 		- type parameter syntax: `def max[T](args: Iterable[T]) -> T: ...`

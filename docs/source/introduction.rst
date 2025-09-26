@@ -38,7 +38,7 @@ What ezdxf can't do
 Supported Python Versions
 -------------------------
 
-`Ezdxf` requires at least Python 3.9 (determined by `numpy`) and will be tested with the
+`Ezdxf` requires at least Python 3.10 and will be tested with the
 latest stable CPython version and the latest stable release of pypy3 during development.
 
 `Ezdxf` is written in pure Python with optional Cython implementations of some
@@ -52,7 +52,7 @@ Supported Operating Systems
 ---------------------------
 
 `Ezdxf` is OS independent and runs on all platforms which provide an appropriate
-Python interpreter (>=3.9).
+Python interpreter (>=3.10).
 
 Supported DXF Versions
 ----------------------

@@ -1,4 +1,5 @@
 ## Version 1.4.3 - dev
+	- CHANGE: requires Python 3.10, Python 3.9 has reached End of Life in Oktober 2025
 	- CHANGE: removed the forced override of `Settings.output_coordinate_space` in the `SVGBacked`
 		- {{issue 1330}}
 	- NEW: Support for exporting elevations by the `geo` add-on
