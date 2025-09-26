@@ -27,7 +27,7 @@ jobs:
         CIBW_ARCHS_WINDOWS: "AMD64"
         CIBW_ARCHS_MACOS: "x86_64 arm64 universal2"
         # Does not fail at unsupported Python versions!
-        CIBW_BUILD: cp310-* cp311-* cp312-* cp313-*
+        CIBW_BUILD: cp310-* cp311-* cp312-* cp313-* cp314-*
     - name: Upload wheels
       env:
         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
