@@ -510,34 +510,27 @@ class FontManager:
         )
 
     def scan_folder(self, folder: Path):
-        if not folder.exists():
-            return
-        for file in folder.iterdir():
-            if file.is_dir():
-                self.scan_folder(file)
-                continue
-            ext = file.suffix.lower()
-            if ext in SUPPORTED_TTF_TYPES:
+        processed_fonts: set[str] = set()
+        for supported_type in SUPPORTED_TTF_TYPES:
+            for file in folder.glob(f"**/*{supported_type}"):
+                if file.name in processed_fonts:
+                    continue
+                processed_fonts.add(file.name)
                 try:
                     font_face = get_ttf_font_face(file)
                 except Exception as e:
-                    logger.warning(f"cannot open font '{file}': {str(e)}")
+                    logger.error(f"cannot open font '{file}': {str(e)}")
                 else:
                     self._font_cache.add_entry(file, font_face)
-            elif ext in SUPPORTED_SHAPE_FILES:
+        for supported_type in SUPPORTED_SHAPE_FILES:
+            for file in folder.glob(f"**/*{supported_type}"):
+                if file.name in processed_fonts:
+                    continue
+                processed_fonts.add(file.name)
                 try:
-                    # Pass self to enable validation and caching of parsed shapefiles
                     font_face = self._get_shape_file_font_face(file)
-                except shapefile.UnsupportedShapeFile as e:
-                    # Handle invalid shapefiles gracefully during scanning
-                    logger.warning(f"skipping unsupported shapefile '{file}': {str(e)}")
-                    continue
                 except Exception as e:
-                    # Handle unexpected errors
-                    logger.warning(
-                        f"unexpected error processing shapefile '{file}': {str(e)}"
-                    )
-                    continue
+                    logger.error(f"cannot open font '{file}': {str(e)}")
                 else:
                     self._font_cache.add_entry(file, font_face)
 
