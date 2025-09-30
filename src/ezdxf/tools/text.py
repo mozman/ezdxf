@@ -4,6 +4,7 @@
 """
 Tools in this module should be as independent of DXF entities as possible!
 """
+
 from __future__ import annotations
 from typing import (
     Iterable,
@@ -274,31 +275,96 @@ def unified_alignment(entity: Union[Text, MText]) -> tuple[int, int]:
 def plain_text(text: str) -> str:
     """Returns the plain text for :class:`~ezdxf.entities.Text`,
     :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.Attdef` content.
+    
+    Processes DXF text content by:
+    - Decoding caret notation (^M -> carriage return, etc.)  
+    - Converting special character codes (%%C -> Ø, %%D -> °, etc.)
+    - Removing formatting codes (%%u, %%o, %%k for underline, overline, strikethrough)
+    - Converting numeric character codes (%%065 -> 'A')
+    
+    Args:
+        text: Raw DXF text content that may contain special codes
+        
+    Returns:
+        Plain text with special codes processed and formatting codes removed
     """
     # TEXT, ATTRIB and ATTDEF are short strings <= 255 in R12.
-    # R2000 allows 2049 chars, but this limit is not often used in real world
-    # applications.
-    result = ""
-    scanner = TextScanner(validator.fix_one_line_text(caret_decode(text)))
+    # R2000 allows 2049 chars, but this limit is not often used in real world applications.
+    
+    # Pre-process text: fix line endings and decode caret notation
+    processed_text = validator.fix_one_line_text(caret_decode(text))
+    scanner = TextScanner(processed_text)
+    result = []
+    
     while scanner.has_data:
-        char = scanner.peek()
-        if char == "%":  # special characters
-            if scanner.peek(1) == "%":
-                code = scanner.peek(2).lower()
-                letter = const.SPECIAL_CHAR_ENCODING.get(code)
-                if letter:
-                    scanner.consume(3)  # %%?
-                    result += letter
-                    continue
-                if code in "kou":
-                    # formatting codes (%%k, %%o, %%u) will be ignored in
-                    # TEXT, ATTRIB and ATTDEF:
-                    scanner.consume(3)
-                    continue
-        scanner.consume(1)
-        # slightly faster then "".join(chars)
-        result += char
-    return result
+        current_char = scanner.peek()
+        
+        if current_char != "%":
+            # Regular character - add it and continue
+            result.append(current_char)
+            scanner.consume(1)
+            continue
+            
+        # Handle potential special sequences starting with %
+        if not _try_process_percent_sequence(scanner, result):
+            # Not a special sequence - treat % as regular character
+            result.append(current_char)
+            scanner.consume(1)
+    
+    return "".join(result)
+
+
+def _try_process_percent_sequence(scanner: TextScanner, result: list[str]) -> bool:
+    """Try to process a percent sequence starting at scanner position.
+    
+    Returns True if a sequence was processed, False if % should be treated as regular character.
+    """
+    if scanner.peek(1) != "%":
+        return False  # Single % - not a special sequence
+        
+    # We have %% - check what follows
+    third_char = scanner.peek(2)
+    
+    # Handle %%X format (special characters and formatting codes)
+    if third_char.isalpha():
+        code = third_char.lower()
+        
+        # Check for special character encodings (%%C, %%D, %%P, etc.)
+        special_char = const.SPECIAL_CHAR_ENCODING.get(code)
+        if special_char:
+            result.append(special_char)
+            scanner.consume(3)  # Skip %%X
+            return True
+            
+        # Check for formatting codes that should be removed
+        if code in "kou":  # %%k (strikethrough), %%o (overline), %%u (underline)
+            scanner.consume(3)  # Skip %%X (don't add anything to result)
+            return True
+            
+        return False  # Unknown %%X code
+    
+    # Handle %%123 format (numeric character codes)
+    if third_char.isdigit() and _is_valid_numeric_sequence(scanner):
+        char_code_str = scanner.peek(1) + scanner.peek(2) + scanner.peek(3)
+        try:
+            char_code = int(char_code_str)
+            if 0 <= char_code <= 255:  # Valid ASCII range
+                result.append(chr(char_code))
+                scanner.consume(4)  # Skip %%123
+                return True
+        except (ValueError, OverflowError):
+            pass
+            
+    return False  # Not a recognized sequence
+
+
+def _is_valid_numeric_sequence(scanner: TextScanner) -> bool:
+    """Check if we have exactly 3 digits following %%."""
+    return (
+        scanner.peek(1).isdigit() and
+        scanner.peek(2).isdigit() and 
+        scanner.peek(3).isdigit()
+    )
 
 
 ONE_CHAR_COMMANDS = "PNLlOoKkX"
