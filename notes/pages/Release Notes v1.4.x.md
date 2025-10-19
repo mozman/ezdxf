@@ -37,3 +37,4 @@
 	- Changelog: ((68d646ab-d400-4b0f-8c2b-33a30ba1ecc5))
 	- Bugfix release
 	- Requires Python 3.10, Python 3.9 has reached End of Life in Oktober 2025
+	- Requires PyPy 3.11, latest `Pillow` release does not provide PyPy 3.10 wheels
