@@ -1,7 +1,8 @@
 ## Version 1.4.3 - 2025-10-19
 id:: 68d646ab-d400-4b0f-8c2b-33a30ba1ecc5
 	- NEW: added deployment of Python 3.14 packages
-	- CHANGE: requires Python 3.10, Python 3.9 has reached End of Life in Oktober 2025
+	- CHANGE: requires Python 3.10, Python 3.9 has reached End of Life in October 2025
+	- CHANGE: requires PyPy 3.11, `Pillow` (and maybe other packages) do not release binary wheels for PyPy 3.10 anymore
 	- CHANGE: removed the forced override of `Settings.output_coordinate_space` in the `SVGBacked`
 		- {{issue 1330}}
 	- NEW: Support for exporting elevations by the `geo` add-on
