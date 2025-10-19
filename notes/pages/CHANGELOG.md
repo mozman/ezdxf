@@ -1,4 +1,5 @@
-## Version 1.4.3 - dev
+## Version 1.4.3 - 2025-10-19
+id:: 68d646ab-d400-4b0f-8c2b-33a30ba1ecc5
 	- NEW: added deployment of Python 3.14 packages
 	- CHANGE: requires Python 3.10, Python 3.9 has reached End of Life in Oktober 2025
 	- CHANGE: removed the forced override of `Settings.output_coordinate_space` in the `SVGBacked`
@@ -16,6 +17,7 @@
 		- {{issue 1321}}
 		- contributed by #eXponenta
 - ## Version 1.4.2 - 2025-05-18
+  id:: 68d646ab-6a15-4016-9cc2-feaad2ceb304
 	- CHANGE: faster and smaller PDF export by the `PyMuPDF` backend
 		- Test with 19 CADKIT samples:
 			- the export of PDF is in average 38x faster
