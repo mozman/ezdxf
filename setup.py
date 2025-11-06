@@ -27,6 +27,7 @@ ext_modules = [
     ),
     Extension("ezdxf.acc.linetypes", ["src/ezdxf/acc/linetypes.pyx"], optional=True),
     Extension("ezdxf.acc.np_support", ["src/ezdxf/acc/np_support.pyx"], optional=True),
+    Extension("ezdxf.acc.tagger", ["src/ezdxf/acc/tagger.pyx"], optional=True),
 ]
 commands = {}
 try:

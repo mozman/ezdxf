@@ -20,6 +20,19 @@ from .types import (
 from .const import DXFStructureError
 from ezdxf.tools.codepage import toencoding
 
+# Try to import Cython-optimized versions for better performance
+USE_CYTHON = False
+try:
+    from ezdxf.acc.tagger import (
+        ascii_tags_loader as _cy_ascii_tags_loader,
+        tag_compiler as _cy_tag_compiler,
+        combined_ascii_loader as _cy_combined_ascii_loader,
+    )
+    USE_CYTHON = True
+except ImportError:
+    # Fall back to pure Python implementation
+    pass
+
 
 def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
     """Yields DXFTag() from trusted (internal) source - relies on
@@ -85,7 +98,7 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
 # I assume the runtime overhead for calling Python functions is the reason.
 
 
-def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterator[DXFTag]:
+def _ascii_tags_loader_python(stream: TextIO, skip_comments: bool = True) -> Iterator[DXFTag]:
     """Yields :class:``DXFTag`` objects from a text `stream` (untrusted
     external source) and does not optimize coordinates. Comment tags (group
     code == 999) will be skipped if argument `skip_comments` is `True`.
@@ -246,7 +259,7 @@ def binary_tags_loader(
 INVALID_POINT_CODES = {1020, 1021, 1022, 1023, 1030, 1031, 1032, 1033}
 
 
-def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
+def _tag_compiler_python(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
     """Compiles DXF tag values imported by ascii_tags_loader() into Python
     types.
 
@@ -382,3 +395,74 @@ def json_tag_loader(
             yield _DXFTag(code, value)
         if code == 0 and value == "EOF":
             return
+
+
+# Public API functions - use Cython versions when available
+def ascii_tags_loader(stream: TextIO, skip_comments: bool = True) -> Iterator[DXFTag]:
+    """Yields :class:``DXFTag`` objects from a text `stream` (untrusted
+    external source) and does not optimize coordinates. Comment tags (group
+    code == 999) will be skipped if argument `skip_comments` is `True`.
+    ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always an
+    unicode string without a trailing '\n'.
+    Works with file system streams and :class:`StringIO` streams, only required
+    feature is the :meth:`readline` method.
+
+    Args:
+        stream: text stream
+        skip_comments: skip comment tags (group code == 999) if `True`
+
+    Raises:
+        DXFStructureError: Found invalid group code.
+
+    """
+    if USE_CYTHON:
+        return _cy_ascii_tags_loader(stream, skip_comments)
+    return _ascii_tags_loader_python(stream, skip_comments)
+
+
+def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
+    """Compiles DXF tag values imported by ascii_tags_loader() into Python
+    types.
+
+    Raises DXFStructureError() for invalid float values and invalid coordinate
+    values.
+
+    Expects DXF coordinates written in x, y[, z] order, this is not required by
+    the DXF standard, but nearly all CAD applications write DXF coordinates that
+    (sane) way, there are older CAD applications (namely an older QCAD version)
+    that write LINE coordinates in x1, x2, y1, y2 order, which does not work
+    with tag_compiler(). For this cases use tag_reorder_layer() from the repair
+    module to reorder the LINE coordinates::
+
+        tag_compiler(tag_reorder_layer(ascii_tags_loader(stream)))
+
+    Args:
+        tags: DXF tag generator e.g. ascii_tags_loader()
+
+    Raises:
+        DXFStructureError: Found invalid DXF tag or unexpected coordinate order.
+
+    """
+    if USE_CYTHON:
+        return _cy_tag_compiler(tags)
+    return _tag_compiler_python(tags)
+
+
+def combined_ascii_loader(stream: TextIO, skip_comments: bool = True) -> Iterator[DXFTag]:
+    """Combined optimized loader that merges ascii_tags_loader and tag_compiler.
+
+    This function combines both parsing and compilation steps into a single pass
+    for maximum performance when the Cython extension is available. Otherwise,
+    it falls back to the two-step process.
+
+    Args:
+        stream: text stream
+        skip_comments: skip comment tags (group code == 999) if True
+
+    Raises:
+        DXFStructureError: Found invalid group code or tag value.
+    """
+    if USE_CYTHON:
+        return _cy_combined_ascii_loader(stream, skip_comments)
+    # Fall back to two-step process
+    return tag_compiler(ascii_tags_loader(stream, skip_comments))
