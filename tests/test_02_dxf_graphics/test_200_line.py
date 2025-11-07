@@ -6,7 +6,7 @@ import math
 from ezdxf.entities.line import Line
 from ezdxf.lldxf.const import DXF12, DXF2000, DXFValueError
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Matrix44
+from ezdxf.math import Matrix44, Z_AXIS, Y_AXIS
 
 TEST_CLASS = Line
 TEST_TYPE = "LINE"
@@ -149,7 +149,7 @@ def test_transform():
     assert line.dxf.start == (1, 2, 3)
     assert line.dxf.end == (2, 2, 3)
     # extrusion direction without translation - not an OCS extrusion vector!
-    assert line.dxf.extrusion == (0, 1, 0)
+    assert line.dxf.extrusion == Y_AXIS
 
     # Create new entity by transformation:
     new_line = line.copy()
@@ -157,7 +157,33 @@ def test_transform():
 
     assert new_line.dxf.start == (2, 4, 6)
     assert new_line.dxf.end == (3, 4, 6)
-    assert new_line.dxf.extrusion == (0, 1, 0)
+    assert Y_AXIS.isclose(new_line.dxf.extrusion)
+
+
+def test_transform_thickness_of_0():
+    line = Line.new(
+        dxfattribs={
+            "start": (0, 0, 0),
+            "end": (1, 0, 0),
+            "thickness": 0,
+        }
+    )
+    m = Matrix44.translate(1, 2, 3)
+    line.transform(m)
+    assert line.dxf.thickness == 0
+
+
+def test_transform_invalid_extrusion_vector():
+    line = Line.new(
+        dxfattribs={
+            "start": (0, 0, 0),
+            "end": (1, 0, 0),
+            "extrusion": (0, 0, 0),
+        }
+    )
+    m = Matrix44.translate(1, 2, 3)
+    line.transform(m)
+    assert Z_AXIS.isclose(line.dxf.extrusion)
 
 
 def test_translation():
