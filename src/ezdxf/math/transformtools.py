@@ -50,15 +50,24 @@ class InsertTransformationError(TransformError):
 def transform_thickness_and_extrusion_without_ocs(
     entity: DXFGraphic, m: Matrix44
 ) -> None:
+    extrusion = Z_AXIS
+    if entity.dxf.hasattr("extrusion"):
+        extrusion = Vec3(entity.dxf.extrusion)
+
+    if extrusion.is_null:  # invalid extrusion vector
+        extrusion = Z_AXIS
+
     if entity.dxf.hasattr("thickness"):
         thickness = entity.dxf.thickness
-        reflection = sign(thickness)
-        thickness = m.transform_direction(entity.dxf.extrusion * thickness)
-        entity.dxf.thickness = thickness.magnitude * reflection
-        entity.dxf.extrusion = thickness.normalize()
-    elif entity.dxf.hasattr("extrusion"):  # without thickness?
-        extrusion = m.transform_direction(entity.dxf.extrusion)
+        if thickness:
+            reflection = sign(thickness)
+            thickness = m.transform_direction(extrusion * thickness)
+            entity.dxf.thickness = thickness.magnitude * reflection
+    extrusion = m.transform_direction(extrusion)
+    try:
         entity.dxf.extrusion = extrusion.normalize()
+    except ZeroDivisionError:
+        entity.dxf.extrusion = Z_AXIS
 
 
 def transform_extrusion(extrusion: UVec, m: Matrix44) -> tuple[Vec3, bool]:
