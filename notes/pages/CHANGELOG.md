@@ -1,5 +1,8 @@
-## Version 1.4.3 - 2025-10-19
-id:: 68d646ab-d400-4b0f-8c2b-33a30ba1ecc5
+## Version 1.4.4 - dev
+	- BUGFIX: transforming a `LINE` entity with an explicit `thickess` of 0 raises `ZeroDivisionError`
+		- {{issue 1344}}
+- ## Version 1.4.3 - 2025-10-19
+  id:: 68d646ab-d400-4b0f-8c2b-33a30ba1ecc5
 	- NEW: added deployment of Python 3.14 packages
 	- CHANGE: requires Python 3.10, Python 3.9 has reached End of Life in October 2025
 	- CHANGE: requires PyPy 3.11, `Pillow` (and maybe other packages) do not release binary wheels for PyPy 3.10 anymore
