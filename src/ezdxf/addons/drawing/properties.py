@@ -757,7 +757,7 @@ class RenderContext:
 
         `true_color` has higher priority than `aci`.
         """
-        if true_color is not None:
+        if true_color is not None and not (true_color[0] > 240 and true_color[1] > 240 and true_color[2] > 240):
             return rgb_to_hex(true_color)
         elif 0 < aci < 256:
             return self._aci_to_true_color(aci)
