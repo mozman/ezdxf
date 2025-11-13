@@ -139,7 +139,6 @@ def extents(
     their control points, this may return a slightly larger bounding box.
 
     """
-    use_matplotlib = ezdxf.options.use_matplotlib
 
     # filter invisible entities
     filtered_entities = []
@@ -154,7 +153,6 @@ def extents(
 
     bounding_boxes = [box for box in multi_flat(filtered_entities, fast=fast)]
     if not bounding_boxes:
-        ezdxf.options.use_matplotlib = use_matplotlib
         return BoundingBox()
 
     # Calculate center points and size metrics
