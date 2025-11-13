@@ -192,7 +192,7 @@ class GeoProxy:
 
     """
 
-    def __init__(self, geo_mapping: GeoMapping, places: int = 6):
+    def __init__(self, geo_mapping: GeoMapping, places: int = 8):
         self._root = geo_mapping
         self.places = places
 
