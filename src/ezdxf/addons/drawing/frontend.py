@@ -840,32 +840,32 @@ class UniversalFrontend:
         entity = cast(Union[LWPolyline, Polyline], entity)
         is_lwpolyline = dxftype == "LWPOLYLINE"
 
-        if entity.has_width:  # draw banded 2D polyline
-            elevation = 0.0
-            ocs = entity.ocs()
-            transform = ocs.transform
-            if transform:
-                if is_lwpolyline:  # stored as float
-                    elevation = entity.dxf.elevation
-                else:  # stored as vector (0, 0, elevation)
-                    elevation = Vec3(entity.dxf.elevation).z
+        # if entity.has_width:  # draw banded 2D polyline
+        #     elevation = 0.0
+        #     ocs = entity.ocs()
+        #     transform = ocs.transform
+        #     if transform:
+        #         if is_lwpolyline:  # stored as float
+        #             elevation = entity.dxf.elevation
+        #         else:  # stored as vector (0, 0, elevation)
+        #             elevation = Vec3(entity.dxf.elevation).z
 
-            trace = TraceBuilder.from_polyline(
-                entity, segments=self.config.circle_approximation_count // 2
-            )
-            for polygon in trace.polygons():  # polygon is a sequence of Vec2()
-                if len(polygon) < 3:
-                    continue
-                if transform:
-                    points = ocs.points_to_wcs(
-                        Vec3(v.x, v.y, elevation) for v in polygon
-                    )
-                else:
-                    points = polygon  # type: ignore
-                # Set default SOLID filling for LWPOLYLINE
-                properties.filling = Filling()
-                self.pipeline.draw_filled_polygon(points, properties)
-            return
+        #     trace = TraceBuilder.from_polyline(
+        #         entity, segments=self.config.circle_approximation_count // 2
+        #     )
+        #     for polygon in trace.polygons():  # polygon is a sequence of Vec2()
+        #         if len(polygon) < 3:
+        #             continue
+        #         if transform:
+        #             points = ocs.points_to_wcs(
+        #                 Vec3(v.x, v.y, elevation) for v in polygon
+        #             )
+        #         else:
+        #             points = polygon  # type: ignore
+        #         # Set default SOLID filling for LWPOLYLINE
+        #         properties.filling = Filling()
+        #         self.pipeline.draw_filled_polygon(points, properties)
+        #     return
         polyline_path = make_path(entity)
         if len(polyline_path):
             self.pipeline.draw_path(polyline_path, properties)
@@ -1014,21 +1014,26 @@ def _draw_entities(
         entities = filter(filter_func, entities)
     viewports: list[Viewport] = []
     for entity in entities:
-        if isinstance(entity, Viewport):
-            viewports.append(entity)
-            continue
-        if not isinstance(entity, DXFGraphic):
-            if frontend.config.proxy_graphic_policy != ProxyGraphicPolicy.IGNORE:
-                entity = DXFGraphicProxy(entity)
-            else:
-                frontend.skip_entity(entity, "Cannot parse DXF entity")
+        try:
+            if isinstance(entity, Viewport):
+                viewports.append(entity)
                 continue
-        properties = ctx.resolve_all(entity)
-        frontend.exec_property_override(entity, properties)
-        if properties.is_visible:
-            frontend.draw_entity(entity, properties)
-        else:
-            frontend.skip_entity(entity, "invisible")
+            if not isinstance(entity, DXFGraphic):
+                if (
+                    frontend.config.proxy_graphic_policy
+                    != ProxyGraphicPolicy.IGNORE
+                ):
+                    entity = DXFGraphicProxy(entity)
+                else:
+                    frontend.skip_entity(entity, "Cannot parse DXF entity")
+                    continue
+            properties = ctx.resolve_all(entity)
+            frontend.override_properties(entity, properties)
+            if properties.is_visible:
+                frontend.draw_entity(entity, properties)
+        except:
+            print("Skipping entity")
+
     _draw_viewports(frontend, viewports)
 
 
