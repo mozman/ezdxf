@@ -245,7 +245,7 @@ class HeaderSection:
 
         def _write(name: str, value: Any) -> None:
             if value.value is None:
-                logger.info(f"did not write header var {name}, value is None.")
+                # logger.info(f"did not write header var {name}, value is None.")
                 return
             tagwriter.write_tag2(9, name)
             group_code = version_specific_group_code(name, dxfversion)
@@ -334,7 +334,7 @@ def header_vars_by_priority(
     for name, value in header_vars.items():
         vardef = HEADER_VAR_MAP.get(name, None)
         if vardef is None:
-            logger.info(f"Header variable {name} ignored, dxfversion={dxfversion}.")
+            # logger.info(f"Header variable {name} ignored, dxfversion={dxfversion}.")
             continue
         if vardef.mindxf <= dxfversion <= vardef.maxdxf:
             order.append((vardef.priority, (name, value)))
