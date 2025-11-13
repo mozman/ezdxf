@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING, Iterable, Optional
 
 import ezdxf
 from ezdxf import disassemble
-from ezdxf.math import BoundingBox
+from ezdxf.math import BoundingBox, Vec2
+import numpy as np
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity
@@ -128,7 +129,9 @@ def extents(
     entities: Iterable[DXFEntity],
     *,
     fast=False,
+    threshold_factor: float = 3.0,  # Number of standard deviations for filtering
     cache: Optional[Cache] = None,
+    doc: "ezdxf.doc" = None,
 ) -> BoundingBox:
     """Returns a single bounding box for all given `entities`.
 
@@ -136,8 +139,52 @@ def extents(
     their control points, this may return a slightly larger bounding box.
 
     """
+    use_matplotlib = ezdxf.options.use_matplotlib
+
+    # filter invisible entities
+    filtered_entities = []
+    filtered_entity_count = 0
+    for entity in entities:
+        layer_str = entity.dxf.layer
+        layer = doc.layers.get(layer_str)
+        if entity.dxf.invisible == 1 or not layer.is_on() or layer.is_frozen():
+            filtered_entity_count += 1
+        else:
+            filtered_entities.append(entity)
+
+    bounding_boxes = [box for box in multi_flat(filtered_entities, fast=fast)]
+    if not bounding_boxes:
+        ezdxf.options.use_matplotlib = use_matplotlib
+        return BoundingBox()
+
+    # Calculate center points and size metrics
+    center_points = [(box.center.x, box.center.y) for box in bounding_boxes]
+    size_metrics = [(box.extmax - box.extmin).x + (box.extmax - box.extmin).y for box in bounding_boxes]
+
+    # Calculate weighted average center
+    avg_center_x = np.average([pt[0] for pt in center_points], weights=size_metrics)
+    avg_center_y = np.average([pt[1] for pt in center_points], weights=size_metrics)
+    weighted_avg_center = Vec2(avg_center_x, avg_center_y)
+
+    # Compute distances from weighted center
+    distances = [
+        box.center.distance(weighted_avg_center) for box in bounding_boxes
+    ]
+    weighted_mean_distance = np.average(distances, weights=size_metrics)
+    weighted_std_dev_distance = np.sqrt(
+        np.average((np.array(distances) - weighted_mean_distance) ** 2, weights=size_metrics)
+    )
+    max_distance = weighted_mean_distance + threshold_factor * weighted_std_dev_distance
+
+    # Filter based on the distance threshold
+    filtered_boxes = [
+        box for box, distance in zip(bounding_boxes, distances)
+        if distance <= max_distance
+    ]
+
+    # Combine filtered bounding boxes into one
     _extends = BoundingBox()
-    for box in multi_flat(entities, fast=fast, cache=cache):
+    for box in filtered_boxes:
         _extends.extend(box)
     return _extends
 
