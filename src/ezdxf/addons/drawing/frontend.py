@@ -144,7 +144,6 @@ class UniversalFrontend:
         pipeline.set_config(self.config)
 
         if self.config.pdsize is None or self.config.pdsize <= 0:
-            self.log_message("relative point size is not supported")
             self.config = self.config.with_changes(pdsize=1)
 
         # Parents entities of current entity/sub-entity
