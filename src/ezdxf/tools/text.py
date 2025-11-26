@@ -1548,7 +1548,7 @@ class MTextParser:
             start, end = match.span()
             result = tail[start:end]
             self.scanner.consume(end)
-        
+
         if result.startswith("."):
             return "0" + result
 
