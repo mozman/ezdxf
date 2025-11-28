@@ -321,12 +321,12 @@ def simplified_text_chunks(
 
     cap_height = _get_cap_height(text)
 
-    extra_scale = 1
+    extra_scale = 1.0
     # get layout with from text when it simple text or from MTEXT style 
     if text_style and isinstance(text, MText):
         extra_scale = text_style.width
     elif isinstance(text, Text):
-        extra_scale = text.dxf.get("width", 1.0)
+        extra_scale = text.dxf.get("width", extra_scale)
 
     lines = _split_into_lines(
         text,
