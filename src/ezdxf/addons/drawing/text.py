@@ -184,11 +184,12 @@ def _get_text_width(text: AnyText) -> Optional[float]:
         raise TypeError(type(text))
 
 
-def _get_extra_transform(text: AnyText, line_width: float) -> Matrix44:
+def _get_extra_transform(text: AnyText, line_width: float, extra_scale: float ) -> Matrix44:
     extra_transform = Matrix44()
     if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
         # 'width' is the width *scale factor* so 1.0 by default:
-        scale_x = text.dxf.width
+        # not apply this, because font will resolve it inside 
+        scale_x = extra_scale
         scale_y = 1.0
 
         # Calculate text stretching for FIT and ALIGNED:
@@ -220,8 +221,9 @@ def _get_extra_transform(text: AnyText, line_width: float) -> Matrix44:
         # Not sure about the rationale behind this but it does match AutoCAD
         # behavior...
         scale_y = sign(text.dxf.extrusion.z)
-        if scale_y != 1.0:
-            extra_transform = Matrix44.scale(1.0, scale_y)
+        if scale_y != 1.0 or extra_scale != 1.0:
+            extra_transform = Matrix44.scale(extra_scale, scale_y)
+        
 
     return extra_transform
 
@@ -305,6 +307,7 @@ def simplified_text_chunks(
     render_engine: TextRenderer,
     *,
     font_face: fonts.FontFace,
+    text_style: Optional[any] = None
 ) -> Iterable[tuple[str, Matrix44, float]]:
     """Splits a complex text entity into simple chunks of text which can all be
     rendered the same way:
@@ -316,6 +319,14 @@ def simplified_text_chunks(
     box_width = _get_text_width(text)
 
     cap_height = _get_cap_height(text)
+
+    extra_scale = 1
+    # get layout with from text when it simple text or from MTEXT style 
+    if text_style and isinstance(text, MText):
+        extra_scale = text_style.width
+    elif isinstance(text, Text):
+        extra_scale = text.dxf.get("width", 1.0)
+
     lines = _split_into_lines(
         text,
         box_width,
@@ -337,7 +348,7 @@ def simplified_text_chunks(
     else:  # no text lines -> no output, value is not important
         first_line_width = 1.0
 
-    extra_transform = _get_extra_transform(text, first_line_width)
+    extra_transform = _get_extra_transform(text, first_line_width, extra_scale)
     insert = _get_wcs_insert(text)
 
     whole_text_transform = (

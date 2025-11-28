@@ -100,6 +100,24 @@ class Filling:
         self.pattern: HatchPatternType = []
 
 
+class TextStyleProperties:
+    def __init__(self, text_style: Optional[Textstyle] = None) -> None:
+        self.name = "Standart"
+        # width factor
+        self.width = 1
+        #oblique
+        self.oblique = 0
+        #height
+        self.height = 1
+        #resolved font face
+        self.font: Optional[fonts.FontFace] = None
+
+        if text_style:
+            self.name = text_style.dxf.name
+            self.width = text_style.dxf.width
+            self.oblique = text_style.dxf.oblique
+            self.height = text_style.dxf.height
+
 class Properties:
     """An implementation agnostic representation of DXF entity properties like
     color and linetype. These properties represent the actual values after
@@ -154,6 +172,8 @@ class Properties:
         self.filling: Optional[Filling] = None
 
         self.units = InsertUnits.Unitless
+
+        self.text_style: Optional[TextStyleProperties] = None
 
     def __str__(self):
         return (
@@ -333,6 +353,7 @@ class RenderContext:
         self.override_ctb = ctb
         self.layers: dict[str, LayerProperties] = dict()
         self.fonts: dict[str, fonts.FontFace] = dict()
+        self.text_styles: dict[str, TextStyleProperties] = dict()
         self.units = InsertUnits.Unitless  # modelspace units
         self.linetype_scale: float = 1.0  # overall modelspace linetype scaling
         self.measurement = Measurement.Imperial
@@ -541,6 +562,11 @@ class RenderContext:
 
         if font_face is None:  # fall back to default font
             font_face = fonts.FontFace()
+
+        ts = TextStyleProperties(text_style)
+        ts.font = font_face
+
+        self.text_styles[name] = ts
         self.fonts[name] = font_face
 
     def _true_layer_color(self, layer: Layer) -> Color:
@@ -614,6 +640,7 @@ class RenderContext:
         p.is_visible = self.resolve_visible(entity, resolved_layer=resolved_layer)
         if entity.is_supported_dxf_attrib("style"):
             p.font = self.resolve_font(entity)
+            p.text_style = self.resolve_style(entity)
         if isinstance(entity, DXFPolygon):
             p.filling = self.resolve_filling(entity)
         return p
@@ -865,6 +892,14 @@ class RenderContext:
         # todo: extended font data
         style = entity.dxf.get("style", "Standard")
         return self.fonts.get(table_key(style))
+    
+    def resolve_style(self, entity: DXFGraphic) -> Optional[dict]:
+        """Resolve the text style of `entity` to a font name.
+        Returns ``None`` for the default font.
+        """
+        # todo: extended font data
+        style = entity.dxf.get("style", "Standard")
+        return self.text_styles.get(table_key(style))
 
     def resolve_filling(self, entity: DXFGraphic) -> Optional[Filling]:
         """Resolve filling properties (SOLID, GRADIENT, PATTERN) of `entity`."""

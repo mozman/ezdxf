@@ -202,6 +202,16 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
 
     # Implementation of required AbstractMTextRenderer methods:
 
+    def make_mtext_context(self, mtext: MText) -> MTextContext:
+        context = super().make_mtext_context(mtext)
+
+        # bind start style, next will be resolved from inline commands
+        if self._properties.text_style:
+            context.width_factor = self._properties.text_style.width
+            context.oblique = self._properties.text_style.oblique
+
+        return context
+    
     def word(self, text: str, ctx: MTextContext) -> tl.ContentCell:
         return tl.Text(
             width=self.get_font(ctx).text_width(text),

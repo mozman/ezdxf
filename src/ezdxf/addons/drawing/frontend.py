@@ -455,8 +455,9 @@ class UniversalFrontend:
 
     def draw_simple_mtext(self, mtext: MText, properties: Properties) -> None:
         """Draw the content of a MTEXT entity without inline formatting codes."""
+        ts = properties.text_style
         for line, transform, cap_height in simplified_text_chunks(
-            mtext, self.text_engine, font_face=self.get_font_face(properties)
+            mtext, self.text_engine, font_face=self.get_font_face(properties), text_style=ts
         ):
             self.pipeline.draw_text(
                 line, transform, properties, cap_height, mtext.dxftype()

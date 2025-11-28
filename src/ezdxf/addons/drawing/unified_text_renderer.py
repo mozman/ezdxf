@@ -66,7 +66,7 @@ class UnifiedTextRenderer(TextRenderer):
         self,
         text: str,
         font_face: fonts.FontFace,
-        cap_height: float = 1.0,
+        cap_height: float = 1.0
     ) -> float:
         abstract_font = self.get_font(font_face)
         return abstract_font.text_width_ex(text, cap_height)

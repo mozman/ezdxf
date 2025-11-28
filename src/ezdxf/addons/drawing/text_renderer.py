@@ -31,13 +31,17 @@ class TextRenderer(abc.ABC):
 
     @abc.abstractmethod
     def get_text_path(
-        self, text: str, font_face: fonts.FontFace, cap_height: float = 1.0
+        self, text: str, 
+        font_face: fonts.FontFace, 
+        cap_height: float = 1.0,
     ) -> NumpyPath2d:
         ...
 
     @abc.abstractmethod
     def get_text_glyph_paths(
-        self, text: str, font_face: fonts.FontFace, cap_height: float = 1.0
+        self, text: str, 
+        font_face: fonts.FontFace, 
+        cap_height: float = 1.0,
     ) -> list[NumpyPath2d]:
         ...
 
