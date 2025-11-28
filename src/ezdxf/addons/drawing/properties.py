@@ -104,11 +104,11 @@ class TextStyleProperties:
     def __init__(self, text_style: Optional[Textstyle] = None) -> None:
         self.name = "Standart"
         # width factor
-        self.width = 1
+        self.width = 1.0
         #oblique
-        self.oblique = 0
+        self.oblique = 0.0
         #height
-        self.height = 1
+        self.height = 1.0
         #resolved font face
         self.font: Optional[fonts.FontFace] = None
 
@@ -893,11 +893,10 @@ class RenderContext:
         style = entity.dxf.get("style", "Standard")
         return self.fonts.get(table_key(style))
     
-    def resolve_style(self, entity: DXFGraphic) -> Optional[dict]:
-        """Resolve the text style of `entity` to a font name.
-        Returns ``None`` for the default font.
+    def resolve_style(self, entity: DXFGraphic) -> Optional[TextStyleProperties]:
+        """Resolve the text style of `entity` to a TextStyleProperties.
+        Returns ``None`` if not present.
         """
-        # todo: extended font data
         style = entity.dxf.get("style", "Standard")
         return self.text_styles.get(table_key(style))
 

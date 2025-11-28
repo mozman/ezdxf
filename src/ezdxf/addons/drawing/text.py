@@ -18,6 +18,7 @@ from ezdxf.fonts import fonts
 from ezdxf.fonts.font_measurements import FontMeasurements
 from ezdxf.tools.text import plain_text, text_wrap
 from .text_renderer import TextRenderer
+from .properties import TextStyleProperties
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 
@@ -307,7 +308,7 @@ def simplified_text_chunks(
     render_engine: TextRenderer,
     *,
     font_face: fonts.FontFace,
-    text_style: Optional[any] = None
+    text_style: Optional[TextStyleProperties] = None
 ) -> Iterable[tuple[str, Matrix44, float]]:
     """Splits a complex text entity into simple chunks of text which can all be
     rendered the same way:
