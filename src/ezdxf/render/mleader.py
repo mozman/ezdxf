@@ -642,22 +642,35 @@ class RenderEngine:
         if len(vertices) < 2:  # at least 2 vertices required
             return
 
-        arrow_direction: Vec3 = get_arrow_direction(vertices)
+        delta: Vec3 = vertices[1] - vertices[0]
+        dist: float = delta.magnitude
+        arrow_direction: Vec3 = X_AXIS
+
+        # can be a lead with zero length
+        if dist > 0.0:
+            arrow_direction = delta.normalize()
+
         raw_color: int = line.color
-        index: int = line.index
-        block_name: str = self.create_arrow_block(self.arrow_block_name(index))
         arrow_size: float = self.context.arrow_head_size
-        self.add_arrow(
-            name=block_name,
-            location=vertices[0],
-            direction=arrow_direction,
-            scale=arrow_size,
-            color=raw_color,
-        )
-        arrow_offset: Vec3 = arrow_direction * arrow_length(
-            block_name, arrow_size
-        )
-        vertices[0] += arrow_offset
+
+        # nanocad/autocad no render mlead arrow when
+        # last dist less that 2 size of arrow
+        # also must check on zero size and dist
+        if dist * arrow_size > .0 and dist > arrow_size * 2.0:
+            index: int = line.index
+            block_name: str = self.create_arrow_block(self.arrow_block_name(index))
+            self.add_arrow(
+                name=block_name,
+                location=vertices[0],
+                direction=arrow_direction,
+                scale=arrow_size,
+                color=raw_color,
+            )
+            arrow_offset: Vec3 = arrow_direction * arrow_length(
+                block_name, arrow_size
+            )
+            vertices[0] += arrow_offset
+
         if leader_type == 1:  # add straight lines
             for s, e in zip(vertices, vertices[1:]):
                 self.add_dxf_line(s, e, raw_color)
