@@ -1219,8 +1219,8 @@ class MTextToken:
         self.data = data
 
 
-RE_FLOAT = re.compile(r"[+-]?\d*(:?\.\d*)?(:?[eE][+-]?\d+)?")
-RE_FLOAT_X = re.compile(r"[+-]?\d*(:?\.\d*)?(:?[eE][+-]?\d+)?([x]?)")
+RE_FLOAT = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?")
+RE_FLOAT_X = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?([x]?)")
 
 CHAR_TO_ALIGN = {
     "l": MTextParagraphAlignment.LEFT,
