@@ -394,6 +394,9 @@ class TestMTextContextParsing:
             r"\H0.3e1;",
             r"\H30e-1",
             r"\H30e-1;",
+
+            r"\H.3e1",  # this does work in AutoCAD
+            r"\H.3e1;",  # this does work in AutoCAD
         ],
     )
     def test_absolut_height_command(self, expr):
@@ -413,6 +416,9 @@ class TestMTextContextParsing:
             r"\H0.3e1x;",
             r"\H30e-1x",
             r"\H30e-1x;",
+
+            r"\H.3e1x",  # this does work in AutoCAD
+            r"\H.3e1x;",  # this does work in AutoCAD
         ],
     )
     def test_relative_height_command(self, expr):
@@ -428,10 +434,6 @@ class TestMTextContextParsing:
             r"\Hx",
             r"\Hx;",
             r"\H1-2;",
-            r"\H.3",  # this does work in AutoCAD
-            r"\H.3;",  # this does work in AutoCAD
-            r"\H.3x",  # this does work in AutoCAD
-            r"\H.3x;",  # this does work in AutoCAD
             r"\H.",
             r"\H.;",
         ],
