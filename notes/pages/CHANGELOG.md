@@ -1,4 +1,7 @@
 ## Version 1.4.4 - dev
+	- CHANGE: `MTEXT` float parsing
+		- {{pr 1350}}
+		- contributed by #eXponenta
 	- BUGFIX: transforming a `LINE` entity with an explicit `thickess` of 0 raises `ZeroDivisionError`
 		- {{issue 1344}}
 - ## Version 1.4.3 - 2025-10-19
