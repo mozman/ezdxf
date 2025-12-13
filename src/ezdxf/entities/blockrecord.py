@@ -20,12 +20,13 @@ from ezdxf.lldxf.const import (
     DXFInternalEzdxfError,
 )
 from ezdxf.entities.dxfentity import base_class, SubclassProcessor, DXFEntity
+from ezdxf.entities.block import Block, EndBlk
 from ezdxf.entities.layer import acdb_symbol_table_record
 from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.audit import Auditor
-    from ezdxf.entities import DXFGraphic, Block, EndBlk
+    from ezdxf.entities import DXFGraphic
     from ezdxf.entities import DXFNamespace
     from ezdxf.entitydb import EntitySpace
     from ezdxf.layouts import BlockLayout
@@ -219,8 +220,12 @@ class BlockRecord(DXFEntity):
         if not self.is_alive:
             return
 
-        self.block.destroy()
-        self.endblk.destroy()
+        # copied BlockRecords by the xref module are not fully initialized,
+        # see also issue #1359
+        if isinstance(self.block, Block) and self.block.is_alive:
+            self.block.destroy()
+        if isinstance(self.endblk, EndBlk) and self.endblk.is_alive:
+            self.endblk.destroy()
         for entity in self.entity_space:
             entity.destroy()
 

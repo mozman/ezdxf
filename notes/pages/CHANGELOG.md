@@ -4,6 +4,8 @@
 		- contributed by #eXponenta
 	- BUGFIX: transforming a `LINE` entity with an explicit `thickess` of 0 raises `ZeroDivisionError`
 		- {{issue 1344}}
+	- BUGFIX: `BlockRecord.destroy()` accesses uninitialized data in context of the `xref` module using `ConflictPolicy.KEEP`
+		- {{issue 1359}}
 - ## Version 1.4.3 - 2025-10-19
   id:: 68d646ab-d400-4b0f-8c2b-33a30ba1ecc5
 	- NEW: added deployment of Python 3.14 packages
