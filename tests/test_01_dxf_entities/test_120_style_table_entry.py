@@ -2,7 +2,9 @@
 # License: MIT License
 import pytest
 
-from ezdxf.entities.textstyle import Textstyle
+import ezdxf
+from ezdxf.entities.textstyle import Textstyle, get_textstyle
+from ezdxf.entities import DXFEntity
 
 
 @pytest.fixture
@@ -146,3 +148,30 @@ def test_malformed_layer():
     assert style.dxf.handle == "FEFE"
     assert style.dxf.width == 1.5
     assert style.dxf.oblique == 30.0
+
+
+@pytest.fixture(scope="module")
+def msp():
+    doc = ezdxf.new()
+    style = doc.styles.add("MyStyle", font="arial.ttf")
+    style.dxf.width = 2
+    style.dxf.oblique = 75
+    return doc.modelspace()
+
+
+class TestGetTextStyle:
+    def test_get_text_style_from_non_text_entity(self):
+        style = get_textstyle(DXFEntity())
+        assert style.dxf.name == "Standard"
+
+    def test_get_undefined_text_style_from_text_entity(self, msp):
+        text = msp.add_text("TEST", dxfattribs={"style": "Unknown"})
+        style = get_textstyle(text)
+        assert style.dxf.name == "Standard"
+
+    def test_get_defined_text_style_from_text_entity(self, msp):
+        text = msp.add_text("TEST", dxfattribs={"style": "MyStyle"})
+        style = get_textstyle(text)
+        assert style.dxf.name == "MyStyle"
+        assert style.dxf.width == 2
+        assert style.dxf.oblique == 75

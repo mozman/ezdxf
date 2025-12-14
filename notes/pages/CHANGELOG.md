@@ -1,4 +1,5 @@
 ## Version 1.4.4 - dev
+	- NEW: `ezdxf.entities.textstyle.get_textstyle()` function
 	- CHANGE: `MTEXT` float parsing
 		- {{pr 1350}}
 		- contributed by #eXponenta

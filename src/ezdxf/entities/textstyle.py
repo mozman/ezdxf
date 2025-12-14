@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import AbstractTagWriter
     from ezdxf.fonts import fonts
 
-__all__ = ["Textstyle"]
+__all__ = ["Textstyle", "get_textstyle"]
 logger = logging.getLogger("ezdxf")
 
 acdb_style = DefSubclass(
@@ -246,3 +246,19 @@ class Textstyle(DXFEntity):
         if width_factor is None or width_factor == 0.0:
             width_factor = self.dxf.width
         return fonts.make_font(ttf, cap_height, width_factor)  # type: ignore
+
+
+def get_textstyle(entity: DXFEntity) -> Textstyle:
+    """Returns the :class:`Textstyle` for the given DXF entity."""
+    if entity.doc is None:
+        return Textstyle()
+    try:
+        name = entity.dxf.style
+    except const.DXFAttributeError:
+        name = "Standard"
+
+    try:
+        style = entity.doc.styles.get(name)
+    except const.DXFTableEntryError:
+        return Textstyle()
+    return style
