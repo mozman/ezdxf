@@ -642,21 +642,19 @@ class RenderEngine:
         if len(vertices) < 2:  # at least 2 vertices required
             return
 
-        delta: Vec3 = vertices[1] - vertices[0]
-        dist: float = delta.magnitude
+        last_line_segment: Vec3 = vertices[1] - vertices[0]
+        length: float = last_line_segment.magnitude
         arrow_direction: Vec3 = X_AXIS
 
-        # can be a lead with zero length
-        if dist > 0.0:
-            arrow_direction = delta.normalize()
+        if length > 0.0:
+            arrow_direction = last_line_segment.normalize()
 
         raw_color: int = line.color
         arrow_size: float = self.context.arrow_head_size
 
-        # nanocad/autocad no render mlead arrow when
-        # last dist less that 2 size of arrow
-        # also must check on zero size and dist
-        if dist * arrow_size > .0 and dist > arrow_size * 2.0:
+        # AutoCAD does not render the arrow-head, if the last distance is less
+        # than 2 times the size of the arrow-head.
+        if length * arrow_size > 0 and length > arrow_size * 2.0:
             index: int = line.index
             block_name: str = self.create_arrow_block(self.arrow_block_name(index))
             self.add_arrow(
