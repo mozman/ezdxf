@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2024, Matthew Broadway
+# Copyright (c) 2020-2025, Matthew Broadway
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -67,6 +67,7 @@ from ezdxf.tools import clipping_portal
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
+from ezdxf.entities.textstyle import get_textstyle
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec2, Vec3, OCS, NULLVEC, Matrix44
 from ezdxf.path import (
@@ -445,7 +446,7 @@ class UniversalFrontend:
         if is_spatial_text(Vec3(mtext.dxf.extrusion)):
             self.skip_entity(mtext, "3D MTEXT not supported")
             return
-        if mtext.has_columns or has_inline_formatting_codes(mtext.text):
+        if is_complex_mtext(mtext):
             try:
                 self.draw_complex_mtext(mtext, properties)
             except text_layout.LayoutError as e:
@@ -1099,3 +1100,14 @@ def _find_image_path(document_dir: pathlib.Path, filename: str) -> pathlib.Path:
     # try document dir:
     filepath = document_dir / pathlib.Path(filename).name  # stem + suffix
     return filepath
+
+
+def is_complex_mtext(mtext: MText) -> bool:
+    if mtext.has_columns:
+        return True
+    if has_inline_formatting_codes(mtext.text):
+        return True
+    if mtext.doc is None:  # cannot determine textstyle
+        return False
+    textstyle = get_textstyle(mtext)
+    return textstyle.dxf.width != 1 or textstyle.dxf.oblique != 0
