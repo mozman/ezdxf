@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, Manfred Moitzi
+# Copyright (c) 2021-2025, Manfred Moitzi
 # License: MIT License
 
 # This is the abstract link between the text layout engine implemented in
@@ -10,6 +10,7 @@ import abc
 from ezdxf.lldxf import const
 from ezdxf import colors
 from ezdxf.entities.mtext import MText, MTextColumns
+from ezdxf.entities.textstyle import get_textstyle
 from ezdxf.enums import (
     MTextParagraphAlignment,
 )
@@ -197,6 +198,9 @@ class AbstractMTextRenderer(abc.ABC):
         ctx.font_face = self.get_font_face(mtext)
         ctx.cap_height = mtext.dxf.char_height
         ctx.aci = mtext.dxf.color
+        textstyle = get_textstyle(mtext)
+        ctx.width_factor = textstyle.dxf.width
+        ctx.oblique = textstyle.dxf.oblique
         rgb = mtext.rgb
         if rgb is not None:
             ctx.rgb = colors.RGB(*rgb)
