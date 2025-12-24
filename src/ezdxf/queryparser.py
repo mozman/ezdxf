@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2021, Manfred Moitzi
+# Copyright (c) 2013-2026, Manfred Moitzi
 # License: MIT-License
 # mypy: ignore_errors=True
 """
@@ -47,31 +47,31 @@ LBRK = Suppress("[")
 RBRK = Suppress("]")
 
 number = Regex(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
-number.addParseAction(lambda t: float(t[0]))  # convert to float
-string_ = quotedString.addParseAction(lambda t: t[0][1:-1])  # remove quotes
+number.add_parse_action(lambda t: float(t[0]))  # convert to float
+string_ = quotedString.add_parse_action(lambda t: t[0][1:-1])  # remove quotes
 
 EntityName = Word(alphanums + "_")
 # ExcludeEntityName = Word(alphanums + '_!')
 ExcludeEntityName = Regex(r"[!][\w]+")
 AttribName = Word(alphanums + "_")
-Relation = oneOf(["==", "!=", "<", "<=", ">", ">=", "?", "!?"])
+Relation = one_of(["==", "!=", "<", "<=", ">", ">=", "?", "!?"])
 
 AttribValue = string_ | number
 AttribQuery = Group(AttribName + Relation + AttribValue)
 EntityNames = Group(
     (Literal("*") + ZeroOrMore(ExcludeEntityName)) | OneOrMore(EntityName)
-).setResultsName("EntityQuery")
+).set_results_name("EntityQuery")
 
-InfixBoolQuery = infixNotation(
+InfixBoolQuery = infix_notation(
     AttribQuery,
-    (
+    [
         ("!", 1, opAssoc.RIGHT),
         ("&", 2, opAssoc.LEFT),
         ("|", 2, opAssoc.LEFT),
-    ),
-).setResultsName("AttribQuery")
+    ],
+).set_results_name("AttribQuery")
 
-AttribQueryOptions = Literal("i").setResultsName("AttribQueryOptions")
+AttribQueryOptions = Literal("i").set_results_name("AttribQueryOptions")
 
 EntityQueryParser = EntityNames + Optional(
     LBRK + InfixBoolQuery + RBRK + Optional(AttribQueryOptions)

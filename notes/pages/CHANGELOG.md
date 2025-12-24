@@ -1,5 +1,8 @@
 ## Version 1.4.4 - dev
 	- NEW: `ezdxf.entities.textstyle.get_textstyle()` function
+	- CHANGE: replace legacy `pyparsing` names and arguments by PEP8-compliant names
+		- requires `pyparsing >= 3.0.0` released in 2022!
+		- {{issue 1363}}
 	- CHANGE: `MTEXT` float parsing
 		- {{pr 1350}}
 		- contributed by #eXponenta

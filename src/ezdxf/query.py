@@ -1,5 +1,4 @@
-# Purpose: Query language and manipulation object for DXF entities
-# Copyright (c) 2013-2022, Manfred Moitzi
+# Copyright (c) 2013-2026, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import (
@@ -441,7 +440,7 @@ class EntityQuery(abc.Sequence):
 
 
 def entity_matcher(query: str) -> Callable[[DXFEntity], bool]:
-    query_args = EntityQueryParser.parseString(query, parseAll=True)
+    query_args = EntityQueryParser.parse_string(query, parse_all=True)
     entity_matcher_ = build_entity_name_matcher(query_args.EntityQuery)
     attrib_matcher = build_entity_attributes_matcher(
         query_args.AttribQuery, query_args.AttribQueryOptions
