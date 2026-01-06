@@ -151,7 +151,47 @@ def extents(
         else:
             filtered_entities.append(entity)
 
-    bounding_boxes = [box for box in multi_flat(filtered_entities, fast=fast)]
+    bounding_boxes = []
+    text_entries = []
+    geometry_sizes = []
+
+    for entity in filtered_entities:
+        # Calculate bbox individually to identify entity type
+        boxes = list(multi_flat([entity], fast=fast, cache=cache))
+        if not boxes:
+            continue
+        box = boxes[0]
+        
+        dxftype = entity.dxftype()
+        size = (box.extmax - box.extmin).x + (box.extmax - box.extmin).y
+        
+        if dxftype in ('TEXT', 'MTEXT'):
+            text_entries.append((box, size))
+        else:
+            bounding_boxes.append(box)
+            geometry_sizes.append(size)
+
+    # Filter text boxes that are enormously large
+    if geometry_sizes:
+        median_size = np.median(geometry_sizes)
+        # Threshold: Discard texts that are > 1000x larger than median geometry
+        limit = median_size * 1000
+        for box, size in text_entries:
+            if size <= limit:
+                bounding_boxes.append(box)
+    else:
+        # Fallback if only text exists
+        if text_entries:
+            sizes = [t[1] for t in text_entries]
+            median_size = np.median(sizes)
+            if median_size > 0:
+                limit = median_size * 1000
+                for box, size in text_entries:
+                    if size <= limit:
+                        bounding_boxes.append(box)
+            else:
+                 bounding_boxes.extend(t[0] for t in text_entries)
+
     if not bounding_boxes:
         return BoundingBox()
 
