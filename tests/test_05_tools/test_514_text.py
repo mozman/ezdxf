@@ -22,6 +22,7 @@ from ezdxf.tools.text import (
     estimate_mtext_content_extents,
     set_estimation_safety_factor,
     reset_estimation_safety_factor,
+    valid_text_height,
 )
 from ezdxf.fonts.fonts import MonospaceFont
 from ezdxf.enums import TextEntityAlignment
@@ -502,6 +503,14 @@ class TestEstimateMTextContentExtents:
         assert height == 2.0
         assert width == pytest.approx(6.0 * 1.01)
         reset_estimation_safety_factor()
+
+
+def test_valid_text_height():
+    assert valid_text_height(0.5) == 0.5
+
+
+def test_valid_text_height_zero():
+    assert valid_text_height(0) > 0
 
 
 if __name__ == "__main__":
