@@ -362,5 +362,21 @@ def test_resolve_transparency_from_layer():
     assert prop.color == "#0000ff7f"
 
 
+def test_bylayer_linetype_properties():
+    doc = ezdxf.new()
+    doc.linetypes.add(
+        name="CUSTOM_DASH",
+        pattern=[1, 12.0, -3.0],
+    )
+    doc.layers.add("CustomLayer", linetype="CUSTOM_DASH")
+    msp = doc.modelspace()
+    line = msp.add_line((0, 1), (1, 0), dxfattribs={"layer": "CustomLayer"})
+    ctx = RenderContext(doc)
+    properties = ctx.resolve_all(line)
+
+    assert properties.linetype_name == "CUSTOM_DASH"
+    assert properties.linetype_pattern == (12.0, 3.0)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
