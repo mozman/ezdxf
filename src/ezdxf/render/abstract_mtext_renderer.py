@@ -22,6 +22,7 @@ from ezdxf.tools.text import (
     TokenType,
     ParagraphProperties,
     estimate_mtext_extents,
+    valid_text_height,
 )
 
 __all__ = ["AbstractMTextRenderer"]
@@ -56,6 +57,7 @@ STACKING = {
 
 def make_default_tab_stops(cap_height: float, width: float) -> list[tl.TabStop]:
     tab_stops = []
+    cap_height = valid_text_height(cap_height)
     step = 4.0 * cap_height
     pos = step
     while pos < width:
@@ -79,6 +81,7 @@ def make_tab_stops(
     tab_stops: Sequence,
     default_stops: Sequence[tl.TabStop],
 ) -> list[tl.TabStop]:
+    cap_height = valid_text_height(cap_height)
     _tab_stops = []
     for stop in tab_stops:
         if isinstance(stop, str):
@@ -119,6 +122,7 @@ def new_paragraph(
     width: float = 0,
     default_stops: Optional[Sequence[tl.TabStop]] = None,
 ):
+    cap_height = valid_text_height(cap_height)
     if cells:
         p = ctx.paragraph
         align = ALIGN.get(p.align, tl.ParagraphAlignment.LEFT)
@@ -173,20 +177,18 @@ class AbstractMTextRenderer(abc.ABC):
         self._font_cache: dict[tuple[str, float, float], fonts.AbstractFont] = {}
 
     @abc.abstractmethod
-    def word(self, test: str, ctx: MTextContext) -> tl.ContentCell:
-        ...
+    def word(self, test: str, ctx: MTextContext) -> tl.ContentCell: ...
 
     @abc.abstractmethod
-    def fraction(self, data: tuple[str, str, str], ctx: MTextContext) -> tl.ContentCell:
-        ...
+    def fraction(
+        self, data: tuple[str, str, str], ctx: MTextContext
+    ) -> tl.ContentCell: ...
 
     @abc.abstractmethod
-    def get_font_face(self, mtext: MText) -> fonts.FontFace:
-        ...
+    def get_font_face(self, mtext: MText) -> fonts.FontFace: ...
 
     @abc.abstractmethod
-    def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer:
-        ...
+    def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer: ...
 
     def make_mtext_context(self, mtext: MText) -> MTextContext:
         ctx = MTextContext()
@@ -196,7 +198,7 @@ class AbstractMTextRenderer(abc.ABC):
             )
         )
         ctx.font_face = self.get_font_face(mtext)
-        ctx.cap_height = mtext.dxf.char_height
+        ctx.cap_height = valid_text_height(mtext.dxf.char_height)
         ctx.aci = mtext.dxf.color
         textstyle = get_textstyle(mtext)
         ctx.width_factor = textstyle.dxf.width
@@ -234,7 +236,7 @@ class AbstractMTextRenderer(abc.ABC):
         return tl.NonBreakingSpace(width=self.space_width(ctx))
 
     def layout_engine(self, mtext: MText) -> tl.Layout:
-        initial_cap_height = mtext.dxf.char_height
+        initial_cap_height = valid_text_height(mtext.dxf.char_height)
         line_spacing = mtext.dxf.line_spacing_factor
 
         def append_paragraph():
