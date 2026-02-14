@@ -16,7 +16,7 @@ from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
 from ezdxf.fonts import fonts
 from ezdxf.fonts.font_measurements import FontMeasurements
-from ezdxf.tools.text import plain_text, text_wrap
+from ezdxf.tools.text import plain_text, text_wrap, valid_text_height
 from .text_renderer import TextRenderer
 
 """
@@ -141,9 +141,9 @@ def _get_alignment(text: AnyText) -> Alignment:
 
 def _get_cap_height(text: AnyText) -> float:
     if isinstance(text, (Text, Attrib, AttDef)):
-        return text.dxf.height
+        return valid_text_height(text.dxf.height)
     elif isinstance(text, MText):
-        return text.dxf.char_height
+        return valid_text_height(text.dxf.char_height)
     else:
         raise TypeError(type(text))
 
