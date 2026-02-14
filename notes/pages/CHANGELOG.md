@@ -19,6 +19,8 @@
 	- BUGFIX: Layer linetype patterns are empty when using custom layout properties
 		- {{issue 1368}}
 		- contributed by #enriqueav
+	- BUGFIX: handle loaded `TEXT` and `MTEXT` entities with a height of 0
+		- {{issue 1372}}
 - ## Version 1.4.3 - 2025-10-19
   id:: 68d646ab-d400-4b0f-8c2b-33a30ba1ecc5
 	- NEW: added deployment of Python 3.14 packages
