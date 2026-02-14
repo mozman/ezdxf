@@ -16,6 +16,9 @@
 	- BUGFIX: `MTEXT` rendering takes textstyle width and oblique attributes into account
 		- {{issue 1351}}
 		- contributed by #eXponenta
+	- BUGFIX: Layer linetype patterns are empty when using custom layout properties
+		- {{issue 1368}}
+		- contributed by #enriqueav
 - ## Version 1.4.3 - 2025-10-19
   id:: 68d646ab-d400-4b0f-8c2b-33a30ba1ecc5
 	- NEW: added deployment of Python 3.14 packages
