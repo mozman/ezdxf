@@ -4,6 +4,7 @@
 import pytest
 
 import ezdxf
+from ezdxf.entities import MText, Text
 from ezdxf.layouts import VirtualLayout
 from ezdxf.tools.text_size import (
     text_size,
@@ -36,6 +37,19 @@ def test_text_size_of_an_empty_string(msp):
     assert size.width == 0.0
     assert size.cap_height == 3.0
     assert size.total_height > 3.3  # assuming the descender factor is > 0.1
+
+
+def test_text_size_for_height_0():
+    text = Text()
+    # hack
+    text.dxf.__dict__["height"] = 0
+    text.dxf.width = 1
+    text.dxf.text = "Test"
+    size = text_size(text)
+    # a text height of 0 should default to 2.5
+    assert size.width == 10.0
+    assert size.cap_height == 2.5
+    assert size.total_height >= 2.5
 
 
 def test_text_width_of_a_single_char(msp):
@@ -102,6 +116,18 @@ def test_mtext_size_of_an_empty_string(msp):
     assert size.gutter_width == 0.0
     assert size.column_count == 1
     assert size.column_heights == (0.0,)
+
+
+def test_mtext_size_for_height_0():
+    text = MText()
+    # hack
+    text.dxf.__dict__["char_height"] = 0
+    text.dxf.text = "Test"
+    text.dxf.width = 20  # reference column width
+    size = mtext_size(text)
+    # a char height of 0 should default to 2.5
+    assert size.total_height >= 2.5
+    assert size.total_width >= 10.0
 
 
 def test_mtext_size_of_a_single_char(msp):

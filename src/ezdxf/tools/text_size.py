@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, Manfred Moitzi
+# Copyright (c) 2021-2026, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Optional
@@ -10,7 +10,7 @@ from ezdxf.fonts import fonts
 from ezdxf.tools import text_layout as tl
 from ezdxf.tools.text import MTextContext
 from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
-from ezdxf.tools.text import estimate_mtext_extents
+from ezdxf.tools.text import estimate_mtext_extents, valid_text_height
 
 __all__ = [
     "text_size",
@@ -64,7 +64,7 @@ def text_size(text: Text) -> TextSize:
     """
     width_factor: float = text.dxf.get_default("width")
     text_width: float = 0.0
-    cap_height: float = text.dxf.get_default("height")
+    cap_height: float = valid_text_height(text.dxf.get_default("height"))
     font: fonts.AbstractFont = fonts.MonospaceFont(cap_height, width_factor)
     if text.doc is not None:
         font_name = get_font_name(text)
