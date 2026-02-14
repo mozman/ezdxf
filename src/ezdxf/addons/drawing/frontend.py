@@ -80,7 +80,7 @@ from ezdxf.render import MeshBuilder, TraceBuilder
 from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic, ProxyGraphicError
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
-from ezdxf.tools.text import has_inline_formatting_codes
+from ezdxf.tools.text import has_inline_formatting_codes, MIN_CAP_HEIGHT
 from ezdxf.tools import text_layout
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
@@ -411,6 +411,10 @@ class UniversalFrontend:
     def draw_text_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         if self.config.text_policy == TextPolicy.IGNORE:
             return
+        # fixed text height set by associated text-style is ignored
+        if entity.dxf.height < MIN_CAP_HEIGHT:
+            self.skip_entity(entity, "text height too small")
+            return
         # Draw embedded MTEXT entity as virtual MTEXT entity:
         if isinstance(entity, BaseAttrib) and entity.has_embedded_mtext_entity:
             self.draw_mtext_entity(entity.virtual_mtext_entity(), properties)
@@ -440,8 +444,11 @@ class UniversalFrontend:
         self.skip_entity(entity, "3D text not supported")
 
     def draw_mtext_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        # fixed text height set by associated text-style is ignored
         if self.config.text_policy == TextPolicy.IGNORE:
             return
+        # Do not skip MTEXT entities with char height 0.
+        # Text height is maybe changed by inline-codes.
         mtext = cast(MText, entity)
         if is_spatial_text(Vec3(mtext.dxf.extrusion)):
             self.skip_entity(mtext, "3D MTEXT not supported")
