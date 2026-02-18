@@ -71,5 +71,25 @@ def test_transform_and_copy(body: Body):
     assert m.transform(v).isclose(m2.transform(v))
 
 
+def test_copy_has_independent_temporary_transformation(msp: Modelspace):
+    """Copy and original must not share the same TransformByBlockReference.
+
+    Regression test: Body.copy_data() previously did a shallow assignment of
+    _temporary_transformation.  Transforming the copy (e.g. via
+    bbox.extents() -> virtual_entities()) would contaminate the original with
+    a spurious pending transform, destroying block structure on save.
+    """
+    body = msp.add_body()
+    copy = body.copy()
+
+    # Must be separate objects
+    assert body.temporary_transformation() is not copy.temporary_transformation()
+
+    # Transforming the copy must not affect the original
+    copy.transform(Matrix44.translate(10, 20, 30))
+    assert body.temporary_transformation().get_matrix() is None
+    assert copy.temporary_transformation().get_matrix() is not None
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
