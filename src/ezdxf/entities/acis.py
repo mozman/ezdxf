@@ -144,7 +144,12 @@ class Body(DXFGraphic):
         entity.sat = self.sat
         entity.sab = self.sab  # load SAB on demand
         entity.dxf.uid = guid()
-        entity._temporary_transformation = self._temporary_transformation
+        # Create a new TransformByBlockReference for the copy — sharing the same
+        # object causes transforming the copy to contaminate the original.
+        entity._temporary_transformation = TransformByBlockReference()
+        m = self._temporary_transformation.get_matrix()
+        if m is not None:
+            entity._temporary_transformation.set_matrix(m.copy())
 
     @override
     def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
