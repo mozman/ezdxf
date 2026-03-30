@@ -144,7 +144,7 @@ class Body(DXFGraphic):
         entity.sat = self.sat
         entity.sab = self.sab  # load SAB on demand
         entity.dxf.uid = guid()
-        entity._temporary_transformation = self._temporary_transformation
+        entity._temporary_transformation = self._temporary_transformation.copy()
 
     @override
     def map_resources(self, clone: Self, mapping: xref.ResourceMapper) -> None:
