@@ -1177,7 +1177,7 @@ class _Transfer:
 
     def map_resources_of_copy(self, entity: DXFEntity) -> None:
         clone = self.get_entity_copy(entity)
-        if clone:
+        if clone is not None:
             entity.map_resources(clone, self)
         elif entity.dxf.handle in self.copy_errors:
             pass

@@ -1259,6 +1259,22 @@ class TestLoadPaperspaceViewport:
         assert factory.is_bound(loaded_sun, tdoc)
 
 
+def test_load_empty_polyline_in_blk_ref():
+    sdoc = ezdxf.new()
+    blk = sdoc.blocks.new("TEST")
+    blk.add_entity(Polyline())
+    sdoc.modelspace().add_blockref("TEST", (0, 0))
+
+    tdoc = ezdxf.new()
+    xref.load_modelspace(sdoc, tdoc)
+
+    blk = tdoc.blocks.get("TEST")
+    assert len(blk) == 1
+    p = blk[0]
+    assert isinstance(p, Polyline) is True
+    assert len(p) == 0
+
+
 # TODO:
 # DICTIONARY, test soft-ownership
 # XRECORD, register and map pointers and hard-owner handles
