@@ -187,7 +187,7 @@ class LinearTrace(AbstractTrace):
                     angle = (
                         stations[segment].vertex - stations[segment + 1].vertex
                     ).angle
-                    return ConstructionRay(v1, angle)
+                    return ConstructionRay(v1, angle=angle)
                 else:
                     return ConstructionRay(v1, v2)
 

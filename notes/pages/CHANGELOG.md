@@ -44,6 +44,8 @@
 	- BUGFIX: draw `ATTRIB` entities of block references at last
 		- {{issue 1321}}
 		- contributed by #eXponenta
+	- BUGFIX: `Trace` rendering
+		- {{issue 1375}}
 - ## Version 1.4.2 - 2025-05-18
   id:: 68d646ab-6a15-4016-9cc2-feaad2ceb304
 	- CHANGE: faster and smaller PDF export by the `PyMuPDF` backend
