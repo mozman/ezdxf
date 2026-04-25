@@ -356,6 +356,19 @@ class LWPolyline(DXFGraphic):
         A non-uniform scaling is not supported if the entity contains circular
         arc segments (bulges).
 
+        .. note::
+
+            LWPOLYLINE stores points in the :ref:`OCS` defined by
+            :attr:`dxf.extrusion`. For transforms that include a reflection
+            (e.g. a matrix derived from an INSERT with a negative scale
+            factor), :attr:`dxf.extrusion` flips sign to preserve the
+            geometry — the stored points themselves are not mirrored in
+            place. Methods that read raw storage (:meth:`get_points`,
+            :meth:`vertices`, :meth:`__getitem__`) therefore continue to
+            return OCS coordinates relative to the new extrusion, which
+            may differ from WCS. Use :meth:`vertices_in_wcs` when you
+            need world coordinates after a transform.
+
         Args:
             m: transformation :class:`~ezdxf.math.Matrix44`
 
