@@ -5,8 +5,8 @@ import codecs
 import binascii
 
 surrogate_escape = codecs.lookup_error("surrogateescape")
-BACKSLASH_UNICODE = re.compile(r"(\\U\+[A-F0-9]{4})")
-MIF_ENCODED = re.compile(r"(\\M\+[1-5][A-F0-9]{4})")
+BACKSLASH_UNICODE = re.compile(r"(\\U\+[A-Fa-f0-9]{4})")
+MIF_ENCODED = re.compile(r"(\\M\+[1-5][A-Fa-f0-9]{4})")
 
 
 def dxf_backslash_replace(exc: Exception):

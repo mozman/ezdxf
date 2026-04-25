@@ -11,6 +11,10 @@ class TestUnicodeEncoding:
         assert ezdxf.has_dxf_unicode(r"\U+039B") is True
         assert ezdxf.has_dxf_unicode(r"\\U+039B") is True
 
+    def test_has_dxf_unicode_encoding_lower_case(self):
+        assert ezdxf.has_dxf_unicode(r"\U+039b") is True
+        assert ezdxf.has_dxf_unicode(r"\\U+039b") is True
+
     def test_has_not_dxf_unicode_encoding(self):
         assert ezdxf.has_dxf_unicode(r"\U+039") is False
         assert ezdxf.has_dxf_unicode(r"\U+") is False
@@ -30,6 +34,10 @@ class TestUnicodeEncoding:
         result = ezdxf.decode_dxf_unicode(r"abc\U+039B\U+0391\U+0393\U+0395\U+03A1xyz")
         assert result == r"abcΛΑΓΕΡxyz"
 
+    def test_successive_chars_lowercase(self):
+        result = ezdxf.decode_dxf_unicode(r"abc\U+039b\U+0391\U+0393\U+0395\U+03a1xyz")
+        assert result == r"abcΛΑΓΕΡxyz"
+
     def test_extra_backslash(self):
         result = ezdxf.decode_dxf_unicode(
             r"abc\U+039B\\U+0391\\U+0393\\U+0395\\U+03A1xyz"
@@ -47,6 +55,9 @@ class TestMIFEncoding:
     def test_has_mif_encoding(self):
         assert has_mif_encoding(r"\M+5D7DF\M+5CFDF\M+5BCDC") is True
 
+    def test_has_mif_encoding_lower_case(self):
+        assert has_mif_encoding(r"\M+5d7df\M+5cfdf\M+5bccd") is True
+
     def test_has_not_mif_encoding(self):
         assert has_mif_encoding(r"M+5BCDC") is False
         assert has_mif_encoding(r"\M+5BCD") is False, "5 hex digits expected"
@@ -56,6 +67,12 @@ class TestMIFEncoding:
         assert decode_mif_to_unicode(r"\M+5D7DF\M+5CFDF\M+5BCDC") == "走线架"
         assert decode_mif_to_unicode(r"*\M+5D7DF*") == "*走*"
         assert decode_mif_to_unicode(r"\M+5D7DF\M+5CFDFM+5BCDC") == "走线M+5BCDC"
+
+    def test_decode_mif_encoding_lower_case(self):
+        assert decode_mif_to_unicode("abc") == "abc"
+        assert decode_mif_to_unicode(r"\M+5d7df\M+5cfdf\M+5bcDC") == "走线架"
+        assert decode_mif_to_unicode(r"*\M+5D7df*") == "*走*"
+        assert decode_mif_to_unicode(r"\M+5D7DF\M+5cFDfM+5BCdC") == "走线M+5BCdC"
 
     def test_decode_empty_string(self):
         assert decode_mif_to_unicode("") == ""
