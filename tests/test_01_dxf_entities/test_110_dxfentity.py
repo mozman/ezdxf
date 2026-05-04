@@ -467,3 +467,58 @@ class TestGetLayout:
         circle = msp.add_circle(center=(0, 0), radius=1)
         msp.unlink_entity(circle)
         assert circle.get_layout() is None
+
+
+class TestContentHash:
+    def test_content_hash_returns_hex_string(self):
+        line = Line.new(dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        h = line.content_hash
+        assert isinstance(h, str)
+        assert len(h) == 64  # SHA-256 hex digest
+
+    def test_identical_entities_same_hash(self):
+        line1 = Line.new(dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        line2 = Line.new(dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        assert line1.content_hash == line2.content_hash
+
+    def test_different_entities_different_hash(self):
+        line1 = Line.new(dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        line2 = Line.new(dxfattribs={"start": (0, 0, 0), "end": (2, 2, 2)})
+        assert line1.content_hash != line2.content_hash
+
+    def test_hash_ignores_handle(self):
+        line1 = Line.new(handle="AAA", dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        line2 = Line.new(handle="BBB", dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        assert line1.content_hash == line2.content_hash
+
+    def test_hash_ignores_owner(self):
+        line1 = Line.new(owner="AAA", dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        line2 = Line.new(owner="BBB", dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        assert line1.content_hash == line2.content_hash
+
+    def test_hash_changes_on_mutation(self):
+        line = Line.new(dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        h1 = line.content_hash
+        line.dxf.end = (5, 5, 5)
+        h2 = line.content_hash
+        assert h1 != h2
+
+    def test_different_layers_produce_different_hash(self):
+        line1 = Line.new(dxfattribs={"layer": "A", "start": (0, 0, 0), "end": (1, 1, 1)})
+        line2 = Line.new(dxfattribs={"layer": "B", "start": (0, 0, 0), "end": (1, 1, 1)})
+        assert line1.content_hash != line2.content_hash
+
+    def test_copy_has_same_hash(self):
+        line = Line.new(dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        clone = line.copy()
+        assert line.content_hash == clone.content_hash
+
+    def test_hash_is_deterministic(self):
+        line = Line.new(dxfattribs={"start": (0, 0, 0), "end": (1, 1, 1)})
+        assert line.content_hash == line.content_hash
+
+    def test_base_entity_content_hash(self):
+        e = DXFEntity()
+        h = e.content_hash
+        assert isinstance(h, str)
+        assert len(h) == 64

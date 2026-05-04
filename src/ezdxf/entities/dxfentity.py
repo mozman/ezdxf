@@ -27,6 +27,7 @@ from typing import (
 )
 from typing_extensions import Self
 
+import hashlib
 import logging
 import uuid
 from ezdxf import options
@@ -131,6 +132,28 @@ class DXFEntity:
             uuid_ = uuid.uuid4()
             setattr(self, DYN_UUID_ATTRIBUTE, uuid_)
         return uuid_
+
+    @property
+    def content_hash(self) -> str:
+        """Returns a SHA-256 hash derived from the entity's DXF content.
+
+        Two entities with identical DXF properties will produce the same hash,
+        regardless of handle, owner, or Python object identity.  This is useful
+        for detecting duplicates or tracking content changes.
+
+        The hash is computed on demand and NOT cached, because any attribute
+        mutation would silently invalidate a cached value.
+        """
+        from io import StringIO
+        from ezdxf.lldxf.tagwriter import TagWriter
+        from ezdxf.lldxf.const import DXF2013
+
+        stream = StringIO()
+        tagwriter = TagWriter(stream, dxfversion=DXF2013, write_handles=False)
+        tagwriter.force_optional = True
+        self.export_entity(tagwriter)
+        self.export_xdata(tagwriter)
+        return hashlib.sha256(stream.getvalue().encode("utf-8")).hexdigest()
 
     @classmethod
     def new(
