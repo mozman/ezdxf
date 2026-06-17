@@ -208,3 +208,111 @@ def test_wcs_mirror_transformations_for_all_edge_types(
         have_close_control_vertices(path_of_transformed_hatch, expected_path)
         is True
     )
+
+
+def test_pattern_scale_and_angle_transform_preserves_geometry():
+    """Transform a hatch with pattern fill and verify that base_point and offset
+    are only rotated+scaled (not translated) and that scale/angle DXF attrs
+    are correctly updated.
+    """
+    hatch = Hatch.new()
+    hatch.set_pattern_fill("ANSI31", angle=0, scale=1.0)
+    # The predefined ANSI31 definition loaded above contains a single pattern
+    # line. Capture the original pattern state.
+    line = hatch.pattern.lines[0]
+    # ANSI31 pattern line has base_angle=45°; capture before transform.
+    orig_line_angle = line.angle
+
+    # Apply a rotation of 45° around the z-axis (no translation).
+    m = Matrix44.z_rotate(math.radians(45))
+    hatch.transform(m)
+
+    # DXF angle should reflect the OCS rotation.
+    assert hatch.dxf.pattern_angle == pytest.approx(45.0)
+
+    # pattern_scale should be multiplied by the x-axis length scale factor.
+    # For pure rotation there is no scale change (factor == 1).
+    assert hatch.dxf.pattern_scale == pytest.approx(1.0)
+
+    # The line's stored angle should be the original plus the OCS rotation.
+    assert line.angle == pytest.approx((orig_line_angle + 45.0) % 360.0)
+
+    # After the rotation the offset should still be a pure direction (no
+    # translation applied). With no additional scale the magnitude must be
+    # unchanged.
+    assert Vec2(line.offset).magnitude == pytest.approx(
+        Vec2(line.offset).magnitude, abs=1e-9
+    )
+    # The offset should also be rotated by 45° relative to its previous
+    # direction (up to sign ambiguity when the rotation axis flips).
+    prev = Vec2(line.offset)
+    # Re-apply the inverse to verify round-trip consistency.
+    inv = Matrix44.z_rotate(math.radians(-45))
+    recovered = Vec2(inv.transform_direction((line.offset[0], line.offset[1], 0)))
+    assert recovered.isclose(Vec2(-2.2450640303, 2.2450640303), abs_tol=1e-6)
+
+
+def test_pattern_transform_with_translation_does_not_shift_base_point():
+    """Translation component of the matrix must not affect the magnitude of
+    base_point or offset — they are direction vectors, not positions.
+    """
+    hatch = Hatch.new()
+    hatch.set_pattern_fill("ANSI31", angle=0, scale=1.0)
+    line = hatch.pattern.lines[0]
+    orig_base_mag = Vec2(line.base_point).magnitude
+    orig_offset_mag = Vec2(line.offset).magnitude
+
+    # Matrix includes a large translation; direction vectors should be unchanged
+    # in magnitude, only the angle should change.
+    m = Matrix44.chain(
+        Matrix44.z_rotate(math.radians(90)),
+        Matrix44.translate(1000, 2000, 0),
+    )
+    hatch.transform(m)
+
+    # base_point/offset magnitude must not drift by the translation.
+    assert Vec2(line.base_point).magnitude == pytest.approx(orig_base_mag, abs=1e-9)
+    assert Vec2(line.offset).magnitude == pytest.approx(orig_offset_mag, abs=1e-9)
+
+    # The DXF pattern_angle should be 90.
+    assert hatch.dxf.pattern_angle == pytest.approx(90.0)
+
+
+def test_pattern_transform_with_scale_updates_scale_and_geometry():
+    """With non-unit scale, pattern_scale DXF attr should be multiplied by the
+    x-axis length scale and the base_point/offset magnitudes should follow.
+    """
+    hatch = Hatch.new()
+    hatch.set_pattern_fill("ANSI31", angle=0, scale=1.0)
+    line = hatch.pattern.lines[0]
+    orig_base_len = Vec2(line.base_point).magnitude
+    orig_offset_len = Vec2(line.offset).magnitude
+
+    m = Matrix44.scale(2, 2, 1)
+    hatch.transform(m)
+
+    assert hatch.dxf.pattern_scale == pytest.approx(2.0)
+
+    new_base_len = Vec2(line.base_point).magnitude
+    new_offset_len = Vec2(line.offset).magnitude
+    # Allow a loose tolerance because the ANSI31 base_point/offset are
+    # non-zero and can drift due to OCS↔WCS round-trip.
+    assert new_base_len == pytest.approx(orig_base_len * 2, abs=1e-9)
+    assert new_offset_len == pytest.approx(orig_offset_len * 2, abs=1e-9)
+
+
+def test_pattern_transform_combined_rotation_and_scale():
+    hatch = Hatch.new()
+    hatch.set_pattern_fill("ANSI31", angle=0, scale=1.0)
+    line = hatch.pattern.lines[0]
+    orig_line_angle = line.angle  # ANSI31 default is 45°
+
+    m = Matrix44.chain(
+        Matrix44.z_rotate(math.radians(30)),
+        Matrix44.scale(2, 2, 1),
+    )
+    hatch.transform(m)
+
+    assert hatch.dxf.pattern_angle == pytest.approx(30.0)
+    assert hatch.dxf.pattern_scale == pytest.approx(2.0)
+    assert line.angle == pytest.approx((orig_line_angle + 30.0) % 360.0)

@@ -186,6 +186,15 @@ class OCSTransform:
         v = Vec3(vertex).replace(z=elevation)
         return Vec2(self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(v))))
 
+    def transform_2d_direction(self, direction: UVec) -> Vec2:
+        """Returns 2D direction (no translation) transformed from old OCS into
+        new OCS. Use for vectors such as pattern offsets and line directions.
+        """
+        d = Vec3(direction).replace(z=0.0)
+        old_wcs = self.old_ocs.to_wcs(d)
+        new_wcs = self.m.transform_direction(old_wcs)
+        return Vec2(self.new_ocs.from_wcs(new_wcs).replace(z=0.0))
+
     def transform_direction(self, direction: UVec) -> Vec3:
         """Returns direction transformed from old OCS into new OCS."""
         return self.new_ocs.from_wcs(

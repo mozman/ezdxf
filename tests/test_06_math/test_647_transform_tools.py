@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 import math
-from ezdxf.math import Matrix44, Vec3, Z_AXIS, arc_angle_span_deg
+from ezdxf.math import Matrix44, Vec2, Vec3, Z_AXIS, arc_angle_span_deg
 from ezdxf.math.transformtools import OCSTransform
 
 
@@ -184,6 +184,62 @@ class TestTransformCCWAngles:
         )
         assert wcs_start.isclose(expected_start)
         assert wcs_end.isclose(expected_end)
+
+
+class TestTransform2dDirection:
+    def test_no_transformation(self):
+        ocs = OCSTransform(Z_AXIS, Matrix44())
+        assert ocs.transform_2d_direction((1, 0)).isclose(Vec2(1, 0))
+        assert ocs.transform_2d_direction((0, 1)).isclose(Vec2(0, 1))
+
+    def test_rotation(self):
+        ocs = OCSTransform(Z_AXIS, Matrix44.z_rotate(math.radians(90)))
+        assert ocs.transform_2d_direction((1, 0)).isclose(Vec2(0, 1))
+        assert ocs.transform_2d_direction((0, 1)).isclose(Vec2(-1, 0))
+
+    def test_uniform_scale(self):
+        ocs = OCSTransform(Z_AXIS, Matrix44.scale(2, 2, 1))
+        assert ocs.transform_2d_direction((1, 0)).isclose(Vec2(2, 0))
+        assert ocs.transform_2d_direction((0, 1)).isclose(Vec2(0, 2))
+
+    def test_non_uniform_scale(self):
+        ocs = OCSTransform(Z_AXIS, Matrix44.scale(2, 3, 1))
+        result = ocs.transform_2d_direction((1, 0))
+        assert result.isclose(Vec2(2, 0))
+        result = ocs.transform_2d_direction((0, 1))
+        assert result.isclose(Vec2(0, 3))
+
+    def test_reflection_x(self):
+        # Mirroring in x flips the OCS z-axis; the new OCS x-axis points in
+        # the -WCS x direction. A WCS x-axis direction is therefore expressed
+        # as local +x in the new OCS.
+        ocs = OCSTransform(Z_AXIS, Matrix44.scale(-1, 1, 1))
+        assert ocs.new_ocs.uz.isclose(-Z_AXIS)
+        assert ocs.transform_2d_direction((1, 0)).isclose(Vec2(1, 0))
+        assert ocs.transform_2d_direction((0, 1)).isclose(Vec2(0, 1))
+
+    def test_combined_rotation_and_scale(self):
+        ocs = OCSTransform(Z_AXIS, Matrix44.chain(
+            Matrix44.z_rotate(math.radians(90)),
+            Matrix44.scale(2, 2, 1),
+        ))
+        assert ocs.transform_2d_direction((1, 0)).isclose(Vec2(0, 2))
+        assert ocs.transform_2d_direction((0, 1)).isclose(Vec2(-2, 0))
+
+    def test_rotated_ocs_with_translation(self):
+        # Translation component in m must NOT affect a direction vector
+        m = Matrix44.chain(
+            Matrix44.z_rotate(math.radians(45)),
+            Matrix44.translate(10, 20, 0),
+        )
+        ocs = OCSTransform(Z_AXIS, m)
+        result = ocs.transform_2d_direction((1, 0))
+        assert result.isclose(Vec2(math.cos(math.radians(45)), math.sin(math.radians(45))))
+
+    def test_result_is_vec2(self):
+        ocs = OCSTransform(Z_AXIS, Matrix44.scale(2, 3, 1))
+        result = ocs.transform_2d_direction((1, 2))
+        assert isinstance(result, Vec2)
 
 
 if __name__ == "__main__":
