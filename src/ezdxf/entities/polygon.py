@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024 Manfred Moitzi
+# Copyright (c) 2019-2026 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Optional, Union, TYPE_CHECKING, Iterator
@@ -400,13 +400,18 @@ class DXFPolygon(DXFGraphic):
         )
         dxf.extrusion = ocs.new_extrusion
         if self.pattern:
-            # todo: non-uniform scaling
-            # take the scaling factor of the x-axis
-            factor = ocs.transform_length((self.dxf.pattern_scale, 0, 0))
-            angle = ocs.transform_deg_angle(self.dxf.pattern_angle)
             # todo: non-uniform pattern scaling is not supported
-            self.pattern.scale(factor, angle)
-            self.dxf.pattern_scale = factor
+            angle = ocs.transform_deg_angle(self.dxf.pattern_angle)           
+
+            # scale pattern relative to current state:
+            # self.dxf.pattern_scale is already applied to the pattern!
+            relative_factor = ocs.transform_length((1, 0, 0))
+            self.pattern.scale(relative_factor, angle)
+
+            # The pattern_scale factor has to be applied to the base pattern to get the
+            # final scaling. This is important for CAD applications, not for the rendering
+            # of the pattern itself.
+            self.dxf.pattern_scale = self.dxf.pattern_scale * relative_factor
             self.dxf.pattern_angle = angle
         self.post_transform(m)
         return self

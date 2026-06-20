@@ -1,5 +1,8 @@
-## Version 1.4.4 - 2026-05-14
-id:: 6a01df82-ea1b-48c4-912f-6a80564d3288
+## Version 1.4.5 - dev
+	- BUGFIX: fix pattern scaling at `HATCH` transformations
+		- {{issue 1391}}
+- ## Version 1.4.4 - 2026-05-14
+  id:: 6a01df82-ea1b-48c4-912f-6a80564d3288
 	- NEW: `ezdxf.entities.textstyle.get_textstyle()` function
 	- CHANGE: replace legacy `pyparsing` names and arguments by PEP8-compliant names
 		- requires `pyparsing >= 3.0.0` released in 2022!
