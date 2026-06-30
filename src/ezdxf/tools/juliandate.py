@@ -55,7 +55,14 @@ class CalendarDate:
 
 
 def frac2time(jdate) -> tuple[int, int, int]:
-    seconds = int(frac(jdate) * 86400.0)
+    # The Julian day number is large, so frac(jdate) loses precision and
+    # int() would truncate e.g. 47720.99998 down to 47720, dropping a second
+    # on the juliandate()/calendardate() round-trip. Round to the nearest
+    # second instead, guarding against a near-midnight value rounding up to
+    # 86400 (which would make hour == 24 and raise ValueError).
+    seconds = round(frac(jdate) * 86400.0)
+    if seconds >= 86400:
+        seconds = 86399
     hour = int(seconds / 3600)
     seconds = seconds % 3600
     minute = int(seconds / 60)
