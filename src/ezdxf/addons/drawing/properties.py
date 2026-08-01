@@ -508,6 +508,10 @@ class RenderContext:
         # have default ACI color 7!
         if not layer.has_dxf_attrib("true_color"):
             properties.has_aci_color_7 = layer.dxf.color == 7
+            # ... unless the plot style table forces a color for ACI 7: then there
+            # is no ambiguity left to resolve against the background color.
+            if properties.has_aci_color_7 and self._ctb_forces_color(7):
+                properties.has_aci_color_7 = False
 
         # Normalize linetype names to UPPERCASE:
         properties.linetype_name = str(layer.dxf.linetype).upper()
@@ -577,12 +581,33 @@ class RenderContext:
         # Colors in CTB files can be RGB colors but don't have to,
         # therefore initialize color without RGB values by the
         # default AutoCAD palette:
+        # Remember which ACI values the plot style table really overrides, before
+        # the loop below fills the remaining entries with the default palette and
+        # has_object_color() becomes False for all of them.
+        # This method can run more than once on the same table (see
+        # set_current_layout() and from_viewport()), so the detection has to
+        # happen on the first pass only.
+        first_pass = not hasattr(ctb, "forced_colors")
+        forced: set[int] = set()
         for aci in range(1, 256):
             entry = ctb[aci]  # type: ignore
             if entry.has_object_color():
                 # initialize with default AutoCAD palette
                 entry.color = int2rgb(DXF_DEFAULT_COLORS[aci])
+            elif first_pass:
+                forced.add(aci)
+        if first_pass:
+            ctb.forced_colors = forced  # type: ignore[attr-defined]
         return ctb
+
+    def _ctb_forces_color(self, aci: int) -> bool:
+        """Returns ``True`` if the plot style table sets an explicit color for `aci`.
+
+        Entries without an explicit color are filled with the default AutoCAD
+        palette when the table is loaded, so the table itself can no longer tell
+        the two cases apart afterwards.
+        """
+        return aci in getattr(self.plot_styles, "forced_colors", ())
 
     @property
     def inside_block_reference(self) -> bool:
@@ -769,6 +794,11 @@ class RenderContext:
         hex format: "#RRGGBB".
         """
         if aci == 7:  # black/white
+            # An explicit plot style color is an instruction and overrides the
+            # background dependent default: ACI 7 is ambiguous only as long as no
+            # plot style table resolves it.
+            if self._ctb_forces_color(aci):
+                return rgb_to_hex(self.plot_styles[aci].color)
             return self.current_layout_properties.default_color
         else:
             return rgb_to_hex(self.plot_styles[aci].color)
