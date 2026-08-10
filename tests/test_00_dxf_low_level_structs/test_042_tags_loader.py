@@ -155,6 +155,13 @@ def test_ext_float_to_int():
     assert list(external_tag_compiler(FLOAT_FOR_INT_TAGS))[0] == (71, 1)
 
 
+def test_ext_overflow_int_value():
+    # A value like "1e999" parses to float('inf'); int(inf) raises
+    # OverflowError, which must surface as a DXFStructureError, not escape.
+    with pytest.raises(DXFStructureError):
+        list(external_tag_compiler("71\n1e999\n0\nEOF\n"))
+
+
 def test_ext_coord_error_tag():
     with pytest.raises(DXFStructureError):
         list(external_tag_compiler(TAGS_WITH_COORD_ERROR))
