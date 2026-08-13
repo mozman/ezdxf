@@ -1,11 +1,19 @@
 # Copyright (c) 2011-2024, Manfred Moitzi
 # License: MIT License
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 # Using * imports to simplify namespace imports, therefore every module
 # has to have an export declaration: __all__ = [...]
 
 # Import base types as C-extensions if available:
 from ._ctypes import *
+
+# Re-export the base vector/matrix types so static type checkers can resolve
+# `ezdxf.math.Vec2`, `ezdxf.math.Vec3` and `ezdxf.math.Matrix44`. These names
+# are provided at runtime by the C-extension in `ezdxf.math._ctypes`, which the
+# pure-Python `ezdxf.math._ctypes` module does not export.
+if TYPE_CHECKING:
+    from ._matrix44 import Matrix44
+    from ._vector import Vec2, Vec3
 # Everything else are pure Python imports:
 from .construct2d import *
 from .construct3d import *
