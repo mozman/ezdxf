@@ -1,6 +1,6 @@
 #  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
-from typing import Union, Sequence
+from typing import TYPE_CHECKING, Union, Sequence
 from typing_extensions import TypeAlias
 # noinspection PyUnresolvedReferences
 from ezdxf.acc import USE_C_EXT
@@ -34,7 +34,7 @@ __all__ = [
     "gps_to_world_mercator",
 ]
 # Import of Python or Cython implementations:
-if USE_C_EXT:
+if USE_C_EXT and not TYPE_CHECKING:
     from ezdxf.acc.vector import (
         Vec3,
         Vec2,
