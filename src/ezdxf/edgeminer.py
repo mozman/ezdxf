@@ -352,7 +352,7 @@ class Deposit:
         e.g. if the vertices a, b are close together, you don't know if you get a or b,
         but it's guaranteed that you only get one of them
         """
-        return filter_close_vertices(self._search_index.rtree, gap_tol=self.gap_tol)
+        return filter_close_vertices(self._search_index.rtree, gap_tol=self.gap_tol)  # type: ignore[arg-type]
 
     def edges_linked_to(self, vertex: UVec, radius: float = -1) -> Sequence[Edge]:
         """Returns all edges linked to `vertex` in range of `radius`.
@@ -373,6 +373,7 @@ class Deposit:
         The distance is measured to the connection line from start to end of the edge.
         This is not correct for edges that represent arcs or splines.
         """
+        vertex = Vec3(vertex)
 
         def distance(edge: Edge) -> float:
             try:
@@ -380,7 +381,6 @@ class Deposit:
             except ZeroDivisionError:
                 return edge.start.distance(vertex)
 
-        vertex = Vec3(vertex)
         si = self._search_index
         nearest_vertex = si.nearest_vertex(vertex)
         edges = self.edges_linked_to(nearest_vertex)
@@ -738,16 +738,16 @@ class _SpatialSearchIndex:
         self._search_tree = rtree.RTree(vertices)
 
     @property
-    def rtree(self) -> rtree.RTree[Vec3]:
+    def rtree(self) -> rtree.RTree[_Vertex]:
         return self._search_tree
 
     def vertices_in_sphere(self, center: Vec3, radius: float) -> Sequence[_Vertex]:
         """Returns all vertices located around `center` with a max. distance of `radius`."""
-        return tuple(self._search_tree.points_in_sphere(center, radius))
+        return tuple(self._search_tree.points_in_sphere(center, radius))  # type: ignore[arg-type]
 
     def nearest_vertex(self, location: Vec3) -> _Vertex:
         """Returns the nearest vertex to the given location."""
-        vertex, _ = self._search_tree.nearest_neighbor(location)
+        vertex, _ = self._search_tree.nearest_neighbor(location)  # type: ignore[arg-type]
         return vertex
 
 

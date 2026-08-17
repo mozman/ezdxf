@@ -468,13 +468,13 @@ def intersect_path(
                     yield ip, hatch_line_distance
 
 
-def _path_elements(path: Path) -> Union[Bezier4P, tuple[Vec2, Vec2]]:
+def _path_elements(path: Path) -> Iterator[Union[Bezier4P, tuple[Vec2, Vec2]]]:
     if len(path) == 0:
         return
-    start = path.start
+    start = Vec2(path.start)
     path_start = start
     for command in path.commands():
-        end = command.end
+        end = Vec2(command.end)
         if isinstance(command, MoveTo):
             if not path_start.isclose(start):
                 yield start, path_start  # close sub-path
@@ -482,9 +482,14 @@ def _path_elements(path: Path) -> Union[Bezier4P, tuple[Vec2, Vec2]]:
         elif isinstance(command, LineTo) and not start.isclose(end):
             yield start, end
         elif isinstance(command, Curve4To):
-            yield Bezier4P((start, command.ctrl1, command.ctrl2, end))
+            yield Bezier4P((
+                start,
+                Vec2(command.ctrl1),
+                Vec2(command.ctrl2),
+                end,
+            ))
         elif isinstance(command, Curve3To):
-            curve3 = Bezier3P((start, command.ctrl, end))
+            curve3 = Bezier3P((start, Vec2(command.ctrl), end))
             yield quadratic_to_cubic_bezier(curve3)
         start = end
 

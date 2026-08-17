@@ -575,10 +575,10 @@ class UniversalFrontend:
                 for s, e in line_pattern.render(line.start, line.end):
                     if ocs.transform:
                         s, e = (
-                            ocs.to_wcs((s.x, s.y, elevation)),
-                            ocs.to_wcs((e.x, e.y, elevation)),
+                            ocs.to_wcs((s.x, s.y, elevation)).vec2,
+                            ocs.to_wcs((e.x, e.y, elevation)).vec2,
                         )
-                    lines.append((s, e))
+                    lines.append((s, e))  # type: ignore[arg-type]
         self.pipeline.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(

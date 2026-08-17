@@ -194,7 +194,7 @@ class ContentRenderer(abc.ABC):
         bottom: float,
         right: float,
         top: float,
-        m: Matrix44 = None,
+        m: Matrix44 | None = None,
     ) -> None:
         """Render content into the given borders (lower left and upper right
         corners).
@@ -210,7 +210,7 @@ class ContentRenderer(abc.ABC):
 
     @abc.abstractmethod
     def line(
-        self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 = None
+        self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 | None = None
     ) -> None:
         """Draw a line from (x1, y1) to (x2, y2)."""
 
@@ -222,12 +222,12 @@ class DoNothingRenderer(ContentRenderer):
         bottom: float,
         right: float,
         top: float,
-        m: Matrix44 = None,
+        m: Matrix44 | None = None,
     ) -> None:
         pass
 
     def line(
-        self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 = None
+        self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 | None = None
     ) -> None:
         pass
 
@@ -297,7 +297,7 @@ class Box(abc.ABC):
         """Returns the final location as the top/left corner"""
 
     @abc.abstractmethod
-    def render(self, m: Matrix44 = None) -> None:
+    def render(self, m: Matrix44 | None = None) -> None:
         """Render content at the final location."""
 
     def bbox(self) -> BoundingBox2d:
@@ -325,7 +325,7 @@ class Cell(Box):  # ABC
         # important
         return 0, 0
 
-    def render(self, m: Matrix44 = None) -> None:
+    def render(self, m: Matrix44 | None = None) -> None:
         pass
 
 
@@ -477,7 +477,8 @@ class Text(ContentCell):
         height = self.total_height
         bottom = top - height
         right = left + self.total_width
-        self.renderer.render(  # type: ignore
+        assert self.renderer is not None
+        self.renderer.render(
             left=left, bottom=bottom, right=right, top=top, m=m
         )
 
@@ -485,7 +486,7 @@ class Text(ContentCell):
         self,
         extend_left: float = 0,
         extend_right: float = 0,
-        m: Matrix44 = None,
+        m: Matrix44 | None = None,
     ) -> None:
         left, top = self.final_location()
         left -= extend_left
@@ -508,13 +509,13 @@ class Text(ContentCell):
             renderer.line(left, y, right, y, m)
 
 
-def render_cells(cells: Iterable[Cell], m: Matrix44 = None) -> None:
+def render_cells(cells: Iterable[Cell], m: Matrix44 | None = None) -> None:
     for cell in cells:
         if cell.is_visible:
             cell.render(m)
 
 
-def render_text_strokes(cells: list[Cell], m: Matrix44 = None) -> None:
+def render_text_strokes(cells: list[Cell], m: Matrix44 | None = None) -> None:
     """Render text cell strokes across glue cells."""
 
     # Should be called for container with horizontal arranged text cells
@@ -606,13 +607,13 @@ class Fraction(ContentCell):
             y -= height - bottom_content.total_height
             bottom_content.place(x, y)  # center/bottom
 
-    def render(self, m: Matrix44 = None) -> None:
+    def render(self, m: Matrix44 | None = None) -> None:
         self._top_content.render(m)
         self._bottom_content.render(m)
         if self._stacking != Stacking.OVER:
             self._render_line(m)
 
-    def _render_line(self, m: Matrix44) -> None:
+    def _render_line(self, m: Matrix44 | None) -> None:
         x, y = self.final_location()
         tw = self.total_width
         th = self.total_height
@@ -759,7 +760,7 @@ class Container(Box):
     def total_height(self) -> float:
         return self.content_height + self.top_margin + self.bottom_margin
 
-    def render(self, m: Matrix44 = None) -> None:
+    def render(self, m: Matrix44 | None = None) -> None:
         """Render container content.
 
         (x, y) is the top/left corner
@@ -775,12 +776,12 @@ class Container(Box):
         """Place container content at the final location."""
         pass
 
-    def render_content(self, m: Matrix44 = None) -> None:
+    def render_content(self, m: Matrix44 | None = None) -> None:
         """Render content at the final location."""
         for entity in self:  # type: ignore
             entity.render(m)
 
-    def render_background(self, m: Matrix44) -> None:
+    def render_background(self, m: Matrix44 | None) -> None:
         """Render background at the final location."""
         # Render content background inclusive margins!
         # (x, y) is the top/left corner
@@ -1434,7 +1435,7 @@ class AbstractLine(ContentCell):  # ABC
             else:
                 yield cell
 
-    def render(self, m: Matrix44 = None) -> None:
+    def render(self, m: Matrix44 | None = None) -> None:
         cells = list(self.cells())
         render_cells(cells, m)
         render_text_strokes(cells, m)

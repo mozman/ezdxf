@@ -548,7 +548,7 @@ def to_lwpolylines(
     for path in tools.single_paths(paths):
         if len(path) > 0:
             p = LWPolyline.new(dxfattribs=dxfattribs)
-            p.append_points(path.flattening(distance, segments), format="xy")
+            p.append_points([(v.x, v.y) for v in path.flattening(distance, segments)], format="xy")
             yield p
 
 
@@ -720,7 +720,7 @@ def build_edge_path(
                     prev = p
     else:  # Polyline boundary path
         boundaries.add_polyline_path(
-            Vec2.generate(path.flattening(distance, segments)), flags=flags
+            [(v.x, v.y) for v in path.flattening(distance, segments)], flags=flags
         )
 
 
@@ -733,7 +733,7 @@ def build_poly_path(
 ):
     boundaries.add_polyline_path(
         # Vec2 removes the z-axis, which would be interpreted as bulge value!
-        Vec2.generate(path.flattening(distance, segments)),
+        [(v.x, v.y) for v in path.flattening(distance, segments)],
         flags=flags,
     )
 
@@ -888,10 +888,11 @@ def to_bsplines_and_vertices(path: Path, g1_tol: float = G1_TOL) -> Iterator[Pat
         if _g1_continuity_curves:
             yield bezier_to_bspline(_g1_continuity_curves)
 
-    curves = []
+    curves: list[Bezier3P | Bezier4P | tuple] = []
     for path in tools.single_paths([path]):
         prev = path.start
         for cmd in path:
+            curve: Bezier3P | Bezier4P | tuple
             if cmd.type == Command.CURVE3_TO:
                 curve = Bezier3P([prev, cmd.ctrl, cmd.end])  # type: ignore
             elif cmd.type == Command.CURVE4_TO:
@@ -901,11 +902,11 @@ def to_bsplines_and_vertices(path: Path, g1_tol: float = G1_TOL) -> Iterator[Pat
             else:
                 raise ValueError
             curves.append(curve)
-            prev = cmd.end
+            prev = Vec3(cmd.end)
 
     bezier: list = []
     polyline: list = []
-    for curve in curves:
+    for curve in curves:  # type: ignore[assignment]
         if isinstance(curve, tuple):
             if bezier:
                 yield from to_bspline()

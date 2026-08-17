@@ -178,9 +178,9 @@ class ImageBase(DXFGraphic):
 
     def get_wcs_transform(self) -> Matrix44:
         m = Matrix44()
-        m.set_row(0, Vec3(self.dxf.u_pixel))
-        m.set_row(1, Vec3(self.dxf.v_pixel))
-        m.set_row(3, Vec3(self.dxf.insert))
+        m.set_row(0, Vec3(self.dxf.u_pixel))  # type: ignore[arg-type]
+        m.set_row(1, Vec3(self.dxf.v_pixel))  # type: ignore[arg-type]
+        m.set_row(3, Vec3(self.dxf.insert))  # type: ignore[arg-type]
         return m
 
     def pixel_boundary_path(self) -> list[Vec2]:

@@ -441,17 +441,17 @@ class BoundingBox2d(AbstractBoundingBox[Vec2]):
 
 def extents3d(vertices: Iterable[UVec]) -> tuple[Vec3, Vec3]:
     """Returns the extents of the bounding box as tuple (extmin, extmax)."""
-    vertices = np.array([Vec3(v).xyz for v in vertices], dtype=np.float64)
-    if len(vertices):
-        return Vec3(vertices.min(0)), Vec3(vertices.max(0))
+    arr = np.array([Vec3(v).xyz for v in vertices], dtype=np.float64)
+    if len(arr):
+        return Vec3(arr.min(0)), Vec3(arr.max(0))
     else:
         raise ValueError("no vertices given")
 
 
 def extents2d(vertices: Iterable[UVec]) -> tuple[Vec2, Vec2]:
     """Returns the extents of the bounding box as tuple (extmin, extmax)."""
-    vertices = np.array([(x, y) for x, y, *_ in vertices], dtype=np.float64)
-    if len(vertices):
-        return Vec2(vertices.min(0)), Vec2(vertices.max(0))
+    arr = np.array([(x, y) for x, y, *_ in vertices], dtype=np.float64)
+    if len(arr):
+        return Vec2(arr.min(0)), Vec2(arr.max(0))
     else:
         raise ValueError("no vertices given")

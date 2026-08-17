@@ -825,8 +825,8 @@ class Geometry:
 
     def add_line(
         self,
-        start: Vec2,
-        end: Vec2,
+        start: UVec,
+        end: UVec,
         dxfattribs,
         remove_hidden_lines=False,
     ) -> None:
@@ -851,7 +851,7 @@ class Geometry:
             )
 
         def order(a: Vec2, b: Vec2) -> tuple[Vec2, Vec2]:
-            if (start - a).magnitude < (start - b).magnitude:
+            if (start - a).magnitude < (start - b).magnitude:  # type: ignore[operator]
                 return a, b
             else:
                 return b, a
@@ -1090,8 +1090,8 @@ class BaseDimensionRenderer:
 
     def add_line(
         self,
-        start: Vec2,
-        end: Vec2,
+        start: UVec,
+        end: UVec,
         dxfattribs,
         remove_hidden_lines=False,
     ) -> None:

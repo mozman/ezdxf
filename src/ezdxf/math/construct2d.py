@@ -187,7 +187,7 @@ def is_point_on_line_2d(
 
 
 def point_to_line_relation(
-    point: Vec2, start: Vec2, end: Vec2, abs_tol=TOLERANCE
+    point: UVec, start: UVec, end: UVec, abs_tol=TOLERANCE
 ) -> int:
     """Returns ``-1`` if `point` is left `line`, ``+1`` if `point` is right of
     `line` and ``0`` if `point` is on the `line`. The `line` is defined by two
@@ -200,8 +200,11 @@ def point_to_line_relation(
         abs_tol: tolerance for minimum distance to line
 
     """
-    rel = (end.x - start.x) * (point.y - start.y) - (end.y - start.y) * (
-        point.x - start.x
+    p = Vec2(point)
+    s = Vec2(start)
+    e = Vec2(end)
+    rel = (e.x - s.x) * (p.y - s.y) - (e.y - s.y) * (
+        p.x - s.x
     )
     if abs(rel) <= abs_tol:
         return 0
@@ -211,7 +214,7 @@ def point_to_line_relation(
         return -1
 
 
-def is_point_left_of_line(point: Vec2, start: Vec2, end: Vec2, colinear=False) -> bool:
+def is_point_left_of_line(point: UVec, start: UVec, end: UVec, colinear=False) -> bool:
     """Returns ``True`` if `point` is "left of line" defined by `start-` and
     `end` point, a colinear point is also "left of line" if argument `colinear`
     is ``True``.

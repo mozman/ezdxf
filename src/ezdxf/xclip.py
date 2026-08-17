@@ -235,9 +235,9 @@ class XClip:
             raise ZeroDivisionError(
                 "Block reference transformation matrix is not invertible."
             )
-        _vertices = Vec2.list(vertices)
+        _vertices = list(Vec2.list(vertices))
         if len(_vertices) == 2:
-            _vertices = _rect_path(_vertices)
+            _vertices = list(_rect_path(_vertices))
         self.set_block_clipping_path(m.transform_vertices(_vertices))
 
     def invert_clipping_path(

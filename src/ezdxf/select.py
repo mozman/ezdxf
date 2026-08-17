@@ -388,7 +388,7 @@ class PlanarSearchIndex:
 
         def detection_vertex(location: Vec2, uid: int) -> RTreeVtx:
             vertex = RTreeVtx(location)
-            vertex.uid = uid
+            vertex.uid = uid  # type: ignore[attr-defined]
             return vertex
 
         self.cache = cache or bbox.Cache()
@@ -435,9 +435,9 @@ class PlanarSearchIndex:
         """Returns all DXF entities that have at least one detection point located
         around `center` with a max. distance of `radius`.
         """
-        detection_vertices = self._search_tree.points_in_sphere(Vec2(center), radius)
+        detection_vertices = self._search_tree.points_in_sphere(Vec2(center), radius)  # type: ignore[arg-type]
         entities = self._entities
-        return [entities[uid] for uid in set(v.uid for v in detection_vertices)]
+        return [entities[uid] for uid in set(v.uid for v in detection_vertices)]  # type: ignore[attr-defined]
 
     def detection_point_in_rect(self, p1: UVec, p2: UVec) -> Sequence[DXFEntity]:
         """Returns all DXF entities that have at least one detection point located
@@ -447,4 +447,4 @@ class PlanarSearchIndex:
             BoundingBox([Vec2(p1), Vec2(p2)])
         )
         entities = self._entities
-        return [entities[uid] for uid in set(v.uid for v in detection_vertices)]
+        return [entities[uid] for uid in set(v.uid for v in detection_vertices)]  # type: ignore[attr-defined]

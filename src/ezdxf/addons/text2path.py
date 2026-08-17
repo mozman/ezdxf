@@ -35,7 +35,7 @@ def make_path_from_str(
     size: float = 1.0,
     align=TextEntityAlignment.LEFT,
     length: float = 0,
-    m: Matrix44 = None,
+    m: Matrix44 | None = None,
 ) -> Path:
     """Convert a single line string `s` into a :term:`Multi-Path` object.
     The text `size` is the height of the uppercase letter "X" (cap height).
@@ -74,7 +74,7 @@ def make_paths_from_str(
     size: float = 1.0,
     align=TextEntityAlignment.LEFT,
     length: float = 0,
-    m: Matrix44 = None,
+    m: Matrix44 | None = None,
 ) -> list[Path]:
     """Convert a single line string `s` into a list of
     :class:`~ezdxf.path.Path` objects. All paths are returned as a list of
@@ -174,7 +174,7 @@ def make_hatches_from_str(
     align=TextEntityAlignment.LEFT,
     length: float = 0,
     dxfattribs=None,
-    m: Matrix44 = None,
+    m: Matrix44 | None = None,
 ) -> list[Hatch]:
     """Convert a single line string `s` into a list of virtual
     :class:`~ezdxf.entities.Hatch` entities.

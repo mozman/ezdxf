@@ -293,7 +293,7 @@ class Spline(DXFGraphic):
 
     @control_points.setter
     def control_points(self, points: Iterable[UVec]) -> None:
-        self._control_points: Vertices = cast(Vertices, VertexArray(Vec3.list(points)))
+        self._control_points: Vertices = cast(Vertices, VertexArray(Vec3.list(points)))  # type: ignore[arg-type]
 
     # DXF callback attribute Spline.dxf.n_control_points
     def control_point_count(self) -> int:
@@ -311,7 +311,7 @@ class Spline(DXFGraphic):
     def fit_points(self, points: Iterable[UVec]) -> None:
         self._fit_points: Vertices = cast(
             Vertices,
-            VertexArray(Vec3.list(points)),
+            VertexArray(Vec3.list(points)),  # type: ignore[arg-type]
         )
 
     # DXF callback attribute Spline.dxf.n_fit_points
@@ -443,7 +443,7 @@ class Spline(DXFGraphic):
         self.dxf.flags = self.PERIODIC | self.CLOSED
         self.dxf.degree = degree
         self.control_points = control_points  # type: ignore
-        self.control_points.extend(control_points[:degree])
+        self.control_points.extend(control_points[:degree])  # type: ignore[arg-type]
         # AutoDesk Developer Docs:
         # If the spline is periodic, the length of knot vector will be greater
         # than length of the control array by 1, but this does not work with

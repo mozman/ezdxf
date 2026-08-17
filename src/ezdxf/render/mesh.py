@@ -573,7 +573,7 @@ class MeshBuilder:
         dxfattribs = dict(dxfattribs) if dxfattribs else {}
         vertices = self.vertices
         if matrix is not None:
-            vertices = matrix.transform_vertices(vertices)
+            vertices = list(matrix.transform_vertices(vertices))
         if ucs is not None:
             vertices = ucs.points_to_wcs(vertices)  # type: ignore
         mesh = layout.add_mesh(dxfattribs=dxfattribs)

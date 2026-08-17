@@ -25,7 +25,7 @@ def corner_vertices(
     bottom: float,
     right: float,
     top: float,
-    m: Matrix44 = None,
+    m: Matrix44 | None = None,
 ) -> Iterable[Vec3]:
     corners = [  # closed polygon: fist vertex  == last vertex
         (left, top),
@@ -70,7 +70,7 @@ class FrameRenderer(tl.ContentRenderer):
         bottom: float,
         right: float,
         top: float,
-        m: Matrix44 = None,
+        m: Matrix44 | None = None,
     ) -> None:
         self._render_outline(list(corner_vertices(left, bottom, right, top, m)))
 
@@ -83,7 +83,7 @@ class FrameRenderer(tl.ContentRenderer):
             prev = vertex
 
     def line(
-        self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 = None
+        self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 | None = None
     ) -> None:
         points = [(x1, y1), (x2, y2)]
         if m is not None:
@@ -113,7 +113,7 @@ class ColumnBackgroundRenderer(FrameRenderer):
         bottom: float,
         right: float,
         top: float,
-        m: Matrix44 = None,
+        m: Matrix44 | None = None,
     ) -> None:
         # Important: this is not a clipping box, it is possible to
         # render anything outside of the given borders!
@@ -153,7 +153,7 @@ class TextRenderer(FrameRenderer):
         bottom: float,
         right: float,
         top: float,
-        m: Matrix44 = None,
+        m: Matrix44 | None = None,
     ):
         """Create/render the text content"""
         sx = 1.0

@@ -147,6 +147,7 @@ class MLeaderStyleOverride:
 
     def get(self, attrib_name: str) -> Any:
         # Set MLEADERSTYLE value as default value:
+        value: Any
         if attrib_name == "block_scale_vector":
             value = self._block_scale_vector
         else:
@@ -1464,7 +1465,7 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         if has_dogleg:
             last_segment = dogleg_direction * (dogleg_length + gap)
         else:
-            last_segment = Vec2()
+            last_segment = Vec3()
         insert = (
             last_leader_point + last_segment + Vec2(move_text_x, move_text_y)
         )

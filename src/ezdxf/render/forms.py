@@ -287,6 +287,7 @@ def ngon(
         angle += delta
 
     if close:
+        assert first is not None
         yield first
 
 
@@ -341,6 +342,7 @@ def star(
         yield s2
 
     if close:
+        assert first is not None
         yield first
 
 
@@ -431,6 +433,7 @@ def gear(
             state = _Gear.TOP_START
 
     if close:
+        assert first is not None
         yield first
 
 
@@ -1058,10 +1061,10 @@ def rotation_form(
     profile = [Vec3(p) for p in profile]
     profiles = [profile]
     for _ in range(int(count)):
-        profile = list(m.transform_vertices(profile))
+        profile = list(m.transform_vertices(profile))  # type: ignore[assignment]
         profiles.append(profile)
     mesh = from_profiles_linear(
-        profiles,
+        profiles,  # type: ignore[arg-type]
         close=False,
         quads=True,
         caps=caps,
@@ -1386,7 +1389,7 @@ def debug_sweep_profiles(
     close=True,
 ) -> list[Sequence[Vec3]]:
     if close:
-        profile = close_polygon(profile)
+        profile = close_polygon([Vec3(p) for p in profile])
     profiles: list[Sequence[Vec3]] = []
     for sp, ep in zip(
         *_make_sweep_start_and_end_profiles(

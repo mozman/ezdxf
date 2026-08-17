@@ -76,7 +76,7 @@ class AbstractTrace:
 
         contour = list(merge(forward_contour))
         contour.extend(reversed(list(merge(backward_contour))))
-        return contour
+        return contour  # type: ignore[return-value]
 
     def virtual_entities(
         self, dxftype="TRACE", dxfattribs=None, doc: Optional[Drawing] = None
@@ -406,7 +406,7 @@ class CurvedTrace(AbstractTrace):
                 vtx0 = vtx3
                 vtx1 = vtx2
                 continue
-            yield vtx0, vtx1, vtx2, vtx3
+            yield vtx0, vtx1, vtx2, vtx3  # type: ignore[misc]
             vtx0 = vtx3
             vtx1 = vtx2
 
@@ -604,6 +604,7 @@ class TraceBuilder(Sequence):
         linear_trace = LinearTrace()
         for point, start_width, end_width, bulge in points:
             if store_bulge != 0.0:
+                assert store_point is not None
                 center, start_angle, end_angle, radius = bulge_to_arc(
                     store_point, point, store_bulge
                 )

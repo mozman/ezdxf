@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING, Callable, Iterable, Iterator
 import math
 import numpy as np
 
@@ -101,6 +101,7 @@ class Arc(Circle):
         arc = self.construction_tool()
         ocs = self.ocs()
         elevation = Vec3(self.dxf.center).z
+        to_wcs: Callable[[Iterable[Vec3]], Iterator[Vec3]]
         if ocs.transform:
             to_wcs = ocs.points_to_wcs
         else:

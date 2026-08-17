@@ -383,14 +383,17 @@ class Vec3:
             and math.isclose(self._z, z, rel_tol=rel_tol, abs_tol=abs_tol)
         )
 
-    def __eq__(self, other: UVec) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Equal operator.
 
         Args:
             other: :class:`Vec3` compatible object
         """
         if not isinstance(other, Vec3):
-            other = Vec3(other)
+            try:
+                other = Vec3(other)
+            except (TypeError, ValueError):
+                return NotImplemented
         return self.x == other.x and self.y == other.y and self.z == other.z
 
     def __lt__(self, other: UVec) -> bool:
@@ -506,8 +509,8 @@ class Vec3:
         """
         x_axis = (base - self.project(base)).normalize()
         y_axis = self.cross(x_axis).normalize()
-        target_projected_x = x_axis.dot(target)
-        target_projected_y = y_axis.dot(target)
+        target_projected_x = x_axis.dot(target)  # type: ignore[arg-type]
+        target_projected_y = y_axis.dot(target)  # type: ignore[arg-type]
         return math.atan2(target_projected_y, target_projected_x) % math.tau
 
     def rotate(self, angle: float) -> Vec3:
@@ -732,9 +735,12 @@ class Vec2:
             self.x, other.x, rel_tol=rel_tol, abs_tol=abs_tol
         ) and math.isclose(self.y, other.y, rel_tol=rel_tol, abs_tol=abs_tol)
 
-    def __eq__(self, other: UVec) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Vec2):
-            other = Vec2(other)
+            try:
+                other = Vec2(other)
+            except (TypeError, ValueError):
+                return NotImplemented
         return self.x == other.x and self.y == other.y
 
     def __lt__(self, other: UVec) -> bool:
@@ -757,7 +763,7 @@ class Vec2:
         except AttributeError:
             raise TypeError("invalid argument")
 
-    def __rsub__(self, other: AnyVec) -> Vec2:
+    def __rsub__(self, other: AnyVec) -> Vec2:  # type: ignore[misc]
         try:
             return self.__class__(other.x - self.x, other.y - self.y)
         except AttributeError:

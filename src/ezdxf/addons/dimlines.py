@@ -312,15 +312,15 @@ class LinearDimension(_DimensionBase):
         """
         Get start and end point on the dimension line of dimension section.
         """
-        return self._get_dimline_point(section), self._get_dimline_point(
+        return Vec3(self._get_dimline_point(section)), Vec3(self._get_dimline_point(
             section + 1
-        )
+        ))
 
     def _get_dimline_bounds(self) -> tuple[Vec3, Vec3]:
         """
         Get the first and the last point of dimension line.
         """
-        return self._get_dimline_point(0), self._get_dimline_point(-1)
+        return Vec3(self._get_dimline_point(0)), Vec3(self._get_dimline_point(-1))
 
     @property
     def section_count(self) -> int:
@@ -357,7 +357,7 @@ class LinearDimension(_DimensionBase):
     @staticmethod
     def _get_point_on_dimline(point: UVec, dimray: ConstructionRay) -> Vec3:
         """get the measure target point projection on the dimension line"""
-        return dimray.intersect(dimray.orthogonal(point))
+        return Vec3(dimray.intersect(dimray.orthogonal(point)))
 
     def _draw_dimline(self, layout: "GenericLayoutType") -> None:
         """build dimension line entity"""
@@ -640,9 +640,9 @@ class ArcDimension(AngularDimension):
     def _setup(self) -> None:
         super()._setup()
         if self.arc3points:
-            self.center = center_of_3points_arc(
+            self.center = Vec3(center_of_3points_arc(
                 self.center, self.start, self.end
-            )
+            ))
 
     def _get_extline_start(self, vector: Vec3) -> Vec3:
         return self.center + (

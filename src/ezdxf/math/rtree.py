@@ -10,7 +10,7 @@
 from __future__ import annotations
 from operator import itemgetter
 import statistics
-from typing import Iterator, Callable, Sequence, Iterable, TypeVar, Generic
+from typing import Iterator, Callable, Sequence, Iterable, TypeVar, Generic, Union
 import abc
 import math
 
@@ -20,7 +20,7 @@ __all__ = ["RTree"]
 
 INF = float("inf")
 
-T = TypeVar("T", Vec2, Vec3)
+T = TypeVar("T", bound=Union[Vec2, Vec3])
 
 
 class Node(abc.ABC, Generic[T]):
@@ -75,6 +75,7 @@ class LeafNode(Node[T]):
         distance, point = min((target.distance(p), p) for p in self.points)
         if distance < nn_dist:
             nn, nn_dist = point, distance
+        assert nn is not None
         return nn, nn_dist
 
     def points_in_sphere(self, center: T, radius: float) -> Iterator[T]:

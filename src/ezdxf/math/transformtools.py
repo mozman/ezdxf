@@ -109,7 +109,7 @@ class OCSTransform:
         if extrusion is None:  # fill in dummy values
             self._reset_ocs(_PLACEHOLDER_OCS, _PLACEHOLDER_OCS, True)
         else:
-            new_extrusion, scale_uniform = transform_extrusion(extrusion, m)
+            new_extrusion, scale_uniform = transform_extrusion(extrusion, self.m)
             self._reset_ocs(OCS(extrusion), OCS(new_extrusion), scale_uniform)
 
     def _reset_ocs(self, old_ocs: OCS, new_ocs: OCS, scale_uniform: bool) -> None:

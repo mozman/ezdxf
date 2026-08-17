@@ -563,7 +563,7 @@ def sort_projected_points(
 ) -> list[Vec2]:
     direction = Vec2.from_deg_angle(angle)
     projected_vectors = [(direction.project(Vec2(p)), p) for p in points]
-    return [p for projection, p in sorted(projected_vectors)]
+    return [Vec2(p) for projection, p in sorted(projected_vectors)]
 
 
 def multi_point_linear_dimension(

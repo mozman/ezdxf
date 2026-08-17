@@ -93,7 +93,7 @@ class RadiusDimension(BaseDimensionRenderer):
         self.dim_line_angle = self.dim_line_vec.angle_deg
         self.radius = direction.magnitude
         # get_measurement() works for radius and diameter dimension
-        measurement.update(self.dimension.get_measurement())
+        measurement.update(self.dimension.get_measurement())  # type: ignore[arg-type]
         self.outside_default_distance = self.radius + 2 * self.arrows.arrow_size
         self.outside_default_defpoint = self.center + (
             self.dim_line_vec * self.outside_default_distance

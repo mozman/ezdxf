@@ -156,7 +156,7 @@ def precise_bbox(path: Path) -> BoundingBox:
     points: list[Vec3] = [start]
     for cmd in path.commands():
         if cmd.type == Command.LINE_TO:
-            points.append(cmd.end)
+            points.append(Vec3(cmd.end))
         elif cmd.type == Command.CURVE4_TO:
             bb = cubic_bezier_bbox(
                 Bezier4P((start, cmd.ctrl1, cmd.ctrl2, cmd.end))  # type: ignore
@@ -168,8 +168,8 @@ def precise_bbox(path: Path) -> BoundingBox:
             points.append(bb.extmin)
             points.append(bb.extmax)
         elif cmd.type == Command.MOVE_TO:
-            points.append(cmd.end)
-        start = cmd.end
+            points.append(Vec3(cmd.end))
+        start = Vec3(cmd.end)
 
     return BoundingBox(points)
 
@@ -585,7 +585,7 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
     end = curves[-1].control_points[-1]
     if path.end.isclose(end):
         # connect to new curves end point
-        curves = reverse_bezier_curves(curves)
+        curves = reverse_bezier_curves(curves)  # type: ignore
 
     for curve in curves:
         start, ctrl1, ctrl2, end = curve.control_points
@@ -618,7 +618,7 @@ def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
     end = curves[-1].control_points[-1]
     if path.end.isclose(end):
         # connect to new curves end point
-        curves = reverse_bezier_curves(curves)
+        curves = reverse_bezier_curves(curves)  # type: ignore
 
     for curve in curves:
         start, ctrl, end = curve.control_points
@@ -671,8 +671,8 @@ def add_2d_polyline(
         curve0 = curves[0]
         cp0 = curve0.control_points[0]
         if cp0.isclose(p2, rel_tol=IS_CLOSE_TOL, abs_tol=0):
-            curves = reverse_bezier_curves(curves)
-        add_bezier4p(path, curves)
+            curves = reverse_bezier_curves(curves)  # type: ignore
+        add_bezier4p(path, curves)  # type: ignore[arg-type]
 
     if len(path):
         raise ValueError("Requires an empty path.")
@@ -787,7 +787,7 @@ def _all_lines_to_curve(path: Path, count: int = 4) -> Path:
                     return new_path
                 # else remove line segment (start==end)
             else:
-                vertices = linear_vertex_spacing(start, cmd.end, count)
+                vertices = linear_vertex_spacing(start, Vec3(cmd.end), count)
                 if count == 3:
                     new_path.curve3_to(vertices[2], ctrl=vertices[1])
                 else:  # count == 4
@@ -798,7 +798,7 @@ def _all_lines_to_curve(path: Path, count: int = 4) -> Path:
                     )
         else:
             new_path.append_path_element(cmd)
-        start = cmd.end
+        start = Vec3(cmd.end)
     return new_path
 
 

@@ -12,4 +12,4 @@ def draw_rect(points: list[Vec3], color: Color, out: BackendInterface):
 
     props = BackendProperties(color=color)
     for a, b in zip(points, points[1:]):
-        out.draw_line(a, b, props)
+        out.draw_line(a, b, props)  # type: ignore[arg-type]

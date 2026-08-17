@@ -161,7 +161,7 @@ class Bezier:
             tangent: start tangent as vector, example: (5, 0, 0) means a
                      horizontal tangent with a length of 5 drawing units
         """
-        self.points.append((Vec3(point), None, tangent, None))
+        self.points.append((Vec3(point), None, Vec3(tangent), None))
 
     def append(
         self,
@@ -495,7 +495,7 @@ class EulerSpiral:
         spline = self.spiral.bspline(length, fit_points, degree=degree)
         points = spline.control_points
         if matrix is not None:
-            points = matrix.transform_vertices(points)
+            points = list(matrix.transform_vertices(points))
         return layout.add_open_spline(
             control_points=points,
             degree=spline.degree,

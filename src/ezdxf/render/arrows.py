@@ -2,7 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Iterator
-from ezdxf.math import Vec2, Shape2d, NULLVEC, UVec
+from ezdxf.math import Vec2, Vec3, Shape2d, NULLVEC, UVec
 from .forms import open_arrow, arrow2
 
 if TYPE_CHECKING:
@@ -106,7 +106,7 @@ class _OpenArrow(BaseArrow):
         angle: float = 0,
     ):
         points = list(open_arrow(size, angle=arrow_angle))
-        points.append((-1, 0))
+        points.append(Vec3(-1, 0))
         super().__init__(points)
         self.place(insert, angle)
 
@@ -193,7 +193,7 @@ class DotSmall(Circle):
         if layout.dxfversion > "AC1009":
             dxfattribs["const_width"] = self.radius
             layout.add_lwpolyline(
-                [(p1, 1), (p2, 1)],
+                [(p1, 1), (p2, 1)],  # type: ignore[list-item]
                 format="vb",
                 close=True,
                 dxfattribs=dxfattribs,
@@ -326,7 +326,7 @@ class DatumTriangleFilled(DatumTriangle):
 class _EzArrow(BaseArrow):
     def __init__(self, insert: UVec, size: float = 1.0, angle: float = 0):
         points = list(arrow2(size, angle=DEFAULT_ARROW_ANGLE))
-        points.append((-1, 0))
+        points.append(Vec3(-1, 0))
         super().__init__(points)
         self.place(insert, angle)
 

@@ -1160,5 +1160,5 @@ def vertex_attribs(data: Sequence, format="xyseb") -> dict:
             location = location.replace(x=float(value))
         elif code == "y":
             location = location.replace(y=float(value))
-    attribs["location"] = location
+    attribs["location"] = location  # type: ignore[assignment]
     return attribs

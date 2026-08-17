@@ -502,7 +502,7 @@ class Paperspace(Layout):
             self.delete_entity(viewport)
         self.add_new_main_viewport()
 
-    def reset_main_viewport(self, center: UVec = None, size: UVec = None) -> Viewport:
+    def reset_main_viewport(self, center: UVec | None = None, size: UVec | None = None) -> Viewport:
         """Reset the main viewport of this paper space layout to the given
         values, or reset them to the default values, deduced from the paper
         settings. Creates a new main viewport if none exist.

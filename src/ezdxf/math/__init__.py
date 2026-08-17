@@ -34,7 +34,7 @@ REL_TOL = 1e-9
 
 def close_vectors(a: Iterable[AnyVec], b: Iterable[UVec], *,
                   rel_tol=REL_TOL, abs_tol=ABS_TOL) -> bool:
-    return all(v1.isclose(v2, rel_tol=rel_tol, abs_tol=abs_tol)
+    return all(v1.isclose(v2, rel_tol=rel_tol, abs_tol=abs_tol)  # type: ignore[arg-type]
                for v1, v2 in zip(a, b))
 
 

@@ -444,6 +444,7 @@ class Text(DXFGraphic):
         length = 0.0
         align, p1, p2 = self.get_placement()
         if align in (TextEntityAlignment.FIT, TextEntityAlignment.ALIGNED):
+            assert p2 is not None
             # text is stretch between p1 and p2
             length = p1.distance(p2)
         return length
@@ -461,6 +462,7 @@ def text_transformation_matrix(entity: Text) -> Matrix44:
     oblique = math.radians(entity.dxf.oblique)
     location = p1
     if align in (TextEntityAlignment.ALIGNED, TextEntityAlignment.FIT):
+        assert p2 is not None
         width_factor = 1.0  # text goes from p1 to p2, no stretching applied
         location = p1.lerp(p2, factor=0.5)
         angle = (p2 - p1).angle  # override stored angle

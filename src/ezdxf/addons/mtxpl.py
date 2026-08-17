@@ -32,7 +32,7 @@ class FrameRenderer(tl.ContentRenderer):
         bottom: float,
         right: float,
         top: float,
-        m: Matrix44 = None,
+        m: Matrix44 | None = None,
     ) -> None:
         pline = self.layout.add_lwpolyline(
             [(left, top), (right, top), (right, bottom), (left, bottom)],
@@ -43,7 +43,7 @@ class FrameRenderer(tl.ContentRenderer):
             pline.transform(m)
 
     def line(
-        self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 = None
+        self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 | None = None
     ) -> None:
         line = self.layout.add_line((x1, y1), (x2, y2), dxfattribs=self.line_attribs)
         if m:

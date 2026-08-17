@@ -147,15 +147,15 @@ class UCS:
         elif ux is None:
             _uy = Vec3(uy).normalize()
             _uz = Vec3(uz).normalize()
-            _ux = Vec3(uy).cross(uz).normalize()
+            _ux = _uy.cross(_uz).normalize()
         elif uy is None:
             _ux = Vec3(ux).normalize()
             _uz = Vec3(uz).normalize()
-            _uy = Vec3(uz).cross(ux).normalize()
+            _uy = _uz.cross(_ux).normalize()
         elif uz is None:
             _ux = Vec3(ux).normalize()
             _uy = Vec3(uy).normalize()
-            _uz = Vec3(ux).cross(uy).normalize()
+            _uz = _ux.cross(_uy).normalize()
         else:  # all axis are given
             _ux = Vec3(ux).normalize()
             _uy = Vec3(uy).normalize()

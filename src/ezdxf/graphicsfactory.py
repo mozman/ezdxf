@@ -455,7 +455,7 @@ class CreatorInterface:
         polyline: Polyline = self.new_entity("POLYLINE", dxfattribs)  # type: ignore
         polyline.close(close)
         if format is not None:
-            polyline.append_formatted_vertices(points, format=format)
+            polyline.append_formatted_vertices(points, format=format)  # type: ignore[arg-type]
         else:
             polyline.append_vertices(points)
         if self.doc:
@@ -628,7 +628,7 @@ class CreatorInterface:
             )
         close = dxfattribs.pop("closed", close)
         lwpolyline: LWPolyline = self.new_entity("LWPOLYLINE", dxfattribs)  # type: ignore
-        lwpolyline.set_points(points, format=format)
+        lwpolyline.set_points(points, format=format)  # type: ignore[arg-type]
         lwpolyline.closed = close
         return lwpolyline
 

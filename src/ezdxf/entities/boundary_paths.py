@@ -343,7 +343,7 @@ class BoundaryPaths:
             ellipse = EllipseEdge()
             ellipse.center = arc.center
             ellipse.ratio = 1.0
-            ellipse.major_axis = (arc.radius, 0.0)
+            ellipse.major_axis = Vec2(arc.radius, 0.0)
             ellipse.start_angle = arc.start_angle
             ellipse.end_angle = arc.end_angle
             ellipse.ccw = arc.ccw

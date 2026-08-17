@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2024 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, Union, Iterable, Iterator
+from typing import TYPE_CHECKING, Optional, Union, Iterable, Iterator, cast
 from typing_extensions import Self
 
 import math
@@ -704,7 +704,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         """
         tool = MEASUREMENT_TOOLS.get(self.dimtype)
         if tool:
-            return tool(self)
+            return cast(Union[float, Vec3], tool(self))
         else:
             raise TypeError(f"Unknown DIMENSION type {self.dimtype}.")
 

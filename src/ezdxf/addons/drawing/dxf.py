@@ -160,7 +160,7 @@ class DXFBackend(BackendInterface):
         self, points: BkPoints2d, properties: BackendProperties
     ) -> None:
         hatch = self.layout.add_hatch(dxfattribs=self.resolve_properties(properties))
-        hatch.paths.add_polyline_path(points.vertices(), is_closed=True)
+        hatch.paths.add_polyline_path(points.vertices(), is_closed=True)  # type: ignore[arg-type]
         self.set_solid_fill(hatch, properties)
 
     def draw_image(self, image_data: ImageData, properties: BackendProperties) -> None:

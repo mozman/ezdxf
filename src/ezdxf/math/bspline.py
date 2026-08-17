@@ -660,7 +660,7 @@ def global_bspline_interpolation_end_tangents(
     fit_points.insert(-1, end_tangent * ((1.0 - knots[-(p + 2)]) / p))
 
     solver = _get_best_solver(rows, degree)
-    control_points = solver.solve_matrix(fit_points)
+    control_points = solver.solve_matrix(fit_points)  # type: ignore[arg-type]
     return Vec3.list(control_points.rows()), knots
 
 
@@ -725,7 +725,7 @@ def cad_fit_point_interpolation(
     fit_points.insert(-1, Vec3(0, 0, 0))
 
     solver = _get_best_solver(rows, p)
-    control_points = solver.solve_matrix(fit_points)
+    control_points = solver.solve_matrix(fit_points)  # type: ignore[arg-type]
     return Vec3.list(control_points.rows()), knots
 
 
@@ -790,7 +790,7 @@ def global_bspline_interpolation_first_derivatives(
     B[1] *= knots[p + 1] / p
     B[-2] *= (1.0 - knots[-(p + 2)]) / p
     solver = _get_best_solver(A, degree)
-    control_points = solver.solve_matrix(B)
+    control_points = solver.solve_matrix(B)  # type: ignore[arg-type]
     return Vec3.list(control_points.rows()), knots
 
 
@@ -905,7 +905,7 @@ class BSpline:
                 )
             if knots[0] != 0.0:
                 knots = normalize_knots(knots)
-        self._basis = Basis(knots, order, count, weights=weights)
+        self._basis = Basis(knots, order, count, weights=list(weights) if weights is not None else None)
         self._clamped = len(set(knots[:order])) == 1 and len(set(knots[-order:])) == 1
 
     def __str__(self):
@@ -992,7 +992,7 @@ class BSpline:
 
         """
         return rational_bspline_from_arc(
-            arc.center, arc.radius, arc.start_angle, arc.end_angle, segments=1
+            Vec3(arc.center), arc.radius, arc.start_angle, arc.end_angle, segments=1
         )
 
     @staticmethod
@@ -1335,7 +1335,7 @@ class BSpline:
         14 at the 2nd level and 28 at the 3rd level.
 
         """
-        params = list(create_t_vector(self._control_points, "chord"))
+        params = list(create_t_vector(list(self._control_points), "chord"))
         if len(params) == 0:
             return params
         if self.max_t != 1.0:
@@ -1459,7 +1459,7 @@ def closed_uniform_bspline(
 
 
 def rational_bspline_from_arc(
-    center: Vec3 = (0, 0),
+    center: UVec = (0, 0),
     radius: float = 1,
     start_angle: float = 0,
     end_angle: float = 360,

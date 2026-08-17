@@ -429,9 +429,10 @@ class ClippingStage2d(RenderStage2d):
 
     def draw_point(self, pos: Vec2, properties: Properties) -> None:
         if self.clipping_portal.is_active:
-            pos = self.clipping_portal.clip_point(pos)
-            if pos is None:
+            clipped = self.clipping_portal.clip_point(pos)
+            if clipped is None:
                 return
+            pos = clipped
         self.next_stage.draw_point(pos, properties)
 
     def draw_line(self, start: Vec2, end: Vec2, properties: Properties):
@@ -613,7 +614,7 @@ class LinetypeStage2d(RenderStage2d):
 
         renderer = linetypes.LineTypeRenderer(self.pattern(properties))
         next_stage.draw_solid_lines(
-            [(s, e) for s, e in renderer.line_segment(s, e)],
+            [(s, e) for s, e in renderer.line_segment(s, e)],  # type: ignore[misc]
             properties,
         )
 

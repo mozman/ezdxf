@@ -61,7 +61,7 @@ def bezier_to_bspline(curves: Iterable[AnyBezier]) -> BSpline:
     def get_points(bezier: AnyBezier):
         points = bezier.control_points
         if len(points) < 4:
-            return quadratic_to_cubic_bezier(bezier).control_points
+            return quadratic_to_cubic_bezier(bezier).control_points  # type: ignore[arg-type]
         else:
             return points
 
@@ -143,7 +143,7 @@ def split_bezier(
         if n == 0:
             return
         split(
-            tuple(points[i] * (1.0 - t) + points[i + 1] * t for i in range(n))
+            tuple(points[i] * (1.0 - t) + points[i + 1] * t for i in range(n))  # type: ignore[misc]
         )
 
     split(control_points)

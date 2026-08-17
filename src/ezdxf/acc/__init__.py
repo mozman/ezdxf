@@ -31,7 +31,7 @@ if PYPY:
 
 if USE_C_EXT:
     try:
-        from ezdxf.acc import vector
+        from ezdxf.acc import vector  # type: ignore[attr-defined]
     except ImportError:
         USE_C_EXT = False
 

@@ -360,7 +360,7 @@ class Mesh(DXFGraphic):
 
     @vertices.setter
     def vertices(self, points: Iterable[UVec]) -> None:
-        self._vertices = VertexArray(points)
+        self._vertices = VertexArray(points)  # type: ignore[arg-type]
 
     @property
     def edges(self):

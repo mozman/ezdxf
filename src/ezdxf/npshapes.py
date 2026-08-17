@@ -169,7 +169,7 @@ class NumpyPath2d(NumpyShape2d):
         vertices = [(v.x, v.y) for v in path.control_vertices()]
         if len(vertices) == 0:
             try:  # control_vertices() does not return the start point of empty paths
-                vertices = [Vec2(path.start)]
+                vertices = [(path.start.x, path.start.y)]
             except IndexError:
                 vertices = []
         self._vertices = np.array(vertices, dtype=VertexNumpyType)
