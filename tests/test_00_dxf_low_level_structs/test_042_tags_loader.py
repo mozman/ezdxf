@@ -155,6 +155,13 @@ def test_ext_float_to_int():
     assert list(external_tag_compiler(FLOAT_FOR_INT_TAGS))[0] == (71, 1)
 
 
+def test_ext_int_overflow_value():
+    # A float-as-int value that overflows to infinity ("1e999") is a structure
+    # error, not a raw OverflowError from int(float(...)).
+    with pytest.raises(DXFStructureError):
+        list(external_tag_compiler(INT_OVERFLOW_TAGS))
+
+
 def test_ext_coord_error_tag():
     with pytest.raises(DXFStructureError):
         list(external_tag_compiler(TAGS_WITH_COORD_ERROR))
@@ -318,6 +325,10 @@ check mark 2
 
 FLOAT_FOR_INT_TAGS = """  71
 1.0
+"""
+
+INT_OVERFLOW_TAGS = """  71
+1e999
 """
 
 TAGS_WITH_ERROR = """  9

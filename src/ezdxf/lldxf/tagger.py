@@ -338,7 +338,8 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
                     if TYPE_TABLE.get(code, str) is int:
                         try:
                             yield DXFTag(code, int(float(x.value)))
-                        except ValueError:
+                        except (ValueError, OverflowError):
+                            # OverflowError: values like "1e999" become inf
                             raise DXFStructureError(error_msg(x))
                     else:
                         raise DXFStructureError(error_msg(x))
