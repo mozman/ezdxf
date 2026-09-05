@@ -344,10 +344,11 @@ class Drawing:
              stream: text stream yielding text (unicode) strings by readline()
 
         """
-        from .lldxf.tagger import ascii_tags_loader
+        from .lldxf.tagger import ascii_tag_compiler
 
-        tag_loader = ascii_tags_loader(stream)
-        return cls.load(tag_loader)
+        # ascii_tag_compiler() is the fused and faster equivalent of the
+        # tag_compiler(ascii_tags_loader(stream)) pipeline applied by load()
+        return cls.from_tags(ascii_tag_compiler(stream))
 
     @classmethod
     def load(cls, tag_loader: Iterable[DXFTag]) -> Drawing:

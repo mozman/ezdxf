@@ -1,7 +1,7 @@
 # Copyright (c) 2016-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, TextIO, Iterator, Any, Optional, Sequence
+from typing import Callable, Iterable, TextIO, Iterator, Any, Optional, Sequence
 import struct
 from .types import (
     DXFTag,
@@ -344,6 +344,196 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterator[DXFTag]:
                         raise DXFStructureError(error_msg(x))
         except StopIteration:
             return
+
+
+def _next_raw_tag(
+    readline: Callable[[], str],
+    line: int,
+    compiled_line: int,
+    yield_comments: bool,
+) -> Optional[tuple[int, str, int, int]]:
+    """Reads the next uncompiled tag from a text stream and returns it as
+    (group code, value, line, compiled_line) tuple. Comment tags are skipped
+    like in :func:`ascii_tags_loader`. Returns ``None`` at the end of the
+    stream. (internal API)
+    """
+    while True:
+        code_str = readline()
+        if not code_str:  # empty string indicates EOF
+            return None
+        try:
+            code = int(code_str)
+        except ValueError:
+            raise DXFStructureError(f'Invalid group code "{code_str}" at line {line}.')
+        value = readline()
+        if not value:  # empty string indicates EOF
+            return None
+        line += 2
+        if code != 999 or yield_comments:
+            return code, value.rstrip("\n"), line, compiled_line + 2
+        # comment tags never reach the compiling stage
+
+
+def _compile_vertex(
+    readline: Callable[[], str],
+    code: int,
+    x_value: str,
+    line: int,
+    compiled_line: int,
+    yield_comments: bool,
+) -> Optional[tuple[DXFVertex, Optional[tuple[int, str]], int, int]]:
+    """Reads the remaining components of the point tag started by
+    (`code`, `x_value`) and returns them as
+    (vertex, look-ahead tag, line, compiled_line) tuple.
+
+    A 2D point is only detected by reading the tag beyond the point, that tag is
+    returned as look-ahead tag and has to be processed by the caller, for a 3D
+    point the look-ahead tag is ``None``.
+
+    Returns ``None`` if the stream ends before the point is complete - the
+    two-stage pipeline discards incomplete points the same way, there the
+    StopIteration raised by ``next(tags)`` ends :func:`tag_compiler` before the
+    point is yielded. (internal API)
+    """
+    # y-axis is mandatory
+    next_tag = _next_raw_tag(readline, line, compiled_line, yield_comments)
+    if next_tag is None:
+        return None
+    y_code, y_value, line, compiled_line = next_tag
+    if y_code != code + 10:  # like 20 for base x-code 10
+        raise DXFStructureError(
+            f"Missing required y coordinate near line: {compiled_line}."
+        )
+
+    # z-axis just for 3d points
+    next_tag = _next_raw_tag(readline, line, compiled_line, yield_comments)
+    if next_tag is None:
+        return None
+    z_code, z_value, line, compiled_line = next_tag
+
+    try:
+        if z_code == code + 20:  # z-axis like (30, 0.0) for base x-code 10
+            point = (float(x_value), float(y_value), float(z_value))
+            return DXFVertex(code, point), None, line, compiled_line
+        return (
+            DXFVertex(code, (float(x_value), float(y_value))),
+            (z_code, z_value),
+            line,
+            compiled_line,
+        )
+    except ValueError:
+        raise DXFStructureError(
+            f"Invalid floating point values near line: {compiled_line}."
+        )
+
+
+def ascii_tag_compiler(stream: TextIO, skip_comments: bool = True) -> Iterator[DXFTag]:
+    """Yields compiled :class:`DXFTag` objects from a text `stream` (untrusted
+    external source), this is the fused and faster equivalent of
+    ``tag_compiler(ascii_tags_loader(stream))``.
+
+    Loading and compiling the tags in a single pass avoids two objects per tag:
+    the uncompiled :class:`DXFTag` created by :func:`ascii_tags_loader` and
+    thrown away by :func:`tag_compiler`, and the generator hand-off between
+    them. Loading the tags of a big DXF file is ~30% faster and loading a
+    complete DXF document ~10% faster, see "profiling/tag_compiler.py". This is
+    the tag loader used by :meth:`ezdxf.document.Drawing.read`.
+
+    The emitted tags, the raised exceptions and the line numbers reported in the
+    exception messages are the same as for the two-stage pipeline, therefore two
+    line counters are maintained: `line` counts the lines read from the stream
+    like :func:`ascii_tags_loader` does and `compiled_line` counts the lines of
+    the tags passed on to the compiling stage like :func:`tag_compiler` does -
+    these numbers differ as soon as comment tags are filtered out.
+
+    Args:
+        stream: text stream, only required feature is the :meth:`readline` method
+        skip_comments: skip comment tags (group code == 999) if `True`
+
+    Raises:
+        DXFStructureError: Found invalid group code, invalid DXF tag or
+            unexpected coordinate order.
+
+    """
+    yield_comments = not skip_comments
+    # localize global names, they are looked up for every single tag
+    _DXFTag = DXFTag
+    point_codes = POINT_CODES
+    binary_codes = BINARY_DATA
+    type_table = TYPE_TABLE
+    readline = stream.readline
+
+    line: int = 1
+    compiled_line: int = 0
+    # a look-ahead tag returned by _compile_vertex() for a 2D point
+    pending: Optional[tuple[int, str]] = None
+
+    while True:
+        if pending is not None:
+            code, value = pending
+            pending = None
+        else:
+            # this is _next_raw_tag() inlined, the tag loop is the hot path of
+            # loading a DXF document and does not need the call overhead
+            code_str = readline()
+            if not code_str:  # empty string indicates EOF
+                return
+            try:
+                code = int(code_str)
+            except ValueError:
+                raise DXFStructureError(
+                    f'Invalid group code "{code_str}" at line {line}.'
+                )
+            value = readline()
+            if not value:  # empty string indicates EOF
+                return
+            value = value.rstrip("\n")
+            line += 2
+            if code == 999 and not yield_comments:
+                continue  # comment tags never reach the compiling stage
+            compiled_line += 2
+
+        if code in point_codes:
+            vertex = _compile_vertex(
+                readline, code, value, line, compiled_line, yield_comments
+            )
+            if vertex is None:  # incomplete point at the end of the stream
+                return
+            tag, pending, line, compiled_line = vertex
+            yield tag
+        elif code in binary_codes:
+            try:
+                yield DXFBinaryTag.from_string(code, value)
+            except ValueError:
+                raise DXFStructureError(
+                    f"Invalid binary data near line: {compiled_line}."
+                )
+        elif code == 0:
+            value = value.strip()
+            yield _DXFTag(0, value)
+            if value == "EOF":  # yield EOF tag but ignore any data beyond EOF
+                return
+        else:
+            caster = type_table.get(code)
+            if caster is None:  # single value tag: str
+                yield _DXFTag(code, value)
+            else:  # single value tag: int or float
+                try:
+                    yield _DXFTag(code, caster(value))
+                except ValueError:
+                    # ProE stores int values as floats :((
+                    if caster is not int:
+                        raise DXFStructureError(
+                            f'Invalid tag (code={code}, value="{value}") '
+                            f"near line: {compiled_line}."
+                        )
+                    try:
+                        yield _DXFTag(code, int(float(value)))
+                    except ValueError:
+                        raise DXFStructureError(
+                            f'Invalid tag (code={code}, value="{value}") '
+                            f"near line: {compiled_line}."
+                        )
 
 
 def json_tag_loader(

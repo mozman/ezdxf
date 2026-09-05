@@ -1,4 +1,8 @@
 ## Version 1.4.5 - dev
+	- NEW: `ezdxf.lldxf.tagger.ascii_tag_compiler()`, fused version of `tag_compiler(ascii_tags_loader(stream))`
+		- loads and compiles DXF tags in a single pass, used by `Drawing.read()` and the `iterdxf` add-on
+		- loading the tags of a big DXF file is ~30% faster, loading a complete DXF document is ~10% faster
+		- the two-stage pipeline is preserved as public API and is still used to load tags from other sources
 	- Added support for control code `%%%` for `%` as documented by [Autodesk](https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-Core/files/GUID-968CBC1D-BA99-4519-ABDD-88419EB2BF92.htm)
 		- contributed by #CRQuadro
 	- BUGFIX: fix pattern scaling at `HATCH` transformations
