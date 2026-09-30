@@ -597,7 +597,7 @@ class RenderContext:
             elif first_pass:
                 forced.add(aci)
         if first_pass:
-            ctb.forced_colors = forced  # type: ignore[attr-defined]
+            ctb.forced_colors = forced  # type: ignore
         return ctb
 
     def _ctb_forces_color(self, aci: int) -> bool:
