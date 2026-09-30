@@ -25,7 +25,8 @@ TOL = 0.001
 
 class TestLibreCadFont:
     @pytest.fixture(scope="class")
-    def lff(self):
+    @classmethod
+    def lff(cls):
         return fonts.make_font(FONT, 2.5)
 
     def test_is_a_lff_font(self, lff):

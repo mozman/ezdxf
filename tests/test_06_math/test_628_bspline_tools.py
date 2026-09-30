@@ -55,7 +55,7 @@ EXPECTED_WEIGHTS = [1.0, 1.75, 2.25, 2.875, 3.0, 2.8749999999999996, 2.25, 1.75,
 
 
 class TestDegreeElevationNonRationalBSpline:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def result(self):
         spline = BSpline(CONTROL_POINTS)
         return spline.degree_elevation(1)
@@ -86,7 +86,7 @@ class TestDegreeElevationNonRationalBSpline:
 
 
 class TestDegreeElevationRationalBSpline:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def result(self):
         spline = BSpline(CONTROL_POINTS, weights=WEIGHTS)
         return spline.degree_elevation(1)
@@ -146,7 +146,7 @@ class TestHomogeneousPoints:
 
 
 class TestPointInversion:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def spline(self):
         return BSpline(CONTROL_POINTS)
 
@@ -171,7 +171,7 @@ class TestSplineMeasurement:
     mid_length = total_length / 2
     mid_param = 0.6251460418169124
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def spline(self):
         return BSpline(CONTROL_POINTS)
 

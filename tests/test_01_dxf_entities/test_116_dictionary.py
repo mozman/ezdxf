@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2022, Manfred Moitzi
+# Copyright (c) 2011-2026, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -330,7 +330,7 @@ class TestDXFDictWithDefault:
 
 
 class TestCopyHardOwnerDictionary:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def source(self, doc) -> Dictionary:
         doc = ezdxf.new()
         dictionary = doc.rootdict.get_required_dict("COPYTEST", hard_owned=True)
@@ -408,7 +408,7 @@ class TestCopyHardOwnerDictionary:
 
 
 class TestCopyNotHardOwnerDictionary:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def source(self, doc) -> Dictionary:
         doc = ezdxf.new()
         dictionary = doc.rootdict.get_required_dict("COPYTEST", hard_owned=True)

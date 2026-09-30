@@ -74,7 +74,8 @@ def test_big_font_not_supported():
 
 class TestFontShapeFile:
     @pytest.fixture(scope="class")
-    def txt(self):
+    @classmethod
+    def txt(cls):
         return shapefile.shp_load(TXT)
 
     def test_shape_file_name(self, txt):
@@ -115,7 +116,8 @@ class TestShapeFile:
     """Any shape file without a font definition is a common shape file"""
 
     @pytest.fixture(scope="class")
-    def shp(self):
+    @classmethod
+    def shp(cls):
         return shapefile.shp_load(FILE_1)
 
     def test_is_a_shape_file(self, shp):
@@ -130,7 +132,8 @@ class TestShapeFile:
 
 class TestShapeRenderer:
     @pytest.fixture(scope="class")
-    def shp(self):
+    @classmethod
+    def shp(cls):
         return shapefile.shp_load(FILE_1)
 
     def test_render_only_lines(self, shp):
@@ -378,7 +381,8 @@ TXT = b"""
 
 class TestLoadShxShapeFile:
     @pytest.fixture(scope="class")
-    def shx(self) -> shapefile.ShapeFile:
+    @classmethod
+    def shx(cls) -> shapefile.ShapeFile:
         return shapefile.shx_load(SHX0)
 
     def test_shape_count(self, shx):
@@ -405,7 +409,8 @@ class TestLoadShxFontFile:
     """This is the old 'AutoCAD-86 shapes 1.0' format like the file ISO.shx"""
 
     @pytest.fixture(scope="class")
-    def shx(self) -> shapefile.ShapeFile:
+    @classmethod
+    def shx(cls) -> shapefile.ShapeFile:
         return shapefile.shx_load(SHX1)
 
     def test_shape_count(self, shx):
@@ -429,7 +434,8 @@ class TestLoadUnifontFile:
     """This is the new format called 'AutoCAD-86 unifont 1.0'."""
 
     @pytest.fixture(scope="class")
-    def shx(self) -> shapefile.ShapeFile:
+    @classmethod
+    def shx(cls) -> shapefile.ShapeFile:
         return shapefile.shx_load(SHX2)
 
     def test_shape_count(self, shx):

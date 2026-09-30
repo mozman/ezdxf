@@ -17,11 +17,11 @@ def test_empty_page():
 
 
 class TestPlotterBackend:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def properties(self):
         return BackendProperties(color="#ff0000", lineweight=0.25)
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def result1(self, properties):
         backend = hpgl2.PlotterBackend()
         backend.draw_line(Vec2(0, 0), Vec2(100, 100), properties)

@@ -440,7 +440,7 @@ class TestReactors:
 
 
 class TestGetLayout:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def doc(self):
         return ezdxf.new()
 

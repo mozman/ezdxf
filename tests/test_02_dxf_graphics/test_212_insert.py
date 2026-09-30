@@ -411,7 +411,7 @@ def test_add_virtual_insert_with_attribs_to_layout(doc):
 
 
 class TestSupportsVirtualEntitiesProtocol:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def doc(self):
         doc = ezdxf.new()
         blk = doc.blocks.new("POINT")

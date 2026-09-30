@@ -8,7 +8,8 @@ from ezdxf import zoom, bbox
 
 class TestModelSpace:
     @pytest.fixture(scope="class")
-    def msp(self):
+    @classmethod
+    def msp(cls):
         doc = ezdxf.new()
         msp_ = doc.modelspace()
         msp_.add_point((-25, -25))
@@ -62,9 +63,10 @@ class TestModelSpace:
 
 class TestPaperSpace:
     @pytest.fixture(scope="class")
-    def psp(self):
+    @classmethod
+    def psp(cls):
         doc = ezdxf.new()
-        psp_ = cast("Paperspace", doc.layout("Layout1"))
+        psp_ = doc.layout("Layout1")
         psp_.add_viewport(
             center=(40, 40),
             size=(40, 40),

@@ -185,7 +185,8 @@ class TestVirtualCopies:
 
 class TestMLeaderNonUniformScaling:
     @pytest.fixture(scope="class")
-    def msp(self):
+    @classmethod
+    def msp(cls):
         from ezdxf.render import mleader
         from ezdxf.math import Vec2
 

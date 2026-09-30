@@ -390,7 +390,8 @@ class TestIsTextVerticalStacked:
     """
 
     @pytest.fixture(scope="class")
-    def doc(self):
+    @classmethod
+    def doc(cls):
         d = ezdxf.new()
         style = d.styles.new("Stacked")
         style.is_vertical_stacked = True

@@ -242,11 +242,11 @@ class TestBestFitNormal:
     def test_if_returns_right_handed_normals(self, a, b, c, r):
         assert best_fit_normal((a, b, c)) == r
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def vertices(self):
         return Vec3.list([(0, 0), (3, 0), (3, 4), (4, 8), (1, 5), (0, 2)])
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def matrix(self):
         return Matrix44.chain(
             Matrix44.x_rotate(0.75),

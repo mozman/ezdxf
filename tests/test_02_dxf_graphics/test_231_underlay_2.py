@@ -114,15 +114,15 @@ def test_new_pdf(new_doc):
 
 
 class TestCopyAndTransformUnderlay:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def doc(self):
         return ezdxf.new()
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def underlay_def(self, doc):
         return doc.add_underlay_def("underlay.pdf")
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def msp(self, doc):
         return doc.modelspace()
 

@@ -18,7 +18,7 @@ from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
 
 # noinspection PyUnresolvedReferences
 class TestMLine:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def msp(self):
         return ezdxf.new().modelspace()
 
@@ -127,7 +127,7 @@ class TestMLine:
 
 
 class TestMLineStyle:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def doc(self):
         return ezdxf.new()
 
@@ -230,7 +230,7 @@ class TestMLineVertex:
 
 
 class TestMLineAudit:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def doc(self):
         d = ezdxf.new()
         new_style = d.mline_styles.new("NewStyle1")
@@ -238,7 +238,7 @@ class TestMLineAudit:
         new_style.elements.append(0)
         return d
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def msp(self, doc):
         return doc.modelspace()
 

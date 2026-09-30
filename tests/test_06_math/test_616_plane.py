@@ -104,7 +104,7 @@ class TestSplitConvexPolygon:
 
 
 class TestIntersectLine:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def plane(self):
         return Plane(Z_AXIS, 5)
 
@@ -144,7 +144,7 @@ class TestIntersectLine:
 
 
 class TestIntersectRay:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def plane(self):
         return Plane(Z_AXIS, 5)
 

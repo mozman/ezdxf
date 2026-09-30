@@ -162,7 +162,8 @@ def test_build_entities(prism_sat):
 
 class TestAcisBuilder:
     @pytest.fixture(scope="class")
-    def builder(self, prism_sat):
+    @classmethod
+    def builder(cls, prism_sat):
         return sat.parse_sat(prism_sat)
 
     def test_parsing_result(self, builder):

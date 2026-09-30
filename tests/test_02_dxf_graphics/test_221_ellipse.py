@@ -164,7 +164,7 @@ def test_from_arc():
 
 
 class TestEllipseParameters:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def msp(self):
         doc = ezdxf.new()
         return doc.modelspace()

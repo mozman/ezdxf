@@ -8,7 +8,8 @@ from ezdxf.lldxf.tagwriter import TagCollector
 
 class TestGenericTableFeatures:
     @pytest.fixture(scope="class")
-    def tables(self) -> TablesSection:
+    @classmethod
+    def tables(cls) -> TablesSection:
         doc = ezdxf.new()
         return doc.tables
 
@@ -52,7 +53,8 @@ class TestGenericTableFeatures:
 
 class TestLayerTableEntry:
     @pytest.fixture(scope="class")
-    def tables(self) -> TablesSection:
+    @classmethod
+    def tables(cls) -> TablesSection:
         doc = ezdxf.new()
         return doc.tables
 
@@ -91,7 +93,8 @@ class TestLayerTableEntry:
 
 class TestTextStyleTable:
     @pytest.fixture(scope="class")
-    def tables(self) -> TablesSection:
+    @classmethod
+    def tables(cls) -> TablesSection:
         doc = ezdxf.new()
         return doc.tables
 
@@ -164,7 +167,7 @@ class TestTextStyleTable:
 
 
 class TestLineTypeTable:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def tables(self) -> TablesSection:
         doc = ezdxf.new()
         return doc.tables

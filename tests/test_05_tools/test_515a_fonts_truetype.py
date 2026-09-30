@@ -167,7 +167,8 @@ class TestFontMeasurements:
 
 class TestMonospaceFont:
     @pytest.fixture(scope="class")
-    def mono(self):
+    @classmethod
+    def mono(cls):
         # special name tio create the MonospaceFont for testing
         return fonts.make_font("*monospace", 2.5, 0.75)
 
@@ -202,7 +203,8 @@ class TestTrueTypeFont:
     """
 
     @pytest.fixture(scope="class")
-    def ttf(self):
+    @classmethod
+    def ttf(cls):
         return fonts.make_font("DejaVuSans.ttf", 2.5)
 
     def test_space_width(self, ttf):

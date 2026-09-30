@@ -719,7 +719,8 @@ def test_all_edges_cube():
 
 class TestGetEdgeStats:
     @pytest.fixture(scope="class")
-    def edges(self):
+    @classmethod
+    def edges(cls):
         mesh = forms.cube()
         return get_edge_stats(mesh.faces)
 
@@ -789,7 +790,8 @@ class TestSeparateMeshes:
 
 class TestNormals:
     @pytest.fixture(scope="class")
-    def normals(self):
+    @classmethod
+    def normals(cls):
         return list(forms.cube().face_normals())
 
     def test_cube_has_six_normals(self, normals):

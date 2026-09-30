@@ -139,7 +139,7 @@ def test_create_layout(doc):
 
 
 class TestAcquireLayouts:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def doc(self):
         doc = ezdxf.new()
         doc.layouts.new("Layout2")

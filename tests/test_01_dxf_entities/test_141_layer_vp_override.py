@@ -140,7 +140,7 @@ class TestSetOverridesWithoutCommit:
 
 
 class TestCommitChanges:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def vp1(self, doc):
         layout: Paperspace = doc.layout("Layout1")  # type: ignore
         return layout.add_viewport(
@@ -151,7 +151,7 @@ class TestCommitChanges:
             status=2,
         )
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def vp2(self, doc):
         layout: Paperspace = doc.layout("Layout1")  # type: ignore
         return layout.add_viewport(

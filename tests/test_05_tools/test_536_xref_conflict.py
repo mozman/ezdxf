@@ -14,7 +14,8 @@ def document_has_no_errors(doc: Drawing) -> bool:
 
 class TestLoadLayers:
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         doc.filename = "xref.dxf"
         doc.layers.add("Layer0", color=colors.RED)
@@ -133,7 +134,8 @@ class TestLoadLinetypes:
     """
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         doc.filename = "xref.dxf"
         doc.linetypes.add("LType0", [0.0], description="xref0")
@@ -194,7 +196,8 @@ class TestLoadTextStyles:
     """
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         doc.filename = "xref.dxf"
         doc.styles.add("Style0", font="style0.ttf")
@@ -260,7 +263,8 @@ class TestLoadDimStyles:
     """
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         doc.filename = "xref.dxf"
         doc.dimstyles.add("Style0", dxfattribs={"dimpost": "xref"})
@@ -323,7 +327,8 @@ class TestLoadMaterials:
     """Materials are stored in object collections which work differently than tables."""
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         doc.filename = "xref.dxf"
         doc.materials.new("Mat0").dxf.description = "XrefMat0"
@@ -382,7 +387,8 @@ class TestLoadMLineStyles:
     """MLineStyles are stored in object collections like Materials."""
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         doc.filename = "xref.dxf"
         mline_style0 = doc.mline_styles.new("Style0")
@@ -455,7 +461,8 @@ class TestLoadMLeaderStyles:
     """MLeaderStyles are stored in object collections like Materials."""
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         doc.filename = "xref.dxf"
         doc.mleader_styles.new("Style0").dxf.default_text_content = "XrefStyle0"

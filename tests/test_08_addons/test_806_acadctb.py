@@ -280,7 +280,8 @@ class TestNamedPlotStyles:
 
 class TestCTBImport:
     @pytest.fixture(scope="class")
-    def ctb(self):
+    @classmethod
+    def ctb(cls):
         path, name = os.path.split(__file__)
         ctbfile = os.path.join(path, "ctbtest.ctb")
         return load(ctbfile)
@@ -343,7 +344,8 @@ class TestCTBExport:
 
 class TestSTBImport:
     @pytest.fixture(scope="class")
-    def stb(self):
+    @classmethod
+    def stb(cls):
         path, name = os.path.split(__file__)
         stb_file = os.path.join(path, "stbtest.stb")
         return load(stb_file)

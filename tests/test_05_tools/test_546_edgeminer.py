@@ -10,7 +10,8 @@ from ezdxf.math import Vec3, rtree
 
 class TestBasicRequirements:
     @pytest.fixture(params=[Vec3, em._Vertex], scope="class")
-    def abc(self, request):
+    @classmethod
+    def abc(cls, request):
         cls = request.param
         a = cls((1, 2, 3))
         b = cls((1, 2, 3))
@@ -296,11 +297,11 @@ class TestFindSequential:
 
 class TestLoopFinderSimple(SimpleLoops):
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def netAD(self):
         return em.Deposit([self.A, self.B, self.C, self.D])
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def netAG(self):
         return em.Deposit([self.A, self.B, self.C, self.D, self.E, self.F, self.G])
 
@@ -567,7 +568,7 @@ class TestWrappingChains:
     D = em.make_edge((3, 0), (4, 0), payload="D")
     E = em.make_edge((4, 0), (5, 0), payload="E")
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def edges(self):
         return (self.A, self.B, self.C, self.D, self.E)
 

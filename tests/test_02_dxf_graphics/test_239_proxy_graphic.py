@@ -29,7 +29,7 @@ def test_export_proxy_graphic():
 
 
 class TestProxyGraphic:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def data(self) -> bytes:
         return load_proxy_graphic(Tags.from_text(DATA))
 

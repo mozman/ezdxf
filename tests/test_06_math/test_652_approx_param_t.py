@@ -27,7 +27,7 @@ class TestGenericFeatures:
 
 
 class TestQuadraticBezier:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def approx(self):
         return ApproxParamT(Bezier3P(Vec2.list([(0, 0), (1, 2), (2, 4)])))
 
@@ -44,7 +44,7 @@ class TestQuadraticBezier:
 
 
 class TestCubicBezier:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def approx(self):
         return ApproxParamT(Bezier4P(Vec2.list([(0, 0), (1, 2), (2, 4), (3, 1)])))
 
@@ -61,7 +61,7 @@ class TestCubicBezier:
 
 
 class TestCubicSpline:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def spline(self):
         points = [(0, 0), (1, 2), (2, 4), (3, 1), (4, 2)]
         # by default knot values are normalized in the range [0, 1],
@@ -72,7 +72,7 @@ class TestCubicSpline:
             knots=knots,
         )
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def approx(self, spline):
         return ApproxParamT(spline, max_t=spline.max_t)
 

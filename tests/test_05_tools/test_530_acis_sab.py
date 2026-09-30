@@ -58,11 +58,13 @@ def test_parse_sab(cube_sab):
 
 class TestSabEntity:
     @pytest.fixture(scope="class")
-    def builder(self, cube_sab):
+    @classmethod
+    def builder(cls, cube_sab):
         return sab.parse_sab(cube_sab)
 
     @pytest.fixture(scope="class")
-    def body(self, builder):
+    @classmethod
+    def body(cls, builder):
         return builder.bodies[0]
 
     def test_get_pointer_at_index(self, body):

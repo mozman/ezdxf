@@ -124,7 +124,8 @@ def test_empty_spline():
 
 class TestLineAndArcToPolyline:
     @pytest.fixture(scope="class")
-    def edges(self) -> Sequence[em.Edge]:
+    @classmethod
+    def edges(cls) -> Sequence[em.Edge]:
         layout = VirtualLayout()
         layout.add_line((0, 0), (6, 0))
         layout.add_arc((6, 3), radius=3, start_angle=270, end_angle=90)

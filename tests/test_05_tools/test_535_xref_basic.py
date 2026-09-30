@@ -36,7 +36,8 @@ def document_has_no_errors(doc: Drawing) -> bool:
 
 class TestLoadResourcesWithoutNamingConflicts:
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         doc.layers.add("FIRST")
         doc.linetypes.add(  # see also: complex_line_type_example.py
@@ -432,7 +433,8 @@ class TestLoadLinkedEntities:
 
 class TestBlocks:
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         doc.layers.add("Layer0")
         doc.linetypes.add("LType0", [0.0])  # CONTINUOUS
@@ -525,7 +527,8 @@ class TestBlocks:
 
 class TestAnonymousBlocks:
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         anonymous_block = doc.blocks.new_anonymous_block("U")
         doc.modelspace().add_blockref(anonymous_block.dxf.name, insert=(0, 0))
@@ -622,7 +625,8 @@ class TestDimension:
     """Load a simple DIMENSION entity without DIMSTYLE overrides in the XDATA section."""
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new(setup="dimstyles")
         msp = doc.modelspace()
         dim = msp.add_linear_dim(
@@ -659,7 +663,8 @@ class TestDimensionDimStyleOverride:
     """Load a DIMENSION with DIMSTYLE overrides in the XDATA section."""
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new(setup="dimstyles")
         msp = doc.modelspace()
         dim = msp.add_linear_dim(
@@ -724,7 +729,8 @@ class TestLeader:
     """
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new(setup="dimstyles")
         msp = doc.modelspace()
         text = msp.add_text("LEADER").set_placement((3, 1))
@@ -800,7 +806,8 @@ class TestLoadImage:
     """Load a IMAGE, IMAGEDEF and IMAGEDEF_REACTOR"""
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         msp = doc.modelspace()
         my_image_def = doc.add_image_def(
@@ -860,7 +867,8 @@ class TestLoadImage:
 
 class TestLoadWipeout:
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         msp = doc.modelspace()
         msp.add_wipeout(vertices=[(0, 0), (2, 1), (1, 1)])
@@ -891,7 +899,8 @@ class TestLoadWipeout:
 
 class TestLoadMLine:
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         style = doc.mline_styles.new("above")
         style.elements.append(0.5, 1)
@@ -942,7 +951,8 @@ MTEXT_STYLE = "EZDXF_MTEXT"
 
 class TestMultiLeaderMText:
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         msp = doc.modelspace()
 
@@ -1040,14 +1050,15 @@ class TestMultiLeaderBlock:
         return block
 
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         from ezdxf.render import mleader
 
         doc = ezdxf.new()
         msp = doc.modelspace()
 
         doc.styles.add("OpenSans", font="OpenSans-Regular.ttf")
-        block = self.create_block(doc, "SQUARE")
+        block = cls.create_block(doc, "SQUARE")
 
         mleader_style = doc.mleader_styles.duplicate_entry("Standard", BLOCK_STYLE)
         mleader_style.dxf.block_record_handle = block.block_record_handle
@@ -1107,7 +1118,8 @@ class TestMultiLeaderBlock:
 
 class TestUnderlay:
     @pytest.fixture(scope="class")
-    def sdoc(self) -> Drawing:
+    @classmethod
+    def sdoc(cls) -> Drawing:
         doc = ezdxf.new()
         pdf_underlay_def = doc.add_underlay_def(
             filename="underlay.pdf", name="1"
@@ -1140,7 +1152,8 @@ class TestUnderlay:
 
 class TestLoadPaperspaceLayout:
     @pytest.fixture(scope="class")
-    def psp(self) -> Paperspace:
+    @classmethod
+    def psp(cls) -> Paperspace:
         doc = ezdxf.new()
         psp = doc.new_layout("MyLayout")
         # without a page setup no main viewport was created!
@@ -1208,11 +1221,12 @@ class TestLoadPaperspaceLayout:
 
 class TestLoadPaperspaceViewport:
     @pytest.fixture(scope="class")
-    def psp(self) -> Paperspace:
+    @classmethod
+    def psp(cls) -> Paperspace:
         doc = ezdxf.new(setup=True)
         psp = doc.page_setup("MyLayout", fmt="ISO A3")
         ucs = doc.tables.ucs.add("MyUCS")
-        visualstyle = doc.rootdict["ACAD_VISUALSTYLE"]["2dWireframe"]
+        visualstyle = doc.rootdict["ACAD_VISUALSTYLE"]["2dWireframe"]  # type: ignore
         circle = psp.add_circle((100, 100), radius=50)
         vp = psp.add_viewport(
             center=(100, 100),
@@ -1225,12 +1239,13 @@ class TestLoadPaperspaceViewport:
         vp.dxf.ucs_handle = ucs.dxf.handle
         vp.dxf.visual_style_handle = visualstyle.dxf.handle
         sun = factory.create_db_entry("SUN", {"owner": vp.dxf.handle}, doc)
-        doc.objects.add_object(sun)
+        doc.objects.add_object(sun)  # type: ignore
         vp.dxf.sun_handle = sun.dxf.handle
         return psp
 
     @pytest.fixture(scope="class")
-    def loaded_psp(self, psp: Paperspace) -> Paperspace:
+    @classmethod
+    def loaded_psp(cls, psp: Paperspace) -> Paperspace:
         tdoc = ezdxf.new()
         xref.load_paperspace(psp, tdoc)
         assert document_has_no_errors(tdoc) is True

@@ -40,7 +40,8 @@ class TestFirstLevel:
 
 class TestBiggerTree:
     @pytest.fixture(scope="class")
-    def tree(self):
+    @classmethod
+    def tree(cls):
         return RTree([Vec3(x, 0, 0) for x in range(100)], max_node_size=5)
 
     def test_setup_is_correct(self, tree):

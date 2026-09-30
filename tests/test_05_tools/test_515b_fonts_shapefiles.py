@@ -58,7 +58,8 @@ def test_width_value_influences_the_best_match_for_shape_files():
 
 class TestShapeFileFont:
     @pytest.fixture(scope="class")
-    def shx(self):
+    @classmethod
+    def shx(cls):
         return fonts.make_font("txt.shx", 2.5)
 
     def test_space_width(self, shx):
@@ -87,7 +88,8 @@ class TestShapeFileFont:
 
 class TestGlyphCache:
     @pytest.fixture(scope="class")
-    def cache(self):
+    @classmethod
+    def cache(cls):
         return fonts.font_manager.get_shapefile_glyph_cache("txt.shx")
 
     def test_get_glyphs(self, cache):

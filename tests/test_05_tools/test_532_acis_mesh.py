@@ -16,7 +16,8 @@ class TestPrismToMesh:
     """
 
     @pytest.fixture(scope="class")
-    def mesh(self, prism_sat):
+    @classmethod
+    def mesh(cls, prism_sat):
         body = load(prism_sat)[0]
         return mesh_from_body(body)[0]
 
@@ -172,7 +173,8 @@ def faces_set(mesh):
 
 class TestTransformCenterOfMeshToOriginAtConversionToAcisBody:
     @pytest.fixture(scope="class")
-    def body(self):
+    @classmethod
+    def body(cls):
         cube = forms.cube(center=False)
         return body_from_mesh(cube)
 

@@ -119,7 +119,7 @@ class TestVirtualEntitiesFromEdgePath:
 
 class TestSpatialTransformation:
     # fixture "all_edge_types_hatch" from conftest.py
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def matrix(self):
         return Matrix44.y_rotate(math.radians(-90))
 

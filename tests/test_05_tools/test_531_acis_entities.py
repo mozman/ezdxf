@@ -76,7 +76,7 @@ class TestLump:
 
 
 class TestShell:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def shell(self, body):
         return body.lump.shell
 
@@ -109,7 +109,7 @@ class TestShell:
 
 
 class TestFace:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def face(self, body):
         return body.lump.shell.face
 
@@ -137,7 +137,8 @@ class TestFace:
 
 class TestPolyhedronFaceBuilder:
     @pytest.fixture(scope="class")
-    def cube(self):
+    @classmethod
+    def cube(cls):
         from ezdxf.render.forms import cube
         return mesh.PolyhedronFaceBuilder(cube())
 
@@ -151,7 +152,7 @@ class TestPolyhedronFaceBuilder:
 
 
 class TestPlane:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def plane(self, body):
         return body.lump.shell.face.surface
 
@@ -175,7 +176,7 @@ class TestPlane:
 
 
 class TestLoop:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def loop(self, body):
         return body.lump.shell.face.loop
 
@@ -207,7 +208,7 @@ class TestLoop:
 
 
 class TestCoedge:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def coedge(self, body):
         return body.lump.shell.face.loop.coedge
 
@@ -249,7 +250,7 @@ def test_default_partner_co_edge_count_is_two():
 
 
 class TestEdge:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def edge(self, body):
         return body.lump.shell.face.loop.coedge.edge
 
@@ -277,7 +278,7 @@ class TestEdge:
 
 
 class TestVertex:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def vertex(self, body):
         return body.lump.shell.face.loop.coedge.edge.start_vertex
 
@@ -289,7 +290,7 @@ class TestVertex:
 
 
 class TestPoint:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def point(self, body):
         return body.lump.shell.face.loop.coedge.edge.start_vertex.point
 
@@ -362,17 +363,20 @@ def test_load_mesh_from_exported_sab_data(prism700):
 
 class TestExportTransform:
     @pytest.fixture(scope="class")
-    def header(self):
+    @classmethod
+    def header(cls):
         header = hdr.AcisHeader()
         header.version = 700
         return header
 
     @pytest.fixture(scope="class")
-    def sat_exporter(self, header):
+    @classmethod
+    def sat_exporter(cls, header):
         return sat.SatExporter(header)
 
     @pytest.fixture(scope="class")
-    def sab_exporter(self, header):
+    @classmethod
+    def sab_exporter(cls, header):
         return sab.SabExporter(header)
 
     def test_export_sat_identity_matrix(self, sat_exporter):

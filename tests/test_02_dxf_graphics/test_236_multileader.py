@@ -43,11 +43,11 @@ def test_synonym_mleader(msp):
 
 
 class TestMLeaderStyle:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def doc(self):
         return ezdxf.new("R2007")
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def new_style(self, doc):
         return doc.mleader_styles.new("TEST1")
 
@@ -104,7 +104,7 @@ def matrix(scale=1.0, rotate=0, tx=0, ty=0, tz=0) -> Matrix44:
 
 
 class TestLeaderLine:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def tags(self):
         return Tags.from_text(LEADER_LINE_1)
 
@@ -173,7 +173,7 @@ LEADER_LINE{
 
 
 class TestLeader:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def tags(self):
         return Tags.from_text(LEADER_1)
 
@@ -287,16 +287,16 @@ LEADER_LINE{
 
 
 class MLeaderTesting:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def tags(self, text):
         tags = Tags.from_text(text)
         return MultiLeader.extract_context_data(tags)
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def ctx(self, tags):
         return MLeaderContext.load(compile_context_tags(tags, 301))
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def mleader(self, text):
         return MultiLeader.load(ExtendedTags.from_text(text))
 
@@ -312,7 +312,7 @@ class MLeaderTesting:
 
 
 class TestMTextContext(MLeaderTesting):
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def text(self):
         return MTEXT_MLEADER_R2010
 
@@ -732,7 +732,7 @@ LEADER_LINE{
 
 
 class TestBlockContext(MLeaderTesting):
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def text(self):
         return BLOCK_MLEADER_R2010
 

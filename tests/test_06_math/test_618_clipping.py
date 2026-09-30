@@ -13,7 +13,8 @@ from ezdxf.render.forms import circle
 
 class TestClipSingleLineAtConvexBoundary:
     @pytest.fixture(scope="class", params=["polygon", "rect"])
-    def clipper(self, request):
+    @classmethod
+    def clipper(cls, request):
         if request.param == "polygon":
             return ConvexClippingPolygon2d(Vec2.list([(0, 0), (2, 0), (2, 2), (0, 2)]))
         else:
@@ -75,7 +76,8 @@ class TestClipSingleLineAtConvexBoundary:
 
 class TestClipPolylineAtConvexBoundary:
     @pytest.fixture(scope="class", params=["polygon", "rect"])
-    def clipper(self, request):
+    @classmethod
+    def clipper(cls, request):
         if request.param == "polygon":
             return ConvexClippingPolygon2d(Vec2.list([(0, 0), (8, 0), (8, 2), (0, 2)]))
         else:
@@ -118,7 +120,8 @@ class TestClipPolylineAtConvexBoundary:
 
 class TestClipPolygonAtConvexBoundary:
     @pytest.fixture(scope="class", params=["polygon", "rect"])
-    def clipper(self, request):
+    @classmethod
+    def clipper(cls, request):
         if request.param == "polygon":
             return ConvexClippingPolygon2d(
                 Vec2.list([(-1, -1), (1, -1), (1, 1), (-1, 1)])

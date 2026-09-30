@@ -202,7 +202,7 @@ class TestBoundingBox:
         p2.line_to((-3, -2, -1))
         assert bbox([p1, p2]).size == (4, 4, 4)
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def quadratic(self):
         p = Path()
         p.curve3_to((2, 0), (1, 1))
@@ -218,7 +218,7 @@ class TestBoundingBox:
 
 
 class TestFitPathsIntoBoxUniformScaling:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def spath(self):
         p = Path()
         p.line_to((1, 2, 3))
@@ -272,7 +272,7 @@ class TestFitPathsIntoBoxUniformScaling:
 
 
 class TestFitPathsIntoBoxNonUniformScaling:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def spath(self):
         p = Path()
         p.line_to((1, 2, 3))

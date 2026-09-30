@@ -23,7 +23,7 @@ def test_mcount_property():
 
 class TestSimpleBlock:
     # without ATTRIB, no rotation, no extrusion
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def doc(self):
         doc = ezdxf.new()
         blk = doc.blocks.new("POINT")
@@ -86,14 +86,14 @@ class TestSimpleBlock:
 
 
 class TestInsertAttributes:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def doc(self):
         doc = ezdxf.new()
         blk = doc.blocks.new("POINT")
         blk.add_point(location=(0, 0))
         return doc
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def insert(self, doc):
         msp = doc.modelspace()
         insert = msp.add_blockref("POINT", (0, 0))
@@ -131,7 +131,7 @@ class TestInsertAttributes:
 class TestRotatedInsert:
     angle = 90
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def insert(self):
         doc = ezdxf.new()
         blk = doc.blocks.new("POINT")

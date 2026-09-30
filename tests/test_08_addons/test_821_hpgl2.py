@@ -300,7 +300,8 @@ class TestTokenizer:
 
 class TestPageCoordinates:
     @pytest.fixture(scope="class")
-    def page(self):
+    @classmethod
+    def page(cls):
         page_ = Page(1000, 1000)
         page_.set_ucs(Vec2(500, 500), sx=2, sy=3)
         return page_

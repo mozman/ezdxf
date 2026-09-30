@@ -221,7 +221,8 @@ EOF
 
 class TestEntityIndex:
     @pytest.fixture(scope="class")
-    def index(self):
+    @classmethod
+    def index(cls):
         data = {
             "ENTITIES": [
                 Tags([DXFTag(0, "ENTITY1"), DXFTag(5, "F001")]),
@@ -388,7 +389,8 @@ LayerName2
 
 class TestSearchIndex:
     @pytest.fixture(scope="class")
-    def entities(self):
+    @classmethod
+    def entities(cls):
         return [txt2tags(SEARCH_EXAMPLE1), txt2tags(SEARCH_EXAMPLE2)]
 
     @pytest.fixture

@@ -117,7 +117,8 @@ def test_decompose_minsert_level_1(doc):
 
 class TestSourceBlockReferences:
     @pytest.fixture(scope="class")
-    def doc(self):
+    @classmethod
+    def doc(cls):
         doc_ = ezdxf.new()
         blk0 = doc_.blocks.new("BLK0")
         blk1 = doc_.blocks.new("BLK1")
@@ -138,7 +139,8 @@ class TestSourceBlockReferences:
         return doc_
 
     @pytest.fixture(scope="class")
-    def entities(self, doc):
+    @classmethod
+    def entities(cls, doc):
         return list(recursive_decompose(doc.modelspace()))
 
     def test_count_of_expected_virtual_entities(self, entities: List[Point]):

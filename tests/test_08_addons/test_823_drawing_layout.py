@@ -96,11 +96,13 @@ class TestDetectFinalPage:
 
 class TestFitToPage:
     @pytest.fixture(scope="class")
-    def page(self):
+    @classmethod
+    def page(cls):
         return layout.Page(200, 100)
 
     @pytest.fixture(scope="class")
-    def page_with_margins(self):
+    @classmethod
+    def page_with_margins(cls):
         return layout.Page(220, 120, margins=layout.Margins.all(10))
 
     def test_stretch_width(self, page):

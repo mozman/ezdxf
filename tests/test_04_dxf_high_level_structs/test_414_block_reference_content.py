@@ -415,7 +415,8 @@ def test_explode_xref(doc, msp):
 
 class TestSourceBlockReferenceFromNestedBlockReferences:
     @pytest.fixture(scope="class")
-    def doc(self):
+    @classmethod
+    def doc(cls):
         doc_ = ezdxf.new()
         blk0 = doc_.blocks.new("BLK0")
         blk1 = doc_.blocks.new("BLK1")
@@ -473,7 +474,8 @@ class TestSourceBlockReferenceFromNestedBlockReferences:
 
 class TestEntitiesInRedrawOrder:
     @pytest.fixture(scope="class")
-    def blk(self):
+    @classmethod
+    def blk(cls):
         d = ezdxf.new()
         blk = d.blocks.new("BLK0")
         line0 = blk.add_line((0, 0), (1, 0))

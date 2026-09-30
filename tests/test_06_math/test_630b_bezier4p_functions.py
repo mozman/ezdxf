@@ -235,7 +235,7 @@ class TestBezierCurveBoundingBox:
 
 
 class TestRayCubicBezierCurve2dIntersection:
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def curve(self):
         return Bezier4P(Vec2.list([(0, -2), (2, 6), (4, -6), (6, 2)]))
 

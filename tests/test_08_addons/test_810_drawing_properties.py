@@ -251,7 +251,8 @@ class TestResolveLayerACIColor7:
         return factory.new("LINE")
 
     @pytest.fixture(scope="class")
-    def ctx(self):
+    @classmethod
+    def ctx(cls):
         doc = ezdxf.new()
         doc.layers.new(
             "TrueColor",
