@@ -69,7 +69,11 @@ InfixBoolQuery = infix_notation(
         ("&", 2, opAssoc.LEFT),
         ("|", 2, opAssoc.LEFT),
     ],
-).set_results_name("AttribQuery")
+)
+# pyparsing >= 3.3.3 builds infix_notation() on _InfixNotation(savelist=True),
+# which changed the shape of the named result by one nesting level.
+InfixBoolQuery.saveAsList = False
+InfixBoolQuery = InfixBoolQuery.set_results_name("AttribQuery")
 
 AttribQueryOptions = Literal("i").set_results_name("AttribQueryOptions")
 
