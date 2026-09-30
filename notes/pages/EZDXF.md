@@ -11,7 +11,7 @@
 		- R2018
 	- [[MIT-License]]
 	  id:: 654fc96e-5aa7-49f9-b70e-45c3f2867976
-	- requires Python 3.9 or newer
+	- requires Python 3.11 or newer
 	  id:: 65509c8d-91b9-4461-886f-6d771ce566ea
 	- works with [[CPython]] and [[PyPy]]
 	- OS independent
@@ -29,7 +29,8 @@
 -
 - Ask Questions
 	- in the [discussion forum](https://github.com/mozman/ezdxf/discussions) on Github
-	- tag questions on [[Stackoverflow]] with `ezdxf` or `dxf`
+	- Ask the AI ​​of your choice
+	- Tag questions on [[Stackoverflow]] with `ezdxf` or `dxf`
 	-
 - Report Errors
 	- <https://github.com/mozman/ezdxf/issues>
