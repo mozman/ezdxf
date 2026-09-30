@@ -1,4 +1,6 @@
 ## Version 1.4.5 - dev
+	- Removed PyPI packages for Python 3.10 (end of life)
+	- Added PyPI packages for Python 3.15
 	- Added support for control code `%%%` for `%` as documented by [Autodesk](https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-Core/files/GUID-968CBC1D-BA99-4519-ABDD-88419EB2BF92.htm)
 		- contributed by #CRQuadro
 	- BUGFIX: fix pattern scaling at `HATCH` transformations
@@ -17,6 +19,12 @@
 	- BUGFIX: translate hatch pattern base points
 		- {{pr 1402}}
 		- contributed by #youdie006
+	- BUGFIX: Honour plot style table color for ACI 7
+		- {{pr 1401}}
+		- contributed by #rafaelfrancisco-contato
+	- BUGFIX: Export the MTEXT attachment point as code 70 of the embedded object
+		- {{pr 1417}}
+		- conrtibuted by #iHateStupidPeople
 - ## Version 1.4.4 - 2026-05-14
   id:: 6a01df82-ea1b-48c4-912f-6a80564d3288
 	- NEW: `ezdxf.entities.textstyle.get_textstyle()` function
