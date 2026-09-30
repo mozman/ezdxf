@@ -244,6 +244,17 @@ def test_export_static_columns_as_embedded_object():
     assert tags[17] == (74, 0)
 
 
+@pytest.mark.parametrize("attachment_point", [1, 2, 3, 4, 5, 6, 7, 8, 9])
+def test_embedded_object_exports_the_attachment_point(attachment_point):
+    # AutoCAD draws the MTEXT at the attachment point of the embedded object,
+    # a hard coded 1 (top left) shifts every other attachment point
+    mtext = make_mtext(STATIC)
+    mtext.dxf.attachment_point = attachment_point
+    collector = TagCollector(dxfversion=const.DXF2018)
+    mtext.export_embedded_object(collector)
+    assert collector.tags[1] == (70, attachment_point)
+
+
 def test_export_dynamic_columns_auto_height_as_embedded_object():
     mtext = make_mtext(DYNAMIC_AUTO_HEIGHT)
     collector = TagCollector(dxfversion=const.DXF2018)

@@ -831,7 +831,9 @@ class MText(DXFGraphic):
         assert cols is not None
 
         tagwriter.write_tag2(101, "Embedded Object")
-        tagwriter.write_tag2(70, 1)  # unknown meaning
+        # AutoCAD reads the attachment point from the embedded object, not from
+        # the MTEXT group code 71:
+        tagwriter.write_tag2(70, dxf.get("attachment_point", 1))
         tagwriter.write_tag(dxftag(10, dxf.text_direction))
         tagwriter.write_tag(dxftag(11, dxf.insert))
         tagwriter.write_tag2(40, dxf.width)  # repeated reference column width
