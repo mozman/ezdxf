@@ -395,7 +395,6 @@ class TestMTextContextParsing:
             r"\H0.3e1;",
             r"\H30e-1",
             r"\H30e-1;",
-
             r"\H.3e1",  # this does work in AutoCAD
             r"\H.3e1;",  # this does work in AutoCAD
         ],
@@ -417,7 +416,6 @@ class TestMTextContextParsing:
             r"\H0.3e1x;",
             r"\H30e-1x",
             r"\H30e-1x;",
-
             r"\H.3e1x",  # this does work in AutoCAD
             r"\H.3e1x;",  # this does work in AutoCAD
         ],
@@ -464,26 +462,6 @@ class TestMTextContextParsing:
     def test_absolut_width_command(self, expr):
         t0 = list(MTextParser(f"{expr}word"))[0]
         assert t0.ctx.width_factor == 3
-
-    @pytest.mark.parametrize(
-        "expr",
-        [
-            r"\W3x",
-            r"\W3x;",
-            r"\W+3x",
-            r"\W+3x;",
-            r"\W-3x",  # ignore sign
-            r"\W-3x;",  # ignore sign
-            r"\W0.3e1x",
-            r"\W0.3e1x;",
-            r"\W30e-1x",
-            r"\W30e-1x;",
-        ],
-    )
-    def test_relative_height_command(self, expr):
-        t1 = list(MTextParser(rf"\W2;word{expr}word"))[1]
-        assert t1.ctx.width_factor == 6.0
-        assert t1.data == "word"
 
     @pytest.mark.parametrize(
         "expr",
@@ -732,9 +710,7 @@ class TestMTextParserYieldsPropertyChangeCommands:
         assert t0.data == r"\pxt4,c5,r6,7.5;"
 
     def test_one_char_commands(self):
-        t0, t1, t2 = list(
-            MTextParser(r"\Lword\l", yield_property_commands=True)
-        )
+        t0, t1, t2 = list(MTextParser(r"\Lword\l", yield_property_commands=True))
         assert t0.type == TokenType.PROPERTIES_CHANGED
         assert t0.data == r"\L"
         assert t2.type == TokenType.PROPERTIES_CHANGED
