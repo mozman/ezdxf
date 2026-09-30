@@ -288,6 +288,62 @@ class TestResolveLayerACIColor7:
         assert ctx.resolve_color(entity).upper() == "#B0B0B0"
 
 
+class TestPlotStyleOverridesACIColor7:
+    """ACI color 7 follows the background color only while it is ambiguous.
+
+    A plot style table that sets an explicit color for ACI 7 resolves that
+    ambiguity and has to win, like in AutoCAD. Without such a table the
+    background dependent behavior of TestResolveLayerACIColor7 applies.
+    """
+
+    @pytest.fixture
+    def ctb(self):
+        plot_styles = ColorDependentPlotStyles()
+        plot_styles[7].color = (255, 0, 0)
+        return plot_styles
+
+    def test_explicit_aci_7_uses_plot_style_color(self, ctb):
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+        line = msp.add_line((0, 0), (1, 0), dxfattribs={"color": 7})
+        ctx = RenderContext(doc, ctb=ctb)
+        ctx.current_layout_properties.set_colors(bg="#000000")
+        assert ctx.resolve_color(line)[:7] == "#ff0000"
+
+    def test_bylayer_on_layer_0_uses_plot_style_color(self, ctb):
+        # Layer '0' has ACI color 7 by default: this is the common case in
+        # engineering drawings and the reason the bug is easy to miss.
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+        line = msp.add_line(
+            (0, 0), (1, 0), dxfattribs={"layer": "0", "color": const.BYLAYER}
+        )
+        ctx = RenderContext(doc, ctb=ctb)
+        ctx.current_layout_properties.set_colors(bg="#000000")
+        assert ctx.resolve_color(line)[:7] == "#ff0000"
+
+    def test_other_aci_values_are_unaffected(self, ctb):
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+        line = msp.add_line((0, 0), (1, 0), dxfattribs={"color": 1})
+        ctx = RenderContext(doc, ctb=ctb)
+        assert ctx.resolve_color(line)[:7] == "#ff0000"
+
+    def test_plot_style_without_color_keeps_background_behavior(self):
+        # A plot style table that expresses no opinion for ACI 7 must not
+        # disable the background dependent default.
+        plot_styles = ColorDependentPlotStyles()
+        plot_styles[1].color = (0, 255, 0)  # some other ACI, not 7
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+        line = msp.add_line((0, 0), (1, 0), dxfattribs={"color": 7})
+        ctx = RenderContext(doc, ctb=plot_styles)
+        ctx.current_layout_properties.set_colors(bg="#000000")
+        assert ctx.resolve_color(line).upper()[:7] == "#FFFFFF"
+        ctx.current_layout_properties.set_colors(bg="#FFFFFF")
+        assert ctx.resolve_color(line)[:7] == "#000000"
+
+
 @pytest.mark.parametrize(
     "color, result",
     [
