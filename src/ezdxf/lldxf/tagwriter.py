@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any, TextIO, TYPE_CHECKING, Union, Iterable, BinaryIO
 import abc
 
-from .types import TAG_STRING_FORMAT, cast_tag_value, DXFVertex
+from .types import TAG_STRING_FORMAT, cast_tag_value, DXFVertex, DXFBinaryTag
 from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_DATA
 from .tags import DXFTag, Tags
 from .const import LATEST_DXF_VERSION
@@ -300,6 +300,8 @@ class JSONTagWriter(AbstractTagWriter):
             else:
                 for code, value in tag.dxftags():
                     self.write_tag2(code, value)
+        elif isinstance(tag, DXFBinaryTag):
+            self.write_tag2(tag.code, tag.tostring())
         else:
             self.write_tag2(tag.code, tag.value)
 
