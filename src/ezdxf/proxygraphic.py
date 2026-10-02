@@ -16,7 +16,8 @@ import math
 from enum import IntEnum
 from itertools import repeat
 from ezdxf.lldxf import const
-from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
+from ezdxf.lldxf.types import DXFBinaryTag
+from ezdxf.tools.binarydata import ByteStream, BitStream
 from ezdxf import colors
 from ezdxf.math import (
     Vec3,
@@ -81,8 +82,9 @@ def export_proxy_graphic(
     tagwriter.write_tag2(length_code, length)
     index = 0
     while index < length:
-        hex_str = bytes_to_hexstr(data[index : index + CHUNK_SIZE])
-        tagwriter.write_tag2(data_code, hex_str)
+        tagwriter.write_tag(
+            DXFBinaryTag(data_code, data[index : index + CHUNK_SIZE])
+        )
         index += CHUNK_SIZE
 
 
