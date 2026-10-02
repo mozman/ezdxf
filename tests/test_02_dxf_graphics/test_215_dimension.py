@@ -4,7 +4,7 @@ import pytest
 import math
 
 import ezdxf
-from ezdxf.math import Vec3, Matrix44
+from ezdxf.math import Vec3, Matrix44, OCS
 from ezdxf.entities.dimension import Dimension, linear_measurement
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
@@ -242,6 +242,85 @@ def test_linear_measurement_without_ocs():
         Vec3(0, 0, 0), Vec3(1, 0, 0), angle=math.radians(90)
     )
     assert math.isclose(measurement, 0, abs_tol=1e-12)
+
+
+@pytest.mark.parametrize("dimtype", [1, 33, 129, 161])
+@pytest.mark.parametrize(
+    "p1, p2, expected",
+    [
+        ((7, -2, 0), (10, 2, 0), 5),
+        ((8, -4, 0), (8, -1.5, 0), 2.5),
+        ((7, -2, 0), (7, -2, 0), 0),
+    ],
+)
+def test_aligned_dimension_measurement(dimtype, p1, p2, expected):
+    dim = Dimension.new(
+        dxfattribs={"dimtype": dimtype, "defpoint2": p1, "defpoint3": p2}
+    )
+    assert not dim.dxf.hasattr("angle")
+    assert dim.get_measurement() == pytest.approx(expected)
+
+
+@pytest.mark.parametrize("extrusion", [(0, 0, 1), (0, 0, -1), (0, 1, 1), (2, 3, 4)])
+@pytest.mark.parametrize("reverse", [False, True])
+def test_aligned_dimension_measurement_in_wcs(extrusion, reverse):
+    # DXF definition points are WCS points in the plane normal to extrusion.
+    # Equal OCS elevations ensure the points lie in the same plane.
+    ocs = OCS(extrusion)
+    p1 = ocs.to_wcs((7, -2, 3))
+    p2 = ocs.to_wcs((10, 2, 3))
+    if reverse:
+        p1, p2 = p2, p1
+    dim = Dimension.new(
+        dxfattribs={
+            "dimtype": 33,
+            "defpoint2": p1,
+            "defpoint3": p2,
+            "extrusion": extrusion,
+        }
+    )
+    assert not dim.dxf.hasattr("angle")
+    assert dim.get_measurement() == pytest.approx(5)
+
+
+@pytest.mark.parametrize(
+    "angle, expected", [(0, 3), (90, 4), (math.degrees(math.atan2(4, 3)), 5)]
+)
+def test_linear_dimension_measurement_is_projected(angle, expected):
+    dim = Dimension.new(
+        dxfattribs={
+            "dimtype": 32,
+            "defpoint2": (7, -2, 0),
+            "defpoint3": (10, 2, 0),
+            "angle": angle,
+        }
+    )
+    assert dim.get_measurement() == pytest.approx(expected)
+
+
+def test_add_aligned_dim_keeps_linear_dimension_type():
+    dim = (
+        ezdxf.new()
+        .modelspace()
+        .add_aligned_dim(p1=(7, -2), p2=(10, 2), distance=2)
+        .dimension
+    )
+    assert dim.dimtype == 0
+    assert dim.dxf.angle == pytest.approx(math.degrees(math.atan2(4, 3)))
+    assert dim.get_measurement() == pytest.approx(5)
+
+
+def test_aligned_measurement_ignores_display_text_and_cached_measurement():
+    dim = Dimension.new(
+        dxfattribs={
+            "dimtype": 33,
+            "defpoint2": (7, -2, 0),
+            "defpoint3": (10, 2, 0),
+            "text": "display override",
+            "actual_measurement": 9999,
+        }
+    )
+    assert dim.get_measurement() == pytest.approx(5)
 
 
 def test_dimension_transform_interface():
