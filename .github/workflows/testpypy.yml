@@ -1,6 +1,10 @@
 name: Test pypy without C-extensions
 
 on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
@@ -19,14 +23,14 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pypy -m pip install --upgrade pip
+        python -m pip install --upgrade pip
         # Excluding Cython to test the pure Python version.
-        pypy -m pip install "setuptools>69.0.0" wheel
+        python -m pip install "setuptools>69.0.0" wheel
     - name: Install without C-extensions
       run: |
-        pypy -m pip install --no-build-isolation .
+        python -m pip install .
     - name: Test pypy without C-extensions
       run: |
         # install test dependencies
-        pypy -m pip install pytest Pillow
-        pypy -m pytest tests integration_tests
+        python -m pip install pytest Pillow
+        python -m pytest tests integration_tests
