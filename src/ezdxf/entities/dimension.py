@@ -1157,6 +1157,13 @@ def measure_linear_distance(dim: Dimension) -> float:
     )
 
 
+def measure_aligned_distance(dim: Dimension) -> float:
+    # The definition points are WCS points; their distance needs no projection.
+    p1 = Vec3(dim.dxf.defpoint2)
+    p2 = Vec3(dim.dxf.defpoint3)
+    return (p2 - p1).magnitude
+
+
 def measure_diameter_or_radius(dim: Dimension) -> float:
     p1 = Vec3(dim.dxf.defpoint)
     p2 = Vec3(dim.dxf.defpoint4)
@@ -1220,7 +1227,7 @@ def linear_measurement(
 # TODO: add ARC_DIMENSION dimtype=8 support
 MEASUREMENT_TOOLS = {
     const.DIM_LINEAR: measure_linear_distance,
-    const.DIM_ALIGNED: measure_linear_distance,
+    const.DIM_ALIGNED: measure_aligned_distance,
     const.DIM_ANGULAR: measure_angle_between_two_lines,
     const.DIM_DIAMETER: measure_diameter_or_radius,
     const.DIM_RADIUS: measure_diameter_or_radius,
