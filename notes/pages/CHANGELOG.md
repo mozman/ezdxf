@@ -26,6 +26,12 @@
 		- contributed by #iHateStupidPeople
 	- BUGFIX: fixed `pytest` warnings for class-level fixtures
 	- BUGFIX: works with `pyparsing v3.3.3`
+	- BUGFIX: fix aligned dimension measurements
+		- {{pr 1419}}
+		- contributed by #Metis-dot
+	- BUGFIX: fix proxy graphic export for binary DXF
+		- {{pr 1418}}
+		- contributed by #Metis-dot
 - ## Version 1.4.4 - 2026-05-14
   id:: 6a01df82-ea1b-48c4-912f-6a80564d3288
 	- NEW: `ezdxf.entities.textstyle.get_textstyle()` function
