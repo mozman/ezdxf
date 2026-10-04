@@ -68,7 +68,7 @@ MIF_CODE_PAGE = {
     "1": "cp932",  # Japanese (Shift-JIS)
     "2": "cp950",  # Traditional Chinese (Big 5)
     "3": "cp949",  # Wansung (KS C-5601-1987)
-    "4": "cp1391",  # Johab (KS C-5601-1992)
+    "4": "cp1361",  # Johab (KS C-5601-1992)
     "5": "cp936",  # Simplified Chinese (GB 2312-80)
 }
 
