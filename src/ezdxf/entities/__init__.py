@@ -87,6 +87,7 @@ from .acis import (
     Solid3d,
     Region,
     Surface,
+    PlaneSurface,
     ExtrudedSurface,
     LoftedSurface,
     RevolvedSurface,
