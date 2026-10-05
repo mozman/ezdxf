@@ -7,6 +7,7 @@ from ezdxf.entities.acis import (
     Solid3d,
     Region,
     Surface,
+    PlaneSurface,
     ExtrudedSurface,
     LoftedSurface,
     RevolvedSurface,
@@ -61,6 +62,7 @@ def test_registered():
     assert "3DSOLID" in ENTITY_CLASSES
     assert "REGION" in ENTITY_CLASSES
     assert "SURFACE" in ENTITY_CLASSES
+    assert "PLANESURFACE" in ENTITY_CLASSES
     assert "EXTRUDEDSURFACE" in ENTITY_CLASSES
     assert "LOFTEDSURFACE" in ENTITY_CLASSES
     assert "REVOLVEDSURFACE" in ENTITY_CLASSES
@@ -194,6 +196,37 @@ SURFACE
 AcDbEntity
 8
 0
+100
+AcDbModelerGeometry
+70
+1
+100
+AcDbSurface
+71
+0
+72
+0
+"""
+
+
+def test_plane_surface_write_dxf():
+    entity = PlaneSurface.from_text(PLANESURFACE, doc=MockDoc())
+    assert entity.dxf.layer == "10"
+    result = special_export(entity, dxfversion=DXF2010)
+    expected = basic_tags_from_text(PLANESURFACE)
+    assert result == expected
+
+
+PLANESURFACE = """0
+PLANESURFACE
+5
+0
+330
+0
+100
+AcDbEntity
+8
+10
 100
 AcDbModelerGeometry
 70
