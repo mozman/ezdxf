@@ -35,6 +35,12 @@ class TestStlLoader:
         with pytest.raises(meshex.ParsingError):
             meshex.stl_loads("vertex 0 0 z")
 
+    def test_binary_buffer_too_short_for_header(self):
+        # a buffer shorter than the 84-byte binary STL header should raise
+        # ParsingError (as the docstring promises), not a raw struct.error
+        with pytest.raises(meshex.ParsingError):
+            meshex.stl_loadb(b"\x00" * 20)
+
 
 OFF_VALID_1 = """OFF
 # just a comment
