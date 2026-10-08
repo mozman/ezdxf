@@ -44,9 +44,7 @@ Factory Functions
 Basic spline entity                         :meth:`~ezdxf.layouts.BaseLayout.add_spline`
 Spline control frame from fit points        :meth:`~ezdxf.layouts.BaseLayout.add_spline_control_frame`
 Open uniform spline                         :meth:`~ezdxf.layouts.BaseLayout.add_open_spline`
-Closed uniform spline                       :meth:`~ezdxf.layouts.BaseLayout.add_closed_spline`
 Open rational uniform spline                :meth:`~ezdxf.layouts.BaseLayout.add_rational_spline`
-Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add_closed_rational_spline`
 =========================================== ==========================================
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-E1F884F8-AA90-4864-A215-3182D47A9C74
