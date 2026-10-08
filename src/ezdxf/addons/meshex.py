@@ -80,7 +80,12 @@ def stl_loadb(buffer: bytes) -> MeshTransformer:
     """
     # http://www.fabbers.com/tech/STL_Format#Sct_ASCII
     index = 80
-    n_faces = struct.unpack_from("<I", buffer, index)[0]
+    try:
+        n_faces = struct.unpack_from("<I", buffer, index)[0]
+    except struct.error:
+        raise ParsingError(
+            "binary STL parsing error: buffer is too short for an 84-byte header"
+        )
     index += 4
 
     mesh = MeshVertexMerger()
