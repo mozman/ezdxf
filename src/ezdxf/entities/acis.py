@@ -35,6 +35,7 @@ __all__ = [
     "Solid3d",
     "Region",
     "Surface",
+    "PlaneSurface",
     "ExtrudedSurface",
     "LoftedSurface",
     "RevolvedSurface",
@@ -387,6 +388,13 @@ class Surface(Body):
         # AcDbModelerGeometry export is done by parent class
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_surface.name)
         self.dxf.export_dxf_attribs(tagwriter, ["u_count", "v_count"])
+
+
+@register_entity
+class PlaneSurface(Surface):
+    """DXF PLANESURFACE entity - container entity for embedded ACIS data."""
+
+    DXFTYPE = "PLANESURFACE"
 
 
 acdb_extruded_surface = DefSubclass(
