@@ -1,6 +1,10 @@
 ## Version 1.4.5 - dev
 	- NEW: added PyPI package deployment for Python 3.15 and removed PyPI package deployment for Python 3.10 (end of life)
-	- NEW: added support for control code `%%%` for `%` as documented by [Autodesk](https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-Core/files/GUID-968CBC1D-BA99-4519-ABDD-88419EB2BF92.htm)
+	- NEW: add support for control code `%%%` for `%` as documented by [Autodesk](https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-Core/files/GUID-968CBC1D-BA99-4519-ABDD-88419EB2BF92.htm)
+		- {{pr 1408}}
+		- contributed by #CRQuadro
+	- NEW: add support for `PLANESURFACE` entity
+		- {{pr 1421}}
 		- contributed by #CRQuadro
 	- BUGFIX: fix pattern scaling at `HATCH` transformations
 		- {{issue 1391}}
@@ -35,6 +39,14 @@
 	- BUGFIX: fix Korean Johab MIF decoding
 		- {{pr 1420}}
 		- contributed by #tomeido
+	- BUGFIX: `meshex.obj_loads()`
+		- ignore vn/vt/vp lines instead of reading them as vertices
+		- {{pr 1423}}
+		- contributed by #Erfouni
+	- BUGFIX: `meshex.stl_loadb()`
+		- raise `ParsingError`, not a raw `struct.error`, on a too-short buffer
+		- {{pr 1424}}
+		- contributed by #Erfouni
 - ## Version 1.4.4 - 2026-05-14
   id:: 6a01df82-ea1b-48c4-912f-6a80564d3288
 	- NEW: `ezdxf.entities.textstyle.get_textstyle()` function
