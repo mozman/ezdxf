@@ -113,5 +113,50 @@ class TestMIFEncoding:
         assert decode_mif_to_unicode("abc") == "abc"
 
 
+@pytest.mark.parametrize("split", range(1, 8))
+@pytest.mark.parametrize("chunk_count", [1, 2])
+@pytest.mark.parametrize("unicode_prefix", [False, True])
+def test_recover_mif_split_across_mtext_chunks(split, chunk_count, unicode_prefix):
+    encoded = r"\M+19195"
+    prefix = "x" * (250 * chunk_count - split)
+    expected_prefix = prefix
+    if unicode_prefix:
+        prefix = r"\U+0041" + prefix[7:]
+        expected_prefix = "A" + expected_prefix[7:]
+    doc = ezdxf.new("R2000")
+    doc.modelspace().add_mtext(prefix + encoded + encoded)
+    doc.modelspace().add_text("unrelated")
+    doc.modelspace().add_mtext("next entity")
+    stream = StringIO()
+    doc.write(stream)
+    # The first escape crosses the writer's 250-character chunk boundary.
+    assert encoded[:split] + "\n  1\n" + encoded[split:] in stream.getvalue()
+
+    recovered, auditor = recover.read(BytesIO(stream.getvalue().encode("cp1252")))
+
+    assert not auditor.errors
+    assert [entity.text for entity in recovered.modelspace().query("MTEXT")] == [
+        expected_prefix + "装装",
+        "next entity",
+    ]
+    assert recovered.modelspace().query("TEXT").first.dxf.text == "unrelated"
+
+
+def test_recover_mtext_with_missing_final_chunk():
+    doc = ezdxf.new("R2000")
+    doc.modelspace().add_mtext("x" * 250 + "tail")
+    doc.modelspace().add_mtext("next entity")
+    stream = StringIO()
+    doc.write(stream)
+    damaged = stream.getvalue().replace("  1\ntail\n", "")
+
+    recovered, _ = recover.read(BytesIO(damaged.encode("cp1252")))
+
+    assert [entity.text for entity in recovered.modelspace().query("MTEXT")] == [
+        "x" * 250,
+        "next entity",
+    ]
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
