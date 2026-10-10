@@ -525,7 +525,37 @@ def safe_tag_loader(
     tags = repair.tag_reorder_layer(tags)
     tags = repair.filter_invalid_point_codes(tags)  # type: ignore
     tags = repair.filter_invalid_handles(tags)
+    tags = _join_mtext_chunks(tags)
     return byte_tag_compiler(tags, encoding, messages=messages, errors=errors)
+
+
+def _join_mtext_chunks(tags: Iterable[DXFTag]) -> Iterator[DXFTag]:
+    """Join MTEXT bytes before decoding escapes which may cross chunk boundaries."""
+    in_mtext = False
+    in_content = False
+    chunks: list[bytes] = []
+    for tag in tags:
+        code, value = tag
+        if code in (0, 100, 101, 1001):
+            if chunks:
+                # Retain unterminated content in a damaged entity.
+                yield DXFTag(3, b"".join(chunks))
+                chunks.clear()
+            if code == 0:
+                in_mtext = value.strip().upper() == b"MTEXT"
+            in_content = in_mtext and code == 100 and value == b"AcDbMText"
+        if in_content and code == 3:
+            chunks.append(value)
+            # Keep a placeholder so compiler line numbers remain unchanged.
+            yield DXFTag(3, b"")
+        elif in_content and code == 1:
+            chunks.append(value)
+            yield DXFTag(1, b"".join(chunks))
+            chunks.clear()
+        else:
+            yield tag
+    if chunks:
+        yield DXFTag(3, b"".join(chunks))
 
 
 INT_PATTERN_S = re.compile(r"[+-]?\d+")
@@ -843,7 +873,7 @@ def byte_tag_compiler(
                         if has_dxf_unicode(str_):
                             str_ = decode_dxf_unicode(str_)
                         # Convert MIF notation "\M+cxxxx" to unicode
-                        elif has_mif_encoding(str_):
+                        if has_mif_encoding(str_):
                             str_ = decode_mif_to_unicode(str_)
                     yield DXFTag(code, str_)
                 else:
