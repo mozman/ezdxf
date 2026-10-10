@@ -47,6 +47,11 @@
 		- raise `ParsingError`, not a raw `struct.error`, on a too-short buffer
 		- {{pr 1424}}
 		- contributed by #Erfouni
+	- BUGFIX: fixes `\U+xxxx` and `\M+xxxx` encodings split at text chunk borders
+		- merges `MTEXT` text chunks in recover mode
+		- {{issue 1322}}
+		- {{pr 1425}}
+		- contributed by #ac1982
 - ## Version 1.4.4 - 2026-05-14
   id:: 6a01df82-ea1b-48c4-912f-6a80564d3288
 	- NEW: `ezdxf.entities.textstyle.get_textstyle()` function
