@@ -624,7 +624,7 @@ class DXFGraphic(DXFEntity):
             entity = factory.create_db_entry(type_, dxfattribs, self.doc)
         else:
             entity = factory.new(type_, dxfattribs)
-        entity.dxf.owner = self.dxf.owner
+        entity.dxf.owner = self.dxf.handle
         entity.dxf.paperspace = self.dxf.paperspace
         return entity  # type: ignore
 

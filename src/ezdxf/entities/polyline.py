@@ -401,7 +401,6 @@ class Polyline(LinkedEntities):
         dxfattribs["flags"] = dxfattribs.get("flags", 0) | self.get_vertex_flags()
 
         # same DXF attributes for VERTEX entities as for POLYLINE
-        dxfattribs["owner"] = self.dxf.owner
         dxfattribs["layer"] = self.dxf.layer
         if self.dxf.hasattr("linetype"):
             dxfattribs["linetype"] = self.dxf.linetype
@@ -451,7 +450,6 @@ class Polyline(LinkedEntities):
         dxfattribs["flags"] = dxfattribs.get("flags", 0) | self.get_vertex_flags()
 
         # same DXF attributes for VERTEX entities as for POLYLINE
-        dxfattribs["owner"] = self.dxf.handle
         dxfattribs["layer"] = self.dxf.layer
         if self.dxf.hasattr("linetype"):
             dxfattribs["linetype"] = self.dxf.linetype
@@ -571,7 +569,14 @@ class Polyline(LinkedEntities):
             entity.doc = doc  # grant same document
             dxf = entity.dxf
             if dxf.owner != owner:
+                previous_owner = dxf.owner
                 dxf.owner = owner
+                auditor.fixed_error(
+                    code=AuditError.INVALID_OWNER_HANDLE,
+                    message=f"Fixed invalid owner handle in {str(entity)}.",
+                    dxf_entity=entity,
+                    data=previous_owner,
+                )
             if dxf.layer != layer:
                 dxf.layer = layer
 
