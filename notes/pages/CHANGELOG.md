@@ -1,4 +1,5 @@
-## Version 1.4.5 - dev
+## Version 1.4.5 - 2026-10-16
+id:: 6a36280d-37b5-4664-897c-4755e53e79af
 	- NEW: added PyPI package deployment for Python 3.15 and removed PyPI package deployment for Python 3.10 (end of life)
 	- NEW: add support for control code `%%%` for `%` as documented by [Autodesk](https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-Core/files/GUID-968CBC1D-BA99-4519-ABDD-88419EB2BF92.htm)
 		- {{pr 1408}}

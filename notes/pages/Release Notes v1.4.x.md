@@ -43,3 +43,8 @@
 	- Bugfix release
 	- Requires Python 3.10
 	- Requires PyPy 3.11
+- # Release v1.4.5
+	- Changelog: ((6a36280d-37b5-4664-897c-4755e53e79af))
+	- Bugfix release
+	- Requires Python 3.11, Python 3.10 is End of Life.
+	- Requires PyPy 3.11
