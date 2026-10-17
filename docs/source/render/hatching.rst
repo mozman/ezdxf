@@ -16,8 +16,42 @@ High Level Functions
 
 .. autofunction:: hatch_paths
 
+Bounded Rendering
+-----------------
+
+High-level hatching and pattern rendering use a :class:`HatchingControl` with
+defaults of 1,000,000 work items and 1,000,000 output segments. Work includes
+boundary elements, attempted intersections, storing and processing intersections,
+and dash elements, including gaps. Internal hatch distances are generated lazily.
+The public :func:`hatch_line_distances` helper continues to return a list.
+
+Pass the same ``control`` to multiple calls to share these limits and a
+``terminate`` callback. Cancellation is checked inside intersection and dash loops
+at least every 64 work items. It stops iteration; exhausting a budget raises
+:class:`HatchingLimitError`. Completed lines may already have been yielded. Set a
+limit to ``None`` to explicitly opt out of that limit.
+
+These limits bound core loop work, not a strict whole-entity elapsed time:
+boundary-to-path conversion precedes the frontend timer, and sorting an
+intersection group is an indivisible operation.
+
+The drawing frontend exposes these limits as ``Configuration.hatching_max_work``
+and ``Configuration.hatching_max_segments``. It retains completed lines and
+reports an aborted hatch when either limit is reached. The default preserves a
+single backend stroke operation, including its transparency blending; the output
+buffer is bounded by the segment limit.
+
+Set ``Configuration.hatching_batch_size`` to a positive integer, such as 1,024,
+to further reduce the frontend's output buffer by sending segments in batches.
+Batching preserves geometry, order and properties, but overlapping translucent
+strokes in separate batches can blend differently. A backend may retain all
+segments internally, so batching does not bound the backend's total memory use.
+Existing minimum-line-distance fallback policies are unchanged.
+
 Classes
 -------
+
+.. autoclass:: HatchingControl
 
 .. autoclass:: HatchBaseLine
 
@@ -110,3 +144,5 @@ Exceptions
 .. autoclass:: HatchLineDirectionError
 
 .. autoclass:: DenseHatchingLinesError
+
+.. autoclass:: HatchingLimitError

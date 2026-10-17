@@ -238,6 +238,16 @@ class Configuration:
         hatching_timeout: hatching timeout for a single entity, very dense
             hatching patterns can cause a very long execution time, the default
             timeout for a single entity is 30 seconds.
+        hatching_max_work: maximum boundary, intersection, and dash work items
+            per hatch entity; ``None`` disables this limit. The default is
+            1,000,000. Exhausting a limit aborts the hatch, keeping completed lines.
+        hatching_max_segments: maximum emitted pattern segments per hatch entity;
+            ``None`` disables this limit. The default is 1,000,000.
+        hatching_batch_size: optional maximum segments per backend call. The
+            default ``None`` preserves one stroke operation per hatch, including
+            its transparency blending. A positive integer bounds the frontend's
+            output buffer, but overlapping translucent strokes in separate batches
+            can blend differently.
         min_hatch_line_distance: minimum hatch line distance to render, narrower pattern
             lines are rendered as solid filling
         color_policy:
@@ -266,6 +276,9 @@ class Configuration:
     max_flattening_distance: float = disassemble.Primitive.max_flattening_distance
     circle_approximation_count: int = 128
     hatching_timeout: float = 30.0
+    hatching_max_work: Optional[int] = 1_000_000
+    hatching_max_segments: Optional[int] = 1_000_000
+    hatching_batch_size: Optional[int] = None
     # Keep value in sync with ezdxf.render.hatching.MIN_HATCH_LINE_DISTANCE
     min_hatch_line_distance: float = 1e-4
     color_policy: ColorPolicy = ColorPolicy.COLOR

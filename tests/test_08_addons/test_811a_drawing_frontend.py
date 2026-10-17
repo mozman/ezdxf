@@ -475,6 +475,7 @@ def test_property_override_method(msp: Modelspace, ctx: RenderContext, override)
 # INSERT clipping stack balance tests
 # =============================================================================
 
+
 def _make_block_with_line(doc, name: str, line_end: tuple) -> str:
     """Create a named block containing a single line."""
     blk = doc.blocks.new(name)
@@ -565,10 +566,50 @@ def test_insert_nested_clipping_stacks_balanced(doc, ctx):
 
     assert frontend.pipeline.push_count == 2
     assert frontend.pipeline.pop_count == 2
-    assert frontend.stack_depth == 0, (
-        f"stack leak: depth={frontend.stack_depth}"
-    )
+    assert frontend.stack_depth == 0, f"stack leak: depth={frontend.stack_depth}"
 
 
 if __name__ == "__main__":
     pytest.main([__file__])
+
+
+@pytest.mark.parametrize(
+    "batch_size,max_segments,expected_sizes",
+    [
+        (None, None, [2500]),
+        (None, 2050, [2050]),
+        (1024, None, [1024, 1024, 452]),
+        (1024, 2050, [1024, 1024, 2]),
+    ],
+)
+def test_hatch_pattern_output_is_batched(
+    msp, basic, monkeypatch, batch_size, max_segments, expected_sizes
+):
+    from ezdxf.render import hatching
+
+    baseline = hatching.HatchBaseLine(Vec2(), Vec2(1, 0), Vec2(0, 1), [1, -1])
+    monkeypatch.setattr(
+        hatching, "pattern_baselines", lambda *args, **kwargs: [baseline]
+    )
+    monkeypatch.setattr(
+        hatching,
+        "hatch_paths",
+        lambda *args, **kwargs: [hatching.Line(Vec2(), Vec2(5000, 0), 0)],
+    )
+    hatch = msp.add_hatch()
+    hatch.set_pattern_fill("ANSI31")
+    basic.config = basic.config.with_changes(
+        hatching_max_segments=max_segments, hatching_batch_size=batch_size
+    )
+    batches = []
+    monkeypatch.setattr(
+        basic.pipeline,
+        "draw_solid_lines",
+        lambda lines, properties: batches.append(list(lines)),
+    )
+    basic.draw_hatch_pattern(hatch, [], Properties())
+    assert [len(batch) for batch in batches] == expected_sizes
+    flattened = [segment for batch in batches for segment in batch]
+    for index, (start, end) in enumerate(flattened):
+        assert start == Vec2(index * 2, 0)
+        assert end == Vec2(index * 2 + 1, 0)

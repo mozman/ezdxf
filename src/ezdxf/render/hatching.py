@@ -35,6 +35,8 @@ MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
 NONE_VEC2 = Vec2(math.nan, math.nan)
 KEY_NDIGITS = 4
 SORT_NDIGITS = 10
+DEFAULT_MAX_HATCHING_WORK = 1_000_000
+DEFAULT_MAX_HATCHING_SEGMENTS = 1_000_000
 
 
 class IntersectionType(enum.IntEnum):
@@ -61,6 +63,64 @@ class DenseHatchingLinesError(HatchingError):
     """Very small hatching distance which creates too many hatching lines."""
 
     pass
+
+
+class HatchingLimitError(HatchingError):
+    """The configured hatching work or output budget has been exhausted."""
+
+
+class _CancelledHatching(HatchingError):
+    pass
+
+
+class HatchingControl:
+    """Shared limits for a hatch entity, including all its pattern baselines.
+
+    ``max_work`` bounds boundary elements, intersection attempts, stored and
+    processed intersections, and dash elements (including gaps).
+    ``max_segments`` bounds segments emitted by :meth:`PatternRenderer.render`.
+    Set either limit to ``None`` to explicitly disable it. Cancellation is checked
+    at least every 64 work items. Completed output may precede cancellation or a
+    :class:`HatchingLimitError`; no alternative filling is substituted.
+    """
+
+    def __init__(
+        self,
+        terminate: Optional[Callable[[], bool]] = None,
+        *,
+        max_work: Optional[int] = DEFAULT_MAX_HATCHING_WORK,
+        max_segments: Optional[int] = DEFAULT_MAX_HATCHING_SEGMENTS,
+    ):
+        for value in (max_work, max_segments):
+            if value is not None and (not isinstance(value, int) or value < 1):
+                raise ValueError("hatching limits must be positive integers or None")
+        self.terminate = terminate
+        self.max_work = max_work
+        self.max_segments = max_segments
+        self.work = 0
+        self.segments = 0
+        self.cancelled = False
+
+    def check(self) -> None:
+        if self.cancelled or (self.terminate is not None and self.terminate()):
+            self.cancelled = True
+            raise _CancelledHatching
+
+    def step(self) -> None:
+        if self.max_work is not None and self.work >= self.max_work:
+            raise HatchingLimitError(f"hatching work limit of {self.max_work} reached")
+        self.work += 1
+        if self.work % 64 == 1:
+            self.check()
+
+    def emit(self) -> None:
+        if self.max_segments is not None and self.segments >= self.max_segments:
+            raise HatchingLimitError(
+                f"hatching segment limit of {self.max_segments} reached"
+            )
+        self.segments += 1
+        if self.segments % 64 == 1:
+            self.check()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -188,7 +248,9 @@ class PatternRenderer:
     def sequence_origin(self, index: float) -> Vec2:
         return self.origin + self.direction * (self.pattern_length * index)
 
-    def render(self, start: Vec2, end: Vec2) -> Iterator[tuple[Vec2, Vec2]]:
+    def render(
+        self, start: Vec2, end: Vec2, *, control: Optional[HatchingControl] = None
+    ) -> Iterator[tuple[Vec2, Vec2]]:
         """Yields the pattern lines as pairs of :class:`~ezdxf.math.Vec2`
         instances from the start- to the end point on the hatch line.
         For points the start- and end point are the same :class:`~ezdxf.math.Vec2`
@@ -197,7 +259,20 @@ class PatternRenderer:
         The start- and end points should be located collinear at the hatch line
         of this instance, otherwise the points a projected onto this hatch line.
 
+        Pass a shared `control` to bound all lines of one hatch entity together.
         """
+        control = control or HatchingControl()
+        try:
+            control.check()
+            for segment in self._render(start, end, control):
+                control.emit()
+                yield segment
+        except _CancelledHatching:
+            return
+
+    def _render(
+        self, start: Vec2, end: Vec2, control: HatchingControl
+    ) -> Iterator[tuple[Vec2, Vec2]]:
         if start.isclose(end):
             return
         length = self.pattern_length
@@ -216,7 +291,9 @@ class PatternRenderer:
         e_index, e_offset = divmod(e_dist, length)
 
         if s_index == e_index:
-            yield from self.render_offset_to_offset(s_index, s_offset, e_offset)
+            yield from self.render_offset_to_offset(
+                s_index, s_offset, e_offset, control=control
+            )
             return
         # line crosses pattern border
         if s_offset > 0.0:
@@ -224,25 +301,34 @@ class PatternRenderer:
                 s_index,
                 s_offset,
                 length,
+                control=control,
             )
             s_index += 1
 
         while s_index < e_index:
-            yield from self.render_full_pattern(s_index)
-            s_index += 1
+            yield from self.render_full_pattern(s_index, control=control)
+            next_index = s_index + 1
+            if next_index == s_index:
+                raise HatchingLimitError("hatch pattern index cannot advance")
+            s_index = next_index
 
         if e_offset > 0.0:
             yield from self.render_offset_to_offset(
                 s_index,
                 0.0,
                 e_offset,
+                control=control,
             )
 
-    def render_full_pattern(self, index: float) -> Iterator[tuple[Vec2, Vec2]]:
+    def render_full_pattern(
+        self, index: float, *, control: Optional[HatchingControl] = None
+    ) -> Iterator[tuple[Vec2, Vec2]]:
         # fast pattern rendering
         direction = self.direction
         start_point = self.sequence_origin(index)
         for dash in self.pattern:
+            if control is not None:
+                control.step()
             if dash == 0.0:
                 yield start_point, start_point
             else:
@@ -252,13 +338,20 @@ class PatternRenderer:
                 start_point = end_point
 
     def render_offset_to_offset(
-        self, index: float, s_offset: float, e_offset: float
+        self,
+        index: float,
+        s_offset: float,
+        e_offset: float,
+        *,
+        control: Optional[HatchingControl] = None,
     ) -> Iterator[tuple[Vec2, Vec2]]:
         direction = self.direction
         origin = self.sequence_origin(index)
         start_point = origin + direction * s_offset
         distance = 0.0
         for dash in self.pattern:
+            if control is not None:
+                control.step()
             distance += abs(dash)
             if distance < s_offset:
                 continue
@@ -342,15 +435,26 @@ def hatch_line_distances(
     """Returns all hatch line distances in the range of the given point
     distances.
     """
+    return list(_hatch_line_distances(point_distances, normal_distance))
+
+
+def _hatch_line_distances(
+    point_distances: Sequence[float], normal_distance: float
+) -> Iterator[float]:
+    # Keep the public list-returning helper compatible, but never allocate a
+    # potentially enormous list before checking the work limit internally.
     assert normal_distance != 0.0
     normal_factors = [d / normal_distance for d in point_distances]
     max_line_number = int(math.ceil(max(normal_factors)))
     min_line_number = int(math.ceil(min(normal_factors)))
-    return [normal_distance * num for num in range(min_line_number, max_line_number)]
+    return (normal_distance * num for num in range(min_line_number, max_line_number))
 
 
 def intersect_polygon(
-    baseline: HatchBaseLine, polygon: Sequence[Vec2]
+    baseline: HatchBaseLine,
+    polygon: Sequence[Vec2],
+    *,
+    control: Optional[HatchingControl] = None,
 ) -> Iterator[tuple[Intersection, float]]:
     """Yields all intersection points of the hatch defined by the `baseline` and
     the given `polygon`.
@@ -371,11 +475,15 @@ def intersect_polygon(
     prev_point = polygon[count - 1]  # last point
     dist_prev = baseline.signed_distance(prev_point)
     for index in range(count):
+        if control is not None:
+            control.step()
         point = polygon[index]
         dist_point = baseline.signed_distance(point)
-        for hatch_line_distance in hatch_line_distances(
+        for hatch_line_distance in _hatch_line_distances(
             (dist_prev, dist_point), baseline.normal_distance
         ):
+            if control is not None:
+                control.step()
             hatch_line = baseline.hatch_line(hatch_line_distance)
             ip = hatch_line.intersect_line(
                 prev_point,
@@ -397,6 +505,8 @@ def hatch_polygons(
     baseline: HatchBaseLine,
     polygons: Sequence[Sequence[Vec2]],
     terminate: Optional[Callable[[], bool]] = None,
+    *,
+    control: Optional[HatchingControl] = None,
 ) -> Iterator[Line]:
     """Yields all pattern lines for all hatch lines generated by the given
     :class:`HatchBaseLine`, intersecting the given 2D polygons as :class:`Line`
@@ -425,13 +535,19 @@ def hatch_polygons(
             winding orientation (cw or ccw) of paths is not important
         terminate: callback function which is called periodically and should
             return ``True`` to terminate the hatching function
+        control: optional shared work budget; defaults to :class:`HatchingControl`
 
     """
-    yield from _hatch_geometry(baseline, polygons, intersect_polygon, terminate)
+    yield from _hatch_geometry(
+        baseline, polygons, intersect_polygon, terminate, control=control
+    )
 
 
 def intersect_path(
-    baseline: HatchBaseLine, path: Path
+    baseline: HatchBaseLine,
+    path: Path,
+    *,
+    control: Optional[HatchingControl] = None,
 ) -> Iterator[tuple[Intersection, float]]:
     """Yields all intersection points of the hatch defined by the `baseline` and
     the given single `path`.
@@ -441,14 +557,18 @@ def intersect_path(
     line.
 
     """
-    for path_element in _path_elements(path):
+    for path_element in _path_elements(path, control=control):
+        if control is not None:
+            control.step()
         if isinstance(path_element, Bezier4P):
             distances = [
                 baseline.signed_distance(p) for p in path_element.control_points
             ]
-            for hatch_line_distance in hatch_line_distances(
+            for hatch_line_distance in _hatch_line_distances(
                 distances, baseline.normal_distance
             ):
+                if control is not None:
+                    control.step()
                 hatch_line = baseline.hatch_line(hatch_line_distance)
                 for ip in hatch_line.intersect_cubic_bezier_curve(path_element):
                     yield ip, hatch_line_distance
@@ -456,9 +576,11 @@ def intersect_path(
             a, b = Vec2.generate(path_element)
             dist_a = baseline.signed_distance(a)
             dist_b = baseline.signed_distance(b)
-            for hatch_line_distance in hatch_line_distances(
+            for hatch_line_distance in _hatch_line_distances(
                 (dist_a, dist_b), baseline.normal_distance
             ):
+                if control is not None:
+                    control.step()
                 hatch_line = baseline.hatch_line(hatch_line_distance)
                 ip = hatch_line.intersect_line(a, b, dist_a, dist_b)
                 if (
@@ -468,12 +590,16 @@ def intersect_path(
                     yield ip, hatch_line_distance
 
 
-def _path_elements(path: Path) -> Union[Bezier4P, tuple[Vec2, Vec2]]:
+def _path_elements(
+    path: Path, *, control: Optional[HatchingControl] = None
+) -> Iterator[Union[Bezier4P, tuple[Vec2, Vec2]]]:
     if len(path) == 0:
         return
     start = path.start
     path_start = start
-    for command in path.commands():
+    for command in path:
+        if control is not None:
+            control.step()
         end = command.end
         if isinstance(command, MoveTo):
             if not path_start.isclose(start):
@@ -496,6 +622,8 @@ def hatch_paths(
     baseline: HatchBaseLine,
     paths: Sequence[Path],
     terminate: Optional[Callable[[], bool]] = None,
+    *,
+    control: Optional[HatchingControl] = None,
 ) -> Iterator[Line]:
     """Yields all pattern lines for all hatch lines generated by the given
     :class:`HatchBaseLine`, intersecting the given 2D :class:`~ezdxf.path.Path`
@@ -516,14 +644,15 @@ def hatch_paths(
             orientation (cw or ccw) of the paths is not important
         terminate: callback function which is called periodically and should
             return ``True`` to terminate the hatching function
+        control: optional shared work budget; defaults to :class:`HatchingControl`
 
     """
-    yield from _hatch_geometry(baseline, paths, intersect_path, terminate)
+    yield from _hatch_geometry(
+        baseline, paths, intersect_path, terminate, control=control
+    )
 
 
-IFuncType: TypeAlias = Callable[
-    [HatchBaseLine, Any], Iterator[Tuple[Intersection, float]]
-]
+IFuncType: TypeAlias = Callable[..., Iterator[Tuple[Intersection, float]]]
 
 
 def _hatch_geometry(
@@ -531,6 +660,8 @@ def _hatch_geometry(
     geometries: Sequence[Any],
     intersection_func: IFuncType,
     terminate: Optional[Callable[[], bool]] = None,
+    *,
+    control: Optional[HatchingControl] = None,
 ) -> Iterator[Line]:
     """Returns all pattern lines intersecting the given geometries.
 
@@ -541,20 +672,37 @@ def _hatch_geometry(
     otherwise ``False``. Can be used to implement a timeout.
 
     """
+    if control is not None and terminate is not None:
+        raise ValueError("set terminate on the shared HatchingControl")
+    control = control or HatchingControl(terminate)
+    try:
+        yield from _hatch_geometry_with_control(
+            baseline, geometries, intersection_func, control
+        )
+    except _CancelledHatching:
+        return
+
+
+def _hatch_geometry_with_control(
+    baseline: HatchBaseLine,
+    geometries: Sequence[Any],
+    intersection_func: IFuncType,
+    control: HatchingControl,
+) -> Iterator[Line]:
     points: dict[float, list[Intersection]] = defaultdict(list)
     for geometry in geometries:
-        if terminate and terminate():
-            return
-        for ip, distance in intersection_func(baseline, geometry):
+        control.check()
+        control.step()
+        for ip, distance in intersection_func(baseline, geometry, control=control):
+            control.step()
             assert ip.type != IntersectionType.NONE
             points[round(distance, KEY_NDIGITS)].append(ip)
 
     for distance, vertices in points.items():
-        if terminate and terminate():
-            return
+        control.check()
         start = NONE_VEC2
         end = NONE_VEC2
-        for line in _line_segments(vertices, distance):
+        for line in _line_segments(vertices, distance, control=control):
             if start is NONE_VEC2:
                 start = line.start
                 end = line.end
@@ -570,13 +718,20 @@ def _hatch_geometry(
             yield Line(start, end, distance)
 
 
-def _line_segments(vertices: list[Intersection], distance: float) -> Iterator[Line]:
+def _line_segments(
+    vertices: list[Intersection],
+    distance: float,
+    *,
+    control: Optional[HatchingControl] = None,
+) -> Iterator[Line]:
     if len(vertices) < 2:
         return
     vertices.sort(key=lambda p: p.p0.round(SORT_NDIGITS))
     inside = False
     prev_point = NONE_VEC2
     for ip in vertices:
+        if control is not None:
+            control.step()
         if ip.type == IntersectionType.NONE or ip.type == IntersectionType.COLLINEAR:
             continue
         # REGULAR, START, END
@@ -596,6 +751,8 @@ def hatch_entity(
     polygon: DXFPolygon,
     filter_text_boxes=True,
     jiggle_origin: bool = True,
+    *,
+    control: Optional[HatchingControl] = None,
 ) -> Iterator[tuple[Vec3, Vec3]]:
     """Yields the hatch pattern of the given HATCH or MPOLYGON entity as 3D lines.
     Each line is a pair of :class:`~ezdxf.math.Vec3` instances as start- and end
@@ -611,6 +768,7 @@ def hatch_entity(
         filter_text_boxes: ignore text boxes if ``True``
         jiggle_origin: move pattern line origins a small amount to avoid intersections
             in corner points which causes errors in patterns
+        control: optional shared cancellation, work, and segment budget
 
     """
     if polygon.pattern is None or polygon.dxf.solid_fill:
@@ -620,17 +778,21 @@ def hatch_entity(
     ocs = polygon.ocs()
     elevation = polygon.dxf.elevation.z
     paths = hatch_boundary_paths(polygon, filter_text_boxes)
+    control = control or HatchingControl()
     # todo: MPOLYGON offset
     # All paths in OCS!
     for baseline in pattern_baselines(polygon, jiggle_origin=jiggle_origin):
-        for line in hatch_paths(baseline, paths):
+        if control.cancelled:
+            return
+        for line in hatch_paths(baseline, paths, control=control):
             line_pattern = baseline.pattern_renderer(line.distance)
-            for s, e in line_pattern.render(line.start, line.end):
+            for s, e in line_pattern.render(line.start, line.end, control=control):
                 if ocs.transform:
                     yield ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
                         (e.x, e.y, elevation)
                     )
-                yield Vec3(s), Vec3(e)
+                else:
+                    yield Vec3(s.x, s.y, elevation), Vec3(e.x, e.y, elevation)
 
 
 def hatch_boundary_paths(polygon: DXFPolygon, filter_text_boxes=True) -> list[Path]:

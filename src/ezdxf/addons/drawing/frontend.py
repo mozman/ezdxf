@@ -553,6 +553,11 @@ class UniversalFrontend:
         elevation = polygon.dxf.elevation.z
         properties.linetype_pattern = tuple()
         lines: list[tuple[Vec3, Vec3]] = []
+        batch_size = self.config.hatching_batch_size
+        if batch_size is not None and (
+            not isinstance(batch_size, int) or batch_size < 1
+        ):
+            raise ValueError("hatching_batch_size must be a positive integer or None")
 
         t0 = time.perf_counter()
         max_time = self.config.hatching_timeout
@@ -565,21 +570,37 @@ class UniversalFrontend:
                 return True
             return False
 
-        for baseline in hatching.pattern_baselines(
-            polygon,
-            min_hatch_line_distance=self.config.min_hatch_line_distance,
-            jiggle_origin=True,
-        ):
-            for line in hatching.hatch_paths(baseline, paths, timeout):
-                line_pattern = baseline.pattern_renderer(line.distance)
-                for s, e in line_pattern.render(line.start, line.end):
-                    if ocs.transform:
-                        s, e = (
-                            ocs.to_wcs((s.x, s.y, elevation)),
-                            ocs.to_wcs((e.x, e.y, elevation)),
-                        )
-                    lines.append((s, e))
-        self.pipeline.draw_solid_lines(lines, properties)
+        control = hatching.HatchingControl(
+            timeout,
+            max_work=self.config.hatching_max_work,
+            max_segments=self.config.hatching_max_segments,
+        )
+        try:
+            for baseline in hatching.pattern_baselines(
+                polygon,
+                min_hatch_line_distance=self.config.min_hatch_line_distance,
+                jiggle_origin=True,
+            ):
+                if control.cancelled:
+                    break
+                for line in hatching.hatch_paths(baseline, paths, control=control):
+                    line_pattern = baseline.pattern_renderer(line.distance)
+                    for s, e in line_pattern.render(
+                        line.start, line.end, control=control
+                    ):
+                        if ocs.transform:
+                            s, e = (
+                                ocs.to_wcs((s.x, s.y, elevation)),
+                                ocs.to_wcs((e.x, e.y, elevation)),
+                            )
+                        lines.append((s, e))
+                        if batch_size is not None and len(lines) == batch_size:
+                            self.pipeline.draw_solid_lines(lines, properties)
+                            lines = []
+        except hatching.HatchingLimitError as error:
+            print(f"{error} for {str(polygon)} - aborting")
+        if lines:
+            self.pipeline.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(
         self,
