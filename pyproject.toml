@@ -33,7 +33,7 @@ dependencies=[
 ]
 
 keywords = ["DXF", "CAD"]
-license = {file = "LICENCE"}
+license = {file = "LICENSE"}
 
 # full list of classifiers: https://pypi.org/classifiers/
 classifiers=[
