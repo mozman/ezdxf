@@ -13,6 +13,7 @@ from typing import (
 import re
 import operator
 from collections import abc
+from functools import lru_cache
 
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.groupby import groupby
@@ -154,8 +155,7 @@ class EntityQuery(abc.Sequence):
         return self.entities.__getitem__(item)
 
     def __setitem__(self, key, value):
-        """Set the DXF attribute `key` for all supported DXF entities to `value`.
-        """
+        """Set the DXF attribute `key` for all supported DXF entities to `value`."""
         if not isinstance(key, str):
             raise TypeError("key has to be a string (DXF attribute name)")
         self._set_dxf_attribute_for_all(key, value)
@@ -171,9 +171,7 @@ class EntityQuery(abc.Sequence):
         self.entities = [e for e in self.entities if e.is_alive]
         return self  # fluent interface
 
-    def _get_entities_with_supported_attribute(
-        self, attribute: str
-    ) -> EntityQuery:
+    def _get_entities_with_supported_attribute(self, attribute: str) -> EntityQuery:
         query = self.__class__(
             e for e in self.entities if e.dxf.is_supported(attribute)
         )
@@ -277,9 +275,13 @@ class EntityQuery(abc.Sequence):
             return self.symmetric_difference(other)
         return NotImplemented
 
-    def _select_by_operator(self, value, op, vectors=True) -> EntityQuery:
+    def _select_by_operator(
+        self, value, op, vectors=True, *, ignore_case: Optional[bool] = None
+    ) -> EntityQuery:
         attribute = self.selected_dxf_attribute
-        if self.ignore_case and isinstance(value, str):
+        if ignore_case is None:
+            ignore_case = self.ignore_case
+        if ignore_case and isinstance(value, str):
             value = value.lower()
 
         query = self.__class__()
@@ -296,7 +298,7 @@ class EntityQuery(abc.Sequence):
                         f"unsupported operation '{str(op.__name__)}' for DXF "
                         f"attribute {attribute}"
                     )
-                if self.ignore_case and isinstance(entity_value, str):
+                if ignore_case and isinstance(entity_value, str):
                     entity_value = entity_value.lower()
                 if op(entity_value, value):
                     entities.append(entity)
@@ -304,7 +306,8 @@ class EntityQuery(abc.Sequence):
 
     def match(self, pattern: str) -> EntityQuery:
         """Returns all entities where the selected DXF attribute matches the
-        regular expression `pattern`.
+        regular expression `pattern` in its entirety, including any trailing
+        newline. Matching uses :func:`re.fullmatch`.
 
         Raises:
              TypeError: for non-string based attributes
@@ -313,7 +316,7 @@ class EntityQuery(abc.Sequence):
 
         def match(value, regex):
             if isinstance(value, str):
-                return regex.match(value) is not None
+                return regex.fullmatch(value) is not None
             raise TypeError(
                 f"cannot apply regular expression to DXF attribute: "
                 f"{self.selected_dxf_attribute}"
@@ -322,18 +325,12 @@ class EntityQuery(abc.Sequence):
         return self._regex_match(pattern, match)
 
     def _regex_match(self, pattern: str, func) -> EntityQuery:
-        ignore_case = self.ignore_case
-        self.ignore_case = False  # deactivate string manipulation
-        re_flags = re.IGNORECASE if ignore_case else 0
-
-        # always match whole pattern
-        if not pattern.endswith("$"):
-            pattern += "$"
-        result = self._select_by_operator(
-            re.compile(pattern, flags=re_flags), func
+        re_flags = re.IGNORECASE if self.ignore_case else 0
+        # Regex flags handle case conversion; leave the query state unchanged,
+        # including when compiling or evaluating the pattern raises an error.
+        return self._select_by_operator(
+            re.compile(pattern, flags=re_flags), func, ignore_case=False
         )
-        self.ignore_case = ignore_case  # restore state
-        return result
 
     @property
     def first(self):
@@ -368,9 +365,7 @@ class EntityQuery(abc.Sequence):
         additional query.
 
         """
-        self.entities = self.difference(
-            self.__class__(self.entities, query)
-        ).entities
+        self.entities = self.difference(self.__class__(self.entities, query)).entities
         return self  # fluent interface
 
     def query(self, query: str = "*") -> EntityQuery:
@@ -439,7 +434,12 @@ class EntityQuery(abc.Sequence):
         return self.__class__(set(self.entities) ^ set(other.entities))
 
 
+@lru_cache(maxsize=256)
 def entity_matcher(query: str) -> Callable[[DXFEntity], bool]:
+    """Compile and cache a query expression, without retaining any entities.
+
+    Cached matchers read current DXF attributes on every evaluation.
+    """
     query_args = EntityQueryParser.parse_string(query, parse_all=True)
     entity_matcher_ = build_entity_name_matcher(query_args.EntityQuery)
     attrib_matcher = build_entity_attributes_matcher(
@@ -470,8 +470,8 @@ class Relation:
         "<=": operator.le,
         ">": operator.gt,
         ">=": operator.ge,
-        "?": lambda e, regex: regex.match(e) is not None,
-        "!?": lambda e, regex: regex.match(e) is None,
+        "?": lambda e, regex: regex.fullmatch(e) is not None,
+        "!?": lambda e, regex: regex.fullmatch(e) is None,
     }
     VALID_CMP_OPERATORS = frozenset(CMP_OPERATORS.keys())
 
@@ -483,9 +483,8 @@ class Relation:
 
         re_flags = re.IGNORECASE if ignore_case else 0
         if "?" in op:
-            self.value = re.compile(
-                value + "$", flags=re_flags
-            )  # always match whole pattern
+            self.value = re.compile(value, flags=re_flags)
+            self.convert_case = lambda x: x
         else:
             self.value = self.convert_case(value)
 
@@ -551,9 +550,7 @@ def _compile_tokens(
     if is_relation(tokens):
         return Relation(tokens, ignore_case)
     else:
-        return BoolExpression(
-            [_compile_tokens(token, ignore_case) for token in tokens]
-        )
+        return BoolExpression([_compile_tokens(token, ignore_case) for token in tokens])
 
 
 def build_entity_attributes_matcher(

@@ -188,8 +188,19 @@ Regular Expression Selection
 ----------------------------
 
 The :meth:`EntityQuery.match` method returns all entities where the selected DXF
-attribute matches the given regular expression. This methods work only on string
-based attributes, raises :class:`TypeError` otherwise.
+attribute matches the given regular expression. This method works only on string
+based attributes and raises :class:`TypeError` otherwise.
+
+Both :meth:`EntityQuery.match` and the query-string operators ``?`` and ``!?``
+match the entire attribute value with :func:`re.fullmatch`. For example,
+``"foo|bar"`` matches ``"foo"`` or ``"bar"``, but does not match ``"foobar"``.
+A trailing newline must also be consumed by the pattern; ``"foo$"`` does not
+match ``"foo\n"``. An invalid pattern or a non-string attribute does not change
+the query's :attr:`EntityQuery.ignore_case` setting.
+
+Compiled query strings are reused by a bounded cache. Query results are always
+evaluated against the current entities and attributes, so editing an entity does
+not require clearing this cache.
 
 From here on I use only descriptors for attribute selection if possible.
 

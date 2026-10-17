@@ -1,6 +1,7 @@
 # Copyright (c) 2013-2022, Manfred Moitzi
 # License: MIT-License
 import pytest
+import re
 import ezdxf
 
 from ezdxf.query import EntityQuery, name_query
@@ -136,17 +137,13 @@ def test_bool_select(modelspace):
 
 
 def test_bool_select_2(modelspace):
-    result = EntityQuery(
-        modelspace, '*[layer=="lay_lines" & color==7 | color==6]'
-    )
+    result = EntityQuery(modelspace, '*[layer=="lay_lines" & color==7 | color==6]')
     # 1xLINE(layer=="lay_lines" & color==7) 1xPOLYLINE(color==6) 1xTEXT(color==6)
     assert len(result) == 3
 
 
 def test_bool_select_3(modelspace):
-    result = EntityQuery(
-        modelspace, '*[layer=="lay_lines" & (color==7 | color==6)]'
-    )
+    result = EntityQuery(modelspace, '*[layer=="lay_lines" & (color==7 | color==6)]')
     # 1xLINE(layer=="lay_lines" & color==7) 1xPOLYLINE(layer=="lay_lines" & color==6)
     assert len(result) == 2
 
@@ -274,10 +271,12 @@ class TestGetSetDelItemInterface:
 class TestVirtualAttributes:
     @pytest.fixture
     def entities(self):
-        return EntityQuery([
-            MText.new(dxfattribs={"text": "content"}),  # virtual text attribute
-            Text.new(dxfattribs={"text": "content"})
-        ])
+        return EntityQuery(
+            [
+                MText.new(dxfattribs={"text": "content"}),  # virtual text attribute
+                Text.new(dxfattribs={"text": "content"}),
+            ]
+        )
 
     def test_get_virtual_attributes(self, entities):
         assert len(entities["text"]) == 2
@@ -287,7 +286,7 @@ class TestVirtualAttributes:
         assert all(e.dxf.text == "XYZ" for e in entities)
 
     def test_cannot_delete_virtual_attributes(self, entities):
-        """Cannot delete virtual DXF attributes! """
+        """Cannot delete virtual DXF attributes!"""
         del entities["text"]
         assert entities.query("MTEXT").first.dxf.text == "content"
 
@@ -376,9 +375,7 @@ class TestRegexMatch:
         return EntityQuery(
             [
                 Line.new(dxfattribs={"layer": "Lay_line", "color": 1}),
-                Circle.new(
-                    dxfattribs={"layer": "lAy_circle", "center": Vec3(0, 0)}
-                ),
+                Circle.new(dxfattribs={"layer": "lAy_circle", "center": Vec3(0, 0)}),
                 Text.new(dxfattribs={"layer": "laY_text"}),
             ]
         )
@@ -401,6 +398,90 @@ class TestRegexMatch:
             base["color"].match("nothing")
         with pytest.raises(TypeError):
             base["center"].match("nothing")
+
+    @pytest.mark.parametrize("ignore_case", [True, False])
+    def test_invalid_regex_preserves_case_policy(self, base, ignore_case):
+        layers = base["layer"]
+        layers.ignore_case = ignore_case
+        before = list(layers == "LAY_LINE")
+        with pytest.raises(re.error):
+            layers.match("[")
+        assert layers.ignore_case is ignore_case
+        assert list(layers == "LAY_LINE") == before
+
+    @pytest.mark.parametrize("ignore_case", [True, False])
+    def test_non_string_attribute_preserves_case_policy(self, base, ignore_case):
+        query = base["color"]
+        query.ignore_case = ignore_case
+        with pytest.raises(TypeError):
+            query.match(".*")
+        assert query.ignore_case is ignore_case
+
+
+@pytest.mark.parametrize(
+    "pattern, value, matches",
+    [
+        ("foo|bar", "foobar", False),
+        ("foo|bar", "foo", True),
+        ("foo|bar", "bar", True),
+        ("(foo|(bar|baz))", "barbaz", False),
+        (r"foo\$", "foo$", True),
+        (r"foo\$", "foo$extra", False),
+        ("(?i)foo|bar", "BAR", True),
+        ("(?-i:FOO)", "FOO", True),
+        ("(?-i:FOO)", "foo", False),
+        ("foo", "foo\n", False),
+        ("foo$", "foo\n", False),
+        ("(?s)foo.*", "foo\n", True),
+    ],
+)
+@pytest.mark.parametrize("ignore_case", [True, False])
+def test_regex_matches_entire_attribute(pattern, value, matches, ignore_case):
+    # MTEXT preserves newlines; TEXT and layer names strip them.
+    entity = MText.new(dxfattribs={"text": value})
+    assert entity.dxf.text == value
+    query = EntityQuery([entity])["text"]
+    query.ignore_case = ignore_case
+    assert bool(query.match(pattern)) is matches
+    suffix = "i" if ignore_case else ""
+    assert bool(EntityQuery([entity], f'MTEXT[text ? "{pattern}"]{suffix}')) is matches
+    assert (
+        bool(EntityQuery([entity], f'MTEXT[text !? "{pattern}"]{suffix}'))
+        is not matches
+    )
+
+
+def test_repeated_query_reads_changed_entity_attributes():
+    entity = Line.new(dxfattribs={"layer": "before"})
+    query = 'LINE[layer == "before"]'
+    assert list(EntityQuery([entity], query)) == [entity]
+    entity.dxf.layer = "after"
+    assert len(EntityQuery([entity], query)) == 0
+
+
+def test_repeated_query_does_not_retain_other_document_entities():
+    first = ezdxf.new().modelspace().add_line((0, 0), (1, 1))
+    second = ezdxf.new().modelspace().add_line((0, 0), (1, 1))
+    query = 'LINE[layer == "0"]'
+    assert list(EntityQuery([first], query)) == [first]
+    assert list(EntityQuery([second], query)) == [second]
+
+
+def test_repeated_query_keeps_case_options_separate():
+    entity = Line.new(dxfattribs={"layer": "UPPER"})
+    query = 'LINE[layer == "upper"]'
+    assert list(EntityQuery([entity], query + "i")) == [entity]
+    assert len(EntityQuery([entity], query)) == 0
+
+
+def test_invalid_query_does_not_break_later_repeated_queries():
+    entity = Line.new(dxfattribs={"layer": "before"})
+    query = 'LINE[layer ? "before"]'
+    assert list(EntityQuery([entity], query)) == [entity]
+    for _ in range(2):
+        with pytest.raises(re.error):
+            EntityQuery([entity], 'LINE[layer ? "["]')
+    assert list(EntityQuery([entity], query)) == [entity]
 
 
 class TestSetOperations:
