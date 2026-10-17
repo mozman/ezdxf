@@ -2,6 +2,7 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional
+from uuid import UUID
 
 import ezdxf
 from ezdxf import disassemble
@@ -16,13 +17,18 @@ MAX_FLATTENING_DISTANCE = disassemble.Primitive.max_flattening_distance
 class Cache:
     """Caching object for :class:`ezdxf.math.BoundingBox` objects.
 
+    Precise and fast bounding boxes are stored separately. Entity UUIDs prevent
+    collisions between equal handles from different documents and survive
+    pickling together with the entities. The cache does not retain entities or
+    documents. Changes to entities still require explicit invalidation.
+
     Args:
         uuid: use UUIDs for virtual entities
 
     """
 
     def __init__(self, uuid=False) -> None:
-        self._boxes: dict[str, BoundingBox] = dict()
+        self._boxes: dict[tuple[UUID, bool], BoundingBox] = dict()
         self._use_uuid = bool(uuid)
         self.hits: int = 0
         self.misses: int = 0
@@ -38,28 +44,41 @@ class Cache:
             f"misses={self.misses})"
         )
 
-    def get(self, entity: DXFEntity) -> Optional[BoundingBox]:
+    def get(
+        self, entity: DXFEntity, *, fast: Optional[bool] = None
+    ) -> Optional[BoundingBox]:
+        """Returns the cached box for the requested calculation mode.
+
+        Omitting `fast` accepts either mode, preferring a precise box. This
+        preserves the mode-independent lookup used by existing cache clients.
+        """
         assert entity is not None
         key = self._get_key(entity)
         if key is None:
             self.misses += 1
             return None
-        box = self._boxes.get(key)
+        if fast is None:
+            box = self._boxes.get((key, False))
+            if box is None:
+                box = self._boxes.get((key, True))
+        else:
+            box = self._boxes.get((key, bool(fast)))
         if box is None:
             self.misses += 1
         else:
             self.hits += 1
         return box
 
-    def store(self, entity: DXFEntity, box: BoundingBox) -> None:
+    def store(self, entity: DXFEntity, box: BoundingBox, *, fast=False) -> None:
+        """Stores a box for the given calculation mode (precise by default)."""
         assert entity is not None
         key = self._get_key(entity)
         if key is None:
             return
-        self._boxes[key] = box
+        self._boxes[(key, bool(fast))] = box
 
     def invalidate(self, entities: Iterable[DXFEntity]) -> None:
-        """Invalidate cache entries for the given DXF `entities`.
+        """Invalidate both calculation modes for the given DXF `entities`.
 
         If entities are changed by the user, it is possible to invalidate
         individual entities. Use with care - discarding the whole cache is
@@ -69,12 +88,12 @@ class Cache:
 
         """
         for entity in entities:
-            try:
-                del self._boxes[self._get_key(entity)]  # type: ignore
-            except KeyError:
-                pass
+            key = self._get_key(entity)
+            if key is not None:
+                self._boxes.pop((key, False), None)
+                self._boxes.pop((key, True), None)
 
-    def _get_key(self, entity: DXFEntity) -> Optional[str]:
+    def _get_key(self, entity: DXFEntity) -> Optional[UUID]:
         if entity.dxftype() == "HATCH":
             # Special treatment for multiple primitives for the same
             # HATCH entity - all have the same handle:
@@ -82,11 +101,9 @@ class Cache:
             # which boundary path should be returned for the handle?
             return None
 
-        key = entity.dxf.handle
-        if key is None or key == "0":
-            return str(entity.uuid) if self._use_uuid else None
-        else:
-            return key
+        if not self._use_uuid and entity.dxf.handle in (None, "0"):
+            return None
+        return entity.uuid
 
 
 def multi_recursive(
@@ -112,11 +129,11 @@ def multi_recursive(
 
         entity = primitive.entity
         if cache is not None:
-            box = cache.get(entity)
+            box = cache.get(entity, fast=fast)
             if box is None:
                 box = primitive.bbox(fast=fast)
                 if box.has_data:
-                    cache.store(entity, box)
+                    cache.store(entity, box, fast=fast)
         else:
             box = primitive.bbox(fast=fast)
 
@@ -164,12 +181,18 @@ def multi_flat(
     for entity in entities:
         box = None
         if cache:
-            box = cache.get(entity)
+            box = cache.get(entity, fast=fast)
 
         if box is None:
-            box = extends_([entity])
+            dxftype = entity.dxftype()
+            if dxftype == "LINE":
+                box = BoundingBox((entity.dxf.start, entity.dxf.end))
+            elif dxftype == "POINT":
+                box = BoundingBox((entity.dxf.location,))
+            else:
+                box = extends_([entity])
             if cache:
-                cache.store(entity, box)
+                cache.store(entity, box, fast=fast)
 
         if box.has_data:
             yield box

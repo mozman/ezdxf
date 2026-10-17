@@ -2,10 +2,13 @@
 #  License: MIT License
 
 import pytest
+import pickle
+import random
 import ezdxf
 from ezdxf.layouts import VirtualLayout
 from ezdxf import bbox, disassemble
 from ezdxf.render.forms import square, translate
+from ezdxf.math import BoundingBox
 
 
 @pytest.fixture(scope="module")
@@ -114,9 +117,7 @@ def test_cache_usage_for_recreation_on_the_fly(msp_solids):
     assert cache.hits == 0
 
 
-@pytest.mark.parametrize(
-    "func", [bbox.multi_flat, bbox.extents, bbox.multi_recursive]
-)
+@pytest.mark.parametrize("func", [bbox.multi_flat, bbox.extents, bbox.multi_recursive])
 def test_cache_usage_for_reused_virtual_entities(msp_solids, func):
     cache = bbox.Cache()
     # Create flat entity structure by yourself, so that virtual entities are
@@ -135,9 +136,7 @@ def test_cache_usage_for_reused_virtual_entities(msp_solids, func):
     assert cache.hits == 0  # parent INSERT bbox is not calculated and cached
 
 
-@pytest.mark.parametrize(
-    "func", [bbox.multi_flat, bbox.extents, bbox.multi_recursive]
-)
+@pytest.mark.parametrize("func", [bbox.multi_flat, bbox.extents, bbox.multi_recursive])
 def test_cache_usage_with_uuids_for_reused_virtual_entities(msp_solids, func):
     cache = bbox.Cache(uuid=True)
     # Create flat entity structure by yourself, so that virtual entities are
@@ -171,6 +170,121 @@ def test_precise_bounding_box_calculation(circle):
     box = bbox.extents(circle, fast=False)
     assert box.extmin == (-100, -100)
     assert box.extmax == (+100, +100)
+
+
+@pytest.mark.parametrize("first_fast", [False, True])
+@pytest.mark.parametrize("func", [bbox.extents, bbox.multi_flat, bbox.multi_recursive])
+@pytest.mark.parametrize("in_block", [False, True])
+def test_cache_separates_precise_and_fast_boxes(first_fast, func, in_block):
+    doc = ezdxf.new()
+    layout = doc.blocks.new("curve") if in_block else doc.modelspace()
+    spline = layout.add_open_spline([(0, 0), (1, 30), (2, 30), (3, 0)], degree=3)
+    entity = doc.modelspace().add_blockref("curve", (0, 0)) if in_block else spline
+    cache = bbox.Cache(uuid=True)
+    for fast in (first_fast, not first_fast, first_fast):
+        result = func([entity], fast=fast, cache=cache)
+        box = result if func is bbox.extents else next(iter(result))
+        assert box.extmax.y == pytest.approx(30.0 if fast else 22.5)
+
+
+@pytest.mark.parametrize("use_uuid", [False, True])
+def test_cache_distinguishes_identical_handles_in_different_documents(use_uuid):
+    point1 = ezdxf.new().modelspace().add_point((0, 0))
+    point2 = ezdxf.new().modelspace().add_point((100, 100))
+    assert point1.dxf.handle == point2.dxf.handle
+    cache = bbox.Cache(uuid=use_uuid)
+    assert bbox.extents([point1], cache=cache).extmin == (0, 0, 0)
+    assert bbox.extents([point2], cache=cache).extmin == (100, 100, 0)
+
+
+def test_cache_legacy_access_and_invalidation():
+    point = ezdxf.new().modelspace().add_point((1, 2, 3))
+    box = BoundingBox([point.dxf.location])
+    cache = bbox.Cache()
+    cache.store(point, box, fast=True)
+    assert cache.get(point) is box
+    assert cache.get(point, fast=False) is None
+    precise = BoundingBox([point.dxf.location])
+    cache.store(point, precise)
+    assert cache.get(point) is precise
+    assert cache.get(point, fast=True) is box
+    cache.invalidate([point])
+    cache.invalidate([point])  # already absent
+    assert cache.get(point, fast=False) is None
+    assert cache.get(point, fast=True) is None
+
+
+@pytest.mark.parametrize("virtual", [False, True])
+def test_cache_and_entities_survive_separate_pickle_roundtrips(virtual):
+    doc = ezdxf.new()
+    point = doc.modelspace().add_point((1, 2, 3))
+    if virtual:
+        point = point.copy()
+    cache = bbox.Cache(uuid=virtual)
+    bbox.extents([point], cache=cache, fast=False)
+    bbox.extents([point], cache=cache, fast=True)
+    restored_cache = pickle.loads(pickle.dumps(cache))
+    restored_point = pickle.loads(pickle.dumps(point))
+    for fast in (False, True):
+        assert restored_cache.get(restored_point, fast=fast).extmin == (1, 2, 3)
+    restored_cache.invalidate([restored_point])
+    assert not restored_cache.has_data
+
+
+@pytest.mark.parametrize("fast", [False, True])
+def test_direct_line_and_point_boxes_match_primitives(fast):
+    rng = random.Random(417)
+    layout = VirtualLayout()
+    for _ in range(50):
+        start = tuple(rng.uniform(-100, 100) for _ in range(3))
+        end = tuple(rng.uniform(-100, 100) for _ in range(3))
+        layout.add_line(start, end, dxfattribs={"thickness": 5, "extrusion": (1, 0, 0)})
+        layout.add_point(start)
+    layout.add_line((2, 3, 4), (2, 3, 4))
+    expected = [p.bbox(fast=fast) for p in disassemble.to_primitives(layout)]
+    cache = bbox.Cache(uuid=True)
+    for _ in range(2):
+        result = list(bbox.multi_flat(layout, fast=fast, cache=cache))
+        assert len(result) == len(expected)
+        for box, reference in zip(result, expected):
+            assert box.extmin == reference.extmin
+            assert box.extmax == reference.extmax
+
+
+@pytest.mark.parametrize("thickness", [-5, 0, 5])
+@pytest.mark.parametrize("extrusion", [(0, 0, 1), (0, 0, -1), (1, 2, 3)])
+def test_direct_boxes_preserve_primitive_thickness_and_extrusion_behavior(
+    thickness, extrusion
+):
+    layout = VirtualLayout()
+    attribs = {"thickness": thickness, "extrusion": extrusion}
+    layout.add_line((3, 2, 1), (-4, -5, -6), dxfattribs=attribs)
+    layout.add_point((4, 5, 6), dxfattribs=attribs)
+    # Existing primitives represent the stored WCS endpoints/location, ignoring
+    # thickness. The fast path must preserve that established limitation.
+    direct = list(bbox.multi_flat(layout))
+    generic = list(bbox.multi_recursive(layout))
+    for result, expected in zip(direct, generic):
+        assert result.extmin == expected.extmin
+        assert result.extmax == expected.extmax
+
+
+def test_mixed_direct_and_decomposed_bounding_boxes():
+    doc = ezdxf.new()
+    block = doc.blocks.new("geometry")
+    block.add_line((0, 0, 1), (2, 4, 3))
+    block.add_point((-1, -2, -3))
+    layout = doc.modelspace()
+    layout.add_blockref("geometry", (20, 30, 40), dxfattribs={"rotation": 90})
+    layout.add_point((-100, 200, 10))
+    layout.add_line((2, 3, 7), (8, -5, 9))
+    layout.add_ray((1000, 1000), (1, 0))  # unsupported
+    reference = BoundingBox()
+    for box in bbox.multi_recursive(layout):
+        reference.extend(box)
+    result = bbox.extents(layout)
+    assert result.extmin.isclose(reference.extmin)
+    assert result.extmax.isclose(reference.extmax)
 
 
 if __name__ == "__main__":

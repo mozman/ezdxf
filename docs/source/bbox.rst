@@ -37,6 +37,9 @@ using only the control vertices.
 
 The **optional** caching object :class:`Cache` has to be instantiated by the
 user, this is only useful if the same entities will be processed multiple times.
+The cache separates ``fast=True`` and ``fast=False`` calculations and can be
+shared by entities from different documents, even when their handles match.
+Changing entity geometry still requires :meth:`Cache.invalidate` or a new cache.
 
 Example usage with caching:
 
@@ -166,6 +169,16 @@ In conclusion: Using a cache is only useful, if you often process
 Cache Class
 -----------
 
+Cache keys use entity UUIDs, without retaining references to entities or documents.
+The ``uuid`` constructor option controls caching of virtual entities without handles;
+entities with handles always have unique cache identities. A cache and its entities
+can be pickled separately after the cache has been populated. Reading the same DXF
+again creates new entity identities and therefore does not reuse the cache.
+
+``Cache.get(entity)`` accepts either precision mode, preferring a precise box.
+Pass ``fast=True`` or ``fast=False`` to request a specific mode. The matching
+``Cache.store(entity, box, fast=...)`` defaults to precise mode.
+
 .. autoclass:: Cache
 
     .. py:attribute:: has_data
@@ -177,3 +190,7 @@ Cache Class
     .. py:attribute:: misses
 
     .. automethod:: invalidate
+
+    .. automethod:: get
+
+    .. automethod:: store

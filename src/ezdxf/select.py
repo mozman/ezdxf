@@ -4,6 +4,8 @@ from __future__ import annotations
 from typing import Iterable, Callable, Sequence
 from typing_extensions import override
 import abc
+from bisect import bisect_right
+from heapq import heappop, heappush
 
 from ezdxf import bbox
 from ezdxf.entities import DXFEntity
@@ -11,7 +13,6 @@ from ezdxf.math import UVec, Vec2, Vec3, BoundingBox2d, is_point_in_polygon_2d
 from ezdxf.math.clipping import CohenSutherlandLineClipping2d
 from ezdxf.math import rtree, BoundingBox
 from ezdxf.query import EntityQuery
-
 
 __all__ = [
     "bbox_chained",
@@ -98,9 +99,12 @@ class Circle(SelectionShape):
     def is_overlapping_bbox(self, entity_bbox: BoundingBox2d) -> bool:
         if not self._bbox.has_overlap(entity_bbox):
             return False
-        if any(self._is_vertex_inside(v) for v in entity_bbox.rect_vertices()):
-            return True
-        return self._is_vertex_inside(entity_bbox.center)
+        center = self._center
+        nearest = Vec2(
+            max(entity_bbox.extmin.x, min(center.x, entity_bbox.extmax.x)),
+            max(entity_bbox.extmin.y, min(center.y, entity_bbox.extmax.y)),
+        )
+        return self._is_vertex_inside(nearest)
 
 
 class Polygon(SelectionShape):
@@ -311,7 +315,9 @@ def bbox_chained(
     """Selects elements that are directly or indirectly connected to each other by
     overlapping bounding boxes. The selection begins at the specified starting element.
 
-    Warning: the current implementation has a complexity of O(n²).
+    The implementation has a worst-case complexity of O(n²). All bounding boxes
+    are projected onto the xy-plane. The starting entity is first in the result;
+    subsequent entities retain the discovery order of repeated input-order scans.
 
     Args:
         start: first entity of selection
@@ -325,23 +331,38 @@ def bbox_chained(
 
     if cache is None:
         cache = bbox.Cache()
-    selected: dict[DXFEntity, BoundingBox2d] = {start: get_bbox_2d(start)}
+    candidates: dict[DXFEntity, tuple[list[int], BoundingBox2d]] = {}
+    for index, entity in enumerate(entities):
+        if entity is start:
+            continue
+        if entity in candidates:
+            candidates[entity][0].append(index)
+        else:
+            candidates[entity] = ([index], get_bbox_2d(entity))
 
-    entities = list(entities)
-    restart = True
-    while restart:
-        restart = False
-        for entity in entities:
-            if entity in selected:
-                continue
-            entity_bbox = get_bbox_2d(entity)
-            for selected_bbox in selected.values():
-                if entity_bbox.has_overlap(selected_bbox):
-                    selected[entity] = entity_bbox
-                    restart = True
-                    break
+    # Queue only newly connected boxes, so each selected/unselected pair is
+    # tested once. The (scan, input position) priority preserves the previous
+    # scan algorithm's discovery order, including repeated input entities.
+    queue = [(0, -1, start, get_bbox_2d(start))]
+    selected = []
+    while queue:
+        scan, source_index, entity, source_box = heappop(queue)
+        selected.append(entity)
+        matches = [
+            candidate
+            for candidate, (_, box) in candidates.items()
+            if box.has_overlap(source_box)
+        ]
+        for candidate in matches:
+            indices, box = candidates.pop(candidate)
+            next_index = bisect_right(indices, source_index)
+            if next_index == len(indices):
+                priority = (scan + 1, indices[0])
+            else:
+                priority = (scan, indices[next_index])
+            heappush(queue, (*priority, candidate, box))
 
-    return EntityQuery(selected.keys())
+    return EntityQuery(selected)
 
 
 class PlanarSearchIndex:
