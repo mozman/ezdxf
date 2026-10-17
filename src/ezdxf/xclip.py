@@ -140,7 +140,18 @@ class XClip:
         vertices: Sequence[Vec2] = []
         if not isinstance(self._spatial_filter, SpatialFilter):
             return ClippingPath()
-        m = self._spatial_filter.inverse_insert_matrix
+        # The boundary vertices are defined in the coordinate system of the clip
+        # boundary, see the DXF reference of the SPATIAL_FILTER entity.  The
+        # transform_matrix maps WCS points into the clip boundary coordinate
+        # system, therefore its inverse maps clip boundary coordinates back to
+        # WCS and the inverse_insert_matrix maps WCS points into the block
+        # coordinate system.
+        clip_to_wcs = self._spatial_filter.transform_matrix.copy()
+        clip_to_wcs.inverse()
+        # composition order: transform the boundary vertices from the clip
+        # boundary coordinate system to WCS first (clip_to_wcs) and then into
+        # the block coordinate system (inverse_insert_matrix)
+        m = clip_to_wcs @ self._spatial_filter.inverse_insert_matrix
         vertices = Vec2.tuple(
             m.transform_vertices(self._spatial_filter.boundary_vertices)
         )
