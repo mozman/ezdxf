@@ -10,11 +10,11 @@ from typing import (
     TypeVar,
 )
 import math
+import operator
 
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec3, Vec2
 from ._matrix44 import Matrix44
-
 
 __all__ = ["Bezier3P"]
 
@@ -124,9 +124,19 @@ class Bezier3P(Generic[T]):
                 curve to the center of the linear (C1) curve between two
                 approximation points to determine if a segment should be
                 subdivided.
-            segments: minimum segment count
+            segments: positive integer minimum segment count
+
+        Raises:
+            ValueError: distance is not finite and greater than zero, or segments
+                is less than one
+            RecursionError: floating-point precision prevents further subdivision
 
         """
+        if not math.isfinite(distance) or distance <= 0.0:
+            raise ValueError("distance must be finite and greater than zero")
+        segments = operator.index(segments)
+        if segments < 1:
+            raise ValueError("segments must be a positive integer")
         stack: list[tuple[float, T]] = []
         dt: float = 1.0 / segments
         t0: float = 0.0
@@ -138,6 +148,8 @@ class Bezier3P(Generic[T]):
         yield start_point
         while t0 < 1.0:
             t1 = t0 + dt
+            if t1 <= t0:
+                raise RecursionError("Bézier flattening cannot advance parameter")
             if math.isclose(t1, 1.0):
                 end_point = cp[2]
                 t1 = 1.0
@@ -159,6 +171,10 @@ class Bezier3P(Generic[T]):
                     else:
                         break
                 else:
+                    if not math.isfinite(d) or mid_t == t0 or mid_t == t1:
+                        raise RecursionError(
+                            "Bézier flattening cannot meet distance at this precision"
+                        )
                     stack.append((t1, end_point))
                     t1 = mid_t
                     end_point = mid_point
