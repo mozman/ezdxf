@@ -55,6 +55,7 @@ classifiers=[
 
 
 [project.optional-dependencies]
+gpu = ["torch>=2.5"]
 # use PyQt5 (draw5/dev5) only when PySide6 is not available
 draw = ["PySide6", "matplotlib", "PyMuPDF>=1.20.0", "Pillow"]
 draw5 = ["PyQt5", "matplotlib", "PyMuPDF>=1.20.0", "Pillow"]

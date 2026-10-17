@@ -10,6 +10,7 @@ Add-ons
 
 
     drawing
+    geometry_batch
     geo
     importer
     dxf2code
