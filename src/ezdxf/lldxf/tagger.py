@@ -20,6 +20,18 @@ from .types import (
 from .const import DXFStructureError
 from ezdxf.tools.codepage import toencoding
 
+_BINARY_NUMBER_READERS = {
+    code: reader
+    for codes, reader in (
+        (INT16, struct.Struct("<h")),
+        (DOUBLE, struct.Struct("<d")),
+        (INT32, struct.Struct("<i")),
+        (INT64, struct.Struct("<q")),
+        (BYTES, struct.Struct("<B")),
+    )
+    for code in codes
+}
+
 
 def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
     """Yields DXFTag() from trusted (internal) source - relies on
@@ -148,7 +160,7 @@ def binary_tags_loader(
             - "strict" to raise an :class:`UnicodeDecodeError`
 
     Raises:
-        DXFStructureError: Not a binary DXF file
+        DXFStructureError: Not a binary DXF file or a truncated tag
         DXFVersionError: Unsupported DXF version
         UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
 
@@ -156,36 +168,37 @@ def binary_tags_loader(
     if data[:22] != b"AutoCAD Binary DXF\r\n\x1a\x00":
         raise DXFStructureError("Not a binary DXF data structure.")
 
+    def scan_header_string(name: bytes) -> Optional[str]:
+        # Limit search to the first 1024 bytes, as before. The high byte of the
+        # preceding group code distinguishes modern tags from R12 tags.
+        # The original name-only search included names ending at byte 1024;
+        # include their terminator even if it lies just outside that window.
+        start = data.find(name + b"\x00", 22, 1025)
+        if start == -1:
+            return None
+        code_size = 2 if data[start - 1] == 0 else 1
+        value_start = start + len(name) + 1 + code_size
+        end = data.find(b"\x00", value_start)
+        if end == -1:
+            raise DXFStructureError(
+                f"Truncated binary DXF header variable {name!r} at byte {start}."
+            )
+        return data[value_start:end].decode()
+
     def scan_params():
         dxfversion = "AC1009"
         encoding = "cp1252"
-        try:
-            # Limit search to first 1024 bytes - an arbitrary number
-            # start index for 1-byte group code
-            start = data.index(b"$ACADVER", 22, 1024) + 10
-        except ValueError:
-            pass  # HEADER var $ACADVER not present
-        else:
-            if data[start] != 65:  # not 'A' = 2-byte group code
-                start += 1
-            dxfversion = data[start : start + 6].decode()
+        version = scan_header_string(b"$ACADVER")
+        if version is not None:
+            if len(version) != 6:
+                raise DXFStructureError("Invalid binary DXF header variable $ACADVER.")
+            dxfversion = version
 
         if dxfversion >= "AC1021":
             encoding = "utf8"
         else:
-            try:
-                # Limit search to first 1024 bytes - an arbitrary number
-                # start index for 1-byte group code
-                start = data.index(b"$DWGCODEPAGE", 22, 1024) + 14
-            except ValueError:
-                pass  # HEADER var $DWGCODEPAGE not present
-            else:  # name schema is 'ANSI_xxxx'
-                if data[start] != 65:  # not 'A' = 2-byte group code
-                    start += 1
-                end = start + 5
-                while data[end] != 0:
-                    end += 1
-                codepage = data[start:end].decode()
+            codepage = scan_header_string(b"$DWGCODEPAGE")
+            if codepage is not None:
                 encoding = toencoding(codepage)
 
         return encoding, dxfversion
@@ -194,51 +207,67 @@ def binary_tags_loader(
     r12 = dxfversion <= "AC1009"
     index: int = 22
     data_length: int = len(data)
-    unpack = struct.unpack_from
+    number_reader = _BINARY_NUMBER_READERS.get
     value: Any
 
     while index < data_length:
         # decode next group code
+        tag_offset = index
         code = data[index]
         if r12:
             if code == 255:  # extended data
+                if index + 3 > data_length:
+                    raise DXFStructureError(
+                        f"Truncated binary DXF group code at byte {tag_offset}."
+                    )
                 code = (data[index + 2] << 8) | data[index + 1]
                 index += 3
             else:
                 index += 1
         else:  # 2-byte group code
+            if index + 2 > data_length:
+                raise DXFStructureError(
+                    f"Truncated binary DXF group code at byte {tag_offset}."
+                )
             code = (data[index + 1] << 8) | code
             index += 2
 
         # decode next value
         if code in BINARY_DATA:
+            if index >= data_length:
+                raise DXFStructureError(
+                    f"Missing binary DXF chunk length at byte {index}, group code {code}."
+                )
             length = data[index]
             index += 1
+            if index + length > data_length:
+                raise DXFStructureError(
+                    f"Truncated binary DXF chunk at byte {index}, group code {code}."
+                )
             value = data[index : index + length]
             index += length
             yield DXFBinaryTag(code, value)
         else:
-            if code in INT16:
-                value = unpack("<h", data, offset=index)[0]
-                index += 2
-            elif code in DOUBLE:
-                value = unpack("<d", data, offset=index)[0]
-                index += 8
-            elif code in INT32:
-                value = unpack("<i", data, offset=index)[0]
-                index += 4
-            elif code in INT64:
-                value = unpack("<q", data, offset=index)[0]
-                index += 8
-            elif code in BYTES:
-                value = data[index]
-                index += 1
-            else:  # zero terminated string
+            reader = number_reader(code)
+            if reader is None:  # zero terminated string
                 start_index = index
-                end_index = data.index(b"\x00", start_index)
+                end_index = data.find(b"\x00", start_index)
+                if end_index == -1:
+                    raise DXFStructureError(
+                        f"Unterminated binary DXF string at byte {index}, group code {code}."
+                    )
                 s = data[start_index:end_index]
                 index = end_index + 1
                 value = s.decode(encoding, errors=errors)
+                yield DXFTag(code, value)
+                continue
+            end_index = index + reader.size
+            if end_index > data_length:
+                raise DXFStructureError(
+                    f"Truncated binary DXF value at byte {index}, group code {code}."
+                )
+            value = reader.unpack_from(data, index)[0]
+            index = end_index
             yield DXFTag(code, value)
 
 
@@ -356,7 +385,7 @@ def json_tag_loader(
     unicode string without a trailing ``\n``.
 
     The expected JSON format is a list of [group-code, value] pairs where each pair is
-    a DXF tag. The `compact` and the `verbose` format is supported. 
+    a DXF tag. The `compact` and the `verbose` format is supported.
 
     Args:
         data: JSON data structure as a sequence of [group-code, value] pairs
