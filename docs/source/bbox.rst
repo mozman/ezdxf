@@ -166,6 +166,11 @@ In conclusion: Using a cache is only useful, if you often process
 Cache Class
 -----------
 
+Cache identities use entity UUIDs so matching handles from different documents
+do not collide. The ``uuid`` option controls virtual entities without handles.
+Keys do not retain entities or documents and survive separate pickle round trips.
+Reading a DXF again creates new identities. Geometry edits still require invalidation.
+
 .. autoclass:: Cache
 
     .. py:attribute:: has_data

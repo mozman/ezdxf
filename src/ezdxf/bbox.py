@@ -3,6 +3,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional
 
+from uuid import UUID
+
 import ezdxf
 from ezdxf import disassemble
 from ezdxf.math import BoundingBox
@@ -22,7 +24,7 @@ class Cache:
     """
 
     def __init__(self, uuid=False) -> None:
-        self._boxes: dict[str, BoundingBox] = dict()
+        self._boxes: dict[UUID, BoundingBox] = dict()
         self._use_uuid = bool(uuid)
         self.hits: int = 0
         self.misses: int = 0
@@ -74,7 +76,7 @@ class Cache:
             except KeyError:
                 pass
 
-    def _get_key(self, entity: DXFEntity) -> Optional[str]:
+    def _get_key(self, entity: DXFEntity) -> Optional[UUID]:
         if entity.dxftype() == "HATCH":
             # Special treatment for multiple primitives for the same
             # HATCH entity - all have the same handle:
@@ -82,11 +84,9 @@ class Cache:
             # which boundary path should be returned for the handle?
             return None
 
-        key = entity.dxf.handle
-        if key is None or key == "0":
-            return str(entity.uuid) if self._use_uuid else None
-        else:
-            return key
+        if not self._use_uuid and entity.dxf.handle in (None, "0"):
+            return None
+        return entity.uuid
 
 
 def multi_recursive(
