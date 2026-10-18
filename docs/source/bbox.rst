@@ -166,6 +166,11 @@ In conclusion: Using a cache is only useful, if you often process
 Cache Class
 -----------
 
+The cache stores ``fast=True`` and ``fast=False`` boxes separately.
+``Cache.get(entity)`` accepts either mode and prefers a precise box. Pass
+``fast=True`` or ``fast=False`` to request a mode; ``Cache.store`` defaults to
+precise mode. Invalidating an entity removes both modes.
+
 .. autoclass:: Cache
 
     .. py:attribute:: has_data
