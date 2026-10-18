@@ -305,7 +305,7 @@ class EntityQuery(abc.Sequence):
 
     def match(self, pattern: str) -> EntityQuery:
         """Returns all entities where the selected DXF attribute matches the
-        regular expression `pattern`.
+        regular expression `pattern` in its entirety using :func:`re.fullmatch`.
 
         Raises:
              TypeError: for non-string based attributes
@@ -314,7 +314,7 @@ class EntityQuery(abc.Sequence):
 
         def match(value, regex):
             if isinstance(value, str):
-                return regex.match(value) is not None
+                return regex.fullmatch(value) is not None
             raise TypeError(
                 f"cannot apply regular expression to DXF attribute: "
                 f"{self.selected_dxf_attribute}"
@@ -327,9 +327,6 @@ class EntityQuery(abc.Sequence):
         self.ignore_case = False  # deactivate string manipulation
         re_flags = re.IGNORECASE if ignore_case else 0
 
-        # always match whole pattern
-        if not pattern.endswith("$"):
-            pattern += "$"
         result = self._select_by_operator(
             re.compile(pattern, flags=re_flags), func
         )
@@ -472,8 +469,8 @@ class Relation:
         "<=": operator.le,
         ">": operator.gt,
         ">=": operator.ge,
-        "?": lambda e, regex: regex.match(e) is not None,
-        "!?": lambda e, regex: regex.match(e) is None,
+        "?": lambda e, regex: regex.fullmatch(e) is not None,
+        "!?": lambda e, regex: regex.fullmatch(e) is None,
     }
     VALID_CMP_OPERATORS = frozenset(CMP_OPERATORS.keys())
 
@@ -485,9 +482,8 @@ class Relation:
 
         re_flags = re.IGNORECASE if ignore_case else 0
         if "?" in op:
-            self.value = re.compile(
-                value + "$", flags=re_flags
-            )  # always match whole pattern
+            self.value = re.compile(value, flags=re_flags)
+            self.convert_case = lambda x: x
         else:
             self.value = self.convert_case(value)
 
