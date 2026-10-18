@@ -35,6 +35,17 @@ def test_export_compact_json_tags(doc):
     assert data[-1] == [0, "EOF"]
 
 
+@pytest.mark.parametrize("compact", [True, False])
+def test_export_json_tags_escapes_string_values(compact):
+    content = 'first\\Psecond "quoted"'
+    doc = ezdxf.new()
+    doc.modelspace().add_mtext(content)
+    data = json.loads(export_json_tags(doc, compact=compact))
+    loaded_doc = load_json_tags(data)
+
+    assert loaded_doc.modelspace()[0].text == content
+
+
 def test_load_json_tags(doc):
     data_str = export_json_tags(doc, compact=False)
     data = json.loads(data_str)

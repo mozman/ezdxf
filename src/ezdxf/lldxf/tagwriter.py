@@ -3,6 +3,7 @@
 from __future__ import annotations
 from typing import Any, TextIO, TYPE_CHECKING, Union, Iterable, BinaryIO
 import abc
+import json
 
 from .types import TAG_STRING_FORMAT, cast_tag_value, DXFVertex, DXFBinaryTag
 from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_DATA
@@ -272,7 +273,7 @@ class JSONTagWriter(AbstractTagWriter):
     """
 
     JSON_HEADER = "[\n"
-    JSON_STRING = '[{0}, "{1}"],\n'
+    JSON_STRING = "[{0}, {1}],\n"
     JSON_NUMBER = '[{0}, {1}],\n'
     VERTEX_TAG_FORMAT = "[{0}, {1}],\n"
 
@@ -312,7 +313,8 @@ class JSONTagWriter(AbstractTagWriter):
         if self.compact and isinstance(value, (float, int)):
             self._stream.write(self.JSON_NUMBER.format(code, value))
             return
-        self._stream.write(self.JSON_STRING.format(code, value))
+        text = json.dumps(str(value), ensure_ascii=False)
+        self._stream.write(self.JSON_STRING.format(code, text))
 
     def write_str(self, s: str) -> None:
         self.write_tags(Tags.from_text(s))
