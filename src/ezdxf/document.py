@@ -20,6 +20,8 @@ import io
 import logging
 import os
 import pathlib
+import stat
+import uuid
 from datetime import datetime, timezone
 from itertools import chain
 
@@ -65,7 +67,6 @@ from ezdxf.tools.codepage import tocodepage, toencoding
 from ezdxf.tools.juliandate import juliandate
 from ezdxf.tools.text import safe_string, MAX_STR_LEN
 from ezdxf import messenger, msgtypes
-
 
 logger = logging.getLogger("ezdxf")
 
@@ -525,14 +526,28 @@ class Drawing:
             fmt: ``'asc'`` for ASCII DXF (default) or ``'bin'`` for Binary DXF
 
         """
+        previous_filename = self.filename
         self.filename = str(filename)
-        self.save(encoding=encoding, fmt=fmt)
+        try:
+            self.save(encoding=encoding, fmt=fmt)
+        except BaseException:
+            self.filename = previous_filename
+            raise
 
     def save(self, encoding: Optional[str] = None, fmt: str = "asc") -> None:
         """Write drawing to file-system by using the :attr:`filename` attribute
         as filename. Override file encoding by argument `encoding`, handle with
         care, but this option allows you to create DXF files for applications
         that handle file encoding different from AutoCAD.
+
+        The drawing is written to a temporary sibling file and replaces the
+        destination only after writing and closing succeeds. Existing permission
+        mode bits are preserved and symbolic links are followed. Replacement
+        creates a new inode, so other hard links retain the previous contents.
+        Other file metadata, such as ownership and extended attributes, is not
+        copied. The destination directory must allow creating and replacing files.
+        This protects against write failures, but does not guarantee durability
+        across a system crash.
 
         Args:
             encoding: override default encoding as Python encoding string like ``'utf-8'``
@@ -551,18 +566,45 @@ class Drawing:
             # different than AutoCAD
             enc = encoding
 
-        if fmt.startswith("asc"):
-            fp = io.open(
-                self.filename, mode="wt", encoding=enc, errors="dxfreplace"  # type: ignore
-            )
-        elif fmt.startswith("bin"):
-            fp = open(self.filename, "wb")  # type: ignore
-        else:
+        if not fmt.startswith(("asc", "bin")):
             raise ValueError(f"Unknown output format: '{fmt}'.")
+
+        # Resolve the destination before creating the temporary file so saving
+        # through a symlink updates its target without replacing the link.
+        filename = pathlib.Path(self.filename).resolve()  # type: ignore
         try:
-            self.write(fp, fmt=fmt)  # type: ignore
+            file_stat = filename.stat()
+        except FileNotFoundError:
+            file_stat = None
+        if file_stat is not None and not stat.S_ISREG(file_stat.st_mode):
+            raise OSError(f"Not a regular file: '{filename}'.")
+
+        temporary = filename.with_name(f".ezdxf-{uuid.uuid4().hex}.tmp")
+        # O_EXCL prevents following an existing temporary-file symlink. Unlike
+        # mkstemp(), mode 0o666 applies the normal file-creation umask.
+        mode = stat.S_IMODE(file_stat.st_mode) if file_stat is not None else 0o666
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
+        try:
+            try:
+                fp: Union[TextIO, BinaryIO]
+                if fmt.startswith("asc"):
+                    fp = io.open(
+                        fd, mode="wt", encoding=enc, errors="dxfreplace", closefd=False
+                    )
+                else:
+                    fp = io.open(fd, mode="wb", closefd=False)
+                with fp:
+                    self.write(fp, fmt=fmt)
+            finally:
+                os.close(fd)
+            if file_stat is not None:
+                os.chmod(temporary, stat.S_IMODE(file_stat.st_mode))
+            os.replace(temporary, filename)
         finally:
-            fp.close()
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
 
     def encode(self, s: str) -> bytes:
         """Encode string `s` with correct encoding and error handler."""
