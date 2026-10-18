@@ -133,6 +133,8 @@ class Bezier4P(Generic[T]):
         yield start_point
         while t0 < 1.0:
             t1 = t0 + dt
+            if t1 <= t0:
+                raise RecursionError("Bézier flattening cannot advance parameter")
             if math.isclose(t1, 1.0):
                 end_point = cp[3]
                 t1 = 1.0
@@ -154,6 +156,10 @@ class Bezier4P(Generic[T]):
                     else:
                         break
                 else:
+                    if not math.isfinite(d) or mid_t == t0 or mid_t == t1:
+                        raise RecursionError(
+                            "Bézier flattening cannot meet distance at this precision"
+                        )
                     stack.append((t1, end_point))
                     t1 = mid_t
                     end_point = mid_point

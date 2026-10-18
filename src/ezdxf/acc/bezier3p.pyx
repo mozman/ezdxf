@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Sequence
 from .vector cimport Vec3, isclose, v3_dist, v3_lerp, v3_add, Vec2
 from .matrix44 cimport Matrix44
 import warnings
+from libc.math cimport isfinite
 if TYPE_CHECKING:
     from ezdxf.math import UVec
 
@@ -83,6 +84,8 @@ cdef class Bezier3P:
         cdef Vec3 end_point
         while t0 < 1.0:
             t1 = t0 + dt
+            if t1 <= t0:
+                raise RecursionError("Bézier flattening cannot advance parameter")
             if isclose(t1, 1.0, REL_TOL, ABS_TOL):
                 end_point = self.end_point
                 t1 = 1.0
@@ -146,6 +149,8 @@ cdef class _Flattening:
         double start_t,
         double end_t
     ):
+        if self._recursion_error:
+            return
         if self._recursion_level > RECURSION_LIMIT:
             self._recursion_error = 1
             return
@@ -155,6 +160,8 @@ cdef class _Flattening:
         cdef double d = v3_dist(mid_point, v3_lerp(start_point, end_point, 0.5))
         if d < self.distance:
             self.points.append(end_point)
+        elif not isfinite(d) or mid_t == start_t or mid_t == end_t:
+            self._recursion_error = 1
         else:
             self.flatten(start_point, mid_point, start_t, mid_t)
             self.flatten(mid_point, end_point, mid_t, end_t)
