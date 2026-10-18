@@ -13,6 +13,7 @@ from typing import (
 import re
 import operator
 from collections import abc
+from functools import lru_cache
 
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.groupby import groupby
@@ -439,6 +440,7 @@ class EntityQuery(abc.Sequence):
         return self.__class__(set(self.entities) ^ set(other.entities))
 
 
+@lru_cache(maxsize=256)
 def entity_matcher(query: str) -> Callable[[DXFEntity], bool]:
     query_args = EntityQueryParser.parse_string(query, parse_all=True)
     entity_matcher_ = build_entity_name_matcher(query_args.EntityQuery)
