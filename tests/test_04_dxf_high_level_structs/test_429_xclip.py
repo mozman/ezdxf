@@ -5,7 +5,7 @@ import ezdxf
 from ezdxf.document import Drawing
 from ezdxf.entities import factory, Dictionary, XRecord
 from ezdxf import xclip
-from ezdxf.math import BoundingBox2d
+from ezdxf.math import BoundingBox2d, Matrix44, Vec2
 from ezdxf.entities.acad_xrec_roundtrip import RoundtripXRecord
 
 TEST_BLK = "TEST_BLK"
@@ -168,6 +168,51 @@ def test_set_wcs_clipping_path(doc: Drawing):
     bbox = BoundingBox2d(clipping_path.vertices)
     assert bbox.extmin.isclose((0, 0))
     assert bbox.extmax.isclose((1, 1))
+
+
+def test_get_wcs_clipping_path_with_clip_boundary_transform(doc: Drawing):
+    """The boundary vertices are stored in the coordinate system of the clip
+    boundary, which is defined by the SPATIAL_FILTER origin and the
+    transform_matrix.  The clip boundary transform must be applied to get the
+    correct WCS clipping path.
+
+    Regression test for issue #1305.
+    """
+    msp = doc.modelspace()
+    insert = msp.add_blockref(TEST_BLK, (100, 50), dxfattribs={"rotation": 30})
+    clipper = xclip.XClip(insert)
+    clipper.set_block_clipping_path([(0, 0), (1, 1)])
+    spatial_filter = clipper.get_spatial_filter()
+    assert spatial_filter is not None
+
+    # Simulate a SPATIAL_FILTER written by a CAD application: the boundary
+    # vertices are defined in the OCS of the clip boundary whose origin is
+    # (100, 50).  The transform_matrix maps WCS points into this coordinate
+    # system, the inverse insert matrix maps WCS points into the block
+    # coordinate system.
+    spatial_filter.dxf.origin = (100, 50, 0)
+    spatial_filter.dxf.extrusion = (0, 0, 1)
+    spatial_filter.set_boundary_vertices([(10, 10), (30, 10), (30, 30), (10, 30)])
+    spatial_filter.set_transform_matrix(Matrix44.translate(-100, -50, 0))
+    inverse_insert_matrix = insert.matrix44()
+    inverse_insert_matrix.inverse()
+    spatial_filter.set_inverse_insert_matrix(inverse_insert_matrix)
+
+    clipping_path = clipper.get_wcs_clipping_path()
+    bbox = BoundingBox2d(clipping_path.vertices)
+    assert bbox.extmin.isclose((110, 60))
+    assert bbox.extmax.isclose((130, 80))
+
+    # The block clipping path is the WCS clipping path transformed back into
+    # the block coordinate system.
+    block_clipping_path = clipper.get_block_clipping_path()
+    block_bbox = BoundingBox2d(block_clipping_path.vertices)
+    wcs_from_block = Vec2.list(
+        insert.matrix44().transform_vertices(block_clipping_path.vertices)
+    )
+    assert all(
+        a.isclose(b) for a, b in zip(clipping_path.vertices, wcs_from_block)
+    )
 
 
 def test_invert_clip_without_clipping_path(clipper: xclip.XClip):
