@@ -110,3 +110,11 @@ Exceptions
 .. autoclass:: HatchLineDirectionError
 
 .. autoclass:: DenseHatchingLinesError
+Optional Frontend Batching
+--------------------------
+
+Set ``Configuration.hatching_batch_size`` to a positive integer to send hatch
+segments to the drawing backend in bounded batches. The default ``None`` keeps
+one stroke operation per hatch. Geometry, order and properties are preserved;
+overlapping translucent strokes in different batches can blend differently.
+This bounds the frontend output buffer, not all backend memory.

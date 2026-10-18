@@ -553,6 +553,11 @@ class UniversalFrontend:
         elevation = polygon.dxf.elevation.z
         properties.linetype_pattern = tuple()
         lines: list[tuple[Vec3, Vec3]] = []
+        batch_size = self.config.hatching_batch_size
+        if batch_size is not None and (
+            not isinstance(batch_size, int) or batch_size < 1
+        ):
+            raise ValueError("hatching_batch_size must be a positive integer or None")
 
         t0 = time.perf_counter()
         max_time = self.config.hatching_timeout
@@ -579,7 +584,11 @@ class UniversalFrontend:
                             ocs.to_wcs((e.x, e.y, elevation)),
                         )
                     lines.append((s, e))
-        self.pipeline.draw_solid_lines(lines, properties)
+                    if batch_size is not None and len(lines) == batch_size:
+                        self.pipeline.draw_solid_lines(lines, properties)
+                        lines = []
+        if lines or batch_size is None:
+            self.pipeline.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(
         self,
