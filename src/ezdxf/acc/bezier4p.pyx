@@ -4,6 +4,8 @@
 from typing import TYPE_CHECKING, Sequence, Iterable, Iterator
 import cython
 import warnings
+import operator
+from libc.math cimport isfinite
 from .vector cimport (
     Vec3,
     Vec2,
@@ -46,10 +48,13 @@ cdef class Bezier4P:
         readonly Vec3 end_point
 
     def __cinit__(self, defpoints: Sequence[UVec]):
+        if len(defpoints) != 4:
+            raise ValueError("Four control points required.")
         if not isinstance(defpoints[0], (Vec2, Vec3)):
             warnings.warn(
-                DeprecationWarning, 
                 "Bezier4P requires defpoints of type Vec2 or Vec3 in the future",
+                DeprecationWarning,
+                stacklevel=2,
             )
         if len(defpoints) == 4:
             self.start_point = Vec3(defpoints[0])
@@ -98,8 +103,13 @@ cdef class Bezier4P:
         points.append(self.end_point)
         return points
 
-    def flattening(self, double distance, int segments = 4) -> list[Vec3]:
-        cdef double dt = 1.0 / segments
+    def flattening(self, double distance, segments = 4) -> list[Vec3]:
+        if not isfinite(distance) or distance <= 0.0:
+            raise ValueError("distance must be finite and greater than zero")
+        cdef int segment_count = operator.index(segments)
+        if segment_count < 1:
+            raise ValueError("segments must be a positive integer")
+        cdef double dt = 1.0 / segment_count
         cdef double t0 = 0.0, t1
         cdef _Flattening f = _Flattening(self, distance)
         cdef Vec3 start_point = self.start_point

@@ -10,6 +10,7 @@ from typing import (
     Generic,
 )
 import math
+import operator
 
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec3, Vec2
@@ -119,9 +120,14 @@ class Bezier4P(Generic[T]):
                 curve to the center of the linear (C1) curve between two
                 approximation points to determine if a segment should be
                 subdivided.
-            segments: minimum segment count
+            segments: positive integer minimum segment count
 
         """
+        if not math.isfinite(distance) or distance <= 0.0:
+            raise ValueError("distance must be finite and greater than zero")
+        segments = operator.index(segments)
+        if segments < 1:
+            raise ValueError("segments must be a positive integer")
         stack: list[tuple[float, T]] = []
         dt: float = 1.0 / segments
         t0: float = 0.0
