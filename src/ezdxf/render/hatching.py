@@ -630,7 +630,8 @@ def hatch_entity(
                     yield ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
                         (e.x, e.y, elevation)
                     )
-                yield Vec3(s), Vec3(e)
+                else:
+                    yield Vec3(s.x, s.y, elevation), Vec3(e.x, e.y, elevation)
 
 
 def hatch_boundary_paths(polygon: DXFPolygon, filter_text_boxes=True) -> list[Path]:
