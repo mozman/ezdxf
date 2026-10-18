@@ -14,7 +14,9 @@
 	- BUGFIX: Match complete attribute values in regular-expression queries
 		- {{pr 1439}}
 		- contributed by #hameddavodi
-	-
+	- BUGFIX: Detect circle overlap with boxes whose corners lie outside
+		- {{pr 1443}}
+		- contributed by #hameddavodi
 - ## Version 1.4.5 - 2026-10-16
   id:: 6a36280d-37b5-4664-897c-4755e53e79af
 	- NEW: added PyPI package deployment for Python 3.15 and removed PyPI package deployment for Python 3.10 (end of life)
