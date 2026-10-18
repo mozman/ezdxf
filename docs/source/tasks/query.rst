@@ -191,6 +191,9 @@ The :meth:`EntityQuery.match` method returns all entities where the selected DXF
 attribute matches the given regular expression. This methods work only on string
 based attributes, raises :class:`TypeError` otherwise.
 
+Compiled query strings are reused by a bounded cache. Each evaluation reads
+current entity attributes; editing an entity does not require clearing the cache.
+
 From here on I use only descriptors for attribute selection if possible.
 
 .. code-block:: Python
