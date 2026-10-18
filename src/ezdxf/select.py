@@ -100,9 +100,12 @@ class Circle(SelectionShape):
     def is_overlapping_bbox(self, entity_bbox: BoundingBox2d) -> bool:
         if not self._bbox.has_overlap(entity_bbox):
             return False
-        if any(self._is_vertex_inside(v) for v in entity_bbox.rect_vertices()):
-            return True
-        return self._is_vertex_inside(entity_bbox.center)
+        center = self._center
+        nearest = Vec2(
+            max(entity_bbox.extmin.x, min(center.x, entity_bbox.extmax.x)),
+            max(entity_bbox.extmin.y, min(center.y, entity_bbox.extmax.y)),
+        )
+        return self._is_vertex_inside(nearest)
 
 
 class Polygon(SelectionShape):
