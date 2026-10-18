@@ -277,9 +277,13 @@ class EntityQuery(abc.Sequence):
             return self.symmetric_difference(other)
         return NotImplemented
 
-    def _select_by_operator(self, value, op, vectors=True) -> EntityQuery:
+    def _select_by_operator(
+        self, value, op, vectors=True, *, ignore_case: Optional[bool] = None
+    ) -> EntityQuery:
         attribute = self.selected_dxf_attribute
-        if self.ignore_case and isinstance(value, str):
+        if ignore_case is None:
+            ignore_case = self.ignore_case
+        if ignore_case and isinstance(value, str):
             value = value.lower()
 
         query = self.__class__()
@@ -296,7 +300,7 @@ class EntityQuery(abc.Sequence):
                         f"unsupported operation '{str(op.__name__)}' for DXF "
                         f"attribute {attribute}"
                     )
-                if self.ignore_case and isinstance(entity_value, str):
+                if ignore_case and isinstance(entity_value, str):
                     entity_value = entity_value.lower()
                 if op(entity_value, value):
                     entities.append(entity)
@@ -322,18 +326,14 @@ class EntityQuery(abc.Sequence):
         return self._regex_match(pattern, match)
 
     def _regex_match(self, pattern: str, func) -> EntityQuery:
-        ignore_case = self.ignore_case
-        self.ignore_case = False  # deactivate string manipulation
-        re_flags = re.IGNORECASE if ignore_case else 0
-
-        # always match whole pattern
+        re_flags = re.IGNORECASE if self.ignore_case else 0
+        # Regex flags handle case conversion; leave the query state unchanged,
+        # including when compiling or evaluating the pattern raises an error.
         if not pattern.endswith("$"):
             pattern += "$"
-        result = self._select_by_operator(
-            re.compile(pattern, flags=re_flags), func
+        return self._select_by_operator(
+            re.compile(pattern, flags=re_flags), func, ignore_case=False
         )
-        self.ignore_case = ignore_case  # restore state
-        return result
 
     @property
     def first(self):
