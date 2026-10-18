@@ -191,6 +191,10 @@ The :meth:`EntityQuery.match` method returns all entities where the selected DXF
 attribute matches the given regular expression. This methods work only on string
 based attributes, raises :class:`TypeError` otherwise.
 
+Regular expressions used by ``match()``, ``?`` and ``!?`` match the entire
+attribute value with :func:`re.fullmatch`. Alternation and trailing newlines
+follow Python regular-expression semantics; inline case flags are respected.
+
 From here on I use only descriptors for attribute selection if possible.
 
 .. code-block:: Python
