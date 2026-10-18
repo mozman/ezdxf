@@ -5,6 +5,9 @@
 	- BUGFIX: xclip: apply the clip boundary transform to the clipping path
 		- {{pr 1432}}
 		- contributed by #Yuren0312
+	- BUGFIX: Emit hatch segments once in WCS and preserve elevation
+		- {{pr 1446}}
+		- contributed by #hameddavodi
 - ## Version 1.4.5 - 2026-10-16
   id:: 6a36280d-37b5-4664-897c-4755e53e79af
 	- NEW: added PyPI package deployment for Python 3.15 and removed PyPI package deployment for Python 3.10 (end of life)

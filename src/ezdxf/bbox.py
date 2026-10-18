@@ -167,7 +167,13 @@ def multi_flat(
             box = cache.get(entity)
 
         if box is None:
-            box = extends_([entity])
+            dxftype = entity.dxftype()
+            if dxftype == "LINE":
+                box = BoundingBox((entity.dxf.start, entity.dxf.end))
+            elif dxftype == "POINT":
+                box = BoundingBox((entity.dxf.location,))
+            else:
+                box = extends_([entity])
             if cache:
                 cache.store(entity, box)
 

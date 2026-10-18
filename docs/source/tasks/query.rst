@@ -195,6 +195,9 @@ Regular expressions used by ``match()``, ``?`` and ``!?`` match the entire
 attribute value with :func:`re.fullmatch`. Alternation and trailing newlines
 follow Python regular-expression semantics; inline case flags are respected.
 
+Compiled query strings are reused by a bounded cache. Each evaluation reads
+current entity attributes; editing an entity does not require clearing the cache.
+
 From here on I use only descriptors for attribute selection if possible.
 
 .. code-block:: Python
