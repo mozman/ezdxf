@@ -7,6 +7,7 @@
 from __future__ import annotations
 from typing import Sequence, Optional
 import abc
+import functools
 from ezdxf.lldxf import const
 from ezdxf import colors
 from ezdxf.entities.mtext import MText, MTextColumns
@@ -175,6 +176,7 @@ _NO_BREAK_BEFORE = set(
 _NO_BREAK_AFTER = set("（〔［｛〈《「『【〘〖〝‘“")
 
 
+@functools.lru_cache(maxsize=1024)
 def is_cjk(char: str) -> bool:
     code = ord(char)
     return any(start <= code <= end for start, end in _CJK_RANGES)
