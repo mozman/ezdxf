@@ -151,6 +151,55 @@ def super_glue():
     return tl.NonBreakingSpace(width=0, min_width=0, max_width=0)
 
 
+def break_glue():
+    return tl.Space(width=0, min_width=0, max_width=0)
+
+
+_CJK_RANGES = (
+    (0x2E80, 0x2FDF),  # CJK radicals
+    (0x3000, 0x303F),  # CJK symbols and punctuation
+    (0x3040, 0x30FF),  # Hiragana, Katakana
+    (0x3100, 0x31FF),  # Bopomofo, Hangul compatibility jamo, Katakana extensions
+    (0x3400, 0x4DBF),  # CJK unified ideographs extension A
+    (0x4E00, 0x9FFF),  # CJK unified ideographs
+    (0xAC00, 0xD7AF),  # Hangul syllables
+    (0xF900, 0xFAFF),  # CJK compatibility ideographs
+    (0xFF00, 0xFFEF),  # halfwidth and fullwidth forms
+    (0x20000, 0x2FA1F),  # CJK unified ideographs extensions B-F and supplement
+)
+
+# characters which should not start or end a line in CJK text
+_NO_BREAK_BEFORE = set(
+    "、。，．・：；？！）〕］｝〉》」』】〙〗〟’”ーゝゞ々ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ"
+)
+_NO_BREAK_AFTER = set("（〔［｛〈《「『【〘〖〝‘“")
+
+
+def is_cjk(char: str) -> bool:
+    code = ord(char)
+    return any(start <= code <= end for start, end in _CJK_RANGES)
+
+
+def split_cjk_word(word: str) -> list[str]:
+    """Split a word into parts which can be broken between, CJK text can be
+    broken between most characters, other text only at spaces.
+    """
+    parts: list[str] = []
+    start = 0
+    for index in range(1, len(word)):
+        prev = word[index - 1]
+        char = word[index]
+        if (
+            (is_cjk(prev) or is_cjk(char))
+            and char not in _NO_BREAK_BEFORE
+            and prev not in _NO_BREAK_AFTER
+        ):
+            parts.append(word[start:index])
+            start = index
+    parts.append(word[start:])
+    return parts
+
+
 def defined_width(mtext: MText) -> float:
     width = mtext.dxf.get("width", 0.0)
     if width < 1e-6:
@@ -289,7 +338,11 @@ class AbstractMTextRenderer(abc.ABC):
                 if cells and isinstance(cells[-1], (tl.Text, tl.Fraction)):
                     # Create an unbreakable connection between those two parts.
                     cells.append(super_glue())
-                cells.append(self.word(token.data, ctx))
+                for index, part in enumerate(split_cjk_word(token.data)):
+                    if index:
+                        # CJK text can be broken between characters
+                        cells.append(break_glue())
+                    cells.append(self.word(part, ctx))
             elif token.type == TokenType.STACK:
                 if cells and isinstance(cells[-1], (tl.Text, tl.Fraction)):
                     # Create an unbreakable connection between those two parts.
