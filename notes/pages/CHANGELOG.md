@@ -17,6 +17,9 @@
 	- BUGFIX: Detect circle overlap with boxes whose corners lie outside
 		- {{pr 1443}}
 		- contributed by #hameddavodi
+	- BUGFIX: allow line breaks between CJK characters in `MTEXT` layout
+		- {{pr 1449}}
+		- contributed by #zzoraemon043
 - ## Version 1.4.5 - 2026-10-16
   id:: 6a36280d-37b5-4664-897c-4755e53e79af
 	- NEW: added PyPI package deployment for Python 3.15 and removed PyPI package deployment for Python 3.10 (end of life)
