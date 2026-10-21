@@ -187,6 +187,11 @@ class ConstructionEllipse:
         # 2021-01-28 removed % math.tau
         old_start_param = start_param = self.start_param
         old_end_param = end_param = self.end_param
+        old_span = self.param_span
+        # Coincident transformed endpoints do not make a short arc a full ellipse.
+        was_full_ellipse = old_span == math.tau or (
+            old_span == 0.0 and old_start_param >= old_end_param
+        )
         old_minor_axis = minor_axis(self.major_axis, self.extrusion, self.ratio)
         new_major_axis, new_minor_axis = m.transform_directions(
             (self.major_axis, old_minor_axis)
@@ -208,7 +213,7 @@ class ConstructionEllipse:
             new_minor_axis = minor_axis(new_major_axis, new_extrusion, new_ratio)
             adjust_params = False
 
-        if adjust_params and not math.isclose(start_param, end_param, abs_tol=1e-9):
+        if adjust_params and old_start_param != old_end_param:
             # open ellipse, adjusting start- and end parameter
             x_axis = new_major_axis.normalize()
             y_axis = new_minor_axis.normalize()
@@ -286,7 +291,7 @@ class ConstructionEllipse:
         #  2021-01-28 this is possibly the source of errors!
         start_param = start_param % math.tau
         end_param = end_param % math.tau
-        if math.isclose(start_param, end_param):
+        if was_full_ellipse and math.isclose(start_param, end_param):
             start_param = 0.0
             end_param = math.tau
 
