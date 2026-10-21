@@ -181,14 +181,14 @@ def intersection_ray_ray_3d(
             return p1, p2
 
 def arc_angle_span_deg(double start, double end) -> float:
-    if isclose(start, end, REL_TOL, DEG_ABS_TOL):
+    if isclose(start, end, 0.0, DEG_ABS_TOL):
         return 0.0
 
     start %= 360.0
-    if isclose(start, end % 360.0, REL_TOL, DEG_ABS_TOL):
+    if isclose(start, end % 360.0, 0.0, DEG_ABS_TOL):
         return 360.0
 
-    if not isclose(end, 360.0, REL_TOL, DEG_ABS_TOL):
+    if not isclose(end, 360.0, 0.0, DEG_ABS_TOL):
         end %= 360.0
 
     if end < start:
@@ -196,14 +196,14 @@ def arc_angle_span_deg(double start, double end) -> float:
     return end - start
 
 def arc_angle_span_rad(double start, double end) -> float:
-    if isclose(start, end, REL_TOL, RAD_ABS_TOL):
+    if isclose(start, end, 0.0, RAD_ABS_TOL):
         return 0.0
 
     start %= M_TAU
-    if isclose(start, end % M_TAU, REL_TOL, RAD_ABS_TOL):
+    if isclose(start, end % M_TAU, 0.0, RAD_ABS_TOL):
         return M_TAU
 
-    if not isclose(end, M_TAU, REL_TOL, RAD_ABS_TOL):
+    if not isclose(end, M_TAU, 0.0, RAD_ABS_TOL):
         end %= M_TAU
 
     if end < start:

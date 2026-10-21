@@ -169,17 +169,17 @@ def arc_angle_span_deg(start: float, end: float) -> float:
 
     """
     # Input values are equal, returns 0 by definition:
-    if math.isclose(start, end, abs_tol=DEG_ABS_TOL):
+    if math.isclose(start, end, rel_tol=0.0, abs_tol=DEG_ABS_TOL):
         return 0.0
 
     # Normalized start- and end angles are equal, but input values are
     # different, returns 360 by definition:
     start %= 360.0
-    if math.isclose(start, end % 360.0, abs_tol=DEG_ABS_TOL):
+    if math.isclose(start, end % 360.0, rel_tol=0.0, abs_tol=DEG_ABS_TOL):
         return 360.0
 
     # Special treatment for end angle == 360 deg:
-    if not math.isclose(end, 360.0, abs_tol=DEG_ABS_TOL):
+    if not math.isclose(end, 360.0, rel_tol=0.0, abs_tol=DEG_ABS_TOL):
         end %= 360.0
 
     if end < start:
@@ -200,17 +200,17 @@ def arc_angle_span_rad(start: float, end: float) -> float:
     """
     tau = math.tau
     # Input values are equal, returns 0 by definition:
-    if math.isclose(start, end, abs_tol=RAD_ABS_TOL):
+    if math.isclose(start, end, rel_tol=0.0, abs_tol=RAD_ABS_TOL):
         return 0.0
 
     # Normalized start- and end angles are equal, but input values are
     # different, returns 360 by definition:
     start %= tau
-    if math.isclose(start, end % tau, abs_tol=RAD_ABS_TOL):
+    if math.isclose(start, end % tau, rel_tol=0.0, abs_tol=RAD_ABS_TOL):
         return tau
 
     # Special treatment for end angle == 2π:
-    if not math.isclose(end, tau, abs_tol=RAD_ABS_TOL):
+    if not math.isclose(end, tau, rel_tol=0.0, abs_tol=RAD_ABS_TOL):
         end %= tau
 
     if end < start:
