@@ -1045,6 +1045,22 @@ def is_inside_polygon_2d(
 def loop_area(edges: Sequence[em.Edge], *, gap_tol=GAP_TOL) -> float:
     """Returns the area of a closed loop.
 
+    The loop is treated as a polygon built from the start vertices of `edges` in the
+    given order, connected by straight lines. Arc or spline edges are not evaluated as
+    curves, only their start vertex contributes to the result. The end vertex of the
+    last edge is not part of the polygon, because it coincides with the start vertex of
+    the first edge.
+
+    The absolute area is returned, so the result is independent of the orientation
+    (clockwise or counter-clockwise) of the loop.
+
+    Args:
+        edges: sequence of :class:`~ezdxf.edgeminer.Edge` representing a closed loop
+        gap_tol: maximum vertex distance to consider two edges as connected
+
+    Returns:
+        the area of the closed loop as float
+
     Raises:
         ValueError: edges are not a closed loop
 
