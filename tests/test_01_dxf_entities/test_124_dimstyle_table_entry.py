@@ -317,11 +317,11 @@ def test_export_dimpost_and_dimapost(dxfversion):
     doc = ezdxf.new(dxfversion)
     dimstyle = doc.dimstyles.add("MyStyle")
     dimstyle.dxf.dimpost = "<>'"
-    dimstyle.dxf.dimapost = "<>\""
+    dimstyle.dxf.dimapost = '<>"'
     t = TagCollector(dxfversion=dxfversion)
     dimstyle.export_dxf(t)
     tags = {tag.code: tag.value for tag in t.tags if tag.code in (3, 4)}
-    assert tags == {3: "<>'", 4: "<>\""}
+    assert tags == {3: "<>'", 4: '<>"'}
 
 
 @pytest.mark.parametrize("dxfversion", [DXF2000, DXF2007, DXF2018])
@@ -330,11 +330,11 @@ def test_dimpost_and_dimapost_survive_round_trip(dxfversion):
     doc = ezdxf.new(dxfversion)
     dimstyle = doc.dimstyles.add("MyStyle")
     dimstyle.dxf.dimpost = "<>'"
-    dimstyle.dxf.dimapost = "<>\""
+    dimstyle.dxf.dimapost = '<>"'
     stream = StringIO()
     doc.write(stream)
     stream.seek(0)
     doc2 = ezdxf.read(stream)
     dimstyle2 = doc2.dimstyles.get("MyStyle")
     assert dimstyle2.dxf.dimpost == "<>'"
-    assert dimstyle2.dxf.dimapost == "<>\""
+    assert dimstyle2.dxf.dimapost == '<>"'
