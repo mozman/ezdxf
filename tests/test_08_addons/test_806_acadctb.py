@@ -4,6 +4,8 @@ import pytest
 
 import os
 import math
+import struct
+import zlib
 from ezdxf.addons.acadctb import *
 
 
@@ -454,6 +456,35 @@ def test_parser_ignores_unknown_appendix():
     assert table["7"] == "0.2"
     assert table["10"] == "0.35560000000"
     assert table["11"] == "0.4"
+
+
+@pytest.mark.parametrize("factory, extension", [(new_ctb, "ctb"), (new_stb, "stb")])
+@pytest.mark.parametrize("description", ["Test plot styles", "caf\u00e9"])
+def test_saved_plot_style_round_trip(factory, extension, description, tmp_path):
+    styles = factory()
+    styles.description = description
+    key = 1 if extension == "ctb" else "Cut"
+    style = styles[key] if extension == "ctb" else styles.new_style(key)
+    style.color = (12, 34, 56)
+    style.set_lineweight(0.5)
+    filename = tmp_path / f"round_trip.{extension}"
+    styles.save(filename)
+
+    data = filename.read_bytes()
+    fixture = os.path.join(os.path.dirname(__file__), f"{extension}test.{extension}")
+    with open(fixture, "rb") as fp:
+        assert data[:48] == fp.read(48)
+    compressed = data[60:]
+    payload = zlib.decompress(compressed)
+    checksum, raw_size, compressed_size = struct.unpack("<III", data[48:60])
+    assert checksum == zlib.adler32(compressed)
+    assert raw_size == len(payload)
+    assert compressed_size == len(compressed)
+
+    loaded = load(filename)
+    assert loaded.description == description
+    assert loaded[key].color == (12, 34, 56)
+    assert loaded.get_table_lineweight(loaded[key].lineweight) == pytest.approx(0.5)
 
 
 if __name__ == "__main__":
