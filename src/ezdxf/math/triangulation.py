@@ -91,16 +91,46 @@ def mapbox_earcut_3d(
         yield polygon[0], polygon[1], polygon[2]
         return
 
+    vector2 = Vec2
+    vector3 = Vec3
     ocs = OCS(safe_normal_vector(polygon))
-    elevation = ocs.from_wcs(polygon[0]).z
-    exterior_ocs = list(ocs.points_from_wcs(polygon))
+    if ocs.transform:
+        m0, m1, m2, _, m4, m5, m6, _, m8, m9, m10, *_ = ocs.matrix
+
+        x, y, z = polygon[0]
+        elevation = x * m8 + y * m9 + z * m10
+
+        exterior_ocs = [
+            vector2(
+                x * m0 + y * m1 + z * m2,
+                x * m4 + y * m5 + z * m6,
+            )
+            for x, y, z in polygon
+        ]
+    else:
+        elevation = polygon[0].z
+        exterior_ocs = polygon
     holes_ocs: list[list[Vec3]] = []
     if holes:
         holes_ocs = [list(ocs.points_from_wcs(hole)) for hole in holes]
 
-    # Vec3 supports the _Point protocol in _mapbox_earcut.py
-    # required attributes: x, y
-    for triangle in earcut(exterior_ocs, holes_ocs):
-        yield tuple(
-            ocs.points_to_wcs(Vec3(v.x, v.y, elevation) for v in triangle)
-        )
+    if ocs.transform:
+        ez0 = elevation * m8
+        ez1 = elevation * m9
+        ez2 = elevation * m10
+
+        def restore(v):
+            x, y = v.x, v.y
+            return vector3(
+                x * m0 + y * m4 + ez0,
+                x * m1 + y * m5 + ez1,
+                x * m2 + y * m6 + ez2,
+            )
+
+    else:
+
+        def restore(v):
+            return vector3(v.x, v.y, elevation)
+
+    for a, b, c in earcut(exterior_ocs, holes_ocs):
+        yield restore(a), restore(b), restore(c)
