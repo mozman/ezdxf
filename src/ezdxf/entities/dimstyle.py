@@ -197,6 +197,8 @@ acdb_dimstyle_group_codes = group_code_mapping(acdb_dimstyle)
 EXPORT_MAP_R2007 = [
     "name",
     "flags",
+    "dimpost",
+    "dimapost",
     "dimscale",
     "dimasz",
     "dimexo",
