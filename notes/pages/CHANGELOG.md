@@ -1,4 +1,6 @@
 ## Version 1.4.6 - dev
+	- BUGFIX: export `dimpost` and `dimapost` of `DIMSTYLE` table entries for DXF R2007 and later
+		- {{issue 1453}}
 	- BUGFIX: Fix JSON export of string values with a backslash or double quote
 		- {{pr 1433}}
 		- contributed by #spicysharkco

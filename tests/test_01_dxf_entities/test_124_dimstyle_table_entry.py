@@ -6,7 +6,7 @@ from io import StringIO
 import ezdxf
 from ezdxf.entities.dimstyle import DimStyle
 from ezdxf.document import Drawing
-from ezdxf.lldxf.const import DXF12
+from ezdxf.lldxf.const import DXF12, DXF2000, DXF2007, DXF2018
 from ezdxf.lldxf.tagwriter import TagCollector, TagWriter
 
 TEXT_STYLE = "TextStyle"
@@ -308,3 +308,33 @@ def test_set_extline2(dimstyle2):
     )
     assert dimstyle2.dxf.dimltex2 == "DOT"
     assert dimstyle2.dxf.dimse2 == 1
+
+
+@pytest.mark.parametrize("dxfversion", [DXF2000, DXF2007, DXF2018])
+def test_export_dimpost_and_dimapost(dxfversion):
+    # Regression test for issue #1453: DIMPOST (3) and DIMAPOST (4) were not
+    # exported for DXF R2007 and later.
+    doc = ezdxf.new(dxfversion)
+    dimstyle = doc.dimstyles.add("MyStyle")
+    dimstyle.dxf.dimpost = "<>'"
+    dimstyle.dxf.dimapost = '<>"'
+    t = TagCollector(dxfversion=dxfversion)
+    dimstyle.export_dxf(t)
+    tags = {tag.code: tag.value for tag in t.tags if tag.code in (3, 4)}
+    assert tags == {3: "<>'", 4: '<>"'}
+
+
+@pytest.mark.parametrize("dxfversion", [DXF2000, DXF2007, DXF2018])
+def test_dimpost_and_dimapost_survive_round_trip(dxfversion):
+    # Regression test for issue #1453
+    doc = ezdxf.new(dxfversion)
+    dimstyle = doc.dimstyles.add("MyStyle")
+    dimstyle.dxf.dimpost = "<>'"
+    dimstyle.dxf.dimapost = '<>"'
+    stream = StringIO()
+    doc.write(stream)
+    stream.seek(0)
+    doc2 = ezdxf.read(stream)
+    dimstyle2 = doc2.dimstyles.get("MyStyle")
+    assert dimstyle2.dxf.dimpost == "<>'"
+    assert dimstyle2.dxf.dimapost == '<>"'
