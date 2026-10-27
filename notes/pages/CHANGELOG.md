@@ -1,6 +1,4 @@
 ## Version 1.4.6 - dev
-	- BUGFIX: export `dimpost` and `dimapost` of `DIMSTYLE` table entries for DXF R2007 and later
-		- {{issue 1453}}
 	- BUGFIX: Fix JSON export of string values with a backslash or double quote
 		- {{pr 1433}}
 		- contributed by #spicysharkco
@@ -22,6 +20,9 @@
 	- BUGFIX: allow line breaks between CJK characters in `MTEXT` layout
 		- {{pr 1449}}
 		- contributed by #zzoraemon043
+	- BUGFIX: export `dimpost` and `dimapost` of `DIMSTYLE` table entries for DXF R2007 and later
+		- {{issue 1453}}
+		- contributed by #dasanache
 - ## Version 1.4.5 - 2026-10-16
   id:: 6a36280d-37b5-4664-897c-4755e53e79af
 	- NEW: added PyPI package deployment for Python 3.15 and removed PyPI package deployment for Python 3.10 (end of life)
