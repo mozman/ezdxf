@@ -348,7 +348,7 @@ class PlotStyleTable:
         memfile.write(chr(0))  # end of file
         body = memfile.getvalue()
         memfile.close()
-        _compress(stream, body)
+        _compress(stream, body, ctb=isinstance(self, ColorDependentPlotStyles))
 
     @abstractmethod
     def write_content(self, stream: TextIO) -> None:
@@ -662,12 +662,14 @@ def _decompress(stream: BinaryIO) -> bytes:
     return data[:-1]  # truncate trailing \nul
 
 
-def _compress(stream: BinaryIO, content: str):
+def _compress(stream: BinaryIO, content: str, *, ctb: bool = True):
     """Compress `content` and write to binary `stream`."""
-    comp_body = zlib.compress(content.encode())
+    body = content.encode()
+    comp_body = zlib.compress(body)
     adler_chksum = zlib.adler32(comp_body)
-    stream.write(b"PIAFILEVERSION_2.0,CTBVER1,compress\r\npmzlibcodec")
-    stream.write(pack("LLL", adler_chksum, len(content), len(comp_body)))
+    file_type = b"CTBVER1" if ctb else b"STBVER1"
+    stream.write(b"PIAFILEVERSION_2.0," + file_type + b",compress\r\npmzlibcodec")
+    stream.write(pack("<III", adler_chksum, len(body), len(comp_body)))
     stream.write(comp_body)
 
 
