@@ -23,6 +23,9 @@
 	- BUGFIX: export `dimpost` and `dimapost` of `DIMSTYLE` table entries for DXF R2007 and later
 		- {{issue 1453}}
 		- contributed by #dasanache
+	- BUGFIX: Write portable CTB/STB file headers
+		- {{pr 1455}}
+		- conributed by #nazeeh111
 - ## Version 1.4.5 - 2026-10-16
   id:: 6a36280d-37b5-4664-897c-4755e53e79af
 	- NEW: added PyPI package deployment for Python 3.15 and removed PyPI package deployment for Python 3.10 (end of life)
