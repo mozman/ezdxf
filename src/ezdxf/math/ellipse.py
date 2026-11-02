@@ -353,7 +353,7 @@ class ConstructionEllipse:
         def vertex_(p: float) -> Vec3:
             x = math.cos(p) * radius_x * x_axis
             y = math.sin(p) * radius_y * y_axis
-            return self.center + x + y
+            return x + y
 
         def subdiv(s: Vec3, e: Vec3, s_param: float, e_param: float):
             m_param = (s_param + e_param) * 0.5
@@ -385,14 +385,17 @@ class ConstructionEllipse:
         elif param > end_param:
             end_param += math.tau
 
+        # Flattening happens near the origin and moved to the final location.
+        center = self.center
         start_point = vertex_(param)
-        yield start_point
+        yield center + start_point
         while param < end_param:
             next_end_param = param + delta
             if math.isclose(next_end_param, end_param):
                 next_end_param = end_param
             end_point = vertex_(next_end_param)
-            yield from subdiv(start_point, end_point, param, next_end_param)
+            for pnt in subdiv(start_point, end_point, param, next_end_param):
+                yield center + pnt
             param = next_end_param
             start_point = end_point
 
