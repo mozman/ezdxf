@@ -312,6 +312,14 @@ def test_plain_mtext_keeps_unicode_escape_sequences(func):
 
 
 @pytest.mark.parametrize("func", [fast_plain_mtext, plain_mtext])
+def test_plain_mtext_keeps_MIF_escape_sequences(func):
+    # "\M+XXXXX" has no terminating semicolon and must not swallow the text
+    # up to the next ";" of a following inline code
+    s = r"\M+4D065\M+48B69\P\fArial|b0;gh"
+    assert func(s) == "\\M+4D065\\M+48B69\ngh"
+
+
+@pytest.mark.parametrize("func", [fast_plain_mtext, plain_mtext])
 def test_plain_mtext_decoding_special_chars(func):
     assert func("%%C") == "Ø"  # alt-0216
     assert func("%%D") == "°"  # alt-0176
