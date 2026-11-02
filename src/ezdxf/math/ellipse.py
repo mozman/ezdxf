@@ -358,7 +358,10 @@ class ConstructionEllipse:
         def subdiv(s: Vec3, e: Vec3, s_param: float, e_param: float):
             m_param = (s_param + e_param) * 0.5
             m = vertex_(m_param)
-            d = distance_point_line_3d(m, s, e)
+            try:
+                d = distance_point_line_3d(m, s, e)
+            except ZeroDivisionError:
+                d = 0.0
             if d < distance:
                 yield e
             else:
@@ -380,9 +383,8 @@ class ConstructionEllipse:
         else:
             end_param = self.end_param % math.tau
 
-        if math.isclose(param, end_param):
-            return
-        elif param > end_param:
+        # delta > 0, there has to be an elliptic curve
+        if param > end_param or math.isclose(param, end_param):
             end_param += math.tau
 
         # Flattening happens near the origin and moved to the final location.
