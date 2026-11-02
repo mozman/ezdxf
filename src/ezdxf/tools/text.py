@@ -462,6 +462,11 @@ def fast_plain_mtext(text: str, split=False) -> Union[list[str], str]:
                     # escape character
                     chars.append(" ")
                 # else: discard other commands
+            elif char == "U" and raw_chars and raw_chars[-1] == "+":
+                # unicode escape sequence "\U+XXXX" has no terminating
+                # semicolon, keep it verbatim like plain_mtext() does
+                chars.append("\\")
+                chars.append(char)
             else:  # multiple character commands are terminated by ';'
                 stacking = char == "S"  # stacking command surrounds user data
                 first_char = char
