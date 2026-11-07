@@ -114,6 +114,49 @@ class TestMLine:
         assert mline.start_location().isclose((2, 2, 9))
         assert mline.dxf.scale_factor == 1, "ignore non-uniform scaling"
 
+    def test_uniform_scale_in_xy_plane(self, msp):
+        mline = msp.add_mline([(0, 5), (10, 5)])
+        m = Matrix44.scale(2, 2, 1)
+        mline.transform(m)
+        assert mline.dxf.scale_factor == pytest.approx(2)
+
+    def test_rotate_and_uniform_scale(self, msp):
+        mline = msp.add_mline([(0, 5), (10, 5)])
+        m = Matrix44.z_rotate(math.pi / 6) @ Matrix44.scale(2, 2, 2)
+        mline.transform(m)
+        assert mline.dxf.scale_factor == pytest.approx(2)
+
+    @pytest.mark.parametrize(
+        "m",
+        [
+            Matrix44.scale(2, 2, 1),
+            Matrix44.z_rotate(math.pi / 6) @ Matrix44.scale(2, 2, 2),
+            Matrix44.scale(-1, 1, 1),
+            Matrix44.scale(1, 1, -1),
+            Matrix44.z_rotate(0.7) @ Matrix44.scale(-100, 100, 1),
+        ],
+        ids=["scale-xy", "rotate-scale", "mirror-x", "mirror-z", "rotate-mirror-x100"],
+    )
+    def test_transformed_line_elements(self, m):
+        doc = ezdxf.new()
+        style = doc.mline_styles.new("ONESIDED")
+        style.elements.append(10.0)
+        style.elements.append(0.0)
+        mline = doc.modelspace().add_mline(
+            [(0, 0), (100, 0), (100, 50)], dxfattribs={"style_name": "ONESIDED"}
+        )
+        mline.set_justification(MLine.TOP)
+        expected = []
+        for line in mline.virtual_entities():
+            line.transform(m)
+            expected.append((line.dxf.start, line.dxf.end))
+        mline.transform(m)
+        result = [(line.dxf.start, line.dxf.end) for line in mline.virtual_entities()]
+        assert len(result) == len(expected)
+        for (s0, e0), (s1, e1) in zip(expected, result):
+            assert s0.isclose(s1, abs_tol=1e-9)
+            assert e0.isclose(e1, abs_tol=1e-9)
+
     def test_support_virtual_entities_protocol(self, msp):
         mline = msp.add_mline([(1, 2, 3), (3, 4, 3)])
         assert isinstance(mline, SupportsVirtualEntities)

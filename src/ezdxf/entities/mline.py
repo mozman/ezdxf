@@ -25,7 +25,17 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.lldxf.tags import Tags, group_tags
-from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, UVec, Vec3, UCS, OCS
+from ezdxf.math import (
+    NULLVEC,
+    X_AXIS,
+    Y_AXIS,
+    Z_AXIS,
+    UVec,
+    Vec3,
+    UCS,
+    OCS,
+    OCSTransform,
+)
 
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -627,15 +637,15 @@ class MLine(DXFGraphic):
 
     def transform(self, m: Matrix44) -> Self:
         """Transform MLINE entity by transformation matrix `m` inplace."""
+        ocs = OCSTransform(self.dxf.extrusion, m)
         for vertex in self.vertices:
             vertex.transform(m)
-        self.dxf.extrusion = m.transform_direction(self.dxf.extrusion)
-        scale = self.dxf.scale_factor
-        scale_vec = m.transform_direction(Vec3(scale, scale, scale))
-        if math.isclose(scale_vec.x, scale_vec.y, abs_tol=1e-6) and math.isclose(
-            scale_vec.y, scale_vec.z, abs_tol=1e-6
-        ):
-            self.dxf.scale_factor = sum(scale_vec) / 3  # average error
+        # The new extrusion is perpendicular to the transformed OCS x- and y-axis,
+        # a mirroring flips the extrusion and keeps the line elements on the
+        # correct side of the reference line.
+        self.dxf.extrusion = ocs.new_extrusion
+        if ocs.scale_uniform:
+            self.dxf.scale_factor *= ocs.transform_length(X_AXIS)
         # None uniform scaling will not be applied to the scale_factor!
         self.update_geometry()
         self.post_transform(m)
