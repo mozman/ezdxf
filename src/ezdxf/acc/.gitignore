@@ -1,13 +1,5 @@
-bezier3p.c*
-bezier4p.c*
-bspline.c*
-construct.c*
-matrix44.c*
-matrix33.c*
-vector.c*
-mapbox_earcut.c*
-linetypes.c*
-np_support.c*
+*.c
+*.h
 *.so
 *.pyd
 *.html
