@@ -152,6 +152,8 @@ class Properties:
         # and the fill color for filled polygons and filled paths is passed as the
         # color attribute in the BackendProperties, gradients are not supported.
         self.filling: Optional[Filling] = None
+        # Preserve contour winding for filled paths with pre-oriented outlines.
+        self.preserve_winding: bool = False
 
         self.units = InsertUnits.Unitless
 
@@ -180,6 +182,7 @@ class BackendProperties(NamedTuple):
     layer: str = "0"  # maybe useful to group entities (SVG, PDF)
     pen: int = 1  # equals the ACI (1-255), for pen based backends like plotters
     handle: str = ""  # top level entity handle
+    preserve_winding: bool = False  # preserve contour winding for filled paths
 
     @property
     def rgb(self) -> RGB:

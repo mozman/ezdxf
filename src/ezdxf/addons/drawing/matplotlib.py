@@ -181,7 +181,7 @@ class MatplotlibBackend(Backend):
 
         try:
             patch = PathPatch(
-                to_matplotlib_path(paths, detect_holes=True),
+                to_matplotlib_path(paths, detect_holes=not properties.preserve_winding),
                 color=properties.color,
                 linewidth=linewidth,
                 fill=True,

@@ -154,8 +154,7 @@ class Recorder(BackendInterface):
 
     def store(self, record: DataRecord, properties: BackendProperties) -> None:
         # exclude top-level entity handle to reduce the variance:
-        # color, lineweight, layer, pen
-        prop_hash = hash(properties[:4])
+        prop_hash = hash(properties._replace(handle=""))
         record.property_hash = prop_hash
         record.handle = properties.handle
         self.records.append(record)
@@ -262,9 +261,7 @@ class Player:
         """Yields all recordings as `(DataRecord, BackendProperties)` tuples."""
         props = self.properties
         for record in self.records:
-            properties = BackendProperties(
-                *props[record.property_hash][:4], record.handle
-            )
+            properties = props[record.property_hash]._replace(handle=record.handle)
             yield record, properties
 
     def replay(

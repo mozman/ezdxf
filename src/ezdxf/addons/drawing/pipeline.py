@@ -11,6 +11,7 @@ from typing import (
 )
 from typing_extensions import TypeAlias
 import abc
+import copy
 
 import numpy as np
 import PIL.Image
@@ -231,6 +232,7 @@ class RenderPipeline2d(AbstractPipeline):
             properties.layer,
             properties.pen,
             self._current_entity_handle,
+            properties.preserve_winding,
         )
 
     def set_draw_entities_callback(self, callback: DrawEntitiesCallback) -> None:
@@ -364,6 +366,9 @@ class RenderPipeline2d(AbstractPipeline):
                 pipeline.draw_path(text_path, properties)
             return
 
+        # Font outlines already encode holes and overlapping components by winding.
+        properties = copy.copy(properties)
+        properties.preserve_winding = True
         if properties.filling is None:
             properties.filling = Filling()
         pipeline.draw_filled_paths(transformed_paths, properties)
