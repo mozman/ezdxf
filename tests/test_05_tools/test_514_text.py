@@ -304,6 +304,12 @@ def test_remove_commands_without_terminating_semicolon():
 
 
 @pytest.mark.parametrize("func", [fast_plain_mtext, plain_mtext])
+def test_plain_mtext_decodes_escaped_backslashes(func):
+    # Left side shows the form in which escaped backslashes are loaded from DXF files:
+    assert func(r"C:\\Stack") == r"C:\Stack"
+
+
+@pytest.mark.parametrize("func", [fast_plain_mtext, plain_mtext])
 def test_plain_mtext_keeps_unicode_escape_sequences(func):
     # "\U+XXXX" has no terminating semicolon and must not swallow the text
     # up to the next ";" of a following inline code
