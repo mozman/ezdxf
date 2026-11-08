@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import tempfile
 import time
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
 import ezdxf
@@ -195,33 +195,42 @@ def export_dwg(
     if version is None:
         version = doc.dxfversion
     export_version = VERSION_MAP[version]
-    dwg_file = Path(filename).absolute()
-    out_folder = Path(dwg_file.parent)
-    if dwg_file.exists():
-        if replace:
-            dwg_file.unlink()
-        else:
-            raise FileExistsError(f"File already exists: {dwg_file}")
-    if out_folder.exists():
-        with tempfile.TemporaryDirectory(prefix="odafc_") as tmp_dir:
-            dxf_file = Path(tmp_dir) / dwg_file.with_suffix(".dxf").name
+    dwg_file = Path(filename).absolute().with_suffix(".dwg")
+    out_folder = dwg_file.parent
+    if dwg_file.exists() and not replace:
+        raise FileExistsError(f"File already exists: {dwg_file}")
+    if not out_folder.is_dir():
+        raise FileNotFoundError(f"No such file or directory: '{out_folder}'")
 
-            # Save DXF document
-            old_filename = doc.filename
+    with tempfile.TemporaryDirectory(prefix="odafc_") as tmp_dir:
+        dxf_file = Path(tmp_dir) / dwg_file.with_suffix(".dxf").name
+        old_filename = doc.filename
+        try:
             doc.saveas(dxf_file)
+        finally:
             doc.filename = old_filename
 
+        # Stage replacements beside the destination for an atomic rename.
+        output = (
+            tempfile.TemporaryDirectory(prefix="odafc_", dir=out_folder)
+            if replace
+            else nullcontext(str(out_folder))
+        )
+        with output as output_dir:
             arguments = _odafc_arguments(
                 dxf_file.name,
                 tmp_dir,
-                str(out_folder),
+                output_dir,
                 output_format="DWG",
                 version=export_version,
                 audit=audit,
             )
             _execute_odafc(arguments)
-    else:
-        raise FileNotFoundError(f"No such file or directory: '{str(out_folder)}'")
+            converted = Path(output_dir) / dwg_file.name
+            if not converted.is_file() or converted.stat().st_size == 0:
+                raise UnknownODAFCError("Unknown error: no DWG file was created")
+            if replace:
+                converted.replace(dwg_file)
 
 
 def convert(
