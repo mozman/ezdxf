@@ -53,3 +53,23 @@ def test_open_R12():
     assert "Model" in doc.layouts, "Model space not found"
     assert "Layout1" in doc.layouts, "Paper space not found"
     assert doc.dxfversion == "AC1009"
+
+
+def test_audit_command_accepts_binary_DXF_files(capsys):
+    from argparse import Namespace
+    from ezdxf.commands import Audit
+
+    filename = os.path.join(BASEDIR, DATADIR, "bin_dxf_r2000.dxf")
+    Audit.run(Namespace(files=[filename], save=False, explore=False))
+    output = capsys.readouterr().out
+    assert "is not a DXF file" not in output
+    assert "Invalid or corrupted DXF file" not in output
+
+
+def test_load_document_of_commands_opens_binary_DXF_files():
+    from ezdxf.commands import load_document
+
+    filename = os.path.join(BASEDIR, DATADIR, "bin_dxf_r2000.dxf")
+    doc, auditor = load_document(filename)
+    assert "Model" in doc.layouts
+    assert "Layout1" in doc.layouts

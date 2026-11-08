@@ -137,7 +137,7 @@ class Audit(Command):
                 logger.info("explore mode - skipping invalid tags")
             loader = recover.explore if args.explore else recover.readfile
             try:
-                doc, auditor = loader(filename)
+                doc, auditor = readfile_and_audit(filename, loader)
             except IOError:
                 msg = "Not a DXF file or a generic I/O error."
                 print(msg)
@@ -186,7 +186,7 @@ class Audit(Command):
                     print(msg)
                     logger.error(msg)
                     continue
-                if not is_dxf_file(filename):
+                if not (is_dxf_file(filename) or is_binary_dxf_file(filename)):
                     msg = f"File '{filename}' is not a DXF file."
                     print(msg)
                     logger.error(msg)
@@ -194,9 +194,17 @@ class Audit(Command):
                 _audit(filename)
 
 
+def readfile_and_audit(filename: str, loader=recover.readfile):
+    # The recover module supports only ASCII DXF files.
+    if is_binary_dxf_file(filename):
+        doc = ezdxf.readfile(filename)
+        return doc, doc.audit()
+    return loader(filename)
+
+
 def load_document(filename: str):
     try:
-        doc, auditor = recover.readfile(filename)
+        doc, auditor = readfile_and_audit(filename)
     except IOError:
         msg = f'Not a DXF file or a generic I/O error: "{filename}"'
         print(msg, file=sys.stderr)
