@@ -303,6 +303,14 @@ def test_remove_commands_without_terminating_semicolon():
     assert fast_plain_mtext(r"\C1Text") == r"\C1Text"  # not the expected result
 
 
+def test_fast_plain_mtext_keeps_unterminated_stacking_command():
+    # the user data of a stacking command without a terminating semicolon
+    # was added to the result and then added again as plain text
+    assert fast_plain_mtext(r"Ratio \S1/2") == r"Ratio \S1/2"
+    assert fast_plain_mtext(r"C:\Stack\Sizes") == r"C:\Stack\Sizes"
+    assert fast_plain_mtext(r"\S1/2;\S3/4") == r"1/2\S3/4"
+
+
 @pytest.mark.parametrize("func", [fast_plain_mtext, plain_mtext])
 def test_plain_mtext_keeps_unicode_escape_sequences(func):
     # "\U+XXXX" has no terminating semicolon and must not swallow the text

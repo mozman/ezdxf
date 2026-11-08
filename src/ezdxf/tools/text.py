@@ -471,12 +471,14 @@ def fast_plain_mtext(text: str, split=False) -> Union[list[str], str]:
                 stacking = char == "S"  # stacking command surrounds user data
                 first_char = char
                 search_chars = raw_chars.copy()
+                stacked_chars = []
                 try:
                     while char != ";":  # end of format marker
                         char = search_chars.pop()
                         if stacking and char != ";":
-                            # append user data of stacking command
-                            chars.append(char)
+                            # collect user data of stacking command
+                            stacked_chars.append(char)
+                    chars.extend(stacked_chars)
                     raw_chars = search_chars
                 except IndexError:
                     # premature end of text - just ignore
