@@ -298,3 +298,91 @@ def test_pattern_base_point_maps_like_boundary_vertex_under_full_transform():
 
     vx, vy, _ = path.vertices[0]
     assert hatch.pattern.lines[0].base_point.isclose(Vec2(vx, vy))
+
+
+class TestNonUniformPatternScaling:
+    # The hatch pattern has to be stretched like the boundary paths, e.g. for a
+    # HATCH in a block reference with different x- and y-scaling factors.
+
+    @staticmethod
+    def pattern_hatch(definition) -> Hatch:
+        hatch = Hatch()
+        hatch.paths.add_polyline_path([(3, 2), (103, 2), (103, 102), (60, 70), (3, 102)])
+        hatch.set_pattern_fill("TEST", definition=definition)
+        return hatch
+
+    def test_horizontal_dashed_pattern_line(self):
+        hatch = self.pattern_hatch([[0, (1, 2), (0.5, 1), [2, -1]]])
+        hatch.transform(Matrix44.scale(3, 100, 1))
+
+        line = hatch.pattern.lines[0]
+        assert line.angle == pytest.approx(0)
+        assert line.base_point.isclose((3, 200))
+        assert line.offset.isclose((1.5, 100))  # line distance: y-scaling
+        assert line.dash_length_items == pytest.approx([6, -3])  # x-scaling
+
+    def test_vertical_dashed_pattern_line(self):
+        hatch = self.pattern_hatch([[90, (1, 2), (-1, 0.5), [2, -1]]])
+        hatch.transform(Matrix44.scale(3, 100, 1))
+
+        line = hatch.pattern.lines[0]
+        assert line.angle == pytest.approx(90)
+        assert line.base_point.isclose((3, 200))
+        assert line.offset.isclose((-3, 50))  # line distance: x-scaling
+        assert line.dash_length_items == pytest.approx([200, -100])  # y-scaling
+
+    def test_diagonal_pattern_line_changes_angle(self):
+        hatch = self.pattern_hatch([[45, (0, 0), (-1, 1), []]])
+        hatch.transform(Matrix44.scale(1, 2, 1))
+
+        line = hatch.pattern.lines[0]
+        assert line.angle == pytest.approx(math.degrees(math.atan2(2, 1)))
+        assert line.offset.isclose((-1, 2))
+
+    def test_uniform_scaling_scales_all_pattern_values(self):
+        hatch = self.pattern_hatch([[45, (1, 2), (-1, 1), [2, -1]]])
+        hatch.transform(Matrix44.scale(3, 3, 3))
+
+        line = hatch.pattern.lines[0]
+        assert line.angle == pytest.approx(45)
+        assert line.base_point.isclose((3, 6))
+        assert line.offset.isclose((-3, 3))
+        assert line.dash_length_items == pytest.approx([6, -3])
+        assert hatch.dxf.pattern_scale == pytest.approx(3)
+
+    @pytest.mark.parametrize(
+        "m",
+        [
+            Matrix44.scale(1, 250, 1),
+            Matrix44.scale(0.001, 1, 1),
+            Matrix44.scale(7, 0.3, 1) @ Matrix44.z_rotate(math.radians(33)),
+            Matrix44.scale(-2, 5, 1) @ Matrix44.translate(40, -9, 0),
+        ],
+        ids=["stretch-y", "shrink-x", "non-uniform-rotated", "non-uniform-mirrored"],
+    )
+    @pytest.mark.parametrize(
+        "definition",
+        [
+            [[45, (0.37, 0.11), (-2.2, 2.2), []]],
+            [[0, (0.37, 0.11), (0.7, 1.3), [4, -2]]],
+        ],
+        ids=["solid-lines", "dashed-lines"],
+    )
+    def test_rendered_pattern_is_transformed_like_the_boundary(self, m, definition):
+        from ezdxf.render import hatching
+
+        def total_length(lines):
+            return math.fsum(s.distance(e) for s, e in lines)
+
+        hatch = self.pattern_hatch(definition)
+        expected = [
+            (m.transform(s), m.transform(e))
+            for s, e in hatching.hatch_entity(hatch, jiggle_origin=False)
+        ]
+        assert len(expected) > 40
+
+        hatch.transform(m)
+        result = list(hatching.hatch_entity(hatch, jiggle_origin=False))
+
+        assert len(result) == len(expected)
+        assert total_length(result) == pytest.approx(total_length(expected))
