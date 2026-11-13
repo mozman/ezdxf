@@ -326,6 +326,13 @@ def test_plain_mtext_keeps_MIF_escape_sequences(func):
 
 
 @pytest.mark.parametrize("func", [fast_plain_mtext, plain_mtext])
+def test_plain_mtext_replaces_non_breaking_space(func):
+    # "\~" is a one-letter command without a terminating semicolon
+    assert func(r"100\~mm") == "100 mm"
+    assert func(r"a\~b\C1;c") == "a bc"
+
+
+@pytest.mark.parametrize("func", [fast_plain_mtext, plain_mtext])
 def test_plain_mtext_decoding_special_chars(func):
     assert func("%%C") == "Ø"  # alt-0216
     assert func("%%D") == "°"  # alt-0176
