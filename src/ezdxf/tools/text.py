@@ -462,6 +462,8 @@ def fast_plain_mtext(text: str, split=False) -> Union[list[str], str]:
                     # escape character
                     chars.append(" ")
                 # else: discard other commands
+            elif char == "~":  # non-breaking space
+                chars.append(" ")
             elif char in "UM" and raw_chars and raw_chars[-1] == "+":
                 # unicode and MIF escape sequences "\U+XXXX" "\M+XXXXX" have no 
                 # terminating semicolon, keep it verbatim like plain_mtext() does
