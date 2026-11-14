@@ -1,37 +1,28 @@
 ## Version 1.4.6 - dev
 	- BUGFIX: Fix JSON export of string values with a backslash or double quote
 		- {{pr 1433}}
-		- contributed by #spicysharkco
 	- BUGFIX: xclip: apply the clip boundary transform to the clipping path
 		- {{pr 1432}}
-		- contributed by #Yuren0312
 	- BUGFIX: Emit hatch segments once in WCS and preserve elevation
 		- {{pr 1446}}
-		- contributed by #hameddavodi
 	- IMPROVEMENT: Avoid repeated pair checks in connected bbox selection
 		- {{pr 1436}}
-		- contributed by #hameddavodi
 	- BUGFIX: Match complete attribute values in regular-expression queries
 		- {{pr 1439}}
-		- contributed by #hameddavodi
 	- BUGFIX: Detect circle overlap with boxes whose corners lie outside
 		- {{pr 1443}}
-		- contributed by #hameddavodi
 	- BUGFIX: allow line breaks between CJK characters in `MTEXT` layout
 		- {{pr 1449}}
-		- contributed by #zzoraemon043
 	- BUGFIX: export `dimpost` and `dimapost` of `DIMSTYLE` table entries for DXF R2007 and later
 		- {{issue 1453}}
-		- contributed by #dasanache
 	- BUGFIX: Write portable CTB/STB file headers
 		- {{pr 1455}}
-		- conributed by #nazeeh111
 	- BUGFIX: Keep `\U+XXXX` and `\M+XXXXX` escapes in `fast_plain_mtext()`
 		- {{issue 1459}}
-		- contributed by #zzoraemon043
 	- BUGFIX: Apply in-plane scaling and mirroring in `MLine.transform()`
 		- {{pr 1463}}
-		- contributed by #RavSinghChandan
+	- BUGFIX: Replace `\~` by a space in `fast_plain_mtext()`
+		- {{pr 1470}}
 - ## Version 1.4.5 - 2026-10-16
   id:: 6a36280d-37b5-4664-897c-4755e53e79af
 	- NEW: added PyPI package deployment for Python 3.15 and removed PyPI package deployment for Python 3.10 (end of life)

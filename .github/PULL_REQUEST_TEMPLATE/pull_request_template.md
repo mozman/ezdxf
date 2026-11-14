@@ -16,3 +16,7 @@ _Optional_ things you can do before requesting a review:
 - Write tests.
 - Write a documentation, when adding new features. Doesn't have to be `RestructuredText`, 
   `Markdown` or simple text is OK, just enough to save me time.
+
+**AI Contributions**
+
+Please read post [AI contributions are welcome, BUT ...](https://github.com/mozman/ezdxf/discussions/1471)

@@ -29,3 +29,7 @@ A clear and concise description of what you expected to happen.
 
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
+
+**AI Contributions**
+
+Please read post [AI contributions are welcome, BUT ...](https://github.com/mozman/ezdxf/discussions/1471)
