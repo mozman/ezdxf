@@ -400,39 +400,28 @@ class DXFPolygon(DXFGraphic):
         )
         dxf.extrusion = ocs.new_extrusion
         if self.pattern:
-            # todo: non-uniform pattern scaling is not supported
-            
-            # scale pattern relative to current state:
-            # self.dxf.pattern_scale is already applied to the pattern!
-            relative_factor = ocs.transform_length((1, 0, 0))
-
-            # rotation relative to current state:
-            rotation_angle = ocs.transform_deg_angle(0)
-
-            # Capture the original base points before scaling/rotating the
-            # pattern. Pattern.scale() applies only the linear part (scale and
-            # rotation) of the transformation to the base points, it never
-            # translates them, so the pattern phase drifts relative to the
-            # boundary under any translation (issue #1402).
-            original_base_points = [line.base_point for line in self.pattern.lines]
-            self.pattern.scale(relative_factor, rotation_angle)
-
-            # Translate the base points by mapping each original base point once
-            # with the full transformation, exactly like a boundary path vertex
-            # (see PolylinePath.transform). Mapping the original point with the
-            # full affine transform avoids double-applying the linear part that
-            # Pattern.scale() already handled.
-            for line, base_point in zip(self.pattern.lines, original_base_points):
-                line.base_point = ocs.transform_vertex(
-                    Vec3(base_point.x, base_point.y, elevation)
+            # Transform each pattern line on its own, this stretches the pattern
+            # like the boundary paths and supports non-uniform scaling.
+            for line in self.pattern.lines:
+                direction = ocs.transform_direction(Vec3.from_deg_angle(line.angle))
+                stretch = direction.vec2.magnitude  # along the hatch line
+                if stretch > 1e-12:
+                    line.angle = direction.vec2.angle_deg % 360.0
+                line.offset = ocs.transform_direction(
+                    Vec3(line.offset.x, line.offset.y, 0)
                 ).vec2
+                # map the base point like a boundary path vertex (issue #1402)
+                line.base_point = ocs.transform_vertex(
+                    Vec3(line.base_point.x, line.base_point.y, elevation)
+                ).vec2
+                line.dash_length_items = [
+                    dash * stretch for dash in line.dash_length_items
+                ]
 
-            # The pattern_scale factor has to be applied to the base pattern to get the
-            # final scaling. This is important for CAD applications, not for the rendering
-            # of the pattern itself.
-            self.dxf.pattern_scale *= relative_factor
-            # update absolute pattern rotation angle
-            self.dxf.pattern_angle += rotation_angle
+            # pattern_scale and pattern_angle are only hints for CAD applications,
+            # a non-uniform scaling is represented by the x-axis stretching.
+            self.dxf.pattern_scale *= ocs.transform_length((1, 0, 0))
+            self.dxf.pattern_angle += ocs.transform_deg_angle(0)
         self.post_transform(m)
         return self
 
