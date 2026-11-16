@@ -162,6 +162,11 @@ def test_bool(vcls):
     assert not vcls(1e-8, 0).is_null
 
 
+def test_bool_uses_the_is_null_tolerance(vcls):
+    assert bool(vcls(1e-12, 0)) is False
+    assert bool(vcls(1e-11, 0)) is True
+
+
 def test_magnitude(vcls):
     v = vcls(3, 4)
     assert math.isclose(abs(v), 5)

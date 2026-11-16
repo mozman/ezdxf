@@ -156,6 +156,14 @@ def test_compare_vectors(vec3):
     assert v1 < v2
 
 
+def test_compare_vectors_with_equal_x_and_y(vec3):
+    v1 = vec3(1, 2, 3)
+    v2 = vec3(1, 2, 4)
+    assert v1 < v2
+    assert not v2 < v1
+    assert sorted([v2, v1]) == [v1, v2]
+
+
 def test_xy(vec3):
     assert vec3(1, 2, 3).xy == vec3(1, 2)
 
