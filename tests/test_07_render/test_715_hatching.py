@@ -1,5 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+import math
 import pytest
 from ezdxf.math import Vec2, Bezier4P
 from ezdxf.render import hatching, forms
@@ -352,6 +353,45 @@ def test_explode_earth1_pattern():
     # jiggle_origin=True has random behavior, which is not good for a test!
     lines = list(hatching.hatch_entity(hatch, jiggle_origin=False))
     assert len(lines) == 139
+
+
+class TestJiggleOrigin:
+    @pytest.fixture
+    def hatch(self):
+        from ezdxf.entities import Hatch
+
+        hatch = Hatch.new()
+        hatch.paths.add_polyline_path([(0, 0), (10, 0), (10, 10), (0, 10)])
+        hatch.set_pattern_fill(
+            "TEST",
+            definition=[[45, (0, 0), (0, 1), []], [0, (0, 0), (0, 2), [1, -1]]],
+        )
+        return hatch
+
+    def test_jiggled_baselines_are_reproducible(self, hatch):
+        import random
+
+        # the state of the global random number generator must not change the result
+        random.seed(1)
+        first = list(hatching.pattern_baselines(hatch, jiggle_origin=True))
+        random.seed(2)
+        second = list(hatching.pattern_baselines(hatch, jiggle_origin=True))
+        assert len(first) == 2
+        assert [line.origin for line in first] == [line.origin for line in second]
+
+    def test_hatch_entity_is_reproducible(self, hatch):
+        first = list(hatching.hatch_entity(hatch, jiggle_origin=True))
+        second = list(hatching.hatch_entity(hatch, jiggle_origin=True))
+        assert len(first) > 0
+        assert first == second
+
+    def test_jiggle_moves_the_origin_a_small_amount(self, hatch):
+        fixed = list(hatching.pattern_baselines(hatch, jiggle_origin=False))
+        jiggled = list(hatching.pattern_baselines(hatch, jiggle_origin=True))
+        # mean offset of the pattern lines is 1.5
+        for a, b in zip(fixed, jiggled):
+            distance = a.origin.distance(b.origin)
+            assert 0.0003 * 1.5 < distance < 0.0010 * 1.5 * math.sqrt(2)
 
 
 if __name__ == "__main__":

@@ -16,7 +16,6 @@ from collections import defaultdict
 import enum
 import math
 import dataclasses
-import random
 from ezdxf.math import (
     Vec2,
     Vec3,
@@ -653,9 +652,13 @@ def hatch_boundary_paths(polygon: DXFPolygon, filter_text_boxes=True) -> list[Pa
     return loops
 
 
-def _jiggle_factor():
-    # range 0.0003 .. 0.0010
-    return random.random() * 0.0007 + 0.0003
+# Fixed factors in the range 0.0003 .. 0.0010 for the jiggle offset of pattern line
+# origins. The factors are constants, not random numbers: the same hatch must yield
+# the same lines in every call and in every process. The two factors are different,
+# so the offset is not parallel to the usual pattern line angles of 0, 45 and 90
+# degrees.
+JIGGLE_FACTOR_X = 0.00061803
+JIGGLE_FACTOR_Y = 0.00041421
 
 
 def pattern_baselines(
@@ -684,11 +687,9 @@ def pattern_baselines(
         # boundary corner points
         offsets: list[float] = [line.offset.magnitude for line in pattern.lines]
         if len(offsets):
-            # calculate the same random jiggle offset for all pattern base lines
+            # calculate the same jiggle offset for all pattern base lines
             mean = sum(offsets) / len(offsets)
-            x = _jiggle_factor() * mean
-            y = _jiggle_factor() * mean
-            jiggle_offset = Vec2(x, y)
+            jiggle_offset = Vec2(JIGGLE_FACTOR_X * mean, JIGGLE_FACTOR_Y * mean)
 
     for line in pattern.lines:
         direction = Vec2.from_deg_angle(line.angle)
