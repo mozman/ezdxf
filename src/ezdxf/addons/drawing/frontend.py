@@ -150,6 +150,9 @@ class UniversalFrontend:
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: list[DXFGraphic] = []
+        # Block names currently being drawn. Block names are case-insensitive.
+        # A name already on this path is a cyclic block reference.
+        self._block_stack: set[str] = set()
 
         self._dispatch = self._build_dispatch_table()
 
@@ -880,6 +883,14 @@ class UniversalFrontend:
 
     def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         def draw_insert(insert: Insert):
+            key = insert.dxf.get("name", "").lower()
+            self._block_stack.add(key)
+            try:
+                _draw_insert_content(insert)
+            finally:
+                self._block_stack.discard(key)
+
+        def _draw_insert_content(insert: Insert):
             clip = xclip.XClip(insert)
             is_clipping_active = clip.has_clipping_path and clip.is_clipping_enabled
 
@@ -917,6 +928,20 @@ class UniversalFrontend:
             self.draw_entities(insert.attribs)
 
         if isinstance(entity, Insert):
+            # Skip a block that is already being drawn. Otherwise a block that
+            # inserts itself recurses until RecursionError.
+            key = entity.dxf.get("name", "").lower()
+            if key in self._block_stack:
+                logger.warning(
+                    "Skipped cyclic block reference '%s' in %s.",
+                    entity.dxf.get("name", ""),
+                    str(entity),
+                )
+                self.skip_entity(entity, "block reference cycle")
+                # ATTRIB entities live on the INSERT, outside the block content.
+                self.draw_entities(entity.attribs)
+                return
+
             self.ctx.push_state(properties)
             if entity.mcount > 1:
                 for virtual_insert in entity.multi_insert():

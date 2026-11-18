@@ -3,6 +3,8 @@
 		- a rotated grid that is no longer orthogonal raises `InsertTransformationError` and is left unchanged
 		- virtual block references expand that grid into one INSERT per cell
 		- {{issue 1474}}
+	- BUGFIX: skip cyclic block references instead of raising `RecursionError`
+		- {{issue 1475}}
 	- BUGFIX: Fix JSON export of string values with a backslash or double quote
 		- {{pr 1433}}
 	- BUGFIX: xclip: apply the clip boundary transform to the clipping path

@@ -1,5 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+import logging
 from typing import List
 import pytest
 import ezdxf
@@ -298,6 +299,96 @@ def test_axis_aligned_nested_minsert_keeps_a_grid_under_non_uniform_scale():
     assert virtual[0].mcount == 4
     assert virtual[0].dxf.row_spacing == pytest.approx(12)
     assert virtual[0].dxf.column_spacing == pytest.approx(10)
+
+
+def _self_insert_doc():
+    doc = ezdxf.new()
+    block = doc.blocks.new("LOOP")
+    block.add_line((0, 0), (1, 1))
+    block.add_blockref("LOOP", (2, 2))
+    doc.modelspace().add_blockref("LOOP", (0, 0))
+    return doc
+
+
+def _cycle_doc():
+    doc = ezdxf.new()
+    block_a = doc.blocks.new("A")
+    block_b = doc.blocks.new("B")
+    block_a.add_line((0, 0), (1, 0))
+    block_a.add_blockref("B", (2, 0))
+    block_b.add_line((0, 0), (0, 1))
+    block_b.add_blockref("A", (0, 2))
+    doc.modelspace().add_blockref("A", (0, 0))
+    return doc
+
+
+def _line_count(entities) -> int:
+    return sum(entity.dxftype() == "LINE" for entity in entities)
+
+
+def test_self_insert_does_not_recurse(caplog):
+    with caplog.at_level(logging.WARNING, logger="ezdxf"):
+        entities = list(recursive_decompose(_self_insert_doc().modelspace()))
+    assert _line_count(entities) == 1
+    assert any("cyclic" in record.message.lower() for record in caplog.records)
+
+
+def test_block_cycle_returns_content_of_each_block_once():
+    entities = list(recursive_decompose(_cycle_doc().modelspace()))
+    assert _line_count(entities) == 2
+    assert all(entity.dxftype() != "INSERT" for entity in entities)
+
+
+def test_entities_after_a_cyclic_reference_are_kept():
+    doc = ezdxf.new()
+    block = doc.blocks.new("LOOP")
+    block.add_line((0, 0), (1, 0))
+    insert = block.add_blockref("LOOP", (2, 0))
+    insert.add_attrib("TAG", "VALUE", (0, 0))
+    block.add_line((0, 1), (1, 1))
+    doc.modelspace().add_blockref("LOOP", (0, 0))
+    types = [entity.dxftype() for entity in recursive_decompose(doc.modelspace())]
+    assert types.count("LINE") == 2
+    assert types.count("ATTRIB") == 1
+    assert "INSERT" not in types
+
+
+def test_block_name_cycle_is_case_insensitive():
+    doc = ezdxf.new()
+    block = doc.blocks.new("Loop")
+    block.add_line((0, 0), (1, 0))
+    block.add_blockref("LOOP", (3, 0))
+    doc.modelspace().add_blockref("loop", (0, 0))
+    entities = list(recursive_decompose(doc.modelspace()))
+    assert _line_count(entities) == 1
+
+
+def test_repeating_a_block_is_not_a_cycle():
+    doc = ezdxf.new()
+    doc.blocks.new("B").add_line((0, 0), (1, 0))
+    msp = doc.modelspace()
+    msp.add_blockref("B", (0, 0))
+    msp.add_blockref("B", (5, 0))
+    assert _line_count(recursive_decompose(msp)) == 2
+
+
+def test_minsert_of_a_self_inserting_block():
+    doc = _self_insert_doc()
+    msp = doc.modelspace()
+    msp.delete_all_entities()
+    msp.add_blockref("LOOP", (0, 0)).grid(size=(2, 2), spacing=(10, 10))
+    assert _line_count(recursive_decompose(msp)) == 4
+
+
+def test_virtual_entities_and_explode_stay_one_level():
+    doc = _self_insert_doc()
+    insert = doc.modelspace()[0]
+    assert [entity.dxftype() for entity in insert.virtual_entities()] == [
+        "LINE",
+        "INSERT",
+    ]
+    exploded = insert.explode()
+    assert [entity.dxftype() for entity in exploded] == ["LINE", "INSERT"]
 
 
 if __name__ == "__main__":

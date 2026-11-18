@@ -570,5 +570,53 @@ def test_insert_nested_clipping_stacks_balanced(doc, ctx):
     )
 
 
+def _drawn_lines(doc):
+    backend = BasicBackend()
+    Frontend(RenderContext(doc), backend).draw_layout(doc.modelspace(), finalize=True)
+    return [item for item in backend.collector if item[0] == "line"]
+
+
+def test_draw_layout_skips_self_insert(caplog):
+    doc = ezdxf.new()
+    block = doc.blocks.new("LOOP")
+    block.add_line((0, 0), (1, 1))
+    block.add_blockref("LOOP", (2, 2))
+    doc.modelspace().add_blockref("LOOP", (0, 0))
+    with caplog.at_level("WARNING", logger="ezdxf"):
+        lines = _drawn_lines(doc)
+    assert len(lines) == 1
+    assert any("cyclic" in record.message.lower() for record in caplog.records)
+
+
+def test_draw_layout_skips_block_cycle():
+    doc = ezdxf.new()
+    block_a = doc.blocks.new("A")
+    block_b = doc.blocks.new("B")
+    block_a.add_line((0, 0), (1, 0))
+    block_a.add_blockref("B", (2, 0))
+    block_b.add_line((0, 0), (0, 1))
+    block_b.add_blockref("A", (0, 2))
+    doc.modelspace().add_blockref("A", (0, 0))
+    assert len(_drawn_lines(doc)) == 2
+
+
+def test_draw_layout_repeats_a_block_that_is_not_cyclic():
+    doc = ezdxf.new()
+    doc.blocks.new("B").add_line((0, 0), (1, 0))
+    msp = doc.modelspace()
+    msp.add_blockref("B", (0, 0))
+    msp.add_blockref("B", (5, 0))
+    assert len(_drawn_lines(doc)) == 2
+
+
+def test_draw_layout_minsert_of_self_inserting_block():
+    doc = ezdxf.new()
+    block = doc.blocks.new("LOOP")
+    block.add_line((0, 0), (1, 0))
+    block.add_blockref("LOOP", (2, 0))
+    doc.modelspace().add_blockref("LOOP", (0, 0)).grid(size=(2, 2), spacing=(10, 10))
+    assert len(_drawn_lines(doc)) == 4
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -3,6 +3,7 @@
 from __future__ import annotations
 from typing import Iterable, Optional, cast, TYPE_CHECKING
 import abc
+import logging
 import math
 from ezdxf.entities import DXFEntity, Insert, get_font_name
 
@@ -24,6 +25,8 @@ from ezdxf.fonts import fonts
 
 if TYPE_CHECKING:
     from ezdxf.entities import LWPolyline, Polyline, MText, Text
+
+logger = logging.getLogger("ezdxf")
 
 __all__ = [
     "make_primitive",
@@ -564,19 +567,46 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
     The function returns all entities and ignores the clipping path polygon and no 
     entity is clipped.
 
+    A cyclic block reference (a block that inserts itself, directly or through
+    other blocks) is skipped. A warning is logged and entities inside the
+    repeated reference are not returned. ATTRIB entities attached to the
+    skipped INSERT are returned.
+
     """
+    yield from _recursive_decompose(entities, set())
+
+
+def _recursive_decompose(
+    entities: Iterable[DXFEntity], block_stack: set[str]
+) -> Iterable[DXFEntity]:
     for entity in entities:
         if isinstance(entity, Insert):
             # TODO: emit internal XCLIP marker entity?
-            if entity.mcount > 1:
-                yield from recursive_decompose(entity.multi_insert())
-            else:
+            # Block names are case-insensitive, same as BlocksSection.key().
+            key = entity.dxf.get("name", "").lower()
+            if key in block_stack:
+                logger.warning(
+                    "Skipped cyclic block reference '%s' in %s.",
+                    entity.dxf.get("name", ""),
+                    str(entity),
+                )
                 yield from entity.attribs
-                yield from recursive_decompose(virtual_entities(entity))
+                continue
+            if entity.mcount > 1:
+                yield from _recursive_decompose(entity.multi_insert(), block_stack)
+            else:
+                block_stack.add(key)
+                try:
+                    yield from entity.attribs
+                    yield from _recursive_decompose(
+                        virtual_entities(entity), block_stack
+                    )
+                finally:
+                    block_stack.discard(key)
         # has a required __virtual_entities__() to be rendered?
         elif isinstance(entity, SupportsVirtualEntities):
             # could contain block references:
-            yield from recursive_decompose(virtual_entities(entity))
+            yield from _recursive_decompose(virtual_entities(entity), block_stack)
         else:
             yield entity
 

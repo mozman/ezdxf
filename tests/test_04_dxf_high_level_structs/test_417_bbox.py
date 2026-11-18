@@ -173,5 +173,41 @@ def test_precise_bounding_box_calculation(circle):
     assert box.extmax == (+100, +100)
 
 
+def _self_insert_msp():
+    doc = ezdxf.new()
+    block = doc.blocks.new("LOOP")
+    block.add_line((0, 0), (1, 1))
+    block.add_blockref("LOOP", (2, 2))
+    doc.modelspace().add_blockref("LOOP", (0, 0))
+    return doc.modelspace()
+
+
+def _cycle_msp():
+    doc = ezdxf.new()
+    block_a = doc.blocks.new("A")
+    block_b = doc.blocks.new("B")
+    block_a.add_line((0, 0), (1, 0))
+    block_a.add_blockref("B", (2, 0))
+    block_b.add_line((0, 0), (0, 1))
+    block_b.add_blockref("A", (0, 2))
+    doc.modelspace().add_blockref("A", (0, 0))
+    return doc.modelspace()
+
+
+@pytest.mark.parametrize("fast", [False, True])
+def test_extents_of_self_insert_block(fast):
+    # The repeated reference is skipped, so the copy at (2, 2) is not included.
+    box = bbox.extents(_self_insert_msp(), fast=fast)
+    assert box.extmin == (0, 0, 0)
+    assert box.extmax == (1, 1, 0)
+
+
+@pytest.mark.parametrize("fast", [False, True])
+def test_extents_of_block_cycle(fast):
+    box = bbox.extents(_cycle_msp(), fast=fast)
+    assert box.extmin == (0, 0, 0)
+    assert box.extmax == (2, 1, 0)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
