@@ -198,7 +198,7 @@ cdef class Vec2:
     reversed = __neg__
 
     def __bool__(self) -> bool:
-        return self.x != 0 or self.y != 0
+        return not self.is_null
 
     def isclose(self, other: UVec, *, double rel_tol=REL_TOL,
                 double abs_tol = ABS_TOL) -> bool:
@@ -604,6 +604,8 @@ cdef class Vec3:
         if not isinstance(other, Vec3):
             other = Vec3(other)
         if self.x == (<Vec3> other).x:
+            if self.y == (<Vec3> other).y:
+                return self.z < (<Vec3> other).z
             return self.y < (<Vec3> other).y
         else:
             return self.x < (<Vec3> other).x
