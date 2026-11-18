@@ -326,17 +326,31 @@ def _line_count(entities) -> int:
     return sum(entity.dxftype() == "LINE" for entity in entities)
 
 
+def _cycle_warnings(caplog):
+    return [
+        record.message
+        for record in caplog.records
+        if record.levelno >= logging.WARNING and "cyclic" in record.message.lower()
+    ]
+
+
 def test_self_insert_does_not_recurse(caplog):
     with caplog.at_level(logging.WARNING, logger="ezdxf"):
         entities = list(recursive_decompose(_self_insert_doc().modelspace()))
     assert _line_count(entities) == 1
-    assert any("cyclic" in record.message.lower() for record in caplog.records)
+    assert _cycle_warnings(caplog) == [
+        "Skipped cyclic block reference 'LOOP' (LOOP -> LOOP)."
+    ]
 
 
-def test_block_cycle_returns_content_of_each_block_once():
-    entities = list(recursive_decompose(_cycle_doc().modelspace()))
+def test_block_cycle_returns_content_of_each_block_once(caplog):
+    with caplog.at_level(logging.WARNING, logger="ezdxf"):
+        entities = list(recursive_decompose(_cycle_doc().modelspace()))
     assert _line_count(entities) == 2
     assert all(entity.dxftype() != "INSERT" for entity in entities)
+    assert _cycle_warnings(caplog) == [
+        "Skipped cyclic block reference 'A' (A -> B -> A)."
+    ]
 
 
 def test_entities_after_a_cyclic_reference_are_kept():
@@ -378,6 +392,35 @@ def test_minsert_of_a_self_inserting_block():
     msp.delete_all_entities()
     msp.add_blockref("LOOP", (0, 0)).grid(size=(2, 2), spacing=(10, 10))
     assert _line_count(recursive_decompose(msp)) == 4
+
+
+def test_cyclic_minsert_yields_attached_attribs_once():
+    doc = ezdxf.new()
+    block = doc.blocks.new("LOOP")
+    block.add_line((0, 0), (1, 0))
+    minsert = block.add_blockref("LOOP", (2, 0))
+    minsert.add_attrib("TAG", "VALUE", (0, 0))
+    minsert.grid(size=(2, 2), spacing=(5, 5))
+    doc.modelspace().add_blockref("LOOP", (0, 0))
+    types = [entity.dxftype() for entity in recursive_decompose(doc.modelspace())]
+    assert types.count("LINE") == 1
+    assert types.count("ATTRIB") == 1
+
+
+def test_decomposing_a_block_layout_expands_one_self_insert(caplog):
+    # The block being decomposed is not on the path, so its own MINSERT is
+    # entered once. Each cell then hits the same MINSERT and that repetition
+    # is skipped. One warning for all ten cells.
+    doc = ezdxf.new()
+    block = doc.blocks.new("LOOP")
+    block.add_line((0, 0), (1, 0))
+    block.add_blockref("LOOP", (0, 0)).grid(size=(2, 5), spacing=(1, 1))
+    with caplog.at_level(logging.WARNING, logger="ezdxf"):
+        entities = list(recursive_decompose(doc.blocks.get("LOOP")))
+    assert _line_count(entities) == 11
+    assert _cycle_warnings(caplog) == [
+        "Skipped cyclic block reference 'LOOP' (LOOP -> LOOP)."
+    ]
 
 
 def test_virtual_entities_and_explode_stay_one_level():

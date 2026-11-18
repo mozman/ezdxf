@@ -576,16 +576,70 @@ def _drawn_lines(doc):
     return [item for item in backend.collector if item[0] == "line"]
 
 
+def _cycle_messages(caplog):
+    return [
+        record.message
+        for record in caplog.records
+        if "block reference cycle" in record.message
+    ]
+
+
 def test_draw_layout_skips_self_insert(caplog):
     doc = ezdxf.new()
     block = doc.blocks.new("LOOP")
     block.add_line((0, 0), (1, 1))
     block.add_blockref("LOOP", (2, 2))
     doc.modelspace().add_blockref("LOOP", (0, 0))
-    with caplog.at_level("WARNING", logger="ezdxf"):
+    with caplog.at_level("INFO", logger="ezdxf"):
         lines = _drawn_lines(doc)
     assert len(lines) == 1
-    assert any("cyclic" in record.message.lower() for record in caplog.records)
+    assert _cycle_messages(caplog) == [
+        'skipped entity INSERT(#None). Reason: "block reference cycle (LOOP -> LOOP)"'
+    ]
+
+
+class _AttribColorFrontend(Frontend):
+    def __init__(self, ctx, backend):
+        super().__init__(ctx, backend)
+        self.attrib_colors: list[str] = []
+
+    def draw_entity(self, entity, properties):
+        if entity.dxftype() == "ATTRIB":
+            self.attrib_colors.append(properties.color[:7])
+            return
+        super().draw_entity(entity, properties)
+
+
+def test_skipped_insert_byblock_attrib_uses_insert_color():
+    # OUTER is green (ACI 3). The cyclic INSERT is red (ACI 1) and carries a
+    # BYBLOCK ATTRIB. The attribute has to resolve to the red INSERT, which is
+    # the same state the normal path pushes around its attributes.
+    doc = ezdxf.new()
+    loop = doc.blocks.new("LOOP")
+    loop.add_line((0, 0), (1, 0))
+    cyclic = loop.add_blockref("LOOP", (2, 0), dxfattribs={"color": 1})
+    cyclic.add_attrib("TAG", "VALUE", (0, 0), dxfattribs={"height": 1, "color": 0})
+    doc.blocks.new("OUTER").add_blockref("LOOP", (0, 0), dxfattribs={"color": 3})
+    doc.modelspace().add_blockref("OUTER", (0, 0), dxfattribs={"color": 5})
+
+    frontend = _AttribColorFrontend(RenderContext(doc), BasicBackend())
+    frontend.draw_layout(doc.modelspace(), finalize=True)
+    assert frontend.attrib_colors == ["#ff0000"]
+
+
+def test_draw_entities_reports_a_cycle_once_per_name(caplog):
+    doc = ezdxf.new()
+    block = doc.blocks.new("LOOP")
+    block.add_line((0, 0), (1, 0))
+    block.add_blockref("LOOP", (0, 0)).grid(size=(2, 5), spacing=(1, 1))
+    backend = BasicBackend()
+    frontend = Frontend(RenderContext(doc), backend)
+    with caplog.at_level("INFO", logger="ezdxf"):
+        frontend.draw_entities(doc.blocks.get("LOOP"))
+    assert _cycle_messages(caplog) == [
+        'skipped entity INSERT(#None). Reason: "block reference cycle (LOOP -> LOOP)"'
+    ]
+    assert sum(item[0] == "line" for item in backend.collector) == 11
 
 
 def test_draw_layout_skips_block_cycle():

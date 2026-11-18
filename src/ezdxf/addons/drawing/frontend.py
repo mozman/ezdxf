@@ -150,9 +150,12 @@ class UniversalFrontend:
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: list[DXFGraphic] = []
-        # Block names currently being drawn. Block names are case-insensitive.
+        # Block names currently being drawn. ``_block_stack`` is the lower-case
+        # lookup set; ``_block_path`` keeps the original spelling in entry order.
         # A name already on this path is a cyclic block reference.
         self._block_stack: set[str] = set()
+        self._block_path: list[str] = []
+        self._warned_block_cycles: set[str] = set()
 
         self._dispatch = self._build_dispatch_table()
 
@@ -282,6 +285,10 @@ class UniversalFrontend:
         The method skips invisible entities and entities for which the given
         filter function returns ``False``.
 
+        A cyclic block reference is skipped. The layout name is not placed on
+        the traversal path, so drawing the contents of block ``LOOP`` directly
+        expands one INSERT of ``LOOP`` and skips only the following repetition.
+
         Args:
             layout: layout to draw of type :class:`~ezdxf.layouts.Layout`
             finalize: ``True`` if the :meth:`finalize` method of the backend
@@ -343,11 +350,17 @@ class UniversalFrontend:
         and entities for which the given filter function returns ``False``.
 
         """
+        # A new traversal starts with an empty block path. Nested calls happen
+        # while a block reference is on that path.
+        if not self._block_stack:
+            self._warned_block_cycles.clear()
         _draw_entities(self, self.ctx, entities, filter_func=filter_func)
 
     def draw_entities_callback(
         self, ctx: RenderContext, entities: Iterable[DXFGraphic]
     ) -> None:
+        if not self._block_stack:
+            self._warned_block_cycles.clear()
         _draw_entities(self, ctx, entities)
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
@@ -883,12 +896,15 @@ class UniversalFrontend:
 
     def draw_composite_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         def draw_insert(insert: Insert):
-            key = insert.dxf.get("name", "").lower()
+            name = insert.dxf.get("name", "")
+            key = name.lower()
             self._block_stack.add(key)
+            self._block_path.append(name)
             try:
                 _draw_insert_content(insert)
             finally:
                 self._block_stack.discard(key)
+                self._block_path.pop()
 
         def _draw_insert_content(insert: Insert):
             clip = xclip.XClip(insert)
@@ -930,16 +946,22 @@ class UniversalFrontend:
         if isinstance(entity, Insert):
             # Skip a block that is already being drawn. Otherwise a block that
             # inserts itself recurses until RecursionError.
-            key = entity.dxf.get("name", "").lower()
+            name = entity.dxf.get("name", "")
+            key = name.lower()
             if key in self._block_stack:
-                logger.warning(
-                    "Skipped cyclic block reference '%s' in %s.",
-                    entity.dxf.get("name", ""),
-                    str(entity),
-                )
-                self.skip_entity(entity, "block reference cycle")
-                # ATTRIB entities live on the INSERT, outside the block content.
-                self.draw_entities(entity.attribs)
+                if key not in self._warned_block_cycles:
+                    self._warned_block_cycles.add(key)
+                    route = " -> ".join([*self._block_path, name])
+                    # skip_entity is the single log line. The virtual INSERT has
+                    # no handle, so the path names where the cycle is.
+                    self.skip_entity(entity, f"block reference cycle ({route})")
+                # Same property state as the normal path, so a BYBLOCK ATTRIB
+                # resolves against this INSERT rather than the outer one.
+                self.ctx.push_state(properties)
+                try:
+                    self.draw_entities(entity.attribs)
+                finally:
+                    self.ctx.pop_state()
                 return
 
             self.ctx.push_state(properties)
