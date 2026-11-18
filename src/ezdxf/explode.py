@@ -245,12 +245,20 @@ def virtual_block_reference_entities(
             except InsertTransformationError:
                 # INSERT entity can not be represented in the target coordinate
                 # system defined by transformation matrix `m`.
-                # Yield transformed sub-entities of the INSERT entity:
-                yield from transform(
-                    virtual_block_reference_entities(
-                        entity, skipped_entity_callback=skipped_entity_callback
+                # A MINSERT whose row/column spacing is no longer orthogonal
+                # (for example a non-uniform scaling of a rotated grid) is
+                # expanded into single INSERT entities first. Each of them can
+                # still represent its own placement. Otherwise yield the
+                # transformed sub-entities of the INSERT entity.
+                if entity.dxftype() == "INSERT" and entity.mcount > 1:
+                    for virtual_insert in entity.multi_insert():
+                        yield from transform([virtual_insert])
+                else:
+                    yield from transform(
+                        virtual_block_reference_entities(
+                            entity, skipped_entity_callback=skipped_entity_callback
+                        )
                     )
-                )
             else:
                 yield entity
 

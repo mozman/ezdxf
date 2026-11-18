@@ -38,6 +38,7 @@ from ezdxf.math import (
     Y_AXIS,
     Z_AXIS,
     Matrix44,
+    OCS,
     UCS,
     NULLVEC,
 )
@@ -467,6 +468,13 @@ class Insert(LinkedEntities):
         represent a non-orthogonal target coordinate system and an
         :class:`InsertTransformationError` will be raised in that case.
 
+        MINSERT row and column spacing is transformed as well. Spacing is an
+        offset in the insert's OCS and is not scaled by the insert scale
+        factors. When the transformed offsets are no longer orthogonal row and
+        column directions of the target system, for example a non-uniform
+        scaling of a rotated grid, :class:`InsertTransformationError` is raised
+        and the entity is left unchanged.
+
         """
         dxf = self.dxf
         source_system = InsertCoordinateSystem(
@@ -481,17 +489,95 @@ class Insert(LinkedEntities):
             raise InsertTransformationError(
                 "INSERT entity can not represent a non-orthogonal target coordinate system."
             )
+        # Resolve spacing before mutating, so a failure leaves the entity unchanged.
+        new_row_spacing, new_column_spacing = self._transformed_grid_spacing(
+            m, target_system
+        )
         dxf.insert = target_system.insert
         dxf.rotation = target_system.rotation
         dxf.extrusion = target_system.extrusion
         dxf.xscale = target_system.scale_factor_x
         dxf.yscale = target_system.scale_factor_y
         dxf.zscale = target_system.scale_factor_z
+        if new_row_spacing is not None:
+            dxf.row_spacing = new_row_spacing
+        if new_column_spacing is not None:
+            dxf.column_spacing = new_column_spacing
 
         for attrib in self.attribs:
             attrib.transform(m)
         self.post_transform(m)
         return self
+
+    def _transformed_grid_spacing(
+        self, m: Matrix44, target: InsertCoordinateSystem
+    ) -> tuple[Optional[float], Optional[float]]:
+        """Return transformed ``(row_spacing, column_spacing)``.
+
+        ``None`` leaves that stored spacing unchanged. A zero spacing stays
+        zero. A non-zero spacing is transformed even when its count is 1.
+        :class:`InsertTransformationError` is raised only when an axis that
+        places cells (count greater than 1) can not be represented.
+        """
+        dxf = self.dxf
+        row_spacing = float(dxf.row_spacing)
+        col_spacing = float(dxf.column_spacing)
+        if not row_spacing and not col_spacing:
+            return None, None
+        # Same rule as Insert.mcount: a spacing of 0 does not create a grid.
+        use_rows = dxf.row_count > 1 and bool(row_spacing)
+        use_cols = dxf.column_count > 1 and bool(col_spacing)
+
+        # multi_insert() places cells at the rotated spacing offset and does
+        # not apply the insert scale factors to that offset.
+        ocs = self.ocs()
+        rotation = dxf.rotation
+
+        def spacing_step(along_x: float, along_y: float) -> Vec3:
+            offset = Vec3(along_x, along_y, 0)
+            if rotation:
+                offset = offset.rotate_deg(rotation)
+            return m.transform_direction(ocs.to_wcs(offset))
+
+        new_ocs = OCS(target.extrusion)
+        new_rotation = target.rotation
+
+        def axis_spacing(step: Vec3, axis: int, *, used: bool) -> Optional[float]:
+            local = new_ocs.from_wcs(step)
+            if new_rotation:
+                local = local.rotate_deg(-new_rotation)
+            if axis == 0:
+                value = local.x
+                projected = Vec3(value, 0, 0)
+            else:
+                value = local.y
+                projected = Vec3(0, value, 0)
+            # A MINSERT grid is always orthogonal in the rotated OCS. A
+            # non-uniform scaling of a rotated grid shears these axes apart.
+            # The off-axis residue grows with the spacing, so the tolerance
+            # has to grow with it. A fixed 1e-9 rejects a pure rotation of a
+            # grid a few kilometres across.
+            tolerance = ABS_TOL * max(1.0, step.magnitude)
+            if not local.isclose(projected, abs_tol=tolerance):
+                if used:
+                    raise InsertTransformationError(
+                        "MINSERT grid can not represent the transformed "
+                        "row/column spacing."
+                    )
+                return None
+            return value
+
+        new_row = (
+            axis_spacing(spacing_step(0.0, row_spacing), 1, used=use_rows)
+            if row_spacing
+            else None
+        )
+        new_col = (
+            axis_spacing(spacing_step(col_spacing, 0.0), 0, used=use_cols)
+            if col_spacing
+            else None
+        )
+        return new_row, new_col
 
     def translate(self, dx: float, dy: float, dz: float) -> Insert:
         """Optimized INSERT translation about `dx` in x-axis, `dy` in y-axis
