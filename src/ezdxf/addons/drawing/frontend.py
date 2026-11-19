@@ -605,10 +605,14 @@ class UniversalFrontend:
 
         polygon = cast(DXFPolygon, entity)
         if filling.type == Filling.PATTERN:
-            if loops is None:
-                loops = hatching.hatch_boundary_paths(polygon, filter_text_boxes=True)
+            # HATCH: pattern loops are OCS paths, the solid fallback needs WCS paths
+            pattern_loops = loops
+            if pattern_loops is None:
+                pattern_loops = hatching.hatch_boundary_paths(
+                    polygon, filter_text_boxes=True
+                )
             try:
-                self.draw_hatch_pattern(polygon, loops, properties)
+                self.draw_hatch_pattern(polygon, pattern_loops, properties)
             except hatching.DenseHatchingLinesError:
                 pass  # fallthrough to solid fill rendering
             else:

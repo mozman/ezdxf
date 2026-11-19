@@ -356,6 +356,21 @@ def test_hatch(msp, path_backend):
     assert result[0][0] == "filled_path"
 
 
+def test_dense_hatch_pattern_solid_fallback_in_wcs(msp, path_backend):
+    # extrusion (0, 0, -1): OCS x-axis is the inverted WCS x-axis
+    hatch = msp.add_hatch(dxfattribs={"extrusion": (0, 0, -1)})
+    hatch.paths.add_polyline_path([(-100, 0), (-90, 0), (-90, 10), (-100, 10)])
+    # pattern lines are too narrow and raise a DenseHatchingLinesError
+    hatch.set_pattern_fill("ANSI31", scale=1e-5)
+    path_backend.draw_entities(msp)
+    result = get_result(path_backend)
+    assert result[0][0] == "filled_path"
+    x_coords = [v.x for path in result[0][1] for v in path.control_vertices()]
+    # solid fallback filling has to be rendered in WCS: x = 90 .. 100
+    assert min(x_coords) == pytest.approx(90)
+    assert max(x_coords) == pytest.approx(100)
+
+
 def test_basic_spline(msp, basic):
     msp.add_spline(fit_points=[(0, 0), (3, 2), (4, 5), (6, 4), (12, 0)])
     basic.draw_entities(msp)
