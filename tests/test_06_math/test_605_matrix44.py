@@ -177,6 +177,13 @@ class TestMatrix44:
     def test_is_cartesian(self, m44):
         assert m44().is_cartesian is True
 
+    @pytest.mark.parametrize("scale", [(2, 2, 2), (2, 3, 4)])
+    def test_scaled_matrix_is_cartesian(self, scale, m44):
+        assert m44.scale(*scale).is_cartesian is True
+
+    def test_mirrored_matrix_is_not_cartesian(self, m44):
+        assert m44.scale(2, 2, -2).is_cartesian is False
+
     def test_translate(self, m44):
         t = m44.translate(10, 20, 30)
         x = diag((1.0, 1.0, 1.0, 1.0), m44)
@@ -189,6 +196,18 @@ class TestMatrix44:
         t = m44.scale(10, 20, 30)
         x = diag((10.0, 20.0, 30.0, 1.0), m44)
         assert equal_matrix(t, x) is True
+
+    def test_perspective_projection(self, m44):
+        m = m44.perspective_projection(0, 2, 1, 0, 1, 2)
+        assert m.get_row(0) == (1.0, 0.0, 0.0, 0.0)
+        assert m.get_row(1) == (0.0, 2.0, 0.0, 0.0)
+        assert m.get_row(2) == (1.0, 1.0, -3.0, -1.0)
+        assert m.get_row(3) == (0.0, 0.0, -4.0, 0.0)
+
+    def test_perspective_projection_fov(self, m44):
+        m = m44.perspective_projection_fov(pi / 2, 1.0, 1.0, 3.0)
+        assert m.get_row(2)[2:] == (-2.0, -1.0)
+        assert m.get_row(3) == (0.0, 0.0, -3.0, 0.0)
 
     def test_x_rotate(self, m44):
         alpha = radians(25)
