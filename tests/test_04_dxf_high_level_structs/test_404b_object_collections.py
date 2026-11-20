@@ -99,6 +99,12 @@ class TestDuplicateEntry:
         assert obj.dxf.name == "Dup1"
         assert len(collection_rw) == count + 1
 
+    def test_duplicate_entry_with_same_name_raises_clear_exception(
+        self, collection_rw
+    ):
+        with pytest.raises(ValueError, match="table names are case-insensitive"):
+            collection_rw.duplicate_entry("Standard", "STANDARD")
+
     def test_duplicate_non_existing_entry_raises_exception(self, collection_rw):
         with pytest.raises(ValueError):
             collection_rw.duplicate_entry("NON_EXISTING_ENTRY", "Dup1")

@@ -145,6 +145,11 @@ class ObjectCollection(Generic[T]):
         if entry is None:
             raise DXFValueError(f"entry '{name}' does not exist")
         new_name = validate_name(new_name)
+        if make_table_key(name) == make_table_key(new_name):
+            raise DXFValueError(
+                f"new name '{new_name}' must be different from "
+                f"source name '{name}' (table names are case-insensitive)"
+            )
         # remove existing entry
         existing_entry = self.get(new_name)
         if existing_entry is not None:
