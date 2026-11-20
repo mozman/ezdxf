@@ -206,8 +206,11 @@ cdef class Matrix44:
 
     @property
     def is_cartesian(self) -> bool:
-        cdef Vec3 x_axis = v3_cross(self.get_uy(), self.get_uz())
-        return v3_isclose(x_axis, self.get_ux(), REL_TOL, ABS_TOL)
+        cdef Vec3 x_axis = v3_normalize(
+            v3_cross(self.get_uy(), self.get_uz()), 1.0
+        )
+        cdef Vec3 ux = v3_normalize(self.get_ux(), 1.0)
+        return v3_isclose(x_axis, ux, REL_TOL, ABS_TOL)
 
     @property
     def is_orthogonal(self) -> bool:
@@ -337,6 +340,7 @@ cdef class Matrix44:
         mat.m[10] = -((far + near) / (far - near))
         mat.m[11] = -1
         mat.m[14] = -((2. * far * near) / (far - near))
+        mat.m[15] = 0.
         return mat
 
     @staticmethod
