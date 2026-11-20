@@ -246,6 +246,19 @@ def test_rotated_clip_rectangle(clipper: xclip.XClip):
         )
 
 
+def test_clipping_path_preserves_transform_matrix(clipper: xclip.XClip):
+    clipper.set_block_clipping_path([(1, 2), (4, 7)])
+    spatial_filter = clipper.get_spatial_filter()
+    assert spatial_filter is not None
+    spatial_filter.set_transform_matrix(Matrix44.z_rotate(-math.pi / 2))
+    original = spatial_filter.transform_matrix.copy()
+
+    clipper.get_block_clipping_path()
+    wcs_path = clipper.get_wcs_clipping_path()
+    assert clipper.get_wcs_clipping_path() == wcs_path
+    assert list(spatial_filter.transform_matrix) == pytest.approx(list(original))
+
+
 def test_invert_clip_without_clipping_path(clipper: xclip.XClip):
     with pytest.raises(ValueError):
         clipper.invert_clipping_path(ignore_acad_compatibility=True)

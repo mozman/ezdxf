@@ -145,7 +145,7 @@ class XClip:
         # system, therefore its inverse maps clip boundary coordinates back to
         # WCS and the inverse_insert_matrix maps WCS points into the block
         # coordinate system.
-        clip_to_wcs = self._spatial_filter.transform_matrix
+        clip_to_wcs = self._spatial_filter.transform_matrix.copy()
         clip_to_wcs.inverse()
         # composition order: transform the boundary vertices from the clip
         # boundary coordinate system to WCS first (clip_to_wcs) and then into
