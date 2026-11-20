@@ -27,6 +27,8 @@
 		- {{pr 1469}}
 	- BUGFIX: Match Python `Vec3.__lt__` and `Vec2.__bool__` in the C extension
 		- {{pr 1473}}
+	- BUGFIX: Match Python `Matrix44 is_cartesian` and `perspective_projection` in the C extension
+		- {{pr 1478}}
 - ## Version 1.4.5 - 2026-10-16
   id:: 6a36280d-37b5-4664-897c-4755e53e79af
 	- NEW: added PyPI package deployment for Python 3.15 and removed PyPI package deployment for Python 3.10 (end of life)
