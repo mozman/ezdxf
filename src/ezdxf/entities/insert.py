@@ -38,6 +38,7 @@ from ezdxf.math import (
     Y_AXIS,
     Z_AXIS,
     Matrix44,
+    OCS,
     UCS,
     NULLVEC,
 )
@@ -481,17 +482,110 @@ class Insert(LinkedEntities):
             raise InsertTransformationError(
                 "INSERT entity can not represent a non-orthogonal target coordinate system."
             )
+        # Resolve spacing before mutating, so a failure leaves the entity unchanged.
+        new_row_spacing, new_column_spacing = self._transformed_grid_spacing(
+            m, target_system
+        )
         dxf.insert = target_system.insert
         dxf.rotation = target_system.rotation
         dxf.extrusion = target_system.extrusion
         dxf.xscale = target_system.scale_factor_x
         dxf.yscale = target_system.scale_factor_y
         dxf.zscale = target_system.scale_factor_z
+        if new_row_spacing is not None:
+            dxf.row_spacing = new_row_spacing
+        if new_column_spacing is not None:
+            dxf.column_spacing = new_column_spacing
 
         for attrib in self.attribs:
             attrib.transform(m)
         self.post_transform(m)
         return self
+
+    def _transformed_grid_spacing(
+        self, m: Matrix44, target: InsertCoordinateSystem
+    ) -> tuple[Optional[float], Optional[float]]:
+        """Return transformed ``(row_spacing, column_spacing)``.
+
+        ``None`` leaves that stored spacing unchanged. A spacing with
+        absolute value ``<= ABS_TOL`` stays unchanged. A larger spacing is
+        transformed even when its count is 1.
+        :class:`InsertTransformationError` is raised only when an axis that
+        places cells (count greater than 1) can not be represented.
+        """
+        dxf = self.dxf
+        row_spacing = float(dxf.row_spacing)
+        col_spacing = float(dxf.column_spacing)
+        has_row_spacing = abs(row_spacing) > ABS_TOL
+        has_col_spacing = abs(col_spacing) > ABS_TOL
+        if not has_row_spacing and not has_col_spacing:
+            return None, None
+        # A spacing at or below ABS_TOL does not place grid cells.
+        use_rows = dxf.row_count > 1 and has_row_spacing
+        use_cols = dxf.column_count > 1 and has_col_spacing
+
+        # multi_insert() places cells at the rotated spacing offset and does
+        # not apply the insert scale factors to that offset.
+        ocs = self.ocs()
+        rotation = dxf.rotation
+
+        def spacing_step(along_x: float, along_y: float) -> Vec3:
+            offset = Vec3(along_x, along_y, 0)
+            if rotation:
+                offset = offset.rotate_deg(rotation)
+            return m.transform_direction(ocs.to_wcs(offset))
+
+        new_ocs = OCS(target.extrusion)
+        new_rotation = target.rotation
+
+        def axis_spacing(step: Vec3, axis: int, *, used: bool) -> Optional[float]:
+            """Return the signed spacing of `step` along one target axis.
+
+            `step` is the transformed row or column offset in WCS. Convert it
+            into the target OCS and remove the target rotation. Axis 0 is the
+            local x-axis (column spacing). Axis 1 is the local y-axis (row
+            spacing).
+
+            Return that signed distance when the offset lies on the axis.
+            Raise :class:`InsertTransformationError` when `used` is ``True``
+            and the offset does not lie on the axis. Return ``None`` when
+            `used` is ``False``, so the stored spacing stays unchanged.
+            """
+            local = new_ocs.from_wcs(step)
+            if new_rotation:
+                local = local.rotate_deg(-new_rotation)
+            if axis == 0:
+                value = local.x
+                projected = Vec3(value, 0, 0)
+            else:
+                value = local.y
+                projected = Vec3(0, value, 0)
+            # A MINSERT grid is always orthogonal in the rotated OCS. A
+            # non-uniform scaling of a rotated grid shears these axes apart.
+            # The off-axis residue grows with the spacing, so the tolerance
+            # has to grow with it. A fixed 1e-9 rejects a pure rotation of a
+            # grid a few kilometres across.
+            tolerance = ABS_TOL * max(1.0, step.magnitude)
+            if not local.isclose(projected, abs_tol=tolerance):
+                if used:
+                    raise InsertTransformationError(
+                        "MINSERT grid can not represent the transformed "
+                        "row/column spacing."
+                    )
+                return None
+            return value
+
+        new_row = (
+            axis_spacing(spacing_step(0.0, row_spacing), 1, used=use_rows)
+            if has_row_spacing
+            else None
+        )
+        new_col = (
+            axis_spacing(spacing_step(col_spacing, 0.0), 0, used=use_cols)
+            if has_col_spacing
+            else None
+        )
+        return new_row, new_col
 
     def translate(self, dx: float, dy: float, dz: float) -> Insert:
         """Optimized INSERT translation about `dx` in x-axis, `dy` in y-axis

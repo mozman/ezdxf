@@ -5,6 +5,7 @@ import pytest
 import ezdxf
 from ezdxf.disassemble import recursive_decompose
 from ezdxf.entities import Point, Insert
+from ezdxf.math import Vec3
 
 
 @pytest.fixture(scope="module")
@@ -191,6 +192,112 @@ class TestSourceBlockReferences:
         assert blkref1.source_block_reference is blkref0
         # and blkref0 has no source_block_reference
         assert blkref0.source_block_reference is None
+
+
+def _nested_minsert_doc(outer_attribs):
+    doc = ezdxf.new()
+    doc.blocks.new("B").add_line((0, 0), (1, 0))
+    doc.blocks.new("O").add_blockref("B", (3, 4), dxfattribs={"rotation": 20}).grid(
+        size=(2, 2), spacing=(4, 5)
+    )
+    outer = doc.modelspace().add_blockref("O", (100, 0), dxfattribs=outer_attribs)
+    return doc, outer
+
+
+def _expected_nested_lines(doc, outer):
+    minsert = doc.blocks.get("O")[0]
+    expected = []
+    for cell in minsert.multi_insert():
+        matrix = cell.matrix44() @ outer.matrix44()
+        expected.append(matrix.transform((0, 0, 0)))
+        expected.append(matrix.transform((1, 0, 0)))
+    return expected
+
+
+def _actual_nested_lines(doc):
+    points = []
+    for entity in recursive_decompose(doc.modelspace()):
+        if entity.dxftype() == "LINE":
+            points.append(Vec3(entity.dxf.start))
+            points.append(Vec3(entity.dxf.end))
+    return points
+
+
+def _assert_same_points(actual, expected):
+    def sort_key(point):
+        return (round(point.x, 4), round(point.y, 4), round(point.z, 4))
+
+    actual = sorted(actual, key=sort_key)
+    expected = sorted(expected, key=sort_key)
+    assert len(actual) == len(expected)
+    for got, want in zip(actual, expected):
+        assert got.isclose(want, abs_tol=1e-6)
+
+
+@pytest.mark.parametrize(
+    "outer_attribs",
+    [
+        {"rotation": 30},
+        {"xscale": 2, "yscale": 2},
+        {"xscale": -1, "rotation": 30},
+    ],
+)
+def test_nested_minsert_follows_outer_transform(outer_attribs):
+    doc, outer = _nested_minsert_doc(outer_attribs)
+    _assert_same_points(_actual_nested_lines(doc), _expected_nested_lines(doc, outer))
+
+
+def _lines_of_transformed_cells(doc, outer):
+    """Where each cell goes when transformed as its own INSERT.
+
+    This is the established non-uniform scaling behaviour of INSERT: grid
+    origins follow the matrix, while a rotated insert's content does not match
+    a raw non-uniform scale exactly.
+    """
+    minsert = doc.blocks.get("O")[0]
+    points = []
+    for cell in minsert.multi_insert():
+        clone = cell.copy()
+        clone.transform(outer.matrix44())
+        matrix = clone.matrix44()
+        points.append(matrix.transform((0, 0, 0)))
+        points.append(matrix.transform((1, 0, 0)))
+    return points
+
+
+@pytest.mark.parametrize(
+    "outer_attribs",
+    [
+        {"xscale": 2, "yscale": 3},
+        {"xscale": 2, "yscale": 3, "rotation": 10},
+    ],
+)
+def test_nested_sheared_minsert_expands_to_single_inserts(outer_attribs):
+    doc, outer = _nested_minsert_doc(outer_attribs)
+    actual = _actual_nested_lines(doc)
+    # One line per grid cell, not just the first cell and not the old spacing.
+    assert len(actual) == 8
+    _assert_same_points(actual, _lines_of_transformed_cells(doc, outer))
+    starts = actual[0::2]
+    composed_origins = _expected_nested_lines(doc, outer)[0::2]
+    _assert_same_points(starts, composed_origins)
+
+
+def test_axis_aligned_nested_minsert_keeps_a_grid_under_non_uniform_scale():
+    # Unlike a rotated grid, this spacing stays representable. The nested
+    # MINSERT is transformed in place rather than expanded.
+    doc = ezdxf.new()
+    doc.blocks.new("B").add_line((0, 0), (1, 0))
+    doc.blocks.new("O").add_blockref("B", (3, 4)).grid(size=(2, 2), spacing=(4, 5))
+    doc.modelspace().add_blockref("O", (100, 0), dxfattribs={"xscale": 2, "yscale": 3})
+    from ezdxf.explode import virtual_block_reference_entities
+
+    virtual = list(virtual_block_reference_entities(doc.modelspace()[0]))
+    assert len(virtual) == 1
+    assert virtual[0].dxftype() == "INSERT"
+    assert virtual[0].mcount == 4
+    assert virtual[0].dxf.row_spacing == pytest.approx(12)
+    assert virtual[0].dxf.column_spacing == pytest.approx(10)
 
 
 if __name__ == "__main__":
