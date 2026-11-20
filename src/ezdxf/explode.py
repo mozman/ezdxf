@@ -251,8 +251,9 @@ def virtual_block_reference_entities(
                 # still represent its own placement. Otherwise yield the
                 # transformed sub-entities of the INSERT entity.
                 if entity.dxftype() == "INSERT" and entity.mcount > 1:
-                    for virtual_insert in entity.multi_insert():
-                        yield from transform([virtual_insert])
+                    # Each virtual INSERT has mcount == 1, so this call does
+                    # not expand the grid again.
+                    yield from transform(entity.multi_insert())
                 else:
                     yield from transform(
                         virtual_block_reference_entities(

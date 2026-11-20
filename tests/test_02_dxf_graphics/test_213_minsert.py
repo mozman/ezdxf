@@ -5,6 +5,7 @@ from typing import cast
 import pytest
 import ezdxf
 from ezdxf.entities import Insert, Point, Attrib
+from ezdxf.entities.insert import ABS_TOL
 from ezdxf.math import Matrix44, Vec3, InsertTransformationError
 
 
@@ -324,6 +325,25 @@ def test_transform_does_not_invent_spacing_for_a_regular_insert():
     insert.scale(2, 3, 4)
     assert insert.dxf.hasattr("row_spacing") is False
     assert insert.dxf.hasattr("column_spacing") is False
+
+
+def test_spacing_within_abs_tol_is_left_unchanged():
+    # A spacing of magnitude <= ABS_TOL does not place cells. The sign must
+    # not matter, and a rotated grid must not raise on a non-uniform scale.
+    row_spacing = -ABS_TOL / 10
+    column_spacing = ABS_TOL
+    minsert = _minsert(rotation=20, spacing=(row_spacing, column_spacing))
+    minsert.transform(Matrix44.scale(2, 3, 1))
+    assert minsert.dxf.row_spacing == row_spacing
+    assert minsert.dxf.column_spacing == column_spacing
+
+
+def test_spacing_just_above_abs_tol_is_scaled():
+    spacing = ABS_TOL * 2
+    minsert = _minsert(rotation=0, spacing=(spacing, spacing))
+    minsert.transform(Matrix44.scale(2, 3, 1))
+    assert minsert.dxf.row_spacing == pytest.approx(spacing * 3)
+    assert minsert.dxf.column_spacing == pytest.approx(spacing * 2)
 
 
 if __name__ == "__main__":

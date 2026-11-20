@@ -468,13 +468,6 @@ class Insert(LinkedEntities):
         represent a non-orthogonal target coordinate system and an
         :class:`InsertTransformationError` will be raised in that case.
 
-        MINSERT row and column spacing is transformed as well. Spacing is an
-        offset in the insert's OCS and is not scaled by the insert scale
-        factors. When the transformed offsets are no longer orthogonal row and
-        column directions of the target system, for example a non-uniform
-        scaling of a rotated grid, :class:`InsertTransformationError` is raised
-        and the entity is left unchanged.
-
         """
         dxf = self.dxf
         source_system = InsertCoordinateSystem(
@@ -514,19 +507,22 @@ class Insert(LinkedEntities):
     ) -> tuple[Optional[float], Optional[float]]:
         """Return transformed ``(row_spacing, column_spacing)``.
 
-        ``None`` leaves that stored spacing unchanged. A zero spacing stays
-        zero. A non-zero spacing is transformed even when its count is 1.
+        ``None`` leaves that stored spacing unchanged. A spacing with
+        absolute value ``<= ABS_TOL`` stays unchanged. A larger spacing is
+        transformed even when its count is 1.
         :class:`InsertTransformationError` is raised only when an axis that
         places cells (count greater than 1) can not be represented.
         """
         dxf = self.dxf
         row_spacing = float(dxf.row_spacing)
         col_spacing = float(dxf.column_spacing)
-        if not row_spacing and not col_spacing:
+        has_row_spacing = abs(row_spacing) > ABS_TOL
+        has_col_spacing = abs(col_spacing) > ABS_TOL
+        if not has_row_spacing and not has_col_spacing:
             return None, None
-        # Same rule as Insert.mcount: a spacing of 0 does not create a grid.
-        use_rows = dxf.row_count > 1 and bool(row_spacing)
-        use_cols = dxf.column_count > 1 and bool(col_spacing)
+        # A spacing at or below ABS_TOL does not place grid cells.
+        use_rows = dxf.row_count > 1 and has_row_spacing
+        use_cols = dxf.column_count > 1 and has_col_spacing
 
         # multi_insert() places cells at the rotated spacing offset and does
         # not apply the insert scale factors to that offset.
@@ -543,6 +539,18 @@ class Insert(LinkedEntities):
         new_rotation = target.rotation
 
         def axis_spacing(step: Vec3, axis: int, *, used: bool) -> Optional[float]:
+            """Return the signed spacing of `step` along one target axis.
+
+            `step` is the transformed row or column offset in WCS. Convert it
+            into the target OCS and remove the target rotation. Axis 0 is the
+            local x-axis (column spacing). Axis 1 is the local y-axis (row
+            spacing).
+
+            Return that signed distance when the offset lies on the axis.
+            Raise :class:`InsertTransformationError` when `used` is ``True``
+            and the offset does not lie on the axis. Return ``None`` when
+            `used` is ``False``, so the stored spacing stays unchanged.
+            """
             local = new_ocs.from_wcs(step)
             if new_rotation:
                 local = local.rotate_deg(-new_rotation)
@@ -569,12 +577,12 @@ class Insert(LinkedEntities):
 
         new_row = (
             axis_spacing(spacing_step(0.0, row_spacing), 1, used=use_rows)
-            if row_spacing
+            if has_row_spacing
             else None
         )
         new_col = (
             axis_spacing(spacing_step(col_spacing, 0.0), 0, used=use_cols)
-            if col_spacing
+            if has_col_spacing
             else None
         )
         return new_row, new_col
