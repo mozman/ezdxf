@@ -661,8 +661,8 @@ class Insert(LinkedEntities):
         is required if :attr:`mcount` > 1.
 
         """
-        return (self.dxf.row_count if self.dxf.row_spacing else 1) * (
-            self.dxf.column_count if self.dxf.column_spacing else 1
+        return (self.dxf.row_count if abs(self.dxf.row_spacing) > ABS_TOL else 1) * (
+            self.dxf.column_count if abs(self.dxf.column_spacing) > ABS_TOL else 1
         )
 
     def multi_insert(self) -> Iterator[Insert]:
@@ -721,6 +721,7 @@ class Insert(LinkedEntities):
                 pairs
 
         """
+
         def unpack(dxfattribs) -> tuple[str, str, UVec]:
             tag = dxfattribs.pop("tag")
             text = values.get(tag, None)
