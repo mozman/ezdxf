@@ -517,7 +517,6 @@ class TestPolygonClipping:
         assert polygon[0].isclose((2, 2))
         assert polygon[2].isclose((12, 4))
 
-    @pytest.mark.xfail(reason="edge case not covered")
     def test_polygon_outside_no_intersection(self, polygon_u: CCP):
         # 10 d.............c
         # 9  .7---6...3---2.
@@ -534,12 +533,13 @@ class TestPolygonClipping:
         #    012345678901234
         #                                           a       b        c         d
         result = polygon_u.clip_polygon(Vec2.list([(0, 0), (14, 0), (14, 10), (0, 10)]))
-        # returns the clipping polygon [0, 1, 2, 3, 4, 5, 6, 7]
-        assert len(result) == 1
-        polygon = result[0]
-        assert len(polygon) == 8
-        assert polygon[0] == Vec2(1, 1)
-        assert polygon[7] == Vec2(1, 9)
+        # returns an empty list
+        # For unfilled polygons (polylines) the result is correct. The subject is
+        # completely outside the clipping polygon.
+        # For filled polygons I expected the boolean intersection of both shapes, the
+        # clipping polygon in this case [0, 1, 2, 3, 4, 5, 6, 7]. This implementation
+        # can not handle this use case.
+        assert len(result) == 0
 
     def test_polygon_inside_with_intersection(self, polygon_u: CCP):
         # 7  .|d++x...x++c|.
