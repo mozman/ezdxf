@@ -137,7 +137,6 @@ class XClip:
 
     def get_block_clipping_path(self) -> ClippingPath:
         """Returns the clipping path in block coordinates (relative to the block origin)."""
-        vertices: Sequence[Vec2] = []
         if not isinstance(self._spatial_filter, SpatialFilter):
             return ClippingPath()
         # The boundary vertices are defined in the coordinate system of the clip
@@ -152,13 +151,11 @@ class XClip:
         # boundary coordinate system to WCS first (clip_to_wcs) and then into
         # the block coordinate system (inverse_insert_matrix)
         m = clip_to_wcs @ self._spatial_filter.inverse_insert_matrix
-        vertices = Vec2.tuple(
-            m.transform_vertices(self._spatial_filter.boundary_vertices)
-        )
+        vertices: Sequence[Vec2] = self._spatial_filter.boundary_vertices
         if len(vertices) == 2:
             vertices = _rect_path(vertices)
 
-        clipping_path = ClippingPath(vertices, is_inverted_clip=False)
+        clipping_path = ClippingPath(Vec2.tuple(m.transform_vertices(vertices)))
         xrec = get_roundtrip_xrecord(self._spatial_filter)
         if isinstance(xrec, RoundtripXRecord):
             clipping_path.inverted_clip = get_roundtrip_vertices(
@@ -180,8 +177,6 @@ class XClip:
         block_clipping_path = self.get_block_clipping_path()
         m = self._insert.matrix44()
         vertices = Vec2.tuple(m.transform_vertices(block_clipping_path.vertices))
-        if len(vertices) == 2:  # rectangle by diagonal corner vertices
-            vertices = BoundingBox2d(vertices).rect_vertices()
         wcs_clipping_path = ClippingPath(
             vertices, is_inverted_clip=block_clipping_path.is_inverted_clip
         )
@@ -189,8 +184,6 @@ class XClip:
             inverted_clip = Vec2.tuple(
                 m.transform_vertices(block_clipping_path.inverted_clip)
             )
-            if len(inverted_clip) == 2:  # rectangle by diagonal corner vertices
-                inverted_clip = BoundingBox2d(inverted_clip).rect_vertices()
             wcs_clipping_path.inverted_clip = inverted_clip
             wcs_clipping_path.inverted_clip_compare = Vec2.tuple(
                 m.transform_vertices(block_clipping_path.inverted_clip_compare)
@@ -449,8 +442,10 @@ def get_roundtrip_vertices(
     xrec: RoundtripXRecord, section_name: str, m: Matrix44
 ) -> Sequence[Vec2]:
     tags = xrec.get_section(section_name)
-    vertices = m.transform_vertices(Vec3(t.value) for t in tags)
-    return Vec2.tuple(vertices)
+    if section_name == ACAD_INVERTEDCLIP_ROUNDTRIP and len(tags) == 2:
+        corners = _rect_path(Vec2(t.value) for t in tags)
+        return Vec2.tuple(m.transform_vertices(corners))
+    return Vec2.tuple(m.transform_vertices(Vec3(t.value) for t in tags))
 
 
 def bbox_area(vertice: Sequence[Vec2]) -> float:

@@ -1,5 +1,7 @@
 # Copyright (c) 2023, Manfred Moitzi
 # License: MIT License
+import math
+
 import pytest
 import ezdxf
 from ezdxf.document import Drawing
@@ -213,6 +215,48 @@ def test_get_wcs_clipping_path_with_clip_boundary_transform(doc: Drawing):
     assert all(
         a.isclose(b) for a, b in zip(clipping_path.vertices, wcs_from_block)
     )
+
+
+def test_rotated_clip_rectangle(clipper: xclip.XClip):
+    assert not clipper.get_block_clipping_path().vertices
+    assert not clipper.get_wcs_clipping_path().vertices
+    diagonal = Vec2.tuple([(1, 2), (4, 7)])
+    clipper.set_block_clipping_path(diagonal)
+    clipper._set_inverted_clipping_path(
+        diagonal, Vec2.tuple([(4, 7), (1, 2), (4, 2)])
+    )
+    spatial_filter = clipper.get_spatial_filter()
+    spatial_filter.set_transform_matrix(Matrix44.z_rotate(-math.pi / 2))
+    spatial_filter.set_inverse_insert_matrix(Matrix44.translate(8, 3, 0))
+
+    block = clipper.get_block_clipping_path()
+    assert clipper.get_block_clipping_path() == block
+    world = clipper.get_wcs_clipping_path()
+    for path, expected in [
+        (block, [(6, 4), (6, 7), (1, 7), (1, 4)]),
+        (world, [(16, 14), (16, 17), (11, 17), (11, 14)]),
+    ]:
+        for vertices in (path.vertices, path.inverted_clip):
+            assert len(vertices) == 4
+            assert all(v.isclose(p) for v, p in zip(vertices, expected))
+        assert len(path.inverted_clip_compare) == 3
+        assert all(
+            v.isclose(expected[i])
+            for v, i in zip(path.inverted_clip_compare, (2, 0, 1))
+        )
+
+
+def test_clipping_path_preserves_transform_matrix(clipper: xclip.XClip):
+    clipper.set_block_clipping_path([(1, 2), (4, 7)])
+    spatial_filter = clipper.get_spatial_filter()
+    assert spatial_filter is not None
+    spatial_filter.set_transform_matrix(Matrix44.z_rotate(-math.pi / 2))
+    original = spatial_filter.transform_matrix.copy()
+
+    clipper.get_block_clipping_path()
+    wcs_path = clipper.get_wcs_clipping_path()
+    assert clipper.get_wcs_clipping_path() == wcs_path
+    assert list(spatial_filter.transform_matrix) == pytest.approx(list(original))
 
 
 def test_invert_clip_without_clipping_path(clipper: xclip.XClip):
