@@ -520,9 +520,11 @@ def parse_shape_codes(reader: DataReader, unifont=False) -> Sequence[int]:
             codes.append(reader.u8())
         elif code == 7:  # sub shape
             if unifont:
-                # read big-endian? see #1468
-                # The current implementation can render € glyphs on Windows.
-                codes.append(reader.u16())
+                # The sub shape number of unifont files is big-endian,
+                # see #1468: in the compiled txt.shx and isocp.shx the
+                # shape 0x80 is stored as the byte sequence 07 20 AC 00,
+                # a reference to the existing shape 0x20AC (euro sign).
+                codes.append(reader.u16_big())
             else:
                 codes.append(reader.u8())
         elif code == 8:  # displacement
