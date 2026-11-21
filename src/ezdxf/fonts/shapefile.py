@@ -398,6 +398,12 @@ class DataReader:
         self.index += 2
         return self.data[index] + (self.data[index + 1] << 8)
 
+    def u16_big(self) -> int:
+        # big ending
+        index = self.index
+        self.index += 2
+        return (self.data[index] << 8) + self.data[index + 1]
+
 
 # the old 'AutoCAD-86 shapes 1.0' format
 SHX_SHAPES_START_INDEX = 0x17
@@ -514,6 +520,8 @@ def parse_shape_codes(reader: DataReader, unifont=False) -> Sequence[int]:
             codes.append(reader.u8())
         elif code == 7:  # sub shape
             if unifont:
+                # read big-endian? see #1468
+                # The current implementation can render € glyphs on Windows.
                 codes.append(reader.u16())
             else:
                 codes.append(reader.u8())
