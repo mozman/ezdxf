@@ -1,5 +1,22 @@
 #  Copyright (c) 2021-2026, Manfred Moitzi
 #  License: MIT License
+"""Tools to calculate bounding boxes for many DXF entities.
+
+The bounding box calculation is based on the :mod:`ezdxf.disassemble` module and
+therefore has the same limitations. Unsupported DXF types like ACIS based
+entities (BODY, 3DSOLID, REGION), external references (XREF), UNDERLAY, RAY,
+XRAY and ACAD_TABLE are silently ignored. Bounding boxes of text entities are
+not accurate, see :ref:`Text Boundary Calculation` for details.
+
+The base type for all bounding boxes is the :class:`ezdxf.math.BoundingBox`
+class. The `entities` argument of the functions in this module accepts any
+iterable of DXF entities, e.g. the modelspace, an entity query or a list of
+entities.
+
+Use the optional :class:`ezdxf.bbox.Cache` class to speed up repeated
+calculations of bounding boxes for nearly the same entity set.
+
+"""
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable
 
@@ -9,14 +26,30 @@ from ezdxf.math import BoundingBox
 if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity
 
+# Default max distance between the flattened approximation line and the original
+# curve of the DXF primitives, see :class:`ezdxf.disassemble.Primitive`:
 MAX_FLATTENING_DISTANCE = disassemble.Primitive.max_flattening_distance
 
 
 class Cache:
     """Caching object for :class:`ezdxf.math.BoundingBox` objects.
 
+    Building the DXF primitives of complex entities like block references is a
+    time consuming task, therefore it is useful to cache the bounding boxes of
+    entities which are processed multiple times.
+
+    Entities are cached by their DXF handle. Entities without a handle - like
+    virtual entities created on demand - are only cached if the `uuid` option
+    is enabled, which caches them by their UUID. HATCH entities are never
+    cached, because their boundary path primitives are not distinguishable by
+    the HATCH handle.
+
     Args:
-        uuid: use UUIDs for virtual entities
+        uuid: use UUIDs for virtual entities without a handle
+
+    Attributes:
+        hits: count of cache hits
+        misses: count of cache misses
 
     """
 
@@ -28,6 +61,7 @@ class Cache:
 
     @property
     def has_data(self) -> bool:
+        """Returns ``True`` if the cache contains any bounding boxes."""
         return bool(self._boxes)
 
     def __str__(self):
@@ -38,6 +72,16 @@ class Cache:
         )
 
     def get(self, entity: DXFEntity) -> BoundingBox | None:
+        """Returns the cached bounding box for `entity` or ``None`` if the
+        entity is not cached.
+
+        Increments the `hits` counter for cache hits and the `misses` counter
+        otherwise. Entities which are not cacheable always count as a miss.
+
+        Args:
+            entity: DXF entity to look up
+
+        """
         assert entity is not None
         key = self._get_key(entity)
         if key is None:
@@ -51,6 +95,16 @@ class Cache:
         return box
 
     def store(self, entity: DXFEntity, box: BoundingBox) -> None:
+        """Store the bounding box `box` for `entity`.
+
+        Replaces an already cached bounding box. The `hits` and `misses`
+        counters are not affected.
+
+        Args:
+            entity: DXF entity
+            box: bounding box of the entity
+
+        """
         assert entity is not None
         key = self._get_key(entity)
         if key is None:
@@ -66,6 +120,9 @@ class Cache:
 
         Ignores entities which are not stored in cache.
 
+        Args:
+            entities: iterable of DXF entities to invalidate
+
         """
         for entity in entities:
             try:
@@ -74,6 +131,8 @@ class Cache:
                 pass
 
     def _get_key(self, entity: DXFEntity) -> str | None:
+        """Returns the cache key for `entity` or ``None`` if the entity is not
+        cacheable. (internal API)"""
         if entity.dxftype() == "HATCH":
             # Special treatment for multiple primitives for the same
             # HATCH entity - all have the same handle:
@@ -99,8 +158,18 @@ def multi_recursive(
     the bounding boxes of these sub entities will be yielded, **not** the
     bounding box of the entity (INSERT) itself.
 
-    If argument `fast` is ``True`` the calculation of Bézier curves is based on
-    their control points, this may return a slightly larger bounding box.
+    All entities are decomposed into DXF primitives first, therefore entities
+    which are represented by more than one primitive - like HATCH - yield a
+    bounding box for each primitive. Primitives without any vertices are
+    ignored.
+
+    Args:
+        entities: iterable of DXF entities
+        fast: calculate the bounding box of Bézier curves from their control
+            points, this is faster but may return a slightly larger bounding
+            box
+        cache: optional :class:`Cache` object to speed up repeated
+            calculations
 
     """
     flat_entities = disassemble.recursive_decompose(entities)
@@ -131,8 +200,22 @@ def extents(
 ) -> BoundingBox:
     """Returns a single bounding box for all given `entities`.
 
-    If argument `fast` is ``True`` the calculation of Bézier curves is based on
-    their control points, this may return a slightly larger bounding box.
+    The bounding box is calculated by :func:`multi_flat`, therefore complex
+    entities like block references contribute a single bounding box for all
+    their sub entities. Entities without a bounding box - like unsupported
+    entities - are ignored. Returns an empty
+    :class:`~ezdxf.math.BoundingBox` if no bounding box could be calculated.
+
+    Args:
+        entities: iterable of DXF entities
+        fast: calculate the bounding box of Bézier curves from their control
+            points, this is faster but may return a slightly larger bounding
+            box
+        cache: optional :class:`Cache` object to speed up repeated
+            calculations
+
+    Returns:
+        the overall bounding box of all given entities
 
     """
     _extends = BoundingBox()
@@ -147,10 +230,25 @@ def multi_flat(
     fast=False,
     cache: Cache | None = None,
 ) -> Iterable[BoundingBox]:
-    """Yields a bounding box for each of the given `entities`.
+    """Yields a single bounding box for each of the given `entities`.
 
-    If argument `fast` is ``True`` the calculation of Bézier curves is based on
-    their control points, this may return a slightly larger bounding box.
+    Entities with sub entities - like INSERT - are decomposed and the bounding
+    boxes of all their sub entities are merged into one bounding box for the
+    top level entity. LINE and POINT entities are handled directly without
+    decomposition. Entities without a bounding box are ignored, therefore the
+    count of yielded bounding boxes can be less than the count of the given
+    entities.
+
+    Args:
+        entities: iterable of DXF entities
+        fast: calculate the bounding box of Bézier curves from their control
+            points, this is faster but may return a slightly larger bounding
+            box
+        cache: optional :class:`Cache` object to speed up repeated
+            calculations
+
+    Yields:
+        bounding box of each entity which has a valid bounding box
 
     """
 

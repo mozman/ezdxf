@@ -30,10 +30,11 @@ from the module :mod:`ezdxf.math`.
 The `entities` iterable as input can be the whole modelspace, an entity
 query or any iterable container of DXF entities.
 
-The Calculation of bounding boxes of curves is done by flattening the curve by
-a default flattening distance of 0.01. Set argument `flatten` to 0 to speedup
-the bounding box calculation by accepting less precision for curved objects by
-using only the control vertices.
+The bounding boxes of curved entities like ARC, CIRCLE, ELLIPSE or SPLINE are
+calculated from their Bézier curve representations. Set argument `fast` to
+``True`` to speed up the bounding box calculation by accepting less precision
+for curved objects, by using only the control points of the Bézier curves,
+which may return a slightly larger bounding box.
 
 The **optional** caching object :class:`Cache` has to be instantiated by the
 user, this is only useful if the same entities will be processed multiple times.
@@ -49,7 +50,7 @@ Example usage with caching:
     # get overall bounding box
     first_bbox = bbox.extents(msp, cache=cache)
     # bounding box of all LINE entities
-    second_bbox = bbox.extend(msp.query("LINE"), cache=cache)
+    second_bbox = bbox.extents(msp.query("LINE"), cache=cache)
 
 Functions
 ---------
@@ -90,7 +91,7 @@ extents:
 
     doc = ezdxf.readfile(CADKitSamples / 'A_000217.dxf')
     cache = bbox.Cache()
-    ext = bbox.extents(doc.modelspace(), cache)
+    ext = bbox.extents(doc.modelspace(), cache=cache)
 
     print(cache)
 
@@ -115,11 +116,11 @@ entity results, using a :class:`Cache` object may speedup the calculation:
     msp = doc.modelspace()
     cache = bbox.Cache(uuid=False)
 
-    ext = bbox.extents(msp, cache)
+    ext = bbox.extents(msp, cache=cache)
     print(cache)
 
     # process modelspace again
-    ext = bbox.extents(msp, cache)
+    ext = bbox.extents(msp, cache=cache)
     print(cache)
 
 Processing the same data again leads some hits::
@@ -142,10 +143,10 @@ first leads to more hits:
     entities = list(disassemble.recursive_decompose(msp))
     cache = bbox.Cache(uuid=False)
 
-    bbox.extents(entities, cache)
+    bbox.extents(entities, cache=cache)
     print(cache)
 
-    bbox.extents(entities, cache)
+    bbox.extents(entities, cache=cache)
     print(cache)
 
 First without UUID for stable virtual entities::
@@ -171,9 +172,5 @@ Cache Class
     .. py:attribute:: has_data
 
         ``True`` if the cache contains any bounding boxes
-
-    .. py:attribute:: hits
-
-    .. py:attribute:: misses
 
     .. automethod:: invalidate
