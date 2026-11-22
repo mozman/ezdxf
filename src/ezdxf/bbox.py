@@ -1,9 +1,8 @@
-#  Copyright (c) 2021-2022, Manfred Moitzi
+#  Copyright (c) 2021-2026, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Iterable
 
-import ezdxf
 from ezdxf import disassemble
 from ezdxf.math import BoundingBox
 
@@ -38,7 +37,7 @@ class Cache:
             f"misses={self.misses})"
         )
 
-    def get(self, entity: DXFEntity) -> Optional[BoundingBox]:
+    def get(self, entity: DXFEntity) -> BoundingBox | None:
         assert entity is not None
         key = self._get_key(entity)
         if key is None:
@@ -74,7 +73,7 @@ class Cache:
             except KeyError:
                 pass
 
-    def _get_key(self, entity: DXFEntity) -> Optional[str]:
+    def _get_key(self, entity: DXFEntity) -> str | None:
         if entity.dxftype() == "HATCH":
             # Special treatment for multiple primitives for the same
             # HATCH entity - all have the same handle:
@@ -93,7 +92,7 @@ def multi_recursive(
     entities: Iterable[DXFEntity],
     *,
     fast=False,
-    cache: Optional[Cache] = None,
+    cache: Cache | None = None,
 ) -> Iterable[BoundingBox]:
     """Yields all bounding boxes for the given `entities` **or** all bounding
     boxes for their sub entities. If an entity (INSERT) has sub entities, only
@@ -128,7 +127,7 @@ def extents(
     entities: Iterable[DXFEntity],
     *,
     fast=False,
-    cache: Optional[Cache] = None,
+    cache: Cache | None = None,
 ) -> BoundingBox:
     """Returns a single bounding box for all given `entities`.
 
@@ -146,7 +145,7 @@ def multi_flat(
     entities: Iterable[DXFEntity],
     *,
     fast=False,
-    cache: Optional[Cache] = None,
+    cache: Cache | None = None,
 ) -> Iterable[BoundingBox]:
     """Yields a bounding box for each of the given `entities`.
 
