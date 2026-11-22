@@ -570,13 +570,16 @@ def _hatch_geometry(
 def _line_segments(vertices: list[Intersection], distance: float) -> Generator[Line]:
     if len(vertices) < 2:
         return
-    vertices.sort(key=lambda p: p.p0.round(SORT_NDIGITS))
+    # process only REGULAR, START, END
+    intersections = [
+        p
+        for p in vertices
+        if p.type != IntersectionType.NONE and p.type != IntersectionType.COLLINEAR
+    ] 
+    intersections.sort(key=lambda p: p.p0.round(SORT_NDIGITS))
     inside = False
     prev_point = NONE_VEC2
-    for ip in vertices:
-        if ip.type == IntersectionType.NONE or ip.type == IntersectionType.COLLINEAR:
-            continue
-        # REGULAR, START, END
+    for ip in intersections:
         point = ip.p0
         if prev_point is NONE_VEC2:
             inside = True
