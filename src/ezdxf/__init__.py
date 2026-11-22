@@ -18,6 +18,66 @@ from .version import version, __version__
 VERSION = __version__
 __author__ = "mozman <me@mozman.at>"
 
+# Public interface: names imported here are re-exported on purpose.
+# Listing them in __all__ marks them as exported for type checkers
+# (typing spec: library interface public and private symbols), so
+# using e.g. ezdxf.new() does not raise reportPrivateImportUsage.
+__all__ = [
+    "VERSION",
+    "__version__",
+    "version",
+    "TRUE_STATE",
+    "PYPY",
+    "PYPY_ON_WINDOWS",
+    "YES_NO",
+    "EZDXF_TEST_FILES",
+    "print_config",
+    "options",
+    "config_files",
+    "int2rgb",
+    "rgb2int",
+    "transparency2float",
+    "float2transparency",
+    "InsertUnits",
+    "const",
+    "is_dxf_file",
+    "is_dxf_stream",
+    "readzip",
+    "new",
+    "read",
+    "readfile",
+    "decode_base64",
+    "setup_linetypes",
+    "setup_styles",
+    "setup_dimstyles",
+    "setup_dimstyle",
+    "pattern",
+    "ARROWS",
+    "DXFError",
+    "DXFStructureError",
+    "DXFVersionError",
+    "DXFTableEntryError",
+    "DXFAppDataError",
+    "DXFXDataError",
+    "DXFAttributeError",
+    "DXFValueError",
+    "DXFKeyError",
+    "DXFIndexError",
+    "DXFTypeError",
+    "DXFBlockInUseError",
+    "InvalidGeoDataException",
+    "DXF12",
+    "DXF2000",
+    "DXF2004",
+    "DXF2007",
+    "DXF2010",
+    "DXF2013",
+    "DXF2018",
+    "dxf_backslash_replace",
+    "has_dxf_unicode",
+    "decode_dxf_unicode",
+]
+
 TRUE_STATE = {"True", "true", "On", "on", "1"}
 PYPY = hasattr(sys, "pypy_version_info")
 PYPY_ON_WINDOWS = sys.platform.startswith("win") and PYPY
