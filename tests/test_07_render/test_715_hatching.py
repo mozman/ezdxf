@@ -2,6 +2,7 @@
 #  License: MIT License
 import pytest
 from ezdxf.math import Vec2, Bezier4P
+from ezdxf.entities import Hatch
 from ezdxf.render import hatching, forms
 from ezdxf import path
 
@@ -349,9 +350,54 @@ def test_explode_earth1_pattern():
         is_closed=1,
         flags=3,
     )
-    # jiggle_origin=True has random behavior, which is not good for a test!
-    lines = list(hatching.hatch_entity(hatch, jiggle_origin=False))
-    assert len(lines) == 139
+    # jiggle_origin=True is deterministic because the jiggle offset is seeded by
+    # the DXF handle; this entity has no handle and uses the fixed fallback seed.
+    lines = list(hatching.hatch_entity(hatch, jiggle_origin=True))
+    assert len(lines) == 142
+
+
+class TestReproducibleHatchRendering:
+    """The jiggle offset is seeded by the DXF handle, which makes hatch
+    renderings reproducible.
+    """
+
+    @staticmethod
+    def make_hatch(handle: str | None = None) -> Hatch:
+        hatch = Hatch.new()
+        if handle is not None:
+            hatch.dxf.handle = handle
+        hatch.set_pattern_definition([[0.0, (0.0, 0.0), (0.0, 1.0), [0.5, -0.5]]])
+        hatch.dxf.solid_fill = 0
+        hatch.paths.add_polyline_path(
+            [(0, 0, 0), (10, 0, 0), (10, 10, 0), (0, 10, 0)], is_closed=1, flags=3
+        )
+        return hatch
+
+    @pytest.mark.parametrize("handle", [None, "2F"])
+    def test_repeated_rendering_is_identical(self, handle):
+        hatch = self.make_hatch(handle)
+        first = list(hatching.hatch_entity(hatch, jiggle_origin=True))
+        second = list(hatching.hatch_entity(hatch, jiggle_origin=True))
+        assert len(first) > 0
+        assert first == second
+
+    def test_handle_controls_the_jiggle_offset(self):
+        lines_a = list(hatching.hatch_entity(self.make_hatch("2F"), jiggle_origin=True))
+        lines_b = list(hatching.hatch_entity(self.make_hatch("30"), jiggle_origin=True))
+        assert lines_a != lines_b
+
+    def test_jiggle_offset_bounds(self):
+        hatch = self.make_hatch("2F")
+        reference = [b.origin for b in hatching.pattern_baselines(hatch)]
+        jiggled = [
+            b.origin for b in hatching.pattern_baselines(hatch, jiggle_origin=True)
+        ]
+        assert len(reference) == len(jiggled)
+        offset = hatch.pattern.lines[0].offset.magnitude
+        # the _jiggle_factor() range is 0.0003 .. 0.0010
+        for origin, shifted_origin in zip(reference, jiggled):
+            shift = (shifted_origin - origin).magnitude
+            assert 0.0004 * offset < shift < 0.0015 * offset
 
 
 if __name__ == "__main__":

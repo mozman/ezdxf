@@ -655,9 +655,9 @@ def hatch_boundary_paths(polygon: DXFPolygon, filter_text_boxes=True) -> list[Pa
     return loops
 
 
-def _jiggle_factor():
+def _jiggle_factor(rg: random.Random) -> float:
     # range 0.0003 .. 0.0010
-    return random.random() * 0.0007 + 0.0003
+    return rg.random() * 0.0007 + 0.0003
 
 
 def pattern_baselines(
@@ -682,14 +682,18 @@ def pattern_baselines(
 
     jiggle_offset = Vec2()
     if jiggle_origin:
+        # A deterministic random number generator seeded by the DXF handle makes
+        # the jiggle offset reproducible for repeated renderings of the same
+        # entity. Unbound entities without a handle use a fixed seed instead.
+        rg = random.Random(polygon.dxf.handle or "42")
         # move origin of base pattern lines a small amount to avoid intersections with
         # boundary corner points
         offsets: list[float] = [line.offset.magnitude for line in pattern.lines]
         if len(offsets):
             # calculate the same random jiggle offset for all pattern base lines
             mean = sum(offsets) / len(offsets)
-            x = _jiggle_factor() * mean
-            y = _jiggle_factor() * mean
+            x = _jiggle_factor(rg) * mean
+            y = _jiggle_factor(rg) * mean
             jiggle_offset = Vec2(x, y)
 
     for line in pattern.lines:
