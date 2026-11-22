@@ -460,6 +460,53 @@ class TestLoadUnifontFile:
     # fmt:on
 
 
+class TestUnifontSubShapeNumberIsBigEndian:
+    """Regression test for issue #1468.
+
+    The 2-byte sub shape number of code 7 in unifont SHX files is stored
+    big-endian.  In the compiled txt.shx and isocp.shx, shape 0x80 is the
+    byte sequence 07 20 AC 00: a reference to the euro sign U+20AC, which
+    exists in these fonts, whereas the little-endian reading 0xAC20 does
+    not exist in any of them.
+    """
+
+    def test_parse_shape_codes_unifont(self):
+        codes = shapefile.parse_shape_codes(
+            shapefile.DataReader(bytes([7, 0x20, 0xAC, 0])), unifont=True
+        )
+        assert codes == (7, 0x20AC, 0)
+
+    def test_parse_shape_codes_not_unifont_is_single_byte(self):
+        codes = shapefile.parse_shape_codes(
+            shapefile.DataReader(bytes([7, 0x41, 0])), unifont=False
+        )
+        assert codes == (7, 0x41, 0)
+
+    def test_shx_load_unifont_sub_shape_reference(self):
+        shx = shapefile.shx_load(SHX3)
+        assert shx[0x80].data == (7, 0x20AC, 0)
+        assert 0x20AC in shx.shapes
+
+
+def _unifont_record(number: int, name: bytes, data: bytes) -> bytes:
+    import struct
+
+    byte_count = len(name) + 1 + len(data)
+    return struct.pack("<HH", number, byte_count) + name + b"\x00" + data
+
+
+# minimal unifont file: shape 0x20AC is a stub glyph, shape 0x80 is the
+# byte sequence 07 20 AC 00 as stored in the compiled txt.shx/isocp.shx
+SHX3 = (
+    b"AutoCAD-86 unifont 1.0\r\n"
+    + bytes([0x1A, 0, 0, 0, 0, 0, 0])
+    + b"TEST\x00"
+    + bytes([6, 2, 2, 0, 0, 0])  # above, below, mode, encoding, embed, 0
+    + _unifont_record(0x20AC, b"euro", bytes([2, 14, 8, 9, 10, 0]))
+    + _unifont_record(0x80, b"", bytes([7, 0x20, 0xAC, 0]))
+)
+
+
 # fmt:off
 SHX0 = bytes([
     0x41, 0x75, 0x74, 0x6F, 0x43, 0x41, 0x44, 0x2D, 0x38, 0x36, 0x20, 0x73,
