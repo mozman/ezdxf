@@ -52,6 +52,7 @@ cdef class _LineTypeRenderer:
         cdef Vec3 v3_end = Vec3(end)
         cdef Vec3 segment_vec, segment_dir
         cdef double segment_length, dash_length
+        cdef bint is_dash
         cdef list dashes = []
 
         if self.is_solid or v3_isclose(v3_start, v3_end, REL_TOL, ABS_TOL):
@@ -64,16 +65,16 @@ cdef class _LineTypeRenderer:
             segment_dir = v3_mul(segment_vec, 1.0 / segment_length)  # normalize
 
         self._render_dashes(segment_length, dashes)
-        for dash_length in dashes:
-            v3_end = v3_add(v3_start, v3_mul(segment_dir, abs(dash_length)))
-            if dash_length > 0:
+        for is_dash, dash_length in dashes:
+            v3_end = v3_add(v3_start, v3_mul(segment_dir, dash_length))
+            if is_dash:
                 yield v3_start, v3_end
             v3_start = v3_end
 
     cdef _render_dashes(self, double length, list dashes):
         if length <= self.current_dash_length:
             self.current_dash_length -= length
-            dashes.append(length if self.is_dash else -length)
+            dashes.append((self.is_dash, length))
             if self.current_dash_length < ABS_TOL:
                 self._cycle_dashes()
         else:
