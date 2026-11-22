@@ -304,7 +304,7 @@ class HatchBaseLine:
         except ZeroDivisionError:
             raise HatchLineDirectionError("hatch baseline has no direction")
         self.offset = offset
-        self.normal_distance: float = (-offset).det(self.direction - offset)
+        self.normal_distance: float = self.direction.det(offset)
         if abs(self.normal_distance) < min_hatch_line_distance:
             raise DenseHatchingLinesError("hatching lines are too narrow")
         self._end = self.origin + self.direction
