@@ -20,6 +20,32 @@ documentation:
 - `.venv/`, `makefile` and `tox.ini` are untracked local files, so root `make`
   targets exist only if a `makefile` was created from `makefile.template`.
 
+## Documentation language (Simplified Technical English)
+
+New prose, in docstrings and in `docs/source`, uses Simplified Technical
+English (STE100) in spirit, not strictly. Existing text is migrated step by
+step by the maintainer: do not restyle existing documentation as a side effect
+of another change.
+
+- Active voice and simple present tense; imperative for instructions. Passive
+  voice is fine when the actor is unknown or irrelevant ("a `DXFError` is
+  raised").
+- One idea per sentence. Target 20 words in procedures and 25 words in
+  descriptions.
+- One topic per paragraph, six sentences at most.
+- `must` for requirements, `can` for permission, possibility or failure
+  ("can raise `DXFError`", "the attribute can be `None`"). Remove `should`,
+  `may`, `might`, `could` and `would` unless the sentence loses accuracy.
+- One term for one concept. Reuse the names that the code uses and the terms in
+  `docs/source/develop/doc_formatting_guide.rst`, and qualify an ambiguous word
+  ("Python attribute" vs "DXF ATTRIB entity"). Do not add synonyms.
+- No contractions, slang, idioms or humor, and no filler words: `simply`,
+  `just`, `easy`, `obviously`, `basically`, `note that`, `it is important to`.
+  Write complete sentences with articles.
+- Use a vertical list for three or more parallel items or steps.
+- These rules never override accuracy or Sphinx markup. Identifiers, DXF names
+  and type names are not dictionary words.
+
 ## Docstrings
 
 - Google style parsed by `sphinx.ext.napoleon`. Sections in use: `Args:`,

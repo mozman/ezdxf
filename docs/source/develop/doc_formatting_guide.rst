@@ -64,6 +64,32 @@ Sphinx theme provided by `Read the Docs <https://readthedocs.org>`_ : ::
 
         Method :meth:`example_method` of class :class:`ExampleCls`
 
+Language Style
+--------------
+
+New text in docstrings and documentation pages uses Simplified Technical
+English (STE100) in spirit, not strictly. Existing text is migrated step by
+step - do not restyle a page while working on something else.
+
+- Active voice and simple present tense, imperative for instructions. Passive
+  voice is acceptable when the actor is unknown or irrelevant: "a `DXFError` is
+  raised".
+- One idea per sentence, 20 words in procedures and 25 words in descriptions.
+- One topic per paragraph, six sentences at most.
+- ``must`` for requirements, ``can`` for permission, possibility or failure.
+  Remove ``should``, ``may``, ``might``, ``could`` and ``would`` unless the
+  sentence loses accuracy.
+- One term for one concept. Use the terms from "Text Formatting" below and the
+  names that the API uses, and qualify an ambiguous word: "Python attribute"
+  vs. "DXF ATTRIB entity".
+- No contractions, slang, idioms or humor, and no filler words like "simply",
+  "just" or "obviously".
+- Use a vertical list for three or more parallel items or steps.
+- Identifiers, DXF names and type names are not dictionary words. These rules
+  never override accuracy or Sphinx markup.
+
+AI agents get the same rules in ``AGENTS.md``.
+
 Text Formatting
 ---------------
 
