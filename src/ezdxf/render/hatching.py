@@ -323,9 +323,11 @@ class HatchBaseLine:
 
     def signed_distance(self, point: Vec2) -> float:
         """Returns the signed normal distance of the given `point` from this
-        hatch baseline.
+        hatch baseline, positive values are on the left side of the hatch line
+        direction.
         """
-        # denominator (_end - origin).magnitude is 1.0 !!!
+        # the base line (origin, _end) has a length of 1.0, therefore the
+        # parallelogram area of both vectors is the normal distance of `point`:
         return (self.origin - point).det(self._end - point)
 
     def pattern_renderer(self, distance: float) -> PatternRenderer:
