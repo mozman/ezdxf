@@ -1,5 +1,4 @@
 *.c
-*.h
 *.so
 *.pyd
 *.html
