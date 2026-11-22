@@ -4,6 +4,7 @@
 .idea
 .tox
 .vscode
+.venv
 __pycache__
 makefile
 tox.ini
@@ -13,5 +14,4 @@ docs/build
 fonts/*.json
 fonts/shapefiles
 profiling/logs
-venv
 wheels
