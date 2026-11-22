@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Tuple, Iterable, Sequence
 from typing_extensions import TypeAlias
 import math
-from ezdxf.math import Vec3, UVec
+from ezdxf.math import Vec3, UVec, ABS_TOL
 
 LineSegment: TypeAlias = Tuple[Vec3, Vec3]
 
@@ -60,7 +60,7 @@ class _LineTypeRenderer:
         if length <= self._current_dash_length:
             self._current_dash_length -= length
             yield self._is_dash, length
-            if math.isclose(self._current_dash_length, 0.0):
+            if self._current_dash_length < ABS_TOL:
                 self._cycle_dashes()
         else:
             # Avoid deep recursions!
