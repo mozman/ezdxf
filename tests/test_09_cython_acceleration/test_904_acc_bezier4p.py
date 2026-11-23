@@ -28,6 +28,12 @@ def test_default_constructor():
     assert c.control_points == Vec3.tuple(POINTS)
 
 
+def test_tuple_points_emit_deprecation_warning():
+    with pytest.warns(DeprecationWarning):
+        c = Bezier4P([(0, 0), (1, 0), (1, 1), (0, 1)])
+    assert c.control_points == Vec3.tuple(POINTS)
+
+
 @pytest.fixture
 def curve():
     return Bezier4P(POINTS)
