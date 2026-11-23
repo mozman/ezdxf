@@ -27,8 +27,8 @@ cdef class Bezier3P:
     def __cinit__(self, defpoints: Sequence[UVec]):
         if not isinstance(defpoints[0], (Vec2, Vec3)):
             warnings.warn(
-                DeprecationWarning, 
                 "Bezier3P requires defpoints of type Vec2 or Vec3 in the future",
+                DeprecationWarning,
             )
         if len(defpoints) == 3:
             self.start_point = Vec3(defpoints[0])
