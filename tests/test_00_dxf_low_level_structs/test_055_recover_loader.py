@@ -137,18 +137,67 @@ class TestByteTagCompiler:
         assert tags[1] == (70, 456000)
         assert len(msg) == 0
 
-    @pytest.mark.parametrize("b", [
-        b"50\n1.000 e20\n",
-        b"50\n1.000 E20\n",
-        b"50\n1.000\te20\n",
-        b"50\n1.000\tE20\n",
-    ])
+    @pytest.mark.parametrize(
+        "b",
+        [
+            b"50\n1.000 e20\n",
+            b"50\n1.000 E20\n",
+            b"50\n1.000\te20\n",
+            b"50\n1.000\tE20\n",
+        ],
+    )
     def test_ignore_whitespace_in_floats(self, b):
         loader = bytes_loader(BytesIO(b))
         msg = []
         tags = list(byte_tag_compiler(loader, messages=msg))
         assert tags[0] == (50, 1e20)
         assert msg[0][0] == AuditError.INVALID_FLOATING_POINT_VALUE
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        b"50\ninf\n",
+        b"50\n-inf\n",
+        b"50\nnan\n",
+        b"10\n0\n20\n0\n30\ninf\n",
+        b"10\n0\n20\n0\n30\n-inf\n",
+        b"10\n0\n20\n0\n30\nnan\n",
+        b"10\n0\n20\ninf\n0\nDummy\n",
+        b"10\n0\n20\n-inf\n0\nDummy\n",
+        b"10\n0\n20\nnan\n0\nDummy\n",
+    ],
+    ids=[
+        "float inf",
+        "float -ins",
+        "float nan",
+        "point3d inf",
+        "point3d -inf",
+        "point3d nan",
+        "point2d inf",
+        "point2d -inf",
+        "point2d nan",
+    ],
+)
+def test_byte_tag_compiler_rejects_inf_and_nan_values(data):
+    loader = bytes_loader(BytesIO(data))
+    with pytest.raises(const.DXFStructureError):
+        list(byte_tag_compiler(loader))
+
+
+NAN_VALUE_TAGS = b"""  10
+ 0
+20
+ 0
+30
+ nan
+11
+ 0
+21
+ nan
+ 0
+DUMMY
+"""
 
 
 OUT_OF_SYNC_TAGS = """
@@ -196,9 +245,7 @@ class TestDetectDXFVersion:
     def test_detect_any_well_formed_version(self):
         assert _detect_dxf_version([(9, "$ACADVER"), (3, "AC9999")]) == "AC9999"
 
-    @pytest.mark.parametrize(
-        "ver", ["AC10x9", "XC1009", "0000", "AC10240", 0, None]
-    )
+    @pytest.mark.parametrize("ver", ["AC10x9", "XC1009", "0000", "AC10240", 0, None])
     def test_malformed_version_is_r12(self, ver):
         assert _detect_dxf_version([(9, "$ACADVER"), (3, ver)]) == "AC1009"
 

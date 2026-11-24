@@ -15,6 +15,7 @@ from typing import (
 )
 import itertools
 import re
+import math
 from collections import defaultdict
 from pathlib import Path
 import logging
@@ -429,7 +430,7 @@ class Recover:
                 # raises DXFStructureError() for invalid entities
                 tags = Tags(entity_structure_validator(entity))
                 if is_r12:
-                    # subclass markers (100, ...) in DXF R12 files confuses the 
+                    # subclass markers (100, ...) in DXF R12 files confuses the
                     # ezdxf parser #1106
                     tags.remove_tags(subclass_markers)
                 yield tags
@@ -591,7 +592,7 @@ def _search_float(s: Union[str, bytes]) -> float:
     )
     if res:
         s = res.group()
-    return float(s)
+    return safe_float(s)
 
 
 @typing.no_type_check
@@ -813,9 +814,9 @@ def byte_tag_compiler(
                     if z.code == code + 20:
                         try:
                             point = (
-                                float(x.value),
-                                float(y.value),
-                                float(z.value),
+                                safe_float(x.value),
+                                safe_float(y.value),
+                                safe_float(z.value),
                             )
                         except ValueError:  # search for any float values
                             point = (
@@ -825,7 +826,7 @@ def byte_tag_compiler(
                             )
                     else:
                         try:
-                            point = (float(x.value), float(y.value))
+                            point = (safe_float(x.value), safe_float(y.value))
                         except ValueError:  # search for any float values
                             point = (
                                 recover_float(x.value),
@@ -851,6 +852,8 @@ def byte_tag_compiler(
                 yield tag
             else:  # just a single tag
                 type_ = TYPE_TABLE.get(code, str)
+                if type_ is float:
+                    type_ = safe_float
                 value: bytes = x.value
                 if type_ is str:
                     if code == 0:
@@ -887,7 +890,7 @@ def byte_tag_compiler(
                                 yield DXFTag(code, recover_int(x.value))
                             except ValueError:
                                 raise const.DXFStructureError(error_msg(x))
-                        elif type_ is float:
+                        elif type_ is safe_float:
                             try:
                                 yield DXFTag(code, recover_float(x.value))
                             except ValueError:
@@ -896,3 +899,17 @@ def byte_tag_compiler(
                             raise const.DXFStructureError(error_msg(x))
         except StopIteration:
             return
+
+
+def safe_float(s: str | bytes) -> float:
+    """Returns only real values, rejects inf and nan values.
+
+    Raises:
+        ValueError: not a float, inf or nan
+    """
+    v = float(s)
+    if math.isinf(v):
+        raise ValueError("infinite number")
+    elif math.isnan(v):
+        raise ValueError("not a number")
+    return v
