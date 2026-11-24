@@ -133,6 +133,19 @@ def test_is_close(vcls):
     assert v1.isclose(v2) is True
 
 
+@pytest.mark.parametrize("a", [math.inf, -math.inf])
+def test_is_close_identical_infinite_values(vcls, a):
+    assert vcls(a, a).isclose(vcls(a, a)) is True
+
+
+@pytest.mark.parametrize(
+    "a,b", [(math.inf, -math.inf), (math.inf, 0.0), (-math.inf, -1e308)]
+)
+def test_finite_value_is_not_close_to_infinite_value(vcls, a, b):
+    assert vcls(a, a).isclose(vcls(b, b)) is False
+    assert vcls(b, b).isclose(vcls(a, a)) is False
+
+
 def test_is_null(vcls):
     v = vcls(0, 0)
     assert v.is_null is True

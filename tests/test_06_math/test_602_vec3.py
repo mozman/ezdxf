@@ -589,6 +589,26 @@ def test_is_not_close_absolute_tolerance(vec3, a, b):
     assert not va.isclose(vb, rel_tol=0, abs_tol=1e-7)
 
 
+@pytest.mark.parametrize("a", [math.inf, -math.inf])
+def test_is_close_identical_infinite_values(vec3, a):
+    assert vec3(a, a, a).isclose(vec3(a, a, a))
+
+
+@pytest.mark.parametrize(
+    "a,b",
+    [
+        (math.inf, -math.inf),
+        (math.inf, 0.0),
+        (-math.inf, 0.0),
+        (math.inf, 1e308),
+        (-math.inf, -1e308),
+    ],
+)
+def test_finite_value_is_not_close_to_infinite_value(vec3, a, b):
+    assert not vec3(a, a, a).isclose(vec3(b, b, b))
+    assert not vec3(b, b, b).isclose(vec3(a, a, a))
+
+
 def test_loosing_floating_point_precision_for_big_values():
     # This values can be represented by a double without loss of precision
     assert not math.isclose(

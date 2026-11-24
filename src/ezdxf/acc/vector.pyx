@@ -3,7 +3,7 @@
 # Copyright (c) 2020-2024, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, List, Sequence, TYPE_CHECKING, Tuple, Iterator
-from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod
+from libc.math cimport fabs, sin, cos, M_PI, hypot, atan2, acos, sqrt, fmod, isinf
 import random
 
 cdef extern from "constants.h":
@@ -19,7 +19,12 @@ if TYPE_CHECKING:
 
 cdef bint isclose(double a, double b, double rel_tol, double abs_tol):
     # Has to match the Python implementation!
-    cdef double diff = fabs(b - a)
+    cdef double diff
+    if a == b:
+        return True
+    if isinf(a) or isinf(b):
+        return False
+    diff = fabs(b - a)
     return diff <= fabs(rel_tol * b) or \
            diff <= fabs(rel_tol * a) or \
            diff <= abs_tol
