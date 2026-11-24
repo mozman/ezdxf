@@ -37,12 +37,8 @@
 		- {{pr 1481}}
 	- BUGFIX: Fix SHX unifont code-7 subshape number endianness
 		- {{pr 1482}}
-	- CHANGES: Refactoring of module `ezdxf.math.bulge`
-		- The following three functions previously leaked `ZeroDivisionError` from the `bulge` division in `signed_bulge_radius()`; they now raise `ValueError("bulge value must not be 0")`.
-			- `bulge_to_arc`
-			- `bulge_center`
-			- `bulge_radius`
-		- All private functions are now prefixed with `_`.
+	- CHANGES: ((6b05314d-da81-49ac-a564-81955e0e14d9))
+		- {{commit 3f549dc}}
 - ## Version 1.4.5 - 2026-10-16
   id:: 6a36280d-37b5-4664-897c-4755e53e79af
 	- NEW: added PyPI package deployment for Python 3.15 and removed PyPI package deployment for Python 3.10 (end of life)
