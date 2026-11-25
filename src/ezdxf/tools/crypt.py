@@ -23,7 +23,8 @@ def decode(text_lines: Iterable[str]) -> Iterable[str]:
         for c in text:
             if skip:
                 skip = False
-                continue
+                if c == 0x20:  # the space after 'A' exists only in ASCII DXF
+                    continue
             if c in dectab:
                 s += dectab[c]
                 skip = (c == 0x5E)  # skip space after 'A'
