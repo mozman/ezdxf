@@ -304,7 +304,7 @@ def convert(
             except IOError:
                 shutil.copy(result[0], dest_path)
         else:
-            UnknownODAFCError(f"Unknown error: no {fmt} file was created")
+            raise UnknownODAFCError(f"Unknown error: no {fmt} file was created")
 
 
 def _detect_version(path: str) -> str:

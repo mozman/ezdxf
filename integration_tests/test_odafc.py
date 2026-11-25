@@ -48,6 +48,14 @@ class Test_Convert_ODAFC_Not_Required:
         with pytest.raises(odafc.UnsupportedVersion):
             odafc.convert(src, version="ABC")
 
+    def test_raise_error_if_no_output_file_was_created(self, tmp_path, monkeypatch):
+        src = dummy(tmp_path / "xxx.dxf")
+        # ODA File Converter finished without error but created no output file
+        monkeypatch.setattr(odafc, "_execute_odafc", lambda arguments: None)
+        with pytest.raises(odafc.UnknownODAFCError):
+            odafc.convert(src)
+        assert not (tmp_path / "xxx.dwg").exists()
+
 
 def dxf_r12(name):
     doc = ezdxf.new(dxfversion="R12")
