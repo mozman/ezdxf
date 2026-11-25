@@ -422,6 +422,27 @@ def test_layer_entry():
     assert layer.dxf.color == 3
 
 
+def test_layer_entry_name_with_quote_is_data():
+    """Regression test for issue #1489.
+
+    A table entry name that contains a quote is data in the generated
+    source code. The name must not break out of the string literal and
+    must not execute code.
+    """
+    from ezdxf.entities.layer import Layer
+
+    executed = []
+    name = "Evil' if executed.append(1) else '"
+    layer = Layer.new("LAYER", dxfattribs={"name": name, "color": 3})
+    code = table_entries_to_code([layer], drawing="doc")
+    namespace = dict(globals())
+    namespace["executed"] = executed
+    exec(str(code), namespace)
+    assert executed == []
+    layer = doc.layers.get(name)
+    assert layer.dxf.color == 3
+
+
 def test_ltype_entry():
     from ezdxf.entities.ltype import Linetype
 
@@ -453,6 +474,37 @@ def test_block_to_code():
     new_block = doc.blocks.get("TestBlock")
     assert new_block.block.dxf.description == block.block.dxf.description
     assert new_block[0].dxftype() == block[0].dxftype()
+
+
+def test_block_to_code_name_with_double_quote_is_data():
+    """Regression test for issue #1489.
+
+    A block name that contains a double quote is data in the generated
+    source code. The Python API rejects the name, but the DXF loader
+    accepts the name, so the name can come from a loaded file.
+    """
+    import io
+
+    testdoc = ezdxf.new()
+    testdoc.blocks.new("Normal")
+    stream = io.StringIO()
+    testdoc.write(stream)
+    name = 'Test"Block'
+    loaded = ezdxf.read(io.StringIO(stream.getvalue().replace("Normal", name)))
+    block = loaded.blocks.get(name)
+    code = block_to_code(block, drawing="doc")
+
+    created = {}
+
+    class FakeBlocks:
+        def new(self, name, base_point=None, dxfattribs=None):
+            created["name"] = name
+
+    class FakeDoc:
+        blocks = FakeBlocks()
+
+    exec(str(code), {"doc": FakeDoc()})
+    assert created["name"] == name
 
 
 def test_hatch_to_code():

@@ -111,7 +111,10 @@ def block_to_code(
     block_name = dxfattribs.pop("name")
     base_point = dxfattribs.pop("base_point")
     code = _SourceCodeGenerator(layout="b")
-    prolog = f'b = {drawing}.blocks.new("{block_name}", base_point={base_point}, dxfattribs={{'
+    prolog = (
+        f"b = {drawing}.blocks.new({json.dumps(block_name)}, "
+        f"base_point={base_point}, dxfattribs={{"
+    )
     code.add_source_code_line(prolog)
     code.add_source_code_lines(_fmt_mapping(dxfattribs, indent=4))
     code.add_source_code_line("    }")
@@ -474,11 +477,11 @@ class _SourceCodeGenerator:
         """
         table = f"{self.doc}.{TABLENAMES[dxftype]}"
         dxfattribs = _purge_handles(dxfattribs)
-        name = dxfattribs.pop("name")
+        name = json.dumps(dxfattribs.pop("name"))
         s = [
-            f"if '{name}' not in {table}:",
+            f"if {name} not in {table}:",
             f"    t = {table}.new(",
-            f"        '{name}',",
+            f"        {name},",
             "        dxfattribs={",
         ]
         s.extend(_fmt_mapping(dxfattribs, indent=12))
