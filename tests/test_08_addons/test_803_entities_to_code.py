@@ -422,6 +422,27 @@ def test_layer_entry():
     assert layer.dxf.color == 3
 
 
+def test_layer_entry_name_with_quote_is_data():
+    """Regression test for issue #1489.
+
+    A table entry name that contains a single quote is data in the
+    generated source code.  The name must not break out of the string
+    literal and must not execute code.  A single quote is a valid
+    character in DXF table names, so the layer is created through the
+    public API of a new document.
+    """
+    executed = []
+    name = "Evil' if executed.append(1) else '"
+    source_doc = ezdxf.new()
+    layer = source_doc.layers.add(name)
+    code = table_entries_to_code([layer], drawing="doc")
+    namespace = dict(globals())
+    namespace["executed"] = executed
+    exec(str(code), namespace)
+    assert executed == []
+    assert name in doc.layers
+
+
 def test_ltype_entry():
     from ezdxf.entities.ltype import Linetype
 

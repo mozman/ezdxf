@@ -476,9 +476,9 @@ class _SourceCodeGenerator:
         dxfattribs = _purge_handles(dxfattribs)
         name = dxfattribs.pop("name")
         s = [
-            f"if '{name}' not in {table}:",
+            f"if {json.dumps(name)} not in {table}:",
             f"    t = {table}.new(",
-            f"        '{name}',",
+            f"        {json.dumps(name)},",
             "        dxfattribs={",
         ]
         s.extend(_fmt_mapping(dxfattribs, indent=12))
