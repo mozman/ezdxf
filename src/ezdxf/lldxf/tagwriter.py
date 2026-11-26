@@ -1,16 +1,8 @@
 # Copyright (c) 2018-2026, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import (
-    Any,
-    TextIO,
-    TYPE_CHECKING,
-    Union,
-    Iterable,
-    BinaryIO,
-    Iterator,
-    override,
-)
+from typing import Any, TextIO, TYPE_CHECKING, Union, Iterable, BinaryIO, Iterator
+from typing_extensions import override
 import abc
 import json
 
