@@ -14,6 +14,18 @@ def test_encode():
         assert enc == dec
 
 
+def test_decode_ascii_dxf_text_with_escape_space():
+    # In ASCII DXF files the "^" character, which encodes the letter "A",
+    # is followed by an escape space:
+    assert list(decode([r"^ 336>1<: ^ \VL ]*63;:-"])) == ["Alliance ACIS Builder"]
+
+
+def test_decode_binary_dxf_text_without_escape_space():
+    # Binary DXF files do not contain the escape space after the "^"
+    # character, the character after "A" is content:
+    assert list(decode([r"^336>1<: ^\VL ]*63;:-"])) == ["Alliance ACIS Builder"]
+
+
 DECODED_LINES = r"""21200 115 2 26
 16 Autodesk AutoCAD 19 ASM 217.0.0.4503 NT 0
 1 9.9999999999999995e-007 1e-010
