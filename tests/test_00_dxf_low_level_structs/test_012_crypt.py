@@ -20,10 +20,24 @@ def test_decode_ascii_dxf_text_with_escape_space():
     assert list(decode([r"^ 336>1<: ^ \VL ]*63;:-"])) == ["Alliance ACIS Builder"]
 
 
+def test_encode_ascii_dxf_text_with_escape_space():
+    # In ASCII DXF files the "^" character, which encodes the letter "A",
+    # is followed by an escape space:
+    assert list(encode(["Alliance ACIS Builder"])) == [r"^ 336>1<: ^ \VL ]*63;:-"]
+
+
 def test_decode_binary_dxf_text_without_escape_space():
     # Binary DXF files do not contain the escape space after the "^"
     # character, the character after "A" is content:
     assert list(decode([r"^336>1<: ^\VL ]*63;:-"])) == ["Alliance ACIS Builder"]
+
+
+def test_encode_binary_dxf_text_without_escape_space():
+    # Binary DXF files do not contain the escape space after the "^"
+    # character, the character after "A" is content:
+    assert list(encode(["Alliance ACIS Builder"], binary_dxf=True)) == [
+        r"^336>1<: ^\VL ]*63;:-"
+    ]
 
 
 DECODED_LINES = r"""21200 115 2 26

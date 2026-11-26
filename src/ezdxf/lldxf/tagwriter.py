@@ -1,7 +1,16 @@
 # Copyright (c) 2018-2026, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Any, TextIO, TYPE_CHECKING, Union, Iterable, BinaryIO
+from typing import (
+    Any,
+    TextIO,
+    TYPE_CHECKING,
+    Union,
+    Iterable,
+    BinaryIO,
+    Iterator,
+    override,
+)
 import abc
 import json
 
@@ -9,7 +18,7 @@ from .types import TAG_STRING_FORMAT, cast_tag_value, DXFVertex, DXFBinaryTag
 from .types import BYTES, INT16, INT32, INT64, DOUBLE, BINARY_DATA
 from .tags import DXFTag, Tags
 from .const import LATEST_DXF_VERSION
-from ezdxf.tools import take2
+from ezdxf.tools import take2, crypt
 import struct
 
 if TYPE_CHECKING:
@@ -54,6 +63,9 @@ class AbstractTagWriter(abc.ABC):
     def write_vertex(self, code: int, vertex: Iterable[float]) -> None:
         for index, value in enumerate(vertex):
             self.write_tag2(code + index * 10, value)
+
+    def encode_sat(self, sat: Iterable[str]) -> Iterator[str]:
+        return crypt.encode(sat)
 
 
 class TagWriter(AbstractTagWriter):
@@ -175,6 +187,10 @@ class BinaryTagWriter(AbstractTagWriter):
             stream.write(str(value).encode(self._encoding, errors="dxfreplace"))
             stream.write(b"\x00")
 
+    @override
+    def encode_sat(self, sat: Iterable[str]) -> Iterator[str]:
+        return crypt.encode(sat, binary_dxf=True)
+
     # End of low level interface
 
     def _write_binary_chunks(self, code: int, data: bytes) -> None:
@@ -262,19 +278,19 @@ def basic_tags_from_text(text: str) -> list[DXFTag]:
 class JSONTagWriter(AbstractTagWriter):
     """Writes DXF tags in JSON format into a text stream.
 
-    The `compact` format is a list of ``[group-code, value]`` pairs where each pair is 
-    a DXF tag. The group-code has to be an integer and the value has to be a string, 
-    integer, float or list of floats for vertices. 
+    The `compact` format is a list of ``[group-code, value]`` pairs where each pair is
+    a DXF tag. The group-code has to be an integer and the value has to be a string,
+    integer, float or list of floats for vertices.
 
-    The `verbose` format (`compact` is ``False``) is a list of ``[group-code, value]`` 
-    pairs where each pair is a 1:1 representation of a DXF tag. The group-code has to be 
+    The `verbose` format (`compact` is ``False``) is a list of ``[group-code, value]``
+    pairs where each pair is a 1:1 representation of a DXF tag. The group-code has to be
     an integer and the value has to be a string.
 
     """
 
     JSON_HEADER = "[\n"
     JSON_STRING = "[{0}, {1}],\n"
-    JSON_NUMBER = '[{0}, {1}],\n'
+    JSON_NUMBER = "[{0}, {1}],\n"
     VERTEX_TAG_FORMAT = "[{0}, {1}],\n"
 
     def __init__(

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024 Manfred Moitzi
+# Copyright (c) 2019-2026 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Union, Optional, Sequence, Any
@@ -236,7 +236,7 @@ class Body(DXFGraphic):
             for line in lines:
                 yield line.rstrip().replace("\n", "")
 
-        tags = Tags(textlines2tags(crypt.encode(cleanup(self.sat))))
+        tags = Tags(textlines2tags(tagwriter.encode_sat(cleanup(self.sat))))
         tagwriter.write_tags(tags)
 
     def tostring(self) -> str:
