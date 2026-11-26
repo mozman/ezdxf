@@ -422,6 +422,15 @@ def test_layer_entry():
     assert layer.dxf.color == 3
 
 
+def test_layer_name_contains_single_quote():
+    from ezdxf.entities.layer import Layer
+
+    layer = Layer.new("LAYER", dxfattribs={"name": "Test'Test", "color": 3})
+    code = table_entries_to_code([layer], drawing="doc")
+    exec(str(code), globals())
+    layer = doc.layers.get("Test'Test")
+    assert layer.dxf.color == 3
+
 def test_ltype_entry():
     from ezdxf.entities.ltype import Linetype
 
