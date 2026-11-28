@@ -140,6 +140,36 @@ class TestIntersectionRayRay3d:
             assert result[0].isclose(intersection_point)
 
 
+def _ray_ray_3d_implementations():
+    from ezdxf.math import _construct
+    from ezdxf.acc import USE_C_EXT
+
+    funcs = [pytest.param(_construct.intersection_ray_ray_3d, id="python")]
+    if USE_C_EXT:
+        from ezdxf.acc import construct
+
+        funcs.append(pytest.param(construct.intersection_ray_ray_3d, id="cython"))
+    return funcs
+
+
+@pytest.mark.parametrize("func", _ray_ray_3d_implementations())
+class TestIntersectionRayRay3dTolerance:
+    def test_abs_tol_is_not_used_as_relative_tolerance(self, func):
+        # The closest points are 0.5 units apart, far above abs_tol.
+        ray1 = (Vec3(0, 1000, 1000), Vec3(2000, 1000, 1000))
+        ray2 = (Vec3(1000, 0, 1000.5), Vec3(1000, 2000, 1000.5))
+        result = func(ray1, ray2, 1e-3)
+        assert len(result) == 2
+
+    def test_default_relative_tolerance_for_large_coordinates(self, func):
+        # The closest points are 5e-4 units apart, within the default relative
+        # tolerance of 1e-9 at coordinates of 1e6.
+        ray1 = (Vec3(0, 1e6, 1e6), Vec3(2e6, 1e6, 1e6))
+        ray2 = (Vec3(1e6, 0, 1e6 + 5e-4), Vec3(1e6, 2e6, 1e6 + 5e-4))
+        result = func(ray1, ray2)
+        assert len(result) == 1
+
+
 class TestIntersectingLines3d:
     @pytest.fixture
     def line1(self):
