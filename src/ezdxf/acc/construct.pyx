@@ -172,7 +172,7 @@ def intersection_ray_ray_3d(
             p1 = v3_add(o1, v3_mul(d1, (det1 / denominator)))
             p2 = v3_add(o2, v3_mul(d2, (det2 / denominator)))
 
-        if v3_isclose(p1, p2, abs_tol, abs_tol):
+        if v3_isclose(p1, p2, REL_TOL, abs_tol):
             # ray1 and ray2 have an intersection point
             return p1,
         else:
